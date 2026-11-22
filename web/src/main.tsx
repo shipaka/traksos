@@ -38,6 +38,12 @@ import './androidDesignReview.css';
 import './androidOwnerVisualAlignment20261120.css';
 // Android secondary routes and functional role menu; never restyle approved dashboards.
 import './androidInternalSections20261120.css';
+// Approved mobile fleet subpage replaces the former oversized desktop management cards.
+import './approvedFleetMobile20261121.css';
+// The native bridge does not turn into the PC website when a tablet exceeds 899px.
+import './nativeWide20261121.css';
+// Approved inner public pages share the 20 November graphite/orange desktop contract.
+import './approvedPublicInner20261120.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -54,7 +60,7 @@ import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
-import { SandboxEnter, SandboxModeBar } from './screens/isolatedSandbox.tsx';
+import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
@@ -64,7 +70,7 @@ import { Consult, Home, Sos, NewOrder, Orders, Garage, Profile, logout } from '.
 import { Order } from './screens/order.tsx';
 import { EcuHandoffPage } from './screens/ecuHandoffs.tsx';
 import { Work,  IncomingCall } from './screens/performer.tsx';
-import { AndroidMasterChats } from './screens/androidWorkspaces.tsx';
+import { AndroidMasterChats, useMobileWorkspace } from './screens/androidWorkspaces.tsx';
 import { PerformerOrderWindow } from './screens/performerOrderWindow.tsx';
 import { Admin } from './screens/admin.tsx';
 import { Documents } from './screens/documents.tsx';
@@ -74,7 +80,7 @@ import { BaseHome, BaseCar, BaseSetup, BaseMoney, AdminServicePayouts, ServicesL
 import { Fleet, QrJoin } from './screens/fleet.tsx';
 import { Help } from './screens/help.tsx';
 import { TechBase } from './screens/techbase.tsx';
-import { PlatformIntro, IntroInvitation } from './screens/platformIntro.tsx';
+import { PlatformIntro } from './screens/platformIntro.tsx';
 import { EconomicsPage } from './screens/economicsGuide.tsx';
 import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
@@ -82,7 +88,7 @@ import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
 import { APPROVED_VISUALS } from './approvedVisuals.ts';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
-import { Training, TrainingInvite } from './screens/training.tsx';
+import { Training } from './screens/training.tsx';
 import { TrainingPractice } from './screens/roleTrainingPractice.tsx';
 import { ContextHelp } from './screens/contextHelp.tsx';
 import { PricingLaboratory } from './screens/pricingLaboratory.tsx';
@@ -93,12 +99,14 @@ import { Privacy } from './screens/privacy.tsx';
 import { ModCase, Appeal, MyReviews } from './screens/moderation.tsx';
 import { ModeratorDesk } from './screens/moderatorDesk.tsx';
 import { AdminTestCenter } from './screens/adminTestCenter.tsx';
-import { ServicePreviewBar,ServicePreviewPage } from './screens/servicePreview.tsx';
 import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from './screens/support.tsx';
 import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
 import { CourierDesk, CourierDelivery } from './screens/courier.tsx';
 import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
+// Injected by the exact same BUILD_REV that powers /api/health in the VPS image.
+declare const __TRAKSOS_BUILD_REV__: string;
+const BROWSER_BUILD_REV = __TRAKSOS_BUILD_REV__;
 
 /** Last-resort screen protection: a broken widget must not produce a blank website. */
 class ScreenErrorBoundary extends Component<
@@ -125,6 +133,15 @@ class ScreenErrorBoundary extends Component<
   }
 }
 
+/* Denied routes never fall back to an obsolete role Home screen. */
+function UnavailableRole({label}:{label:string}) {
+  return <main className="tr-approved-route-unavailable" aria-label={label}>
+    <span className="tr-approved-route-eyebrow">TRAKSOS · ЛИЧНЫЙ КАБИНЕТ</span>
+    <h1>{label}</h1>
+    <p>Этот раздел недоступен для вашей роли. Другой кабинет не открывается автоматически.</p>
+    <a href="#/" className="btn">Вернуться в свой рабочий кабинет</a>
+  </main>;
+}
 type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection' | 'courier';
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
@@ -135,6 +152,28 @@ function App() {
   const toast = useToast();
   const [me, setMe] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
+  // A stale PWA/service-worker bundle must NEVER quietly render yesterday's
+  // dashboard against a newly deployed API. Native APK versions are allowed
+  // to lag the server and have a separate compatibility contract.
+  const [browserRevision, setBrowserRevision] = useState<'checking'|'ok'|'stale'>(() =>
+    native.isApp || !/^[a-f0-9]{40}$/.test(BROWSER_BUILD_REV) ? 'ok' : 'checking');
+  useEffect(() => {
+    if (browserRevision !== 'checking') return;
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 6000);
+    let active = true;
+    void fetch('/api/health', { cache: 'no-store', signal: abort.signal })
+      .then(async response => response.ok ? await response.json() : null)
+      .then(result => {
+        if (!active) return;
+        const serverRevision = result?.buildRevision;
+        setBrowserRevision(typeof serverRevision === 'string' &&
+          /^[a-f0-9]{40}$/.test(serverRevision) && serverRevision !== BROWSER_BUILD_REV
+          ? 'stale' : 'ok');
+      }).catch(() => { if (active) setBrowserRevision('ok'); })
+      .finally(() => clearTimeout(timer));
+    return () => { active = false; clearTimeout(timer); abort.abort(); };
+  }, [browserRevision]);
   const [mode, setModeState] = useState<Mode>(() => (localStorageGet('traksos.mode') as Mode) || 'client');
   const setMode = (m: Mode) => { setModeState(m); localStorageSet('traksos.mode', m); };
 
@@ -219,7 +258,35 @@ function App() {
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
-  if (!ready) return <div className="traksos-start-loading" role="status" aria-label="Загрузка"><span className="traksos-start-loading-line" aria-hidden="true" /></div>;
+  if (!ready || browserRevision === 'checking')
+    return <div className="traksos-start-loading" role="status" aria-label="Проверка версии интерфейса">
+      <span className="traksos-start-loading-line" aria-hidden="true" />
+    </div>;
+  if (browserRevision === 'stale') return <div className="app" style={{minHeight:'100vh',padding:'10vh 16px 24px'}}> 
+    <main className="stack" style={{margin:'0 auto',maxWidth:590,padding:24,
+      background:'linear-gradient(145deg,#163849,#081e2c)',border:'1px solid #4e8190',borderRadius:18,
+      color:'#f3faff',boxShadow:'0 18px 40px #0007'}}> 
+      <span className="pill accent">TRAKSOS · ТРЕБУЕТСЯ ОБНОВЛЕНИЕ</span>
+      <h1 style={{fontSize:26}}>На сайте вышла новая версия</h1>
+      <p>Этот браузер сохранил предыдущую сборку. Чтобы не открыть старый интерфейс
+        и не смешать данные разных версий, текущий экран заблокирован.</p>
+      <button className="btn" type="button" onClick={async () => {
+        try {
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.filter(key => key.startsWith('tracksos-static-'))
+              .map(key => caches.delete(key)));
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(reg => reg.update()));
+          }
+        } catch { /* Unavailable cache API must not trap the user. */ }
+        location.reload();
+      }}>Загрузить актуальный интерфейс</button>
+      <small style={{color:'#abc7d6'}}>Текущая сборка: {BROWSER_BUILD_REV.slice(0,12)}. Ничего из аккаунта не удалено.</small>
+    </main>
+  </div>;
   // Handoff takes place on the separate sandbox origin. The ticket is not a
   // production login and never reaches normal application API endpoints.
   if (route[0] === 'sandbox-enter') return <SandboxEnter />;
@@ -243,7 +310,6 @@ function App() {
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
   const isAdmin = me.roles.includes('admin');
-  const serviceSandbox = isAdmin && a === 'admin' && b === 'test-center' && route[2] === 'service' && route.length > 3;
   const isModerator = me.roles.includes('moderator') || isAdmin;
   const isStaff = isModerator;
   const isService = me.roles.includes('service');
@@ -258,7 +324,7 @@ function App() {
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
     : isCustomer || isStaff;
   const allowedMode: Mode = permitted ? mode : fallback;
-  const effMode: Mode = serviceSandbox ? 'service' : a === 'work' && isPerformer ? 'performer'
+  const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
     : a === 'base' && isService ? 'service' : a === 'insurance' && isInsurer ? 'insurer' : a === 'inspections' && (isInspection||isInsurer) ? 'inspection'
     : a === 'courier' && isCourier ? 'courier' : allowedMode;
@@ -266,13 +332,13 @@ function App() {
   const desktopRole: ApprovedPCRole = effMode === 'client' ? (me.owner_id || me.roles.includes('driver') ? 'driver' : 'owner')
     : effMode === 'performer' ? (me.performer?.kind === 'tow' ? 'tow' : 'master')
     : effMode === 'service' ? 'service' : effMode === 'insurer' ? 'insurer' : effMode === 'inspection' ? 'inspection'
-    : effMode === 'moderator' ? 'moderator' : 'admin';
+    : effMode === 'courier' ? 'courier' : effMode === 'moderator' ? 'moderator' : 'admin';
   let screen;
   switch (a) {
-    case undefined: screen = effMode === 'courier' ? <CourierDesk /> : effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
+    case undefined: screen = effMode === 'performer' && (!me.performer || me.performer.kind === 'ecu')
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
-      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
-    case 'login': screen = <Home />; break;
+      : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
+    case 'login': screen = <UnavailableRole label="Вы уже вошли в TrakSOS" />; break;
     case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = effMode === 'performer' && isPerformer && b
@@ -290,7 +356,7 @@ function App() {
         // A station owner may add the mobile-master workplace using the
         // existing real performer onboarding; no fake ninth UI shell.
         screen = isService && (b === 'profile' || b === 'me')
-          ? <PerformerHub /> : <Home />;
+          ? <PerformerHub /> : <UnavailableRole label="Кабинет выездного мастера недоступен" />;
         break;
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
@@ -298,17 +364,17 @@ function App() {
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
-      ? (isPerformer && b === 'me' ? <BaseSetup /> : <Home />)
+      ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)
       : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'inspections': screen = isInspection ? (b === 'processing' ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'inspections': screen = (isInspection || isInsurer) ? (b ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
     case 'courier': screen = !isCourier
       ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
-        : <CourierDesk section={b==='jobs'?'jobs':b==='chat'?'chat':'home'} />; break;
+        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
     case 'insurance': screen = b === 'request'
       ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
@@ -338,8 +404,8 @@ function App() {
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
     case 'reviews': screen = <MyReviews />; break;
-    case 'admin': screen = !isStaff ? <Home /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? (serviceSandbox ? <ServicePreviewPage section={route[3]} sub={route[4]} id={route[5]} /> : <AdminTestCenter roleId={route[2]} fullFidelity />) : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
-    case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <Home />; break;
+    case 'admin': screen = !isStaff ? <UnavailableRole label="Нет доступа к администрированию" /> : b === 'case' && route[2] ? <ModCase id={route[2]} /> : !isAdmin ? <ModeratorDesk /> : b === 'test-center' ? <AdminTestCenter roleId={route[2]} fullFidelity /> : b === 'user' && route[2] ? <AdminUser id={route[2]} /> : b === undefined ? <ApprovedPcDesk role="admin" fallback={<Admin />} /> : <Admin key={b === 'section' ? route[2] : 'summary'} initialSection={b === 'section' ? route[2] : undefined} />; break;
+    case 'moderation': screen = isModerator ? (b === 'verify' || b === 'support' || b === 'flagged' || b === 'cases' ? <ModeratorDesk initialTab={b === 'verify' ? 'verify' : b === 'support' ? 'support' : b === 'flagged' ? 'flagged' : 'cases'} /> : <ApprovedPcDesk role="moderator" fallback={<ModeratorDesk />} />) : <UnavailableRole label="Нет доступа к модерации" />; break;
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
@@ -349,9 +415,7 @@ function App() {
   return (
     <MeCtx.Provider value={{ me, reload, mode: effMode, setMode }}>
       <ScreenErrorBoundary key={route.join('/')}>
-        <SandboxModeBar />
-        {serviceSandbox && <ServicePreviewBar />}
-        <Shell mode={effMode} me={serviceSandbox ? {...me,roles:['service'],name:'Тестовый сервис'} : me}>{screen}</Shell>
+        <Shell mode={effMode} me={me}>{screen}</Shell>
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <IncomingCall />}
         {!(a === 'admin' && b === 'test-center' && isAdmin) && <OfferGate />}
       </ScreenErrorBoundary>
@@ -361,9 +425,38 @@ function App() {
 
 function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: React.ReactNode }) {
   const route = useRoute();
+  // The approved 618 phone shell keeps tips under Menu, not as a second top banner.
+  const mobileShell = useMobileWorkspace();
   const [openGuestGroup, setOpenGuestGroup] = useState<string | null>(null);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  // Desktop guest home owns its approved header, never mount the legacy one simultaneously.
+  const [standaloneDesktopHome, setStandaloneDesktopHome] = useState(() => !native.isApp && window.matchMedia('(min-width: 900px)').matches);
+  useEffect(() => {
+    if (native.isApp) return;
+    const media = window.matchMedia('(min-width: 900px)');
+    const sync = () => setStandaloneDesktopHome(media.matches);
+    media.addEventListener('change', sync);
+    sync();
+    return () => media.removeEventListener('change', sync);
+  }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
+  const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
+    { title: 'О платформе', links: [
+      { title: 'О нас', href: '#/company' },
+      { title: 'Как работает', href: '#/explore/guide' },
+      { title: 'Комиссии', href: '#/explore/pricing' },
+      { title: 'Оферты и документы', href: '#/offers' },
+    ] },
+    { title: 'Сервисы', links: PUBLIC_CAPABILITIES.map(item => ({ title: item.title, href: item.href })) },
+    { title: 'Сообщество', links: [
+      { title: 'Эфир', href: '#/explore/air' },
+      { title: 'Клуб TrakSOS', href: '#/explore/club' },
+    ] },
+    { title: 'Партнёрам', links: [
+      { title: 'Хотим работать', href: '#/join' },
+      { title: 'Оферты партнёров', href: '#/offers' },
+    ] },
+  ];
   useEffect(() => {
     setOpenGuestGroup(null);
     setMobileCatalogOpen(false);
@@ -392,9 +485,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       </div>
     </div>
   );
-  const serviceSandbox = route[0]==='admin'&&route[1]==='test-center'&&route[2]==='service'&&route.length>3;
-  const here = serviceSandbox ? '/'+(route.slice(3).join('/')||'base') : '/'+route.join('/');
-  const sandboxHref=(href:string)=>serviceSandbox?'#/admin/test-center/service'+(href==='/menu'?'/menu':href==='/base'||href.startsWith('/base/')?href:'/unavailable'):'#'+href;
+  const here = '/'+route.join('/');
+  const shellHref=(href:string)=>'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
@@ -420,9 +512,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'service'
-      ? (serviceSandbox
-          ? [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']]
-          : [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']])
+      ? [['/base', '⌂', 'Главная'], ['/base/inbox', 'clipboard', 'Заявки'], ['/shop', '🛍', 'Магазин'], ['/base/money', '₽', 'Финансы'], ['/menu', 'menu', 'Меню']]
     : mode === 'insurer'
       ? [['/insurance', '⌂', 'Главная'], ['/insurance/requests', 'clipboard', 'Заявки'], ['/insurance/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'inspection'
@@ -475,7 +565,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/offers', 'Оферты площадки'],
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
-         ['/economics', 'Калькулятор прибыльности · проект'],
+         ['/pricing-lab', 'Калькулятор прибыльности · проект'],
          ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
@@ -502,7 +592,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // composition is intentionally untouched. Titles come from authorized routes.
   const workspaceHref = mobileTabs[0]?.[0] || '/';
   const sectionPath = here.split('?')[0];
-  const innerSection = !!me && native.isApp && !serviceSandbox &&
+  const innerSection = !!me && native.isApp &&
     !['/',workspaceHref,'/menu'].includes(sectionPath);
   const scopedSectionNames: [string,string][] = [
     ...mobileTabs.map(([path,,name])=>[path,name] as [string,string]),
@@ -512,11 +602,31 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     .filter(([path])=>path !== '/' && (path === sectionPath || sectionPath.startsWith(path+'/')))
     .sort((a,b)=>b[0].length-a[0].length)[0]?.[1]
     || (sectionPath.startsWith('/order/') ? 'Карточка заявки' : 'Рабочий раздел');
+  // An approved desktop dashboard already contains its own TrakBot card.
+  // Do not mount a second floating copy of the same helper over its actions.
+  // Secondary pages and roles without the embedded card keep the dock.
+  const approvedDeskHasTrakBot = !!me && !native.isApp && !mobileShell && (
+    (route.length === 0 &&
+      ['client','performer','service','insurer','inspection'].includes(mode) &&
+      !(mode === 'performer' && (!me.performer || me.performer.kind === 'ecu'))) ||
+    (mode === 'performer' && route[0] === 'work' && !route[1] &&
+      !!me.performer && me.performer.kind !== 'ecu') ||
+    (mode === 'service' && route[0] === 'base' && !route[1]) ||
+    (mode === 'insurer' && route[0] === 'insurance' && !route[1]) ||
+    (mode === 'inspection' && route[0] === 'inspections' && !route[1])
+  );
   const safeLogout = () => {
     if (me?.roles.some(r => r === 'master' || r === 'tow') &&
       !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
     void logout();
   };
+  if (!me && route.length === 0 && standaloneDesktopHome) return (
+    <div className="app guest-app guest-home guest-home-standalone">
+      <NetworkStatus />
+      <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      <TrakBotDock authenticated={false} />
+    </div>
+  );
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
       <header className="top">
@@ -527,30 +637,22 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {me && mode === 'client' && <nav className="track-top-shortcuts" aria-label="Быстрый доступ">
           <a href="#/">Главная</a><a href="#/orders">Заявки</a><a href="#/sos">Помощь в дороге</a><a href="#/shop">Запчасти</a>
         </nav>}
-        {!me && !isAuthEntry && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
-          <a href="#/" aria-current={route.length === 0 ? 'page' : undefined}>Главная</a>
-          <details className="guest-nav-group" open={openGuestGroup === 'Возможности'}
-            onMouseLeave={() => setOpenGuestGroup(null)}
-            onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
-            onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
-            <summary aria-expanded={openGuestGroup === 'Возможности'}
-              onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === 'Возможности' ? null : 'Возможности'); }}>
-              Возможности <span aria-hidden="true">⌄</span>
-            </summary>
-            <div className="guest-nav-dropdown guest-nav-dropdown--all">
-              {PUBLIC_CAPABILITIES.map(item =>
-                <a key={item.href} href={item.href} onClick={() => setOpenGuestGroup(null)}>{item.title}</a>)}
-              <span className="guest-nav-hint">Услуги доступны после входа и только при наличии исполнителей</span>
-            </div>
-          </details>
-          <a href="#/explore/tech" className="guest-nav-techbase">ТехБаза</a>
-          <a href="#/company">О платформе</a>
-          <a href="#/explore/pricing">Тарифы</a>
-          <a href="#/help">Помощь</a>
-        </nav>}
-        {!me && isAuthEntry && <nav className="guest-auth-links" aria-label="О компании и документах">
-          <a href="#/">Главная</a><a href="#/company">Компания</a>
-          <a href="#/offers">Оферты</a><a href="#/offer/privacy">Документы</a>
+        {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
+          {guestNavGroups.map(group => (
+            <details key={group.title} className="guest-nav-group" open={openGuestGroup === group.title}
+              onMouseLeave={() => setOpenGuestGroup(null)}
+              onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
+              onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
+              <summary aria-expanded={openGuestGroup === group.title}
+                onClick={event => { event.preventDefault(); setOpenGuestGroup(current => current === group.title ? null : group.title); }}>
+                {group.title} <span aria-hidden="true">⌄</span>
+              </summary>
+              <div className="guest-nav-dropdown guest-nav-dropdown--all">
+                {group.links.map(link => <a key={link.href} href={link.href} onClick={() => setOpenGuestGroup(null)}>{link.title}</a>)}
+              </div>
+            </details>
+          ))}
+          <a href="#/help">Поддержка</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
           <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>
@@ -564,6 +666,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
+          {me && <SandboxModeBadge />}
           {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
           {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
@@ -571,7 +674,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
           {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
           {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && !serviceSandbox && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
+          {me && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
             (mode === 'insurer' || mode === 'inspection') &&
             <nav className="cabinet-role-switch" aria-label="Рабочее направление партнёра">
               <a href="#/as/insurer" aria-label="Кабинет страхования"
@@ -579,31 +682,30 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a href="#/as/inspection" aria-label="Кабинет техосмотра"
                 aria-current={mode === 'inspection' ? 'page' : undefined}>Техосмотр</a>
             </nav>}
-          {me && !serviceSandbox && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
+          {me && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
             <nav className="cabinet-role-switch" aria-label="Режим кабинета">
               <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
               {me.roles.includes('admin')
                 ? <a href="#/as/admin" aria-label="Администратор" aria-current={mode === 'admin' ? 'page' : undefined}>Админ</a>
                 : <a href="#/as/moderator" aria-label="Модератор" aria-current={mode === 'moderator' ? 'page' : undefined}>Модер.</a>}
             </nav>}
-          {me && !serviceSandbox && <a href="#/help" className="bell" aria-label="Справка">?</a>}
-          {me && !serviceSandbox && <Bell />}
+          {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
+          {me && <Bell />}
           {me && <details className="account-menu" key={here}>
             <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
             <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
-              {accountLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
+              {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
-              {!serviceSandbox && <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
-              {helpLinks.map(([href, label]) => <a key={href} href={sandboxHref(href)}>{label}</a>)}
-              {!serviceSandbox && <button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
+              {<button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
+              {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              {<button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
         </div>
       </header>
       <NetworkStatus />
-      {me && !native.isApp && !serviceSandbox && ['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') && <TrainingInvite />}
-      {me && !serviceSandbox && (!native.isApp || !['', 'work', 'base', 'admin', 'moderation', 'insurance', 'inspections'].includes(route[0] ?? '') || route.length>1) && <ContextHelp page={route[0] ?? ''} />}
+      {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
@@ -619,8 +721,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
                       : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
-                  <span aria-hidden="true">{ic}</span><span>{name}</span>
+                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                  <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
               ))}
               {mode === 'performer' && <>
@@ -639,37 +741,37 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]
                   ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
                   <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
-                  {links.map(([href,ic,name])=><a key={href} href={sandboxHref(href)}
+                  {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
                     className={`desktop-nav-link ${here===href?'active':''}`}>
-                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                   </a>)}
                 </div>)}
                 {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
-                  <span aria-hidden="true">▤</span><span>Моя СТО</span>
+                  <span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Моя СТО</span>
                 </a>}
               </>}
               {mode === 'client' && <>
                 <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
                 {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
-                  <a key={href} href={sandboxHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
-                    <span aria-hidden="true">{ic}</span><span>{name}</span>
+                  <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
+                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                   </a>
                 ))}
               </>}
             </> : isAuthEntry ? <>
-              <a className="desktop-nav-link" href="#/"><span>⌂</span><span>Главная</span></a>
-              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
-              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
-              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Документы</span></a>
+              <a className="desktop-nav-link" href="#/"><span aria-hidden="true"><NavGlyph glyph="⌂"/></span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/company"><span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Оферты</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Документы</span></a>
             </> : <>
-              <a className="desktop-nav-link active" href="#/"><span>⌂</span><span>Главная</span></a>
-              <a className="desktop-nav-link" href="#/explore/van"><span>⚒</span><span>Все услуги</span></a>
-              <a className="desktop-nav-link" href="#/login"><span>◉</span><span>Войти</span></a>
-              <a className="desktop-nav-link" href="#/register"><span>＋</span><span>Регистрация клиента</span></a>
-              <a className="desktop-nav-link" href="#/join"><span>▣</span><span>Для партнёров</span></a>
-              <a className="desktop-nav-link" href="#/company"><span>ⓘ</span><span>Компания</span></a>
-              <a className="desktop-nav-link" href="#/offers"><span>▤</span><span>Оферты</span></a>
-              <a className="desktop-nav-link" href="#/offer/privacy"><span>▣</span><span>Документы</span></a>
+              <a className="desktop-nav-link active" href="#/"><span aria-hidden="true"><NavGlyph glyph="⌂"/></span><span>Главная</span></a>
+              <a className="desktop-nav-link" href="#/explore/van"><span aria-hidden="true"><NavGlyph glyph="⚒"/></span><span>Все услуги</span></a>
+              <a className="desktop-nav-link" href="#/login"><span aria-hidden="true"><NavGlyph glyph="◉"/></span><span>Войти</span></a>
+              <a className="desktop-nav-link" href="#/register"><span aria-hidden="true"><NavGlyph glyph="＋"/></span><span>Регистрация клиента</span></a>
+              <a className="desktop-nav-link" href="#/join"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Для партнёров</span></a>
+              <a className="desktop-nav-link" href="#/company"><span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Компания</span></a>
+              <a className="desktop-nav-link" href="#/offers"><span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Оферты</span></a>
+              <a className="desktop-nav-link" href="#/offer/privacy"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Документы</span></a>
                         </>}
           </nav>
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
@@ -688,8 +790,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         </aside>
         <div className="desktop-content">
           {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
-          {me && !native.isApp && !serviceSandbox && route.length===0 && <IntroInvitation key={me.id+'-'+mode} userId={me.id} mode={mode} roles={me.roles} />}
-          {me && route[0] === 'menu' && !serviceSandbox
+          {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
           {/* Website legal/footer blocks belong to the browser, not beneath
@@ -711,7 +812,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={sandboxHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
@@ -719,8 +820,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !serviceSandbox && !isAuthEntry && route[0] !== 'trakbot' && <TrakBotDock authenticated={!!me} />}
-      {me && !serviceSandbox && <RoleTour page={route[0] ?? ''} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
+      {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
 }

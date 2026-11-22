@@ -85,16 +85,21 @@ async function run(width, height, mobile, nativePreview = false) {
         const carousel = document.querySelector('.public-hero-carousel')?.getBoundingClientRect();
         if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
         return {heroWidth:hero.width,heroHeight:hero.height,
-          pictureWidth:visual.width,pictureHeight:visual.height,
+          pictureWidth:visual.width,pictureHeight:visual.height,pictureBottom:visual.bottom,
           paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
           carouselTop:carousel.top,carouselHeight:carousel.height };
       });
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // The approved native guest entry shows the complete truck photo above the
+        // text and actions. Do not demand an obsolete full-bleed overlay.
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
+          heroGeometry.pictureWidth >= heroGeometry.heroWidth * .75 &&
+          heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
+          heroGeometry.pictureBottom <= heroGeometry.paragraphTop + 2,
+          suffix + ': native truck photo must be uncropped and separate from the text: ' + JSON.stringify(heroGeometry));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
@@ -116,6 +121,64 @@ async function run(width, height, mobile, nativePreview = false) {
         suffix + ': hero carousel too small for touch: '+JSON.stringify(heroGeometry));
     }
     await verifyPage(page, suffix + ':home');
+    // Regression for the 20 Nov owner screenshot: benefits/insurance were
+    // inline text and enormous icons even while the overall page did not scroll.
+    if (width < 900 && !nativePreview) {
+      const publicLegibility = await page.evaluate(() => {
+        const errors = [];
+        const bounds = el => el?.getBoundingClientRect();
+        const benefits = [...document.querySelectorAll('.public-why-strip > article.public-benefit')];
+        if (benefits.length !== 3) errors.push('wrong number of benefit cards');
+        for (const [i, item] of benefits.entries()) {
+          const box = bounds(item);
+          const icon = bounds(item.querySelector('.public-benefit-icon svg'));
+          const title = bounds(item.querySelector('b'));
+          const detail = bounds(item.querySelector('small'));
+          if (!box || !icon || !title || !detail) {
+            errors.push('benefit ' + i + ' missing layout element'); continue;
+          }
+          if (icon.width > 50 || icon.height > 50)
+            errors.push('benefit ' + i + ' huge icon ' + icon.width + 'x' + icon.height);
+          if (detail.top < title.bottom - 2)
+            errors.push('benefit ' + i + ' title and description overlap');
+          if (detail.left < title.left - 2 || detail.right > box.right + 2 ||
+              title.right > box.right + 2 || icon.right > title.left + 2)
+            errors.push('benefit ' + i + ' columns overlap or overflow');
+          if (box.height < 95 || box.width < 200)
+            errors.push('benefit ' + i + ' tiny card');
+        }
+        const insurance = document.querySelector('.public-track-insurance');
+        const insuranceText = bounds(insurance?.querySelector('span'));
+        const insuranceLabel = bounds(insurance?.querySelector('span b'));
+        const insuranceDetail = bounds(insurance?.querySelector('span small'));
+        const insuranceAction = bounds(insurance?.querySelector(':scope > strong'));
+        const insuranceBox = bounds(insurance);
+        if (!insuranceBox || !insuranceText || !insuranceLabel || !insuranceDetail || !insuranceAction)
+          errors.push('insurance CTA incomplete');
+        else if (insuranceDetail.top < insuranceLabel.bottom - 2 ||
+                 insuranceAction.top < insuranceText.bottom - 2 ||
+                 insuranceAction.right > insuranceBox.right + 2)
+          errors.push('insurance CTA text concatenated/overlapping');
+        const extras = [...document.querySelectorAll('.public-track-extras-grid > a.public-track-extra')];
+        if (extras.length !== 3) errors.push('missing service links');
+        for (const [i, link] of extras.entries()) {
+          const b = bounds(link.querySelector('b'));
+          const s = bounds(link.querySelector('small'));
+          if (!b || !s || s.top < b.bottom - 2)
+            errors.push('service link ' + i + ' inline/overlapping');
+        }
+        const map = document.querySelector('.public-map-static');
+        if (!map || !getComputedStyle(map).backgroundImage.includes('radial-gradient') ||
+            !getComputedStyle(map, '::after').content.includes('демонстрационная'))
+          errors.push('blank or unlabelled mobile demo map');
+        const logo = document.querySelector('.top .guest-approved-mark img');
+        if (!logo || getComputedStyle(logo).mixBlendMode !== 'screen')
+          errors.push('public brand crop with exposed dark background');
+        return { count: benefits.length, issues: errors };
+      });
+      check(publicLegibility.count === 3 && !publicLegibility.issues.length,
+        suffix + ': owner-reported mobile text/icon/branding defect: ' + JSON.stringify(publicLegibility));
+    }
     if (mobile && width <= 430) {
       const nav = page.locator('.track-guest-tabbar');
       const navCount = await nav.locator('a').count();
@@ -127,6 +190,24 @@ async function run(width, height, mobile, nativePreview = false) {
       }
     }
     // The latest 19 Nov public six tiles are the only approved public row.
+    if(width<900 && !nativePreview){
+      // A collapsed browser bot must be reachable without covering the
+      // truck or signup controls; it lives below the actual page content.
+      const layout=await page.evaluate(()=>{
+        const hero=document.querySelector('.public-brand-hero')?.getBoundingClientRect();
+        const dock=document.querySelector('.guest-app.guest-home > .trakbot-dock')?.getBoundingClientRect();
+        const launcher=document.querySelector('.guest-app.guest-home > .trakbot-dock .trakbot-dock-launcher');
+        return hero&&dock&&launcher?{
+          heroBottom:hero.bottom,dockTop:dock.top,mode:getComputedStyle(launcher.closest('.trakbot-dock')).position
+        }:null;
+      });
+      check(layout && layout.mode!=='fixed' && layout.dockTop>layout.heroBottom+8,
+        suffix+': collapsed TrakBot overlays approved public photo and actions: '+JSON.stringify(layout));
+      const launcher=page.getByRole('button',{name:'Открыть TrakBot'});
+      await launcher.click();
+      await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+      await page.getByRole('button',{name:'Закрыть TrakBot'}).last().click();
+    }
     const services = page.locator('.public-service-tiles > a');
     check(await services.count() === 6, suffix + ': six approved service cards required');
     const labels = await services.locator('b').allTextContents();

@@ -92,33 +92,29 @@ for role in client master; do
   sleep 3
   painted=0
   for attempt in 1 2 3; do
-    adb exec-out screencap -p > "android-review-$role.png"
-    if ! python3 scripts/verify-android-screen.py "android-review-$role.png"; then
-      sleep 2
-      continue
-    fi
     if [ "$sdk_level" -ge 34 ]; then
-      if timeout 25s adb shell uiautomator dump /sdcard/traksos-role.xml >/dev/null 2>&1; then
-        adb exec-out cat /sdcard/traksos-role.xml > "android-review-$role-ui.xml" || true
-        if grep -Fq 'Рабочий стол' "android-review-$role-ui.xml"; then
-          if [ "$role" = client ] && grep -Fq 'Владелец автопарка' "android-review-$role-ui.xml"; then
-            painted=1
-          fi
-          if [ "$role" = master ] && grep -Fq 'Выездной мастер' "android-review-$role-ui.xml"; then
-            painted=1
-          fi
-        fi
+      # Dump accessibility BEFORE capturing. Waiting for the dump can advance
+      # the compositor several frames past the guest or previous role.
+      if ! timeout 25s adb shell uiautomator dump /sdcard/traksos-role.xml >/dev/null 2>&1 ||
+         ! adb exec-out cat /sdcard/traksos-role.xml > "android-review-$role-ui.xml"; then
+        sleep 2
+        continue
       fi
-    else
-      # Older API29 WebView accessibility may expose no text nodes at all.
-      # The role log, a compositor pause and non-identical screen still gate it.
-      if ! cmp -s "emulator-screen.png" "android-review-$role.png"; then
-        if [ "$role" = client ] || ! cmp -s "android-review-client.png" "android-review-master.png"; then
-          painted=1
-        fi
+      marker='Владелец автопарка'
+      if [ "$role" = master ]; then marker='Сегодня'; fi
+      if ! grep -Fq 'Рабочий стол' "android-review-$role-ui.xml" ||
+         ! grep -Fq "$marker" "android-review-$role-ui.xml"; then
+        sleep 2
+        continue
       fi
     fi
-    if [ "$painted" -eq 1 ]; then break; fi
+    adb exec-out screencap -p > "android-review-$role.png"
+    previous=(emulator-screen.png)
+    if [ "$role" = master ]; then previous+=(android-review-client.png); fi
+    if python3 scripts/verify-android-screen.py "android-review-$role.png" "${previous[@]}"; then
+      painted=1
+      break
+    fi
     sleep 3
   done
   if [ "$painted" -ne 1 ]; then

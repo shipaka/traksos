@@ -239,30 +239,62 @@
     width:calc(var(--trakbot-visible-width,100vw) - 14px)!important;}
 }
 
-/* Approved desktop guest dock footprint, 19 Nov:
-   a full-width cyan-edged launcher with the ORIGINAL technician artwork,
-   not the old small brown chat bubble. Workrooms/mobile remain compact. */
-@media(min-width:1251px){
-  .guest-app.guest-home .trakbot-dock{
-    right:3.2%!important;bottom:20px!important;
-  }
-  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
-    display:flex!important;align-items:center!important;justify-content:flex-start!important;
-    gap:14px!important;width:min(292px,23vw)!important;min-height:80px!important;
-    border:2px solid #00d5f4!important;border-radius:999px!important;
-    padding:5px 15px 5px 7px!important;
-    background:linear-gradient(105deg,#063455,#061e36)!important;
-    color:#f4fbff!important;box-shadow:0 4px 19px #00192c55!important;
-  }
-  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
-    --bot-size:72px!important;width:72px!important;height:72px!important;
-  }
-  .guest-app.guest-home .trakbot-dock-launcher .trakbot-dock-label{
-    display:block!important;flex:1;min-width:0;max-width:160px;
-    font-size:17px!important;font-weight:800!important;line-height:1.16!important;
-    text-align:left!important;white-space:normal!important;
-  }
-  .guest-app.guest-home .trakbot-dock-launcher::after{
-    content:'›';color:#d5faff;font-size:28px;font-weight:400;
+/* Keep conversation history independently scrollable on phone-sized screens.
+   This avoids long diagnostic replies growing the whole compact dialog. */
+@media (min-width:360px) and (max-width:899px) {
+  .trakbot-compact-body .trakbot-dialog .msgs {
+    max-height:min(180px,28dvh)!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
   }
 }
+
+/* 20 Nov guest approval: on a narrow browser the collapsed mascot cannot
+   float over the truck, headline, login controls or the four bottom tabs.
+   It stays present and operable after the page content, opening only on tap.
+   Native APK never mounts this floating browser-only component. */
+@media (max-width:899px) {
+  html.traksos-browser .guest-app.guest-home > .trakbot-dock {
+    position:relative!important;
+    right:auto!important;left:auto!important;top:auto!important;bottom:auto!important;
+    margin:10px 14px calc(105px + env(safe-area-inset-bottom)) auto!important;
+    width:max-content;max-width:calc(100% - 28px);
+    pointer-events:auto;
+  }
+}
+
+
+/* Approved signed-in PC inner pages: prominent fixed technician button, no
+   38px square avatar in a generic pill. The dashboard already has its own Bot
+   card and does not mount a duplicate. Native Android uses its role menu. */
+@media(min-width:900px){
+ .app:not(.guest-app)> .trakbot-dock{position:fixed;right:18px;bottom:18px;z-index:96}
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher{
+   display:grid;place-items:center;gap:0;
+   width:84px;min-width:84px;height:84px;min-height:84px;padding:0;
+   border:0;border-radius:0;background:transparent;box-shadow:none;
+   transition:transform .2s ease;
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher:hover{
+   transform:translateY(-4px) scale(1.035);filter:none;
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{
+   --bot-size:84px;width:84px;height:84px;
+   animation:trakbot-tech-bob 4s ease-in-out infinite;
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot-original{
+   border-radius:50%;box-shadow:none;
+   -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0 58%,rgba(0,0,0,.85) 65%,transparent 80%);
+   mask-image:radial-gradient(circle at 50% 50%,#000 0 58%,rgba(0,0,0,.85) 65%,transparent 80%);
+ }
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-label{display:none}
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher:focus-visible{
+   outline:3px solid #ff9d58;outline-offset:3px;border-radius:12px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{animation:none!important}
+ .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher{transition:none!important}
+}
+html.traksos-reduced-motion .app:not(.guest-app)> .trakbot-dock .trakbot-dock-launcher .trakbot-mascot{animation:none!important}

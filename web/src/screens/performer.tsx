@@ -11,6 +11,7 @@ import { EcuStationWorkspace } from './ecuHandoffs.tsx';
 import './performerMobileWork.css';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { AndroidPerformerWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
+import { PerformerHub } from './performerCabinet.tsx';
 
 // Линия: статус, геолокация, входящие ---------------------------------------
 
@@ -31,7 +32,9 @@ export function Work({background=false}:{background?:boolean}={}) {
   useEffect(() => onEvent((e) => { if (e.type === 'line_status') reload(); }), [reload]);
   const p = me?.performer;
   if (p?.kind === 'ecu') return <EcuStationWorkspace />;
-  if (!p) return <main><h1>Кабинет исполнителя</h1><div className="card"><b>Заполните профиль</b><span className="note">Марки, цены, машина и статус самозанятого или ИП — после проверки начнут приходить заявки.</span><button className="btn" onClick={() => go('work/me')}>Заполнить</button></div></main>;
+  // No legacy mini-page: every unconfigured partner gets the SAME approved
+  // four-step onboarding as #/work and #/work/me, including native WebView.
+  if (!p) return <PerformerHub />;
 
   // A physical job may be completed while its separate price dispute is still open.
   const active = (jobs.data ?? []).filter((o: any) =>

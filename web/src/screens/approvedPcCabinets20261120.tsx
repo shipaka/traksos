@@ -6,17 +6,20 @@
  */
 import {useEffect, useState, type ReactNode} from 'react';
 import {get, onEvent, post} from '../api.ts';
+import {insurancePresentation, insuranceQueueGroup, type InsuranceQueueGroup} from '../insurancePresentation.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
+import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
+import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
 
-export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'moderator'|'admin';
+export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 const activeStates = new Set(['searching','accepted','en_route','arrived','working','awaiting_confirmation','pending_client','disputed']);
 const text = (value:any, fallback='—') => value == null || value === '' ? fallback : String(value);
 const number = (value:any) => typeof value === 'number' ? value.toLocaleString('ru-RU') : '—';
@@ -29,9 +32,9 @@ const dateIso = (value:Date) => [value.getFullYear(),String(value.getMonth()+1).
 const todayISO = () => dateIso(new Date());
 
 function useDesktopSize(){
-  const [wide,setWide]=useState(()=>!native.isApp && typeof window!=='undefined' && window.matchMedia('(min-width: 1000px)').matches);
+  const [wide,setWide]=useState(()=>!native.isApp && typeof window!=='undefined' && window.matchMedia('(min-width: 900px)').matches);
   useEffect(()=>{
-    const mq=window.matchMedia('(min-width: 1000px)');
+    const mq=window.matchMedia('(min-width: 900px)');
     const sync=()=>setWide(!native.isApp && mq.matches);
     // Old Android WebViews have addListener/removeListener but not MQL.addEventListener.
     if (typeof mq.addEventListener === 'function') mq.addEventListener('change',sync);
@@ -45,14 +48,15 @@ function useDesktopSize(){
   return wide;
 }
 
-/** Never mount both versions simultaneously: avoids duplicate requests/actions. */
+/** One breakpoint: phone/tablet <900, approved PC >=900. Never mount both. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
-  if(!wide) return <>{fallback}</>;
+  if (!wide && !(role === 'admin' && !native.isApp)) return <>{fallback}</>;
   if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
   if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
   if(role==='service') return <ServiceDesk/>;
-  if(role==='insurer'||role==='inspection') return <InsuranceDesk inspection={role==='inspection'}/>;
+  if(role==='insurer'||role==='inspection') return <InsuranceDesk key={role} inspection={role==='inspection'}/>;
+  if(role==='courier') return <ApprovedPcCourier/>;
   if(role==='moderator') return <ModeratorDesk/>;
   return <AdminDesk/>;
 }
@@ -211,16 +215,16 @@ function CustomerDesk({owner}:{owner:boolean}){
           :<Empty>Нет активных заявок. Создать новую можно через меню.</Empty>}
       </Pane>
       {owner&&<Pane title="Техника автопарка">
-        {fleet.error&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
+        {!fleet.data&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
         {cars.slice(0,5).map((c:any)=><RowItem key={c.id} href={'#/garage/'+c.id} label={vehicleLabel(c)}
           info={c.driver?.name?'Водитель: '+c.driver.name:'Водитель не закреплён'} v={c}/>)}
-        {!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
+        {fleet.data&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
         <a className="approved-pc-small-link" href="#/fleet">Весь автопарк →</a>
       </Pane>}
     </>} center={selected?<RealCase o={selected} owner={owner}/>:<Pane title="Рабочий стол">
-        <h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
+        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
         <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a>
-          <a href="#/new/tow">Эвакуатор</a><a href="#/services">СТО</a><a href="#/orders">История заявок</a></div>
+          <a href="#/new/tow">Эвакуатор</a><a href="#/services">СТО</a><a href="#/orders">История заявок</a></div></>}
       </Pane>}
       right={<><Pane title={owner?'Сводка автопарка':'Быстрые переходы'}>
         {owner?<><p>Машин в автопарке: <strong>{fleet.data?cars.length:'—'}</strong></p>
@@ -229,8 +233,8 @@ function CustomerDesk({owner}:{owner:boolean}){
           :<><a className="approved-pc-small-link" href="#/orders">Заявки и история →</a><a className="approved-pc-small-link" href="#/garage">Моя техника →</a></>}
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
     {owner&&<div className="approved-pc-fleet-footer">
-      <Pane title={'Все активные заявки автопарка · '+active.length}>
-        {active.length?<div className="approved-pc-table-wrap"><table className="approved-pc-order-table">
+      <Pane title={'Все активные заявки автопарка · '+(orders.data?active.length:'—')}>
+        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?<div className="approved-pc-table-wrap"><table className="approved-pc-order-table">
           <thead><tr><th>Заявка</th><th>Транспорт</th><th>Водитель / клиент</th><th>Неисправность</th><th>Статус</th><th>Действие</th></tr></thead>
           <tbody>{active.map((o:any)=><tr key={o.id} className={selected?.id===o.id?'selected':''}>
             <td>№{text(o.number||o.id)}</td><td>{vehicleLabel(transport(o))}</td>
@@ -241,14 +245,14 @@ function CustomerDesk({owner}:{owner:boolean}){
         </table></div>:<Empty>Активных ремонтов сейчас нет. Здесь появятся заявки по автопарку после их создания.</Empty>}
       </Pane>
       <div className="approved-pc-fleet-footer-grid">
-        <Pane title={'Мои машины · '+cars.length}>
+        <Pane title={'Мои машины · '+(fleet.data?cars.length:'—')}>
           <div className="approved-pc-fleet-vehicle-row">{cars.slice(0,4).map((c:any)=>
             <a key={c.id} href={'#/garage/'+c.id} className="approved-pc-fleet-vehicle">
               <Photo v={c}/><strong>{vehicleLabel(c)}</strong>
               <small>{c.driver?.name?'Водитель: '+c.driver.name:'Водитель не назначен'}</small>
               <span>История и документы ›</span>
             </a>)}
-            {!cars.length&&<Empty>Машины ещё не добавлены в автопарк.</Empty>}
+            {fleet.data&&!cars.length&&<Empty>Машины ещё не добавлены в автопарк.</Empty>}
           </div>
           <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
         </Pane>
@@ -379,13 +383,13 @@ function PerformDesk({tow}:{tow:boolean}){
   const offers=auctions.data||[];
   return <main className="approved-pc approved-pc-performer">
     <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
-    <Tabs items={[[ 'work','Текущая работа · '+current.length+'  |  Запланировано · '+planned.length,null ],
+    <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
       ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
       <p><b>Статус:</b> {text(me?.performer?.line_status,'Проверьте профиль')}</p>
       <p>Предложения отобраны сервером по доступным специализациям и зоне работы.</p>
       <a className="approved-pc-small-link" href="#/work/me">Мои параметры →</a></Pane>}
-      center={<Pane title={'Новые предложения · '+offers.length}>
+      center={<Pane title={'Новые предложения · '+(auctions.data?offers.length:'—')}>
         {auctions.error&&<LoadingBlock error={auctions.error} retry={auctions.reload}/>}
         {!auctions.data?<LoadingBlock error={auctions.error} retry={auctions.reload}/>:offers.length?
           offers.map((a:any)=><article key={a.order_id} className="approved-pc-offer">
@@ -399,18 +403,29 @@ function PerformDesk({tow}:{tow:boolean}){
           </article>):<Empty>Новых подходящих предложений пока нет.</Empty>}
       </Pane>}
       right={<><Calendar items={planned}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
-      :<WorkLayout left={<><Pane title={'В работе сегодня · '+current.length}>
+      :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobs.data?current.length:'—')}>
         {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
         <RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description,statusName(o))} v={transport(o)}
           badge={statusName(o)} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
         :<Empty>На сегодня принятых работ нет.</Empty>}
-      </Pane><Pane title={'Запланировано · '+planned.length}>
+      </Pane><Pane title={'Запланировано · '+(jobs.data?planned.length:'—')}>
         {planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
           onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
-        {!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
+        {jobs.data&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
-      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title="Рабочая смена"><Empty>Нет принятых активных заявок. Перейдите в новые предложения.</Empty>
-        <button className="approved-pc-primary" onClick={()=>setMode('offers')}>Проверить предложения</button></Pane>}
+      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
+        {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
+          <div className="approved-pc-shift-empty-body" data-orders="0">
+            <div className="approved-pc-shift-empty-copy">
+              <strong>{tow?'Готовы к следующей эвакуации':'Готовы к следующему выезду'}</strong>
+              <p>{tow?'Принятых эвакуаций сейчас нет. Проверьте новые предложения по доступной зоне и технике.':
+                'Принятых выездных заявок сейчас нет. Новые предложения появляются с учётом специализаций и зоны работы.'}</p>
+              <button className="approved-pc-primary" type="button" onClick={()=>setMode('offers')}>Проверить предложения</button>
+              <a className="approved-pc-small-link" href="#/work/me/schedule">Мой график и доступность →</a>
+            </div>
+            <ApprovedEmptyScene kind="shift"/>
+          </div>}
+      </Pane>}
       right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
@@ -548,11 +563,17 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const {me}=useMe();
   const api=inspection?'/api/insurer/inspections':'/api/insurer/requests';
   const source=useLoad(()=>get<any[]>(api),[api],e=>e.type==='vehicle_service');
-  const [mode,setMode]=useState<'active'|'done'>('active');
+  const [mode,setMode]=useState<InsuranceQueueGroup | 'all'>(inspection ? 'active' : 'action');
   const [chosen,setChosen]=useState('');
   const all=source.data||[];
-  const done=(o:any)=>['completed','rejected','cancelled'].includes(o.status);
-  const items=all.filter(o=>mode==='done'?done(o):!done(o));
+  const group = (o:any):InsuranceQueueGroup => inspection
+    ? (['completed','rejected','cancelled'].includes(o.status) ? 'closed' : 'active')
+    : insuranceQueueGroup(o.insurance_stage,o.status);
+  const stageLabel = (o:any) => insurancePresentation(o.insurance_stage,o.status,'partner').label;
+  const items=all.filter(o=>mode==='all' || group(o)===mode);
+  const filters:[InsuranceQueueGroup | 'all',string][] = inspection
+    ? [['active','Осмотры в работе'],['closed','История']]
+    : [['action','Требуют действий'],['active','В работе'],['all','Все'],['closed','История']];
   const selected=items.find(o=>String(o.id)===chosen)||items[0];
   const both=me?.roles.includes('insurer')&&me?.roles.includes('inspection_operator');
   return <main className="approved-pc approved-pc-insurance">
@@ -560,27 +581,28 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
     {both&&<div className="approved-pc-partner-switch"><a className={!inspection?'selected':''} href="#/as/insurer">Страхование</a>
       <a className={inspection?'selected':''} href="#/as/inspection">Техосмотр</a></div>}
-    <Tabs items={[[ 'active',inspection?'Осмотры в работе':'Страховые дела в работе',source.data?all.filter(o=>!done(o)).length:null],
-      ['done','История',source.data?all.filter(done).length:null]]} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
+    <Tabs items={filters.map(([id,label])=>[id,label,source.data ? all.filter(o=>id==='all' || group(o)===id).length : null])} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
     <WorkLayout left={<Pane title={inspection?'Назначенные осмотры':'Страховые заявки'}>
       {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?items.map((o:any)=>
         <RowItem key={o.id} label={(inspection?'ТО ':'Полис ')+vehicleLabel(o)} info={text(o.comment)}
-          active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={text(o.status) } v={o}/>)
-        :<Empty>Назначенных заявок в выбранном разделе нет.</Empty>}
+          active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={inspection ? text(o.status) : stageLabel(o)} v={o}/>)
+        :<Empty>{!inspection && mode==='active' ? 'Нет заявок в работе.' : 'Назначенных заявок в выбранном разделе нет.'}</Empty>}
     </Pane>}
     center={selected?<section className="approved-pc-case">
       <header><div><small>{inspection?'ДЕЛО ТЕХОСМОТРА':'СТРАХОВОЕ ДЕЛО'}</small><h2>№{text(selected.number||selected.id)}</h2></div>
-        <span className="approved-pc-stage">{text(selected.status)}</span></header>
+        <span className="approved-pc-stage">{inspection ? text(selected.status) : stageLabel(selected)}</span></header>
       <div className="approved-pc-case-main"><Photo v={selected}/><div className="approved-pc-facts">
         <h3>{vehicleLabel(selected)}</h3><p><b>Клиент:</b> {text(selected.client_name||selected.client?.name)}</p>
         <p><b>VIN:</b> {text(selected.vin)}</p><p><b>Заявка:</b> {text(selected.comment,'Детали внутри дела')}</p>
       </div></div>
       {inspection?<><Pane title="Этапы осмотра"><p>Заявка → Назначение → Проверка → Фиксация результата</p>
         <p>Отметка о выполнении не является выдачей диагностической карты и не направляет её в ЕАИСТО.</p></Pane>
-        <a className="approved-pc-primary" href="#/inspections/processing">Открыть рабочую обработку осмотра</a></>
+        <a className="approved-pc-primary" href={"#/inspections/"+encodeURIComponent(String(selected.id))}>Открыть рабочую обработку осмотра</a></>
       :<><InsuranceProposals requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
-    </section>:<Pane title={inspection?'Техосмотры':'Страхование'}><Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty></Pane>}
+    </section>:<Pane title={inspection?'Техосмотры':'Страхование'}>
+      {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
+    </Pane>}
     right={<><Calendar kind={inspection?'inspection':'insurance'} items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
       {selected&&!inspection&&<a className="approved-pc-small-link" href={'#/insurance/request/'+selected.id}>Документы и предложения →</a>}
       {inspection&&<p className="approved-pc-caveat">Официальные карты/ЕАИСТО пока не подключены.</p>}
@@ -640,7 +662,9 @@ function ModeratorDesk(){
       items.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number)} info={text(o.title)}
         badge={o.priority===1?'Срочно':'На проверке'} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
       :<Empty>Открытых дел в очереди нет.</Empty>}</Pane>}
-      center={selected?<ModeratorSelectedCase id={String(selected.id)}/>:<Pane title="Модерация"><Empty>Выберите обращение слева.</Empty></Pane>}
+      center={selected?<ModeratorSelectedCase id={String(selected.id)}/>:<Pane title="Модерация">
+        {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Выберите обращение слева.</Empty>}
+      </Pane>}
       right={<><Pane title="Что проверить"><p>✓ Связанная заявка и статус</p><p>✓ Доказательства обеих сторон</p><p>✓ Переписка и правила площадки</p><p>✓ Основание и журнал решения</p></Pane>
         <Pane title="Рабочие инструменты"><a className="approved-pc-small-link" href="#/moderation/support">Очередь поддержки →</a>
           <a className="approved-pc-small-link" href="#/moderation/verify">Проверка партнёров →</a></Pane></>}/>
@@ -680,8 +704,10 @@ function AdminDesk(){
     right={<><Pane title="Состояние платформы"><p>Реальный статус интеграций — в диагностике; зелёные индикаторы из макета не являются подтверждением работы.</p>
       <a className="approved-pc-small-link" href="#/admin/section/diagnostics">Открыть диагностику →</a></Pane>
       <Pane title="Тестовые кабинеты"><div className="approved-pc-role-grid">
-        {[['owner','Владелец'],['driver','Водитель'],['master','Мастер'],['tow','Эвакуатор'],
-          ['service','СТО'],['insurer','Страхование'],['inspection','Техосмотр'],['moderator','Модератор'],['admin','Администратор']]
+        {[['client','Клиент'],['owner','Владелец'],['driver','Водитель'],['master','Мастер'],
+          ['tow','Эвакуатор'],['service','СТО'],['master_service','Мастер + СТО'],
+          ['insurer','Страхование'],['inspection','Техосмотр'],['courier','Курьер'],
+          ['moderator','Модератор'],['admin','Администратор']]
           .map(([id,label])=><a key={id} href={'#/admin/test-center/'+id}>{label}</a>)}
       </div><a className="approved-pc-primary" href="#/admin/test-center">Открыть тест-центр</a></Pane></>}/>
   </main>;

@@ -91,10 +91,52 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
     if (!used) throw forbidden(); // replayed handoff
     const token = newToken();
     await q.query('insert into sessions(token_hash,user_id,expires_at,device) values ($1,$2,$3,$4)', [
-      sha256(token), user.id, new Date(now + 2*60*60_000), 'sandbox-role-preview',
+      sha256(token), user.id,
+      new Date(now + (role === 'admin' ? 12 : 2)*60*60_000),
+      role === 'admin' ? 'sandbox-supervisor' : 'sandbox-role-preview',
     ]);
     return token;
   });
   return { token: result, role, landing: SANDBOX_LANDING[role], sandbox: true,
     returnUrl: typeof p.returnUrl === 'string' && /^https:\/\//.test(p.returnUrl) ? p.returnUrl : undefined };
+}
+
+// The long-lived (12-hour) supervisor comes from a one-time signed *admin*
+// handoff on the separate sandbox origin. Role sessions never become supervisors,
+// even when the chosen fictitious role happens to be "admin".
+export async function switchSandboxRole(
+  db: Db, supervisorToken: string, role: SandboxRole, now = Date.now(),
+) {
+  if (typeof supervisorToken !== 'string' ||
+      !/^[A-Za-z0-9_-]{20,512}$/.test(supervisorToken) ||
+      !SANDBOX_ROLES.includes(role)) throw forbidden();
+  return db.tx(async q => {
+    const supervisor = await q.one<{expires_at:Date}>(
+      `select s.expires_at from sessions s join users u on u.id=s.user_id
+        where s.token_hash=$1 and s.device='sandbox-supervisor'
+          and s.expires_at>now() and u.phone=$2
+          and u.status='active' and 'admin'=any(u.roles)`,
+      [sha256(supervisorToken), SANDBOX_USER_PHONE.admin],
+    );
+    if (!supervisor) throw forbidden();
+    const target = await q.one<{id:string;roles:string[]}>(
+      "select id,roles from users where phone=$1 and status='active'",
+      [SANDBOX_USER_PHONE[role]],
+    );
+    const required = role==='owner'||role==='client'?'client':
+      role==='inspection'?'inspection_operator':
+      role==='master_service'?'master':role;
+    if (!target?.roles.includes(required) ||
+        (role==='master_service'&&!target.roles.includes('service')))
+      throw forbidden();
+    const token = newToken();
+    const expiresAt = new Date(Math.min(now+12*60*60_000,
+      new Date(supervisor.expires_at).getTime()));
+    if(expiresAt.getTime()<=now)throw forbidden();
+    await q.query(
+      'insert into sessions(token_hash,user_id,expires_at,device) values ($1,$2,$3,$4)',
+      [sha256(token),target.id,expiresAt,'sandbox-role-switched'],
+    );
+    return {token,role,landing:SANDBOX_LANDING[role],sandbox:true,expiresAt};
+  });
 }

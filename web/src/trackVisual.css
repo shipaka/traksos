@@ -371,7 +371,6 @@
 .app.role-service .base-onboarding-hero::after,
 .app.role-insurer .cabinet-page>.cabinet-heading::after,
 .app.role-inspection .cabinet-page>.cabinet-heading::after,
-.app.role-client .client-garage-page>.client-section-hero::after,
 .app.role-client .insurance-workflow-hero::after{
   content:"";position:absolute;inset:0 0 0 auto;z-index:0;pointer-events:none;
   width:42%;opacity:.60;background-position:center right;background-size:contain;background-repeat:no-repeat;
@@ -381,7 +380,6 @@
 .app.role-service :is(.base-command-hero,.base-onboarding-hero)::after{background-image:none;}
 .app.role-insurer .cabinet-page>.cabinet-heading::after{background-image:none;}
 .app.role-inspection .cabinet-page>.cabinet-heading::after{background-image:none;}
-.app.role-client .client-garage-page>.client-section-hero::after{background-image:none!important;} /* Actual vehicle photos belong to their own model-specific cards. */
 .app.role-client .insurance-workflow-hero::after{background-image:none;}
 .app.role-performer .work-command-hero>*,
 .app.role-service .base-command-hero>*,
@@ -405,11 +403,15 @@
 .app.role-inspection .partner-workspaces .btn.active{
   border-color:#68e7f5;color:#fff;background:#16638c;box-shadow:0 0 13px #0fe7f737;
 }
-.app.role-client .client-garage-page>.client-section-hero{padding:28px 30px;}
+.app.role-client .client-garage-page>.client-section-hero{
+  min-height:108px;padding:16px 22px;border:1px solid #3f6572;
+  border-left:4px solid #ff791e;border-radius:14px;
+  background:linear-gradient(130deg,#102832,#0a202a);box-shadow:0 9px 24px #0005;
+}
 .app.role-client .client-garage-page>.client-section-hero>*,
 .app.role-client .insurance-workflow-hero>*{position:relative;z-index:1;}
 .app.role-client .client-garage-page>.client-section-hero h1{color:#fff;}
-.app.role-client .client-garage-page>.client-section-hero .sub{color:#c7dfeb;max-width:65%;}
+.app.role-client .client-garage-page>.client-section-hero .sub{color:#cbdde2;max-width:100%;}
 .app.role-client .insurance-workflow-hero{padding:27px 30px;}
 .app.role-client .insurance-workflow-hero p{color:#d5edfb;max-width:60%;}
 /* Parts catalog: large hero with the gear artwork from the approved concept. */
@@ -455,8 +457,7 @@
   .app.role-inspection .cabinet-page>.cabinet-heading{padding:19px;min-height:135px;}
   .app.role-insurer .cabinet-page>.cabinet-heading::after,
   .app.role-inspection .cabinet-page>.cabinet-heading::after{width:32%;opacity:.3;}
-  .app.role-client .client-garage-page>.client-section-hero{padding:21px;min-height:150px;}
-  .app.role-client .client-garage-page>.client-section-hero::after{opacity:.25;}
+  .app.role-client .client-garage-page>.client-section-hero{padding:17px;min-height:108px;}
   .app.role-client .insurance-workflow-hero{padding:21px;min-height:160px;}
 }
 @media(prefers-reduced-motion:reduce){

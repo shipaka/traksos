@@ -22,11 +22,11 @@ function rememberAllowed(key:string){
 }
 function route(key:string) { return '#/explore/' + key; }
 function OwnerIcon({kind}:{kind:string}) {
-  const props={viewBox:'0 0 48 48',fill:'none',stroke:'currentColor',strokeWidth:3,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true as const};
+  const props={viewBox:'0 0 48 48',fill:'none',stroke:'currentColor',strokeWidth:2.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true as const};
   let lines;
   switch(kind){
-    case 'van': lines=<><path d="M32 6a12 12 0 0 0-11 15L7 35a5 5 0 0 0 7 7l14-14A12 12 0 0 0 43 17l-8 8-10-3-2-9Z"/></>;break;
-    case 'tow': lines=<><path d="M3 27h34l6 8v6H4V27Zm6-9h22l6 9H3l6-9ZM13 18V7h16l7 11"/><path d="M14 8 7 14l-3-3m29 2h10"/><circle cx="14" cy="40" r="4"/><circle cx="37" cy="40" r="4"/></>;break;
+    case 'van': lines=<><path d="M30 5a12 12 0 0 0-10 18L7 36a5 5 0 0 0 7 7l13-13A12 12 0 0 0 43 15l-9 9-9-3-3-9Z"/><circle cx="10.5" cy="39.5" r="1"/></>;break;
+    case 'tow': lines=<><path d="M4 34h29l8 6v4H4V34Z"/><path d="M9 34V23h14l8 11M12 23V12h15l6 11M23 12l-6-7M29 8h11v8l-5 5h-5"/><circle cx="13" cy="43" r="3.4"/><circle cx="35" cy="43" r="3.4"/><path d="M40 21v6m-4 0h8"/></>;break;
     case 'sto': lines=<><path d="M3 19 24 5l21 14v25H3V19Z"/><path d="M13 44V25h22v19M13 33h22"/></>;break;
     case 'ecu': lines=<><rect x="10" y="10" width="28" height="28" rx="3"/><path d="M16 4v6m8-6v6m8-6v6M16 38v6m8-6v6m8-6v6M4 16h6m-6 8h6m-6 8h6m28-16h6m-6 8h6m-6 8h6"/><rect x="17" y="17" width="14" height="14" rx="2"/></>;break;
     case 'consult': lines=<><path d="M5 25V23a19 19 0 0 1 38 0v3M5 25v10c0 5 4 8 8 8h4V27h-4a8 8 0 0 0-8 8m38-10v10c0 5-4 8-8 8h-4V27h4a8 8 0 0 1 8 8"/></>;break;

@@ -505,7 +505,7 @@
 .app.role-client .client-orders-page>h1::before,
 .app[class*="role-"] .account-profile-page>h1::before{
   content:"";position:absolute;left:0;top:16px;bottom:16px;
-  width:4px;background:linear-gradient(#82ebf3,#eb499c);
+  width:4px;background:linear-gradient(#ff9b4d,#f36a1e);
   border-radius:10px;
 }
 .app.role-client .client-orders-page>.scroll-x{
@@ -548,6 +548,53 @@
   .app[class*="role-"] .account-profile-page>form.stack{padding:16px;}
 }
 
+
+/* Dual-mode phone header fit: keep the approved logo and both role links
+   visible instead of forcing all controls into one over-wide row. */
+@media (max-width: 520px) {
+  .app:not(.guest-app) .top:has(.cabinet-role-switch) {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .app:not(.guest-app) .top:has(.cabinet-role-switch) > .row {
+    display: flex;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* The compact 'Тест' badge stays identical until a signed sandbox
+   supervisor opens it. No sticky test banner covers real cabinet screens. */
+.app:not(.guest-app) .sandbox-supervisor-badge{
+  position:relative;display:inline-flex;z-index:55;flex:0 0 auto;
+}
+.app:not(.guest-app) .sandbox-supervisor-badge>summary{
+  cursor:pointer;list-style:none;min-height:34px;align-items:center;
+}
+.app:not(.guest-app) .sandbox-supervisor-badge>summary::-webkit-details-marker{display:none}
+.app:not(.guest-app) .sandbox-supervisor-menu{
+  position:absolute;top:calc(100% + 8px);right:0;
+  width:min(300px,calc(100vw - 24px));max-width:calc(100vw - 24px);
+  display:grid;gap:9px;padding:14px;box-sizing:border-box;
+  border:1px solid #416b81;border-radius:12px;
+  background:#092331;color:#f2f8fc;box-shadow:0 10px 32px #000b;
+}
+.app:not(.guest-app) .sandbox-supervisor-menu label{font-size:12px;font-weight:800}
+.app:not(.guest-app) .sandbox-supervisor-menu select,
+.app:not(.guest-app) .sandbox-supervisor-menu button{
+  min-width:0;width:100%;min-height:42px;padding:8px;
+  border:1px solid #477990;border-radius:9px;
+  background:#153c4d;color:#fff;font:inherit;font-size:13px;
+}
+.app:not(.guest-app) .sandbox-supervisor-menu button{
+  background:#ed7429;border-color:#ffa76c;cursor:pointer;font-weight:800;
+}
+.app:not(.guest-app) .sandbox-supervisor-menu a{color:#bdebf7;font-size:12px}
+.app:not(.guest-app) .sandbox-supervisor-error{
+  overflow-wrap:anywhere;color:#ffd2a9;font-size:12px;
+}
 
 /* One explicit account-mode control; staff-only links stay out of a master menu. */
 .app:not(.guest-app) .cabinet-role-switch{

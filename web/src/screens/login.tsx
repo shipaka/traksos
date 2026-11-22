@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
@@ -95,8 +96,16 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
   const [heroSlide, setHeroSlide] = useState(0);
-  const [desktopPublic, setDesktopPublic] = useState(() => window.matchMedia('(min-width: 900px)').matches);
-  useEffect(() => { const q = window.matchMedia('(min-width: 900px)'); const update = () => setDesktopPublic(q.matches); q.addEventListener('change',update); return () => q.removeEventListener('change',update); }, []);
+  // Even a wide/resizable Android WebView remains the approved app guest flow.
+  // Only desktop browsers may show the independently approved 617.png page.
+  const [desktopPublic, setDesktopPublic] = useState(() => !native.isApp && window.matchMedia('(min-width: 900px)').matches);
+  useEffect(() => {
+    if (native.isApp) return;
+    const q = window.matchMedia('(min-width: 900px)');
+    const update = () => setDesktopPublic(q.matches);
+    q.addEventListener('change',update);
+    return () => q.removeEventListener('change',update);
+  }, []);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
@@ -305,7 +314,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
         </div>
-        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true" />
+        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true">
+          <img className="public-hero-mobile-photo" src="/tracksos-approved-hero-owner-20261119.webp" alt="" loading="eager" decoding="async" />
+        </div>
         <div className="public-hero-carousel" role="group" aria-label="Фотографии TrakSOS">
           <div className="public-hero-dots">
             {HERO_SLIDES.map((slide, index) => <button key={slide.id} type="button"
@@ -417,7 +428,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
           <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
-          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Подключиться →</button>
+          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Хотим работать</button>
         </div>
       </div>
 

@@ -42,77 +42,33 @@ try {
     await page.locator('input[type=password]').fill(code);
     await page.getByRole('button',{name:'Войти',exact:true}).click();
     await page.waitForURL(/#\/admin(?:$|\/)/,{timeout:20_000});
-    await page.getByRole('heading',{name:'Администратор'}).waitFor();
-    const previewLink = page.getByRole('link',{name:/Тестирование всех кабинетов/}).first();
+    await page.locator('main.approved-pc-admin').waitFor();
+    const previewLink = page.locator('main.approved-pc-admin a[href="#/admin/test-center"]').first();
     await previewLink.click();
     await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
+    const roleCards=page.locator('main.sandbox-root .sandbox-role-card');
+    if(await roleCards.count()!==12 ||
+       await roleCards.locator('.sandbox-role-icon svg').count()!==12)
+      throw Error('Admin selector must display 12 real roles with consistent SVG icons');
     for (const [id,label] of [
       ['client','Клиент'],['owner','Владелец / автопарк'],['driver','Сотрудник автопарка'],
       ['master','Выездной мастер'],['tow','Эвакуаторщик'],['service','Рембаза / СТО'],
       ['master_service','Мастер и своя СТО'],['insurer','Страховой партнёр'],
-      ['inspection','Оператор техосмотра'],['moderator','Модератор'],['admin','Администратор'],
+      ['inspection','Оператор техосмотра'],['courier','Курьер запчастей'],
+      ['moderator','Модератор'],['admin','Администратор']
     ]) {
-      const link=page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]');
-      await link.click();
+      await page.locator('a.sandbox-role-card[href="#/admin/test-center/'+id+'"]').click();
       await page.waitForURL('**/#/admin/test-center/'+id);
-      // Legacy training exercises remain available explicitly while the
-      // full-fidelity, separate-database sandbox is not provisioned in CI.
-      // Do not silently pretend these older screens are production-equivalent.
-      await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).click();
-      if(id==='service'){
-        await page.getByRole('heading',{name:/Рембаза/}).waitFor();
-        await page.locator('.service-preview-admin-bar').waitFor();
-        await page.getByRole('button',{name:'Готовы принять'}).first().waitFor();
-        // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
-        await page.waitForTimeout(450);
-        await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-        await page.getByRole('button',{name:'Готовы принять'}).first().click();
-        await page.getByRole('button',{name:'Отправить клиенту'}).first().click();
-        await page.getByRole('button',{name:/Машины у вас/}).first().click();
-        await page.locator('a[href="#/admin/test-center/service/base/car/demo-booking-1"]').click();
-        await page.getByRole('heading',{name:/Scania/}).waitFor();
-        await page.getByRole('button',{name:'Машина приехала'}).click();
-        await page.locator('.service-preview-admin-bar a[href="#/admin/test-center"]').click();
-      } else if(id==='master_service'){
-        // Combined role opens the master workspace, then the separately isolated service entry.
-        await page.getByRole('button',{name:'Моя СТО',exact:true}).click();
-        await page.getByRole('link',{name:'Открыть полный тестовый кабинет СТО'}).waitFor();
-        // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
-        await page.waitForTimeout(450);
-        await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-        await page.getByRole('link',{name:'← Все кабинеты'}).first().click();
-      } else {
-        const cabinetLabel=id==='owner'?'Владелец автопарка':id==='driver'?'Водитель автопарка':label;
-        await page.getByRole('main',{name:'Тестовый кабинет: '+cabinetLabel}).waitFor();
-        // Wait for ts-appear cards and route transitions before taking owner-review screenshots.
-        await page.waitForTimeout(450);
-        await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
-        // Each role has its own real navigation. The old shared "create request" selector
-        // was invalid for fleet, master, insurer and inspection workspaces.
-        if(id==='client'||id==='driver'){
-          await page.getByRole('button',{name:'История',exact:true}).click();
-          await page.getByRole('button',{name:'Помощь на дороге',exact:true}).waitFor();
-        }else if(id==='owner'){
-          await page.getByRole('button',{name:'Водители',exact:true}).click();
-          await page.getByRole('textbox',{name:'Имя водителя'}).waitFor();
-        }else if(id==='master'||id==='tow'){
-          await page.getByRole('button',{name:'Мои выезды',exact:true}).click();
-          await page.getByRole('button',{name:'Начать выезд'}).waitFor();
-        }else if(id==='insurer'){
-          await page.getByRole('button',{name:'Документы и полисы',exact:true}).click();
-          await page.getByRole('heading',{name:'Полисы и документы'}).waitFor();
-        }else if(id==='inspection'){
-          await page.getByRole('button',{name:'Расписание',exact:true}).click();
-          await page.getByRole('heading',{name:'Расписание осмотров'}).waitFor();
-        }else if(id==='moderator'){
-          await page.getByRole('button',{name:'Жалобы и обращения',exact:true}).click();
-          await page.getByRole('heading',{name:'Жалобы и обращения'}).waitFor();
-        }else{
-          await page.locator('.sandbox-nav button').nth(1).click();
-          await page.getByRole('button',{name:'Создать тестовую заявку'}).waitFor();
-        }
-        await page.getByRole('link',{name:'← Назад к выбору кабинетов'}).first().click();
-      }
+      await page.getByRole('heading',{name:label,exact:true}).waitFor();
+      if(await page.getByRole('button',{name:'Открыть старый учебный тренажёр'}).count())
+        throw Error(id+': obsolete legacy training entry has returned');
+      await page.screenshot({path:'e2e/shots/sandbox/'+id+'-'+width+'.png',fullPage:true});
+      // A matching sidebar link exists but can be hidden at the current
+      // viewport. Exercise the visible Back control in the real role launcher.
+      const back=page.locator('main.sandbox-root a.btn.ghost[href="#/admin/test-center"]');
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await page.waitForURL('**/#/admin/test-center');
       await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
     }
     if (errors.length) throw new Error('Browser error at '+width+': '+errors.join('; '));
@@ -140,7 +96,7 @@ try {
     body:JSON.stringify({phone,password:code}),
   });
   if (relog.status !== 401) throw new Error('Expired preview code allowed a fresh sign-in');
-  console.log('Preview admin login (mobile + desktop), 11 roles, expiry and token revocation: OK');
+  console.log('Preview admin login (mobile + desktop), 12 roles, expiry and token revocation: OK');
 } finally {
   if (browser) await browser.close();
   await db.query('update users set password_hash=$1,admin_preview_until=$2 where id=$3',

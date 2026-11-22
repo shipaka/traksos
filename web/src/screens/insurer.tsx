@@ -32,7 +32,9 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const dualPartnerRole = !!me?.roles.includes('insurer') && !!me?.roles.includes('inspection_operator');
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const route = useRoute();
-  const inspectionId = inspectionOnly && route[0]==='inspections' ? route[1] : undefined;
+  // "processing" is the list view, never an inspection ID. Individual IDs
+  // must open their own server-scoped case detail on desktop and mobile.
+  const inspectionId = inspectionOnly && route[0]==='inspections' && route[1]!=='processing' ? route[1] : undefined;
   const [checkedSteps,setCheckedSteps] = useState<Record<string,boolean>>({});
   const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
   const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);

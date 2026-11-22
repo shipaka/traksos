@@ -55,6 +55,8 @@ jobs:
       - name: Реальные ПК-кабинеты всех доступных тестовых ролей
         continue-on-error: true
         run: node e2e/owner20-cabinet-evidence.mjs
+      - name: "Курьер: настоящие ПК и Android, права доступа и рабочие кнопки"
+        run: node e2e/approved-pc-courier-real.mjs
       - name: "Активные ПК-заявки: Chromium, локальные синтетические данные, без оплаты"
         continue-on-error: true
         run: node e2e/approved-pc-active-work.mjs

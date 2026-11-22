@@ -78,7 +78,7 @@ try{
   for(const item of [
     {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
     {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
-    {name:'admin',token:admin.token,hash:'#/admin',heading:'Администратор',expected:'Страхование и ТО'}
+    {name:'admin',token:admin.token,hash:'#/admin/section/vehicleServices',heading:'Страхование и ТО',expected:'Страхование и ТО'}
   ]){
     const context=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
     const page=await context.newPage();
@@ -91,9 +91,7 @@ try{
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
-      await page.getByRole('button',{name:/Разделы управления/}).click();
-      await page.getByRole('navigation',{name:'Разделы администрации'})
-        .getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.locator('.admin-stage-head h2').getByText('Страхование и ТО',{exact:true}).waitFor();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
       await page.getByRole('button',{name:/Страховые агенты/}).click();
        await page.getByText('Страховые партнёры',{exact:true}).waitFor();
@@ -163,10 +161,10 @@ try{
   await inboxPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await inboxPage.goto(BASE+'/#/insurance');
   await acceptPendingOffers(inboxPage,partner.token);
-  await inboxPage.getByText('Получена новая заявка',{exact:true}).waitFor();
-  await inboxPage.getByRole('button',{name:'Требуют действий'}).waitFor();
+  await inboxPage.locator('.approved-pc-case').getByText('Получена новая заявка',{exact:true}).waitFor();
+  await inboxPage.getByRole('tab',{name:/^Требуют действий/}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
+  await inboxPage.getByRole('tab',{name:/^В работе/}).click();
   await inboxPage.getByText('Нет заявок в работе.',{exact:true}).waitFor();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
@@ -174,8 +172,8 @@ try{
   await api('POST','/api/insurance/requests/'+requestId+'/offers',
     {offers:[one,{...one,company:'Страховая Б',premiumKopecks:3560000}]},partner.token);
   await inboxPage.reload();
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
-  await inboxPage.getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
+  await inboxPage.getByRole('tab',{name:/^В работе/}).click();
+  await inboxPage.locator('.approved-pc-case').getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-working.png',fullPage:true});
   await inboxContext.close();
   await clientPage.reload();
