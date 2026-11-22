@@ -112,6 +112,39 @@ def main() -> None:
             "trailer_modified_pixels": 0
         })
 
+    # Reviewed at 100% and 400% after local artifact download. Restoring
+    # the *whole original grille badge area* removes the embossed letter
+    # shadows that a bright-pixel-only mask leaves behind. This is still
+    # confined to 107x25 pixels of the ORIGINAL approved 912x460 frame.
+    full_badge = np.zeros((h, w), dtype=np.uint8)
+    cv2.rectangle(full_badge, (190, 220), (296, 244), 255, -1)
+    final_bgr = cv2.inpaint(bgr, full_badge, 5, cv2.INPAINT_TELEA)
+    final_rgb = cv2.cvtColor(final_bgr, cv2.COLOR_BGR2RGB)
+    final_diff = np.any(final_rgb != rgb, axis=2)
+    forbidden = final_diff.copy()
+    forbidden[220:245, 190:297] = False
+    if np.any(forbidden):
+        raise SystemExit("UNSAFE RETOUCH: pixels outside badge area modified")
+    if np.any(final_rgb[:, 350:] != rgb[:, 350:]):
+        raise SystemExit("UNSAFE RETOUCH: TrakSOS lettering on trailer modified")
+    reviewed = Image.fromarray(final_rgb)
+    reviewed.save(OUT / "05-local-retouch-review-original-scene.png")
+    reviewed.save(OUT / "05-local-retouch-review-original-scene.webp", "WEBP", lossless=True, method=6)
+    crop_scaled(reviewed, inspect_box).save(OUT / "05-local-retouch-grille-4x.png")
+    highlighted = np.zeros_like(rgb)
+    highlighted[final_diff] = (255, 130, 45)
+    Image.fromarray(highlighted).save(OUT / "05-local-retouch-changed-pixels.png")
+    final_path = Path("web/public/tracksos-approved-hero-owner-20261119-retouched.webp")
+    reviewed.save(final_path, "WEBP", lossless=True, method=6)
+    summary.append({
+        "candidate": "05-reviewed-local-badge-only",
+        "modified_pixels": int(np.count_nonzero(final_diff)),
+        "outside_logo_modified_pixels": int(np.count_nonzero(forbidden)),
+        "trailer_modified_pixels": 0,
+        "published_to_production": False,
+        "output_file": final_path.as_posix()
+    })
+
     (OUT / "provenance.json").write_text(json.dumps({
         "source": SOURCE.as_posix(),
         "original_blob_sha": actual_sha,
