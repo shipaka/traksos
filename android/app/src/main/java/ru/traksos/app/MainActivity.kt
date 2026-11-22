@@ -476,8 +476,11 @@ class MainActivity : AppCompatActivity() {
     private fun checkDebugRenderedUi(attempt: Int = 0) {
         if (!BuildConfig.DEBUG || debugUiReadyLogged || failed || !::web.isInitialized) return
         web.evaluateJavascript(
-            "!!(document.querySelector('main.public-landing .public-brand-hero') && " +
-                "document.querySelector('.public-actions button'))"
+            "!!((document.querySelector('main.tr-native-welcome') && " +
+                "document.querySelector('.tr-native-welcome-login') && " +
+                "document.querySelector('.tr-native-welcome-register')) || " +
+                "(document.querySelector('main.public-landing .public-brand-hero') && " +
+                "document.querySelector('.public-actions button')))"
         ) { rendered ->
             if (rendered == "true") {
                 debugUiReadyLogged = true
