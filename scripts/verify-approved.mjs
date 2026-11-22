@@ -291,6 +291,21 @@ expect(!roleCss.includes('traksos-final-insurance.webp') &&
 
 expect(!landing.includes('public-track-extra-art') && !landing.includes('public-track-insurance-art'),
   'all retired photographic ghost slots were physically removed from public service cards');
+// The approved 617 composition remains unchanged; only the two small badge
+// rectangles are corrected in lossless copies of the EXACT raster sources.
+const pcHeroSource = await read('web/src/screens/ownerDesktopHome20261120.css');
+const approvedVisualRegistry = await read('web/src/approvedVisuals.ts');
+expect(
+  pcHeroSource.includes("owner20-photo-background-approved-retouched.webp") &&
+  pcHeroSource.includes("owner20-artwork-sprite-retouched.webp") &&
+  approvedVisualRegistry.includes("publicPcPhoto: '/owner20-photo-background-approved-retouched.webp'") &&
+  approvedVisualRegistry.includes("publicPcAtlas: '/owner20-artwork-sprite-retouched.webp'") &&
+  approvedVisualRegistry.includes("workspaceTruck: '/tracksos-approved-hero-owner-20261119-retouched.webp'") &&
+  !pcHeroSource.includes("url('/owner20-photo-background-approved.webp')") &&
+  !pcHeroSource.includes("url('/owner20-artwork-sprite.webp')"),
+  'approved PC/mobile screens must use exactly-local retouches of their original photo crops, never a new truck'
+);
+
 const approvedPhoto = 'tracksos-approved-hero-owner-20261119-retouched.webp';
 const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
 expect(approvedHeroLayer.includes('object-fit:contain!important') &&
