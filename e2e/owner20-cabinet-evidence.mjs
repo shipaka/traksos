@@ -187,6 +187,32 @@ try{
            throw Error('Verified coordinates not displayed on actual admin map');
          }
        }
+       if(c.id==='admin'&&width===1440){
+         // Strictly SYNTHETIC LOCAL browser fixture. Prove that a new verified
+         // coordinate opens the REAL map and that it disappears again when
+         // the fixture is removed. Never include mocked points in screenshots.
+         const fixture='**/api/admin/summary';
+         const replaceCoverage=async(route)=>{
+           const response=await route.fetch();
+           const actual=await response.json();
+           await route.fulfill({response,json:{...actual,coverage:{centers:[{
+             id:'synthetic-ci-sto',name:'Тестовая СТО — только CI',
+             address:'Синтетические координаты, не реальный партнёр',
+             lat:59.9343,lng:30.3351
+           }]}}});
+         };
+         await page.route(fixture,replaceCoverage);
+         await page.reload({waitUntil:'domcontentloaded'});
+         await page.locator('.approved-pc-geo-live .roadside-map iframe').waitFor({timeout:14000});
+         if(await page.locator('.approved-pc-geo-compact').count())
+           throw Error('New confirmed point did not expand verified partner map');
+         const mapUrl=await page.locator('.approved-pc-geo-live iframe').getAttribute('src');
+         if(!mapUrl?.includes('59.934300')||!mapUrl.includes('30.335100'))
+           throw Error('Admin map did not use API-confirmed coordinates');
+         await page.unroute(fixture,replaceCoverage);
+         await page.reload({waitUntil:'domcontentloaded'});
+         await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
+       }
        if(c.id==='moderator'&&await workdesk.locator('.approved-pc-bot').count())
          throw Error('Moderator workdesk must not force TrakBot');
        if(!['moderator','admin'].includes(c.id)&&await workdesk.locator('.approved-pc-bot').count()!==1)
