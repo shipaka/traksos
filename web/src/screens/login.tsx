@@ -120,7 +120,17 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
     if (native.isApp || !serviceContext || !(serviceContext in GUEST_SERVICE_NAMES)) return;
     rememberGuestAction(serviceContext as GuestAction);
   }, [serviceContext]);
-  const [phone, setPhone] = useState('+7 ');
+  // Switching login ↔ registration must not discard a just-typed phone number.
+  // Store only this short-lived input draft in sessionStorage (never the password);
+  // clear it on successful auth or when closing the entire guest panel.
+  const [phone, setPhone] = useState(() => {
+    try { return sessionStorage.getItem('traksos.authPhoneDraft') || '+7 '; }
+    catch { return '+7 '; }
+  });
+  const changePhone = (value: string) => {
+    try { sessionStorage.setItem('traksos.authPhoneDraft', value); } catch { /* private mode */ }
+    setPhone(value);
+  };
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -164,6 +174,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
     setIntent(null); setInlineLegal(null);
+    try { sessionStorage.removeItem('traksos.authPhoneDraft'); } catch { /* private mode */ }
     try {
       sessionStorage.removeItem('traksos.pendingLandingAction');
       sessionStorage.removeItem('traksos.pendingCatalogChoice');
@@ -295,7 +306,10 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
       toast('Вы вошли');
-      try { localStorage.removeItem('traksos.ref'); } catch { /* */ }
+      try {
+        localStorage.removeItem('traksos.ref');
+        sessionStorage.removeItem('traksos.authPhoneDraft');
+      } catch { /* */ }
       setToken(r.token);
       connectWs();
       await reload();
@@ -536,7 +550,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
         </div>
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { setPhone(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { changePhone(e.target.value); setLoginError(''); }} /></Field>
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
@@ -599,7 +613,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
             </details>}
           </div>}
           <Field label="Телефон">
-            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); setCodeError(''); }} />
+            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { changePhone(e.target.value); setInsurerOnly(false); setCodeError(''); }} />
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
