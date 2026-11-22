@@ -32,6 +32,8 @@ try {
         reveal.light !== 'tr-auth-glow-arrive' || reveal.button !== 'tr-auth-cta-warmth')
       throw Error(width + ': approved reveal/glow missing ' + JSON.stringify(reveal));
     if (!await landing.isVisible()) throw Error(width + ': landing was replaced by login');
+    if (await landing.getAttribute('aria-hidden') !== 'true' || await landing.getAttribute('inert') === null)
+      throw Error(width + ': public buttons are still accessible behind login dialog');
     if (await page.locator('.auth-desktop-showcase:visible').count())
       throw Error(width + ': old full-page cinematic login illustration returned');
     if (!await dialog.locator('input[type=password]').isVisible())
