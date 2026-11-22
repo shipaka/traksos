@@ -169,3 +169,13 @@ html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:non
   background-size:100% 100%;
   background-position:center center;
 }
+
+
+/* One calm movement language for the approved TrakBot across docks, cabinets
+   and chat headers; reaction animation and reduced-motion controls win. */
+@media (prefers-reduced-motion:no-preference) {
+  html:not(.traksos-reduced-motion) .trakbot-mascot.is-ambient:not(.is-active) .trakbot-mascot-truck {
+    animation:trakbot-tech-bob 3.8s ease-in-out infinite;
+    transform-origin:50% 75%;
+  }
+}
