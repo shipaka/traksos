@@ -150,13 +150,21 @@ def main() -> None:
     Image.fromarray(highlighted).save(OUT / "05-local-retouch-changed-pixels.png")
     final_path = Path("web/public/tracksos-approved-hero-owner-20261119-retouched.webp")
     reviewed.save(final_path, "WEBP", lossless=True, method=6)
+    # Android splash is an exact copy of the same approved source image.
+    # Preserve the original dimensions/composition and replace ONLY maker
+    # letters on the cabin. Never create a new splash or add branding.
+    android_splash = Path("android/app/src/main/res/drawable-nodpi/splash_truck.webp")
+    if git_blob_sha(android_splash.read_bytes()) != EXPECTED_GIT_BLOB_SHA:
+        raise SystemExit("Android splash is not the exact original truck art")
+    shutil.copyfile(final_path, android_splash)
     summary.append({
         "candidate": "05-reviewed-local-badge-only",
         "modified_pixels": int(np.count_nonzero(final_diff)),
         "outside_logo_modified_pixels": int(np.count_nonzero(forbidden)),
         "trailer_modified_pixels": 0,
         "published_to_production": False,
-        "output_file": final_path.as_posix()
+        "output_file": final_path.as_posix(),
+        "android_splash_same_bytes": android_splash.as_posix()
     })
 
     (OUT / "provenance.json").write_text(json.dumps({
