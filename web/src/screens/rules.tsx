@@ -34,8 +34,8 @@ export function Rules() {
   const sections: [string, Item[]][] = mode === 'performer' ? [['Исполнителю', performer], ['Для всех', common]] : [['Для всех', common]];
   const d = st.data;
   return (
-    <main>
-      <Back to={mode === 'performer' ? 'work/me' : 'profile'} label="Назад" />
+    <main className={me ? 'tr-rules-page' : 'tr-rules-page tr-rules-public'}>
+      {me ? <Back to={mode === 'performer' ? 'work/me' : 'profile'} label="Назад" /> : <a className="guest-explore-back" href="#/">← На главную</a>}
       <div><h1>Правила площадки</h1><div className="sub">Коротко и по делу. Полный текст — в оферте{mode === 'performer' ? ' и агентском договоре' : ''}.</div></div>
       {mode === 'performer' && d && (
         <div className="grid2">
