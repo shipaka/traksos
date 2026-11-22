@@ -64,7 +64,9 @@ async function run(width, height, mobile, nativePreview = false) {
     }
     await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
     check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
-    check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
+    check(await page.locator('.public-actions a.public-button-outline[href="#/login"]')
+      .getByText('Войти в TrakSOS',{exact:true}).isVisible(),
+      'Hero must open sign-in, not obsolete guide');
     const image = await page.locator('.public-hero-visual').evaluate(async el => {
       const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
       const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
@@ -180,13 +182,18 @@ async function run(width, height, mobile, nativePreview = false) {
         suffix + ': owner-reported mobile text/icon/branding defect: ' + JSON.stringify(publicLegibility));
     }
     if (mobile && width <= 430) {
-      const nav = page.locator('.track-guest-tabbar');
-      const navCount = await nav.locator('a').count();
-      const vectorCount = await nav.locator('a svg[aria-hidden="true"]').count();
-      check(navCount === 4 && vectorCount === 4,
-        suffix + ': all four authorized guest tabs must have vector icons, got ' + navCount + '/' + vectorCount);
-      for(const forbidden of ['Заявки','Помощь','Запчасти']) {
-        check(!(await nav.getByText(forbidden,{exact:true}).count()), suffix + ': protected tab visible before sign-in: '+forbidden);
+      // 22 Nov owner approval: entry actions live on the FIRST screen.
+      // The former unstyled four-link guest bar was below legal documents,
+      // repeated registration, and must not return in the mobile browser/APK.
+      check(await page.locator('.track-guest-tabbar').count()===0,
+        suffix + ': obsolete guest bottom navigation returned');
+      const visibleCatalogue=page.locator('.guest-mobile-catalog > summary');
+      check(await visibleCatalogue.isVisible(),
+        suffix + ': mobile service catalogue is unreachable');
+      if (!nativePreview) {
+        check(await page.locator('.guest-header-actions a[href="#/login"]').isVisible() &&
+          await page.locator('.guest-header-actions a[href="#/register"]').isVisible(),
+          suffix + ': approved first-screen entry links are missing');
       }
     }
     // The latest 19 Nov public six tiles are the only approved public row.
