@@ -183,6 +183,10 @@ export function Login({ driver, entry, serviceContext }: {
     try {
       sessionStorage.removeItem('traksos.authTransition');
       sessionStorage.removeItem('traksos.authPhoneDraft');
+      // Cancelled service selection must not redirect the user's next
+      // unrelated login into an earlier, abandoned request.
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
     } catch { /* Strict private browsing */ }
     if (entry) go('');
   };
