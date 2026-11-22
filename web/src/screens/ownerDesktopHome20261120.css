@@ -18,8 +18,10 @@
  .owner20-tagline{font-size:12px;line-height:1.35;color:#d5e1e6;margin-right:auto}
  .owner20-topnav{display:flex;align-items:center;justify-content:center;gap:clamp(12px,1.8vw,32px);font-size:13px;white-space:nowrap}
  .owner20-topnav details{position:relative}
- .owner20-topnav summary{cursor:pointer;list-style:none}
- .owner20-topnav summary:after{content:'⌄';margin-left:7px}
+ .owner20-topnav summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;line-height:1.2;white-space:nowrap;vertical-align:middle}
+ .owner20-topnav summary::-webkit-details-marker{display:none}
+ .owner20-topnav summary:after{content:"";display:block;box-sizing:border-box;flex:0 0 7px;width:7px;height:7px;transform:translateY(-2px) rotate(45deg);border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transition:transform .18s ease}
+ .owner20-topnav details[open]>summary:after{transform:translateY(1px) rotate(225deg)}
  .owner20-topnav details>div{position:absolute;top:26px;left:-12px;background:#0b1d29;border:1px solid #476372;min-width:180px;padding:8px;border-radius:12px;z-index:20;box-shadow:0 12px 35px #000a;display:grid;gap:4px}
  .owner20-topnav details>div a{padding:8px 10px;border-radius:7px}
  .owner20-topnav details>div a:hover,.owner20-topnav>a:hover{color:#ff995c;background:#193440}
