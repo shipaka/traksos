@@ -813,3 +813,86 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > .trak
 html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:first-child {
   width:min(58%,680px)!important;position:relative!important;z-index:2!important;
 }
+
+/* Owner QA 900–1179: bottom cards were too shallow for long Russian copy.
+   Live screenshots showed "Эфир" and "Клуб" text running into a second
+   pasted image, the fifth "Почему" bullet clipped, and the RuStore label
+   under the phone. Keep all FOUR approved destinations and the one-row grid,
+   but give readable copy sufficient vertical space. Use continuous existing
+   photography instead of old sprite slices with embedded text. */
+@media(min-width:900px) {
+  .guest-app.guest-home .owner20-bottom-air,
+  .guest-app.guest-home .owner20-bottom-club {
+    background-image:
+      linear-gradient(90deg,rgba(5,17,24,.97) 0%,rgba(5,19,28,.93) 34%,rgba(7,21,30,.62) 62%,rgba(7,23,33,.05) 100%),
+      url('/traksos-service-scenes-desktop-hq.webp')!important;
+    background-size:100% 100%,auto 100%!important;
+    background-repeat:no-repeat,no-repeat!important;
+    background-position:center center,100% 50%!important;
+  }
+  .guest-app.guest-home .owner20-bottom-club{
+    background-position:center center,72% 50%!important;
+  }
+  .guest-app.guest-home .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom-club::after{
+    content:none!important;display:none!important;
+    background:none!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club) > b,
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club) > p {
+    position:relative!important;z-index:2!important;
+    text-shadow:0 2px 9px rgba(0,0,0,.92)!important;
+    max-width:66%!important;overflow-wrap:break-word;
+  }
+}
+@media(min-width:900px) and (max-width:1199px){
+  .guest-app.guest-home .owner20-bottom-card{
+    min-height:214px!important;
+    height:214px!important;
+    padding:15px 12px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card>b{
+    display:block!important;
+    max-width:100%;
+    font-size:clamp(12px,1.55vw,16px)!important;
+    line-height:1.25!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-card>p{
+    font-size:11px!important;line-height:1.35!important;
+    margin-top:10px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club)>p{
+    max-width:67%!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card>span:not(.owner20-store){
+    left:12px!important;bottom:13px!important;
+    padding:6px 9px!important;font-size:11px!important;
+    max-width:calc(100% - 24px)!important;
+  }
+  .guest-app.guest-home .owner20-bottom-why ul{
+    font-size:11px!important;line-height:1.32!important;
+    padding-left:15px!important;margin:9px 0 0!important;
+  }
+  .guest-app.guest-home .owner20-bottom-why li{
+    margin-bottom:5px!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app>p{
+    max-width:53%!important;overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    display:block!important;position:absolute!important;
+    z-index:3!important;left:12px!important;bottom:13px!important;
+    width:53%!important;max-width:53%!important;
+    font-size:10px!important;line-height:1.25!important;
+    white-space:normal!important;overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app::before{
+    right:20px!important;top:42px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app::after{
+    right:13px!important;
+    top:34px!important;
+  }
+}
