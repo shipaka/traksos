@@ -27,7 +27,9 @@ try {
         'The legal footer must not overlap any part of approved 617: '+JSON.stringify(fgeom));
       assert(await page.locator('header.owner20-top').count()===1,
         'Final PC should show exactly one approved header');
-      assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
+      assert(await page.locator('.owner20-quick>a').count()===4,'Owner 22 Nov: no duplicate ECU, four quick services');
+      assert(await page.locator('.owner20-quick>a').filter({hasText:'ЭБУ'}).count()===0,
+        'ECU must appear only in the illustrated specialist card');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
       assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');
       // 617 cards: text on the left, source imagery on the right, continuous
@@ -107,7 +109,7 @@ try {
       const widths=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       assert(widths.scroll<=widths.client+3,'Final PC overflow '+JSON.stringify(widths));
       assert(!errors.length,'Final PC JS errors '+errors.join('; '));
-      console.log('OK: approved Nov20 PC, '+width+'px, TrakBot opt-in, 5+5+4 and zero overflow');
+      console.log('OK: approved Nov20 PC, '+width+'px, TrakBot opt-in, 4+5+4 and zero overflow');
       await context.close();
       continue;
     }
