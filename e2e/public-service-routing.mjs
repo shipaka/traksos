@@ -247,6 +247,33 @@ try {
         check(!footnote.missing&&footnote.lines>0&&footnote.noteWidth>170&&!footnote.overlap,
           'Mobile legal footnote hidden under floating TrakBot: '+JSON.stringify(footnote));
       }
+      if(width<900){
+        // Secondary legal/info pages must use the approved 618 non-floating dock:
+        // a fixed mascot covered a Rules accordion, the cookie notice and
+        // the Offers footnote despite the old screenshot-only gate passing.
+        const legalBot=await page.evaluate(()=>{
+          const dock=document.querySelector('.guest-app:not(.guest-home) > .trakbot-dock');
+          const launcher=dock?.querySelector('.trakbot-dock-launcher');
+          if(!dock||!launcher)return {missing:true};
+          const b=launcher.getBoundingClientRect();
+          const targets=['.guest-info-note','.site-footer .banner[role="note"] > .note',
+            '.tr-rules-public button[aria-expanded]'];
+          const overlaps=[];
+          for(const selector of targets){
+            for(const el of document.querySelectorAll(selector)){
+              const range=document.createRange();range.selectNodeContents(el);
+              if([...range.getClientRects()].some(r=>r.width>0&&r.height>0&&
+                r.left<b.right&&r.right>b.left&&r.top<b.bottom&&r.bottom>b.top))
+                overlaps.push(selector);
+            }
+          }
+          return {position:getComputedStyle(dock).position,overlaps,
+            hasLauncher:launcher.getBoundingClientRect().width>=44};
+        });
+        check(!legalBot.missing&&legalBot.position==='relative'&&legalBot.hasLauncher&&
+          legalBot.overlaps.length===0,
+          route+': TrakBot must follow mobile legal content instead of covering it: '+JSON.stringify(legalBot));
+      }
       await page.screenshot({path:legalShots+'/'+route.replace('/','-')+'-'+width+'.png',animations:'disabled'});
     }
     for(const route of ['help','explore/guide','explore/pricing']){

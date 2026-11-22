@@ -1559,12 +1559,16 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
   html.traksos-native .guest-app .tr-native-welcome-actions a{transition:none!important}
 }
 
-/* Mobile published-offers footnote must remain readable beside the fixed TrakBot.
-   Keep the existing approved floating mascot and legal text: reserve its
-   lower-right corner ONLY in the document index, without changing 617/618. */
+/* The approved 618 mobile guest home already keeps TrakBot IN page flow
+   rather than covering content. Apply that same non-overlay behavior to
+   secondary guest screens (published terms, privacy, rules, About).
+   The same approved mascot and launcher remain accessible after the footer. */
 @media(max-width:899px) {
-  html.traksos-browser .guest-app:not(.guest-home) .guest-info-offers > .guest-info-note {
-    box-sizing:border-box;
-    padding-right:clamp(74px,22vw,88px)!important;
+  html.traksos-browser .guest-app:not(.guest-home) > .trakbot-dock {
+    position:relative!important;
+    right:auto!important;left:auto!important;top:auto!important;bottom:auto!important;
+    margin:12px 14px calc(20px + env(safe-area-inset-bottom)) auto!important;
+    width:max-content;max-width:calc(100% - 28px);
+    pointer-events:auto;
   }
 }
