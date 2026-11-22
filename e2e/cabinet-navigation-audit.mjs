@@ -1,6 +1,7 @@
 // Full non-destructive navigation audit for every staff, customer and performer cabinet.
 // Runs after role-matrix.mjs and admin-master-switch.mjs on synthetic local accounts.
 import { chromium } from 'playwright';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
 if (!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
@@ -18,6 +19,8 @@ const accounts = [
   ['admin', '+79990000001', 'TrakSOS-Test-2026!', '#/admin'],
 ];
 const browser = await chromium.launch();
+const OUT='e2e/shots/inner-route-audit';
+await mkdir(OUT,{recursive:true});
 const report = [];
 try {
   for (const [kind, phone, password, initial] of accounts) {
@@ -148,6 +151,12 @@ try {
         if(href==='#/help' && !state.help)
           throw Error(kind+' '+width+'px '+href+': legacy help route returned instead of rebuilt help');
         if(errors.length)throw Error(kind+' '+width+'px '+href+': JS error '+errors.join('; '));
+        // Every desktop menu destination produces a real Chromium screenshot
+        // on this exact commit, not a static approved design mockup.
+        if(width===1440){
+          await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
+          await page.screenshot({path:OUT+'/'+kind+'-'+href.slice(2).replace(/[^a-z0-9-]/gi,'-')+'.png',animations:'disabled'});
+        }
         coverage.push({href,width,accent:state.accent});
       }
     }
@@ -155,4 +164,5 @@ try {
     await ctx.close();
   }
 } finally {await browser.close();}
-console.log('Validated all menu routes in local browser:',JSON.stringify(report));
+await writeFile(OUT+'/route-report.json',JSON.stringify({source:'real Playwright Chromium, local isolated fixtures',report},null,2));
+console.log('Validated every link in every accessible menu (phone + desktop):',JSON.stringify(report));
