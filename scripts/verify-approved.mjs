@@ -110,6 +110,8 @@ const allowedPublicVisuals = new Set([
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
   'owner20-photo-brandless-20261122.webp',
+  'owner617-tech-photo.webp','owner617-ecu-photo.webp',
+  'owner617-parts-photo.webp','owner617-insurance-photo.webp',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
   'traksos-service-scenes-desktop-hq.webp',
@@ -126,6 +128,7 @@ expect(unexpectedVisuals.length===0,
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
 await asset('web/public/owner20-photo-brandless-20261122.webp', 15000);
+for(const n of ['tech','ecu','parts','insurance']) await asset('web/public/owner617-'+n+'-photo.webp',15000);
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
 for(const alternateLogo of [
@@ -170,13 +173,13 @@ expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent 
   'signed-in PC detail pages keep the approved larger floating technician without an old pill');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
 const approved617Source = await read('web/src/screens/ownerDesktopHome20261120.tsx');
-expect(ownerPcUiContract.includes('617 PHOTO-ASSET-ONLY REPAIR') &&
-  ownerPcUiContract.includes("url('/traksos-service-scenes-desktop-hq.webp')") &&
+expect(ownerPcUiContract.includes('Owner-approved 617.png remains the ONLY desktop homepage') &&
+  ['tech','ecu','parts','insurance'].every(n =>
+    ownerPcUiContract.includes("url('/owner617-"+n+"-photo.webp')")) &&
   ownerPcUiContract.includes("url('/owner20-photo-brandless-20261122.webp')") &&
-  ownerPcUiContract.includes('background-size:100% 100%,400% 100%') &&
   ownerPcUiContract.includes('-webkit-mask-image:none!important') &&
   !approved617Source.includes('ownerFeatureArt20261122'),
-  '617 approved homepage keeps its original geometry, photograph and full-size caption-free service scenes');
+  '617 approved layout unchanged: independent large photographic right-side service images and brandless truck');
 expect(approved617Source.includes("'Шиномонтаж','Выездной ремонт колёс','tyre'") &&
   !approved617Source.includes("'ЭБУ','Диагностика и ремонт электронных блоков','ecu'") &&
   approved617Source.includes("'Специалисты ЭБУ'") &&
