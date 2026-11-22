@@ -229,6 +229,24 @@ try {
         await document.locator('.offer-text, .offer-unpublished').waitFor();
         check(!await document.getByRole('alert').count(),route+': legal document request failed');
       }
+      if(route==='offers' && width<900){
+        // Captured 390px legal page previously had TrakBot covering the note.
+        // Use actual glyph-line rectangles, not the note element's entire box.
+        const footnote=await page.evaluate(()=>{
+          const note=document.querySelector('.guest-info-offers > .guest-info-note');
+          const bot=document.querySelector('.trakbot-dock-launcher');
+          if(!note||!bot)return {missing:true};
+          const range=document.createRange();range.selectNodeContents(note);
+          const b=bot.getBoundingClientRect();
+          const textRects=[...range.getClientRects()].filter(r=>r.width>0&&r.height>0);
+          return {missing:false,lines:textRects.length,
+            overlap:textRects.some(r=>r.left<b.right&&r.right>b.left&&r.top<b.bottom&&r.bottom>b.top),
+            noteWidth:note.getBoundingClientRect().width,
+            bot:[b.left,b.top,b.right,b.bottom]};
+        });
+        check(!footnote.missing&&footnote.lines>0&&footnote.noteWidth>170&&!footnote.overlap,
+          'Mobile legal footnote hidden under floating TrakBot: '+JSON.stringify(footnote));
+      }
       await page.screenshot({path:legalShots+'/'+route.replace('/','-')+'-'+width+'.png',animations:'disabled'});
     }
     for(const route of ['help','explore/guide','explore/pricing']){

@@ -1558,3 +1558,13 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
   }
   html.traksos-native .guest-app .tr-native-welcome-actions a{transition:none!important}
 }
+
+/* Mobile published-offers footnote must remain readable beside the fixed TrakBot.
+   Keep the existing approved floating mascot and legal text: reserve its
+   lower-right corner ONLY in the document index, without changing 617/618. */
+@media(max-width:899px) {
+  html.traksos-browser .guest-app:not(.guest-home) .guest-info-offers > .guest-info-note {
+    box-sizing:border-box;
+    padding-right:clamp(74px,22vw,88px)!important;
+  }
+}
