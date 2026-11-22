@@ -683,3 +683,89 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
  }
 }
+
+/*
+ * 617 PHOTO-ASSET-ONLY REPAIR (22.11.2026).
+ * The OWNER-APPROVED HTML and geometry stay as-is: NO new homepage, rows,
+ * typography, map or hero layout. Only replace the five card imagery layers.
+ * The old atlas had raster captions and clipped subjects. These approved
+ * photograph scenes contain no raster captions.
+ */
+@media (min-width:900px) {
+  .guest-app.guest-home .owner20-feature { isolation:isolate; }
+  .guest-app.guest-home .owner20-feature::before {
+    content:none!important;
+    display:none!important;
+  }
+  .guest-app.guest-home .owner20-feature-illustration,
+  .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration,
+  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration,
+  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration,
+  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration,
+  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    z-index:1!important;
+    transform:none!important;
+    filter:none!important;
+    opacity:1!important;
+    background-color:#112934!important;
+    /* Dark navy on the LEFT, actual photographed scene fills the RIGHT.
+       No opaque grey block and no captions baked into the raster pixels. */
+    background-image:
+      linear-gradient(90deg,rgba(8,25,35,.98) 0%,rgba(8,25,35,.91) 30%,rgba(8,25,35,.58) 54%,rgba(8,25,35,.08) 86%,transparent 100%),
+      url('/traksos-service-scenes-desktop-hq.webp')!important;
+    background-repeat:no-repeat,no-repeat!important;
+    background-size:100% 100%,400% 100%!important;
+    background-position:center center,0% center!important;
+    -webkit-mask-image:none!important;
+    mask-image:none!important;
+    pointer-events:none!important;
+  }
+  .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration {
+    background-position:center center,0% center!important; /* mechanic, full size */
+  }
+  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
+    background-position:center center,100% center!important; /* diagnostics screen */
+  }
+  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
+    background-position:center center,66.6667% center!important; /* workshop & repairs */
+  }
+  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
+    background-position:center center,33.3333% center!important; /* transport protection */
+  }
+  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
+    background-position:center center,66.6667% center!important; /* truck service bay */
+  }
+  .guest-app.guest-home .owner20-feature-title,
+  .guest-app.guest-home .owner20-feature p {position:relative;z-index:2!important}
+  .guest-app.guest-home .owner20-feature-cta {position:absolute;z-index:3!important}
+  /* The distinctive photo objects below are *caption-free* zones of 617's
+     original artwork. Enrich three cards, never restore raster lettering. */
+  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration::after,
+  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration::after,
+  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration::after {
+    content:"";
+    position:absolute;
+    bottom:0;right:0;
+    height:126px;
+    background-image:url('/owner20-artwork-sprite.webp');
+    background-size:1018px 446px;
+    background-repeat:no-repeat;
+    pointer-events:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent,black 15%);
+    mask-image:linear-gradient(90deg,transparent,black 15%);
+  }
+  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration::after {
+    width:110px;background-position:-337px -317px;
+  }
+  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration::after {
+    width:88px;background-position:-500px -317px;
+  }
+  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration::after {
+    width:81px;background-position:-624px -317px;
+  }
+}
