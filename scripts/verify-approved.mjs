@@ -127,7 +127,7 @@ const unexpectedVisuals = visualRootEntries.filter(entry =>
 expect(unexpectedVisuals.length===0,
   'no obsolete artwork or unapproved new images in live public assets' +
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
-// Require exact audited bytes even if no component mounts the review candidate.
+// Require exact audited bytes and original scene in every public/mobile source.
 await asset('web/public/tracksos-approved-hero-owner-20261119-retouched.webp', 250000);
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
@@ -284,7 +284,7 @@ expect(!roleCss.includes('traksos-final-insurance.webp') &&
 
 expect(!landing.includes('public-track-extra-art') && !landing.includes('public-track-insurance-art'),
   'all retired photographic ghost slots were physically removed from public service cards');
-const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
+const approvedPhoto = 'tracksos-approved-hero-owner-20261119-retouched.webp';
 const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
 expect(approvedHeroLayer.includes('object-fit:contain!important') &&
   approvedHeroLayer.includes('.public-app-phone-truck') &&
@@ -294,7 +294,7 @@ const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
-expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119") &&
+expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119-retouched") &&
   heroVisualE2E.includes("owner20-photo-background-approved.webp") &&
   heroVisualE2E.includes("main.approved-pc.approved-pc-client") &&
   heroVisualE2E.includes("main.client-dashboard .and19-workspace.and19-client") &&
