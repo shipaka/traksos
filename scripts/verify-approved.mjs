@@ -25,9 +25,15 @@ const LOCKED_ASSETS = {
   'web/public/icon-192.png': 'f48bc0073cf5ec1c',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
+  // Audited derivative: same original scene, only maker badge x190..296/y220..244
+  // corrected. Review candidate, NOT authorization to change 617/618 layouts.
+  'web/public/tracksos-approved-hero-owner-20261119-retouched.webp': 'ae316ae5bafaf08d',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
   'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
   'web/public/owner20-photo-background-approved.webp': '833c162d1fddcef0',
+  // Exact 617 scenes with ONLY two tiny manufacturer badges removed.
+  'web/public/owner20-photo-background-approved-retouched.webp': '09cda86c07542c33',
+  'web/public/owner20-artwork-sprite-retouched.webp': '700a38609f354d0b',
   // Cross-platform owner-selected branding/illustrations. These checks lock bytes,
   // not layout; unchanged native launcher art remains a separate approved asset.
   'web/public/traksos-brand-logo-approved-618.png': '10e9d529a5503140',
@@ -39,7 +45,7 @@ const LOCKED_ASSETS = {
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': 'ed08c9c0041ca46f',
   'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': 'ec7089c48d32d46c',
   'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 'f48bc0073cf5ec1c',
-  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '7a7a9acec9ee7f32',
+  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': 'ae316ae5bafaf08d',
 };
 async function asset(path, minBytes = 5000) {
   try {
@@ -106,9 +112,13 @@ expect(retiredReferences.length === 0,
 const allowedPublicVisuals = new Set([
   'icon-192.png','icon-512.png',
   'tracksos-approved-hero-owner-20261119.webp',
+  // Specific checked retouch of the SAME approved source, not a new truck.
+  'tracksos-approved-hero-owner-20261119-retouched.webp',
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
+  'owner20-photo-background-approved-retouched.webp',
+  'owner20-artwork-sprite-retouched.webp',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
   'traksos-service-scenes-desktop-hq.webp',
@@ -122,8 +132,27 @@ const unexpectedVisuals = visualRootEntries.filter(entry =>
 expect(unexpectedVisuals.length===0,
   'no obsolete artwork or unapproved new images in live public assets' +
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
+// Prevent legacy cabinet/guest styles from silently reintroducing the
+// unretouched manufacturer marks. The original assets remain byte-locked as
+// archival references, but no running web component may point to them.
+const staleSharedTruckReferences = [];
+for (const relative of await readdir('web/src', { recursive: true })) {
+  if (!/\.(?:css|tsx?|jsx?|mjs)$/.test(relative)) continue;
+  const source = await read('web/src/' + relative);
+  if (/tracksos-approved-hero-owner-20261119\.webp|owner20-artwork-sprite\.webp|owner20-photo-background-approved\.webp/.test(source)) {
+    staleSharedTruckReferences.push(relative);
+  }
+}
+expect(staleSharedTruckReferences.length === 0,
+  'all guest, auth, PC, Android WebView and archived role styles load retouched exact originals; old marked photos absent from active source' +
+  (staleSharedTruckReferences.length ? ': ' + staleSharedTruckReferences.join(', ') : ''));
+
+// Require exact audited bytes and original scene in every public/mobile source.
+await asset('web/public/tracksos-approved-hero-owner-20261119-retouched.webp', 250000);
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
+await asset('web/public/owner20-photo-background-approved-retouched.webp', 150000);
+await asset('web/public/owner20-artwork-sprite-retouched.webp', 250000);
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
 for(const alternateLogo of [
@@ -277,7 +306,22 @@ expect(!roleCss.includes('traksos-final-insurance.webp') &&
 
 expect(!landing.includes('public-track-extra-art') && !landing.includes('public-track-insurance-art'),
   'all retired photographic ghost slots were physically removed from public service cards');
-const approvedPhoto = 'tracksos-approved-hero-owner-20261119.webp';
+// The approved 617 composition remains unchanged; only the two small badge
+// rectangles are corrected in lossless copies of the EXACT raster sources.
+const pcHeroSource = await read('web/src/screens/ownerDesktopHome20261120.css');
+const approvedVisualRegistry = await read('web/src/approvedVisuals.ts');
+expect(
+  pcHeroSource.includes("owner20-photo-background-approved-retouched.webp") &&
+  pcHeroSource.includes("owner20-artwork-sprite-retouched.webp") &&
+  approvedVisualRegistry.includes("publicPcPhoto: '/owner20-photo-background-approved-retouched.webp'") &&
+  approvedVisualRegistry.includes("publicPcAtlas: '/owner20-artwork-sprite-retouched.webp'") &&
+  approvedVisualRegistry.includes("workspaceTruck: '/tracksos-approved-hero-owner-20261119-retouched.webp'") &&
+  !pcHeroSource.includes("url('/owner20-photo-background-approved.webp')") &&
+  !pcHeroSource.includes("url('/owner20-artwork-sprite.webp')"),
+  'approved PC/mobile screens must use exactly-local retouches of their original photo crops, never a new truck'
+);
+
+const approvedPhoto = 'tracksos-approved-hero-owner-20261119-retouched.webp';
 const approvedHeroLayer = await read('web/src/approvedHeroImage20261119.css');
 expect(approvedHeroLayer.includes('object-fit:contain!important') &&
   approvedHeroLayer.includes('.public-app-phone-truck') &&
@@ -287,8 +331,8 @@ const heroVisualE2E = await read('e2e/approved-truck-hero.mjs');
 expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approvedPhoto)
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
-expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119") &&
-  heroVisualE2E.includes("owner20-photo-background-approved.webp") &&
+expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119-retouched") &&
+  heroVisualE2E.includes("owner20-photo-background-approved-retouched.webp") &&
   heroVisualE2E.includes("main.approved-pc.approved-pc-client") &&
   heroVisualE2E.includes("main.client-dashboard .and19-workspace.and19-client") &&
   !heroVisualE2E.includes("page.locator('.client-dashboard .desktop-hero')"),

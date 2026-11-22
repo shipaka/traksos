@@ -36,7 +36,7 @@ try {
         };
       }));
       assert(tiles.length===5&&tiles.every(t=>
-        t.image?.includes('owner20-artwork-sprite.webp') &&
+        t.image?.includes('owner20-artwork-sprite-retouched.webp') &&
         t.gradient?.includes('linear-gradient') &&
         t.artRight <= t.cardRight+3 &&
         t.mask?.includes('linear-gradient')),
@@ -236,7 +236,7 @@ try {
     // Validate only active owner-approved artwork. The old 19 Nov alternate
     // wordmark was intentionally removed; never request or decode its 404 HTML.
     for (const name of [
-      'tracksos-approved-hero-owner-20261119.webp',
+      'tracksos-approved-hero-owner-20261119-retouched.webp',
       'traksos-brand-logo-approved-618.png'
     ]) {
       const check = await page.evaluate(async (asset) => {

@@ -768,7 +768,7 @@
 
 /* Pre-17 Nov partner photography retired; only current palette remains until approved replacement assets.
    The same four source images render consistently in desktop + mobile webview. */
-.guest-app .partner-art-intro{--partner-art:url('../public/tracksos-approved-hero-owner-20261119.webp')}
+.guest-app .partner-art-intro{--partner-art:url('../public/tracksos-approved-hero-owner-20261119-retouched.webp')}
 .guest-app .partner-art-tow{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
 .guest-app .partner-art-master{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}
 .guest-app .partner-art-service{--partner-art:linear-gradient(145deg,#0b3754,#071b31)}

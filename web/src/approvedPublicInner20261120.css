@@ -70,7 +70,7 @@
   top: 0; right: 0; bottom: 0;
   width: 57%;
   z-index: 0;
-  background: url('/owner20-photo-background-approved.webp') 58% 50% / cover no-repeat;
+  background: url('/owner20-photo-background-approved-retouched.webp') 58% 50% / cover no-repeat;
   opacity: .72;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
@@ -166,7 +166,7 @@
     border-color: #52636b !important;
   }
   .guest-app .partner-showcase .auth-desktop-showcase-photo {
-    background-image: url('/owner20-photo-background-approved.webp') !important;
+    background-image: url('/owner20-photo-background-approved-retouched.webp') !important;
     background-size: cover !important;
     background-position: 55% 50% !important;
     border-color: #455862 !important;
