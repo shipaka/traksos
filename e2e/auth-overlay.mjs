@@ -22,6 +22,15 @@ try {
     await page.waitForURL('**/#/login');
     const dialog = page.getByRole('dialog', { name: 'Вход по номеру телефона' });
     await dialog.waitFor();
+    const reveal = await dialog.evaluate(el => ({
+      panel: getComputedStyle(el).animationName,
+      trace: getComputedStyle(el, '::before').animationName,
+      light: getComputedStyle(el, '::after').animationName,
+      button: getComputedStyle(el.querySelector('.btn:not(.ghost)')).animationName
+    }));
+    if (reveal.panel !== 'tr-auth-sheet-in' || reveal.trace !== 'tr-auth-trace' ||
+        reveal.light !== 'tr-auth-glow-arrive' || reveal.button !== 'tr-auth-cta-warmth')
+      throw Error(width + ': approved reveal/glow missing ' + JSON.stringify(reveal));
     if (!await landing.isVisible()) throw Error(width + ': landing was replaced by login');
     if (await page.locator('.auth-desktop-showcase:visible').count())
       throw Error(width + ': old full-page cinematic login illustration returned');
@@ -59,5 +68,22 @@ try {
     if (errors.length) throw Error(width + ': JS errors ' + errors.join('; '));
     await context.close();
   }
-  console.log('Approved browser guest overlays at 390px and 1440px: login, client, partner, Escape, outside click OK');
+  // Accessibility: switching off motion must remove all decorative animation,
+  // including the panel trace, flare and primary CTA.
+  const reduced = await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',locale:'ru-RU'});
+  try {
+    const page=await reduced.newPage();
+    await page.goto(BASE+'/#/login');
+    const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await dialog.waitFor();
+    const names=await dialog.evaluate(el=>[
+      getComputedStyle(el).animationName,
+      getComputedStyle(el,'::before').animationName,
+      getComputedStyle(el,'::after').animationName,
+      getComputedStyle(el.querySelector('.btn:not(.ghost)')).animationName
+    ]);
+    if(names.some(name=>name!=='none'))
+      throw Error('Reduced-motion browser still animates auth: '+names.join(', '));
+  } finally { await reduced.close(); }
+  console.log('Approved browser guest overlays at 390px and 1440px: login, client, partner, Escape, outside click, glow and reduced motion OK');
 } finally { await browser.close(); }
