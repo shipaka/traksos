@@ -56,26 +56,3 @@
    min-width:94px;font-size:10px;padding:8px;
  }
 }
-
-/* Mobile staff quick actions fit as three whole links. The previous generic
- * horizontal scroller clipped 'Тестовые кабинеты' off-screen at 390px. */
-@media(max-width:899px){
- html.traksos-browser .app:is(.role-admin,.role-moderator)
- .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > nav{
-   display:grid!important;
-   grid-template-columns:repeat(3,minmax(0,1fr));
-   overflow-x:visible!important;
-   gap:6px;
- }
- html.traksos-browser .app:is(.role-admin,.role-moderator)
- .desktop-content:has(> .tr-inner-hero) .tr-inner-rail-tools > nav > a{
-   min-width:0;
-   flex:none;
-   white-space:normal!important;
-   overflow-wrap:normal;
-   text-align:center;
-   justify-content:center;
-   padding:7px 5px;
-   min-height:40px;
- }
-}

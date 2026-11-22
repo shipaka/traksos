@@ -244,11 +244,15 @@ html.traksos-reduced-motion .tr-inner-rail{
  }
  html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools > :is(.tr-inner-rail-overline,h2){display:none}
  html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav{
-  display:flex;flex-flow:row nowrap;gap:7px;overflow-x:auto;scrollbar-width:none;
+  /* All three approved role actions must be visible without hidden sideways scrolling. */
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;overflow-x:visible;
  }
- html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav::-webkit-scrollbar{display:none}
  html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a{
-  flex:0 0 auto;font-size:10px;min-height:36px;white-space:nowrap;padding:7px 10px;
+  display:flex;align-items:center;justify-content:center;
+  min-width:0;min-height:40px;
+  font-size:10px;line-height:1.25;white-space:normal;
+  text-align:center;padding:7px 4px;
  }
 }
 

@@ -183,6 +183,26 @@ try{
                !(await page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]').isVisible()))
               throw Error('Desktop 617 secondary route returned without approved inner shell '+
                 role+' '+destination);
+            // Horizontal overflow of the document does NOT reveal individually
+            // clipped actions inside a scrollable rail. Verify all 3 role links
+            // remain on-screen in the *real* 390px sandbox browser.
+            if(width===390 && destination!=='#/menu'){
+              const quick=page.locator('.desktop-content > .tr-inner-rail .tr-inner-rail-tools nav');
+              if(await quick.count()){
+                const geometry=await quick.evaluate(node=>{
+                  const rect=node.getBoundingClientRect();
+                  const actions=[...node.querySelectorAll('a')];
+                  return {count:actions.length,scroll:node.scrollWidth,client:node.clientWidth,
+                    inside:actions.every(link=>{
+                      const r=link.getBoundingClientRect();
+                      return r.width>0 && r.left>=rect.left-2 && r.right<=rect.right+2;
+                    })};
+                });
+                if(geometry.count!==3 || geometry.scroll>geometry.client+2 || !geometry.inside)
+                  throw Error('Hidden or clipped approved 618 role action '+role+' '+
+                    destination+' '+JSON.stringify(geometry));
+              }
+            }
             if(destination==='#/menu' && !await page.locator('main.tr-mobile-menu-page').isVisible())
               throw Error('Approved role menu not mounted at '+role+' '+width);
             if(errors.length)throw Error('Navigation JavaScript exception '+role+' '+destination+': '+errors.join('; '));
