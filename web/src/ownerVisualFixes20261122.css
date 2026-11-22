@@ -571,6 +571,26 @@ html .guest-partner-roles .guest-partner-role-service::before {
 }
 
 
+/* Owner QA insurer empty state — no glued-on sprite rectangle.
+   Keep the right-hand shield, but use the SAME approved insurance scene
+   as the feature card and header. Fade its left edge into the whole pane.
+   This is only decoration for a truly loaded empty queue; loading and errors
+   remain visible with their proper server-backed content. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc-insurance .approved-pc-insurance-empty-visual::before{
+    content:""!important;
+    top:0!important;bottom:0!important;right:0!important;left:auto!important;
+    width:clamp(150px,33%,250px)!important;height:100%!important;
+    background-image:url('/feature-art/traksos-feature-insurance-desktop-20261122.webp')!important;
+    background-size:cover!important;
+    background-repeat:no-repeat!important;
+    background-position:75% 50%!important;
+    -webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.8) 22%,#000 48%)!important;
+    mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.8) 22%,#000 48%)!important;
+    opacity:.72!important;transform:none!important;
+    border:0!important;box-shadow:none!important;
+  }
+}
 /* Actual 390px browser evidence: the guest legal footer fell through to
    browser default blue/purple visited links below the cookie preference.
    Keep published legal destinations unchanged, but use the approved
