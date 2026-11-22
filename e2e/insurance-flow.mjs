@@ -80,7 +80,7 @@ assert(history.find(x=>x.id===request.id).events.length>=3,'History events not p
 const browser=await chromium.launch();
 try{
   for(const item of [
-    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
+    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой транспорт',expected:'Страхование и техосмотр'},
     {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
     {name:'admin',token:admin.token,hash:'#/admin/section/vehicleServices',heading:'Страхование и ТО',expected:'Страхование и ТО'}
   ]){

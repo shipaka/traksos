@@ -42,6 +42,11 @@ import './approvedFleetMobile20261121.css';
 import './nativeWide20261121.css';
 // Approved inner public pages share the 20 November graphite/orange desktop contract.
 import './approvedPublicInner20261120.css';
+// Approved inner 617/618 visuals decorate existing functional pages only.
+import './approvedInnerExperience.css';
+import './androidInnerStudio20261121.css';
+import './approvedInnerDepth20261121.css';
+import './approvedStaffInnerCompact20261121.css';
 // Auth opens as a browser-only sheet above the approved landing, never a new visual page.
 import './authOverlay20261122.css';
 import { createRoot } from 'react-dom/client';
@@ -60,6 +65,7 @@ import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
+import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
@@ -601,6 +607,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/privacy', 'Мои персональные данные']];
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
+  const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
   const workspaceHref = mobileTabs[0]?.[0] || '/';
   const sectionPath = here.split('?')[0];
   const innerSection = !!me && native.isApp &&
@@ -613,6 +620,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     .filter(([path])=>path !== '/' && (path === sectionPath || sectionPath.startsWith(path+'/')))
     .sort((a,b)=>b[0].length-a[0].length)[0]?.[1]
     || (sectionPath.startsWith('/order/') ? 'Карточка заявки' : 'Рабочий раздел');
+  // This is browser-only secondary-route chrome; real role dashboards and
+  // authenticated Android 618 desks keep their owner-approved appearance.
+  const approvedInnerRoute = !!me && !native.isApp && route.length > 0 &&
+    !['/','/work','/base','/insurance','/inspections','/courier','/moderation','/admin'].includes(sectionPath) &&
+    !['menu','as','trakbot','android-review','preview'].includes(route[0] ?? '') &&
+    !(route[0] === 'admin' && route[1] === 'test-center');
   // An approved desktop dashboard already contains its own TrakBot card.
   // Do not mount a second floating copy of the same helper over its actions.
   // Secondary pages and roles without the embedded card keep the dock.
@@ -803,7 +816,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
-          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref}/>}
+          {approvedInnerRoute && <ApprovedInnerHero mode={innerRole} route={route} title={sectionLabel}/>}
+          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref} route={route} mode={innerRole}/>}
+          {approvedInnerRoute && <ApprovedInnerRail mode={innerRole} route={route}/>} 
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
@@ -834,7 +849,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && !approvedInnerRoute && <TrakBotDock authenticated={!!me} />}
       {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
