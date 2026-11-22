@@ -502,6 +502,11 @@ expect(ownerPcHeader.includes("['▦','Специалисты ЭБУ'") &&
   !ownerPcHeader.includes("['▦','ЭБУ','Диагностика") &&
   ownerPcHeader.includes('href="#/login">Подробнее о покрытии'),
   '617 public quick menu has no duplicate ECU and coverage opens sign-in');
+expect(ownerPcHeader.includes("['✦','TrakBot · ИИ','Наш технический помощник','trakbot']") &&
+  ownerPcHeader.includes('requestTrakBotOpen()') &&
+  ownerPcHeader.includes('className="owner20-quick-trakbot"') &&
+  !ownerPcHeader.includes("['▦','ЭБУ','Диагностика"),
+  '617 fifth quick tile opens one canonical TrakBot instead of restoring duplicate ECU');
 expect(ownerPcHeader.includes('<a href="#/company">О нас</a>') &&
   !ownerPcHeader.includes('<a href="#/offers">Оферты</a>'),
   '617 Platform and partner menus use the owner-approved guest flow');
