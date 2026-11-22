@@ -70,6 +70,27 @@ try {
       art.approvedHero?.w!==1536 || art.approvedHero?.h!==324 ||
       art.approvedLogo?.w!==274 || art.approvedLogo?.h!==46)
      throw Error(width+': approved 617.png image or loaded size regressed '+JSON.stringify(art));
+   // At narrow PC sizes, keep cards equal-width and center the last two.
+   // This protects against the clipped labels and art observed in real 900px PNGs.
+   if(width<=1199){
+     const small=await page.evaluate(()=>{
+       const cards=[...document.querySelectorAll('.owner20-features>a')];
+       const features=document.querySelector('.owner20-features');
+       const bottom=document.querySelector('.owner20-bottom');
+       const rects=cards.map(el=>el.getBoundingClientRect());
+       return {
+         columns:getComputedStyle(features).gridTemplateColumns.trim().split(/\\s+/).length,
+         bottomColumns:getComputedStyle(bottom).gridTemplateColumns.trim().split(/\\s+/).length,
+         widths:rects.map(r=>r.width),
+         left:rects.map(r=>r.left),
+       };
+     });
+     if(small.columns!==6||small.bottomColumns!==2||
+        small.widths.some(w=>Math.abs(w-small.widths[0])>3)||
+        Math.abs((small.left[3]+small.left[4])/2 -
+          (small.left[0]+small.left[2]+small.widths[2])/2)>15)
+       throw Error(width+': balanced 3+2 vector-card layout regressed '+JSON.stringify(small));
+   }
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
