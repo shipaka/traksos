@@ -5,6 +5,8 @@
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+// Master/desktop/mobile/Android scene identity and hashes for the five service tiles.
+import './verify-feature-art.mjs';
 
 const read = (path) => readFile(path, 'utf8');
 const failures = [];
