@@ -2,7 +2,14 @@ name: "TrakSOS — реальная межролевая песочница (PR)
 
 on:
   pull_request:
+    # Any change to the active web UI must re-test all 12 real role routes,
+    # not only the nine quick smoke accounts. No production connections.
     paths:
+      - 'web/**'
+      - 'scripts/verify-approved.mjs'
+      - 'scripts/verify-current-policy.mjs'
+      - 'Dockerfile'
+      - 'package.json'
       - 'server/src/payments/persistentSandboxMock.ts'
       - 'server/src/ops/*Sandbox*.ts'
       - 'server/src/ops/exerciseSandboxOrder.ts'
