@@ -521,6 +521,17 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
        ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
+  // A nested route must highlight one real mobile tab, never both its parent
+  // and its child (for example /courier and /courier/jobs).
+  const activeMobileTabHref = mobileTabs
+    .filter(([href]) => here === href ||
+      (href !== '/' && here.startsWith(href + '/')))
+    .sort((a,b) => b[0].length - a[0].length)[0]?.[0];
+  // Desktop primary navigation follows the same deepest-match rule.
+  const isDesktopPrimaryActive = (href: string, links: readonly (readonly string[])[]) =>
+    (here === href || (href !== '/' && here.startsWith(href + '/'))) &&
+    !links.some(([other]) => other !== href && other.length > href.length &&
+      (here === other || here.startsWith(other + '/')));
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
@@ -723,8 +734,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
+                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href, links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
               ))}
@@ -815,7 +826,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={shellHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
