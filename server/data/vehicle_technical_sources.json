@@ -1,0 +1,865 @@
+{
+  "version": "2026-11-17",
+  "policy": "Only truck and trailer technical sources. Official manufacturer links have NOT been licensed for redistribution, even if download is public; all originals remain with rights holders. Wikimedia Commons sources require specific per-file attribution and any underlying source rights review. Avoid VIN-specific claims without authoritative matching.",
+  "professional": [
+    {
+      "id": "scania-bodybuilder",
+      "title": "Scania — портал надстроек и электрики",
+      "make": "scania",
+      "subsystem": "electrical",
+      "kind": "manufacturer_portal",
+      "url": "https://bodybuilder.scania.com/trucks/en/home.html",
+      "region": "Europe",
+      "scope": "Надстройки и системы шасси, доступ к чертежам может требовать входа; модель и год сверяются на портале.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "Scania CV AB",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "scania-rmi",
+      "title": "Scania — официальный Repair & Maintenance Information",
+      "make": "scania",
+      "subsystem": "general",
+      "kind": "manufacturer_portal",
+      "url": "https://www.scania.com/group/en/home/products-and-services/services/rmi/information-package.html",
+      "region": "Europe",
+      "scope": "Описание доступных заводских сведений, электрические схемы — в системе производителя.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "Scania CV AB",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "volvo-bodybuilder-eu",
+      "title": "Volvo Trucks — Bodybuilder Instructions (Европа)",
+      "make": "volvo",
+      "subsystem": "electrical",
+      "kind": "manufacturer_portal",
+      "url": "https://www.volvotrucks.co.uk/en-gb/trucks/features/bodybuilding.html",
+      "region": "Europe",
+      "scope": "Заводская документация для надстройки; точную применимость по VIN уточняют у Volvo.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "Volvo Trucks",
+      "requiresLogin": "varies",
+      "modelFamilyKeywords": [
+        "FH",
+        "FM"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "volvo-wiring-na",
+      "title": "Volvo Trucks — оригинальные схемы Body Builder (Сев. Америка)",
+      "make": "volvo",
+      "subsystem": "electrical",
+      "kind": "manufacturer_portal",
+      "url": "https://www.volvotrucks.ca/en-ca/parts-and-services/services/body-builder-support/wiring-diagrams/",
+      "region": "North America",
+      "scope": "Внимание: не считать американскую VN/VHD схему схемой европейского FH/FM.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "Volvo Group North America LLC",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "knorr-docs",
+      "title": "Knorr-Bremse — техническая документация TruckServices",
+      "make": null,
+      "subsystem": "brakes",
+      "kind": "manufacturer_portal",
+      "url": "https://truckservices.knorr-bremse.com/en/gb/services/technical-documentation/",
+      "region": "Global",
+      "scope": "Руководства по тормозам/пневматике и сервису, доступ через кабинет производителя.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "Knorr-Bremse",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "knorr-portal",
+      "title": "Knorr-Bremse — кабинет TruckServices",
+      "make": null,
+      "subsystem": "brakes",
+      "kind": "manufacturer_portal",
+      "url": "https://mytruckservices.knorr-bremse.com/",
+      "region": "Global",
+      "scope": "Подбор документации по артикулу/продукту; схема не универсальна.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "Knorr-Bremse",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "zf-wabco",
+      "title": "ZF WABCO — справочная поддержка и документация",
+      "make": null,
+      "subsystem": "ebs",
+      "kind": "manufacturer_portal",
+      "url": "https://aftermarket.zf.com/us/aftermarket-portal/our-catalog/technical-information/",
+      "region": "Global",
+      "scope": "Техническая библиотека ZF/WABCO; конфигурация EBS, версия блока и регион должны быть проверены.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "ZF Aftermarket",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "zf-wabco-customer",
+      "title": "WABCO — официальная сервисная поддержка",
+      "make": null,
+      "subsystem": "ebs",
+      "kind": "manufacturer_portal",
+      "url": "https://wabco-solutioncentre.com/en_US/cc/aftermarket-service-and-support/",
+      "region": "North America",
+      "scope": "Каталоги и руководства производителя; не применяйте без сверки модели и версии модуля.",
+      "rights": "LINK_ONLY",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "sourceStatus": "link_verified",
+      "owner": "ZF/WABCO",
+      "requiresLogin": "varies",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "commons-alternator-basics",
+      "title": "Схема устройства генератора — учебная иллюстрация",
+      "make": null,
+      "subsystem": "electrical",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:Alternator_1.svg",
+      "region": "General",
+      "scope": "Учебная схема, не распиновка автомобильного генератора. Нельзя переносить на конкретные клеммы B+/D+ без заводского руководства.",
+      "rights": "CC-BY-3.0",
+      "author": "Egmason",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "origin": "Wikimedia Commons",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "owner": "Egmason",
+      "requiresLogin": "no",
+      "sourceStatus": "license_verified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "commons-differential-pd",
+      "title": "Дифференциал ведущего моста — учебная схема",
+      "make": null,
+      "subsystem": "drivetrain",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:Differential_gear_(PSF).png",
+      "region": "General",
+      "scope": "Общая конструкция дифференциала, не руководство по ремонту редуктора и регулировке преднатяга.",
+      "rights": "PUBLIC_DOMAIN",
+      "author": "Pearson Scott Foresman",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/File:Differential_gear_(PSF).png",
+      "origin": "Wikimedia Commons",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "owner": "Pearson Scott Foresman",
+      "requiresLogin": "no",
+      "sourceStatus": "license_verified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "commons-diesel-scr",
+      "title": "Система SCR / AdBlue — учебная схема",
+      "make": null,
+      "subsystem": "exhaust",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:Diesel_technology_-_SCR.svg",
+      "region": "General",
+      "scope": "Упрощённая цепочка дизельного SCR, без расположения датчиков и распиновок конкретного автомобиля.",
+      "rights": "CC-BY-SA-4.0",
+      "author": "Cjp24",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "origin": "Wikimedia Commons",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "owner": "Cjp24",
+      "requiresLogin": "no",
+      "sourceStatus": "hold_upstream",
+      "reviewNote": "Оригинал VDA указан как источник произведения; для локального копирования необходимо отдельно проверить производные права.",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "commons-alternator-pdf",
+      "title": "Электрическая схема генератора — авторский PDF",
+      "make": null,
+      "subsystem": "electrical",
+      "kind": "educational_diagram",
+      "url": "https://commons.wikimedia.org/wiki/File:AANSLUITSCHEMA_ALTERNATOR-geconverteerd(1).pdf",
+      "region": "General",
+      "scope": "Авторский пример подключения генератора. Перед использованием сверяйте контакты с заводской документацией, нельзя применять как универсальную распиновку.",
+      "rights": "CC-BY-SA-4.0",
+      "author": "IstasRené",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "origin": "Wikimedia Commons",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "changeStatus": "unmodified",
+      "owner": "IstasRené",
+      "requiresLogin": "no",
+      "sourceStatus": "license_verified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "mercedes-bodybuilder",
+      "title": "Mercedes-Benz Trucks — официальный портал по шасси и надстройкам",
+      "make": "mercedes-benz",
+      "subsystem": "chassis",
+      "kind": "manufacturer_portal",
+      "url": "https://bb-portal.mercedes-benz-trucks.com/en/GLOBAL",
+      "region": "Europe",
+      "scope": "Конструкторские материалы по Actros, Arocs, Atego; наличие конкретных чертежей и доступ уточняйте на портале.",
+      "rights": "LINK_ONLY",
+      "owner": "Daimler Truck AG",
+      "requiresLogin": "some_materials",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "Actros",
+        "Arocs",
+        "Atego"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "mercedes-rmi",
+      "title": "Mercedes-Benz Trucks — RMI и XENTRY WIS",
+      "make": "mercedes-benz",
+      "subsystem": "general",
+      "kind": "manufacturer_portal",
+      "url": "https://service-info-int.mercedes-benz-trucks.com/eu/en/technical-publishing.html",
+      "region": "Europe",
+      "scope": "Техническая информация независимым специалистам; сервисные процедуры и документация по подписке.",
+      "rights": "LINK_ONLY",
+      "owner": "Daimler Truck AG",
+      "requiresLogin": "likely",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "man-manted",
+      "title": "MAN — порталы MANTED, ABBI и технические данные",
+      "make": "man",
+      "subsystem": "chassis",
+      "kind": "manufacturer_portal",
+      "url": "https://www.man.eu/bodybuilder/en/bodybuilder/portals.html",
+      "region": "Europe",
+      "scope": "TGX, TGS, TGM, TGL; технические данные шасси и надстроек, часть доступа по регистрации.",
+      "rights": "LINK_ONLY",
+      "owner": "MAN Truck & Bus SE",
+      "requiresLogin": "some_materials",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "TGX",
+        "TGS",
+        "TGM",
+        "TGL"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "daf-bbi",
+      "title": "DAF — BBI/BBI+ шасси и модельные поколения",
+      "make": "daf",
+      "subsystem": "chassis",
+      "kind": "manufacturer_portal",
+      "url": "https://www.dafbbi.com/en",
+      "region": "Europe",
+      "scope": "Официальные семейства XF/XG/XD/XB, схемы шасси MY2005 и MY2017; BBI+ по логину.",
+      "rights": "LINK_ONLY",
+      "owner": "DAF Trucks N.V.",
+      "requiresLogin": "some_materials",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "XF",
+        "XG",
+        "XG+",
+        "XD",
+        "XB",
+        "CF",
+        "LF"
+      ],
+      "documentSections": [
+        "MY2005",
+        "MY2017",
+        "New Generation"
+      ],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "iveco-bb",
+      "title": "IVECO — Body Builder Portal",
+      "make": "iveco",
+      "subsystem": "chassis",
+      "kind": "manufacturer_portal",
+      "url": "https://newibb.iveco.com/en/Pages/Home.aspx",
+      "region": "Europe",
+      "scope": "Заводские технические документы по грузовым IVECO, доступ регулируется производителем.",
+      "rights": "LINK_ONLY",
+      "owner": "IVECO S.p.A.",
+      "requiresLogin": "likely",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "renault-bb",
+      "title": "Renault Trucks — официальный портал надстройщиков",
+      "make": "renault",
+      "subsystem": "chassis",
+      "kind": "manufacturer_portal",
+      "url": "https://bodybuilder.renault-trucks.com/en/user/login",
+      "region": "Europe",
+      "scope": "Чертежи шасси и оснащения по VIN или номеру заказа, необходимо авторизоваться.",
+      "rights": "LINK_ONLY",
+      "owner": "Renault Trucks",
+      "requiresLogin": "yes",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "bpw-downloads",
+      "title": "BPW — руководства осей и подвески полуприцепов",
+      "make": null,
+      "subsystem": "axle",
+      "kind": "manufacturer_portal",
+      "url": "https://www.bpw.de/en/service/downloads",
+      "region": "Europe",
+      "scope": "Официальные версии инструкций и AxleGuide. Наличие PDF не разрешает их копирование.",
+      "rights": "LINK_ONLY",
+      "owner": "BPW Bergische Achsen",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "ECO Air",
+        "AxleGuide"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "bpw-technical",
+      "title": "BPW — чертежи и расчёты тормозов",
+      "make": null,
+      "subsystem": "trailer",
+      "kind": "manufacturer_portal",
+      "url": "https://www.bpw.co.uk/services-and-support/technical",
+      "region": "Europe",
+      "scope": "Данные осей, форматы CAD, тормозные расчёты и установка конкретного изделия.",
+      "rights": "LINK_ONLY",
+      "owner": "BPW Limited",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "saf-holland-downloads",
+      "title": "SAF-HOLLAND — инструкции по полуприцепам",
+      "make": null,
+      "subsystem": "trailer",
+      "kind": "manufacturer_portal",
+      "url": "https://safholland.com/us/en/service/download-center",
+      "region": "North America",
+      "scope": "Руководства по седлам, осям и подвеске. Североамериканские редакции нельзя автоматически применять в России.",
+      "rights": "LINK_ONLY",
+      "owner": "SAF-HOLLAND",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "SAF axles",
+        "HOLLAND fifth wheels"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "jost-documents",
+      "title": "JOST / ROCKINGER — седла, стойки, сцепные устройства",
+      "make": null,
+      "subsystem": "trailer",
+      "kind": "manufacturer_portal",
+      "url": "https://production.jost-world.com/en/products/pdf-downloads/",
+      "region": "Europe",
+      "scope": "Технические инструкции, серии узлов и номера комплектующих на официальном сайте.",
+      "rights": "LINK_ONLY",
+      "owner": "JOST Werke SE",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "schmitz-service",
+      "title": "Schmitz Cargobull — сервисный портал",
+      "make": "schmitz",
+      "subsystem": "trailer",
+      "kind": "manufacturer_portal",
+      "url": "https://www.cargobull-serviceportal.de/applications/serviceportal/default.aspx",
+      "region": "Europe",
+      "scope": "Сервисные данные полуприцепов, детали, условия партнёрского доступа.",
+      "rights": "LINK_ONLY",
+      "owner": "Schmitz Cargobull AG",
+      "requiresLogin": "some_materials",
+      "vehicleClasses": [
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "haldex-trailer",
+      "title": "Haldex — Trailer Application Guide",
+      "make": null,
+      "subsystem": "ebs",
+      "kind": "manufacturer_portal",
+      "url": "https://www.haldex.com/en/europe/trailer-application-guide/",
+      "region": "Europe",
+      "scope": "Системы ABS/EBS, пневматика, подбор по серии компонента; это не универсальная распиновка.",
+      "rights": "LINK_ONLY",
+      "owner": "Haldex / SAF-HOLLAND",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "EB+ 4.0",
+        "Gen3"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "haldex-technical",
+      "title": "Haldex — техническая документация",
+      "make": null,
+      "subsystem": "brakes",
+      "kind": "manufacturer_portal",
+      "url": "https://www.haldex.com/en/europe/services/technical-documentation/",
+      "region": "Europe",
+      "scope": "Оригинальные руководства тормозной системы и прицепных компонентов.",
+      "rights": "LINK_ONLY",
+      "owner": "Haldex / SAF-HOLLAND",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "knorr-live",
+      "title": "Knorr-Bremse — eService Manuals и документация iTEBS",
+      "make": null,
+      "subsystem": "ebs",
+      "kind": "manufacturer_portal",
+      "url": "https://truckservices.knorr-bremse.com/en/de/products/technical-documentation/",
+      "region": "Europe",
+      "scope": "Руководства iTEBS X, SyD7, EAC2.5 и пр. Оригиналы на сайте производителя.",
+      "rights": "LINK_ONLY",
+      "owner": "Knorr-Bremse",
+      "requiresLogin": "some_materials",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "iTEBS X",
+        "SyD7",
+        "EAC2.5"
+      ],
+      "documentSections": [],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "jost-repair",
+      "title": "JOST — оригинальные сервисные инструкции",
+      "make": null,
+      "subsystem": "trailer",
+      "kind": "manufacturer_portal",
+      "url": "https://service-and-parts.jost-world.com/en/technicalsupportcentre/repair-solutions.html",
+      "region": "Europe",
+      "scope": "Оригинальные инструкции эксплуатации и ремонта седел/сцепок, подбор по серии.",
+      "rights": "LINK_ONLY",
+      "owner": "JOST Werke SE",
+      "requiresLogin": "varies",
+      "vehicleClasses": [
+        "truck",
+        "trailer"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null,
+      "modelFamilyKeywords": [],
+      "documentSections": []
+    },
+    {
+      "id": "scania-rmi-portal",
+      "title": "Scania — официальный RMI / SWS, диагностика и электросхемы по номеру шасси",
+      "make": "scania",
+      "subsystem": "general",
+      "kind": "manufacturer_portal",
+      "url": "https://www.scania.com/group/en/home/products-and-services/services/rmi/scania-rmi-portal.html",
+      "region": "Europe",
+      "scope": "Scania RMI объясняет доступ к SWS, документации ремонтов и схемам по номеру шасси. Само SWS предоставляется по платному времени доступа; общая страница информирует бесплатно.",
+      "rights": "LINK_ONLY",
+      "owner": "Scania CV AB",
+      "requiresLogin": "yes",
+      "accessCost": "paid_subscription",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "5-series"
+      ],
+      "documentSections": [
+        "SWS",
+        "Technical Information Shop"
+      ],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    },
+    {
+      "id": "daf-rmi-portal",
+      "title": "DAF — официальная RMI с VIN, электросхемами и диагностикой",
+      "make": "daf",
+      "subsystem": "general",
+      "kind": "manufacturer_portal",
+      "url": "https://rmi.daf.com/en/faq-rmi/general",
+      "region": "Europe",
+      "scope": "DAF RMI предоставляет дилерского уровня документацию, процедуры, DTC, программирование и схемы. Для доступа нужны регистрация независимого оператора и платный тариф.",
+      "rights": "LINK_ONLY",
+      "owner": "DAF Trucks N.V.",
+      "requiresLogin": "yes",
+      "accessCost": "paid_subscription",
+      "vehicleClasses": [
+        "truck"
+      ],
+      "checkedOn": "2026-11-17",
+      "sourceStatus": "link_verified",
+      "changeStatus": "unmodified",
+      "modelFamilyKeywords": [
+        "XF",
+        "XG",
+        "XG+",
+        "CF",
+        "LF"
+      ],
+      "documentSections": [
+        "Paccar.net",
+        "DAVIE4+"
+      ],
+      "confirmedFitment": false,
+      "vehicleYearFrom": null,
+      "vehicleYearTo": null
+    }
+  ],
+  "driverTips": [
+    {
+      "id": "brakes",
+      "title": "Неисправность тормозов и EBS",
+      "category": "truck",
+      "tags": [
+        "EBS",
+        "ABS",
+        "тормоза"
+      ],
+      "body": "При сообщении EBS/ABS оцените управляемость и торможение, остановитесь в безопасном месте. Не отключайте защитные системы и не продолжайте движение, если торможение ненадёжно. Зафиксируйте код ошибки и тип прицепа; вызовите профильного специалиста.",
+      "priority": "critical",
+      "professionalDetail": false
+    },
+    {
+      "id": "charging",
+      "title": "Пропала зарядка генератора",
+      "category": "truck",
+      "tags": [
+        "генератор",
+        "АКБ",
+        "питание"
+      ],
+      "body": "Остановитесь в безопасном месте и проверьте индикаторы напряжения без вмешательства в проводку. Оцените необходимость эвакуатора/выездного электрика. Не замыкайте силовые контакты и не разбирайте генератор на обочине.",
+      "priority": "high",
+      "professionalDetail": false
+    },
+    {
+      "id": "cooling",
+      "title": "Перегрев двигателя",
+      "category": "truck",
+      "tags": [
+        "антифриз",
+        "температура",
+        "охлаждение"
+      ],
+      "body": "Остановитесь там, где безопасно. Не открывайте крышку расширительного бачка горячего двигателя: возможен ожог. Зафиксируйте температуру и признаки утечек, обратитесь к специалисту.",
+      "priority": "critical",
+      "professionalDetail": false
+    },
+    {
+      "id": "adblue",
+      "title": "Ошибка SCR/AdBlue",
+      "category": "truck",
+      "tags": [
+        "AdBlue",
+        "SCR",
+        "NOx"
+      ],
+      "body": "Запишите сообщения панели и код ошибки, проверьте уровень AdBlue по штатному индикатору. Не обходите экологическую систему и не пытайтесь сбросить ошибку без диагностики; при ограничении мощности запросите консультацию.",
+      "priority": "normal",
+      "professionalDetail": false
+    },
+    {
+      "id": "trailer_lights",
+      "title": "Не работает освещение прицепа",
+      "category": "trailer",
+      "tags": [
+        "свет",
+        "розетка",
+        "прицеп"
+      ],
+      "body": "Остановитесь безопасно и проверьте наружный свет визуально. Если не работают габариты/стоп-сигналы, оцените возможность безопасного движения и обратитесь к выездному электрику. Не делайте перемычки в разъёме наугад.",
+      "priority": "high",
+      "professionalDetail": false
+    },
+    {
+      "id": "tyre",
+      "title": "Повреждение шины",
+      "category": "truck",
+      "tags": [
+        "колесо",
+        "шина",
+        "давление"
+      ],
+      "body": "При повреждении шины не выполняйте опасную замену на проезжей части. Установите предупреждение по ПДД, покиньте опасную зону и вызовите шиномонтаж или эвакуатор. Не проверяйте рукой утечку воздуха на накачанной грузовой шине.",
+      "priority": "high",
+      "professionalDetail": false
+    }
+  ],
+  "sourceNotice": "Original TrackSOS safety reminders, not OEM repair instructions. Linked OEM portals are NOT licensed for local redistribution of their PDFs, wiring diagrams or repair programs."
+}
