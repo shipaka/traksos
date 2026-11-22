@@ -50,9 +50,10 @@ function Feature({item}:{item:typeof features[number]}) {
     <span className="owner20-feature-cta">{action}　→</span>
   </a>;
 }
-export function OwnerDesktopHome20261120() {
-  return <main className="owner20-home" id="public-home">
-    <header className="owner20-top">
+/** Shared exact public navigation for every desktop guest route. The Android
+ * and narrow-browser header remains its separately approved composition. */
+export function ApprovedPublicHeader() {
+  return <header className="owner20-top">
       <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
@@ -72,7 +73,12 @@ export function OwnerDesktopHome20261120() {
       </details>
       <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
       <a href="#/login" className="owner20-signin">♙　Войти</a>
-    </header>
+    </header>;
+}
+
+export function OwnerDesktopHome20261120() {
+  return <main className="owner20-home" id="public-home">
+    <ApprovedPublicHeader />
     <section className="owner20-hero" aria-labelledby="owner20-heading">
       <div className="owner20-photo" aria-hidden="true"/>
       <div className="owner20-lead">
