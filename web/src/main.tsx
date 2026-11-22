@@ -309,18 +309,19 @@ function App() {
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
+    // Guest only: every service, company, guide and support entry opens
+    // the SAME contextual login/registration sheet. The only public
+    // exception is the legally required offers/documents reader.
     const info: GuestInfoKind | undefined = native.isApp ? undefined
-      : route[0] === 'company' ? 'company'
       : route[0] === 'offers' ? 'offers'
-      : route[0] === 'help' || route[0] === 'support' ? 'help'
       : route[0] === 'rules' ? 'rules'
-      : route[0] === 'economics' ? 'pricing'
       : route[0] === 'privacy' ? 'offer:privacy'
       : route[0] === 'offer' ? (`offer:${route[1] || 'client'}` as GuestInfoKind)
-      : route[0] === 'explore' && route[1] === 'guide' ? 'guide'
-      : route[0] === 'explore' && route[1] === 'pricing' ? 'pricing' : undefined;
-    const requestedService = !native.isApp && route[0] === 'explore' && !info ? route[1] : undefined;
-    const unifiedGuestOverlay = !native.isApp && (info || route[0] === 'explore');
+      : undefined;
+    const requestedService = !native.isApp && route[0] === 'explore' ? route[1] : undefined;
+    const unifiedGuestOverlay = !native.isApp && (
+      !!info || route[0] === 'explore' ||
+      ['company','help','support','economics'].includes(route[0] ?? ''));
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
         <Shell mode="client" me={null}>{unifiedGuestOverlay
