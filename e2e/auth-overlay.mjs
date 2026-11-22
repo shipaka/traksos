@@ -47,7 +47,7 @@ try {
     await page.waitForURL('**/#/register');
     const signup = page.getByRole('dialog', { name: 'Регистрация в TrakSOS' });
     await signup.waitFor();
-    const carried = (await signup.locator('input[type=tel]').inputValue()).replace(/\\D/g,'');
+    const carried = (await signup.locator('input[type=tel]').inputValue()).replace(/\D/g,'');
     if (carried !== '79991112233') throw Error(width + ': phone lost when switching from login to registration: ' + carried);
     if (!await landing.isVisible()) throw Error(width + ': signup replaced public landing');
     await page.screenshot({ path: 'e2e/shots/auth-overlay/register-' + width + '.png', animations: 'disabled' });
