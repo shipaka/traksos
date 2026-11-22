@@ -236,6 +236,9 @@ try {
       throw Error('Duplicate partner cinematic illustration returned in browser auth dialog');
     if(!await page.locator(width>=900?'.owner20-home':'.public-home').isVisible())
       throw Error('Partner registration displaced the approved guest landing');
+    // The entrance is intentionally animated. Assess geometry only after
+    // its opening keyframes have finished, not halfway through the reveal.
+    await modal.evaluate(el => Promise.all(el.getAnimations().map(anim => anim.finished.catch(() => {}))));
     const initial = await modal.boundingBox();
     if(!initial)throw Error('Missing partner dialog geometry');
     for(const roleName of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
