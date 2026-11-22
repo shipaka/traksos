@@ -26,7 +26,7 @@
  .owner20-signin{border:1px solid var(--orange);border-radius:9px;padding:10px 21px;font-size:13px;white-space:nowrap}
  .owner20-signin:hover{background:#432517}
  .owner20-hero{height:326px;position:relative;overflow:hidden;background:linear-gradient(90deg,#07121a 0%,#0c1822 35%,transparent 80%),#092231}
- .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c);background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}
+
  .owner20-lead{position:absolute;top:27px;left:2.2%;z-index:1;max-width:57%;text-shadow:0 3px 14px #0008}
  .owner20-lead h1{font-size:clamp(27px,2.6vw,43px);line-height:1.05;letter-spacing:-.6px;color:#fff;font-weight:800;margin:0 0 12px}
  .owner20-lead h1 em{font-style:normal;color:var(--orange)}
@@ -264,39 +264,9 @@
     overflow:hidden;
     background:linear-gradient(180deg,#122028 0%,#0f1e26 48%,#070f15 80%,#0b1012 100%)!important;
   }
-  .guest-app.guest-home .owner20-photo {
-    display:block!important;
-    position:absolute!important;inset:0!important;
-    background:
-      linear-gradient(90deg,#08141a 0%,#0d1920 29%,transparent 40%,transparent 60%,#101a1c 93%,#07141a),
-      radial-gradient(ellipse at 60% 18%,#efaf79 0%,#875c4c 26%,transparent 51%),
-      linear-gradient(180deg,#14232d 5%,#333d40 49%,#0c181b 67%,#192027 75%,#090e12 100%)!important;
-    filter:none!important;
-    opacity:1!important;
-  }
-  .guest-app.guest-home .owner20-photo::before{
-    content:"";
-    position:absolute;inset:0;
-    pointer-events:none;
-    background:
-      linear-gradient(169deg,transparent 75%,#40434a33 76%,#0b131b 76.5%,transparent 78%),
-      linear-gradient(12deg,#070c0e 1%,transparent 24%),
-      repeating-linear-gradient(176deg,transparent 0 31px,#afb0aa11 32px,#191e2311 33px,transparent 35px);
-    opacity:.86;
-  }
-  .guest-app.guest-home .owner20-photo::after{
-    content:"";
-    position:absolute;left:34.5%;top:10px;
-    width:456px;height:314px;
-    background-image:url('/owner20-artwork-sprite.webp')!important;
-    background-position:0 0!important;
-    background-size:1018px 446px!important;
-    background-repeat:no-repeat!important;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 96%,transparent 100%);
-    mask-image:linear-gradient(90deg,transparent 0%,#000 9%,#000 96%,transparent 100%);
-    z-index:1;
-    pointer-events:none;
-  }
+
+
+
   .guest-app.guest-home .owner20-lead{
     left:2.32%!important;top:26px!important;
     max-width:60%!important;
@@ -433,18 +403,10 @@
     opacity:1!important;
     color:transparent!important;
   }
-  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{
-    width:147px;height:128px;background-position:-172px -317px!important;
-  }
-  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{
-    width:123px;height:128px;background-position:-324px -317px!important;
-  }
-  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{
-    width:136px;height:125px;background-position:-452px -317px!important;
-  }
-  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{
-    width:111px;height:126px;background-position:-594px -317px!important;
-  }
+
+
+
+
   .guest-app.guest-home .owner20-feature-cta{
     bottom:13px!important;left:15px!important;
     border-color:#9fb4c0!important;
@@ -503,24 +465,10 @@
 
 }
 
-/* Mid-size desktop: preserve the SAME November 20 artwork with a fluid layout,
-   not the removed Nov 19 landing artwork. Android (<900px) remains unchanged. */
+/* Mid-size desktop keeps the approved layout, without switching to a sprite truck. */
 @media (min-width:900px) and (max-width:1280px){
- .guest-app.guest-home .owner20-photo{
-   background:linear-gradient(90deg,#07151d 0%,#0f2730 46%,#1e3440 78%,#09171f 100%),
-      radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c)!important;
- }
- .guest-app.guest-home .owner20-photo::after{
-   content:"";
-   position:absolute;top:12px;left:34.5%;
-   width:365px;height:251px;
-   background-image:url('/owner20-artwork-sprite.webp');
-   background-position:0 0;
-   background-size:814px 357px;
-   background-repeat:no-repeat;
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent);
-   mask-image:linear-gradient(90deg,transparent 0%,#000 10%,#000 90%,transparent);
- }
+
+
  .guest-app.guest-home .owner20-map-source{
    display:block;width:100%;height:100%;min-height:125px;
    background-image:url('/owner20-artwork-sprite.webp');
@@ -540,10 +488,10 @@
    font-size:0;color:transparent;
    transform:none!important;
  }
- .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{width:142px;background-position:-172px -317px}
- .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{width:123px;background-position:-324px -317px}
- .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{width:127px;background-position:-452px -317px}
- .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{width:111px;background-position:-594px -317px}
+
+
+
+
  .guest-app.guest-home .owner20-bottom-air::after,
  .guest-app.guest-home .owner20-bottom-club::after{
    display:block;content:""!important;
@@ -560,23 +508,12 @@
 }
 
 
-/* The precise 1536x324 road and truck cut from approved 617.png.
-   Only photographic pixels are present; labels and panels are DOM UI. */
+/* The approved photographic banner is a continuous background at every desktop width. */
 @media(min-width:1281px){
- .guest-app.guest-home .owner20-photo::after{
-   left:0!important;top:0!important;
-   width:100%!important;height:324px!important;
-   background-image:url('/owner20-photo-background-approved.webp')!important;
-   background-position:center top!important;
-   background-size:100% 100%!important;
-   background-repeat:no-repeat!important;
-   -webkit-mask-image:none!important;mask-image:none!important;
- }
+
 }
 
-/* Owner 617 sprite captions are raster pixels. The only active desktop
-   artwork crop is defined in the source-sprite contract below, for all
-   widths >=900px. Do not reintroduce masks here or conceal missing art. */
+/* Text labels are now live HTML; artwork is separate and text-free. */
 
 
 /* UI CONTRACT 21.11: canonical desktop guest mascot; no old pill/40px badge.
@@ -620,13 +557,8 @@
  .guest-app.guest-home .trakbot-dock-launcher:focus-visible {
    outline:3px solid #ff9d58!important;outline-offset:3px!important;border-radius:14px!important;
  }
- /* The approved 617 atlas still supplies the thematic images. Preserve each
-    complete RIGHT-hand artwork area; fade its left edge under the DOM text,
-    rather than deleting nearly half the image with a hard mask. */
- .guest-app.guest-home .owner20-feature::before {
-   content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
-   background:linear-gradient(90deg,rgba(9,27,37,.76) 0%,rgba(9,27,37,.62) 30%,rgba(9,27,37,.18) 67%,transparent 100%);
- }
+ /* Text-free artwork requires no gradient veil or raster-caption masks. */
+
  .guest-app.guest-home .owner20-feature-illustration {
  }
  .guest-app.guest-home .owner20-bottom-air::after,
@@ -647,26 +579,13 @@
 }
 html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {animation:none!important;}
 
-/* Source-sprite crop contract: the approved 617 atlas contains printed captions
-   inside its pixels. Only show each artwork's RIGHT-hand image zone, never
-   another image of the caption behind the real accessible DOM labels.
-   Every crop ends at its original atlas frame's right edge. */
+/* Individual vector artwork replaces the atlas's embedded captions. */
 @media(min-width:900px){
- .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration {
-   width:112px!important;background-position:-55px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
-   width:94px!important;background-position:-225px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
-   width:110px!important;background-position:-337px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
-   width:88px!important;background-position:-500px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
-   width:81px!important;background-position:-624px -317px!important;
- }
+
+
+
+
+
  .guest-app.guest-home .owner20-feature-illustration {
    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
@@ -682,4 +601,89 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
  }
+}
+
+/*
+ * PC VISUAL CONTRACT 22.11: The owner's 617.png composition uses a real
+ * road/truck/sky photograph behind the hero copy at ALL desktop widths.
+ * No generated road gradients, masked atlas truck or grey text panel.
+ * Do not change the separate approved Android/mobile-browser artwork.
+ */
+@media (min-width:900px) {
+  .guest-app.guest-home .owner20-photo {
+    position:absolute!important;
+    display:block!important;
+    inset:0!important;
+    opacity:1!important;
+    filter:none!important;
+    background-color:#10212a!important;
+    background-image:url('/owner20-photo-background-approved.webp')!important;
+    background-size:cover!important;
+    background-position:center center!important;
+    background-repeat:no-repeat!important;
+  }
+  .guest-app.guest-home .owner20-photo::before {
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(90deg,
+      rgba(5,15,23,.46) 0%, rgba(5,15,23,.27) 31%,
+      rgba(5,15,23,.05) 58%, transparent 82%)!important;
+  }
+  .guest-app.guest-home .owner20-photo::after {
+    content:none!important;
+    display:none!important;
+  }
+  /* Five independent vector objects, one bounding box and baseline.
+     No reused sprite coordinates, baked lettering, masks or dark overlay. */
+  .guest-app.guest-home .owner20-feature {
+    isolation:isolate;
+  }
+  .guest-app.guest-home .owner20-feature-illustration {
+    position:absolute!important;
+    display:flex!important;
+    align-items:flex-end!important;
+    justify-content:flex-end!important;
+    width:134px!important;
+    height:129px!important;
+    right:1px!important;
+    bottom:0!important;
+    left:auto!important;
+    top:auto!important;
+    z-index:1!important;
+    color:inherit!important;
+    font-size:initial!important;
+    transform:none!important;
+    opacity:1!important;
+    background:none!important;
+    background-image:none!important;
+    -webkit-mask-image:none!important;
+    mask-image:none!important;
+    pointer-events:none!important;
+  }
+  .guest-app.guest-home .owner20-feature-illustration svg {
+    display:block;
+    width:100%;
+    height:100%;
+    max-width:100%;
+    max-height:100%;
+    filter:drop-shadow(0 5px 9px rgba(1,11,18,.28));
+  }
+  .guest-app.guest-home .owner20-feature-title,
+  .guest-app.guest-home .owner20-feature p,
+  .guest-app.guest-home .owner20-feature-cta {
+    position:relative;
+    z-index:2!important;
+  }
+  .guest-app.guest-home .owner20-feature p { max-width:72%!important; }
+  .guest-app.guest-home .owner20-feature-cta { position:absolute;z-index:3!important; }
+}
+@media(min-width:900px) and (max-width:1150px) {
+  .guest-app.guest-home .owner20-feature-illustration {
+    width:112px!important;
+    height:111px!important;
+    right:0!important;
+  }
+  .guest-app.guest-home .owner20-feature p { max-width:67%!important; }
 }
