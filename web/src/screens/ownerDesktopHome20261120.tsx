@@ -3,6 +3,7 @@ import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { requestTrakBotOpen } from '../trakbotEvents.ts';
 import { TrakBotMascot } from '../trakbotMascot.tsx';
 import { TrakServiceIcon } from '../trakServiceIcon.tsx';
+import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { FeatureArtwork } from '../featureArtwork20261122.tsx';
 import './ownerDesktopHome20261120.css';
@@ -114,8 +115,8 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
       {primary.map(([symbol,title,hint,key])=>key==='trakbot'
-        ? <a href="#/trakbot" key={key} className="owner20-quick-trakbot" aria-label="Открыть TrakBot — ИИ-помощник" onClick={event=>{event.preventDefault();requestTrakBotOpen();}}><span className="owner20-quick-icon" aria-hidden="true"><TrakBotMascot reaction="hello" size="small" ambient /></span><span><b>{title}</b><small>{hint}</small></span></a>
-        : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span><b>{title}</b><small>{hint}</small></span></a>)}
+        ? <a href="#/trakbot" key={key} className="owner20-quick-trakbot" aria-label="Открыть TrakBot — ИИ-помощник" onClick={event=>{event.preventDefault();requestTrakBotOpen();}}><span className="owner20-quick-icon" aria-hidden="true"><TrakBotMascot reaction="hello" size="small" ambient /></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span></a>
+        : <a href={route(key)} key={key} className={'owner20-quick-'+key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span><ApprovedServiceIllustration kind={key==='van'?'repair':key==='tow'?'tow':key==='sto'?'service':'consult'}/></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">
       {features.map(item=><Feature key={item[3]} item={item}/>)}
