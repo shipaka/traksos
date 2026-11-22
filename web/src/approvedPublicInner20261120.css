@@ -11,6 +11,18 @@
     box-shadow: none !important;
   }
 }
+/* Shared source of dropdown chevron geometry: never position a font glyph below text. */
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group > summary{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.25;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group > summary > span[aria-hidden]{
+  box-sizing:border-box;display:inline-block;width:7px;height:7px;flex:0 0 7px;
+  font-size:0;line-height:0;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);transition:transform .18s ease;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group[open] > summary > span[aria-hidden]{
+  transform:translateY(1px) rotate(225deg);
+}
 .guest-app:not(.guest-home) .guest-site-nav a,
 .guest-app:not(.guest-home) .guest-site-nav .guest-nav-group > summary {
   color: #f1f5f5 !important;
