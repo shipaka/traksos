@@ -84,10 +84,10 @@
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
-    padding: 10px 12px 14px !important;
+    padding: 0 0 14px !important;
     min-height: 0 !important;
     height: auto !important;
-    gap: 10px !important;
+    gap: 0 !important;
     border-radius: 16px !important;
     overflow: hidden !important;
   }
@@ -103,7 +103,7 @@
     order: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    /* Pre-Chrome-88 WebView ignores aspect-ratio: reserve real image height. */
+    /* Full-bleed artwork: no inset photo frame or card gap; reserve legacy WebView height. */
     height: 156px !important;
     min-height: 156px !important;
     aspect-ratio: 2 / 1 !important;
@@ -121,7 +121,7 @@
     order: 1 !important;
     width: 100% !important;
     max-width: none !important;
-    padding: 0 2px !important;
+    padding: 12px 14px 0 !important;
     margin: 0 !important;
     height: auto !important;
     min-height: 0 !important;
