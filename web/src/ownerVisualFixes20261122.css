@@ -49,7 +49,8 @@ html.traksos-browser .app[class*="role-"] .tr-inner-hero-art {
 .trakbot-dock .trakbot-dock-close:hover {background:#22495a!important}
 .trakbot-dock-launcher .trakbot-mascot-original,
 .trakbot-dock-brand .trakbot-mascot-original {
-  background:transparent!important;box-shadow:none!important;
+  /* Background shorthand erased the approved image. Remove only the matte. */
+  background-color:transparent!important;box-shadow:none!important;
 }
 
 @media(min-width:900px) {
@@ -247,7 +248,7 @@ html.traksos-browser .app[class*="role-"] .tr-inner-hero-art {
     width:106px!important;min-width:106px!important;height:106px!important;min-height:106px!important;
   }
   .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot-original{
-    background:transparent!important;border-radius:50%!important;
+    background-color:transparent!important;border-radius:50%!important;
   }
 }
 
