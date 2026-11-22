@@ -243,7 +243,7 @@ expect(unifiedOrderPhoto.includes("vehicleReferencePhoto(brand,model,year)") &&
   unifiedMobile.includes('<ApprovedOrderTruck order={current} />') &&
   // Both signed-in workspaces use current as the selected live order.
   (unifiedMobile.match(/<ApprovedOrderTruck order=\{current\} \/>/g)?.length ?? 0)>=2 &&
-  unifiedSceneStyle.includes('prefers-reduced-motion:reduce') &&
+  !unifiedSceneStyle.includes('tr-approved-scene-route') &&
   ownerPcHeader.includes('src={APPROVED_VISUALS.logo}') &&
   !ownerPcHeader.includes('function TruckLogo()'),
   'one exact-generation truck photo source with honest fallback, reduced motion and identical public/Android brand');
@@ -541,7 +541,7 @@ expect(native.includes('BundledWeb(this)'), 'APK loads bundled web interface');
 expect(labels.includes('Шиномонтаж') && labels.includes('Эвакуатор') && labels.includes('Электрик'), 'truck services remain present');
 
 const publicStart = landing.indexOf('const mobileLanding = (');
-const publicEnd = landing.indexOf('\n  if (!intent) return desktopPublic', publicStart);
+const publicEnd = landing.indexOf('\n  // Native Android is designed for thumb interaction:', publicStart);
 expect(publicStart >= 0 && publicEnd > publicStart, 'browser auth still preserves the existing mobile guest landing');
 const publicPart = landing.slice(publicStart, publicEnd);
 for (const word of ['Аптека', 'Химчистка', 'Авиабилеты', 'Покупка авиабилетов', 'Магазин лекарств']) {
