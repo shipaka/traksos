@@ -169,6 +169,23 @@ try{
  assert(await op.getByText('Текущее местоположение исполнителя не подтверждено.').count()===1,
   'Stale or missing GPS incorrectly displayed as live');
  await op.screenshot({path:output+'/owner-active-1647.png',fullPage:false,animations:'disabled'});
+ // Shared inner-screen banners must NOT overlay the old separate photo tile
+ // on top of the approved full-card photograph, as caught in real screenshots.
+ await op.goto(BASE+'/#/garage',{waitUntil:'domcontentloaded'});
+ const innerHero=op.locator('.desktop-content > .tr-inner-hero');
+ await innerHero.waitFor({state:'visible'});
+ const visual=await innerHero.evaluate(el=>({
+   background:getComputedStyle(el).backgroundImage,
+   separateArt:el.querySelector('.tr-inner-hero-art')
+     ?getComputedStyle(el.querySelector('.tr-inner-hero-art')).display:'none',
+   copyWidth:el.querySelector('.tr-inner-hero-copy')?.getBoundingClientRect().width||0,
+   cardWidth:el.getBoundingClientRect().width
+ }));
+ assert(visual.background.includes('owner20-photo-background-approved-retouched.webp') &&
+   visual.separateArt==='none' &&
+   visual.copyWidth>90 && visual.copyWidth<visual.cardWidth*.72,
+   'Inner cabinet hero still has a rectangular pasted image, missing photo or clipped left copy: '+JSON.stringify(visual));
+ await op.screenshot({path:output+'/owner-garage-full-bleed-1647.png',fullPage:false,animations:'disabled'});
  assert(!oe.length,'Owner browser errors: '+oe.join(';'));
  report.push({role:'owner',status:'PASS',scenarios:['selected order','performer details','safe GPS absence'],
    screenshots:['owner-active-1647.png']});
