@@ -173,7 +173,8 @@
     order: 2 !important;
     inset: auto !important;
     align-self: flex-end !important;
-    margin: 0 !important;
+    /* Separate carousel touch controls from the approved hero copy. */
+    margin: 8px 0 0 !important;
     min-height: 46px !important;
     transform: none !important;
   }
