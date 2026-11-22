@@ -152,6 +152,41 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     if (entry) go('');
   };
 
+  // Escape, keyboard focus and scroll locking apply only to the browser dialog.
+  useEffect(() => {
+    if (!intent || native.isApp) return;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusInitial = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('.tr-auth-close')?.focus();
+    });
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        backToPublic();
+      } else if (event.key === 'Tab') {
+        const dialog = document.querySelector<HTMLElement>('.tr-auth-panel');
+        if (!dialog) return;
+        const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(el => el.getClientRects().length > 0);
+        if (!controls.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.cancelAnimationFrame(focusInitial);
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = oldOverflow;
+    };
+  }, [intent, entry]); // Browser auth routes provide their own independent dialog lifecycle.
+
   const partnerAccountType = intent === 'join' && (role === 'master' || role === 'service') && hybridMasterService
     ? 'master_service' : role;
   async function sendCode() {
@@ -280,9 +315,11 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
 
-  if (!intent && desktopPublic) return <OwnerDesktopHome20261120 />;
+  // The public page stays mounted beneath browser sign-in and registration.
+  // Native Android keeps the separately approved full-screen auth experience.
+  const showOverlay = !native.isApp && !!intent;
 
-  if (!intent) return (
+  const mobileLanding = (
     <main className="public-home public-landing" id="public-home">
       <div className="public-landing-head">
         <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
@@ -435,9 +472,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     </main>
   );
 
+  if (!intent) return desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
+
   return (
-    <main className="auth-desktop-layout">
+    <>
+      {showOverlay && (desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding)}
+      {showOverlay && <div className="tr-auth-backdrop" onClick={backToPublic} aria-hidden="true" />}
+      <main className={'auth-desktop-layout' + (showOverlay ? ' tr-auth-panel tr-auth-panel--' + intent : '')}
+        role={showOverlay ? 'dialog' : undefined} aria-modal={showOverlay ? true : undefined}
+        aria-labelledby={showOverlay ? 'tr-auth-title' : undefined}>
       <section className="auth-desktop-form">
+      {showOverlay && <button type="button" className="tr-auth-close" onClick={backToPublic} aria-label="Закрыть окно">×</button>}
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
         <button type="button" onClick={() => go('join')}>Хочу работать с TrakSOS</button>
@@ -447,7 +492,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
       </nav>}
       <div>
-        <h1>{title}</h1>
+        <h1 id="tr-auth-title">{title}</h1>
         <div className="sub">{sub}</div>
       </div>
 
@@ -466,6 +511,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
+          <button type="button" className="btn ghost" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
@@ -557,7 +603,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </form>
       )}
       </section>
-      <aside className={'auth-desktop-showcase partner-showcase partner-art-'+partnerShowcaseKey}
+      {!showOverlay && <aside className={'auth-desktop-showcase partner-showcase partner-art-'+partnerShowcaseKey}
         aria-label="Иллюстрация выбранного направления партнёрства TrakSOS">
         <div key={'visual-'+partnerShowcaseKey} className="auth-desktop-showcase-photo"
           role="img" aria-label={partnerShowcase.imageLabel}/>
@@ -567,7 +613,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <p>{partnerShowcase.description}</p>
         </div>
         <span className="partner-showcase-footnote">Кинематографичная иллюстрация возможностей TrakSOS</span>
-      </aside>
-    </main>
+      </aside>}
+      </main>
+    </>
   );
 }
