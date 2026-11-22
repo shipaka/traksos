@@ -850,15 +850,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {(!native.isApp || !me) && <SiteFooter />}
         </div>
       </div>
-      {!me && !route[0] && (
-        <nav className="track-guest-tabbar" aria-label="Гостевая навигация TrakSOS">
-          <a href="#/" className="active" aria-current="page"><span aria-hidden="true"><NavGlyph glyph="⌂" /></span>Главная</a>
-          <a href="#/" onClick={e => { e.preventDefault(); document.getElementById('public-services')?.scrollIntoView({behavior:'smooth',block:'start'}); }}>
-            <span aria-hidden="true"><NavGlyph glyph="▤" /></span>Услуги</a>
-          <a href="#/login"><span aria-hidden="true"><NavGlyph glyph="◉" /></span>Войти</a>
-          <a href="#/register"><span aria-hidden="true"><NavGlyph glyph="＋" /></span>Регистрация</a>
-        </nav>
-      )}
+      {/* Public 618 already puts sign-in/registration on the first screen and
+          services in the accessible “Возможности” menu. The old guest tabbar
+          was an extra, unstyled block AFTER legal documents (purple links);
+          it must not reappear below the footer. Authenticated role tabs
+          remain below and are intentionally unchanged. */}
       {/* On Android the primary menu must remain reachable from every inner page. */}
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
