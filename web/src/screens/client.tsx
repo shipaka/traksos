@@ -1264,7 +1264,7 @@ export function Profile() {
       <h1 className="account-profile-mobile-title">Профиль</h1>
       <header className="account-profile-hero">
         <div className="account-profile-visual" aria-hidden="true">
-          <img src="/tracksos-approved-hero-owner-20261119.webp" alt="" />
+          <img src="/traksos-unbranded-truck-20261122.avif" alt="" onError={event => { event.currentTarget.hidden = true; }} />
           <span className="account-profile-visual-trace" />
         </div>
         <div className="account-profile-hero-copy">
