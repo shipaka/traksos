@@ -112,6 +112,7 @@ const allowedPublicVisuals = new Set([
   'owner20-photo-brandless-20261122.webp',
   'owner617-tech-photo.webp','owner617-ecu-photo.webp',
   'owner617-parts-photo.webp','owner617-insurance-photo.webp',
+  'owner617-inspection-photo.svg',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
   'traksos-service-scenes-desktop-hq.webp',
@@ -129,6 +130,7 @@ await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
 await asset('web/public/owner20-photo-brandless-20261122.webp', 15000);
 for(const n of ['tech','ecu','parts','insurance']) await asset('web/public/owner617-'+n+'-photo.webp',15000);
+await asset('web/public/owner617-inspection-photo.svg',20000);
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
 for(const alternateLogo of [
@@ -176,6 +178,7 @@ const approved617Source = await read('web/src/screens/ownerDesktopHome20261120.t
 expect(ownerPcUiContract.includes('Owner-approved 617.png remains the ONLY desktop homepage') &&
   ['tech','ecu','parts','insurance'].every(n =>
     ownerPcUiContract.includes("url('/owner617-"+n+"-photo.webp')")) &&
+  ownerPcUiContract.includes("url('/owner617-inspection-photo.svg')") &&
   ownerPcUiContract.includes("url('/owner20-photo-brandless-20261122.webp')") &&
   ownerPcUiContract.includes('-webkit-mask-image:none!important') &&
   !approved617Source.includes('ownerFeatureArt20261122'),
