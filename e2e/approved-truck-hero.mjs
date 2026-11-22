@@ -110,7 +110,7 @@ try{
         h:el.getBoundingClientRect().height
       }));
       if(info.w<100||info.h<100||
-         !info.photo.includes('tracksos-approved-hero-owner-20261119')||
+         !info.photo.includes('tracksos-approved-hero-owner-20261119-retouched')||
          info.photo.includes('tracksos-approved-scenic-hero'))
         throw Error('Approved mobile browser photo replaced by obsolete asset '+JSON.stringify(info));
       if(await home.locator('.public-service-tiles>a').count()!==6)
