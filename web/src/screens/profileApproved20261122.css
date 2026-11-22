@@ -124,3 +124,23 @@ html.traksos-native .account-profile-page > .account-profile-shortcuts{display:n
 @media(prefers-reduced-motion:reduce){
  .account-profile-page .account-profile-shortcuts button{transition:none!important}
 }
+
+/* Browser evidence 31f551b: the former magenta Save button and white inputs
+   were out of place in the 618 dark UI, and the floating assistant covered
+   the Save field. Preserve mobile form geometry; correct only the visual canon. */
+.app[class*="role-"] main.account-profile-page .account-profile-invite-label{
+  display:inline-flex;align-items:center;gap:9px;
+}
+.app[class*="role-"] main.account-profile-page .account-profile-gift{
+  display:inline-block;flex:0 0 23px;color:#ffab72;vertical-align:middle;
+}
+.app[class*="role-"] main.account-profile-page .account-profile-data input.field{
+  background:#081c27!important;color:#f7fafb!important;
+  border:1px solid #426473!important;box-shadow:none!important;
+}
+.app[class*="role-"] main.account-profile-page .btn:not(.ghost):not(.bad):not(.good):not([disabled]){
+  background:linear-gradient(112deg,#ff9c45,#ee6e23)!important;
+  color:#101c24!important;border:1px solid #ffc28c!important;
+  box-shadow:0 5px 17px #f56a2730!important;
+}
+.app[class*="role-"] main.account-profile-page input.field::placeholder{color:#91aebc}
