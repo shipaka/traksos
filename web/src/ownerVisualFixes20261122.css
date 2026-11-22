@@ -1271,3 +1271,135 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     display:none!important;
   }
 }
+
+/* 23 Nov owner feedback: full-card quick artwork and native touch actions */
+/* Do not replace the approved 617 section, its five links or TrakBot.
+   The same licensed four-scene panorama used for Android is rendered here.
+   Gradients paint the full card; the subject stays at right, never over text. */
+@media(min-width:900px) {
+  .guest-app.guest-home .owner20-quick>a {
+    isolation:isolate!important;
+    min-width:0!important;overflow:hidden!important;
+    transition:filter .18s ease,border-color .18s ease!important;
+  }
+  .guest-app.guest-home .owner20-quick>a::before {
+    content:"";display:block;pointer-events:none;
+    position:absolute;inset:0;z-index:1;
+    background:linear-gradient(90deg,#0c202af0 0%,#0c202adb 32%,
+      #102633b5 52%,#10263305 94%);
+  }
+  .guest-app.guest-home .owner20-quick>a:focus-visible {
+    outline:3px solid #eab35d!important;outline-offset:-3px!important
+  }
+  .guest-app.guest-home .owner20-quick>a:hover,
+  .guest-app.guest-home .owner20-quick>a:focus-visible {
+    filter:brightness(1.09)
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon {
+    position:relative;z-index:3;flex-shrink:0;min-width:0;
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy {
+    position:relative;z-index:3;min-width:0;max-width:60%;overflow-wrap:break-word;
+    text-shadow:0 1px 4px #061820;
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration {
+    position:absolute!important;inset:auto 0 0 auto!important;z-index:0!important;
+    opacity:.95!important;width:140px!important;height:84px!important;
+    background-color:#102b36!important;
+    background-image:var(--tr-service-desktop)!important;
+    background-size:560px 84px!important;background-repeat:no-repeat!important;
+    transform:none!important;mask-image:none!important;-webkit-mask-image:none!important;
+    pointer-events:none!important;
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--repair{background-position:0 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--tow{background-position:-140px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--service{background-position:-280px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--consult{background-position:-420px 0!important}
+  .guest-app.guest-home .owner20-quick>a.owner20-quick-trakbot::before {
+    background:linear-gradient(90deg,#101f2de8,#17303bd2)
+  }
+}
+@media(min-width:900px) and (max-width:1279px){
+  .guest-app.guest-home .owner20-quick>a{gap:4px!important;padding:9px 5px!important}
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon{
+    flex:0 0 25px!important;width:25px!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon svg {
+    width:25px!important;height:25px!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy{
+    max-width:calc(100% - 28px)!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy b{
+    font-size:11.5px!important;line-height:1.15!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy small {
+    display:none!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration {
+    width:90px!important;height:54px!important;
+    background-size:360px 54px!important;bottom:0!important;opacity:.85!important;
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--tow{background-position:-90px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--service{background-position:-180px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--consult{background-position:-270px 0!important}
+}
+/* Native 618 is a touch device: four actions become two rows of real
+   thumb-size, icon-left shortcuts. Routes remain unchanged; no PC carousel,
+   no huge vertical cards, and no accidental double-sized pictograms. */
+@media(max-width:899px){
+  html.traksos-native .app.role-client .and19-services{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;margin:0!important
+  }
+  html.traksos-native .app.role-client .and19-services>a{
+    position:relative;display:flex!important;flex-direction:row!important;
+    align-items:center!important;justify-content:flex-start!important;
+    gap:8px!important;min-width:0!important;
+    min-height:64px!important;max-height:none!important;
+    padding:9px!important;text-align:left!important;
+    border:1px solid #4c6674!important;border-radius:13px!important;
+    background:linear-gradient(120deg,#193445,#102531)!important;
+    color:#f6f9f8!important;
+    transition:transform .16s ease,border-color .16s ease!important
+  }
+  html.traksos-native .app.role-client .and19-services>a:first-child{
+    border-color:#d98e43!important;background:linear-gradient(120deg,#874016,#4b291d)!important
+  }
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-symbol {
+    position:relative;z-index:3;flex:0 0 28px!important;
+    display:grid!important;place-items:center!important;
+    width:28px!important;height:32px!important;
+    font-size:24px!important;line-height:1!important
+  }
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-symbol svg{
+    width:26px!important;height:26px!important;display:block
+  }
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-label {
+    position:relative;z-index:3;flex:1 1 auto;min-width:0;
+    font-size:12px!important;line-height:1.25!important;
+    text-align:left!important;font-weight:800!important;overflow-wrap:normal!important
+  }
+  html.traksos-native .app.role-client .and19-services>a>.tr-service-illustration{
+    z-index:0!important;opacity:.16!important;right:0!important;
+    width:88px!important;max-height:52px!important;
+    mask-image:linear-gradient(90deg,transparent,#000 75%)!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 75%)!important
+  }
+  html.traksos-native .app.role-client .and19-services>a:focus-visible{
+    outline:3px solid #e8ad51!important;outline-offset:2px!important
+  }
+  html.traksos-native .app.role-client .and19-services>a:active{
+    transform:scale(.985)
+  }
+}
+@media(max-width:345px){
+  html.traksos-native .app.role-client .and19-services>a{gap:5px!important;padding:7px!important}
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-label{
+    font-size:11px!important
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html.traksos-native .app.role-client .and19-services>a,
+  .guest-app.guest-home .owner20-quick>a{transition:none!important}
+}
