@@ -44,7 +44,7 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
       <h1>{item.name}</h1>
       <span className="note">Редакция {item.current.version} · с {new Date(item.current.effective_at).toLocaleDateString('ru-RU')}</span>
       {String(item.current.version).toLowerCase().includes('черновик') && <p className="note" role="note">Тестовый черновик для проверки интерфейса. Это не согласованный юридический документ и не окончательный текст для публикации.</p>}
-      {item.current.summary && <div className="card"><b>Что изменилось</b><span>{item.current.summary}</span></div>
+      {item.current.summary && <div className="card"><b>Что изменилось</b><span>{item.current.summary}</span></div>}
       <div className="card offer-text">{full ? <Markdown text={full.body ?? ''} /> : 'Загружаю текст…'}</div>
       <label className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
         <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 4, width: 20, height: 20 }} />
