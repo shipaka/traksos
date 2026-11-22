@@ -45,7 +45,9 @@ try{
       await page.goto(BASE+'/'+route,{waitUntil:'domcontentloaded'});
       await page.locator('.app').waitFor({timeout:20000});
       const offers=await get('/api/me/offers',v.token);
-      for(const offer of offers.filter(o=>o.current&&!o.accepted)){
+      const legalAudiences={client:['client'],performer:['performer']}[mode]??[];
+      for(const offer of offers.filter(o=>o.current&&!o.accepted &&
+        (o.audience==='privacy'||legalAudiences.includes(o.audience)))){
         const modal=page.getByRole('dialog',{name:offer.name});
         await modal.waitFor({state:'visible',timeout:15000});
         await modal.locator('input[type=checkbox]').check();
