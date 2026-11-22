@@ -121,12 +121,13 @@ class ScreenErrorBoundary extends Component<
   }
   render() {
     if (!this.state.failed) return this.props.children;
-    return <div className="app">
-      <main className="stack" style={{ padding: 24, maxWidth: 640, margin: '40px auto' }}>
+    return <div className="app tr-approved-error-shell">
+      <main className="tr-approved-route-unavailable" role="alert">
+        <span className="tr-approved-route-eyebrow">TRAKSOS · ИНТЕРФЕЙС</span>
         <h1>Не удалось открыть раздел</h1>
-        <p className="sub">Возникла ошибка отображения. Ваши данные не удалены. Можно вернуться на главную или обновить страницу.</p>
-        <div className="row">
-          <a className="btn" href="#/" onClick={() => { this.setState({ failed: false }); }}>На главную</a>
+        <p>Возникла ошибка отображения. Данные не удалены. Старый интерфейс вместо этого раздела не загружается.</p>
+        <div className="tr-approved-error-actions">
+          <a className="btn" href="#/" onClick={() => this.setState({ failed: false })}>На главную</a>
           <button className="btn ghost" type="button" onClick={() => location.reload()}>Обновить страницу</button>
         </div>
       </main>
@@ -340,14 +341,14 @@ function App() {
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
       : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <UnavailableRole label="Вы уже вошли в TrakSOS" />; break;
-    case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
-    case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
+    case 'sos': screen = isCustomer ? <Sos /> : <UnavailableRole label="Для вызова SOS нужен клиентский аккаунт" />; break;
+    case 'new': screen = !isCustomer ? <UnavailableRole label="Для заказа нужен клиентский аккаунт" /> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = effMode === 'performer' && isPerformer && b
       ? <PerformerOrderWindow id={b} initialTab={(['order','client','finance','chat','history','vehicle'].includes(route[2] ?? '') ? route[2] as 'order'|'client'|'finance'|'chat'|'history'|'vehicle' : 'order')} />
       : <Order id={b} />; break;
     case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
-    case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
-    case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'orders': screen = isCustomer ? <Orders as="client" /> : <UnavailableRole label="Нет доступа к клиентским заявкам" />; break;
+    case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <UnavailableRole label="Нет доступа к гаражу" />; break;
     case 'profile': screen = <Profile />; break;
     case 'menu': screen = <main className="tr-mobile-menu-route" />; break;
     case 'invite': screen = <Invite />; break;
@@ -369,10 +370,10 @@ function App() {
       : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
-    case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'inspections': screen = (isInspection || isInsurer) ? (b ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <UnavailableRole label="Парком управляет владелец" />; break;
+    case 'inspections': screen = (isInspection || isInsurer) ? (b ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <UnavailableRole label="Нет прав оператора техосмотра" />; break;
     case 'courier': screen = !isCourier
-      ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
+      ? <UnavailableRole label="Кабинет курьера доступен только назначенному курьеру." />
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
         : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
@@ -382,7 +383,7 @@ function App() {
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
           : <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} />
-        : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+        : <UnavailableRole label="Нет доступа к кабинету страховщика" />; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
     case 'learn': screen = <PlatformIntro />; break;
@@ -392,15 +393,15 @@ function App() {
       ? me.roles.some(r => ['master','service','admin','moderator'].includes(r))
       : me.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r)))
       ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
-      : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
+      : <UnavailableRole label="Нет доступа к этому разделу ТехБазы" />; break;
     case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
     case 'training': screen = <Training chapter={b} />; break;
     case 'practice': screen = <TrainingPractice chapter={b} />; break;
-    case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <main><div className="empty">Нет доступа</div></main>; break;
+    case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <UnavailableRole label="Нет доступа" />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
       ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
-      : <main><div className="empty">Магазин доступен в клиентском кабинете или кабинете исполнителя.</div></main>; break;
+      : <UnavailableRole label="Магазин доступен в клиентском кабинете или кабинете исполнителя." />; break;
     case 'privacy': screen = <Privacy />; break;
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
@@ -410,7 +411,7 @@ function App() {
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
-    default: screen = <main><div className="empty">Такой страницы нет</div></main>;
+    default: screen = <UnavailableRole label="Такой страницы нет" />;
   }
 
   return (
