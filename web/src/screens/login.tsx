@@ -106,7 +106,26 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     q.addEventListener('change',update);
     return () => q.removeEventListener('change',update);
   }, []);
-  const [phone, setPhone] = useState('+7 ');
+  // Preserve only an explicitly entered login phone while the user
+  // switches to client registration. A direct new registration starts blank.
+  const [phone, setPhone] = useState(() => {
+    try {
+      if (entry !== 'register' || sessionStorage.getItem('traksos.authTransition') !== 'register') return '+7 ';
+      const draft = sessionStorage.getItem('traksos.authPhoneDraft') || '+7 ';
+      sessionStorage.removeItem('traksos.authTransition');
+      sessionStorage.removeItem('traksos.authPhoneDraft');
+      return draft;
+    } catch { return '+7 '; }
+  });
+  const startClientRegistration = () => {
+    try {
+      sessionStorage.setItem('traksos.authTransition', 'register');
+      sessionStorage.setItem('traksos.authPhoneDraft', phone);
+    } catch { /* Strict private browsing */ }
+    setIntent('register');
+    setStep('phone');
+    go('register');
+  };
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -149,6 +168,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
     setIntent(null);
+    try {
+      sessionStorage.removeItem('traksos.authTransition');
+      sessionStorage.removeItem('traksos.authPhoneDraft');
+    } catch { /* Strict private browsing */ }
     if (entry) go('');
   };
 
@@ -512,7 +535,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
-          <button type="button" className="btn ghost" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
+          <button type="button" className="btn ghost" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
