@@ -404,3 +404,14 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
    position:relative;z-index:2;
  }
 }
+
+/* The approved mascot source has a baked pale rectangle. Blend the image
+   with its existing card surface, retaining the exact approved character,
+   rather than overlaying a dark replacement square. */
+.approved-pc .approved-pc-bot img {
+ mix-blend-mode:multiply!important;
+ filter:contrast(1.2) saturate(1.2)!important;
+ -webkit-mask-image:radial-gradient(ellipse at 50% 52%,#000 0 58%,rgba(0,0,0,.9) 66%,transparent 81%);
+ mask-image:radial-gradient(ellipse at 50% 52%,#000 0 58%,rgba(0,0,0,.9) 66%,transparent 81%);
+ border:0!important;box-shadow:none!important;
+}
