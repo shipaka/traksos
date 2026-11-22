@@ -244,6 +244,18 @@ try{
            throw Error('Empty garage still shows a fictional truck and route');
          if(await page.locator('.tr-approved-garage-compact-link').count()!==1)
            throw Error('Empty owner garage lost Add Vehicle action');
+         if(width===390){
+           const geometry=await page.locator('.tr-approved-garage-compact').evaluate(el=>{
+             const copy=el.querySelector('.tr-approved-garage-compact-copy').getBoundingClientRect();
+             const action=el.querySelector('.tr-approved-garage-compact-link').getBoundingClientRect();
+             return {copyWidth:copy.width,copyBottom:copy.bottom,
+               actionTop:action.top,actionRight:action.right,
+               viewportWidth:document.documentElement.clientWidth};
+           });
+           if(geometry.copyWidth<170||geometry.actionTop<geometry.copyBottom-2||
+              geometry.actionRight>geometry.viewportWidth+2)
+             throw Error('Phone empty garage text wraps into a thin column or overlaps button: '+JSON.stringify(geometry));
+         }
        }
        const header=page.locator('.client-garage-page>.client-section-hero');
        await header.waitFor();
