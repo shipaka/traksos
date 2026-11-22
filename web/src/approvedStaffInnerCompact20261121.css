@@ -56,3 +56,13 @@
    min-width:94px;font-size:10px;padding:8px;
  }
 }
+
+
+/* Keep one approved 617 title on admin secondary routes. The original
+   operational stage remains mounted with all actions, tables and description;
+   only its redundant old section heading is visually retired. */
+html.traksos-browser .app.role-admin
+ .desktop-content:has(> .tr-inner-hero[data-route^="admin/section/"])
+ > main .admin-stage > .admin-stage-head > h2 {
+  display:none!important;
+}
