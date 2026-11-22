@@ -36,7 +36,7 @@ try {
         };
       }));
       assert(tiles.length===5&&tiles.every(t=>
-        t.image?.includes('owner20-artwork-sprite.webp') &&
+        t.image?.includes('owner20-artwork-sprite-retouched.webp') &&
         t.gradient?.includes('linear-gradient') &&
         t.artRight <= t.cardRight+3 &&
         t.mask?.includes('linear-gradient')),
