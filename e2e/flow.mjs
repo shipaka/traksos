@@ -372,11 +372,11 @@ await a.locator('textarea').fill('# Оферта для клиентов\n\nТе
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
 await a.getByRole('button', { name: 'Опубликовать' }).click();
 await a.getByText(/Опубликовано/).waitFor();
-// Админ тоже пользователь — новую редакцию для клиентов принимает и он
-await a.getByRole('dialog').waitFor({ timeout: 10000 });
-await a.getByRole('dialog').locator('input[type=checkbox]').check();
-await a.getByRole('button', { name: 'Принимаю' }).click();
-await a.getByRole('dialog').waitFor({ state: 'detached' });
+// Mixed-role admin must NOT be blocked by client terms in the admin cabinet.
+// When switched to the client workspace, the server still enforces that offer.
+await a.waitForTimeout(300);
+if (await a.getByRole('dialog').count())
+  throw new Error('Admin cabinet is blocked by inactive client offer');
 await k.goto(BASE + '/#/');
 await k.getByRole('dialog').waitFor({ timeout: 10000 });
 await shot(k, '16-client-offer-gate');

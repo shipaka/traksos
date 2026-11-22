@@ -93,7 +93,10 @@ try{
      await page.locator('.app').waitFor();
      // Accept the current local offer through the real UI if required.
      const offers=await fetch(BASE+'/api/me/offers',{headers:{authorization:'Bearer '+token}}).then(r=>r.ok?r.json():[]);
-     for(const o of offers.filter(x=>x.current&&!x.accepted)){
+     const legalAudiences={client:['client'],performer:['performer'],
+       service:['performer'],insurer:['insurer'],admin:[],moderator:[]}[c.mode]??[];
+     for(const o of offers.filter(x=>x.current&&!x.accepted &&
+       (x.audience==='privacy'||legalAudiences.includes(x.audience)))){
        const dlg=page.getByRole('dialog',{name:o.name});
        await dlg.waitFor({state:'visible',timeout:12000});
        await dlg.locator('input[type=checkbox]').check();
