@@ -236,7 +236,7 @@ try {
     // Validate only active owner-approved artwork. The old 19 Nov alternate
     // wordmark was intentionally removed; never request or decode its 404 HTML.
     for (const name of [
-      'tracksos-approved-hero-owner-20261119.webp',
+      'tracksos-approved-hero-owner-20261119-retouched.webp',
       'traksos-brand-logo-approved-618.png'
     ]) {
       const check = await page.evaluate(async (asset) => {
