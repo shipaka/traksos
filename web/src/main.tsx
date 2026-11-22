@@ -68,7 +68,7 @@ import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
-import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
+
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
