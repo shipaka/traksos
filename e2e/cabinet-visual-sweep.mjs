@@ -113,6 +113,23 @@ try {
       await verify('inner');
       await page.waitForTimeout(450);
       await verify('inner-stable');
+      // Actual 390px admin screenshot revealed the last quick-action link
+      // cut off by the old horizontal carousel. Every action must be visible.
+      if(width===390 && ['admin','moderator'].includes(entry.name)){
+        const quick=page.locator('.desktop-content > .tr-inner-rail .tr-inner-rail-tools nav');
+        await quick.waitFor({state:'visible'});
+        const geometry=await quick.evaluate(node=>{
+          const bounds=node.getBoundingClientRect();
+          const items=[...node.querySelectorAll('a')];
+          return {count:items.length,scroll:node.scrollWidth,visible:node.clientWidth,
+            allInside:items.every(link=>{
+              const b=link.getBoundingClientRect();
+              return b.left>=bounds.left-2 && b.right<=bounds.right+2;
+            })};
+        });
+        if(geometry.count!==3 || geometry.scroll>geometry.visible+2 || !geometry.allInside)
+          throw Error(entry.name+': mobile quick actions clipped at 390px '+JSON.stringify(geometry));
+      }
       // The approved 617 inner page uses its role-safe TrakBot rail action,
       // not the retired fixed 84px assistant over live forms. Test the real
       // click and browser Back path instead of waiting for a hidden launcher.
