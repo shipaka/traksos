@@ -122,11 +122,16 @@ export const MASTER_SPECIALTIES = [
   {id:'tyre',name:'Шиномонтаж'}, {id:'hydraulics',name:'Гидравлика'}, {id:'consult',name:'Консультации'},
 ] as const;
 
-/** Short-lived client-side navigation hint; never grants a role or access. */
-export function rememberGuestService(service: ServiceId | 'inspection', item?: string) {
+/** Client-side route hint, never a permission, role or paid booking. */
+export type GuestAction = ServiceId | 'inspection' | 'ecu' | 'sos' | 'air' |
+  'club' | 'tech' | 'trakbot' | 'garage' | 'training';
+export function rememberGuestAction(service: GuestAction, item?: string) {
   try {
     sessionStorage.setItem('traksos.pendingLandingAction', service);
     if (item) sessionStorage.setItem('traksos.pendingCatalogChoice', service + '/' + item);
     else sessionStorage.removeItem('traksos.pendingCatalogChoice');
   } catch { /* unavailable in strict private browsing */ }
+}
+export function rememberGuestService(service: ServiceId | 'inspection', item?: string) {
+  rememberGuestAction(service, item);
 }

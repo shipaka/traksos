@@ -87,7 +87,10 @@ async function login(page, phoneNum, how) {
     await page.goto(BASE + '/#/login');
   } else if (how === 'client') {
     await page.goto(BASE + '/#/explore/van');
-    await page.locator('.guest-explore-cta').click();
+    const selected=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await selected.waitFor();
+    await selected.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
+    await page.getByRole('dialog',{name:'Регистрация в TrakSOS'}).waitFor();
   } else if (how === 'login') {
     await page.goto(BASE + '/#/login');
   } else {

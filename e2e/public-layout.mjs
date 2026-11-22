@@ -343,7 +343,8 @@ async function run(width, height, mobile, nativePreview = false) {
       const catalogue = page.locator('.guest-site-nav .guest-nav-group').first();
       await catalogue.locator('summary').click();
       await catalogue.locator('a[href="#/explore/van"]').click();
-      await page.getByRole('heading', { name: 'Выездной мастер' }).waitFor();
+      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
+      check(await page.locator('.owner20-home').isVisible(),suffix+': service replaced approved 617 homepage');
       await verifyPage(page, suffix + ':catalogue');
     } else {
       await page.goto(BASE + '/#/');

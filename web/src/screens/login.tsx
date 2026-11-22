@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, type GuestAction } from '../guestCatalog.ts';
 import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 
 const HERO_SLIDES = [
@@ -91,7 +91,15 @@ export function homeFor(roles: string[], intent: Intent): string {
   return '#/as/client';
 }
 
-export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = {}) {
+const GUEST_SERVICE_NAMES: Record<string,string> = {
+  van:'Выездной мастер',tow:'Эвакуация',sto:'СТО и ремонт',
+  ecu:'Специалисты ЭБУ',consult:'Консультация',parts:'Запчасти',
+  insurance:'Страхование',inspection:'Техосмотр',sos:'Помощь SOS',
+  air:'Эфир водителей',club:'Клуб TrakSOS',tech:'ТехБаза'
+};
+export function Login({ driver, entry, serviceContext }: {
+  driver?: boolean; entry?: Intent; serviceContext?: string;
+} = {}) {
   const { reload } = useMe();
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
@@ -108,6 +116,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   }, []);
   // Preserve only an explicitly entered login phone while the user
   // switches to client registration. A direct new registration starts blank.
+  useEffect(() => {
+    if (native.isApp || !serviceContext || !GUEST_SERVICE_NAMES[serviceContext]) return;
+    rememberGuestAction(serviceContext as GuestAction);
+  }, [serviceContext]);
   const [phone, setPhone] = useState(() => {
     try {
       if (entry !== 'register' || sessionStorage.getItem('traksos.authTransition') !== 'register') return '+7 ';
@@ -171,6 +183,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     try {
       sessionStorage.removeItem('traksos.authTransition');
       sessionStorage.removeItem('traksos.authPhoneDraft');
+      // Cancelled service selection must not redirect the user's next
+      // unrelated login into an earlier, abandoned request.
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
     } catch { /* Strict private browsing */ }
     if (entry) go('');
   };
@@ -315,7 +331,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       const selectedDestination: string | undefined = customer ? ({
         van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
         consult: '#/new/consult', insurance: '#/insurance/request/new',
-        parts: '#/shop', inspection: '#/garage'
+        parts: '#/shop', inspection: '#/garage', ecu: '#/new/ecu',
+        sos: '#/sos', air: '#/air', club: '#/air',
+        tech: '#/techbase/driver'
       } as Record<string,string>)[pending ?? ''] : undefined;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
@@ -516,6 +534,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
       </nav>}
       <div>
+        {serviceContext && GUEST_SERVICE_NAMES[serviceContext] &&
+          <span className="label" style={{display:'block',color:'var(--accent)',marginBottom:8}}>Вы выбрали: {GUEST_SERVICE_NAMES[serviceContext]}</span>}
         <h1 id="tr-auth-title">{title}</h1>
         <div className="sub">{sub}</div>
       </div>
