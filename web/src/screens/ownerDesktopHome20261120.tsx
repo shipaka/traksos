@@ -2,6 +2,7 @@ import { rememberGuestService, rememberGuestAction } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { requestTrakBotOpen } from '../trakbotEvents.ts';
 import { TrakBotMascot } from '../trakbotMascot.tsx';
+import { FeatureArtwork } from '../featureArtwork20261122.tsx';
 import './ownerDesktopHome20261120.css';
 
 /** The 20 November owner-approved desktop layout. Mobile stays on its separately approved view. */
@@ -49,7 +50,7 @@ function Feature({item}:{item:typeof features[number]}) {
   return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberAllowed(key)}>
     <div className="owner20-feature-title"><span aria-hidden="true"><OwnerIcon kind={key}/></span><b>{title}</b></div>
     <p>{description}</p>
-    <span className="owner20-feature-illustration" aria-hidden="true" />
+    <FeatureArtwork kind={key} />
     <span className="owner20-feature-cta">{action}　→</span>
   </a>;
 }
