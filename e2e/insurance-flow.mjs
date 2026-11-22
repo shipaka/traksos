@@ -19,7 +19,7 @@ async function acceptPendingOffers(page,token,activeMode) {
   const offers=await response.json();
   // API lists all roles on a multi-role account, but the UI only prompts
   // for documents required by the currently opened workspace.
-  const applicable={client:['client'],insurer:['insurer'],admin:[]};
+  const applicable={owner:['client'],client:['client'],insurer:['insurer'],admin:[]};
   for (const item of offers.filter(x=>x.current && !x.accepted &&
     (x.audience==='privacy' || applicable[activeMode]?.includes(x.audience)))) {
     const dialog=page.getByRole('dialog',{name:item.name});
