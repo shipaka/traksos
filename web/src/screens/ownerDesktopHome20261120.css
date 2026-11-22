@@ -288,7 +288,7 @@
     content:"";
     position:absolute;left:34.5%;top:10px;
     width:456px;height:314px;
-    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-image:url('/owner20-artwork-sprite-retouched.webp')!important;
     background-position:0 0!important;
     background-size:1018px 446px!important;
     background-repeat:no-repeat!important;
@@ -352,7 +352,7 @@
   }
   .guest-app.guest-home .owner20-map-source{
     width:332px;height:165px;display:block;
-    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-image:url('/owner20-artwork-sprite-retouched.webp')!important;
     background-position:-459px 0!important;
     background-size:1018px 446px!important;
     background-repeat:no-repeat!important;
@@ -426,7 +426,7 @@
     width:167px;height:128px;
     z-index:1!important;
     font-size:0!important;
-    background-image:url('/owner20-artwork-sprite.webp')!important;
+    background-image:url('/owner20-artwork-sprite-retouched.webp')!important;
     background-size:1018px 446px!important;
     background-repeat:no-repeat!important;
     background-position:0 -317px!important;
@@ -482,7 +482,7 @@
     content:""!important;display:block!important;
     position:absolute!important;right:0!important;bottom:0!important;
     width:218px;height:168px;
-    background:url('/owner20-artwork-sprite.webp') -797px 0 / 1018px 446px no-repeat!important;
+    background:url('/owner20-artwork-sprite-retouched.webp') -797px 0 / 1018px 446px no-repeat!important;
     font-size:0!important;opacity:1!important;
     pointer-events:none;
     z-index:1;
@@ -514,7 +514,7 @@
    content:"";
    position:absolute;top:12px;left:34.5%;
    width:365px;height:251px;
-   background-image:url('/owner20-artwork-sprite.webp');
+   background-image:url('/owner20-artwork-sprite-retouched.webp');
    background-position:0 0;
    background-size:814px 357px;
    background-repeat:no-repeat;
@@ -523,7 +523,7 @@
  }
  .guest-app.guest-home .owner20-map-source{
    display:block;width:100%;height:100%;min-height:125px;
-   background-image:url('/owner20-artwork-sprite.webp');
+   background-image:url('/owner20-artwork-sprite-retouched.webp');
    background-position:-459px 0;
    background-size:1018px 446px;
    background-repeat:no-repeat;
@@ -533,7 +533,7 @@
    display:block;position:absolute;
    right:0;bottom:0;top:auto;left:auto;
    width:148px;height:125px;
-   background-image:url('/owner20-artwork-sprite.webp');
+   background-image:url('/owner20-artwork-sprite-retouched.webp');
    background-position:0 -317px;
    background-size:1018px 446px;
    background-repeat:no-repeat;
@@ -549,7 +549,7 @@
    display:block;content:""!important;
    position:absolute;right:0;bottom:0;
    width:218px;height:168px;
-   background-image:url('/owner20-artwork-sprite.webp');
+   background-image:url('/owner20-artwork-sprite-retouched.webp');
    background-position:-797px 0;
    background-size:1018px 446px;
    background-repeat:no-repeat;
@@ -566,7 +566,7 @@
  .guest-app.guest-home .owner20-photo::after{
    left:0!important;top:0!important;
    width:100%!important;height:324px!important;
-   background-image:url('/owner20-photo-background-approved.webp')!important;
+   background-image:url('/owner20-photo-background-approved-retouched.webp')!important;
    background-position:center top!important;
    background-size:100% 100%!important;
    background-repeat:no-repeat!important;
