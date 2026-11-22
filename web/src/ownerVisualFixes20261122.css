@@ -1006,3 +1006,47 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     word-break:normal!important;
   }
 }
+
+/* Owner-reviewed role portraits on all real PC workspace banners. */
+/* The photographic cell is naturally sized (400x134) and joined to the
+   whole-card background by a soft mask. No stretching or second truck.
+   Name/CTA stay live DOM nodes on the unobstructed LEFT. The atlas is
+   a review-sized asset; do not claim it is a high-resolution master. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]{
+    isolation:isolate!important;position:relative!important;overflow:hidden!important;
+    background-color:#071b26!important;
+    background-image:linear-gradient(105deg,#071923 0%,#0a2834 61%,#071b25 100%)!important;
+    background-size:100% 100%!important;background-repeat:no-repeat!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]::after{
+    content:""!important;display:block!important;position:absolute!important;
+    right:0!important;top:50%!important;left:auto!important;
+    width:min(400px,52%)!important;height:134px!important;z-index:0!important;
+    background-image:url('/role-art/traksos-role-banners-approved-atlas-20261122.webp')!important;
+    background-size:800px 670px!important;background-repeat:no-repeat!important;
+    background-position:var(--tr-role-art-pos,0 0)!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.75) 20%,#000 42%)!important;
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.75) 20%,#000 42%)!important;
+    transform:translateY(-50%)!important;
+    filter:none!important;opacity:1!important;pointer-events:none!important;
+    border:0!important;box-shadow:none!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]>img,
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]>.traksos-feature-art {
+    display:none!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]>div:first-child{
+    position:relative!important;z-index:2!important;
+    width:min(62%,680px)!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="owner"]{--tr-role-art-pos:0 0}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="driver"]{--tr-role-art-pos:-400px 0}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="admin"]{--tr-role-art-pos:0 -134px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="moderator"]{--tr-role-art-pos:-400px -134px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="insurer"]{--tr-role-art-pos:0 -268px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="inspection"]{--tr-role-art-pos:-400px -268px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="master"]{--tr-role-art-pos:0 -402px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="tow"]{--tr-role-art-pos:-400px -402px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="service"]{--tr-role-art-pos:0 -536px}
+}
