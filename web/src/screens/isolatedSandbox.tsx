@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { setToken } from '../api.ts';
 
+function resetSandboxMode(role: string) {
+  try {
+    if (role === 'admin' || role === 'moderator') localStorage.setItem('traksos.mode', role);
+    else localStorage.removeItem('traksos.mode');
+  } catch { /* private mode */ }
+}
+
 /** Same real TrakSOS application, opened on another origin/database. */
 export function SandboxEnter() {
   const [error, setError] = useState('');
@@ -27,7 +34,7 @@ export function SandboxEnter() {
       // Regular fictitious role tickets must never inherit that authority.
       if (json.role === 'admin') sessionStorage.setItem('traksos.sandboxSupervisorToken', json.token);
       else sessionStorage.removeItem('traksos.sandboxSupervisorToken');
-      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
+      resetSandboxMode(json.role);
       if (typeof json.returnUrl === 'string' && json.returnUrl.startsWith('https://'))
         sessionStorage.setItem('traksos.sandboxReturnUrl', json.returnUrl);
       setToken(json.token);
@@ -81,7 +88,7 @@ export function SandboxModeBadge() {
           typeof data?.token !== 'string' || typeof data?.landing !== 'string' ||
           !data.landing.startsWith('#/'))
         throw new Error(data?.message || 'Не удалось открыть тестовый кабинет');
-      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
+      resetSandboxMode(data.role);
       setToken(data.token);
       location.replace(location.pathname + location.search + data.landing);
       location.reload();
