@@ -59,7 +59,7 @@ try {
    const expectedHero='owner20-photo-brandless-20261122.webp';
    if(!art.photo.includes(expectedHero) ||
       !art.map.includes('owner20-artwork-sprite.webp') ||
-      !art.feature.includes('traksos-service-scenes-desktop-hq.webp') ||
+      !art.feature.includes('owner617-tech-photo.webp') ||
       !art.logo.includes('traksos-brand-logo-approved-618.png') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
       art.sprite?.w!==1018 || art.sprite?.h!==446 ||
