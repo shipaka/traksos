@@ -25,17 +25,28 @@ const checkOverflow=async(page,label)=>{
   if(g.scroll>g.client+3||g.body>g.client+3)
     throw Error(label+': horizontal overflow '+JSON.stringify(g));
 };
-const checkImage=async(locator,label)=>{
-  const img=await locator.first().elementHandle();
-  if(!img)throw Error(label+': image element missing');
-  const state=await img.evaluate(async i=>{
-    if(!i.complete)await i.decode().catch(()=>{});
-    const r=i.getBoundingClientRect();
-    return {complete:i.complete,width:i.naturalWidth,height:i.naturalHeight,visible:r.width>40&&r.height>30};
+const checkRoleBanner=async(page,locator,label)=>{
+  // Current 617 cabinet uses a masked role illustration as a full card
+  // background. Its legacy <img> is intentionally hidden to prevent two
+  // overlapping trucks. Check the VISIBLE role art, never hidden fallback.
+  const state=await locator.evaluate(el=>{
+    const card=el.getBoundingClientRect();
+    const art=getComputedStyle(el,'::after');
+    const heading=el.querySelector('h1')?.getBoundingClientRect();
+    return {role:el.getAttribute('data-role-art'),image:art.backgroundImage,
+      size:art.backgroundSize,display:art.display,
+      width:card.width,height:card.height,
+      textLeft:heading?.left??0,textRight:heading?.right??0,cardRight:card.right};
   });
-  if(!state.complete||state.width<100||!state.visible)
-    throw Error(label+': approved artwork missing '+JSON.stringify(state));
+  if(state.role!=='owner'||!state.image.includes('traksos-role-banners-approved-atlas-20261122.webp')||
+     state.display==='none'||state.width<500||state.height<105||
+     state.textRight>=state.cardRight-70)
+    throw Error(label+': approved role illustration missing or title obscured '+JSON.stringify(state));
+  const file=await page.request.get(BASE+'/role-art/traksos-role-banners-approved-atlas-20261122.webp');
+  if(!file.ok()||(await file.body()).byteLength<10000)
+    throw Error(label+': role art is not available to the browser');
 };
+
 try{
   for(const width of [390,1440]){
     const nativeApp=width<900;
@@ -75,7 +86,7 @@ try{
     }else{
       const pc=page.locator('main.approved-pc.approved-pc-client');
       await pc.waitFor({state:'visible',timeout:15000});
-      await checkImage(pc.locator('.approved-pc-heading>img'),'617 signed-in client header');
+      await checkRoleBanner(page,pc.locator('.approved-pc-heading'),'617 signed-in client header');
       if(await pc.locator('.desktop-hero,.desktop-quick-links').count())
         throw Error('Old desktop-hero leaked into approved PC cabinet');
       if(!await pc.locator('a[href="#/sos"]').count())
