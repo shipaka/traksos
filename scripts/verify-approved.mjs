@@ -479,7 +479,10 @@ expect(landing.includes('RuStore') && !landing.includes('Google Play'), 'only Ru
 expect(native.includes('BundledWeb(this)'), 'APK loads bundled web interface');
 expect(labels.includes('Шиномонтаж') && labels.includes('Эвакуатор') && labels.includes('Электрик'), 'truck services remain present');
 
-const publicPart = landing.slice(landing.indexOf('if (!intent) return ('), landing.indexOf('\n  return (\n    <main>', landing.indexOf('if (!intent) return (')));
+const publicStart = landing.indexOf('const mobileLanding = (');
+const publicEnd = landing.indexOf('\n  if (!intent) return desktopPublic', publicStart);
+expect(publicStart >= 0 && publicEnd > publicStart, 'browser auth still preserves the existing mobile guest landing');
+const publicPart = landing.slice(publicStart, publicEnd);
 for (const word of ['Аптека', 'Химчистка', 'Авиабилеты', 'Покупка авиабилетов', 'Магазин лекарств']) {
   expect(!publicPart.includes(word), 'no unrelated public services: ' + word);
 }

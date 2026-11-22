@@ -262,10 +262,19 @@ async function run(width, height, mobile, nativePreview = false) {
       suffix + ': all four partner role options remain accessible');
     check(await page.getByRole('navigation',{name:'Тип регистрации'}).count() === 0,
       suffix + ': partner page repeats client registration tab');
-    const partnerImage=page.locator(mobile ? '.guest-partner-mobile-preview' : '.auth-desktop-showcase-photo');
-    if(await partnerImage.isVisible())
-      check((await partnerImage.evaluate(el=>getComputedStyle(el).backgroundImage)).includes('tracksos-approved-hero-owner-20261119'),
-        suffix + ': partner signup must start with the owner-approved 19 Nov truck artwork');
+    if (nativePreview) {
+      const partnerImage = page.locator(mobile ? '.guest-partner-mobile-preview' : '.auth-desktop-showcase-photo');
+      if (await partnerImage.isVisible())
+        check((await partnerImage.evaluate(el => getComputedStyle(el).backgroundImage)).includes('tracksos-approved-hero-owner-20261119'),
+          suffix + ': native signup must keep its approved truck artwork');
+    } else {
+      check(await page.locator('.tr-auth-panel[role="dialog"][aria-modal="true"]').isVisible(),
+        suffix + ': browser signup must be an accessible overlay');
+      check(await page.locator('.auth-desktop-showcase:visible,.guest-partner-mobile-preview:visible').count() === 0,
+        suffix + ': duplicate cinematic illustration returned inside registration');
+      check(await page.locator(width >= 900 ? '.owner20-home' : '.public-home').isVisible(),
+        suffix + ': opening signup must preserve the approved guest page beneath');
+    }
     check(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
       suffix + ': default partner role must not be preselected');
     await page.getByRole('button',{name:'Мастер',exact:true}).click();
