@@ -41,28 +41,30 @@ try {
        const image=await createImageBitmap(await res.blob()).catch(()=>null);
        return {status:res.status,w:image?.width??0,h:image?.height??0};
      };
-     const [sprite,approvedHero,approvedLogo]=await Promise.all([
+     const [sprite,approvedHero,approvedLogo,brandlessHero]=await Promise.all([
        measure('/owner20-artwork-sprite.webp'),
        measure('/owner20-photo-background-approved.webp'),
        measure('/traksos-brand-logo-approved-618.png'),
+       measure('/owner20-photo-brandless-20261122.webp'),
      ]);
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
      return {
        photo:pick(photo,'::after'),map:pick(map),feature:pick(feature),
-       logo:logo?.querySelector('img')?.getAttribute('src')||'',sprite,approvedHero,approvedLogo,
+       logo:logo?.querySelector('img')?.getAttribute('src')||'',sprite,approvedHero,approvedLogo,brandlessHero,
        head:rect('.owner20-top'),hero:rect('.owner20-hero'),
        quick:rect('.owner20-quick'),features:rect('.owner20-features'),
        bottom:rect('.owner20-bottom'),coverage:rect('.owner20-map'),
      };
    });
-   const expectedHero=width>=1281?'owner20-photo-background-approved.webp':'owner20-artwork-sprite.webp';
+   const expectedHero='owner20-photo-brandless-20261122.webp';
    if(!art.photo.includes(expectedHero) ||
       !art.map.includes('owner20-artwork-sprite.webp') ||
-      !art.feature.includes('owner20-artwork-sprite.webp') ||
+      !art.feature.includes('traksos-service-scenes-desktop-hq.webp') ||
       !art.logo.includes('traksos-brand-logo-approved-618.png') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
       art.sprite?.w!==1018 || art.sprite?.h!==446 ||
       art.approvedHero?.w!==1536 || art.approvedHero?.h!==324 ||
+      art.brandlessHero?.w!==1536 || art.brandlessHero?.h!==324 ||
       art.approvedLogo?.w!==274 || art.approvedLogo?.h!==46)
      throw Error(width+': approved 617.png image or loaded size regressed '+JSON.stringify(art));
    if(width===1536){
