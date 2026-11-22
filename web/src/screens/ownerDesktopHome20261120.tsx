@@ -7,7 +7,7 @@ const primary = [
   ['⚒','Выездной мастер','Диагностика и ремонт на месте','van'],
   ['↗','Эвакуация','Быстрая и безопасная','tow'],
   ['⌂','СТО','Ремонт и обслуживание','sto'],
-  ['▦','ЭБУ','Диагностика и ремонт электронных блоков','ecu'],
+  ['◉','Шиномонтаж','Выездной ремонт колёс','tyre'],
   ['◉','Консультация','Профессиональная помощь онлайн','consult']
 ] as const;
 const features = [
@@ -18,9 +18,10 @@ const features = [
   ['▤','Техосмотр','Оформление и прохождение для грузового транспорта','inspection','Записаться']
 ] as const;
 function rememberAllowed(key:string){
+  if(key==='tyre') { rememberGuestService('van','tyre'); return; }
   if(key==='van'||key==='tow'||key==='sto'||key==='consult'||key==='parts'||key==='insurance'||key==='inspection') rememberGuestService(key);
 }
-function route(key:string) { return '#/explore/' + key; }
+function route(key:string) { return '#/explore/' + (key === 'tyre' ? 'van' : key); }
 function OwnerIcon({kind}:{kind:string}) {
   const props={viewBox:'0 0 48 48',fill:'none',stroke:'currentColor',strokeWidth:2.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true as const};
   let lines;
@@ -28,6 +29,7 @@ function OwnerIcon({kind}:{kind:string}) {
     case 'van': lines=<><path d="M30 5a12 12 0 0 0-10 18L7 36a5 5 0 0 0 7 7l13-13A12 12 0 0 0 43 15l-9 9-9-3-3-9Z"/><circle cx="10.5" cy="39.5" r="1"/></>;break;
     case 'tow': lines=<><path d="M4 34h29l8 6v4H4V34Z"/><path d="M9 34V23h14l8 11M12 23V12h15l6 11M23 12l-6-7M29 8h11v8l-5 5h-5"/><circle cx="13" cy="43" r="3.4"/><circle cx="35" cy="43" r="3.4"/><path d="M40 21v6m-4 0h8"/></>;break;
     case 'sto': lines=<><path d="M3 19 24 5l21 14v25H3V19Z"/><path d="M13 44V25h22v19M13 33h22"/></>;break;
+    case 'tyre': lines=<><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="5"/><path d="M24 5v7m0 24v7M5 24h7m24 0h7M10 10l5 5m18 18 5 5M38 10l-5 5M15 33l-5 5"/></>;break;
     case 'ecu': lines=<><rect x="10" y="10" width="28" height="28" rx="3"/><path d="M16 4v6m8-6v6m8-6v6M16 38v6m8-6v6m8-6v6M4 16h6m-6 8h6m-6 8h6m28-16h6m-6 8h6m-6 8h6"/><rect x="17" y="17" width="14" height="14" rx="2"/></>;break;
     case 'consult': lines=<><path d="M5 25V23a19 19 0 0 1 38 0v3M5 25v10c0 5 4 8 8 8h4V27h-4a8 8 0 0 0-8 8m38-10v10c0 5-4 8-8 8h-4V27h4a8 8 0 0 1 8 8"/></>;break;
     case 'tech': lines=<><path d="M8 7h27a5 5 0 0 1 5 5v29H13a5 5 0 0 0 0-10h27"/><path d="M8 7v29a5 5 0 0 0 5 5m5-26h15m-15 6h15m-15 6h11"/></>;break;
