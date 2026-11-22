@@ -518,3 +518,15 @@
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
+
+@media (max-width: 899px) {
+  html.traksos-browser .app[class*="role-"] .site-footer > [role="note"] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+  }
+  html.traksos-browser .app[class*="role-"] .site-footer > [role="note"] button {
+    scroll-margin-block-end: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+}

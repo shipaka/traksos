@@ -307,6 +307,23 @@ try{
        throw Error('Old profile heading duplicates the approved inner hero');
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     if(c.id === 'tow' && width === 390){
+       const notice = page.locator('footer [role="note"]');
+       const dismiss = notice.getByRole('button',{name:'Понятно'});
+       const nav = page.locator('nav.tabbar');
+       const buttonBox = await dismiss.boundingBox();
+       const navBox = await nav.boundingBox();
+       if(!buttonBox || !navBox || buttonBox.y + buttonBox.height > navBox.y)
+         throw Error('Cookie acknowledgement is covered by mobile navigation at 390px');
+       await dismiss.click({trial:true});
+       await page.setViewportSize({width:320,height:640});
+       await dismiss.evaluate(el => el.scrollIntoView({block:'center',behavior:'instant'}));
+       await dismiss.click();
+       await notice.waitFor({state:'detached'});
+       await page.reload();
+       await page.locator('footer.site-footer').waitFor({state:'attached'});
+       if(await notice.count())throw Error('Cookie acknowledgement reappeared after reload');
+     }
      // The inspection API accepts both insurers and inspection operators.
      // Verify the partner UI applies the SAME role policy on direct navigation.
      if(c.id==='insurer'){
