@@ -49,8 +49,8 @@
  }
  html:not(.traksos-native) .account-profile-page .account-profile-visual img{
    position:absolute;right:0;top:0;display:block;
-   width:69%;height:100%;object-fit:cover;object-position:57% 55%;
-   filter:saturate(.74) brightness(.65) contrast(1.13);
+   width:69%;height:100%;object-fit:cover;object-position:64% 48%;
+   filter:saturate(.84) brightness(.78) contrast(1.08);
    -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 31%,#000 100%);
    mask-image:linear-gradient(90deg,transparent 0%,#000 31%,#000 100%);
    transform:scale(1.02);
@@ -291,12 +291,11 @@
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-invite:before{
    content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-   background-image:
-     linear-gradient(90deg,#08202bf0 2%,#0b2538d1 43%,#09222a59 100%),
-     url('/vehicles/models/volvo-fh-2013.webp');
-   background-position:center,right center;
-   background-size:cover,cover;background-repeat:no-repeat;
-   filter:saturate(.85);
+   background:
+     radial-gradient(ellipse at 88% 26%,#2765728c,transparent 50%),
+     repeating-linear-gradient(135deg,transparent 0,transparent 34px,#ffffff09 35px,#ffffff09 36px,transparent 37px,transparent 68px),
+     linear-gradient(105deg,#0a202b,#123541);
+   filter:none;
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-invite:hover{
    border-color:#f4a573!important;transform:translateY(-3px);
