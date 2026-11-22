@@ -822,6 +822,17 @@ expect(
   'approved design index points to 617 and the 20 Nov canonical decisions, not retired 19 Nov PC design'
 );
 
+
+// Guard the current desktop/mobile split. An old PR must not silently
+// restore the obsolete 1000px switch or hide the approved browser admin desk.
+const pcWorkspaceSource = await read('web/src/screens/approvedPcCabinets20261120.tsx');
+expect(
+  pcWorkspaceSource.includes("matchMedia('(min-width: 900px)')") &&
+  pcWorkspaceSource.includes("role === 'admin' && !native.isApp") &&
+  !pcWorkspaceSource.includes("matchMedia('(min-width: 1000px)')"),
+  'approved PC/mobile boundary remains 900px and browser admin uses approved workspace'
+);
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
