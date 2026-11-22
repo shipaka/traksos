@@ -45,7 +45,7 @@ def run() -> None:
                 target = ROOT / Path(asset['url']).name
                 if args.write:
                     crop = ImageOps.fit(source, size, method=Image.Resampling.LANCZOS,
-                                        centering=(0.5, 0.53))
+                                        centering=(0.5, 0.25 if key == 'insurance' else 0.53))
                     crop.save(target, format='WEBP', quality=quality, method=6)
                 if not target.is_file():
                     raise RuntimeError(f'{key}: missing {target}')
