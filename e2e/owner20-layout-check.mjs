@@ -92,7 +92,8 @@ try {
      const link=page.locator('.owner20-home a[href="#/explore/'+key+'"]:visible').first();
      await link.waitFor();await link.click();
      await page.waitForURL('**/#/explore/'+key);
-     await page.locator('.guest-explore-hero h1').waitFor();
+     await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
+     if(!await page.locator('.owner20-home').isVisible())throw Error(key+': lost approved 617 home in service auth');
     }
     for(const [selector,target] of [['.owner20-signin','#/login'],['.owner20-topnav a[href="#/join"]','#/join']]){
      await page.goto(BASE+'/#/');
