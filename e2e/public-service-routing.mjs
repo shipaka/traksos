@@ -2,6 +2,7 @@
 // Real Chromium clicks. Do not reintroduce the retired guest bottom tabs,
 // duplicate ECU, guest tours, or public access to protected services.
 import {chromium} from 'playwright';
+import {mkdir} from 'node:fs/promises';
 
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if(!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))throw Error('Local CI only');
@@ -211,11 +212,24 @@ try {
 
     // Published legal documents and About remain public. The old guide/help
     // routes must never return old pink/white pages for anonymous visitors.
+    const legalShots='e2e/shots/public-documents';
+    await mkdir(legalShots,{recursive:true});
     for(const [route,heading] of [
-      ['company','Компания TrakSOS'],['offers','Оферты и документы']
+      ['company','Компания TrakSOS'],['offers','Оферты и документы'],
+      ['rules','Правила площадки'],['offer/privacy',null],
+      ['offer/client',null],['offer/performer',null]
     ]){
-      await page.goto(BASE+'/#/'+route);
-      await page.getByRole('heading',{name:heading}).waitFor();
+      await page.goto(BASE+'/#/'+(route.startsWith('offer/')?'offers':''));
+      const links=route.startsWith('offer/')?page.locator('.guest-info-grid'):page.locator('.site-footer');
+      await links.locator('a[href="#/'+route+'"]').click();
+      await page.waitForURL('**/#/'+route);
+      if(heading) await page.getByRole('heading',{name:heading,exact:true}).waitFor();
+      else {
+        const document=page.locator('main.public-offer-page');
+        await document.locator('.offer-text, .offer-unpublished').waitFor();
+        check(!await document.getByRole('alert').count(),route+': legal document request failed');
+      }
+      await page.screenshot({path:legalShots+'/'+route.replace('/','-')+'-'+width+'.png',animations:'disabled'});
     }
     for(const route of ['help','explore/guide','explore/pricing']){
       await page.goto(BASE+'/#/'+route);

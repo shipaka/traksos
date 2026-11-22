@@ -1144,10 +1144,13 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     right:92px!important;top:7px!important;
     height:112px!important;width:72px!important;
   }
-  .guest-app.guest-home .owner20-bottom-app>b,
-  .guest-app.guest-home .owner20-bottom-app>p,
-  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
-    display:block;max-width:calc(100% - 174px)!important;white-space:normal;
+  #public-home .owner20-bottom-app>:is(b,p,.owner20-store){
+    display:block!important;
+    width:calc(100% - 178px)!important;
+    max-width:calc(100% - 178px)!important;
+    min-width:0!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere;
   }
   .guest-app.guest-home .traksos-app-phone-title,
   .guest-app.guest-home .owner20-bottom-card .traksos-app-phone-title b{
