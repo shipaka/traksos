@@ -173,7 +173,7 @@ export function PhoneSection() {
       <h1>Телефон и вход</h1>
       <div className="card">
         <dl className="kv"><dt>Номер</dt><dd>{fmtPhone(me!.phone)}</dd></dl>
-        <span className="note">Вход — по этому номеру и коду из SMS. Клиенты ваш номер не видят: звонки идут через TrakSOS.</span>
+        <span className="note">Вход — по номеру телефона и паролю. SMS-код нужен только при регистрации и восстановлении доступа. Клиенты ваш личный номер не видят: связь проходит через TrakSOS.</span>
       </div>
       <a className="btn ghost" href="#/support/new">Сменить номер — через поддержку</a>
       <span className="note">Номер меняем только после проверки, что это вы: на нём ваши выплаты и рейтинг.</span>
