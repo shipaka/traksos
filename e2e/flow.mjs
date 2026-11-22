@@ -183,6 +183,8 @@ await shot(m, '02-master-online');
 
 // Клиент
 const k = await mk();
+// Exercise the approved native Android client workspace rather than mobile-browser fallback.
+await k.addInitScript(() => { window.TrakSOSNative = { postMessage() {} }; });
 await login(k, '+79991112233', 'client');
 // Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
