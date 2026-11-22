@@ -1295,7 +1295,7 @@ export function Profile() {
       </a>
       <div className="card account-profile-facts">
         <span className="account-profile-section-index">ВАШ АККАУНТ</span>
-        <h2>Обзор</h2>
+        <h2><span className="account-profile-desktop-label">Обзор</span><span className="account-profile-mobile-label">Данные учётной записи</span></h2>
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(me.phone)}</dd>
           <dt>Рейтинг</dt><dd>{me.rating ? `${me.rating.toFixed(2)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
@@ -1308,7 +1308,7 @@ export function Profile() {
         if (await run(() => (patchMe({ name, companyName: company || null, companyInn: inn || null })), 'Сохранено')) reload();
       }}>
         <span className="account-profile-section-index">01 / ЛИЧНЫЕ ДАННЫЕ</span>
-        <div className="account-profile-section-heading"><h2>Контактная информация</h2><p>Изменения будут сохранены только после подтверждения.</p></div>
+        <div className="account-profile-section-heading"><h2><span className="account-profile-desktop-label">Контактная информация</span><span className="account-profile-mobile-label">Личные данные</span></h2><p>Изменения будут сохранены только после подтверждения.</p></div>
         <Field label="Имя"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         {!me.owner_id && !me.roles.includes('driver') && (
           <>
@@ -1320,7 +1320,7 @@ export function Profile() {
       </form>
       <div id="account-profile-security" className="card stack account-profile-security">
         <span className="account-profile-section-index">02 / БЕЗОПАСНОСТЬ</span>
-        <h2>Защита аккаунта</h2>
+        <h2><span className="account-profile-desktop-label">Защита аккаунта</span><span className="account-profile-mobile-label">Безопасность аккаунта</span></h2>
         <button type="button" className="btn ghost" onClick={() => {
           setPasswordOpen(value => !value);
           setPasswordError('');
@@ -1377,7 +1377,7 @@ export function Profile() {
       </div>
       <div id="account-profile-settings" className="card stack account-profile-settings">
         <span className="account-profile-section-index">03 / НАСТРОЙКИ</span>
-        <h2>Интерфейс и доступ</h2>
+        <h2><span className="account-profile-desktop-label">Интерфейс и доступ</span><span className="account-profile-mobile-label">Настройки приложения</span></h2>
         <label className="row">
           <input type="checkbox" checked={reducedMotion} onChange={e => toggleMotion(e.target.checked)} />
           <span>Уменьшить анимацию</span>
