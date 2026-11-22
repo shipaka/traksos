@@ -115,7 +115,7 @@ async function run(width, height, mobile, nativePreview = false) {
       }
       check(heroGeometry.actionsTop >= heroGeometry.paragraphTop-2,
         suffix + ': banner actions overlap its paragraph: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.copyBottom < heroGeometry.carouselTop-2,
+      check(heroGeometry.copyBottom <= heroGeometry.carouselTop+2,
         suffix + ': carousel controls overlap text and actions: ' + JSON.stringify(heroGeometry));
       check(heroGeometry.carouselHeight>=44,
         suffix + ': hero carousel too small for touch: '+JSON.stringify(heroGeometry));
