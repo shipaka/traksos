@@ -40,9 +40,15 @@ try {
       throw Error(width + ': password login missing');
     await page.screenshot({ path: 'e2e/shots/auth-overlay/login-' + width + '.png', animations: 'disabled' });
 
+    // Switching from login to client registration must not wipe the entered
+    // phone, and must not accidentally send an SMS or start partner onboarding.
+    await dialog.locator('input[type=tel]').fill('+7 999 111 22 33');
     await dialog.getByRole('button', { name: 'Нет аккаунта? Зарегистрироваться' }).click();
     await page.waitForURL('**/#/register');
-    await page.getByRole('dialog', { name: 'Регистрация в TrakSOS' }).waitFor();
+    const signup = page.getByRole('dialog', { name: 'Регистрация в TrakSOS' });
+    await signup.waitFor();
+    const carried = (await signup.locator('input[type=tel]').inputValue()).replace(/\\D/g,'');
+    if (carried !== '79991112233') throw Error(width + ': phone lost when switching from login to registration: ' + carried);
     if (!await landing.isVisible()) throw Error(width + ': signup replaced public landing');
     await page.screenshot({ path: 'e2e/shots/auth-overlay/register-' + width + '.png', animations: 'disabled' });
 
@@ -62,6 +68,12 @@ try {
     await page.waitForURL('**/#/');
     if (await page.getByRole('dialog').count()) throw Error(width + ': Escape did not close modal');
     if (!await landing.isVisible()) throw Error(width + ': landing missing after closing modal');
+    // Never auto-fill an unrelated user's phone on a direct registration visit.
+    await page.goto(BASE + '/#/register');
+    const direct = page.getByRole('dialog', { name: 'Регистрация в TrakSOS' });
+    await direct.waitFor();
+    if (await direct.locator('input[type=tel]').inputValue() !== '+7 ')
+      throw Error(width + ': direct registration leaked a previous phone');
     await page.goto(BASE + '/#/login');
     await page.getByRole('dialog', { name: 'Вход по номеру телефона' }).waitFor();
     await page.locator('.tr-auth-backdrop').click({ position: {x: 5, y: 5} });
