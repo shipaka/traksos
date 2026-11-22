@@ -32,13 +32,20 @@ try {
     await page.addInitScript(t=>localStorage.setItem('traksos.token',t),token);
     await page.goto(BASE+'/'+initial,{waitUntil:'domcontentloaded'});
     await page.locator('.account-menu > summary').waitFor();
-    // Previous E2E tests publish a new client offer. All synthetic users must
-    // accept it through the actual UI before their navigation can be audited.
+    // Previous tests may publish a client offer. A user can have multiple
+    // roles, but only the active cabinet's terms may cover its navigation.
     const offersResponse = await fetch(BASE+'/api/me/offers',{
       headers:{authorization:'Bearer '+token}});
     if(!offersResponse.ok)throw Error(kind+': failed loading required offer status');
     const offers = await offersResponse.json();
-    const pendingOffers = offers.filter(item=>item.current && !item.accepted);
+    const audienceByCabinet={
+      owner:['client'],driver:['client'],master:['performer'],tow:['performer'],
+      service:['performer'],master_service:['performer'],
+      insurer:['insurer'],admin:[],moderator_master:[]
+    };
+    const activeAudiences=audienceByCabinet[kind]??[];
+    const pendingOffers=offers.filter(item=>item.current && !item.accepted &&
+      (item.audience==='privacy'||activeAudiences.includes(item.audience)));
     for(const item of pendingOffers){
       const modal=page.getByRole('dialog',{name:item.name});
       await modal.waitFor({state:'visible',timeout:12000});
