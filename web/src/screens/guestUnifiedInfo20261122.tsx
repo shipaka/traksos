@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { get, ApiError } from '../api.ts';
 import { Markdown } from '../markdown.tsx';
 
-type GuestInfoKind = 'company' | 'offers' | 'help' | 'guide' | 'pricing' | 'rules' | `offer:${string}`;
+export type GuestInfoKind = 'company' | 'offers' | 'help' | 'guide' | 'pricing' | 'rules' | `offer:${string}`;
 type LegalDocument = { version: string; effective_at: string; body: string };
 
 const DOCUMENTS = [
