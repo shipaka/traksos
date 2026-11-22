@@ -1403,3 +1403,145 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
   html.traksos-native .app.role-client .and19-services>a,
   .guest-app.guest-home .owner20-quick>a{transition:none!important}
 }
+
+/* 23 Nov Android native welcome: NOT a squeezed desktop website */
+html.traksos-native .guest-app .tr-native-welcome{
+  box-sizing:border-box!important;display:flex!important;
+  flex-direction:column!important;gap:12px!important;
+  width:100%!important;max-width:600px!important;
+  min-width:0!important;margin:0 auto!important;
+  padding:12px 14px max(20px,env(safe-area-inset-bottom))!important;
+  color:#f5f9fb!important;background:#091b26!important;
+}
+html.traksos-native .guest-app .tr-native-welcome-stage{
+  box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;
+  gap:10px;position:relative;padding:15px 15px 17px;
+  min-width:0;border:1px solid #395869;border-radius:20px;
+  background:linear-gradient(158deg,#122c3c,#071924 80%);
+  box-shadow:0 8px 24px #020b1666;
+}
+html.traksos-native .guest-app .tr-native-welcome-kicker{
+  font-size:10px;font-weight:850;letter-spacing:1.2px;color:#f0ba6c;
+}
+html.traksos-native .guest-app .tr-native-welcome-photo{
+  box-sizing:border-box;display:flex;justify-content:center;align-items:center;
+  width:100%;height:clamp(145px,29vh,235px);min-width:0;
+  padding:6px 8px;border-radius:14px;overflow:hidden;
+  background:radial-gradient(ellipse at 58% 65%,#284554 0%,#0c2230 75%);
+}
+html.traksos-native .guest-app .tr-native-welcome-photo img{
+  display:block;width:100%;height:100%;max-width:100%;
+  object-fit:contain!important;object-position:center center!important;
+  transform:none!important;filter:drop-shadow(0 7px 13px #0008);
+}
+html.traksos-native .guest-app .tr-native-welcome-stage h1{
+  font-size:clamp(23px,6.1vw,31px)!important;line-height:1.12!important;
+  font-weight:850;letter-spacing:-.4px;margin:2px 0!important;color:#f4f8fa;
+}
+html.traksos-native .guest-app .tr-native-welcome-stage h1 em{
+  color:#e8ad51!important;font-style:normal;
+}
+html.traksos-native .guest-app .tr-native-welcome-stage p{
+  font-size:13px;line-height:1.45;margin:0;color:#c5d6de;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions a{
+  display:flex;justify-content:center;align-items:center;text-align:center;
+  min-width:0;min-height:52px;padding:8px;border-radius:13px;
+  text-decoration:none;font-size:13px;font-weight:850;line-height:1.2;
+  border:1px solid #d9a457;color:#20180d;
+  background:linear-gradient(145deg,#f1bb67,#d99135);
+  transition:transform .14s ease,filter .14s ease;
+  touch-action:manipulation;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions .tr-native-welcome-register{
+  background:#183342;border-color:#577786;color:#e5f5f6;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions a:active{transform:scale(.985)}
+html.traksos-native .guest-app .tr-native-welcome-actions a:focus-visible,
+html.traksos-native .guest-app .tr-native-welcome-services summary:focus-visible,
+html.traksos-native .guest-app .tr-native-welcome-service-list a:focus-visible,
+html.traksos-native .guest-app .tr-native-welcome-partner:focus-visible{
+  outline:3px solid #e8ad51!important;outline-offset:2px
+}
+html.traksos-native .guest-app .tr-native-welcome-stage>small{
+  font-size:10px;color:#9bb4bd;line-height:1.3
+}
+html.traksos-native .guest-app .tr-native-welcome-services{
+  display:block!important;width:100%;min-width:0;
+  border:1px solid #3c5c6c;border-radius:14px;overflow:hidden;
+  background:#102735;
+}
+html.traksos-native .guest-app .tr-native-welcome-services>summary{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-height:54px;padding:13px;list-style:none;
+  color:#f2f7f8;font-size:14px;font-weight:800;cursor:pointer;
+  touch-action:manipulation;
+}
+html.traksos-native .guest-app .tr-native-welcome-services>summary::-webkit-details-marker{display:none}
+html.traksos-native .guest-app .tr-native-welcome-services>summary>span{
+  font-size:11px;flex:none;color:#e9b76e;font-weight:650
+}
+html.traksos-native .guest-app .tr-native-welcome-services[open]>summary{
+  border-bottom:1px solid #476773
+}
+html.traksos-native .guest-app .tr-native-welcome-services[open]>summary>span>span{
+  display:inline-block;transform:rotate(180deg)
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list{
+  box-sizing:border-box;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px;padding:9px;
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{
+  box-sizing:border-box;position:relative;display:flex!important;
+  align-items:center;justify-content:flex-start;flex-direction:row!important;
+  gap:8px;min-height:59px!important;min-width:0;
+  border:1px solid #456474!important;border-radius:11px!important;
+  padding:8px!important;text-align:left!important;
+  background:#142f3e!important;color:#f6f8f9!important;
+  text-decoration:none;touch-action:manipulation;
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list .public-service-icon{
+  display:grid;place-items:center;flex:0 0 25px;
+  width:25px;height:25px;color:#e8ad51
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list .public-service-icon svg{
+  width:24px;height:24px
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list strong{
+  min-width:0;flex:1;font-size:12px;line-height:1.25;overflow-wrap:anywhere
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list>a>span:last-child{
+  color:#e8ad51;font-size:18px
+}
+html.traksos-native .guest-app .tr-native-welcome-partner{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:12px 13px;min-height:48px;
+  font-size:12px;font-weight:750;line-height:1.25;
+  color:#d8ecf2;text-decoration:none;
+  border:1px solid #3e5f6e;border-radius:12px;background:#102735
+}
+html.traksos-native .guest-app .tr-native-welcome-partner>span{
+  color:#e8ad51;font-size:19px
+}
+html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
+  animation:tr-native-entry .25s ease-out both
+}
+@keyframes tr-native-entry{
+  from{opacity:.65;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:350px){
+  html.traksos-native .guest-app .tr-native-welcome{padding:9px!important;gap:9px!important}
+  html.traksos-native .guest-app .tr-native-welcome-stage{padding:12px!important}
+  html.traksos-native .guest-app .tr-native-welcome-photo{height:130px}
+  html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{gap:5px;padding:6px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
+    animation:none!important
+  }
+  html.traksos-native .guest-app .tr-native-welcome-actions a{transition:none!important}
+}
