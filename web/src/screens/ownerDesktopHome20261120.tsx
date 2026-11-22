@@ -53,14 +53,19 @@ function Feature({item}:{item:typeof features[number]}) {
 /** Shared exact public navigation for every desktop guest route. The Android
  * and narrow-browser header remains its separately approved composition. */
 export function ApprovedPublicHeader() {
-  return <header className="owner20-top">
+  return <header className="owner20-top" onKeyDown={event=>{
+    if(event.key==='Escape'){
+      event.currentTarget.querySelectorAll('details[open]').forEach(node=>node.removeAttribute('open'));
+      event.preventDefault();
+    }
+  }}>
       <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
-        <details><summary>О платформе</summary><div><a href="#/company">О нас</a><a href="#/explore/guide">Как работает</a><a href="#/explore/pricing">Комиссии</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]}>{item[1]}</a>)}<a href="#/explore/parts">Запчасти</a><a href="#/explore/insurance">Страхование</a></div></details>
-        <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
-        <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
+        <details name="owner20-public-menu"><summary>О платформе</summary><div><a href="#/company">О нас</a><a href="#/explore/guide">Как работает</a><a href="#/explore/pricing">Комиссии</a></div></details>
+        <details name="owner20-public-menu"><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]}>{item[1]}</a>)}<a href="#/explore/parts">Запчасти</a><a href="#/explore/insurance">Страхование</a></div></details>
+        <details name="owner20-public-menu"><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
+        <details name="owner20-public-menu"><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
         <a href="#/help">Поддержка</a>
       </nav>
       <details className="owner20-compact-menu">
