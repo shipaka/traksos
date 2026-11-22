@@ -258,18 +258,24 @@ try {
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
 
-    // The six approved live tiles are real links to each feature's truthful
-    // guest preview, not dead cards or an unexpected login redirect.
+    // The approved live tiles open a contextual password dialog directly
+    // above the same public page; no intermediate feature preview is allowed.
     if (width === 390 || width === 1672) {
       for (const id of ['sos', 'air', 'sto', 'ecu', 'parts', 'insurance']) {
         const link = page.locator('.public-service-' + id);
         assert(await link.getAttribute('href') === '#/explore/' + id,
           width + 'px: public tile ' + id + ' changed its approved destination');
         await link.click();
-        await page.locator('.guest-explore-hero h1').waitFor({ timeout: 10000 });
+        const modal=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+        await modal.waitFor({timeout:10000});
         assert(new URL(page.url()).hash === '#/explore/' + id,
-          width + 'px: public ' + id + ' did not open its own feature page');
-        await page.locator('.guest-explore-back').first().click();
+          width + 'px: public ' + id + ' lost its service URL');
+        assert(await page.locator('.public-landing').isVisible() &&
+          await page.locator('.guest-explore-hero:visible').count()===0,
+          width + 'px: service returned old intermediate page '+id);
+        assert(await modal.getByText('Вы выбрали:',{exact:false}).isVisible(),
+          width + 'px: selected service not shown in auth '+id);
+        await modal.getByRole('button',{name:'Закрыть окно'}).click();
         await page.locator('.public-service-tiles').waitFor();
         assert(new URL(page.url()).hash === '#/',
           width + 'px: returning from ' + id + ' failed');
@@ -281,10 +287,11 @@ try {
       assert(await link.getAttribute('href') === '#/explore/tech',
         width + 'px: TechBase feature must be a working direct link');
       await link.click();
-      await page.getByRole('heading', { name: 'ТехБаза TrakSOS' }).waitFor({ timeout: 10000 });
+      const modal=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+      await modal.waitFor({timeout:10000});
       assert(new URL(page.url()).hash === '#/explore/tech',
-        width + 'px: TechBase must reach its own feature preview');
-      await page.locator('.guest-explore-back').first().click();
+        width + 'px: TechBase must open contextual login');
+      await modal.getByRole('button',{name:'Закрыть окно'}).click();
       await page.locator('.public-service-tiles').waitFor();
     }
 
