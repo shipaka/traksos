@@ -24,6 +24,8 @@
  .owner20-topnav details>div a:hover,.owner20-topnav>a:hover{color:#ff995c;background:#193440}
  .owner20-region{font-size:12px;white-space:nowrap;color:#d5e1e6}
  .owner20-signin{border:1px solid var(--orange);border-radius:9px;padding:10px 21px;font-size:13px;white-space:nowrap}
+ .owner20-top summary>svg,.owner20-signin>svg{width:1.15em;height:1.15em;vertical-align:-.18em;margin-inline-end:.3em;flex-shrink:0}
+ .owner20-region summary>svg{color:var(--orange)}
  .owner20-signin:hover{background:#432517}
  .owner20-hero{height:326px;position:relative;overflow:hidden;background:linear-gradient(90deg,#07121a 0%,#0c1822 35%,transparent 80%),#092231}
  .owner20-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,#05131d 0%,#071923c9 33%,#07192314 66%,#06141ca1),radial-gradient(ellipse at 55% 20%,#b36f4f,#142832 65%,#06151c);background-position:center center,center 60%;background-size:cover;filter:saturate(.95)}

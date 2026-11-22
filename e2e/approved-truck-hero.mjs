@@ -142,6 +142,12 @@ try{
         throw Error('617 PC needs five vector service shortcuts and five approved service tiles');
       if(await p.locator('.public-landing,.desktop-hero,.desktop-quick-links').count())
         throw Error('Retired public or client desktop shell mounted over approved 617 PC home');
+      const region=home.locator('.owner20-region');
+      await region.locator('summary svg').waitFor({state:'visible'});
+      await region.getByText('Выбрать регион',{exact:true}).click();
+      await region.getByText('Регион запуска',{exact:true}).waitFor({state:'visible'});
+      await region.locator('summary').click();
+      await home.getByRole('link',{name:'Войти',exact:true}).locator('svg').waitFor({state:'visible'});
       await checkOverflow(p,'617 desktop guest');
       await p.screenshot({path:'e2e/shots/approved-truck/public-'+width+'.png',fullPage:true});
       await home.locator('.owner20-signin').click();
