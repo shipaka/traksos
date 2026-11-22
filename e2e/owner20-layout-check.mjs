@@ -27,8 +27,8 @@ try {
    if(overflow.scroll>overflow.client+3)throw Error(width+': desktop overflow '+JSON.stringify(overflow));
    if(errors.length)throw Error(width+': JS error '+errors.join('; '));
    // Visual contract from the real 1536x864 617.png, not a later assistant sketch.
-   // Verify source imagery comes from the owner's bundled crop sprite and the
-   // former 19 Nov truck cannot creep back through a CSS fallback.
+   // Approved photo is a full-bleed real banner at ALL widths. The map still uses
+   // the approved atlas; feature/community illustrations are clean independent SVGs.
    const art=await page.evaluate(async () => {
      const photo=document.querySelector('.owner20-photo');
      const map=document.querySelector('.owner20-map-source');
@@ -48,17 +48,22 @@ try {
      ]);
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
      return {
-       photo:pick(photo,'::after'),map:pick(map),feature:pick(feature),
+       photo:pick(photo),photoAfter:photo?getComputedStyle(photo,'::after').content:'',
+       map:pick(map),feature:pick(feature),
+       vectorCards:document.querySelectorAll('.owner20-feature-illustration svg').length,
+       communityCards:document.querySelectorAll('.owner20-community-art svg').length,
+       featureMask:feature?getComputedStyle(feature).maskImage:'missing',
        logo:logo?.querySelector('img')?.getAttribute('src')||'',sprite,approvedHero,approvedLogo,
        head:rect('.owner20-top'),hero:rect('.owner20-hero'),
        quick:rect('.owner20-quick'),features:rect('.owner20-features'),
        bottom:rect('.owner20-bottom'),coverage:rect('.owner20-map'),
      };
    });
-   const expectedHero=width>=1281?'owner20-photo-background-approved.webp':'owner20-artwork-sprite.webp';
-   if(!art.photo.includes(expectedHero) ||
+   if(!art.photo.includes('owner20-photo-background-approved.webp') ||
+      art.photoAfter!=='none' ||
       !art.map.includes('owner20-artwork-sprite.webp') ||
-      !art.feature.includes('owner20-artwork-sprite.webp') ||
+      art.feature!=='none' || art.featureMask!=='none' ||
+      art.vectorCards!==5 || art.communityCards!==2 ||
       !art.logo.includes('traksos-brand-logo-approved-618.png') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
       art.sprite?.w!==1018 || art.sprite?.h!==446 ||
@@ -93,5 +98,5 @@ try {
    }
   }finally{await ctx.close();}
  }
- console.log('Approved 20 Nov PC: 6 desktop widths, 5+5+4 content, no overflow, 11 working feature routes, real screenshots');
+ console.log('Approved 617 PC: 6 desktop widths, continuous road photo, text-free illustrations, 5+5+4, route checks and screenshots');
 }finally{await browser.close();}
