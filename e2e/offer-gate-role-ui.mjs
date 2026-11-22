@@ -28,7 +28,11 @@ try{
   const page=await context.newPage();
   await page.addInitScript(t=>{
     localStorage.setItem('traksos.token',t);
-    localStorage.setItem('traksos.mode','admin');
+    // addInitScript runs on EVERY reload. Preserve a deliberate mode switch
+    // made later in this test; otherwise client mode is silently reset to
+    // admin and the client-only offer can never appear.
+    if (!localStorage.getItem('traksos.mode'))
+      localStorage.setItem('traksos.mode','admin');
   },token);
   await page.route('**/api/me/offers',route=>route.fulfill({
     status:200,contentType:'application/json',
