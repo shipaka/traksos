@@ -120,16 +120,34 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
     if (native.isApp || !serviceContext || !(serviceContext in GUEST_SERVICE_NAMES)) return;
     rememberGuestAction(serviceContext as GuestAction);
   }, [serviceContext]);
-  // Switching login ↔ registration must not discard a just-typed phone number.
-  // Store only this short-lived input draft in sessionStorage (never the password);
-  // clear it on successful auth or when closing the entire guest panel.
+  // A draft transfers only during an explicit login → registration action.
+  // Direct registration and fresh visits start empty, so one user's phone
+  // cannot silently appear in the next guest's form.
   const [phone, setPhone] = useState(() => {
-    try { return sessionStorage.getItem('traksos.authPhoneDraft') || '+7 '; }
-    catch { return '+7 '; }
+    try {
+      if (entry !== 'register' || sessionStorage.getItem('traksos.authTransition') !== 'register') return '+7 ';
+      const draft = sessionStorage.getItem('traksos.authPhoneDraft') || '+7 ';
+      sessionStorage.removeItem('traksos.authTransition');
+      sessionStorage.removeItem('traksos.authPhoneDraft');
+      return draft;
+    } catch { return '+7 '; }
   });
   const changePhone = (value: string) => {
-    try { sessionStorage.setItem('traksos.authPhoneDraft', value); } catch { /* private mode */ }
+    try {
+      if (sessionStorage.getItem('traksos.authTransition') === 'register')
+        sessionStorage.setItem('traksos.authPhoneDraft', value);
+    } catch { /* private mode */ }
     setPhone(value);
+  };
+  const startClientRegistration = () => {
+    try {
+      sessionStorage.setItem('traksos.authTransition','register');
+      sessionStorage.setItem('traksos.authPhoneDraft',phone);
+    } catch { /* private mode */ }
+    // The form switches immediately, before the hashchange remount happens.
+    setIntent('register');
+    setStep('phone');
+    go('register');
   };
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
@@ -174,7 +192,10 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
     setIntent(null); setInlineLegal(null);
-    try { sessionStorage.removeItem('traksos.authPhoneDraft'); } catch { /* private mode */ }
+    try {
+      sessionStorage.removeItem('traksos.authPhoneDraft');
+      sessionStorage.removeItem('traksos.authTransition');
+    } catch { /* private mode */ }
     try {
       sessionStorage.removeItem('traksos.pendingLandingAction');
       sessionStorage.removeItem('traksos.pendingCatalogChoice');
@@ -309,6 +330,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
       try {
         localStorage.removeItem('traksos.ref');
         sessionStorage.removeItem('traksos.authPhoneDraft');
+        sessionStorage.removeItem('traksos.authTransition');
       } catch { /* */ }
       setToken(r.token);
       connectWs();
@@ -554,7 +576,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
-          <button type="button" className="btn ghost tr-auth-register-link guest-explore-cta" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
+          <button type="button" className="btn ghost tr-auth-register-link guest-explore-cta" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
           <button type="button" className="btn ghost tr-auth-partner-link" onClick={() => go('join')}>Мастер, эвакуатор, СТО? Регистрация партнёра</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
