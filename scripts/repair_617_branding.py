@@ -41,11 +41,12 @@ select([[816,108],[912,166],[911,226],[815,212]],expand=2)
 # Front strip of curtain-side graphic, not the sky around it.
 select([[786,68],[810,80],[813,166],[785,153]],expand=2)
 # Small letters on the upper cab visor.
-select([[624,73],[704,72],[704,100],[622,100]],expand=1)
+cv2.rectangle(mask,(629,75),(700,96),255,-1)
 
 # Tiny manufacturer badges / cab identification and licence plate.
-for x1,y1,x2,y2 in [(649,164,670,185),(648,187,669,209),(638,254,693,272)]:
-    cv2.rectangle(mask,(x1,y1),(x2,y2),255,-1)
+cv2.ellipse(mask,(658,176),(8,8),0,0,360,255,-1)
+cv2.ellipse(mask,(657,199),(8,8),0,0,360,255,-1)
+cv2.rectangle(mask,(640,260),(688,269),255,-1)
 
 fixed=cv2.inpaint(cv2.cvtColor(image,cv2.COLOR_RGB2BGR),mask,4,cv2.INPAINT_TELEA)
 out=Image.fromarray(cv2.cvtColor(fixed,cv2.COLOR_BGR2RGB))
