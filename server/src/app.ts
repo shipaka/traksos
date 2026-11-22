@@ -168,15 +168,24 @@ export function createApp(d: Deps) {
   registerVehicleReferenceRoutes(r, d.db, settings, now);
   // Curated official source links only. No specialist documents are returned
   // to a client even when the caller changes ?audience=master manually.
-  r.get('/api/techbase', true, (c: AuthedCtx) => {
-    const allowed = techBaseAudience(c.user.roles);
+  r.get('/api/techbase', true, async (c: AuthedCtx) => {
+    // A menu role does not itself prove that a specialist's documents were approved.
+    // Enforce the same server-side verification as the new source directory.
+    const claimedPro = c.user.roles.some(role => role==='master'||role==='service');
+    const profile = claimedPro
+      ? await d.db.one<{verification:string}>(
+          'select verification from performer_profiles where user_id=$1',[c.user.id])
+      : null;
+    const effectiveRoles = profile?.verification==='approved' ? c.user.roles
+      : c.user.roles.filter(role => role!=='master'&&role!=='service');
+    const allowed = techBaseAudience(effectiveRoles);
     if (!allowed.length) throw forbidden();
     const requested = c.query.get('audience');
     if (requested && !['driver', 'master'].includes(requested))
       throw bad('audience', 'Неизвестный раздел ТехБазы');
     if (requested && !allowed.includes(requested as 'driver' | 'master'))
-      throw forbidden();
-    return { audiences: allowed, documents: techBaseForRoles(c.user.roles, requested ?? undefined) };
+      throw forbidden('Профессиональная ТехБаза требует подтверждённого мастера или СТО');
+    return { audiences: allowed, documents: techBaseForRoles(effectiveRoles, requested ?? undefined) };
   });
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];
