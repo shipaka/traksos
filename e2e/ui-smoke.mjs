@@ -37,7 +37,7 @@ try {
       }));
       const artFiles={tech:'owner617-tech-photo.webp',ecu:'owner617-ecu-photo.webp',
         parts:'owner617-parts-photo.webp',insurance:'owner617-insurance-photo.webp',
-        inspection:'traksos-service-scenes-desktop-hq.webp'};
+        inspection:'owner617-inspection-photo.svg'};
       assert(tiles.length===5&&tiles.every(t=>
         t.key && t.image?.includes(artFiles[t.key]) &&
         t.mask==='none' && t.before==='none' &&
