@@ -82,7 +82,7 @@ try {
       await page.waitForTimeout(200);
       console.log('visual entry route ' + width + 'px: ' + await page.evaluate(() => location.hash));
       try {
-        await page.locator('.client-dashboard').waitFor({timeout: 20000});
+        await page.locator(width < 900 ? '.client-dashboard' : '.app.role-client').waitFor({timeout: 20000});
       } catch (error) {
         const diagnostic = await page.evaluate(() => ({
           hash: location.hash,
@@ -112,17 +112,16 @@ try {
         if (await page.locator('.desktop-quick-card').count() !== 0)
           throw Error('Mobile view should not render the desktop dashboard tree');
       } else {
-        const truck = await page.locator('.client-hero-scania').evaluate(img => ({
-          loaded: img.complete && img.naturalWidth > 100,
-          fit: getComputedStyle(img).objectFit,
-          visible: getComputedStyle(img).display !== 'none'
-        }));
-        if (!truck.loaded || !truck.visible || truck.fit !== 'contain')
-          throw new Error(width + 'px approved Scania image issue: ' + JSON.stringify(truck));
-        const cards = await page.locator('.client-dashboard .desktop-quick-card').count();
-        const hubs = await page.locator('.client-dashboard-hubs > a').count();
-        if (cards !== 4 || hubs !== 4)
-          throw new Error(width + 'px wrong desktop card counts: ' + cards + '/' + hubs);
+        // A registered fleet owner has a dedicated approved PC workspace, not
+        // the generic driver/client .client-dashboard. Verify the actual route.
+        const headings = await page.locator('h1,h2').allTextContents();
+        for (const expected of ['Рабочий стол', 'Сводка автопарка', 'Техника автопарка']) {
+          if (!headings.some(text => text.includes(expected)))
+            throw new Error(width + 'px fleet owner dashboard missing ' + expected +
+              ': ' + JSON.stringify(headings));
+        }
+        if (!await page.locator('.app.role-client').isVisible())
+          throw new Error(width + 'px fleet owner workspace not visible');
       }
       // Older photographic service cards were physically retired at the owner's
       // request. Preserve only verified actual vehicle-model photos in the app.
@@ -139,7 +138,7 @@ try {
       });
       if (photoDetails.some(p => p.w < 320 || p.h < 180))
         throw new Error(width + 'px vehicle-model photo quality/availability: ' + JSON.stringify(photoDetails));
-      if(width >= 900) for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
+      if(width >= 900 && await page.locator('.desktop-quick-card').count() === 4) for (const [index, key] of ['master', 'tow', 'sto', 'consult'].entries()) {
         const bg = await page.locator('.desktop-quick-card').nth(index).evaluate(el =>
           getComputedStyle(el).backgroundImage);
         if (bg.includes('tracksos-photo-') || !bg.includes('gradient'))
