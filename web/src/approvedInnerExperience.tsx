@@ -46,7 +46,11 @@ const roleCopy: Record<string,{name:string;home:string;actions:[string,string][]
   moderator:{name:'Модератор',home:'/moderation',actions:[['/moderation/cases','Очередь дел'],['/moderation/support','Обращения'],['/moderation/verify','Проверки']]},
   admin:{name:'Администратор',home:'/admin',actions:[['/admin/section/orders','Все заявки'],['/admin/section/diagnostics','Диагностика'],['/admin/test-center','Тестовые кабинеты']]},
 };
-function metaFor(path:string[], fallback:string):RouteMeta{
+function roleFor(mode:string) {
+  if (mode === 'tow') return {...roleCopy.performer,name:'Кабинет эвакуаторщика'};
+  return roleCopy[mode] ?? roleCopy.client;
+}
+function metaFor(path:string[], fallback:string, mode:string):RouteMeta{
   // A role's technical-library route must identify the REAL audience.
   // The generic cabinet navigation label can be shared by driver/master,
   // but their technical documents and titles are deliberately different.
@@ -58,16 +62,18 @@ function metaFor(path:string[], fallback:string):RouteMeta{
     return {title:'Карточка СТО',subtitle:'Отметьте услуги, условия приёмки и фактический адрес въезда. Стоимость согласуется после осмотра.',marker:'СТО'};
   if(path[0]==='base'&&path[1]==='money')
     return {title:'Финансы СТО',subtitle:'Каждый счёт содержит работы, комиссию и выплату. Спорные суммы и сверки отражаются отдельно.',marker:'ФИНАНСЫ'};
-  const base=pageCopy[path[0]||''];
+  const base = path[0] === 'work' && mode === 'tow'
+    ? {...pageCopy.work,title:'Рабочее место эвакуаторщика',marker:'ЭВАКУАТОРЩИК'}
+    : pageCopy[path[0] || ''];
   if(!base)return {title:fallback||'Рабочий раздел',subtitle:'Важные инструменты и следующие действия находятся на этой странице.',marker:'РАЗДЕЛ'};
   if(path.length>1 && fallback && !['Рабочий раздел','Кабинет техосмотра'].includes(fallback))
     return {...base,title:fallback.length<=52?fallback:base.title};
   return base;
 }
-export function approvedInnerSectionCopy(route:string[],title:string):RouteMeta { return metaFor(route,title); }
+export function approvedInnerSectionCopy(route:string[],title:string,mode:string):RouteMeta { return metaFor(route,title,mode); }
 export function ApprovedInnerHero({mode,route,title}:{mode:string;route:string[];title:string}){
-  const role=roleCopy[mode]??roleCopy.client;
-  const info=metaFor(route,title);
+  const role=roleFor(mode);
+  const info=metaFor(route,title,mode);
   return <header className="tr-inner-hero" data-traksos-inner-ui="approved-617-618" data-route={route.join('/')} key={route.join('/')}>
     <div className="tr-inner-hero-copy">
       <nav className="tr-inner-crumbs" aria-label="Навигация по разделам">
@@ -86,9 +92,9 @@ export function ApprovedInnerHero({mode,route,title}:{mode:string;route:string[]
   </header>;
 }
 export function ApprovedInnerRail({mode,route}:{mode:string;route:string[]}){
-  const role=roleCopy[mode]??roleCopy.client;
+  const role=roleFor(mode);
   const staff=mode==='admin'||mode==='moderator';
-  const label=pageCopy[route[0]||'']?.marker||'РАЗДЕЛ';
+  const label=metaFor(route,'',mode).marker;
   return <aside className="tr-inner-rail" aria-label="Быстрые действия и помощник">
     <div className="tr-inner-rail-card tr-inner-rail-tools">
       <span className="tr-inner-rail-overline">БЫСТРЫЙ ДОСТУП</span>

@@ -191,6 +191,9 @@ try{
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
      const approvedInner=page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]');
      await approvedInner.waitFor({state:'visible',timeout:14000});
+     const performerMarker = {tow:'ЭВАКУАТОРЩИК',master:'МАСТЕР'}[c.id];
+     if(performerMarker && await approvedInner.locator('.tr-inner-crumbs [aria-current="page"]').innerText() !== performerMarker)
+       throw Error('Wrong performer breadcrumb: '+c.id+'/'+width);
      if(await page.locator('.desktop-content > main').count()!==1)
        throw Error('Approved inner chrome detached the working React main: '+c.id+'/'+width);
      if(await approvedInner.locator('a.tr-inner-back').count()!==1)
@@ -348,7 +351,7 @@ try{
      // Native WebView-mode REAL Chromium rendering: the existing 618 role
      // workdesk stays unchanged; only secondary pages gain an illustrated
      // brief. Synthetic account/session belongs to local CI, never VPS.
-     if(width===390 && ['owner','master','service','insurer','admin','moderator'].includes(c.id)){
+     if(width===390 && ['owner','master','tow','service','insurer','admin','moderator'].includes(c.id)){
        const nativeContext=await browser.newContext({
          viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'
        });
@@ -371,6 +374,8 @@ try{
          await studio.waitFor({state:'visible',timeout:14000});
          await studio.locator('img[src="/tracksos-approved-hero-owner-20261119.webp"]')
            .waitFor({state:'visible',timeout:14000});
+         if(performerMarker && await studio.locator('.tr-native-section-kicker').innerText() !== performerMarker)
+           throw Error('Wrong native role marker: '+c.id);
          const staff=['admin','moderator'].includes(c.id);
          if(staff && await studio.locator('a[href="#/trakbot"]').count())
            throw Error('Staff native hint incorrectly launches TrakBot: '+c.id);
