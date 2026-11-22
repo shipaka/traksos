@@ -96,6 +96,16 @@ try {
    }
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
    if(width===1536){
+    // All native drop-downs are mutually exclusive, including keyboard Escape.
+    const menus=page.locator('.owner20-topnav details');
+    await menus.nth(0).locator('summary').click();
+    if(!(await menus.nth(0).evaluate(el=>el.open))) throw Error('Platform menu did not open');
+    await menus.nth(1).locator('summary').click();
+    if((await menus.nth(0).evaluate(el=>el.open)) ||
+      !(await menus.nth(1).evaluate(el=>el.open)))
+      throw Error('Top menus overlap rather than switching');
+    await menus.nth(1).locator('summary').press('Escape');
+    if(await menus.nth(1).evaluate(el=>el.open)) throw Error('Escape did not close services menu');
     const botShortcut=page.locator('.owner20-quick-trakbot');
     if(await botShortcut.count()!==1) throw Error('TrakBot shortcut missing');
     await botShortcut.click();
