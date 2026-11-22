@@ -610,7 +610,7 @@ html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before
 /* Owner review 22 Nov: full-bleed authenticated workspace hero. */
 /* Use the SAME photo from approved 617, not a new truck or a stock image.
    The original 1536px photo has a right-side UI matte beginning near x=985.
-   Scaling the background to 155% shows only the photographic left 990px:
+   Scaling the background to 158% shows only the photographic left 972px:
    the truck falls on the RIGHT of our card, and no baked-in grey panel appears.
    A continuous dark gradient is OVER the photograph, not a detached text tile.
    These are decorative-only visual rules: headings/actions remain real DOM. */
@@ -624,7 +624,7 @@ html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before
     background-image:
       linear-gradient(90deg,rgba(5,17,25,.98) 0%,rgba(7,22,31,.92) 28%,rgba(8,24,33,.65) 50%,rgba(8,25,34,.24) 76%,rgba(5,17,25,.12) 100%),
       url('/owner20-photo-background-approved-retouched.webp')!important;
-    background-size:100% 100%,155% auto!important;
+    background-size:100% 100%,158% auto!important;
     background-position:center center,left center!important;
     background-repeat:no-repeat,no-repeat!important;
     border-color:#3e606c!important;
