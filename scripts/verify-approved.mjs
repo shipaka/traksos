@@ -114,6 +114,9 @@ const allowedPublicVisuals = new Set([
   'traksos-service-scenes-desktop-hq.webp',
   // Explicitly approved nationwide map for the administrator PC (Russia, not SPb-only).
   'traksos-russia-outline.svg',
+  // Owner requested four new illustrations only for partner registration on 22 Nov.
+  'partner-master-illustration.svg','partner-tow-illustration.svg',
+  'partner-sto-illustration.svg','partner-insurer-illustration.svg',
 ]);
 const visualRootEntries = await readdir('web/public',{withFileTypes:true});
 const unexpectedVisuals = visualRootEntries.filter(entry =>
@@ -124,6 +127,14 @@ expect(unexpectedVisuals.length===0,
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
+for(const role of ['master','tow','sto','insurer']){
+  const file = 'web/public/partner-' + role + '-illustration.svg';
+  await asset(file, 1600);
+  const visual = await read(file);
+  expect(visual.includes('<svg') && visual.includes('viewBox=') &&
+    !/<script\\b|javascript:|<foreignObject\\b/i.test(visual),
+    'partner role image is self-contained SVG, without remote scripts: ' + role);
+}
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
 for(const alternateLogo of [
@@ -272,8 +283,9 @@ const currentCss = await read('web/src/currentApproved20261119.css');
 // Regression guard: removing legacy visual assets must never leave broken CSS references.
 expect(!roleCss.includes('traksos-final-insurance.webp') &&
   !roleCss.includes('tracksos-partner-insurer-approved.webp') &&
-  roleCss.includes('.guest-app .partner-art-insurer{--partner-art:linear-gradient('),
-  'retired insurer background cannot return; partner screen keeps a nonempty branded fallback');
+  roleCss.includes(".guest-app .partner-art-insurer{--partner-art:url('/partner-insurer-illustration.svg')}") &&
+  ['master','tow','service','insurer'].every(role => roleCss.includes('.guest-app .guest-partner-role-'+role+'{background-image:url(')),
+  'retired insurer background cannot return; four partner cards use distinct owner-requested illustrated art');
 
 expect(!landing.includes('public-track-extra-art') && !landing.includes('public-track-insurance-art'),
   'all retired photographic ghost slots were physically removed from public service cards');
