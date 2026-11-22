@@ -49,7 +49,9 @@ export function GuestUnifiedInfo({ kind, onBack }: { kind: GuestInfoKind; onBack
          help: 'Поддержка TrakSOS', guide: 'Как работает TrakSOS',
          pricing: 'Комиссии TrakSOS', rules: 'Правила площадки' } as Record<string, string>)[kind];
   return <div className="tr-guest-info" aria-label={heading}>
-    {onBack && <button type="button" className="tr-guest-info-back" onClick={onBack}>← Вернуться к регистрации</button>}
+    {onBack
+      ? <button type="button" className="tr-guest-info-back" onClick={onBack}>← Вернуться к регистрации</button>
+      : legal && <a className="tr-guest-info-back" href="#/offers">← К списку оферт</a>}
     <span className="tr-guest-info-kicker">TRAKSOS · ИНФОРМАЦИЯ</span>
     <h1 id="tr-auth-title">{heading}</h1>
     {legal ? <LegalDocument audience={legal} /> : kind === 'offers' ? <>
