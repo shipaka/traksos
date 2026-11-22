@@ -25,6 +25,9 @@ const LOCKED_ASSETS = {
   'web/public/icon-192.png': 'f48bc0073cf5ec1c',
   // Exact approved images. Deliberate asset changes require a new owner-approved baseline.
   'web/public/tracksos-approved-hero-owner-20261119.webp': '7a7a9acec9ee7f32',
+  // Audited derivative: same original scene, only maker badge x190..296/y220..244
+  // corrected. Review candidate, NOT authorization to change 617/618 layouts.
+  'web/public/tracksos-approved-hero-owner-20261119-retouched.webp': 'ae316ae5bafaf08d',
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
   'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
   'web/public/owner20-photo-background-approved.webp': '833c162d1fddcef0',
@@ -106,6 +109,8 @@ expect(retiredReferences.length === 0,
 const allowedPublicVisuals = new Set([
   'icon-192.png','icon-512.png',
   'tracksos-approved-hero-owner-20261119.webp',
+  // Specific checked retouch of the SAME approved source, not a new truck.
+  'tracksos-approved-hero-owner-20261119-retouched.webp',
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
@@ -122,6 +127,8 @@ const unexpectedVisuals = visualRootEntries.filter(entry =>
 expect(unexpectedVisuals.length===0,
   'no obsolete artwork or unapproved new images in live public assets' +
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
+// Require exact audited bytes even if no component mounts the review candidate.
+await asset('web/public/tracksos-approved-hero-owner-20261119-retouched.webp', 250000);
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
 // The superseded 617-only raster logo must not be served as an alternative
