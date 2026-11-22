@@ -1,3 +1,4 @@
+import { NavGlyph } from '../navGlyph.tsx';
 import { rememberGuestService } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import './ownerDesktopHome20261120.css';
@@ -63,15 +64,15 @@ export function OwnerDesktopHome20261120() {
         <a href="#/help">Поддержка</a>
       </nav>
       <details className="owner20-compact-menu">
-        <summary>☰ Разделы</summary>
+        <summary><NavGlyph glyph="menu"/> Разделы</summary>
         <nav aria-label="Разделы сайта на небольшом экране ПК">
           <a href="#/company">О платформе</a><a href="#/explore/van">Сервисы</a>
           <a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a>
           <a href="#/join">Партнёрам</a><a href="#/help">Поддержка</a>
         </nav>
       </details>
-      <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
-      <a href="#/login" className="owner20-signin">♙　Войти</a>
+      <details className="owner20-region"><summary><NavGlyph glyph="pin"/> Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
+      <a href="#/login" className="owner20-signin"><NavGlyph glyph="◉"/> Войти</a>
     </header>
     <section className="owner20-hero" aria-labelledby="owner20-heading">
       <div className="owner20-photo" aria-hidden="true"/>
