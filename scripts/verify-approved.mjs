@@ -395,10 +395,15 @@ for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
   try { await stat('android/app/src/main/assets/seasonal_splash/'+name); present = true; } catch {}
   expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
 }
-expect(landing.includes('/icon-192.png') &&
+const brandedAppPhone=await read('web/src/trakAppPhone.tsx');
+const desktopAppLanding=await read('web/src/screens/ownerDesktopHome20261120.tsx');
+expect(landing.includes('<TrakAppPhone className="public-app-phone"/>') &&
+       desktopAppLanding.includes('<TrakAppPhone/>') &&
+       brandedAppPhone.includes('/icon-192.png?v=approved-20261120') &&
+       brandedAppPhone.includes('traksos-app-phone-title') &&
        shell.includes('src={APPROVED_VISUALS.logo}') &&
        !shell.includes('tracksos-approved-logo-owner-20261119.webp'),
-       'mobile promo preserves approved launcher icon and shares 618 brand with Android and desktop');
+       'mobile and desktop promo share one real TrakSOS phone with the approved launcher icon');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 expect(!demo.includes('Открыть старый учебный тренажёр') &&
   !demo.includes('setFallback(true)'),
