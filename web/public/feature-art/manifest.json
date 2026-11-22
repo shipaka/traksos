@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-11-22-v1",
+  "status": "candidate-awaiting-617-618-visual-approval",
+  "sourcePolicy": "Each named feature and its four variants are derived from a single illustration scene; never edit only one variant",
+  "brandPolicy": "No raster words/logos; live DOM text and canonical TrakSOS logo",
+  "fileRoot": "/feature-art/",
+  "features": {
+    "tech": {
+      "key": "tech",
+      "variants": {
+        "master": {
+          "url": "/feature-art/traksos-feature-tech-master-20261122.webp",
+          "sha256": "04324ae317fc815c0295c9034c7917e2d784c3bd2bff4c3e0916ca4f2d2ae80b",
+          "bytes": 44876,
+          "width": 512,
+          "height": 512
+        },
+        "desktop": {
+          "url": "/feature-art/traksos-feature-tech-desktop-20261122.webp",
+          "sha256": "660f731b976463d2ef4a74f5117b282c2fc02f73fee7fa1b90e76926bab57dcf",
+          "bytes": 22910,
+          "width": 512,
+          "height": 300
+        },
+        "mobile": {
+          "url": "/feature-art/traksos-feature-tech-mobile-20261122.webp",
+          "sha256": "dbed89188d0b588209042f156f6016f3fd8cb0a5fc909997c4126d69767c6dc7",
+          "bytes": 10760,
+          "width": 360,
+          "height": 210
+        },
+        "android": {
+          "url": "/feature-art/traksos-feature-tech-android-20261122.webp",
+          "sha256": "f96530086a7c81884899cdb9c54aa218a55e890f2059eb6542221aa9bad66810",
+          "bytes": 5074,
+          "width": 256,
+          "height": 150
+        }
+      }
+    },
+    "ecu": {
+      "key": "ecu",
+      "variants": {
+        "master": {
+          "url": "/feature-art/traksos-feature-ecu-master-20261122.webp",
+          "sha256": "3b72faed1b33f5a3fa2670d8808816a72059cad8b8aa4a68c32b724de4c14b21",
+          "bytes": 44958,
+          "width": 512,
+          "height": 512
+        },
+        "desktop": {
+          "url": "/feature-art/traksos-feature-ecu-desktop-20261122.webp",
+          "sha256": "4e416517284a48ac2d211994c00cfa4d010fff64aa493e8a5e0862b420a08de1",
+          "bytes": 23248,
+          "width": 512,
+          "height": 300
+        },
+        "mobile": {
+          "url": "/feature-art/traksos-feature-ecu-mobile-20261122.webp",
+          "sha256": "0fcbd86962d61d1bb85b58c7ea6ff89840fe1344c047839c31b2706336d2e0ef",
+          "bytes": 11606,
+          "width": 360,
+          "height": 210
+        },
+        "android": {
+          "url": "/feature-art/traksos-feature-ecu-android-20261122.webp",
+          "sha256": "8dc8d387fa127ceb503b75ca83cdf831f3d14c4c208f64790b18df1a4fd84d63",
+          "bytes": 5604,
+          "width": 256,
+          "height": 150
+        }
+      }
+    },
+    "parts": {
+      "key": "parts",
+      "variants": {
+        "master": {
+          "url": "/feature-art/traksos-feature-parts-master-20261122.webp",
+          "sha256": "2a9ed6872c2152ca97081113a0df61fe55868bbb62609b1be9827610f369bbc7",
+          "bytes": 45734,
+          "width": 512,
+          "height": 512
+        },
+        "desktop": {
+          "url": "/feature-art/traksos-feature-parts-desktop-20261122.webp",
+          "sha256": "e3b2a2b136cb8e89aa24721054febdf1c114a0b44e621ebe4ab990d1846ae9f8",
+          "bytes": 23896,
+          "width": 512,
+          "height": 300
+        },
+        "mobile": {
+          "url": "/feature-art/traksos-feature-parts-mobile-20261122.webp",
+          "sha256": "01f80f357ff11381fc8a699cd863aa51c640d0f78d264aa7304970b1208de65b",
+          "bytes": 11532,
+          "width": 360,
+          "height": 210
+        },
+        "android": {
+          "url": "/feature-art/traksos-feature-parts-android-20261122.webp",
+          "sha256": "1b181dee467da4d3cee0cc14b265c2094aad3e5eb8a53d6f02983219e926d9a8",
+          "bytes": 5534,
+          "width": 256,
+          "height": 150
+        }
+      }
+    },
+    "insurance": {
+      "key": "insurance",
+      "variants": {
+        "master": {
+          "url": "/feature-art/traksos-feature-insurance-master-20261122.webp",
+          "sha256": "ed3ab946526f81dfed243acdebaf2d8fa75ac1c845374bb69bfb7a25881d9330",
+          "bytes": 31736,
+          "width": 512,
+          "height": 512
+        },
+        "desktop": {
+          "url": "/feature-art/traksos-feature-insurance-desktop-20261122.webp",
+          "sha256": "e8d601b205804b411fadeb5d295ce59a95f0128287530cf3863f1ac8c25db24b",
+          "bytes": 17060,
+          "width": 512,
+          "height": 300
+        },
+        "mobile": {
+          "url": "/feature-art/traksos-feature-insurance-mobile-20261122.webp",
+          "sha256": "904b86b04b48562d9785ec1cc98b05396d30762632bba74c36c7ba7693b2d410",
+          "bytes": 8008,
+          "width": 360,
+          "height": 210
+        },
+        "android": {
+          "url": "/feature-art/traksos-feature-insurance-android-20261122.webp",
+          "sha256": "3f76fd026689bcfb54a61e68984994237ff5d472b52e0240d8c82c23a25af8ef",
+          "bytes": 3852,
+          "width": 256,
+          "height": 150
+        }
+      }
+    },
+    "inspection": {
+      "key": "inspection",
+      "variants": {
+        "master": {
+          "url": "/feature-art/traksos-feature-inspection-master-20261122.webp",
+          "sha256": "56634ce067cd2c11058cf9811ce3e8090295c56e7c72b9a5abbd6ac627803584",
+          "bytes": 46972,
+          "width": 512,
+          "height": 512
+        },
+        "desktop": {
+          "url": "/feature-art/traksos-feature-inspection-desktop-20261122.webp",
+          "sha256": "b24a10aab4c4399e2922fa4e1661cb16142a43d4ad2bdc554a2044ddb88f5f83",
+          "bytes": 23106,
+          "width": 512,
+          "height": 300
+        },
+        "mobile": {
+          "url": "/feature-art/traksos-feature-inspection-mobile-20261122.webp",
+          "sha256": "4f9500f388aefe1f9bdc67d813ad03d4fb566e31ab7e3b64fe9d980d45fe0ec6",
+          "bytes": 11450,
+          "width": 360,
+          "height": 210
+        },
+        "android": {
+          "url": "/feature-art/traksos-feature-inspection-android-20261122.webp",
+          "sha256": "2c5f0d3b5590cb55a1614fc02b694c8ab238a561163f32e6060bd899bac9b081",
+          "bytes": 5404,
+          "width": 256,
+          "height": 150
+        }
+      }
+    }
+  }
+}
