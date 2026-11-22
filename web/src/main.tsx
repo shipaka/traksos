@@ -234,6 +234,11 @@ function App() {
   // resurrect a guest-only service preview or a dead legacy route.
   useEffect(() => {
     if (!ready || !me || route[0] !== 'explore') return;
+    // A login initiated from a service controls its own post-auth destination.
+    // Do not race signedIn() and override the selected order/service route.
+    try {
+      if (sessionStorage.getItem('traksos.pendingLandingAction')) return;
+    } catch { /* Private browsing */ }
     if (GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '')) location.replace('#/');
   }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
