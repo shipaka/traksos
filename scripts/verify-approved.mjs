@@ -296,7 +296,7 @@ expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approved
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
 expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119") &&
-  heroVisualE2E.includes("owner20-photo-background-approved.webp") &&
+  heroVisualE2E.includes("owner20-photo-brandless-20261122.webp") &&
   heroVisualE2E.includes("main.approved-pc.approved-pc-client") &&
   heroVisualE2E.includes("main.client-dashboard .and19-workspace.and19-client") &&
   !heroVisualE2E.includes("page.locator('.client-dashboard .desktop-hero')"),
