@@ -518,7 +518,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Рейсы'], ['/courier/chat','▤','Чат']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Доставки'], ['/courier/chat','▤','Чат']]
     : mode === 'performer'
     ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
@@ -534,7 +534,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Рейсы'], ['/courier/chat','chat','Чат'], ['/menu','menu','Меню']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/courier/chat','chat','Чат'], ['/menu','menu','Меню']]
     : mode === 'client'
     ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
@@ -563,7 +563,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
-    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои рейсы'], ['/courier/chat','Связь по доставкам'], ['/profile','Профиль и настройки']]
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/courier/chat','Связь по доставкам'], ['/profile','Профиль и настройки']]
     : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
