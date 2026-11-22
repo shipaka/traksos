@@ -13,17 +13,26 @@ async function api(method,path,body,token,status=200) {
   return data;
 }
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
-async function acceptPendingOffers(page,token) {
+// Agreements are scoped to the currently active workspace. A mixed-role
+// admin/insurer must NOT be blocked by unrelated client terms; the real client
+// still accepts their own terms. API-side consent enforcement is unchanged.
+async function acceptPendingOffers(page,token,mode) {
   const response=await fetch(BASE+'/api/me/offers',{headers:{authorization:'Bearer '+token}});
   if(!response.ok) throw Error('Could not read pending offer status');
   const offers=await response.json();
-  for (const item of offers.filter(x=>x.current && !x.accepted)) {
+  const audiences={client:['client'],performer:['performer'],service:['performer'],
+    insurer:['insurer'],inspection:['inspection'],admin:[],moderator:[],courier:[]};
+  if(!Object.hasOwn(audiences,mode)) throw Error('Unknown offer audience for mode '+mode);
+  for (const item of offers.filter(x=>x.current && !x.accepted &&
+    (x.audience==='privacy'||audiences[mode].includes(x.audience)))) {
     const dialog=page.getByRole('dialog',{name:item.name});
     await dialog.waitFor({state:'visible',timeout:15000});
     await dialog.locator('input[type=checkbox]').check();
     await dialog.getByRole('button',{name:'Принимаю'}).click();
     await dialog.waitFor({state:'detached',timeout:15000});
   }
+  if(mode==='admin' && await page.getByRole('dialog',{name:'Оферта для клиентов'}).count())
+    throw Error('Client-only terms unexpectedly overlay the admin workspace');
 }
 
 async function register(phone,accountType) {
@@ -76,18 +85,18 @@ assert(history.find(x=>x.id===request.id).events.length>=3,'History events not p
 const browser=await chromium.launch();
 try{
   for(const item of [
-    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой транспорт',expected:'Страхование и техосмотр'},
-    {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
-    {name:'admin',token:admin.token,hash:'#/admin/section/vehicleServices',heading:'Страхование и ТО',expected:'Страхование и ТО'}
+    {name:'owner',mode:'client',token:owner.token,hash:'#/garage',heading:'Мой транспорт',expected:'Страхование и техосмотр'},
+    {name:'insurer',mode:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
+    {name:'admin',mode:'admin',token:admin.token,hash:'#/admin/section/vehicleServices',heading:'Страхование и ТО',expected:'Страхование и ТО'}
   ]){
     const context=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
-    await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},item.token);
+    await page.addInitScript(({token,mode})=>{localStorage.setItem('traksos.token',token);localStorage.setItem('traksos.mode',mode)},{token:item.token,mode:item.mode});
     await page.goto(BASE+'/'+item.hash,{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:item.heading}).waitFor();
-    await acceptPendingOffers(page,item.token);
+    await acceptPendingOffers(page,item.token,item.mode);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
@@ -112,7 +121,7 @@ try{
   const clientPage=await clientCtx.newPage();
   await clientPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},owner.token);
   await clientPage.goto(BASE+'/#/insurance/request/new/'+truck.id);
-  await acceptPendingOffers(clientPage,owner.token);
+  await acceptPendingOffers(clientPage,owner.token,'client');
   await clientPage.locator('.desktop-content > main').getByRole('heading',{name:'Заявка на страхование грузовика'}).first().waitFor();
   await clientPage.locator('select').first().selectOption(partner.user.id);
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
@@ -164,7 +173,7 @@ try{
   const inboxPage=await inboxContext.newPage();
   await inboxPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await inboxPage.goto(BASE+'/#/insurance');
-  await acceptPendingOffers(inboxPage,partner.token);
+  await acceptPendingOffers(inboxPage,partner.token,'insurer');
   await inboxPage.locator('.approved-pc-case').getByText('Получена новая заявка',{exact:true}).waitFor();
   await inboxPage.getByRole('tab',{name:/^Требуют действий/}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
@@ -200,7 +209,7 @@ try{
   const agentPage=await agentCtx.newPage();
   await agentPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await agentPage.goto(BASE+'/#/insurance/request/'+requestId);
-  await acceptPendingOffers(agentPage,partner.token);
+  await acceptPendingOffers(agentPage,partner.token,'insurer');
   await agentPage.getByRole('heading',{name:/DAF XF/}).waitFor();
   await agentPage.getByText('Анкета для оформления').waitFor();
   // The working action is immediately available before a long progress list
