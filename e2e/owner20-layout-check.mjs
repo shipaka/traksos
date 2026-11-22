@@ -136,21 +136,27 @@ try {
          !x.storeOk||!x.bulletsOk||!x.fullBleed))
        throw Error(width+': bottom strip has clipped text, extra photo slice or hidden CTA: '+JSON.stringify(bottomReading));
    }
-   const phoneBot=await page.evaluate(()=>{
+   // Both 617 and 618 now use the same real DOM phone/TrakSOS app icon.
+   // No pseudo-phone may return; keep floating TrakBot outside the artwork.
+   const phoneBot=await page.evaluate(async()=>{
      const card=document.querySelector('.owner20-bottom-app');
+     const phone=card?.querySelector('.traksos-app-phone');
+     const img=phone?.querySelector('.traksos-app-phone-icon');
      const bot=document.querySelector('.trakbot-dock-launcher');
-     if(!card||!bot) return {missing:true};
-     const c=card.getBoundingClientRect(),b=bot.getBoundingClientRect(),
-       p=getComputedStyle(card,'::after');
-     const x=c.right-parseFloat(p.right)-parseFloat(p.width);
-     const y=c.top+parseFloat(p.top);
-     return {phone:[x,y,parseFloat(p.width),parseFloat(p.height)],
-       dock:[b.x,b.y,b.width,b.height],
-       overlaps:x<b.right && x+parseFloat(p.width)>b.left &&
-         y<b.bottom && y+parseFloat(p.height)>b.top};
+     if(!card||!phone||!img||!bot)return {missing:true};
+     if(!img.complete)await img.decode().catch(()=>{});
+     const c=card.getBoundingClientRect(),p=phone.getBoundingClientRect(),
+       b=bot.getBoundingClientRect(),pseudo=getComputedStyle(card,'::after');
+     return {phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
+       assetLoaded:img.naturalWidth>30,branded:phone.textContent.includes('Trak')&&phone.textContent.includes('SOS'),
+       rustore:card.querySelector('.owner20-store')?.textContent?.includes('RuStore')??false,
+       pseudoHidden:pseudo.display==='none',
+       inside:p.left>=c.left-2&&p.right<=c.right+2&&p.top>=c.top-2&&p.bottom<=c.bottom+2,
+       overlaps:p.left<b.right&&p.right>b.left&&p.top<b.bottom&&p.bottom>b.top};
    });
-   if(phoneBot.missing||phoneBot.overlaps)
-     throw Error(width+': floating TrakBot covers app phone or assistant is absent: '+JSON.stringify(phoneBot));
+   if(phoneBot.missing||!phoneBot.assetLoaded||!phoneBot.branded||
+      !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps)
+     throw Error(width+': branded phone clipped, duplicated or covered by TrakBot: '+JSON.stringify(phoneBot));
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
