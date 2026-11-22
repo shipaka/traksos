@@ -212,8 +212,11 @@ try{
           const button = history.getByRole('button', {name, exact:true});
           await button.click();
           await history.locator('button[aria-pressed="true"]').filter({hasText:name}).waitFor();
-          if (await button.evaluate(el => getComputedStyle(el).backgroundColor) !== 'rgb(169, 76, 24)')
-            throw Error('Unexpected active history color on ' + name);
+          await page.waitForFunction(expectedName => {
+            const selected = document.querySelector('.performer-history-tabs button[aria-pressed="true"]');
+            return selected?.textContent.trim() === expectedName &&
+              getComputedStyle(selected).backgroundColor === 'rgb(169, 76, 24)';
+          }, name, {timeout:3000});
         }
       }
      if(width===390 && c.id==='master'){
