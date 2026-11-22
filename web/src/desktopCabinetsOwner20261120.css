@@ -396,3 +396,128 @@
     background:linear-gradient(100deg,#122b37,#091a23)!important;
   }
 }
+
+
+/* Approved role help is a real standalone secondary screen, not the retired
+   generic card stack. It keeps actual role-verified explanations/actions and
+   shares the 617 graphite/orange language with the 618 mobile palette. */
+.app[class*="role-"] .approved-help {
+  --help-orange:#ff8a42; --help-line:#355663;
+  display:flex;flex-direction:column;align-items:stretch;gap:18px;
+  width:100%;min-width:0;max-width:1360px;
+  color:#edf5f7;
+}
+.app[class*="role-"] .approved-help .approved-help-hero {
+  display:flex;align-items:end;justify-content:space-between;gap:28px;
+  position:relative;isolation:isolate;overflow:hidden;
+  padding:clamp(22px,3.3vw,42px);
+  min-height:190px;
+  border:1px solid #3b5c69;border-radius:20px;
+  background:radial-gradient(ellipse at 100% 0%,#27627555,transparent 56%),
+    linear-gradient(115deg,#183541,#091e29 74%);
+  box-shadow:0 10px 33px #0004;
+}
+.app[class*="role-"] .approved-help .approved-help-hero:before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;
+  background:linear-gradient(115deg,transparent 60%,#0eb7b71a);
+}
+.app[class*="role-"] .approved-help .approved-help-hero-copy{
+  display:flex;flex-direction:column;gap:10px;max-width:740px;
+}
+.app[class*="role-"] .approved-help .approved-help-eyebrow{
+  color:var(--help-orange);font-weight:800;letter-spacing:1.4px;font-size:11px;
+}
+.app[class*="role-"] .approved-help h1{
+  color:#fff;font-size:clamp(26px,2.6vw,39px);line-height:1.13;margin:0;
+}
+.app[class*="role-"] .approved-help .approved-help-hero p{
+  color:#c9dce2;max-width:640px;font-size:14px;line-height:1.55;margin:0;
+}
+.app[class*="role-"] .approved-help .approved-help-support-action{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:12px 18px;min-height:44px;min-width:max-content;
+  border:1px solid #ff9552;border-radius:12px;
+  text-decoration:none;color:#13191c;background:linear-gradient(120deg,#ffb065,#ff7831);
+  font-weight:800;font-size:13px;
+}
+.app[class*="role-"] .approved-help .approved-help-learning{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px;
+  padding:20px 24px;border:1px solid var(--help-line);border-radius:17px;
+  background:linear-gradient(110deg,#14333e,#0b202b);
+}
+.app[class*="role-"] .approved-help .approved-help-learning h2{
+  color:#fff;margin:0 0 7px;font-size:20px;
+}
+.app[class*="role-"] .approved-help .approved-help-learning p{
+  max-width:670px;line-height:1.4;font-size:13px;color:#b9cfd7;margin:0;
+}
+.app[class*="role-"] .approved-help .approved-help-learning nav{
+  display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px;
+}
+.app[class*="role-"] .approved-help .approved-help-learning nav a,
+.app[class*="role-"] .approved-help .approved-help-bottom-actions a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:40px;padding:9px 13px;border:1px solid #467685;
+  border-radius:10px;color:#f3f9fa;background:#0e2b36;
+  text-decoration:none;font-size:12px;font-weight:700;
+}
+.app[class*="role-"] .approved-help .approved-help-search{
+  display:grid;gap:8px;color:#d6e4e9;font-size:13px;font-weight:700;
+}
+.app[class*="role-"] .approved-help .approved-help-search input{
+  width:100%;min-height:48px;border-radius:12px;
+  background:#0a202a;border:1px solid #466574;color:#fff;
+  padding:12px 14px;
+}
+.app[class*="role-"] .approved-help .approved-help-section{
+  display:flex;flex-direction:column;gap:12px;
+}
+.app[class*="role-"] .approved-help .approved-help-section h2{
+  color:#fff;font-size:21px;margin:0;
+}
+.app[class*="role-"] .approved-help .approved-help-items{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+.app[class*="role-"] .approved-help .approved-help-item{
+  align-self:start;min-width:0;
+  border:1px solid #335361;border-radius:14px;
+  background:linear-gradient(135deg,#162f3a,#0b1f29);overflow:hidden;
+}
+.app[class*="role-"] .approved-help .approved-help-item[open]{
+  grid-row:span 2;border-color:#a45b38;
+}
+.app[class*="role-"] .approved-help .approved-help-item summary{
+  display:flex;align-items:center;justify-content:space-between;
+  list-style:none;cursor:pointer;padding:15px 17px;gap:12px;
+  color:#eaf5f7;font-size:14px;line-height:1.35;
+}
+.app[class*="role-"] .approved-help .approved-help-item summary::-webkit-details-marker{display:none}
+.app[class*="role-"] .approved-help .approved-help-item summary:after{
+  content:"+";display:inline-grid;place-items:center;flex:0 0 22px;
+  width:22px;height:22px;border-radius:7px;background:#21424d;color:#ff9c64;
+}
+.app[class*="role-"] .approved-help .approved-help-item[open] summary:after{content:"−"}
+.app[class*="role-"] .approved-help .approved-help-item p{
+  color:#ccdde3;line-height:1.55;padding:0 17px 17px;
+  margin:0;font-size:13px;overflow-wrap:anywhere;
+}
+.app[class*="role-"] .approved-help .approved-help-bottom-actions{
+  display:flex;flex-wrap:wrap;gap:10px;
+}
+.app[class*="role-"] .approved-help .approved-help-learning a:hover,
+.app[class*="role-"] .approved-help .approved-help-bottom-actions a:hover{
+  border-color:var(--help-orange);background:#20434d;
+}
+@media(max-width:900px){
+ .app[class*="role-"] .approved-help .approved-help-hero{
+   min-height:0;flex-direction:column;align-items:flex-start;gap:16px;padding:23px 17px;
+ }
+ .app[class*="role-"] .approved-help .approved-help-support-action{min-width:0;width:100%}
+ .app[class*="role-"] .approved-help .approved-help-learning{
+   grid-template-columns:1fr;padding:16px;gap:15px;
+ }
+ .app[class*="role-"] .approved-help .approved-help-learning nav{justify-content:flex-start}
+ .app[class*="role-"] .approved-help .approved-help-items{grid-template-columns:1fr}
+ .app[class*="role-"] .approved-help .approved-help-item[open]{grid-row:auto}
+ .app[class*="role-"] .approved-help .approved-help-bottom-actions{flex-direction:column}
+}
