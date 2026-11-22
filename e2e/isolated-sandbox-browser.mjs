@@ -138,8 +138,9 @@ try{
         // secondary destinations while authenticated to catch old forms,
         // wrong roles, empty screens and links to retired frontend sources.
         // Include 1440px desktop inner routes: prior scans only checked desktop workspaces.
-        if(width===390 || width===960 || width===1440 ||
-           (width===320 && ['client','inspection'].includes(role))){
+        // Every sandbox role gets real deep-route checks on 320, 390, 960 and 1440.
+        // Narrow mobile cannot silently clip a different role's quick actions.
+        if([320,390,960,1440].includes(width)){
           const destinations={
             client:['#/sos','#/orders','#/garage','#/menu'],
             owner:['#/garage','#/orders','#/menu'],
