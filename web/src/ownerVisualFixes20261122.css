@@ -1081,3 +1081,164 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     bottom:10px!important;
   }
 }
+
+/* 23 Nov unified app preview and mobile settings controls */
+:root{--traksos-control-gold:#e8ad51;--traksos-control-gold-ink:#1b1e20}
+/* One real DOM phone in both 617/618, using the bundled TrakSOS app icon.
+   Previously CSS ::before/::after drew a second phone, without real branding. */
+.traksos-app-phone{
+  box-sizing:border-box;display:flex;align-items:stretch;justify-content:stretch;
+  width:104px;height:168px;min-height:0;min-width:0;padding:5px;
+  border:3px solid #334858;border-radius:20px;
+  background:#08111a;box-shadow:0 12px 25px #0009,0 0 0 1px #8197a0;
+  transform:rotate(4deg);pointer-events:none;flex-shrink:0;
+}
+.traksos-app-phone-screen{
+  min-width:0;min-height:0;flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-around;
+  padding:8px 4px 4px;border-radius:13px;overflow:hidden;
+  color:#fff;background:radial-gradient(circle at 52% 72%,#f0793147,transparent 66%),
+    linear-gradient(165deg,#0c2734,#152e3d 60%,#071b26);
+}
+.traksos-app-phone-camera{display:block;align-self:center;width:26%;height:3px;min-height:3px;
+  border-radius:8px;background:#607b88}
+.traksos-app-phone-title{
+  display:block;font-size:clamp(10px,1.1vw,15px)!important;
+  font-weight:900!important;letter-spacing:-.5px!important;
+  line-height:1.1;color:#f8f6ef;white-space:nowrap;
+}
+.traksos-app-phone-title b{color:#f69a59}
+.traksos-app-phone-icon{display:block!important;width:56%!important;max-width:64px!important;
+  height:auto!important;max-height:55px!important;object-fit:contain!important;
+  border-radius:9px;box-shadow:0 4px 12px #0007;filter:none!important;}
+.traksos-app-phone-caption{display:block;max-width:95%;font-size:9px;line-height:1.2;
+  font-weight:600;text-align:center;color:#dce9ea}
+.traksos-app-phone-home{display:block;width:24%;height:3px;min-height:3px;border-radius:8px;
+  background:#8ba7ac}
+@media(min-width:900px){
+  .guest-app.guest-home .owner20-bottom-app{
+    isolation:isolate;position:relative!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app::before,
+  .guest-app.guest-home .owner20-bottom-app::after{
+    content:none!important;display:none!important; /* no duplicate pseudo phone */
+  }
+  .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
+    position:absolute;z-index:2;top:8px;right:12px;
+    width:72px!important;height:110px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app> b,
+  .guest-app.guest-home .owner20-bottom-app>p,
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    position:relative;z-index:3;max-width:57%!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    position:absolute!important;bottom:12px!important;left:12px!important;
+    max-width:56%!important;font-weight:800;color:#eab25a!important;
+  }
+}
+@media(min-width:1200px){
+  /* Keep the entire phone to the LEFT of the large fixed TrakBot launcher. */
+  .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
+    right:clamp(88px,7.5vw,125px)!important;top:7px!important;
+    height:112px!important;width:72px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app>b,
+  .guest-app.guest-home .owner20-bottom-app>p,
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{max-width:40%!important}
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{
+    grid-column:2;grid-row:1/6;justify-self:center;align-self:center;
+    width:104px!important;max-width:100%!important;
+    height:174px!important;min-height:174px!important;
+    padding:5px!important;gap:0!important;
+    transform:rotate(3deg)!important;
+  }
+  .guest-app .public-landing .traksos-app-phone-title{font-size:13px!important}
+}
+@media(max-width:370px){
+  .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{
+    width:84px!important;height:154px!important;min-height:154px!important;
+  }
+  .guest-app .public-landing .traksos-app-phone-title{font-size:11px!important}
+}
+/* Native details are keyboard-accessible and do not create new routes. */
+@media(max-width:899px){
+  .app:not(.guest-app) .tr-mobile-menu-section>summary{
+    min-height:55px;cursor:pointer;touch-action:manipulation;
+  }
+  .app:not(.guest-app) .tr-mobile-menu-section[open]>.tr-mobile-menu-section-head{
+    border-color:var(--traksos-control-gold)!important;
+  }
+  .app:not(.guest-app) .tr-mobile-menu-section[open] .tr-mobile-menu-disclosure{
+    color:var(--traksos-control-gold)!important;transform:rotate(180deg);
+  }
+  .app:not(.guest-app) .tr-mobile-menu-section>summary:focus-visible,
+  .app:not(.guest-app) .performer-schedule-accordion>summary:focus-visible{
+    outline:2px solid var(--traksos-control-gold)!important;outline-offset:2px;
+  }
+  .app:not(.guest-app) .tr-mobile-menu-links a,
+  .app:not(.guest-app) .tr-mobile-menu-links button{min-height:44px;touch-action:manipulation}
+}
+.app .performer-schedule-accordion{
+  display:block;overflow:hidden;min-width:0;margin:0;
+  border:1px solid #466271;border-radius:13px;
+  background:linear-gradient(125deg,#112c37,#091d27);color:#edf7fa;
+}
+.app .performer-schedule-accordion>summary{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:57px;padding:13px 15px;list-style:none;cursor:pointer;
+  font-weight:800;touch-action:manipulation;
+}
+.app .performer-schedule-accordion>summary::-webkit-details-marker{display:none}
+.app .performer-schedule-accordion>summary>span:first-child{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+.app .performer-schedule-accordion>summary small{
+  font-size:11px;font-weight:500;color:#a6c1ce;overflow-wrap:anywhere;
+}
+.app .performer-schedule-accordion>summary>span:last-child{
+  flex:none;color:var(--traksos-control-gold);font-size:20px;
+  transition:transform .2s ease;
+}
+.app .performer-schedule-accordion[open]>summary{
+  border-bottom:1px solid #49616e;
+}
+.app .performer-schedule-accordion[open]>summary>span:last-child{
+  transform:rotate(180deg)
+}
+.app .performer-schedule-panel{
+  display:flex;flex-direction:column;gap:12px;padding:14px;min-width:0
+}
+.app .performer-schedule-panel label{
+  display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:750;
+}
+.app .performer-schedule-panel .grid7{
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;
+}
+.app .performer-schedule-panel .seg{
+  min-width:0;min-height:42px;padding:0!important;font-size:12px!important;
+  border-radius:9px;touch-action:manipulation
+}
+.app .performer-schedule .seg[aria-pressed="true"]{
+  background:var(--traksos-control-gold)!important;
+  color:var(--traksos-control-gold-ink)!important;
+  border-color:#f2c780!important;box-shadow:inset 0 0 0 1px #fff3!important;
+}
+.app .performer-schedule .seg[aria-pressed="false"]{
+  background:#142a35!important;color:#d6e9ed!important;border-color:#4a6068!important
+}
+.app .performer-schedule :is(input[type="checkbox"],input[type="radio"],input[type="date"],input[type="time"],select){
+  accent-color:var(--traksos-control-gold)!important;
+}
+@media(max-width:899px){
+  html.traksos-browser .app:not(.guest-app) :is(input[type="date"],input[type="time"],input[type="datetime-local"],input[type="checkbox"],input[type="radio"]),
+  html.traksos-native .app:not(.guest-app) :is(input[type="date"],input[type="time"],input[type="datetime-local"],input[type="checkbox"],input[type="radio"]){
+    accent-color:var(--traksos-control-gold)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+ .app .performer-schedule-accordion>summary>span:last-child{transition:none}
+}
