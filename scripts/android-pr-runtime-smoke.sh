@@ -4,6 +4,42 @@
 # All output is non-sensitive: readiness tags, screenshot, foreground state, crash log.
 set -Eeuo pipefail
 
+# Some API 35 GitHub emulator images sporadically show an ANR for their
+# SYSTEM Pixel Launcher over a correctly rendered TrakSOS WebView.
+# Dismiss ONLY that exact launcher dialog via its real accessibility bounds.
+# Never dismiss TrakSOS or any other application's ANR, and still demand
+# an actual painted role-specific UI afterwards.
+dismiss_pixel_launcher_anr() {
+  local hierarchy="$1" point
+  if ! grep -Fq "Pixel Launcher isn't responding" "$hierarchy"; then return 1; fi
+  point="$(python3 - "$hierarchy" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+try:
+    root = ET.parse(sys.argv[1]).getroot()
+    for node in root.iter('node'):
+        if node.get('text') == 'Wait' and node.get('class') == 'android.widget.Button':
+            bounds = node.get('bounds', '')
+            match = re.fullmatch(r'\[(\d+),(\d+)\]\[(\d+),(\d+)\]', bounds)
+            if match:
+                left, top, right, bottom = map(int, match.groups())
+                print((left + right) // 2, (top + bottom) // 2)
+                break
+except (OSError, ValueError, ET.ParseError):
+    pass
+PY
+)"
+  if [ -z "$point" ]; then
+    echo "FAIL: Pixel Launcher ANR has no accessible Wait button"
+    return 1
+  fi
+  echo "INFO: dismissing SYSTEM Pixel Launcher ANR, not a TrakSOS crash"
+  adb shell input tap $point
+  echo "SYSTEM_PIXEL_LAUNCHER_ANR_DISMISSED=1" >> runtime-ready.log
+  sleep 3
+}
+
 apk="apk/app-debug.apk"
 test -s "$apk"
 adb install -r "$apk"
@@ -39,8 +75,22 @@ done
 if timeout 30s adb shell uiautomator dump /sdcard/traksos-window.xml >/dev/null 2>&1; then
   adb exec-out cat /sdcard/traksos-window.xml > emulator-ui.xml || true
 fi
+# Avoid counting the emulator's unrelated launcher ANR as a blank or bad
+# TrakSOS screen. Recovery is narrow; the fresh capture remains mandatory.
+if [ -s emulator-ui.xml ] && grep -Fq "Pixel Launcher isn't responding" emulator-ui.xml; then
+  dismiss_pixel_launcher_anr emulator-ui.xml || exit 1
+  if timeout 30s adb shell uiautomator dump /sdcard/traksos-window.xml >/dev/null 2>&1; then
+    adb exec-out cat /sdcard/traksos-window.xml > emulator-ui.xml || true
+  fi
+  adb exec-out screencap -p > emulator-screen.png
+  python3 scripts/verify-android-screen.py emulator-screen.png || screen_ok=0
+fi
 if [ "$screen_ok" -ne 1 ]; then
   echo 'FAIL: screenshot did not show a visibly rendered TrakSOS guest page'
+  exit 1
+fi
+if [ -s emulator-ui.xml ] && grep -Eiq "Pixel Launcher isn.t responding|System UI isn.t responding|TrakSOS isn.t responding" emulator-ui.xml; then
+  echo 'FAIL: Android system dialog still covers TrakSOS'
   exit 1
 fi
 if [ "$ready" -ne 1 ]; then
@@ -91,13 +141,19 @@ for role in client master; do
   # Allow the compositor to paint, then validate the visible native UI.
   sleep 3
   painted=0
-  for attempt in 1 2 3; do
+  for attempt in 1 2 3 4 5; do
     if [ "$sdk_level" -ge 34 ]; then
       # Dump accessibility BEFORE capturing. Waiting for the dump can advance
       # the compositor several frames past the guest or previous role.
       if ! timeout 25s adb shell uiautomator dump /sdcard/traksos-role.xml >/dev/null 2>&1 ||
          ! adb exec-out cat /sdcard/traksos-role.xml > "android-review-$role-ui.xml"; then
         sleep 2
+        continue
+      fi
+      # API 35 sometimes wedges the emulator Pixel Launcher, not TrakSOS.
+      # Retry the screenshot ONLY after dismissing that specific system dialog.
+      if grep -Fq "Pixel Launcher isn't responding" "android-review-$role-ui.xml"; then
+        dismiss_pixel_launcher_anr "android-review-$role-ui.xml" || exit 1
         continue
       fi
       marker='Владелец автопарка'
