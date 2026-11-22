@@ -200,6 +200,22 @@ try{
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
      const approvedInner=page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]');
      await approvedInner.waitFor({state:'visible',timeout:14000});
+     if(c.id==='inspection'){
+       const tabs=page.locator('.desktop-content > main.cabinet-page .partner-workspaces');
+       const inspectionTab=tabs.getByRole('button',{name:'Техосмотры',exact:true});
+       await inspectionTab.waitFor({state:'visible'});
+       if(await inspectionTab.getAttribute('aria-pressed')!=='true')
+         throw Error('Inspection tab is not selected on its own route: '+width);
+       const selectedColor=await inspectionTab.evaluate(el=>getComputedStyle(el).backgroundImage);
+       if(!selectedColor.includes('rgb(239, 130, 37)'))
+         throw Error('Legacy cyan inspection tab violates approved 617 orange: '+width+' '+selectedColor);
+       await tabs.getByRole('button',{name:'Финансы',exact:true}).click();
+       if(await tabs.getByRole('button',{name:'Финансы',exact:true}).getAttribute('aria-pressed')!=='true')
+         throw Error('Inspection finance tab does not respond: '+width);
+       await inspectionTab.click();
+       if(await inspectionTab.getAttribute('aria-pressed')!=='true')
+         throw Error('Inspection tab cannot be restored: '+width);
+     }
      const performerMarker = {tow:'ЭВАКУАТОРЩИК',master:'МАСТЕР'}[c.id];
      if(performerMarker && await approvedInner.locator('.tr-inner-crumbs [aria-current="page"]').innerText() !== performerMarker)
        throw Error('Wrong performer breadcrumb: '+c.id+'/'+width);
