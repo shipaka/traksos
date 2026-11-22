@@ -97,6 +97,28 @@
 .guest-app:not(.guest-home) .guest-explore-tow { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:-704px 50%;--guest-scene-size:2816px 420px; }
 .guest-app:not(.guest-home) .guest-explore-sto { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:-1408px 50%;--guest-scene-size:2816px 420px; }
 .guest-app:not(.guest-home) .guest-explore-consult { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:-2112px 50%;--guest-scene-size:2816px 420px; }
+
+/* Desktop-only responsive four-frame atlas geometry.
+   The former fixed 704px offsets assumed a 704px-wide ::before element,
+   but the scene box is 57% of the fluid hero width. That cropped real
+   content on narrower PCs and exposed the neighbouring frame on wider ones.
+   Scale all four atlas frames together so each one fills exactly ONE scene
+   box in X at every desktop width. Android / mobile retain their 618 rules.
+   This corrects cross-frame bleed; replacing raster captions in the separate
+   617 feature-tile atlas still requires clean owner-approved assets (#226). */
+@media (min-width:900px) {
+  .guest-app:not(.guest-home) .guest-explore-van,
+  .guest-app:not(.guest-home) .guest-explore-tow,
+  .guest-app:not(.guest-home) .guest-explore-sto,
+  .guest-app:not(.guest-home) .guest-explore-consult {
+    --guest-scene-size:400% auto;
+  }
+  .guest-app:not(.guest-home) .guest-explore-van { --guest-scene-position:0% 50%; }
+  .guest-app:not(.guest-home) .guest-explore-tow { --guest-scene-position:33.333333% 50%; }
+  .guest-app:not(.guest-home) .guest-explore-sto { --guest-scene-position:66.666667% 50%; }
+  .guest-app:not(.guest-home) .guest-explore-consult { --guest-scene-position:100% 50%; }
+}
+
 /* Keep the heading, controls and links above the road image overlay. */
 .guest-app:not(.guest-home) .guest-explore-hero > *,
 .guest-app:not(.guest-home) .guest-info-hero > * {
