@@ -67,6 +67,23 @@ try {
       art.brandlessHero?.w!==1536 || art.brandlessHero?.h!==324 ||
       art.approvedLogo?.w!==274 || art.approvedLogo?.h!==46)
      throw Error(width+': approved 617.png image or loaded size regressed '+JSON.stringify(art));
+   if(width<=1199) {
+     const geometry=await page.evaluate(()=>{
+       const rects=[...document.querySelectorAll('.owner20-feature')].map(el=>el.getBoundingClientRect());
+       const bottom=[...document.querySelectorAll('.owner20-bottom-card')].map(el=>el.getBoundingClientRect());
+       return {featureTop:rects.map(r=>r.top),featureWidth:rects.map(r=>r.width),
+         bottomTop:bottom.map(r=>r.top)};
+     });
+     const first=geometry.featureTop[0],second=geometry.featureTop[3];
+     if(geometry.featureTop.slice(0,3).some(t=>Math.abs(t-first)>3) ||
+        geometry.featureTop.slice(3).some(t=>Math.abs(t-second)>3) ||
+        second<first+100 ||
+        geometry.featureWidth.some(w=>Math.abs(w-geometry.featureWidth[0])>3) ||
+        Math.abs(geometry.bottomTop[0]-geometry.bottomTop[1])>3 ||
+        Math.abs(geometry.bottomTop[2]-geometry.bottomTop[3])>3 ||
+        geometry.bottomTop[2]<geometry.bottomTop[0]+100)
+       throw Error(width+': original 617 narrow-PC feature/footer cards no longer readable 3+2/2+2 '+JSON.stringify(geometry));
+   }
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
