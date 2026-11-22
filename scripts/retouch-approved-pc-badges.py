@@ -34,7 +34,7 @@ ASSETS = [
 ]
 
 def git_sha(data:bytes)->str:
-  return hashlib.sha1(b"blob "+str(len(data)).encode()+b"\\0"+data).hexdigest()
+  return hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()
 
 def retouch_one(conf:dict)->dict:
   path=ROOT/conf["original"]
@@ -95,7 +95,7 @@ def retouch_one(conf:dict)->dict:
 def main():
   OUT.mkdir(parents=True,exist_ok=True)
   records=[retouch_one(a) for a in ASSETS]
-  (OUT/"proof.json").write_text(json.dumps(records,ensure_ascii=False,indent=2)+"\\n")
+  (OUT/"proof.json").write_text(json.dumps(records,ensure_ascii=False,indent=2)+"\n")
   print(json.dumps(records,ensure_ascii=False,indent=2))
 if __name__=="__main__":
   main()
