@@ -201,6 +201,15 @@
     padding: 24px 20px 21px !important;
     border-radius: 20px !important;
   }
+  /* Phone and tablet panels bloom vertically, never slide beyond the viewport. */
+  .auth-desktop-layout.tr-auth-panel {
+    transform-origin: 50% 8%;
+  }
+  @keyframes tr-auth-sheet-in {
+    0% { opacity: 0; transform: translate3d(0, 13px, 0) scale(.94); }
+    63% { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.004); }
+    100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  }
   .tr-auth-panel .guest-partner-roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tr-auth-panel .guest-partner-role { min-width: 0; }
 }
