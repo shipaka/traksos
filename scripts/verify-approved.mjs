@@ -810,6 +810,18 @@ expect(pcE2E.includes('SYNTHETIC local API data') &&
   pcE2E.includes("const changes={depart:'en_route',arrive:'arrived',start_work:'working'}"),
   'signed-in real-browser synthetic fixture clearly labelled and state sequence guarded');
 
+
+// Protect the canonical design pointer: archival 19 Nov layouts must never become
+// the declared source of truth again, even if older PRs are cherry-picked.
+const approvedDesignDoc = await read('docs/APPROVED_DESIGN.md');
+expect(
+  approvedDesignDoc.includes('617.png') &&
+  approvedDesignDoc.includes('ACTIVE_SOURCE_OF_TRUTH_2026-11-20.md') &&
+  approvedDesignDoc.includes('ANDROID_ROLE_APPROVAL_REGISTER_2026-11-20.md') &&
+  !approvedDesignDoc.includes('**ДЕЙСТВУЮЩИЙ ЭТАЛОН 19 НОЯБРЯ 2026:**'),
+  'approved design index points to 617 and the 20 Nov canonical decisions, not retired 19 Nov PC design'
+);
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
