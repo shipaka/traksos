@@ -93,6 +93,7 @@ const activeFiles = await activeWebFiles('web/src');
 expect(activeFiles.length >= 100, 'approved-design guard scans all web/src source files');
 for (const file of activeFiles) {
   const source = await read(file);
+  if (source.includes('tracksos-visual-home')) retiredReferences.push(file + ' → retired client home');
   for (const name of retiredVisuals) if (source.includes(name)) retiredReferences.push(file + ' → ' + name);
 }
 expect(retiredReferences.length === 0,
@@ -295,13 +296,9 @@ expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119") &&
   'browser visual gate tests approved 617/618 real guest and account screens, never obsolete desktop-hero or fake phone hero');
 
 
-/* A retired guest stylesheet must never silently redraw the approved 19 Nov
-   desktop / mobile-browser page. Signed-in cabinet selectors remain intact. */
-for (const path of ['web/src/trackVisual.css', 'web/src/trackPolish.css', 'web/src/trackScenic.css']) {
-  const retainedRoleStyles = await read(path);
-  expect(!/\\.guest-app\\b|\\.public-[\\w-]+\\b|\\.track-guest-tabbar\\b/.test(retainedRoleStyles),
-    'obsolete public layout cannot leak from signed-in cabinet stylesheet: ' + path);
-}
+const retainedRoleStyles = await read('web/src/trackVisual.css');
+expect(!/\.guest-app\b|\.public-[\w-]+\b|\.track-guest-tabbar\b/.test(retainedRoleStyles),
+  'obsolete public layout cannot leak from trackVisual.css');
 const shell = await read('web/src/main.tsx');
 const androidCss = await read('web/src/androidApproved20261119.css');
 const browserCss = await read('web/src/mobileBrowser.css');

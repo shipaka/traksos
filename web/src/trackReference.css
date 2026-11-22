@@ -37,18 +37,6 @@
     border-top:1px solid #236c90;
   }
   .guest-app .desktop-sidebar-bottom{margin-top:0!important;border-top:1px solid #255a78;padding-top:12px;}
-  .app.role-client .tracksos-visual-home .track-road-art::before{
-    content:"";z-index:0;position:absolute;inset:0;
-    background:url('../public/tracksos-approved-hero-owner-20261119.webp') center/cover no-repeat;
-    filter:blur(29px) brightness(.52);opacity:.52;
-    -webkit-mask-image:radial-gradient(ellipse at center,#000 36%,transparent 90%);
-    mask-image:radial-gradient(ellipse at center,#000 36%,transparent 90%);
-  }
-  .app.role-client .tracksos-visual-home .track-road-art img{
-    position:relative;z-index:1;filter:drop-shadow(0 17px 22px #000c);
-    -webkit-mask-image:radial-gradient(ellipse 77% 84% at 50% 50%,#000 45%,rgba(0,0,0,.88) 65%,transparent 93%);
-    mask-image:radial-gradient(ellipse 77% 84% at 50% 50%,#000 45%,rgba(0,0,0,.88) 65%,transparent 93%);
-  }
 }
 @media(max-width:899px){
   .guest-app .track-sidebar-app{display:none;}
