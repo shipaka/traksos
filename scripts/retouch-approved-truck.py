@@ -154,9 +154,13 @@ def main() -> None:
     # Preserve the original dimensions/composition and replace ONLY maker
     # letters on the cabin. Never create a new splash or add branding.
     android_splash = Path("android/app/src/main/res/drawable-nodpi/splash_truck.webp")
-    if git_blob_sha(android_splash.read_bytes()) != EXPECTED_GIT_BLOB_SHA:
-        raise SystemExit("Android splash is not the exact original truck art")
-    shutil.copyfile(final_path, android_splash)
+    current_splash = android_splash.read_bytes()
+    expected_retouched = final_path.read_bytes()
+    if (git_blob_sha(current_splash) != EXPECTED_GIT_BLOB_SHA
+            and current_splash != expected_retouched):
+        raise SystemExit("Android splash differs from both exact source and audited retouch")
+    if current_splash != expected_retouched:
+        shutil.copyfile(final_path, android_splash)
     summary.append({
         "candidate": "05-reviewed-local-badge-only",
         "modified_pixels": int(np.count_nonzero(final_diff)),
