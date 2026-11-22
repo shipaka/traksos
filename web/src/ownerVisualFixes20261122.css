@@ -591,6 +591,35 @@ html .guest-partner-roles .guest-partner-role-service::before {
     border:0!important;box-shadow:none!important;
   }
 }
+/* Shared pictograms on partner selection: same SVG paths as the public
+   Master, Tow, STO and Insurance service cards. Keep artwork to the right
+   and readable live labels in the left text zone. */
+.guest-app .guest-partner-roles .guest-partner-role-label {
+  display:flex!important;align-items:flex-start!important;gap:7px!important;
+  max-width:78%;position:relative!important;z-index:3!important;
+  margin-bottom:6px;line-height:1.22;
+}
+.guest-app .guest-partner-roles .guest-partner-role-label svg {
+  width:21px!important;height:21px!important;
+  flex:0 0 21px;stroke:#ffa367!important;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.7));
+}
+.guest-app .guest-partner-roles .guest-partner-role-label b {
+  display:block!important;min-width:0;
+  line-height:1.22!important;overflow-wrap:break-word;
+}
+.guest-app .guest-partner-roles .guest-partner-role>small{
+  max-width:74%!important;
+}
+@media(max-width:899px){
+  .guest-app .guest-partner-roles .guest-partner-role-label {
+    max-width:84%;gap:5px!important;
+    font-size:12px;
+  }
+  .guest-app .guest-partner-roles .guest-partner-role-label svg {
+    width:18px!important;height:18px!important;flex-basis:18px;
+  }
+}
 /* Actual 390px browser evidence: the guest legal footer fell through to
    browser default blue/purple visited links below the cookie preference.
    Keep published legal destinations unchanged, but use the approved
