@@ -127,3 +127,16 @@
    width:88px;height:90px!important;max-height:90px!important;
  }
 }
+
+
+/* Approved 617 inner inspection: the legacy partner-workspace active button
+   inherited a cyan outline/fill on desktop and mobile browser. Keep the
+   operator's actual tabs, ARIA pressed state and case controls unchanged. */
+html.traksos-browser .app.role-inspection
+  .desktop-content:has(> .tr-inner-hero[data-route^="inspections/"])
+  > main.cabinet-page .partner-workspaces .btn.active {
+  background:linear-gradient(125deg,#ef8225,#a94c18)!important;
+  color:#fff!important;
+  border-color:#ffb776!important;
+  box-shadow:0 5px 16px #a94c1844;
+}
