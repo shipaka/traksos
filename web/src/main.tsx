@@ -103,6 +103,7 @@ import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from
 import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
 import { CourierDesk, CourierDelivery } from './screens/courier.tsx';
 import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
+import { ApprovedPublicHeader } from './screens/ownerDesktopHome20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 // Injected by the exact same BUILD_REV that powers /api/health in the VPS image.
 declare const __TRAKSOS_BUILD_REV__: string;
@@ -630,7 +631,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   );
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
-      <header className="top">
+      {!me && standaloneDesktopHome
+        ? <ApprovedPublicHeader />
+        : <header className="top">
         {me ? <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
           : <a href="#/" className="logo guest-approved-mark" aria-label="TrakSOS — главная">
               <img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS"/>
@@ -704,7 +707,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </nav>
           </details>}
         </div>
-      </header>
+      </header>}
       <NetworkStatus />
       {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
