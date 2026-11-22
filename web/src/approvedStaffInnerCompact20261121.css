@@ -66,3 +66,12 @@ html.traksos-browser .app.role-admin
  > main .admin-stage > .admin-stage-head > h2 {
   display:none!important;
 }
+
+
+/* Registry content originally printed a second copy of the same page title.
+   Preserve the actual registry introduction, create button and filters. */
+html.traksos-browser .app.role-admin
+ .desktop-content:has(> .tr-inner-hero[data-route="admin/section/registry"])
+ > main .tr-registry-intro h3 {
+  display:none!important;
+}
