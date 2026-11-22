@@ -659,3 +659,65 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
     z-index:3!important;
   }
 }
+
+/*
+ * Screenshot review 22.11 at 900px exposed a genuine visual regression:
+ * five narrow cards forced the artwork over copy/CTAs and four footer cards
+ * compressed the Russian text. Reflow those sections on narrow DESKTOP only.
+ * 617.png 1536px and approved Android/mobile remain untouched.
+ */
+@media (min-width:900px) and (max-width:1199px) {
+  .guest-app.guest-home .owner20-features {
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  .guest-app.guest-home .owner20-feature {
+    height:156px!important;
+    padding:15px!important;
+  }
+  .guest-app.guest-home .owner20-feature-title {
+    font-size:16px!important;
+    gap:8px!important;
+  }
+  .guest-app.guest-home .owner20-feature p {
+    max-width:64%!important;
+    font-size:11px!important;
+    line-height:1.42!important;
+  }
+  .guest-app.guest-home .owner20-feature-illustration {
+    width:126px!important;
+    height:123px!important;
+    right:2px!important;
+    bottom:0!important;
+  }
+  .guest-app.guest-home .owner20-feature-cta {
+    left:14px!important;
+    bottom:14px!important;
+  }
+  .guest-app.guest-home .owner20-bottom {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card {
+    height:168px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card p {
+    max-width:63%!important;
+  }
+  .guest-app.guest-home .owner20-community-art {
+    width:151px;
+    height:142px;
+    right:3px;
+    bottom:1px;
+  }
+}
+@media (min-width:1200px) and (max-width:1380px) {
+  .guest-app.guest-home .owner20-feature-illustration {
+    width:110px!important;
+    height:112px!important;
+    right:1px!important;
+  }
+  .guest-app.guest-home .owner20-feature p {
+    max-width:66%!important;
+  }
+}
