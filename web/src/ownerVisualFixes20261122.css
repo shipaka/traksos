@@ -867,9 +867,11 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 }
 @media(min-width:900px) and (max-width:1199px){
   .guest-app.guest-home .owner20-bottom-card{
-    min-height:214px!important;
-    height:214px!important;
-    padding:15px 12px!important;
+    /* Let the longest Russian list establish the row's real height.
+       A hard 214px still cut its final bullet at 900px. */
+    min-height:228px!important;
+    height:auto!important;
+    padding:15px 12px 22px!important;
   }
   .guest-app.guest-home .owner20-bottom-card>b{
     display:block!important;
