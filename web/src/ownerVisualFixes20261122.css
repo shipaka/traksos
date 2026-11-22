@@ -587,3 +587,22 @@ html.traksos-browser .guest-app .site-footer a:focus-visible {
   outline:2px solid #ffad71;outline-offset:3px;
   border-radius:3px;
 }
+
+/* The important background shorthand above also defines position. Match its
+   specificity on each approved role to avoid showing the mechanic in the
+   tow/STO tiles. The standalone join page uses the shorter selectors. */
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role.guest-partner-role-master::before,
+html .guest-partner-roles .guest-partner-role.guest-partner-role-master::before {
+  background-position:0% 50%!important;
+  transform:scaleX(-1)!important;
+}
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role.guest-partner-role-tow::before,
+html .guest-partner-roles .guest-partner-role.guest-partner-role-tow::before {
+  background-position:33.3333% 50%!important;
+  transform:none!important;
+}
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role.guest-partner-role-service::before,
+html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before {
+  background-position:66.6667% 50%!important;
+  transform:none!important;
+}
