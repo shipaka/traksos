@@ -236,6 +236,16 @@ try{
           if (docs[0].id === docs[1].id || docs[0].body === docs[1].body || docs[0].summary === docs[1].summary)
             throw Error('Privacy duplicates client offer in ' + role);
         }
+        // A performer must not see the client's insurance application even
+        // through a manually entered hash. The partner's dossier thread stays
+        // accessible through the separate authorized insurer role.
+        if(role==='master' && width===390){
+          await page.goto(base+'/#/insurance/request/new',{waitUntil:'domcontentloaded'});
+          await page.locator('main.tr-approved-route-unavailable').waitFor({state:'visible',timeout:15000});
+          if(await page.getByRole('heading',{name:'Заявка на страхование грузовика'}).count())
+            throw Error('Master unexpectedly mounted customer insurance form');
+          if(errors.length)throw Error('Denied insurance route JS error '+errors.join('; '));
+        }
         // A wrong-role deep link must NEVER show an old Home dashboard.
         // Clear denial screens are safer than silently exposing a stale
         // or misleading cabinet for an authenticated user.
