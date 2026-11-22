@@ -62,7 +62,7 @@
    operational stage remains mounted with all actions, tables and description;
    only its redundant old section heading is visually retired. */
 html.traksos-browser .app.role-admin
- .desktop-content:has(> .tr-inner-hero[data-route^="admin/section/"])
+ .desktop-content:has(> .tr-inner-hero:is([data-route="admin/section/support"],[data-route="admin/section/stats"]))
  > main .admin-stage > .admin-stage-head > h2 {
   display:none!important;
 }
