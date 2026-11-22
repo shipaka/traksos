@@ -680,13 +680,13 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
     gap:8px!important;
   }
   .guest-app.guest-home .owner20-feature p {
-    max-width:64%!important;
+    max-width:60%!important;
     font-size:11px!important;
     line-height:1.42!important;
   }
   .guest-app.guest-home .owner20-feature-illustration {
-    width:126px!important;
-    height:123px!important;
+    width:112px!important;
+    height:114px!important;
     right:2px!important;
     bottom:0!important;
   }
