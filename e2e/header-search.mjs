@@ -10,8 +10,8 @@ async function session(term, select, expectedHash, width=1440){
   const page=await browser.newPage({viewport:{width,height:width<500?844:900},locale:'ru-RU'});
   page.on('pageerror',err=>errors.push(err.message));
   try{
-    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-    // Wait for the actual approved header control, not a retired hero heading.
+    await page.goto(BASE+'/#/help',{waitUntil:'domcontentloaded'});
+    // The approved standalone home intentionally has no Shell search; test it on the Shell help route.
     try {
       await page.locator('.track-site-search-icon').waitFor({state:'visible',timeout:10000});
     } catch (error) {
