@@ -128,6 +128,10 @@ try {
     assert(await botLauncher.isVisible(), width + 'px: TrakBot entry not visible');
     assert(await botLauncher.locator('.trakbot-mascot-truck').count() === 1,
       width + 'px: approved truck technician missing from launcher');
+    const mascotMask = await botLauncher.locator('.trakbot-mascot-original')
+      .evaluate(el => getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage);
+    assert(mascotMask?.includes('radial-gradient'),
+      width + 'px: TrakBot still appears as a rectangular raster sticker: ' + mascotMask);
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot opened automatically');
     await botLauncher.click();
