@@ -30,15 +30,19 @@ try {
         const pic=card.querySelector('.owner20-feature-illustration');
         const bounds=card.getBoundingClientRect(),art=pic?.getBoundingClientRect();
         const style=getComputedStyle(pic);
-        return {image:style.backgroundImage,mask:style.maskImage,
+        return {key:(card.className.match(/owner20-feature-(tech|ecu|parts|insurance|inspection)/)||[])[1],
+          image:style.backgroundImage,mask:style.maskImage,
           before:getComputedStyle(card,'::before').content,
           w:art?.width,h:art?.height,cardW:bounds.width,cardH:bounds.height};
       }));
+      const artFiles={tech:'owner617-tech-photo.webp',ecu:'owner617-ecu-photo.webp',
+        parts:'owner617-parts-photo.webp',insurance:'owner617-insurance-photo.webp',
+        inspection:'traksos-service-scenes-desktop-hq.webp'};
       assert(tiles.length===5&&tiles.every(t=>
-        t.image?.includes('traksos-service-scenes-desktop-hq.webp') &&
+        t.key && t.image?.includes(artFiles[t.key]) &&
         t.mask==='none' && t.before==='none' &&
         Math.abs(t.w-t.cardW)<3 && Math.abs(t.h-t.cardH)<3),
-        width+'px: 617 photographs should fill cards with no raster caption cuts '+JSON.stringify(tiles));
+        width+'px: 617 photographs should fill cards without raster caption cuts '+JSON.stringify(tiles));
       const heroPhoto=await page.locator('.owner20-photo').evaluate(el=>
         getComputedStyle(el,'::after').backgroundImage);
       assert(heroPhoto.includes('owner20-photo-brandless-20261122.webp'),
