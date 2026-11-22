@@ -35,28 +35,40 @@ try {
       // 617 cards: text on the left, source imagery on the right, continuous
       // dimming gradient, not a hard-masked half-image or text baked into CSS.
       const tiles=await page.locator('.owner20-feature').evaluateAll(items=>items.map(card=>{
-        const pic=card.querySelector('.owner20-feature-illustration');
-        const bounds=card.getBoundingClientRect(),art=pic?.getBoundingClientRect();
-        return {title:card.querySelector('b')?.textContent,
-          image:getComputedStyle(pic).backgroundImage,
-          gradient:getComputedStyle(card,'::before').backgroundImage,
-          artRight:art?.right,cardRight:bounds.right,
-          mask:getComputedStyle(pic).maskImage,
+        const picture=card.querySelector('picture[data-feature-art]');
+        const img=picture?.querySelector('img');
+        const title=card.querySelector('.owner20-feature-title');
+        const desc=card.querySelector('p');
+        const cta=card.querySelector('.owner20-feature-cta');
+        const art=picture?.getBoundingClientRect();
+        const bounds=card.getBoundingClientRect();
+        const titleRect=title?.getBoundingClientRect();
+        const descRect=desc?.getBoundingClientRect();
+        const ctaRect=cta?.getBoundingClientRect();
+        const overlay=getComputedStyle(card,'::before');
+        return {
+          key:picture?.getAttribute('data-feature-art'),
+          src:img?.currentSrc||img?.src,
+          loaded:!!img?.complete&&img.naturalWidth>=256&&img.naturalHeight>=150,
+          imageSize:img?[img.naturalWidth,img.naturalHeight]:null,
+          oldAtlas:!!card.querySelector('.owner20-feature-illustration'),
+          overlay:overlay.backgroundImage,
+          artFull:!!art&&Math.abs(art.left-bounds.left)<3&&Math.abs(art.right-bounds.right)<3&&
+            Math.abs(art.top-bounds.top)<3&&Math.abs(art.bottom-bounds.bottom)<3,
+          titleInBounds:!!titleRect&&titleRect.left>=bounds.left-2&&titleRect.right<=bounds.right+2,
+          descInBounds:!!descRect&&descRect.left>=bounds.left-2&&descRect.right<=bounds.right+2,
+          ctaInBounds:!!ctaRect&&ctaRect.left>=bounds.left-2&&ctaRect.right<=bounds.right+2&&ctaRect.bottom<=bounds.bottom+2,
+          caption:card.querySelector('b')?.textContent?.trim(),
         };
       }));
-      assert(tiles.length===5&&tiles.every(t=>
-        t.image?.includes('owner20-artwork-sprite-retouched.webp') &&
-        t.gradient?.includes('linear-gradient') &&
-        t.artRight <= t.cardRight+3 &&
-        t.mask?.includes('linear-gradient')),
-
-        width+'px: approved 617 right-image/left-copy card composition lost '+JSON.stringify(tiles));
-      const crop=await page.locator('.owner20-feature-illustration').evaluateAll(items=>items.map(el=>{
-        const r=el.getBoundingClientRect(),bg=getComputedStyle(el).backgroundPosition;
-        return {w:Math.round(r.width),bg};
-      }));
-      assert(crop.length===5 && crop.every(x=>x.w<=112),
-        width+'px: caption-bearing atlas region returned to feature cards '+JSON.stringify(crop));
+      const canonical=['tech','ecu','parts','insurance','inspection'];
+      assert(tiles.length===5&&tiles.every((tile,index)=>
+        tile.key===canonical[index] &&
+        tile.src?.includes('/feature-art/traksos-feature-'+tile.key+'-desktop-20261122.webp') &&
+        tile.loaded && tile.artFull && !tile.oldAtlas &&
+        tile.overlay?.includes('linear-gradient') &&
+        tile.titleInBounds && tile.descInBounds && tile.ctaInBounds),
+        width+'px: new canonical full-card feature photo, visible DOM copy, or CTA failed: '+JSON.stringify(tiles));
       const botShortcut=page.locator('.owner20-quick-trakbot');
       assert(await botShortcut.count()===1,'TrakBot should occupy exactly the fifth quick tile');
       await botShortcut.click();
