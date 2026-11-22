@@ -164,6 +164,7 @@ export class StatsService {
     }>(`select id, name, address, lat, lng from service_centers
        where verification='approved' and paused=false
          and lat between -90 and 90 and lng between -180 and 180
+         and not (lat=0 and lng=0)
        order by name, id limit 30`);
     return {
       today: { orders: r.orders_today, mastersOnline: r.masters_online, towOnline: r.tow_online, disputesOpen: r.disputes_open, modOpen: r.mod_open, supportOpen: r.support_open },
