@@ -382,3 +382,25 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
   .guest-app .tr-rules-public>div:first-of-type::after{opacity:.16}
   .guest-app .tr-rules-public>div:first-of-type :is(h1,.sub){max-width:100%}
 }
+
+/* Authenticated insurance workspace: visually meaningful VERIFIED-empty
+   queue only. Errors and loading states never masquerade as empty data. */
+@media(min-width:900px) {
+ .approved-pc-insurance .approved-pc-insurance-empty-visual {
+   position:relative;isolation:isolate;overflow:hidden;
+   min-height:185px!important;padding-right:clamp(145px,29%,205px)!important;
+   background:linear-gradient(110deg,#102c38,#0b202b)!important;
+ }
+ .approved-pc-insurance .approved-pc-insurance-empty-visual::before {
+   content:"";position:absolute;right:10px;bottom:0;top:15px;
+   width:clamp(110px,24%,152px);z-index:-1;
+   background:url('/owner20-artwork-sprite-retouched.webp') -476px -315px / 1018px 446px no-repeat;
+   -webkit-mask-image:linear-gradient(to right,transparent,#000 16%);
+   mask-image:linear-gradient(to right,transparent,#000 16%);
+   opacity:.80;pointer-events:none;
+ }
+ .approved-pc-insurance .approved-pc-insurance-empty-visual>h2,
+ .approved-pc-insurance .approved-pc-insurance-empty-visual>.approved-pc-empty {
+   position:relative;z-index:2;
+ }
+}
