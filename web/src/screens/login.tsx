@@ -4,6 +4,7 @@ import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
 import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
+import { GuestUnifiedInfo, type GuestInfoKind } from './guestUnifiedInfo20261122.tsx';
 
 const HERO_SLIDES = [
   { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
@@ -91,7 +92,16 @@ export function homeFor(roles: string[], intent: Intent): string {
   return '#/as/client';
 }
 
-export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = {}) {
+const GUEST_SERVICE_NAMES: Record<string, string> = {
+  van:'Выездной мастер', tow:'Эвакуация', sto:'СТО и ремонт',
+  ecu:'Специалисты ЭБУ', consult:'Консультация', parts:'Запчасти',
+  insurance:'Страхование', inspection:'Техосмотр', sos:'Помощь SOS',
+  air:'Эфир водителей', club:'Клуб TrakSOS', tech:'ТехБаза',
+  trakbot:'TrakBot', garage:'Мой гараж', training:'Обучение'
+};
+export function Login({ driver, entry, publicInfo, serviceContext }: {
+  driver?: boolean; entry?: Intent; publicInfo?: GuestInfoKind; serviceContext?: string;
+} = {}) {
   const { reload } = useMe();
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
@@ -140,6 +150,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     });
     return () => cancelAnimationFrame(frame);
   }, [intent]);
+  const [inlineLegal, setInlineLegal] = useState<string | null>(null);
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
@@ -148,13 +159,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   // Otherwise the guest header links to #/login, #/register or #/join
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
-    setIntent(null);
-    if (entry) go('');
+    setIntent(null); setInlineLegal(null);
+    try {
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
+    } catch { /* private browsing */ }
+    if (entry || publicInfo) go('');
   };
 
   // Escape, keyboard focus and scroll locking apply only to the browser dialog.
   useEffect(() => {
-    if (!intent || native.isApp) return;
+    if ((!intent && !publicInfo) || native.isApp) return;
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const focusInitial = window.requestAnimationFrame(() => {
@@ -185,7 +200,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = oldOverflow;
     };
-  }, [intent, entry]); // Browser auth routes provide their own independent dialog lifecycle.
+  }, [intent, entry, publicInfo, inlineLegal]); // Modal remains keyboard-accessible on service, legal and support routes.
 
   const partnerAccountType = intent === 'join' && (role === 'master' || role === 'service') && hybridMasterService
     ? 'master_service' : role;
@@ -317,7 +332,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
 
   // The public page stays mounted beneath browser sign-in and registration.
   // Native Android keeps the separately approved full-screen auth experience.
-  const showOverlay = !native.isApp && !!intent;
+  const showOverlay = !native.isApp && (!!intent || !!publicInfo);
 
   const mobileLanding = (
     <main className="public-home public-landing" id="public-home"
@@ -473,17 +488,21 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     </main>
   );
 
-  if (!intent) return desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
+  if (!intent && !publicInfo) return desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
 
   return (
     <>
       {showOverlay && (desktopPublic ? <OwnerDesktopHome20261120 overlayBackground /> : mobileLanding)}
       {showOverlay && <div className="tr-auth-backdrop" onClick={backToPublic} aria-hidden="true" />}
-      <main className={'auth-desktop-layout' + (showOverlay ? ' tr-auth-panel tr-auth-panel--' + intent : '')}
+      <main className={'auth-desktop-layout' + (showOverlay ? ' tr-auth-panel tr-auth-panel--' + (publicInfo || inlineLegal ? 'info' : intent) : '')}
         role={showOverlay ? 'dialog' : undefined} aria-modal={showOverlay ? true : undefined}
         aria-labelledby={showOverlay ? 'tr-auth-title' : undefined}>
       <section className="auth-desktop-form">
       {showOverlay && <button type="button" className="tr-auth-close" onClick={backToPublic} aria-label="Закрыть окно">×</button>}
+      {(publicInfo || inlineLegal) ? <GuestUnifiedInfo
+        kind={publicInfo ?? ('offer:' + inlineLegal) as GuestInfoKind}
+        onBack={inlineLegal ? () => setInlineLegal(null) : undefined}
+      /> : <>
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
         <button type="button" onClick={() => go('join')}>Хочу работать с TrakSOS</button>
@@ -493,6 +512,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
       </nav>}
       <div>
+        {serviceContext && GUEST_SERVICE_NAMES[serviceContext] &&
+          <span className="tr-auth-service-context">Вы выбрали: {GUEST_SERVICE_NAMES[serviceContext]}</span>}
         <h1 id="tr-auth-title">{title}</h1>
         <div className="sub">{sub}</div>
       </div>
@@ -512,7 +533,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
-          <button type="button" className="btn ghost" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
+          <button type="button" className="btn ghost tr-auth-register-link" onClick={() => go('register')}>Нет аккаунта? Зарегистрироваться</button>
+          <button type="button" className="btn ghost tr-auth-partner-link" onClick={() => go('join')}>Мастер, эвакуатор, СТО? Регистрация партнёра</button>
           <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
@@ -581,7 +603,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           </div>}
           {needAgree && <label className="row note" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 3 }} />
-            <span>{intent === 'activate' ? 'Согласен на ' : <>Согласен с {intent === 'join' ? <a href="#/offer/performer" target="_blank" rel="noreferrer">агентским договором</a> : <a href="#/offer/client" target="_blank" rel="noreferrer">офертой</a>} и на </>}<a href="#/offer/privacy" target="_blank" rel="noreferrer">обработку персональных данных</a></span>
+            <span>{intent === 'activate' ? 'Согласен на ' : <>Согласен с {intent === 'join' ? <a href="#/offer/performer" onClick={e => { if(!native.isApp){e.preventDefault();setInlineLegal('performer');} }}>агентским договором</a> : <a href="#/offer/client" onClick={e => { if(!native.isApp){e.preventDefault();setInlineLegal('client');} }}>офертой</a>} и на </>}<a href="#/offer/privacy" onClick={e => { if(!native.isApp){e.preventDefault();setInlineLegal('privacy');} }}>обработку персональных данных</a></span>
           </label>}
           {codeError && <div className="card" role="alert" style={{ borderColor: 'var(--danger, #e25b69)' }}>{codeError}</div>}
           {codeStatus && <div className="note" role="status">{codeStatus}</div>}
@@ -603,6 +625,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
         </form>
       )}
+      </>}
       </section>
       {!showOverlay && <aside className={'auth-desktop-showcase partner-showcase partner-art-'+partnerShowcaseKey}
         aria-label="Иллюстрация выбранного направления партнёрства TrakSOS">
