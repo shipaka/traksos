@@ -19,25 +19,28 @@ async function assertFullBleedCabinetBanner(page,role) {
  const banner=page.locator('.approved-pc-heading');
  await banner.waitFor({state:'visible'});
  const state=await banner.evaluate(el=>{
-  const style=getComputedStyle(el);
+  const art=getComputedStyle(el,'::after');
   const box=el.getBoundingClientRect();
   const copy=el.querySelector(':scope > div')?.getBoundingClientRect();
   const image=el.querySelector(':scope > img');
+  const feature=el.querySelector(':scope > .traksos-feature-art');
   return {
-   background:style.backgroundImage,size:style.backgroundSize,
-   position:style.backgroundPosition,repeat:style.backgroundRepeat,
-   imageDisplay:image?getComputedStyle(image).display:'absent',
+   role:el.getAttribute('data-role-art'),
+   image:art.backgroundImage,mask:art.maskImage,position:art.backgroundPosition,
+   background:getComputedStyle(el).backgroundImage,
+   imageDisplay:image?getComputedStyle(image).display:'none',
+   featureDisplay:feature?getComputedStyle(feature).display:'none',
    copyWidth:copy?.width??0,copyLeft:copy?.left??0,
    cardWidth:box.width,cardLeft:box.left,
    text:el.querySelector('h1')?.textContent||''
   };
  });
- assert(state.background.includes('owner20-photo-background-approved-retouched.webp'),
-  role+': role banner is not the approved full-bleed photo '+JSON.stringify(state));
- assert(state.size.includes('158%')&&state.imageDisplay==='none',
-  role+': secondary picture / grey right panel returned '+JSON.stringify(state));
+ assert(state.role===role && state.image.includes('traksos-role-banners-approved-atlas-20261122.webp'),
+  role+': role-specific atlas not applied to the banner '+JSON.stringify(state));
+ assert(state.mask.includes('linear-gradient')&&state.imageDisplay==='none'&&state.featureDisplay==='none',
+  role+': duplicated rectangular truck or image cutout returned '+JSON.stringify(state));
  assert(state.copyWidth>90&&state.copyWidth<state.cardWidth*.7&&state.copyLeft>=state.cardLeft,
-  role+': banner headline no longer occupies the left area '+JSON.stringify(state));
+  role+': readable left-hand headline missing '+JSON.stringify(state));
  assert(state.text.length>3,role+': missing real role heading');
 }
 
