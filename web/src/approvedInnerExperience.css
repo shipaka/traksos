@@ -256,6 +256,21 @@ html.traksos-reduced-motion .tr-inner-rail{
  }
 }
 
+/* At 320px the action's decorative corner arrow plus the inherited
+ * 10px flex gap caused a 4px internal overflow (real 12-role Chromium QA).
+ * Keep all three buttons and readable labels; only the redundant arrow goes. */
+@media(max-width:359px){
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a{
+  gap:0;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a > span:first-child{
+  min-width:0;overflow-wrap:anywhere;
+ }
+ html.traksos-browser .app[class*="role-"] .tr-inner-rail-tools nav a > span:last-child{
+  display:none;
+ }
+}
+
 /* Second pass after inspecting REAL Chromium 1440/390 captures:
  * Old decorative headings duplicated the approved section hero, pushing
  * functional forms and the user's real data below the viewport. Hide only
