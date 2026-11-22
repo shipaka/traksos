@@ -569,3 +569,21 @@ html .guest-partner-roles .guest-partner-role-tow::before {
 html .guest-partner-roles .guest-partner-role-service::before {
   background-position:66.6667% 50%!important;transform:none!important;
 }
+
+
+/* Actual 390px browser evidence: the guest legal footer fell through to
+   browser default blue/purple visited links below the cookie preference.
+   Keep published legal destinations unchanged, but use the approved
+   graphite/orange visual language on desktop AND narrow browser widths. */
+html.traksos-browser .guest-app .site-footer a,
+html.traksos-browser .guest-app .site-footer a:visited {
+  color:#cbe4ea!important;
+  text-decoration:none!important;
+}
+html.traksos-browser .guest-app .site-footer a:hover {
+  color:#ffb97e!important;text-decoration:underline!important;
+}
+html.traksos-browser .guest-app .site-footer a:focus-visible {
+  outline:2px solid #ffad71;outline-offset:3px;
+  border-radius:3px;
+}
