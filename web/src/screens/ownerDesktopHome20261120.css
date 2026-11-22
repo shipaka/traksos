@@ -68,10 +68,10 @@
  .owner20-bottom-card{height:177px;position:relative;background:linear-gradient(130deg,#142b37,#071924);border:1px solid #3c535d;border-radius:14px;overflow:hidden;padding:18px 15px}
  .owner20-bottom-card b{font-size:18px;color:#fff}
  .owner20-bottom-card p{font-size:12px;line-height:1.4;max-width:75%;color:#d0dce1}
- .owner20-bottom-air:after,.owner20-bottom-club:after{position:absolute;right:-9px;bottom:-12px;font-size:115px;color:#ffffff1d;pointer-events:none}
- .owner20-bottom-air:after{content:'◉'}
- .owner20-bottom-club:after{content:'♧'}
- .owner20-bottom-card>a,.owner20-bottom-card>span:not(.owner20-store){position:absolute;bottom:15px;left:15px;border:1px solid #f1713d;border-radius:20px;padding:7px 13px;font-size:12px}
+
+
+
+ .owner20-bottom-card>a,.owner20-bottom-card>.owner20-bottom-cta{position:absolute;bottom:15px;left:15px;border:1px solid #f1713d;border-radius:20px;padding:7px 13px;font-size:12px}
  .owner20-bottom-why ul{padding-left:18px;margin:9px 0;list-style:'✓  ';font-size:12px;line-height:1.75}
  .owner20-bottom-why li::marker{color:var(--orange)}
  .owner20-store{position:absolute;bottom:15px;left:15px;color:#bbcbd1;font-size:12px}
@@ -440,20 +440,9 @@
     position:relative;z-index:2;
   }
   .guest-app.guest-home .owner20-bottom-air::after,
-  .guest-app.guest-home .owner20-bottom-club::after{
-    content:""!important;display:block!important;
-    position:absolute!important;right:0!important;bottom:0!important;
-    width:218px;height:168px;
-    background:url('/owner20-artwork-sprite.webp') -797px 0 / 1018px 446px no-repeat!important;
-    font-size:0!important;opacity:1!important;
-    pointer-events:none;
-    z-index:1;
-  }
-  .guest-app.guest-home .owner20-bottom-club::after{
-    width:213px;height:167px;
-    background-position:-797px -170px!important;
-  }
-  .guest-app.guest-home .owner20-bottom-card>span:not(.owner20-store){
+
+
+  .guest-app.guest-home .owner20-bottom-card>.owner20-bottom-cta{
     z-index:3!important;
     bottom:23px!important;
     left:16px!important;
@@ -493,18 +482,8 @@
 
 
  .guest-app.guest-home .owner20-bottom-air::after,
- .guest-app.guest-home .owner20-bottom-club::after{
-   display:block;content:""!important;
-   position:absolute;right:0;bottom:0;
-   width:218px;height:168px;
-   background-image:url('/owner20-artwork-sprite.webp');
-   background-position:-797px 0;
-   background-size:1018px 446px;
-   background-repeat:no-repeat;
-   font-size:0;
-   transform:none;
- }
- .guest-app.guest-home .owner20-bottom-club::after{width:213px;height:167px;background-position:-797px -170px}
+
+
 }
 
 
@@ -562,8 +541,7 @@
  .guest-app.guest-home .owner20-feature-illustration {
  }
  .guest-app.guest-home .owner20-bottom-air::after,
- .guest-app.guest-home .owner20-bottom-club::after {
- }
+
 }
 @media(min-width:900px) and (max-width:1199px){
  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher {
@@ -590,17 +568,10 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
  }
- .guest-app.guest-home .owner20-bottom-air::after {
-   width:133px!important;background-position:-882px 0!important;
- }
- .guest-app.guest-home .owner20-bottom-club::after {
-   width:133px!important;background-position:-877px -170px!important;
- }
+
+
  .guest-app.guest-home .owner20-bottom-air::after,
- .guest-app.guest-home .owner20-bottom-club::after {
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
- }
+
 }
 
 /*
@@ -686,4 +657,34 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
     right:0!important;
   }
   .guest-app.guest-home .owner20-feature p { max-width:67%!important; }
+}
+
+/* Clean community images share one geometry: no text inside the assets. */
+@media(min-width:900px){
+  .guest-app.guest-home .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom-club::after { content:none!important; }
+  .guest-app.guest-home .owner20-community-art {
+    position:absolute;
+    width:164px;
+    height:152px;
+    right:-5px;
+    bottom:-3px;
+    z-index:1;
+    opacity:.90;
+    pointer-events:none;
+    display:block;
+    background:none;
+    border:0;
+    padding:0;
+  }
+  .guest-app.guest-home .owner20-community-art svg {
+    width:100%;
+    height:100%;
+    display:block;
+    filter:drop-shadow(0 5px 9px rgba(3,14,21,.22));
+  }
+  .guest-app.guest-home .owner20-bottom-cta {
+    position:absolute;
+    z-index:3!important;
+  }
 }
