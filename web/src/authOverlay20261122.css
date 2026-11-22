@@ -9,7 +9,7 @@
   background: rgba(2, 9, 14, .65);
   -webkit-backdrop-filter: blur(7px) saturate(.85);
   backdrop-filter: blur(7px) saturate(.85);
-  animation: tr-auth-shade-in .2s ease-out both;
+  animation: tr-auth-shade-in .46s ease-out both;
 }
 .auth-desktop-layout.tr-auth-panel {
   box-sizing: border-box !important;
@@ -36,7 +36,9 @@
   border: 1px solid rgba(132, 178, 188, .4) !important;
   border-radius: 23px !important;
   box-shadow: 0 33px 110px rgba(0, 0, 0, .64), inset 0 1px rgba(255,255,255,.09), 0 0 40px rgba(244, 100, 37, .075) !important;
-  animation: tr-auth-sheet-in .25s cubic-bezier(.19,1,.22,1) both;
+  transform-origin: 92% 2%;
+  will-change: transform, opacity;
+  animation: tr-auth-sheet-in .56s cubic-bezier(.16,1,.3,1) both;
 }
 .auth-desktop-layout.tr-auth-panel:is(.tr-auth-panel--register,.tr-auth-panel--join) {
   width: min(590px, calc(100vw - 32px)) !important;
@@ -48,9 +50,25 @@
   left: 31px;
   right: 31px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #fc743b 24%, #ffab72 68%, transparent);
-  box-shadow: 0 0 22px rgba(252,116,59,.38);
+  background: linear-gradient(95deg, transparent 1%, #ff6a29 23%, #ffd1a4 52%, #ff8b49 78%, transparent 99%);
+  background-size: 240% 100%;
+  box-shadow: 0 0 24px rgba(252,116,59,.45);
   pointer-events: none;
+  animation: tr-auth-trace 1s cubic-bezier(.16,1,.3,1) both;
+}
+.auth-desktop-layout.tr-auth-panel::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  top: -125px;
+  right: -98px;
+  width: 330px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255, 122, 55, .17) 0%, rgba(251, 112, 48, .08) 35%, transparent 71%);
+  opacity: .62;
+  animation: tr-auth-glow-arrive .9s ease-out both;
 }
 .auth-desktop-layout.tr-auth-panel .auth-desktop-form {
   position: relative;
@@ -99,8 +117,15 @@
   background: linear-gradient(120deg, #fd813e, #ef5528) !important;
   color: #fff !important;
   box-shadow: 0 8px 20px rgba(210, 65, 25, .21);
+  animation: tr-auth-cta-warmth 1.8s ease-in-out .58s 2;
+  transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
   border-radius: 11px !important;
   min-height: 44px;
+}
+ .tr-auth-panel .btn:not(.ghost):not(:disabled):hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 11px 29px rgba(255, 110, 49, .32);
 }
 .tr-auth-panel .btn.ghost {
   color: #dbeaf0 !important;
@@ -143,8 +168,27 @@
 .tr-auth-panel .seg[aria-pressed='true'] { border-color: #ff9052 !important; box-shadow: inset 0 0 0 1px rgba(255,144,82,.35); }
 .tr-auth-panel .agree a { color: #ffb488; }
 .tr-auth-panel .auth-desktop-showcase { display: none !important; }
-@keyframes tr-auth-shade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes tr-auth-sheet-in { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes tr-auth-shade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tr-auth-sheet-in {
+  0% { opacity: 0; transform: translate3d(34px, -8px, 0) rotate(1.4deg) scale(.94); }
+  60% { opacity: 1; transform: translate3d(-3px, 0, 0) rotate(-.24deg) scale(1.005); }
+  100% { opacity: 1; transform: translate3d(0,0,0) rotate(0) scale(1); }
+}
+@keyframes tr-auth-trace {
+  from { opacity: .15; background-position: 100% 0; }
+  to { opacity: 1; background-position: 0 0; }
+}
+@keyframes tr-auth-glow-arrive {
+  0% { opacity: 0; transform: translate3d(55px,-30px,0) scale(.7); }
+  100% { opacity: .62; transform: translate3d(0,0,0) scale(1); }
+}
+@keyframes tr-auth-cta-warmth {
+  0%, 100% { box-shadow: 0 8px 20px rgba(210,65,25,.21); }
+  50% { box-shadow: 0 9px 28px rgba(255,127,55,.46), 0 0 0 4px rgba(252,111,44,.1); }
+}
 @media (max-width: 899px) {
   .auth-desktop-layout.tr-auth-panel,
   .auth-desktop-layout.tr-auth-panel:is(.tr-auth-panel--register,.tr-auth-panel--join) {
@@ -161,7 +205,13 @@
   .tr-auth-panel .guest-partner-role { min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tr-auth-backdrop, .auth-desktop-layout.tr-auth-panel { animation: none !important; }
+  .tr-auth-backdrop, .auth-desktop-layout.tr-auth-panel,
+  .auth-desktop-layout.tr-auth-panel::before, .auth-desktop-layout.tr-auth-panel::after,
+  .tr-auth-panel .btn:not(.ghost) { animation: none !important; transition: none !important; }
+
 }
 .traksos-reduced-motion .tr-auth-backdrop,
-.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel { animation: none !important; }
+.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel,
+.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel::before,
+.traksos-reduced-motion .auth-desktop-layout.tr-auth-panel::after,
+.traksos-reduced-motion .tr-auth-panel .btn:not(.ghost) { animation: none !important; transition: none !important; }
