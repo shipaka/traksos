@@ -843,6 +843,16 @@ expect(
   'desktop cabinet stylesheet references approved 618 mobile design, not retired Android authority'
 );
 
+// The retired admin homepage tab no longer exists. Keep the browser E2E
+// verification on its protected route rather than a missing button.
+const browserFlow = await read('e2e/flow.mjs');
+expect(
+  browserFlow.includes("await a.goto(BASE + '/#/admin/section/verify')") &&
+  browserFlow.includes("getByRole('heading', { name: 'Проверка', exact: true })") &&
+  !browserFlow.includes("getByRole('button', { name: 'Проверка', exact: true }).click()"),
+  'browser admin verification uses approved protected section, not retired home tab'
+);
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
