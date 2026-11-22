@@ -1050,3 +1050,34 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
   html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="tow"]{--tr-role-art-pos:-400px -402px}
   html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="service"]{--tr-role-art-pos:0 -536px}
 }
+
+
+/* 23 Nov visual review of 95bced6 PNG: at 1536px the fixed TrakBot
+   launcher covered the lower portion of the illustration in the app card.
+   Keep the approved phone-and-bot concept, but give each its own space.
+   Narrow PC (900-1199) retains the previously tested composition. */
+@media(min-width:1200px){
+  .guest-app.guest-home .owner20-bottom-app::after{
+    top:4px!important;
+    right:28px!important;
+    width:50px!important;
+    height:74px!important;
+    border-width:4px!important;
+    border-radius:12px!important;
+    background:
+      linear-gradient(#ff7b34,#ff7b34) 8px 39px / 14px 10px no-repeat,
+      linear-gradient(#1da7b2,#1da7b2) 27px 39px / 14px 10px no-repeat,
+      linear-gradient(#325d6b,#325d6b) 8px 57px / 33px 3px no-repeat,
+      linear-gradient(#244b59,#244b59) 8px 64px / 23px 3px no-repeat,
+      linear-gradient(175deg,#0a2330,#143a44 60%,#0b1d26)!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app::before{
+    top:18px!important;
+    right:29px!important;
+    width:52px!important;
+    font-size:9px!important;
+  }
+  .guest-app.guest-home > .trakbot-dock{
+    bottom:10px!important;
+  }
+}
