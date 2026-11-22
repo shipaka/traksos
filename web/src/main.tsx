@@ -103,6 +103,7 @@ import { SupportList, SupportNew, SupportThread, Notifications, useUnread } from
 import { InsurerCabinet, InsurerChats } from './screens/insurer.tsx';
 import { CourierDesk, CourierDelivery } from './screens/courier.tsx';
 import { ApprovedPcDesk, type ApprovedPCRole } from './screens/approvedPcCabinets20261120.tsx';
+import { ApprovedPublicHeader } from './screens/ownerDesktopHome20261120.tsx';
 import { InsuranceApplication,InsuranceThread } from './screens/insuranceFlow.tsx';
 // Injected by the exact same BUILD_REV that powers /api/health in the VPS image.
 declare const __TRAKSOS_BUILD_REV__: string;
@@ -120,12 +121,13 @@ class ScreenErrorBoundary extends Component<
   }
   render() {
     if (!this.state.failed) return this.props.children;
-    return <div className="app">
-      <main className="stack" style={{ padding: 24, maxWidth: 640, margin: '40px auto' }}>
+    return <div className="app tr-approved-error-shell">
+      <main className="tr-approved-route-unavailable" role="alert">
+        <span className="tr-approved-route-eyebrow">TRAKSOS · ИНТЕРФЕЙС</span>
         <h1>Не удалось открыть раздел</h1>
-        <p className="sub">Возникла ошибка отображения. Ваши данные не удалены. Можно вернуться на главную или обновить страницу.</p>
-        <div className="row">
-          <a className="btn" href="#/" onClick={() => { this.setState({ failed: false }); }}>На главную</a>
+        <p>Возникла ошибка отображения. Данные не удалены. Старый интерфейс вместо этого раздела не загружается.</p>
+        <div className="tr-approved-error-actions">
+          <a className="btn" href="#/" onClick={() => this.setState({ failed: false })}>На главную</a>
           <button className="btn ghost" type="button" onClick={() => location.reload()}>Обновить страницу</button>
         </div>
       </main>
@@ -300,7 +302,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <GuestExplore id="support" /> : route[0] === 'explore' ? <GuestExplore id={route[1] || ''} itemKey={route[2]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -339,14 +341,14 @@ function App() {
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
       : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <UnavailableRole label="Вы уже вошли в TrakSOS" />; break;
-    case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
-    case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
+    case 'sos': screen = isCustomer ? <Sos /> : <UnavailableRole label="Для вызова SOS нужен клиентский аккаунт" />; break;
+    case 'new': screen = !isCustomer ? <UnavailableRole label="Для заказа нужен клиентский аккаунт" /> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = effMode === 'performer' && isPerformer && b
       ? <PerformerOrderWindow id={b} initialTab={(['order','client','finance','chat','history','vehicle'].includes(route[2] ?? '') ? route[2] as 'order'|'client'|'finance'|'chat'|'history'|'vehicle' : 'order')} />
       : <Order id={b} />; break;
     case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
-    case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
-    case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
+    case 'orders': screen = isCustomer ? <Orders as="client" /> : <UnavailableRole label="Нет доступа к клиентским заявкам" />; break;
+    case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <UnavailableRole label="Нет доступа к гаражу" />; break;
     case 'profile': screen = <Profile />; break;
     case 'menu': screen = <main className="tr-mobile-menu-route" />; break;
     case 'invite': screen = <Invite />; break;
@@ -360,28 +362,28 @@ function App() {
         break;
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
-        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
+        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <UnavailableRole label="Такого раздела настроек мастера нет" />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)
-      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
+      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : b === undefined ? <ApprovedPcDesk role="service" fallback={<BaseHome />} /> : <UnavailableRole label="Раздел СТО не найден" />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
-    case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
-    case 'inspections': screen = (isInspection || isInsurer) ? (b ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <main><div className="empty">Нет прав оператора техосмотра</div></main>; break;
+    case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <UnavailableRole label="Парком управляет владелец" />; break;
+    case 'inspections': screen = (isInspection || isInsurer) ? (b ? <InsurerCabinet inspectionOnly /> : <ApprovedPcDesk role="inspection" fallback={<InsurerCabinet inspectionOnly />} />) : <UnavailableRole label="Нет прав оператора техосмотра" />; break;
     case 'courier': screen = !isCourier
-      ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
+      ? <UnavailableRole label="Кабинет курьера доступен только назначенному курьеру." />
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
-        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
+        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : b === undefined ? <ApprovedPcDesk role="courier" fallback={<CourierDesk />} /> : <UnavailableRole label="Раздел курьерского кабинета не найден" />; break;
     case 'insurance': screen = b === 'request'
       ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
-          : <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} />
-        : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
+          : b === undefined ? <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} /> : <UnavailableRole label="Раздел страхового кабинета не найден" />
+        : <UnavailableRole label="Нет доступа к кабинету страховщика" />; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
     case 'learn': screen = <PlatformIntro />; break;
@@ -391,15 +393,15 @@ function App() {
       ? me.roles.some(r => ['master','service','admin','moderator'].includes(r))
       : me.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r)))
       ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
-      : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
-    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
+      : <UnavailableRole label="Нет доступа к этому разделу ТехБазы" />; break;
+    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <UnavailableRole label="Раздел технической базы не найден" />; break;
     case 'training': screen = <Training chapter={b} />; break;
     case 'practice': screen = <TrainingPractice chapter={b} />; break;
-    case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <main><div className="empty">Нет доступа</div></main>; break;
+    case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <UnavailableRole label="Нет доступа" />; break;
     case 'rules': screen = <Rules />; break;
     case 'shop': screen = ((effMode === 'client' && isCustomer) || (effMode === 'performer' && isPerformer) || (effMode === 'service' && isService))
       ? (b === 'cart' ? <ShopCart /> : b === 'history' ? <ShopHistory vehicleId={route[2]} /> : <Shop />)
-      : <main><div className="empty">Магазин доступен в клиентском кабинете или кабинете исполнителя.</div></main>; break;
+      : <UnavailableRole label="Магазин доступен в клиентском кабинете или кабинете исполнителя." />; break;
     case 'privacy': screen = <Privacy />; break;
     case 'qr': screen = <QrJoin code={b} />; break;
     case 'appeal': screen = <Appeal />; break;
@@ -409,7 +411,7 @@ function App() {
     case 'offer': screen = <OfferPage audience={b ?? 'client'} />; break;
     case 'support': screen = b === 'new' ? <SupportNew /> : b ? <SupportThread id={b} /> : <SupportList />; break;
     case 'notifications': screen = <Notifications />; break;
-    default: screen = <main><div className="empty">Такой страницы нет</div></main>;
+    default: screen = <UnavailableRole label="Такой страницы нет" />;
   }
 
   return (
@@ -624,12 +626,15 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     <div className="app guest-app guest-home guest-home-standalone">
       <NetworkStatus />
       <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      <SiteFooter />
       <TrakBotDock authenticated={false} />
     </div>
   );
   return (
     <div className={`app ${me ? "role-"+mode : (route.length === 0 ? "guest-app guest-home" : "guest-app")}`}>
-      <header className="top">
+      {!me && standaloneDesktopHome
+        ? <ApprovedPublicHeader />
+        : <header className="top">
         {me ? <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
           : <a href="#/" className="logo guest-approved-mark" aria-label="TrakSOS — главная">
               <img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS"/>
@@ -703,7 +708,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </nav>
           </details>}
         </div>
-      </header>
+      </header>}
       <NetworkStatus />
       {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
@@ -820,7 +825,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && route[0] !== 'profile' && mode !== 'moderator' && !approvedDeskHasTrakBot && <TrakBotDock authenticated={!!me} />}
       {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
@@ -869,7 +874,7 @@ function SiteFooter() {
       {l?.address && <span className="note">{l.address}</span>}
       {contacts && <span className="note">Поддержка: {contacts}</span>}
       <span className="row note" style={{ gap: 12 }}>
-        <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
+        <a href="#/explore/guide">Маркетплейс выездной помощи</a><a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
       <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSos'}</span>
     </footer>

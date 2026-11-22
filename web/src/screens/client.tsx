@@ -10,6 +10,7 @@ import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNew
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
+import './profileApproved20261122.css';
 import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
@@ -1239,9 +1240,44 @@ export function Profile() {
   if (!me) return null;
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
+  const roleLabel: Record<string,string> = {
+    client: me.owner_id || me.roles.includes('driver') ? 'Водитель автопарка' : 'Владелец автопарка',
+    performer: me.performer?.kind === 'tow' ? 'Эвакуаторщик' : 'Выездной мастер',
+    service: 'СТО / рембаза', insurer: 'Страховой партнёр',
+    inspection: 'Оператор техосмотра', courier: 'Курьер',
+    moderator: 'Модератор', admin: 'Администратор',
+  };
+  const scrollToSection = (id:string) =>
+    document.getElementById(id)?.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth', block: 'start'
+    });
   return (
     <main className="account-profile-page">
-      <h1>Профиль</h1>
+      <h1 className="account-profile-mobile-title">Профиль</h1>
+      <header className="account-profile-hero">
+        <div className="account-profile-hero-copy">
+          <span className="account-profile-eyebrow"><span aria-hidden="true" className="account-profile-eyebrow-mark" /> ЛИЧНЫЙ КАБИНЕТ <span className="account-profile-index">/ 01</span></span>
+          <h1>Профиль<span className="account-profile-heading-dot">.</span></h1>
+          <p>Личные данные, безопасность и настройки аккаунта. Только то, что действительно важно.</p>
+        </div>
+        <div className="account-profile-identity" aria-label="Текущий аккаунт">
+          <span className="account-profile-identity-overline">ТЕКУЩИЙ АККАУНТ</span>
+          <div className="account-profile-identity-row">
+            <span className="account-profile-avatar" aria-hidden="true">
+              <svg viewBox="0 0 48 48" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="24" cy="17" r="7.5"/><path d="M10 39c2.2-9 8.2-13 14-13s11.8 4 14 13"/></svg>
+            </span>
+            <span className="account-profile-identity-text">
+              <strong>{roleLabel[mode] ?? 'Участник TrakSOS'}</strong>
+              <small>{fmtPhone(me.phone)}</small>
+            </span>
+          </div>
+        </div>
+      </header>
+      <nav className="account-profile-shortcuts" aria-label="Разделы профиля">
+        <button type="button" onClick={() => scrollToSection('account-profile-info')}><span className="account-profile-tab-index">01</span> Личные данные</button>
+        <button type="button" onClick={() => scrollToSection('account-profile-security')}><span className="account-profile-tab-index">02</span> Безопасность</button>
+        <button type="button" onClick={() => scrollToSection('account-profile-settings')}><span className="account-profile-tab-index">03</span> Настройки</button>
+      </nav>
       {native.isApp && <div className="card">
         <b>Быстрый безопасный вход</b>
         <label className="row" style={{ alignItems: 'center' }}>
@@ -1254,10 +1290,12 @@ export function Profile() {
         </label>
         <span className="note">При возвращении в приложение после перерыва. Статус «На линии» и входящие вызовы не отключаются.</span>
       </div>}
-      <a href="#/invite" className="card" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span><b>🎁 Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
+      <a href="#/invite" className="card account-profile-invite" style={{ textDecoration: 'none', color: 'inherit', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span><b className="account-profile-invite-label"><svg aria-hidden="true" className="account-profile-gift" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9h18v12H3V9Zm-1-5h20v5H2V4Zm10 0v17M12 4c-4-4-8-2-6 1 1 2 4 2 6-1Zm0 0c4-4 8-2 6 1-1 2-4 2-6-1Z"/></svg>Пригласить и получать баллы</b><small className="note" style={{ display: 'block' }}>Баллы гасят сбор и комиссию TrakSOS</small></span><span>›</span>
       </a>
-      <div className="card">
+      <div className="card account-profile-facts">
+        <span className="account-profile-section-index">ВАШ АККАУНТ</span>
+        <h2><span className="account-profile-desktop-label">Обзор</span><span className="account-profile-mobile-label">Данные учётной записи</span></h2>
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(me.phone)}</dd>
           <dt>Рейтинг</dt><dd>{me.rating ? `${me.rating.toFixed(2)} · ${me.rating_count} оценок` : 'пока нет оценок'}</dd>
@@ -1265,10 +1303,12 @@ export function Profile() {
           {(me as any).personalFee && <><dt>Ваш сбор</dt><dd>{(me as any).feePct}% — персональные условия</dd></>}
         </dl>
       </div>
-      <form className="stack" onSubmit={async (e) => {
+      <form id="account-profile-info" className="stack account-profile-data" onSubmit={async (e) => {
         e.preventDefault();
         if (await run(() => (patchMe({ name, companyName: company || null, companyInn: inn || null })), 'Сохранено')) reload();
       }}>
+        <span className="account-profile-section-index">01 / ЛИЧНЫЕ ДАННЫЕ</span>
+        <div className="account-profile-section-heading"><h2><span className="account-profile-desktop-label">Контактная информация</span><span className="account-profile-mobile-label">Личные данные</span></h2><p>Изменения будут сохранены только после подтверждения.</p></div>
         <Field label="Имя"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         {!me.owner_id && !me.roles.includes('driver') && (
           <>
@@ -1278,8 +1318,9 @@ export function Profile() {
         )}
         <button className="btn" disabled={busy}>Сохранить</button>
       </form>
-      <div className="card stack">
-        <b>Безопасность аккаунта</b>
+      <div id="account-profile-security" className="card stack account-profile-security">
+        <span className="account-profile-section-index">02 / БЕЗОПАСНОСТЬ</span>
+        <h2><span className="account-profile-desktop-label">Защита аккаунта</span><span className="account-profile-mobile-label">Безопасность аккаунта</span></h2>
         <button type="button" className="btn ghost" onClick={() => {
           setPasswordOpen(value => !value);
           setPasswordError('');
@@ -1334,15 +1375,16 @@ export function Profile() {
         </form>}
         {passwordSaved && <p role="status">Пароль изменён. Другие сеансы завершены.</p>}
       </div>
-      <div className="card stack">
-        <b>Настройки приложения</b>
+      <div id="account-profile-settings" className="card stack account-profile-settings">
+        <span className="account-profile-section-index">03 / НАСТРОЙКИ</span>
+        <h2><span className="account-profile-desktop-label">Интерфейс и доступ</span><span className="account-profile-mobile-label">Настройки приложения</span></h2>
         <label className="row">
           <input type="checkbox" checked={reducedMotion} onChange={e => toggleMotion(e.target.checked)} />
           <span>Уменьшить анимацию</span>
         </label>
         <span className="note">Уменьшает эффекты и движения интерфейса на слабых устройствах.</span>
       </div>
-      <div className="stack">
+      <div className="stack account-profile-navigation">
         {isCustomer && mode !== 'client' && <button className="btn ghost" onClick={() => go('as/client')}>Кабинет клиента</button>}
         {isPerformer && mode !== 'performer' && <button className="btn ghost" onClick={() => go('as/performer')}>Кабинет исполнителя</button>}
 
@@ -1351,6 +1393,7 @@ export function Profile() {
         {me.roles.some((r) => r === 'admin' || r === 'moderator') && mode !== 'admin' && <button className="btn ghost" onClick={() => go('as/admin')}>Кабинет администратора</button>}
         <button className="btn ghost" onClick={() => go('support')}>Поддержка</button>
         <button className="btn ghost" onClick={() => go('help')}>Справка: как всё устроено</button>
+        <button className="btn ghost" onClick={() => go('trakbot')}>TrakBot — личный помощник</button>
         <button className="btn ghost" onClick={() => go('privacy')}>Персональные данные и удаление аккаунта</button>
         <button className="btn ghost" onClick={() => go('reviews')}>Отзывы обо мне</button>
         <button className="btn ghost" onClick={() => go('appeal')}>Оспорить нарушение или блокировку</button>

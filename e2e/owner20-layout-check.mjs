@@ -13,8 +13,15 @@ try {
   try{
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
    const root=page.locator('.owner20-home');await root.waitFor();
-   if(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()!==0)
-     throw Error(width+': legacy header/sidebar/footer mounted on approved PC page');
+   if(await page.locator('.app > header.top, .desktop-sidebar').count()!==0)
+     throw Error(width+': legacy header/sidebar mounted on approved PC page');
+   // Home is intentionally standalone but must now share the legal footer.
+   if(await page.locator('.guest-home-standalone > .site-footer').count()!==1)
+     throw Error(width+': approved desktop home lost legal footer');
+   for(const href of ['#/explore/guide','#/company','#/offers','#/offer/privacy','#/rules']){
+     if(!await page.locator('.guest-home-standalone > .site-footer a[href="'+href+'"]').count())
+       throw Error(width+': footer route missing '+href);
+   }
    if(await page.locator('header.owner20-top').count()!==1)
      throw Error(width+': approved header should appear exactly once');
    const cards=await page.locator('.owner20-quick>a').count();
@@ -84,7 +91,29 @@ try {
      await link.waitFor();await link.click();
      await page.waitForURL('**/#/explore/'+key);
      await page.locator('.guest-explore-hero h1').waitFor();
+     if(await page.locator('header.owner20-top').count()!==1 ||
+        await page.locator('header.top,.guest-site-nav').count()!==0)
+       throw Error(key+': legacy public header appeared after opening approved service tile');
+     if(['van','tow','sto','consult'].includes(key)){
+       const scene=await page.locator('.guest-explore-hero').evaluate(el=>getComputedStyle(el,'::before').backgroundImage);
+       if(!scene.includes('traksos-service-scenes-desktop-hq.webp'))
+         throw Error(key+': service page reused homepage truck instead of its scene '+scene);
+     }
     }
+    await page.goto(BASE+'/#/');
+    await page.locator('.owner20-map-inner').click();
+    await page.waitForURL('**/#/explore/guide');
+    await page.goto(BASE+'/#/');
+    await page.locator('.owner20-bottom-app').click();
+    await page.waitForURL('**/#/explore/app');
+    await page.locator('.guest-explore-hero h1').waitFor();
+    await page.goto(BASE+'/#/login');
+    await page.locator('button:has-text("Зарегистрироваться как клиент")').click();
+    await page.waitForURL('**/#/register');
+    await page.goto(BASE+'/#/help');
+    await page.locator('.guest-explore-support h1:has-text("Помощь и поддержка TrakSOS")').waitFor();
+    if(await page.locator('.guest-explore-support .guest-explore-cta[href="#/login"]').count()!==1)
+      throw Error('Public support regressed to legacy training component');
     for(const [selector,target] of [['.owner20-signin','#/login'],['.owner20-topnav a[href="#/join"]','#/join']]){
      await page.goto(BASE+'/#/');
      if(selector.includes('topnav')){await page.locator('.owner20-topnav summary').nth(3).click();}

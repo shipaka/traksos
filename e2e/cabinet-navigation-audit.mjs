@@ -1,6 +1,7 @@
 // Full non-destructive navigation audit for every staff, customer and performer cabinet.
 // Runs after role-matrix.mjs and admin-master-switch.mjs on synthetic local accounts.
 import { chromium } from 'playwright';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8080';
 if (!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
@@ -18,6 +19,8 @@ const accounts = [
   ['admin', '+79990000001', 'TrakSOS-Test-2026!', '#/admin'],
 ];
 const browser = await chromium.launch();
+const OUT='e2e/shots/inner-route-audit';
+await mkdir(OUT,{recursive:true});
 const report = [];
 try {
   for (const [kind, phone, password, initial] of accounts) {
@@ -106,25 +109,98 @@ try {
       throw Error(kind+': sees administrator menu routes');
     if(kind==='admin' && !paths.includes('#/admin/section/queue'))
       throw Error('Admin moderation shortcut missing');
-    for(const href of paths){
-      console.log('Navigating:',kind,href);
-      await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
-      try {
-        await page.locator('.app').waitFor({timeout:12000});
-      } catch {
-        throw Error(kind+': app shell did not render for '+href+
-          ' (actual URL '+page.url()+', JS errors: '+errors.join('; ')+')');
+    const coverage=[];
+    // Reproduce actual clicks, not merely a hard-coded GET/navigation call.
+    // Audit every menu destination in both owner-approved desktop and phone
+    // compositions. Never press a payment, profile-save, SOS or cancel action.
+    for(const width of [390,1440]) {
+      await page.setViewportSize({width,height:width===390?844:900});
+      for(const href of paths){
+        console.log('Clicking role menu:',kind,width,href);
+        await page.goto(BASE+'/'+initial,{waitUntil:'domcontentloaded'});
+        const menu=page.locator('.account-menu > summary');
+        await menu.waitFor();
+        await menu.click();
+        const link=page.locator('.account-menu nav a[href="'+href+'"]').first();
+        if(await link.count()!==1)throw Error(kind+': role menu link vanished '+href);
+        await link.click();
+        await page.waitForURL(url=>url.hash===href,{timeout:12000});
+        await page.locator('.app > header.top').waitFor();
+        const state=await page.evaluate(()=>{
+          const app=document.querySelector('.app');
+          const main=document.querySelector('.desktop-content main');
+          const logo=document.querySelector('.top .tr-approved-brand-logo img');
+          const css=app?getComputedStyle(app):null;
+          return {
+            missing:main?.textContent?.includes('Такой страницы нет'),
+            failed:document.body.textContent?.includes('Не удалось открыть раздел'),
+            overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+3,
+            obsolete:!!document.querySelector('.desktop-content .public-landing,.desktop-content .desktop-hero,.desktop-content .desktop-quick-links'),
+            roleApp:app?.className.includes('role-')||false,
+            logo:logo?.getAttribute('src'),
+            accent:css?.getPropertyValue('--accent').trim(),
+            help:!!document.querySelector('main.approved-help'),
+            width:document.documentElement.clientWidth
+          };
+        });
+        if(state.missing||state.failed||state.overflow||state.obsolete||!state.roleApp||
+           state.logo!=='/traksos-brand-logo-approved-618.png')
+          throw Error(kind+' '+width+'px '+href+': returned obsolete or broken cabinet screen '+JSON.stringify(state));
+        if(width>=900 && state.accent!=='#ff701c')
+          throw Error(kind+' '+width+'px '+href+': approved desktop palette missing '+JSON.stringify(state));
+        if(href==='#/help' && !state.help)
+          throw Error(kind+' '+width+'px '+href+': legacy help route returned instead of rebuilt help');
+        // Approved-style candidate PROFILE: desktop has its own cohesive visual,
+        // while phone/Android retains the earlier plain profile composition.
+        if(href==='#/profile'){
+          const profile=page.locator('main.account-profile-page');
+          await profile.waitFor({state:'visible'});
+          const hero=profile.locator('.account-profile-hero');
+          const originalTitle=profile.locator('h1.account-profile-mobile-title');
+          if(width>=900){
+            if(!await hero.isVisible()||await originalTitle.isVisible()||
+               await hero.locator('.account-profile-identity').count()!==1 ||
+               await hero.locator('.account-profile-hero-art').count()!==0)
+              throw Error(kind+': new role profile visual missing on desktop');
+            const shortcuts=profile.locator('.account-profile-shortcuts button');
+            if(await shortcuts.count()!==3)throw Error(kind+': profile section shortcuts missing');
+            await shortcuts.nth(1).click();
+            if(!await profile.locator('#account-profile-security').isVisible())
+              throw Error(kind+': profile security shortcut does not reveal real section');
+          }else if(await hero.isVisible()||!await originalTitle.isVisible()){
+            throw Error(kind+': approved 618 mobile profile was replaced by desktop redesign');
+          }
+        }
+        if(errors.length)throw Error(kind+' '+width+'px '+href+': JS error '+errors.join('; '));
+        // Every desktop menu destination produces a real Chromium screenshot
+        // on this exact commit, not a static approved design mockup.
+        if(width===1440){
+          await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
+          await page.screenshot({path:OUT+'/'+kind+'-'+href.slice(2).replace(/[^a-z0-9-]/gi,'-')+'.png',animations:'disabled'});
+        }
+        coverage.push({href,width,accent:state.accent});
       }
-      const state=await page.evaluate(()=>({
-        missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
-        overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+3,
-      }));
-      if(state.missing)throw Error(kind+': dead link '+href);
-      if(state.overflow)throw Error(kind+': horizontal overflow on '+href);
-      if(errors.length)throw Error(kind+': script error at '+href+': '+errors.join('; '));
     }
-    report.push({role:kind,visited:paths.length});
+    // Regression: a typo/deep-link into a role must never silently mount
+    // a dashboard or the old generic help page.
+    const invalid={
+      owner:['#/tech/retired-page'],
+      driver:['#/tech/retired-page'],
+      master:['#/work/me/retired-page'],
+      tow:['#/work/me/retired-page'],
+      service:['#/base/retired-page'],
+      master_service:['#/base/retired-page'],
+      insurer:['#/insurance/retired-page'],
+    }[kind]||[];
+    for(const href of invalid){
+      await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
+      await page.locator('main.tr-approved-route-unavailable').waitFor({state:'visible'});
+      if(await page.locator('main.approved-pc,main.performer-workspace,main.base-workspace').count())
+        throw Error(kind+': obsolete dashboard fallback on unknown route '+href);
+    }
+    report.push({role:kind,visited:paths.length,verifiedRouteSizes:coverage.length,unknownRoutesRejected:invalid.length});
     await ctx.close();
   }
 } finally {await browser.close();}
-console.log('Validated all menu routes in local browser:',JSON.stringify(report));
+await writeFile(OUT+'/route-report.json',JSON.stringify({source:'real Playwright Chromium, local isolated fixtures',report},null,2));
+console.log('Validated every link in every accessible menu (phone + desktop):',JSON.stringify(report));

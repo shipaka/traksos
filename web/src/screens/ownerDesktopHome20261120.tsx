@@ -26,8 +26,8 @@ function OwnerIcon({kind}:{kind:string}) {
   let lines;
   switch(kind){
     case 'van': lines=<><path d="M30 5a12 12 0 0 0-10 18L7 36a5 5 0 0 0 7 7l13-13A12 12 0 0 0 43 15l-9 9-9-3-3-9Z"/><circle cx="10.5" cy="39.5" r="1"/></>;break;
-    case 'tow': lines=<><path d="M4 34h29l8 6v4H4V34Z"/><path d="M9 34V23h14l8 11M12 23V12h15l6 11M23 12l-6-7M29 8h11v8l-5 5h-5"/><circle cx="13" cy="43" r="3.4"/><circle cx="35" cy="43" r="3.4"/><path d="M40 21v6m-4 0h8"/></>;break;
-    case 'sto': lines=<><path d="M3 19 24 5l21 14v25H3V19Z"/><path d="M13 44V25h22v19M13 33h22"/></>;break;
+    case 'tow': lines=<><path d="M3 34h28l8 5v5H3V34Z"/><path d="M8 34V23h15l7 11M12 23l4-7h6M29 34V15l9-8 4 4-8 9v8"/><path d="M30 14 19 9M19 9v-5M37 7l5 5M34 28h9M43 28v5l-4 4-4-4" /><circle cx="13" cy="44" r="3"/><circle cx="32" cy="44" r="3"/></>;break;
+    case 'sto': lines=<><path d="M3 43V14l5-7h29l8 7v29H3Z"/><path d="M3 16h42M9 43V22h30v21M9 29h30"/><path d="M15 36h18l-3-5H18l-3 5Zm-1 0v5m20-5v5" /><circle cx="19" cy="38" r="1.5"/><circle cx="29" cy="38" r="1.5"/><path d="m14 4 2-2 2 2-2 2-2-2Zm9 0h9"/></>;break;
     case 'ecu': lines=<><rect x="10" y="10" width="28" height="28" rx="3"/><path d="M16 4v6m8-6v6m8-6v6M16 38v6m8-6v6m8-6v6M4 16h6m-6 8h6m-6 8h6m28-16h6m-6 8h6m-6 8h6"/><rect x="17" y="17" width="14" height="14" rx="2"/></>;break;
     case 'consult': lines=<><path d="M5 25V23a19 19 0 0 1 38 0v3M5 25v10c0 5 4 8 8 8h4V27h-4a8 8 0 0 0-8 8m38-10v10c0 5-4 8-8 8h-4V27h4a8 8 0 0 1 8 8"/></>;break;
     case 'tech': lines=<><path d="M8 7h27a5 5 0 0 1 5 5v29H13a5 5 0 0 0 0-10h27"/><path d="M8 7v29a5 5 0 0 0 5 5m5-26h15m-15 6h15m-15 6h11"/></>;break;
@@ -50,16 +50,22 @@ function Feature({item}:{item:typeof features[number]}) {
     <span className="owner20-feature-cta">{action}　→</span>
   </a>;
 }
-export function OwnerDesktopHome20261120() {
-  return <main className="owner20-home" id="public-home">
-    <header className="owner20-top">
+/** Shared exact public navigation for every desktop guest route. The Android
+ * and narrow-browser header remains its separately approved composition. */
+export function ApprovedPublicHeader() {
+  return <header className="owner20-top" onKeyDown={event=>{
+    if(event.key==='Escape'){
+      event.currentTarget.querySelectorAll('details[open]').forEach(node=>node.removeAttribute('open'));
+      event.preventDefault();
+    }
+  }}>
       <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
-        <details><summary>О платформе</summary><div><a href="#/company">О нас</a><a href="#/explore/guide">Как работает</a><a href="#/explore/pricing">Комиссии</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]}>{item[1]}</a>)}<a href="#/explore/parts">Запчасти</a><a href="#/explore/insurance">Страхование</a></div></details>
-        <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
-        <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
+        <details name="owner20-public-menu"><summary>О платформе</summary><div><a href="#/company">О нас</a><a href="#/explore/guide">Как работает</a><a href="#/explore/pricing">Комиссии</a></div></details>
+        <details name="owner20-public-menu"><summary>Сервисы</summary><div>{primary.map(item=><a href={route(item[3])} key={item[3]}>{item[1]}</a>)}<a href="#/explore/parts">Запчасти</a><a href="#/explore/insurance">Страхование</a></div></details>
+        <details name="owner20-public-menu"><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
+        <details name="owner20-public-menu"><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a><a href="#/offers">Оферты</a></div></details>
         <a href="#/help">Поддержка</a>
       </nav>
       <details className="owner20-compact-menu">
@@ -72,7 +78,12 @@ export function OwnerDesktopHome20261120() {
       </details>
       <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/help">Уточнить доступность →</a></div></details>
       <a href="#/login" className="owner20-signin">♙　Войти</a>
-    </header>
+    </header>;
+}
+
+export function OwnerDesktopHome20261120() {
+  return <main className="owner20-home" id="public-home">
+    <ApprovedPublicHeader />
     <section className="owner20-hero" aria-labelledby="owner20-heading">
       <div className="owner20-photo" aria-hidden="true"/>
       <div className="owner20-lead">
@@ -85,10 +96,10 @@ export function OwnerDesktopHome20261120() {
       </div>
       <aside className="owner20-map" aria-label="Покрытие сервисов">
         <h2>Покрытие сервисов TrakSOS</h2>
-        <div className="owner20-map-inner">
+        <a href="#/explore/guide" className="owner20-map-inner" aria-label="Подробнее о зоне покрытия TrakSOS — демонстрационная карта">
           <div className="owner20-map-shape" role="img" aria-label="Иллюстрация России из утверждённого макета, не подтверждение фактического покрытия."><span className="owner20-map-source" aria-hidden="true" /><span className="owner20-map-demo-tag">ДЕМО</span></div>
           <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
-        </div>
+        </a>
         <a href="#/explore/guide">Подробнее о покрытии →</a>
       </aside>
     </section>
@@ -102,7 +113,7 @@ export function OwnerDesktopHome20261120() {
       <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span>Войти в Эфир　→</span></a>
       <a href="#/explore/club" className="owner20-bottom-card owner20-bottom-club"><b>♧　Клуб TrakSOS</b><p>Профессиональное сообщество. Обсуждения, советы, разборы, проекты.</p><span>О Клубе　→</span></a>
       <div className="owner20-bottom-card owner20-bottom-why"><b>Почему TrakSOS</b><ul><li>Реальная помощь в дороге</li><li>Проверенные исполнители</li><li>Профессиональное сообщество</li><li>Техническая база знаний</li><li>Развитие сервисов по регионам</li></ul></div>
-      <div className="owner20-bottom-card owner20-bottom-app"><b>▯　Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Готовится к публикации в RuStore</span></div>
+      <a href="#/explore/app" className="owner20-bottom-card owner20-bottom-app"><b>▯　Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Информация о приложении · RuStore</span></a>
     </section>
     <p className="owner20-disclaimer">Демонстрационный режим. Наличие исполнителей, доступность регионов и услуг уточняется после входа.</p>
   </main>;

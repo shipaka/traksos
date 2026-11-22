@@ -79,35 +79,47 @@ export function Help() {
     : [['Как всё устроено', client], ['Владельцу парка', owner]];
   const match = (it: Item) => !q.trim() || (it[0] + ' ' + it[1]).toLowerCase().includes(q.trim().toLowerCase());
   return (
-    <main>
+    <main className="approved-help" aria-label="Справка TrakSOS">
       <Back to="" label="Назад" />
-      <div><h1>Справка</h1><div className="sub">Коротко о том, как устроены суммы, оплата, отмена и кто что видит.</div></div>
-      <div className="card stack">
-        <h2>Новичок? Начните здесь</h2>
-        <p className="note">Покажем ваш кабинет простыми шагами, а потом потренируемся без настоящих денег и заявок.</p>
-        <div className="row"><a className="btn" href="#/training">Обучение по шагам</a><a className="btn ghost" href="#/practice">Попробовать в тренажёре</a></div>
-      </div>
-      {me && <a className="btn" href="#/learn">Пройти знакомство с TrakSOS · по шагам</a>}
-      <input className="field" type="search" placeholder="Поиск по справке и ситуациям" value={q} onChange={(e) => setQ(e.target.value)} />
+      <header className="approved-help-hero">
+        <div className="approved-help-hero-copy">
+          <span className="approved-help-eyebrow">TRAKSOS · СПРАВКА ПО КАБИНЕТУ</span>
+          <h1>Помощь и инструкции</h1>
+          <p>Понятные ответы о заявках, оплате, комиссии и ваших возможностях. Информация соответствует текущей роли.</p>
+        </div>
+        <a href="#/support/new" className="approved-help-support-action">Связаться с поддержкой →</a>
+      </header>
+      <section className="approved-help-learning" aria-labelledby="approved-help-learning-title">
+        <div>
+          <h2 id="approved-help-learning-title">Знакомство с TrakSOS</h2>
+          <p>Обучение и тренажёр открываются только по вашему желанию. В тренажёре нет реальных списаний и заявок.</p>
+        </div>
+        <nav aria-label="Учебные материалы"><a href="#/training">Инструкция по шагам</a><a href="#/practice">Тренажёр</a>{me && <a href="#/learn">Знакомство с кабинетом</a>}</nav>
+      </section>
+      <label className="approved-help-search"><span>Поиск по вопросам</span><input className="field" type="search" placeholder="Например: как отменить заявку" value={q} onChange={(e) => setQ(e.target.value)} /></label>
       {me && <EconomicsGuide />}
       {me && <ScenarioEncyclopedia query={q} />}
       {sections.map(([title, items]) => {
         const shown = items.filter(match);
         if (!shown.length) return null;
         return (
-          <div key={title} className="stack">
-            <span className="label">{title}</span>
-            {shown.map(([h, t]) => (
-              <details key={h} className="card" open={!!q.trim()}>
-                <summary><b>{h}</b></summary>
-                <span className="note" style={{ color: 'var(--fg)', lineHeight: 1.5 }}>{t}</span>
-              </details>
-            ))}
-          </div>
+          <section key={title} className="approved-help-section">
+            <h2>{title}</h2>
+            <div className="approved-help-items">
+              {shown.map(([h, t]) => (
+                <details key={h} className="approved-help-item" open={!!q.trim()}>
+                  <summary><b>{h}</b></summary>
+                  <p>{t}</p>
+                </details>
+              ))}
+            </div>
+          </section>
         );
       })}
-      <a className="btn" href="#/trakbot">TrakBot — первичная помощь в личном чате</a>
-      <a className="btn ghost" href="#/support/new">Не нашли ответ — написать в поддержку</a>
+      <nav className="approved-help-bottom-actions" aria-label="Дополнительная помощь">
+        <a href="#/trakbot">TrakBot — технический вопрос в личном чате</a>
+        <a href="#/support/new">Не нашли ответ? Напишите в поддержку</a>
+      </nav>
       {(mode === 'client' || !me) && <a className="note" href="#/offer/client">Оферта для клиентов</a>}
       {(mode === 'performer' || mode === 'service') && <a className="note" href="#/offer/performer">Агентский договор исполнителя / СТО</a>}
       {mode === 'insurer' && <a className="note" href="#/offer/insurer">Договор страхового партнёра</a>}

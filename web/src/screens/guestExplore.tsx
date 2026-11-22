@@ -4,6 +4,7 @@ import { CATALOGUE, SERVICE_TILES, rememberGuestService, type ServiceId } from '
 // Latest 19 November public tiles point to honest, accessible information,
 // not to protected routes that silently bounce guests back to the homepage.
 const FEATURE_PREVIEWS: Record<string,{title:string;icon:string;description:string;details:string[]}> = {
+  app:{title:'Приложение TrakSOS',icon:'▯',description:'Мобильное приложение для работы с заявками, техникой и сообщениями. Публикация в RuStore готовится; прямую ссылку на скачивание покажем только после подтверждённого размещения.',details:['Заявки и история обращений в телефоне','Уведомления о статусах работы','Отдельные рабочие кабинеты для подключённых ролей']},
   club:{title:'Клуб TrakSOS',icon:'♧',description:'Профессиональное сообщество для водителей, мастеров, СТО и владельцев грузового транспорта. Доступ к обсуждениям зависит от регистрации и правил площадки.',details:['Профессиональное общение и разборы','Обмен опытом и полезными материалами','Рабочие группы и проекты сообщества']},
   sos:{title:'SOS — помощь в дороге',icon:'⚠',description:'Выберите помощь для грузовика: мастер, эвакуатор, СТО или консультация. Для создания заявки нужен клиентский аккаунт.',details:['Указание места поломки и автомобиля','Выбор подходящего типа помощи','История и статус обращения']},
   air:{title:'Эфир водителей',icon:'◉',description:'Сообщество водителей и специалистов. Общие сообщения и личные диалоги разделены; личные данные и технические вопросы доступны только по правилам доступа.',details:['Общение водителей','Помощь и обмен опытом','Подтверждённый личный чат TrakBot']},
@@ -24,6 +25,30 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
   const service = isService ? CATALOGUE[tile.id] : null;
   const serviceId = (tile?.id || 'van') as ServiceId;
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); }, [id, itemKey]);
+  if (id === 'support') {
+    return <main className="guest-explore guest-explore-support">
+      <a className="guest-explore-back" href="#/">← На главную</a>
+      <section className="guest-explore-hero">
+        <span className="guest-explore-eyebrow">TRAKSOS · ПОДДЕРЖКА</span>
+        <h1>Помощь и поддержка TrakSOS</h1>
+        <p>Узнайте, как работает платформа, выберите нужную услугу или войдите в личный кабинет, чтобы обратиться по своей заявке. Без входа мы не показываем историю и данные других пользователей.</p>
+        <div className="guest-explore-actions">
+          <a className="guest-explore-cta" href="#/login">Войти в кабинет</a>
+          <a className="guest-explore-secondary" href="#/explore/guide">Как работает TrakSOS</a>
+        </div>
+      </section>
+      <section className="guest-explore-section">
+        <h2>Выберите направление</h2>
+        <div className="guest-explore-service-grid">
+          <a href="#/explore/van" className="guest-explore-item"><strong>Выездной мастер</strong><span aria-hidden="true">›</span></a>
+          <a href="#/explore/tow" className="guest-explore-item"><strong>Эвакуация</strong><span aria-hidden="true">›</span></a>
+          <a href="#/explore/sto" className="guest-explore-item"><strong>СТО и ремонт</strong><span aria-hidden="true">›</span></a>
+          <a href="#/offers" className="guest-explore-item"><strong>Оферты и документы</strong><span aria-hidden="true">›</span></a>
+        </div>
+        <p className="guest-explore-note">Обращения, связанные с вашим заказом, доступны после входа в кабинет. Если вы не можете войти, используйте восстановление пароля на экране входа.</p>
+      </section>
+    </main>;
+  }
   if (id === 'inspection') {
     return <main className="guest-explore guest-explore-inspection">
       <a className="guest-explore-back" href="#/">← На главную</a>

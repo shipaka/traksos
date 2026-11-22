@@ -23,17 +23,20 @@ try {
         await entry.click();
         await page.waitForURL('**/#/explore/'+key);
         await page.locator('.guest-explore-hero h1').waitFor();
-        // The 20 Nov road image must paint above the hero background:
-        // z-index:-1 used to hide it behind the solid panel.
+        // Every service has its own scene, never the homepage road truck.
+        // Preserve photo layering and contrast with readable HTML captions.
         const artwork=await page.locator('.guest-explore-hero').evaluate(el=>{
           const image=getComputedStyle(el,'::before');
           const text=getComputedStyle(el.querySelector('h1'));
           return {isolation:getComputedStyle(el).isolation,image:image.backgroundImage,
             imageLayer:image.zIndex,textLayer:text.zIndex};
         });
+        const expectedScene=['van','tow','sto','consult'].includes(key)
+          ? 'traksos-service-scenes-desktop-hq.webp' : 'linear-gradient';
         if(artwork.isolation!=='isolate'||artwork.imageLayer!=='0'||
-           artwork.textLayer!=='1'||!artwork.image.includes('owner20-photo-background-approved.webp'))
-          throw Error(key+': approved PC inner-page road image obscured: '+JSON.stringify(artwork));
+           artwork.textLayer!=='1'||!artwork.image.includes(expectedScene)||
+           artwork.image.includes('owner20-photo-background-approved.webp'))
+          throw Error(key+': incorrect service illustration, layering or old homepage truck: '+JSON.stringify(artwork));
         await page.goto(BASE+'/#/');
       }
       await page.locator('.owner20-region>summary').click();
@@ -270,22 +273,39 @@ try {
     // Latest 'Возможности' menu keeps all other approved functions discoverable.
     await page.goto(BASE+'/#/');
     if(width>=900){
-      const nav=page.locator('.guest-site-nav');
-      const all=nav.locator('.guest-nav-group');
-      await all.locator('summary').click();
-      for(const route of ['#/explore/van','#/explore/tow','#/explore/tech',
-        '#/explore/air','#/explore/ecu','#/explore/parts','#/explore/insurance']) {
-        if(!(await all.locator('a[href="'+route+'"]').count()))
-          throw Error('Missing actual capability '+route);
+      // The entire PC site uses ONE owner-approved 617 header, including
+      // service, support, login and company routes. The old guest-site-nav
+      // is deliberately not rendered at desktop widths.
+      const nav=page.locator('.owner20-topnav');
+      const services=nav.locator('details').nth(1);
+      await services.locator('summary').click();
+      for(const route of ['#/explore/van','#/explore/tow',
+        '#/explore/ecu','#/explore/parts','#/explore/insurance']) {
+        if(!(await services.locator('a[href="'+route+'"]').count()))
+          throw Error('Missing approved desktop service route '+route);
       }
-      await all.locator('summary').press('Escape');
-      if(await all.getAttribute('open')!==null)throw Error('Escape did not close capabilities');
-      await nav.getByRole('link',{name:'О платформе'}).click();
+      // Exclusive groups must not pile dropdowns on top of one another.
+      const company=nav.locator('details').first();
+      await company.locator('summary').click();
+      if(await services.getAttribute('open')!==null)
+        throw Error('Approved menu left services dropdown layered under company menu');
+      await company.locator('summary').press('Escape');
+      if(await company.getAttribute('open')!==null)
+        throw Error('Approved 617 menu Escape did not close');
+      await company.locator('summary').click();
+      await company.locator('a[href="#/company"]').click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      // All public subpages preserve the exact approved header, not a 19 Nov
+      // replacement, and topic-specific art, never the homepage truck.
+      await page.locator('header.owner20-top').waitFor();
+      if(await page.locator('header.top, .guest-site-nav').count())
+        throw Error('A retired desktop guest header mounted on inner company page');
       await page.goto(BASE+'/#/');
-      await nav.getByRole('link',{name:'Тарифы'}).click();
+      const pricing=page.locator('.owner20-topnav details').first();
+      await pricing.locator('summary').click();
+      await pricing.locator('a[href="#/explore/pricing"]').click();
       await page.getByRole('heading',{name:'Комиссии и тарифы TrakSOS'}).waitFor();
-    } else {
+        } else {
       await page.locator('.guest-mobile-catalog > summary').click();
       const nav=page.getByRole('navigation',{name:'Возможности TrakSOS'});
       if(!(await nav.getByRole('link',{name:'ТехБаза и справочник'}).count()))
