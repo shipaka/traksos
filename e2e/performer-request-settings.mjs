@@ -54,7 +54,7 @@ try{
       // days, real save/restore through the existing performer API.
       await page.goto(BASE+'/#/work/me/schedule');
       await page.getByRole('heading',{name:'Распорядок',exact:true}).waitFor();
-      const scheduleToggle=page.locator('.performer-schedule>.opt[aria-pressed]').first();
+      const scheduleToggle=page.locator('.performer-schedule-enabled').first();
       const initiallyOn=await scheduleToggle.getAttribute('aria-pressed');
       if(initiallyOn!=='true') await scheduleToggle.click();
       const sections=page.locator('.performer-schedule-accordion');
@@ -85,7 +85,7 @@ try{
       assert.notEqual(await page.getByRole('button',{name:'Сб',exact:true}).getAttribute('aria-pressed'),initialDay,
         'workday selection must persist after saving/reloading');
       await page.getByRole('button',{name:'Сб',exact:true}).click();
-      if(initiallyOn!=='true') await page.locator('.performer-schedule>.opt[aria-pressed]').first().click();
+      if(initiallyOn!=='true') await page.locator('.performer-schedule-enabled').first().click();
       await page.getByRole('button',{name:'Сохранить',exact:true}).click();
       await page.getByText('Распорядок сохранён').waitFor();
       await page.screenshot({path:OUT+'/schedule-accordion-'+label+'.png'});
