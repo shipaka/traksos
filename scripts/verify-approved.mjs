@@ -31,6 +31,9 @@ const LOCKED_ASSETS = {
   // Original artwork from owner's 617.png on 20 Nov; keep mobile 19 Nov locked independently.
   'web/public/owner20-artwork-sprite.webp': '401fcedf30e1603b',
   'web/public/owner20-photo-background-approved.webp': '833c162d1fddcef0',
+  // Exact 617 scenes with ONLY two tiny manufacturer badges removed.
+  'web/public/owner20-photo-background-approved-retouched.webp': '09cda86c07542c33',
+  'web/public/owner20-artwork-sprite-retouched.webp': '700a38609f354d0b',
   // Cross-platform owner-selected branding/illustrations. These checks lock bytes,
   // not layout; unchanged native launcher art remains a separate approved asset.
   'web/public/traksos-brand-logo-approved-618.png': '10e9d529a5503140',
@@ -114,6 +117,8 @@ const allowedPublicVisuals = new Set([
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
+  'owner20-photo-background-approved-retouched.webp',
+  'owner20-artwork-sprite-retouched.webp',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
   'traksos-service-scenes-desktop-hq.webp',
@@ -131,6 +136,8 @@ expect(unexpectedVisuals.length===0,
 await asset('web/public/tracksos-approved-hero-owner-20261119-retouched.webp', 250000);
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
+await asset('web/public/owner20-photo-background-approved-retouched.webp', 150000);
+await asset('web/public/owner20-artwork-sprite-retouched.webp', 250000);
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
 for(const alternateLogo of [
@@ -295,7 +302,7 @@ expect(currentCss.includes(approvedPhoto) && approvedHeroLayer.includes(approved
   && !currentCss.includes('tracksos-approved-scenic-hero.webp'),
   'guest home has one approved Nov 19 truck image, with no legacy image fallback');
 expect(heroVisualE2E.includes("tracksos-approved-hero-owner-20261119-retouched") &&
-  heroVisualE2E.includes("owner20-photo-background-approved.webp") &&
+  heroVisualE2E.includes("owner20-photo-background-approved-retouched.webp") &&
   heroVisualE2E.includes("main.approved-pc.approved-pc-client") &&
   heroVisualE2E.includes("main.client-dashboard .and19-workspace.and19-client") &&
   !heroVisualE2E.includes("page.locator('.client-dashboard .desktop-hero')"),
