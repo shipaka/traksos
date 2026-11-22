@@ -176,6 +176,15 @@ try {
           key+': partner icon no longer matches exact '+(desktop?'PC':'mobile/Android')+' public service pictogram');
       }
       if(width===390) {
+        if(key==='tow'){
+          const label=await btn.locator('.guest-partner-role-label b').evaluate(el=>({
+            text:el.textContent.trim(),whiteSpace:getComputedStyle(el).whiteSpace,
+            width:el.clientWidth,scrollWidth:el.scrollWidth,
+          }));
+          check(label.text==='Эвакуаторщик'&&label.whiteSpace==='nowrap'&&
+            label.scrollWidth<=label.width+2,
+            'Mobile tow partner label wrapped or clipped: '+JSON.stringify(label));
+        }
         const image=await btn.evaluate(el=>({
           before:getComputedStyle(el,'::before').backgroundImage,
           position:getComputedStyle(el,'::before').backgroundPosition,
