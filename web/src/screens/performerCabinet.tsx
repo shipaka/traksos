@@ -248,13 +248,17 @@ export function ScheduleSection() {
   const { me } = useMe();
   const p = me!.performer!;
   const { busy, run } = useAction();
+  // Mobile 618: start with two short disclosures instead of a tall form.
+  // Keep each disclosure state when a user selects a working day/time.
+  const [daysExpanded, setDaysExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900);
+  const [hoursExpanded, setHoursExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900);
   const { reload } = useMe();
   const [s, setS] = useState(() => p.schedule ?? { on: true, days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, from: '09:00', to: '18:00', phoneTo: '20:00' });
   const sel = (v: string, on: (x: string) => void, min?: string) => (
     <select className="field" value={v} onChange={(e) => on(e.target.value)}>{TIMES.filter((t) => !min || t >= min).map((t) => <option key={t} value={t}>{t}</option>)}</select>
   );
   return (
-    <main>
+    <main className="performer-schedule stack">
       <Back to="work/me" label="Профиль" />
       <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
       <VacationToggle />
@@ -263,20 +267,29 @@ export function ScheduleSection() {
       </button>
       {s.on && (
         <>
-          <div className="card">
-            <b>Рабочие дни</b>
-            <div className="grid7">{WEEK.map(([k, n]) => (
-              <button key={k} className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={!!s.days[k]} onClick={() => setS({ ...s, days: { ...s.days, [k]: !s.days[k] } })}>{n}</button>
-            ))}</div>
-          </div>
-          <div className="card">
-            <b>Выезды</b>
-            <div className="grid2">{sel(s.from, (v) => setS({ ...s, from: v }))}{sel(s.to, (v) => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from)}</div>
-            <span className="note">В эти часы приходят все заявки.</span>
-            <b>На телефоне до</b>
-            {sel(s.phoneTo, (v) => setS({ ...s, phoneTo: v }), s.to)}
-            <span className="note">После выездов и до этого времени — только консультации по телефону. Не нужно — поставьте то же время, что конец выездов.</span>
-          </div>
+          <details className="performer-schedule-accordion" open={daysExpanded}
+            onToggle={event => setDaysExpanded(event.currentTarget.open)}>
+            <summary><span>Рабочие дни<small>{dayList(s.days)}</small></span><span aria-hidden="true">⌄</span></summary>
+            <div className="performer-schedule-panel">
+              <div className="grid7" role="group" aria-label="Выбрать рабочие дни">{WEEK.map(([k, n]) => (
+                <button key={k} type="button" className="seg" aria-pressed={!!s.days[k]}
+                  onClick={() => setS({ ...s, days: { ...s.days, [k]: !s.days[k] } })}>{n}</button>
+              ))}</div>
+            </div>
+          </details>
+          <details className="performer-schedule-accordion" open={hoursExpanded}
+            onToggle={event => setHoursExpanded(event.currentTarget.open)}>
+            <summary><span>Выезды и телефон<small>Выезды {s.from}–{s.to} · связь до {s.phoneTo}</small></span><span aria-hidden="true">⌄</span></summary>
+            <div className="performer-schedule-panel">
+              <div className="grid2">
+                <label>Начало выездов{sel(s.from, v => setS({ ...s, from: v }))}</label>
+                <label>Конец выездов{sel(s.to, v => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from)}</label>
+              </div>
+              <span className="note">В эти часы приходят все заявки.</span>
+              <label>На телефоне до{sel(s.phoneTo, v => setS({ ...s, phoneTo: v }), s.to)}</label>
+              <span className="note">После выездов — только консультации по телефону. Не нужно — установите время окончания выездов.</span>
+            </div>
+          </details>
           <div className="card flat">
             <span className="note">Обед или заправка — статус «Перерыв» на «Линии»: 15 минут – 2 часа, потом снова «Свободен» сам.</span>
           </div>
