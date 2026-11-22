@@ -117,22 +117,22 @@
         },
         "desktop": {
           "url": "/feature-art/traksos-feature-insurance-desktop-20261122.webp",
-          "sha256": "e8d601b205804b411fadeb5d295ce59a95f0128287530cf3863f1ac8c25db24b",
-          "bytes": 17060,
+          "sha256": "3ca2b21aeef373ef779b775dc0c54889c0e8299c35695cebe9d947c810b3f51b",
+          "bytes": 14720,
           "width": 512,
           "height": 300
         },
         "mobile": {
           "url": "/feature-art/traksos-feature-insurance-mobile-20261122.webp",
-          "sha256": "904b86b04b48562d9785ec1cc98b05396d30762632bba74c36c7ba7693b2d410",
-          "bytes": 8008,
+          "sha256": "1fa87202e72feb64b29e0fbd2b450c7c785a91c2c92e50a4c1312f8e6191ba53",
+          "bytes": 6952,
           "width": 360,
           "height": 210
         },
         "android": {
           "url": "/feature-art/traksos-feature-insurance-android-20261122.webp",
-          "sha256": "3f76fd026689bcfb54a61e68984994237ff5d472b52e0240d8c82c23a25af8ef",
-          "bytes": 3852,
+          "sha256": "0e1363e9d1cc1f9639b884a4acbd7dbf4fefcade5588b638f8d35ad83043ce1d",
+          "bytes": 3418,
           "width": 256,
           "height": 150
         }
