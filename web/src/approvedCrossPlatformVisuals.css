@@ -103,3 +103,50 @@
 .guest-app.guest-home .owner20-mark img {
   mix-blend-mode: screen;
 }
+
+/* TrakSOS COMPACT EMPTY GEO CONTRACT · 22 Nov 2026.
+   No fictional truck or route if the registered garage is empty. */
+.tr-approved-garage-compact{
+  box-sizing:border-box;display:flex;align-items:center;gap:14px;
+  min-height:76px;padding:14px clamp(14px,2vw,22px);
+  margin:10px 0 16px;
+  border:1px solid #345565;border-radius:14px;
+  background:linear-gradient(120deg,#112b36,#0a202a);
+  color:#eef5f8;
+  animation:tr-garage-empty-reveal .35s ease-out both;
+}
+.tr-approved-garage-compact-symbol{
+  display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;
+  font-size:20px;line-height:1;background:#173c46;color:#ffae70;
+  border:1px solid #366571;border-radius:11px;
+}
+.tr-approved-garage-compact-copy{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.tr-approved-garage-compact-copy strong{font-size:15px;font-weight:750;color:#f7fafc}
+.tr-approved-garage-compact-copy p{font-size:12px;line-height:1.5;margin:0;color:#b8ced7}
+.tr-approved-garage-compact-link{
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  flex:0 0 auto;min-height:42px;padding:9px 14px;border:1px solid #d9854b;
+  border-radius:10px;background:#3e2b22;color:#ffb57d;font-size:12px;font-weight:760;
+  cursor:pointer;transition:background .2s ease,transform .2s ease;
+}
+.tr-approved-garage-compact-link:hover{background:#563624;transform:translateY(-1px)}
+.client-garage-page > .card[id^="garage-vehicle-"]{
+  animation:tr-garage-empty-reveal .34s ease-out both;
+}
+@keyframes tr-garage-empty-reveal{
+  from{opacity:0;transform:translateY(7px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:640px){
+ .tr-approved-garage-compact{flex-wrap:wrap;gap:10px;min-height:0;padding:12px}
+ .tr-approved-garage-compact-symbol{flex-basis:32px;width:32px;height:32px}
+ .tr-approved-garage-compact-link{margin-left:42px;min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tr-approved-garage-compact,
+ .client-garage-page > .card[id^="garage-vehicle-"]{
+  animation:none!important
+ }
+ .tr-approved-garage-compact-link{transition:none!important;transform:none!important}
+}
+
