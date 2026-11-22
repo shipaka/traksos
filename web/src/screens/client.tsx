@@ -1224,6 +1224,7 @@ export function Profile() {
   const [company, setCompany] = useState(me?.company_name ?? '');
   const [inn, setInn] = useState(me?.company_inn ?? '');
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'info'|'security'|'settings'>('info');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
@@ -1247,21 +1248,38 @@ export function Profile() {
     inspection: 'Оператор техосмотра', courier: 'Курьер',
     moderator: 'Модератор', admin: 'Администратор',
   };
-  const scrollToSection = (id:string) =>
-    document.getElementById(id)?.scrollIntoView({
-      behavior: reducedMotion ? 'auto' : 'smooth', block: 'start'
-    });
+  const navigateProfileSection = (key:'info'|'security'|'settings') => {
+    setActiveSection(key);
+    // Keep fields mounted (no lost edits); desktop switches the real panel.
+    // On mobile the already-approved 618 long-form layout remains unchanged.
+    const target = key==='info'?'account-profile-info':key==='security'?'account-profile-security':'account-profile-settings';
+    requestAnimationFrame(() =>
+      document.getElementById(target)?.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth', block: 'start'
+      })
+    );
+  };
   return (
-    <main className="account-profile-page">
+    <main className="account-profile-page" data-section={activeSection}>
       <h1 className="account-profile-mobile-title">Профиль</h1>
       <header className="account-profile-hero">
+        <div className="account-profile-visual" aria-hidden="true">
+          <img src="/vehicles/models/scania-r520-2016.webp" alt="" />
+          <span className="account-profile-visual-trace" />
+        </div>
         <div className="account-profile-hero-copy">
-          <span className="account-profile-eyebrow"><span aria-hidden="true" className="account-profile-eyebrow-mark" /> ЛИЧНЫЙ КАБИНЕТ <span className="account-profile-index">/ 01</span></span>
-          <h1>Профиль<span className="account-profile-heading-dot">.</span></h1>
-          <p>Личные данные, безопасность и настройки аккаунта. Только то, что действительно важно.</p>
+          <span className="account-profile-eyebrow"><span aria-hidden="true" className="account-profile-eyebrow-mark" /> TRAKSOS / АККАУНТ</span>
+          <h1>Твой кабинет.<br/><span>Твои правила.</span></h1>
+          <p>Контакты, безопасность и настройки — под контролем. Всё необходимое для работы, без лишних действий.</p>
+          <div className="account-profile-hero-actions">
+            <button type="button" onClick={() => navigateProfileSection('info')}>
+              Управлять профилем <span aria-hidden="true">↗</span>
+            </button>
+            <a href="#/">На рабочий стол <span aria-hidden="true">→</span></a>
+          </div>
         </div>
         <div className="account-profile-identity" aria-label="Текущий аккаунт">
-          <span className="account-profile-identity-overline">ТЕКУЩИЙ АККАУНТ</span>
+          <span className="account-profile-identity-overline"><span aria-hidden="true" className="account-profile-status-dot" /> АКТИВНЫЙ ПРОФИЛЬ</span>
           <div className="account-profile-identity-row">
             <span className="account-profile-avatar" aria-hidden="true">
               <svg viewBox="0 0 48 48" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="24" cy="17" r="7.5"/><path d="M10 39c2.2-9 8.2-13 14-13s11.8 4 14 13"/></svg>
@@ -1274,9 +1292,15 @@ export function Profile() {
         </div>
       </header>
       <nav className="account-profile-shortcuts" aria-label="Разделы профиля">
-        <button type="button" onClick={() => scrollToSection('account-profile-info')}><span className="account-profile-tab-index">01</span> Личные данные</button>
-        <button type="button" onClick={() => scrollToSection('account-profile-security')}><span className="account-profile-tab-index">02</span> Безопасность</button>
-        <button type="button" onClick={() => scrollToSection('account-profile-settings')}><span className="account-profile-tab-index">03</span> Настройки</button>
+        <button type="button" className={activeSection==='info'?'is-active':''} aria-current={activeSection==='info'?'step':undefined} onClick={() => navigateProfileSection('info')}>
+          <span className="account-profile-tab-index">01</span><span className="account-profile-tab-copy"><strong>Личные данные</strong><small>Контакты и реквизиты</small></span><span className="account-profile-tab-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" className={activeSection==='security'?'is-active':''} aria-current={activeSection==='security'?'step':undefined} onClick={() => navigateProfileSection('security')}>
+          <span className="account-profile-tab-index">02</span><span className="account-profile-tab-copy"><strong>Безопасность</strong><small>Пароль и защита</small></span><span className="account-profile-tab-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button type="button" className={activeSection==='settings'?'is-active':''} aria-current={activeSection==='settings'?'step':undefined} onClick={() => navigateProfileSection('settings')}>
+          <span className="account-profile-tab-index">03</span><span className="account-profile-tab-copy"><strong>Настройки</strong><small>Интерфейс и доступ</small></span><span className="account-profile-tab-arrow" aria-hidden="true">↗</span>
+        </button>
       </nav>
       {native.isApp && <div className="card">
         <b>Быстрый безопасный вход</b>
