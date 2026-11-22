@@ -36,6 +36,17 @@ try {
     const desktop=width>=900;
     const landing=desktop?'.owner20-home':'.public-landing';
     await page.locator(landing).waitFor({state:'visible'});
+    const publicGlyphs={};
+    if(desktop){
+      for(const [key,selector] of [
+        ['master','.owner20-quick a[href="#/explore/van"] svg'],
+        ['tow','.owner20-quick a[href="#/explore/tow"] svg'],
+        ['service','.owner20-quick a[href="#/explore/sto"] svg'],
+        ['insurer','.owner20-feature-insurance svg'],
+      ]){
+        publicGlyphs[key]=await page.locator(selector).first().evaluate(el=>el.innerHTML);
+      }
+    }
 
     if(desktop){
       check(await page.locator('.owner20-quick>a').count()===5,
@@ -154,6 +165,14 @@ try {
       check(await role.getAttribute('aria-pressed')==='true',
         'Partner signup role not selectable: '+key);
       const btn=page.locator('.guest-partner-role-'+key);
+      const symbol=btn.locator('.guest-partner-role-label svg');
+      check(await symbol.count()===1,
+        key+': partner choice lacks canonical vector service symbol');
+      if(desktop) {
+        const glyph=await symbol.evaluate(el=>el.innerHTML);
+        check(glyph===publicGlyphs[key],
+          key+': partner icon no longer matches exact public service pictogram');
+      }
       if(width===390) {
         const image=await btn.evaluate(el=>({
           before:getComputedStyle(el,'::before').backgroundImage,
