@@ -1141,12 +1141,18 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 @media(min-width:1200px){
   /* Keep the entire phone to the LEFT of the large fixed TrakBot launcher. */
   .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
-    right:clamp(88px,7.5vw,125px)!important;top:7px!important;
+    right:92px!important;top:7px!important;
     height:112px!important;width:72px!important;
   }
   .guest-app.guest-home .owner20-bottom-app>b,
   .guest-app.guest-home .owner20-bottom-app>p,
-  .guest-app.guest-home .owner20-bottom-app>.owner20-store{max-width:40%!important}
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    display:block;max-width:calc(100% - 174px)!important;white-space:normal;
+  }
+  .guest-app.guest-home .traksos-app-phone-title,
+  .guest-app.guest-home .owner20-bottom-card .traksos-app-phone-title b{
+    font-size:10px!important;
+  }
 }
 @media(max-width:899px){
   .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{

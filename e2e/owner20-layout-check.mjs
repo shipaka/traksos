@@ -147,7 +147,12 @@ try {
      if(!img.complete)await img.decode().catch(()=>{});
      const c=card.getBoundingClientRect(),p=phone.getBoundingClientRect(),
        b=bot.getBoundingClientRect(),pseudo=getComputedStyle(card,'::after');
-     return {phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
+     const textCollision=[...card.querySelectorAll(':scope > b, :scope > p, :scope > .owner20-store')].some(el=>{
+       const range=document.createRange();
+       range.selectNodeContents(el);
+       return [...range.getClientRects()].some(r=>r.left<p.right && r.right>p.left && r.top<p.bottom && r.bottom>p.top);
+     });
+     return {textCollision,phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
        assetLoaded:img.naturalWidth>30,branded:phone.textContent.includes('Trak')&&phone.textContent.includes('SOS'),
        rustore:card.querySelector('.owner20-store')?.textContent?.includes('RuStore')??false,
        pseudoHidden:pseudo.display==='none',
@@ -155,7 +160,7 @@ try {
        overlaps:p.left<b.right&&p.right>b.left&&p.top<b.bottom&&p.bottom>b.top};
    });
    if(phoneBot.missing||!phoneBot.assetLoaded||!phoneBot.branded||
-      !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps)
+      !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps||phoneBot.textCollision)
      throw Error(width+': branded phone clipped, duplicated or covered by TrakBot: '+JSON.stringify(phoneBot));
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;

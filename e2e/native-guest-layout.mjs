@@ -43,7 +43,7 @@ try {
       });
       if(!hero.native||hero.scroll>hero.viewport+3||!hero.natural||
         !hero.source?.includes('tracksos-approved-hero-owner-20261119-retouched')||
-        hero.fit!=='contain'||!hero.centered?.includes('center')||
+        hero.fit!=='contain'||hero.centered!=='50% 50%'||
         !hero.photo||!hero.title||hero.photo.w<140||hero.photo.h<110||
         hero.photo.y+hero.photo.h>hero.title.y+2)
         throw Error(width+'px native truck clipped or overlaps title: '+JSON.stringify(hero));

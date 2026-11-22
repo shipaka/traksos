@@ -139,7 +139,7 @@ try {
         probe.remove();
         return result;
       });
-      if(photoRule.fit!=='contain'||!photoRule.position.includes('center')||
+      if(photoRule.fit!=='contain'||photoRule.position!=='50% 50%'||
          photoRule.label!=='none')
         throw Error(role+': Android truck is still cropped or illustration label leaks '+JSON.stringify(photoRule));
     }

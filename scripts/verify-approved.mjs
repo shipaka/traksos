@@ -505,14 +505,14 @@ expect(landing.includes("heroSlide === 0 ? go('register')") &&
   landing.includes('href="#/login">Войти в TrakSOS</a>') &&
   !landing.includes('href="#/explore/guide">Как это работает</a>'),
   'approved mobile hero retains registration and opens sign-in, not old guide');
-expect(ownerPcHeader.includes("['▦','Специалисты ЭБУ'") &&
-  !ownerPcHeader.includes("['▦','ЭБУ','Диагностика") &&
+expect(ownerPcHeader.includes("['Специалисты ЭБУ'") &&
+  !/^\s*\[(?:[^\n]*?,)?\s*'ЭБУ',/m.test(ownerPcHeader) &&
   ownerPcHeader.includes('href="#/login">Подробнее о покрытии'),
   '617 public quick menu has no duplicate ECU and coverage opens sign-in');
-expect(ownerPcHeader.includes("['✦','TrakBot · ИИ','Наш технический помощник','trakbot']") &&
+expect(ownerPcHeader.includes("['TrakBot · ИИ','Наш технический помощник','trakbot']") &&
   ownerPcHeader.includes('requestTrakBotOpen()') &&
   ownerPcHeader.includes('className="owner20-quick-trakbot"') &&
-  !ownerPcHeader.includes("['▦','ЭБУ','Диагностика"),
+  !/^\s*\[(?:[^\n]*?,)?\s*'ЭБУ',/m.test(ownerPcHeader),
   '617 fifth quick tile opens one canonical TrakBot instead of restoring duplicate ECU');
 expect(ownerPcHeader.includes('<a href="#/company">О нас</a>') &&
   !ownerPcHeader.includes('<a href="#/offers">Оферты</a>'),

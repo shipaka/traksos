@@ -148,9 +148,10 @@ try{
       if(!approved.ok()||(await approved.body()).byteLength<15000)
         throw Error('617 PC approved hero image is unavailable');
       if(await home.locator('.owner20-quick>a').count()!==5||
-         await home.locator('.owner20-quick-icon svg').count()!==5||
+         await home.locator('.owner20-quick > a:not(.owner20-quick-trakbot) .owner20-quick-icon svg:visible').count()!==4||
+         await home.locator('.owner20-quick > a:nth-child(5).owner20-quick-trakbot .trakbot-mascot-original:visible').count()!==1||
          await home.locator('.owner20-features>a').count()!==5)
-        throw Error('617 PC needs five vector service shortcuts and five approved service tiles');
+        throw Error('617 PC needs four service pictograms, the approved TrakBot in the fifth shortcut, and five feature tiles');
       if(await p.locator('.public-landing,.desktop-hero,.desktop-quick-links').count())
         throw Error('Retired public or client desktop shell mounted over approved 617 PC home');
       await checkOverflow(p,'617 desktop guest');

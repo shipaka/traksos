@@ -10,18 +10,18 @@ import './ownerDesktopHome20261120.css';
 
 /** The 20 November owner-approved desktop layout. Mobile stays on its separately approved view. */
 const primary = [
-  ['⚒','Выездной мастер','Диагностика и ремонт на месте','van'],
-  ['↗','Эвакуация','Быстрая и безопасная','tow'],
-  ['⌂','СТО','Ремонт и обслуживание','sto'],
-  ['◉','Консультация','Профессиональная помощь онлайн','consult'],
-  ['✦','TrakBot · ИИ','Наш технический помощник','trakbot']
+  ['Выездной мастер','Диагностика и ремонт на месте','van'],
+  ['Эвакуация','Быстрая и безопасная','tow'],
+  ['СТО','Ремонт и обслуживание','sto'],
+  ['Консультация','Профессиональная помощь онлайн','consult'],
+  ['TrakBot · ИИ','Наш технический помощник','trakbot']
 ] as const;
 const features = [
-  ['▤','ТехБаза','Техническая библиотека и практический опыт','tech','Перейти'],
-  ['▦','Специалисты ЭБУ','Диагностика, ремонт и программирование','ecu','Подобрать'],
-  ['⚙','Запчасти','Подбор и поставка для грузовой техники','parts','В каталог'],
-  ['◇','Страхование','ОСАГО, КАСКО, грузы и автопарк','insurance','Подробнее'],
-  ['▤','Техосмотр','Оформление и прохождение для грузового транспорта','inspection','Записаться']
+  ['ТехБаза','Техническая библиотека и практический опыт','tech','Перейти'],
+  ['Специалисты ЭБУ','Диагностика, ремонт и программирование','ecu','Подобрать'],
+  ['Запчасти','Подбор и поставка для грузовой техники','parts','В каталог'],
+  ['Страхование','ОСАГО, КАСКО, грузы и автопарк','insurance','Подробнее'],
+  ['Техосмотр','Оформление и прохождение для грузового транспорта','inspection','Записаться']
 ] as const;
 function rememberAllowed(key:string){
   if(key==='van'||key==='tow'||key==='sto'||key==='consult'||key==='parts'||key==='insurance'||key==='inspection') rememberGuestService(key);
@@ -47,7 +47,7 @@ function OwnerIcon({kind}:{kind:string}) {
 }
 
 function Feature({item}:{item:typeof features[number]}) {
-  const [symbol,title,description,key,action] = item;
+  const [title,description,key,action] = item;
   return <a href={route(key)} className={'owner20-feature owner20-feature-'+key} onClick={() => rememberAllowed(key)}>
     <div className="owner20-feature-title"><span aria-hidden="true"><OwnerIcon kind={key}/></span><b>{title}</b></div>
     <p>{description}</p>
@@ -78,7 +78,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           if(opened){opened.open=false;opened.querySelector('summary')?.focus();event.preventDefault();}
         }}>
         <details><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(item=>item[3]==='trakbot' ? <a href="#/trakbot" key={item[3]} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{item[1]}</a> : <a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
+        <details><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
         <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
         <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
         <a href="#/login">Поддержка</a>
@@ -114,12 +114,12 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       </aside>
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
-      {primary.map(([symbol,title,hint,key])=>key==='trakbot'
+      {primary.map(([title,hint,key])=>key==='trakbot'
         ? <a href="#/trakbot" key={key} className="owner20-quick-trakbot" aria-label="Открыть TrakBot — ИИ-помощник" onClick={event=>{event.preventDefault();requestTrakBotOpen();}}><span className="owner20-quick-icon" aria-hidden="true"><TrakBotMascot reaction="hello" size="small" ambient /></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span></a>
         : <a href={route(key)} key={key} className={'owner20-quick-'+key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span><ApprovedServiceIllustration kind={key==='van'?'repair':key==='tow'?'tow':key==='sto'?'service':'consult'}/></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">
-      {features.map(item=><Feature key={item[3]} item={item}/>)}
+      {features.map(item=><Feature key={item[2]} item={item}/>)}
     </section>
     <section className="owner20-bottom" aria-label="Сообщество и приложение">
       <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span>Войти в Эфир　→</span></a>
