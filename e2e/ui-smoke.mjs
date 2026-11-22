@@ -23,31 +23,26 @@ try {
       assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
       assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');
-      // 617 cards: text on the left, source imagery on the right, continuous
-      // dimming gradient, not a hard-masked half-image or text baked into CSS.
+      // 617 DOM remains unchanged; only the photo layers inside the five
+      // existing tiles are replaced. They must fill each card, without a
+      // visible cut-out sprite or duplicate rasterized captions.
       const tiles=await page.locator('.owner20-feature').evaluateAll(items=>items.map(card=>{
         const pic=card.querySelector('.owner20-feature-illustration');
         const bounds=card.getBoundingClientRect(),art=pic?.getBoundingClientRect();
-        return {title:card.querySelector('b')?.textContent,
-          image:getComputedStyle(pic).backgroundImage,
-          gradient:getComputedStyle(card,'::before').backgroundImage,
-          artRight:art?.right,cardRight:bounds.right,
-          mask:getComputedStyle(pic).maskImage,
-        };
+        const style=getComputedStyle(pic);
+        return {image:style.backgroundImage,mask:style.maskImage,
+          before:getComputedStyle(card,'::before').content,
+          w:art?.width,h:art?.height,cardW:bounds.width,cardH:bounds.height};
       }));
       assert(tiles.length===5&&tiles.every(t=>
-        t.image?.includes('owner20-artwork-sprite.webp') &&
-        t.gradient?.includes('linear-gradient') &&
-        t.artRight <= t.cardRight+3 &&
-        t.mask?.includes('linear-gradient')),
-
-        width+'px: approved 617 right-image/left-copy card composition lost '+JSON.stringify(tiles));
-      const crop=await page.locator('.owner20-feature-illustration').evaluateAll(items=>items.map(el=>{
-        const r=el.getBoundingClientRect(),bg=getComputedStyle(el).backgroundPosition;
-        return {w:Math.round(r.width),bg};
-      }));
-      assert(crop.length===5 && crop.every(x=>x.w<=112),
-        width+'px: caption-bearing atlas region returned to feature cards '+JSON.stringify(crop));
+        t.image?.includes('traksos-service-scenes-desktop-hq.webp') &&
+        t.mask==='none' && t.before==='none' &&
+        Math.abs(t.w-t.cardW)<3 && Math.abs(t.h-t.cardH)<3),
+        width+'px: 617 photographs should fill cards with no raster caption cuts '+JSON.stringify(tiles));
+      const heroPhoto=await page.locator('.owner20-photo').evaluate(el=>
+        getComputedStyle(el,'::after').backgroundImage);
+      assert(heroPhoto.includes('owner20-photo-brandless-20261122.webp'),
+        '617 truck must be unbranded without changing the approved hero DOM: '+heroPhoto);
       const bot=page.getByRole('button',{name:'Открыть TrakBot'});
       assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
       assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');
