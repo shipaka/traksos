@@ -132,7 +132,7 @@ for(const role of ['master','tow','sto','insurer']){
   await asset(file, 1600);
   const visual = await read(file);
   expect(visual.includes('<svg') && visual.includes('viewBox=') &&
-    !/<script\\b|javascript:|<foreignObject\\b/i.test(visual),
+    !/<script\b|javascript:|<foreignObject\b/i.test(visual),
     'partner role image is self-contained SVG, without remote scripts: ' + role);
 }
 // The superseded 617-only raster logo must not be served as an alternative
