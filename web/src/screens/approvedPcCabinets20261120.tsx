@@ -69,7 +69,7 @@ function Heading({title,description,children,artKey,roleIcon}:{title:string;desc
     <div>
       <span className="approved-pc-eyebrow">TRAKSOS · РАБОЧИЙ КАБИНЕТ</span>
       <div className="approved-pc-heading-title-row">
-        {roleIcon&&<span className="approved-pc-heading-role-icon" aria-hidden="true"><TrakServiceIcon kind={roleIcon}/></span>}
+        {roleIcon&&<span className="approved-pc-heading-role-icon" data-role-icon={roleIcon} aria-hidden="true"><TrakServiceIcon kind={roleIcon}/></span>}
         <h1>{title}</h1>
       </div>
       <p>{description}</p>
