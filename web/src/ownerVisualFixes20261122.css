@@ -551,11 +551,19 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
 }
 
 
-/* Owner QA 22 Nov, Playwright mobile 390px: older guest-card gradients
-   won the ::before cascade and left three partner roles without photos.
+/* Owner QA 22 Nov, Playwright mobile 390px: old
+   roleShared20261119.css selector
+   ".guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role::before"
+   had FOUR classes and an important gradient shorthand, so the earlier
+   three-class photographic rule lost the cascade. Override this exact
+   legacy selector with one EXTRA class; keep image on ::before, and copy
+   shading on ::after.
+   (Avoid lowering the old accessibility contrast rules.)
+/*
    Override the entire shorthand on the image layer, not only image/size.
    The separate ::after shade continues under text; only approved scenes
    are used and the 4-category/selection logic remains unchanged. */
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::before,
 html .guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::before {
   background:url('/traksos-service-scenes-desktop-hq.webp') 0% 50% / 400% 100% no-repeat!important;
 }
