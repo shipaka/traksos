@@ -356,6 +356,15 @@ try {
         });
         assert(visual.image.includes(key==='insurer'?'linear-gradient':'traksos-service-scenes-desktop-hq.webp'),
           key+': partner visual failed to load canonical scene '+JSON.stringify(visual));
+        if(key!=='insurer'){
+          const expected={master:0,tow:33.3333,service:66.6667}[key];
+          assert(Math.abs(parseFloat(visual.position)-expected)<0.5,
+            key+': partner selected card shows wrong 25% panorama frame '+JSON.stringify(visual));
+        } else {
+          const shield=await chosen.evaluate(el=>getComputedStyle(el,'::after').backgroundImage);
+          assert(shield.includes('owner20-artwork-sprite-retouched.webp'),
+            'insurance partner illustration is not loaded from approved art: '+shield);
+        }
         await page.screenshot({path:'e2e/shots/partners-review/partner-'+key+'-390.png',
           fullPage:true,animations:'disabled'});
       }
