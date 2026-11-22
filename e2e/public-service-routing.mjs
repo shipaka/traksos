@@ -227,31 +227,25 @@ try {
     for(const label of ['Мастер','Эвакуаторщик','СТО','Страховой агент'])
       await page.getByRole('button',{name:new RegExp('^'+label)}).waitFor();
     if(await page.locator('.auth-desktop-form .opt').count()!==4)throw Error('Partner categories must be exactly four');
-    // No role is forced on initial opening; the fixed right-side image is Scania.
-    const showcaseImage=width>=900?'.auth-desktop-showcase-photo':'.guest-partner-mobile-preview';
-    const visual=page.locator(showcaseImage);
-    await visual.waitFor();
-    const photo=()=>visual.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if((await photo())==='none')throw Error('Partner signup artwork is missing');
-    const fixedPosition=width>=900 ? await page.locator('.partner-showcase').evaluate(el=>{
-      const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
-    }) : null;
-    for(const [roleName,asset] of [
-      ['Эвакуаторщик','linear-gradient'],
-      ['Мастер','linear-gradient'],
-      ['СТО','linear-gradient'],
-      ['Страховой агент','linear-gradient'],
-    ]){
-      await page.getByRole('button',{name:roleName,exact:true}).click();
-      if(!(await photo()).includes(asset))throw Error('Wrong cinematic showcase when choosing '+roleName);
-      if(width>=900 && fixedPosition) {
-        const next=await page.locator('.partner-showcase').evaluate(el=>{
-          const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
-        });
-        if(Math.abs(next.x-fixedPosition.x)>3 || Math.abs(next.width-fixedPosition.width)>3 ||
-           Math.abs(next.height-fixedPosition.height)>3)
-          throw Error('Desktop partner illustration shifts layout when switching '+roleName+': '+JSON.stringify({fixedPosition,next}));
-      }
+    // Browser partner registration stays on the approved public surface.
+    // No separate truck illustration, second header, or obsolete auth page.
+    const modal = page.locator('.tr-auth-panel[role="dialog"][aria-modal="true"]');
+    await modal.waitFor();
+    if(!await modal.isVisible())throw Error('Partner registration dialog is not visible');
+    if(await page.locator('.auth-desktop-showcase:visible,.guest-partner-mobile-preview:visible').count())
+      throw Error('Duplicate partner cinematic illustration returned in browser auth dialog');
+    if(!await page.locator(width>=900?'.owner20-home':'.public-home').isVisible())
+      throw Error('Partner registration displaced the approved guest landing');
+    const initial = await modal.boundingBox();
+    if(!initial)throw Error('Missing partner dialog geometry');
+    for(const roleName of ['Эвакуаторщик','Мастер','СТО','Страховой агент']){
+      const button=page.getByRole('button',{name:roleName,exact:true});
+      await button.click();
+      if(await button.getAttribute('aria-pressed')!=='true')
+        throw Error('Partner selection did not update: '+roleName);
+      const next=await modal.boundingBox();
+      if(!next || Math.abs(next.x-initial.x)>3 || Math.abs(next.width-initial.width)>3)
+        throw Error('Partner dialog jumps horizontally on role switch: '+roleName);
     }
     await page.getByRole('button',{name:/^Мастер/}).click();
     for(const specialty of ['Электрик','Автономщик']){
