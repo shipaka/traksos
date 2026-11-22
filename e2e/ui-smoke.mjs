@@ -123,6 +123,11 @@ try {
       continue;
     }
     await page.locator('.public-landing').waitFor({ timeout: 15000 });
+    assert(await page.locator('.track-guest-tabbar').count() === 0,
+      width + 'px: retired, unstyled guest menu returned below legal footer');
+    assert(await page.locator('.guest-header-actions a[href="#/login"]').count() === 1 &&
+      await page.locator('.guest-header-actions a[href="#/register"]').count() === 1,
+      width + 'px: guest entry actions missing after bottom-nav cleanup');
     // TrakBot is opt-in and does not interrupt the public landing.
     const botLauncher = page.getByRole('button', { name: 'Открыть TrakBot' });
     assert(await botLauncher.isVisible(), width + 'px: TrakBot entry not visible');
