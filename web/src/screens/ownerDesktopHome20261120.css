@@ -684,108 +684,65 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
  }
 }
 
+
 /*
- * 617 PHOTO-ASSET-ONLY REPAIR (22.11.2026).
- * The OWNER-APPROVED HTML and geometry stay as-is: NO new homepage, rows,
- * typography, map or hero layout. Only replace the five card imagery layers.
- * The old atlas had raster captions and clipped subjects. These approved
- * photograph scenes contain no raster captions.
+ * Owner-approved 617.png remains the ONLY desktop homepage.
+ * PHOTO ASSETS ONLY: real source imagery inside its five unchanged cards.
+ * No new header, grid, positions, typography, geometry, or 618/mobile changes.
  */
 @media (min-width:900px) {
   .guest-app.guest-home .owner20-feature { isolation:isolate; }
   .guest-app.guest-home .owner20-feature::before {
-    content:none!important;
-    display:none!important;
+    content:none!important;display:none!important;
   }
-  .guest-app.guest-home .owner20-feature-illustration,
   .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration,
   .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration,
   .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration,
   .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration,
   .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
-    position:absolute!important;
-    inset:0!important;
-    display:block!important;
-    width:100%!important;
-    height:100%!important;
-    z-index:1!important;
-    transform:none!important;
-    filter:none!important;
-    opacity:1!important;
-    background-color:#112934!important;
-    /* Dark navy on the LEFT, actual photographed scene fills the RIGHT.
-       No opaque grey block and no captions baked into the raster pixels. */
-    background-image:
-      linear-gradient(90deg,rgba(8,25,35,.98) 0%,rgba(8,25,35,.91) 30%,rgba(8,25,35,.58) 54%,rgba(8,25,35,.08) 86%,transparent 100%),
-      url('/traksos-service-scenes-desktop-hq.webp')!important;
-    background-repeat:no-repeat,no-repeat!important;
-    background-size:100% 100%,400% 100%!important;
-    background-position:center center,0% center!important;
-    -webkit-mask-image:none!important;
-    mask-image:none!important;
+    position:absolute!important;inset:0!important;
+    display:block!important;width:100%!important;height:100%!important;
+    z-index:1!important;opacity:1!important;
+    transform:none!important;filter:none!important;
+    background-repeat:no-repeat!important;
+    background-position:center center!important;
+    background-size:cover!important;
+    -webkit-mask-image:none!important;mask-image:none!important;
     pointer-events:none!important;
   }
   .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration {
-    background-position:center center,0% center!important; /* mechanic, full size */
+    background-image:url('/owner617-tech-photo.webp')!important;
   }
   .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
-    background-position:center center,100% center!important; /* diagnostics screen */
+    background-image:url('/owner617-ecu-photo.webp')!important;
   }
   .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
-    background-position:center center,66.6667% center!important; /* workshop & repairs */
+    background-image:url('/owner617-parts-photo.webp')!important;
   }
   .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
-    background-position:center center,33.3333% center!important; /* transport protection */
+    background-image:url('/owner617-insurance-photo.webp')!important;
   }
+  /* A photo of the existing workshop retains the approved inspection look
+     until its individual text-free high-resolution artwork is verified. */
   .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
-    background-position:center center,66.6667% center!important; /* truck service bay */
+    background-image:
+      linear-gradient(90deg,rgba(9,27,37,.92) 0%,rgba(9,27,37,.70) 33%,transparent 82%),
+      url('/traksos-service-scenes-desktop-hq.webp')!important;
+    background-size:100% 100%,400% 100%!important;
+    background-position:center center,66.6667% center!important;
   }
   .guest-app.guest-home .owner20-feature-title,
   .guest-app.guest-home .owner20-feature p {position:relative;z-index:2!important}
   .guest-app.guest-home .owner20-feature-cta {position:absolute;z-index:3!important}
-  /* The distinctive photo objects below are *caption-free* zones of 617's
-     original artwork. Enrich three cards, never restore raster lettering. */
-  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration::after,
-  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration::after,
-  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration::after {
-    content:"";
-    position:absolute;
-    bottom:0;right:0;
-    height:126px;
-    background-image:url('/owner20-artwork-sprite.webp');
-    background-size:1018px 446px;
-    background-repeat:no-repeat;
-    pointer-events:none;
-    -webkit-mask-image:linear-gradient(90deg,transparent,black 15%);
-    mask-image:linear-gradient(90deg,transparent,black 15%);
-  }
-  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration::after {
-    width:110px;background-position:-337px -317px;
-  }
-  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration::after {
-    width:88px;background-position:-500px -317px;
-  }
-  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration::after {
-    width:81px;background-position:-624px -317px;
-  }
-}
 
-
-/* Exact 617 layout is unchanged. Photo-only correction: truck paint may not
-   display any brand, model or lettering in shared public artwork. The new
-   photograph retains the original pixel geometry and map remains on top. */
-@media (min-width:900px) {
+  /* Only the photographic pixels change; full approved hero DOM, road/sky
+     geometry, buttons, map and coordinates remain untouched. */
   .guest-app.guest-home .owner20-photo::after {
-    content:""!important;
-    position:absolute!important;
-    inset:0!important;
-    width:100%!important;
-    height:100%!important;
+    content:""!important;position:absolute!important;inset:0!important;
+    width:100%!important;height:100%!important;
     background-image:url('/owner20-photo-brandless-20261122.webp')!important;
     background-position:center center!important;
-    background-size:cover!important;
-    background-repeat:no-repeat!important;
-    -webkit-mask-image:none!important;
-    mask-image:none!important;
+    background-size:cover!important;background-repeat:no-repeat!important;
+    -webkit-mask-image:none!important;mask-image:none!important;
   }
 }
