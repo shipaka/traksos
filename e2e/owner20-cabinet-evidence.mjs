@@ -153,6 +153,25 @@ try{
        const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected==='insurer'?'insurance':roleExpected);
        if(!await workdesk.evaluate((node,cls)=>node.classList.contains(cls),roleClass))
          throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
+       const roleArtKey={owner:'owner',driver:'driver',master:'master',
+         tow:'tow',service:'service',master_service:'service',
+         insurer:'insurer',moderator:'moderator',admin:'admin'}[c.id];
+       if(roleArtKey){
+         const art=await workdesk.locator('.approved-pc-heading').evaluate(el=>{
+           const style=getComputedStyle(el,'::after');
+           const old=el.querySelector(':scope>img');
+           const feature=el.querySelector(':scope>.traksos-feature-art');
+           return {key:el.getAttribute('data-role-art'),image:style.backgroundImage,
+             mask:style.maskImage,backgroundPos:style.backgroundPosition,
+             oldDisplay:old?getComputedStyle(old).display:'none',
+             featureDisplay:feature?getComputedStyle(feature).display:'none'};
+         });
+         if(art.key!==roleArtKey||
+           !art.image.includes('traksos-role-banners-approved-atlas-20261122.webp')||
+           !art.mask.includes('linear-gradient')||
+           art.oldDisplay!=='none'||art.featureDisplay!=='none')
+           throw Error('Approved role banner lost or second image reappeared: '+c.id+' '+JSON.stringify(art));
+       }
        const symbolRoles={master:'master',tow:'tow',service:'service',
          master_service:'service',insurer:'insurer'};
        const symbolKind=symbolRoles[c.id];
