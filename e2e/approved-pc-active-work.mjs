@@ -11,6 +11,36 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))throw Error('Loca
 const output='e2e/shots/pc-active-synthetic';
 await mkdir(output,{recursive:true});
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
+
+/** Real CSS contract on actual authenticated PC role screens.
+ * Photograph fills the WHOLE banner; the same truck is on the right,
+ * with legible DOM text at left and no second boxed-in image. */
+async function assertFullBleedCabinetBanner(page,role) {
+ const banner=page.locator('.approved-pc-heading');
+ await banner.waitFor({state:'visible'});
+ const state=await banner.evaluate(el=>{
+  const style=getComputedStyle(el);
+  const box=el.getBoundingClientRect();
+  const copy=el.querySelector(':scope > div')?.getBoundingClientRect();
+  const image=el.querySelector(':scope > img');
+  return {
+   background:style.backgroundImage,size:style.backgroundSize,
+   position:style.backgroundPosition,repeat:style.backgroundRepeat,
+   imageDisplay:image?getComputedStyle(image).display:'absent',
+   copyWidth:copy?.width??0,copyLeft:copy?.left??0,
+   cardWidth:box.width,cardLeft:box.left,
+   text:el.querySelector('h1')?.textContent||''
+  };
+ });
+ assert(state.background.includes('owner20-photo-background-approved-retouched.webp'),
+  role+': role banner is not the approved full-bleed photo '+JSON.stringify(state));
+ assert(state.size.includes('158%')&&state.imageDisplay==='none',
+  role+': secondary picture / grey right panel returned '+JSON.stringify(state));
+ assert(state.copyWidth>90&&state.copyWidth<state.cardWidth*.7&&state.copyLeft>=state.cardLeft,
+  role+': banner headline no longer occupies the left area '+JSON.stringify(state));
+ assert(state.text.length>3,role+': missing real role heading');
+}
+
 const post=async(path,data,token)=>{const r=await fetch(BASE+path,{
  method:'POST',headers:{'content-type':'application/json',...(token?{authorization:'Bearer '+token}:{})},body:JSON.stringify(data)
 });const d=await r.json().catch(()=>null);if(!r.ok)throw Error(path+' '+r.status+' '+JSON.stringify(d));return d};
@@ -80,6 +110,7 @@ try{
      description:'Тестовое предложение (не назначено)',address:'Только CI',
      limits:{usual:100000,floor:75000,ceil:125000},my_price:null}])));
  await open(page,master.token,master.mode,'#/work');
+ await assertFullBleedCabinetBanner(page,'master');
  assert(await page.locator('.approved-pc-performer-case').count()===1,'Active job not opened');
  assert(await page.getByRole('button',{name:'Выехал'}).count()===1,'Correct first status action missing');
  assert(await page.locator('.approved-pc-techbook').count()===1,'TechBase book not on vehicle photo');
@@ -118,6 +149,7 @@ try{
  ],pending:[]})));
  await open(op,owner.token,owner.mode,'#/');
  assert(await op.locator('.approved-pc-client').count()===1,'Owner PC home missing');
+ await assertFullBleedCabinetBanner(op,'owner');
  // Approved PC 617/role desktop should start with the actual work area,
  // not automatically render a training ribbon or a second first-visit card.
  assert(await op.locator('.tr-training-invite').count()===0,
