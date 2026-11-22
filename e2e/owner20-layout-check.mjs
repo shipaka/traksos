@@ -91,6 +91,9 @@ try {
      await link.waitFor();await link.click();
      await page.waitForURL('**/#/explore/'+key);
      await page.locator('.guest-explore-hero h1').waitFor();
+     if(await page.locator('header.owner20-top').count()!==1 ||
+        await page.locator('header.top,.guest-site-nav').count()!==0)
+       throw Error(key+': legacy public header appeared after opening approved service tile');
      if(['van','tow','sto','consult'].includes(key)){
        const scene=await page.locator('.guest-explore-hero').evaluate(el=>getComputedStyle(el,'::before').backgroundImage);
        if(!scene.includes('traksos-service-scenes-desktop-hq.webp'))
