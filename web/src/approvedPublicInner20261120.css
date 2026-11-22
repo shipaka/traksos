@@ -70,12 +70,21 @@
   top: 0; right: 0; bottom: 0;
   width: 57%;
   z-index: 0;
-  background: url('/owner20-photo-background-approved.webp') 58% 50% / cover no-repeat;
+  background: var(--guest-scene,linear-gradient(120deg,#12323d,#09202b)) var(--guest-scene-position,58% 50%) / var(--guest-scene-size,cover) no-repeat;
   opacity: .72;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 38%);
   pointer-events: none;
 }
+/* Per-service approved photo atlas (4 x 704px scenes at native 4x quality).
+   Never repeat the homepage truck on a tow, repair, STO or consultation page.
+   Other informational routes retain a neutral graphic background until their
+   separately reviewed imagery is available. */
+.guest-app:not(.guest-home) .guest-info-page { --guest-scene:url('/owner20-photo-background-approved.webp'); }
+.guest-app:not(.guest-home) .guest-explore-van { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:0 50%;--guest-scene-size:2816px 420px; }
+.guest-app:not(.guest-home) .guest-explore-tow { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:-704px 50%;--guest-scene-size:2816px 420px; }
+.guest-app:not(.guest-home) .guest-explore-sto { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:-1408px 50%;--guest-scene-size:2816px 420px; }
+.guest-app:not(.guest-home) .guest-explore-consult { --guest-scene:url('/traksos-service-scenes-desktop-hq.webp');--guest-scene-position:-2112px 50%;--guest-scene-size:2816px 420px; }
 /* Keep the heading, controls and links above the road image overlay. */
 .guest-app:not(.guest-home) .guest-explore-hero > *,
 .guest-app:not(.guest-home) .guest-info-hero > * {
@@ -337,20 +346,27 @@
     width:100%!important;
     max-width:100%!important;
     min-width:0!important;
+    display:grid!important;
     grid-template-columns:minmax(170px,auto) minmax(0,1fr) 44px auto!important;
+    grid-template-rows:auto auto!important;
+    align-items:center!important;
+    gap:10px 12px!important;
+    min-height:104px!important;
   }
   .guest-app:not(.guest-home) .guest-site-nav {
     display:flex!important;
-    flex-wrap:wrap!important;
+    flex-wrap:nowrap!important;
     align-items:center!important;
     justify-content:flex-start!important;
     column-gap:clamp(14px,2.6vw,30px)!important;
-    row-gap:3px!important;
+    row-gap:0!important;
     width:100%!important;
     max-width:100%!important;
     min-width:0!important;
     grid-column:1/-1!important;
     grid-row:2!important;
+    padding-top:4px!important;
+    border-top:1px solid #1e3842;
   }
   .guest-app:not(.guest-home) .guest-site-nav .guest-nav-group,
   .guest-app:not(.guest-home) .guest-site-nav > a {
