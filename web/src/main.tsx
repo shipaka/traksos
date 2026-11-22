@@ -470,22 +470,25 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
   const isGuestServiceLogin = !me && !native.isApp && route[0] === 'explore' &&
     GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '');
+  // One coherent public menu. The full catalogue, fees and learning remain
+  // accessible after login instead of exposing legacy guest detail screens.
+  const guestServiceLinks = [
+    {title:'Выездной мастер', href:'#/explore/van'},
+    {title:'Эвакуация', href:'#/explore/tow'},
+    {title:'СТО и ремонт', href:'#/explore/sto'},
+    {title:'Специалисты ЭБУ', href:'#/explore/ecu'},
+    {title:'Консультация', href:'#/explore/consult'},
+    {title:'Запчасти', href:'#/explore/parts'},
+    {title:'Страхование', href:'#/explore/insurance'},
+  ];
   const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
-    { title: 'О платформе', links: [
-      { title: 'О нас', href: '#/company' },
-      { title: 'Как работает', href: '#/explore/guide' },
-      { title: 'Комиссии', href: '#/explore/pricing' },
-      { title: 'Оферты и документы', href: '#/offers' },
-    ] },
-    { title: 'Сервисы', links: PUBLIC_CAPABILITIES.map(item => ({ title: item.title, href: item.href })) },
+    { title: 'О платформе', links: [{ title: 'О нас', href: '#/company' }] },
+    { title: 'Сервисы', links: guestServiceLinks },
     { title: 'Сообщество', links: [
       { title: 'Эфир', href: '#/explore/air' },
       { title: 'Клуб TrakSOS', href: '#/explore/club' },
     ] },
-    { title: 'Партнёрам', links: [
-      { title: 'Хотим работать', href: '#/join' },
-      { title: 'Оферты партнёров', href: '#/offers' },
-    ] },
+    { title: 'Партнёрам', links: [{ title: 'Хотим работать', href: '#/join' }] },
   ];
   useEffect(() => {
     setOpenGuestGroup(null);
@@ -703,16 +706,16 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </div>
             </details>
           ))}
-          <a href="#/help">Поддержка</a>
+          <a href="#/login">Поддержка</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
           <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>
           <nav aria-label="Возможности TrakSOS">
-            {PUBLIC_CAPABILITIES.map(item =>
+            {guestServiceLinks.map(item =>
               <a key={item.href} href={item.href} onClick={() => setMobileCatalogOpen(false)}>{item.title}</a>)}
             <a href="#/company" onClick={() => setMobileCatalogOpen(false)}>О платформе</a>
-            <a href="#/economics" onClick={() => setMobileCatalogOpen(false)}>Тарифы</a>
-            <a href="#/help" onClick={() => setMobileCatalogOpen(false)}>Помощь</a>
+            <a href="#/join" onClick={() => setMobileCatalogOpen(false)}>Партнёрам</a>
+            <a href="#/login" onClick={() => setMobileCatalogOpen(false)}>Поддержка</a>
           </nav>
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
