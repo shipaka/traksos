@@ -42,8 +42,8 @@ try {
         scroll:document.documentElement.scrollWidth,
         services:document.querySelectorAll('.public-service-tile').length,
         login:document.querySelectorAll('.guest-header-actions a').length,
-        hero:hero&&{top:hero.top,bottom:hero.bottom,width:hero.width},
-        photo:photo&&{top:photo.top,bottom:photo.bottom,height:photo.height,width:photo.width},
+        hero:hero&&{top:hero.top,bottom:hero.bottom,left:hero.left,width:hero.width},
+        photo:photo&&{top:photo.top,bottom:photo.bottom,left:photo.left,height:photo.height,width:photo.width},
         copy:copy&&{top:copy.top,bottom:copy.bottom,width:copy.width},
         arrows:arrows&&{top:arrows.top,bottom:arrows.bottom},
         fit:style.backgroundSize,background:style.backgroundImage,
@@ -53,7 +53,8 @@ try {
       throw Error(width+'px Android public shell invalid: '+JSON.stringify(g));
     if(!g.hero||!g.photo||!g.copy||!g.arrows||g.fit!=='contain'||
        g.photo.height<100||g.photo.width>g.hero.width+3||
-       g.photo.bottom>g.copy.top+8||g.arrows.top<g.copy.top-3)
+       g.photo.bottom>g.copy.top+8||g.arrows.top<g.copy.top-3||
+       Math.abs(g.photo.left-g.hero.left)>3||Math.abs(g.photo.width-g.hero.width)>3)
       throw Error(width+'px Android guest still overlays text/caption on truck: '+JSON.stringify(g));
     if(!g.background.includes('tracksos-approved-hero-owner-20261119')||
        /tracksos-approved-(?:scenic-hero|scania-r520|truck)\.webp/.test(g.background))
