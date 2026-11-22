@@ -12,7 +12,23 @@ async function session(term, select, expectedHash, width=1440){
   try{
     await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
     // Wait for the actual approved header control, not a retired hero heading.
-    await page.locator('.track-site-search-icon').waitFor({state:'visible'});
+    try {
+      await page.locator('.track-site-search-icon').waitFor({state:'visible',timeout:10000});
+    } catch (error) {
+      // Keep the failure red; collect evidence rather than weakening the design assertion.
+      const fs=await import('node:fs/promises');
+      await fs.mkdir('e2e/shots',{recursive:true});
+      await page.screenshot({path:'e2e/shots/header-search-failure.png',fullPage:true}).catch(()=>{});
+      const snapshot=await page.evaluate(()=>({
+        url:location.href,title:document.title,
+        bodyText:document.body?.innerText?.slice(0,1400),
+        searchIconCount:document.querySelectorAll('.track-site-search-icon').length,
+        searchInputCount:document.querySelectorAll('input[type="search"]').length,
+        appRoot:document.querySelector('#root')?.innerHTML?.slice(0,1400)
+      })).catch(e=>({snapshotError:String(e)}));
+      console.error('Header search diagnostic:',JSON.stringify({width,snapshot,errors}));
+      throw error;
+    }
     const search=page.getByRole('searchbox',{name:'Поиск разделов и услуг'});
     // Canonical header starts as a search icon; opening it must reveal a usable real input.
     await page.locator('.track-site-search-icon').click();
