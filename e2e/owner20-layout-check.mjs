@@ -152,7 +152,22 @@ try {
        range.selectNodeContents(el);
        return [...range.getClientRects()].some(r=>r.left<p.right && r.right>p.left && r.top<p.bottom && r.bottom>p.top);
      });
-     return {textCollision,phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
+     // Geometric phone checks alone missed severe 1280px word splitting and
+     // the RuStore badge printed over the description. Guard actual text flow.
+     const heading=card.querySelector(':scope > b');
+     const copy=card.querySelector(':scope > p');
+     const store=card.querySelector(':scope > .owner20-store');
+     const headingRange=document.createRange();
+     if(heading)headingRange.selectNodeContents(heading);
+     const headingLines=heading?[...new Set([...headingRange.getClientRects()]
+       .filter(r=>r.width>0).map(r=>Math.round(r.top)))].length:0;
+     const copyRect=copy?.getBoundingClientRect();
+     const storeRect=store?.getBoundingClientRect();
+     const copyStoreCollision=!!(copyRect&&storeRect&&
+       copyRect.left<storeRect.right&&copyRect.right>storeRect.left&&
+       copyRect.top<storeRect.bottom&&copyRect.bottom>storeRect.top);
+     return {textCollision,headingLines,copyStoreCollision,
+       phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
        assetLoaded:img.naturalWidth>30,branded:phone.textContent.includes('Trak')&&phone.textContent.includes('SOS'),
        rustore:card.querySelector('.owner20-store')?.textContent?.includes('RuStore')??false,
        pseudoHidden:pseudo.display==='none',
@@ -160,8 +175,9 @@ try {
        overlaps:p.left<b.right&&p.right>b.left&&p.top<b.bottom&&p.bottom>b.top};
    });
    if(phoneBot.missing||!phoneBot.assetLoaded||!phoneBot.branded||
-      !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps||phoneBot.textCollision)
-     throw Error(width+': branded phone clipped, duplicated or covered by TrakBot: '+JSON.stringify(phoneBot));
+      !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps||phoneBot.textCollision||
+      (width>=1200&&(phoneBot.headingLines>2||phoneBot.copyStoreCollision)))
+     throw Error(width+': app-card copy clipped, broken or overlapping branded phone/RuStore/TrakBot: '+JSON.stringify(phoneBot));
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
