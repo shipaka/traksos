@@ -626,6 +626,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     <div className="app guest-app guest-home guest-home-standalone">
       <NetworkStatus />
       <div className="desktop-layout"><div className="desktop-content">{children}</div></div>
+      {/* The approved 617 artwork finishes above this *existing* legal footer.
+          Keep sign-in dialogs modal: no tabbable footer behind their overlay. */}
+      {route.length === 0 && <SiteFooter standalone />}
       <TrakBotDock authenticated={false} />
     </div>
   );
@@ -851,7 +854,7 @@ function NetworkStatus() {
 
 /** Подвал: реквизиты площадки (их заполняет админ в «Настройках»), ссылки на документы; плашка про cookie — один раз */
 let legalCache: Promise<any> | null = null;
-function SiteFooter() {
+function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
   const [l, setL] = useState<any>(null);
   const [cookieOk, setCookieOk] = useState(() => { try { return localStorage.getItem('traksos.cookie') === '1'; } catch { return true; } });
   useEffect(() => { (legalCache ??= get('/api/legal').catch(() => null)).then(setL); }, []);
@@ -859,6 +862,7 @@ function SiteFooter() {
   const contacts = l ? [l.phone, l.email].filter(Boolean).join(' · ') : '';
   return (
     <footer className="site-footer">
+      {standalone && <span className="note site-footer-about">Маркетплейс выездной помощи грузовому транспорту</span>}
       {!cookieOk && (
         <div className="banner col" role="note">
           <span className="note">Используем только необходимые cookie — чтобы вы оставались в аккаунте. Рекламных нет.</span>
