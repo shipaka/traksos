@@ -1,6 +1,10 @@
 name: Реальные скриншоты TrakSOS
 
 on:
+  push:
+    branches:
+      - feature/courier-approved-pc-android-20261120
+      - design/owner-final-pc-cabinets-20261120
   pull_request:
     # Editing PR metadata can request a fresh visual proof even when automated
     # commits do not emit a GitHub Actions synchronize event.
