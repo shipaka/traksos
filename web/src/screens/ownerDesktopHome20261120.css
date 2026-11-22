@@ -722,14 +722,10 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
   .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
     background-image:url('/owner617-insurance-photo.webp')!important;
   }
-  /* A photo of the existing workshop retains the approved inspection look
-     until its individual text-free high-resolution artwork is verified. */
   .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
-    background-image:
-      linear-gradient(90deg,rgba(9,27,37,.92) 0%,rgba(9,27,37,.70) 33%,transparent 82%),
-      url('/traksos-service-scenes-desktop-hq.webp')!important;
-    background-size:100% 100%,400% 100%!important;
-    background-position:center center,66.6667% center!important;
+    background-image:url('/owner617-inspection-photo.svg')!important;
+    background-size:cover!important;
+    background-position:center center!important;
   }
   .guest-app.guest-home .owner20-feature-title,
   .guest-app.guest-home .owner20-feature p {position:relative;z-index:2!important}
