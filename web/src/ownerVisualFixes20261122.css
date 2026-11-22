@@ -143,10 +143,17 @@ html.traksos-browser .app[class*="role-"] .tr-inner-hero-art {
   /* The original 617 sprite contains bitmap letters at y=317..351 in
      ECU and parts frames. Hide that caption strip while retaining the
      lower, illustrated mechanical subjects on the right. */
-  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration,
+  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
+    width:100px!important;
+    background-position:-220px -319px!important;
+    -webkit-mask-image:linear-gradient(to right,transparent 0 26%,#000 43%)!important;
+    mask-image:linear-gradient(to right,transparent 0 26%,#000 43%)!important;
+  }
   .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
-    -webkit-mask-image:linear-gradient(to bottom,transparent 0 36px,#000 53px)!important;
-    mask-image:linear-gradient(to bottom,transparent 0 36px,#000 53px)!important;
+    width:83px!important;
+    background-position:-359px -319px!important;
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 13%)!important;
+    mask-image:linear-gradient(to right,transparent,#000 13%)!important;
   }
   .guest-app.guest-home .owner20-feature-cta{
     min-width:0;max-width:calc(100% - 25px);
