@@ -171,14 +171,25 @@ try{
       // Capture the real fully-painted menu, not the first 0%-opacity frame
       // of the approved 180ms opening animation. Only screenshot timing changes.
       await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
-      const helpDetails=page.locator('details.tr-mobile-menu-section').last();
-      if(await helpDetails.getAttribute('open')!==null)
-        throw Error(role+': help and documents must be collapsed until explicitly requested');
+      // The approved Account section is now a fourth, collapsed <details>.
+      // Locate Help by its accessible title, never by the fragile last() index.
+      const helpDetails=page.locator('details.tr-mobile-menu-section').filter({
+        has:page.locator('summary[aria-label="Помощь и документы"]')
+      });
+      if(await helpDetails.count()!==1||await helpDetails.getAttribute('open')!==null)
+        throw Error(role+': help and documents must exist and be collapsed until requested');
       await helpDetails.locator('summary').click();
       if(!await helpDetails.locator('a[href="#/help"]').isVisible())
         throw Error(role+': help menu failed to expand to the real section');
       await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
-      await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
+      const accountDetails=page.locator('details.tr-mobile-menu-account');
+      if(await accountDetails.count()!==1||await accountDetails.getAttribute('open')!==null)
+        throw Error(role+': approved Account section must start collapsed');
+      await accountDetails.locator('summary').click();
+      if(!await accountDetails.locator('a[href="#/profile"]').isVisible()||
+         !await accountDetails.locator('button.tr-mobile-menu-logout').isVisible())
+        throw Error(role+': account did not reveal the real profile and logout actions');
+      await accountDetails.locator('a[href="#/profile"]').click();
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
       await page.locator('main.account-profile-page').waitFor({state:'visible',timeout:15000});
       if(await page.locator('main.tr-mobile-menu-page').count())
