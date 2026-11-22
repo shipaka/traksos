@@ -661,7 +661,7 @@ html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before
     min-width:0!important;
     text-shadow:0 2px 10px rgba(0,0,0,.75);
   }
-  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero-art {
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero .tr-inner-hero-art {
     display:none!important; /* photo already fills all of the hero */
   }
 }
