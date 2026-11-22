@@ -276,6 +276,8 @@ try {
         assert(await modal.getByText('Вы выбрали:',{exact:false}).isVisible(),
           width + 'px: selected service not shown in auth '+id);
         await modal.getByRole('button',{name:'Закрыть окно'}).click();
+        assert(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))===null,
+          width + 'px: cancelled '+id+' remains selected for unrelated future login');
         await page.locator('.public-service-tiles').waitFor();
         assert(new URL(page.url()).hash === '#/',
           width + 'px: returning from ' + id + ' failed');
