@@ -50,8 +50,22 @@ try {
    const art=await page.evaluate(async () => {
      const photo=document.querySelector('.owner20-photo');
      const map=document.querySelector('.owner20-map-source');
-     const feature=document.querySelector('.owner20-feature-illustration');
      const logo=document.querySelector('.owner20-mark');
+     const sceneKeys=['tech','ecu','parts','insurance','inspection'];
+     const renderedScenes=await Promise.all(sceneKeys.map(async key=>{
+       const card=document.querySelector('.owner20-feature-'+key);
+       const picture=card?.querySelector('.traksos-feature-art');
+       const image=picture?.querySelector('img');
+       if(image && !image.complete) await image.decode().catch(()=>{});
+       const frame=card?.getBoundingClientRect();
+       const title=card?.querySelector('.owner20-feature-title')?.getBoundingClientRect();
+       const body=card?.querySelector('p')?.getBoundingClientRect();
+       return {key,src:image?.getAttribute('src')||'',display:image?getComputedStyle(image).display:'none',
+         loaded:!!image?.naturalWidth,imageW:image?.naturalWidth||0,imageH:image?.naturalHeight||0,
+         picture:!!picture,gradient:getComputedStyle(card,'::before').backgroundImage,
+         frameWidth:frame?.width||0,titleRight:title?.right||0,bodyRight:body?.right||0,
+         frameLeft:frame?.left||0,oldSprite:!!card?.querySelector('.owner20-feature-illustration')};
+     }));
      const pick=(el,pseudo)=>el?getComputedStyle(el,pseudo).backgroundImage:'';
      const measure=async (path)=>{
        const res=await fetch(path);
@@ -66,7 +80,7 @@ try {
      ]);
      const rect=(selector)=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
      return {
-       photo:pick(photo,'::after'),map:pick(map),feature:pick(feature),
+       photo:pick(photo,'::after'),map:pick(map),renderedScenes,
        logo:logo?.querySelector('img')?.getAttribute('src')||'',sprite,approvedHero,approvedLogo,
        head:rect('.owner20-top'),hero:rect('.owner20-hero'),
        quick:rect('.owner20-quick'),features:rect('.owner20-features'),
@@ -76,13 +90,24 @@ try {
    const expectedHero=width>=1281?'owner20-photo-background-approved-retouched.webp':'owner20-artwork-sprite-retouched.webp';
    if(!art.photo.includes(expectedHero) ||
       !art.map.includes('owner20-artwork-sprite-retouched.webp') ||
-      !art.feature.includes('owner20-artwork-sprite-retouched.webp') ||
       !art.logo.includes('traksos-brand-logo-approved-618.png') ||
       art.photo.includes('tracksos-approved-hero-owner-20261119') ||
       art.sprite?.w!==1018 || art.sprite?.h!==446 ||
       art.approvedHero?.w!==1536 || art.approvedHero?.h!==324 ||
       art.approvedLogo?.w!==274 || art.approvedLogo?.h!==46)
      throw Error(width+': approved 617.png image or loaded size regressed '+JSON.stringify(art));
+   const expectedScenes=['tech','ecu','parts','insurance','inspection'];
+   if(art.renderedScenes?.length!==expectedScenes.length)throw Error(width+': feature card image count incorrect');
+   for(const scene of art.renderedScenes){
+     if(!expectedScenes.includes(scene.key)||!scene.picture||!scene.loaded||
+        scene.imageW!==512||scene.imageH!==300||
+        !scene.src.includes('/feature-art/traksos-feature-'+scene.key+'-desktop-20261122.webp')||
+        scene.oldSprite||
+        !scene.gradient.includes('linear-gradient')||
+        scene.titleRight>scene.frameLeft+scene.frameWidth*.84 ||
+        scene.bodyRight>scene.frameLeft+scene.frameWidth*.8)
+       throw Error(width+': clipped/overlapping/missing canonical service art '+JSON.stringify(scene));
+   }
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
