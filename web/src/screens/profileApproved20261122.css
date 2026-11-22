@@ -28,6 +28,8 @@
    color:var(--profile-bright);
  }
  html:not(.traksos-native) .account-profile-page > .account-profile-mobile-title{display:none}
+ html:not(.traksos-native) .account-profile-page .account-profile-mobile-label{display:none}
+ html:not(.traksos-native) .account-profile-page .account-profile-desktop-label{display:inline}
  html:not(.traksos-native) .account-profile-page > .account-profile-hero{
    grid-area:hero;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,350px);
    align-items:center;gap:30px;position:relative;isolation:isolate;overflow:hidden;
@@ -236,9 +238,17 @@
 @media (max-width:899px){
  .account-profile-page > .account-profile-hero,
  .account-profile-page > .account-profile-shortcuts{display:none}
+ .account-profile-page .account-profile-desktop-label,
+ .account-profile-page .account-profile-section-index,
+ .account-profile-page .account-profile-section-heading p{display:none}
+ .account-profile-page .account-profile-mobile-label{display:inline}
 }
 html.traksos-native .account-profile-page > .account-profile-hero,
 html.traksos-native .account-profile-page > .account-profile-shortcuts{display:none}
+html.traksos-native .account-profile-page .account-profile-desktop-label,
+html.traksos-native .account-profile-page .account-profile-section-index,
+html.traksos-native .account-profile-page .account-profile-section-heading p{display:none}
+html.traksos-native .account-profile-page .account-profile-mobile-label{display:inline}
 /* Keep the approved mobile screen labels and original layout, only improve
    known contrast problems without changing cards, navigation, or geometry. */
 .app[class*="role-"] main.account-profile-page .account-profile-invite-label{
