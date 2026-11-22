@@ -107,6 +107,10 @@ try {
     await page.goto(BASE+'/#/login');
     await page.locator('button:has-text("Зарегистрироваться как клиент")').click();
     await page.waitForURL('**/#/register');
+    await page.goto(BASE+'/#/help');
+    await page.locator('.guest-explore-support h1:has-text("Помощь и поддержка TrakSOS")').waitFor();
+    if(await page.locator('.guest-explore-support .guest-explore-cta[href="#/login"]').count()!==1)
+      throw Error('Public support regressed to legacy training component');
     for(const [selector,target] of [['.owner20-signin','#/login'],['.owner20-topnav a[href="#/join"]','#/join']]){
      await page.goto(BASE+'/#/');
      if(selector.includes('topnav')){await page.locator('.owner20-topnav summary').nth(3).click();}
