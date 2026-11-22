@@ -520,3 +520,32 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
 .guest-app.guest-home .owner20-quick-trakbot:focus-visible{
   outline:3px solid #ffab7b!important;outline-offset:2px!important;
 }
+
+
+/* Partner portraits: each of the four already-approved HQ scenes is one
+   25% panorama panel. Isolate each frame exactly, instead of arbitrary
+   offsets that showed two cut-off scenes in one card. The master panel is
+   mirrored so the mechanic is on the right and copy remains readable. */
+.guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::before {
+  background-image:url('/traksos-service-scenes-desktop-hq.webp')!important;
+  background-size:400% 100%!important;
+  background-repeat:no-repeat!important;
+}
+.guest-partner-roles .guest-partner-role-master::before {
+  background-position:0% 50%!important;
+  transform:scaleX(-1);
+}
+.guest-partner-roles .guest-partner-role-tow::before {
+  background-position:33.3333% 50%!important;transform:none;
+}
+.guest-partner-roles .guest-partner-role-service::before {
+  background-position:66.6667% 50%!important;transform:none;
+}
+.guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::after {
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(7,22,30,.98) 0%,rgba(7,22,30,.85) 48%,rgba(7,22,30,.02) 100%);
+}
+.guest-partner-roles .guest-partner-role :is(b,small){
+  position:relative;z-index:2;
+  text-shadow:0 1px 7px #01070ad9;
+}
