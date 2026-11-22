@@ -251,18 +251,23 @@ try {
       assert(check, width + 'px: approved image cannot be loaded: ' + name);
     }
 
-    // The six approved live tiles are real links to each feature's truthful
-    // guest preview, not dead cards or an unexpected login redirect.
+    // Approved guest tiles open a contextual login panel directly on the same
+    // landing; no intermediate white/blue preview can return.
     if (width === 390 || width === 1672) {
       for (const id of ['sos', 'air', 'sto', 'ecu', 'parts', 'insurance']) {
         const link = page.locator('.public-service-' + id);
         assert(await link.getAttribute('href') === '#/explore/' + id,
           width + 'px: public tile ' + id + ' changed its approved destination');
         await link.click();
-        await page.locator('.guest-explore-hero h1').waitFor({ timeout: 10000 });
+        const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+        await dialog.waitFor({timeout:10000});
         assert(new URL(page.url()).hash === '#/explore/' + id,
-          width + 'px: public ' + id + ' did not open its own feature page');
-        await page.locator('.guest-explore-back').first().click();
+          width + 'px: public ' + id + ' did not reach contextual login');
+        assert(await page.locator('.public-landing').isVisible(),
+          width + 'px: approved landing displaced by service preview ' + id);
+        assert(await dialog.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).isVisible(),
+          width + 'px: register action missing from service '+id);
+        await page.getByRole('button',{name:'Закрыть окно'}).click();
         await page.locator('.public-service-tiles').waitFor();
         assert(new URL(page.url()).hash === '#/',
           width + 'px: returning from ' + id + ' failed');
@@ -274,10 +279,10 @@ try {
       assert(await link.getAttribute('href') === '#/explore/tech',
         width + 'px: TechBase feature must be a working direct link');
       await link.click();
-      await page.getByRole('heading', { name: 'ТехБаза TrakSOS' }).waitFor({ timeout: 10000 });
+      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor({timeout:10000});
       assert(new URL(page.url()).hash === '#/explore/tech',
-        width + 'px: TechBase must reach its own feature preview');
-      await page.locator('.guest-explore-back').first().click();
+        width + 'px: TechBase must open contextual authorization');
+      await page.getByRole('button',{name:'Закрыть окно'}).click();
       await page.locator('.public-service-tiles').waitFor();
     }
 
