@@ -331,3 +331,12 @@ html.traksos-browser .app[class*="role-"] .desktop-content:has(> .tr-inner-hero[
  > main.techbase-page > .techbase-hero:has(.techbase-hero-actions > a){
  min-height:0;padding:12px 16px;border-radius:14px
 }
+
+
+/* The 617 section hero owns the referral heading; real balance, link,
+   QR, terms and all reward controls remain in the original Invite() page. */
+html.traksos-browser .app[class*="role-"]
+ .desktop-content:has(> .tr-inner-hero[data-route="invite"])
+ > main > div:first-child:has(> h1) {
+  display:none!important;
+}
