@@ -521,3 +521,40 @@
  .app[class*="role-"] .approved-help .approved-help-item[open]{grid-row:auto}
  .app[class*="role-"] .approved-help .approved-help-bottom-actions{flex-direction:column}
 }
+
+/* Only one supported failure state when a route is invalid/unavailable.
+   Old white/pink <main><div class="empty"> fallbacks must never mount. */
+.app .tr-approved-route-unavailable {
+  display:flex;flex-direction:column;align-items:flex-start;gap:16px;
+  width:min(100%,980px);margin:clamp(18px,5vh,55px) auto;
+  min-height:260px;padding:clamp(24px,4vw,52px);box-sizing:border-box;
+  background:radial-gradient(ellipse at 100% 0%,#245e6855,transparent 60%),
+    linear-gradient(125deg,#142e3a,#091b25 75%);
+  color:#e6f3f7;border:1px solid #3b5b65;border-radius:20px;
+  box-shadow:0 18px 45px #0006;
+}
+.app .tr-approved-route-unavailable .tr-approved-route-eyebrow{
+  color:#ffa46b;font-size:11px;letter-spacing:1.4px;font-weight:800;
+}
+.app .tr-approved-route-unavailable h1{
+  margin:0;font-size:clamp(23px,2.6vw,34px);line-height:1.16;color:#fff;
+}
+.app .tr-approved-route-unavailable p{
+  color:#bdd2db;max-width:700px;font-size:14px;line-height:1.5;margin:0;
+}
+.app .tr-approved-route-unavailable > a,
+.app .tr-approved-error-actions a,
+.app .tr-approved-error-actions button{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:42px;padding:10px 17px;border-radius:11px;
+  border:1px solid #fc9456;background:linear-gradient(110deg,#ff953e,#f06b29);
+  color:#111c22;text-decoration:none;font-size:13px;font-weight:800;
+}
+.app .tr-approved-error-actions{display:flex;flex-wrap:wrap;gap:10px}
+.app .tr-approved-error-actions .ghost{
+  border-color:#4c6b77;background:#15323d;color:#eff8fa;
+}
+.app.tr-approved-error-shell{max-width:none;background:#061219;color:#f1f7f8;min-height:100vh}
+@media(max-width:899px){
+ .app .tr-approved-route-unavailable{min-height:220px;margin:16px auto;border-radius:15px;padding:24px 18px}
+}
