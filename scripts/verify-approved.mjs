@@ -109,6 +109,7 @@ const allowedPublicVisuals = new Set([
   'trakbot-approved-30.webp','trakbot-approved-hello.webp',
   'owner20-artwork-sprite.webp',
   'owner20-photo-background-approved.webp',
+  'owner20-photo-brandless-20261122.webp',
   'traksos-brand-logo-approved-618.png',
   'traksos-service-scenes-shared.webp',
   'traksos-service-scenes-desktop-hq.webp',
@@ -124,6 +125,7 @@ expect(unexpectedVisuals.length===0,
   (unexpectedVisuals.length ? ': '+unexpectedVisuals.join(', ') : ''));
 await asset('web/public/owner20-artwork-sprite.webp', 20000);
 await asset('web/public/owner20-photo-background-approved.webp', 15000);
+await asset('web/public/owner20-photo-brandless-20261122.webp', 15000);
 // The superseded 617-only raster logo must not be served as an alternative
 // wordmark: the owner requested the exact 618 Android logo on all surfaces.
 for(const alternateLogo of [
@@ -167,13 +169,19 @@ expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent 
   signedPcBotStyles.includes('.app:not(.guest-app)> .trakbot-dock'),
   'signed-in PC detail pages keep the approved larger floating technician without an old pill');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
-expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
-  ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
-  ownerPcUiContract.includes('rgba(0,0,0,.9) 13%,#000 27%') &&
-  !ownerPcUiContract.includes('transparent 43%,#000 75%') &&
-  !ownerPcUiContract.includes('transparent 53%,#000 84%') &&
-  !ownerPcUiContract.includes('rgba(0,0,0,.50) 18%,#000 42%'),
-  '617 desktop uses one effective artwork crop, not stacked contradictory mask patches');
+const approved617Source = await read('web/src/screens/ownerDesktopHome20261120.tsx');
+expect(ownerPcUiContract.includes('617 PHOTO-ASSET-ONLY REPAIR') &&
+  ownerPcUiContract.includes("url('/traksos-service-scenes-desktop-hq.webp')") &&
+  ownerPcUiContract.includes("url('/owner20-photo-brandless-20261122.webp')") &&
+  ownerPcUiContract.includes('background-size:100% 100%,400% 100%') &&
+  ownerPcUiContract.includes('-webkit-mask-image:none!important') &&
+  !approved617Source.includes('ownerFeatureArt20261122'),
+  '617 approved homepage keeps its original geometry, photograph and full-size caption-free service scenes');
+expect(approved617Source.includes("'Шиномонтаж','Выездной ремонт колёс','tyre'") &&
+  !approved617Source.includes("'ЭБУ','Диагностика и ремонт электронных блоков','ecu'") &&
+  approved617Source.includes("'Специалисты ЭБУ'") &&
+  approved617Source.includes("rememberGuestService('van','tyre')"),
+  '617 has one ECU specialists entry and a real tyre service instead of duplicate upper ECU');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
   ownerPcUiContract.includes('owner20-feature::before') &&
