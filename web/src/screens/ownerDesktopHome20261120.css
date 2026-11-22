@@ -769,3 +769,23 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
     width:81px;background-position:-624px -317px;
   }
 }
+
+
+/* Exact 617 layout is unchanged. Photo-only correction: truck paint may not
+   display any brand, model or lettering in shared public artwork. The new
+   photograph retains the original pixel geometry and map remains on top. */
+@media (min-width:900px) {
+  .guest-app.guest-home .owner20-photo::after {
+    content:""!important;
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    background-image:url('/owner20-photo-brandless-20261122.webp')!important;
+    background-position:center center!important;
+    background-size:cover!important;
+    background-repeat:no-repeat!important;
+    -webkit-mask-image:none!important;
+    mask-image:none!important;
+  }
+}
