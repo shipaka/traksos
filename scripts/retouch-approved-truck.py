@@ -20,7 +20,7 @@ from PIL import Image, ImageDraw, ImageFont
 SOURCE = Path("web/public/tracksos-approved-hero-owner-20261119.webp")
 OUT = Path("e2e/shots/approved-truck-retouch")
 # Approximate coordinates of the WHITE foreign maker name on the front grille
-# of the fixed, owner-approved 912x456 composition.
+# of the fixed, owner-approved 912x460 composition.
 ROI = (187, 217, 300, 251)  # x0 y0 x1 y1; no changes outside these pixels
 EXPECTED_GIT_BLOB_SHA = "ae2deca0f4d3165cd441de8535104378cead22f4"
 
@@ -44,8 +44,8 @@ def main() -> None:
 
     rgb = np.array(Image.open(SOURCE).convert("RGB"))
     h, w, _ = rgb.shape
-    if (w, h) != (912, 456):
-        raise SystemExit(f"Owner-approved original expected 912x456, got {w}x{h}")
+    if (w, h) != (912, 460):
+        raise SystemExit(f"Owner-approved original expected 912x460, got {w}x{h}")
     x0, y0, x1, y1 = ROI
     patch = rgb[y0:y1, x0:x1, :]
     # Lettering is almost white, whereas the background blue-black grille is
