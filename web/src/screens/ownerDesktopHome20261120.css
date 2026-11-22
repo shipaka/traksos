@@ -668,9 +668,13 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
  */
 @media (min-width:900px) and (max-width:1199px) {
   .guest-app.guest-home .owner20-features {
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
     gap:14px!important;
   }
+  .guest-app.guest-home .owner20-feature { grid-column:span 2; }
+  /* Center the last two equal-size cards instead of leaving a blank right column. */
+  .guest-app.guest-home .owner20-feature:nth-child(4) { grid-column:2 / span 2; }
+  .guest-app.guest-home .owner20-feature:nth-child(5) { grid-column:4 / span 2; }
   .guest-app.guest-home .owner20-feature {
     height:156px!important;
     padding:15px!important;
