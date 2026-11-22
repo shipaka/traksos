@@ -980,7 +980,7 @@ function MyPerformers({ black }: { black: boolean }) {
 
 function HistoryTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void }) {
   return (
-    <div className="grid3" role="tablist">
+    <div className="grid3 performer-history-tabs" role="tablist">
       <button className="seg" aria-pressed={tab === 'list'} onClick={() => setTab('list')}>Все заявки</button>
       <button className="seg" aria-pressed={tab === 'cars'} onClick={() => setTab('cars')}>По машинам</button>
       <button className="seg" aria-pressed={tab === 'black'} onClick={() => setTab('black')}>Чёрный список</button>

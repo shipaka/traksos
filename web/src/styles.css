@@ -804,6 +804,13 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 .app:not(.guest-app) .chip,
 .app:not(.guest-app) .seg{border-color:#365f7d;}
+@media (max-width:899px) {
+  .app.role-performer .performer-history-tabs .seg[aria-pressed="true"] {
+    background:#a94c18;
+    border-color:#f7a558;
+    color:white;
+  }
+}
 .app:not(.guest-app) .tabbar{
   background:rgba(7,28,48,.96);border:1px solid #345a76;
   box-shadow:0 10px 28px rgba(0,7,20,.42);backdrop-filter:blur(18px);

@@ -191,6 +191,9 @@ try{
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
      const approvedInner=page.locator('.desktop-content > .tr-inner-hero[data-traksos-inner-ui="approved-617-618"]');
      await approvedInner.waitFor({state:'visible',timeout:14000});
+     const performerMarker = {tow:'ЭВАКУАТОРЩИК',master:'МАСТЕР'}[c.id];
+     if(performerMarker && await approvedInner.locator('.tr-inner-crumbs [aria-current="page"]').innerText() !== performerMarker)
+       throw Error('Wrong performer breadcrumb: '+c.id+'/'+width);
      if(await page.locator('.desktop-content > main').count()!==1)
        throw Error('Approved inner chrome detached the working React main: '+c.id+'/'+width);
      if(await approvedInner.locator('a.tr-inner-back').count()!==1)
@@ -206,6 +209,19 @@ try{
      // fixed floating launcher must never obstruct input fields or CTAs.
      if(width===390 && await page.locator('.trakbot-dock').count())
        throw Error('Floating TrakBot overlaps narrow inner content: '+c.id+'/'+width);
+      if (c.id === 'tow' && width === 390) {
+        const history = page.getByRole('tablist').filter({has:page.getByRole('button', {name:'Все заявки', exact:true})});
+        for (const name of ['По машинам', 'Чёрный список', 'Все заявки']) {
+          const button = history.getByRole('button', {name, exact:true});
+          await button.click();
+          await history.locator('button[aria-pressed="true"]').filter({hasText:name}).waitFor();
+          await page.waitForFunction(expectedName => {
+            const selected = document.querySelector('.performer-history-tabs button[aria-pressed="true"]');
+            return selected?.textContent.trim() === expectedName &&
+              getComputedStyle(selected).backgroundColor === 'rgb(169, 76, 24)';
+          }, name, {timeout:3000});
+        }
+      }
      if(width===390 && c.id==='master'){
        const action=page.locator('main.performer-workspace .internal-role-hero-performer a.btn[href="#/work"]');
        await action.waitFor({state:'visible',timeout:12000});
@@ -291,6 +307,23 @@ try{
        throw Error('Old profile heading duplicates the approved inner hero');
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     if(c.id === 'tow' && width === 390){
+       const notice = page.locator('footer [role="note"]');
+       const dismiss = notice.getByRole('button',{name:'Понятно'});
+       const nav = page.locator('nav.tabbar');
+       const buttonBox = await dismiss.boundingBox();
+       const navBox = await nav.boundingBox();
+       if(!buttonBox || !navBox || buttonBox.y + buttonBox.height > navBox.y)
+         throw Error('Cookie acknowledgement is covered by mobile navigation at 390px');
+       await dismiss.click({trial:true});
+       await page.setViewportSize({width:320,height:640});
+       await dismiss.evaluate(el => el.scrollIntoView({block:'center',behavior:'instant'}));
+       await dismiss.click();
+       await notice.waitFor({state:'detached'});
+       await page.reload();
+       await page.locator('footer.site-footer').waitFor({state:'attached'});
+       if(await notice.count())throw Error('Cookie acknowledgement reappeared after reload');
+     }
      // The inspection API accepts both insurers and inspection operators.
      // Verify the partner UI applies the SAME role policy on direct navigation.
      if(c.id==='insurer'){
@@ -335,7 +368,7 @@ try{
      // Native WebView-mode REAL Chromium rendering: the existing 618 role
      // workdesk stays unchanged; only secondary pages gain an illustrated
      // brief. Synthetic account/session belongs to local CI, never VPS.
-     if(width===390 && ['owner','master','service','insurer','admin','moderator'].includes(c.id)){
+     if(width===390 && ['owner','master','tow','service','insurer','admin','moderator'].includes(c.id)){
        const nativeContext=await browser.newContext({
          viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'
        });
@@ -358,6 +391,8 @@ try{
          await studio.waitFor({state:'visible',timeout:14000});
          await studio.locator('img[src="/tracksos-approved-hero-owner-20261119.webp"]')
            .waitFor({state:'visible',timeout:14000});
+         if(performerMarker && await studio.locator('.tr-native-section-kicker').innerText() !== performerMarker)
+           throw Error('Wrong native role marker: '+c.id);
          const staff=['admin','moderator'].includes(c.id);
          if(staff && await studio.locator('a[href="#/trakbot"]').count())
            throw Error('Staff native hint incorrectly launches TrakBot: '+c.id);

@@ -53,6 +53,7 @@ jobs:
       - name: Реальные снимки ПК и телефона на утверждённых размерах
         run: node e2e/public-shots.mjs e2e/shots
       - name: Реальные ПК-кабинеты всех доступных тестовых ролей
+        id: role_screens
         continue-on-error: true
         run: node e2e/owner20-cabinet-evidence.mjs
       - name: "Курьер: настоящие ПК и Android, права доступа и рабочие кнопки"
@@ -100,3 +101,6 @@ jobs:
           echo "Source HEAD: ${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_STEP_SUMMARY"
           echo 'Artifact screens-real-browser contains actual HTML screenshots if build and Chromium launched.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Passing this job does not mean visual owner acceptance, Android acceptance, or production deployment.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Require successful role captures
+        if: always() && steps.role_screens.outcome == 'failure'
+        run: exit 1

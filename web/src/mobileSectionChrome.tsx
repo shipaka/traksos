@@ -9,7 +9,7 @@ import { approvedInnerSectionCopy } from './approvedInnerExperience.tsx';
 export function MobileSectionChrome({ title, homeHref, route=[], mode='client' }: {
   title: string; homeHref: string; route?: string[]; mode?: string;
 }) {
-  const section=approvedInnerSectionCopy(route,title);
+  const section=approvedInnerSectionCopy(route,title,mode);
   const staff=mode==='admin'||mode==='moderator';
   return <>
     <nav className="tr-native-section-path" aria-label="Навигация внутри кабинета">

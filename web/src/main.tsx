@@ -612,6 +612,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/privacy', 'Мои персональные данные']];
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
+  const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
   const workspaceHref = mobileTabs[0]?.[0] || '/';
   const sectionPath = here.split('?')[0];
   const innerSection = !!me && native.isApp &&
@@ -818,9 +819,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
         </aside>
         <div className="desktop-content">
-          {approvedInnerRoute && <ApprovedInnerHero mode={mode} route={route} title={sectionLabel}/>}
-          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref} route={route} mode={mode}/>}
-          {approvedInnerRoute && <ApprovedInnerRail mode={mode} route={route}/>}
+          {approvedInnerRoute && <ApprovedInnerHero mode={innerRole} route={route} title={sectionLabel}/>}
+          {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref} route={route} mode={innerRole}/>}
+          {approvedInnerRoute && <ApprovedInnerRail mode={innerRole} route={route}/>}
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
