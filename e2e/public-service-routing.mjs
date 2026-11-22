@@ -32,7 +32,7 @@ try {
             imageLayer:image.zIndex,textLayer:text.zIndex};
         });
         if(artwork.isolation!=='isolate'||artwork.imageLayer!=='0'||
-           artwork.textLayer!=='1'||!artwork.image.includes('owner20-photo-background-approved.webp'))
+           artwork.textLayer!=='1'||!artwork.image.includes('owner20-photo-background-approved-retouched.webp'))
           throw Error(key+': approved PC inner-page road image obscured: '+JSON.stringify(artwork));
         await page.goto(BASE+'/#/');
       }
