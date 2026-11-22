@@ -79,15 +79,15 @@ try {
        const bottom=document.querySelector('.owner20-bottom');
        const rects=cards.map(el=>el.getBoundingClientRect());
        return {
-         columns:getComputedStyle(features).gridTemplateColumns.trim().split(/\\s+/).length,
-         bottomColumns:getComputedStyle(bottom).gridTemplateColumns.trim().split(/\\s+/).length,
+         columns:getComputedStyle(features).gridTemplateColumns.trim().split(' ').filter(Boolean).length,
+         bottomColumns:getComputedStyle(bottom).gridTemplateColumns.trim().split(' ').filter(Boolean).length,
          widths:rects.map(r=>r.width),
          left:rects.map(r=>r.left),
        };
      });
      if(small.columns!==6||small.bottomColumns!==2||
         small.widths.some(w=>Math.abs(w-small.widths[0])>3)||
-        Math.abs((small.left[3]+small.left[4])/2 -
+        Math.abs((small.left[3]+small.left[4]+small.widths[4])/2 -
           (small.left[0]+small.left[2]+small.widths[2])/2)>15)
        throw Error(width+': balanced 3+2 vector-card layout regressed '+JSON.stringify(small));
    }
