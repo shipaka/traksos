@@ -53,7 +53,8 @@ jobs:
       - name: Реальные снимки ПК и телефона на утверждённых размерах
         run: node e2e/public-shots.mjs e2e/shots
       - name: Реальные ПК-кабинеты всех доступных тестовых ролей
-        continue-on-error: true
+        # An absent role screenshot must fail the visual proof, not become a
+        # deceptive green badge. Artifact publishing runs with if:always().
         run: node e2e/owner20-cabinet-evidence.mjs
       - name: "Курьер: настоящие ПК и Android, права доступа и рабочие кнопки"
         run: node e2e/approved-pc-courier-real.mjs
