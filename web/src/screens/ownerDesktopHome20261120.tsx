@@ -26,8 +26,8 @@ function OwnerIcon({kind}:{kind:string}) {
   let lines;
   switch(kind){
     case 'van': lines=<><path d="M30 5a12 12 0 0 0-10 18L7 36a5 5 0 0 0 7 7l13-13A12 12 0 0 0 43 15l-9 9-9-3-3-9Z"/><circle cx="10.5" cy="39.5" r="1"/></>;break;
-    case 'tow': lines=<><path d="M4 34h29l8 6v4H4V34Z"/><path d="M9 34V23h14l8 11M12 23V12h15l6 11M23 12l-6-7M29 8h11v8l-5 5h-5"/><circle cx="13" cy="43" r="3.4"/><circle cx="35" cy="43" r="3.4"/><path d="M40 21v6m-4 0h8"/></>;break;
-    case 'sto': lines=<><path d="M3 19 24 5l21 14v25H3V19Z"/><path d="M13 44V25h22v19M13 33h22"/></>;break;
+    case 'tow': lines=<><path d="M3 34h28l8 5v5H3V34Z"/><path d="M8 34V23h15l7 11M12 23l4-7h6M29 34V15l9-8 4 4-8 9v8"/><path d="M30 14 19 9M19 9v-5M37 7l5 5M34 28h9M43 28v5l-4 4-4-4" /><circle cx="13" cy="44" r="3"/><circle cx="32" cy="44" r="3"/></>;break;
+    case 'sto': lines=<><path d="M3 43V14l5-7h29l8 7v29H3Z"/><path d="M3 16h42M9 43V22h30v21M9 29h30"/><path d="M15 36h18l-3-5H18l-3 5Zm-1 0v5m20-5v5" /><circle cx="19" cy="38" r="1.5"/><circle cx="29" cy="38" r="1.5"/><path d="m14 4 2-2 2 2-2 2-2-2Zm9 0h9"/></>;break;
     case 'ecu': lines=<><rect x="10" y="10" width="28" height="28" rx="3"/><path d="M16 4v6m8-6v6m8-6v6M16 38v6m8-6v6m8-6v6M4 16h6m-6 8h6m-6 8h6m28-16h6m-6 8h6m-6 8h6"/><rect x="17" y="17" width="14" height="14" rx="2"/></>;break;
     case 'consult': lines=<><path d="M5 25V23a19 19 0 0 1 38 0v3M5 25v10c0 5 4 8 8 8h4V27h-4a8 8 0 0 0-8 8m38-10v10c0 5-4 8-8 8h-4V27h4a8 8 0 0 1 8 8"/></>;break;
     case 'tech': lines=<><path d="M8 7h27a5 5 0 0 1 5 5v29H13a5 5 0 0 0 0-10h27"/><path d="M8 7v29a5 5 0 0 0 5 5m5-26h15m-15 6h15m-15 6h11"/></>;break;
