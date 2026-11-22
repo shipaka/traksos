@@ -782,3 +782,34 @@ html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before
 @media(prefers-reduced-motion:reduce) {
  .guest-app.guest-home .owner20-features .traksos-feature-art img {transition:none!important}
 }
+
+/* Same canonical insurance and inspection illustrations in authenticated cabinets. */
+/* Keep existing live document/action UI: art is inert and contains no labels.
+   A soft blend, not a pasted rectangular photo, joins the left text surface. */
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] {
+  isolation:isolate!important;
+  background-image:linear-gradient(90deg,#071924,#102e3c 78%,#112735)!important;
+  background-size:cover!important;
+  background-position:center!important;
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art]::before {
+  content:"";position:absolute;inset:0;
+  z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(4,17,25,.98) 0%,
+    rgba(5,19,29,.91) 34%,rgba(5,19,29,.54) 56%,
+    rgba(5,19,29,.10) 90%)!important;
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > .traksos-feature-art {
+  left:auto!important;right:0!important;top:0!important;bottom:0!important;
+  width:56%!important;height:100%!important;z-index:0!important;
+  border-radius:0!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.92) 22%,#000 42%);
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.92) 22%,#000 42%);
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > .traksos-feature-art img {
+  object-fit:cover!important;object-position:50% 52%!important;
+  height:100%!important;width:100%!important;
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:first-child {
+  width:min(58%,680px)!important;position:relative!important;z-index:2!important;
+}
