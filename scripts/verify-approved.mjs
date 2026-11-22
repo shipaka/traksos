@@ -815,8 +815,9 @@ expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("'/api/mod/cases?kind='") &&
   pcSource.includes('OfferForm') &&
   pcSource.includes('RoadsideMap') &&
-  pcSource.includes('APPROVED_VISUALS.trakbotHello'),
-  'desktop cards, bids, inspections, moderation, map and bot use real API/approved assets');
+  pcSource.includes('<TrakBotMascot reaction="hello" size="large" ambient />') &&
+  pcSource.includes("import {TrakBotMascot} from '../trakbotMascot.tsx';"),
+  'desktop cards, bids, inspections, moderation, map and canonical animated bot use real API/approved assets');
 expect(pcSource.includes("href={'#/order/'+o.id+'?chat=1'}") &&
   pcSource.includes('owner?get<any>(\'/api/fleet\')') &&
   pcSource.includes('fleet.data?.cars') &&
