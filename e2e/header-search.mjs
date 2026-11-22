@@ -16,9 +16,9 @@ async function desktop(href,heading){
    const link=page.locator(href);
    await link.waitFor({state:'visible'});
    await link.click();
-   await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+   await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor({state:'visible'});
    if(!page.url().includes(heading))throw Error('Approved desktop tile went to wrong route '+page.url());
-   await page.locator('.guest-explore-cta[href="#/register"]').waitFor({state:'visible'});
+   if(!await page.locator('.owner20-home').isVisible())throw Error('Approved PC page disappeared behind service auth');
    const dims=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
    if(dims.scroll>dims.client+3)throw Error('Approved PC navigation horizontal overflow '+JSON.stringify(dims));
  } finally {await page.close();}
@@ -36,7 +36,7 @@ async function mobile(){
    const parts=nav.locator('a[href="#/explore/parts"]');
    await parts.waitFor({state:'visible'});
    await parts.click();
-   await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
+   await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor({state:'visible'});
    if(!page.url().endsWith('#/explore/parts'))throw Error('Mobile catalogue parts link broken');
    const width=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
    if(width>3)throw Error('Approved mobile header horizontal overflow '+width);
