@@ -491,12 +491,20 @@ expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 
   'public catalogue, Company and Offers have real routes');
 expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group'),
   'guest catalogue links work on mobile and desktop');
-// The first hero slide uses a dynamic label; verify the actual actions,
-// not the superseded static text markup.
+// A guest now enters the approved auth sheet, not a stale guided tour.
+// Keep the primary registration action and verify the new secondary destination.
 expect(landing.includes("heroSlide === 0 ? go('register')") &&
   landing.includes("heroSlide === 0 ? 'Зарегистрироваться'") &&
-  landing.includes('href="#/explore/guide">Как это работает</a>'),
-  'approved 19 Nov hero opens registration and explains the platform');
+  landing.includes('href="#/login">Войти в TrakSOS</a>') &&
+  !landing.includes('href="#/explore/guide">Как это работает</a>'),
+  'approved mobile hero retains registration and opens sign-in, not old guide');
+expect(ownerPcHeader.includes("['▦','Специалисты ЭБУ'") &&
+  !ownerPcHeader.includes("['▦','ЭБУ','Диагностика") &&
+  ownerPcHeader.includes('href="#/login">Подробнее о покрытии'),
+  '617 public quick menu has no duplicate ECU and coverage opens sign-in');
+expect(ownerPcHeader.includes('<a href="#/company">О нас</a>') &&
+  !ownerPcHeader.includes('<a href="#/offers">Оферты</a>'),
+  '617 Platform and partner menus use the owner-approved guest flow');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
 
