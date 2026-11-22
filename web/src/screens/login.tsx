@@ -388,7 +388,7 @@ export function Login({ driver, entry, serviceContext }: {
               onClick={() => heroSlide === 0 ? go('register') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
               {heroSlide === 0 ? 'Зарегистрироваться' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
             </button>
-            <a className="public-button public-button-outline" href="#/explore/guide">Как это работает</a>
+            <a className="public-button public-button-outline" href="#/login">Войти в TrakSOS</a>
           </div>
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
