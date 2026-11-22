@@ -83,10 +83,14 @@ try {
          bottomColumns:getComputedStyle(bottom).gridTemplateColumns.trim().split(' ').filter(Boolean).length,
          widths:rects.map(r=>r.width),
          left:rects.map(r=>r.left),
+         top:rects.map(r=>r.top),
        };
      });
      if(small.columns!==6||small.bottomColumns!==2||
         small.widths.some(w=>Math.abs(w-small.widths[0])>3)||
+        small.top.slice(0,3).some(y=>Math.abs(y-small.top[0])>3)||
+        Math.abs(small.top[3]-small.top[4])>3||
+        small.top[3]<small.top[0]+50||
         Math.abs((small.left[3]+small.left[4]+small.widths[4])/2 -
           (small.left[0]+small.left[2]+small.widths[2])/2)>15)
        throw Error(width+': balanced 3+2 vector-card layout regressed '+JSON.stringify(small));
