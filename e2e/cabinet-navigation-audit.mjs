@@ -159,7 +159,8 @@ try {
           const originalTitle=profile.locator('h1.account-profile-mobile-title');
           if(width>=900){
             if(!await hero.isVisible()||await originalTitle.isVisible()||
-               await hero.locator('.account-profile-hero-art').count()!==1)
+               await hero.locator('.account-profile-identity').count()!==1 ||
+               await hero.locator('.account-profile-hero-art').count()!==0)
               throw Error(kind+': new role profile visual missing on desktop');
             const shortcuts=profile.locator('.account-profile-shortcuts button');
             if(await shortcuts.count()!==3)throw Error(kind+': profile section shortcuts missing');
