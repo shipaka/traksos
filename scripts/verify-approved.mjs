@@ -45,7 +45,7 @@ const LOCKED_ASSETS = {
   'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': 'ed08c9c0041ca46f',
   'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': 'ec7089c48d32d46c',
   'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 'f48bc0073cf5ec1c',
-  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': '7a7a9acec9ee7f32',
+  'android/app/src/main/res/drawable-nodpi/splash_truck.webp': 'ae316ae5bafaf08d',
 };
 async function asset(path, minBytes = 5000) {
   try {
