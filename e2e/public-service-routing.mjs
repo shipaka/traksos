@@ -15,13 +15,15 @@ try {
       await page.locator('.owner20-home').waitFor();
       const links=page.locator('.owner20-quick>a');
       if(await links.count()!==5)throw Error('Nov20 PC primary services row changed');
-      for(const key of ['van','tow','sto','ecu','consult']){
-        const link=links.locator('a[href="#/explore/'+key+'"]');
-        // The owning <a> is itself in the list; scope route query to the full page.
-        const entry=page.locator('.owner20-quick>a[href="#/explore/'+key+'"]');
-        if(await entry.count()!==1)throw Error('Missing PC service route '+key);
+      for(const [index, key] of ['van','tow','sto','van','consult'].entries()){
+        const entry=links.nth(index);
+        if(await entry.getAttribute('href')!=='#/explore/'+key)
+          throw Error('Missing PC service at slot '+index+': '+key);
+        if(index===3 && !((await entry.textContent())||'').includes('Шиномонтаж'))
+          throw Error('Duplicate ECU returned instead of tyre specialization');
         await entry.click();
         await page.waitForURL('**/#/explore/'+key);
+        if(index===3 && await page.evaluate(()=>sessionStorage.getItem('traksos.pendingCatalogChoice'))!=='van/tyre') throw Error('Tyre specialization not retained');
         await page.locator('.guest-explore-hero h1').waitFor();
         // The 20 Nov road image must paint above the hero background:
         // z-index:-1 used to hide it behind the solid panel.
