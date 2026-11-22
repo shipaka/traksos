@@ -600,7 +600,8 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
         <a className="approved-pc-primary" href={"#/inspections/"+encodeURIComponent(String(selected.id))}>Открыть рабочую обработку осмотра</a></>
       :<><InsuranceProposals requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
-    </section>:<Pane title={inspection?'Техосмотры':'Страхование'}>
+    </section>:<Pane title={inspection?'Техосмотры':'Страхование'}
+      className={source.data ? 'approved-pc-insurance-empty-visual' : ''}>
       {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
     </Pane>}
     right={<><Calendar kind={inspection?'inspection':'insurance'} items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
