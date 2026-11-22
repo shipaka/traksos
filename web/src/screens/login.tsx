@@ -41,10 +41,10 @@ function PublicDemoMapBackdrop() {
 
 // Роль выбирают только те, кто подключается работать. Остальные входят по номеру — кабинет определяется по ролям.
 const JOIN_ROLES = [
-  { id: 'master', name: 'Мастер', hint: 'Выездные работы; далее выбор специализаций' },
-  { id: 'tow', name: 'Эвакуаторщик', hint: 'Заявки на грузовую эвакуацию' },
-  { id: 'service', name: 'СТО', hint: 'Записи на ремонт и кабинет станции' },
-  { id: 'insurer', name: 'Страховой агент', hint: 'Оформление полисов и страховых заявок' },
+  { id: 'master', name: 'Мастер', hint: 'Диагностика и выездной ремонт' },
+  { id: 'tow', name: 'Эвакуаторщик', hint: 'Помощь и эвакуация грузовиков' },
+  { id: 'service', name: 'СТО', hint: 'Ремонтная станция и запись' },
+  { id: 'insurer', name: 'Страховой агент', hint: 'ОСАГО, КАСКО, документы' },
 ] as const;
 type JoinRole = (typeof JOIN_ROLES)[number]['id'];
 const PARTNER_SHOWCASES: Record<JoinRole,{tag:string;title:string;description:string;imageLabel:string}> = {
