@@ -12,6 +12,7 @@ import {useAction, useLoad, useMe} from '../ui.tsx';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import {FeatureArtwork, type FeatureArtworkKey} from '../featureArtwork20261122.tsx';
+import {TrakServiceIcon, type TrakServiceIconKind} from '../trakServiceIcon.tsx';
 import {TrakBotMascot} from '../trakbotMascot.tsx';
 import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
@@ -63,9 +64,16 @@ export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:Rea
   return <AdminDesk/>;
 }
 
-function Heading({title,description,children,artKey}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey}){
+function Heading({title,description,children,artKey,roleIcon}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind}){
   return <header className="approved-pc-heading" data-feature-art={artKey}>
-    <div><span className="approved-pc-eyebrow">TRAKSOS · РАБОЧИЙ КАБИНЕТ</span><h1>{title}</h1><p>{description}</p></div>
+    <div>
+      <span className="approved-pc-eyebrow">TRAKSOS · РАБОЧИЙ КАБИНЕТ</span>
+      <div className="approved-pc-heading-title-row">
+        {roleIcon&&<span className="approved-pc-heading-role-icon" aria-hidden="true"><TrakServiceIcon kind={roleIcon}/></span>}
+        <h1>{title}</h1>
+      </div>
+      <p>{description}</p>
+    </div>
     {artKey?<FeatureArtwork kind={artKey}/>:<img src={APPROVED_VISUALS.workspaceTruck} alt="Иллюстрация TrakSOS, не транспорт клиента"/>}
     {children}
   </header>;
@@ -384,7 +392,7 @@ function PerformDesk({tow}:{tow:boolean}){
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
   const offers=auctions.data||[];
   return <main className="approved-pc approved-pc-performer">
-    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
+    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
     <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
       ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
@@ -516,7 +524,7 @@ function ServiceDesk(){
   const card=(b:any)=><RowItem key={b.id} label={vehicleLabel(b.vehicle)} info={text(b.needName,b.statusName)}
       badge={b.statusName} active={selected?.id===b.id} onClick={()=>setChosen(String(b.id))} v={b.vehicle}/>;
   return <main className="approved-pc approved-pc-service">
-    <Heading title="СТО / рембаза" description={data.data?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
+    <Heading title="СТО / рембаза" roleIcon="service" description={data.data?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
     <Tabs active={mode} onChange={(id)=>{setMode(id as typeof mode);setChosen('')}} items={[
       ['req','Входящие',g?buckets.req.length:null],['repair','В ремонте',g?buckets.repair.length:null],
       ['ready','К выдаче',g?buckets.ready.length:null],['done','История',g?buckets.done.length:null]]}/>
@@ -580,6 +588,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const both=me?.roles.includes('insurer')&&me?.roles.includes('inspection_operator');
   return <main className="approved-pc approved-pc-insurance">
     <Heading title={inspection?'Оператор техосмотра':'Страховой партнёр'}
+      roleIcon={inspection?undefined:'insurer'}
       artKey={inspection?'inspection':'insurance'}
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
     {both&&<div className="approved-pc-partner-switch"><a className={!inspection?'selected':''} href="#/as/insurer">Страхование</a>
