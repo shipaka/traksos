@@ -833,6 +833,16 @@ expect(
   'approved PC/mobile boundary remains 900px and browser admin uses approved workspace'
 );
 
+// The approved desktop stylesheet must not reintroduce 19 Nov Android as the
+// authoritative mobile design when older UI branches are cherry-picked.
+const desktopOwnerCss = await read('web/src/desktopCabinetsOwner20261120.css');
+expect(
+  desktopOwnerCss.includes('approved 618.png') &&
+  desktopOwnerCss.includes('20 Nov Android role register') &&
+  !desktopOwnerCss.includes('Android 19.11 remains authoritative'),
+  'desktop cabinet stylesheet references approved 618 mobile design, not retired Android authority'
+);
+
 if (failures.length) {
   console.error('Approved design gate: '+failures.length+' failure(s).');
   process.exitCode=1;
