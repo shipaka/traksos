@@ -108,6 +108,34 @@ try {
         scene.bodyRight>scene.frameLeft+scene.frameWidth*.8)
        throw Error(width+': clipped/overlapping/missing canonical service art '+JSON.stringify(scene));
    }
+   // Narrow PC is still the approved four-card strip. Check that the
+   // extra community imagery is full-bleed and does NOT paste bitmap
+   // captions over the text. The fifth "Почему" line must fit above
+   // the card bottom; app release text must stay separate from the phone.
+   if(width===900||width===1024) {
+     const bottomReading=await page.locator('.owner20-bottom>.owner20-bottom-card').evaluateAll(cards=>cards.map(card=>{
+       const bounds=card.getBoundingClientRect();
+       const title=card.querySelector('b')?.getBoundingClientRect();
+       const summary=card.querySelector('p')?.getBoundingClientRect();
+       const action=card.querySelector(':scope > span:not(.owner20-store)')?.getBoundingClientRect();
+       const store=card.querySelector('.owner20-store')?.getBoundingClientRect();
+       const lastBullet=[...card.querySelectorAll('li')].at(-1)?.getBoundingClientRect();
+       const bg=getComputedStyle(card).backgroundImage;
+       const after=getComputedStyle(card,'::after');
+       return {className:card.className,height:bounds.height,
+         headingOk:!!title&&title.bottom<=bounds.bottom-8,
+         copyOk:!summary||summary.bottom <= (action?.top??store?.top??bounds.bottom)+2,
+         actionOk:!action||action.bottom<=bounds.bottom-6,
+         storeOk:!store||store.bottom<=bounds.bottom-5,
+         bulletsOk:!lastBullet||lastBullet.bottom<=bounds.bottom-8,
+         fullBleed:!card.classList.contains('owner20-bottom-air')&&!card.classList.contains('owner20-bottom-club')||
+           (bg.includes('traksos-service-scenes-desktop-hq.webp')&&after.display==='none')
+       };
+     }));
+     if(bottomReading.length!==4||bottomReading.some(x=>!x.headingOk||!x.copyOk||!x.actionOk||
+         !x.storeOk||!x.bulletsOk||!x.fullBleed))
+       throw Error(width+': bottom strip has clipped text, extra photo slice or hidden CTA: '+JSON.stringify(bottomReading));
+   }
    if(width===1536){
      const near=(got,expected)=>Math.abs(got-expected)<=7;
      if(!art.head||!art.hero||!art.quick||!art.features||!art.bottom||!art.coverage||
