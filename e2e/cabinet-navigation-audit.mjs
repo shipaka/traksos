@@ -150,6 +150,26 @@ try {
           throw Error(kind+' '+width+'px '+href+': approved desktop palette missing '+JSON.stringify(state));
         if(href==='#/help' && !state.help)
           throw Error(kind+' '+width+'px '+href+': legacy help route returned instead of rebuilt help');
+        // Approved-style candidate PROFILE: desktop has its own cohesive visual,
+        // while phone/Android retains the earlier plain profile composition.
+        if(href==='#/profile'){
+          const profile=page.locator('main.account-profile-page');
+          await profile.waitFor({state:'visible'});
+          const hero=profile.locator('.account-profile-hero');
+          const originalTitle=profile.locator('h1.account-profile-mobile-title');
+          if(width>=900){
+            if(!await hero.isVisible()||await originalTitle.isVisible()||
+               await hero.locator('.account-profile-hero-art').count()!==1)
+              throw Error(kind+': new role profile visual missing on desktop');
+            const shortcuts=profile.locator('.account-profile-shortcuts button');
+            if(await shortcuts.count()!==3)throw Error(kind+': profile section shortcuts missing');
+            await shortcuts.nth(1).click();
+            if(!await profile.locator('#account-profile-security').isVisible())
+              throw Error(kind+': profile security shortcut does not reveal real section');
+          }else if(await hero.isVisible()||!await originalTitle.isVisible()){
+            throw Error(kind+': approved 618 mobile profile was replaced by desktop redesign');
+          }
+        }
         if(errors.length)throw Error(kind+' '+width+'px '+href+': JS error '+errors.join('; '));
         // Every desktop menu destination produces a real Chromium screenshot
         // on this exact commit, not a static approved design mockup.
@@ -160,7 +180,24 @@ try {
         coverage.push({href,width,accent:state.accent});
       }
     }
-    report.push({role:kind,visited:paths.length,verifiedRouteSizes:coverage.length});
+    // Regression: a typo/deep-link into a role must never silently mount
+    // a dashboard or the old generic help page.
+    const invalid={
+      owner:['#/tech/retired-page'],
+      driver:['#/tech/retired-page'],
+      master:['#/work/me/retired-page'],
+      tow:['#/work/me/retired-page'],
+      service:['#/base/retired-page'],
+      master_service:['#/base/retired-page'],
+      insurer:['#/insurance/retired-page'],
+    }[kind]||[];
+    for(const href of invalid){
+      await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
+      await page.locator('main.tr-approved-route-unavailable').waitFor({state:'visible'});
+      if(await page.locator('main.approved-pc,main.performer-workspace,main.base-workspace').count())
+        throw Error(kind+': obsolete dashboard fallback on unknown route '+href);
+    }
+    report.push({role:kind,visited:paths.length,verifiedRouteSizes:coverage.length,unknownRoutesRejected:invalid.length});
     await ctx.close();
   }
 } finally {await browser.close();}
