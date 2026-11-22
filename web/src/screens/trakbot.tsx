@@ -135,7 +135,7 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
   const Frame = compact ? 'div' : 'main';
   return <Frame className={compact ? 'trakbot-compact-body' : undefined}>
     {!compact && <Back to="help" />}
-    {compact ? <h2 className="trakbot-compact-title">TrackSalesBot</h2> : <div className="trakbot-chat-title"><TrakBotMascot reaction="hello" size="small"/><h1>TrackSalesBot</h1></div>}
+    {compact ? <h2 className="trakbot-compact-title">TrackSalesBot</h2> : <div className="trakbot-chat-title"><TrakBotMascot reaction="hello" size="small" ambient/><h1>TrackSalesBot</h1></div>}
     {!compact && <div className="sub">{isTech ? 'Помощник мастера и СТО.' : 'Помощник для водителя.'} Личный чат, без публикаций в общем эфире.</div>}
     {compact ? <details className="trakbot-advice-compact">
       <summary>Важно: советы справочные, не диагноз</summary>
