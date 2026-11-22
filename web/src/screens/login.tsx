@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, type GuestAction } from '../guestCatalog.ts';
 import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 import { GuestUnifiedInfo, type GuestInfoKind } from './guestUnifiedInfo20261122.tsx';
 
@@ -116,6 +116,10 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
     q.addEventListener('change',update);
     return () => q.removeEventListener('change',update);
   }, []);
+  useEffect(() => {
+    if (native.isApp || !serviceContext || !(serviceContext in GUEST_SERVICE_NAMES)) return;
+    rememberGuestAction(serviceContext as GuestAction);
+  }, [serviceContext]);
   const [phone, setPhone] = useState('+7 ');
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
@@ -307,7 +311,10 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
       const selectedDestination: string | undefined = customer ? ({
         van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
         consult: '#/new/consult', insurance: '#/insurance/request/new',
-        parts: '#/shop', inspection: '#/garage'
+        parts: '#/shop', inspection: '#/garage', ecu: '#/new/ecu',
+        sos: '#/sos', air: '#/air', club: '#/air',
+        tech: '#/techbase/driver', trakbot: '#/trakbot',
+        garage: '#/garage', training: '#/training'
       } as Record<string,string>)[pending ?? ''] : undefined;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
@@ -392,7 +399,7 @@ export function Login({ driver, entry, publicInfo, serviceContext }: {
           <div className="public-service-tiles">
             {PUBLIC_HOME_TILES.map(({id,title,hint,href}) => (
               <a href={href} className={'public-service-tile public-service-' + id}
-                key={id}>
+                key={id} onClick={() => rememberGuestAction(id as GuestAction)}>
                 <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
                 <b>{title}</b><small>{hint}</small><span className="public-service-arrow">Далее <span aria-hidden="true">›</span></span>
               </a>
