@@ -155,13 +155,8 @@ const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 
 
-// The real service tiles open the existing auth panel over the approved guest
-// home; informational and legal routes keep their public readable pages.
-const GUEST_AUTH_SERVICE_ROUTES = new Set([
-  'van','tow','sto','ecu','consult','parts','insurance','inspection',
-  'sos','air','club','tech'
-]);
-
+// Every public catalogue route opens the same browser auth sheet.
+// Only About and published legal documents remain readable to guests.
 function App() {
   const route = useRoute();
   const toast = useToast();
@@ -243,7 +238,7 @@ function App() {
     try {
       if (sessionStorage.getItem('traksos.pendingLandingAction')) return;
     } catch { /* Private browsing */ }
-    if (GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '')) location.replace('#/');
+    location.replace('#/');
   }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
     // Refresh the role/profile when the device reconnects or returns to foreground.
@@ -326,11 +321,10 @@ function App() {
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
-    const guestServiceLogin = !native.isApp && route[0] === 'explore' &&
-      GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '');
+    const guestServiceLogin = !native.isApp && route[0] === 'explore';
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? (guestServiceLogin ? <Login key={route.join('/')} entry="login" serviceContext={route[1]} /> : <GuestExplore id={route[1] || ''} itemKey={route[2]} />) : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Login key="guest-help-login" entry="login" /> : route[0] === 'explore' ? (guestServiceLogin ? <Login key={route.join('/')} entry="login" serviceContext={route[1]} /> : <GuestExplore id={route[1] || ''} itemKey={route[2]} />) : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -470,8 +464,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     return () => media.removeEventListener('change', sync);
   }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
-  const isGuestServiceLogin = !me && !native.isApp && route[0] === 'explore' &&
-    GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '');
+  const isGuestServiceLogin = !me && !native.isApp && route[0] === 'explore';
   // One coherent public menu. The full catalogue, fees and learning remain
   // accessible after login instead of exposing legacy guest detail screens.
   const guestServiceLinks = [
