@@ -1264,7 +1264,7 @@ export function Profile() {
       <h1 className="account-profile-mobile-title">Профиль</h1>
       <header className="account-profile-hero">
         <div className="account-profile-visual" aria-hidden="true">
-          <img src="/vehicles/models/scania-r520-2016.webp" alt="" />
+          <img src="/tracksos-approved-hero-owner-20261119.webp" alt="" />
           <span className="account-profile-visual-trace" />
         </div>
         <div className="account-profile-hero-copy">
