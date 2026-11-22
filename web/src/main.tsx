@@ -234,6 +234,8 @@ function App() {
   // resurrect a guest-only service preview or a dead legacy route.
   useEffect(() => {
     if (!ready || !me || route[0] !== 'explore') return;
+    // A stale render must not overwrite a newer signedIn() destination.
+    if (!location.hash.startsWith('#/explore/')) return;
     // A login initiated from a service controls its own post-auth destination.
     // Do not race signedIn() and override the selected order/service route.
     try {
