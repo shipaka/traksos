@@ -120,6 +120,29 @@ try {
       await page.screenshot({path:'e2e/shots/android-approved/'+role+'-native-'+width+'.png'});
     }
     await page.setViewportSize({width:390,height:844});
+    if(mode==='client'||mode==='performer'){
+      // Read computed Android CSS in the real role shell even if this
+      // synthetic user has no live order/photo yet. Never manufacture an
+      // order, vehicle, payment or availability record just for visuals.
+      const photoRule=await page.evaluate(()=>{
+        const host=document.querySelector('.app');
+        if(!host)return {missing:true};
+        const probe=document.createElement('section');
+        probe.className='and19-main-order';
+        probe.innerHTML='<span class="tr-approved-order-truck is-illustration"><img alt="" src="/icon-192.png"/><small>Иллюстрация</small></span>';
+        host.appendChild(probe);
+        const img=probe.querySelector('img');
+        const label=probe.querySelector('small');
+        const result={fit:getComputedStyle(img).objectFit,
+          position:getComputedStyle(img).objectPosition,
+          label:getComputedStyle(label).display};
+        probe.remove();
+        return result;
+      });
+      if(photoRule.fit!=='contain'||!photoRule.position.includes('center')||
+         photoRule.label!=='none')
+        throw Error(role+': Android truck is still cropped or illustration label leaks '+JSON.stringify(photoRule));
+    }
     if(mode==='client'){
       const desk=page.locator('.and19-client');
       await desk.waitFor({state:'visible'});
