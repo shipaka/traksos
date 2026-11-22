@@ -89,6 +89,7 @@ jobs:
           node e2e/ui-smoke.mjs
           node e2e/native-guest-layout.mjs
           node e2e/trakbot-android-compact.mjs
+          node e2e/courier-mobile-chrome.mjs
           node e2e/public-service-routing.mjs
           node e2e/temporary-demo-entry.mjs
           node e2e/header-search.mjs

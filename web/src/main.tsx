@@ -530,6 +530,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
        ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
+  // Only one bottom tab can be active. A parent route such as /courier
+  // also matches /courier/jobs, but the most specific existing tab wins.
+  // Keep the deliberate exclusions for /work and /base secondary forms.
+  const activeMobileTabHref=mobileTabs
+    .filter(([href])=>here===href ||
+      (href!=='/' && href!=='/work' && href!=='/base' && here.startsWith(href+'/')))
+    .sort((a,b)=>b[0].length-a[0].length)[0]?.[0];
+  // The desktop sidebar also has parent/child routes (for example, /admin
+  // and /admin/section/orders). Only the deepest rendered item is selected.
+  const isDesktopPrimaryActive=(href:string,links:readonly (readonly string[])[]) =>
+    (here===href || (href!=='/' && here.startsWith(href+'/'))) &&
+    !links.some(([other]) => other!==href && other.length>href.length &&
+      (here===other || here.startsWith(other+'/')));
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
@@ -736,8 +749,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name]) => (
-                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || (href !== '/' && here.startsWith(href + '/')) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
+                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href,links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
               ))}
@@ -830,7 +843,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={shellHref(href)} className={`${here === href || (href !== '/' && here.startsWith(href + '/') && href !== '/work' && href !== '/base') ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
@@ -838,7 +851,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       )}
       {/* 618.png has no overlapping floating robot. The same approved talking-truck
           TrakBot remains in Android Menu > TrakBot and on the desktop. */}
-      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && !approvedInnerRoute && <TrakBotDock authenticated={!!me} />}
+      {!native.isApp && !isAuthEntry && route[0] !== 'trakbot' && mode !== 'moderator' && !approvedDeskHasTrakBot && !approvedInnerRoute && !(!!me && mobileShell && mode === 'courier' && sectionPath !== '/menu') && <TrakBotDock authenticated={!!me} />}
       {me && <RoleTour page={route[0] ?? ''} />}
     </div>
   );
