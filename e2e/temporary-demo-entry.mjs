@@ -30,7 +30,7 @@ try {
         const message=await panel.innerText();
         if(!message.includes('Старый демонстрационный просмотр закрыт'))
           throw Error('Former training preview is not visibly retired '+route);
-        if(await page.locator('.sandbox-role-card,.sandbox-cabinet,.operator-demo-screen,#operator-demo-code').count())
+        if(await page.locator('.sandbox-role-card,.sandbox-cabinet,.operator-demo-app,.operator-demo-badge,.operator-demo-screen,#operator-demo-code').count())
           throw Error('Obsolete/mock role dashboard mounted on public route '+route);
         const login=panel.locator('a[href="#/login"]');
         if(!(await login.isVisible()))throw Error('Retired role entry cannot reach real login '+route);

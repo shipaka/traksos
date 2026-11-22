@@ -479,21 +479,6 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     document.addEventListener('pointerdown', outside);
     return () => document.removeEventListener('pointerdown', outside);
   }, [openGuestGroup]);
-  // Guest demo is deliberately isolated from the public registration shell.
-  // This preserves the one-time PIN flow and never grants an admin session.
-  const isOperatorDemo = !me && (route[0] === 'preview' ||
-    (route[0] === 'admin' && route[1] === 'test-center'));
-  if (isOperatorDemo) return (
-    <div className="app operator-demo-app">
-      <header className="top">
-        <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
-        <span className="operator-demo-badge">ТЕСТОВЫЙ РЕЖИМ</span>
-      </header>
-      <div className="operator-demo-content" style={{width:'100%', maxWidth:1440, margin:'0 auto'}}>
-        {children}
-      </div>
-    </div>
-  );
   const here = '/'+route.join('/');
   const shellHref=(href:string)=>'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты

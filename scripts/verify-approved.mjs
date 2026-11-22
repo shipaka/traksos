@@ -711,6 +711,10 @@ expect(retiredDemo.includes('Старый демонстрационный пр�
   !retiredDemo.includes('operatorDemoSession') &&
   !retiredDemo.includes('/api/public/demo/unlock'),
   'public PIN preview must never restore obsolete simulated role cabinets');
+expect(!unifiedShell.includes('operator-demo-app') &&
+  !unifiedShell.includes('operator-demo-badge') &&
+  !css.includes('.app.operator-demo-app'),
+  'retired guest preview cannot mount a separate obsolete header and CSS shell');
 expect(realTestCenter.includes('FullFidelityRoleLauncher') &&
   realTestCenter.includes("'/api/admin/sandbox/ticket'") &&
   realTestCenter.includes('<NavGlyph glyph={r.icon}/>') &&
