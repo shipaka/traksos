@@ -29,12 +29,14 @@ try {
    const cards=await page.locator('.owner20-quick>a').count();
    const features=await page.locator('.owner20-features>a').count();
    const bottom=await page.locator('.owner20-bottom>.owner20-bottom-card').count();
-   // Owner 22 Nov: remove duplicate ECU from quick services while retaining
-   // the detailed Specialists ECU card in the approved illustration row.
-   if(cards!==4||features!==5||bottom!==4)throw Error(width+': wrong approved rows '+cards+'/'+features+'/'+bottom);
+   // Owner 22 Nov: balanced five shortcuts. ECU stays only in the illustrated
+   // specialist row; TrakBot opens the existing assistant, not another page.
+   if(cards!==5||features!==5||bottom!==4)throw Error(width+': wrong approved rows '+cards+'/'+features+'/'+bottom);
    const quickTitles=await page.locator('.owner20-quick>a b').allInnerTexts();
    const featureTitles=await page.locator('.owner20-features>a b').allInnerTexts();
    if(quickTitles.some(title=>/ЭБУ|Шиномонтаж/i.test(title))||
+      quickTitles.filter(title=>title.includes('TrakBot')).length!==1 ||
+      quickTitles[4] !== 'TrakBot · ИИ' ||
       featureTitles.filter(title=>title==='Специалисты ЭБУ').length!==1)
      throw Error(width+': duplicate ECU or unwanted tire service in promoted tiles');
    const heading=await page.locator('.owner20-lead h1').innerText();
@@ -94,6 +96,14 @@ try {
    }
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
    if(width===1536){
+    const botShortcut=page.locator('.owner20-quick-trakbot');
+    if(await botShortcut.count()!==1) throw Error('TrakBot shortcut missing');
+    await botShortcut.click();
+    await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+    if(!page.url().endsWith('/#/')) throw Error('TrakBot shortcut navigated off 617 landing');
+    if(await page.locator('.trakbot-dock-panel').count()!==1) throw Error('Duplicate TrakBot panels');
+    await page.locator('.trakbot-dock-close').click();
+    if(await page.locator('.trakbot-dock-panel').count()!==0) throw Error('TrakBot shortcut did not close');
     for(const key of ['van','tow','sto','ecu','consult','tech','parts','insurance','inspection','air','club']){
      await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
      const link=page.locator('.owner20-home a[href="#/explore/'+key+'"]:visible').first();
@@ -110,5 +120,5 @@ try {
    }
   }finally{await ctx.close();}
  }
- console.log('Approved 20 Nov PC: 6 desktop widths, 4+5+4 content, no overflow, 11 working feature routes, real screenshots');
+ console.log('Approved 20 Nov PC: 6 desktop widths, 5+5+4 content, no overflow, 11 working feature routes, real screenshots');
 }finally{await browser.close();}
