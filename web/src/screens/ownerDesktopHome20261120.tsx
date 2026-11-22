@@ -50,8 +50,9 @@ function Feature({item}:{item:typeof features[number]}) {
     <span className="owner20-feature-cta">{action}　→</span>
   </a>;
 }
-export function OwnerDesktopHome20261120() {
-  return <main className="owner20-home" id="public-home">
+export function OwnerDesktopHome20261120({ overlayBackground = false }: { overlayBackground?: boolean } = {}) {
+  return <main className="owner20-home" id="public-home"
+    inert={overlayBackground || undefined} aria-hidden={overlayBackground || undefined}>
     <header className="owner20-top">
       <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
