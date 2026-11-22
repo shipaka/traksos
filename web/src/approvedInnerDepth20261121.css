@@ -127,3 +127,19 @@
    width:88px;height:90px!important;max-height:90px!important;
  }
 }
+
+
+/* Approved 617/618 performer order-history filters. The shared retired
+   theme painted pressed .seg controls hot pink; the signed-in work/orders
+   interior must retain the same orange/graphite navigation as its desk.
+   Never alter pressed state, tab handlers, or unrelated views. */
+html.traksos-browser .app.role-performer
+  .desktop-content:has(> .tr-inner-hero[data-route="work/jobs"])
+  > main.performer-orders-page .seg[aria-pressed="true"],
+html.traksos-native .app.role-performer
+  .desktop-content > main.performer-orders-page .seg[aria-pressed="true"] {
+  background:linear-gradient(125deg,#ef8225,#a94c18)!important;
+  border-color:#ffb776!important;
+  color:#fff!important;
+  box-shadow:0 5px 16px #aa4c183b;
+}
