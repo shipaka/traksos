@@ -282,7 +282,7 @@ await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
 try {
-  await m.getByText('Долг по комиссии с наличных').waitFor({ timeout: 10000 });
+  await m.getByText(/Историческая задолженность:\s*750\s*₽/).waitFor({ timeout: 10000 });
 } catch (error) {
   const diagnostics = await m.evaluate(() => ({
     hash: location.hash,
