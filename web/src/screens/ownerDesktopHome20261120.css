@@ -62,7 +62,7 @@
  .owner20-feature-title{display:flex;align-items:center;gap:9px;font-size:16px;position:relative;z-index:2}
  .owner20-feature-title span{color:#d3ebf1;font-size:20px}
  .owner20-feature p{max-width:76%;font-size:11px;line-height:1.45;color:#c6d5dc;position:relative;z-index:2;margin:8px 0}
- .owner20-feature-illustration{position:absolute;right:-3px;bottom:-16px;font-size:115px;font-weight:900;line-height:1;color:#aec9d438;transform:rotate(-13deg)}
+
  .owner20-feature-cta{position:absolute;bottom:13px;left:12px;font-size:11px;border:1px solid #a6c0c9;padding:7px 12px;border-radius:20px;z-index:3}
  .owner20-bottom{margin:16px 2% 0;display:grid;gap:13px;grid-template-columns:1.1fr 1.1fr .79fr .91fr}
  .owner20-bottom-card{height:177px;position:relative;background:linear-gradient(130deg,#142b37,#071924);border:1px solid #3c535d;border-radius:14px;overflow:hidden;padding:18px 15px}
@@ -387,22 +387,7 @@
     z-index:3!important;
     text-shadow:0 1px 5px #06141a;
   }
-  .guest-app.guest-home .owner20-feature-illustration{
-    display:block!important;
-    position:absolute!important;
-    top:auto!important;left:auto!important;
-    right:0!important;bottom:0!important;
-    transform:none!important;
-    width:167px;height:128px;
-    z-index:1!important;
-    font-size:0!important;
-    background-image:url('/owner20-artwork-sprite.webp')!important;
-    background-size:1018px 446px!important;
-    background-repeat:no-repeat!important;
-    background-position:0 -317px!important;
-    opacity:1!important;
-    color:transparent!important;
-  }
+
 
 
 
@@ -439,7 +424,7 @@
     max-width:77%!important;
     position:relative;z-index:2;
   }
-  .guest-app.guest-home .owner20-bottom-air::after,
+
 
 
   .guest-app.guest-home .owner20-bottom-card>.owner20-bottom-cta{
@@ -466,22 +451,12 @@
    background-repeat:no-repeat;
    transform-origin:top left;
  }
- .guest-app.guest-home .owner20-feature-illustration{
-   display:block;position:absolute;
-   right:0;bottom:0;top:auto;left:auto;
-   width:148px;height:125px;
-   background-image:url('/owner20-artwork-sprite.webp');
-   background-position:0 -317px;
-   background-size:1018px 446px;
-   background-repeat:no-repeat;
-   font-size:0;color:transparent;
-   transform:none!important;
- }
 
 
 
 
- .guest-app.guest-home .owner20-bottom-air::after,
+
+
 
 
 }
@@ -538,9 +513,8 @@
  }
  /* Text-free artwork requires no gradient veil or raster-caption masks. */
 
- .guest-app.guest-home .owner20-feature-illustration {
- }
- .guest-app.guest-home .owner20-bottom-air::after,
+
+
 
 }
 @media(min-width:900px) and (max-width:1199px){
@@ -564,13 +538,10 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
 
 
 
- .guest-app.guest-home .owner20-feature-illustration {
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
- }
 
 
- .guest-app.guest-home .owner20-bottom-air::after,
+
+
 
 }
 
