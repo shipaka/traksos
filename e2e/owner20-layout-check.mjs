@@ -29,7 +29,14 @@ try {
    const cards=await page.locator('.owner20-quick>a').count();
    const features=await page.locator('.owner20-features>a').count();
    const bottom=await page.locator('.owner20-bottom>.owner20-bottom-card').count();
-   if(cards!==5||features!==5||bottom!==4)throw Error(width+': wrong approved rows '+cards+'/'+features+'/'+bottom);
+   // Owner 22 Nov: remove duplicate ECU from quick services while retaining
+   // the detailed Specialists ECU card in the approved illustration row.
+   if(cards!==4||features!==5||bottom!==4)throw Error(width+': wrong approved rows '+cards+'/'+features+'/'+bottom);
+   const quickTitles=await page.locator('.owner20-quick>a b').allInnerTexts();
+   const featureTitles=await page.locator('.owner20-features>a b').allInnerTexts();
+   if(quickTitles.some(title=>/ЭБУ|Шиномонтаж/i.test(title))||
+      featureTitles.filter(title=>title==='Специалисты ЭБУ').length!==1)
+     throw Error(width+': duplicate ECU or unwanted tire service in promoted tiles');
    const heading=await page.locator('.owner20-lead h1').innerText();
    if(!heading.includes('Помощь в дороге.')||!heading.includes('для грузового транспорта'))throw Error('Wrong owner headline');
    const overflow=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
@@ -103,5 +110,5 @@ try {
    }
   }finally{await ctx.close();}
  }
- console.log('Approved 20 Nov PC: 6 desktop widths, 5+5+4 content, no overflow, 11 working feature routes, real screenshots');
+ console.log('Approved 20 Nov PC: 6 desktop widths, 4+5+4 content, no overflow, 11 working feature routes, real screenshots');
 }finally{await browser.close();}
