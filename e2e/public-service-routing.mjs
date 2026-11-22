@@ -76,16 +76,12 @@ try {
         : page.locator(selector).first();
       await card.click();
       await page.waitForURL('**/#/explore/'+destination);
-      if(destination==='guide'){
-        await page.getByRole('dialog',{name:'Как работает TrakSOS'}).waitFor();
-        if(!await page.locator('.tr-guest-info-items').count())
-          throw Error('How-it-works information missing from compact sheet');
-      } else {
-        const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
-        await dialog.waitFor();
-        if(!await dialog.getByText('Вы выбрали:',{exact:false}).count())
-          throw Error(destination+': selected service is not explained');
-      }
+      const dialog=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+      await dialog.waitFor();
+      if(destination!=='guide' && !await dialog.getByText('Вы выбрали:',{exact:false}).count())
+        throw Error(destination+': selected service is not explained');
+      if(!await page.locator('.public-landing').isVisible())
+        throw Error(destination+': approved homepage is not the underlying surface');
     }
     await page.goto(BASE+'/#/');
     await page.locator('.public-track-insurance').click();
@@ -197,7 +193,7 @@ try {
     }
 
     await page.goto(BASE+'/#/company');
-    await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
+    await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
     await page.goto(BASE+'/#/offers');
     await page.getByRole('heading',{name:'Оферты и документы'}).waitFor();
     for(const path of ['#/offer/client','#/offer/performer','#/offer/privacy']){
@@ -284,17 +280,17 @@ try {
       await all.locator('summary').press('Escape');
       if(await all.getAttribute('open')!==null)throw Error('Escape did not close capabilities');
       await nav.getByRole('link',{name:'О платформе'}).click();
-      await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
+      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
       await page.goto(BASE+'/#/');
       await nav.getByRole('link',{name:'Тарифы'}).click();
-      await page.getByRole('dialog',{name:'Комиссии TrakSOS'}).waitFor();
+      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
     } else {
       await page.locator('.guest-mobile-catalog > summary').click();
       const nav=page.getByRole('navigation',{name:'Возможности TrakSOS'});
       if(!(await nav.getByRole('link',{name:'ТехБаза и справочник'}).count()))
         throw Error('TechBase hidden from mobile capabilities');
       await nav.getByRole('link',{name:'О платформе'}).click();
-      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
     }
     if(jsErrors.length)throw Error('JS exceptions: '+jsErrors.join('; '));
     await context.close();
