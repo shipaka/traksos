@@ -16,8 +16,15 @@ try {
     await page.goto(BASE + '/#/', { waitUntil: 'domcontentloaded' });
     if(width>=900){
       await page.locator('.owner20-home').waitFor({timeout:15000});
-      assert(await page.locator('.app > header.top, .desktop-sidebar, .site-footer').count()===0,
-        'Final PC must not render legacy guest header/sidebar/footer');
+      assert(await page.locator('.app > header.top, .desktop-sidebar').count()===0,
+        'Final PC must not render legacy guest header/sidebar');
+      const footer=page.locator('.guest-home-standalone > .site-footer');
+      assert(await footer.count()===1 && await footer.isVisible(),
+        'The legal links must appear below approved 617, without a second header');
+      const fgeom=await footer.evaluate(el=>({top:el.getBoundingClientRect().top,
+        homeBottom:document.querySelector('.owner20-home')?.getBoundingClientRect().bottom??Infinity}));
+      assert(fgeom.top>=fgeom.homeBottom-3,
+        'The legal footer must not overlap any part of approved 617: '+JSON.stringify(fgeom));
       assert(await page.locator('header.owner20-top').count()===1,
         'Final PC should show exactly one approved header');
       assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
