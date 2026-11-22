@@ -744,6 +744,10 @@ expect(approvedInnerCss.includes('grid-template-columns:repeat(3,minmax(0,1fr))'
 expect(unifiedShell.includes('Заявку на страхование создаёт только клиент') &&
   unifiedShell.includes('isCustomer ? <InsuranceApplication'),
   'unauthorized roles cannot open the client insurance application shell');
+// Denied deep links must use the same styled neutral shell in every cabinet.
+const retiredDeniedMessages = ["Для вызова SOS нужен клиентский аккаунт","Для заказа нужен клиентский аккаунт","Нет доступа к клиентским заявкам","Нет доступа к гаражу","Парком управляет владелец","Нет прав оператора техосмотра","Кабинет курьера доступен только назначенному курьеру.","Нет доступа к кабинету страховщика","Нет доступа к этому разделу ТехБазы","Нет доступа","Магазин доступен в клиентском кабинете или кабинете исполнителя."];
+expect(retiredDeniedMessages.every(label => unifiedShell.includes('<UnavailableRole label="'+label+'" />')),
+  'no unauthorised route may return a bare old-style empty panel');
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');

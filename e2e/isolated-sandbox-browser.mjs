@@ -261,6 +261,28 @@ try{
             console.log('SANDBOX DENIED ROUTE PASS',forbidden,'neutral approved-only state');
           }
         }
+        // Wrong-role deep links must always render the single approved neutral
+        // state, never old unstyled <div class=empty> panels.
+        if(width===390){
+          const deniedByRole={
+            client:['#/inspections','#/insurance','#/pricing-lab'],
+            master:['#/garage','#/orders','#/sos','#/fleet','#/pricing-lab'],
+            tow:['#/garage','#/orders','#/sos'],
+            service:['#/orders','#/sos','#/inspections'],
+            insurer:['#/garage','#/shop','#/fleet','#/sos','#/new/consult'],
+            inspection:['#/garage','#/shop','#/fleet','#/new/consult'],
+            courier:['#/garage','#/orders','#/shop','#/inspections'],
+          };
+          for(const forbidden of deniedByRole[role]||[]){
+            await page.goto(base+'/'+forbidden,{waitUntil:'domcontentloaded'});
+            const refused=page.locator('main.tr-approved-route-unavailable');
+            await refused.waitFor({state:'visible',timeout:15000});
+            if(await page.locator('main .empty, main.approved-pc, main.client-dashboard').count())
+              throw Error('Old/privileged screen returned to denied route '+role+' '+forbidden);
+            if(errors.length)throw Error('Denied route JS error '+role+' '+forbidden+': '+errors.join('; '));
+            console.log('SANDBOX ROLE DENIAL PASS',role,forbidden);
+          }
+        }
         // A real browser must switch roles without new SMS or new signed
         // admin handoff. Verify the resulting role cannot elevate itself.
         if(role==='admin'){
