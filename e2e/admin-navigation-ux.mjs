@@ -77,7 +77,15 @@ try {
       await openNav();
       await navigation.getByRole('button',{name,exact:true}).click();
       await page.waitForURL(new RegExp('#/admin/section/'+id+'$'));
-      await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      // 617 uses one canonical section title for support and statistics.
+      // Keep the actual admin stage mounted; only its redundant heading is hidden.
+      if(['support','stats'].includes(id)){
+        await page.locator('.desktop-content > .tr-inner-hero h1')
+          .getByText(name,{exact:true}).waitFor();
+        await page.locator('.admin-stage-content').waitFor({state:'visible'});
+      }else{
+        await page.locator('.admin-stage-head h2').getByText(name,{exact:true}).waitFor();
+      }
       if (await page.locator('.admin-command-hero').count() !== 0)
         throw Error(id + ': obsolete admin landing hero repeated above the actual section');
       if(id==='dispatch') {
