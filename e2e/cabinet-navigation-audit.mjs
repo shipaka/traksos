@@ -164,9 +164,27 @@ try {
               throw Error(kind+': new role profile visual missing on desktop');
             const shortcuts=profile.locator('.account-profile-shortcuts button');
             if(await shortcuts.count()!==3)throw Error(kind+': profile section shortcuts missing');
+            const imageState=await hero.locator('.account-profile-visual img').evaluate(img=>({
+              loaded:img.complete && img.naturalWidth>0,
+              width:img.naturalWidth
+            }));
+            if(!imageState.loaded)throw Error(kind+': immersive hero scene image did not load');
+            if((await shortcuts.nth(0).getAttribute('aria-current'))!=='step')
+              throw Error(kind+': personal data is not visibly selected');
             await shortcuts.nth(1).click();
-            if(!await profile.locator('#account-profile-security').isVisible())
-              throw Error(kind+': profile security shortcut does not reveal real section');
+            if(await profile.getAttribute('data-section')!=='security' ||
+               !await profile.locator('#account-profile-security').isVisible() ||
+               await profile.locator('#account-profile-info').isVisible())
+              throw Error(kind+': security selection did not replace the visible form');
+            await shortcuts.nth(2).click();
+            if(await profile.getAttribute('data-section')!=='settings' ||
+               !await profile.locator('#account-profile-settings').isVisible() ||
+               await profile.locator('#account-profile-security').isVisible())
+              throw Error(kind+': settings selection did not replace the visible form');
+            await shortcuts.nth(0).click();
+            if(!await profile.locator('#account-profile-info').isVisible() ||
+               (await shortcuts.nth(0).getAttribute('aria-current'))!=='step')
+              throw Error(kind+': profile editing tab failed to reactivate');
           }else if(await hero.isVisible()||!await originalTitle.isVisible()){
             throw Error(kind+': approved 618 mobile profile was replaced by desktop redesign');
           }
