@@ -351,7 +351,8 @@ async function run(width, height, mobile, nativePreview = false) {
       await page.goto(BASE + '/#/');
       await page.locator('.guest-mobile-catalog > summary').click();
       await page.getByRole('navigation',{name:'Возможности TrakSOS'}).getByRole('link',{name:'О платформе'}).click();
-      await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
+      if(nativePreview) await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+      else await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
       await verifyPage(page, suffix + ':company');
     }
     check(errors.length === 0, 'JS exceptions: ' + errors.join(' | '));
