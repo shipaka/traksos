@@ -393,10 +393,10 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
  }
  .approved-pc-insurance .approved-pc-insurance-empty-visual::before {
    content:"";position:absolute;right:10px;bottom:0;top:15px;
-   width:clamp(110px,24%,152px);z-index:-1;
-   background:url('/owner20-artwork-sprite-retouched.webp') -476px -315px / 1018px 446px no-repeat;
-   -webkit-mask-image:linear-gradient(to right,transparent,#000 16%);
-   mask-image:linear-gradient(to right,transparent,#000 16%);
+   width:90px;z-index:-1;
+   background:url('/owner20-artwork-sprite-retouched.webp') -500px -319px / 1018px 446px no-repeat;
+   -webkit-mask-image:linear-gradient(to bottom,transparent 0 24px,#000 37px);
+   mask-image:linear-gradient(to bottom,transparent 0 24px,#000 37px);
    opacity:.80;pointer-events:none;
  }
  .approved-pc-insurance .approved-pc-insurance-empty-visual>h2,
