@@ -3,6 +3,7 @@ import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { requestTrakBotOpen } from '../trakbotEvents.ts';
 import { TrakBotMascot } from '../trakbotMascot.tsx';
 import { TrakServiceIcon } from '../trakServiceIcon.tsx';
+import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { FeatureArtwork } from '../featureArtwork20261122.tsx';
 import './ownerDesktopHome20261120.css';
 
@@ -123,7 +124,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span>Войти в Эфир　→</span></a>
       <a href="#/explore/club" className="owner20-bottom-card owner20-bottom-club"><b>♧　Клуб TrakSOS</b><p>Профессиональное сообщество. Обсуждения, советы, разборы, проекты.</p><span>О Клубе　→</span></a>
       <div className="owner20-bottom-card owner20-bottom-why"><b>Почему TrakSOS</b><ul><li>Реальная помощь в дороге</li><li>Проверенные исполнители</li><li>Профессиональное сообщество</li><li>Техническая база знаний</li><li>Развитие сервисов по регионам</li></ul></div>
-      <div className="owner20-bottom-card owner20-bottom-app"><b>▯　Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Готовится к публикации в RuStore</span></div>
+      <div className="owner20-bottom-card owner20-bottom-app"><b>Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Скоро в RuStore</span><TrakAppPhone/></div>
     </section>
     <p className="owner20-disclaimer">Демонстрационный режим. Наличие исполнителей, доступность регионов и услуг уточняется после входа.</p>
   </main>;
