@@ -740,9 +740,50 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
   .guest-app.guest-home .owner20-photo::after {
     content:""!important;position:absolute!important;inset:0!important;
     width:100%!important;height:100%!important;
-    background-image:url('/owner20-photo-brandless-20261122.webp')!important;
+    background-image:
+      linear-gradient(90deg,rgba(4,15,24,.76) 0%,rgba(4,15,24,.57) 29%,rgba(4,15,24,.13) 56%,transparent 70%),
+      url('/owner20-photo-brandless-20261122.webp')!important;
     background-position:center center!important;
-    background-size:cover!important;background-repeat:no-repeat!important;
+    background-size:100% 100%,cover!important;background-repeat:no-repeat,no-repeat!important;
     -webkit-mask-image:none!important;mask-image:none!important;
+  }
+}
+
+/* Only narrow desktop widths need more room to read the SAME 617 cards.
+   The owner's exact 1536x864 grid and all mobile/Android styles are locked. */
+@media (min-width:900px) and (max-width:1199px) {
+  .guest-app.guest-home .owner20-features {
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  .guest-app.guest-home .owner20-feature {
+    height:156px!important;
+    padding:15px!important;
+  }
+  .guest-app.guest-home .owner20-feature:nth-child(1){grid-row:1;grid-column:1/span 2}
+  .guest-app.guest-home .owner20-feature:nth-child(2){grid-row:1;grid-column:3/span 2}
+  .guest-app.guest-home .owner20-feature:nth-child(3){grid-row:1;grid-column:5/span 2}
+  .guest-app.guest-home .owner20-feature:nth-child(4){grid-row:2;grid-column:2/span 2}
+  .guest-app.guest-home .owner20-feature:nth-child(5){grid-row:2;grid-column:4/span 2}
+  .guest-app.guest-home .owner20-feature-title{
+    font-size:15px!important;gap:8px!important;
+  }
+  .guest-app.guest-home .owner20-feature p{
+    max-width:62%!important;font-size:11px!important;line-height:1.4!important;
+  }
+  .guest-app.guest-home .owner20-feature-cta{
+    left:14px!important;bottom:13px!important;
+  }
+  .guest-app.guest-home .owner20-bottom{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:14px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card{height:173px!important}
+  .guest-app.guest-home .owner20-bottom-card p{
+    max-width:65%!important;font-size:12px!important;line-height:1.4!important;
+  }
+  .guest-app.guest-home .owner20-lead h1,
+  .guest-app.guest-home .owner20-lead>p{
+    text-shadow:0 2px 14px #000c,0 1px 24px #000a!important;
   }
 }
