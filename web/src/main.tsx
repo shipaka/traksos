@@ -49,6 +49,8 @@ import './approvedInnerDepth20261121.css';
 import './approvedStaffInnerCompact20261121.css';
 // Auth opens as a browser-only sheet above the approved landing, never a new visual page.
 import './authOverlay20261122.css';
+// Final narrowly-scoped owner review corrections; approved assets remain unchanged.
+import './ownerVisualFixes20261122.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
