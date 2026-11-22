@@ -327,7 +327,9 @@ try {
     assert(await page.locator('.guest-partner-role').count() === 4,
       width+'px: hybrid partner unexpectedly creates a fifth public role card');
     await page.goto(BASE + '/#/company');
-    await page.getByRole('heading', {name:'Компания TrakSOS'}).waitFor();
+    await page.getByRole('dialog',{name:'О платформе TrakSOS'}).waitFor();
+    assert(await page.locator(width>=900?'.owner20-home':'.public-landing').isVisible(),
+      width+'px: company panel displaced approved guest homepage');
     await page.goto(BASE + '/#/offers');
     await page.getByRole('heading', {name:'Оферты и документы'}).waitFor();
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
