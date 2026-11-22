@@ -198,6 +198,16 @@ await k.locator('.and19-client .and19-services > a[href="#/sos"]').first().waitF
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
+// Source-backed garage must preserve exact model keys without replacing 618.
+await k.goto(BASE + '/#/garage');
+await k.getByRole('textbox',{name:'Поиск марки'}).fill('Scania');
+await k.getByRole('combobox',{name:'Марка',exact:true}).selectOption('scania');
+await k.getByRole('combobox',{name:'Модель',exact:true}).selectOption('r-series');
+const garageSave=k.locator('#garage-add-form').getByRole('button',{name:'Сохранить'});
+if(!await garageSave.isEnabled())throw Error('License-backed garage keys were lost after selecting Scania R Series');
+await k.locator('#garage-add-form a[href="https://vehiclesdb.com"]').waitFor();
+await shot(k,'03a-vehicle-catalog-garage');
+await k.goto(BASE + '/#/');
 // Mobile browser and Android APK both use the approved responsive .and19-client workspace.
 // Home and SOS share the direction-first flow.
 await k.locator('.and19-client .and19-services > a[href="#/sos"]').first().click();

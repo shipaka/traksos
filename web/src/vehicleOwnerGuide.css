@@ -1,0 +1,39 @@
+
+/* A compact book on desktop; an inline full-width sheet on narrow screens. */
+.vehicle-owner-guide{margin:8px 0;border:1px solid var(--line,rgba(145,178,227,.22));border-radius:16px;overflow:hidden}
+.vehicle-owner-guide-toggle{width:100%;border:0;padding:12px 14px;background:rgba(85,136,213,.08);color:inherit;display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer}
+.vehicle-owner-guide-toggle>span:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.vehicle-owner-guide-toggle small{font-size:12px;opacity:.75;line-height:1.35}
+.vehicle-owner-guide-book{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:12px;background:rgba(64,133,245,.16);font-size:25px}
+.vehicle-owner-guide-content{padding:14px;background:rgba(18,32,57,.1)}
+.vehicle-owner-guide-grid{display:grid;grid-template-columns:minmax(180px,42%) minmax(0,1fr);gap:18px;align-items:start}
+.vehicle-owner-guide-media{display:flex;flex-direction:column;gap:7px;min-width:0}
+.vehicle-owner-guide-media img{width:100%;height:190px;object-fit:cover;border-radius:12px;background:rgba(75,93,117,.12)}
+.vehicle-owner-guide-fallback{min-height:166px;border-radius:12px;background:linear-gradient(120deg,rgba(48,89,146,.24),rgba(53,91,112,.07));display:grid;place-items:center;font-size:54px;color:rgba(154,177,208,.5)}
+.vehicle-owner-guide-media small{font-size:11px;line-height:1.45}
+.vehicle-owner-guide-media a,.vehicle-owner-guide-text a:not(.btn){color:var(--accent)}
+.vehicle-owner-guide-text{display:flex;flex-direction:column;gap:8px;min-width:0}
+.vehicle-owner-guide-text>b{font-size:16px}
+.vehicle-owner-guide-text .note{margin:0;font-size:12px;line-height:1.5}
+.vehicle-owner-guide-actions{display:flex;flex-wrap:wrap;gap:8px}
+.vehicle-owner-guide-topics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.vehicle-owner-guide-topics article{border:1px solid rgba(136,156,197,.17);border-radius:10px;padding:10px}
+.vehicle-owner-guide-topics b{font-size:12px}
+.vehicle-owner-guide-topics p{margin:5px 0 0;font-size:12px;line-height:1.45}
+@media(max-width:700px){
+  .vehicle-owner-guide-grid{grid-template-columns:1fr;gap:12px}
+  .vehicle-owner-guide-content{padding:12px}
+  .vehicle-owner-guide-media img{height:180px}
+  .vehicle-owner-guide-topics{grid-template-columns:1fr}
+  .vehicle-owner-guide-toggle{padding:10px;gap:9px}
+  .vehicle-owner-guide-book{width:36px;height:36px;flex-basis:36px}
+}
+@media(prefers-reduced-motion:reduce){.vehicle-owner-guide *{scroll-behavior:auto;transition:none!important}}
+
+/* Category examples in the tow-cabinet selector: never mistaken for the selected rig. */
+.recovery-photo-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:6px 0 0}
+.recovery-photo{margin:0;border-radius:12px;border:1px solid rgba(127,151,197,.2);overflow:hidden;background:rgba(25,46,76,.1)}
+.recovery-photo img{display:block;width:100%;height:142px;object-fit:cover;background:rgba(52,84,117,.18)}
+.recovery-photo .vehicle-owner-guide-fallback{min-height:142px}
+.recovery-photo figcaption{padding:8px 10px;font-size:11px;line-height:1.4;color:var(--muted,var(--fg))}
+.recovery-photo a{color:var(--accent)}

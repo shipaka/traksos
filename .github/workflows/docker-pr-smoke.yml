@@ -26,5 +26,12 @@ jobs:
             test -d server/migrations
             test ! -d server/test
             test -f web/dist/index.html
+            test -f server/data/vehiclesdb_2026_11_11.json
+            test -f server/data/vehiclesdb_truck_evidence_2026_11_11.json
+            test -f server/data/vehiclesdb_ATTRIBUTION.md
+            test -f server/data/vehiclesdb_LICENSE.txt
+            test -f server/data/vehicle_owner_shelf_2026_11_17.json
+            test -f server/data/vehicle_technical_sources.json
             node --import tsx -e "import(\"./server/src/db/migrate.ts\").then(() => console.log(\"migration loader ok\"))"
+            node --import tsx -e "import(\"./server/src/services/publicVehicleDirectory.ts\").then(async ({PublicVehicleDirectory}) => { const m=await new PublicVehicleDirectory().metadata(); if(m.count!==8486 || m.brandCount!==499 || !m.categories.includes(\"trailer\")) throw Error(\"vehicle catalog missing from runtime image\"); console.log(\"licensed catalog in Docker\",m.count,m.version); })"
           '

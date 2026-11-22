@@ -223,6 +223,24 @@ try{
         // A real browser must switch roles without new SMS or new signed
         // admin handoff. Verify the resulting role cannot elevate itself.
         if(role==='admin'){
+          // On a direct menu/deep link, mandatory terms may mount after the
+          // first landing was inspected. A fake sandbox supervisor must
+          // explicitly accept those terms through the real dialog; forcing
+          // the role badge click would conceal a blocked user experience.
+          const lateLegal=page.locator('div.call[role="dialog"][aria-modal="true"]');
+          await page.waitForTimeout(300);
+          let lateAccepted=0;
+          for(let attempt=0;attempt<8;attempt++){
+            if(!(await lateLegal.count()) || !(await lateLegal.first().isVisible()))break;
+            const dialog=lateLegal.first();
+            await dialog.locator('input[type="checkbox"]').check();
+            await dialog.getByRole('button',{name:'Принимаю',exact:true}).click();
+            lateAccepted++;
+            await page.waitForTimeout(260);
+          }
+          if(await lateLegal.count() && await lateLegal.first().isVisible())
+            throw Error('Mandatory agreement blocks supervisor role switch after navigation');
+          if(lateAccepted)console.log('SANDBOX ADMIN ACCEPTED LATE AGREEMENTS VIA UI',width,lateAccepted);
           await page.locator('.sandbox-supervisor-badge > summary').click();
           const choose=page.locator('#sandbox-switch-role');
           await choose.waitFor();

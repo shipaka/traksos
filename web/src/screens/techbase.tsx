@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { get } from '../api.ts';
 import { useMe } from '../ui.tsx';
+import { VehicleTechnicalSources } from './VehicleTechnicalSources.tsx';
 
 type Audience = 'driver' | 'master';
 type TechDoc = {
@@ -11,7 +12,7 @@ type TechDoc = {
   warning:string; reviewedOn:string;
 };
 type Payload = { audiences: Audience[]; documents: TechDoc[] };
-type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null };
+type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null; catalog_category?:string|null; catalog_brand_key?:string|null; };
 const KIND_LABELS = { all:'Все типы', truck:'Грузовики', trailer:'Прицепы', component:'Узлы и агрегаты' };
 const TYPE_LABELS: Record<string,string> = { operation:'Эксплуатация',maintenance:'ТО',diagnostics:'Диагностика',wiring:'Схемы',parts:'Запчасти',service:'Ремонт' };
 const normalize = (s:string) => s.toLowerCase().replace(/[^a-zа-яё0-9]+/gi,'').replace('мерседесбенц','mercedesbenz');
@@ -80,7 +81,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     <section className="card stack techbase-filter" aria-label="Поиск технических материалов">
       {!isMaster && vehicles.length>0 && <label className="stack">
         <b>Машина из моего гаража</b>
-        <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind(e.target.value?'truck':'all');}}>
+        <select className="field" value={vehicleId} onChange={e=>{const v=vehicles.find(x=>x.id===e.target.value);setVehicleId(e.target.value);setMake('');setKind(v?.catalog_category==='trailer'?'trailer':v?'truck':'all');}}>
           <option value="">Все машины / ручной поиск</option>
           {vehicles.map(v=><option key={v.id} value={v.id}>{v.brand} {v.model||''} {v.year||''} {v.plate?'· '+v.plate:''}</option>)}
         </select>
@@ -133,6 +134,10 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
         </div>
       </section>)}
     </div>}
+    <VehicleTechnicalSources professional={isMaster}
+      makeKey={chosen?.catalog_brand_key??selectedMake.toLowerCase()}
+      category={chosen?.catalog_category==='trailer'||kind==='trailer'?'trailer':'truck'}
+      query={query} vehicleId={!isMaster?chosen?.id:undefined}/>
     <div className="techbase-footer-note">TrakSOS показывает ссылки на публикации производителей, не хранит копии без разрешения и не подтверждает применимость автоматически. Инструкции по критически важным тормозным и электрическим системам предназначены для квалифицированных специалистов.</div>
   </main>;
 }
