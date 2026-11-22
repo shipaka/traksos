@@ -169,6 +169,21 @@ try{
          if((await realTabs.nth(1).getAttribute('aria-selected'))!=='true')throw Error('New offers mode did not change');
          await realTabs.nth(0).click();
        }
+       if(c.id==='insurer') {
+         // A verified empty queue must use the SAME canonical insurance
+         // picture as the public tile, not the old rectangular shield cutout.
+         const pane=page.locator('.approved-pc-insurance-empty-visual');
+         if(await pane.count()){
+           const decoration=await pane.evaluate(el=>({
+             background:getComputedStyle(el,'::before').backgroundImage,
+             mask:getComputedStyle(el,'::before').maskImage,
+           }));
+           if(!decoration.background.includes('traksos-feature-insurance-desktop-20261122.webp')||
+              !decoration.mask.includes('linear-gradient')||
+              decoration.background.includes('owner20-artwork-sprite-retouched.webp'))
+             throw Error('Insurer empty queue still has a pasted shield rectangle: '+JSON.stringify(decoration));
+         }
+       }
        if(c.id==='admin'){
          await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
          // The decorative outline was a regression: it showed an imaginary
