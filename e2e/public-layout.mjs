@@ -92,9 +92,14 @@ async function run(width, height, mobile, nativePreview = false) {
       if (nativePreview) {
         check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': Android must not activate browser-only styling');
-        check(heroGeometry && Math.abs(heroGeometry.heroWidth-heroGeometry.pictureWidth)<3 &&
-          Math.abs(heroGeometry.heroHeight-heroGeometry.pictureHeight)<3,
-          suffix + ': native artwork must cover the approved banner: ' + JSON.stringify(heroGeometry));
+        // The approved Android guest uses contained artwork ABOVE its copy.
+        // Full-banner background coverage would reintroduce the retired overlay.
+        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 3 &&
+          heroGeometry.pictureHeight >= 100 &&
+          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
+          heroGeometry.paragraphTop >= heroGeometry.pictureHeight &&
+          heroGeometry.carouselTop >= heroGeometry.paragraphTop,
+          suffix + ': native contained artwork and copy must not overlap: ' + JSON.stringify(heroGeometry));
       } else {
         check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
           suffix + ': regular Chrome must activate mobile browser styling');
