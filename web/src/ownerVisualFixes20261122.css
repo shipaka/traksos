@@ -230,9 +230,14 @@ html.traksos-browser .app[class*="role-"] .tr-inner-hero-art {
 .guest-partner-roles .guest-partner-role-tow::before{background-position:center,34% 50%}
 .guest-partner-roles .guest-partner-role-service::before{background-position:center,67% 50%}
 .guest-partner-roles .guest-partner-role-insurer::before{
-  background-image:linear-gradient(90deg,rgba(7,22,30,.98),rgba(7,22,30,.65) 72%,rgba(7,22,30,.20)),
-    url('/owner20-artwork-sprite-retouched.webp');
-  background-size:cover,1018px 446px;background-position:center,right -317px bottom 0;
+  background-image:linear-gradient(90deg,#071b25,#15333e);
+}
+.guest-partner-roles .guest-partner-role-insurer::after {
+  content:"";position:absolute;z-index:0;right:5px;bottom:0;
+  width:92px;height:126px;pointer-events:none;
+  background:url('/owner20-artwork-sprite-retouched.webp') -497px -319px / 1018px 446px no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 15%);
+  mask-image:linear-gradient(90deg,transparent,#000 15%);
 }
 .guest-partner-roles .guest-partner-role :is(b,small){position:relative;z-index:1}
 .guest-partner-roles .guest-partner-role small{display:block;max-width:75%}
@@ -296,4 +301,71 @@ html.traksos-browser .app[class*="role-"] .tr-inner-hero-art {
 html.traksos-reduced-motion .guest-partner-role,
 html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
   transition:none!important;animation:none!important;
+}
+
+/* Legal pages share the same approved graphite shell as the public landing;
+   the actual document content and availability state stay untouched. */
+.guest-app .public-offer-page .offer-text,
+.guest-app .public-offer-page .offer-unpublished,
+.guest-app .public-offer-page > .empty {
+  background:linear-gradient(125deg,#132f3b,#081e29)!important;
+  border:1px solid #46606a!important;
+  border-radius:17px!important;
+  color:#edf4f6!important;
+  box-shadow:0 14px 30px #0005;
+}
+.guest-app .public-offer-page .offer-text {padding:clamp(19px,3vw,36px)!important}
+.guest-app .public-offer-page :is(h1,h2,h3){color:#fff!important}
+.guest-app .public-offer-page .guest-explore-back{color:#ffac73!important}
+.guest-app .tr-rules-public{
+  width:min(1100px,calc(100% - 32px))!important;
+  max-width:1100px!important;
+  margin:20px auto 55px!important;
+  padding:clamp(12px,2.5vw,24px)!important;
+  color:#edf7f8!important;
+}
+.guest-app .tr-rules-public>div:first-of-type{
+  position:relative;overflow:hidden;
+  padding:clamp(23px,3.5vw,40px);
+  border:1px solid #4d6670;border-radius:17px;
+  background:linear-gradient(105deg,#142f3a,#091d26);
+  box-shadow:0 15px 35px #0006;
+}
+.guest-app .tr-rules-public>div:first-of-type::after{
+  content:"";position:absolute;right:8%;top:12px;width:81px;height:126px;opacity:.82;
+  background:url('/owner20-artwork-sprite-retouched.webp') -638px -319px / 1018px 446px no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 13%);
+  mask-image:linear-gradient(90deg,transparent,#000 13%);
+  pointer-events:none;
+}
+.guest-app .tr-rules-public>div:first-of-type :is(h1,.sub){
+  position:relative;z-index:1;max-width:78%;
+}
+.guest-app .tr-rules-public>div:first-of-type h1{color:#fff;margin:0 0 9px}
+.guest-app .tr-rules-public .card{
+  background:linear-gradient(115deg,#132c37,#0a1e29)!important;
+  border:1px solid #3c5966!important;
+  border-radius:13px!important;
+  color:#eaf6f8!important;
+}
+.guest-app .tr-rules-public .card button{
+  color:inherit!important;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group summary{
+  display:inline-flex;align-items:center;gap:7px;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group summary>span{
+  display:inline-block!important;line-height:1;
+  transform:translateY(-1px);transition:transform .2s ease;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group[open] summary>span{
+  transform:rotate(180deg);
+}
+.guest-app:not(.guest-home) .guest-nav-dropdown{
+  position:absolute;z-index:200!important;
+  box-shadow:0 16px 32px #0009!important;
+}
+@media(max-width:899px){
+  .guest-app .tr-rules-public>div:first-of-type::after{opacity:.16}
+  .guest-app .tr-rules-public>div:first-of-type :is(h1,.sub){max-width:100%}
 }
