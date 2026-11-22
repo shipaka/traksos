@@ -140,3 +140,41 @@ html.traksos-browser .app.role-inspection
   border-color:#ffb776!important;
   box-shadow:0 5px 16px #a94c1844;
 }
+
+/* Real browser regression at 1440px: the worker profile repeated the old
+ * cinematic "Профиль" banner below the new approved section hero.
+ * Keep its actual "На линию" action, remove only redundant decoration/copy. */
+html.traksos-browser .app.role-performer
+ .desktop-content:has(> .tr-inner-hero[data-traksos-inner-ui="approved-617-618"])
+ > main.performer-workspace > .internal-role-hero {
+ display:flex!important;align-items:center!important;justify-content:flex-end!important;
+ min-height:0!important;height:auto!important;max-height:none!important;
+ margin:0 0 10px!important;padding:10px 12px!important;
+ border-radius:12px!important;border:1px solid #3e6372!important;
+ background:#102833!important;box-shadow:none!important;
+}
+html.traksos-browser .app.role-performer
+ .desktop-content:has(> .tr-inner-hero)
+ > main.performer-workspace > .internal-role-hero :is(span,h1,p) {display:none!important}
+html.traksos-browser .app.role-performer
+ .desktop-content:has(> .tr-inner-hero)
+ > main.performer-workspace > .internal-role-hero::before,
+html.traksos-browser .app.role-performer
+ .desktop-content:has(> .tr-inner-hero)
+ > main.performer-workspace > .internal-role-hero::after {content:none!important;display:none!important}
+html.traksos-browser .app.role-performer
+ .desktop-content:has(> .tr-inner-hero)
+ > main.performer-workspace > .internal-role-hero > a.btn {
+ position:relative!important;inset:auto!important;
+ grid-area:auto!important;width:auto!important;max-width:100%;
+ margin:0!important;background:#184252!important;
+ border:1px solid #6aa1af!important;color:#fff!important;box-shadow:none!important;
+}
+/* 390px tow orders: selected tab was still old magenta. Preserve the real
+ * ARIA pressed-state and click handlers; change color only. */
+html.traksos-browser .app.role-performer .desktop-content:has(> .tr-inner-hero)
+ > main.performer-orders-page .grid3[role="tablist"] .seg[aria-pressed="true"] {
+ background:#b65320!important;background-image:linear-gradient(125deg,#ef8225,#a94c18)!important;
+ color:#fff!important;border-color:#ffb776!important;
+ box-shadow:0 5px 16px #a94c1844!important;
+}
