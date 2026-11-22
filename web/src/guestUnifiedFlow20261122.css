@@ -1,0 +1,180 @@
+/* Service and information routes reuse the owner-approved guest background.
+ * Only the functional guest panels are new; 617/618 photography stays intact. */
+@media (min-width: 900px) {
+  .owner20-top .owner20-auth-actions {
+    display: flex;
+    flex: 0 0 112px;
+    width: 112px;
+    height: 61px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+  }
+  .owner20-top .owner20-auth-actions .owner20-signin {
+    height: 36px !important;
+    width: 112px !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+  }
+  .owner20-top .owner20-auth-actions .owner20-signup {
+    display: block;
+    width: 112px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 750;
+    color: #ffb185;
+    padding: 2px 0;
+    line-height: 1.1;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .owner20-top .owner20-auth-actions .owner20-signup:hover { color: #fff3e9; }
+}
+.tr-auth-panel .tr-auth-service-context {
+  display: inline-block;
+  font-weight: 760;
+  font-size: 12px;
+  color: #ffae78;
+  padding: 8px 11px;
+  margin: 0 0 10px;
+  border: 1px solid #b86a40;
+  border-radius: 9px;
+  background: rgba(231, 101, 38, .12);
+}
+.tr-auth-panel .btn.ghost.tr-auth-register-link {
+  background: rgba(247, 107, 48, .14) !important;
+  border: 1px solid rgba(255, 155, 91, .85) !important;
+  color: #ffd7b9 !important;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(249, 120, 66, .07);
+  transition: background .2s ease, box-shadow .2s ease;
+}
+.tr-auth-panel .btn.ghost.tr-auth-register-link:hover {
+  background: rgba(247, 107, 48, .23) !important;
+  box-shadow: 0 0 26px rgba(239, 103, 51, .17);
+}
+.tr-auth-panel .btn.ghost.tr-auth-partner-link {
+  color: #b9e9f0 !important;
+  border-color: rgba(78, 178, 197, .48) !important;
+  background: rgba(12, 65, 77, .4) !important;
+  font-weight: 730;
+}
+.tr-auth-panel .btn.ghost.tr-auth-partner-link:hover {
+  color: #fff !important;
+  border-color: #5fc6db !important;
+}
+.auth-desktop-layout.tr-auth-panel.tr-auth-panel--info {
+  width: min(675px, calc(100vw - 32px)) !important;
+  padding: 30px 32px !important;
+}
+.tr-auth-panel--info .auth-desktop-form::before { content: none !important; }
+.tr-auth-panel--info .auth-desktop-form { gap: 0 !important; }
+.tr-guest-info { width: 100%; min-width: 0; display: grid; gap: 15px; color: #edf7fa; }
+.tr-guest-info h1 {
+  margin: 0 34px 0 0 !important;
+  font-size: clamp(24px, 3.5vw, 31px) !important;
+}
+.tr-guest-info p { color: #c9dce2; font-size: 14px; line-height: 1.65; margin: 0; }
+.tr-guest-info-kicker {
+  color: #ff9b5b;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 2px;
+}
+.tr-guest-info-items { display: grid; gap: 9px; }
+.tr-guest-info-card, .tr-guest-info-item {
+  display: block;
+  position: relative;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(114, 157, 173, .35);
+  border-radius: 13px;
+  background: rgba(9, 28, 39, .75);
+  color: #f3f9fc !important;
+  text-decoration: none !important;
+}
+.tr-guest-info-card b, .tr-guest-info-item b { display: block; color: #fff; font-size: 14px; }
+.tr-guest-info-card small, .tr-guest-info-item small {
+  display: block;
+  margin-top: 5px;
+  color: #b7cdd7;
+  line-height: 1.5;
+  font-size: 12px;
+}
+.tr-guest-info-item { padding-right: 35px; transition: border-color .2s, background .2s, transform .2s; }
+.tr-guest-info-item>span { position:absolute;top:50%;right:14px;transform:translateY(-50%);font-size:22px;color:#ff9b5b; }
+.tr-guest-info-item:hover { border-color: #fa955d; background: #183a46; transform: translateX(2px); }
+.tr-guest-info-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.tr-guest-info-cta, .tr-guest-info-secondary, .tr-guest-info-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  text-decoration: none !important;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tr-guest-info-cta {
+  background: linear-gradient(115deg,#fa793b,#e65527);
+  border: 1px solid #fb975a;
+  color: #fff !important;
+}
+.tr-guest-info-secondary, .tr-guest-info-link {
+  background: rgba(38,70,83,.65);
+  border: 1px solid rgba(139,189,198,.5);
+  color: #d8eef4 !important;
+}
+.tr-guest-info-back {
+  justify-self: start;
+  color: #eac9b1;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 0;
+}
+.tr-guest-info-back:hover { color: #fff; }
+.tr-guest-info-note { font-size: 12px !important; color: #99b9c6 !important; }
+.tr-guest-legal {
+  border: 1px solid #335a67;
+  border-radius: 13px;
+  padding: 14px 16px;
+  background: #081d29;
+  min-width: 0;
+}
+.tr-guest-legal-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #dce9ef;
+  overflow-wrap: anywhere;
+}
+.tr-guest-legal-body h1,
+.tr-guest-legal-body h2,
+.tr-guest-legal-body h3 { color: #fff; margin: 16px 0 8px !important; font-size: 18px !important; }
+.tr-guest-legal-body a { color: #ffba88; }
+.tr-guest-legal-body table { display:block;max-width:100%;overflow-x:auto; }
+.tr-guest-info .tr-guest-legal-body p { margin: 10px 0; }
+@media (max-width: 899px) {
+  .auth-desktop-layout.tr-auth-panel.tr-auth-panel--info {
+    top: max(12px, env(safe-area-inset-top)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    padding: 26px 19px !important;
+    width: auto !important;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top)) !important;
+  }
+  .tr-guest-info h1 { font-size: 25px !important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .tr-guest-info-item, .tr-auth-panel .btn.ghost.tr-auth-register-link { transition: none !important; }
+}
+.traksos-reduced-motion .tr-guest-info-item,
+.traksos-reduced-motion .tr-auth-panel .btn.ghost.tr-auth-register-link { transition:none!important; }
