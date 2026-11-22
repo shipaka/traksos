@@ -59,7 +59,22 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
     <header className="owner20-top">
       <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
-      <nav className="owner20-topnav" aria-label="Основные разделы">
+      <nav className="owner20-topnav" aria-label="Основные разделы"
+        onClick={event => {
+          // Native <details> remains keyboard-accessible. One menu at a time;
+          // prevent old drop-downs from stacking over the next selection.
+          const summary=(event.target as HTMLElement).closest('summary');
+          if(!summary || !event.currentTarget.contains(summary)) return;
+          const active=summary.closest('details');
+          event.currentTarget.querySelectorAll('details[open]').forEach(menu => {
+            if(menu!==active) menu.open=false;
+          });
+        }}
+        onKeyDown={event => {
+          if(event.key!=='Escape') return;
+          const opened=event.currentTarget.querySelector('details[open]') as HTMLDetailsElement|null;
+          if(opened){opened.open=false;opened.querySelector('summary')?.focus();event.preventDefault();}
+        }}>
         <details><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
         <details><summary>Сервисы</summary><div>{primary.map(item=>item[3]==='trakbot' ? <a href="#/trakbot" key={item[3]} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{item[1]}</a> : <a href={route(item[3])} key={item[3]} onClick={() => rememberAllowed(item[3])}>{item[1]}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
         <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
