@@ -20,7 +20,7 @@ export function GuestCompany() {
 }
 
 export function GuestOffers() {
-  return <main className="guest-info-page">
+  return <main className="guest-info-page guest-info-offers">
     <div className="guest-info-top"><a href="#/">← Главная</a><span>ЮРИДИЧЕСКАЯ ИНФОРМАЦИЯ</span></div>
     <section className="guest-info-hero">
       <span className="guest-info-overline">TRAKSOS · ДОКУМЕНТЫ</span>
