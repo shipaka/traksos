@@ -76,6 +76,22 @@
  .owner20-bottom-why li::marker{color:var(--orange)}
  .owner20-store{position:absolute;bottom:15px;left:15px;color:#bbcbd1;font-size:12px}
  .owner20-disclaimer{font-size:10px;color:#9aafb9;text-align:center;margin:10px 2% 20px}
+ /* Reuse the existing legal footer BELOW the final 617 composition.
+    No overlay, extra header, legacy sidebar, or change to any approved tile. */
+ .guest-home-standalone > .site-footer{
+   box-sizing:border-box;width:100%;max-width:1800px;margin:0 auto;
+   padding:22px clamp(20px,3vw,48px) 26px;
+   background:#071923;border-top:1px solid #324852;
+   color:#d9e6ea;
+ }
+ .guest-home-standalone > .site-footer .note,
+ .guest-home-standalone > .site-footer a{color:#d9e6ea!important}
+ .guest-home-standalone > .site-footer .site-footer-about{
+   font-weight:650;letter-spacing:.01em;color:#fff!important
+ }
+ .guest-home-standalone > .site-footer a:hover{color:#ff9e61!important;text-decoration:underline}
+ .guest-home-standalone > .site-footer .row{display:flex;flex-wrap:wrap;gap:12px}
+
 }
 @media(min-width:900px) and (max-width:1270px){
  .owner20-top{gap:12px;padding:0 18px}
