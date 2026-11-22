@@ -138,7 +138,8 @@ try{
         // secondary destinations while authenticated to catch old forms,
         // wrong roles, empty screens and links to retired frontend sources.
         // Include 1440px desktop inner routes: prior scans only checked desktop workspaces.
-        if(width===390 || width===960 || width===1440){
+        if(width===390 || width===960 || width===1440 ||
+           (width===320 && ['client','inspection'].includes(role))){
           const destinations={
             client:['#/sos','#/orders','#/garage','#/menu'],
             owner:['#/garage','#/orders','#/menu'],
@@ -186,7 +187,7 @@ try{
             // Horizontal overflow of the document does NOT reveal individually
             // clipped actions inside a scrollable rail. Verify all 3 role links
             // remain on-screen in the *real* 390px sandbox browser.
-            if(width===390 && destination!=='#/menu'){
+            if(width<=390 && destination!=='#/menu'){
               const quick=page.locator('.desktop-content > .tr-inner-rail .tr-inner-rail-tools nav');
               if(await quick.count()){
                 const geometry=await quick.evaluate(node=>{

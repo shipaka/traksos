@@ -734,6 +734,16 @@ for (const oldPath of ['web/src/screens/servicePreview.tsx','web/src/demo/servic
   try { await stat(oldPath); remains=true; } catch { /* physical removal required */ }
   expect(!remains, 'retired STO preview source must be deleted: '+oldPath);
 }
+// Release regression gate: never allow a horizontally clipped role-action
+// carousel on the 320/390px 618 browser inner pages, or display a customer
+// insurance application through a performer's direct URL.
+const approvedInnerCss = await read('web/src/approvedInnerExperience.css');
+expect(approvedInnerCss.includes('grid-template-columns:repeat(3,minmax(0,1fr))') &&
+  !approvedInnerCss.includes('display:flex;flex-flow:row nowrap;gap:7px;overflow-x:auto;scrollbar-width:none;'),
+  'all three approved quick actions remain visible on mobile browser secondary screens');
+expect(unifiedShell.includes('Заявку на страхование создаёт только клиент') &&
+  unifiedShell.includes('isCustomer ? <InsuranceApplication'),
+  'unauthorized roles cannot open the client insurance application shell');
 const pcSource=await read('web/src/screens/approvedPcCabinets20261120.tsx');
 const pcCss=await read('web/src/approvedPcCabinets20261120.css');
 const courierPcCss=await read('web/src/screens/approvedPcCourier20261120.css');
