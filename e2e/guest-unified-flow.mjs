@@ -62,7 +62,7 @@ try {
     await page.waitForURL('**/#/register');
     const signup=page.getByRole('dialog',{name:'Регистрация в TrakSOS'});
     await signup.waitFor();
-    if((await signup.locator('input[type=tel]').inputValue()).replace(/\\D/g,'')!=='79991112233')
+    if((await signup.locator('input[type=tel]').inputValue()).replace(/\D/g,'')!=='79991112233')
       throw Error(width+': login → registration lost the phone field');
     if(!await home.isVisible())throw Error(width+': signup left approved homepage');
     await signup.getByRole('button',{name:'Владелец / автопарк'}).waitFor();
