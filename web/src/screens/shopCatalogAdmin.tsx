@@ -1,20 +1,56 @@
 // Catalog ingestion is separate from sellable products: never invent prices.
-import { useEffect, useState } from 'react';
-import { get, post } from '../api.ts';
-import { useLoad, useAction, Loading } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, getToken } from '../api.ts';
+import { useLoad, useAction, useMe, Loading } from '../ui.tsx';
 import { parseCatalogCsv, type CatalogCsvRow } from '../catalogCsv.ts';
 
+type CatalogPreview = { newRows: number; existingRows: number; processed: number; revision: number; actorId: string; token: string };
 export function AdminShopCatalog() {
-  const config = useLoad(() => get('/api/shop?light=1'), []);
-  const stats = useLoad(() => get('/api/admin/shop/catalog/stats'), []);
+  const { me } = useMe();
+  const config = useLoad(() => get('/api/shop?light=1'), [me?.id]);
+  const stats = useLoad(() => get('/api/admin/shop/catalog/stats'), [me?.id]);
   const [sourceNote, setSourceNote] = useState('');
   const [rights, setRights] = useState(false);
   const [rows, setRows] = useState<CatalogCsvRow[]>([]);
   const [fileError, setFileError] = useState('');
-  const [preview, setPreview] = useState<{ newRows: number; existingRows: number; processed: number } | null>(null);
+  const [preview, setPreview] = useState<CatalogPreview | null>(null);
   const [progress, setProgress] = useState('');
   const [revision, setRevision] = useState(0);
   const { busy, run } = useAction();
+  const fileReadId = useRef(0);
+  const formRevision = useRef(0);
+  const requestBusy = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const currentUserId = useRef(me?.id);
+  currentUserId.current = me?.id;
+  const invalidate = () => {
+    ++formRevision.current;
+    setPreview(null);
+    setProgress('');
+  };
+  const sameSession = (actor: string, token: string, rev: number) =>
+    currentUserId.current === actor && getToken() === token && formRevision.current === rev;
+  useEffect(() => {
+    // Do not reuse another administrator's CSV, provenance or approval.
+    ++fileReadId.current;
+    invalidate();
+    setRows([]); setRights(false); setSourceNote(''); setFileError('');
+    if (inputRef.current) inputRef.current.value = '';
+  }, [me?.id]);
+  useEffect(() => {
+    const reset = () => {
+      ++fileReadId.current;
+      invalidate();
+      setRows([]); setRights(false); setSourceNote(''); setFileError('');
+      if (inputRef.current) inputRef.current.value = '';
+    };
+    window.addEventListener('traksos-auth-external-change', reset);
+    window.addEventListener('traksos-auth-expired', reset);
+    return () => {
+      window.removeEventListener('traksos-auth-external-change', reset);
+      window.removeEventListener('traksos-auth-expired', reset);
+    };
+  }, []);
 
   const [state, setState] = useState('pending');
   const [query, setQuery] = useState('');
@@ -26,7 +62,7 @@ export function AdminShopCatalog() {
   }, [query]);
   const list = useLoad(() => get(
     `/api/admin/shop/catalog?state=${encodeURIComponent(state)}&q=${encodeURIComponent(debounced)}&page=${page}`
-  ), [state, debounced, page, revision]);
+  ), [state, debounced, page, revision, me?.id]);
 
   async function loadFile(file: File | undefined) {
     setPreview(null); setProgress(''); setFileError(''); setRows([]);
