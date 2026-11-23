@@ -11,6 +11,11 @@ import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
 
 export function SupportList() {
   const { me } = useMe();
+  return <SupportListSession key={me?.id ?? 'guest'} />;
+}
+
+function SupportListSession() {
+  const { me } = useMe();
   // Scope tickets to the authenticated account even when the route survives a
   // fast logout/login; never show the previous user's cached conversation list.
   const list = useLoad(() => get('/api/support'), [me?.id], (e) => e.type === 'support');
@@ -38,7 +43,13 @@ export function SupportList() {
 }
 
 export function SupportNew() {
+  const { me } = useMe();
   const orderId = new URLSearchParams(location.hash.split('?')[1] ?? '').get('order') ?? undefined;
+  // Never carry a previous account's support draft into another identity.
+  return <SupportNewSession key={(me?.id ?? 'guest') + ':' + (orderId ?? '')} orderId={orderId} />;
+}
+
+function SupportNewSession({ orderId }: { orderId?: string }) {
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
   // Backend deduplicates order-linked tickets, but not standalone requests.
@@ -77,13 +88,26 @@ export function SupportNew() {
 
 export function SupportThread({ id }: { id: string }) {
   const { me, mode } = useMe();
+  // Old GET/POST and sensitive drafts remain in an unmounted session only.
+  return <SupportThreadSession key={(me?.id ?? 'guest') + ':' + mode + ':' + id} id={id} />;
+}
+
+function SupportThreadSession({ id }: { id: string }) {
+  const { me, mode } = useMe();
   const th = useLoad(() => get(`/api/support/${id}`), [id], (e) => e.type === 'support' && e.ticketId === id);
   const { busy, run } = useAction();
   const [text, setText] = useState('');
+  const sendingRef = useRef(false);
+  const closingRef = useRef(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [th.data?.messages.length]);
-  useEffect(() => onEvent((e) => { if (e.type === 'support' && e.ticketId === id) th.reload(); }), [id]); // eslint-disable-line
-  if (!th.data) return <main><Back to="support" /><Loading error={th.error} /></main>;
+  // useLoad already owns the matching support event subscription. A second
+  // subscription used to launch two competing GETs for each single event.
+  if (!th.data) return <main><Back to="support" /><div className="stack">
+    <Loading error={th.error} />
+    {th.error && <button type="button" className="btn ghost small"
+      onClick={() => void th.reload()}>Повторить загрузку переписки</button>}
+  </div></main>;
   const t = th.data;
   const staff = mode === 'admin' || mode === 'moderator';
   const backTo = mode === 'moderator' ? 'moderation/support' : staff ? 'admin' : 'support';
@@ -125,15 +149,31 @@ export function SupportThread({ id }: { id: string }) {
         {t.status === 'open' && (
           <form className="compose" onSubmit={async (e) => {
             e.preventDefault();
-            if (await run(() => post(`/api/support/${id}/messages`, { body: text }), null)) { setText(''); th.reload(); }
+            if (sendingRef.current || closingRef.current || busy || !text.trim()) return;
+            sendingRef.current = true;
+            try {
+              const posted = await run(() => post(`/api/support/${id}/messages`, { body: text }), null);
+              if (posted) {
+                setText('');
+                void th.reload();
+              }
+              // On an uncertain timeout the original draft remains visible;
+              // never auto-POST the same message a second time.
+            } finally { sendingRef.current = false; }
           }}>
-            <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} />
-            <button className="btn small" disabled={busy || !text.trim()}>➤</button>
+            <input className="field" aria-label="Сообщение поддержке" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} />
+            <button type="submit" className="btn small" disabled={busy || !text.trim()}>➤</button>
           </form>
         )}
       </div>
-      {t.status === 'open' && <button className="btn ghost" disabled={busy} onClick={() => run(() => post(`/api/support/${id}/close`), 'Обращение закрыто').then((r) => r && th.reload())}>
-        {staff ? 'Закрыть обращение' : 'Вопрос решён — закрыть'}</button>}
+      {t.status === 'open' && <button type="button" className="btn ghost" disabled={busy} onClick={async () => {
+        if (closingRef.current || sendingRef.current || busy) return;
+        closingRef.current = true;
+        try {
+          const closed = await run(() => post(`/api/support/${id}/close`), 'Обращение закрыто');
+          if (closed) void th.reload();
+        } finally { closingRef.current = false; }
+      }}>{staff ? 'Закрыть обращение' : 'Вопрос решён — закрыть'}</button>}
       {t.status === 'closed' && <button className="btn" onClick={() => go(t.order ? `support/new?order=${t.order.id}` : 'support/new')}>Новое обращение</button>}
     </main>
   );
@@ -142,14 +182,25 @@ export function SupportThread({ id }: { id: string }) {
 /** Очередь обращений для сотрудников */
 export function SupportQueue() {
   const { me } = useMe();
+  return <SupportQueueSession key={me?.id ?? 'guest'} />;
+}
+
+function SupportQueueSession() {
   const [status, setStatus] = useState<'open' | 'closed'>('open');
-  const q = useLoad(() => get(`/api/admin/support?status=${status}`), [status, me?.id], (e) => e.type === 'support');
+  return <div className="stack">
+    <div className="grid2">
+      <button type="button" className="seg" aria-pressed={status === 'open'} onClick={() => setStatus('open')}>Открытые</button>
+      <button type="button" className="seg" aria-pressed={status === 'closed'} onClick={() => setStatus('closed')}>Закрытые</button>
+    </div>
+    <SupportQueueResults key={status} status={status}/>
+  </div>;
+}
+
+function SupportQueueResults({ status }: { status: 'open' | 'closed' }) {
+  // Remount immediately on a filter change: stale GET cannot paint the other tab.
+  const q = useLoad(() => get(`/api/admin/support?status=${status}`), [status], (e) => e.type === 'support');
   return (
-    <div className="stack">
-      <div className="grid2">
-        <button type="button" className="seg" aria-pressed={status === 'open'} onClick={() => setStatus('open')}>Открытые</button>
-        <button type="button" className="seg" aria-pressed={status === 'closed'} onClick={() => setStatus('closed')}>Закрытые</button>
-      </div>
+    <>
       {!q.data ? <div className="stack">
         <Loading error={q.error} />
         {q.error && <button type="button" className="btn ghost small" onClick={() => void q.reload()}>Повторить загрузку очереди</button>}
@@ -164,7 +215,7 @@ export function SupportQueue() {
           </a>
         ))}</div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -201,6 +252,11 @@ export function useUnread() {
 }
 
 export function Notifications() {
+  const { me } = useMe();
+  return <NotificationsSession key={me?.id ?? 'guest'} />;
+}
+
+function NotificationsSession() {
   const { me } = useMe();
   const list = useLoad(() => get('/api/me/notifications'), [me?.id]);
   const [readError,setReadError]=useState('');
