@@ -90,6 +90,7 @@ jobs:
           node e2e/native-guest-layout.mjs
           node e2e/trakbot-android-compact.mjs
           node e2e/public-service-routing.mjs
+           node e2e/legacy-guest-deeplinks.mjs
           node e2e/api-session-race.mjs
           # Sign-in, client registration and partner onboarding must stay above the approved public page.
           node e2e/auth-overlay.mjs
