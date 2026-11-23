@@ -37,6 +37,18 @@
   text-align:center; white-space:normal; overflow-wrap:anywhere;
   font-size:14px; line-height:1.35;
 }
+/* 617 PC and 618 mobile must use the same TrakSOS orange primary
+   action. Scoped !important only defeats legacy mobile .btn pink overrides;
+   no other routes, cards or approved photo are affected. */
+.traksos-no-performer .traksos-no-performer-actions button.btn:not(.ghost) {
+  background:linear-gradient(110deg,#fa6817,#ff9626)!important;
+  border:1px solid #ffb56b!important;
+  color:#fff!important;
+  box-shadow:0 5px 13px #f46d2155;
+}
+.traksos-no-performer .traksos-no-performer-actions button.btn:not(.ghost):not(:disabled):hover {
+  filter:brightness(1.1);
+}
 .traksos-no-performer-actions :is(a,button):focus-visible {
   outline:2px solid #ffc18a; outline-offset:2px;
 }
