@@ -166,30 +166,43 @@ export class ShopService {
   async setSupplierRef(actor: AuthUser, productId: string, input: {
     article: string; brand?: string | null; sourceNote?: string | null; verified?: boolean;
   }) {
-    const product = await this.db.one<{ id: string }>('select id from shop_products where id=$1', [productId]);
-    if (!product) throw notFound('Товар не найден');
     const source = input.sourceNote?.trim() || null;
     if (input.verified && (!source || source.length < 3))
       throw bad('need_source', 'Для подтверждения артикула укажите источник сверки');
-    await this.db.query(
-      `insert into shop_supplier_refs(product_id, supplier_article, supplier_brand, source_note, verified, updated_by)
-       values ($1,$2,$3,$4,$5,$6)
-       on conflict(product_id) do update set
-         supplier_article=excluded.supplier_article, supplier_brand=excluded.supplier_brand,
-         source_note=excluded.source_note, verified=excluded.verified,
-         updated_by=excluded.updated_by, updated_at=now()`,
-      [productId, input.article.trim(), input.brand?.trim() || null, source, !!input.verified, actor.id]);
-    await this.db.query(
-      'insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-      [actor.id, 'shop.supplier_ref_set', productId, { supplier: 'autokontinent', verified: !!input.verified }]);
-    return this.supplierRef(productId);
+    return this.db.tx(async(q)=>{
+      // Lock the product to prevent concurrent hide/remove from splitting
+      // a supplier mapping from its audited modification.
+      const product=await q.one<{id:string}>(
+        'select id from shop_products where id=$1 for update',[productId]);
+      if(!product)throw notFound('Товар не найден');
+      const row=await q.one<any>(
+        `insert into shop_supplier_refs(product_id, supplier_article, supplier_brand, source_note, verified, updated_by)
+         values ($1,$2,$3,$4,$5,$6)
+         on conflict(product_id) do update set
+           supplier_article=excluded.supplier_article, supplier_brand=excluded.supplier_brand,
+           source_note=excluded.source_note, verified=excluded.verified,
+           updated_by=excluded.updated_by, updated_at=now()
+         returning supplier_article,supplier_brand,source_note,verified,updated_at`,
+        [productId,input.article.trim(),input.brand?.trim()||null,source,!!input.verified,actor.id]);
+      await q.query(
+        'insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id,'shop.supplier_ref_set',productId,
+          {supplier:'autokontinent',verified:!!input.verified}]);
+      return {
+        supplier:'autokontinent',article:row.supplier_article,
+        brand:row.supplier_brand,sourceNote:row.source_note,
+        verified:!!row.verified,updatedAt:row.updated_at,connected:false,
+      };
+    });
   }
 
   async clearSupplierRef(actor: AuthUser, productId: string) {
-    await this.db.query('delete from shop_supplier_refs where product_id=$1', [productId]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-      [actor.id, 'shop.supplier_ref_clear', productId, { supplier: 'autokontinent' }]);
-    return { ok: true };
+    return this.db.tx(async(q)=>{
+      await q.query('delete from shop_supplier_refs where product_id=$1',[productId]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id,'shop.supplier_ref_clear',productId,{supplier:'autokontinent'}]);
+      return {ok:true};
+    });
   }
 
   async supplierStatus() {
