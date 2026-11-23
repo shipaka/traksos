@@ -631,5 +631,8 @@ function useRinging() {
 function Nearby() {
   const n = useLoad(() => get('/api/performer/nearby'), [], (e) => e.type === 'order' || e.type === 'auction');
   if (!n.data) return null;
+  if (n.data.locationKnown === false) return <span className="note">
+    Нет подтверждённых координат. Пока нельзя определить заявки и свободных коллег рядом — проверьте геолокацию.
+  </span>;
   return <span className="note">{n.data.openNearby ? `${n.data.openNearby} открыт${n.data.openNearby === 1 ? 'ая заявка' : 'ых заявок'} рядом` : 'Открытых заявок рядом нет'} · {n.data.ahead ? `${n.data.ahead} свободн${n.data.ahead === 1 ? 'ый коллега ближе' : 'ых коллег ближе'} вас` : 'вы ближе всех свободных'}</span>;
 }
