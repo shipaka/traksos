@@ -60,10 +60,14 @@ export class OnsiteService {
 
   /** Совпала ли подсказка мастера по телефону — для его точности, без штрафов */
   async hintCheck(user: AuthUser, orderId: string, result: 'yes' | 'part' | 'no') {
-    const o = await this.mine(user, orderId);
-    if (!o.consult_of) throw bad('no_hint', 'В этой заявке не было консультации');
-    await this.db.query('update orders set hint_check=$2 where id=$1', [orderId, result]);
-    await this.orders.event(this.db, orderId, user.id, 'hint_checked', { result });
+    await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!o.consult_of)throw bad('no_hint','В этой заявке не было консультации');
+      await q.query('update orders set hint_check=$2 where id=$1',[orderId,result]);
+      await this.orders.event(q,orderId,user.id,'hint_checked',{result});
+    });
     return this.orders.view(user, orderId);
   }
 
