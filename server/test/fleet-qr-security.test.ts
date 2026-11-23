@@ -185,3 +185,21 @@ test('revoke and join racing for the same code cannot resurrect a revoked assign
   assert.equal((await state(driver.id))?.owner_id,null);
   assert.equal((await t.api('POST','/api/qr/'+qr+'/join',{},driver.token)).status,404);
 });
+
+test('fleet rules are visible only while the driver has a live assigned vehicle', async () => {
+  const owner=await t.login(phone(1700));
+  const driver=await t.login(phone(1701),'driver');
+  const vehicle=ok(await t.api('POST','/api/vehicles',car(81),owner.token));
+  const qr=(await fleet(owner,vehicle.id)).qrCode;
+  // Legacy broken release: owner_id remained after the last vehicle was revoked.
+  await t.db.query('update users set owner_id=$2 where id=$1',[driver.id,owner.id]);
+  const stale=await t.api('GET','/api/fleet/rules',undefined,driver.token);
+  assert.equal(stale.status,200);
+  assert.equal(stale.body,null,'stale owner_id alone must not expose another fleet settings');
+  ok(await t.api('POST','/api/qr/'+qr+'/join',{},driver.token));
+  const linked=ok(await t.api('GET','/api/fleet/rules',undefined,driver.token));
+  assert.equal(linked.mode,'limit');
+  ok(await t.api('POST',`/api/fleet/vehicles/${vehicle.id}/new-qr`,{},owner.token));
+  const revoked=await t.api('GET','/api/fleet/rules',undefined,driver.token);
+  assert.equal(revoked.body,null);
+});
