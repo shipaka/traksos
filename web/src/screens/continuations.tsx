@@ -1,6 +1,7 @@
-import {useState} from 'react';
+import {useRef,useState} from 'react';
 import {get,post,fmtTime} from '../api.ts';
-import {useAction,useLoad,useMe} from '../ui.tsx';
+import {useAction,useMe} from '../ui.tsx';
+import {usePrivateRead} from './privateRead20261124.ts';
 
 const titles:Record<string,string> = {
  tow:'Эвакуатор',sto:'СТО',master:'Выездной мастер',ecu:'Ремонт ЭБУ',
@@ -13,21 +14,50 @@ const titles:Record<string,string> = {
  */
 export function OrderContinuations({order:o}:{order:any}) {
  const {me}=useMe();
- const recs=useLoad<any[]>(()=>get('/api/orders/'+o.id+'/continuations'),[o.id],
-  e=>e.orderId===o.id && e.type==='order');
+ const scope=(me?.id??'guest')+':'+o.id;
+ const scopeRef=useRef(scope);
+ scopeRef.current=scope;
+ const actionRef=useRef(false);
+ const recs=usePrivateRead<any[]>(()=>me
+   ? get('/api/orders/'+o.id+'/continuations') : Promise.resolve([]),
+   scope, e=>e.orderId===o.id && e.type==='order');
  const {busy,run}=useAction();
- const [target,setTarget]=useState<'tow'|'sto'|'master'|'ecu'>(o.service==='consult'?'master':o.service==='tow'?'sto':'tow');
- const [reason,setReason]=useState('');
+ const targets=o.service==='consult'?['master','tow','sto','ecu']
+  :o.service==='tow'?['sto']:['tow','sto','ecu'];
+ type Target='tow'|'sto'|'master'|'ecu';
+ const initialTarget=(o.service==='consult'?'master':o.service==='tow'?'sto':'tow') as Target;
+ // An order/account switch invalidates BOTH the fetched private list and the
+ // local recommendation draft, even before React effects have run.
+ const [draft,setDraft]=useState<{scope:string;target:Target;reason:string}>({
+  scope,target:initialTarget,reason:'',
+ });
+ const target:Target=draft.scope===scope && targets.includes(draft.target)
+  ? draft.target : initialTarget;
+ const reason=draft.scope===scope?draft.reason:'';
+ const setTarget=(next:Target)=>setDraft({scope,target:next,reason});
+ const setReason=(next:string)=>setDraft({scope,target,reason:next});
+ const submit=async(request:()=>Promise<any>,message:string,onSuccess?:()=>void)=>{
+  if(actionRef.current||!me)return;
+  actionRef.current=true;
+  const initiatedUnder=scope;
+  try{
+   const result=await run(request,message);
+   // A response for account/order A may not clear B's draft or reload B's
+   // private resource. Backend writes are authorized independently.
+   if(result && scopeRef.current===initiatedUnder){
+    onSuccess?.();
+    void recs.reload();
+   }
+  }finally{actionRef.current=false;}
+ };
  const isPerformer=o.you==='performer';
  const client=o.you==='client';
- const owner=client&&!me?.owner_id;
+ const owner=client && !!me && !me.owner_id;
  const canSuggest=isPerformer && (
   ['arrived','working','awaiting_confirmation','completed'].includes(o.status) ||
   (o.service==='tow' && ['accepted','en_route'].includes(o.status))
  );
- const targets=o.service==='consult'?['master','tow','sto','ecu']
-  :o.service==='tow'?['sto']:['tow','sto','ecu'];
- if(!client&&!isPerformer||!targets.length)return null;
+ if(!me||(!client&&!isPerformer)||!targets.length)return null;
  const rows=recs.data??[];
  const nextLink=(r:any)=>{
   const suffix='&recommendation='+r.id;
@@ -51,16 +81,18 @@ export function OrderContinuations({order:o}:{order:any}) {
    <textarea className="field" rows={3} maxLength={1000} value={reason}
     placeholder="Заключение: что обнаружили, почему нужен следующий специалист или эвакуация"
     onChange={e=>setReason(e.target.value)}/>
-   <button className="btn ghost small" disabled={busy||reason.trim().length<12||
-      rows.some(r=>r.target_kind===target)}
-    onClick={async()=>{
-     if(await run(()=>post('/api/orders/'+o.id+'/continuations',
-       {target,summary:reason}),'Рекомендация отправлена владельцу')) {
-       setReason('');recs.reload();
-     }
-    }}>Предложить продолжение клиенту</button>
+   <button className="btn ghost small" disabled={busy||actionRef.current||recs.loading||
+      !!recs.error||reason.trim().length<12||rows.some(r=>r.target_kind===target)}
+    onClick={()=>void submit(()=>post('/api/orders/'+o.id+'/continuations',
+       {target,summary:reason}),'Рекомендация отправлена владельцу',()=>setReason(''))}>
+    Предложить продолжение клиенту</button>
   </>}
-  {!recs.data && recs.error && <span className="note">{String(recs.error)}</span>}
+  {recs.loading&&<span role="status" className="note">Загружаю рекомендации…</span>}
+  {recs.error&&<div role="alert" className="stack">
+   <span className="note">Не удалось получить актуальные рекомендации: {String(recs.error)}</span>
+   <button className="btn ghost small" type="button" onClick={()=>void recs.reload()}>
+    Повторить загрузку</button>
+  </div>}
   {rows.map((r:any)=><div className="card flat stack" key={r.id}>
    <div className="between"><b>{titles[r.target_kind]??r.target_kind}</b>
     <span className="pill">{r.next_order_id||r.next_booking_id||r.next_ecu_handoff_id?'Создан следующий этап':
@@ -69,21 +101,20 @@ export function OrderContinuations({order:o}:{order:any}) {
    <p>{r.summary}</p>
    <small className="note">{fmtTime(r.created_at)} · Следующую услугу подтверждает владелец; условия оплаты отдельно</small>
    {owner&&r.status==='pending'&&<div className="row">
-    <button className="btn small" disabled={busy} onClick={async()=>{
-     if(await run(()=>post('/api/orders/'+o.id+'/continuations/'+r.id+'/decision',
-      {approve:true}),'Поиск следующего специалиста разрешён'))recs.reload();
-    }}>Согласовать поиск</button>
-    <button className="btn ghost small" disabled={busy} onClick={async()=>{
-     if(await run(()=>post('/api/orders/'+o.id+'/continuations/'+r.id+'/decision',
-      {approve:false}),'Продолжение отклонено'))recs.reload();
-    }}>Отказаться</button>
+    <button className="btn small" disabled={busy||actionRef.current} onClick={()=>
+      void submit(()=>post('/api/orders/'+o.id+'/continuations/'+r.id+'/decision',
+       {approve:true}),'Поиск следующего специалиста разрешён')}>
+     Согласовать поиск</button>
+    <button className="btn ghost small" disabled={busy||actionRef.current} onClick={()=>
+      void submit(()=>post('/api/orders/'+o.id+'/continuations/'+r.id+'/decision',
+       {approve:false}),'Продолжение отклонено')}>
+     Отказаться</button>
    </div>}
    {owner&&r.status==='approved'&&r.target_kind==='ecu'&&!r.next_ecu_handoff_id&&
-    <button className="btn small" disabled={busy} onClick={async()=>{
-     const created=await run(()=>post('/api/orders/'+o.id+'/ecu-handoff',
-       {summary:r.summary,recommendationId:r.id}), 'Заключение направлено мастерским ЭБУ');
-     if(created)recs.reload();
-    }}>Направить заключение специалистам ЭБУ</button>}
+    <button className="btn small" disabled={busy||actionRef.current} onClick={()=>
+      void submit(()=>post('/api/orders/'+o.id+'/ecu-handoff',
+       {summary:r.summary,recommendationId:r.id}),'Заключение направлено мастерским ЭБУ')}>
+     Направить заключение специалистам ЭБУ</button>}
    {r.next_ecu_handoff_id&&<a className="btn ghost small"
      href={'#/ecu-handoff/'+r.next_ecu_handoff_id}>Открыть предложения диагностики ЭБУ</a>}
    {owner&&r.status==='approved'&&r.target_kind!=='ecu'&&!r.next_order_id&&!r.next_booking_id&&
