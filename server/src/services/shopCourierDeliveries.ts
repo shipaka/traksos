@@ -66,8 +66,12 @@ export class ShopCourierDeliveries {
       const courier=await q.one<{id:string}>(
         `select id from users where id=$1 and 'courier'=any(roles) and status='active'`,[courierId]);
       if(!courier)throw bad('invalid_courier','Выберите активного курьера TrakSOS');
-      const old=await q.one<{id:string;status:Stage}>(
-        'select id,status from shop_courier_deliveries where shop_order_id=$1 for update',[orderId]);
+      const old=await q.one<{id:string;status:Stage;courier_id:string}>(
+        'select id,status,courier_id from shop_courier_deliveries where shop_order_id=$1 for update',[orderId]);
+      // A dropped/retried HTTP response is not a new assignment. In particular
+      // it must not rotate an unexpired secret or send a second job alert.
+      if(old?.courier_id===courierId && old.status==='assigned')
+        return {id:old.id,status:old.status,changed:false,previousCourierId:null};
       if(old&&old.status!=='assigned')
         throw conflict('already_in_progress','Маршрут уже начат. Для изменения курьера требуется отдельное разбирательство.');
       const d=old
@@ -79,12 +83,22 @@ export class ShopCourierDeliveries {
             (shop_order_id,courier_id,assigned_by) values ($1,$2,$3) returning *`,
             [orderId,courierId,actor.id]);
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
-        [actor.id,'courier.assign',d.id,{shopOrderId:orderId,courierId}]);
-      return d;
+        [actor.id,'courier.assign',d.id,{shopOrderId:orderId,courierId,
+          previousCourierId:old?.courier_id??null}]);
+      return {id:d.id,status:d.status,changed:true,previousCourierId:old?.courier_id??null};
     });
-    await this.notify.notify([courierId],{type:'shop',shopOrderId:orderId},
-      {kind:'normal',title:'Назначена доставка запчастей',
-       body:'Откройте новый рейс в кабинете курьера',data:{shopOrderId:orderId}});
+    if(row.changed) {
+      // The old courier loses access immediately on reassignment. A separate
+      // private alert prevents a stale job from remaining on their phone.
+      if(row.previousCourierId)await this.notify.notify([row.previousCourierId],
+        {type:'shop',shopOrderId:orderId},
+        {kind:'normal',title:'Назначение доставки изменено',
+         body:'Заказ снят с вашего маршрута. Обновите список заданий.',
+         data:{shopOrderId:orderId}}).catch(e=>console.warn('[courier-reassignment-alert]',e));
+      await this.notify.notify([courierId],{type:'shop',shopOrderId:orderId},
+        {kind:'normal',title:'Назначена доставка запчастей',
+         body:'Откройте новый рейс в кабинете курьера',data:{shopOrderId:orderId}});
+    }
     return {id:row.id,shopOrderId:orderId,status:row.status};
   }
   async list(courier:AuthUser){
@@ -118,6 +132,9 @@ export class ShopCourierDeliveries {
         throw conflict('invalid_stage','Нельзя пропускать или откатывать этапы доставки');
       if(d.shop_status==='cancelled'||d.shop_status==='done')
         throw conflict('order_closed','Заказ магазина уже закрыт');
+      if((d.status==='assigned'&&d.shop_status!=='ready')||
+         (d.status!=='assigned'&&d.shop_status!=='shipped'))
+        throw conflict('courier_order_state','Заказ магазина не соответствует этапу доставки');
       const row=await q.one<any>(
         'update shop_courier_deliveries set status=$2,updated_at=now() where id=$1 returning *',
         [id,status]);
