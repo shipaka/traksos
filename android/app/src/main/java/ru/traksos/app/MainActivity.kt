@@ -198,6 +198,11 @@ class MainActivity : AppCompatActivity() {
             .setDomain(Uri.parse(Session.server(this)).host ?: "traksos.ru")
             .addPathHandler("/", BundledWeb(this))
             .build()
+        // CI needs the actual installed WebView's DOM on Android 15 because
+        // that emulator's system UIAutomator can hang and drop ADB. Expose the
+        // localhost DevTools socket ONLY in unsigned debug builds; release
+        // builds and production accounts must never enable remote inspection.
+        if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
         web = WebView(this)
         // Legacy Android 10 Google-API system images can carry Chromium WebView 74.
         // On a headless/software GPU its hardware-backed surface may stay blank,
