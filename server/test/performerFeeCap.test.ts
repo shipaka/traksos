@@ -33,11 +33,13 @@ const largeOrder = {
 
 test('worker-facing breakdown caps both 5% sides at 5000 RUB on expensive repairs', async () => {
   const breakdown = await createOrders().moneyForViewer(largeOrder, 'performer');
+  assert.ok('commission' in breakdown && 'payout' in breakdown && 'commissionPct' in breakdown);
   assert.equal(breakdown.amount, 30_000_000);
   assert.equal(breakdown.commissionPct, 5);
   assert.equal(breakdown.commission, 500_000, 'worker commission must never exceed 5000 RUB');
   assert.equal(breakdown.payout, 29_500_000);
   const customer = await createOrders().moneyForViewer(largeOrder, 'client');
+  assert.ok('clientFee' in customer);
   assert.equal(customer.clientFee, 500_000, 'client service fee retains its independent cap');
   assert.equal(customer.total, 30_500_000);
 });
@@ -46,9 +48,11 @@ test('a zero-fee campaign and a priority worker still have no worker commission'
   const zero = await createOrders().moneyForViewer({
     ...largeOrder, commission_pct_override: 0,
   }, 'performer');
+  assert.ok('commission' in zero && 'payout' in zero);
   assert.equal(zero.commission, 0);
   assert.equal(zero.payout, largeOrder.call_out_amount);
   const priority = await createOrders(true).moneyForViewer(largeOrder, 'performer');
+  assert.ok('commission' in priority && 'payout' in priority);
   assert.equal(priority.commission, 0);
   assert.equal(priority.payout, largeOrder.call_out_amount);
 });
@@ -59,6 +63,7 @@ test('a low percentage is retained, with a cap only when the computed amount exc
     call_out_amount: 1_000_000, // 10 000 ₽
     commission_pct_override: 2.5,
   }, 'performer');
+  assert.ok('commission' in small && 'payout' in small && 'commissionPct' in small);
   assert.equal(small.commissionPct, 2.5);
   assert.equal(small.commission, 25_000); // 250 ₽
   assert.equal(small.payout, 975_000);
@@ -66,6 +71,7 @@ test('a low percentage is retained, with a cap only when the computed amount exc
     ...largeOrder,
     commission_pct_override: 2.5,
   }, 'performer');
+  assert.ok('commission' in large && 'payout' in large);
   assert.equal(large.commission, 500_000);
   assert.equal(large.payout, 29_500_000);
 });
