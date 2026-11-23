@@ -118,6 +118,17 @@ try {
   }, moderator.token);
   await page.goto(BASE+'/#/moderation');
   await page.getByRole('heading',{name:'Модерация'}).waitFor();
+  // Real 390px Android/phone UI: four clickable action tiles, not four more
+  // duplicated tab chips below them. Preserve the actual verification action.
+  const modTiles=page.locator('.moderator-workspace .moderator-action-grid button');
+  await modTiles.first().waitFor();
+  if(await modTiles.count()!==4)throw Error('Moderator lost one of the four work sections');
+  if(await page.locator('.moderator-workspace > .scroll-x[role="tablist"]').isVisible())
+    throw Error('Moderator mobile displays a second identical control row');
+  const verify=modTiles.filter({hasText:'Проверка мастеров'});
+  await verify.click();
+  if(await verify.getAttribute('aria-pressed')!=='true')
+    throw Error('Moderator verification tile does not open the real section');
   const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
   await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);

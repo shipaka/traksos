@@ -1531,3 +1531,12 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
     pointer-events:auto;
   }
 }
+/* moderator-mobile-duplicate-tabs:
+   Four real action tiles already select the working moderation sections.
+   On 618-sized screens a second row of the SAME four controls was repeated
+   directly underneath and wasted the first viewport. Keep PC tabs intact. */
+@media (max-width:899px) {
+  .app.role-moderator .moderator-workspace > .scroll-x[role="tablist"] {
+    display:none!important;
+  }
+}
