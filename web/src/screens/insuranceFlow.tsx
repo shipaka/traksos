@@ -314,6 +314,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
     if(v)notify();
   };
   const upload=async()=>{
+    const file=pdf;
     if(!futurePolicyExpiry(expiresOn)){
       reportActionError('policy','Укажите корректную будущую дату окончания полиса.',
         '[data-insurance-policy-field="date"]');
@@ -321,8 +322,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
     }
     // Android document pickers may return a PDF with an empty MIME type.
     // The backend verifies the actual %PDF- header; do not accept a known bad MIME.
-    if(!pdf||!(pdf.type==='application/pdf'||(!pdf.type&&/\.pdf$/i.test(pdf.name)))||
-      pdf.size>4*1024*1024||pdf.size<100){
+    if(!file||!(file.type==='application/pdf'||(!file.type&&/\.pdf$/i.test(file.name)))||
+      file.size>4*1024*1024||file.size<100){
       reportActionError('policy','Прикрепите действительный PDF размером от 100 байт до 4 МБ.',
         '[data-insurance-policy-field="file"]');
       return;
@@ -336,10 +337,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
         reader.onload=()=>resolve(String(reader.result));
         reader.onerror=()=>reject(reader.error??new Error('Ошибка чтения PDF'));
         reader.onabort=()=>reject(new Error('Чтение PDF отменено'));
-        reader.readAsDataURL(pdf);
+        reader.readAsDataURL(file);
       });
       return post('/api/insurance/requests/'+requestId+'/policy',{
-        dataUrl,fileName:pdf.name,expiresOn});
+        dataUrl,fileName:file.name,expiresOn});
     },'Готовый PDF отправлен клиенту');
     if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';notify();}
   };
