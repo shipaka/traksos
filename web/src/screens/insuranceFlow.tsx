@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
-import {API_URL,fmtTime,get,getToken,post,rub} from '../api.ts';
+import {authedImage,fmtTime,get,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
 import { INSURANCE_STAGES, insurancePresentation, insuranceStepIndex } from '../insurancePresentation.ts';
 
@@ -28,6 +28,24 @@ const stepLabels:Record<string,string>={
   processing:'Принято в работу · оформление',policy_sent:'Полис отправлен'};
 const insuranceStatus=(key:string|null|undefined)=>stepLabels[key||'']??'На рассмотрении';
 const emptyVehicle=()=>Object.fromEntries(VEHICLE_FIELDS.map(([name])=>[name,''])) as Record<VehicleKey,string>;
+
+// The server accepts integer kopecks, between 1 and 1_000_000_000.
+// Reject scientific notation and extra decimals rather than silently rounding.
+function quoteKopecks(input:string):number {
+  const normalized=input.replace(/[\s\u00a0\u202f]/g,'').replace(',','.');
+  if(!/^\d+(?:\.\d{1,2})?$/.test(normalized))return Number.NaN;
+  const [whole,fraction='']=normalized.split('.');
+  const result=Number(whole)*100+Number(fraction.padEnd(2,'0'));
+  return Number.isSafeInteger(result)&&result>0&&result<=1_000_000_000?result:Number.NaN;
+}
+
+// Match the backend's UTC date contract: real calendar day strictly after today.
+function futurePolicyExpiry(value:string):boolean {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const parsed=new Date(value+'T00:00:00Z');
+  return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===value
+    &&value>new Date().toISOString().slice(0,10);
+}
 
 export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const {me}=useMe();
@@ -124,7 +142,13 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       <p>Выберите агента, проверьте свои данные и сведения о технике. Предложения и готовый полис придут в переписку по этой заявке.</p>
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
-    {(!vehicles.data||!agents.data)?<Loading error={vehicles.error||agents.error}/>:
+    {(!vehicles.data||!agents.data)?<section className="card stack" role="status">
+      <Loading error={vehicles.error||agents.error}/>
+      {(vehicles.error||agents.error)&&<button className="btn ghost" type="button"
+        onClick={()=>{if(!vehicles.data)void vehicles.reload();if(!agents.data)void agents.reload();}}>
+        Повторить загрузку данных
+      </button>}
+    </section>:
     <form ref={formRef} className="stack" onSubmit={submit} noValidate>
       <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
         {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
@@ -239,12 +263,21 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const [expiresOn,setExpiresOn]=useState('');
   const [pdf,setPdf]=useState<File|null>(null);
   const threadRef=useRef<HTMLElement>(null);
+  const policyFileRef=useRef<HTMLInputElement>(null);
   const [actionError,setActionError]=useState<{scope:'offers'|'policy'|'download';message:string}|null>(null);
   const reportActionError=(scope:'offers'|'policy'|'download',message:string,selector?:string)=>{
     setActionError({scope,message});
     if(selector)threadRef.current?.querySelector<HTMLElement>(selector)?.focus();
   };
-  const d=source.data,r=d?.request;
+  // Router may reuse this component for another case: never carry private
+  // message, offer selection or PDF from the previous request.
+  useEffect(()=>{
+    setMessage('');setChatExpanded(false);
+    setDrafts([{company:'',product:'',price:'',description:'',coverage:''}]);
+    setChoice('');setExpiresOn('');setPdf(null);setActionError(null);
+    if(policyFileRef.current)policyFileRef.current.value='';
+  },[requestId]);
+  const d=source.data?.request?.id===requestId?source.data:null,r=d?.request;
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
   const isAgent=!!d?.isPartner;
@@ -266,13 +299,13 @@ export function InsuranceThread({requestId}:{requestId:string}){
   };
   const publish=async()=>{
     const data=drafts.map(o=>({company:o.company.trim(),product:o.product.trim(),
-      premiumKopecks:Math.round(Number(o.price.replace(',','.'))*100),
+      premiumKopecks:quoteKopecks(o.price),
       description:o.description.trim(),coverage:o.coverage.trim()}));
-    const invalid=data.findIndex(o=>!o.company||!o.product||!Number.isFinite(o.premiumKopecks)||o.premiumKopecks<=0);
+    const invalid=data.findIndex(o=>!o.company||!o.product||!Number.isInteger(o.premiumKopecks)||o.premiumKopecks<=0);
     if(invalid!==-1){
       const offer=data[invalid];
       const key=!offer.company?'company':!offer.product?'product':'price';
-      reportActionError('offers','Предложение '+(invalid+1)+': укажите компанию, продукт и положительную стоимость.',
+      reportActionError('offers','Предложение '+(invalid+1)+': укажите компанию, продукт и стоимость от 0,01 до 10 000 000 ₽ (не более двух знаков после запятой).',
         '[data-insurance-offer-field="'+invalid+'-'+key+'"]');
       return;
     }
@@ -281,29 +314,51 @@ export function InsuranceThread({requestId}:{requestId:string}){
     if(v)notify();
   };
   const upload=async()=>{
-    if(!pdf||pdf.type!=='application/pdf'||pdf.size>4*1024*1024||pdf.size<100||!expiresOn){
-      reportActionError('policy','Прикрепите действительный PDF до 4 МБ и укажите дату окончания полиса.',
-        '[data-insurance-policy-field="'+(!expiresOn?'date':'file')+'"]');
+    if(!futurePolicyExpiry(expiresOn)){
+      reportActionError('policy','Укажите корректную будущую дату окончания полиса.',
+        '[data-insurance-policy-field="date"]');
+      return;
+    }
+    // Android document pickers may return a PDF with an empty MIME type.
+    // The backend verifies the actual %PDF- header; do not accept a known bad MIME.
+    if(!pdf||!(pdf.type==='application/pdf'||(!pdf.type&&/\.pdf$/i.test(pdf.name)))||
+      pdf.size>4*1024*1024||pdf.size<100){
+      reportActionError('policy','Прикрепите действительный PDF размером от 100 байт до 4 МБ.',
+        '[data-insurance-policy-field="file"]');
       return;
     }
     setActionError(null);
-    const dataUrl=await new Promise<string>((resolve,reject)=>{
-      const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);
-      reader.readAsDataURL(pdf);
-    });
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/policy',{
-      dataUrl,fileName:pdf.name,expiresOn}),'Готовый PDF отправлен клиенту');
-    if(v){setPdf(null);notify();}
+    const v=await run(async()=>{
+      // A FileReader failure must pass through useAction's error handling.
+      // The selected file remains in place for a manual retry.
+      const dataUrl=await new Promise<string>((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result));
+        reader.onerror=()=>reject(reader.error??new Error('Ошибка чтения PDF'));
+        reader.onabort=()=>reject(new Error('Чтение PDF отменено'));
+        reader.readAsDataURL(pdf);
+      });
+      return post('/api/insurance/requests/'+requestId+'/policy',{
+        dataUrl,fileName:pdf.name,expiresOn});
+    },'Готовый PDF отправлен клиенту');
+    if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';notify();}
   };
   const download=async()=>{
+    setActionError(null);
     try{
-      const response=await fetch(API_URL+'/api/insurance/requests/'+requestId+'/policy',{
-        headers:{authorization:'Bearer '+(getToken()??'')},cache:'no-store'});
-      if(!response.ok)throw new Error('Не удалось получить документ');
-      const url=URL.createObjectURL(await response.blob());
-      const link=document.createElement('a');link.href=url;link.download='insurance-policy.pdf';link.click();
+      // Guarded private-blob transport checks sandbox origin and account
+      // continuity both before and after reading PDF bytes.
+      const url=await authedImage('/api/insurance/requests/'+requestId+'/policy',{
+        allowedMimeTypes:['application/pdf']});
+      const link=document.createElement('a');
+      link.href=url;link.download='insurance-policy.pdf';
+      document.body.append(link);link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),30000);
-    }catch{reportActionError('download','Не удалось скачать PDF. Проверьте интернет и повторите.');}
+    }catch(e){
+      reportActionError('download',e instanceof Error&&e.message.includes('Сессия изменилась')
+        ?'Сессия изменилась. Войдите заново и откройте полис.'
+        :'Не удалось скачать PDF. Проверьте интернет и повторите.');
+    }
   };
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
   return <main ref={threadRef} className="insurance-workflow stack">
@@ -439,7 +494,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
                   data-insurance-offer-field={i+'-'+key}
                   aria-invalid={actionError?.scope==='offers'&&
                     ((!o.company.trim()&&key==='company')||(!o.product.trim()&&key==='product')||
-                    (key==='price'&&!(Number(o.price.replace(',','.'))>0)))||undefined}
+                    (key==='price'&&!Number.isFinite(quoteKopecks(o.price))))||undefined}
                   onChange={e=>{updateDraft(i,key,e.target.value);setActionError(null);}}/></label>)}
               {drafts.length>1&&<button type="button" className="btn ghost small"
                 onClick={()=>setDrafts(old=>old.filter((_,n)=>n!==i))}>Удалить вариант</button>}
@@ -452,8 +507,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <b>Отправить готовый полис</b>
             <p className="note">Оформите полис у страховой компании и прикрепите полученный PDF. Файл до 4 МБ хранится в защищённом виде.</p>
             <label>Дата окончания действия<input type="date" className="field" value={expiresOn}
-              data-insurance-policy-field="date" onChange={e=>{setExpiresOn(e.target.value);setActionError(null);}}/></label>
-            <label>Файл PDF<input type="file" accept="application/pdf,.pdf" className="field"
+              data-insurance-policy-field="date" aria-invalid={actionError?.scope==='policy'&&!futurePolicyExpiry(expiresOn)||undefined} onChange={e=>{setExpiresOn(e.target.value);setActionError(null);}}/></label>
+            <label>Файл PDF<input ref={policyFileRef} type="file" accept="application/pdf,.pdf" className="field"
               data-insurance-policy-field="file" onChange={e=>{setPdf(e.target.files?.[0]??null);setActionError(null);}}/></label>
             <button className="btn" type="button" disabled={busy} onClick={upload}>
               Отправить готовый полис клиенту</button>
