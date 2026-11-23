@@ -36,6 +36,7 @@ def pixel_stats(path):
     previous = bytearray(stride)
     pos = 0
     hist = collections.Counter()
+    upper_hist = collections.Counter()
     pixels = bytearray()
     for y in range(height):
         method = scan[pos]
@@ -61,18 +62,31 @@ def pixel_stats(path):
                 off = x * channels
                 rgb = bytes(curr[off:off + 3])
                 hist[rgb] += 1
+                if y < height // 3:
+                    upper_hist[rgb] += 1
                 pixels.extend(rgb)
         previous = curr
-    return width, height, pixels, len(hist), hist.most_common(1)[0][1] / (len(pixels) // 3)
+    top_dominance = upper_hist.most_common(1)[0][1] / sum(upper_hist.values())
+    return width, height, pixels, len(hist), hist.most_common(1)[0][1] / (len(pixels) // 3), top_dominance
 
 if __name__ == '__main__':
     try:
-        w, h, pixels, distinct, dom = pixel_stats(sys.argv[1])
+        args = sys.argv[1:]
+        reject_splash = '--reject-native-splash' in args
+        if reject_splash:
+            args.remove('--reject-native-splash')
+        w, h, pixels, distinct, dom, upper_dom = pixel_stats(args[0])
         print(f'Android screenshot {w}x{h}: {distinct} sampled colors, largest color {dom:.1%} of app viewport')
         if distinct < 30 or dom > .92:
             raise ValueError('App viewport appears uniform/black; guest UI not visibly rendered')
-        for previous in sys.argv[2:]:
-            pw, ph, other, _, _ = pixel_stats(previous)
+        # The approved native truck splash is full-width solid navy above its
+        # photograph. A WebView-rendered role page has its header and controls
+        # in this region. This gate only delays accessibility inspection;
+        # later checks still require real role text and distinct pixels.
+        if reject_splash and upper_dom > .96:
+            raise ValueError('Native splash is still visibly covering the React workspace')
+        for previous in args[1:]:
+            pw, ph, other, _, _, _ = pixel_stats(previous)
             if (pw, ph) != (w, h):
                 raise ValueError('screen dimensions changed between roles')
             # Ignore system bars and tiny animation/clock changes.
