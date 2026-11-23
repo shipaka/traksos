@@ -85,8 +85,8 @@ test('a real insurance case serializes concurrent agent accept, quotes, customer
       fileName:'test-policy.pdf',expiresOn:'2028-12-31'};
     copies=await race(5,()=>t.api('POST',`/api/insurance/requests/${id}/policy`,policy,agent.token));
     exactlyOneResponse(copies,'policy_sent');
-    const files=await t.db.query<{id:string}>(
-      'select id from insurance_policy_files where request_id=$1',[id]);
+    const files=await t.db.query<{request_id:string}>(
+      'select request_id from insurance_policy_files where request_id=$1',[id]);
     assert.equal(files.length,1,'duplicate PDF storage forbidden');
     assert.equal((await statuses(t,id)).filter(m=>m.kind==='policy').length,1);
     const state=await t.db.one<{status:string;insurance_stage:string}>(
