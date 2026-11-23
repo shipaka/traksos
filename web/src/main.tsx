@@ -193,12 +193,16 @@ function App() {
   const setMode = (m: Mode) => { setModeState(m); localStorageSet('traksos.mode', m); };
 
   const reload = useCallback(async () => {
-    if (!getToken()) {
+    const requestToken = getToken();
+    if (!requestToken) {
       try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
       setMe(null); setReady(true); return;
     }
     try {
       const m = await get<Me>('/api/me');
+      // An old /api/me may finish after logout, expiration or another login.
+      // Never resurrect the previous identity or cache it for offline mode.
+      if (getToken() !== requestToken) return;
       setMe(m);
       // Store only a minimal identity for read-only UI navigation without a network;
       // NEVER persist orders, chat, document images or the user's personal profile.
@@ -211,6 +215,9 @@ function App() {
       if (!localStorageGet('traksos.mode') && m.roles.includes('courier')) setMode('courier');
       else if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
     } catch (error) {
+      // A failed request from a previous session must not clear or overwrite
+      // the current account, including its read-only offline identity.
+      if (getToken() !== requestToken) return;
       if (error instanceof ApiError && error.code === 'network' && getToken()) {
         try {
           const identity = JSON.parse(localStorage.getItem('traksos.offlineIdentity') ?? 'null');
