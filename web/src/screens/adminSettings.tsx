@@ -141,7 +141,7 @@ export function AdminSettings() {
                          return;
                        }
                        setEdit(edit===id?null:id);
-                       setVal(kind==='share'?(typeof cur==='number'?(cur*100).toFixed(2).replace(/\\.?0+$/,''): ''):cur??'');
+                       setVal(kind==='share'?(typeof cur==='number'?String(Number((cur*100).toFixed(2))): ''):cur??'');
                      }}>
                     <span className="stack" style={{ gap: 0 }}><span>{label}</span>{hint && <small className="note">{hint}</small>}</span>
                     <b style={{ whiteSpace: 'nowrap' }}>{show(cur, kind)}</b>
