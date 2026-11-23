@@ -88,7 +88,7 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
-      {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
+      {d.status === 'no_performer' && d.you === 'client' && <Retry id={id} reason={d.absenceReason} onDone={o.reload} />}
 
       {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
       {isPerformer && <ClientCard d={d} />}
@@ -132,7 +132,8 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
       {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} /></section>}
       </>}
 
-      {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
+      {d.you !== 'admin' && d.you !== 'candidate' && !(d.you === 'client' && d.status === 'no_performer') &&
+        <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.status !== 'searching' && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card stack">
         <b>Заявка отменена</b>
@@ -1056,14 +1057,40 @@ function ConsultHintCard({ from, title }: { from: any; title?: string }) {
   );
 }
 
-function Retry({ id, onDone }: { id: string; onDone: () => void }) {
+function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: () => void }) {
   const { busy, run } = useAction();
+  const messages: Record<string, [string, string]> = {
+    not_connected: [
+      'По этому направлению пока нет партнёров',
+      'Мы расширяем сеть TrakSOS и работаем над подключением специалистов по этой услуге.'
+    ],
+    temporarily_unavailable: [
+      'Сейчас нет доступных специалистов',
+      'Подходящие партнёры есть, но сейчас не могут принять вызов.'
+    ],
+    no_response: [
+      'Пока никто не откликнулся',
+      'Поиск завершён без подтверждённого исполнителя.'
+    ],
+    unknown: [
+      'Пока не удалось найти исполнителя',
+      'Поиск завершён. Мы не можем достоверно определить причину отсутствия откликов.'
+    ]
+  };
+  const [heading, description] = messages[reason ?? 'unknown'] ?? messages.unknown;
   return (
-    <div className="card hi">
-      <b>Сейчас никто не взял заявку</b>
-      <span className="note">Все свободные мастера рядом заняты. Можно позвать ещё раз — кто-то мог освободиться.</span>
-      <button className="btn" disabled={busy} onClick={() => run(() => post(`/api/orders/${id}/retry`)).then((r) => r && onDone())}>Искать ещё раз</button>
-    </div>
+    <section className="card hi" aria-label="Результат поиска исполнителя">
+      <b>{heading}</b>
+      <span className="note">{description}</span>
+      <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+        <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy}
+          onClick={() => run(() => post(`/api/orders/${id}/retry`)).then((r) => r && onDone())}>
+          Искать ещё раз
+        </button>
+        <a className="btn ghost" style={{ minHeight: 44 }} href="#/sos">Другая помощь</a>
+        <a className="btn ghost" style={{ minHeight: 44 }} href={`#/support/new?order=${id}`}>Поддержка</a>
+      </div>
+    </section>
   );
 }
 
