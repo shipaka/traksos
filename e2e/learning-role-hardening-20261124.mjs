@@ -43,7 +43,15 @@ try{
   const errors=[];const requests=[];
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>requests.push(r.url()));
-  await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
+  // about:blank is an opaque origin and forbids localStorage. Fulfil one
+  // synthetic secure top-level page in Chromium so actual localStorage and
+  // storage/focus events run without an HTTP server or a production request.
+  const origin='https://training-ui.test';
+  await page.route(origin+'/**',route=>route.fulfill({
+    status:200,contentType:'text/html',
+    body:'<!doctype html><html lang="ru"><body><div id="root"></div></body></html>',
+  }));
+  await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
   await page.addScriptTag({content:bundle.outputFiles[0].text});
   const change=async(patch)=>page.evaluate(patch=>window.__setTraining(patch),patch);
 
