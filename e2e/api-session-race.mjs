@@ -199,6 +199,17 @@ try {
         result.guestImageCode=(await guestImage).code;
         result.guestImageToken=module.getToken();
 
+        // A restricted file from a legitimate session must reject a fake
+        // HTML payload, never turn it into an img blob URL.
+        module.setToken('CI-IMAGE-MIME');
+        const rejectedMime=module.authedImage('/api/private-image',{
+          allowedMimeTypes:['image/jpeg','image/png','image/webp']
+        }).catch(e=>e);
+        pendingImages[4].resolve(new Response(new Blob(['<html>fake-photo</html>'],{
+          type:'text/html'
+        }),{status:200,headers:{'content-type':'text/html'}}));
+        result.invalidImageCode=(await rejectedMime).code;
+
         // The first order failed ambiguously; its request key must remain
         // reusable for THIS account only, not after a different login.
         const orderBody={service:'hydraulics',zoneId:'spb',
@@ -307,6 +318,7 @@ try {
     assert.equal(actual.guestImageAuth,null);
     assert.equal(actual.guestImageCode,'session_changed');
     assert.equal(actual.guestImageToken,'CI-AFTER-GUEST-IMAGE');
+    assert.equal(actual.invalidImageCode,'invalid_image_type');
     assert.equal(actual.lateOrderCode,'session_changed');
     assert.equal(actual.ordersAfterLateFingerprint,0,
       'unfinished old-account form was POSTed as a new user while digesting');

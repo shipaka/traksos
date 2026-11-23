@@ -292,12 +292,15 @@ export function fmtTime(iso: string) {
 }
 
 /** Картинка, которую отдают только с токеном (фото документов) → адрес для <img> */
-export async function authedImage(path: string) {
+export async function authedImage(
+  path: string, options?: { signal?: AbortSignal; allowedMimeTypes?: readonly string[] },
+) {
   assertSandboxOrigin();
   const requestToken = token;
   const r = await fetch(API_URL + path, {
     headers: requestToken ? { authorization: `Bearer ${requestToken}` } : {},
     cache: 'no-store',
+    signal: options?.signal,
   });
   // Private images can finish downloading after sign-out or account switch.
   // Never return old-account document pixels as a reusable blob URL.
@@ -314,6 +317,10 @@ export async function authedImage(path: string) {
   const data = await r.blob();
   if (token !== requestToken)
     throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+  if (options?.signal?.aborted)
+    throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+  if (options?.allowedMimeTypes && !options.allowedMimeTypes.includes(data.type))
+    throw new ApiError(415, 'invalid_image_type', 'Неподдерживаемый формат фотографии');
   return URL.createObjectURL(data);
 }
 

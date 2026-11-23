@@ -5,7 +5,7 @@
  * the server. Debug preview never opens a picker or sends an API request.
  */
 import { useEffect, useRef, useState } from 'react';
-import { API_URL, get, getToken, post } from '../api.ts';
+import { authedImage, get, getToken, post } from '../api.ts';
 import { useLoad, useToast } from '../ui.tsx';
 import { NavGlyph } from '../navGlyph.tsx';
 import './orderPhotos.css';
@@ -77,19 +77,21 @@ function SecurePhoto({orderId,photo}:{orderId:string;photo:PhotoMeta}){
   },[expanded]);
   useEffect(()=>{
     if(!getToken())return;
-    if(sessionStorage.getItem('traksos.sandboxMode')==='1' &&
-       new URL(API_URL||location.origin,location.origin).origin!==location.origin)return;
     const abort=new AbortController();
     let objectUrl='';
-    const url=API_URL+'/api/orders/'+encodeURIComponent(orderId)+
+    const path='/api/orders/'+encodeURIComponent(orderId)+
       '/photos/'+encodeURIComponent(photo.id)+'/file';
-    fetch(url,{headers:{authorization:'Bearer '+getToken()},cache:'no-store',signal:abort.signal})
-      .then(r=>{if(!r.ok)throw new Error('Нет доступа к файлу');return r.blob()})
-      .then(blob=>{
-        if(abort.signal.aborted)return;
-        if(!['image/jpeg','image/png','image/webp'].includes(blob.type))return;
-        objectUrl=URL.createObjectURL(blob);setSrc(objectUrl);
-      }).catch(()=>{});
+    // Use the same sandbox isolation, bearer snapshot and expiry handling
+    // as confidential identity documents. Never show a previous account's
+    // repair photo after a login/logout in another tab.
+    authedImage(path,{
+      signal:abort.signal,
+      allowedMimeTypes:['image/jpeg','image/png','image/webp'],
+    }).then(url=>{
+      if(abort.signal.aborted){URL.revokeObjectURL(url);return;}
+      objectUrl=url;
+      setSrc(url);
+    }).catch(()=>{});
     return ()=>{abort.abort();if(objectUrl)URL.revokeObjectURL(objectUrl)};
   },[orderId,photo.id]);
   return <>
