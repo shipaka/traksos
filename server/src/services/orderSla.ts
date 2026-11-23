@@ -69,12 +69,21 @@ export class OrderSlaService {
       const late=overdueOrderStage(o,now);
       if(!late)continue;
       const {stage,started,due}=late;
-      const recipients=[...new Set([o.client_id,o.created_by,o.performer_id,
-        ...admins.map(a=>a.id)].filter((x):x is string=>!!x))];
+      // The historical creator may have been revoked from this vehicle.
+      // Recipients are captured under the same transaction that stores the
+      // incident and durable inbox, never from an old order.created_by alone.
       const title='Проверьте этап заявки №'+o.number;
       const body=STAGE_NAMES[stage]+': превышен контрольный интервал. Причина требует проверки.';
       const message={kind:'normal' as const,title,body,data:{orderId:o.id}};
       const incident=await this.db.tx(async q=>{
+        const currentDriver=o.created_by!==o.client_id ? await q.one<{id:string}>(
+          `select u.id from orders ord join users u on u.id=$2
+             join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+            where ord.id=$1 and ord.created_by=u.id and ord.client_id=u.owner_id
+              and 'driver'=any(u.roles) and (ord.vehicle_id is null or v.id=ord.vehicle_id)
+            limit 1 for share of v`,[o.id,o.created_by]) : null;
+        const recipients=[...new Set([o.client_id,currentDriver?.id,o.performer_id,
+          ...admins.map(a=>a.id)].filter((x):x is string=>!!x))];
         const inserted=await q.one<{id:string}>(
           'insert into order_sla_incidents(order_id,stage,stage_started_at,due_at,performer_id)' +
           ' select id,$2,$3::timestamptz,$4::timestamptz,performer_id from orders' +
@@ -86,13 +95,13 @@ export class OrderSlaService {
           'insert into notifications(user_id,kind,title,body,data)' +
           ' select id,$2,$3,$4,$5::jsonb from users where id=any($1::uuid[])',
           [recipients,'order_sla',title,body,JSON.stringify({orderId:o.id,incidentId:inserted.id})]);
-        return inserted.id;
+        return {id:inserted.id,recipients};
       });
       if(!incident)continue;
       raised++;
       // Stored alerts survive restart even when WebSocket/push delivery fails.
-      await this.notifier.deliverStored(recipients,
-        {type:'order_sla',orderId:o.id,incidentId:incident,stage},message).catch(e=>
+      await this.notifier.deliverStored(incident.recipients,
+        {type:'order_sla',orderId:o.id,incidentId:incident.id,stage},message).catch(e=>
         console.warn('[order-sla push]',(e as Error).message));
       if(stage==='searching' && !o.auction_until) {
         // Safe one-time recovery of orphaned queue; no financial or status override.
