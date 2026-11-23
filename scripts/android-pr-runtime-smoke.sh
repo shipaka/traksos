@@ -152,6 +152,28 @@ for role in client master; do
     exit 1
   fi
 
+  # A cold API35 launch (used to avoid stale singleTask guest frames) displays
+  # the REAL approved 3.5s native truck splash. DESIGN_REVIEW_RENDERED comes
+  # from the React effect BEFORE that splash is removed. Previously the test
+  # grabbed a photo of the truck splash, then mislabelled it as a stale guest
+  # page and hammered UIAutomator while the emulator was still painting.
+  # Read a NEW splash-dismissed event since logcat -c (not a cached marker).
+  if [ "$sdk_level" -ge 34 ]; then
+    splash_dismissed=0
+    for attempt in $(seq 1 45); do
+      if adb logcat -d -s TrakSOSRuntime:I | grep -Fq 'SPLASH_VISIBLE_MS='; then
+        splash_dismissed=1
+        break
+      fi
+      sleep 1
+    done
+    if [ "$splash_dismissed" -ne 1 ]; then
+      echo "FAIL: fresh native splash never dismissed before Android $sdk_level role=$role"
+      exit 1
+    fi
+    echo "APK_REVIEW_SPLASH_DISMISSED=$role API=$sdk_level" >> runtime-ready.log
+  fi
+
   # A React callback alone does not prove the requested screen is PAINTED:
   # Android 15 previously captured the guest page under the filename
   # android-review-client.png, and the client under android-review-master.png.
