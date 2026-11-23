@@ -384,15 +384,33 @@ function AdminWorkerCommunications({userId}:{userId:string}){
 
 export function WorkerNotices({audience}:{audience?:'service'}) {
   const {me}=useMe();
-  const mode=audience==='service'?'service':me?.roles.includes('tow')?'tow':'master';
-  const list=useLoad(()=>get('/api/worker/announcements?audience='+mode),[mode]);
-  const promos=useLoad(()=>get('/api/worker/commission-campaigns'),[mode]);
-  const specialties = (me?.performer?.specialties??[]) as string[];
+  if(!me?.roles.some(r=>r==='master'||r==='tow'||r==='service'))return null;
+  const mode=audience==='service'?'service':me.roles.includes('tow')?'tow':'master';
+  return <WorkerNoticesScoped key={me.id+':'+mode}
+    userId={me.id} mode={mode} specialties={me.performer?.specialties??[]}/>;
+}
+function WorkerNoticesScoped({userId,mode,specialties}:{
+  userId:string;mode:'service'|'tow'|'master';specialties:string[];
+}) {
+  const list=useOpsRead<any[]>(()=>get('/api/worker/announcements?audience='+mode),
+    'worker-notices:'+userId+':'+mode);
+  const promos=useOpsRead<any[]>(()=>get('/api/worker/commission-campaigns'),
+    'worker-campaigns:'+userId+':'+mode);
   const matching = (service?:string|null) => !service ||
     (mode==='service' ? true : mode==='tow' ? service==='tow' :
       specialties.includes(service) || (service==='ecu' && specialties.includes('electric')));
   const announcements=(list.data??[]).filter((x:any)=>matching(x.service));
   const offers=(promos.data??[]).filter((x:any)=>matching(x.service));
+  // A failed private GET cannot mean there are "no campaigns" and must not
+  // keep a previous account's discount or announcement visible.
+  if(list.error||promos.error)return <div className="card stack" role="alert">
+    <b>Не удалось проверить объявления и действующие акции</b>
+    <span className="note">Проверьте соединение. Актуальная ставка подтверждается в конкретной заявке.</span>
+    <button type="button" className="btn ghost small" onClick={()=>{
+      if(list.error)void list.reload();
+      if(promos.error)void promos.reload();
+    }}>Повторить загрузку</button>
+  </div>;
   if(!announcements.length&&!offers.length)return null;
   return <div className="stack" style={{gap:8}}>
     {offers.map((x:any)=><div key={'campaign-'+x.id} className="card hi">
