@@ -768,7 +768,17 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               }
             }}>
             <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
-            <nav aria-label="Все разделы кабинета">
+            <nav aria-label="Все разделы кабинета"
+              onClick={event=>{
+                // A link may point to the current route, so keyed remounting
+                // alone cannot close native <details>. Close on any real
+                // action, including Help and "show tour", before it obscures
+                // the destination screen. Plain whitespace doesn't dismiss.
+                if((event.target as Element).closest('a,button')){
+                  const menu=event.currentTarget.closest('details');
+                  if(menu)menu.open=false;
+                }
+              }}>
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
