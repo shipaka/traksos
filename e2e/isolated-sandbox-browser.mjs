@@ -28,12 +28,23 @@ try{
       const errors=[];
       page.on('pageerror',error=>errors.push(error.message));
       try{
-        const ticket=issueSandboxTicket(role,secret);
+        // A signed owner handoff must show a visible Admin/Back control; a
+        // regular direct sandbox ticket has no invented return destination.
+        const qaReturnUrl=role==='inspection' && width===390
+          ? 'https://example.test/#/admin/test-center' : '';
+        const ticket=issueSandboxTicket(role,secret,Date.now(),qaReturnUrl);
         await page.goto(base+'/#/sandbox-enter?ticket='+encodeURIComponent(ticket),{
           waitUntil:'domcontentloaded',
         });
         await page.locator('header.top .sandbox-test-badge').filter({hasText:'Тест'}).first().waitFor({timeout:25_000});
         await page.waitForFunction(expected=>location.hash===expected,landing,{timeout:20_000});
+        if(qaReturnUrl){
+          const back=page.locator('header.top .sandbox-test-badge');
+          await back.getByText('Admin', {exact:false}).waitFor();
+          if(await back.getAttribute('href')!==qaReturnUrl ||
+             !(await back.getByText('Назад',{exact:false}).isVisible()))
+            throw Error('Signed sandbox handoff has no visible Admin / Back to owner test center');
+        }
         // The role needs an actually usable desk. Clear mandatory legal
         // acceptance through the REAL interface, then close optional first-use
         // invitations before screenshot evidence. These are fake sandbox users;
