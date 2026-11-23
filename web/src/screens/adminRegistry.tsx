@@ -154,7 +154,14 @@ export function AdminRegistry() {
         <p className="note">Сведения автоматически собраны из регистраций, карточек компаний, исполнителей, СТО и истории работ. Дублирующая база контактов не создаётся.</p></div>
       <a className="btn ghost small" href="#/admin/section/access">+ Создать участника</a>
     </div>
-    <form className="tr-registry-filter stack" onSubmit={e=>{e.preventDefault();setPage(1);setApplied({...draft});setEditing(null);}}>
+    <form className="tr-registry-filter stack" onSubmit={e=>{
+      e.preventDefault();
+      if(draft.from&&draft.to&&draft.from>draft.to){
+        setFilterError('Дата начала не может быть позже даты окончания.');return;
+      }
+      setFilterError('');setPage(1);setApplied({...draft});setEditing(null);
+      setExportError('');setExportInfo('');
+    }}>
       <div className="tr-registry-fields">
         <label className="stack">Поиск
           <input className="field" type="search" value={draft.q} onChange={e=>set('q',e.target.value)}
@@ -226,22 +233,32 @@ export function AdminRegistry() {
       </div>
       <div className="row">
         <button className="btn" type="submit">Найти участников</button>
-        <button className="btn ghost" type="button" onClick={()=>{setDraft({...DEFAULT});setApplied({...DEFAULT});setPage(1);setEditing(null);}}>Сбросить</button>
-        <button className="btn ghost" type="button" disabled={exporting} onClick={exportFiltered}>{exporting?'Формируем CSV…':'Выгрузить найденных · CSV'}</button>
+        <button className="btn ghost" type="button" onClick={()=>{
+          setDraft({...DEFAULT});setApplied({...DEFAULT});setPage(1);setEditing(null);
+          setFilterError('');setExportError('');setExportInfo('');
+        }}>Сбросить</button>
+        <button className="btn ghost" type="button" disabled={exporting||!loaded||changed}
+          onClick={()=>void exportFiltered()}>{exporting?'Формируем CSV…':'Выгрузить найденных · CSV'}</button>
       </div>
     </form>
-    {exportError && <div className="banner bad" role="alert">{exportError}</div>}
+    {filterError && <div className="banner bad" role="alert">{filterError}</div>}
+    {changed && <p className="note">Фильтры изменены, но ещё не применены. Нажмите «Найти участников» для обновления выдачи и CSV.</p>}
+    {exportError && <div className="banner bad" role="alert">{exportError}</div>
     {exportInfo && <p className="note" role="status">{exportInfo}</p>}
     <div className="tr-registry-results-header">
-      <b>{result.data ? `Найдено участников: ${total}` : 'Загружаем реестр'}</b>
+      <b>{data ? `Найдено участников: ${total}` : result.error?'Данные реестра недоступны':'Загружаем реестр'}</b>
       <div className="row">
         <span className="note">Регион последней заявки — не подтверждённый адрес проживания или работы.</span>
         <button type="button" className="btn ghost small" onClick={()=>result.reload()}>Обновить данные</button>
       </div>
     </div>
-    {!result.data ? <Loading error={result.error} /> : <>
-      {result.data.items.length===0 && <div className="empty">По заданным параметрам участников нет. Измените фильтры.</div>}
-      {result.data.items.map((item:any)=><article className="tr-registry-card card" key={item.id}>
+    {!data ? <div className="stack">
+      <Loading error={result.error}/>
+      {result.error&&<button type="button" className="btn ghost small"
+        onClick={()=>void result.reload()}>Повторить загрузку реестра</button>}
+    </div> : <>
+      {data.items.length===0 && <div className="empty">По заданным параметрам участников нет. Измените фильтры.</div>}
+      {data.items.map((item:any)=><article className="tr-registry-card card" key={item.id}>
         <div className="between">
           <div className="stack tr-registry-identity">
             <a href={'#/admin/user/'+item.id}><b>{item.company_name||item.center_name||item.name||'Без имени'}</b></a>
@@ -273,7 +290,7 @@ export function AdminRegistry() {
         {item.note && <p className="note"><b>Заметка:</b> {item.note}</p>}
         <div className="row">
           <a className="btn ghost small" href={'#/admin/user/'+item.id}>Полная карточка и история</a>
-          <button className="btn ghost small" onClick={()=>setEditing(editing===item.id?null:item.id)}>
+          <button type="button" className="btn ghost small" onClick={()=>setEditing(editing===item.id?null:item.id)}>
             {editing===item.id?'Свернуть заметки':'Регион, теги и заметки'}
           </button>
         </div>
