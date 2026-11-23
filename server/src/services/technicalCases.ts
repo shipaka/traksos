@@ -76,12 +76,19 @@ export class TechnicalCasesService {
 
   async decide(user: AuthUser, id: string, approve: boolean, note: string) {
     if (!user.roles.includes('admin')) throw forbidden('Проверка кейсов доступна администратору');
-    if (!/^\d+$/.test(id)) throw notFound();
-    if (approve && note.trim().length < 10)
+    // An oversized numeric path must not turn a missing case into PostgreSQL
+    // bigint overflow (HTTP 500). A reviewer cannot approve their own case.
+    if (!/^\d{1,19}$/.test(id) || BigInt(id) > 9223372036854775807n) throw notFound();
+    const reason = normalized(note).slice(0,1000);
+    if (approve && reason.length < 10)
       throw bad('review_note_required', 'Укажи основание технической проверки — не менее 10 символов');
+    const own = await this.db.one<{author_id:string}>(
+      'select author_id from technical_repair_cases where id=$1::bigint', [id]);
+    if (own?.author_id === user.id)
+      throw forbidden('Проверку собственного технического кейса проводит другой администратор');
     const row = await this.db.one(
-      "update technical_repair_cases set review_state=$2,reviewed_by=$3,reviewed_at=now(),review_note=$4 where id=$1::bigint and review_state='pending' returning id::text as id,review_state",
-      [id, approve ? 'approved' : 'rejected', user.id, note.trim().slice(0, 1000)],
+      "update technical_repair_cases set review_state=$2,reviewed_by=$3,reviewed_at=now(),review_note=$4 where id=$1::bigint and review_state='pending' and author_id<>$3 returning id::text as id,review_state",
+      [id, approve ? 'approved' : 'rejected', user.id, reason],
     );
     if (!row) throw notFound('Кейс не найден или уже проверен');
     return row;
