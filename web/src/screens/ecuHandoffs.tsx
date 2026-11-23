@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useRef,useState } from 'react';
 import { get,post,put,rub,fmtTime } from '../api.ts';
-import { useLoad,useAction,useMe,Loading,Back } from '../ui.tsx';
+import { useAction,useMe,Loading,Back } from '../ui.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
+import { ecuDiagnosisKopecks } from '../ecuQuoteAmount20261124.ts';
 import { SERVICES,STATUS } from '../dict.ts';
 
 /** A technician hands over a technical conclusion; no sale or bank operation. */
 export function EcuOrderPanel({order:o}:{order:any}) {
  const {me}=useMe();
- const handoff=useLoad(()=>get('/api/orders/'+o.id+'/ecu-handoff'),[o.id],
-  e=>e.type==='ecu_handoff' && e.orderId===o.id);
+ return <EcuOrderPanelInner key={(me?.id??'guest')+':'+o.id} order={o}/>;
+}
+function EcuOrderPanelInner({order:o}:{order:any}) {
+ const {me}=useMe();
+ const key=(me?.id??'guest')+':'+o.id;
+ const handoff=usePrivateRead<any>(()=>me?get('/api/orders/'+o.id+'/ecu-handoff'):Promise.resolve(null),
+  key,e=>e.type==='ecu_handoff'&&e.orderId===o.id);
  const [summary,setSummary]=useState('');
  const {busy,run}=useAction();
+ const postBusy=useRef(false);
  const supported=['consult','electric','diag','air','autonomy','tyre'].includes(o.service);
  if(!supported || !['client','performer','admin'].includes(o.you))return null;
  const originReady=o.you==='performer' && (o.service==='consult'
@@ -26,24 +34,40 @@ export function EcuOrderPanel({order:o}:{order:any}) {
     Открыть передачу · {handoff.data.state==='selected'?'специалист выбран':'ожидаем предложения'}
    </a>
   </> : <>
+   {handoff.loading&&<span className="note" role="status">Проверяю передачу ЭБУ…</span>}
+   {handoff.error&&<div role="alert" className="stack">
+     <span className="note">Не удалось проверить наличие передачи ЭБУ: {handoff.error}</span>
+     <button type="button" className="btn ghost small" onClick={()=>void handoff.reload()}>Повторить</button>
+   </div>}
    <span className="note">Если проблема в электронном блоке управления, можно передать заключение проверенным стационарным мастерским. Клиенту придёт уведомление. Это бесплатно; будущая диагностика и ремонт согласуются отдельно.</span>
    <textarea className="field" rows={3} value={summary} maxLength={1400}
     placeholder="Что проверили, какие ошибки получили, какие детали исключили, вывод мастера…"
     onChange={e=>setSummary(e.target.value)}/>
-   <button className="btn ghost small" disabled={busy||summary.trim().length<10}
+   <button className="btn ghost small"
+    disabled={busy||postBusy.current||handoff.loading||!!handoff.error||summary.trim().length<10}
     onClick={async()=>{
-     const r=await run(()=>post('/api/orders/'+o.id+'/ecu-handoff',{summary}),
-      'Заключение направлено, платных работ не создано');
-     if(r)handoff.reload();
+     if(postBusy.current)return;
+     postBusy.current=true;
+     try{
+      const r=await run(()=>post('/api/orders/'+o.id+'/ecu-handoff',{summary}),
+       'Заключение направлено, платных работ не создано');
+      if(r)void handoff.reload();
+     }finally{postBusy.current=false;}
     }}>Передать техническое заключение в ЭБУ</button>
   </>}
  </div>;
 }
 
 export function EcuStationWorkspace(){
- const station=useLoad(()=>get('/api/ecu/station'),[]);
- const inbox=useLoad(()=>get('/api/ecu/handoffs'),[],
-  e=>e.type==='ecu_handoff');
+ const {me}=useMe();
+ return <EcuStationWorkspaceInner key={me?.id??'guest'} />;
+}
+function EcuStationWorkspaceInner(){
+ const {me}=useMe();
+ const identity=me?.id??'guest';
+ const station=usePrivateRead<any>(()=>me?get('/api/ecu/station'):Promise.resolve(null),identity+':station');
+ const inbox=usePrivateRead<any[]>(()=>me?get('/api/ecu/handoffs'):Promise.resolve([]),
+  identity+':inbox',e=>e.type==='ecu_handoff');
  const [name,setName]=useState('');
  const [address,setAddress]=useState('');
  const {busy,run}=useAction();
@@ -54,7 +78,11 @@ export function EcuStationWorkspace(){
   <p className="note">Стационарная мастерская. Здесь нет цены выезда, километража, оплаты без согласия клиента или служебной машины.</p>
   <div className="card stack">
    <b>Адрес и проверка стационарной точки</b>
-   {!station.data ? <Loading error={station.error}/> : <>
+   {!station.data ? <div className="stack">
+   <Loading error={station.error}/>
+   {station.error&&<button type="button" className="btn ghost small"
+     onClick={()=>void station.reload()}>Повторить загрузку адреса</button>}
+  </div> : <>
     <span className="note">{s?.approved_at?'Адрес мастерской подтверждён администратором':'Адрес ещё не одобрен. Запросы станут доступны после проверки специалиста и мастерской.'}</span>
     {s && <span className="note">{s.public_name} · {s.address}</span>}
     <input className="field" placeholder="Публичное название мастерской" value={name}
@@ -73,7 +101,10 @@ export function EcuStationWorkspace(){
   <div className="card stack">
    <div className="between"><b>Заключения для ЭБУ</b>
     <button className="btn ghost small" onClick={()=>inbox.reload()}>Обновить</button></div>
-   {!inbox.data ? <Loading error={inbox.error}/> :
+   {!inbox.data ? <div className="stack"><Loading error={inbox.error}/>
+     {inbox.error&&<button className="btn ghost small" type="button"
+       onClick={()=>void inbox.reload()}>Повторить загрузку передач</button>}
+     </div> :
     inbox.data.length ? inbox.data.map((r:any)=><a className="linkrow"
       href={'#/ecu-handoff/'+r.id} key={r.id}>
       <span><b>{r.brand??'Грузовик'} {r.model??''} · после {SERVICES[r.service]?.name??r.service}</b>
@@ -86,22 +117,40 @@ export function EcuStationWorkspace(){
 
 export function EcuHandoffPage({id}:{id:string}){
  const {me}=useMe();
- const details=useLoad(()=>get('/api/ecu/handoffs/'+id),[id],e=>e.type==='ecu_handoff'&&e.handoffId===id);
+ return <EcuHandoffPageInner key={(me?.id??'guest')+':'+id} id={id}/>;
+}
+function EcuHandoffPageInner({id}:{id:string}){
+ const {me}=useMe();
+ const identity=(me?.id??'guest')+':'+id;
+ const details=usePrivateRead<any>(()=>me?get('/api/ecu/handoffs/'+id):Promise.resolve(null),
+  identity,e=>e.type==='ecu_handoff'&&e.handoffId===id);
  const {busy,run}=useAction();
  const [priceRub,setPriceRub]=useState('');
  const [explanation,setExplanation]=useState('');
  const [quoteId,setQuoteId]=useState<string|null>(null);
  const [agree,setAgree]=useState(false);
  const [message,setMessage]=useState('');
+ const actionLock=useRef(false);
+ const lockAction=async(fn:()=>Promise<any>,label:string,onSuccess:()=>void)=>{
+  if(actionLock.current)return;
+  actionLock.current=true;
+  try{
+   const result=await run(fn,label);
+   if(result)onSuccess();
+  }finally{actionLock.current=false;}
+ };
  const d=details.data;
- const price=Math.round(Number(priceRub.replace(',','.'))*100);
+ const price=ecuDiagnosisKopecks(priceRub);
  const quote=d?.quotes?.find((q:any)=>q.id===quoteId);
  const owner=d?.actor==='owner' && !me?.owner_id;
  const canChat=d?.state==='selected'&&['owner','driver','expert','admin'].includes(d?.actor);
  return <main className="stack">
   <Back to={me?.performer?.kind==='ecu'?'work':'orders'} />
   <h1>Передача ЭБУ №{d?.number??'…'} · техническая цепочка</h1>
-  {!d ? <Loading error={details.error}/> : <>
+  {!d ? <div className="stack"><Loading error={details.error}/>
+    {details.error&&<button type="button" className="btn ghost small"
+      onClick={()=>void details.reload()}>Повторить загрузку передачи ЭБУ</button>}
+   </div> : <>
    <div className="card stack">
     <div className="between"><b>После заявки №{d.sourceNumber}</b>
       <span className="pill">{d.state==='selected'?'Специалист выбран':'Ожидаем предложения'}</span></div>
@@ -145,12 +194,10 @@ export function EcuHandoffPage({id}:{id:string}){
     <textarea className="field" rows={3} maxLength={1000} value={explanation}
      placeholder="Что включено в диагностику и условия передачи блока"
      onChange={e=>setExplanation(e.target.value)}/>
-    <button className="btn" disabled={busy||!Number.isInteger(price)||price<100||explanation.trim().length<10}
-     onClick={async()=>{
-      const r=await run(()=>post('/api/ecu/handoffs/'+id+'/quote',
-       {diagnosisPrice:price,explanation}),'Предложение отправлено');
-      if(r)details.reload();
-     }}>Предложить диагностику</button>
+    <button className="btn" disabled={busy||actionLock.current||price===null||explanation.trim().length<10}
+     onClick={()=>void lockAction(()=>post('/api/ecu/handoffs/'+id+'/quote',
+       {diagnosisPrice:price,explanation}),'Предложение отправлено',()=>void details.reload())}>
+     Предложить диагностику</button>
    </div>}
    {owner && d.state==='pending' && <div className="card stack">
     <b>Предложения стационарных специалистов</b>
@@ -166,12 +213,12 @@ export function EcuHandoffPage({id}:{id:string}){
      <label className="agree"><input type="checkbox" checked={agree}
       onChange={e=>setAgree(e.target.checked)} />
       Я подтверждаю цену диагностики {rub(quote.diagnosis_price)} по версии {quote.version} и разрешаю выбранному специалисту увидеть VIN и технические заключения этой цепочки. Другие специалисты доступа не получат. Дополнительный ремонт отдельно.</label>
-     <button className="btn" disabled={busy||!agree} onClick={async()=>{
-      const r=await run(()=>post('/api/ecu/handoffs/'+id+'/choose',
+     <button className="btn" disabled={busy||actionLock.current||!agree||!quote}
+      onClick={()=>void lockAction(()=>post('/api/ecu/handoffs/'+id+'/choose',
        {quoteId:quote.id,version:quote.version,price:quote.diagnosis_price,agree:true}),
-       'Выбран специалист и подтверждена цена диагностики');
-      if(r){details.reload();setAgree(false);}
-     }}>Выбрать этого специалиста</button>
+       'Выбран специалист и подтверждена цена диагностики',
+       ()=>{setAgree(false);setQuoteId(null);void details.reload();})}>
+      Выбрать этого специалиста</button>
     </>}
    </div>}
    {owner && d.state!=='closed' && <EcuClose id={id} onDone={()=>details.reload()} />}
@@ -183,11 +230,10 @@ export function EcuHandoffPage({id}:{id:string}){
     <textarea className="field" value={message} maxLength={1500}
      placeholder="Информация о проверке, адрес и согласование передачи блока — без личных номеров"
      onChange={e=>setMessage(e.target.value)} />
-    <button className="btn ghost small" disabled={busy||message.trim().length<2}
-     onClick={async()=>{
-      const r=await run(()=>post('/api/ecu/handoffs/'+id+'/notes',{body:message}),'Сообщение сохранено');
-      if(r){setMessage('');details.reload();}
-     }}>Отправить сообщение</button>
+    <button className="btn ghost small" disabled={busy||actionLock.current||message.trim().length<2}
+     onClick={()=>void lockAction(()=>post('/api/ecu/handoffs/'+id+'/notes',{body:message}),
+       'Сообщение сохранено',()=>{setMessage('');void details.reload();})}>
+     Отправить сообщение</button>
    </div>}
   </>}
  </main>;
@@ -211,12 +257,21 @@ function EcuClose({id,onDone}:{id:string;onDone:()=>void}){
 }
 
 export function EcuAdminStations(){
- const rows=useLoad(()=>get('/api/admin/ecu/stations'),[]);
+ const {me}=useMe();
+ return <EcuAdminStationsInner key={me?.id??'guest'} />;
+}
+function EcuAdminStationsInner(){
+ const {me}=useMe();
+ const rows=usePrivateRead<any[]>(()=>me?get('/api/admin/ecu/stations'):Promise.resolve([]),
+  (me?.id??'guest')+':admin-ecu-stations');
  const {busy,run}=useAction();
  return <div className="stack">
   <div className="card stack"><b>Проверка стационарных точек ЭБУ</b>
    <span className="note">Проверяйте документы исполнителя и публичный адрес мастерской. Это не выездная услуга и не тариф по километрам.</span></div>
-  {!rows.data ? <Loading error={rows.error}/> : rows.data.length
+  {!rows.data ? <div className="stack"><Loading error={rows.error}/>
+    {rows.error&&<button type="button" className="btn ghost small"
+      onClick={()=>void rows.reload()}>Повторить загрузку проверок ЭБУ</button>}
+   </div> : rows.data.length
    ? rows.data.map((s:any)=><div key={s.performer_id} className="card stack">
      <b>{s.public_name} · {s.name??'Специалист'}</b>
      <span className="note">{s.address}</span>
