@@ -209,6 +209,30 @@ try{
           await page.screenshot({path:out+'/'+role+'-'+width+'-OVERFLOW.png',fullPage:true});
           throw Error('Horizontal scroll in '+role+' '+width+': '+JSON.stringify({geometry,offenders}));
         }
+        if(role==='moderator' && width<=390){
+          // Actual 618 screenshot showed four dated purple Unicode symbols,
+          // out of place against the approved graphite/orange working UI.
+          const controls=page.locator('main.moderator-workspace .moderator-action');
+          await controls.first().waitFor({state:'visible'});
+          const visual=await controls.evaluateAll(nodes=>nodes.map(el=>{
+            const span=el.querySelector('span');
+            const glyph=span?.querySelector('svg');
+            return {text:el.textContent.trim(),iconCount:span?.querySelectorAll('svg').length,
+              color:span?getComputedStyle(span).color:'',
+              size:glyph?glyph.getBoundingClientRect().width:0,
+              border:getComputedStyle(el).borderTopColor,
+              active:el.classList.contains('active')};
+          }));
+          if(visual.length!==4 || visual.some(x=>x.iconCount!==1 ||
+             x.size<20 || !/rgb\\(255,\\s*171,\\s*89\\)/.test(x.color)) ||
+             !visual.some(x=>x.active && /rgb\\(250,\\s*140,\\s*56\\)/.test(x.border)))
+            throw Error('Moderator old purple nonvector icons/active border at '+width+': '+
+              JSON.stringify(visual));
+          await controls.nth(1).click();
+          if(await controls.nth(1).getAttribute('aria-pressed')!=='true')
+            throw Error('Moderator queue cards do not select a real section');
+          await controls.first().click();
+        }
         // Every working role must be reachable directly from the real
         // admin dashboard, not only from a hidden test-center URL.
         if(role==='admin'){
