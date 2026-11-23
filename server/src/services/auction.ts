@@ -342,9 +342,38 @@ export class AuctionService {
       const invited = await this.db.one<{ invited: boolean }>(
         `select exists(
           select 1 from order_events e
-           where e.order_id=$1 and e.type='ringing'
+           where e.order_id=$1
              and e.id>coalesce((select max(id) from order_events
                                  where order_id=$1 and type='retry'),0)
+             and (
+               e.type='ringing'
+               or (e.type='auction_started' and
+                   (e.data->>'candidates') ~ '^[1-9][0-9]*
+        ) as invited`, [order.id]);
+      const profiles = await this.db.query<PartnerPresence>(
+        `select p.kind,p.specialties,u.status as user_status,p.verification,
+                p.line_status,p.paused,p.extras,p.lat,p.lng
+           from performer_profiles p join users u on u.id=p.user_id
+          where p.kind=$1`, [performerKindFor(order.service)]);
+      const dispatch = (await this.settings.all()).dispatch;
+      absenceReason = classifyNoPerformerReason({
+        service: order.service, verifiedOnly: !!order.verified_only,
+        lat: order.lat ?? null, lng: order.lng ?? null,
+        radiusKm: dispatch.radiusKm, invited: !!invited?.invited, profiles
+      });
+    } catch (err) {
+      // Explanatory copy must never block the terminal order status, payment,
+      // immutable event or customer notification.
+      console.error('[no-performer-classification]', err);
+    }
+    await this.orders.event(this.db, order.id, null, 'no_performer',
+      { auction: true, absenceReason });
+    await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
+      { kind: 'normal', title: 'Нет откликов', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } });
+  }
+}
+)
+             )
         ) as invited`, [order.id]);
       const profiles = await this.db.query<PartnerPresence>(
         `select p.kind,p.specialties,u.status as user_status,p.verification,
