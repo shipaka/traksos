@@ -600,16 +600,26 @@ export class OrdersService {
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [user.id]);
       await this.event(q, orderId, user.id, 'performer_dropped', { reason });
     });
-    await this.systemMessage(orderId, 'Исполнитель отказался от заявки. Ищем другого.');
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: 'searching' },
-      { kind: 'normal', title: 'Ищем другого исполнителя', body: `Исполнитель отказался от заявки №${o.number}. Уже ищем замену.`, data: { orderId } });
+    // Start replacement discovery immediately. Optional chat/push side effects
+    // must never strand an already-committed searching order if their transport
+    // fails (for example during a brief chat_messages DB outage).
     await this.startDispatch(orderId, [user.id]);
-    // The former performer has been removed from the order. Calling view()
-    // would correctly deny their access with 403 *after* a successful drop,
-    // leaving the mobile UI thinking the refusal failed. Return only a
-    // minimal acknowledgement; never expose the replacement's order data.
     const current = await this.db.one<{ status: string }>(
       'select status from orders where id=$1', [orderId]);
+    await this.systemMessage(orderId, 'Исполнитель отказался от заявки. Поиск замены запущен.')
+      .catch((e) => console.warn('[order-drop chat]', (e as Error).message));
+    // If discovery already exhausted all waves, the auction sent the final
+    // no_performer notice. Do not follow it with a false "still searching".
+    if (current?.status === 'searching') {
+      await this.notifier.notify([o.client_id, o.created_by],
+        { type: 'order', orderId, status: 'searching' },
+        { kind: 'normal', title: 'Ищем другого исполнителя',
+          body: `Исполнитель отказался от заявки №${o.number}. Поиск замены запущен.`,
+          data: { orderId } })
+        .catch((e) => console.warn('[order-drop notify]', (e as Error).message));
+    }
+    // The former performer no longer has ACL to the replacement's full
+    // order view; a minimal acknowledgement is both correct and private.
     return { ok: true, orderId, status: current?.status ?? 'searching' };
   }
 

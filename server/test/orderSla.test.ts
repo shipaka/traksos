@@ -85,3 +85,35 @@ test('performer handoff starts a fresh dispatch SLA clock instead of inheriting 
     "select count(*)::int c from order_events where order_id=$1 and type='performer_dropped'",[id]);
   assert.equal(events?.c,1,'drop must have one immutable event');
 });
+
+
+test('a chat write failure after performer drop cannot block replacement dispatch', async()=>{
+  const oldStart=new Date(t.clock.now().getTime()-2*60*60_000);
+  const id=(await t.db.one<{id:string}>(
+    "insert into orders(client_id,created_by,performer_id,service,zone_id,status,created_at,accepted_at,dispatch_started_at)" +
+    " values ($1,$1,$2,'electric','spb','accepted',$3,$3,$3) returning id",
+    [customer.id,master.id,oldStart]))!.id;
+  await t.db.exec(`create function traksos_test_fail_drop_chat()
+    returns trigger language plpgsql as $$
+    begin raise exception 'injected chat write outage'; end $$;
+    create trigger traksos_test_fail_drop_chat
+    before insert on chat_messages for each statement
+    execute function traksos_test_fail_drop_chat();`);
+  try {
+    const outcome=ok(await t.api('POST','/api/orders/'+id+'/drop',
+      {reason:'Вынужден передать заказ другому специалисту'},master.token));
+    assert.equal(outcome.ok,true);
+    const current=await t.db.one<{status:string;dispatch_started_at:Date|null}>(
+      'select status,dispatch_started_at from orders where id=$1',[id]);
+    assert.ok(['searching','no_performer'].includes(current!.status));
+    assert.equal(outcome.status,current?.status);
+    assert.ok(current?.dispatch_started_at,
+      'the new search must start even when its chat announcement failed');
+    const events=await t.db.one<{c:number}>(
+      "select count(*)::int c from order_events where order_id=$1 and type='performer_dropped'",[id]);
+    assert.equal(events?.c,1,'drop transaction must record one event');
+  }finally{
+    await t.db.exec(`drop trigger if exists traksos_test_fail_drop_chat on chat_messages;
+      drop function if exists traksos_test_fail_drop_chat();`);
+  }
+});
