@@ -81,9 +81,10 @@ test('terminal replacement search does not reuse offers or invitations from befo
   const t = await setup();
   try {
     const customer = await t.login('+79990003561', 'client');
-    for (const [afterDropInvitation, expected] of [
-      [false, 'not_connected'],
-      [true, 'no_response'],
+    for (const [afterDropInvitation, afterDropOffer, expected] of [
+      [false, false, 'not_connected'],
+      [true, false, 'no_response'],
+      [true, true, 'offers_withdrawn'],
     ] as const) {
       // The old accepted dispatch had both an invite and an offer. A later
       // performer_dropped event marks the new search boundary.
@@ -104,6 +105,13 @@ test('terminal replacement search does not reuse offers or invitations from befo
         await t.db.query(
           `insert into order_events(order_id,actor_id,type,data)
             values ($1,null,'ringing','{}'::jsonb)`,
+          [order.id],
+        );
+      }
+      if (afterDropOffer) {
+        await t.db.query(
+          `insert into order_events(order_id,actor_id,type,data)
+            values ($1,null,'offer','{}'::jsonb)`,
           [order.id],
         );
       }
