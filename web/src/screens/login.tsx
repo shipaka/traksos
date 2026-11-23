@@ -323,6 +323,15 @@ export function Login({ driver, entry, serviceContext }: {
       }
       toast('Вы вошли');
       try { localStorage.removeItem('traksos.ref'); } catch { /* */ }
+      // Consume the exact service selection BEFORE publishing the new
+      // authenticated identity. React may render protected navigation during
+      // reload(); a concurrent route effect must not steal or replay this hint.
+      let pending: string | null = null;
+      try {
+        pending = sessionStorage.getItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingCatalogChoice');
+      } catch { /* private browsing */ }
       setToken(r.token);
       connectWs();
       await reload();
@@ -330,11 +339,6 @@ export function Login({ driver, entry, serviceContext }: {
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
       const customer = roles.includes('client') || roles.includes('driver');
-      let pending: string | null = null;
-      try {
-        pending = sessionStorage.getItem('traksos.pendingLandingAction');
-        sessionStorage.removeItem('traksos.pendingLandingAction');
-      } catch { /* private browsing */ }
       const selectedDestination = customer ? guestCustomerDestination(pending) : null;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.

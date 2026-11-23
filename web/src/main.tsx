@@ -290,6 +290,12 @@ function App() {
     // A parallel signedIn() may still choose its own QR/partner destination;
     // it will update the hash after this effect without reopening the guest UI.
     const customer = me.roles.includes('client') || me.roles.includes('driver');
+    // Already-authenticated clicks must not survive into a later unrelated
+    // login. Successful sign-in consumed the hint before reload() above.
+    try {
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
+    } catch { /* Restricted private browsing */ }
     location.replace((customer ? guestCustomerDestination(route[1]) : null) ?? '#/');
   }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {

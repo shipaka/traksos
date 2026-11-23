@@ -355,6 +355,9 @@ try {
       await signedInPage.waitForFunction(expected=>location.hash===expected,route);
       check(signedInPage.url().endsWith(route),
         'Authenticated customer service link '+service+' did not open '+route);
+      check(await signedInPage.evaluate(()=>
+        sessionStorage.getItem('traksos.pendingLandingAction'))===null,
+        'Authenticated shortcut '+service+' left a stale service for the next sign-in');
     }
   }finally{await signedInContext.close();}
   // The public legal footer must recover after its first API request fails;
