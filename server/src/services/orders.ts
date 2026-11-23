@@ -362,14 +362,14 @@ export class OrdersService {
       await this.db.query(`update orders set status='cancelled', cancel_reason=$2, cancelled_at=now() where id=$1 and status='awaiting_owner'`, [orderId, why]);
       await this.event(this.db, orderId, owner.id, 'owner_rejected', { reason: why });
       await this.systemMessage(orderId, `Владелец отклонил заказ: ${why}`);
-      await this.notifier.notify([o.created_by], { type: 'order', orderId, status: 'cancelled' },
+      await this.notifier.notify((await this.customerRecipients(o)).filter(id=>id===o.created_by), { type: 'order', orderId, status: 'cancelled' },
         { kind: 'normal', title: 'Владелец отклонил заказ', body: why, data: { orderId } });
       return this.view(owner, orderId);
     }
     const upd = await this.db.one(`update orders set status='searching' where id=$1 and status='awaiting_owner' returning *`, [orderId]);
     if (!upd) throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
     await this.event(this.db, orderId, owner.id, 'owner_approved', {});
-    await this.notifier.notify([o.created_by], { type: 'order', orderId, status: 'searching' },
+    await this.notifier.notify((await this.customerRecipients(o)).filter(id=>id===o.created_by), { type: 'order', orderId, status: 'searching' },
       { kind: 'normal', title: 'Владелец подтвердил заказ', body: 'Ищем исполнителя', data: { orderId } });
     await this.launch(owner, upd);
     return this.view(owner, orderId);
@@ -579,7 +579,7 @@ export class OrdersService {
     // Остальным приоритетным, кому звонила эта заявка, — закрыть вызов
     this.notifier.live((res as any)._others, { type: 'order', orderId, status: 'released' });
     const name = user.name ?? 'Исполнитель';
-    await this.notifier.notify([res.client_id, res.created_by], { type: 'order', orderId, status: 'accepted' },
+    await this.notifier.notify(await this.customerRecipients(res), { type: 'order', orderId, status: 'accepted' },
       { kind: 'normal', title: 'Заявку приняли', body: `${name} принял заявку №${res.number}`, data: { orderId } });
     await this.systemMessage(orderId, `${name} принял заявку. Чат открыт для всех участников.`);
     return this.view(user, orderId);
@@ -633,7 +633,7 @@ export class OrdersService {
     // If discovery already exhausted all waves, the auction sent the final
     // no_performer notice. Do not follow it with a false "still searching".
     if (current?.status === 'searching') {
-      await this.notifier.notify([o.client_id, o.created_by],
+      await this.notifier.notify(await this.customerRecipients(o),
         { type: 'order', orderId, status: 'searching' },
         { kind: 'normal', title: 'Ищем другого исполнителя',
           body: `Исполнитель отказался от заявки №${o.number}. Поиск замены запущен.`,
@@ -663,7 +663,7 @@ export class OrdersService {
     await this.event(this.db, orderId, user.id, action, {});
     const text = { depart: 'Исполнитель выехал', arrive: 'Исполнитель на месте', start_work: 'Исполнитель начал работу' }[action];
     await this.systemMessage(orderId, text);
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+    await this.notifier.notify(await this.customerRecipients(o), { type: 'order', orderId, status: to },
       { kind: 'normal', title: text, body: `Заявка №${o.number}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -716,7 +716,7 @@ export class OrdersService {
       ...bill.extras.map((x) => `${x.name} ${rub(x.amount)}`),
     ].filter(Boolean).join(', ');
     await this.systemMessage(orderId, 'Исполнитель завершил работы. Клиенту отправлен подробный расчёт для подтверждения в заявке.');
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+    await this.notifier.notify(await this.customerRecipients(o), { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Подтвердите сумму', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -736,7 +736,7 @@ export class OrdersService {
     const m = this.money(o);
     await this.systemMessage(orderId, `Мастер завершил консультацию. Подозрение: ${h.hints.join(', ')}${h.note ? ` — ${h.note}` : ''}. ` +
       `Нажмите «Вопрос решён» (${rub(m.total)}) или «Нужен выезд» — подсказка перейдёт мастеру на выезде.`);
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+    await this.notifier.notify(await this.customerRecipients(o), { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Консультация завершена', body: `Подозрение: ${h.hints.join(', ')}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -831,8 +831,7 @@ export class OrdersService {
   }
 
   async cancel(user: AuthUser, orderId: string, reason: string) {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!o) throw notFound();
+    const o = await this.mustSee(user, orderId);
     const actor = this.actorOf(user, o);
     if (actor === 'performer') throw bad('use_drop', 'Исполнитель отказывается от заявки кнопкой «Не смогу приехать»');
     if (!actor) throw forbidden();
@@ -888,7 +887,7 @@ export class OrdersService {
       .catch((e) => console.error('[cancel-bank-action]', e));
     this.notifier.live(invited, { type: 'order', orderId, status: 'cancelled' });
     await this.systemMessage(orderId, `Заявка отменена: ${reason}`);
-    await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x) => x !== user.id), { type: 'order', orderId, status: 'cancelled' },
+    await this.notifier.notify([...await this.customerRecipients(o), o.performer_id].filter((x) => x && x !== user.id), { type: 'order', orderId, status: 'cancelled' },
       { kind: 'normal', title: 'Заявка отменена', body: `№${o.number}: ${reason}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -950,20 +949,52 @@ export class OrdersService {
 
   // Просмотр ---------------------------------------------------------------
 
+  /**
+   * A driver's creator_id is NOT a perpetual right to a former employer's
+   * orders. Read the live owner/vehicle assignment from PostgreSQL instead.
+   * No order without a vehicle can be read after the driver leaves that fleet.
+   */
+  private liveDriverLink(alias: string, userParam: string) {
+    return `exists (select 1 from users u join vehicles v
+      on v.owner_id=u.owner_id and v.driver_id=u.id
+      where u.id=${userParam} and 'driver'=any(u.roles)
+        and u.owner_id=${alias}.client_id
+        and (${alias}.vehicle_id is null or v.id=${alias}.vehicle_id))`;
+  }
+
   actorOf(user: AuthUser, o: any): Actor | null {
     if (user.roles.includes('admin') || user.roles.includes('moderator')) return 'admin';
-    if (o.client_id === user.id || o.created_by === user.id) return 'client';
+    if (o.client_id === user.id) return 'client';
+    // Deliberately fail closed for a raw order row without an evaluated ACL.
+    // mustSee() supplies this value in the same SQL snapshot as the order.
+    if (o.created_by === user.id && o.current_driver_access === true) return 'client';
     if (o.performer_id === user.id) return 'performer';
     return null;
   }
 
+  /** Only the *currently* assigned driver receives order and chat broadcasts. */
+  private async customerRecipients(o: any): Promise<string[]> {
+    if (!o.created_by || o.created_by === o.client_id) return [o.client_id];
+    const current = await this.db.one<{ ok: number }>(
+      `select 1 as ok from orders order_row where order_row.id=$1
+         and order_row.created_by=$2 and ${this.liveDriverLink('order_row','$2')} limit 1`,
+      [o.id, o.created_by]);
+    return current ? [o.client_id, o.created_by] : [o.client_id];
+  }
+
   async participants(orderId: string) {
-    const o = await this.db.one('select client_id, created_by, performer_id from orders where id=$1', [orderId]);
-    return o ? [o.client_id, o.created_by, o.performer_id].filter(Boolean) as string[] : [];
+    const o = await this.db.one<any>(
+      `select o.client_id,
+        case when o.created_by=o.client_id or ${this.liveDriverLink('o','o.created_by')}
+          then o.created_by else null end as created_by,
+        o.performer_id from orders o where o.id=$1`, [orderId]);
+    return o ? [...new Set([o.client_id, o.created_by, o.performer_id].filter(Boolean))] as string[] : [];
   }
 
   async mustSee(user: AuthUser, orderId: string) {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
+    const o = await this.db.one<any>(
+      `select o.*, (o.created_by=$2 and ${this.liveDriverLink('o','$2')}) as current_driver_access
+         from orders o where o.id=$1`, [orderId, user.id]);
     if (!o) throw notFound('Заявка не найдена');
     if (this.actorOf(user, o)) return o;
     // Исполнитель, которому сейчас «звонит» заявка, видит её без контактов
@@ -1136,7 +1167,10 @@ export class OrdersService {
   }
 
   async list(user: AuthUser, scope: 'client' | 'performer', status?: string) {
-    const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
+    // The former creator must not receive the old fleet's address, location or
+    // financial archive merely because created_by still references their UUID.
+    const where = scope === 'performer' ? 'o.performer_id = $1'
+      : `(o.client_id=$1 or (o.created_by=$1 and ${this.liveDriverLink('o','$1')}))`;
     const items = await this.db.query<any>(
       `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.lat, o.lng, o.brand, o.estimate, o.work_amount, o.call_out_amount,
               o.client_fee_pct, o.discount_amount, o.payment_method,
@@ -1294,9 +1328,8 @@ export class OrdersService {
   }
 
   private async mustBeClient(user: AuthUser, orderId: string) {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!o) throw notFound();
-    if (o.client_id !== user.id && o.created_by !== user.id) throw forbidden('Это не ваша заявка');
+    const o = await this.mustSee(user, orderId);
+    if (this.actorOf(user, o) !== 'client') throw forbidden('Это не ваша заявка');
     return o;
   }
 
