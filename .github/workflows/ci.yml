@@ -127,6 +127,7 @@ jobs:
           node e2e/moderator-workspace-tabs-20261124.mjs
           node e2e/moderator-staff-route-20261124.mjs
           node e2e/techbase-repair-hardening-20261124.mjs
+          node e2e/vehicle-service-history-20261124.mjs
           # Real read-only role switching, courier training and per-account course progress.
           node e2e/learning-role-hardening-20261124.mjs
           node e2e/admin-master-switch.mjs
