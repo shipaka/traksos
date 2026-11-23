@@ -1,5 +1,5 @@
 // True Chromium proof: authenticated requester, real no_performer order, real
-// approved #3 WebP, real DOM actions. Runs only after exerciseSandboxNoPerformer
+// owner-approved SHA-verified Russia-network WebP, real DOM actions. Runs after
 // created and exhausted owner/driver orders through sandbox API + fake checkout.
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -63,12 +63,16 @@ try{
         await page.getByText('Оплата',{exact:true}).first().waitFor({timeout:12_000});
         const art=await card.locator('img').evaluate(async image=>{
           await image.decode();
+          const style=getComputedStyle(image);
           return {width:image.naturalWidth,height:image.naturalHeight,
-            src:image.getAttribute('src'),complete:image.complete};
+            src:image.getAttribute('src'),complete:image.complete,
+            fit:style.objectFit,position:style.objectPosition};
         });
-        if(!art.complete || art.width!==480 || art.height!==384 ||
-           !art.src?.includes('traksos-no-performer-search-approved-20261123.webp'))
-          throw Error('Approved visual #3 failed real load/decode '+JSON.stringify(art));
+        if(!art.complete || art.width!==2172 || art.height!==724 ||
+           !art.src?.includes('traksos-no-performer-network-russia-approved-v1.webp') ||
+           art.fit!=='cover' || art.position!=='100% 50%')
+          throw Error('Owner-approved Russia network image absent, cropped wrongly or stale: '+
+            JSON.stringify(art));
         const details=await card.evaluate(el=>{
           const rect=(x)=>{const r=x.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
           const illustration=el.querySelector('.traksos-no-performer-art');
