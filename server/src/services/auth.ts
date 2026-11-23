@@ -210,6 +210,8 @@ export class AuthService {
             password ? hashPassword(password) : null]);
       }
       if (!user) throw new Error('Не удалось сохранить подтверждённый аккаунт');
+      if (user.status !== 'active')
+        throw new HttpError(403, 'blocked', 'Подтверждённый аккаунт недоступен');
 
       if (purpose === 'reset') {
         // The credential rotation and revocation of all previous sessions,
