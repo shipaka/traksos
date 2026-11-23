@@ -54,12 +54,14 @@ function CourierProgress({status}:{status:CourierStatus}){
 function CourierStatusSwitch(){
   const p=useLoad<{online:boolean}>(()=>get('/api/courier/presence'),[]);
   const {busy,run}=useAction();
+  const [retrying,setRetrying]=useState(false);
   // A failed presence GET must not impersonate "offline" indefinitely.
   // Let the courier recover without leaving the workspace.
   if(p.error)return <span className="courier-presence-error" role="alert">
     Не удалось проверить статус линии
-    <button type="button" className="courier-switch" onClick={()=>{void p.reload();}}>
-      Повторить
+    <button type="button" className="courier-switch" disabled={retrying}
+      onClick={async()=>{setRetrying(true);try{await p.reload();}finally{setRetrying(false);}}}>
+      {retrying?'Проверяем…':'Повторить'}
     </button>
   </span>;
   return <button type="button" role="switch" className={'courier-switch'+(p.data?.online?' is-on':'')}
