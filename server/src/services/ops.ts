@@ -113,6 +113,7 @@ export class OpsService {
     const start = new Date(p.startsAt), end = new Date(p.endsAt);
     if (!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start) throw bad('bad_dates','Проверьте даты');
     if (end.getTime()-start.getTime()>90*86_400_000) throw bad('too_long','Объявление не длиннее 90 дней');
+    if (p.published && end <= this.now()) throw bad('expired','Истёкшее объявление нельзя опубликовать');
     return this.db.tx(async q => {
       const row=await q.one<any>(`insert into worker_announcements(audience,service,title,body,starts_at,ends_at,published,created_by)
         values ($1,$2,$3,$4,$5,$6,$7,$8) returning id,audience,service,title,body,starts_at,ends_at,published`,
@@ -125,9 +126,15 @@ export class OpsService {
 
   async setAnnouncementPublished(actor:AuthUser,id:string,published:boolean) {
     return this.db.tx(async q=>{
+      // Lock and validate the real saved interval in the same transaction;
+      // an old draft must never become a misleading "published" notice.
+      const current=await q.one<{id:string;ends_at:Date}>(
+        'select id,ends_at from worker_announcements where id=$1 for update',[id]);
+      if(!current)throw notFound('Объявление не найдено');
+      if(published && new Date(current.ends_at) <= this.now())
+        throw bad('expired','Истёкшее объявление нельзя опубликовать');
       const row=await q.one<any>(`update worker_announcements set published=$2,updated_at=now()
         where id=$1 returning id,published,title`,[id,published]);
-      if(!row)throw notFound('Объявление не найдено');
       await q.query(`insert into audit_log(actor_id,action,target,data) values ($1,'ops.announcement.status',$2,$3)`,
         [actor.id,id,{published}]);
       return row;
