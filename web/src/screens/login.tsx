@@ -301,6 +301,9 @@ export function Login({ driver, entry, serviceContext }: {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
           accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
+        // A failed SMS response for a phone already edited by the user must
+        // not overwrite the current form with an error from the old number.
+        if (generation !== authGeneration.current) return null;
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
         setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
         throw e;
@@ -352,6 +355,7 @@ export function Login({ driver, entry, serviceContext }: {
           purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
+        if (generation !== authGeneration.current) return null;
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
         if (generation === authGeneration.current &&
             e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) {
