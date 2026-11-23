@@ -387,6 +387,53 @@ try{
               if(!await commission.isDisabled())
                 throw Error('Empty campaign date must block real finance action');
               console.log('ADMIN DATE CONTROLS BROWSER PASS',width);
+              if(width===390){
+                // Genuine HTTP announcements in this disposable sandbox.
+                // One is published but scheduled, the other a preserved
+                // expired draft. Neither may expose a broken send action.
+                const fixtures=await page.evaluate(async()=>{
+                  const token=localStorage.getItem('traksos.token');
+                  if(!token)throw Error('Admin token unavailable for notice scenario');
+                  const post=async(input)=>{
+                    const response=await fetch('/api/admin/announcements',{
+                      method:'POST',headers:{'content-type':'application/json',
+                        authorization:'Bearer '+token},body:JSON.stringify(input)
+                    });
+                    const body=await response.json();
+                    if(!response.ok)throw Error('Cannot create real notice: '+response.status+' '+JSON.stringify(body));
+                    return body;
+                  };
+                  const now=Date.now();
+                  const common={
+                    audience:'master',service:'electric',
+                    body:'Одноразовое объявление для настоящей проверки интерфейса администратора.'
+                  };
+                  const scheduled=await post({...common,title:'QA запланированное объявление',
+                    startsAt:new Date(now+20*86_400_000).toISOString(),
+                    endsAt:new Date(now+21*86_400_000).toISOString(),
+                    published:true});
+                  const expired=await post({...common,title:'QA истёкший черновик',
+                    startsAt:new Date(now-3*86_400_000).toISOString(),
+                    endsAt:new Date(now-2*86_400_000).toISOString(),
+                    published:false});
+                  return {scheduled:scheduled.id,expired:expired.id};
+                });
+                if(!fixtures.scheduled||!fixtures.expired)
+                  throw Error('Admin notice fixtures have no API IDs');
+                await page.reload({waitUntil:'domcontentloaded'});
+                const scheduledCard=page.locator('main.admin-workspace .list-item')
+                  .filter({hasText:'QA запланированное объявление'});
+                const expiredCard=page.locator('main.admin-workspace .list-item')
+                  .filter({hasText:'QA истёкший черновик'});
+                await scheduledCard.waitFor({state:'visible',timeout:15000});
+                await expiredCard.waitFor({state:'visible',timeout:15000});
+                if(!await scheduledCard.getByText('запланировано',{exact:false}).isVisible()||
+                   await scheduledCard.getByRole('button',{name:'Разослать уведомление'}).count()!==0||
+                   !await expiredCard.getByText('срок истёк',{exact:false}).isVisible()||
+                   !await expiredCard.getByRole('button',{name:'Опубликовать'}).isDisabled())
+                  throw Error('Scheduled or expired notice has misleading status or dead admin action');
+                console.log('ADMIN NOTICE SCHEDULE BROWSER PASS',width,fixtures);
+              }
             }
             if(role==='admin' && destination==='#/admin/section/demand'){
               // The existing admin tools must show live grouped data, not
