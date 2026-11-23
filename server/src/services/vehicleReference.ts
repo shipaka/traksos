@@ -208,6 +208,53 @@ export class VehicleReferenceService {
     });
   }
 
+  /** A count check alone cannot detect changed names, aliases, year ranges
+   * or substituted models. Rebuild the exact canonical import and verify the
+   * stored SHA-256 BEFORE publishing or accepting an already active revision.
+   */
+  private async assertSnapshotIntegrity(q: Queryable, selected: SnapshotRow) {
+    type StoredBrand = { category: VehicleCategory; key:string; name:string; aliases:string[] };
+    type StoredModel = { category:VehicleCategory; brand_key:string; key:string; name:string;
+      aliases:string[]; year_from:number|null; year_to:number|null };
+    const [brands,models] = await Promise.all([
+      q.query<StoredBrand>(
+        'select category,brand_key as key,display_name as name,aliases ' +
+        'from vehicle_ref_brands where snapshot_id=$1 order by category,brand_key',
+        [selected.id]),
+      q.query<StoredModel>(
+        'select category,brand_key,model_key as key,display_name as name,aliases,year_from,year_to ' +
+        'from vehicle_ref_models where snapshot_id=$1 order by category,brand_key,model_key',
+        [selected.id]),
+    ]);
+    if (brands.length!==Number(selected.brand_count) || models.length!==Number(selected.model_count))
+      throw conflict('vehicle_ref_integrity','Количество строк снимка отличается от утверждённого');
+    const byBrand=new Map<string, StoredModel[]>();
+    for (const model of models) {
+      const id=model.category+':'+model.brand_key;
+      const group=byBrand.get(id)??[];
+      group.push(model);
+      byBrand.set(id,group);
+    }
+    let rebuilt:ReturnType<typeof normalizeCatalog>;
+    try {
+      rebuilt=normalizeCatalog({
+        sourceRevision:selected.revision,
+        brands:brands.map((b)=>({
+          category:b.category,key:b.key,name:b.name,aliases:b.aliases,
+          models:(byBrand.get(b.category+':'+b.key)??[]).map((m)=>({
+            key:m.key,name:m.name,aliases:m.aliases,
+            yearFrom:m.year_from,yearTo:m.year_to,
+          })),
+        })),
+      });
+    } catch {
+      throw conflict('vehicle_ref_integrity','Содержимое снимка повреждено или нарушает формат');
+    }
+    if (rebuilt.sha256!==selected.content_sha256 ||
+        rebuilt.brandCount!==brands.length || rebuilt.modelCount!==models.length)
+      throw conflict('vehicle_ref_integrity','SHA-256 снимка не совпадает с сохранёнными строками');
+  }
+
   async activateSnapshot(actor: AuthUser, sourceKey: string, revision: string, reasonInput: string) {
     requireAdmin(actor);
     const key = slug(sourceKey);
@@ -221,14 +268,8 @@ export class VehicleReferenceService {
       const selected = await q.one<SnapshotRow>(
         'select * from vehicle_ref_snapshots where source_key=$1 and revision=$2 for update', [key, rev]);
       if (!selected) throw notFound('Версия справочника не найдена');
+      await this.assertSnapshotIntegrity(q, selected);
       if (selected.state === 'active') return { revision: rev, unchanged: true };
-      const counts = await q.one<{ brands: number; models: number }>(
-        'select (select count(*)::int from vehicle_ref_brands where snapshot_id=$1) as brands,' +
-        ' (select count(*)::int from vehicle_ref_models where snapshot_id=$1) as models',
-        [selected.id]);
-      if (!counts || counts.brands !== Number(selected.brand_count) ||
-          counts.models !== Number(selected.model_count))
-        throw conflict('vehicle_ref_integrity', 'Несовпадение количества строк снимка');
       await q.query("update vehicle_ref_snapshots set state='retired',retired_at=now() " +
         "where source_key=$1 and state='active'", [key]);
       await q.query("update vehicle_ref_snapshots set state='active',published_by=$2," +
@@ -332,10 +373,21 @@ export class VehicleReferenceService {
       { ...options, year: selection.year });
     const model = models.find((m) => m.key === selection.modelKey);
     if (model?.conflict) throw conflict('vehicle_ref_model_conflict', 'Описание модели различается между источниками');
+    // The brand and the model must be supported by the SAME approved source.
+    // A composite "brand from A, model from B" must never claim to be an
+    // attested catalogue entry for A. Pick a deterministic common source.
+    const common = model && brand ? model.sources.filter((key) => brand.sources.includes(key)).sort() : [];
+    if (brand && model && !common.length)
+      throw conflict('vehicle_ref_provenance_conflict','Марка и модель не подтверждены одним источником');
     try {
-      return validateReferenceSelection(brands, models.map((m): ReferenceModel =>
+      const selectedEntry=validateReferenceSelection(brands, models.map((m): ReferenceModel =>
         ({ category: m.category, brandKey: m.brand_key, key: m.key, name: m.name, aliases: m.aliases,
           yearFrom: m.year_from, yearTo: m.year_to, sourceKey: m.source_key })), selection);
+      return {
+        ...selectedEntry,
+        brand:{...selectedEntry.brand,sourceKey:common[0]},
+        model:{...selectedEntry.model,sourceKey:common[0]},
+      };
     } catch (e) {
       throw bad('vehicle_ref_selection_invalid', (e as Error).message);
     }
