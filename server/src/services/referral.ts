@@ -21,12 +21,17 @@ import { rub } from '../util.ts';
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DAY = 86_400_000;
 
-type Entry = { amount: number; expires_at: Date | null; created_at: Date };
+type Entry = { id?: number; amount: number; expires_at: Date | null; created_at: Date };
 
 /** Остаток с учётом сгорания: траты гасят самые старые начисления (FIFO) */
 export function pointsBalance(entries: Entry[], at: Date) {
   const lots: { left: number; exp: number }[] = [];
-  for (const e of [...entries].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())) {
+  // Equal timestamps are common in a single invoice transaction and in test
+  // clocks. Use the monotonically increasing ledger id as the FIFO tie-breaker;
+  // database row order without ORDER BY must never change an account balance.
+  for (const e of [...entries].sort((a, b) =>
+    new Date(a.created_at).getTime() - new Date(b.created_at).getTime() ||
+    (a.id ?? 0) - (b.id ?? 0))) {
     const t = new Date(e.created_at).getTime();
     if (e.amount > 0) { lots.push({ left: e.amount, exp: e.expires_at ? new Date(e.expires_at).getTime() : Infinity }); continue; }
     let need = -e.amount;
@@ -71,7 +76,9 @@ export class ReferralService {
   }
 
   async balance(userId: string, q: Queryable = this.db) {
-    const rows = await q.query<Entry>('select amount, expires_at, created_at from points_entries where user_id=$1', [userId]);
+    const rows = await q.query<Entry>(
+      'select id, amount, expires_at, created_at from points_entries where user_id=$1 order by created_at, id',
+      [userId]);
     return pointsBalance(rows, this.now());
   }
 
