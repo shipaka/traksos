@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import {useEffect,useRef,useState} from 'react';
 import { get, post, rub } from '../api.ts';
-import { useAction, useLoad, Loading } from '../ui.tsx';
+import {useAction,useMe} from '../ui.tsx';
+import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
+import {parseAdminRubles} from '../adminFinanceKopecks20261124.ts';
 
 type Move = 'receipt' | 'refund';
 type Method = 'invoice' | 'online' | 'cash' | 'other';
@@ -14,26 +16,54 @@ const paymentNames: Record<string,string> = {
 };
 
 function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>void}) {
-  const d=useLoad(()=>get('/api/admin/bookings/'+id+'/payment-events'),[id]);
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':booking:'+id;
+  const scopeRef=useRef(scope);
+  scopeRef.current=scope;
+  const d=useAdminScopedResource<any>('/api/admin/bookings/'+id+'/payment-events',scope,admin);
   const {busy,run}=useAction();
   const [kind,setKind]=useState<Move>('receipt');
   const [method,setMethod]=useState<Method>('invoice');
   const [amount,setAmount]=useState('');
   const [reference,setReference]=useState('');
+  const [error,setError]=useState('');
+  useEffect(()=>{
+    setKind('receipt');setMethod('invoice');setAmount('');setReference('');setError('');
+  },[scope]);
+  const kopecks=parseAdminRubles(amount);
   async function save() {
-    const kopecks=Math.round(Number(amount)*100);
-    if (!Number.isSafeInteger(kopecks)||kopecks<=0||reference.trim().length<4)return;
+    if(busy||!admin||kopecks===null||reference.trim().length<4){
+      setError('Укажите точную сумму до копейки и номер подтверждающего банковского документа.');
+      return;
+    }
+    const startedAs=scope;
+    setError('');
+    // This screen only records a completed bank/receipt operation. It is
+    // deliberately not a bank/payment gateway or an automatic retry.
     const result=await run(()=>post('/api/admin/bookings/'+id+'/payment-events',
       {kind,method,amount:kopecks,reference:reference.trim()}),
-    kind==='receipt'?'Поступление записано':'Возврат учтён');
-    if(result){setAmount('');setReference('');await d.reload();reload();}
+      kind==='receipt'?'Поступление записано':'Возврат учтён');
+    if(scopeRef.current!==startedAs)return;
+    if(result){
+      setAmount('');setReference('');d.reload();reload();
+    }else setError('Операция не подтверждена. Сверьте банковский журнал перед повторной записью.');
   }
   const inv=d.data?.invoice;
+  const events=Array.isArray(d.data?.events)?d.data.events:null;
+  const valid=inv&&events;
   return <div className="card stack">
     <div className="between"><b>Ручная банковская сверка — счёт №{inv?.number??''}</b>
       <button type="button" className="btn ghost small" onClick={close}>Закрыть</button></div>
     <p className="note">Здесь фиксируется уже совершённая операция по реальному банковскому/кассовому документу. Кнопка ничего не списывает со счёта клиента и не отправляет банковский возврат.</p>
-    {!inv ? <Loading error={d.error} /> : <>
+    {!valid ? <div className="stack" role={d.error||d.data?'alert':'status'}>
+      <p>{d.error?'Не удалось загрузить банковскую сверку: '+d.error:
+        d.data?'Сервер вернул неполный журнал — операции недоступны.':
+        'Загружаем банковскую сверку…'}</p>
+      <button type="button" className="btn ghost small" onClick={d.reload}>
+        Повторить загрузку сверки
+      </button>
+    </div> : <>
       <div className="row"><span>Клиенту начислено <b>{rub(inv.total)}</b></span>
         <span>Получено <b>{rub(inv.received)}</b></span>
         <span>Возвращено <b>{rub(inv.refunded)}</b></span>
@@ -55,7 +85,7 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
             </select>
           </label>
           <label className="stack">Сумма, ₽
-            <input className="field" type="number" min=".01" max="100000000" step=".01"
+            <input className="field" type="text" inputMode="decimal" maxLength={30}
               value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Например, 10500" />
           </label>
           <label className="stack">Номер реальной банковской / кассовой операции
@@ -63,13 +93,16 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
               placeholder="Номер транзакции / выписки / чека" />
           </label>
         </div>
-        <button className="btn" type="button" disabled={busy||!reference.trim()||reference.trim().length<4||!amount||Number(amount)<=0}
-          onClick={save}>Записать {kind==='receipt'?'поступление':'исполненный возврат'}</button>
+        {error&&<div className="banner warn" role="alert">{error}</div>}
+        {amount&&kopecks===null&&<p className="note" role="alert">Введите сумму в рублях с точностью до копейки, без экспонент и округления.</p>}
+        <button className="btn" type="button"
+          disabled={busy||!admin||reference.trim().length<4||kopecks===null}
+          onClick={()=>void save()}>Записать {kind==='receipt'?'поступление':'исполненный возврат'}</button>
       </>}
       {!inv.paymentRequired && <span className="note">Исторический счёт не пересчитывается: новая схема платежей для него не применяется.</span>}
       <b>Журнал подтверждений</b>
-      {d.data.events.length===0?<span className="note">Подтверждённых операций пока нет.</span>:
-        d.data.events.map((x:any)=><div key={x.id} className="between">
+      {events!.length===0?<span className="note">Подтверждённых операций пока нет.</span>:
+        events!.map((x:any)=><div key={x.id} className="between">
           <span>{x.kind==='receipt'?'Поступление':'Возврат'} · {x.method} · {x.reference}<small className="note"> · {new Date(x.created_at).toLocaleString('ru-RU')} · {x.verified_by}</small></span>
           <b>{x.kind==='receipt'?'+':'−'}{rub(x.amount)}</b></div>)}
     </>}
@@ -77,22 +110,48 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
 }
 
 export function AdminServiceFinance() {
-  const d=useLoad(()=>get('/api/admin/service-finance'),[]);
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':service-finance-admin';
+  const scopeRef=useRef(scope);
+  scopeRef.current=scope;
+  const d=useAdminScopedResource<any[]>('/api/admin/service-finance',scope,admin);
   const {busy,run}=useAction();
   const [selected,setSelected]=useState<string|null>(null);
   const [payoutRefs,setPayoutRefs]=useState<Record<string,string>>({});
   const [filter,setFilter]=useState<'all'|'awaiting'|'ready'|'disputed'|'recovery'>('all');
-  const items:any[]=d.data??[];
+  const [actionError,setActionError]=useState('');
+  useEffect(()=>{
+    setSelected(null);setPayoutRefs({});setFilter('all');setActionError('');
+  },[scope]);
+  const items:any[]=Array.isArray(d.data)?d.data:[];
   const shown=items.filter(x=>
     filter==='all'||(filter==='awaiting'&&x.payment_required&&x.outstanding>0)||
     (filter==='ready'&&x.payoutReady)||(filter==='disputed'&&x.status==='disputed')||
     (filter==='recovery'&&x.recoveryNeeded));
   async function markPayout(id:string) {
+    if(!admin||busy)return;
     const ref=payoutRefs[id]?.trim()??'';
-    if(ref.length<4)return;
-    const out=await run(()=>post('/api/admin/bookings/'+id+'/paid',{reference:ref}),'Фактическая выплата отмечена по банковскому документу');
-    if(out)await d.reload();
+    const invoice=items.find(item=>String(item.id)===id);
+    if(!invoice?.payoutReady)return;
+    if(invoice.payment_required&&ref.length<4){
+      setActionError('Укажите номер реально отправленного перевода перед фиксацией выплаты.');
+      return;
+    }
+    if(!window.confirm('Фактический банковский перевод СТО уже выполнен? Записать подтверждение в журнал?'))return;
+    const startedAs=scope;
+    setActionError('');
+    const out=await run(()=>post('/api/admin/bookings/'+id+'/paid',
+      invoice.payment_required?{reference:ref}:{}),'Фактическая выплата отмечена по банковскому документу');
+    if(scopeRef.current!==startedAs)return;
+    if(out){
+      setPayoutRefs(old=>({...old,[id]:''}));d.reload();
+    }else setActionError('Подтверждение выплаты не получено. Проверьте историю счёта перед повтором.');
   }
+  if(!admin)return <div className="card stack">
+    <h3>Сверка оплаты и выплат СТО</h3>
+    <p role="alert">Реестр банковской сверки доступен только администратору.</p>
+  </div>;
   return <div className="stack">
     <h3>Сверка оплаты и выплат СТО</h3>
     <p className="note">Два независимых сбора: клиентский 5% сверху и комиссия СТО 5% внутри суммы работ. Максимум по 5 000 ₽ с каждой стороны на счёт. Для старых счетов тариф и итог не меняются.</p>
@@ -103,7 +162,12 @@ export function AdminServiceFinance() {
           aria-pressed={filter===id} onClick={()=>setFilter(id)}>{label}</button>)}
       <button type="button" className="btn ghost small" onClick={()=>d.reload()}>Обновить</button>
     </div>
-    {!d.data ? <Loading error={d.error}/> : shown.length===0 ? <div className="empty">Счетов с такими параметрами нет.</div>:
+    {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+    {!Array.isArray(d.data) ? <div className="card stack" role={d.error||d.data?'alert':'status'}>
+      {d.error?'Не удалось загрузить финансовый реестр: '+d.error:
+        d.data?'Сервер вернул некорректные данные финансов.':'Загружаем финансовый реестр…'}
+      <button type="button" className="btn ghost small" onClick={d.reload}>Повторить загрузку финансов</button>
+    </div> : shown.length===0 ? <div className="empty">Счетов с такими параметрами нет.</div>:
       shown.map((x:any)=><div key={x.id} className="card stack">
         <div className="between"><div><b>Счёт №{x.number} · {x.center_name}</b>
           <div className="note">{x.client_name} · {new Date(x.invoiced_at).toLocaleDateString('ru-RU')}</div></div>
@@ -138,7 +202,8 @@ export function AdminServiceFinance() {
               onClick={()=>markPayout(x.id)}>Отметить фактическую выплату СТО</button>
           </>}
         </div>
-        {selected===x.id && <BankMovements id={x.id} close={()=>setSelected(null)} reload={d.reload}/>}
+        {selected===x.id && <BankMovements key={scope+':'+x.id} id={x.id}
+          close={()=>setSelected(null)} reload={d.reload}/>}
       </div>)}
     <p className="note">Полная история сверки доступна только администратору. Платёжные документы и банковские переводы подтверждаются вне TrakSOS; внутреннее действие не отправляет реальные деньги.</p>
   </div>;
