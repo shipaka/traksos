@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { rememberGuestService, rememberGuestAction } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { requestTrakBotOpen } from '../trakbotEvents.ts';
@@ -6,6 +7,7 @@ import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.ts
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { FeatureArtwork } from '../featureArtwork20261122.tsx';
+import { PartnerNetworkMap } from './PartnerNetworkMap20261123.tsx';
 import './ownerDesktopHome20261120.css';
 
 function dismissOnMouseLeave(event: import('react').MouseEvent<HTMLDetailsElement>) {
@@ -61,6 +63,12 @@ function Feature({item}:{item:typeof features[number]}) {
   </a>;
 }
 export function OwnerDesktopHome20261120({ overlayBackground = false }: { overlayBackground?: boolean } = {}) {
+  const [mapOpen,setMapOpen]=useState(false);
+  const mapLauncher=useRef<HTMLButtonElement|null>(null);
+  function closeMap(){
+    setMapOpen(false);
+    requestAnimationFrame(()=>mapLauncher.current?.focus());
+  }
   return <main className="owner20-home" id="public-home"
     inert={overlayBackground || undefined} aria-hidden={overlayBackground || undefined}>
     <header className="owner20-top">
@@ -112,11 +120,19 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <aside className="owner20-map" aria-label="Покрытие сервисов">
         <h2>Покрытие сервисов TrakSOS</h2>
         <div className="owner20-map-inner">
-          <div className="owner20-map-shape" role="img" aria-label="Иллюстрация России из утверждённого макета, не подтверждение фактического покрытия."><span className="owner20-map-source" aria-hidden="true" /><span className="owner20-map-demo-tag">ДЕМО</span></div>
+          <div className="owner20-map-shape"><span className="owner20-map-source" aria-hidden="true" />
+            <span className="owner20-map-demo-tag">ДЕМО</span>
+            <button type="button" className="owner20-map-open" ref={mapLauncher}
+              aria-label="Развернуть карту партнёров" aria-expanded={mapOpen}
+              onClick={()=>setMapOpen(true)}>
+              <span className="owner20-map-expand-label">Развернуть карту</span>
+            </button>
+          </div>
           <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
         </div>
-        <a href="#/login">Подробнее о покрытии →</a>
+        <button type="button" className="owner20-map-footer-open" onClick={()=>setMapOpen(true)}>Подробнее о покрытии →</button>
       </aside>
+      {mapOpen && <PartnerNetworkMap onClose={closeMap}/>} 
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
       {primary.map(([title,hint,key])=>key==='trakbot'
