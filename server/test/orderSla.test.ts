@@ -72,6 +72,12 @@ test('performer handoff starts a fresh dispatch SLA clock instead of inheriting 
   const current=await t.db.one<{status:string;dispatch_started_at:string|null;performer_id:string|null}>(
     'select status,dispatch_started_at,performer_id from orders where id=$1',[id]);
   assert.equal(current?.performer_id,null,'dropped worker must be unassigned');
+  assert.equal(dropped.ok,true,'a successful refusal must return HTTP 200');
+  assert.equal(dropped.orderId,id);
+  assert.equal(dropped.status,current?.status,
+    'minimal acknowledgement must report the actual re-dispatch status');
+  assert.equal((await t.api('GET','/api/orders/'+id,undefined,master.token)).status,403,
+    'former performer must not regain access to private replacement order');
   assert.ok(current?.dispatch_started_at===null ||
     new Date(current.dispatch_started_at).getTime()>oldStart.getTime()+60*60_000,
     'replacement dispatch must not carry over the exhausted original SLA clock');

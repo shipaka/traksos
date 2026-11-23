@@ -604,7 +604,13 @@ export class OrdersService {
     await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: 'searching' },
       { kind: 'normal', title: 'Ищем другого исполнителя', body: `Исполнитель отказался от заявки №${o.number}. Уже ищем замену.`, data: { orderId } });
     await this.startDispatch(orderId, [user.id]);
-    return this.view(user, orderId);
+    // The former performer has been removed from the order. Calling view()
+    // would correctly deny their access with 403 *after* a successful drop,
+    // leaving the mobile UI thinking the refusal failed. Return only a
+    // minimal acknowledgement; never expose the replacement's order data.
+    const current = await this.db.one<{ status: string }>(
+      'select status from orders where id=$1', [orderId]);
+    return { ok: true, orderId, status: current?.status ?? 'searching' };
   }
 
   // Статусы ----------------------------------------------------------------
