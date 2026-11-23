@@ -377,6 +377,12 @@ try{
                 throw Error('Empty announcement date must block real Save action');
               await work.locator('textarea[maxlength="500"]').fill('Учебная проверка акции гидравлики');
               const commission=work.getByRole('button',{name:'Назначить комиссию'});
+              const percent=work.locator('input[type="number"][step="0.5"]');
+              await percent.fill('');
+              if(!await commission.isDisabled() ||
+                 !await work.getByText('Пустое поле не означает 0%',{exact:false}).isVisible())
+                throw Error('An empty percentage must not silently become a 0% finance campaign');
+              await percent.fill('0'); // zero is valid only when explicitly entered
               await times.nth(2).fill('');
               if(!await commission.isDisabled())
                 throw Error('Empty campaign date must block real finance action');
