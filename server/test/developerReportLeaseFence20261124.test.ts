@@ -62,7 +62,7 @@ test('developer report: stale failed sender does not move newer lease back to re
  try{
   const admin=await t.login('+79990000001');
   const report=ok(await t.api('POST','/api/admin/developer-reports',{
-   category:'technical',phone:'+79998889913',
+   category:'other',phone:'+79998889913',
    details:'Проверка потери позднего отрицательного HTTP ответа',
   },admin.token));
   let rejectFirst!:(reason:Error)=>void,releaseSecond!:()=>void;
