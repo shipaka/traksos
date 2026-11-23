@@ -67,14 +67,16 @@ PY
 # mFocusedApp = ru.traksos.app.preview/MainActivity.
 # Do not dismiss another app's dialog or weaken the DOM/pixel verification.
 recover_launcher_anr() {
-  local context="$1" windows dimensions
+  local context="$1" windows dimensions focus_line app_line
   windows="$(adb shell dumpsys window windows 2>/dev/null || true)"
-  if ! echo "$windows" | grep -F 'mCurrentFocus=' |
-      grep -Fq 'Application Not Responding: com.google.android.apps.nexuslauncher'; then
+  # Here-strings avoid SIGPIPE false negatives under set -o pipefail: the
+  # full dumpsys window dump may exceed a pipe buffer on Android 15.
+  focus_line="$(grep -m1 -F 'mCurrentFocus=' <<< "$windows" || true)"
+  if [[ "$focus_line" != *'Application Not Responding: com.google.android.apps.nexuslauncher'* ]]; then
     return 0
   fi
-  if ! echo "$windows" | grep -F 'mFocusedApp=' |
-      grep -Fq 'ru.traksos.app.preview'; then
+  app_line="$(grep -m1 -F 'mFocusedApp=' <<< "$windows" || true)"
+  if [[ "$app_line" != *'ru.traksos.app.preview'* ]]; then
     echo "FAIL: launcher ANR is not over the TrakSOS Activity ($context)"
     return 1
   fi
@@ -89,8 +91,8 @@ recover_launcher_anr() {
   adb shell input tap 117 378
   sleep 2
   windows="$(adb shell dumpsys window windows 2>/dev/null || true)"
-  if echo "$windows" | grep -F 'mCurrentFocus=' |
-      grep -Fq 'Application Not Responding: com.google.android.apps.nexuslauncher'; then
+  focus_line="$(grep -m1 -F 'mCurrentFocus=' <<< "$windows" || true)"
+  if [[ "$focus_line" == *'Application Not Responding: com.google.android.apps.nexuslauncher'* ]]; then
     echo "FAIL: Pixel Launcher ANR remains visible after Wait"
     return 1
   fi
