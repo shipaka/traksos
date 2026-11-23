@@ -2,6 +2,7 @@
 // Все суммы — копейки; периоды — по московскому времени.
 
 import type { Db } from '../db/index.ts';
+import { bad } from '../http/router.ts';
 
 const TZ = `'Europe/Moscow'`;
 
@@ -12,14 +13,22 @@ export class StatsService {
   async live() {
     const since = new Date(this.now().getTime() - 86_400_000);
     return this.db.one(
-      `select (select count(*)::int from performer_profiles where kind='master' and verification='approved' and line_status in ('online','on_call','on_job')) as masters_online,
-              (select count(*)::int from performer_profiles where kind='tow' and verification='approved' and line_status in ('online','on_call','on_job')) as tow_online,
+      `select (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
+                 where p.kind='master' and p.verification='approved' and u.status='active'
+                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and p.line_status in ('online','on_call','on_job')) as masters_online,
+              (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
+                 where p.kind='tow' and p.verification='approved' and u.status='active'
+                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and p.line_status in ('online','on_call','on_job')) as tow_online,
               (select count(*)::int from orders where created_at >= $1) as orders_24h,
               (select count(*)::int from orders where status in ('accepted','en_route','arrived','working','awaiting_confirmation')) as in_work,
               (select count(*)::int from orders where status='completed' and completed_at >= $1) as done_24h`, [since]);
   }
 
   async overview(days = 30) {
+    if (!Number.isSafeInteger(days) || days < 1 || days > 365)
+      throw bad('bad_stats_period','Период статистики должен быть от 1 до 365 суток');
     const since = new Date(this.now().getTime() - days * 86_400_000);
     const p = [since];
     const [totals, byDay, byService, cancels, speed, money, people, top, repeat, zones, brands] = await Promise.all([
@@ -59,7 +68,10 @@ export class StatsService {
       this.db.one(
         `select (select count(*)::int from users where created_at >= $1) as new_users,
                 (select count(*)::int from performer_profiles where verification='approved') as performers_approved,
-                (select count(*)::int from performer_profiles where line_status in ('online','on_call','on_job')) as performers_online,
+                (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
+                 where p.verification='approved' and u.status='active'
+                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and p.line_status in ('online','on_call','on_job')) as performers_online,
                 (select count(*)::int from performer_profiles where verification='pending' and submitted_at is not null) as verification_queue,
                 (select count(*)::int from users where company_inn is not null) as companies,
                 (select count(*)::int from support_tickets where status='open') as support_open`, p),
@@ -136,8 +148,14 @@ export class StatsService {
     const monthStart = new Date(Date.UTC(msk.getUTCFullYear(), msk.getUTCMonth(), 1) - 3 * 3600_000);
     const r = await this.db.one<any>(
       `select (select count(*)::int from orders where created_at >= $1) as orders_today,
-              (select count(*)::int from performer_profiles where kind<>'tow' and verification='approved' and line_status in ('online','on_call','on_job')) as masters_online,
-              (select count(*)::int from performer_profiles where kind='tow' and verification='approved' and line_status in ('online','on_call','on_job')) as tow_online,
+              (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
+                 where p.kind='master' and p.verification='approved' and u.status='active'
+                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and p.line_status in ('online','on_call','on_job')) as masters_online,
+              (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
+                 where p.kind='tow' and p.verification='approved' and u.status='active'
+                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and p.line_status in ('online','on_call','on_job')) as tow_online,
               (select count(*)::int from mod_cases where status='open' and kind='dispute') as disputes_open,
               (select count(*)::int from mod_cases where status='open') as mod_open,
               (select count(*)::int from support_tickets where status='open') as support_open,
@@ -184,7 +202,7 @@ export class StatsService {
               cl.name as client_name, pf.name as performer_name
          from orders o left join users cl on cl.id=o.client_id left join users pf on pf.id=o.performer_id
         where o.status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation')
-        order by o.is_sos desc, o.created_at limit 100`);
+        order by o.is_sos desc, o.created_at desc, o.id limit 100`);
     const ids = rows.map((r: any) => r.id);
     const ev = ids.length ? await this.db.query<{ order_id: string; type: string; created_at: Date }>(
       `select order_id, type, created_at from (select e.*, row_number() over (partition by order_id order by created_at desc) rn from order_events e where order_id = any($1::uuid[])) x where rn <= 5 order by created_at desc`, [ids]) : [];
