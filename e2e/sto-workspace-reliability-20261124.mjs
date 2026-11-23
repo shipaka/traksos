@@ -228,7 +228,12 @@ try{
   assert(saved.legacy.includes('engine'),
     'Shared legacy preferences were modified or migrated into new user');
   await change(undefined,'sto-C');
-  await page.getByRole('heading',{name:'Найти рембазу'}).waitFor();
+  // Heading already exists in the old account; wait for the actual new
+  // React identity AND the new account's non-selected service filter.
+  await page.waitForFunction(()=>window.__sto.me?.id==='sto-C' &&
+    [...document.querySelectorAll('button')].some(button=>
+      button.textContent?.trim()==='Электрика' &&
+      button.getAttribute('aria-pressed')==='false'));
   assert(await page.getByRole('button',{name:'Электрика'}).getAttribute('aria-pressed')==='false',
     'Old user search choice leaked into the new account');
 
