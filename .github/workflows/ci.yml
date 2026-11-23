@@ -96,6 +96,8 @@ jobs:
           node e2e/api-session-race.mjs
           # Actual DriverAir React UI: offline, A/B account boundary, delayed polls.
           node e2e/air-session-20261124.mjs
+          # Real STO account, finance, search and booking React; isolated synthetic transport.
+          node e2e/sto-workspace-reliability-20261124.mjs
           # Real React+Chromium; synthetic error responses, never private production media.
           node e2e/order-photo-error-ui.mjs
           # Sign-in, client registration and partner onboarding must stay above the approved public page.
