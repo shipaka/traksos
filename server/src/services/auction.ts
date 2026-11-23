@@ -13,6 +13,7 @@ import { offerLimits, sortOffers, etaMinutes, type Sort } from '../domain/offers
 import type { Settings } from '../domain/defaults.ts';
 import { rub } from '../util.ts';
 import { policyFor, withinStage, type VerifiedRoadEta, type SosSearchStage } from '../domain/progressiveSos.ts';
+import { classifyNoPerformerReason, type NoPerformerReason, type PartnerPresence } from '../domain/noPerformerReason.ts';
 
 export class AuctionService {
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService,
@@ -334,7 +335,35 @@ export class AuctionService {
     const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
     if (!r.length) return;
     await this.db.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
-    await this.orders.event(this.db, order.id, null, 'no_performer', { auction: true });
+    // Snapshot what we actually KNOW at the end of the final wave. Never
+    // infer a missing partner from no_performer status or an empty radius alone.
+    let absenceReason: NoPerformerReason = 'unknown';
+    try {
+      const invited = await this.db.one<{ invited: boolean }>(
+        `select exists(
+          select 1 from order_events e
+           where e.order_id=$1 and e.type='ringing'
+             and e.id>coalesce((select max(id) from order_events
+                                 where order_id=$1 and type='retry'),0)
+        ) as invited`, [order.id]);
+      const profiles = await this.db.query<PartnerPresence>(
+        `select p.kind,p.specialties,u.status as user_status,p.verification,
+                p.line_status,p.paused,p.extras,p.lat,p.lng
+           from performer_profiles p join users u on u.id=p.user_id
+          where p.kind=$1`, [performerKindFor(order.service)]);
+      const dispatch = (await this.settings.all()).dispatch;
+      absenceReason = classifyNoPerformerReason({
+        service: order.service, verifiedOnly: !!order.verified_only,
+        lat: order.lat ?? null, lng: order.lng ?? null,
+        radiusKm: dispatch.radiusKm, invited: !!invited?.invited, profiles
+      });
+    } catch (err) {
+      // Explanatory copy must never block the terminal order status, payment,
+      // immutable event or customer notification.
+      console.error('[no-performer-classification]', err);
+    }
+    await this.orders.event(this.db, order.id, null, 'no_performer',
+      { auction: true, absenceReason });
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
       { kind: 'normal', title: 'Нет откликов', body: 'Свободных исполнителей рядом сейчас нет. Попробуйте ещё раз или позвоните в поддержку.', data: { orderId: order.id } });
   }
