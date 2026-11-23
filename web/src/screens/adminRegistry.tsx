@@ -95,6 +95,7 @@ export function AdminRegistry() {
   const [draft,setDraft]=useState<Filters>({...DEFAULT});
   const [applied,setApplied]=useState<Filters>({...DEFAULT});
   const [page,setPage]=useState(1);
+  const [reloadToken,setReloadToken]=useState(0);
   const [editing,setEditing]=useState<string|null>(null);
   const [exporting,setExporting]=useState(false);
   const [exportError,setExportError]=useState('');
@@ -109,17 +110,19 @@ export function AdminRegistry() {
   const changed=filterSnapshot!==JSON.stringify(draft);
   useEffect(()=>{
     setDraft({...DEFAULT});setApplied({...DEFAULT});
-    setPage(1);setEditing(null);setExportError('');setExportInfo('');setFilterError('');
+    setPage(1);setReloadToken(0);
+    setEditing(null);setExportError('');setExportInfo('');setFilterError('');
   },[me?.id]);
   const params=useMemo(()=>{
     const p=selection(applied);p.set('page',String(page));p.set('pageSize','30');
     return p.toString();
   },[applied,page]);
-  const result=useLoad<{ownerId:string|null;params:string;payload:any}>(
-    async()=>({ownerId:me?.id??null,params,payload:await get('/api/admin/registry?'+params)}),
-    [params,me?.id]);
+  const result=useLoad<{ownerId:string|null;params:string;version:number;payload:any}>(
+    async()=>({ownerId:me?.id??null,params,version:reloadToken,
+      payload:await get('/api/admin/registry?'+params)}),
+    [params,me?.id,reloadToken]);
   const loaded=!!me?.id && !result.error && result.data?.ownerId===me.id &&
-    result.data.params===params;
+    result.data.params===params && result.data.version===reloadToken;
   const data=loaded?result.data!.payload:null;
   const total=Number(data?.total??0);
   const pages=Math.max(1,Math.ceil(total/30));
@@ -249,7 +252,8 @@ export function AdminRegistry() {
       <b>{data ? `Найдено участников: ${total}` : result.error?'Данные реестра недоступны':'Загружаем реестр'}</b>
       <div className="row">
         <span className="note">Регион последней заявки — не подтверждённый адрес проживания или работы.</span>
-        <button type="button" className="btn ghost small" onClick={()=>result.reload()}>Обновить данные</button>
+        <button type="button" className="btn ghost small"
+          onClick={()=>setReloadToken(v=>v+1)}>Обновить данные</button>
       </div>
     </div>
     {!data ? <div className="stack">
@@ -294,7 +298,8 @@ export function AdminRegistry() {
             {editing===item.id?'Свернуть заметки':'Регион, теги и заметки'}
           </button>
         </div>
-        {editing===item.id && <RegistryEdit key={item.id} item={item} onSaved={()=>{setEditing(null);result.reload();}}
+        {editing===item.id && <RegistryEdit key={item.id} item={item}
+          onSaved={()=>{setEditing(null);setReloadToken(v=>v+1);}}
           onCancel={()=>setEditing(null)}/>}
       </article>)}
       {pages>1 && <div className="row tr-registry-pagination">
