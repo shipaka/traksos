@@ -87,6 +87,21 @@ try{
           throw Error('Signed owner handoff lost Admin/Back: '+role);
         if(role==='admin' && !marker.includes('Admin'))
           throw Error('Admin sandbox supervisor badge missing');
+        if(['master','master_service','tow'].includes(role) && width===390){
+          const search=page.locator('.work-mobile-searchbar input[type=search]');
+          await search.waitFor({state:'visible'});
+          const colors=await search.evaluate(input=>({
+            field:getComputedStyle(input).backgroundColor,
+            toolbar:getComputedStyle(input.parentElement).backgroundColor,
+            hint:getComputedStyle(input,'::placeholder').color,
+          }));
+          if(colors.field!=='rgba(0, 0, 0, 0)' || colors.toolbar!=='rgb(28, 45, 61)' ||
+             colors.hint!=='rgb(183, 199, 217)')
+            throw Error(role+': unreadable work search '+JSON.stringify(colors));
+          await search.click();
+          await page.getByRole('group',{name:'Что ищем'}).waitFor();
+          await page.getByRole('button',{name:'Свернуть поиск',exact:true}).click();
+        }
         if(role==='client' && width===1440){
           // The account dropdown must remain usable when the mouse crosses
           // the deliberate 8px visual gap, then disappear on pointer exit.
