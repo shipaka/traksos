@@ -11,6 +11,14 @@ const labels: Record<string,string> = {
 // Explicit Moscow time for promotions. The administrator's device can be abroad.
 const dateInput = (ms:number) => new Date(ms+3*3_600_000).toISOString().slice(0,16);
 const datetime = (x:string) => new Date(x+':00+03:00').toISOString();
+const validMskWindow = (start:string,end:string,maxDays:number) => {
+  // datetime-local can be cleared while editing. Avoid RangeError outside
+  // useAction's catch path; never show an enabled Save button for invalid dates.
+  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(start) ||
+     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(end))return false;
+  const a=Date.parse(start+':00+03:00'),b=Date.parse(end+':00+03:00');
+  return Number.isFinite(a)&&Number.isFinite(b)&&b>a&&b-a<=maxDays*86_400_000;
+};
 const mskTime = (iso:string) => new Date(iso).toLocaleString('ru-RU', {
   timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
 })+' МСК';
@@ -198,6 +206,10 @@ export function WorkerCommunications() {
   const [promoTo,setPromoTo]=useState(dateInput(Date.now()+3_600_000));
   const [reason,setReason]=useState('');
   const {busy,run}=useAction();
+  const announcementDatesOk=validMskWindow(from,to,90);
+  const campaignStart=Date.parse(promoFrom+':00+03:00');
+  const campaignDatesOk=validMskWindow(promoFrom,promoTo,31) &&
+    Number.isFinite(campaignStart) && campaignStart>=Date.now()-60_000;
   const a=async()=>{const r=await run(()=>post('/api/admin/announcements',{
     audience,service:service||null,title,body,startsAt:datetime(from),endsAt:datetime(to),published
   }),'Объявление создано');if(r){notices.reload();setTitle('');setBody('');}};
@@ -227,7 +239,7 @@ export function WorkerCommunications() {
         <label className="stack">Конец (МСК)<input type="datetime-local" className="field" value={to} onChange={e=>setTo(e.target.value)}/></label>
       </div>
       <label className="row"><input type="checkbox" checked={published} onChange={e=>setPublished(e.target.checked)}/> Опубликовать после наступления даты</label>
-      <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3} onClick={a}>Сохранить объявление</button>
+      <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3||!announcementDatesOk} onClick={a}>Сохранить объявление</button>
     </div>
     <div className="card stack">
       <b>Временная комиссия площадки</b>
@@ -244,7 +256,8 @@ export function WorkerCommunications() {
       </div>
       <label className="stack">Причина изменения
         <textarea className="field" rows={2} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
-      <button className="btn" disabled={busy||reason.trim().length<3} onClick={c}>Назначить комиссию</button>
+      <button className="btn" disabled={busy||reason.trim().length<3||!campaignDatesOk||
+          !Number.isFinite(promoPct)||promoPct<0||promoPct>100} onClick={c}>Назначить комиссию</button>
     </div>
     <div className="card stack">
       <b>Объявления (история)</b>
