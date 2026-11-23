@@ -62,5 +62,26 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     const legacyReplay=await send(another);
     assert.equal(legacyReplay.status,200,'existing raw-JSON fingerprints remain replayable');
     assert.equal(legacyReplay.body.order.id,separately.body.order.id);
+    // The HTTP endpoint uses Zod, which rebuilds objects in schema order.
+    // Exercise OrdersService itself so this regression really covers the
+    // previously non-canonical nested input rather than just Zod parsing.
+    const actor=await t.db.one<any>(
+      'select id,phone,name,roles,status,owner_id from users where id=$1',[customer.id]);
+    assert.ok(actor);
+    const directKey='order-direct-nested-repeat-123';
+    const directData={
+      service:'electric',regionId:'spb',zoneId:'spb',paymentMethod:'online',
+      description:'Direct service retry after mobile reconnect',
+      site:{place:'road',road:{highway:'М10',km:41,side:'right'}},
+    };
+    const first=await t.app.orders.create(actor,directData as any,directKey);
+    const reorderedNested={
+      ...Object.fromEntries(Object.entries(directData).reverse()),
+      site:{road:{side:'right',km:41,highway:'М10'},place:'road'},
+    };
+    const same=await t.app.orders.create(actor,reorderedNested as any,directKey);
+    assert.equal(same.order.id,first.order.id,
+      'service must not reject logically identical nested objects with reordered keys');
+    assert.equal((await t.db.query('select id from orders where id=$1',[first.order.id])).length,1);
   } finally {await t.close();}
 });
