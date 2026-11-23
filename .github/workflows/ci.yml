@@ -114,6 +114,8 @@ jobs:
           node e2e/insurance-locked-ui.mjs
           # Mixed-role admin must not be covered by an inactive client offer.
           node e2e/offer-gate-role-ui.mjs
+          # No consent while legal text is pending, failed or mismatched.
+          node e2e/offer-consent-guard.mjs
           node e2e/moderator-permission-check.mjs
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
