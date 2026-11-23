@@ -339,9 +339,15 @@ export class ServiceCenters {
       if(movingTow)throw conflict('tow_not_delivered',
         `Эвакуатор №${movingTow.number} ещё не сообщил о доставке. СТО может подтвердить запись, но не отмечать приезд машины.`);
     }
-    await this.db.query(
-      `update service_bookings set status=$2, arrived_at=coalesce(arrived_at, now()), updated_at=now() where id=$1`, [id, status]);
-    await this.tell({ ...b, status }, `Ремонт: ${STATUS_NAME[status]}`, `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim());
+    const updated = await this.db.one<any>(
+      `update service_bookings set status=$2,
+              arrived_at=coalesce(arrived_at, now()), updated_at=now()
+        where id=$1 and status=any($3::text[]) and status<>$2
+        returning *`,
+      [id, status, ['expected', ...REPAIR_STATUSES]]);
+    if (!updated) throw conflict('bad_status', 'Статус изменился. Обновите карточку ремонта.');
+    await this.tell(updated, `Ремонт: ${STATUS_NAME[status]}`,
+      `${updated.vehicle?.brand ?? ''} ${updated.vehicle?.plate ?? ''}`.trim());
     return this.booking(user, id);
   }
 
@@ -360,7 +366,10 @@ export class ServiceCenters {
   async stillHere(user: AuthUser, id: string) {
     const { b } = await this.mineBooking(user, id);
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Машина не в ремонте');
-    await this.db.query('update service_bookings set still_here_at=now() where id=$1', [id]);
+    const changed = await this.db.one<any>(
+      'update service_bookings set still_here_at=now() where id=$1 and status=any($2::text[]) returning id',
+      [id, REPAIR_STATUSES]);
+    if (!changed) throw conflict('bad_status', 'Машина уже не отмечена в ремонте');
     return this.booking(user, id);
   }
 
@@ -370,8 +379,12 @@ export class ServiceCenters {
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Сначала отметьте, что машина приехала');
     const clean = [...new Set(works.map((w) => w.trim()).filter(Boolean))].slice(0, 20);
     if (!clean.length) throw bad('no_works', 'Отметьте, что делали');
-    await this.db.query(`update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now() where id=$1`, [id, clean]);
-    await this.tell({ ...b, status: 'ready' }, 'Машина готова', `Сделано: ${clean.join(', ')}`);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now()
+        where id=$1 and status=any($3::text[]) returning *`,
+      [id, clean, REPAIR_STATUSES]);
+    if (!updated) throw conflict('bad_status', 'Состояние ремонта изменилось. Обновите карточку.');
+    await this.tell(updated, 'Машина готова', `Сделано: ${clean.join(', ')}`);
     return this.booking(user, id);
   }
 
