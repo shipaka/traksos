@@ -37,7 +37,30 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
   const { busy, run } = useAction();
   const [agree, setAgree] = useState(false);
   const [full, setFull] = useState<any>(null);
-  useEffect(() => { get(`/api/offers/${item.current.id}`).then(setFull).catch(() => {}); }, [item.current.id]);
+  const [loadError, setLoadError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setFull(null);
+    setLoadError(false);
+    setAgree(false);
+    get(`/api/offers/${item.current.id}`)
+      .then((value: any) => {
+        if (!active) return;
+        // Consent is only allowed for the actual, readable, current edition.
+        if (value?.id !== item.current.id ||
+            value?.version !== item.current.version ||
+            value?.audience !== item.audience ||
+            typeof value?.body !== 'string' || !value.body.trim()) {
+          setLoadError(true);
+          return;
+        }
+        setFull(value);
+      })
+      .catch(() => { if (active) setLoadError(true); });
+    return () => { active = false; };
+  }, [item.current.id, item.current.version, item.audience, retry]);
+  const canAccept = !!full && !loadError && !busy;
   return (
     <div className="call" role="dialog" aria-modal="true" aria-label={item.name} style={{ justifyContent: 'flex-start', gap: 14, overflowY: 'auto' }}>
       <span className="label" style={{ color: 'var(--accent)' }}>Условия изменились{left > 1 ? ` · ещё ${left - 1}` : ''}</span>
@@ -45,12 +68,18 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
       <span className="note">Редакция {item.current.version} · с {new Date(item.current.effective_at).toLocaleDateString('ru-RU')}</span>
       {String(item.current.version).toLowerCase().includes('черновик') && <p className="note" role="note">Тестовый черновик для проверки интерфейса. Это не согласованный юридический документ и не окончательный текст для публикации.</p>}
       {item.current.summary && <div className="card"><b>Что изменилось</b><span>{item.current.summary}</span></div>}
-      <div className="card offer-text">{full ? <Markdown text={full.body ?? ''} /> : 'Загружаю текст…'}</div>
+      <div className="card offer-text">{loadError ? (
+        <div role="alert">
+          <p>Не удалось загрузить действующую редакцию условий. Принять документ без его текста нельзя.</p>
+          <button type="button" className="btn ghost" onClick={() => setRetry(value => value + 1)}>Попробовать снова</button>
+        </div>
+      ) : full ? <Markdown text={full.body} /> : <span role="status">Загружаю текст…</span>}</div>
       <label className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
-        <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 4, width: 20, height: 20 }} />
+        <input type="checkbox" checked={agree} disabled={!full || loadError || busy} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: 4, width: 20, height: 20 }} />
         <span>Я прочитал и принимаю «{item.name}», редакция {item.current.version}</span>
       </label>
-      <button className="btn" disabled={!agree || busy} onClick={async () => {
+      <button className="btn" disabled={!agree || !canAccept} onClick={async () => {
+        if (!agree || !canAccept) return;
         if (await run(() => post(`/api/offers/${item.current.id}/accept`), 'Спасибо — условия приняты')) onDone();
       }}>Принимаю</button>
     </div>
