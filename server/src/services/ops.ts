@@ -14,7 +14,7 @@ export class OpsService {
 
   async demand(days = 7, waitMinutes = 15) {
     const since = new Date(this.now().getTime() - Math.min(365, Math.max(1, days)) * 86_400_000);
-    const [summary, hourly, byService, incidents] = await Promise.all([
+    const [summary, hourly, byService, byServiceZone, incidents] = await Promise.all([
       this.db.one<any>(`select count(*)::int as total,
           count(*) filter (where status='completed')::int as completed,
           count(*) filter (where status='no_performer' or exists
@@ -46,6 +46,19 @@ export class OpsService {
           count(*) filter (where accepted_at > created_at + $3::int * interval '1 minute')::int as accepted_late
         from orders where created_at >= $1 group by service order by unfilled desc, total desc`,
         [since, this.now(), waitMinutes]),
+      // Aggregate only original requests in the administrator-only endpoint.
+      // A zone ID is a coarse demand grouping, not a precise GPS coordinate;
+      // names, driver contacts and route samples are never in this dataset.
+      this.db.query<any>(`select o.service,
+          coalesce(nullif(o.zone_id,''),'unknown') as zone_id,
+          count(*)::int as total,
+          count(*) filter (where o.status='no_performer' or exists
+            (select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer'))::int as unfilled
+        from orders o where o.created_at >= $1
+        group by o.service,coalesce(nullif(o.zone_id,''),'unknown')
+        having count(*) filter (where o.status='no_performer' or exists
+          (select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer')) > 0
+        order by unfilled desc,total desc,o.service,zone_id limit 100`,[since]),
       this.db.query<any>(`select o.id, o.number, o.service, o.status, o.is_sos, o.zone_id,
           o.address, o.created_at, o.accepted_at, o.cancelled_at, o.cancel_reason,
           exists(select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer') as had_no_performer,
@@ -62,7 +75,7 @@ export class OpsService {
           o.is_sos desc, o.created_at desc limit 250`,
         [since, this.now(), waitMinutes]),
     ]);
-    return { days, waitMinutes, timezone: 'Europe/Moscow', summary, hourly, byService, incidents };
+    return { days, waitMinutes, timezone: 'Europe/Moscow', summary, hourly, byService, byServiceZone, incidents };
   }
 
   async review(actor: AuthUser, orderId: string, state: 'open' | 'investigating' | 'resolved', note: string) {
