@@ -12,6 +12,18 @@ ADB_BIN="$(command -v adb)"
 adb() {
   timeout --signal=TERM --kill-after=5s 35s "$ADB_BIN" "$@"
 }
+# If the API35 emulator process disappears, adb can spend 35 seconds on
+# *each* command saying "waiting for device". Stop the current role promptly,
+# preserve the screenshot and runtime logs, and keep this gate RED.
+require_live_emulator() {
+  if timeout --signal=TERM --kill-after=2s 7s "$ADB_BIN" get-state 2>/dev/null |
+      grep -Fxq device; then
+    return 0
+  fi
+  echo "FAIL: Android emulator ADB transport disconnected during $1"
+  timeout 7s "$ADB_BIN" devices -l >> android-compositor-diagnostics.log 2>&1 || true
+  exit 1
+}
 
 # Some API 35 GitHub emulator images sporadically show an ANR for their
 # SYSTEM Pixel Launcher over a correctly rendered TrakSOS WebView.
@@ -134,14 +146,13 @@ sdk_level=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 for role in client master; do
   # Readiness logs fire on React effect and can precede WebView compositor.
   # Clear them before each role so an earlier render cannot falsely pass.
-  # Android 15's headless emulator can render the React review event via an
-  # onNewIntent/same-document WebView navigation but keep a stale GUEST
-  # compositor frame. Cold launch the *same installed APK* directly to each
-  # real review route on API34+, then demand fresh role pixels and UI hierarchy.
-  # This is stricter, not an invented screenshot or acceptance of a React log.
-  if [ "$sdk_level" -ge 34 ]; then
-    adb shell am force-stop ru.traksos.app.preview
-  fi
+  # API35 Google-API headless AVD on GitHub repeatedly loses the *entire*
+  # emulator/ADB connection after force-stop of an already-rendered APK.
+  # MainActivity is singleTask; onNewIntent() explicitly reloads the REAL
+  # APK-packaged web view for android-review/<role>. Use that route instead.
+  # A stale compositor frame still fails the real-pixel comparison below,
+  # and the live WebView DOM must independently show the correct role.
+  require_live_emulator "before $role navigation"
   adb logcat -c
   adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity --es path "android-review/$role" >/dev/null
   found=0
@@ -157,39 +168,18 @@ for role in client master; do
     exit 1
   fi
 
-  # A cold API35 launch (used to avoid stale singleTask guest frames) displays
-  # the REAL approved 3.5s native truck splash. DESIGN_REVIEW_RENDERED comes
-  # from the React effect BEFORE that splash is removed. Previously the test
-  # grabbed a photo of the truck splash, then mislabelled it as a stale guest
-  # page and hammered UIAutomator while the emulator was still painting.
-  # Read a NEW splash-dismissed event since logcat -c (not a cached marker).
-  if [ "$sdk_level" -ge 34 ]; then
-    splash_dismissed=0
-    for attempt in $(seq 1 45); do
-      # Match the native removeView() marker from this same fresh process,
-      # not just the duration event: the previous API35 image stayed covered
-      # despite reporting that the 3.5-second delay had elapsed.
-      if adb logcat -d -s TrakSOSRuntime:I | grep -Fq 'NATIVE_SPLASH_DETACHED'; then
-        splash_dismissed=1
-        break
-      fi
-      sleep 1
-    done
-    if [ "$splash_dismissed" -ne 1 ]; then
-      echo "FAIL: fresh native splash never dismissed before Android $sdk_level role=$role"
-      exit 1
-    fi
-    echo "APK_REVIEW_SPLASH_DISMISSED=$role API=$sdk_level" >> runtime-ready.log
-  fi
-
-  # A React effect and even a logged SPLASH_VISIBLE_MS do not guarantee
-  # that Android 15's actual compositor has removed the native truck splash.
-  # Never launch expensive UIAutomator while the splash still covers React:
-  # in the failing API 35 artifact it wedged the emulator/ADB transport.
+  # The first genuine Activity startup above already passed the real 3.5s
+  # native-splash AND painted-guest checks. SingleTask review navigation does
+  # not create a new native splash, so demanding a second DETACHED event
+  # would be false evidence. If Android recreates Activity, the native
+  # splash will be rejected by --reject-native-splash below until it clears.
+  # Never treat a React-only event as visual proof.
+  require_live_emulator "after $role React render"
   sleep 2
   if [ "$sdk_level" -ge 34 ]; then
     splash_cleared=0
     for attempt in $(seq 1 12); do
+      require_live_emulator "during $role pixel capture attempt $attempt"
       adb exec-out screencap -p > "android-review-$role.png" || true
       if python3 scripts/verify-android-screen.py "android-review-$role.png" --reject-native-splash; then
         splash_cleared=1
@@ -245,6 +235,7 @@ for role in client master; do
   # distinct from the guest AND the previously verified role.
   painted=0
   for attempt in 1 2 3 4 5; do
+    require_live_emulator "before $role role-specific screenshot attempt $attempt"
     adb exec-out screencap -p > "android-review-$role.png"
     previous=(emulator-screen.png)
     if [ "$role" = master ]; then previous+=(android-review-client.png); fi
