@@ -92,6 +92,8 @@ jobs:
           node e2e/public-service-routing.mjs
            node e2e/legacy-guest-deeplinks.mjs
           node e2e/api-session-race.mjs
+          # Real React+Chromium; synthetic error responses, never private production media.
+          node e2e/order-photo-error-ui.mjs
           # Sign-in, client registration and partner onboarding must stay above the approved public page.
           node e2e/auth-overlay.mjs
           node e2e/temporary-demo-entry.mjs
