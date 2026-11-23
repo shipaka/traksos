@@ -509,8 +509,11 @@ expect(landing.includes("heroSlide === 0 ? go('register')") &&
   'approved mobile hero retains registration and opens sign-in, not old guide');
 expect(ownerPcHeader.includes("['Специалисты ЭБУ'") &&
   !/^\s*\[(?:[^\n]*?,)?\s*'ЭБУ',/m.test(ownerPcHeader) &&
-  ownerPcHeader.includes('href="#/login">Подробнее о покрытии'),
-  '617 public quick menu has no duplicate ECU and coverage opens sign-in');
+  ownerPcHeader.includes('aria-label="Развернуть карту партнёров"') &&
+  ownerPcHeader.includes('className="owner20-map-footer-open"') &&
+  ownerPcHeader.includes('<PartnerNetworkMap onClose={closeMap}/>') &&
+  ownerPcHeader.includes('owner20-map-demo-tag'),
+  '617 preserves approved compact map and opens the real partner network without duplicate ECU');
 expect(ownerPcHeader.includes("['TrakBot · ИИ','Наш технический помощник','trakbot']") &&
   ownerPcHeader.includes('requestTrakBotOpen()') &&
   ownerPcHeader.includes('className="owner20-quick-trakbot"') &&
