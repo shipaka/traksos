@@ -1,9 +1,9 @@
 // Operational control: historical unfilled orders, demand by Moscow hour,
 // targeted notices and commission campaigns. No fake metrics.
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, put } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
-import { useLoad, useAction, Loading, useMe } from '../ui.tsx';
+import { useAction, Loading, useMe } from '../ui.tsx';
 
 const labels: Record<string,string> = {
   master:'Выездные мастера', tow:'Эвакуаторщики', service:'СТО', all_workers:'Все исполнители',
@@ -40,20 +40,58 @@ const mskTime = (iso:string) => new Date(iso).toLocaleString('ru-RU', {
   timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
 })+' МСК';
 
+/**
+ * Account-scoped operational read: the generic useLoad retains a prior
+ * response on failure and can commit old filter/account responses out of order.
+ * Never show stale demand metrics, private notices or commission campaign data.
+ */
+function useOpsRead<T>(load:()=>Promise<T>,scope:string){
+  const loader=useRef(load);
+  loader.current=load;
+  const sequence=useRef(0);
+  const [snapshot,setSnapshot]=useState<{scope:string;data:T|null;error:string|null}>(
+    {scope,data:null,error:null});
+  const reload=useCallback(async()=>{
+    const request=++sequence.current;
+    setSnapshot({scope,data:null,error:null});
+    try{
+      const data=await loader.current();
+      if(request===sequence.current)setSnapshot({scope,data,error:null});
+    }catch(error){
+      if(request===sequence.current)setSnapshot({
+        scope,data:null,error:error instanceof Error?error.message:'Не удалось загрузить данные',
+      });
+    }
+  },[scope]);
+  useEffect(()=>{
+    void reload();
+    return ()=>{sequence.current++;};
+  },[reload]);
+  // Hide stale scope before the next effect, even during a fast role switch.
+  const current=snapshot.scope===scope?snapshot:null;
+  return {data:current?.data??null,error:current?.error??null,reload};
+}
+
 function Metric({name,value,hint}:{name:string;value:number|string;hint:string}) {
   return <div className="card tile"><span className="label">{name}</span>
     <b className="tile-value">{value}</b><span className="note">{hint}</span></div>;
 }
 
 export function OpsDashboard() {
-  const { me } = useMe();
-  const admin = !!me?.roles.includes('admin');
+  const {me}=useMe();
+  if(!me?.roles.includes('admin'))return null;
+  return <AdminOpsDashboard key={me.id} userId={me.id}/>;
+}
+function AdminOpsDashboard({userId}:{userId:string}) {
+  const admin=true;
   const [days,setDays]=useState(7);
   const [wait,setWait]=useState(15);
   const [filter,setFilter]=useState('all');
   const [onlyOpen,setOnlyOpen]=useState(false);
-  const report = useLoad(() => get('/api/admin/demand?days='+days+'&wait='+wait),[days,wait]);
-  const sla = useLoad(() => admin ? get('/api/admin/order-sla?days='+days) : Promise.resolve({incidents:[],repeat:[]}),[days,admin]);
+  const report = useOpsRead<any>(()=>get('/api/admin/demand?days='+days+'&wait='+wait),
+    'demand:'+userId+':'+days+':'+wait);
+  const sla = useOpsRead<any>(()=>get('/api/admin/order-sla?days='+days),
+    'sla:'+userId+':'+days);
   const {busy,run}=useAction();
   const d=report.data;
   const incidents=(d?.incidents??[]).filter((x:any)=>
@@ -126,7 +164,7 @@ export function OpsDashboard() {
         {!sla.data ? <Loading error={sla.error}/> : <>
           <div className="scroll-x"><table><thead><tr><th>Заявка / этап</th><th>Начало этапа</th><th>Контрольная дата</th><th>Текущий статус</th><th>Разбор</th></tr></thead>
             <tbody>{sla.data.incidents.length ? sla.data.incidents.map((i:any)=>
-              <SlaIncidentRow key={i.id} incident={i} onSaved={()=>sla.reload()}/>) :
+              <SlaIncidentRow key={i.id+':'+(i.reviewed_at??'')+':'+(i.review_state??'')} incident={i} onSaved={()=>sla.reload()}/>) :
               <tr><td colSpan={5}>Зависших этапов за период нет.</td></tr>}</tbody>
           </table></div>
           <b>Повторяющиеся случаи за 30 дней</b>
@@ -151,7 +189,7 @@ export function OpsDashboard() {
           <label className="row"><input type="checkbox" checked={onlyOpen} onChange={e=>setOnlyOpen(e.target.checked)}/> Только неразобранные</label>
         </div>
         {incidents.length===0 && <span className="note">За выбранный период случаев не найдено.</span>}
-        {incidents.map((o:any)=><IncidentRow key={o.id} order={o} editable={admin}
+        {incidents.map((o:any)=><IncidentRow key={o.id+':'+(o.reviewed_at??'')+':'+(o.review_state??'')} order={o} editable={admin}
           onSave={async (state,note)=>{const x=await run(()=>put('/api/admin/demand/'+o.id+'/review',{state,note}),'Разбор сохранён');if(x)report.reload();}} busy={busy}/>)}
       </div>
     </>}
