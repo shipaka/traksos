@@ -10,7 +10,7 @@ import { EconomicsGuide } from './economicsGuide.tsx';
 /** Любой ответ сервера «offer_required» открывает окно согласия */
 export const offerRequired = new EventTarget();
 export function reportApiError(e: unknown) {
-  if (e instanceof ApiError && e.code === 'offer_required') offerRequired.dispatchEvent(new Event('need'));
+  if (e instanceof ApiError && (e.code === 'offer_required' || e.code === 'offer_outdated')) offerRequired.dispatchEvent(new Event('need'));
 }
 
 export function OfferGate() {
