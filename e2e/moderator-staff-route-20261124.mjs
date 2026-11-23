@@ -51,7 +51,7 @@ const output=await build({
     }));
   }}]
 });
-const js=output.outputFiles.find(file=>file.path.endsWith('.js'))?.text;
+const js=output.outputFiles[0]?.text;
 if(!js)throw Error('No React bundle generated');
 const browser=await chromium.launch();
 const assert=(condition,message)=>{if(!condition)throw Error(message)};
