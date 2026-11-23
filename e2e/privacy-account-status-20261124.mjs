@@ -79,6 +79,7 @@ try{
     deleteAt:'2026-12-20T00:00:00Z',graceDays:30
   }));
   await page.getByText(/Запрос принят/).waitFor();
+  await page.getByText(/удаление откладывается до их закрытия/).waitFor();
   check(await page.getByRole('button',{name:'Не удалять'}).count()===1,
     'Account A should display its pending deletion request');
 
@@ -99,6 +100,7 @@ try{
     deleteRequestedAt:null,deleteAt:null,graceDays:45
   }));
   await page.getByText(/Через 45 дней аккаунт будет закрыт/).waitFor();
+  await page.getByText(/если завершены все действующие заявки/).waitFor();
   check(await page.getByRole('button',{name:'Удалить аккаунт'}).count()===1,
     'Delete action missing after verified new-account status');
 
