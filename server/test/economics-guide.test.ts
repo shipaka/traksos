@@ -35,6 +35,12 @@ test('economy explainer shows only the own side and all actual bonus settings',(
   assert.doesNotMatch(owner.paragraphs.map(x=>x.text).join(' '),/комисси[яю] исполнителя\s*[—:-]\s*5%/);
   assert.doesNotMatch(master.paragraphs.map(x=>x.text).join(' '),/сбор с клиента\s*[—:-]\s*5%/);
   assert.equal(workshop.examples[1].fee,500_000);
+  const promo=master.paragraphs.find(x=>x.title==='Временная акция на выезд');
+  assert.ok(promo,'role learning must describe the approved shortage campaign');
+  assert.match(promo.text,/от 0 до 5%/);
+  assert.match(promo.text,/при создании конкретной заявки/);
+  assert.match(promo.text,/баллы исполнителя не списываются/);
+  assert.match(promo.text,/5 000/);
   for(const role of ['insurer','inspection','moderator','admin'] as const) {
     assert.equal(financeGuide(defaultSettings,role).examples.length,0);
   }
