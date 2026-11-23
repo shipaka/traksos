@@ -41,6 +41,7 @@ function AirRoom() {
     setError('');
     const load=async()=>{
       const request=++latestRequest;
+      setLoading(true);
       try {
         const result=await get<Air>('/api/air/messages');
         if(live && request===latestRequest) {setAir(result);setError('');}
