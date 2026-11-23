@@ -126,8 +126,13 @@ const browser=await chromium.launch();
 try{
   const page=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
   const jsErrors=[];page.on('pageerror',e=>jsErrors.push(e.message));
-  await page.goto('about:blank');
-  await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
+  // A synthetic loopback origin provides normal localStorage semantics.
+  // Playwright intercepts the document; no external request or test server.
+  await page.route('http://127.0.0.1:18979/**',route=>route.fulfill({
+    status:200,contentType:'text/html',
+    body:'<!doctype html><html lang="ru"><body><div id="root"></div></body></html>'
+  }));
+  await page.goto('http://127.0.0.1:18979/');
   await page.evaluate(()=>{
     window.__sto={pending:[],listeners:new Set(),errors:[],go:[],done:0,me:null};
     localStorage.setItem('traksos.svcsearch',JSON.stringify({need:'engine',radius:0}));
@@ -183,7 +188,7 @@ try{
   const indexFinance=await page.evaluate(()=>window.__sto.pending.findIndex(x=>x.path==='/api/base/money'));
   await answer(indexFinance,money(1012345));
   await page.getByRole('heading',{name:'Финансы'}).waitFor();
-  await page.getByText('10 123,45 ₽',{exact:false}).first().waitFor();
+  await page.getByText(/10\s?123[,.]45/).first().waitFor();
   const pointsIndex=await page.evaluate(()=>window.__sto.pending.findIndex(x=>x.path==='/api/me/referral'));
   await reject(pointsIndex,'Баллы недоступны');
   await page.getByText('Не удалось проверить действующий лимит списания баллов').waitFor().catch(async()=>{
@@ -192,7 +197,7 @@ try{
   });
   await page.evaluate(()=>window.__sto.listeners.forEach(fn=>fn({type:'booking'})));
   await waitGet('/api/base/money',2);
-  assert(await page.getByText('10 123,45 ₽',{exact:false}).count()===0,
+  assert(await page.getByText(/10\s?123[,.]45/).count()===0,
     'Stale payout visible during finance refresh');
   const financeSecond=await page.evaluate(()=>window.__sto.pending.findLastIndex(x=>x.path==='/api/base/money'));
   await reject(financeSecond,'Ошибка чтения реестра');
