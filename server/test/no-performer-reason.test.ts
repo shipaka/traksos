@@ -268,3 +268,45 @@ test('a retry supersedes an old pending no-performer alert', async () => {
     assert.equal(notifications.length,0);
   } finally {await t.close();}
 });
+
+test('real auction: nearby offline specialist reports temporary unavailability; absent GPS stays unknown', async () => {
+  const { setup } = await import('./helpers.ts');
+  const t = await setup();
+  try {
+    const client = await t.login('+79990003569', 'client');
+    const offline = await t.login('+79990003570', 'master');
+    // A real, active specialist is registered for this exact direction.
+    // Offline is not the same thing as no connected partners.
+    await t.db.query(
+      `insert into performer_profiles(user_id,kind,specialties,verification,line_status,lat,lng)
+       values ($1,'master',$2::text[],'approved','offline',59.934,30.335)
+       on conflict(user_id) do update set
+         specialties=excluded.specialties,verification=excluded.verification,
+         line_status=excluded.line_status,lat=excluded.lat,lng=excluded.lng`,
+      [offline.id,['hydraulics']]);
+    for (const [lat,lng,expected] of [
+      [59.934,30.335,'temporarily_unavailable'],
+      [null,null,'unknown'],
+    ] as const) {
+      const order=await t.db.one<{id:string}>(
+        `insert into orders(client_id,created_by,service,zone_id,status,estimate,lat,lng)
+         values ($1,$1,'hydraulics','spb','searching',$2::jsonb,$3,$4)
+         returning id`,
+        [client.id,JSON.stringify({callOut:100000,zoneName:'СПб'}),lat,lng]);
+      assert.ok(order);
+      // Test the actual final status, event, and owner-visible API, not only
+      // the pure classifier or a mocked response in the browser.
+      await t.app.auction.start(order.id);
+      const viewed=await t.api('GET',`/api/orders/${order.id}`,undefined,client.token);
+      assert.equal(viewed.status,200);
+      assert.equal(viewed.body.status,'no_performer');
+      assert.equal(viewed.body.absenceReason,expected,
+        'a location-free search cannot claim the offline worker is nearby');
+      const events=await t.db.query<{reason:string}>(
+        `select data->>'absenceReason' as reason from order_events
+         where order_id=$1 and type='no_performer' order by id desc`,[order.id]);
+      assert.equal(events.length,1);
+      assert.equal(events[0].reason,expected);
+    }
+  } finally { await t.close(); }
+});
