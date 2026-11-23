@@ -1405,18 +1405,25 @@ export async function logout() {
   location.reload();
 }
 
-const PRIO: [string, string][] = [['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
+const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
 function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
-  const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'near'; } catch { return 'near'; } });
+  const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'near'; } });
   const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
   const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, geo?.lng, brand, verifiedOnly]);
   if (!l.data) return null;
   const d = l.data;
   const choose = (k: string) => { setPrio(k); try { localStorage.setItem('traksos.prio', k); } catch { /* */ } };
-  const items = [...d.items].sort((a: any, b: any) => Number(b.verification==='approved')-Number(a.verification==='approved') || (prio === 'cheap' ? (a.callOut ?? 1e12) - (b.callOut ?? 1e12)
-    : prio === 'brand' ? (b.brandStars ?? 0) - (a.brandStars ?? 0) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)
-    : prio === 'fast' ? (a.etaMin ?? 1e9) - (b.etaMin ?? 1e9) : (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)));
+  const items = [...d.items].sort((a:any,b:any)=>{
+    const verified=Number(b.verification==='approved')-Number(a.verification==='approved');
+    const near=(a.distanceKm??1e9)-(b.distanceKm??1e9);
+    const criterion=prio==='cheap'?(a.callOut??1e12)-(b.callOut??1e12)
+      :prio==='brand'?(b.brandStars??0)-(a.brandStars??0)||near
+      :prio==='fast'?(a.etaMin??1e9)-(b.etaMin??1e9)
+      :prio==='near'?near:verified||near;
+    // "Recommended" rewards verification. Explicit sort modes MUST take precedence.
+    return criterion||(prio==='recommended'?near:verified||near);
+  });
   return (
     <div className="card">
       <div className="between">
@@ -1444,9 +1451,15 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
           </span>
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
-      )) : <span className="note">{verifiedOnly?'Сейчас нет подходящих проверенных исполнителей. Снимите галочку «Только проверенные», чтобы видеть остальных, или оставьте её для поиска только проверенных.':'Свободных рядом сейчас нет — заявка уйдёт в торги, мастера откликнутся, когда освободятся.'}</span>}
+      )) : <span className="note">{d.scope==='nearby'
+        ?verifiedOnly
+          ?'В указанном радиусе сейчас нет свободных проверенных мастеров. Можно снять галочку «Только проверенные», чтобы расширить поиск, либо сохранить ограничение.'
+          :'В указанном радиусе пока нет свободных подходящих мастеров. Новые кандидаты могут появиться позже.'
+        :verifiedOnly
+          ?'По всей сети сейчас нет свободных подходящих проверенных мастеров. Без координат нельзя определить местную доступность; укажите расположение автомобиля.'
+          :'В общесетевой выдаче пока нет свободных подходящих мастеров. Это не подтверждает отсутствие исполнителей рядом с автомобилем — укажите его расположение.'}</span>}
       <span className="note">{d.scope==='nearby'?'Счётчики и список относятся к подтверждённому радиусу поиска. ':'Без координат нельзя утверждать, что исполнитель находится рядом. '}
-        Значок «Проверен» показывается только подтверждённым исполнителям. Они имеют преимущество в выдаче; непроверенные остаются доступными, если фильтр выключен.</span>
+        Значок «Проверен» показывается только подтверждённым исполнителям. В режиме «Рекомендуем» они получают преимущество; в выбранной сортировке по цене, расстоянию или времени главный критерий — именно выбранный. Непроверенные остаются доступными, если фильтр выключен.</span>
     </div>
   );
 }
