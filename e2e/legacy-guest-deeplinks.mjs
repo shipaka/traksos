@@ -66,6 +66,44 @@ try {
         assert(await page.locator('main.guest-explore').count()===0,
           width+'px: obsolete public tour at #/'+path);
       }
+      if (width>=900) {
+        // Secondary public pages use the shared header, NOT the owner 617
+        // home header. Its menus must not remain open over legal documents.
+        await page.goto(BASE+'/#/company',{waitUntil:'domcontentloaded'});
+        await page.getByRole('heading',{name:'Компания TrakSOS',exact:true}).waitFor();
+        const menus=page.locator('.guest-site-nav details.guest-nav-group');
+        assert(await menus.count()===4,
+          'Desktop secondary public header lost an approved navigation group');
+        const platform=menus.nth(0);
+        const services=menus.nth(1);
+        await platform.locator('summary').click();
+        assert(await platform.evaluate(el=>el.open),
+          'Desktop secondary header Platform disclosure did not open');
+        await services.locator('summary').click();
+        assert(!await platform.evaluate(el=>el.open) &&
+          await services.evaluate(el=>el.open),
+          'Two secondary public header menus are open simultaneously');
+        await page.keyboard.press('Escape');
+        assert(!await services.evaluate(el=>el.open),
+          'Escape left a secondary public header flyout hanging');
+        assert(await services.locator('summary').evaluate(el=>document.activeElement===el),
+          'Escape lost keyboard focus in secondary public header');
+        await services.locator('summary').click();
+        await page.mouse.move(width/2,height-5);
+        assert(!await services.evaluate(el=>el.open),
+          'Desktop secondary header flyout stayed open after pointer left');
+        await services.locator('summary').click();
+        await page.mouse.click(width/2,height-5);
+        assert(!await services.evaluate(el=>el.open),
+          'Desktop secondary header flyout stayed open after outside click');
+        await services.locator('summary').click();
+        await services.locator('a[href="#/explore/van"]').click();
+        await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+        await page.waitForFunction(() =>
+          sessionStorage.getItem('traksos.pendingLandingAction')==='van');
+        assert(await page.getByText('Вы выбрали:',{exact:false}).count()===1,
+          'Desktop secondary header Services did not open real chosen-service auth');
+      }
       await open('explore/guide');
       await page.screenshot({path:'e2e/shots/legacy-guest/legacy-'+width+'.png'});
       // Existing approved service bookmarks must still retain the selected
