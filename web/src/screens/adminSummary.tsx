@@ -25,12 +25,12 @@ function Tile({ label, value, hint, tone }: { label: string; value: string | num
 
 export function AdminSummary() {
   const { me } = useMe();
-  const s = useLoad(() => get('/api/admin/summary'), [me?.id],
-    (e) => e.type === 'order' || e.type === 'mod_case');
+  const s = useLoad(async () => ({ownerId:me?.id,payload:await get('/api/admin/summary')}),
+    [me?.id], (e) => e.type === 'order' || e.type === 'mod_case');
   const [tab, setTab] = useState<'money' | 'work' | 'quality'>('money');
   // useLoad keeps the previous payload on GET failure; this is financial and
   // role-sensitive data, not a reusable estimate from a previous session.
-  const d = !s.error ? s.data : null;
+  const d = !s.error && s.data?.ownerId === me?.id ? s.data.payload : null;
   if (!d) return <div className="stack">
     <Loading error={s.error} />
     {s.error && <button type="button" className="btn ghost small"
@@ -97,18 +97,20 @@ export function AdminSummary() {
 
 function LiveOrders() {
   const { me } = useMe();
-  const l = useLoad(() => get('/api/admin/live'), [me?.id], (e) => e.type === 'order');
-  if (!l.data || l.error) return <div className="stack">
+  const l = useLoad(async () => ({ownerId:me?.id,rows:await get('/api/admin/live')}),
+    [me?.id], (e) => e.type === 'order');
+  const rows = !l.error && l.data?.ownerId === me?.id ? l.data.rows : null;
+  if (!rows) return <div className="stack">
     <Loading error={l.error} />
     {l.error && <button type="button" className="btn ghost small"
       onClick={() => void l.reload()}>Повторить загрузку живых заявок</button>}
   </div>;
   return (
     <div className="stack">
-      <span className="label">Живые заявки · {l.data.length}</span>
-      {!l.data.length ? <div className="empty">Сейчас открытых заявок нет</div> : (
+      <span className="label">Живые заявки · {rows.length}</span>
+      {!rows.length ? <div className="empty">Сейчас открытых заявок нет</div> : (
         <div className="rows">
-          {l.data.map((o: any) => (
+          {rows.map((o: any) => (
             <a key={o.id} href={`#/order/${o.id}`} className="list-item">
               <div className="stack" style={{ gap: 2 }}>
                 <b>№{o.number} · {SERVICES[o.service]?.name ?? o.service}{o.is_sos ? ' · SOS' : ''}</b>
