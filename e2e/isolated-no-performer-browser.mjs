@@ -14,11 +14,16 @@ const out='e2e/shots/sandbox-real-browser';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const failures=[];
-const widths=[320,360,390,412,768,900,1024,1440,1672];
+// Match owner-approved cross-device acceptance, including short landscape
+// phones and portrait tablets. Keep existing screenshot naming stable.
+const widths=[320,360,390,412,640,768,900,1024,1280,1440,1536,1672];
 try{
   for(const role of ['owner','driver']){
     for(const width of widths){
-      const context=await browser.newContext({viewport:{width,height:width<=412?844:width<=900?950:980},locale:'ru-RU'});
+      // A 640×360 landscape screen must remain usable without a forced click;
+      // 768×850 proves the portrait-tablet layout, not a tall desktop mock.
+      const height=width===640?360:width===768?850:width<=412?844:width<=900?950:980;
+      const context=await browser.newContext({viewport:{width,height},locale:'ru-RU'});
       const page=await context.newPage();
       try{
         const ticket=issueSandboxTicket(role,secret);
