@@ -123,7 +123,7 @@ async function readBoundedModelBody(response: Response): Promise<string | null> 
 }
 
 export async function requestGeneratedText(
-  instructions: string;
+  instructions: string,
   input: string,
   maxTokens: number,
   timeoutMs: number,
