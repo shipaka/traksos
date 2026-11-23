@@ -149,6 +149,9 @@ export class DocumentsService {
   /** Voluntary verification: remove all confidential images and revoke verification. */
   async deleteConfidential(user: AuthUser) {
     await this.db.tx(async (q) => {
+      // Use the same per-performer lock as upload/submit/review. A slow
+      // concurrent upload must not restore a photo after this delete commits.
+      await q.one('select user_id from performer_profiles where user_id=$1 for update', [user.id]);
       await q.query('delete from documents where user_id=$1', [user.id]);
       await q.query(`update performer_profiles
         set verification='pending', verification_note=null, verified_at=null, submitted_at=null
@@ -161,15 +164,21 @@ export class DocumentsService {
 
   /** Файл: владельцу — всегда, модератору — с записью в журнал */
   async file(user: AuthUser, id: string) {
-    const row = await this.db.one('select * from documents where id=$1', [id]);
-    if (!row) throw notFound();
-    const staff = user.roles.includes('admin') || user.roles.includes('moderator');
-    if (row.user_id !== user.id && !staff) throw forbidden();
-    if (row.user_id !== user.id) {
-      await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-        [user.id, 'document.view', id, { owner: row.user_id, kind: row.kind }]);
-    }
-    return { mime: row.mime as string, body: decrypt({ iv: asBuf(row.iv), tag: asBuf(row.tag), data: asBuf(row.data) }) };
+    const row = await this.db.tx(async q => {
+      // Reading + access + staff audit is one snapshot; no private document
+      // may be fetched successfully after a concurrent committed deletion.
+      const file=await q.one<any>('select * from documents where id=$1 for share', [id]);
+      if(!file)throw notFound();
+      const staff=user.roles.includes('admin')||user.roles.includes('moderator');
+      if(file.user_id!==user.id&&!staff)throw forbidden();
+      if(file.user_id!==user.id){
+        await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+          [user.id,'document.view',id,{owner:file.user_id,kind:file.kind}]);
+      }
+      return file;
+    });
+    return {mime:row.mime as string,
+      body:decrypt({iv:asBuf(row.iv),tag:asBuf(row.tag),data:asBuf(row.data)})};
   }
 
   /** Очередь модератора: кто отправил на проверку, с автоотметками */
