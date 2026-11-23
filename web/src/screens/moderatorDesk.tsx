@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ModQueue } from './moderation.tsx';
 import { SupportQueue } from './support.tsx';
 import { Verify, Flagged } from './admin.tsx';
+import { NavGlyph } from '../navGlyph.tsx';
 
 type DeskTab = 'cases' | 'support' | 'verify' | 'flagged';
 
@@ -20,7 +21,7 @@ export function ModeratorDesk({initialTab='cases'}:{initialTab?:DeskTab}={}) {
       {options.map(([key,name],i)=><button type="button" key={key}
         className={tab===key?'moderator-action active':'moderator-action'} onClick={()=>setTab(key)}
         aria-pressed={tab===key}>
-        <span aria-hidden="true">{['⚑','▣','✓','◈'][i]}</span>
+        <span aria-hidden="true"><NavGlyph glyph={['⚑','chat','check','alert'][i]}/></span>
         <b>{name}</b><small>Открыть рабочий раздел →</small>
       </button>)}
     </div>
