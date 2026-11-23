@@ -23,9 +23,6 @@
   white-space:nowrap;
   margin-right:clamp(4px,1.1vw,17px);
 }
-.guest-app .top .logo b {
-  color:#12d8fa !important;
-}
 .guest-app .guest-site-nav {
   display:flex;
   align-items:center;

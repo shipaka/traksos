@@ -12,8 +12,6 @@
  .owner20-home a:focus-visible,.owner20-home summary:focus-visible{outline:3px solid #ffad78;outline-offset:2px}
  .owner20-top{height:66px;display:flex;align-items:center;gap:24px;padding:0 32px;background:#071923;border-bottom:1px solid #1c3541}
  .owner20-mark{display:flex;align-items:center;gap:10px;flex:0 0 auto;white-space:nowrap;font-size:clamp(22px,2.2vw,35px);font-style:italic;font-weight:900;letter-spacing:-1.6px}
- .owner20-mark svg{width:65px;height:42px;color:#fff}
- .owner20-mark strong{color:var(--orange)}
  .owner20-tagline{font-size:12px;line-height:1.35;color:#d5e1e6;margin-right:auto}
  .owner20-topnav{display:flex;align-items:center;justify-content:center;gap:clamp(12px,1.8vw,32px);font-size:13px;white-space:nowrap}
  .owner20-topnav details{position:relative}
@@ -140,7 +138,6 @@
  .owner20-top{gap:12px}
  .owner20-region{font-size:11px}
  .owner20-mark{font-size:25px}
- .owner20-mark svg{width:50px}
  .owner20-lead{max-width:60%}
  .owner20-hero-links a{width:165px;font-size:12px}
  .owner20-map{width:34%;right:1%;padding:9px 8px}
@@ -246,7 +243,6 @@
     justify-self:start;
     gap:9px!important;
   }
-  .guest-app.guest-home .owner20-mark svg{width:63px!important;height:44px!important}
   .guest-app.guest-home .owner20-tagline{
     font-size:12px!important;line-height:1.35!important;
     margin:0!important;color:#d8dfe2!important;

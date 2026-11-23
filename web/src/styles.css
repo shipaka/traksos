@@ -28,7 +28,6 @@ a { color: var(--accent); }
 .app { max-width: 440px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
 .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
 .logo { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: -.5px; }
-.logo b { color: var(--accent); font-weight: 700; }
 main { flex: 1; display: flex; flex-direction: column; gap: 18px; padding: 18px 0 110px; }
 h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 24px; line-height: 1.15; text-wrap: balance; }
 h2 { margin: 0; font-size: 17px; }
@@ -552,7 +551,6 @@ select.field { appearance: none; }
 .guest-app{--public-ink:#f7f9ff;--public-orange:#ff6a13;--public-cyan:#13d8ef;background:linear-gradient(150deg,#071424,#0b2541 62%,#071321);color:var(--public-ink);}
 .guest-app .top{background:#06182b;border-bottom:1px solid #203851;color:white;}
 .guest-app .top .logo{font-size:clamp(15px,2.2vw,24px);letter-spacing:-.6px;color:white;}
-.guest-app .top .logo b{color:var(--public-orange);}
 .guest-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;}
 .guest-header-actions a{display:inline-flex;align-items:center;justify-content:center;border-radius:13px;padding:11px 16px;min-height:42px;border:1px solid var(--public-cyan);color:#f7fbff;font-weight:800;font-size:12px;text-decoration:none;white-space:nowrap;}
 .guest-header-actions a.register{border-color:#ff8f47;background:linear-gradient(120deg,#ff9b45,#ff6a13);color:#101e29;box-shadow:0 4px 19px #ff6a1340;}
@@ -748,8 +746,6 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   background:rgba(5,23,41,.96);color:#f5fbff;
   border-color:#24445c;backdrop-filter:blur(16px);
 }
-.app:not(.guest-app) .top .logo b,
-.app:not(.guest-app) .site-footer .logo b {color:#fc247c;}
 .app:not(.guest-app) .top .pill.accent{background:rgba(30,207,237,.13);color:#72e7fa;border:1px solid #277e98;}
 .app:not(.guest-app) .bell{color:#c4effd;border-color:#345c79;background:rgba(16,47,72,.7);}
 .app:not(.guest-app) .card,
@@ -1112,8 +1108,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   --accent-soft: rgba(250,23,110,.14);
   --on-accent: #fff;
 }
-.guest-app .site-footer .logo,
-.guest-app .site-footer .logo b { color: #fa176e; }
+.guest-app .site-footer .logo { color: #fa176e; }
 @media(max-width:899px) {
   /* Keep the headline fully above the photo, and buttons below the cab. */
   .public-landing .public-hero-visual {
