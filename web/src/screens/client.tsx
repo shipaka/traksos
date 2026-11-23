@@ -292,12 +292,17 @@ function MyPlace() {
 // Консультация по телефону — отдельная услуга: фиксированная цена, без выезда ----
 
 export function Consult() {
+  const {me}=useMe();
+  return <ConsultForAccount key={(me?.id??'guest')+':'+location.hash}/>;
+}
+function ConsultForAccount() {
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sym = SYMPTOMS.find((p) => p.id === params.get('p'));
   const { busy, run } = useAction();
   const { me } = useMe();
-  const { pricing } = usePrices();
-  const vehicles = useLoad(() => get('/api/vehicles'), []);
+  const pricingRead=usePrivateRead<any>(()=>get('/api/pricing'),'consult-price:'+(me?.id??'guest'));
+  const pricing=pricingRead.data;
+  const vehicles=usePrivateRead<any[]>(()=>get('/api/vehicles'),'consult-vehicles:'+(me?.id??'guest'));
   const [vehicleId, setVehicleId] = useState('');
   const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name + '. ' : '');
@@ -312,7 +317,10 @@ export function Consult() {
     !agree && { id: 'f-agree', name: 'согласие' },
     !consultMethod && { id: 'f-pay', name: 'безналичный способ оплаты' },
   ].filter(Boolean) as { id: string; name: string }[];
-  if (!pricing) return <main><Loading /></main>;
+  if (!pricing) return <main className="stack"><Loading error={pricingRead.error}/>
+    {pricingRead.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void pricingRead.reload();}}>Повторить проверку тарифа</button>}
+  </main>;
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
@@ -422,7 +430,12 @@ function SelfOrderWarning({ me }: { me: any }) {
 
 // Новая заявка --------------------------------------------------------------
 
-export function NewOrder({ service }: { service: string }) {
+export function NewOrder({service}:{service:string}) {
+  const {me}=useMe();
+  return <NewOrderForAccount key={(me?.id??'guest')+':'+service+':'+location.hash}
+    service={service}/>;
+}
+function NewOrderForAccount({service}:{service:string}) {
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
@@ -433,12 +446,19 @@ export function NewOrder({ service }: { service: string }) {
   const preferredPerformerId = params.get('preferred') ?? '';
   const { me } = useMe();
   const { busy, run } = useAction();
-  const pricing = useLoad(() => get('/api/pricing'), []);
-  const vehicles = useLoad(() => get('/api/vehicles'), []);
-  const pastPerformers = useLoad(() => preferredPerformerId ? get('/api/my-performers') : Promise.resolve([]), [preferredPerformerId]);
-  const selectedPerformer = (pastPerformers.data ?? []).find((p:any) => p.id === preferredPerformerId);
-  const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
-  const parallelSource = useLoad(() => ((parallelWith||continueFrom) ? get(`/api/orders/${parallelWith||continueFrom}`) : Promise.resolve(null)), [parallelWith,continueFrom]);
+  const scope=(me?.id??'guest')+':'+service;
+  const pricing=usePrivateRead<any>(()=>get('/api/pricing'),'order-price:'+scope);
+  const vehicles=usePrivateRead<any[]>(()=>get('/api/vehicles'),'order-vehicles:'+scope);
+  const pastPerformers=usePrivateRead<any[]>(()=>preferredPerformerId
+    ?get('/api/my-performers'):Promise.resolve([]),
+    'order-performers:'+scope+':'+preferredPerformerId);
+  const selectedPerformer=(pastPerformers.data??[]).find((p:any)=>p.id===preferredPerformerId);
+  const consult=usePrivateRead<any>(()=>fromConsult
+    ?get(`/api/orders/${fromConsult}`):Promise.resolve(null),
+    'order-consult:'+scope+':'+(fromConsult??''));
+  const parallelSource=usePrivateRead<any>(()=>(parallelWith||continueFrom)
+    ?get(`/api/orders/${parallelWith||continueFrom}`):Promise.resolve(null),
+    'order-parallel:'+scope+':'+(parallelWith||continueFrom||''));
   const [parallelAgree,setParallelAgree] = useState(false);
   const [agree, setAgree] = useState(false);
 
@@ -631,6 +651,8 @@ export function NewOrder({ service }: { service: string }) {
   if (!pricing.data) return <main>
     <Back to="" />
     <div className="banner warn">{pricing.error ?? 'Проверяем тарифы и тарифные зоны. Без связи отправка новой заявки недоступна.'}</div>
+    {pricing.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void pricing.reload();}}>Повторить проверку тарифа</button>}
     {savedDraft && <div className="card stack">
       <b>Ваш локальный черновик сохранён</b>
       <span className="note">Сохранён {fmtTime(new Date(savedDraft.savedAt).toISOString())}. Описание: {savedDraft.data.description.slice(0,180)||'не указано'}</span>
