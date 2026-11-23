@@ -82,9 +82,13 @@
   padding:7px 12px;background:#0b1f2ad9;
   color:#d0e0e6;font-size:10px;pointer-events:none}
 .owner20-map-open{
-  display:block;width:100%;height:100%;padding:0;border:0;
-  text-align:left;background:transparent;color:inherit;
-  cursor:zoom-in;position:relative;
+  position:absolute;z-index:6;inset:0;display:block;width:100%;height:100%;padding:0;border:0;
+  text-align:left;background:transparent;color:inherit;cursor:zoom-in;
+}
+.owner20-map .owner20-map-footer-open{
+  position:absolute;bottom:10px;right:12px;border:1px solid #66c4cf;
+  border-radius:20px;padding:6px 12px;background:transparent;
+  color:#f3fafb;cursor:pointer;font-size:11px;font-weight:750;
 }
 .owner20-map-open:focus-visible{outline:3px solid #ffbd5c;outline-offset:-3px;border-radius:10px}
 .owner20-map-expand-label{
