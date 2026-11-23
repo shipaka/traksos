@@ -45,11 +45,16 @@ export class OnsiteService {
 
   /** Отметки на месте: ожидание, погрузка, въезд — попадут в карточку клиента */
   async flags(user: AuthUser, orderId: string, flags: string[]) {
-    const o = await this.mine(user, orderId);
-    if (!['arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status)) throw conflict('bad_status', 'Отметки ставят после приезда');
-    const clean = [...new Set(flags.filter((f) => f in SITE_FLAGS))];
-    await this.db.query('update orders set site_flags=$2 where id=$1', [orderId, clean]);
-    await this.orders.event(this.db, orderId, user.id, 'site_flags', { flags: clean });
+    const clean=[...new Set(flags.filter(f=>f in SITE_FLAGS))];
+    await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['arrived','working','awaiting_confirmation','completed'].includes(o.status))
+        throw conflict('bad_status','Отметки ставят после приезда');
+      await q.query('update orders set site_flags=$2 where id=$1',[orderId,clean]);
+      await this.orders.event(q,orderId,user.id,'site_flags',{flags:clean});
+    });
     return this.orders.view(user, orderId);
   }
 
