@@ -161,7 +161,10 @@ for role in client master; do
   if [ "$sdk_level" -ge 34 ]; then
     splash_dismissed=0
     for attempt in $(seq 1 45); do
-      if adb logcat -d -s TrakSOSRuntime:I | grep -Fq 'SPLASH_VISIBLE_MS='; then
+      # Match the native removeView() marker from this same fresh process,
+      # not just the duration event: the previous API35 image stayed covered
+      # despite reporting that the 3.5-second delay had elapsed.
+      if adb logcat -d -s TrakSOSRuntime:I | grep -Fq 'NATIVE_SPLASH_DETACHED'; then
         splash_dismissed=1
         break
       fi
@@ -205,8 +208,14 @@ for role in client master; do
     if [ "$sdk_level" -ge 34 ]; then
       # Dump accessibility BEFORE capturing. Waiting for the dump can advance
       # the compositor several frames past the guest or previous role.
+      # Every attempt needs a newly generated accessibility tree. Some
+      # Android 15 emulators report a successful dump but do not write XML,
+      # so stale or error-text files cannot be treated as valid role evidence.
+      adb shell rm -f /sdcard/traksos-role.xml || true
       if ! timeout 25s adb shell uiautomator dump /sdcard/traksos-role.xml >/dev/null 2>&1 ||
-         ! adb exec-out cat /sdcard/traksos-role.xml > "android-review-$role-ui.xml"; then
+         ! adb shell test -s /sdcard/traksos-role.xml ||
+         ! adb exec-out cat /sdcard/traksos-role.xml > "android-review-$role-ui.xml" ||
+         ! grep -Fq '<hierarchy' "android-review-$role-ui.xml"; then
         sleep 2
         continue
       fi
