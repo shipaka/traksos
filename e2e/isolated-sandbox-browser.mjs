@@ -824,11 +824,11 @@ try{
       await guestPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
       await partnerButton.waitFor({state:'detached',timeout:15000});
       await partnerCard.waitFor({state:'detached',timeout:15000});
-      const revoked=await guestPage.evaluate(async()=>{
+      const revoked=await guestPage.evaluate(async id=>{
         const r=await fetch('/api/public/partner-map',{cache:'no-store'});
         const d=await r.json();
-        return {status:r.status,stillPublished:d.points?.some(p=>p.id===centerId)};
-      });
+        return {status:r.status,stillPublished:d.points?.some(p=>p.id===id)};
+      },centerId);
       if(revoked.status!==200 || revoked.stillPublished)
         throw Error('Revoked station is still published to guests');
       await guestPage.screenshot({path:out+'/guest-1440-partner-consent-revoked.png',
