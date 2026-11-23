@@ -400,7 +400,7 @@ function App() {
         ? <CourierDelivery id={route[2]} />
         : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
     case 'insurance': screen = b === 'request'
-      ? (route[2] === 'new' ? (isCustomer ? <InsuranceApplication vehicleId={route[3]??''} /> : <UnavailableRole label="Оформление страховой заявки доступно только клиенту" />) : <InsuranceThread requestId={route[2]??''} />)
+      ? (route[2] === 'new' ? (isCustomer && effMode === 'client' ? <InsuranceApplication vehicleId={route[3]??''} /> : <UnavailableRole label="Оформление страховой заявки доступно только клиенту" />) : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
