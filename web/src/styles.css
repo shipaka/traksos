@@ -981,6 +981,14 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 .account-menu > summary::-webkit-details-marker { display: none; }
 .account-menu[open] > summary { border-color: var(--accent); }
+.account-menu[open]::after {
+  /* Pointer bridge across the 8px visual gap between trigger and flyout.
+     Without it, the mouseleave handler closes the menu before the pointer
+     can reach its actual links. No visible color/geometry change to 617/618. */
+  content: ""; position: absolute; right: 0; top: 100%;
+  width: min(290px, calc(100vw - 24px)); height: 9px;
+  z-index: 29; pointer-events: auto;
+}
 .account-menu nav {
   position: absolute; right: 0; top: calc(100% + 8px);
   width: min(290px, calc(100vw - 24px)); max-height: min(65vh, 550px);
