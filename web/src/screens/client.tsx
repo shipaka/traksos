@@ -52,7 +52,8 @@ function ClientHomeForAccount() {
   const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
     !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
   const restrictionCopy=fleetRules.error?'Не удалось проверить права — повторите запрос'
-    :'Ограниченный доступ · разрешает владелец';
+    :fleetRules.loading?'Проверяем разрешения автопарка…'
+      :'Ограниченный доступ · разрешает владелец';
   const active = usePrivateRead<any[]>(()=>get('/api/orders'),
     'home-orders:'+(me?.id??'guest'),e=>e.type==='order');
   const services = usePrivateRead<any[]>(()=>get('/api/vehicle-service-requests'),
