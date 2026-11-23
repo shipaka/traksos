@@ -13,6 +13,9 @@ before(async()=>{
   admin=await t.login('+79990000001');
   customer=await t.login('+79992221101');
   master=await t.login('+79992221102','master');
+  // Announcement dispatch now correctly targets only actually verified
+  // specialists. Approve this fake master only in the disposable test DB.
+  await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[master.id]);
 });
 after(()=>t.close());
 
