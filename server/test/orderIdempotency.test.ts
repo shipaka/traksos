@@ -57,7 +57,13 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     assert.notEqual(separately.body.order.id,ids[0]);
     // A pre-upgrade stored hash used JSON.stringify without sorting. Replays
     // of such orders must remain valid after deploying canonical hashing.
-    const legacyHash=createHash('sha256').update(JSON.stringify(data)).digest('hex');
+    // Historical service hashes were computed AFTER Zod parsing, which puts
+    // fields in the declared API schema order (not the incoming wire order).
+    const legacyParsed={
+      service:data.service,description:data.description,address:data.address,
+      zoneId:data.zoneId,regionId:data.regionId,paymentMethod:data.paymentMethod,
+    };
+    const legacyHash=createHash('sha256').update(JSON.stringify(legacyParsed)).digest('hex');
     await t.db.query('update orders set create_request_hash=$1 where id=$2',[legacyHash,separately.body.order.id]);
     const legacyReplay=await send(another);
     assert.equal(legacyReplay.status,200,'existing raw-JSON fingerprints remain replayable');
