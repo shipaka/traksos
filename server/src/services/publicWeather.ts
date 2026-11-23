@@ -27,10 +27,12 @@ export function normalizeYandexCondition(value: unknown): Pick<PublicWeather, 'c
   if (value === 'partly-cloudy' || value === 'cloudy' || value === 'overcast') {
     return { condition: 'cloudy', description: value === 'overcast' ? 'Пасмурно' : 'Облачно' };
   }
-  if (value === 'thunderstorm' || value.startsWith('thunderstorm-with-')) {
+  if (value === 'thunderstorm' || value === 'thunderstorm-with-rain' ||
+      value === 'thunderstorm-with-hail') {
     return { condition: 'storm', description: 'Гроза' };
   }
-  if (value === 'wet-snow' || value.includes('snow')) {
+  if (value === 'wet-snow' || value === 'light-snow' ||
+      value === 'snow' || value === 'snow-showers') {
     return { condition: 'snow', description: value === 'wet-snow' ? 'Мокрый снег' : 'Снег' };
   }
   if (value === 'light-rain' || value === 'rain' || value === 'moderate-rain' ||
@@ -47,7 +49,10 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
   if (!fact || typeof fact !== 'object') return null;
   const result = normalizeYandexCondition(fact.condition);
   if (!result || typeof fact.temp !== 'number' || !Number.isFinite(fact.temp) ||
-      fact.temp < -80 || fact.temp > 65 || typeof fact.obs_time !== 'number') return null;
+      fact.temp < -80 || fact.temp > 65 ||
+      !Number.isFinite(fetchedMs) || fetchedMs < 0 ||
+      typeof fact.obs_time !== 'number' || !Number.isSafeInteger(fact.obs_time) ||
+      fact.obs_time < 0) return null;
   const observationMs = fact.obs_time * 1000;
   if (!Number.isFinite(observationMs) || observationMs > fetchedMs + 60_000 ||
       fetchedMs - observationMs > OBSERVATION_MAX_AGE_MS) return null;
@@ -74,7 +79,7 @@ export class PublicWeatherService {
   ) {}
 
   async current(): Promise<PublicWeather | null> {
-    if (!this.apiKey) return null;
+    if (!this.apiKey?.trim()) return null;
     const at = this.clock();
     if (this.cache && this.cache.expiresAt > at) return this.cache.value;
     if (this.pending) return this.pending;
