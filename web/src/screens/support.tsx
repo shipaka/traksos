@@ -77,7 +77,7 @@ export function SupportThread({ id }: { id: string }) {
         {t.order && <a className="btn ghost small" href={`#/order/${t.order.id}`}>Открыть заявку</a>}
         {mode === 'admin' && t.author && <a className="btn ghost small" href={`#/admin/user/${t.author.id}`}>{t.author.name ?? fmtPhone(t.author.phone)} — карточка</a>}
       </div>
-      {t.entry && (
+      {t.entry && mode !== 'moderator' && (
         <div className="card flat" style={{ gap: 4 }}>
           <span className="label">Операция №{t.entry.id}{t.entry.order_number ? ` · заявка №${t.entry.order_number}` : ''}</span>
           <div className="between"><b>{ENTRY_KIND[t.entry.kind] ?? t.entry.kind}</b><b>{t.entry.amount >= 0 ? '+' : '−'}{rub(Math.abs(t.entry.amount))}</b></div>
