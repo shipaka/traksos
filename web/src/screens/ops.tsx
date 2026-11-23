@@ -215,7 +215,10 @@ export function WorkerCommunications() {
   const [promoTo,setPromoTo]=useState(dateInput(Date.now()+3_600_000));
   const [reason,setReason]=useState('');
   const {busy,run}=useAction();
-  const announcementDatesOk=validMskWindow(from,to,90);
+  const announcementDatesOk=validMskWindow(from,to,90) &&
+    // Saved drafts can have old dates for historical audit, but a new
+    // publication with an expired end time would always fail server validation.
+    (!published || Date.parse(to+':00+03:00')>Date.now());
   const commissionRate=promoPct.trim()===''?NaN:Number(promoPct);
   const campaignStart=Date.parse(promoFrom+':00+03:00');
   const campaignDatesOk=validMskWindow(promoFrom,promoTo,31) &&
@@ -248,7 +251,7 @@ export function WorkerCommunications() {
         <label className="stack">Начало (МСК)<input type="datetime-local" className="field" value={from} onChange={e=>setFrom(e.target.value)}/></label>
         <label className="stack">Конец (МСК)<input type="datetime-local" className="field" value={to} onChange={e=>setTo(e.target.value)}/></label>
       </div>
-      {!announcementDatesOk && <span className="note" role="status">Укажите начало и конец объявления по Москве: конец должен быть позже начала, интервал — не более 90 дней.</span>}
+      {!announcementDatesOk && <span className="note" role="status">Укажите начало и конец объявления по Москве: конец позже начала, срок не более 90 дней; для публикации окончание должно быть в будущем.</span>}
       <label className="row"><input type="checkbox" checked={published} onChange={e=>setPublished(e.target.checked)}/> Опубликовать после наступления даты</label>
       <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3||!announcementDatesOk} onClick={a}>Сохранить объявление</button>
     </div>
