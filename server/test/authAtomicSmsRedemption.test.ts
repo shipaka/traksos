@@ -91,6 +91,34 @@ test('database failure after valid code rolls back account, code and session ato
   assert.equal((await sessionRows(retried.user.id)).length,1);
 });
 
+test('failed session INSERT rolls back the already-created account and preserves the exact SMS',async()=>{
+  const phone=correctPhone('0017');
+  const once=await code(phone);
+  await t.db.exec(`
+    CREATE FUNCTION auth_test_fail_session() RETURNS trigger LANGUAGE plpgsql AS $
+    BEGIN
+      IF (SELECT phone FROM users WHERE id=NEW.user_id) = '+79996660017' THEN
+        RAISE EXCEPTION 'synthetic session insertion fault';
+      END IF;
+      RETURN NEW;
+    END $;
+    CREATE TRIGGER auth_test_fail_session BEFORE INSERT ON sessions
+      FOR EACH ROW EXECUTE FUNCTION auth_test_fail_session();
+  `);
+  try {
+    const failed=await register(phone,once);
+    assert.equal(failed.status,500);
+    assert.equal((await t.db.query('select id from users where phone=$1',[phone])).length,0,
+      'account must not survive a failed session creation');
+    assert.equal((await t.db.query('select code_hash from auth_codes where phone=$1',[phone])).length,1,
+      'SMS must remain usable when server cannot create a session');
+  }finally{
+    await t.db.exec('DROP TRIGGER IF EXISTS auth_test_fail_session ON sessions; DROP FUNCTION IF EXISTS auth_test_fail_session();');
+  }
+  const retried=ok(await register(phone,once));
+  assert.equal((await sessionRows(retried.user.id)).length,1);
+});
+
 test('SMS password reset revokes all previous sessions and push registration with new token atomically',async()=>{
   const phone=correctPhone('0015');
   const first=ok(await register(phone,await code(phone),'FirstPassword123'));
