@@ -88,7 +88,13 @@ export class FleetService {
 
   /** Водитель: что ему можно — чтобы не предлагать лишнего и честно сказать про лимит */
   async rules(user: AuthUser) {
-    if (!user.owner_id) return null;
+    if (!user.owner_id || !user.roles.includes('driver')) return null;
+    // Historical revoked assignments may still have an owner_id. The JWT
+    // claims are not proof of current vehicle access: check the live link.
+    const assigned = await this.db.one<{ id: string }>(
+      'select id from vehicles where owner_id=$1 and driver_id=$2 limit 1',
+      [user.owner_id, user.id]);
+    if (!assigned) return null;
     const o = await this.db.one<any>('select fleet, coalesce(company_name, name) as owner from users where id=$1', [user.owner_id]);
     const f = o?.fleet ?? {};
     return {
