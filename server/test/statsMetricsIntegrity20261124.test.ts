@@ -6,7 +6,7 @@ async function profile(t: Awaited<ReturnType<typeof setup>>, admin:{token:string
   phone:string, kind:'master'|'tow', approved=true) {
   const worker=await t.login(phone,kind);
   ok(await t.api('PUT','/api/performer/profile',{
-    kind,name:'Проверка честной статистики',specialties:kind==='master'?['electric']:['tow'],
+    kind,name:'Проверка честной статистики',specialties:kind==='master'?['electric']:[],
     taxStatus:'self_employed',inn:'780000000555',
   },worker.token));
   if(approved)ok(await t.api('POST',`/api/admin/performers/${worker.id}/verify`,
