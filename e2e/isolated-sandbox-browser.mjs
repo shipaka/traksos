@@ -824,6 +824,11 @@ try{
       await guestPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
       await partnerButton.waitFor({state:'detached',timeout:15000});
       await partnerCard.waitFor({state:'detached',timeout:15000});
+      // When consent disappears, the selected card's focused close button is
+      // unmounted. Keyboard focus must return to a visible stable modal action.
+      await guestPage.waitForFunction(()=>
+        document.activeElement?.getAttribute('aria-label')==='Закрыть карту',
+        null,{timeout:5000});
       const revoked=await guestPage.evaluate(async id=>{
         const r=await fetch('/api/public/partner-map',{cache:'no-store'});
         const d=await r.json();
