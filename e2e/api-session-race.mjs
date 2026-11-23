@@ -165,6 +165,40 @@ try {
         result.currentNetworkStatus=currentFailure.status;
         result.networkEventsAfterCurrent=offlineEvents;
 
+        // A public request that began without any bearer is just as stale
+        // after login as a request from a previous authenticated account.
+        module.setToken(null);
+        const guest200=module.api('GET','/api/me').catch(e=>e);
+        result.guest200Auth=pending[6]?.auth ?? null;
+        module.setToken('CI-AFTER-GUEST-200');
+        pending[6].resolve(response(200,{id:'CI-GUEST-OLD'}));
+        result.guest200Code=(await guest200).code;
+        result.guest200Token=module.getToken();
+
+        module.setToken(null);
+        const guest401=module.api('GET','/api/me').catch(e=>e);
+        module.setToken('CI-AFTER-GUEST-401');
+        pending[7].resolve(response(401,{error:'unauthorized'}));
+        result.guest401Code=(await guest401).code;
+        result.guest401Token=module.getToken();
+
+        module.setToken(null);
+        const guestNetwork=module.api('GET','/api/me').catch(e=>e);
+        module.setToken('CI-AFTER-GUEST-NETWORK');
+        pending[8].reject(new TypeError('synthetic stale guest network failure'));
+        result.guestNetworkCode=(await guestNetwork).code;
+        result.offlineEventsAfterGuest=offlineEvents;
+
+        module.setToken(null);
+        const guestImage=module.authedImage('/api/private-image').catch(e=>e);
+        result.guestImageAuth=pendingImages[3]?.auth ?? null;
+        module.setToken('CI-AFTER-GUEST-IMAGE');
+        pendingImages[3].resolve(new Response(new Blob(['guest-old-image']),{
+          status:200,headers:{'content-type':'image/png'}
+        }));
+        result.guestImageCode=(await guestImage).code;
+        result.guestImageToken=module.getToken();
+
         // The first order failed ambiguously; its request key must remain
         // reusable for THIS account only, not after a different login.
         const orderBody={service:'hydraulics',zoneId:'spb',
@@ -262,6 +296,17 @@ try {
     assert.equal(actual.currentNetworkCode,'network');
     assert.equal(actual.currentNetworkStatus,0);
     assert.equal(actual.networkEventsAfterCurrent,1);
+    assert.equal(actual.guest200Auth,null);
+    assert.equal(actual.guest200Code,'session_changed');
+    assert.equal(actual.guest200Token,'CI-AFTER-GUEST-200');
+    assert.equal(actual.guest401Code,'session_changed');
+    assert.equal(actual.guest401Token,'CI-AFTER-GUEST-401');
+    assert.equal(actual.guestNetworkCode,'session_changed');
+    assert.equal(actual.offlineEventsAfterGuest,1,
+      'stale anonymous timeout incorrectly marked the new account offline');
+    assert.equal(actual.guestImageAuth,null);
+    assert.equal(actual.guestImageCode,'session_changed');
+    assert.equal(actual.guestImageToken,'CI-AFTER-GUEST-IMAGE');
     assert.equal(actual.lateOrderCode,'session_changed');
     assert.equal(actual.ordersAfterLateFingerprint,0,
       'unfinished old-account form was POSTed as a new user while digesting');

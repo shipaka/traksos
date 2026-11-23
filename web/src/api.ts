@@ -82,7 +82,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
     // A request that failed after another login is an obsolete request, NOT
     // proof that the newly signed-in account is offline. Do not return a
     // misleading network error or fire a connection alert for that account.
-    if (requestToken && token !== requestToken)
+    if (token !== requestToken)
       throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
     window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
@@ -94,7 +94,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
   // Response payloads belong to the account that sent the request. Even a
   // successful 200 from an old session must not populate the new account's
   // shared React views after logout or a different sign-in.
-  if (requestToken && token !== requestToken)
+  if (token !== requestToken)
     throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
   if (r.status === 401 && requestToken && token === requestToken) {
     setToken(null);
@@ -301,7 +301,7 @@ export async function authedImage(path: string) {
   });
   // Private images can finish downloading after sign-out or account switch.
   // Never return old-account document pixels as a reusable blob URL.
-  if (requestToken && token !== requestToken)
+  if (token !== requestToken)
     throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
   if (r.status === 401 && requestToken) {
     // The image may be the first authenticated request to discover expiry.
@@ -312,7 +312,7 @@ export async function authedImage(path: string) {
   }
   if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
   const data = await r.blob();
-  if (requestToken && token !== requestToken)
+  if (token !== requestToken)
     throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
   return URL.createObjectURL(data);
 }
