@@ -64,7 +64,8 @@ function safeAdminReturn(value: unknown): string | undefined {
 }
 
 export function issueSandboxTicket(role: SandboxRole, secret: string, now = Date.now(), returnUrl = ''): string {
-  if (!secret || secret.length < 32 || !SANDBOX_ROLES.includes(role)) throw forbidden();
+  if (!secret || secret.length < 32 || !SANDBOX_ROLES.includes(role) ||
+      !Number.isSafeInteger(now)) throw forbidden();
   const back = safeAdminReturn(returnUrl);
   if (returnUrl && !back) throw forbidden();
   const payload = Buffer.from(JSON.stringify({
@@ -129,18 +130,19 @@ export async function switchSandboxRole(
 ) {
   if (typeof supervisorToken !== 'string' ||
       !/^[A-Za-z0-9_-]{20,512}$/.test(supervisorToken) ||
-      !SANDBOX_ROLES.includes(role)) throw forbidden();
+      !SANDBOX_ROLES.includes(role) || !Number.isSafeInteger(now)) throw forbidden();
   return db.tx(async q => {
     const supervisor = await q.one<{expires_at:Date}>(
       `select s.expires_at from sessions s join users u on u.id=s.user_id
         where s.token_hash=$1 and s.device='sandbox-supervisor'
           and s.expires_at>now() and u.phone=$2
-          and u.status='active' and 'admin'=any(u.roles)`,
+          and u.status='active' and 'admin'=any(u.roles)
+        for share of s,u`,
       [sha256(supervisorToken), SANDBOX_USER_PHONE.admin],
     );
     if (!supervisor) throw forbidden();
     const target = await q.one<{id:string;roles:string[]}>(
-      "select id,roles from users where phone=$1 and status='active'",
+      "select id,roles from users where phone=$1 and status='active' for share",
       [SANDBOX_USER_PHONE[role]],
     );
     const required = role==='owner'||role==='client'?'client':
