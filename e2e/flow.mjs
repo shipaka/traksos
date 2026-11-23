@@ -308,11 +308,18 @@ await a.goto(BASE + '/#/admin/section/payments');
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
-// Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
-await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.and19-client .and19-services > a[href="#/sos"]').first().waitFor();
-await clickCabinetLink(a, 'Профиль и настройки');
-await a.getByRole('button', { name: 'Кабинет администратора' }).click();
+// Admin's "client" shortcut must go to the REAL isolated sandbox selector,
+// never turn the production/staff account into a pretend client role.
+await clickCabinetLink(a, 'Тестовый кабинет клиента');
+await a.waitForURL(/#\/admin\/test-center\/client$/);
+await a.getByRole('heading', { name: 'Клиент', exact: true }).waitFor();
+if (await a.evaluate(() => localStorage.getItem('traksos.mode')) !== 'admin')
+  throw new Error('Admin sandbox entry changed the active staff mode');
+if (await a.locator('.and19-client .and19-services').count())
+  throw new Error('Admin sandbox entry exposed the live client dashboard');
+await a.getByRole('link', { name: '← Выбор кабинета' }).click();
+await a.getByRole('heading', { name: 'Тестирование кабинетов' }).waitFor();
+await a.getByRole('link', { name: 'Вернуться в админку' }).click();
 await a.locator('main.approved-pc-admin').waitFor();
 await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
