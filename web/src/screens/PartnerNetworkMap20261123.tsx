@@ -3,6 +3,10 @@ import { geographicCenter, mustExpandCluster } from './partnerNetworkGeometry202
 import './partnerNetworkMap20261123.css';
 
 type PartnerPoint={id:string;kind:'service';name:string;lat:number;lng:number};
+function samePartner(a:PartnerPoint,b:PartnerPoint){
+  return a.id===b.id && a.kind===b.kind && a.name===b.name &&
+    a.lat===b.lat && a.lng===b.lng;
+}
 type View={lat:number;lng:number;zoom:number};
 type Cluster={key:string;x:number;y:number;members:PartnerPoint[]};
 const TILE=256;
@@ -140,12 +144,21 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
             Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0));
           if(controller.signal.aborted)return;
           setPoints(safe);
-          setSelected(old=>old ? safe.find(p=>p.id===old.id)??null : null);
+          // Keep React state identity when verified data did not change.
+          // Replacing the selected object on every focus/interval refresh
+          // would re-focus its close button while the user clicks a link.
+          setSelected(old=>{
+            if(!old)return null;
+            const fresh=safe.find(p=>p.id===old.id);
+            if(!fresh)return null; // consent was withdrawn
+            return samePartner(old,fresh)?old:fresh;
+          });
           setExpandedCluster(old=>{
             if(!old)return null;
             const members=old.members.map(p=>safe.find(next=>next.id===p.id))
               .filter((p):p is PartnerPoint=>!!p);
-            return members.length===old.members.length ? {...old,members} : null;
+            if(members.length!==old.members.length)return null;
+            return members.every((p,i)=>samePartner(p,old.members[i])) ? old : {...old,members};
           });
           setState('ready');
         }).catch(()=>{

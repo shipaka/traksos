@@ -238,6 +238,11 @@ try {
        response.url().includes('/api/public/partner-map'),{timeout:15_000});
      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
      const response=await refresh;
+     // A background refresh must never forcibly steal focus from a control
+     // that the user is interacting with inside the already-open dialog.
+     await zoomButton.focus();
+     const stillFocused=await zoomButton.evaluate(node=>document.activeElement===node);
+     if(!stillFocused)throw Error(width+': map focus was lost before refresh verification');
      // A static Vite preview may serve index.html with HTTP 200 for
      // unavailable API routes; only JSON is a real public-map contract.
      if(response.ok() && (response.headers()['content-type']||'').includes('application/json')){
