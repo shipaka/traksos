@@ -77,6 +77,8 @@ export class SupportService {
   async open(user: AuthUser, p: { topic: string; text: string; orderId?: string; ledgerEntryId?: number }) {
     const text = p.text.trim();
     if (text.length < 3) throw bad('empty', 'Опишите, что случилось');
+    // The stored body and notification preview share one redacted version.
+    const safeText = maskPhones(text).text;
     let number: number | null = null;
     // Вопрос по конкретной операции: начисление, списание, выплата — поддержка увидит её целиком
     if (p.ledgerEntryId) {
@@ -96,6 +98,9 @@ export class SupportService {
              values ($1,$2,$3,$4,$5) returning id, number`,
           [user.id, e.order_id, p.topic.slice(0, 80), e.id,
             new Date(this.now().getTime() + 3_600_000)]);
+        // Never commit an empty support ticket if its initial message fails.
+        await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
+          [created!.id, user.id, safeText]);
         return { id: created!.id, number: created!.number, created: true };
       });
       if (!result.created) {
@@ -103,9 +108,10 @@ export class SupportService {
         return this.thread(user, result.id);
       }
       const t = result;
-      await this.db.query(`insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)`, [t!.id, user.id, maskPhones(text).text]);
       await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-        kind: 'normal', title: `Обращение №${t!.number}: вопрос по операции`, body: `${user.name ?? user.phone}: ${text.slice(0, 100)}`, data: { ticketId: t!.id },
+        kind: 'normal', title: `Обращение №${t!.number}: вопрос по операции`,
+        body: maskPhones(`${user.name ?? user.phone}: ${safeText.slice(0, 100)}`).text,
+        data: { ticketId: t!.id },
       });
       return this.thread(user, t!.id);
     }
@@ -127,6 +133,9 @@ export class SupportService {
              values ($1,$2,$3,$4) returning id, number`,
           [user.id, p.orderId, p.topic.slice(0, 80),
             new Date(this.now().getTime() + 3_600_000)]);
+        // Never commit an empty support ticket if its initial message fails.
+        await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
+          [created!.id, user.id, safeText]);
         return { id: created!.id, number: created!.number, created: true };
       });
       if (!result.created) {
@@ -135,18 +144,23 @@ export class SupportService {
       }
       uniqueTicket = { id: result.id, number: result.number };
     }
-    const t = uniqueTicket ?? await this.db.one<{ id: string; number: number }>(
-      `insert into support_tickets(user_id, order_id, topic, sla_deadline_at)
-         values ($1,$2,$3,$4) returning id, number`,
-      [user.id, null, p.topic.slice(0, 80), new Date(this.now().getTime() + 3_600_000)]);
-    await this.db.query(`insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)`, [t!.id, user.id, maskPhones(text).text]);
+    const t = uniqueTicket ?? await this.db.tx(async q => {
+      const created = await q.one<{ id: string; number: number }>(
+        `insert into support_tickets(user_id, order_id, topic, sla_deadline_at)
+           values ($1,$2,$3,$4) returning id, number`,
+        [user.id, null, p.topic.slice(0, 80), new Date(this.now().getTime() + 3_600_000)]);
+      await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
+        [created!.id, user.id, safeText]);
+      return created!;
+    });
     if (p.orderId) {
       await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: t!.number, topic: p.topic });
       await this.orders.systemMessage(p.orderId, `Подключили поддержку (обращение №${t!.number}). Первый ответ специалиста — в течение часа.`);
     }
     if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId ?? null, ticketId: t!.id, text, topic: p.topic });
     await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-      kind: 'normal', title: `Обращение №${t!.number}: ${p.topic}`, body: `${user.name ?? user.phone}${number ? ` · заявка №${number}` : ''}: ${text.slice(0, 100)}`,
+      kind: 'normal', title: maskPhones(`Обращение №${t!.number}: ${p.topic}`).text,
+      body: maskPhones(`${user.name ?? user.phone}${number ? ` · заявка №${number}` : ''}: ${safeText.slice(0, 100)}`).text,
       data: { ticketId: t!.id },
     });
     return this.thread(user, t!.id);
@@ -157,6 +171,7 @@ export class SupportService {
     if (t.status === 'closed') throw conflict('closed', 'Обращение закрыто — создайте новое');
     const text = body.trim();
     if (!text) throw bad('empty', 'Пустое сообщение');
+    const safeText = maskPhones(text).text;
     const staff = isStaff(user) && t.user_id !== user.id;
     await this.db.tx(async q => {
       const locked = await q.one<{ status: string }>(
@@ -165,7 +180,7 @@ export class SupportService {
         throw conflict('closed', 'Обращение закрыто — создайте новое');
       const postedAt = this.now();
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body)
-        values ($1,$2,$3,$4)`, [ticketId, user.id, staff, staff ? text : maskPhones(text).text]);
+        values ($1,$2,$3,$4)`, [ticketId, user.id, staff, staff ? text : safeText]);
       await q.query(`update support_tickets
         set updated_at=$2, assignee_id=coalesce(assignee_id,$3),
             first_staff_reply_at=case when $4::boolean then coalesce(first_staff_reply_at,$2::timestamptz)
@@ -174,12 +189,12 @@ export class SupportService {
     });
     if (staff) {
       await this.notifier.notify([t.user_id], { type: 'support', ticketId }, {
-        kind: 'normal', title: `Поддержка ответила · №${t.number}`, body: text.slice(0, 120), data: { ticketId },
+        kind: 'normal', title: `Поддержка ответила · №${t.number}`, body: safeText.slice(0, 120), data: { ticketId },
       });
     } else {
       const to = t.assignee_id ? [t.assignee_id] : await this.intakeStaffIds();
       await this.notifier.notify(to, { type: 'support', ticketId }, {
-        kind: 'normal', title: `Новое сообщение · №${t.number}`, body: text.slice(0, 120), data: { ticketId },
+        kind: 'normal', title: `Новое сообщение · №${t.number}`, body: safeText.slice(0, 120), data: { ticketId },
       });
     }
     return this.thread(user, ticketId);
@@ -187,12 +202,26 @@ export class SupportService {
 
   async close(user: AuthUser, ticketId: string) {
     const t = await this.mustSee(user, ticketId);
-    if (t.status === 'closed') return this.thread(user, ticketId);
-    await this.db.query(`update support_tickets set status='closed', closed_at=$2, closed_by=$3, updated_at=$2 where id=$1`, [ticketId, this.now(), user.id]);
-    await this.db.query(`insert into support_messages(ticket_id, sender_id, from_staff, body) values ($1,null,false,$2)`,
-      [ticketId, isStaff(user) && t.user_id !== user.id ? 'Поддержка закрыла обращение. Если вопрос остался — напишите новое.' : 'Обращение закрыто.']);
-    if (t.user_id !== user.id) {
-      await this.notifier.notify([t.user_id], { type: 'support', ticketId }, { kind: 'normal', title: `Обращение №${t.number} закрыто`, body: 'Если вопрос остался — напишите новое', data: { ticketId } });
+    // post() takes the same row lock. Concurrent close/close and close/post
+    // therefore serialize, with exactly one closure event on success.
+    const closedNow = await this.db.tx(async q => {
+      const locked = await q.one<{ status: string }>(
+        'select status from support_tickets where id=$1 for update', [ticketId]);
+      if (!locked) throw notFound('Обращение не найдено');
+      if (locked.status === 'closed') return false;
+      const at = this.now();
+      await q.query(`update support_tickets set status='closed', closed_at=$2, closed_by=$3, updated_at=$2 where id=$1`,
+        [ticketId, at, user.id]);
+      await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body) values ($1,null,false,$2)`,
+        [ticketId, isStaff(user) && t.user_id !== user.id
+          ? 'Поддержка закрыла обращение. Если вопрос остался — напишите новое.' : 'Обращение закрыто.']);
+      return true;
+    });
+    if (closedNow && t.user_id !== user.id) {
+      await this.notifier.notify([t.user_id], { type: 'support', ticketId }, {
+        kind: 'normal', title: `Обращение №${t.number} закрыто`,
+        body: 'Если вопрос остался — напишите новое', data: { ticketId },
+      });
     }
     return this.thread(user, ticketId);
   }
