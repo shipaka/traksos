@@ -38,9 +38,21 @@ function BotBubble({ message, newest = false, onNavigate }: {
   </div>;
 }
 
-export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: { compact?: boolean; onNavigate?: () => void; onComposerSubmit?: () => void } = {}) {
+/** Remount private state when the account or its permissions change. */
+export function TrakBotChat(props: { compact?: boolean; onNavigate?: () => void; onComposerSubmit?: () => void } = {}) {
+  const { me } = useMe();
+  const identity = [me?.id ?? 'guest', (me?.roles ?? []).join(','), me?.performer?.verification ?? ''].join(':');
+  return <TrakBotChatSession key={identity} {...props} />;
+}
+
+function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: { compact?: boolean; onNavigate?: () => void; onComposerSubmit?: () => void } = {}) {
   const { me } = useMe();
   const [messages, setMessages] = useState<BotMessage[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyError, setHistoryError] = useState('');
+  const [historyAttempt, setHistoryAttempt] = useState(0);
+  const submissionPending = useRef(false);
   const [text, setText] = useState('');
   const [make, setMake] = useState('');
   const [ecu, setEcu] = useState('');
@@ -86,15 +98,30 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
     (isTech && me?.performer?.verification === 'approved');
   useEffect(() => {
     let live = true;
-    get<BotHistory>('/api/trakbot/messages').then((result) => { if (live) { setMessages(result.messages); setAiAvailable(!!result.aiAvailable); setAiTransport(result.aiTransport === 'local' ? 'local' : 'api'); } })
-      .catch((e) => { if (live) setError(e.message || 'Не удалось загрузить диалог'); });
+    setHistoryLoading(true);
+    setHistoryLoaded(false);
+    setHistoryError('');
+    setMessages([]);
+    setAiAvailable(false);
+    setAiConsent(false);
+    get<BotHistory>('/api/trakbot/messages')
+      .then((result) => {
+        if (!live) return;
+        setMessages(Array.isArray(result.messages) ? result.messages : []);
+        setAiAvailable(!!result.aiAvailable);
+        setAiTransport(result.aiTransport === 'local' ? 'local' : 'api');
+        setHistoryLoaded(true);
+      })
+      .catch((e) => { if (live) setHistoryError(e.message || 'Не удалось загрузить личную переписку'); })
+      .finally(() => { if (live) setHistoryLoading(false); });
     return () => { live = false; };
-  }, [me?.id]);
+  }, [historyAttempt]);
   useEffect(() => { if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight; }, [messages.length, working]);
 
   const send = async () => {
-    if (working || !text.trim()) return;
+    if (submissionPending.current || working || !historyLoaded || !text.trim()) return;
     const body = text.trim();
+    submissionPending.current = true;
     setWorking(true);
     setError('');
     try {
@@ -108,15 +135,23 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
       setText('');
       setHandoff(!!result.handoffSuggested);
     } catch (e: any) {
-      setError(e.message || 'Ошибка связи');
-      // A write may have succeeded before a network disconnect; reconcile rather than resending.
-      get<BotHistory>('/api/trakbot/messages').then((history) => setMessages(history.messages)).catch(() => {});
+      // POST may have committed before a network timeout. Never auto-repeat.
+      setError((e.message || 'Ошибка связи') + ' Проверь историю перед ручной повторной отправкой.');
+      try {
+        const history = await get<BotHistory>('/api/trakbot/messages');
+        setMessages(Array.isArray(history.messages) ? history.messages : []);
+      } catch {
+        setError('Не удалось подтвердить отправку и перечитать историю. Текст сохранён в поле; сначала восстанови связь и проверь историю.');
+      }
+    } finally {
+      submissionPending.current = false;
+      setWorking(false);
     }
-    finally { setWorking(false); }
   };
 
   const clearConversation = async () => {
-    if (working || !messages.length || !window.confirm('Очистить всю личную переписку с TrakBot? Отменить действие нельзя.')) return;
+    if (submissionPending.current || working || !historyLoaded || !messages.length || !window.confirm('Очистить всю личную переписку с TrakBot? Отменить действие нельзя.')) return;
+    submissionPending.current = true;
     setWorking(true);
     setError('');
     try {
@@ -128,6 +163,7 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
     } catch (e: any) {
       setError(e.message || 'Не получилось очистить историю. Попробуй ещё раз.');
     } finally {
+      submissionPending.current = false;
       setWorking(false);
     }
   };
@@ -162,8 +198,9 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
     </details>
     <section className="card trakbot-dialog">
       <div className="msgs" ref={msgBox} aria-live="polite" style={{ minHeight: compact ? 0 : 240, maxHeight: compact ? undefined : '50vh', overflowY: 'auto' }}>
-        {!messages.length && <BotBubble message={{ id: 'initial', role: 'bot', body: initialGreeting, created_at: '' }} onNavigate={onNavigate} />}
-        {messages.map((message) => message.role === 'bot'
+        {historyLoading && <div className="note" role="status">Загружаю личную переписку…</div>}
+        {historyLoaded && !messages.length && <BotBubble message={{ id: 'initial', role: 'bot', body: initialGreeting, created_at: '' }} onNavigate={onNavigate} />}
+        {historyLoaded && messages.map((message) => message.role === 'bot'
           ? <BotBubble key={message.id} message={message} newest={message.id === justAnsweredId} onNavigate={onNavigate} />
           : <div key={message.id} className="msg me trakbot-message--user">
             <span className="b" style={{ whiteSpace: 'pre-wrap' }}>{message.body}</span>
@@ -175,14 +212,19 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
         </div>}
         <div ref={end} />
       </div>
+      {historyError && <div className="stack" role="alert" style={{ gap: 8 }}>
+        <span className="note" style={{ color: 'var(--danger, #b42318)' }}>{historyError}</span>
+        <button type="button" className="btn ghost small" disabled={historyLoading || working}
+          onClick={() => setHistoryAttempt((n) => n + 1)}>Повторить загрузку переписки</button>
+      </div>}
       {error && <div role="alert" className="note" style={{ color: 'var(--danger, #b42318)' }}>{error}</div>}
       {compact && handoff && <div className="trakbot-compact-handoff" role="note">
         Нет проверенной расшифровки. {!isTech && <a href="#/new/consult" onClick={onNavigate}>Связаться с мастером</a>}
       </div>}
       <form className="compose" onSubmit={(event) => { event.preventDefault(); void send(); onComposerSubmit?.(); }}>
-        <input className="field" maxLength={700} value={text} onChange={(e) => setText(e.target.value)} placeholder="Например: Iveco, ошибка P0087..." aria-label="Сообщение TrakBot" />
+        <input className="field" maxLength={700} disabled={!historyLoaded || working} value={text} onChange={(e) => setText(e.target.value)} placeholder="Например: Iveco, ошибка P0087..." aria-label="Сообщение TrakBot" />
         {speechAvailable && <button type="button" className="btn ghost small" aria-label={listening ? 'Остановить запись голоса' : 'Надиктовать вопрос'} title="Надиктовать вопрос — ответ придёт текстом" onClick={startDictation}>{listening ? 'Стоп' : '🎙'}</button>}
-        <button type="submit" className="btn small" disabled={working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
+        <button type="submit" className="btn small" disabled={!historyLoaded || working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
     {!compact && <TrakBotReactionGallery />}
@@ -205,19 +247,37 @@ export function TrakBotChat({ compact = false, onNavigate, onComposerSubmit }: {
 
 export function TechCodes() {
   const { me } = useMe();
+  const identity = [me?.id ?? 'guest', (me?.roles ?? []).join(','), me?.performer?.verification ?? ''].join(':');
+  return <TechCodesSession key={identity} />;
+}
+
+function TechCodesSession() {
+  const { me } = useMe();
   const permitted = !!me?.roles.some((role) => ['admin','moderator'].includes(role)) ||
     (!!me?.roles.some((role) => ['master','service'].includes(role)) && me?.performer?.verification === 'approved');
   const [term, setTerm] = useState('');
   const [items, setItems] = useState<CodeRecord[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const searchSequence = useRef(0);
   if (!permitted) return <main><Back to="help" /><h1>Доступ ограничен</h1><p>Справочник доступен подтверждённым техническим специалистам и сотрудникам.</p></main>;
   const search = async () => {
-    if (term.trim().length < 2) return;
-    setBusy(true);setError('');
-    try { const r = await get<{items: CodeRecord[]}>(`/api/tech/codes?q=${encodeURIComponent(term.trim())}`);setItems(r.items); }
-    catch(e:any) {setError(e.message || 'Ошибка поиска');}
-    finally {setBusy(false);}
+    const query = term.trim();
+    if (query.length < 2 || busy) return;
+    const request = ++searchSequence.current;
+    setBusy(true); setSearched(false); setError(''); setItems([]);
+    try {
+      const result = await get<{items: CodeRecord[]}>(`/api/tech/codes?q=${encodeURIComponent(query)}`);
+      if (request === searchSequence.current) {
+        setItems(Array.isArray(result.items) ? result.items : []);
+        setSearched(true);
+      }
+    } catch (e: any) {
+      if (request === searchSequence.current) setError(e.message || 'Ошибка поиска');
+    } finally {
+      if (request === searchSequence.current) setBusy(false);
+    }
   };
   return <main>
     <Back to="trakbot" />
@@ -228,10 +288,15 @@ export function TechCodes() {
       {me?.roles.includes('admin') && <a className="btn ghost small" href="#/tech/review">Проверить новые кейсы</a>}
     </div>
     <form className="compose" onSubmit={(e) => {e.preventDefault();void search();}}>
-      <input aria-label="Поиск кода" className="field" placeholder="Код или фрагмент названия" value={term} onChange={(e)=>setTerm(e.target.value)} />
+      <input aria-label="Поиск кода" className="field" placeholder="Код или фрагмент названия" value={term}
+        onChange={(e) => {
+          searchSequence.current += 1;
+          setTerm(e.target.value); setItems([]); setSearched(false); setError(''); setBusy(false);
+        }} />
       <button className="btn small" disabled={busy || term.trim().length < 2}>Искать</button>
     </form>
-    {error && <p role="alert">{error}</p>}
+    {busy && <p role="status" className="note">Ищу в техническом справочнике…</p>}
+    {error && <p role="alert">{error} <button type="button" className="btn ghost small" onClick={() => void search()}>Повторить поиск</button></p>}
     {items.map((it) => <details key={it.code + ':' + it.source_url} className="card">
       <summary><b>{it.code}</b> · {it.title_ru || it.title_en}</summary>
       <div className="stack">
@@ -240,6 +305,6 @@ export function TechCodes() {
         {it.source_url.startsWith('https://') && <a href={it.source_url} target="_blank" rel="noopener noreferrer">Источник данных</a>}
       </div>
     </details>)}
-    {!busy && term.trim().length >= 2 && items.length === 0 && <span className="note">Совпадений пока нет. Проверь точность кода и блок управления.</span>}
+    {searched && !busy && !error && items.length === 0 && <span className="note">Совпадений пока нет. Проверь точность кода и блок управления.</span>}
   </main>;
 }
