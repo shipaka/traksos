@@ -201,12 +201,13 @@ export function WorkerCommunications() {
   const notices=useLoad(()=>get('/api/admin/announcements'),[]);
   const campaigns=useLoad(()=>get('/api/admin/commission-campaigns'),[]);
   const [promoService,setPromoService]=useState('');
-  const [promoPct,setPromoPct]=useState(0);
+  const [promoPct,setPromoPct]=useState('0');
   const [promoFrom,setPromoFrom]=useState(dateInput(Date.now()+60_000));
   const [promoTo,setPromoTo]=useState(dateInput(Date.now()+3_600_000));
   const [reason,setReason]=useState('');
   const {busy,run}=useAction();
   const announcementDatesOk=validMskWindow(from,to,90);
+  const commissionRate=promoPct.trim()===''?NaN:Number(promoPct);
   const campaignStart=Date.parse(promoFrom+':00+03:00');
   const campaignDatesOk=validMskWindow(promoFrom,promoTo,31) &&
     Number.isFinite(campaignStart) && campaignStart>=Date.now()-60_000;
@@ -215,7 +216,7 @@ export function WorkerCommunications() {
   }),'Объявление создано');if(r){notices.reload();setTitle('');setBody('');}};
   const c=async()=>{if(!window.confirm('Комиссия по новым заявкам в этот интервал изменится. Это финансовое действие. Подтвердить?'))return;
     const r=await run(()=>post('/api/admin/commission-campaigns',{
-      service:promoService||null,commissionPct:promoPct,startsAt:datetime(promoFrom),
+      service:promoService||null,commissionPct:commissionRate,startsAt:datetime(promoFrom),
       endsAt:datetime(promoTo),enabled:true,reason
     }),'Акция комиссии сохранена');if(r){campaigns.reload();setReason('');}};
   return <div className="stack" style={{gap:14}}>
@@ -238,6 +239,7 @@ export function WorkerCommunications() {
         <label className="stack">Начало (МСК)<input type="datetime-local" className="field" value={from} onChange={e=>setFrom(e.target.value)}/></label>
         <label className="stack">Конец (МСК)<input type="datetime-local" className="field" value={to} onChange={e=>setTo(e.target.value)}/></label>
       </div>
+      {!announcementDatesOk && <span className="note" role="status">Укажите начало и конец объявления по Москве: конец должен быть позже начала, интервал — не более 90 дней.</span>}
       <label className="row"><input type="checkbox" checked={published} onChange={e=>setPublished(e.target.checked)}/> Опубликовать после наступления даты</label>
       <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3||!announcementDatesOk} onClick={a}>Сохранить объявление</button>
     </div>
@@ -249,15 +251,18 @@ export function WorkerCommunications() {
           <option value="">Все виды выезда</option>{Object.entries(SERVICES).filter(([k])=>k!=='consult').map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
         </select></label>
       <label className="stack">Комиссия платформы, % (0 — без комиссии)
-        <input className="field" type="number" min={0} max={100} step={0.5} value={promoPct} onChange={e=>setPromoPct(Number(e.target.value))}/></label>
+        <input className="field" type="number" min={0} max={100} step={0.5} value={promoPct} onChange={e=>setPromoPct(e.target.value)}/></label>
       <div className="grid2">
         <label className="stack">С (МСК)<input type="datetime-local" className="field" value={promoFrom} onChange={e=>setPromoFrom(e.target.value)}/></label>
         <label className="stack">До (МСК)<input type="datetime-local" className="field" value={promoTo} onChange={e=>setPromoTo(e.target.value)}/></label>
       </div>
       <label className="stack">Причина изменения
         <textarea className="field" rows={2} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
+      {!campaignDatesOk && <span className="note" role="status">Укажите будущие начало и конец акции по Москве; срок не более 31 дня.</span>}
+      {(promoPct.trim()==='' || !Number.isFinite(commissionRate) || commissionRate<0 || commissionRate>100) &&
+        <span className="note" role="status">Укажите комиссию от 0 до 100%. Пустое поле не означает 0%.</span>}
       <button className="btn" disabled={busy||reason.trim().length<3||!campaignDatesOk||
-          !Number.isFinite(promoPct)||promoPct<0||promoPct>100} onClick={c}>Назначить комиссию</button>
+          !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>100} onClick={c}>Назначить комиссию</button>
     </div>
     <div className="card stack">
       <b>Объявления (история)</b>
