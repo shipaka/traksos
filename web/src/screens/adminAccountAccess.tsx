@@ -179,9 +179,13 @@ export function AdminAccountAccess() {
 
     <div className="card stack">
       <h3>Внутренние технические обращения</h3>
-      {!reports.data ? <div className="empty">{reports.error ?? 'Загрузка обращений…'}</div>
-      : reports.data.length === 0 ? <span className="note">Очередь пуста</span>
-      : reports.data.map(report => <div key={report.id} className="card stack">
+      {!Array.isArray(reports.data)?<div className="card stack" role={reports.error?'alert':'status'}>
+        <span>{reports.error?'Не удалось загрузить обращения: '+reports.error:
+          reports.data?'Сервер вернул некорректный список обращений.':'Загрузка обращений…'}</span>
+        <button type="button" className="btn ghost small" onClick={reports.reload}>Повторить загрузку обращений</button>
+      </div>
+      :reports.data.length===0?<span className="note">Очередь пуста</span>
+      :reports.data.map(report=><div key={report.id} className="card stack">
         <div className="between">
           <b>{REPORT_TOPICS.find(x => x.value === report.category)?.label ?? report.category}</b>
           <span className={'pill ' + (report.status === 'resolved' ? 'good' : '')}>{report.status === 'resolved' ? 'Решено' : report.delivery_sent_at ? 'В работе' : 'Открыто'}</span>
@@ -200,9 +204,16 @@ export function AdminAccountAccess() {
         <div className="row">
           <button type="button" className="btn ghost small" onClick={() => copyReport(report)}>Скопировать для разработчика</button>
           {report.status !== 'resolved' && <button type="button" className="btn small" disabled={busy}
-            onClick={async () => { if (!window.confirm('Проблема действительно устранена?')) return;
-              if (await run(() => post('/api/admin/developer-reports/' + report.id + '/resolve'), 'Обращение отмечено решённым')) reports.reload();
-            }}>Отметить решённым</button>}
+            onClick={async()=>{
+               if(!window.confirm('Проблема действительно устранена?'))return;
+               const startedAs=scope;
+               setError('');
+               const result=await run(()=>post('/api/admin/developer-reports/'+report.id+'/resolve'),
+                 'Обращение отмечено решённым');
+               if(scopeRef.current!==startedAs)return;
+               if(result)reports.reload();
+               else setError('Закрытие не подтверждено. Сверьте обращение перед повтором.');
+             }}>Отметить решённым</button>}
         </div>
       </div>)}
     </div>
