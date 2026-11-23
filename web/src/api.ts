@@ -41,23 +41,23 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
-  // The sandbox is the exact same frontend served from another origin.
-  // Fail closed if a bundle was accidentally built with a remote production API.
+// A sandbox must reject remote API calls in every authenticated transport,
+// including protected image downloads, not just JSON requests.
+function assertSandboxOrigin() {
   const remoteOrigin = new URL(API_URL || location.origin, location.origin).origin !== location.origin;
   let sandboxMode = false;
   try {
     sandboxMode = sessionStorage.getItem('traksos.sandboxMode') === '1';
   } catch {
-    // Same-origin public browsing remains usable even when sessionStorage is
-    // forbidden. A foreign-origin transport cannot verify isolation and must
-    // not silently reach a live API.
-    if (remoteOrigin)
-      throw new ApiError(403, 'sandbox_storage_unavailable',
-        'Невозможно проверить изоляцию тестового окружения');
+    if (remoteOrigin) throw new ApiError(403, 'sandbox_storage_unavailable',
+      'Невозможно проверить изоляцию тестового окружения');
   }
   if (sandboxMode && remoteOrigin)
     throw new ApiError(403, 'sandbox_wrong_origin', 'Тестовые запросы не могут обращаться к другому серверу');
+}
+
+export async function api<T = any>(method: string, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
+  assertSandboxOrigin();
   // Bind authentication to THIS request, not to a token that may have been
   // replaced by a successful login while its response was in flight.
   const requestToken = token;
@@ -291,6 +291,7 @@ export function fmtTime(iso: string) {
 
 /** Картинка, которую отдают только с токеном (фото документов) → адрес для <img> */
 export async function authedImage(path: string) {
+  assertSandboxOrigin();
   const requestToken = token;
   const r = await fetch(API_URL + path, {
     headers: requestToken ? { authorization: `Bearer ${requestToken}` } : {},

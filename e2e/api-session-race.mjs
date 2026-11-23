@@ -248,6 +248,34 @@ try {
     assert.deepEqual(actual.sameUserAuth,[
       'Bearer CI-RETRY-SAME-USER','Bearer CI-RETRY-SAME-USER'
     ]);
+    // Even a misconfigured sandbox build cannot send protected images to a
+    // foreign API. This isolated module uses a synthetic token, never live.
+    await page.route('**/__ci_api_remote_transport.mjs',route=>
+      route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
+    const sandboxGuard=await page.evaluate(async()=>{
+      const original=window.fetch;let sends=0;
+      window.fetch=(...args)=>{
+        if(String(args[0]).includes('ci-foreign.example'))sends++;
+        return original.apply(window,args);
+      };
+      try {
+        sessionStorage.setItem('traksos.sandboxMode','1');
+        window.TRAKSOS_API='https://ci-foreign.example';
+        const remote=await import('/__ci_api_remote_transport.mjs');
+        remote.setToken('CI-FAKE-SANDBOX-TOKEN');
+        const json=await remote.api('GET','/api/me').catch(e=>e.code);
+        const image=await remote.authedImage('/api/private-image').catch(e=>e.code);
+        return {json,image,sends};
+      }finally{
+        delete window.TRAKSOS_API;
+        sessionStorage.removeItem('traksos.sandboxMode');
+        window.fetch=original;
+      }
+    });
+    assert.equal(sandboxGuard.json,'sandbox_wrong_origin');
+    assert.equal(sandboxGuard.image,'sandbox_wrong_origin');
+    assert.equal(sandboxGuard.sends,0,
+      'test sandbox sent a private bearer to a foreign API origin');
     // Now exercise ACTUAL browser localStorage propagation across two
     // independent documents of the same origin, not just synthetic events.
     // Use the SAME isolated HTML fixture for two tabs. Browsers may render
