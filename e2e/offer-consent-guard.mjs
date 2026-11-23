@@ -39,7 +39,13 @@ const bundle = await build({
   stdin: { contents: `
     import React from 'react';
     import {createRoot} from 'react-dom/client';
-    import {OfferGate} from './web/src/screens/offers.tsx';
+    import {OfferGate, reportApiError} from './web/src/screens/offers.tsx';
+    import {ApiError} from './web/src/api.ts';
+    window.__sendOfferOutdated = () => {
+      const error = new ApiError('outdated');
+      error.code = 'offer_outdated';
+      reportApiError(error);
+    };
     window.__offerMock = {requests:[],posts:[],resolve:null,reject:null};
     createRoot(document.getElementById('root')).render(React.createElement(OfferGate));
   `, resolveDir:process.cwd(), sourcefile:'offer-consent-entry.tsx', loader:'tsx' },
@@ -103,6 +109,13 @@ try {
   const posts=await page.evaluate(()=>window.__offerMock.posts);
   if(posts.length!==1 || posts[0]!=='/api/offers/offer-1/accept')
     throw Error('Expected one acceptance for the verified contract: '+JSON.stringify(posts));
+  // An obsolete edition rejected by the server must refresh the list, so
+  // the modal can show the new effective contract instead of trapping a user.
+  const before=await page.evaluate(()=>
+    window.__offerMock.requests.filter(x=>x==='/api/me/offers').length);
+  await page.evaluate(()=>window.__sendOfferOutdated());
+  await page.waitForFunction(n=>
+    window.__offerMock.requests.filter(x=>x==='/api/me/offers').length>n,before);
   if(errors.length)throw Error('Browser errors: '+errors.join('; '));
   await page.close();
   console.log('PASS: real OfferGate disallows pending/failed/stale consent; retry and valid acceptance work');
