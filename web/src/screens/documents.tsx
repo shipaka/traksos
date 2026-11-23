@@ -96,7 +96,7 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
         {status === 'rejected' && <span className="pill bad">Переснять</span>}
       </div>
       <span className="note">{status === 'rejected' ? `Модератор: ${r.doc.note}` : r.hint}</span>
-      {src && <img src={src} alt={r.name} style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12 }} />}
+      {src && <img src={src} alt={r.name} style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 12 }} />}
       {status !== 'approved' && (
         <label className="btn ghost" style={{ cursor: 'pointer' }}>
           {busy ? 'Загружаю…' : r.doc ? 'Переснять' : 'Снять'}
