@@ -57,9 +57,13 @@ function safeAdminReturn(value: unknown): string | undefined {
     return undefined;
   try {
     const url = new URL(value);
-    return url.protocol === 'https:' && !url.username && !url.password &&
-      url.pathname === '/' && !url.search && url.hash === '#/admin/test-center'
-      ? url.href : undefined;
+    if (url.protocol !== 'https:' || url.username || url.password ||
+        !/^\/+$/u.test(url.pathname) || url.search ||
+        url.hash !== '#/admin/test-center') return undefined;
+    // PUBLIC_URL may already have a trailing slash; the caller appends
+    // '/#/admin/test-center'. Canonicalize harmless repeated root slashes.
+    url.pathname = '/';
+    return url.href;
   } catch { return undefined; }
 }
 
