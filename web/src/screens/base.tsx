@@ -99,13 +99,29 @@ function useBaseLoad<T = any>(
   };
 }
 
+function StationLoading({ error, reload }: { error: string | null; reload: () => void }) {
+  if (!error) return <Loading />;
+  return <div className="card stack" role="alert">
+    <b>Не удалось получить актуальные данные</b>
+    <span className="note">{error}</span>
+    <button className="btn ghost small" type="button" onClick={reload}>
+      Повторить загрузку
+    </button>
+  </div>;
+}
+
 // ═══════════════════════ Кабинет рембазы ═══════════════════════
 
 /** Счёт рембазы: по желанию погасить баллами часть комиссии TrakSOS (не больше половины) */
 function InvoicePoints({ amount, value, onChange }: { amount: number | null; value: number | null; onChange: (v: number | null) => void }) {
   const a = useBaseLoad(() => (amount ? baseGet(`/api/base/points?amount=${amount}`) : Promise.resolve(null)), [amount]);
   const max: number = a.data?.max ?? 0;
-  if (!amount || max <= 0) return null;
+  if (!amount) return null;
+  if (a.error) return <div className="note" role="alert">
+    Не удалось проверить доступные баллы для этого счёта.
+    <button className="btn ghost small" type="button" onClick={a.reload}>Повторить проверку баллов</button>
+  </div>;
+  if (max <= 0) return null;
   const on = value != null && value > 0;
   return (
     <div className="card flat" style={{ gap: 6 }}>
@@ -126,7 +142,7 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
   const cab = useBaseLoad(() => baseGet('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
-  if (!cab.data) return <main>{<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
+  if (!cab.data) return <main>{<WorkerNotices audience="service" />}<StationLoading error={cab.error} reload={cab.reload} /></main>;
   const { center, groups } = cab.data;
   // Новая рембаза: на главной — что будет дальше, сама карточка — во вкладке «Карточка»
   if (!center) return (
@@ -355,7 +371,7 @@ function BaseCarPanel({ id }: { id: string }) {
   const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
   const d = b.data;
-  if (!d) return <main><Back to={baseRoutePath('base')} label="Рембаза" /><Loading error={b.error} /></main>;
+  if (!d) return <main><Back to={baseRoutePath('base')} label="Рембаза" /><StationLoading error={b.error} reload={b.reload} /></main>;
   const act = async (path: string, body: any, okText: string) => { const r = await run(() => basePost(`/api/base/bookings/${id}/${path}`, body), okText); if (r) b.setData(r); return r; };
   const inRepair = REPAIR.some(([s]) => s === d.status);
   return (
@@ -456,15 +472,15 @@ function BaseCarPanel({ id }: { id: string }) {
         <div className="card">
           <b>Выставить счёт</b>
           <span className="note">Работы: {d.works.join(', ')}</span>
-          <Field label="Общая сумма работ и материалов"><RubInput value={amount} onChange={setAmount} placeholder="например, 12 000 ₽" /></Field>
+          <Field label="Общая сумма работ и материалов"><RubInput value={amount} onChange={v => {setAmount(v);setInvPts(null);}} placeholder="например, 12 000 ₽" /></Field>
           <Field label="Из неё запчасти и материалы (в рублях, если есть)">
-            <RubInput value={partsAmount} onChange={setPartsAmount} placeholder="например, 3 000 ₽" />
+            <RubInput value={partsAmount} onChange={v => {setPartsAmount(v);setInvPts(null);}} placeholder="например, 3 000 ₽" />
           </Field>
           {amount!=null && <span className="note">База для комиссии — только работы: {rub(Math.max(0,amount-(partsAmount??0)))}. Запчасти в этот расчёт 5% не включаются. Клиент получит отдельную разбивку своего сбора.</span>}
           {amount!=null && (partsAmount??0)>amount && <span className="err">Стоимость запчастей не может превышать общий счёт.</span>}
           <span className="note">Счёт и акт с юридически корректными реквизитами требуют отдельного подключения платёжных и документооборотных сервисов. До этого админ сверяет платёж вручную.</span>
           <InvoicePoints amount={amount == null ? null : Math.max(0,amount-(partsAmount??0))} value={invPts} onChange={setInvPts} />
-          <button className="btn" disabled={busy || !amount || (partsAmount??0)>amount} onClick={() => act('invoice',
+          <button className="btn" disabled={busy || !amount || (partsAmount??0)>amount || (invPts != null && (amount-(partsAmount??0)) <= 0)} onClick={() => act('invoice',
             { amount, partsAmount:partsAmount??0, points: invPts ?? 0 }, 'Счёт выставлен — клиенту отправлен итог')}>Выставить счёт</button>
         </div>
       )}
@@ -512,7 +528,7 @@ function BaseSetupPanel() {
     setF(c ? { name: c.name, address: c.address, hours: c.hours, inn: c.inn ?? '', lat: c.lat, lng: c.lng, brands: c.brands, staff: c.staff, conditions: c.conditions, accepts: c.accepts, closedDays: (c.closed_days ?? []).map((x: string) => x.slice(0, 10)), paused: c.paused }
       : { name: '', address: '', hours: '08:00–20:00', inn: '', lat: null, lng: null, brands: [], staff: { electric: 'own' }, conditions: ['parking'], accepts: ['quick', 'day'], closedDays: [], paused: false });
   }, [cab.data]); // eslint-disable-line
-  if (!f) return <main><Loading error={cab.error} /></main>;
+  if (!f) return <main><StationLoading error={cab.error} reload={cab.reload} /></main>;
   const first = !cab.data?.center;
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
@@ -806,7 +822,7 @@ function ServicesListPanel() {
       </details>
 
       {/* 5. Результат */}
-      {!list.data ? <Loading error={list.error} /> : <>
+      {!list.data ? <StationLoading error={list.error} reload={list.reload} /> : <>
         <span className="note">{shown.length ? `Найдено: ${shown.length}${s.radius && point ? ` в радиусе ${s.radius} км` : ''}` : ''}{!point ? ' · расстояние появится, когда выберете место' : ''}</span>
         {!shown.length ? (
           <div className="empty col" style={{ gap: 8 }}>
@@ -862,7 +878,7 @@ function CenterPagePanel({ id }: { id: string }) {
   if(recommendationId)nextQuery.set('recommendation',recommendationId);
   const nextSuffix=nextQuery.toString();
   const d = c.data;
-  if (!d) return <main><Back to="services" label="Сервисы" /><Loading error={c.error} /></main>;
+  if (!d) return <main><Back to="services" label="Сервисы" /><StationLoading error={c.error} reload={c.reload} /></main>;
   const staffOwn = Object.entries(d.staff ?? {}).filter(([, v]) => v === 'own').map(([k]) => NEEDS[k]).filter(Boolean);
   const staffInv = Object.entries(d.staff ?? {}).filter(([, v]) => v === 'invite').map(([k]) => NEEDS[k]).filter(Boolean);
   return (
@@ -929,7 +945,7 @@ function BookFormPanel({ id }: { id: string }) {
     setVehicle(source.data.vehicleId??'');
     if(source.data.service==='tow')setArrival('tow');
   }},[source.data]); // eslint-disable-line
-  if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><Loading error={c.error} /></main>;
+  if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><StationLoading error={c.error} reload={c.reload} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
   async function send() {
@@ -991,7 +1007,7 @@ function BookingPagePanel({ id }: { id: string }) {
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
   const d = b.data;
-  if (!d) return <main><Back to="orders" label="Заявки" /><Loading error={b.error} /></main>;
+  if (!d) return <main><Back to="orders" label="Заявки" /><StationLoading error={b.error} reload={b.reload} /></main>;
   if (d.mine) { go(`base/car/${id}`); return null; }
   const act = async (path: string, body: any, okText: string) => { const r = await run(() => post(`/api/bookings/${id}/${path}`, body), okText); if (r) b.setData(r); return r; };
   const steps = ['new', 'expected', 'arrived', 'in_work', 'ready', 'closed'];
@@ -1109,7 +1125,8 @@ export function BookingRows({ live }: { live: boolean }) {
 }
 function BookingRowsPanel({ live }: { live: boolean }) {
   const l = useBaseLoad(() => get('/api/bookings'), [], isBookingEvent);
-  return <BookingList rows={(l.data ?? []).filter((b: any) => live === isOpenBooking(b))} />;
+  if (!l.data) return <StationLoading error={l.error} reload={l.reload} />;
+  return <BookingList rows={l.data.filter((b: any) => live === isOpenBooking(b))} />;
 }
 
 /** Мастер на месте: «на месте не исправить — советую сервис» */
@@ -1127,7 +1144,7 @@ function RecommendServicePanel({ order, onDone }: { order: any; onDone: (o: any)
     <div className="card">
       <b>Посоветовать сервис-партнёр</b>
       <span className="note">Клиенту — скидка в сервисе, вам — бонус, когда сервис отметит «Машина готова». Из комиссии TrakSOS.</span>
-      {!list.data ? <Loading error={list.error} /> : !list.data.length ? <span className="note">Рядом пока нет сервисов-партнёров.</span> : list.data.slice(0, 6).map((c: any) => (
+      {!list.data ? <StationLoading error={list.error} reload={list.reload} /> : !list.data.length ? <span className="note">Рядом пока нет сервисов-партнёров.</span> : list.data.slice(0, 6).map((c: any) => (
         <button key={c.id} className="linkrow" disabled={busy} onClick={async () => { const r = await run(() => post(`/api/orders/${order.id}/recommend-service`, { centerId: c.id }), 'Клиенту отправлено'); if (r) onDone(r); }}>
           <span><b>{c.name}</b><small>{c.address}{c.distanceKm != null ? ` · ${c.distanceKm} км` : ''}{c.rating ? ` · ★ ${c.rating.toFixed(1)}` : ''}</small></span><span aria-hidden="true">›</span>
         </button>
@@ -1197,7 +1214,7 @@ export function AdminServices() {
 function AdminServicesPanel() {
   const l = useBaseLoad(() => get('/api/admin/services'), []);
   const { busy, run } = useAction();
-  if (!l.data) return <Loading error={l.error} />;
+  if (!l.data) return <StationLoading error={l.error} reload={l.reload} />;
   if (!l.data.length) return <div className="empty">Рембаз пока нет</div>;
   return (
     <div className="stack">
@@ -1235,7 +1252,7 @@ function BaseMoneyPanel() {
   const m = useBaseLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
   const pts = useBaseLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
   const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
-  if (!m.data) return <main><Loading error={m.error} /></main>;
+  if (!m.data) return <main><StationLoading error={m.error} reload={m.reload} /></main>;
   const { summary: s, months, items, rule } = m.data;
   const shown = items.filter((x: any) => filter === 'all' || x.state === filter);
   return (
@@ -1260,7 +1277,12 @@ function BaseMoneyPanel() {
           <span className="note">Комиссия TrakSOS — {rule.pct}% с работ по клиентам TrakSOS, но не больше {rub(rule.max)} за один счёт. Клиенту по совету мастера — скидка {rule.referralPct}% из комиссии, ваша выручка не меняется.</span>
           <span className="note">{FEE_PURPOSE}</span>
           {pts.data && <div className="between"><span>Баллы за приглашения: <b>{Math.round(pts.data.balance / 100).toLocaleString('ru-RU')}</b>{s.points ? ` · уже погашено ${rub(s.points)}` : ''}</span><a href="#/invite" className="note">Пригласить →</a></div>}
-          <span className="note">Баллами можно погасить до {pts.data?.rules?.spendCapPct ?? 50}% комиссии — галочкой при выставлении счёта.</span>
+          {pts.error ? <div className="note" role="alert">
+            Не удалось проверить действующий лимит списания баллов.
+            <button type="button" className="btn ghost small" onClick={pts.reload}>Повторить проверку баллов</button>
+          </div> : pts.data?.rules?.spendCapPct != null
+            ? <span className="note">Баллами можно погасить до {pts.data.rules.spendCapPct}% комиссии — галочкой при выставлении счёта.</span>
+            : <span className="note">Доступный лимит баллов станет известен после загрузки условий.</span>}
         </div>
       </details>
 
@@ -1326,7 +1348,7 @@ export function AdminServicePayouts() {
 function AdminServicePayoutsPanel() {
   const l = useBaseLoad(() => get('/api/admin/service-payouts'), []);
   const { busy, run } = useAction();
-  if (!l.data) return <Loading error={l.error} />;
+  if (!l.data) return <StationLoading error={l.error} reload={l.reload} />;
   if (!l.data.length) return <span className="note">Выплачивать рембазам сейчас нечего.</span>;
   return (
     <div className="stack">
