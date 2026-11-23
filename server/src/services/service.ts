@@ -704,7 +704,10 @@ export class ServiceCenters {
   async answer(user: AuthUser, id: string, text: string) {
     const b = await this.clientBooking(user, id);
     if (b.status !== 'clarify') throw conflict('bad_status', 'Сервис ничего не спрашивал');
-    await this.db.query(`update service_bookings set status='new', client_answer=$2, updated_at=now() where id=$1`, [id, text.trim()]);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='new', client_answer=$2, updated_at=now()
+        where id=$1 and status='clarify' returning id`, [id, text.trim()]);
+    if (!updated) throw conflict('bad_status', 'Ответ по этой записи уже обработан');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'new' },
       { kind: 'normal', title: 'Клиент ответил', body: text.trim().slice(0, 120), data: { bookingId: id } });
     return this.booking(user, id);
@@ -713,7 +716,10 @@ export class ServiceCenters {
   async cancel(user: AuthUser, id: string) {
     const b = await this.clientBooking(user, id);
     if (!['new', 'clarify', 'expected'].includes(b.status)) throw conflict('bad_status', 'Машина уже в сервисе — отменить нельзя, напишите сервису');
-    await this.db.query(`update service_bookings set status='cancelled', updated_at=now() where id=$1`, [id]);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='cancelled', updated_at=now()
+        where id=$1 and status in ('new','clarify','expected') returning id`, [id]);
+    if (!updated) throw conflict('bad_status', 'Запись уже перешла в следующий этап');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'cancelled' },
       { kind: 'normal', title: 'Клиент отменил запись', body: `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim() || 'Запись отменена', data: { bookingId: id } });
     return this.booking(user, id);
@@ -724,9 +730,12 @@ export class ServiceCenters {
     const b = await this.clientBooking(user, id);
     if (b.status !== 'invoiced') throw conflict('bad_status', 'Счёта ещё нет');
     if (p.agree) {
-      await this.db.query(
-        `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='closed', closed_at=now(),
+                review_stars=$2, review_text=$3, updated_at=now()
+          where id=$1 and status='invoiced' returning id`,
         [id, p.stars ?? null, p.text?.trim() || null]);
+      if (!updated) throw conflict('bad_status', 'Работы уже подтверждены либо открыт спор');
       // New agreements award post-payment bonuses only after a recorded receipt.
       if (!b.payment_required) await this.referral?.afterBookingClosed(b.owner_id, id);
       else if (this.settlement(b).paymentStatus === 'received') await this.referral?.afterBookingClosed(b.owner_id, id);
@@ -735,7 +744,10 @@ export class ServiceCenters {
     } else {
       const why = p.why?.trim();
       if (!why || why.length < 5) throw bad('empty', 'Напишите, с чем не согласны');
-      await this.db.query(`update service_bookings set status='disputed', updated_at=now() where id=$1`, [id]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='disputed', updated_at=now()
+          where id=$1 and status='invoiced' returning id`, [id]);
+      if (!updated) throw conflict('bad_status', 'По этому счёту уже принято решение');
       const t = await this.support.open(user, { topic: 'Ремонт в сервисе', text: `Ремонт в сервисе, счёт №${b.number}: ${why}` }) as any;
       await this.onDispute?.({ userId: user.id, bookingId: id, ticketId: t?.id ?? null, text: why, targetId: b.owner_id, title: `Спор по ремонту в сервисе, счёт №${b.number}` });
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'disputed' },
