@@ -116,19 +116,30 @@ export class ShopCourierDeliveries {
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [actor.id,'courier.assign',d.id,{shopOrderId:orderId,courierId,
           previousCourierId:old?.courier_id??null}]);
+      // Persist inbox in the SAME transaction as the assignment. An optional
+      // push failure after COMMIT must not lose the job or demand a retry.
+      if(old?.courier_id)await q.query(
+        'insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+        [old.courier_id,'shop','Назначение доставки изменено',
+         'Заказ снят с вашего маршрута. Обновите список заданий.',{shopOrderId:orderId}]);
+      await q.query(
+        'insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+        [courierId,'shop','Назначена доставка запчастей',
+         'Откройте новый рейс в кабинете курьера',{shopOrderId:orderId}]);
       return {id:d.id,status:d.status,changed:true,previousCourierId:old?.courier_id??null};
     });
     if(row.changed) {
       // The old courier loses access immediately on reassignment. A separate
       // private alert prevents a stale job from remaining on their phone.
-      if(row.previousCourierId)await this.notify.notify([row.previousCourierId],
+      if(row.previousCourierId)await this.notify.deliverStored([row.previousCourierId],
         {type:'shop',shopOrderId:orderId},
         {kind:'normal',title:'Назначение доставки изменено',
          body:'Заказ снят с вашего маршрута. Обновите список заданий.',
-         data:{shopOrderId:orderId}}).catch(e=>console.warn('[courier-reassignment-alert]',e));
-      await this.notify.notify([courierId],{type:'shop',shopOrderId:orderId},
+         data:{shopOrderId:orderId}}).catch(e=>console.warn('[courier-reassignment-push]',e));
+      await this.notify.deliverStored([courierId],{type:'shop',shopOrderId:orderId},
         {kind:'normal',title:'Назначена доставка запчастей',
-         body:'Откройте новый рейс в кабинете курьера',data:{shopOrderId:orderId}});
+         body:'Откройте новый рейс в кабинете курьера',data:{shopOrderId:orderId}})
+        .catch(e=>console.warn('[courier-assignment-push]',e));
     }
     return {id:row.id,shopOrderId:orderId,status:row.status};
   }
