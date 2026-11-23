@@ -991,6 +991,7 @@ function BookFormPanel({ id }: { id: string }) {
   const recommendationId=query().get('recommendation');
   const source=useBaseLoad(()=>caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
   const { busy, run } = useAction();
+  const submitting = useRef(false);
   const [vehicleId, setVehicle] = useState('');
   const [need, setNeed] = useState(query().get('need') ?? '');
   const [day, setDay] = useState(mskDay());
@@ -1006,8 +1007,15 @@ function BookFormPanel({ id }: { id: string }) {
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
   async function send() {
-    const r = await run(() => post(`/api/services/${id}/book`, { vehicleId: vehicleId || null, need, day, time: time || null, arrival, comment: comment || null, fromOrderId: from, caseOrderId, recommendationId }), 'Запрос отправлен — сервис ответит уведомлением');
-    if (r) go(`booking/${r.id}`);
+    if (submitting.current) return;
+    submitting.current = true;
+    try {
+      const result = await run(() => post(`/api/services/${id}/book`, {
+        vehicleId: vehicleId || null, need, day, time: time || null, arrival,
+        comment: comment || null, fromOrderId: from, caseOrderId, recommendationId
+      }), 'Запрос отправлен — сервис ответит уведомлением');
+      if (result) go(`booking/${result.id}`);
+    } finally { submitting.current = false; }
   }
   return (
     <main>
