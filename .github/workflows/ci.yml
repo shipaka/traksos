@@ -164,6 +164,7 @@ jobs:
           node e2e/ops-admin-reliability-20261124.mjs
           node e2e/learning-role-hardening-20261124.mjs
           node e2e/continuation-tour-role-20261124.mjs
+          node e2e/ecu-handoff-web-session-20261124.mjs
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
