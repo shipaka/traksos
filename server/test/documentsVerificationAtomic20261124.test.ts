@@ -66,6 +66,12 @@ test('document review cannot approve a superseded photo; verification follows la
       {status:'approved'},admin.token);
     assert.equal(old.status,409);
     ok(await t.api('POST','/api/performer/documents/submit',{},master.token));
+    const staffQueue=ok(await t.api('GET','/api/admin/verification',undefined,admin.token));
+    const queued=staffQueue.find((p:any)=>p.id===master.id);
+    assert.ok(queued,'new submission must reappear in verification queue');
+    const currentPhotos=queued.docs.filter((d:any)=>d.kind==='car_front');
+    assert.equal(currentPhotos.length,1,'staff must see only the newest car photo');
+    assert.equal(currentPhotos[0].id,newer.id);
     ok(await t.api('POST',`/api/admin/documents/${newer.id}`,
       {status:'approved'},admin.token));
     ok(await t.api('POST',`/api/admin/performers/${master.id}/verify`,
