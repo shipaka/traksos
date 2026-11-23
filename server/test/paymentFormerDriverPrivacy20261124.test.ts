@@ -88,9 +88,15 @@ test('work payment checkout link is visible to real owner, not former driver', {
     assert.ok(created.confirmationUrl,'call-out must offer a test checkout');
     ok(await t.api('POST','/api/dev/mock-pay/'+created.confirmationUrl.split('/').pop()));
     ok(await t.api('POST',`/api/orders/${id}/offers`,{},master.token));
+    assert.equal((await t.api('GET',`/api/orders/${id}/payments`,
+      undefined,master.token)).status,403,
+      'a bidding candidate may see an offer, but not the bank checkout URL or client surcharge');
     const bids=ok(await t.api('GET',`/api/orders/${id}/offers`,undefined,driver.token));
     ok(await t.api('POST',`/api/orders/${id}/offers/${bids.offers[0].id}/choose`,
       {},driver.token));
+    assert.equal((await t.api('GET',`/api/orders/${id}/payments`,
+      undefined,master.token)).status,403,
+      'a selected performer still has no access to client bank operations');
     ok(await t.api('POST',`/api/orders/${id}/step`,{action:'arrive'},master.token));
     await t.db.query("update orders set estimate=estimate - 'hour' where id=$1",[id]);
     ok(await t.api('POST',`/api/orders/${id}/amount`,{
@@ -138,9 +144,15 @@ test('delayed orphan work payment webhook after revocation never leaks recovered
     const id=created.order.id as string;
     ok(await t.api('POST','/api/dev/mock-pay/'+created.confirmationUrl.split('/').pop()));
     ok(await t.api('POST',`/api/orders/${id}/offers`,{},master.token));
+    assert.equal((await t.api('GET',`/api/orders/${id}/payments`,
+      undefined,master.token)).status,403,
+      'a bidding candidate may see an offer, but not the bank checkout URL or client surcharge');
     const bids=ok(await t.api('GET',`/api/orders/${id}/offers`,undefined,driver.token));
     ok(await t.api('POST',`/api/orders/${id}/offers/${bids.offers[0].id}/choose`,
       {},driver.token));
+    assert.equal((await t.api('GET',`/api/orders/${id}/payments`,
+      undefined,master.token)).status,403,
+      'a selected performer still has no access to client bank operations');
     ok(await t.api('POST',`/api/orders/${id}/step`,{action:'arrive'},master.token));
     await t.db.query("update orders set estimate=estimate - 'hour' where id=$1",[id]);
     ok(await t.api('POST',`/api/orders/${id}/amount`,{
