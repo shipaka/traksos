@@ -71,6 +71,23 @@ export interface PaymentHooks {
 const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'hydraulics', 'tow', 'consult', 'ecu'];
 const CONSULT_DISCOUNT = 'Скидка после консультации';
 
+// Keep the server's request fingerprint consistent with web/src/api.ts.
+// JSON object property order is not part of an order's meaning. Arrays still
+// preserve order; undefined/JSON-only values are normalized as on the wire.
+function canonicalOrderRequest(body: CreateOrderInput): string {
+  const normalized = JSON.parse(JSON.stringify(body));
+  const sort = (value: any): any => {
+    if (Array.isArray(value)) return value.map(sort);
+    if (value !== null && typeof value === 'object') {
+      const output: Record<string, unknown> = {};
+      for (const key of Object.keys(value).sort()) output[key] = sort(value[key]);
+      return output;
+    }
+    return value;
+  };
+  return JSON.stringify(sort(normalized));
+}
+
 export class OrdersService {
   onDispute: ((p: { userId: string; orderId: string; text: string; targetId: string | null; title: string }) => Promise<unknown>) | null = null;
   /** Реферальные баллы: гашение сбора/комиссии и начисления пригласившим */
@@ -94,9 +111,14 @@ export class OrdersService {
     if (requestKey && !/^[A-Za-z0-9._:-]{8,100}$/.test(requestKey))
       throw bad('bad_idempotency_key', 'Недопустимый ключ повторной заявки');
     const requestHash = requestKey
+      ? createHash('sha256').update(canonicalOrderRequest(i)).digest('hex') : null;
+    // Orders created before canonicalization retain the original JSON hash.
+    // An exact replay of that legacy request must continue to work.
+    const legacyRequestHash = requestKey
       ? createHash('sha256').update(JSON.stringify(i)).digest('hex') : null;
     const reuse = async (existing: { id: string; create_request_hash: string | null }) => {
-      if (!requestHash || existing.create_request_hash !== requestHash)
+      if (!requestHash || (existing.create_request_hash !== requestHash &&
+          existing.create_request_hash !== legacyRequestHash))
         throw conflict('idempotency_conflict',
           'Для изменённой заявки требуется новый ключ отправки');
       const pay = await this.db.one<{ confirmation_url: string | null }>(
