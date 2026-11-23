@@ -1,6 +1,6 @@
 // Модератор: очередь (споры, обжалования, отзывы), решения с последствиями, журнал решений, «вернуть в очередь».
 
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { ReviewsService } from './reviews.ts';
 import type { SmsProvider } from '../providers/sms.ts';
@@ -13,47 +13,76 @@ export const DECISIONS: Record<string, Record<string, string>> = {
 };
 const KIND_NAME: Record<string, string> = { dispute: 'Спор', appeal: 'Обжалование', review: 'Отзыв' };
 
+type NewModerationCase = {
+  kind:'dispute'|'appeal'|'review';title:string;text?:string|null;
+  openedBy?:string|null;targetId?:string|null;orderId?:string|null;
+  bookingId?:string|null;reviewId?:string|null;ticketId?:string|null;priority?:number;
+};
+
 export class ModerationService {
   constructor(private db: Db, private notifier: Notifier, private reviews: ReviewsService, private now: () => Date, private sms?: SmsProvider) {}
 
-  private async staff(linkedSupportTicket = false) {
-    // A support-linked dispute belongs to the moderator during the first
-    // 60 minutes. Admin receives the separate one-time overdue alert.
+  private async staff(linkedSupportTicket = false, q: Queryable = this.db) {
+    // A support-linked dispute belongs to moderators until the SLA escalation.
     if (linkedSupportTicket) {
-      const moderators = await this.db.query<{ id: string }>(
+      const moderators=await q.query<{id:string}>(
         `select id from users where roles && '{moderator}'::text[]`);
-      if (moderators.length) return moderators.map(r => r.id);
-      return (await this.db.query<{ id: string }>(
-        `select id from users where roles && '{admin}'::text[]`)).map(r => r.id);
+      if (moderators.length) return moderators.map(r=>r.id);
+      return (await q.query<{id:string}>(
+        `select id from users where roles && '{admin}'::text[]`)).map(r=>r.id);
     }
-    return (await this.db.query<{ id: string }>(`select id from users where roles && '{admin,moderator}'::text[]`)).map((r) => r.id);
+    return (await q.query<{id:string}>(
+      `select id from users where roles && '{admin,moderator}'::text[]`)).map(r=>r.id);
   }
 
-  async open(p: { kind: 'dispute' | 'appeal' | 'review'; title: string; text?: string | null; openedBy?: string | null; targetId?: string | null;
-    orderId?: string | null; bookingId?: string | null; reviewId?: string | null; ticketId?: string | null; priority?: number }) {
-    // The open-case lookup and insert must be atomic. A burst from the same
-    // customer (or duplicate webhook) must not create multiple moderation cases.
-    // Advisory transaction lock works across all Node processes sharing PostgreSQL.
-    const key = JSON.stringify([p.kind,p.openedBy ?? null,p.orderId ?? null,p.bookingId ?? null,p.reviewId ?? null]);
-    const result = await this.db.tx(async q => {
-      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['mod_case:' + key]);
-      const same = await q.one<{ id: string }>(
-        `select id from mod_cases where status='open' and kind=$1 and opened_by is not distinct from $2
-           and order_id is not distinct from $3 and booking_id is not distinct from $4 and review_id is not distinct from $5`,
-        [p.kind, p.openedBy ?? null, p.orderId ?? null, p.bookingId ?? null, p.reviewId ?? null]);
-      if (same) {
-        if (p.text) await q.query(`update mod_cases set text = coalesce(text || E'\\n— ', '') || $2 where id=$1`, [same.id, p.text]);
-        return { id: same.id, number: 0, created: false };
-      }
-      const created = await q.one<{ id: string; number: number }>(
-        `insert into mod_cases(kind, title, text, opened_by, target_id, order_id, booking_id, review_id, ticket_id, priority)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id, number`,
-        [p.kind, p.title, p.text ?? null, p.openedBy ?? null, p.targetId ?? null, p.orderId ?? null, p.bookingId ?? null, p.reviewId ?? null, p.ticketId ?? null, p.priority ?? 2]);
-      return { id: created!.id, number: created!.number, created: true };
-    });
-    if (result.created)
-      await this.notifier.notify(await this.staff(!!p.ticketId), { type: 'mod_case', caseId: result.id },
-        { kind: 'normal', title: `${KIND_NAME[p.kind]} №${result.number}`, body: p.title, data: { caseId: result.id } });
+  /** Reusable locked case creation; callers may keep their other changes in
+   * the exact same SQL transaction instead of leaving partial review effects. */
+  private async openLocked(q: Queryable, p: NewModerationCase) {
+    const key=JSON.stringify([p.kind,p.openedBy??null,p.orderId??null,
+      p.bookingId??null,p.reviewId??null]);
+    await q.query('select pg_advisory_xact_lock(hashtext($1))',['mod_case:'+key]);
+    const same=await q.one<{id:string}>(
+      `select id from mod_cases where status='open' and kind=$1
+          and opened_by is not distinct from $2
+          and order_id is not distinct from $3
+          and booking_id is not distinct from $4
+          and review_id is not distinct from $5`,
+      [p.kind,p.openedBy??null,p.orderId??null,p.bookingId??null,p.reviewId??null]);
+    if(same) {
+      if(p.text)await q.query(
+        `update mod_cases set text=coalesce(text || E'\\\\n— ', '') || $2 where id=$1`,
+        [same.id,p.text]);
+      return {id:same.id,number:0,created:false,staff:[] as string[]};
+    }
+    const created=await q.one<{id:string;number:number}>(
+      `insert into mod_cases(kind,title,text,opened_by,target_id,
+          order_id,booking_id,review_id,ticket_id,priority)
+        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id,number`,
+      [p.kind,p.title,p.text??null,p.openedBy??null,p.targetId??null,
+       p.orderId??null,p.bookingId??null,p.reviewId??null,p.ticketId??null,p.priority??2]);
+    if(!created)throw bad('mod_case_create','Не удалось создать обращение');
+    const staff=await this.staff(!!p.ticketId,q);
+    const title=`${KIND_NAME[p.kind]} №${created.number}`;
+    // The staff inbox is durable in the same commit as the new case; retries
+    // never create phantom new-case alerts.
+    for(const userId of staff){
+      await q.query(`insert into notifications(user_id,kind,title,body,data)
+        values ($1,'mod_case',$2,$3,$4)`,[userId,title,p.title,{caseId:created.id}]);
+    }
+    return {id:created.id,number:created.number,created:true,staff,title};
+  }
+
+  private async announceNew(p: NewModerationCase, result: Awaited<ReturnType<ModerationService['openLocked']>>) {
+    if(!result.created)return;
+    await this.notifier.deliverStored(result.staff,
+      {type:'mod_case',caseId:result.id},
+      {kind:'normal',title:`${KIND_NAME[p.kind]} №${result.number}`,
+       body:p.title,data:{caseId:result.id}});
+  }
+
+  async open(p: NewModerationCase) {
+    const result=await this.db.tx(q=>this.openLocked(q,p));
+    await this.announceNew(p,result);
     return result.id;
   }
 
@@ -75,13 +104,24 @@ export class ModerationService {
 
   /** Оспорить отзыв о себе: до решения он не влияет на рейтинг */
   async contestReview(user: AuthUser, reviewId: string, text: string) {
-    const r = await this.db.one<any>('select r.*, o.number from reviews r join orders o on o.id=r.order_id where r.id=$1', [reviewId]);
-    if (!r || r.target_id !== user.id) throw notFound('Отзыв не найден');
-    if (r.hidden) throw conflict('hidden', 'Отзыв уже скрыт');
-    await this.db.query('update reviews set disputed=true where id=$1', [reviewId]);
-    await this.reviews.recompute(user.id);
-    const id = await this.open({ kind: 'review', title: `Оспорен отзыв ${r.stars}★ по заявке №${r.number}`, text: text.trim(), openedBy: user.id, targetId: r.author_id, orderId: r.order_id, reviewId, priority: 3 });
-    return this.caseView(id);
+    const p: NewModerationCase = {
+      kind:'review',title:'Оспорен отзыв',text:text.trim(),
+      openedBy:user.id,targetId:null,reviewId,priority:3,
+    };
+    const result=await this.db.tx(async q=>{
+      const r=await q.one<any>(`select r.*,o.number from reviews r
+        join orders o on o.id=r.order_id where r.id=$1 for update`,[reviewId]);
+      if(!r || r.target_id!==user.id)throw notFound('Отзыв не найден');
+      if(r.hidden)throw conflict('hidden','Отзыв уже скрыт');
+      p.title=`Оспорен отзыв ${r.stars}★ по заявке №${r.number}`;
+      p.targetId=r.author_id;
+      p.orderId=r.order_id;
+      await q.query('update reviews set disputed=true where id=$1',[reviewId]);
+      await this.reviews.recompute(user.id,q);
+      return this.openLocked(q,p);
+    });
+    await this.announceNew(p,result);
+    return this.caseView(result.id);
   }
 
   async mine(user: AuthUser) {
