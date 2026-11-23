@@ -33,7 +33,8 @@ try {
   page.on('pageerror',e=>exceptions.push(e.message));
   await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin')},token);
   await page.goto(BASE+'/#/admin');
-  await page.locator('main.approved-pc-admin').waitFor();
+  const mobileDesk=page.locator('main.admin-workspace');
+  await mobileDesk.getByRole('heading',{name:'Рабочий стол',exact:true}).waitFor();
   const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
   await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
@@ -47,9 +48,9 @@ try {
   // Never silently set the LIVE administrator's local mode to client.
   if(await page.locator('a[href="#/as/client"]').count())
     throw Error('Admin still exposes unsafe live client-mode shortcut');
-  if(await page.locator('a[href="#/admin/test-center/client"]').count()<1)
-    throw Error('Admin lost real client sandbox entry');
-  await page.goto(BASE+'/#/admin/test-center/client');
+  await mobileDesk.getByRole('link',{name:'Тестирование кабинетов ролей'}).click();
+  await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
+  await page.locator('main.sandbox-root a.sandbox-role-card[href="#/admin/test-center/client"]').click();
   await page.getByRole('heading',{name:'Клиент',exact:true}).waitFor();
   if(await page.evaluate(()=>localStorage.getItem('traksos.mode'))!=='admin')
     throw Error('Opening the client sandbox rewrote live admin role');
@@ -78,7 +79,7 @@ try {
   }
   if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
   await page.getByRole('link',{name:'Вернуться в админку'}).click();
-  await page.locator('main.approved-pc-admin').waitFor();
+  await mobileDesk.getByRole('heading',{name:'Рабочий стол',exact:true}).waitFor();
   if(exceptions.length)throw new Error('JavaScript error: '+exceptions.join(' | '));
   console.log('Admin and master cabinets switch correctly within one account');
   await context.close();
