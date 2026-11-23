@@ -142,6 +142,11 @@ function PerformerOnboarding() {
 
 export function AboutSection() {
   const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <AboutSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function AboutSectionForUser() {
+  const { me } = useMe();
   const p = me!.performer!;
   const { busy, save } = useSave();
   const [name, setName] = useState(me?.name ?? '');
@@ -197,6 +202,11 @@ function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: strin
 
 export function CarsSection() {
   const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <CarsSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function CarsSectionForUser() {
+  const { me } = useMe();
   const p = me!.performer!;
   const { busy, save } = useSave();
   const [cars, setCars] = useState<any[]>(p.cars?.length ? p.cars : p.car ? [p.car] : []);
@@ -245,6 +255,11 @@ const dayList = (d: Record<string, boolean>) => WEEK.filter(([k]) => d?.[k]).map
 const TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
 
 export function ScheduleSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <ScheduleSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function ScheduleSectionForUser() {
   const { me } = useMe();
   const p = me!.performer!;
   const { busy, run } = useAction();
@@ -336,6 +351,11 @@ function TaxInputs({ taxStatus, inn, onChange }: { taxStatus: string; inn: strin
 
 export function TaxSection() {
   const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <TaxSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function TaxSectionForUser() {
+  const { me } = useMe();
   const p = me!.performer!;
   const { busy, save } = useSave();
   const [taxStatus, setTax] = useState(p.tax_status ?? '');
@@ -394,6 +414,11 @@ function PointsPref() {
 }
 
 export function MoneySection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <MoneySectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function MoneySectionForUser() {
   const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
   const ledger = useLoad(() => get('/api/performer/ledger'), [], (e) => e.type === 'balance' || e.type === 'order');
   const [ask, setAsk] = useState<number | null>(null);
@@ -464,6 +489,11 @@ function AskAbout({ entryId, onDone, onCancel }: { entryId: number; onDone: (tic
 // Фильтр заявок ---------------------------------------------------------------
 
 export function FilterSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <FilterSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function FilterSectionForUser() {
   const { me, reload } = useMe();
   const p = me?.performer;
   const pricing = useLoad(() => get('/api/pricing'), []);
@@ -680,6 +710,11 @@ const LEVELS: [string, string, string][] = [['newbie', 'Новичок', 'пер
 
 /** Мой уровень и точность подсказок — видно только вам */
 export function LevelSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <LevelSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function LevelSectionForUser() {
   const s = useLoad(() => get('/api/performer/standing'), []);
   const d = s.data;
   return (
