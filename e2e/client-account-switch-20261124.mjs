@@ -104,7 +104,12 @@ const browser=await chromium.launch();
 try {
  const page=await browser.newPage({viewport:{width:1440,height:920}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
+ // Use an ordinary synthetic HTTPS origin for localStorage-backed profile settings.
+ await page.route('https://traksos-client.test/**',route=>route.fulfill({
+   status:200,contentType:'text/html',
+   body:'<!doctype html><html lang="ru"><body><div id="root"></div></body></html>'
+ }));
+ await page.goto('https://traksos-client.test/');
  await page.addScriptTag({content:js.text});
  const wait=(path,user,n)=>page.waitForFunction(([p,u,n])=>
    window.__clientMock.calls.filter(x=>x.path===p&&x.user===u).length>=n,[path,user,n]);
