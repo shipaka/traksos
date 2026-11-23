@@ -101,7 +101,11 @@ jobs:
   # Launch the exact uploaded APK under Android 10 and Android 15, collect native crash logs.
   runtime-launch:
     needs: debug-apk
-    runs-on: ubuntu-latest
+    # GitHub's moving ubuntu-latest switched to Ubuntu 26.04 in Nov 2026;
+    # API35 headless emulator lost its ADB transport mid-screenshot on it.
+    # Use a fixed supported runner image; keep BOTH real Android 29/35
+    # boot, live WebView DOM, pixel screenshots and crash gates unchanged.
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     strategy:
       fail-fast: false
