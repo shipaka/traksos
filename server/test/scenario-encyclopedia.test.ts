@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { practiceStages } from '../../web/src/screens/trainingDemoModel.ts';
 import {
   scenarioLibrary, scenariosForRole, allowedScenario, chooseScenarioOption,
   type CourseRole,
