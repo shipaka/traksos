@@ -967,6 +967,10 @@ export function createApp(d: Deps) {
       expectedUpdatedAt: z.string().datetime().optional(),
       expectedName: z.string().max(120).optional(),
       expectedSourceNote: z.string().max(300).optional(),
+      expectedBrand: z.string().max(80).optional(),
+      expectedArticle: z.string().max(100).optional(),
+      expectedCategory: z.string().max(30).optional(),
+      expectedSearchTerms: z.string().max(400).nullable().optional(),
     }), c.body);
     return partCatalog.review(c.user, c.params.id, b.reviewed, b);
   });
