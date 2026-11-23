@@ -26,6 +26,16 @@ test('СТО: concurrent replies, steps, confirmation and cancellation are one-s
       vehicleId:vehicle.id,need:'electric',day,arrival:'self'
     },owner.token);
     const first=ok(await create());
+    const invalidDay=await t.api('POST',`/api/services/${center.id}/book`,{
+      vehicleId:vehicle.id,need:'electric',day:'2026-12-35',arrival:'self'
+    },owner.token);
+    assert.equal(invalidDay.status,400,'impossible calendar date is rejected before PostgreSQL insert');
+    const prototypeNeed=await t.api('POST',`/api/services/${center.id}/book`,{
+      vehicleId:vehicle.id,need:'__proto__',day,arrival:'self'
+    },owner.token);
+    assert.equal(prototypeNeed.status,400,'inherited JavaScript prototype keys are not valid repair jobs');
+    assert.equal(ok(await t.api('GET','/api/services?need=__proto__',undefined,owner.token)).length,0,
+      'catalog cannot invent support for an unsupported work category');
 
     const dual=async(path:string,body:unknown,token:string)=>{
       const [left,right]=await Promise.all([
