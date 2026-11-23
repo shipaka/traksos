@@ -195,6 +195,19 @@ try{
   assert(await page.getByText('Учебный ноль').count()===0,
     'Another worker saw a previous worker rate');
 
+  // Station partners must not be shown temporary dispatch worker discounts.
+  // Their commission/contract is separate from roadside master/tow actions.
+  await switchTo('worker','station-A',['service']);
+  const stationNotices='/api/worker/announcements?audience=service';
+  await waitFor(stationNotices,1);
+  await finish(stationNotices,0,[]);
+  const campaignReads=await page.evaluate(()=>
+    window.__opsMock.requests.filter(x=>x.path==='/api/worker/commission-campaigns').length);
+  assert(campaignReads===2,
+    'Station fetched and could display commission campaigns meant for dispatch workers');
+  assert(await page.getByText('Учебный ноль').count()===0,
+    'Station saw a roadside master campaign');
+
   assert((await page.evaluate(()=>window.__opsMock.mutations.length))===0,
     'Read-only operations regression created a campaign or sent notifications');
   assert(errors.length===0,'Runtime errors: '+errors.join('; '));
