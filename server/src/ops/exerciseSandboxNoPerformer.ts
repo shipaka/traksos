@@ -10,9 +10,9 @@ if (!config.sandboxInstance || process.env.TRAKSOS_RUN_DISPOSABLE_SCENARIO !== '
   throw Error('No-performer exercise is restricted to disposable isolated sandbox');
 const origin='http://127.0.0.1:'+config.port;
 const marker='TRAKSOS_QA_NO_PERFORMER_20261123_';
-const assert=(value:unknown,message:string):asserts value=>{
+function assert(value:unknown,message:string): asserts value {
   if(!value)throw Error('NO PERFORMER SANDBOX: '+message);
-};
+}
 async function api(method:string,path:string,token?:string,body?:unknown):Promise<any>{
   const response=await fetch(origin+path,{method,
     headers:{...(token?{authorization:'Bearer '+token}:{}),
