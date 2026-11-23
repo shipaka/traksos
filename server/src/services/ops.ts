@@ -5,7 +5,7 @@ import type { AuthUser } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
 import { bad, notFound } from '../http/router.ts';
 
-const SERVICES = ['electric','diag','air','autonomy','tyre','tow','consult','ecu'] as const;
+const SERVICES = ['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu'] as const;
 const AUDIENCES = ['master','tow','service','all_workers'] as const;
 export type Audience = typeof AUDIENCES[number];
 
