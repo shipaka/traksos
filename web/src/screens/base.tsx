@@ -382,9 +382,18 @@ function BaseCarPanel({ id }: { id: string }) {
   const [partsAmount, setPartsAmount] = useState<number | null>(null);
   const [invPts, setInvPts] = useState<number | null>(null);
   const [company, setCompany] = useState<any>(null);
+  const acting = useRef(false);
   const d = b.data;
   if (!d) return <main><Back to={baseRoutePath('base')} label="Рембаза" /><StationLoading error={b.error} reload={b.reload} /></main>;
-  const act = async (path: string, body: any, okText: string) => { const r = await run(() => basePost(`/api/base/bookings/${id}/${path}`, body), okText); if (r) b.setData(r); return r; };
+  const act = async (path: string, body: any, okText: string) => {
+    if (acting.current) return undefined;
+    acting.current = true;
+    try {
+      const result = await run(() => basePost(`/api/base/bookings/${id}/${path}`, body), okText);
+      if (result) b.setData(result);
+      return result;
+    } finally { acting.current = false; }
+  };
   const inRepair = REPAIR.some(([s]) => s === d.status);
   return (
     <main>
