@@ -37,7 +37,7 @@ export class StatsService {
                 count(*) filter (where status='completed')::int as completed,
                 count(*) filter (where status='cancelled')::int as cancelled,
                 count(*) filter (where status='no_performer')::int as no_performer,
-                count(*) filter (where status in ('searching','accepted','en_route','arrived','working','awaiting_confirmation'))::int as active,
+                count(*) filter (where status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation'))::int as active,
                 count(*) filter (where is_sos)::int as sos,
                 count(*) filter (where night)::int as night
            from orders where created_at >= $1`, p),
