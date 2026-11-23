@@ -137,6 +137,7 @@ jobs:
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
           node e2e/insurer-inspection-reliability-20261124.mjs
           node e2e/admin-partner-finance-20261124.mjs
+          node e2e/admin-account-settings-20261124.mjs
           node e2e/insurance-locked-ui.mjs
           # Mixed-role admin must not be covered by an inactive client offer.
           node e2e/offer-gate-role-ui.mjs
