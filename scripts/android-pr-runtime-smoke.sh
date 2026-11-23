@@ -195,6 +195,13 @@ for role in client master; do
         splash_cleared=1
         break
       fi
+      # Capture a bounded, narrow diagnostic at the FIRST visually stale
+      # frame, while ADB still works. It helps distinguish an app crash from
+      # the Android 15 software compositor/emulator transport disappearing.
+      # Diagnostics never turn a failed image into a PASS.
+      if [ "$attempt" -eq 1 ]; then
+        timeout 12s "$ADB_BIN" logcat -d -v brief -s TrakSOSRuntime:I AndroidRuntime:E SurfaceFlinger:W WindowManager:W           > android-compositor-diagnostics.log 2>&1 || true
+      fi
       sleep 2
     done
     if [ "$splash_cleared" -ne 1 ]; then
