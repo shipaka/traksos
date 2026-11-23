@@ -197,16 +197,17 @@ export function AdminShopCatalog() {
       <span className="note">Формат CSV (разделитель «;», запятая или табуляция). Колонки: <b>бренд;артикул;название;категория;синонимы</b>. Категория — код или название раздела TrakSOS. Поддерживаются русские заголовки и кавычки.</span>
       <label className="field" style={{ display: 'block' }}>
         Выберите файл CSV
-        <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain"
-          onChange={(e) => void loadFile(e.target.files?.[0])} style={{ display: 'block', marginTop: 8, maxWidth: '100%' }} />
+        <input ref={inputRef} type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain"
+          disabled={busy} onChange={(e) => void loadFile(e.target.files?.[0])}
+          style={{ display: 'block', marginTop: 8, maxWidth: '100%' }} />
       </label>
       <label className="stack" style={{ gap: 5 }}>
         <b>Откуда получены данные?</b>
-        <input className="field" maxLength={300} value={sourceNote} onChange={(e) => { setSourceNote(e.target.value); setPreview(null); }}
+        <input className="field" maxLength={300} disabled={busy} value={sourceNote} onChange={(e) => { invalidate(); setSourceNote(e.target.value); }}
           placeholder="Название каталога, источник и разрешение на использование" />
       </label>
       <label className="agree">
-        <input type="checkbox" checked={rights} onChange={(e) => { setRights(e.target.checked); setPreview(null); }}/>
+        <input type="checkbox" disabled={busy} checked={rights} onChange={(e) => { invalidate(); setRights(e.target.checked); }}/>
         <span>Подтверждаю, что имею право использовать и импортировать эти данные в TrakSOS.</span>
       </label>
       {fileError && <div className="banner warn">{fileError}</div>}
@@ -218,17 +219,17 @@ export function AdminShopCatalog() {
         </div>)}
       </>}
       {progress && <span className="note" role="status">{progress}</span>}
-      {preview && <div className="banner">
-        Проверка файла: {preview.processed} позиций · новых: {preview.newRows} · уже известных: {preview.existingRows}. Ничего не опубликовано.
+      {approvedPreview && preview && <div className="banner">
+        Предварительная проверка: {preview.processed} позиций · новых: {preview.newRows} · уже известных: {preview.existingRows}. Ничего не опубликовано. Если другой администратор изменит каталог, итоговые числа могут отличаться.
       </div>}
       <div className="row">
         <button className="btn ghost" disabled={busy || !valid} onClick={() => void check()}>
           {busy ? 'Обрабатываем…' : 'Проверить перед загрузкой'}
         </button>
-        <button className="btn" disabled={busy || !valid || !preview || preview.processed !== rows.length}
+        <button className="btn" disabled={busy || !approvedPreview}
           onClick={() => void importAll()}>Загрузить на проверку</button>
       </div>
-      <span className="note">За один запрос передаётся максимум 150 деталей. При обрыве интернета файл можно загрузить повторно — одинаковые записи не размножаются.</span>
+      <span className="note">За один запрос передаётся максимум 150 деталей. При обрыве связи прогресс показывает только подтверждённые сервером партии; повторно проверьте исходный CSV, затем загрузите снова. Записи остаются на ручной модерации, а не в продаже.</span>
     </div>
     <div className="card stack">
       <b>Проверка импортированных артикулов</b>
@@ -237,7 +238,11 @@ export function AdminShopCatalog() {
           <button key={k} className="chip" aria-pressed={state === k} onClick={() => { setState(k); setPage(0); }}>{label}</button>)}
       </div>
       <input className="field" placeholder="Искать бренд, номер или название" value={query} onChange={(e) => setQuery(e.target.value)}/>
-      {!list.data ? <Loading error={list.error} /> : <>
+      {list.error ? <div className="card stack" role="alert">
+        <span>Не удалось обновить список артикулов. Не подтверждайте устаревшие сведения.</span>
+        <button type="button" className="btn ghost" disabled={busy}
+          onClick={() => void list.reload()}>Повторить загрузку</button>
+      </div> : !list.data ? <Loading error={list.error} /> : <>
         {!list.data.items.length && <div className="empty">Подходящих записей нет</div>}
         {list.data.items.map((p: any) => <div key={p.id} className="card stack" style={{ gap: 8 }}>
           <b>{p.name}</b>
@@ -246,7 +251,7 @@ export function AdminShopCatalog() {
           <div className="row">
             <span className={p.reviewed ? 'pill good' : 'pill'}>{p.reviewed ? 'Подтверждена' : 'Требует проверки'}</span>
             <button className="btn ghost small" disabled={busy}
-              onClick={() => void reviewEntry(p.id, !p.reviewed)}>
+              onClick={() => void reviewEntry(p, !p.reviewed)}>
               {p.reviewed ? 'Отозвать проверку' : 'Подтвердить запись'}
             </button>
           </div>
