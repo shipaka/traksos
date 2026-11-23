@@ -133,7 +133,7 @@ test('SMS password reset revokes all previous sessions and push registration wit
   }));
   assert.equal(reset.user.id,first.user.id);
   assert.equal((await sessionRows(first.user.id)).length,1);
-  assert.equal((await t.db.query('select id from push_tokens where user_id=$1',[first.user.id])).length,0);
+  assert.equal((await t.db.query('select token from push_tokens where user_id=$1',[first.user.id])).length,0);
   assert.equal((await t.api('GET','/api/me',undefined,first.token)).status,401);
   assert.equal((await t.api('GET','/api/me',undefined,login.token)).status,401);
   assert.equal((await t.api('GET','/api/me',undefined,reset.token)).status,200);
