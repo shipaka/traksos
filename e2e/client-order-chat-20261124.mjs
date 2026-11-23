@@ -107,7 +107,7 @@ try{
   const order=(id,number)=>({
     id,number,service:'electric',status:'accepted',you:'client',isSos:false,
     createdAt:'2026-11-24T00:00:00Z',actions:[],events:[],
-    paymentMethod:'cash',estimate:{zoneName:'Учебная зона',hour:null},
+    paymentMethod:number===202?'online':'cash',estimate:{zoneName:'Учебная зона',hour:null},
     money:{callOut:10000,work:0,discount:0,clientFee:0,total:10000}
   });
   const navigate=(id,user='U1')=>page.evaluate(route=>window.__orderRoute(route),{id,user});
@@ -138,6 +138,14 @@ try{
   await settle('/api/orders/B',0,order('B',202));
   await wait('/api/orders/B/messages',1);
   await settle('/api/orders/B/messages',0,{messages:[],quickReplies:[],participants:[]});
+  // An unauthenticated/stale payment GET is not an empty ledger: show retry
+  // and never fall back to another order's captured amount.
+  const paymentPath='/api/orders/B/payments';
+  await wait(paymentPath,1);
+  await settle(paymentPath,0,'bank history offline',true);
+  await page.getByRole('button',{name:'Повторить загрузку платежей'}).click();
+  await wait(paymentPath,2);
+  await settle(paymentPath,1,[]);
   await page.getByRole('button',{name:/Чат по заявке/}).click();
   const message=page.getByPlaceholder('Сообщение');
   await message.waitFor();
