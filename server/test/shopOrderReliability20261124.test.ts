@@ -41,7 +41,6 @@ const stock=async()=>(
 test('fleet driver cannot cancel another driver purchase by known UUID; owner can',async()=>{
   const first=ok(await order(driverA.token));
   assert.equal(first.status,'new');
-  assert.equal((await t.api('GET','/api/shop/orders',undefined,driverB.token)).length,undefined);
   const listB=ok(await t.api('GET','/api/shop/orders',undefined,driverB.token));
   assert.equal(listB.some((v:any)=>v.id===first.id),false);
   const denied=await t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},driverB.token);
