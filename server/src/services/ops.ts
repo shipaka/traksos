@@ -222,6 +222,10 @@ export class OpsService {
     // billed separately. Neither can ever apply a worker commission campaign.
     if(p.service==='ecu'||p.service==='consult')
       throw bad('no_dispatch_commission','Для выбранной услуги нет комиссии выездного исполнителя');
+    // The approved worker fee is 5%; a shortage campaign is a discount,
+    // not authority to raise commission above the agreed baseline.
+    if(!Number.isFinite(p.commissionPct)||p.commissionPct<0||p.commissionPct>5)
+      throw bad('bad_commission_pct','Временная комиссия допускается только от 0 до 5%');
     const start=new Date(p.startsAt),end=new Date(p.endsAt);
     if(!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start) throw bad('bad_dates','Проверьте даты');
     if(end.getTime()-start.getTime()>31*86_400_000) throw bad('too_long','Акция не длиннее 31 дня');
