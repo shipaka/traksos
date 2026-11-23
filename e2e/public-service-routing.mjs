@@ -333,5 +333,30 @@ try {
       width+'px: horizontal overflow '+JSON.stringify(widths));
     await ctx.close();
   }
+  // The public legal footer must recover after its first API request fails;
+  // neither a hard reload nor invented legal/contact data is acceptable.
+  const legalContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    const legalPage=await legalContext.newPage();
+    let requests=0;
+    let firstResolved;
+    const firstRequest=new Promise(resolve=>{firstResolved=resolve;});
+    await legalPage.route('**/api/legal',async route=>{
+      requests++;
+      const first=requests===1;
+      await route.fulfill({status:first?503:200,contentType:'application/json',
+        body:first?JSON.stringify({error:'temporary_unavailable'}):
+          JSON.stringify({brand:'TrakSOS',entity:'CI-LEGAL-RESTORED'})});
+      if(first)firstResolved();
+    });
+    await legalPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await legalPage.locator('.site-footer').waitFor();
+    await firstRequest;
+    await legalPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await legalPage.locator('.site-footer').getByText('CI-LEGAL-RESTORED').waitFor();
+    check(requests>=2,'Legal footer did not retry after offline/online');
+    check(await legalPage.locator('.site-footer').getByText('CI-LEGAL-RESTORED').count()===1,
+      'Recovered legal details must not be duplicated');
+  }finally{await legalContext.close();}
 }finally{await browser.close();}
-console.log('PASS: owner-approved 617/618 routes, five quick services, unified TrakBot, guest gates, four partner roles and public docs');
+console.log('PASS: owner-approved 617/618 routes, five quick services, unified TrakBot, guest gates, four partner roles, public docs and legal reconnect');

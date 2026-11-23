@@ -929,11 +929,31 @@ function NetworkStatus() {
 }
 
 /** Подвал: реквизиты площадки (их заполняет админ в «Настройках»), ссылки на документы; плашка про cookie — один раз */
-let legalCache: Promise<any> | null = null;
 function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
   const [l, setL] = useState<any>(null);
   const [cookieOk, setCookieOk] = useState(() => { try { return localStorage.getItem('traksos.cookie') === '1'; } catch { return true; } });
-  useEffect(() => { (legalCache ??= get('/api/legal').catch(() => null)).then(setL); }, []);
+  useEffect(() => {
+    // A one-time rejected promise previously cached an empty legal footer for
+    // the entire SPA session. Re-read verified details after reconnect/return;
+    // retain the last successful response if the next request is offline.
+    let active = true;
+    let lastRequest = 0;
+    const refresh = () => {
+      const request = ++lastRequest;
+      void get('/api/legal').then(data => {
+        if (active && request === lastRequest && data) setL(data);
+      }).catch(() => { /* Keep verified details; retry on reconnect/visibility. */ });
+    };
+    const visible = () => { if (!document.hidden) refresh(); };
+    refresh();
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      active = false;
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, []);
   // Prevent a floating bot from covering a mandatory cookie notice on phones.
   useEffect(()=>{
     document.documentElement.classList.toggle('traksos-cookie-notice-open',!cookieOk);
