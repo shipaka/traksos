@@ -1019,6 +1019,32 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .top .logo { flex-shrink: 0; }
 }
 
+/* The 320px TEST administrator must keep its supervisor badge legible,
+   rather than shrink it under Bell/Account. Only the failing narrow admin
+   header gets a second flex row; 617 desktop and 618 client remain unchanged. */
+@media(max-width:359px){
+  .app.role-admin header.top{
+    flex-wrap:wrap!important;
+    row-gap:4px!important;
+    align-content:center;
+  }
+  .app.role-admin header.top > .row{
+    flex:1 0 100%;
+    width:100%;min-width:0;
+    box-sizing:border-box;
+    align-items:center;justify-content:space-between;
+    gap:8px!important;
+  }
+  .app.role-admin header.top .sandbox-supervisor-controls,
+  .app.role-admin header.top .sandbox-supervisor-badge,
+  .app.role-admin header.top .sandbox-test-badge{
+    flex:none;min-width:max-content;white-space:nowrap;
+  }
+  .app.role-admin header.top .sandbox-test-badge{
+    display:inline-flex;align-items:center;justify-content:center;min-height:44px;
+  }
+}
+
 /* Approved public palette and mobile readability, 2026-11-13.
    Layout-only corrections: no account, route or product-behaviour changes.
    The truck asset must be separately replaced by the approved Scania R520. */
