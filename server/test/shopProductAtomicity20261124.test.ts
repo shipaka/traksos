@@ -28,7 +28,7 @@ async function triggerBlock(action:string){
     "    RAISE EXCEPTION 'synthetic catalog audit failure';",
     '  END IF;',
     '  RETURN NEW;',
-    'END $$;',
+    'END; $;',
     'DROP TRIGGER IF EXISTS shop_test_audit_fault_trigger ON audit_log;',
     'CREATE TRIGGER shop_test_audit_fault_trigger BEFORE INSERT ON audit_log',
     'FOR EACH ROW EXECUTE FUNCTION shop_test_audit_fault();',
