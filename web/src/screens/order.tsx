@@ -19,10 +19,21 @@ import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { OrderPhotoGallery } from './orderPhotos.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
 
 type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history' | 'vehicle';
-export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: PerformerOrderTab }) {
-  const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
+export function Order({id,initialTab='order'}:{id:string;initialTab?:PerformerOrderTab}) {
+  const {me}=useMe();
+  // Every account and request has isolated actions, chat drafts and cached data.
+  return <OrderForSession key={(me?.id??'guest')+':'+id}
+    id={id} initialTab={initialTab} userId={me?.id??'guest'}/>;
+}
+function OrderForSession({id,initialTab,userId}:{
+  id:string;initialTab:PerformerOrderTab;userId:string;
+}) {
+  const o=usePrivateRead<any>(()=>get(`/api/orders/${id}`),
+    'order:'+userId+':'+id,
+    (e:any)=>e.orderId===id&&(e.type==='order'||e.type==='payment'));
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
   useEffect(() => {
     setPerfPos(null); // Never display another order's last GPS position after switching the route.
@@ -43,7 +54,9 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
   const [ptab, setPtab] = useState<PerformerOrderTab>(initialTab);
   useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
-  if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
+  if (!o.data) return <main className="stack"><Back to={backTo} />
+    <Loading error={o.error}/>{o.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void o.reload();}}>Повторить загрузку заявки</button>}</main>;
   const d = o.data;
   const isPerformer = d.you === 'performer';
   const done = ['completed', 'cancelled'].includes(d.status);
@@ -1303,8 +1316,18 @@ function Chat({ id, status }: { id: string; status: string }) {
 
 // Деньги по заявке: клиенту — что списано и что вернули; админу — ещё и кнопка возврата
 function PaymentsList({ id, admin, noPerformer = false }: { id: string; admin: boolean; noPerformer?: boolean }) {
-  const list = useLoad(() => get(`/api/orders/${id}/payments`), [id], (e) => e.orderId === id);
-  if (!list.data?.length) return null;
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get(`/api/orders/${id}/payments`),
+    'order-payments:'+(me?.id??'guest')+':'+id,
+    (e:any)=>e.orderId===id);
+  if(list.error)return <section className="card stack" role="alert">
+    <b>Не удалось проверить актуальные платежи</b>
+    <span className="note">Для проверки оплаты или возврата повторите запрос. Старые данные не показываются как новые.</span>
+    <button type="button" className="btn ghost small" onClick={()=>{void list.reload();}}>
+      Повторить загрузку платежей
+    </button>
+  </section>;
+  if(!list.data?.length)return null;
   return (
     <div className="card">
       <b>Оплата</b>
