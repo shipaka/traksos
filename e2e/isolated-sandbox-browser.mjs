@@ -87,6 +87,37 @@ try{
           throw Error('Signed owner handoff lost Admin/Back: '+role);
         if(role==='admin' && !marker.includes('Admin'))
           throw Error('Admin sandbox supervisor badge missing');
+        if(role==='admin' && width<=390){
+          const headerLayout=await page.locator('header.top').evaluate(header=>{
+            const badge=header.querySelector('.sandbox-test-badge');
+            const menu=header.querySelector('.account-menu > summary');
+            const bell=header.querySelector('[aria-label="Уведомления"]')||
+              header.querySelector('button.bell');
+            if(!badge || !menu)throw Error('Missing admin supervisor badge/account menu');
+            const textRange=document.createRange();textRange.selectNodeContents(badge);
+            const box=node=>{if(!node)return null;const r=node.getBoundingClientRect();
+              return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+                width:r.width,height:r.height};};
+            const hit=node=>{if(!node)return true;
+              const r=node.getBoundingClientRect();
+              const top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+              return top===node || node.contains(top);};
+            return {width:document.documentElement.clientWidth,
+              header:box(header),badge:box(badge),text:box(textRange),
+              menu:box(menu),bell:box(bell),badgeHit:hit(badge),menuHit:hit(menu),
+              bellHit:hit(bell)};
+          });
+          const {badge,text,menu,bell}=headerLayout;
+          const intersect=(a,b)=>!!a&&!!b&&a.left<b.right-1&&a.right>b.left+1&&
+            a.top<b.bottom-1&&a.bottom>b.top+1;
+          if(!badge||!text||text.width<55||
+             text.left<badge.left-1||text.right>badge.right+1||
+             text.right>headerLayout.width+1||intersect(text,menu)||intersect(text,bell)||
+             !headerLayout.badgeHit||!headerLayout.menuHit||!headerLayout.bellHit||
+             menu.height<40)
+            throw Error('320/390 admin badge obscured by clickable header controls: '+
+              JSON.stringify(headerLayout));
+        }
         if(width===390 && role==='client'){
           // The latest approved symbolic Russia-network illustration, never
           // the cancelled #3 truck. This resource is decoded from the real
