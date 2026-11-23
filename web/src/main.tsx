@@ -717,7 +717,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {me && <SandboxModeBadge />}
           {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
-          {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
+          {!me && !isAuthEntry && !(native.isApp && route.length === 0) && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}

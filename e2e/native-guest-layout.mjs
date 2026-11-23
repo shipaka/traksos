@@ -53,6 +53,10 @@ try {
       const register=welcome.getByRole('link',{name:'Зарегистрироваться',exact:true});
       if(!await login.isVisible()||!await register.isVisible())
         throw Error(width+'px Android has no first-screen authentication actions');
+      for(const action of ['Войти','Зарегистрироваться']){
+        if(await page.getByRole('link',{name:action,exact:true}).count()!==1)
+          throw Error(width+'px: duplicate native welcome action '+action);
+      }
       const controls=await Promise.all([login,register].map(x=>x.evaluate(el=>{
         const rect=el.getBoundingClientRect();
         return {w:rect.width,h:rect.height};
