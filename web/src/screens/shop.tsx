@@ -413,13 +413,18 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
 /** Purchase history is loaded only when the customer opens this page, never for all fleet vehicles. */
 export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
   const [page, setPage] = useState(0);
-  const c = useLoad(() => get('/api/shop?light=1'), []);
-  const history = useLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
+  const c = useShopPrivateLoad(() => get('/api/shop?light=1'), []);
+  const history = useShopPrivateLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
     [page, vehicleId], (e) => e.type === 'shop');
+  useEffect(()=>setPage(0),[vehicleId]);
   return <main>
     <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
     <h1>История покупок</h1>
-    {!history.data ? <Loading error={history.error} /> : <>
+    {!history.data ? <div className="stack">
+      <Loading error={history.error} />
+      {history.error && <button className="btn ghost small" onClick={history.reload}>
+        Повторить загрузку истории</button>}
+    </div> : <>
       {history.data.items.length === 0 ? <div className="empty">Покупок пока нет</div> :
         <MyShopOrders orders={history.data.items} reload={history.reload} canOrder={!!c.data?.enabled} />}
       {(page > 0 || history.data.hasMore) && <div className="between">
