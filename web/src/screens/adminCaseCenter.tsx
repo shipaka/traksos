@@ -206,7 +206,7 @@ export function AdminCaseCenter() {
         Повторить загрузку реестра
       </button>
     </div>}
-    {!list&&!listError?<p className="note" role="status">Загрузка реестра…</p>
+    {!list?(listError?null:<p className="note" role="status">Загрузка реестра…</p>)
       :!list.length?<p className="case-reg-empty">По выбранным условиям обращений не найдено.</p>
       :<div className="case-reg-list">{list.map(x=>
         <button type="button" className="case-reg-entry" key={x.id} onClick={()=>open(x.id)}
