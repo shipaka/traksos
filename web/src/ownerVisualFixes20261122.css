@@ -807,8 +807,8 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
    but give readable copy sufficient vertical space. Use continuous existing
    photography instead of old sprite slices with embedded text. */
 @media(min-width:900px) {
-  .guest-app.guest-home .owner20-bottom-air,
-  .guest-app.guest-home .owner20-bottom-club {
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-air,
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-club {
     background-image:
       linear-gradient(90deg,rgba(5,17,24,.97) 0%,rgba(5,19,28,.93) 34%,rgba(7,21,30,.62) 62%,rgba(7,23,33,.05) 100%),
       url('/traksos-service-scenes-desktop-hq.webp')!important;
@@ -816,11 +816,11 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     background-repeat:no-repeat,no-repeat!important;
     background-position:center center,100% 50%!important;
   }
-  .guest-app.guest-home .owner20-bottom-club{
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-club{
     background-position:center center,72% 50%!important;
   }
-  .guest-app.guest-home .owner20-bottom-air::after,
-  .guest-app.guest-home .owner20-bottom-club::after{
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-club::after{
     content:none!important;display:none!important;
     background:none!important;
   }

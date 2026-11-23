@@ -112,7 +112,7 @@ try {
    // extra community imagery is full-bleed and does NOT paste bitmap
    // captions over the text. The fifth "Почему" line must fit above
    // the card bottom; app release text must stay separate from the phone.
-   if(width===900||width===1024) {
+   {
      const bottomReading=await page.locator('.owner20-bottom>.owner20-bottom-card').evaluateAll(cards=>cards.map(card=>{
        const bounds=card.getBoundingClientRect();
        const title=card.querySelector('b')?.getBoundingClientRect();
@@ -132,8 +132,8 @@ try {
            (bg.includes('traksos-service-scenes-desktop-hq.webp')&&after.display==='none')
        };
      }));
-     if(bottomReading.length!==4||bottomReading.some(x=>!x.headingOk||!x.copyOk||!x.actionOk||
-         !x.storeOk||!x.bulletsOk||!x.fullBleed))
+     if(bottomReading.length!==4||bottomReading.some(x=>!x.fullBleed||
+         (width<=1024&&(!x.headingOk||!x.copyOk||!x.actionOk||!x.storeOk||!x.bulletsOk))))
        throw Error(width+': bottom strip has clipped text, extra photo slice or hidden CTA: '+JSON.stringify(bottomReading));
    }
    // Both 617 and 618 now use the same real DOM phone/TrakSOS app icon.
