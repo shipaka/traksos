@@ -13,6 +13,23 @@ const snapshot = (patch: Partial<Parameters<typeof classifyNoPerformerReason>[0]
   profiles: [] as PartnerPresence[], ...patch,
 });
 
+async function linkedVehicleFor(t:any,owner:{token:string;id:string},driver:{token:string;id:string},num:number){
+  // Real fleet ownership, QR consent and current vehicle.driver_id are part
+  // of the right to see the old ticket. created_by alone is NOT authority.
+  const created=await t.api('POST','/api/vehicles',{
+    brand:'Scania',model:'R',year:2018,plate:'А'+String(num)+'АА178',
+  },owner.token);
+  assert.equal(created.status,200,JSON.stringify(created.body));
+  const fleet=await t.api('GET','/api/fleet',undefined,owner.token);
+  assert.equal(fleet.status,200,JSON.stringify(fleet.body));
+  const qr=fleet.body.cars.find((v:any)=>v.id===created.body.id)?.qrCode;
+  assert.ok(qr,'owner must own an active QR for this synthetic fleet vehicle');
+  const joined=await t.api('POST','/api/qr/'+qr+'/join',{},driver.token);
+  assert.equal(joined.status,200,JSON.stringify(joined.body));
+  return created.body.id as string;
+}
+
+
 test('no partner claim requires proven absence of matching active profiles anywhere', () => {
   assert.equal(classifyNoPerformerReason(snapshot()), 'not_connected');
   assert.equal(classifyNoPerformerReason(snapshot({
@@ -196,10 +213,11 @@ test('terminal alert queue stores one inbox row per participant under concurrent
   try {
     const owner=await t.login('+79990003563','client');
     const driver=await t.login('+79990003564','driver');
+    const vehicleId=await linkedVehicleFor(t,owner,driver,563);
     const order=await t.db.one<{id:string}>(`
-      insert into orders(client_id,created_by,service,zone_id,status,estimate)
-      values ($1,$2,'hydraulics','spb','searching',$3::jsonb) returning id`,
-      [owner.id,driver.id,JSON.stringify({callOut:100000,zoneName:'СПб'})]);
+      insert into orders(client_id,created_by,vehicle_id,service,zone_id,status,estimate)
+      values ($1,$2,$4,'hydraulics','spb','searching',$3::jsonb) returning id`,
+      [owner.id,driver.id,JSON.stringify({callOut:100000,zoneName:'СПб'}),vehicleId]);
     assert.ok(order);
     // Hold the inbox storage unavailable while the terminal search commits,
     // so multiple drainers really race to claim the same pending intents.
@@ -318,13 +336,14 @@ test('fleet owner and submitting driver can see and retry their exhausted SOS, u
     const owner = await t.login('+79990003571', 'client');
     const driver = await t.login('+79990003572', 'driver');
     const stranger = await t.login('+79990003573', 'client');
+    const vehicleId = await linkedVehicleFor(t,owner,driver,571);
     // A fleet driver's submitted SOS is owned by the fleet owner, while
     // created_by records the initiating driver. Both must have requester
     // rights; unrelated accounts must not see the terminal reason or retry.
     const order = await t.db.one<{id:string}>(`
-      insert into orders(client_id,created_by,service,zone_id,status,estimate)
-      values ($1,$2,'hydraulics','spb','searching',$3::jsonb) returning id`,
-      [owner.id,driver.id,JSON.stringify({callOut:100000,zoneName:'СПб'})]);
+      insert into orders(client_id,created_by,vehicle_id,service,zone_id,status,estimate)
+      values ($1,$2,$4,'hydraulics','spb','searching',$3::jsonb) returning id`,
+      [owner.id,driver.id,JSON.stringify({callOut:100000,zoneName:'СПб'}),vehicleId]);
     assert.ok(order);
     await t.app.auction.start(order.id);
     const url = '/api/orders/' + order.id;
