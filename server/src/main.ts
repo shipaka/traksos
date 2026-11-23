@@ -65,6 +65,14 @@ const orderSlaTimer = setInterval(() => {
   void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
 }, 60_000);
 void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
+// Recover saved no-performer inbox notifications after database storage outages
+// and process restarts, independently of the two-second dispatch timer.
+const noPerformerAlertsTimer = setInterval(() => {
+  void app.auction.flushPendingNoPerformerAlerts()
+    .catch((e) => console.error('[no-performer-alerts]', e));
+}, 30_000);
+void app.auction.flushPendingNoPerformerAlerts()
+  .catch((e) => console.error('[no-performer-alerts]', e));
 // First human response deadline, one durable overdue notification at 60 min.
 // Database row locks and event uniqueness protect multi-instance operation.
 const supportSlaTimer = setInterval(() => {
@@ -125,6 +133,7 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(captureTimer);
     clearInterval(supportSlaTimer);
     clearInterval(orderSlaTimer);
+    clearInterval(noPerformerAlertsTimer);
     clearInterval(unilateralSlaTimer);
     clearInterval(developerDeliveryTimer);
     server.close();
