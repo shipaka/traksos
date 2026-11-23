@@ -404,6 +404,28 @@ export class ShopService {
       if (!u?.company_inn) throw bad('need_inn', 'Счёт выставляем компаниям — укажите ИНН в профиле');
     }
     return this.db.tx(async (q) => {
+      // Fleet membership may be revoked while a user confirms a cart. Recheck
+      // the CURRENT user/vehicle under row locks, inside the same transaction
+      // that reserves parts and creates the buyer's order.
+      const currentUser=await q.one<{owner_id:string|null;roles:string[]}>(
+        'select owner_id,roles from users where id=$1 for update',[user.id]);
+      if(!currentUser ||
+         (currentUser.owner_id??null)!==(user.owner_id??null) ||
+         !currentUser.roles.some(role=>['client','driver','master','tow','service'].includes(role)))
+        throw forbidden('Доступ к покупкам изменился — обновите кабинет');
+      if(user.owner_id){
+        const owner=await q.one<{fleet:any}>(
+          'select fleet from users where id=$1 for update',[user.owner_id]);
+        if(!owner || owner.fleet?.allow?.shop===false)
+          throw forbidden('Владелец не разрешил покупки в магазине');
+      }
+      if(vehicle){
+        const owned=await q.one<{id:string}>(
+          'select id from vehicles where id=$1 and owner_id=$2 '+
+          (user.owner_id?'and driver_id=$3 ':'')+'for update',
+          user.owner_id?[vehicle.id,clientId,user.id]:[vehicle.id,clientId]);
+        if(!owned)throw forbidden('Машина больше не назначена этому пользователю');
+      }
       // Link to a repair job only while it remains open. A fleet driver may
       // never attach parts to another driver's work order by knowing its UUID.
       let linkOrder: string | null = null;
