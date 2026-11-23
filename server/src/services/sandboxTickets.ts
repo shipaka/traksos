@@ -53,7 +53,7 @@ const forbidden = () => new HttpError(403, 'sandbox_access_denied', 'Досту�
  */
 function safeAdminReturn(value: unknown): string | undefined {
   if (value === '') return undefined;
-  if (typeof value !== 'string' || value.length > 512 || /[\\u0000-\\u001f\\u007f]/.test(value))
+  if (typeof value !== 'string' || value.length > 512 || /[\u0000-\u001f\u007f]/.test(value))
     return undefined;
   try {
     const url = new URL(value);
