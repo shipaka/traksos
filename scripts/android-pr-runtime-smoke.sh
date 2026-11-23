@@ -140,6 +140,10 @@ for role in client master; do
   # android-review-client.png, and the client under android-review-master.png.
   # Allow the compositor to paint, then validate the visible native UI.
   sleep 3
+  # Collect actual pixels BEFORE UIAutomator: API35 can fail to write its
+  # accessibility XML although the React role was rendered. Preserve the
+  # screenshot for independent QA even when this strict gate still fails.
+  adb exec-out screencap -p > "android-review-$role.png" || true
   painted=0
   for attempt in 1 2 3 4 5; do
     if [ "$sdk_level" -ge 34 ]; then
@@ -174,6 +178,12 @@ for role in client master; do
     sleep 3
   done
   if [ "$painted" -ne 1 ]; then
+    adb logcat -d -s TrakSOSRuntime:I >> runtime-ready.log || true
+    # This is diagnostic only; no relaxed PASS without real accessibility +
+    # screenshot evidence. A missing XML will no longer hide the actual pixels.
+    if [ -s "android-review-$role.png" ]; then
+      python3 scripts/verify-android-screen.py "android-review-$role.png" emulator-screen.png || true
+    fi
     echo "FAIL: native Android $sdk_level did not visibly display expected role=$role after React render"
     exit 1
   fi
