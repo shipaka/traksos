@@ -56,11 +56,14 @@ const bundle=await build({
     name:'isolate-techbase-requests',
     setup(b){
       b.onResolve({filter:/./},args=>{
+        // Reuse ONE React Context instance across entry + both real screens.
+        if(args.path==='../ui.tsx'||args.path==='./web/src/ui.tsx')
+          return {path:'shared-ui',namespace:'tech-stub'};
         if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'tech-stub'};
       });
       b.onLoad({filter:/./,namespace:'tech-stub'},args=>({
-        contents:stubs[args.path],
-        loader:args.path.endsWith('.tsx')?'tsx':'js',
+        contents:args.path==='shared-ui'?stubs['../ui.tsx']:stubs[args.path],
+        loader:args.path==='shared-ui'||args.path.endsWith('.tsx')?'tsx':'js',
       }));
     },
   }],
@@ -141,7 +144,9 @@ try{
   });
   await pending('GET','/api/tech/repair-cases?q=',1);
   await page.getByRole('textbox',{name:'Поиск кейса'}).fill('Scania');
-  await page.getByRole('button',{name:'Поиск'}).click();
+  // Simulate a re-entrant native form submit while an earlier GET is still
+  // pending (a click is intentionally disabled by the pending state).
+  await page.locator('form.compose').dispatchEvent('submit');
   await pending('GET','/api/tech/repair-cases?q=Scania',1);
   await settle('GET','/api/tech/repair-cases?q=Scania',0,'resolve',
     {items:[caseFile('case-new','Scania')]});
