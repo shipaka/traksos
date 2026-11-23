@@ -154,13 +154,29 @@ try{
         // Every working role must be reachable directly from the real
         // admin dashboard, not only from a hidden test-center URL.
         if(role==='admin'){
-          const links=await page.locator('.approved-pc-role-grid a').evaluateAll(nodes=>
-            nodes.map(node=>node.getAttribute('href')));
+          // 617 desktop has the approved PC role grid; 618 mobile keeps its
+          // own Admin workspace and must reach the SAME 12 real role tickets.
+          // Do not require desktop DOM on a phone just to make CI green.
+          if(width<900){
+            const launcher=page.locator('main.admin-workspace a[href="#/admin/test-center"]').first();
+            await launcher.waitFor({state:'visible',timeout:15_000});
+            await launcher.click();
+            await page.locator('main.sandbox-root .sandbox-role-grid').waitFor({state:'visible'});
+          }
+          const links=await page.locator(width<900
+            ? '.sandbox-role-grid a.sandbox-role-card'
+            : '.approved-pc-role-grid a').evaluateAll(nodes=>
+              nodes.map(node=>node.getAttribute('href')));
           const required=SANDBOX_ROLES.map(id=>'#/admin/test-center/'+id);
           const missing=required.filter(href=>!links.includes(href));
           if(missing.length || links.length!==required.length)
             throw Error('Admin role launcher differs from the 12 real sandbox roles: '+
-              JSON.stringify({missing,links}));
+              JSON.stringify({width,missing,links}));
+          if(width<900){
+            await page.getByRole('link',{name:'← Вернуться в админку'}).click();
+            await page.waitForFunction(()=>location.hash==='#/admin',{timeout:15_000});
+            await page.locator('main.admin-workspace').waitFor({state:'visible'});
+          }
         }
         if(errors.length)throw Error('JavaScript error in '+role+': '+errors.join('; '));
         // A legal dialog or navigation click may leave the page scrolled.
