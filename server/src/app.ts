@@ -44,6 +44,7 @@ import { StatsService } from './services/stats.ts';
 import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
+import { PublicPartnerMap } from './services/publicPartnerMap.ts';
 import { FleetService } from './services/fleet.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PartnerFinance } from './services/partnerFinance.ts';
@@ -134,6 +135,7 @@ export function createApp(d: Deps) {
   const orderSla = new OrderSlaService(d.db, orders, notifier, now);
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
+  const publicPartnerMap = new PublicPartnerMap(d.db);
   const referral = new ReferralService(d.db, settings, notifier, now);
   referral.ledger = payments.ledger.bind(payments);
   orders.referral = referral;
@@ -162,6 +164,13 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Public network coverage is opt-in, stationary-only and actually verified.
+  // All existing entries default to private; no current mobile performer GPS.
+  r.get('/api/public/partner-map', false, () => publicPartnerMap.list());
+  r.put('/api/service/public-map', ['service'], (c: AuthedCtx) => {
+    const b = parse(z.object({ enabled:z.boolean() }), c.body);
+    return publicPartnerMap.visibility(c.user,b.enabled);
+  });
   // Curated official source links only. No specialist documents are returned
   // to a client even when the caller changes ?audience=master manually.
   r.get('/api/techbase', true, (c: AuthedCtx) => {
