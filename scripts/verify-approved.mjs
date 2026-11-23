@@ -913,22 +913,23 @@ expect(
 // until the owner separately approves a replacement. Text/actions remain DOM.
 const emptyOrderSource = await read('web/src/screens/order.tsx');
 const emptyOrderCss = await read('web/src/screens/noPerformerApproved20261123.css');
-const emptyOrderArt = await readFile('web/public/feature-art/traksos-no-performer-search-approved-20261123.webp');
+const emptyOrderArt = await readFile('web/public/feature-art/traksos-no-performer-network-russia-approved-v1.webp');
 expect(
   emptyOrderArt.length > 3000 &&
   emptyOrderArt.toString('ascii',0,4)==='RIFF' &&
   emptyOrderArt.toString('ascii',8,12)==='WEBP' &&
   createHash('sha256').update(emptyOrderArt).digest('hex') ===
-    '9b8bc42efa47a9eee1a9f5cc07a8b48e20c2d72517adb6e46c999b7e9094f257' &&
-  (await read('web/src/approvedVisuals.ts')).includes("noPerformerSearch: '/feature-art/traksos-no-performer-search-approved-20261123.webp'") &&
+    '95f4e06d414a77d6a3f3058fd7674e39d7b26e04415de0d7a161f84a90537d3d' &&
+  (await read('web/src/approvedVisuals.ts')).includes("noPerformerSearch: '/feature-art/traksos-no-performer-network-russia-approved-v1.webp'") &&
   emptyOrderSource.includes('src={APPROVED_VISUALS.noPerformerSearch}') &&
   emptyOrderSource.includes('d.you === \'client\' && <Retry') &&
   emptyOrderSource.includes('href="#/sos"') &&
   emptyOrderSource.includes('/support/new?order=') &&
   emptyOrderCss.includes('.traksos-no-performer-art') &&
   emptyOrderCss.includes('@media (max-width:700px)') &&
-  emptyOrderCss.includes('object-fit:contain'),
-  'approved no-performer #3 artwork bundled byte-exact; requester-only DOM actions and responsive card remain wired'
+  emptyOrderCss.includes('object-fit:cover') &&
+  emptyOrderCss.includes('object-position:right center'),
+  'owner-approved Russia-network art bundled byte-exact; requester-only DOM actions and mobile crop remain wired'
 );
 
 // The approved desktop stylesheet must not reintroduce 19 Nov Android as the
