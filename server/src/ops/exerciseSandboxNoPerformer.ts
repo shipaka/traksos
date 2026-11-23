@@ -105,4 +105,66 @@ try{
       role,id,status:finished.status,reason:finished.absenceReason,
       description,payment:'sandbox_mock_only'}));
   }
+
+  // Also reproduce QA #7095558837 end to end. Use a very short auction
+  // *setting* ONLY on the isolated sandbox, not a fabricated terminal status,
+  // so the same server scheduler and immutable event flow close the orders.
+  const worker=await token('master');
+  const previousDispatch=(await api('GET','/api/admin/settings',admin)).dispatch;
+  assert(previousDispatch&&Number.isFinite(previousDispatch.auctionMinutes),
+    'cannot snapshot dispatch settings');
+  try {
+    await api('PUT','/api/admin/settings/dispatch',admin,{
+      priorityFirst:false,auctionMinutes:0.15,
+    });
+    await api('POST','/api/performer/line',worker,{lineStatus:'online'});
+    const masterProfile=await db.one<{id:string}>(`select p.user_id as id
+      from performer_profiles p join users u on u.id=p.user_id
+     where u.phone=$1 and p.verification='approved'
+       and p.specialties @> array['electric']::text[]`,
+      [SANDBOX_USER_PHONE.master]);
+    assert(masterProfile?.id,'sandbox master lacks proven electric specialization');
+    for(const [role,who] of [['owner',owner],['driver',driver]] as const){
+      const description='TRAKSOS_QA_WITHDRAWN_20261123_'+role.toUpperCase();
+      const created=await api('POST','/api/orders',who,{
+        service:'electric',description,isSos:false,
+        address:'Санкт-Петербург, учебная стоянка',regionId:'spb',zoneId:'spb',
+        city:'Санкт-Петербург',lat:59.93,lng:30.36,tier:'eco',
+        night:false,paymentMethod:'online',
+        ...(role==='driver'?{vehicleId:fleetVehicle.id}:{brand:'Scania',model:'R440',year:2012}),
+      });
+      const id=created?.order?.id;
+      assert(typeof id==='string','withdrawal order creation failed: '+role);
+      if(created.order.status==='awaiting_owner')
+        await api('POST','/api/orders/'+id+'/owner-decision',owner,{approve:true});
+      const hold=created.confirmationUrl || (await api('GET','/api/orders/'+id+'/payments',who))
+        .find((p:any)=>p.kind==='call_out'&&p.confirmation_url)?.confirmation_url;
+      assert(hold,'missing isolated order hold for withdrawn case '+role);
+      await virtualHold(hold);
+      let invited=false;
+      for(let attempt=0;attempt<24;attempt++){
+        const list=await api('GET','/api/performer/auctions',worker);
+        if(list.some((x:any)=>x.order_id===id)){invited=true;break;}
+        await new Promise(r=>setTimeout(r,150));
+      }
+      assert(invited,'real bidding invitation was not received for '+role);
+      await api('POST','/api/orders/'+id+'/offers',worker,{});
+      await api('DELETE','/api/orders/'+id+'/offers',worker);
+      const final=await eventualOrder(who,id);
+      assert(final.status==='no_performer'&&final.absenceReason==='offers_withdrawn',
+        'real offer/withdraw was lost before requester API: '+role+' '+final.absenceReason);
+      assert(final.events?.some((e:any)=>e.type==='offer')&&
+        final.events?.some((e:any)=>e.type==='no_performer'&&e.data?.absenceReason==='offers_withdrawn'),
+        'immutable events were lost on withdrawal');
+      const adminCopy=await api('GET','/api/orders/'+id,admin);
+      assert(adminCopy.absenceReason===undefined,'withdrawn reason leaked into staff API');
+      console.log('WITHDRAWN OFFER REAL BACKEND PASS '+JSON.stringify({
+        role,id,description,reason:final.absenceReason,payment:'sandbox_mock_only'}));
+    }
+  }finally{
+    await api('PUT','/api/admin/settings/dispatch',admin,{
+      priorityFirst:previousDispatch.priorityFirst,
+      auctionMinutes:previousDispatch.auctionMinutes,
+    });
+  }
 }finally{await db.close();}
