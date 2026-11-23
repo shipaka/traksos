@@ -366,6 +366,19 @@ try {
     await signedInPage.waitForFunction(()=>location.hash==='#/');
     check(await signedInPage.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))===null,
       'Unknown signed-in service left stale booking intent');
+    // A sibling tab changing accounts cannot carry this tab's pending
+    // vehicle/catalogue selection into the new account's workspace.
+    await signedInPage.evaluate(()=>{
+      sessionStorage.setItem('traksos.pendingLandingAction','insurance');
+      sessionStorage.setItem('traksos.pendingCatalogChoice','insurance/quote');
+      window.dispatchEvent(new StorageEvent('storage',{
+        key:'traksos.token',oldValue:'CI-CUSTOMER-DEEPLINK',
+        newValue:'CI-OTHER-ACCOUNT',storageArea:localStorage
+      }));
+    });
+    await signedInPage.waitForFunction(()=>location.hash==='#/' &&
+      sessionStorage.getItem('traksos.pendingLandingAction')===null &&
+      sessionStorage.getItem('traksos.pendingCatalogChoice')===null);
   }finally{await signedInContext.close();}
   // A public deep link must not open client-only workspaces for a courier,
   // master, station or other non-customer role.

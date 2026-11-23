@@ -249,6 +249,12 @@ function App() {
     const syncExternalSession = () => {
       // An account changed in a sibling browser tab. Do not leave its
       // previous orders, drafts, routes or role-specific UI mounted here.
+      // A service selected in this tab belongs to its previous account flow,
+      // not to a new customer signed in from a different tab.
+      try {
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingCatalogChoice');
+      } catch { /* Restricted private browsing */ }
       setMe(null);
       setReady(false);
       location.replace('#/');
