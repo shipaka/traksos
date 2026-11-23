@@ -161,11 +161,11 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
-          # API35's headless runner intermittently loses its compositor/ADB after
-          # displaying a stale splash. Disable emulator Vulkan (not WebView GPU)
-          # while preserving both strict Android 29/35 live-screen gates.
-          # Android Emulator officially supports '-feature -Vulkan'.
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -feature -Vulkan
+          # Restore the graphics options used by the actual successful
+          # Android API35 run #45212277037 (both role DOM and PNG confirmed).
+          # The later -feature -Vulkan override did not cure API35 and has not
+          # produced a confirmed role PNG. Keep ALL runtime screenshot/DOM gates.
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash scripts/android-pr-runtime-smoke.sh
       - uses: actions/upload-artifact@v4
         if: always()
