@@ -65,6 +65,27 @@ test('changing stationary address revokes old opt-in and public coordinate proof
   assert.equal(ok(await t.api('GET','/api/public/partner-map')).points[0].lat,59.96);
 });
 
+test('two independently consented stations appear; unapproved or no-GPS entries never appear',async()=>{
+  const second=await t.login('+79991234563','service');
+  const setup=ok(await t.api('PUT','/api/base',{
+    name:'Вторая проверенная мастерская',address:'Гатчина, проверенный тестовый въезд, 4',
+    lat:59.57,lng:30.14,accepts:['day'],staff:{engine:'own'}
+  },second.token));
+  const secondId=setup.center.id;
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1);
+  ok(await t.api('POST',`/api/admin/services/${secondId}/verify`,{decision:'approved'},admin.token));
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1,
+    'mod approval does not itself opt-in');
+  ok(await t.api('PUT','/api/service/public-map',{enabled:true},second.token));
+  const both=ok(await t.api('GET','/api/public/partner-map')).points;
+  assert.equal(both.length,2);
+  assert.ok(both.some((p:any)=>p.id===centerId));
+  assert.ok(both.some((p:any)=>p.id===secondId));
+  assert.ok(!both.some((p:any)=>p.kind==='master'),'mobile performer GPS may never appear');
+  ok(await t.api('PUT','/api/service/public-map',{enabled:false},second.token));
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1);
+});
+
 test('blocked, paused, revoked, absent and invalid locations disappear without cached pins',async()=>{
   await t.db.query('update service_centers set paused=true where id=$1',[centerId]);
   assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
