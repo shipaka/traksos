@@ -78,14 +78,19 @@ export class StandingService {
           and p.verification='approved' and p.line_status='online' and not p.paused
           and p.lat is not null and p.lng is not null
           and not exists(select 1 from orders o where o.performer_id=p.user_id
-             and o.status in ('accepted','en_route','arrived','working'))`,
+             and o.status in ('accepted','en_route','arrived','working','awaiting_confirmation')
+             and not (o.status='awaiting_confirmation' and
+               (o.service='consult' or exists (select 1 from order_unilateral_closures uc
+                 where uc.order_id=o.id and uc.status in ('pending_client','disputed')))))`,
       [p.kind,user.id]);
     const now=this.now();
     let ahead=0;
     for(const c of others){
       if(!validPoint(c.lat,c.lng)||c.extras?.vacation)continue;
-      if(slot(c.schedule,now,c.off_schedule_until)!=='work')continue;
+      const available=slot(c.schedule,now,c.off_schedule_until);
+      if(available!=='work'&&available!=='phone')continue;
       if(near.some(o=>
+        (available==='work'||o.service==='consult') &&
         (c.kind!=='master'||o.service==='consult'||(c.specialties??[]).includes(o.service)) &&
         haversineKm({lat:c.lat!,lng:c.lng!},{lat:o.lat!,lng:o.lng!}) <
         haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})))ahead++;
