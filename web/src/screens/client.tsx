@@ -14,6 +14,7 @@ import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -40,14 +41,21 @@ function FleetShortcut({href,locked,className,children}:{
 }
 
 export function Home() {
-  const { me } = useMe();
+  const {me}=useMe();
+  return <ClientHomeForAccount key={me?.id??'guest'}/>;
+}
+function ClientHomeForAccount() {
+  const {me}=useMe();
   const mobileWorkspace = useMobileWorkspace();
-  const fleetRules = useLoad(() => me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null),[me?.owner_id]);
+  const fleetRules = usePrivateRead<any>(()=>me?.owner_id?get('/api/fleet/rules'):Promise.resolve(null),
+    'fleet-rules:'+(me?.id??'guest')+':'+(me?.owner_id??''));
   const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
     !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
-  const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
-  const services = useLoad(() => get<any[]>('/api/vehicle-service-requests'), [],
-    e => e.type === 'vehicle_service' || e.type === 'connection_restored');
+  const active = usePrivateRead<any[]>(()=>get('/api/orders'),
+    'home-orders:'+(me?.id??'guest'),e=>e.type==='order');
+  const services = usePrivateRead<any[]>(()=>get('/api/vehicle-service-requests'),
+    'home-services:'+(me?.id??'guest'),
+    e=>e.type==='vehicle_service'||e.type==='connection_restored');
   const insuranceInProgress = (services.data ?? []).filter(r =>
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
@@ -907,10 +915,15 @@ export function NewOrder({ service }: { service: string }) {
 
 // Мои заявки ----------------------------------------------------------------
 
-export function Orders({ as }: { as: 'client' | 'performer' }) {
-  const list = useLoad(() => get(`/api/orders?as=${as}`), [as], (e) => e.type === 'order');
-  const bookings = useLoad<any[]>(() => as === 'client' ? get('/api/bookings') : Promise.resolve([]),
-    [as], (e) => e.type === 'booking');
+export function Orders({as}:{as:'client'|'performer'}) {
+  const {me}=useMe();
+  return <OrdersForAccount key={(me?.id??'guest')+':'+as} as={as} userId={me?.id??'guest'}/>;
+}
+function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
+  const list=usePrivateRead<any[]>(()=>get(`/api/orders?as=${as}`),
+    'orders:'+userId+':'+as,e=>e.type==='order');
+  const bookings=usePrivateRead<any[]>(()=>as==='client'?get('/api/bookings'):Promise.resolve([]),
+    'bookings:'+userId+':'+as,e=>e.type==='booking');
   const [tab, setTab] = useState<'list' | 'black' | 'cars'>('list');
   const [ctab, setCtab] = useState<'now' | 'my' | 'hist' | 'black'>('now');
   if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
@@ -1023,8 +1036,15 @@ function PerformerBlacklist() {
 // Гараж ---------------------------------------------------------------------
 
 export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
-  const { me } = useMe();
-  const list = useLoad(() => get('/api/vehicles'), []);
+  const {me}=useMe();
+  return <GarageForAccount key={me?.id??'guest'} focusVehicleId={focusVehicleId}
+    userId={me?.id??'guest'}/>;
+}
+function GarageForAccount({focusVehicleId,userId}:{
+  focusVehicleId?:string;userId:string;
+}) {
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get('/api/vehicles'),'garage:'+userId);
   const { busy, run } = useAction();
   const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
@@ -1069,7 +1089,10 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           })
         }>Добавить машину <span aria-hidden="true">↗</span></button>}
       </section>}
-      {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
+      {!list.data ? <div className="stack"><Loading error={list.error} />
+        {list.error&&<button type="button" className="btn ghost small"
+          onClick={()=>{void list.reload();}}>Повторить загрузку транспорта</button>}</div>
+        : list.data.map((v: any) => (
         <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
           <VehiclePhotoLink brand={v.brand} model={v.model} year={v.year} plate={v.plate} href={`#/garage/${v.id}`}/>
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.plate ?? 'без номера'}</span></div>
@@ -1180,6 +1203,7 @@ function VehicleExtendedDetails({vehicle:v,isDriver,onSaved}:{
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
 function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boolean }) {
+  const {me}=useMe();
   const [open, setOpen] = useState(initialOpen);
   useEffect(()=>{
     if(!initialOpen)return;
@@ -1187,9 +1211,15 @@ function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boo
     const el=document.getElementById('garage-vehicle-'+id);
     el?.scrollIntoView({block:'start',behavior:'auto'});
   },[initialOpen,id]);
-  const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
-  const d = h.data;
-  if (!d) return null;
+  const h=usePrivateRead<any>(()=>get(`/api/vehicles/${id}/history`),
+    'vehicle-history:'+(me?.id??'guest')+':'+id,e=>e.type==='order');
+  const d=h.data;
+  if(!d)return h.error?<div className="card stack" role="alert">
+    <span>Не удалось загрузить историю машины.</span>
+    <button type="button" className="btn ghost small" onClick={()=>{void h.reload();}}>
+      Повторить загрузку истории
+    </button>
+  </div>:null;
   if (!d.items.length) return <span className="note">История пока пустая — здесь будут все вызовы по этой машине и что делали мастера.</span>;
   const last = d.summary.lastAt ? fmtTime(d.summary.lastAt) : '';
   return (
@@ -1238,6 +1268,10 @@ function confirmDelete() {
 // Профиль -------------------------------------------------------------------
 
 export function Profile() {
+  const {me}=useMe();
+  return <ProfileForAccount key={me?.id??'guest'}/>;
+}
+function ProfileForAccount() {
   const { me, reload, mode } = useMe();
   const { busy, run } = useAction();
   const [name, setName] = useState(me?.name ?? '');
