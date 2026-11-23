@@ -109,7 +109,7 @@ try{
   await page.getByLabel('Период').selectOption('30');
   await waitFor(thirty,1);
   await finish(thirty,0,demand(8,'Старая запись'));
-  await page.locator('.tile-value').first().getByText('8',{exact:true}).waitFor();
+  await page.waitForFunction(()=>document.querySelector('.tile-value')?.textContent?.trim()==='8');
   await finish(seven,0,demand(999,'Чужой устаревший период'));
   assert((await page.locator('.tile-value').first().innerText())==='8',
     'A late 7-day GET overwrote the 30-day report');
@@ -122,7 +122,7 @@ try{
   await page.getByRole('button',{name:'Обновить данные'}).click();
   await waitFor(thirty,2);
   await finish(thirty,1,demand(9,'Новое решение коллеги'));
-  await page.getByPlaceholder('Причина, решение и что улучшить').waitFor();
+  await page.waitForFunction(()=>document.querySelector('input[placeholder="Причина, решение и что улучшить"]')?.value==='Новое решение коллеги');
   assert((await note.inputValue())==='Новое решение коллеги',
     'Old locally held review note survived an updated review version');
 
@@ -140,7 +140,7 @@ try{
   assert(await page.getByText('Старая запись').count()===0,
     'Former admin's private report visible to replacement session');
   await finish(seven,1,demand(5));
-  await page.locator('.tile-value').first().getByText('5',{exact:true}).waitFor();
+  await page.waitForFunction(()=>document.querySelector('.tile-value')?.textContent?.trim()==='5');
 
   // Admin notices and campaigns: transient 500 and reliable manual retry.
   await switchTo('communications','admin-B',['admin']);
