@@ -50,11 +50,16 @@ test('admin demand groups historical unmet requests by service and coarse zone o
     assert.ok(id,'real order ID required for demand evidence');
     created.push({id,service,zoneId});
   }
-  // The disposable DB moves two real created orders to a terminal state,
-  // leaving one successfully-created service request without an absence
-  // event. The aggregate must NOT invent a shortage for the third.
+  // The disposable sandbox has no tyre performers. The real dispatch of
+  // the third order therefore also records no_performer automatically.
+  // Preserve this immutable evidence rather than pretending the third
+  // order was matched. We explicitly mark the first two terminal as well.
   await t.db.query("update orders set status='no_performer' where id=any($1::uuid[])",[
     [created[0].id,created[1].id]]);
+  const tyre=await t.db.one<{status:string}>(
+    'select status from orders where id=$1',[created[2].id]);
+  assert.equal(tyre?.status,'no_performer',
+    'real zero-performer dispatch also counts as unmet tyre demand');
   const data=ok(await t.api('GET','/api/admin/demand?days=30',undefined,admin.token));
   assert.ok(Array.isArray(data.byServiceZone));
   const rows=data.byServiceZone;
@@ -62,7 +67,8 @@ test('admin demand groups historical unmet requests by service and coarse zone o
     service:r.service,zone_id:r.zone_id,unfilled:r.unfilled,total:r.total
   })),[
     {service:'electric',zone_id:'gat',unfilled:1,total:1},
-    {service:'electric',zone_id:'spb',unfilled:1,total:1}
+    {service:'electric',zone_id:'spb',unfilled:1,total:1},
+    {service:'tyre',zone_id:'spb',unfilled:1,total:1}
   ].sort((a,b)=>a.service.localeCompare(b.service)||a.zone_id.localeCompare(b.zone_id)),
   'only actual unfilled demand may be used to prioritize partner recruitment');
   for(const row of rows){
