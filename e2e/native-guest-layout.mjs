@@ -8,7 +8,7 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
 await mkdir('e2e/shots/android-guest',{recursive:true});
 const browser=await chromium.launch();
 try {
-  for(const width of [320,360,390,900,960,1200]){
+  for(const width of [320,360,390,412,900,960,1200]){
     const height=width===320?640:width===360?800:844;
     const ctx=await browser.newContext({viewport:{width,height},isMobile:true,
       hasTouch:true,deviceScaleFactor:1,locale:'ru-RU'});
@@ -63,6 +63,53 @@ try {
       })));
       if(controls.some(x=>x.w<90||x.h<48))
         throw Error(width+'px login/register are not finger-friendly: '+JSON.stringify(controls));
+      // QA P1: actual Android 15 APK at 320px painted
+      // "Зарегистрироваться" across the adjacent golden login button.
+      // A viewport scrollWidth check cannot detect OVERLAPPING siblings.
+      // Measure the text glyph ranges, button bounds, hit targets and real
+      // side-by-side/stacked breakpoint; preserve actual clickable anchors.
+      const actionsGeometry=await welcome.locator('.tr-native-welcome-actions')
+        .evaluate(group=>{
+          const links=[...group.querySelectorAll('a')];
+          return links.map(link=>{
+            const rect=link.getBoundingClientRect();
+            const text=link.firstChild;
+            const range=document.createRange();
+            if(text)range.selectNodeContents(text);
+            const lines=[...range.getClientRects()].map(x=>({
+              left:x.left,right:x.right,top:x.top,bottom:x.bottom}));
+            const point=document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2);
+            return {
+              href:link.getAttribute('href'),left:rect.left,right:rect.right,
+              top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,
+              lines,hit:point===link || link.contains(point),
+              whiteSpace:getComputedStyle(link).whiteSpace
+            };
+          });
+        });
+      if(actionsGeometry.length!==2 ||
+         actionsGeometry[0].href!=='#/login' ||
+         actionsGeometry[1].href!=='#/register' ||
+         actionsGeometry.some(x=>x.height<44 || x.width<90 || !x.hit || !x.lines.length))
+        throw Error(width+'px Android native CTA geometry invalid '+JSON.stringify(actionsGeometry));
+      const [loginRect,registerRect]=actionsGeometry;
+      if(loginRect.left<registerRect.right-0.5 &&
+         registerRect.left<loginRect.right-0.5 &&
+         loginRect.top<registerRect.bottom-0.5 &&
+         registerRect.top<loginRect.bottom-0.5)
+        throw Error(width+'px login and register clickable bounds overlap '+JSON.stringify(actionsGeometry));
+      for(const action of actionsGeometry){
+        for(const line of action.lines){
+          if(line.left<action.left+2 || line.right>action.right-2 ||
+             line.top<action.top+2 || line.bottom>action.bottom-2)
+            throw Error(width+'px native CTA text spills outside clickable button: '+
+              JSON.stringify({action,line}));
+        }
+      }
+      if(width<=350 && !(registerRect.top>=loginRect.bottom+2))
+        throw Error(width+'px native CTA stack missing at 320px');
+      if(width>=360 && Math.abs(registerRect.top-loginRect.top)>3)
+        throw Error(width+'px native CTA pair lost its 2-column approved layout');
       const services=welcome.locator('details.tr-native-welcome-services');
       if(await services.evaluate(e=>e.open))
         throw Error(width+'px native services must be collapsed by default');
