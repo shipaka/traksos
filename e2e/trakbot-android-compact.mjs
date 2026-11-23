@@ -99,7 +99,14 @@ try {
     await launch.click();
     const dialog=page.getByRole('dialog',{name:'TrakBot — личный помощник'});
     await dialog.waitFor();
-    await page.locator('.trakbot-message--bot').last().waitFor({timeout:15000});
+    // The panel renders a temporary INITIAL greeting before its history GET.
+    // Waiting for any bot bubble incorrectly accepts that placeholder and
+    // measures an empty 150px list on faster 768px/tablet renders. Wait for
+    // the actual long test message, then still demand real internal scrolling.
+    const longHistory=page.locator('.trakbot-message--bot').filter({hasText:'Это общий код OBD-II'});
+    await longHistory.waitFor({timeout:15000});
+    assert((await longHistory.locator('.b').textContent())?.length>2000,
+      width+'×'+height+': long synthetic history not fully rendered');
 
     const geometry=await page.evaluate(() => {
       const rect = (s) => { const el=document.querySelector(s);return el?el.getBoundingClientRect():null; };
