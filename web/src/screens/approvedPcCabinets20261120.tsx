@@ -54,7 +54,7 @@ function useDesktopSize(){
 /** One breakpoint: phone/tablet <900, approved PC >=900. Never mount both. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
-  if (!wide && !(role === 'admin' && !native.isApp)) return <>{fallback}</>;
+  if (!wide) return <>{fallback}</>; // Mobile Chrome and Android share the approved 618 workspace, including admin.
   if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
   if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
   if(role==='service') return <ServiceDesk/>;
