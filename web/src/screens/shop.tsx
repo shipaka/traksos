@@ -653,9 +653,10 @@ async function resizeImage(file: File): Promise<string> {
 }
 
 export function AdminShop() {
+  const {me}=useMe();
   const [tab, setTab] = useState<'orders' | 'products' | 'catalog' | 'settings'>('orders');
   return (
-    <div className="stack">
+    <div className="stack" key={(me?.id??'signed-out')+':'+(getToken()??'no-token')}>
       <ShopSwitch />
       <div className="scroll-x" role="tablist">
         {([['orders', 'Заказы'], ['products', 'Товары'], ['catalog', 'Справочник'], ['settings', 'Получение и тексты']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
@@ -669,7 +670,7 @@ export function AdminShop() {
 }
 
 function ShopSwitch() {
-  const s = useLoad(() => get('/api/admin/settings'), []);
+  const s = useShopPrivateLoad<any>(() => get('/api/admin/settings'), []);
   const { busy, run } = useAction();
   if (!s.data) return <Loading error={s.error} />;
   const on = s.data.shop.enabled;
@@ -684,7 +685,7 @@ function ShopSwitch() {
 }
 
 function ShopSettings() {
-  const s = useLoad(() => get('/api/admin/settings'), []);
+  const s = useShopPrivateLoad<any>(() => get('/api/admin/settings'), []);
   const { busy, run } = useAction();
   const [f, setF] = useState<any>(null);
   useEffect(() => { if (s.data && !f) setF(s.data.shop); }, [s.data]); // eslint-disable-line
@@ -711,8 +712,8 @@ function ShopSettings() {
 const EMPTY = { category: 'other', name: '', spec: '', description: '', brand: '', article: '', searchTerms: '', price: null as number | null, stock: null as number | null, leadDays: 2, isKit: false, active: true, sort: 100 };
 
 function AdminProducts() {
-  const l = useLoad(() => get('/api/admin/shop/products'), []);
-  const cats = useLoad(() => get('/api/shop'), []);
+  const l = useShopPrivateLoad<any[]>(() => get('/api/admin/shop/products'), []);
+  const cats = useShopPrivateLoad<any>(() => get('/api/shop'), []);
   const [edit, setEdit] = useState<any>(null);
   if (!l.data || !cats.data) return <Loading error={l.error ?? cats.error} />;
   if (edit) return <ProductForm p={edit} products={l.data} categories={cats.data.categories} onDone={() => { setEdit(null); l.reload(); }} />;
@@ -806,7 +807,7 @@ function ProductForm({ p, products, categories, onDone }: { p: any; products: an
 
 /** Internal procurement mapping: supplier SKUs never appear in public product cards. */
 function SupplierMapping({ productId }: { productId: string }) {
-  const ref = useLoad(() => get(`/api/admin/shop/products/${productId}/supplier`), [productId]);
+  const ref = useShopPrivateLoad<any>(() => get(`/api/admin/shop/products/${productId}/supplier`), [productId]);
   const { busy, run } = useAction();
   const [form, setForm] = useState({
     article: '', brand: '', sourceNote: '', verified: false,
@@ -931,7 +932,7 @@ function CourierReceiptRecovery({order,onDone}:{order:any;onDone:()=>void}){
 
 function AdminShopOrders() {
   const [all, setAll] = useState(false);
-  const l = useLoad(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
+  const l = useShopPrivateLoad<any[]>(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
   const { busy, run } = useAction();
   const [note, setNote] = useState<Record<string, string>>({});
   if (!l.data) return <Loading error={l.error} />;
