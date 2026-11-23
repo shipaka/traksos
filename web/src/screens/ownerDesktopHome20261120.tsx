@@ -2,7 +2,7 @@ import { rememberGuestService, rememberGuestAction } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { requestTrakBotOpen } from '../trakbotEvents.ts';
 import { TrakBotMascot } from '../trakbotMascot.tsx';
-import { TrakServiceIcon } from '../trakServiceIcon.tsx';
+import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { FeatureArtwork } from '../featureArtwork20261122.tsx';
@@ -29,8 +29,8 @@ function rememberAllowed(key:string){
 }
 function route(key:string) { return '#/explore/' + key; }
 function OwnerIcon({kind}:{kind:string}) {
-  if(kind==='van'||kind==='tow'||kind==='sto'||kind==='insurance')
-    return <TrakServiceIcon kind={kind}/>;
+  if(['van','tow','sto','consult','parts','insurance','tech','ecu','inspection'].includes(kind))
+    return <TrakServiceIcon kind={kind as TrakServiceIconKind}/>;
   const props={viewBox:'0 0 48 48',fill:'none',stroke:'currentColor',strokeWidth:2.8,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true as const};
   let lines;
   switch(kind){

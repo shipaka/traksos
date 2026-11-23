@@ -1,4 +1,4 @@
-import { TrakServiceIcon } from '../trakServiceIcon.tsx';
+import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.tsx';
 import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { useEffect, useState } from 'react';
 import { native } from '../native.ts';
@@ -24,7 +24,8 @@ const HERO_SLIDES = [
 function PublicTileIcon({ id }: { id: typeof PUBLIC_HOME_TILES[number]['id'] }) {
   // Reuse the EXACT same approved service illustration on Android/mobile,
   // desktop PC and partner onboarding, not a mobile-only wrench for the STO.
-  if(id==='sto'||id==='insurance') return <TrakServiceIcon kind={id}/>;
+  if(['van','tow','sto','consult','parts','insurance','ecu','inspection','tech'].includes(id))
+    return <TrakServiceIcon kind={id as TrakServiceIconKind}/>;
   const shared = { fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' as const, strokeLinejoin:'round' as const };
   return <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" focusable="false" {...shared}>
     {id === 'sos' ? <><path d="M24 5 45 42H3Z"/><path d="M24 17v13m0 6v1"/></>

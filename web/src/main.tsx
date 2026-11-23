@@ -51,6 +51,8 @@ import './approvedStaffInnerCompact20261121.css';
 import './authOverlay20261122.css';
 // Final narrowly-scoped owner review corrections; approved assets remain unchanged.
 import './ownerVisualFixes20261122.css';
+// Owner-approved metallic-amber service icon styling, scoped to existing cards.
+import './trakServicePremium20261123.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
