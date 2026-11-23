@@ -358,5 +358,25 @@ try {
     check(await legalPage.locator('.site-footer').getByText('CI-LEGAL-RESTORED').count()===1,
       'Recovered legal details must not be duplicated');
   }finally{await legalContext.close();}
+  // A storage read can throw synchronously before React mounts (for example
+  // a restricted browser profile). The approved guest page must still paint.
+  const restrictedContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    await restrictedContext.addInitScript(()=>{
+      const realGet=Storage.prototype.getItem;
+      Storage.prototype.getItem=function(key){
+        if(key==='traksos.reduceMotion')throw new DOMException('storage denied','SecurityError');
+        return realGet.call(this,key);
+      };
+    });
+    const restrictedPage=await restrictedContext.newPage();
+    const failures=[];
+    restrictedPage.on('pageerror',e=>failures.push(e.message));
+    await restrictedPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await restrictedPage.locator('main.public-landing').waitFor({state:'visible',timeout:15000});
+    check(failures.length===0,'Denied motion preference storage blanked the guest app: '+failures.join('; '));
+    check(await restrictedPage.getByRole('link',{name:'Войти',exact:true}).count()===1,
+      'Login must remain reachable when the motion preference cannot be read');
+  }finally{await restrictedContext.close();}
 }finally{await browser.close();}
-console.log('PASS: owner-approved 617/618 routes, five quick services, unified TrakBot, guest gates, four partner roles, public docs and legal reconnect');
+console.log('PASS: owner-approved 617/618 routes, five quick services, unified TrakBot, guest gates, four partner roles, public docs, legal reconnect and restricted storage');
