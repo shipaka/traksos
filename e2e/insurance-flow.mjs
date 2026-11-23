@@ -154,7 +154,7 @@ try{
     localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin');
   },admin.token);
   await staffPage.goto(BASE+'/#/insurance/request/'+requestId);
-  await staffPage.getByText('ПРОСМОТР СОТРУДНИКА',{exact:true}).waitFor();
+  await staffPage.locator('.insurance-live-kicker').getByText(/ПРОСМОТР СОТРУДНИКА/).waitFor();
   assert(await staffPage.locator('a.insurance-back[href="#/admin/section/vehicleServices"]').count()===1,
     'Staff dossier must link back to real admin insurance queue, not client garage');
   assert(await staffPage.locator('.insurance-chat-editor').count()===0,
