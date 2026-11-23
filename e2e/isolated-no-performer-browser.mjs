@@ -70,7 +70,7 @@ try{
         });
         if(!art.complete || art.width!==2172 || art.height!==724 ||
            !art.src?.includes('traksos-no-performer-network-russia-approved-v1.webp') ||
-           art.fit!=='cover' || art.position!=='100% 50%')
+           art.fit!=='cover' || !['100% 50%','right center','right 50%'].includes(art.position))
           throw Error('Owner-approved Russia network image absent, cropped wrongly or stale: '+
             JSON.stringify(art));
         const details=await card.evaluate(el=>{
