@@ -14,7 +14,7 @@ export function DriverAir() {
     <p>Писать в общем эфире могут только водители и владельцы автопарков. Сотрудникам доступна модерация.</p></main>;
   // A→B can preserve the same permission boolean. A keyed room unmounts every
   // previous draft, moderator permission, support hint and in-flight response.
-  return <AirRoom key={me!.id} />;
+  return <AirRoom key={me!.id+':'+[...me!.roles].sort().join(',')} />;
 }
 
 function AirRoom() {
