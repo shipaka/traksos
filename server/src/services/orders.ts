@@ -219,8 +219,17 @@ export class OrdersService {
       year = year ?? c.year;
     }
 
-    // Record the commission campaign on creation. Never recalculate an existing order.
-    const campaign = this.ops ? await this.ops.commissionFor(i.service, this.now()) : null;
+    // Freeze the effective *lower* promotional rate when an order is created.
+    // A general free-until period is not a reason to charge the same order
+    // after the administrator changes that setting or its date passes.
+    // Specific service campaigns retain their existing priority.
+    const createdAt = this.now();
+    const campaign = this.ops ? await this.ops.commissionFor(i.service, createdAt) : null;
+    const freeUntil = all.fees.freeUntil;
+    const generalFreeAtCreation = !!freeUntil &&
+      createdAt <= new Date(freeUntil + 'T23:59:59+03:00');
+    const frozenCommissionPct = campaign?.commission_pct ??
+      (generalFreeAtCreation ? 0 : null);
 
     // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
     const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
@@ -236,7 +245,7 @@ export class OrdersService {
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
-        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
+        gate ? 'awaiting_owner' : 'searching', gate, frozenCommissionPct, campaign?.id ?? null,
         previous ? (previous.case_root_id ?? previous.id) : consultRootId, previous?.id ?? null,
         requestKey,requestHash, isConsult ? null : i.regionId, preferredId,
         i.parallelWith ? {sourceOrderId:previous.id,sourceNumber:previous.number,
