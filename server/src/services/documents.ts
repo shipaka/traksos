@@ -123,25 +123,26 @@ export class DocumentsService {
           where user_id=$1 order by kind,created_at desc,id desc`, [user.id]);
       if (!requiredKinds(prof).every(k => docs.some(d => d.kind===k && d.status!=='rejected')))
         throw bad('incomplete', 'Загрузите все фото из списка');
-      if (prof.verification==='pending' && prof.submitted_at) return false;
+      if (prof.verification==='pending' && prof.submitted_at) return null;
       await q.query(`update performer_profiles
         set submitted_at=$2,verification='pending',verification_note=null
         where user_id=$1`, [user.id,this.now()]);
-      return true;
-    });
-    if (result) {
-      const staff=(await this.db.query<{id:string}>(
+      // The inbox entry is in the same transaction as submission. If a DB
+      // write fails, neither the queue status nor partial staff alerts persist.
+      const staff=(await q.query<{id:string}>(
         `select id from users where roles && '{admin,moderator}'::text[]`)).map(r=>r.id);
-      try {
-        await this.notifier.notify(staff,
-          { type:'verification_queue', userId:user.id },
-          { kind:'normal', title:'Новый исполнитель на проверке',
-            body:`${user.name ?? user.phone} отправил документы`, data:{userId:user.id} });
-      } catch (error) {
-        console.warn('[documents] verification notification failed',
-          error instanceof Error?error.message:String(error));
+      const title='Новый исполнитель на проверке';
+      const body=`${user.name ?? user.phone} отправил документы`;
+      for(const id of staff) {
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'verification_queue',$2,$3,$4)`,
+          [id,title,body,{userId:user.id}]);
       }
-    }
+      return {staff,title,body};
+    });
+    if (result) await this.notifier.deliverStored(result.staff,
+      {type:'verification_queue',userId:user.id},
+      {kind:'normal',title:result.title,body:result.body,data:{userId:user.id}});
     return this.mine(user);
   }
 
@@ -218,18 +219,19 @@ export class DocumentsService {
       if (!changed) throw conflict('document_outdated', 'Фото уже рассмотрено или заменено новым');
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [admin.id,'document.review',id,p]);
+      if (p.status==='rejected') {
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'verification',$2,$3,$4)`,
+          [changed.user_id,'Переснимите фото',
+           `${DOC_KINDS[changed.kind]?.name}: ${p.note}`,{}]);
+      }
       return changed;
     });
     if(p.status==='rejected'){
-      try {
-        await this.notifier.notify([result.user_id],
-          {type:'verification',decision:'retake'},
-          {kind:'normal',title:'Переснимите фото',
-           body:`${DOC_KINDS[result.kind]?.name}: ${p.note}`,data:{}});
-      } catch (error) {
-        console.warn('[documents] retake notification failed',
-          error instanceof Error?error.message:String(error));
-      }
+      await this.notifier.deliverStored([result.user_id],
+        {type:'verification',decision:'retake'},
+        {kind:'normal',title:'Переснимите фото',
+         body:`${DOC_KINDS[result.kind]?.name}: ${p.note}`,data:{}});
     }
     return {ok:true};
   }
@@ -261,19 +263,19 @@ export class DocumentsService {
         where user_id=$1`,[userId,decision,note?.trim()||null,this.now()]);
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [admin.id,'performer.verify',userId,{decision,note}]);
+      await q.query(`insert into notifications(user_id,kind,title,body,data)
+        values ($1,'verification',$2,$3,$4)`,
+        [userId,decision==='approved'?'Проверка пройдена':'Проверка не пройдена',
+         decision==='approved'?'Проверка документов завершена — работа на линии доступна.':
+           note??'Подробности в профиле',{}]);
       return true;
     });
     if(changed){
-      try {
-        await this.notifier.notify([userId],{type:'verification',decision},
-          {kind:'normal',
-           title:decision==='approved'?'Проверка пройдена':'Проверка не пройдена',
-           body:decision==='approved'?'Проверка документов завершена — работа на линии доступна.':
-             note??'Подробности в профиле', data:{}});
-      }catch(error){
-        console.warn('[documents] decision notification failed',
-          error instanceof Error?error.message:String(error));
-      }
+      await this.notifier.deliverStored([userId],{type:'verification',decision},
+        {kind:'normal',
+         title:decision==='approved'?'Проверка пройдена':'Проверка не пройдена',
+         body:decision==='approved'?'Проверка документов завершена — работа на линии доступна.':
+           note??'Подробности в профиле', data:{}});
     }
     return {ok:true};
   }
