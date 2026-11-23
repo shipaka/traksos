@@ -192,7 +192,12 @@ function App() {
   const [mode, setModeState] = useState<Mode>(() => (localStorageGet('traksos.mode') as Mode) || 'client');
   const setMode = (m: Mode) => { setModeState(m); localStorageSet('traksos.mode', m); };
 
+  const reloadSequence = useRef(0);
   const reload = useCallback(async () => {
+    // Rapid reconnect/focus/role-switch can launch several /api/me reads for
+    // the SAME bearer token. Only the latest should update React or the
+    // offline navigation identity; earlier responses may contain old roles.
+    const requestSequence = ++reloadSequence.current;
     const requestToken = getToken();
     if (!requestToken) {
       try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
@@ -202,7 +207,7 @@ function App() {
       const m = await get<Me>('/api/me');
       // An old /api/me may finish after logout, expiration or another login.
       // Never resurrect the previous identity or cache it for offline mode.
-      if (getToken() !== requestToken) return;
+      if (getToken() !== requestToken || requestSequence !== reloadSequence.current) return;
       setMe(m);
       // Store only a minimal identity for read-only UI navigation without a network;
       // NEVER persist orders, chat, document images or the user's personal profile.
@@ -217,7 +222,7 @@ function App() {
     } catch (error) {
       // A failed request from a previous session must not clear or overwrite
       // the current account, including its read-only offline identity.
-      if (getToken() !== requestToken) return;
+      if (getToken() !== requestToken || requestSequence !== reloadSequence.current) return;
       if (error instanceof ApiError && error.code === 'network' && getToken()) {
         try {
           const identity = JSON.parse(localStorage.getItem('traksos.offlineIdentity') ?? 'null');
@@ -234,7 +239,7 @@ function App() {
         setMe(null);
       }
     } finally {
-      setReady(true);
+      if (requestSequence === reloadSequence.current) setReady(true);
     }
   }, []);
 

@@ -445,5 +445,57 @@ try {
     check(await expiredPage.evaluate(()=>localStorage.getItem('traksos.offlineIdentity'))===null,
       'Stale previous-session profile may not persist an offline account');
   }finally{await expiredContext.close();}
+  // Two concurrent profile refreshes with the SAME bearer token may complete
+  // out of order; stale old roles/identities must not overwrite newer data.
+  const refreshContext=await browser.newContext({viewport:{width:1024,height:900},locale:'ru-RU'});
+  try {
+    await refreshContext.addInitScript(()=>localStorage.setItem('traksos.token','CI-SAME-TOKEN'));
+    const refreshPage=await refreshContext.newPage();
+    let profileCount=0,releaseOld,releaseLatest,oldSeen,latestSeen;
+    const oldStarted=new Promise(resolve=>{oldSeen=resolve;});
+    const latestStarted=new Promise(resolve=>{latestSeen=resolve;});
+    const profile=(id)=>JSON.stringify({
+      id,phone:'',name:null,roles:['courier'],owner_id:null,
+      company_name:null,company_inn:null,rating:null,rating_count:0,performer:null
+    });
+    await refreshPage.route('**/api/**',async route=>{
+      const pathname=new URL(route.request().url()).pathname;
+      if(pathname==='/api/me'){
+        const number=++profileCount;
+        if(number===1)return route.fulfill({status:200,contentType:'application/json',
+          body:profile('CI-INITIAL')});
+        if(number===2){releaseOld=()=>route.fulfill({status:200,
+          contentType:'application/json',body:profile('CI-STALE')});oldSeen();return;}
+        if(number===3){releaseLatest=()=>route.fulfill({status:200,
+          contentType:'application/json',body:profile('CI-LATEST')});latestSeen();return;}
+        return route.fulfill({status:200,contentType:'application/json',
+          body:profile('CI-LATEST')});
+      }
+      if(pathname==='/api/auth/realtime-ticket')
+        return route.fulfill({status:503,contentType:'application/json',
+          body:JSON.stringify({error:'CI_NO_SOCKET'})});
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    await refreshPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await refreshPage.locator('.app.role-courier').waitFor({state:'visible'});
+    await refreshPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await Promise.race([oldStarted,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('first refresh did not start')),10000))]);
+    await refreshPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await Promise.race([latestStarted,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('second refresh did not start')),10000))]);
+    await releaseLatest();
+    await refreshPage.waitForFunction(()=>{
+      try{return JSON.parse(localStorage.getItem('traksos.offlineIdentity'))?.id==='CI-LATEST';}
+      catch{return false;}
+    });
+    await releaseOld();
+    await refreshPage.waitForTimeout(150);
+    check(await refreshPage.evaluate(()=>{
+      try{return JSON.parse(localStorage.getItem('traksos.offlineIdentity'))?.id;}
+      catch{return null;}
+    })==='CI-LATEST',
+      'older same-token profile overwrote the latest verified offline identity');
+  }finally{await refreshContext.close();}
 }finally{await browser.close();}
-console.log('PASS: owner-approved 617/618 routes, service auth, legal reconnect, restricted storage and expired-session unmount');
+console.log('PASS: owner-approved 617/618 routes, service auth, offline identity refresh races and session expiry');
