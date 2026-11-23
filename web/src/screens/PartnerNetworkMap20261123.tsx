@@ -119,21 +119,54 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
     return ()=>document.removeEventListener('keydown',onKey);
   },[onClose,selected,expandedCluster]);
   useEffect(()=>{
-    const c=new AbortController();
+    let current:AbortController|null=null;
     setState('loading');
-    fetch('/api/public/partner-map',{cache:'no-store',signal:c.signal})
-      .then(async res=>{
-        if(!res.ok)throw Error('http '+res.status);
-        const data=await res.json();
-        if(data?.source!=='verified_stationary_opt_in' || !Array.isArray(data?.points))
-          throw Error('public map contract mismatch');
-        const safe=data.points.filter((p:any)=>
-          p.kind==='service'&&typeof p.name==='string'&&
-          typeof p.id==='string'&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&
-          Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0));
-        setPoints(safe);setState('ready');
-      }).catch(e=>{if(!c.signal.aborted){setState('error');setPoints([]);}});
-    return ()=>c.abort();
+    // A partner can withdraw public-map consent while a visitor keeps this
+    // modal open. Re-fetch verified data on return to the tab and periodically;
+    // never leave a revoked point or its cached partner card on the screen.
+    const refresh=()=>{
+      current?.abort();
+      const controller=new AbortController();
+      current=controller;
+      fetch('/api/public/partner-map',{cache:'no-store',signal:controller.signal})
+        .then(async res=>{
+          if(!res.ok)throw Error('http '+res.status);
+          const data=await res.json();
+          if(data?.source!=='verified_stationary_opt_in' || !Array.isArray(data?.points))
+            throw Error('public map contract mismatch');
+          const safe:PartnerPoint[]=data.points.filter((p:any)=>
+            p.kind==='service'&&typeof p.name==='string'&&
+            typeof p.id==='string'&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&
+            Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0));
+          if(controller.signal.aborted)return;
+          setPoints(safe);
+          setSelected(old=>old ? safe.find(p=>p.id===old.id)??null : null);
+          setExpandedCluster(old=>{
+            if(!old)return null;
+            const members=old.members.map(p=>safe.find(next=>next.id===p.id))
+              .filter((p):p is PartnerPoint=>!!p);
+            return members.length===old.members.length ? {...old,members} : null;
+          });
+          setState('ready');
+        }).catch(()=>{
+          if(controller.signal.aborted)return;
+          setState('error');
+          setPoints([]);
+          setSelected(null);
+          setExpandedCluster(null);
+        });
+    };
+    refresh();
+    const onReturn=()=>{if(!document.hidden)refresh();};
+    window.addEventListener('focus',onReturn);
+    document.addEventListener('visibilitychange',onReturn);
+    const interval=window.setInterval(()=>{if(!document.hidden)refresh();},60_000);
+    return ()=>{
+      window.clearInterval(interval);
+      window.removeEventListener('focus',onReturn);
+      document.removeEventListener('visibilitychange',onReturn);
+      current?.abort();
+    };
   },[]);
   useEffect(()=>{
     const update=()=>{
