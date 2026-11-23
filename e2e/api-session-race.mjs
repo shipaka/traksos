@@ -220,13 +220,21 @@ try {
     assert.equal(actual.newOrderId,'CI-NEW-ORDER');
     // Now exercise ACTUAL browser localStorage propagation across two
     // independent documents of the same origin, not just synthetic events.
-    // Open /api/health as a harmless origin-bound page without the React app.
+    // Use the SAME isolated HTML fixture for two tabs. Browsers may render
+    // JSON /api/health as a special viewer document without JS module support;
+    // that is not evidence of an auth regression in the application.
+    await context.route('**/__ci_api_session_race_host',route=>
+      route.fulfill({status:200,contentType:'text/html',
+        body:'<!doctype html><html lang="ru"><head><meta charset="utf-8"></head><body>Isolated cross-tab CI</body></html>'}));
     await context.route('**/__ci_api_session_race.mjs',route=>
       route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
     const tabA=await context.newPage();
     const tabB=await context.newPage();
     try {
-      await Promise.all([tabA.goto(BASE+'/api/health'),tabB.goto(BASE+'/api/health')]);
+      await Promise.all([
+        tabA.goto(BASE+'/__ci_api_session_race_host'),
+        tabB.goto(BASE+'/__ci_api_session_race_host')
+      ]);
       const loadModule=async page=>page.evaluate(async()=>{
         window.ciApi=await import('/__ci_api_session_race.mjs');
         window.ciExternalChanges=0;
