@@ -135,5 +135,17 @@ test('СТО: former fleet driver loses booking and archive on vehicle transfer'
       need:'electric',day,arrival:'self'
     },driver.token)).status,403,
       'driver without an assigned vehicle cannot book without truck');
+    const before=await t.db.one<{n:number}>(
+      "select count(*)::int as n from notifications where user_id=$1 and kind='booking'",[driver.id]);
+    ok(await t.api('POST',`/api/base/bookings/${booking.id}/respond`,{
+      action:'accept',time:'17:20'
+    },service.token));
+    const after=await t.db.one<{n:number}>(
+      "select count(*)::int as n from notifications where user_id=$1 and kind='booking'",[driver.id]);
+    assert.equal(after?.n,before?.n,
+      'Former driver must not receive old truck/repair data via notification inbox');
+    const ownerInbox=await t.db.one<{n:number}>(
+      "select count(*)::int as n from notifications where user_id=$1 and kind='booking'",[ownerA.id]);
+    assert.ok((ownerInbox?.n??0)>0,'Current fleet owner still receives their workshop alerts');
   }finally{await t.close()}
 });
