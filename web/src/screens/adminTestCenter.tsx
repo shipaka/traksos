@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, post } from '../api.ts';
 import { NavGlyph } from '../navGlyph.tsx';
+import { checkedSandboxEntryUrl } from './adminSandboxEntry20261124.ts';
 
 // Only the role-selection UI lives here. Authorized sandbox tickets open
 // actual TrakSOS role workspaces on a separate origin and isolated database.
@@ -25,26 +26,32 @@ const DEMO_ROLES:RoleInfo[]=[
 const rolePath=(id:DemoRole)=>'#/admin/test-center/'+id;
 function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
   const [message,setMessage]=useState('Проверяем доступ к изолированной тестовой базе…');
+  const [retry,setRetry]=useState(0);
+  const [failed,setFailed]=useState(false);
   useEffect(()=>{
     let active=true;
-    void get<{enabled:boolean}>('/api/admin/sandbox/status')
+    setFailed(false);
+    setMessage('Проверяем доступ к изолированной тестовой базе…');
+    void get<{enabled:boolean;reason?:string}>('/api/admin/sandbox/status')
       .then(status=>{
         if(!status.enabled)
           throw new Error((status as any).reason||'Полноценный тестовый сервер ещё не подключён.');
-        return post<{entryUrl:string}>('/api/admin/sandbox/ticket',{role:role.id});
+        return post<{entryUrl:string;role:string}>('/api/admin/sandbox/ticket',{role:role.id});
       })
       .then(result=>{
         if(!active)return;
-        if(!result?.entryUrl||!result.entryUrl.startsWith('https://'))
-          throw new Error('Не удалось сформировать защищённый тестовый вход.');
-        location.assign(result.entryUrl);
+        const entry=checkedSandboxEntryUrl(result?.entryUrl,role.id,result?.role,location.origin);
+        location.assign(entry);
       })
-      .catch(e=>{if(active)setMessage(e instanceof Error?e.message:'Ошибка доступа к тестовому серверу');});
+      .catch(e=>{if(active){setFailed(true);setMessage(e instanceof Error?e.message:'Ошибка доступа к тестовому серверу');}});
     return ()=>{active=false;};
-  },[role.id]);
+  },[role.id,retry]);
   return <main className="sandbox-root stack" style={{maxWidth:720,margin:'28px auto'}}>
     <span className="pill accent">НАСТОЯЩИЙ КАБИНЕТ · ТЕСТОВАЯ ВЕРСИЯ</span>
-    <h1>{role.label}</h1><p>{message}</p>
+    <h1>{role.label}</h1><p role={failed?'alert':'status'}>{message}</p>
+    {failed&&<button className="btn ghost" type="button" onClick={()=>setRetry(x=>x+1)}>
+      Повторить подключение к тестовому серверу
+    </button>}
     <p className="note">На отдельном адресе открываются настоящие экраны TrakSOS с тестовыми аккаунтами, базой и платёжным имитатором. Песочница может содержать новые изменения раньше основного сайта.</p>
     <div className="row"><a className="btn ghost" href="#/admin/test-center">← Выбор кабинета</a></div>
   </main>;
