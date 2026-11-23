@@ -18,7 +18,7 @@ const output = await build({
     "window.__renderDesk=(tab)=>root.render(React.createElement(ModeratorDesk,{initialTab:tab}));",
     "window.__renderDesk('cases');"
   ].join('\n'), resolveDir:process.cwd(), sourcefile:'moderator-workspace-test-entry.tsx', loader:'tsx'},
-  bundle:true, write:false, platform:'browser', format:'iife', jsx:'automatic',
+  bundle:true, write:false, outdir:'./e2e/.tmp-moderator-proof', platform:'browser', format:'iife', jsx:'automatic',
   plugins:[{name:'isolate-real-moderator',setup(b){
     b.onResolve({filter:/./},args=>{
       if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'moderator-test-stub'};
