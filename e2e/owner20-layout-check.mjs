@@ -251,6 +251,33 @@ try {
          throw Error('Partner map focus refresh accepted an unverified source');
      }
    }
+   if(width===1440){
+     // A transient failure must be recoverable without closing the map,
+     // reloading 617, waiting a full minute, or inventing a partner pin.
+     let calls=0;
+     await page.route('**/api/public/partner-map',async route=>{
+       calls++;
+       await route.fulfill({status:calls===1?503:200,
+         contentType:'application/json',body:calls===1
+           ? JSON.stringify({error:'temporarily_unavailable'})
+           : JSON.stringify({source:'verified_stationary_opt_in',points:[]})});
+     });
+     const firstError=page.waitForResponse(response=>
+       response.url().includes('/api/public/partner-map')&&response.status()===503);
+     await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+     await firstError;
+     const retryButton=network.getByRole('button',{name:'Повторить загрузку'});
+     await retryButton.waitFor({state:'visible'});
+     const recovery=page.waitForResponse(response=>
+       response.url().includes('/api/public/partner-map')&&response.status()===200);
+     await retryButton.click();
+     await recovery;
+     await retryButton.waitFor({state:'detached'});
+     if(calls!==2 || await network.locator('.tr-network-marker').count()!==0 ||
+        !await network.getByText('Пока нет СТО, разрешивших показывать').count())
+       throw Error('Explicit map retry did not recover honestly without synthetic pins');
+     await page.unroute('**/api/public/partner-map');
+   }
    // Interaction-only DOM probe, not a fake partner or a map screenshot:
    // the pan handler must not capture pointer events from actual links nested
    // in the map (the verified workshop detail uses a native <a>).

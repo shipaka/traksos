@@ -65,6 +65,8 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const [size,setSize]=useState({width:850,height:490});
   const [points,setPoints]=useState<PartnerPoint[]>([]);
   const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
+  // Expose an explicit retry after a transient API failure; no fake pins.
+  const [retryCount,setRetryCount]=useState(0);
   const [selected,setSelected]=useState<PartnerPoint|null>(null);
   const [expandedCluster,setExpandedCluster]=useState<Cluster|null>(null);
   const clusterTrigger=useRef<HTMLButtonElement|null>(null);
@@ -180,7 +182,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
       document.removeEventListener('visibilitychange',onReturn);
       current?.abort();
     };
-  },[]);
+  },[retryCount]);
   useEffect(()=>{
     const update=()=>{
       if(surface.current){
@@ -310,8 +312,11 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a>
         </aside>}
         {state!=='ready'&&<div className="tr-network-notice" role="status">
-          {state==='loading'?'Получаем подтверждённые точки партнёров…'
-            :'Данные сети временно недоступны. Не подставляем демонстрационные точки.'}</div>}
+          <span>{state==='loading'?'Получаем подтверждённые точки партнёров…'
+            :'Данные сети временно недоступны. Не подставляем демонстрационные точки.'}</span>
+          {state==='error'&&<button type="button" className="tr-network-retry"
+            onClick={()=>setRetryCount(n=>n+1)}>Повторить загрузку</button>}
+        </div>}
         {state==='ready'&&points.length===0&&<div className="tr-network-notice" role="status">
           Пока нет СТО, разрешивших показывать проверенное местоположение на публичной карте.
           Мы расширяем партнёрскую сеть; декоративные точки за реальные не выдаём.

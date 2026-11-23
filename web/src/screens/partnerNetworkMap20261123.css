@@ -96,6 +96,12 @@
   text-align:center;line-height:1.5;color:#e3f1f7;background:#09283de9;
   border:1px solid #3a667d;border-radius:15px;padding:19px 16px;
   box-shadow:0 7px 25px #0008;font-size:13px}
+.tr-network-retry{
+  display:block;margin:12px auto 0;min-height:44px;min-width:170px;
+  padding:9px 14px;border-radius:10px;border:1px solid #f3ba68;
+  background:#183e4e;color:#ffebd2;font-weight:800;cursor:pointer;
+}
+.tr-network-retry:focus-visible{outline:2px solid #ffbd6e;outline-offset:2px}
 .tr-network-attribution{
   position:absolute;z-index:3;bottom:0;right:0;left:0;
   display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;
