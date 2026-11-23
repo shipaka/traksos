@@ -133,8 +133,8 @@ await m.locator('input[placeholder="ИНН, 12 цифр"]').fill('780000000001')
 await m.locator('input[placeholder="Марка: Lada Largus"]').fill('Lada Largus');
 await m.locator('input[placeholder="Госномер"]').fill('а123вс78');
 await shot(m, '01-master-profile');
-await m.getByRole('button', { name: /Дальше — фото/ }).click();
-// Сразу после профиля — фото для проверки
+await m.getByRole('button', { name: 'Дальше — добровольная проверка' }).click();
+// Опциональная фото-проверка остаётся доступной после сохранения профиля
 await m.waitForURL(/work\/docs/);
 await m.getByText(/^0 из \d$/).waitFor();
 const n = await m.locator('input[type=file]').count();
