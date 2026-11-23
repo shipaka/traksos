@@ -73,8 +73,15 @@ test('Chat: failure of optional notification must NOT make committed user messag
   const t=await setup();
   try{
     const owner=await t.login(phone(4205));
+    const driver=await t.login(phone(4206),'driver');
     const v=ok(await t.api('POST','/api/vehicles',vehicleBody(453),owner.token));
-    const order=ok(await t.api('POST','/api/orders',orderBody(v.id),owner.token)).order;
+    const fleet=ok(await t.api('GET','/api/fleet',undefined,owner.token));
+    const qr=fleet.cars.find((x:any)=>x.id===v.id)?.qrCode;
+    assert.ok(qr);
+    ok(await t.api('POST',`/api/qr/${qr}/join`,{},driver.token));
+    // A currently linked driver is an actual recipient; failure of that
+    // recipient's inbox will be injected below.
+    const order=ok(await t.api('POST','/api/orders',orderBody(v.id),driver.token)).order;
     await t.db.exec(`
       create function reject_chat_push_20261124() returns trigger
       language plpgsql as $$ begin
@@ -84,8 +91,6 @@ test('Chat: failure of optional notification must NOT make committed user messag
       create trigger reject_chat_push_20261124 before insert on notifications
         for each row execute function reject_chat_push_20261124();
     `);
-    // Owner may be the only recipient while no performer is assigned. In that
-    // case no notification is written; also exercise the full persisted path.
     const posted=ok(await t.api('POST',`/api/orders/${order.id}/messages`,
       {body:'One final committed message despite optional push outage'},owner.token));
     assert.ok(posted.id);
@@ -93,6 +98,11 @@ test('Chat: failure of optional notification must NOT make committed user messag
       'select count(*)::int as n from chat_messages where order_id=$1 and sender_id=$2 and body=$3',
       [order.id,owner.id,'One final committed message despite optional push outage']);
     assert.equal(count?.n,1);
+    const received=await t.db.one<{n:number}>(
+      `select count(*)::int as n from notifications
+        where user_id=$1 and kind='chat_push' and data->>'orderId'=$2`,
+      [driver.id,order.id]);
+    assert.equal(received?.n,0,'injected durable inbox failure was actually exercised');
     await t.db.exec(`
       drop trigger reject_chat_push_20261124 on notifications;
       drop function reject_chat_push_20261124();
