@@ -40,7 +40,7 @@ test('economy explainer shows only the own side and all actual bonus settings',(
   assert.match(promo.text,/от 0 до 5%/);
   assert.match(promo.text,/при создании конкретной заявки/);
   assert.match(promo.text,/баллы исполнителя не списываются/);
-  assert.match(promo.text,/5 000/);
+  assert.match(promo.text.replace(/[\u00a0\u202f]/g,' '),/5 000/);
   for(const role of ['insurer','inspection','moderator','admin'] as const) {
     assert.equal(financeGuide(defaultSettings,role).examples.length,0);
   }
