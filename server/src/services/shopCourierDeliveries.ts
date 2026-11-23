@@ -49,6 +49,19 @@ export class ShopCourierDeliveries {
       [buyerId,clientId]);
     return !!linked;
   }
+  private async storeInbox(q:Queryable,ids:(string|null|undefined)[],shopOrderId:string,
+    title:string,body:string){
+    for(const id of new Set(ids.filter(Boolean) as string[]))
+      await q.query('insert into notifications(user_id,kind,title,body,data) values ($1,$2,$3,$4,$5)',
+        [id,'shop',title,body,{shopOrderId}]);
+  }
+  private async lockedRecipients(q:Queryable,d:{
+    shop_order_id:string;client_id:string;created_by:string;vehicle_id:string|null;
+  }){
+    return [d.client_id,...(d.created_by!==d.client_id&&
+      await this.currentBuyer(q,d.client_id,d.created_by,d.vehicle_id,d.created_by,true)
+        ?[d.created_by]:[])];
+  }
   private async currentRecipients(orderId:string){
     const o=await this.db.one<{client_id:string;created_by:string;vehicle_id:string|null}>(
       'select client_id,created_by,vehicle_id from shop_orders where id=$1',[orderId]);
@@ -165,7 +178,7 @@ export class ShopCourierDeliveries {
   async progress(courier:AuthUser,id:string,status:Stage){
     const d=await this.db.tx(async q=>{
       const d=await q.one<any>(
-        `select d.*,o.status as shop_status,o.client_id,o.created_by
+        `select d.*,o.status as shop_status,o.client_id,o.created_by,o.vehicle_id
          from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
@@ -185,18 +198,24 @@ export class ShopCourierDeliveries {
         [d.shop_order_id]);
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [courier.id,'courier.stage',id,{status,shopOrderId:d.shop_order_id}]);
+      await this.storeInbox(q,await this.lockedRecipients(q,d),d.shop_order_id,
+        'Доставка запчастей: новый этап',status==='arrived'
+          ?'Курьер прибыл — откройте заказ и покажите ему код получения'
+          :'Статус доставки обновлён');
       return {...row,client_id:d.client_id,created_by:d.created_by};
     });
-    if(!d.unchanged)await this.notify.notify(await this.currentRecipients(d.shop_order_id),
+    if(!d.unchanged)await this.notify.deliverStored(
+      await this.currentRecipients(d.shop_order_id),
       {type:'shop',shopOrderId:d.shop_order_id},
       {kind:'normal',title:'Доставка запчастей: новый этап',body:status==='arrived'?
         'Курьер прибыл — откройте заказ и покажите ему код получения':'Статус доставки обновлён',
-        data:{shopOrderId:d.shop_order_id}});
+        data:{shopOrderId:d.shop_order_id}})
+      .catch(e=>console.warn('[courier-stage-push]',e));
     return this.one(courier,id);
   }
   async verify(courier:AuthUser,id:string,code:string){
     const result=await this.db.tx(async q=>{
-      const d=await q.one<any>(`select d.*,o.status as shop_status,o.client_id,o.created_by
+      const d=await q.one<any>(`select d.*,o.status as shop_status,o.client_id,o.created_by,o.vehicle_id
         from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
