@@ -1,7 +1,7 @@
 // Персональные данные: что собираем, выгрузка «всё о себе», запрос на удаление.
 // Удаление — через 30 дней: аккаунт обезличивается; заявки и деньги остаются для бухгалтерии, как требует закон.
 
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import { conflict, type AuthUser } from '../http/router.ts';
 
@@ -38,6 +38,67 @@ export class PrivacyService {
     };
   }
 
+  /** A deletion must not strand another participant's active work.
+   * Keep all role checks centralized for both request and background erasure.
+   * Each query uses the immutable user id; no client-supplied owner/role. */
+  private async activeObligation(q: Queryable, userId: string):
+    Promise<{ code: string; message: string } | null> {
+    const checks = [
+      {
+        code: 'active_orders',
+        message: 'Сначала завершите или отмените открытые заявки',
+        sql: `select exists(
+          select 1 from orders
+          where (client_id=$1 or created_by=$1 or performer_id=$1)
+            and status in ('awaiting_owner','searching','accepted','en_route',
+                           'arrived','working','awaiting_confirmation')
+        ) as active`,
+      },
+      {
+        code: 'active_service_bookings',
+        message: 'Сначала завершите или отмените текущие записи и ремонты СТО',
+        sql: `select exists(
+          select 1 from service_bookings b
+          left join service_centers c on c.id=b.center_id
+          where (b.client_id=$1 or b.created_by=$1 or c.owner_id=$1)
+            and b.status not in ('closed','declined','cancelled')
+        ) as active`,
+      },
+      {
+        code: 'active_shop_orders',
+        message: 'Сначала получите или отмените незавершённые заказы запчастей',
+        sql: `select exists(
+          select 1 from shop_orders
+          where (client_id=$1 or created_by=$1)
+            and status in ('new','confirmed','ready','shipped')
+        ) as active`,
+      },
+      {
+        code: 'active_vehicle_requests',
+        message: 'Сначала завершите или отмените заявки на страхование и техосмотр',
+        sql: `select exists(
+          select 1 from vehicle_service_requests
+          where (owner_id=$1 or requested_by=$1 or assigned_to=$1)
+            and status in ('submitted','in_review','need_documents','sent_to_partner')
+        ) as active`,
+      },
+      {
+        code: 'active_courier_deliveries',
+        message: 'Сначала завершите или передайте назначенные курьерские доставки',
+        sql: `select exists(
+          select 1 from shop_courier_deliveries
+          where courier_id=$1
+            and status not in ('received','cancelled')
+        ) as active`,
+      },
+    ];
+    for (const check of checks) {
+      const result = await q.one<{ active: boolean }>(check.sql, [userId]);
+      if (result?.active) return { code: check.code, message: check.message };
+    }
+    return null;
+  }
+
   async requestDelete(user: AuthUser) {
     // Lock the user row so repeated requests (and the scheduled eraser) cannot
     // generate duplicate audits/alerts. Consent state belongs to this account.
@@ -46,10 +107,8 @@ export class PrivacyService {
         'select delete_requested_at, deleted_at from users where id=$1 for update', [user.id]);
       if (!current || current.deleted_at) throw conflict('account_unavailable', 'Аккаунт уже закрыт');
       if (current.delete_requested_at) return false;
-      const busy = await q.one<{ n: number }>(
-        `select count(*)::int as n from orders where (client_id=$1 or created_by=$1 or performer_id=$1)
-           and status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation')`, [user.id]);
-      if (busy?.n) throw conflict('active_orders', 'Сначала завершите или отмените открытые заявки');
+      const active = await this.activeObligation(q, user.id);
+      if (active) throw conflict(active.code, active.message);
       await q.query('update users set delete_requested_at=$2 where id=$1', [user.id, this.now()]);
       await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
         [user.id, 'privacy.delete_requested', user.id, {}]);
@@ -98,6 +157,14 @@ export class PrivacyService {
       // Another worker may have deleted this user, or the user may have
       // cancelled the request after the initial due-list was read.
       const erased = await this.db.tx(async (q) => {
+        const current = await q.one<{ delete_requested_at: Date | null; deleted_at: Date | null }>(
+          'select delete_requested_at, deleted_at from users where id=$1 for update', [id]);
+        if (!current || current.deleted_at || !current.delete_requested_at ||
+            new Date(current.delete_requested_at).getTime() >= now.getTime() - GRACE_DAYS * 86400_000)
+          return false;
+        // Active work may have been created during the 30-day grace period.
+        // Keep the deletion request pending until all work has settled.
+        if (await this.activeObligation(q, id)) return false;
         const updated = await q.one<{ id: string }>(
           `update users set phone='deleted-' || id, name=null, company_name=null, company_inn=null,
               edo_operator=null, edo_id=null, status='blocked', deleted_at=$2, owner_id=null
