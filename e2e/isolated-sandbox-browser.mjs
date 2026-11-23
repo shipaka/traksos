@@ -17,6 +17,9 @@ await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const failures=[];
 try{
+  // Independent map failures must not suppress the remaining 12-role
+  // evidence on the same exact SHA. Record them as hard failures at the end.
+  try{
   // Owner-approved 617 guest PC map must be an actual accessible expanded
   // network, not a painted or falsely populated static screenshot. Inspect
   // the SAME disposable server that supplies all real cabinet screenshots.
@@ -82,6 +85,11 @@ try{
         null,{timeout:3000});
     }finally{await context.close();}
   }
+  }catch(error){
+    const detail=String(error instanceof Error ? error.stack??error.message : error);
+    failures.push({role:'guest-partner-map',width:1440,detail});
+    console.error('PUBLIC PARTNER MAP FAIL',1440,detail);
+  }
   // Cover the real guest desktop breakpoints and keyboard activation, beyond
   // the 1440px hero screenshot. 900/1024 can intentionally use wider dialogs
   // for touch-friendly controls, while 1280+ uses the approved 70% overlay.
@@ -109,6 +117,14 @@ try{
       await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')===
         'Развернуть карту партнёров',null,{timeout:3000});
       console.log('APPROVED MAP KEYBOARD/RESPONSIVE PASS',width,Math.round(rect.width),Math.round(rect.height));
+    }catch(error){
+      const detail=String(error instanceof Error ? error.stack??error.message : error);
+      failures.push({role:'guest-partner-map',width,detail});
+      console.error('PUBLIC PARTNER MAP FAIL',width,detail);
+      try{
+        await page.screenshot({path:out+'/guest-'+width+'-partner-network-ERROR.png',
+          fullPage:false,animations:'disabled'});
+      }catch{/* The browser's original failure is authoritative. */}
     } finally {await context.close();}
   }
   // 960px is crucial: formerly between mobile 899px and PC 1000px,
