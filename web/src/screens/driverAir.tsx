@@ -27,7 +27,8 @@ function AirRoom() {
   const inFlight = useRef(false);
   const [supportHint,setSupportHint] = useState(false);
   const [refresh,setRefresh] = useState(0);
-  const end = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+  const keepAtBottom = useRef(true);
   const lastCount = useRef(0);
 
   useEffect(()=>{
@@ -56,7 +57,7 @@ function AirRoom() {
     // Two overlapping polls can finish out of order on mobile networks:
     // only the newest response is allowed to replace the visible snapshot.
     const timer=setInterval(()=>{
-      if(document.visibilityState==='visible') void load();
+      if(document.visibilityState==='visible' && navigator.onLine) void load();
     },12000);
     const online=()=>void load();
     const offline=()=>{
@@ -75,7 +76,10 @@ function AirRoom() {
   useEffect(()=>{
     if(air && air.messages.length!==lastCount.current) {
       lastCount.current=air.messages.length;
-      end.current?.scrollIntoView({block:'nearest',behavior:'auto'});
+      // Follow new messages only if the user is already reading near the end;
+      // scrolling the whole page would interrupt someone reading old messages.
+      if(keepAtBottom.current && logRef.current)
+        logRef.current.scrollTop=logRef.current.scrollHeight;
     }
   },[air?.messages.length]);
 
@@ -123,7 +127,12 @@ function AirRoom() {
       {air && !air.botEnabled && <span className="note">Самостоятельные сообщения TrakBot сейчас выключены. При вызове модератора или админа он подскажет, как оформить обращение приватно.</span>}
     </div>
     <section className="card" aria-label="Общий эфир водителей">
-      <div role="log" aria-label="Сообщения эфира" aria-live="polite" style={{height:'min(53vh,520px)',minHeight:260,overflowY:'auto'}}>
+      <div ref={logRef} role="log" aria-label="Сообщения эфира" aria-live="polite"
+        onScroll={event=>{
+          const el=event.currentTarget;
+          keepAtBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<96;
+        }}
+        style={{height:'min(53vh,520px)',minHeight:260,overflowY:'auto'}}>
         {!air && <div className="empty">{loading ? 'Загружаю сообщения…' : 'Сообщения пока недоступны.'}</div>}
         {air && !air.messages.length && <div className="empty">{air.canPost ? 'Эфир открыт. Начни разговор — например, расскажи, как проходит рейс.' : 'Сообщений пока нет.'}</div>}
         {air?.messages.map(item=><div key={item.id} className="card flat" style={{margin:'8px 0',padding:12}}>
@@ -137,7 +146,7 @@ function AirRoom() {
           {air?.canModerate && <button className="btn ghost small" type="button" disabled={posting}
             style={{marginTop:8}} onClick={()=>void hide(item.id)}>Скрыть</button>}
         </div>)}
-        <div ref={end}/>
+
       </div>
       {error && <div className="stack" role="alert">
         <p className="note">{error}</p>
