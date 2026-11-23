@@ -180,6 +180,37 @@ test('weekly confirmation expires public pin; real confirmation restores the sam
     'actual weekly confirmation immediately restores previously consented, verified station');
 });
 
+test('profile form save does not silently renew expired weekly service verification',async()=>{
+  // The real React form submits ALL accepts and closedDays values, even when
+  // its only changed field is the work schedule. This may not count as an
+  // explicit seven-day availability confirmation.
+  const before=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(before.public_map_opt_in,true);
+  assert.ok(before.public_map_location_verified_at);
+  await t.db.query(`update service_centers
+    set accepts_confirmed_at=now()-interval '8 days' where id=$1`,[centerId]);
+  const stale=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(stale.confirmDue,true);
+  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
+  // A normal save includes unchanged capabilities and closed-day arrays,
+  // but may NOT revive a previously expired public yellow location marker.
+  ok(await t.api('PUT','/api/base',{
+    hours:'08:00–21:00',accepts:before.accepts,closedDays:[]
+  },service.token));
+  const saved=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(saved.confirmDue,true,'editing hours with full form is not confirmation');
+  assert.equal(saved.public_map_opt_in,true,'consent persists but point stays hidden');
+  assert.ok(saved.public_map_location_verified_at);
+  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[],
+    'regular profile save must not reactivate a week-old service listing');
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400);
+  ok(await t.api('POST','/api/base/confirm-accepts',{},service.token));
+  const confirmed=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(confirmed.confirmDue,false);
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1,
+    'explicit existing service confirmation is the only renewal operation');
+});
+
 test('explicit null coordinates clear stale published GPS without retaining prior consent',async()=>{
   // Real HTTP + disposable PostgreSQL. Omitted fields are not edits: hours
   // changes must not silently revoke location review or map consent.
