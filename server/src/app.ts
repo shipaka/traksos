@@ -620,7 +620,9 @@ export function createApp(d: Deps) {
   });
   r.post('/api/admin/commission-campaigns', ['admin'], (c: AuthedCtx) =>
     ops.campaign(c.user,parse(z.object({
-      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu']).nullish(),
+      // Only paid dispatch services: ECU is a stationary handoff and
+      // consultation has its own separate fee, not a worker campaign.
+      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow']).nullish(),
       commissionPct:z.number().min(0).max(100),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),
       enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
