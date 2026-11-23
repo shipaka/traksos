@@ -44,8 +44,8 @@ try{
  await page.evaluate(()=>window.__render('work','second'));
  await page.getByText(/№202/).first().waitFor();
  check(await page.getByText(/№101/).count()===0,'Previous worker order leaked after switching account');
- await page.getByText('200 ₽',{exact:false}).first().waitFor();
- check(await page.getByText('100 ₽',{exact:false}).count()===0,'Old worker balance remained visible');
+ await page.getByText('20000 ₽',{exact:false}).first().waitFor();
+ check(await page.getByText('10000 ₽',{exact:false}).count()===0,'Old worker balance remained visible');
 
  // GPS watcher is bound to the session and old queued callbacks cannot send
  // coordinates under a new bearer token after user switch.
