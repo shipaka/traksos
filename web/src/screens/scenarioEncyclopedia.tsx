@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Back, useMe } from '../ui.tsx';
 import { learningRole } from './platformIntro.tsx';
 import { allowedScenario, chooseScenarioOption, scenariosForRole,
@@ -17,6 +17,7 @@ function saveProgress(userId:string,role:CourseRole,id:string):void {
   try {
     const next=[...new Set([...loadProgress(userId,role),id])];
     localStorage.setItem(progressKey(userId,role),JSON.stringify(next));
+    window.dispatchEvent(new Event('traksos-scenario-progress'));
   } catch {/* disabled storage — the course remains available */}
 }
 function sortedChoiceIndexes(scenario:Scenario,stage:number):number[] {
@@ -30,7 +31,26 @@ function sortedChoiceIndexes(scenario:Scenario,stage:number):number[] {
 export function ScenarioEncyclopedia({query=''}:{query?:string}) {
   const {me,mode}=useMe();
   const role=learningRole(mode,me?.roles??[]);
-  const [done]=useState<string[]>(()=>me?loadProgress(me.id,role):[]);
+  const scope=me?progressKey(me.id,role):'';
+  const [progress,setProgress]=useState<{scope:string;done:string[]}>(()=>({
+    scope,done:me?loadProgress(me.id,role):[],
+  }));
+  // Do not reuse another account's/role's completion badges. Reflect progress
+  // after returning from a lesson and when another tab finishes a course.
+  const done=progress.scope===scope?progress.done:me?loadProgress(me.id,role):[];
+  useEffect(()=>{
+    if(!me)return;
+    const refresh=()=>setProgress({scope,done:loadProgress(me.id,role)});
+    refresh();
+    window.addEventListener('storage',refresh);
+    window.addEventListener('focus',refresh);
+    window.addEventListener('traksos-scenario-progress',refresh);
+    return ()=>{
+      window.removeEventListener('storage',refresh);
+      window.removeEventListener('focus',refresh);
+      window.removeEventListener('traksos-scenario-progress',refresh);
+    };
+  },[me?.id,role]);
   if(!me)return null;
   const cases=scenariosForRole(role,query);
   const total=scenariosForRole(role).length;
@@ -69,14 +89,22 @@ export function ScenarioLesson({id}:{id:string}) {
   const {me,mode}=useMe();
   const role=learningRole(mode,me?.roles??[]);
   const scenario=allowedScenario(role,id);
+  if(!me||!scenario)return <main className="stack"><Back to="help" />
+    <h1>Курс недоступен</h1><p>Эта ситуация не относится к вашему кабинету. Выберите другую в справке.</p>
+    <a className="btn" href="#/help">К энциклопедии</a></main>;
+  // Navigating between cases can reuse the same route/component instance.
+  // Remount the answer state so an old index can never read past new steps.
+  return <ScenarioLessonContent key={me.id+':'+role+':'+id}
+    scenario={scenario} role={role} userId={me.id}/>;
+}
+
+function ScenarioLessonContent({scenario,role,userId}:{
+  scenario:Scenario;role:CourseRole;userId:string;
+}) {
   const [index,setIndex]=useState(0);
   const [selected,setSelected]=useState<number|null>(null);
   const [finished,setFinished]=useState(false);
   const [helpOpen,setHelpOpen]=useState(true);
-
-  if(!me||!scenario)return <main className="stack"><Back to="help" />
-    <h1>Курс недоступен</h1><p>Эта ситуация не относится к вашему кабинету. Выберите другую в справке.</p>
-    <a className="btn" href="#/help">К энциклопедии</a></main>;
   const stage=scenario.steps[index];
   const response=selected===null?null:chooseScenarioOption(scenario,index,selected);
   const options=sortedChoiceIndexes(scenario,index);
@@ -84,7 +112,7 @@ export function ScenarioLesson({id}:{id:string}) {
   const goNext=()=>{
     if(!response?.recommended)return;
     if(response.finished){
-      saveProgress(me.id,role,scenario.id);
+      saveProgress(userId,role,scenario.id);
       setFinished(true);
     }else{
       setIndex(response.nextStage);
