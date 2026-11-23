@@ -71,6 +71,7 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     const directKey='order-direct-nested-repeat-123';
     const directData={
       service:'electric',regionId:'spb',zoneId:'spb',paymentMethod:'online',
+      address:'Санкт-Петербург, тестовая парковка',
       description:'Direct service retry after mobile reconnect',
       site:{place:'road',road:{highway:'М10',km:41,side:'right'}},
     };
