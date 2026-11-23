@@ -26,6 +26,9 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
   if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
       new URL(API_URL || location.origin, location.origin).origin !== location.origin)
     throw new ApiError(403, 'sandbox_wrong_origin', 'Тестовые запросы не могут обращаться к другому серверу');
+  // Bind authentication to THIS request, not to a token that may have been
+  // replaced by a successful login while its response was in flight.
+  const requestToken = token;
   let r: Response;
   try {
     // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
@@ -35,7 +38,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
     try {
       r = await fetch(API_URL + path, {
         method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
+        headers: { 'content-type': 'application/json', ...(requestToken ? { authorization: `Bearer ${requestToken}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
         signal: timeout.signal,
@@ -49,8 +52,11 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
   }
   window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
   const j = await r.json().catch(() => null);
-  if (r.status === 401 && token) {
+  if (r.status === 401 && requestToken && token === requestToken) {
     setToken(null);
+    // The app must drop the cached workspace immediately; a hash redirect
+    // alone leaves the old React identity mounted until a manual reload.
+    window.dispatchEvent(new Event('traksos-auth-expired'));
     location.hash = '#/login';
   }
   if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', { ...(j?.data ?? {}), requestId: j?.requestId ?? r.headers.get('x-request-id') });

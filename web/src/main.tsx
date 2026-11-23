@@ -232,6 +232,17 @@ function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    // The transport invalidated the session: unmount protected workspaces
+    // immediately instead of showing "already logged in" at #/login.
+    const expire = () => {
+      try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
+      setMe(null);
+      setReady(true);
+    };
+    window.addEventListener('traksos-auth-expired', expire);
+    return () => window.removeEventListener('traksos-auth-expired', expire);
+  }, []);
   // Android system Back and browser history navigation do not invoke the
   // Login dialog's Back handler. Abandoned service selections must not send
   // the next unrelated login to an old booking or assistant page. Keep the
