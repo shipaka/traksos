@@ -394,7 +394,10 @@ function WorkerNoticesScoped({userId,mode,specialties}:{
 }) {
   const list=useOpsRead<any[]>(()=>get('/api/worker/announcements?audience='+mode),
     'worker-notices:'+userId+':'+mode);
-  const promos=useOpsRead<any[]>(()=>get('/api/worker/commission-campaigns'),
+  // Dispatch campaigns change only the mobile worker fee. Station (СТО)
+  // bookings use a separate contract; never advertise roadside 0% there.
+  const promos=useOpsRead<any[]>(()=>mode==='service'
+      ?Promise.resolve([]):get('/api/worker/commission-campaigns'),
     'worker-campaigns:'+userId+':'+mode);
   const matching = (service?:string|null) => !service ||
     (mode==='service' ? true : mode==='tow' ? service==='tow' :
