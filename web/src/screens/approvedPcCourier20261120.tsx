@@ -63,10 +63,10 @@ export function ApprovedPcCourier(){
           <a className="teal" href="#/courier/jobs"><span>⬡</span><small>Посылки</small><strong>{jobs.data?itemCount:'—'}</strong></a>
           <a className="blue" href="#/courier/jobs"><span>⌖</span><small>Остановки</small><strong>{jobs.data?active.length:'—'}</strong></a>
         </div>
-        <section className="courier-pc-trip">
+        <section className={"courier-pc-trip"+(jobs.data&&active.length===0?" courier-pc-trip--empty":"")}>
           <header><div><span className="courier-pc-trip-icon">▣</span>
-              <div><h2>{current?'Доставка №'+current.orderNumber:'Мой рейс'}</h2>
-                <small>{current?'Назначенная доставка запчастей':'Только подтверждённые задания'}</small></div></div>
+              <div><h2>{current?'Доставка №'+current.orderNumber:jobs.data?'Пока нет назначенных доставок':'Проверяем назначения'}</h2>
+                <small>{current?'Назначенная доставка запчастей':'На экране появятся только реальные назначения из системы'}</small></div></div>
             {current&&<em>{STATUS[current.status]}</em>}</header>
           <div className="courier-pc-trip-hero">
             <div className="courier-pc-vehicle">
@@ -74,7 +74,7 @@ export function ApprovedPcCourier(){
               <span>Иллюстрация TrakSOS · не фото заказа</span>
             </div>
             <div className="courier-pc-stops">
-              <strong>Пункты доставки</strong>
+              <strong>{current?"Назначенные адреса":"Новые назначения"}</strong>
               {jobs.error&&<p role="alert">Не удалось загрузить рейсы. <button onClick={jobs.reload}>Повторить</button></p>}
               {!jobs.data&&!jobs.error&&<p>Загружаем назначения…</p>}
               {jobs.data&&active.length===0&&<p>Пока нет назначенных доставок. Новые появятся после назначения диспетчером.</p>}
@@ -93,20 +93,20 @@ export function ApprovedPcCourier(){
       </div>
       <aside className="courier-pc-side">
         <section className="courier-pc-route">
-          <h2>Маршрутный лист <small>Адреса назначений</small></h2>
-          <div className="courier-pc-schematic" aria-label="Список остановок, без автоматической прокладки маршрута">
-            <span className="courier-pc-schematic-title">Доставки по заданиям</span>
+          <h2>{current?"Адреса доставок":"Ожидание назначений"} <small>{current?"По текущим заказам":"Маршрут не сформирован"}</small></h2>
+          <div className={"courier-pc-schematic"+(!current?" courier-pc-schematic--empty":"")} aria-label={current?"Список остановок, без автоматической прокладки маршрута":"Нет назначенного маршрута"}>
+            <span className="courier-pc-schematic-title">{current?"Доставки по заданиям":"Реальные адреса появятся после назначения"}</span>
             <div className="courier-pc-route-line">
               {active.length?active.slice(0,4).map((job,i)=><button key={job.id} type="button"
                 className={current?.id===job.id?'selected':''} onClick={()=>setSelected(job.id)}
                 aria-label={'Выбрать доставку '+job.orderNumber}>{i+1}</button>)
-                :<span>Нет активных остановок</span>}
+                :<span>Маршрут ещё не назначен</span>}
             </div>
-            <small>Схема, не географическая карта. Порядок маршрута не рассчитывается.</small>
+            <small>{current?"Схема, не географическая карта. Порядок маршрута не рассчитывается.":"Когда появится доставка, здесь будут только её реальные адреса."}</small>
           </div>
         </section>
         <section className="courier-pc-order">
-          <header><h2>{current?'Заказ №'+current.orderNumber:'Текущая доставка'}</h2>
+          <header><h2>{current?'Заказ №'+current.orderNumber:'Нет текущей доставки'}</h2>
             {current&&<em>{STATUS[current.status]}</em>}</header>
           {current?<><div className="courier-pc-items"><span className="courier-pc-package">⬡</span>
             <div><strong>{current.items[0]?.name||'Запчасти'}</strong>

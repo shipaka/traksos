@@ -67,6 +67,15 @@ try{
    await page.locator(width===1440?'main.courier-pc':'main.courier-android')
      .waitFor({state:'visible',timeout:15000});
    if(width===1440){
+    // An empty courier account must not advertise an imaginary live trip.
+    if(await page.locator('.courier-pc-trip--empty').count()){
+      if(await page.getByText('Мой рейс',{exact:true}).count() ||
+         await page.getByText('Маршрутный лист',{exact:true}).count() ||
+         await page.locator('.courier-pc-trip--empty .courier-pc-progress').count() ||
+         await page.locator('.courier-pc-schematic--empty .courier-pc-route-line button').count())
+        throw Error('Empty courier workspace exposes a fictional active trip or route');
+      await page.getByText('Пока нет назначенных доставок',{exact:true}).first().waitFor();
+    }
     if(await page.locator('.courier-pc-bot img').count()!==1)
       throw Error('Approved TrakBot is missing');
     if(await page.locator('.app > .trakbot-dock').isVisible().catch(()=>false))
