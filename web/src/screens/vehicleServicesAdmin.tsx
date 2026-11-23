@@ -1,11 +1,30 @@
-import { useState } from 'react';
+import {useEffect,useRef,useState} from 'react';
 import { get, post, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction, Loading } from '../ui.tsx';
+import {useAction,useMe} from '../ui.tsx';
+import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
+import {parseAdminRubles,displayAdminRubles} from '../adminFinanceKopecks20261124.ts';
+
+function validFutureDate(value:string):boolean {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const date=new Date(value+'T00:00:00Z');
+  return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value
+    &&value>new Date().toISOString().slice(0,10);
+}
 
 export function VehicleServicesQueue() {
-  const list = useLoad(() => get('/api/admin/vehicle-service-requests'), []);
-  const insurers = useLoad(() => get('/api/admin/insurers'), []);
-  const inspectionPartners=useLoad(()=>get('/api/admin/inspection-partners'),[]);
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':vehicle-services-admin';
+  const scopeRef=useRef(scope);
+  scopeRef.current=scope;
+  const [draftScope,setDraftScope]=useState('');
+  const currentDraft=draftScope===scope;
+  const list=useAdminScopedResource<any[]>('/api/admin/vehicle-service-requests',scope,admin);
+  const insurers=useAdminScopedResource<any[]>('/api/admin/insurers',scope,admin);
+  const inspectionPartners=useAdminScopedResource<any[]>('/api/admin/inspection-partners',scope,admin);
+  const rows=Array.isArray(list.data)?list.data:null;
+  const eligibleInsurers=Array.isArray(insurers.data)?insurers.data:[];
+  const eligibleInspectors=Array.isArray(inspectionPartners.data)?inspectionPartners.data:[];
   const [selectedInsurers, setSelectedInsurers] = useState<Record<string, string>>({});
   const [direction,setDirection]=useState<'insurance'|'inspection'>('insurance');
   const { busy, run } = useAction();
@@ -17,6 +36,13 @@ export function VehicleServicesQueue() {
   const [payoutReferences,setPayoutReferences]=useState<Record<string,string>>({});
   const [reversalAmounts,setReversalAmounts]=useState<Record<string,string>>({});
   const [reversalReasons,setReversalReasons]=useState<Record<string,string>>({});
+  const [actionError,setActionError]=useState('');
+  useEffect(()=>{
+    setDraftScope(scope);setSelectedInsurers({});setNotes({});setExpiry({});
+    setAccrualAmounts({});setAccrualReasons({});setPayoutAmounts({});
+    setPayoutReferences({});setReversalAmounts({});setReversalReasons({});
+    setActionError('');setDirection('insurance');
+  },[scope]);
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -28,26 +54,47 @@ export function VehicleServicesQueue() {
     need_documents: ['in_review', 'cancelled'],
     sent_to_partner: ['completed', 'rejected', 'cancelled'],
   };
-  async function change(id: string, status: string) {
-    const note = (notes[id] ?? '').trim();
-    // Explain refusals and document requests before updating the client-visible status.
-    if (['rejected', 'need_documents'].includes(status) && !note) {
-      window.alert('Укажите причину отказа или какие документы нужны клиенту.');
+  async function change(id:string,status:string,kind:string) {
+    const startedAs=scope;
+    const note=(currentDraft?(notes[id]??''):'').trim();
+    const expiration=currentDraft?(expiry[id]??''):'';
+    if(['rejected','need_documents'].includes(status)&&!note){
+      setActionError('Укажите причину отказа или какие документы нужны клиенту.');
       return;
     }
-    const r = await run(() => patch(`/api/admin/vehicle-service-requests/${id}`, {
-      status, note: note || undefined,
-      policyExpiresOn: status === 'completed' && expiry[id] ? expiry[id] : undefined,
-    }), 'Статус обновлён');
-    if (r) { setNotes(previous => { const nextNotes = { ...previous }; delete nextNotes[id]; return nextNotes; }); list.reload(); }
+    if(status==='completed'&&kind==='insurance'&&!validFutureDate(expiration)){
+      setActionError('Для завершения страхования нужна корректная дата окончания полиса позже сегодняшнего дня.');
+      return;
+    }
+    setActionError('');
+    const result=await run(()=>patch(`/api/admin/vehicle-service-requests/${id}`,{
+      status,note:note||undefined,
+      policyExpiresOn:status==='completed'&&kind==='insurance'?expiration:undefined,
+    }),'Статус обновлён');
+    if(scopeRef.current!==startedAs)return;
+    if(result){
+      setNotes(old=>({...old,[id]:''}));setExpiry(old=>({...old,[id]:''}));
+      list.reload();
+    }else setActionError('Изменение статуса не подтверждено. Сверьте очередь перед повтором.');
   }
+  if(!admin)return <div className="card stack">
+    <h2>Страховые заявки и техосмотры</h2>
+    <p role="alert">Управление назначениями и финансовыми начислениями доступно только администратору.</p>
+  </div>;
   return <div className="stack">
     <h2>{direction==='insurance'?'Страховые заявки':'Заявки на техосмотр'}</h2>
     <nav className="partner-workspaces" aria-label="Направление заявок">
       <button type="button" className={'btn ghost'+(direction==='insurance'?' active':'')} aria-pressed={direction==='insurance'} onClick={()=>setDirection('insurance')}>Страхование</button>
       <button type="button" className={'btn ghost'+(direction==='inspection'?' active':'')} aria-pressed={direction==='inspection'} onClick={()=>setDirection('inspection')}>Техосмотры</button>
     </nav>
-    {!list.data ? <Loading error={list.error} /> : list.data.filter((r:any)=>r.kind===direction).length === 0 ? <div className="empty">Заявок в этом направлении пока нет</div> : list.data.filter((r:any)=>r.kind===direction).map((r: any) =>
+    {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+    {!rows ? <div className="card stack" role={list.error?'alert':'status'}>
+      {list.error?'Не удалось загрузить заявки: '+list.error:
+        list.data?'Получены некорректные данные. Обновите реестр.':'Загружаем заявки…'}
+      <button type="button" className="btn ghost small" onClick={list.reload}>
+        Повторить загрузку заявок
+      </button>
+    </div> : rows.filter((r:any)=>r.kind===direction).length === 0 ? <div className="empty">Заявок в этом направлении пока нет</div> : rows.filter((r:any)=>r.kind===direction).map((r: any) =>
       <div className="card" key={r.id}>
         <div className="between"><b>{r.kind === 'insurance' ? 'Страхование' : 'Техосмотр'} · {r.brand} {r.model ?? ''}</b><span className="pill">{labels[r.status] ?? r.status}</span></div>
         <span className="note">{r.plate ?? 'Без номера'} · {fmtTime(r.created_at)}</span>
