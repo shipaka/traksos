@@ -25,6 +25,16 @@ before(async()=>{
 });
 after(()=>t.close());
 
+test('admin demand filter rejects invalid SQL time windows before querying',async()=>{
+  for(const suffix of ['days=abc','days=NaN','days=Infinity','days=','days=1.5',
+    'wait=unknown','wait=Infinity','wait=-1.5']){
+    const res=await t.api('GET','/api/admin/demand?'+suffix,undefined,admin.token);
+    assert.equal(res.status,400,'invalid filter must never cause a SQL 500: '+suffix);
+  }
+  assert.equal((await t.api('GET','/api/admin/demand?days=7&wait=15',
+    undefined,admin.token)).status,200);
+});
+
 test('admin demand groups historical unmet requests by service and coarse zone only',async()=>{
   assert.equal((await t.api('GET','/api/admin/demand?days=30',undefined,client.token)).status,403,
     'demand history and counts must never be publicly accessible');
