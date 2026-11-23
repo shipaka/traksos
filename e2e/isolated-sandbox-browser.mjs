@@ -77,9 +77,16 @@ try{
         await page.waitForTimeout(200);
         if(await page.locator('[role="dialog"][aria-modal="true"]').count())
           throw Error('Unexpected blocking dialog after login in sandbox '+role);
-        const marker=await page.locator('header.top .sandbox-test-badge').filter({hasText:'Тест'}).first().innerText();
-        if(marker.trim()!=='Тест')
-          throw Error('Compact sandbox badge missing for '+role);
+        const marker=(await page.locator('header.top .sandbox-test-badge')
+          .filter({hasText:'Тест'}).first().innerText()).trim();
+        // Direct sandbox tickets use a small "Тест" badge, while supervised
+        // owner/admin handoffs show Admin and, when signed, a back action.
+        if(!['Тест','Admin · Тест','Admin · Тест · ← Назад'].includes(marker))
+          throw Error('Unexpected sandbox badge: '+role+' '+marker);
+        if(qaReturnUrl && !marker.includes('Назад'))
+          throw Error('Signed owner handoff lost Admin/Back: '+role);
+        if(role==='admin' && !marker.includes('Admin'))
+          throw Error('Admin sandbox supervisor badge missing');
         const content=await page.locator('main').first().innerText();
         if(!content.trim() || /Вход по номеру телефона|Отсутствует приглашение/.test(content))
           throw Error('Role did not open a real authenticated cabinet: '+role);
