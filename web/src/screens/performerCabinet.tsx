@@ -394,7 +394,7 @@ function PointsPref() {
   const ex = me?.performer?.extras ?? {};
   const on = ex.pointsAuto !== false;
   const [max, setMax] = useState<number | null>(ex.pointsMax ?? null);
-  if (!pts.data) return null;
+  if (!pts.data) return <div className="note" role={pts.error ? 'alert' : undefined}>{pts.error ? 'Не удалось загрузить баланс баллов. Повторите попытку позднее.' : 'Загружаем баланс баллов…'}</div>;
   const save = (body: any, ok: string) => run(() => put('/api/performer/extras', body), ok).then((r) => r && reload());
   return (
     <div className="card">
@@ -515,6 +515,16 @@ function FilterSectionForUser() {
   const set = (patch: Partial<typeof f>) => setF({ ...f, ...patch });
   const isTow = p.kind === 'tow';
   const corridor = pricing.data?.tiers;
+  const extraNumbers: [string, number, number, string][] = [
+    ['weekendPct', 0, 100, 'Выходные'],
+    ['nightPct', 0, 100, 'Ночь'],
+    ['holidayPct', 0, 100, 'Праздники'],
+    ['waitRate', 0, 1_000_000, 'Ожидание'],
+    ['maxMass', 1, 100, 'Максимальная масса'],
+  ];
+  const invalidExtra = extraNumbers.find(([key, min, max]) =>
+    x[key] != null && x[key] !== '' && (!Number.isFinite(Number(x[key])) ||
+      Number(x[key]) < min || Number(x[key]) > max));
   const selectedBrands = BRANDS.filter(b => b !== 'Прочие' && Object.prototype.hasOwnProperty.call(f.brands,b));
   const tuned = selectedBrands.length;
   const body = () => isTow
@@ -668,7 +678,8 @@ function FilterSectionForUser() {
               <Field label="Час работы"><RubInput value={f.hourPrice} onChange={(v) => set({ hourPrice: v })} placeholder={corridor ? rub(corridor[f.tier].hour) : ''} /></Field>
             </div>
           )}
-          {!isTow && <span className="note">Пусто — цена уровня по умолчанию. Коридор площадки: 1 500–7 000 ₽.</span>}
+          {!isTow && <span className="note">Пусто — тариф выбранного уровня по умолчанию. Актуальные суммы загружаются из настроек площадки.</span>}
+          {pricing.error && <span className="note" role="status">Тарифные подсказки временно недоступны. Введённые вами суммы можно сохранить после проверки ограничений на сервере.</span>}
           <Field label="За КАД, ₽ за км" hint="Считается расстояние × 1,5 — дорога туда и половина обратно.">
             <RubInput value={f.kmRate} onChange={(v) => set({ kmRate: v })} placeholder={isTow ? '110 ₽' : '50 ₽'} />
           </Field>
@@ -680,7 +691,7 @@ function FilterSectionForUser() {
             {num('holidayPct', '0', 'Праздники, %')}
             {num('waitRate', 'например 900', 'Ожидание, ₽/ч')}
           </div>
-          <span className="note">Время ожидания и возможные надбавки — ориентиры для последующего согласования. Система не списывает их автоматически.</span>
+          <span className="note">Время ожидания и возможные надбавки — ориентиры для последующего согласования. Система не списывает их автоматически. Чтобы убрать ранее установленную процентную надбавку, укажите 0; пустое поле не удаляет прежнее значение.</span>
           {!isTow && (
             <>
               <b>Предоплата за работу</b>
@@ -693,7 +704,8 @@ function FilterSectionForUser() {
         </div>
       )}
 
-      <button className="btn" disabled={busy || (!isTow && !f.specialties.length) || (isTow && !x.prepAck)} onClick={async () => {
+      {invalidExtra && <p className="err" role="alert">{invalidExtra[3]}: допустимый диапазон от {invalidExtra[1]} до {invalidExtra[2]}. Исправьте значение перед сохранением.</p>}
+      <button className="btn" disabled={busy || !!invalidExtra || (!isTow && !f.specialties.length) || (isTow && !x.prepAck)} onClick={async () => {
         const extras = extrasBody();
         Object.keys(extras).forEach((k) => extras[k] === undefined && delete extras[k]);
         const result = await run(
