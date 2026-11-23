@@ -91,6 +91,17 @@ try {
         const currentImageUrl=await currentImage;
         result.currentImageLoaded=currentImageUrl.startsWith('blob:');
         URL.revokeObjectURL(currentImageUrl);
+
+        module.setToken('CI-IMAGE-EXPIRED');
+        const image401=module.authedImage('/api/private-image').catch(e=>e);
+        result.expiredImageAuth=pendingImages[2]?.auth;
+        pendingImages[2].resolve(new Response(JSON.stringify({error:'expired_session'}),{
+          status:401,headers:{'content-type':'application/json'}
+        }));
+        const expiredImage=await image401;
+        result.expiredImageStatus=expiredImage.status;
+        result.afterExpiredImage=module.getToken();
+        result.expiredEventsAfterImage=expiredEvents;
       } finally {
         window.fetch=originalFetch;
       }
@@ -119,6 +130,12 @@ try {
     assert.equal(actual.newImageAuth,'Bearer CI-IMAGE-NEW');
     assert.equal(actual.currentImageLoaded,true,
       'private images for the current account still load normally');
-    console.log('PASS: stale 200/401 and private images cannot mix account data');
+    assert.equal(actual.expiredImageAuth,'Bearer CI-IMAGE-EXPIRED');
+    assert.equal(actual.expiredImageStatus,401);
+    assert.equal(actual.afterExpiredImage,null,
+      'expired private-image request must clear its own bearer token');
+    assert.equal(actual.expiredEventsAfterImage,2,
+      'image 401 must unmount expired workspace just like a JSON API 401');
+    console.log('PASS: stale 200/401, private images, and image expiry cannot mix accounts');
   } finally { await context.close(); }
 } finally { await browser.close(); }

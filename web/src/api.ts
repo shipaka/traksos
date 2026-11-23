@@ -257,6 +257,13 @@ export async function authedImage(path: string) {
   // Never return old-account document pixels as a reusable blob URL.
   if (requestToken && token !== requestToken)
     throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+  if (r.status === 401 && requestToken) {
+    // The image may be the first authenticated request to discover expiry.
+    // Match ordinary API behavior and immediately remove the old workspace.
+    setToken(null);
+    window.dispatchEvent(new Event('traksos-auth-expired'));
+    location.hash = '#/login';
+  }
   if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
   const data = await r.blob();
   if (requestToken && token !== requestToken)
