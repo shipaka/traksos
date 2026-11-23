@@ -377,17 +377,27 @@ try{
           await clear.waitFor({state:'visible',timeout:15000});
           await clear.click(); // real DOM pointer event; protected PUT /api/base
           await clear.waitFor({state:'detached',timeout:15000});
-          const result=await page.evaluate(async()=>{
+          const verified=await page.evaluate(async()=>{
             const token=localStorage.getItem('traksos.token');
-            const response=await fetch('/api/base',{headers:{authorization:'Bearer '+token}});
-            if(!response.ok)throw Error('Cannot read saved station');
-            return (await response.json()).center;
+            const headers={authorization:'Bearer '+token};
+            const [stationResponse,mapResponse]=await Promise.all([
+              fetch('/api/base',{headers,cache:'no-store'}),
+              fetch('/api/public/partner-map',{cache:'no-store'})
+            ]);
+            if(!stationResponse.ok || !mapResponse.ok)
+              throw Error('Cannot verify real saved station and public map');
+            return {center:(await stationResponse.json()).center,
+              map:(await mapResponse.json())};
           });
+          const result=verified.center;
           if(result?.lat!==null || result?.lng!==null ||
              result?.public_map_opt_in!==false || result?.public_map_location_verified_at!==null ||
-             result.name!==prepared.name || result.verification!==prepared.verification)
-            throw Error('GPS clear button did not atomically remove the station location: '+
-              JSON.stringify({prepared,result}));
+             result.name!==prepared.name || result.verification!==prepared.verification ||
+             verified.map?.source!=='verified_stationary_opt_in' ||
+             verified.map.points?.some(p=>p.id===result.id))
+            throw Error('GPS clear button did not remove the private/public station location: '+
+              JSON.stringify({prepared,result,publicIdVisible:
+                verified.map.points?.some(p=>p.id===result.id)}));
           await page.screenshot({path:out+'/service-'+width+'-gps-cleared.png',
             fullPage:false,animations:'disabled'});
           console.log('STATIONARY GPS CLEAR BROWSER PASS',width,result.id);
