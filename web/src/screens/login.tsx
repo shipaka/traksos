@@ -383,8 +383,10 @@ export function Login({ driver, entry, serviceContext }: {
       } catch { /* private browsing */ }
       setToken(r.token);
       connectWs();
+      // Publishing the authenticated profile naturally unmounts this guest
+      // form. Navigation after reload is part of the successful login, so do
+      // not treat that intentional unmount as cancellation.
       await reload();
-      if (generation !== authGeneration.current) return;
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
