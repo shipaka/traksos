@@ -1030,6 +1030,58 @@ export function RecommendService({ order, onDone }: { order: any; onDone: (o: an
   );
 }
 
+/** Separate human evidence review for station coordinates. Ordinary approval
+ * grants business access, never claims a real location for the public map. */
+function ServiceLocationReview({center,onDone}:{center:any;onDone:()=>void}){
+  const [kind,setKind]=useState<'official_registry'|'site_visit'|'verified_document'>('official_registry');
+  const [reference,setReference]=useState('');
+  const [confirmed,setConfirmed]=useState(false);
+  const {busy,run}=useAction();
+  if(center.verification!=='approved')return null;
+  if(center.public_map_location_verified_at)return <div className="note">
+    Местоположение отдельно проверено модератором. Появление публичной точки зависит
+    также от добровольного согласия СТО и актуального подтверждения услуг.
+  </div>;
+  return <details className="card flat">
+    <summary><b>Отдельно проверить адрес и координаты для публичной карты</b></summary>
+    <div className="stack" style={{marginTop:12}}>
+      <span className="note">Одобрение организации не подтверждает GPS.
+        Проверьте адрес по независимому достоверному источнику; без доказательства
+        жёлтая точка не публикуется. Не используйте GPS мобильных мастеров.</span>
+      <div className="note">Заявленный адрес: <b>{center.address||'не указан'}</b>.
+        Координаты: {center.lat ?? '—'}, {center.lng ?? '—'}.</div>
+      <label className="stack">Основание проверки
+        <select className="field" value={kind} onChange={e=>setKind(
+          e.target.value as typeof kind)}>
+          <option value="official_registry">Независимый официальный реестр</option>
+          <option value="site_visit">Подтверждённый осмотр места</option>
+          <option value="verified_document">Проверенный документ с адресом</option>
+        </select>
+      </label>
+      <label className="stack">Ссылка / идентификатор проверенного документа или акта
+        <input className="field" value={reference} maxLength={500}
+          placeholder="Реальное основание проверки (не менее 8 символов)"
+          onChange={e=>setReference(e.target.value)}/>
+      </label>
+      <label className="row" style={{alignItems:'flex-start'}}>
+        <input type="checkbox" checked={confirmed}
+          onChange={e=>setConfirmed(e.target.checked)}/>
+        <span>Я лично сверил фактический стационарный адрес и координаты
+          именно этой СТО по указанному источнику.</span>
+      </label>
+      <button className="btn" type="button"
+        disabled={busy||center.paused||reference.trim().length<8||!confirmed}
+        onClick={async()=>{
+          if(await run(()=>post(`/api/admin/services/${center.id}/verify-location`,{
+            kind,reference:reference.trim(),confirmed:true
+          }),'Проверка стационарного адреса записана в журнал')){
+            setReference('');setConfirmed(false);onDone();
+          }
+        }}>Подтвердить проверенное местоположение</button>
+    </div>
+  </details>;
+}
+
 /** Модерация: проверка рембаз */
 export function AdminServices() {
   const l = useLoad(() => get('/api/admin/services'), []);
@@ -1045,9 +1097,10 @@ export function AdminServices() {
           <span className="note">{c.address} · ИНН {c.inn ?? '—'} · {c.phone}</span>
           <span className="note">Принимают: {c.accepts.map((a: string) => ACCEPTS[a]?.[0]).join(', ')} · условия: {c.conditions.map((x: string) => CONDITIONS[x]).join(', ') || '—'}</span>
           {c.verification !== 'approved' && <div className="grid2">
-            <button className="btn small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/services/${c.id}/verify`, { decision: 'approved' }), 'Клиенты увидят этот сервис')) l.reload(); }}>Одобрить</button>
+            <button className="btn small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/services/${c.id}/verify`, { decision: 'approved' }), 'СТО одобрена для работы; координаты проверяются отдельно')) l.reload(); }}>Одобрить</button>
             <button className="btn ghost small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/services/${c.id}/verify`, { decision: 'rejected' }), 'Отказ отправлен')) l.reload(); }}>Отказать</button>
           </div>}
+          <ServiceLocationReview center={c} onDone={l.reload} />
         </div>
       ))}
     </div>
