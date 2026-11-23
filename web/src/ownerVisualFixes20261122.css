@@ -1571,3 +1571,27 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
     background:transparent;pointer-events:auto;
   }
 }
+
+/* Isolated, signed admin test sessions only: persistent visible return control.
+   Never render on public 617/618, production roles or unsupervised previews. */
+.sandbox-supervisor-controls {
+ display:inline-flex;align-items:center;gap:6px;min-width:0;
+}
+.sandbox-supervisor-controls .sandbox-supervisor-badge {
+ min-width:0;flex-shrink:0;
+}
+.sandbox-review-back {
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:6px 8px;min-height:36px;box-sizing:border-box;
+ border:1px solid var(--line);border-radius:8px;
+ color:var(--fg);font-size:12px;font-weight:700;text-decoration:none;
+ white-space:nowrap;
+}
+.sandbox-review-back:focus-visible {
+ outline:2px solid var(--accent);outline-offset:2px;
+}
+@media(max-width:420px){
+ .sandbox-supervisor-controls {gap:4px}
+ .sandbox-supervisor-controls .sandbox-test-badge {padding:5px 6px;font-size:11px}
+ .sandbox-review-back {padding:5px;font-size:11px}
+}
