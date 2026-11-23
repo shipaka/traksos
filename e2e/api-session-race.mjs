@@ -17,9 +17,15 @@ try {
   const context=await browser.newContext({serviceWorkers:'block',locale:'ru-RU'});
   try {
     const page=await context.newPage();
-    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    // Do not mount the real React app here: it imports another instance of
+    // api.ts, causing TWO storage listeners and duplicate external-change
+    // events. This test must own exactly one instance of the transport.
+    await page.route('**/__ci_api_session_race_host',route=>
+      route.fulfill({status:200,contentType:'text/html',
+        body:'<!doctype html><html lang="ru"><head><meta charset="utf-8"></head><body>Isolated CI transport</body></html>'}));
     await page.route('**/__ci_api_session_race.mjs',route=>
       route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
+    await page.goto(BASE+'/__ci_api_session_race_host',{waitUntil:'domcontentloaded'});
     const actual=await page.evaluate(async()=>{
       const module=await import('/__ci_api_session_race.mjs');
       const originalFetch=window.fetch.bind(window);
