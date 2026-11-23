@@ -191,6 +191,44 @@ try {
        throw Error('1536x864 approved 617.png geometry regressed: '+JSON.stringify(art));
    }
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
+   // The approved 617 compact Russia graphic remains intact. The owner has
+   // separately approved a real ~70% partner-network modal. Test actual
+   // keyboard, close/focus, visible map and honest network source; no mock pins.
+   const launchMap=page.getByRole('button',{name:'Развернуть карту партнёров'});
+   await launchMap.waitFor({state:'visible'});
+   await launchMap.click();
+   const network=page.getByRole('dialog',{name:'Карта партнёров TrakSOS'});
+   await network.waitFor({state:'visible'});
+   const modalBox=await network.boundingBox();
+   if(!modalBox || modalBox.width<width*.62 || modalBox.width>width*.96 ||
+      modalBox.height<900*.57 || modalBox.height>900*.94)
+     throw Error(width+': network modal is not around 70vw×70vh '+JSON.stringify(modalBox));
+   const zoomButton=network.getByRole('button',{name:'Приблизить карту'});
+   await zoomButton.click();
+   const tiles=network.locator('.tr-network-tiles img');
+   if(await tiles.count()<3)throw Error(width+': interactive map has no geographic base');
+   await network.getByRole('button',{name:'Показать Россию'}).click();
+   const actual=await page.evaluate(async()=>{
+     try{const response=await fetch('/api/public/partner-map');
+       if(!response.ok)return {ok:false,points:[]};
+       const body=await response.json();
+       return {ok:body.source==='verified_stationary_opt_in',points:body.points||[]};
+     }catch{return {ok:false,points:[]};}
+   });
+   if(actual.ok && actual.points.length===0 && await network.locator('.tr-network-marker').count()!==0)
+     throw Error(width+': visual map invented yellow partner pins absent from real backend');
+   await page.screenshot({path:'e2e/shots/owner20-pc/partner-network-'+width+'.png',
+     fullPage:false,animations:'disabled'});
+   await page.keyboard.press('Escape');
+   await network.waitFor({state:'detached'});
+   if(!await launchMap.evaluate(node=>document.activeElement===node))
+     throw Error(width+': network ESC did not restore keyboard focus');
+   const footerMap=page.getByRole('button',{name:'Подробнее о покрытии →'});
+   await footerMap.click();
+   await network.waitFor({state:'visible'});
+   await page.mouse.click(3,3);
+   await network.waitFor({state:'detached'});
+
     const botShortcut=page.locator('.owner20-quick-trakbot');
     if(await botShortcut.count()!==1) throw Error('TrakBot shortcut missing');
     const mascotFits=await botShortcut.evaluate(tile=>{
