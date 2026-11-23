@@ -6,59 +6,15 @@ import { SERVICES, STATUS } from '../dict.ts';
 import { useLoad, useMe, Loading } from '../ui.tsx';
 import './dispatcherDesk.css';
 
-type OrderEvent = { type: string; at: string };
-type LiveOrder = {
-  id: string; number: number; service: string; status: string; is_sos: boolean;
-  created_at: string; accepted_at?: string | null; arrived_at?: string | null;
-  case_root_id?: string | null; address?: string | null; zone?: string | null;
-  client_name?: string | null; performer_name?: string | null; events: OrderEvent[];
-};
+import { attention, ageMinutes, type LiveOrder } from './dispatcherAttention20261124.ts';
+function ageLabel(minutes: number) {
+  return minutes < 60 ? minutes + ' мин' : Math.floor(minutes / 60) + ' ч ' + minutes % 60 + ' мин';
+}
 type Incident = { id: string; number: number; service: string; status: string; is_sos: boolean;
   elapsed_minutes: number; address?: string | null; review_state?: string | null };
 type Demand = { incidents: Incident[] };
 type View = 'all' | 'alerts' | 'sos' | 'searching';
 
-function ageMinutes(date: string | undefined | null, now: number) {
-  if (!date) return 0;
-  const value = new Date(date).getTime();
-  return Number.isFinite(value) ? Math.max(0, Math.floor((now - value) / 60000)) : 0;
-}
-function ageLabel(minutes: number) {
-  return minutes < 60 ? minutes + ' мин' : Math.floor(minutes / 60) + ' ч ' + minutes % 60 + ' мин';
-}
-// The API returns only the last five order events, not accepted_at or
-// arrived_at. Never substitute order creation time for a missing stage
-// transition: that flags a newly accepted worker as already late.
-function latestEventAt(o: LiveOrder, types?: readonly string[]): string | null {
-  const matching = o.events.filter(e => !types || types.includes(e.type))
-    .map(e => new Date(e.at).getTime())
-    .filter(ms => Number.isFinite(ms));
-  return matching.length ? new Date(Math.max(...matching)).toISOString() : null;
-}
-// Thresholds indicate a need to review a case; not evidence of misconduct.
-function attention(o: LiveOrder, now: number): string | null {
-  const last = latestEventAt(o);
-  const searchSince = latestEventAt(o, ['dispatch_started', 'retry', 'performer_dropped']);
-  if (o.status === 'searching' &&
-      ageMinutes(searchSince ?? o.created_at, now) >= (o.is_sos ? 3 : 10))
-    return 'Долго ищем исполнителя';
-  const approval = latestEventAt(o, ['owner_approval_requested']);
-  if (o.status === 'awaiting_owner' && approval && ageMinutes(approval, now) >= 10)
-    return 'Ожидается решение владельца';
-  const accepted = o.accepted_at ?? latestEventAt(o, ['accepted']);
-  if (o.status === 'accepted' && accepted && ageMinutes(accepted, now) >= 10)
-    return 'Нет отметки выезда';
-  if (o.status === 'en_route' && last && ageMinutes(last, now) >= 40)
-    return 'Давно нет событий в пути — проверьте ETA';
-  const arrived = o.arrived_at ?? latestEventAt(o, ['arrive']);
-  if (o.status === 'arrived' && arrived && ageMinutes(arrived, now) >= 30)
-    return 'Давно на месте — уточнить ход работ';
-  if (o.status === 'working' && last && ageMinutes(last, now) >= 90)
-    return 'Давно нет обновлений о работе';
-  if (o.status === 'awaiting_confirmation' && last && ageMinutes(last, now) >= 25)
-    return 'Ожидается подтверждение';
-  return null;
-}
 const stage = (status: string) => STATUS[status]?.name ?? status;
 const service = (id: string) => SERVICES[id]?.name ?? id;
 
