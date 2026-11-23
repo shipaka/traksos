@@ -100,3 +100,18 @@ test('real staff escalation is taught accurately and does not auto-create a tick
   // Only help routes are suggested; there is no attempt to call a production endpoint.
   assert.ok(scenarioLibrary.every(x=>x.link.startsWith('/')));
 });
+
+
+test('owner and driver course teaches the real verified-only dispatch policy',()=>{
+  for(const role of ['owner','driver'] as const){
+    const item=allowedScenario(role,'verified-only-search');
+    assert.ok(item,role+' must receive verification choices');
+    assert.equal(item.steps.length,3);
+    const teaching=item.steps.map(step=>step.situation+' '+step.where+' '+step.why+' '+step.choices.map(c=>c.feedback).join(' ')).join(' ');
+    assert.match(teaching,/Только проверенные/);
+    assert.match(teaching,/непроверенн/);
+    assert.match(teaching,/сервер сохранит/);
+  }
+  assert.equal(allowedScenario('master','verified-only-search'),null);
+  assert.equal(allowedScenario('insurer','verified-only-search'),null);
+});
