@@ -982,6 +982,13 @@ export class OrdersService {
     return current ? [o.client_id, o.created_by] : [o.client_id];
   }
 
+  /** Authorized owner plus the driver currently assigned to this order's car. */
+  async customerRecipientsForOrder(orderId: string): Promise<string[]> {
+    const order = await this.db.one<{id:string;client_id:string;created_by:string}>(
+      'select id,client_id,created_by from orders where id=$1', [orderId]);
+    return order ? this.customerRecipients(order) : [];
+  }
+
   async participants(orderId: string) {
     const o = await this.db.one<any>(
       `select o.client_id,
