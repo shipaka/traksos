@@ -9,6 +9,16 @@ const ENTRY_KIND: Record<string, string> = {
 };
 import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
 
+/** A completed old-session request may not navigate or broadcast in a new one. */
+function useSupportSessionAlive() {
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
+  return alive;
+}
+
 export function SupportList() {
   const { me } = useMe();
   return <SupportListSession key={me?.id ?? 'guest'} />;
@@ -50,6 +60,7 @@ export function SupportNew() {
 }
 
 function SupportNewSession({ orderId }: { orderId?: string }) {
+  const alive = useSupportSessionAlive();
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
   // Backend deduplicates order-linked tickets, but not standalone requests.
@@ -77,7 +88,7 @@ function SupportNewSession({ orderId }: { orderId?: string }) {
           const r = await run(() => post('/api/support', {
             topic, text: text.trim(), orderId
           }), 'Обращение зарегистрировано');
-          if (r) location.replace(`#/support/${r.id}`);
+          if (r && alive.current) location.replace(`#/support/${r.id}`);
           // If the mobile response was lost, do not erase the draft. The user
           // can inspect the list before deliberately retrying a new ticket.
         } finally { sendingRef.current = false; }
@@ -93,6 +104,7 @@ export function SupportThread({ id }: { id: string }) {
 }
 
 function SupportThreadSession({ id }: { id: string }) {
+  const alive = useSupportSessionAlive();
   const { me, mode } = useMe();
   const th = useLoad(() => get(`/api/support/${id}`), [id], (e) => e.type === 'support' && e.ticketId === id);
   const { busy, run } = useAction();
@@ -153,7 +165,7 @@ function SupportThreadSession({ id }: { id: string }) {
             sendingRef.current = true;
             try {
               const posted = await run(() => post(`/api/support/${id}/messages`, { body: text }), null);
-              if (posted) {
+              if (posted && alive.current) {
                 setText('');
                 void th.reload();
               }
@@ -171,7 +183,7 @@ function SupportThreadSession({ id }: { id: string }) {
         closingRef.current = true;
         try {
           const closed = await run(() => post(`/api/support/${id}/close`), 'Обращение закрыто');
-          if (closed) void th.reload();
+          if (closed && alive.current) void th.reload();
         } finally { closingRef.current = false; }
       }}>{staff ? 'Закрыть обращение' : 'Вопрос решён — закрыть'}</button>}
       {t.status === 'closed' && <button className="btn" onClick={() => go(t.order ? `support/new?order=${t.order.id}` : 'support/new')}>Новое обращение</button>}
@@ -257,6 +269,7 @@ export function Notifications() {
 }
 
 function NotificationsSession() {
+  const alive = useSupportSessionAlive();
   const { me } = useMe();
   const list = useLoad(() => get('/api/me/notifications'), [me?.id]);
   const [readError,setReadError]=useState('');
@@ -271,19 +284,22 @@ function NotificationsSession() {
         // Only the owning user can mark this actual row as read. The backend
         // verifies user_id and returns 404 for foreign/missing IDs.
         await post(`/api/me/notifications/${n.id}/read`);
+        if (!alive.current) return;
         window.dispatchEvent(new Event('traksos:notifications-read'));
         void list.reload(); // update read styling for non-navigating messages
       } catch {
-        setReadError('Не удалось отметить уведомление прочитанным. Повторите после восстановления связи.');
-        // The destination may still be useful offline; don't report success.
+        if (alive.current)
+          setReadError('Не удалось отметить уведомление прочитанным. Повторите после восстановления связи.');
+        // The destination may still be useful offline for THIS account.
       }
     }
+    if (!alive.current) return;
     if (n.data?.orderId) go(`order/${n.data.orderId}`);
     else if (n.data?.ticketId) go(`support/${n.data.ticketId}`);
     else if (n.kind === 'verification') go('work/docs');
     else if (n.kind === 'balance') go('work');
     else if (n.kind === 'pricing') go('profile');
-    setOpeningId(null);
+    if (alive.current) setOpeningId(null);
   };
   return (
     <main>
@@ -293,10 +309,14 @@ function NotificationsSession() {
           setMarkingAll(true);setReadError('');
           try{
             await post('/api/me/notifications/read');
+            if (!alive.current) return;
             await list.reload();
-            window.dispatchEvent(new Event('traksos:notifications-read'));
-          }catch{setReadError('Не удалось отметить уведомления: соединение недоступно');}
-          finally{setMarkingAll(false);}
+            if (alive.current) window.dispatchEvent(new Event('traksos:notifications-read'));
+          }catch{
+            if (alive.current) setReadError('Не удалось отметить уведомления: соединение недоступно');
+          }finally{
+            if (alive.current) setMarkingAll(false);
+          }
         }}>Прочитать все</button>
       </div>
       {readError && <p className="err" role="alert">{readError}</p>}
