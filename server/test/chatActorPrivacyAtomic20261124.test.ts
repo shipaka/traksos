@@ -21,6 +21,9 @@ test('Chat: invited but NOT selected performer sees limited order preview, never
     const v=ok(await t.api('POST','/api/vehicles',vehicleBody(451),owner.token));
     const order=ok(await t.api('POST','/api/orders',orderBody(v.id),owner.token)).order;
     assert.ok(order.id);
+    // In the standalone test there is no online master, so dispatch normally
+    // ends in no_performer. Explicitly retain an OPEN status to test chat ACL.
+    await t.db.query("update orders set status='searching' where id=$1",[order.id]);
     ok(await t.api('POST',`/api/orders/${order.id}/messages`,
       {body:'Private owner-chat content 452'},owner.token));
     await t.db.query(`
@@ -36,6 +39,10 @@ test('Chat: invited but NOT selected performer sees limited order preview, never
     assert.ok(posting.status===400||posting.status===403,'invitation is not authority to write');
     const ownerChat=ok(await t.api('GET',`/api/orders/${order.id}/messages`,undefined,owner.token));
     assert.ok(ownerChat.messages.some((m:any)=>m.body.includes('Private owner-chat')));
+    await t.db.query("update orders set status='no_performer' where id=$1",[order.id]);
+    assert.equal((await t.api('POST',`/api/orders/${order.id}/messages`,
+      {body:'A terminal order must not reopen chat'},owner.token)).status,409,
+      'real terminal chat state remains a business constraint');
     for(const cursor of ['-1','Infinity','NaN','2.5','9007199254740992']){
       assert.equal((await t.api('GET',`/api/orders/${order.id}/messages?after=${cursor}`,
         undefined,owner.token)).status,400,'invalid pagination cursor must not query DB');
@@ -54,6 +61,7 @@ test('Chat: revoked fleet driver loses read/write rights, owner retains records'
     assert.ok(qr);
     ok(await t.api('POST',`/api/qr/${qr}/join`,{},driver.token));
     const order=ok(await t.api('POST','/api/orders',orderBody(v.id),driver.token)).order;
+    await t.db.query("update orders set status='searching' where id=$1",[order.id]);
     ok(await t.api('POST',`/api/orders/${order.id}/messages`,
       {body:'Private driver incident details'},driver.token));
     const before=ok(await t.api('GET',`/api/orders/${order.id}/messages`,undefined,driver.token));
@@ -82,6 +90,7 @@ test('Chat: failure of optional notification must NOT make committed user messag
     // A currently linked driver is an actual recipient; failure of that
     // recipient's inbox will be injected below.
     const order=ok(await t.api('POST','/api/orders',orderBody(v.id),driver.token)).order;
+    await t.db.query("update orders set status='searching' where id=$1",[order.id]);
     await t.db.exec(`
       create function reject_chat_push_20261124() returns trigger
       language plpgsql as $$ begin
