@@ -124,7 +124,7 @@ test('blocked account SMS proof cannot rewrite password/roles or issue a new ses
   });
   assert.equal(rejected.status,403);
   assert.equal(rejected.body.error,'blocked');
-  assert.ok(rejected.body.appealToken);
+  assert.ok(rejected.body.data?.appealToken);
   const current=await t.db.one<{password_hash:string;roles:string[]}>(
     'select password_hash,roles from users where id=$1',[registered.user.id]);
   assert.deepEqual(current,old,'blocked identity must remain unchanged');
