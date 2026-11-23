@@ -114,3 +114,47 @@ test('failed audit INSERT rolls back both vehicle and order state',async()=>{
     await t.db.exec('drop trigger test_refuse_vehicle_audit on order_events; drop function refuse_onsite_audit();');
   }
 });
+
+
+test('parallel wait/resume calls charge waiting only once and preserve one system message',async()=>{
+  await t.db.query("update orders set status='arrived',wait_started_at=null,wait_minutes=0,part_mode=null where id=$1",[orderId]);
+  const waiting=await Promise.all(Array.from({length:10},()=>t.api(
+    'POST',`/api/orders/${orderId}/part`,{mode:'wait'},master.token)));
+  assert.ok(waiting.every(x=>x.status===200),JSON.stringify(waiting.map(x=>[x.status,x.body?.error])));
+  const count=await t.db.one<{n:number}>(`select count(*)::int as n from order_events
+    where order_id=$1 and type='part' and data->>'mode'='wait'`,[orderId]);
+  assert.equal(count?.n,1,'repeated wait does not issue repeated financial events');
+  const messages=await t.db.one<{n:number}>(`select count(*)::int as n
+    from chat_messages where order_id=$1 and kind='system'
+      and body like 'Нужна запчасть — мастер ждёт.%'`,[orderId]);
+  assert.equal(messages?.n,1,'one durable system message per actual transition');
+  const resumed=await Promise.all(Array.from({length:8},()=>t.api(
+    'POST',`/api/orders/${orderId}/part`,{mode:'resume'},master.token)));
+  assert.equal(resumed.filter(x=>x.status===200).length,1);
+  assert.ok(resumed.filter(x=>x.status!==200).every(x=>x.status===409&&x.body.error==='not_waiting'));
+  const order=await t.db.one<{wait_minutes:number;wait_started_at:Date|null}>(
+    'select wait_minutes,wait_started_at from orders where id=$1',[orderId]);
+  assert.equal(order?.wait_started_at,null);
+  assert.equal(order?.wait_minutes,1,'parallel resume never charges the same wait twice');
+});
+
+test('system-message failure rolls back waiting timer, audit and all state',async()=>{
+  const before=await t.db.one<any>(
+    'select wait_minutes,wait_started_at,part_mode from orders where id=$1',[orderId]);
+  const eventCount=await events();
+  await t.db.exec(`create function refuse_onsite_chat() returns trigger as $$
+    begin if NEW.kind='system' and NEW.body like 'Нужна запчасть%' then
+      raise exception 'test-only forced chat failure';
+    end if;return NEW;end $$ language plpgsql;
+    create trigger test_refuse_part_chat before insert on chat_messages
+      for each row execute function refuse_onsite_chat();`);
+  try{
+    const failed=await t.api('POST',`/api/orders/${orderId}/part`,{mode:'wait'},master.token);
+    assert.equal(failed.status,500);
+    assert.deepEqual(await t.db.one<any>(
+      'select wait_minutes,wait_started_at,part_mode from orders where id=$1',[orderId]),before);
+    assert.deepEqual(await events(),eventCount);
+  }finally{
+    await t.db.exec('drop trigger test_refuse_part_chat on chat_messages; drop function refuse_onsite_chat();');
+  }
+});
