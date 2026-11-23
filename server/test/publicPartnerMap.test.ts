@@ -92,6 +92,49 @@ test('changing stationary address revokes old opt-in and public coordinate proof
   assert.equal(ok(await t.api('GET','/api/public/partner-map')).points[0].lat,59.96);
 });
 
+test('explicitly cleared stationary GPS is persisted and immediately unpublished; omitted keys preserve it',async()=>{
+  const map=async()=>ok(await t.api('GET','/api/public/partner-map')).points;
+  const cabinet=async()=>ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  const checkPublished=async()=>{
+    const c=await cabinet();
+    assert.equal(c.lat,59.96);
+    assert.equal(c.lng,30.32);
+    assert.equal(c.public_map_opt_in,true);
+    assert.ok(c.public_map_location_verified_at);
+    assert.equal((await map()).some((p:any)=>p.id===centerId),true);
+  };
+  const restore=async(label:string)=>{
+    ok(await t.api('PUT','/api/base',{lat:59.96,lng:30.32},service.token));
+    ok(await t.api('POST',`/api/admin/services/${centerId}/verify-location`,{
+      kind:'site_visit',reference:'TEST-ONLY-RECHECK-AFTER-'+label,confirmed:true
+    },admin.token));
+    ok(await t.api('PUT','/api/service/public-map',{enabled:true},service.token));
+    await checkPublished();
+  };
+  await checkPublished();
+  ok(await t.api('PUT','/api/base',{},service.token));
+  await checkPublished(); // no update fields supplied = no change and no revocation
+  for(const [label,body,wantLat,wantLng] of [
+    ['BOTH',{lat:null,lng:null},null,null],
+    ['LAT',{lat:null},null,30.32],
+    ['LNG',{lng:null},59.96,null],
+  ] as const){
+    ok(await t.api('PUT','/api/base',body,service.token));
+    const cleared=await cabinet();
+    assert.equal(cleared.lat,wantLat,label+' lat cleared by nullable API');
+    assert.equal(cleared.lng,wantLng,label+' lng cleared by nullable API');
+    assert.equal(cleared.public_map_opt_in,false,label+' old consent revoked');
+    assert.equal(cleared.public_map_opted_at,null,label+' opt-in timestamp revoked');
+    assert.equal(cleared.public_map_location_verified_at,null,label+' old geo proof revoked');
+    assert.equal((await map()).some((p:any)=>p.id===centerId),false,label+' stale pin removed');
+    assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
+      label+' cannot re-publish without GPS and independent verification');
+    await restore(label);
+  }
+  ok(await t.api('PUT','/api/base',{lat:59.96,lng:30.32},service.token));
+  await checkPublished(); // same coordinates do not invalidate valid approval
+});
+
 test('two independently consented stations appear; unapproved or no-GPS entries never appear',async()=>{
   const second=await t.login('+79991234563','service');
   const setup=ok(await t.api('PUT','/api/base',{
