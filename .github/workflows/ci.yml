@@ -61,6 +61,8 @@ jobs:
         run: node scripts/verify-knowledge-sync.mjs
       - name: Проверка действующих бизнес-правил 20.11
         run: node scripts/verify-current-policy.mjs
+      - name: Магазин — изоляция корзины между аккаунтами и целостность данных
+        run: node e2e/shop-cart-isolation-20261124.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
