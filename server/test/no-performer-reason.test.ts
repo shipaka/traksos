@@ -189,3 +189,82 @@ test('terminal no-performer result survives notification write outage', async ()
     assert.equal(again.length,1);
   }finally{await t.close();}
 });
+
+test('terminal alert queue stores one inbox row per participant under concurrent workers', async () => {
+  const { setup } = await import('./helpers.ts');
+  const t=await setup();
+  try {
+    const owner=await t.login('+79990003563','client');
+    const driver=await t.login('+79990003564','driver');
+    const order=await t.db.one<{id:string}>(`
+      insert into orders(client_id,created_by,service,zone_id,status,estimate)
+      values ($1,$2,'hydraulics','spb','searching',$3::jsonb) returning id`,
+      [owner.id,driver.id,JSON.stringify({callOut:100000,zoneName:'СПб'})]);
+    assert.ok(order);
+    // Hold the inbox storage unavailable while the terminal search commits,
+    // so multiple drainers really race to claim the same pending intents.
+    await t.db.exec(`create function traksos_test_block_no_performer_notice()
+      returns trigger language plpgsql as $$
+      begin raise exception 'temporary notification storage failure'; end $$;
+      create trigger traksos_test_block_no_performer_notice
+      before insert on notifications for each statement
+      execute function traksos_test_block_no_performer_notice();`);
+    try {
+      await t.app.auction.start(order.id);
+    } finally {
+      await t.db.exec(`drop trigger if exists traksos_test_block_no_performer_notice on notifications;
+        drop function if exists traksos_test_block_no_performer_notice();`);
+    }
+    const queued=await t.db.query<{user_id:string}>(
+      'select user_id from order_no_performer_alerts where order_id=$1',[order.id]);
+    assert.deepEqual(queued.map(r=>r.user_id).sort(),[owner.id,driver.id].sort());
+    const handled=await Promise.all([
+      t.app.auction.flushPendingNoPerformerAlerts(),
+      t.app.auction.flushPendingNoPerformerAlerts(),
+    ]);
+    assert.equal(handled.reduce((a,b)=>a+b,0),2,
+      'FOR UPDATE SKIP LOCKED must not deliver one alert twice');
+    const alerts=await t.db.query<{user_id:string}>(
+      `select user_id from notifications where data->>'orderId'=$1
+       and data ? 'terminalEventId'`,[order.id]);
+    assert.deepEqual(alerts.map(r=>r.user_id).sort(),[owner.id,driver.id].sort());
+    assert.equal(await t.app.auction.flushPendingNoPerformerAlerts(),0);
+  } finally {await t.close();}
+});
+
+test('a retry supersedes an old pending no-performer alert', async () => {
+  const { setup } = await import('./helpers.ts');
+  const t=await setup();
+  try {
+    const client=await t.login('+79990003565','client');
+    const order=await t.db.one<{id:string}>(`
+      insert into orders(client_id,created_by,service,zone_id,status,estimate)
+      values ($1,$1,'hydraulics','spb','searching',$2::jsonb) returning id`,
+      [client.id,JSON.stringify({callOut:100000,zoneName:'СПб'})]);
+    assert.ok(order);
+    await t.db.exec(`create function traksos_test_block_old_alert()
+      returns trigger language plpgsql as $$
+      begin raise exception 'temporary notification storage failure'; end $$;
+      create trigger traksos_test_block_old_alert
+      before insert on notifications for each statement
+      execute function traksos_test_block_old_alert();`);
+    try {
+      await t.app.auction.start(order.id);
+    } finally {
+      await t.db.exec(`drop trigger if exists traksos_test_block_old_alert on notifications;
+        drop function if exists traksos_test_block_old_alert();`);
+    }
+    await t.db.query(
+      `update orders set status='searching' where id=$1 and status='no_performer'`,
+      [order.id]);
+    assert.equal(await t.app.auction.flushPendingNoPerformerAlerts(),0,
+      'do not deliver stale terminal message after a new search starts');
+    const obsolete=await t.db.one<{outcome:string}>(
+      'select outcome from order_no_performer_alerts where order_id=$1',[order.id]);
+    assert.equal(obsolete?.outcome,'obsolete');
+    const notifications=await t.db.query(
+      `select id from notifications where data->>'orderId'=$1
+       and data ? 'terminalEventId'`,[order.id]);
+    assert.equal(notifications.length,0);
+  } finally {await t.close();}
+});
