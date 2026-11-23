@@ -16,7 +16,8 @@ export function RoadsideMap({point,kind='request',address,updatedAt,synthetic=fa
   point:Point|null|undefined;kind?:'request'|'performer'|'service';address?:string|null;
   updatedAt?:number|null;synthetic?:boolean;
 }){
-  const {me}=useMe();
+  // Public/demo embeds may render before the private MeCtx provider exists.
+  const me=useMe()?.me;
   const [approvedFor,setApprovedFor]=useState<string|null>(null);
   const good=valid(point);
   const lat=good?point.lat:0, lng=good?point.lng:0;
