@@ -128,7 +128,7 @@ function EcuHandoffPageInner({id}:{id:string}){
  const [priceRub,setPriceRub]=useState('');
  const [explanation,setExplanation]=useState('');
  const [quoteId,setQuoteId]=useState<string|null>(null);
- const [agree,setAgree]=useState(false);
+ const [agreedTo,setAgreedTo]=useState<string|null>(null);
  const [message,setMessage]=useState('');
  const actionLock=useRef(false);
  const lockAction=async(fn:()=>Promise<any>,label:string,onSuccess:()=>void)=>{
@@ -142,6 +142,10 @@ function EcuHandoffPageInner({id}:{id:string}){
  const d=details.data;
  const price=ecuDiagnosisKopecks(priceRub);
  const quote=d?.quotes?.find((q:any)=>q.id===quoteId);
+ // A checkbox is consent to exactly one immutable quote revision AND price;
+ // refreshing the list must never reuse consent for a changed amount.
+ const confirmationKey=quote?quote.id+':'+quote.version+':'+quote.diagnosis_price:null;
+ const agree=!!confirmationKey && agreedTo===confirmationKey;
  const owner=d?.actor==='owner' && !me?.owner_id;
  const canChat=d?.state==='selected'&&['owner','driver','expert','admin'].includes(d?.actor);
  return <main className="stack">
@@ -204,20 +208,20 @@ function EcuHandoffPageInner({id}:{id:string}){
     <span className="note">Цена диагностики относится только к ней. Ремонт и перепрошивка обсуждаются отдельным согласованием. Без оплаты и автосписаний.</span>
     {d.quotes?.length ? d.quotes.map((q:any)=><label key={q.id} className="opt">
       <input type="radio" name="ecu-quote" checked={quoteId===q.id} onChange={()=>{
-       setQuoteId(q.id);setAgree(false);
+       setQuoteId(q.id);setAgreedTo(null);
       }}/>
       <b>{q.public_name} · {rub(q.diagnosis_price)}</b>
       <small>{q.address}</small><small>{q.explanation} · версия {q.version}</small>
      </label>) : <span className="note">Специалисты ещё не прислали цены.</span>}
     {quote && <>
      <label className="agree"><input type="checkbox" checked={agree}
-      onChange={e=>setAgree(e.target.checked)} />
+      onChange={e=>setAgreedTo(e.target.checked?confirmationKey:null)} />
       Я подтверждаю цену диагностики {rub(quote.diagnosis_price)} по версии {quote.version} и разрешаю выбранному специалисту увидеть VIN и технические заключения этой цепочки. Другие специалисты доступа не получат. Дополнительный ремонт отдельно.</label>
      <button className="btn" disabled={busy||actionLock.current||!agree||!quote}
       onClick={()=>void lockAction(()=>post('/api/ecu/handoffs/'+id+'/choose',
        {quoteId:quote.id,version:quote.version,price:quote.diagnosis_price,agree:true}),
        'Выбран специалист и подтверждена цена диагностики',
-       ()=>{setAgree(false);setQuoteId(null);void details.reload();})}>
+       ()=>{setAgreedTo(null);setQuoteId(null);void details.reload();})}>
       Выбрать этого специалиста</button>
     </>}
    </div>}
