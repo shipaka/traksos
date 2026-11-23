@@ -88,6 +88,11 @@ export function AdminSettings() {
     const result=parseAdminSetting(kind,input);
     if(!result.ok){setError(result.error);return;}
     const [top,sub]=section.split('.');
+    if(sub&&(!s.data[top]||!s.data[top][sub]||
+      typeof s.data[top][sub]!=='object')){
+      setError('Нет подтверждённого вложенного раздела настройки. Обновите параметры и попробуйте снова.');
+      return;
+    }
     // Nested sub-objects (consult, cancel scale) are merged with a fresh copy
     // of the displayed snapshot, so no unrelated fields are overwritten by
     // an accidental undefined key in the editor.
@@ -115,7 +120,8 @@ export function AdminSettings() {
     <div className="stack">
       <span className="note">Выберите раздел. Остальные настройки останутся скрытыми. Новые условия применяются к новым заявкам.</span>
       {error&&<div className="banner warn" role="alert">{error}</div>}
-      <button type="button" className="btn ghost small" disabled={busy} onClick={s.reload}>Сверить параметры с сервером</button>
+      <button type="button" className="btn ghost small" disabled={busy}
+        onClick={()=>{setEdit(null);setVal(null);setError('');s.reload();}}>Сверить параметры с сервером</button>
       <button type="button" className="linkrow" aria-expanded={activeGroup === 'insurance'} onClick={() => { setActiveGroup(activeGroup === 'insurance' ? null : 'insurance'); setEdit(null); }}>
         <span><b>Страховые агенты</b><small>Доступы и подключение страховых партнёров</small></span><span aria-hidden="true">{activeGroup === 'insurance' ? '−' : '›'}</span>
       </button>
