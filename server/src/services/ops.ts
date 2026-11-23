@@ -183,12 +183,17 @@ export class OpsService {
       const users=await q.query<{id:string}>(`select u.id from users u
         left join performer_profiles p on p.user_id=u.id
         where u.status='active' and (
-          ($1 in ('master','all_workers') and u.roles @> '{master}'::text[] and
+          ($1 in ('master','all_workers') and u.roles @> '{master}'::text[]
+             and p.verification='approved' and not p.paused and
              ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))
                 or ($2='ecu' and 'electric'=any(coalesce(p.specialties,'{}'::text[])))))
-          or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[] and
-             ($2::text is null or $2='tow'))
-          or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[])
+          or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[]
+             and p.verification='approved' and not p.paused
+             and ($2::text is null or $2='tow'))
+          or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[]
+              and exists(select 1 from service_centers center
+                where center.owner_id=u.id and center.verification='approved'
+                  and not center.paused))
         ) limit 501`,[row.audience,row.service]);
       if(users.length===0)throw bad('no_recipients',
         'Пока нет подходящих получателей. Объявление сохранено — можно повторить рассылку после подключения партнёров');
