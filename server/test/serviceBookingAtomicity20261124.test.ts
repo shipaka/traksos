@@ -7,7 +7,7 @@ import { setup, ok } from './helpers.ts';
 test('СТО: concurrent replies, steps, confirmation and cancellation are one-shot', {timeout:120_000}, async () => {
   const t=await setup();
   try {
-    const admin=await t.login('+79996841001');
+    const admin=await t.login('+79990000001');
     const owner=await t.login('+79996841002');
     const service=await t.login('+79996841003','service');
     const center=ok(await t.api('PUT','/api/base',{
@@ -17,7 +17,7 @@ test('СТО: concurrent replies, steps, confirmation and cancellation are one-s
     },service.token)).center;
     ok(await t.api('POST',`/api/admin/services/${center.id}/verify`,{
       decision:'approved'
-    },(await t.login('+79990000001')).token));
+    },admin.token));
     const vehicle=ok(await t.api('POST','/api/vehicles',{
       brand:'Scania',model:'R',year:2018,plate:'А911АА178'
     },owner.token));
@@ -76,14 +76,10 @@ test('СТО: concurrent replies, steps, confirmation and cancellation are one-s
     },owner.token);
     assert.equal(forged.status,403,
       'Only a real recommendation to this exact workshop can activate a referral');
-    // Admin remains independent of station and customer roles. A direct
-    // service-level manual payout check cannot be invoked by arbitrary users.
-    await assert.rejects(
-      ()=>t.app.centers.markPaidOut({id:owner.id,phone:'',name:null,
-        roles:['client'],owner_id:null,status:'active'},first.id,'FORGED-PAYOUT'),
-      (e:any)=>e?.status===403
-    );
-    void admin;
+    assert.equal((await t.api('POST',`/api/admin/bookings/${first.id}/paid`,{
+      reference:'FORGED-PAYOUT'
+    },owner.token)).status,403,
+    'only administrative users can record an external STO payout');
   } finally {await t.close();}
 });
 
