@@ -289,6 +289,17 @@ try{
        path:out+'/'+c.id+'-home-'+width+'-retina2x.png',fullPage:false,animations:'disabled',scale:'device'
      });
      if(width===390&&c.id==='owner'){
+       const emptyPhoto=page.locator('.and19-empty .tr-approved-empty-scene--orders img');
+       if(await emptyPhoto.count()){
+         const fillsScene=await emptyPhoto.evaluate(async img=>{
+           await img.decode();
+           const frame=img.parentElement;
+           const idealHeight=frame.clientWidth*img.naturalHeight/img.naturalWidth;
+           return Math.abs(frame.clientHeight-idealHeight)<=1 &&
+             Math.abs(img.clientWidth-frame.clientWidth)<=1;
+         });
+         if(!fillsScene)throw Error('Empty orders photo leaves unused space or crops the truck');
+       }
        const notice=page.locator('footer.site-footer > .banner');
        await notice.waitFor({state:'visible'});
        const dismiss=notice.getByRole('button',{name:'Понятно'});
