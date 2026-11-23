@@ -33,7 +33,25 @@ export class PrivacyService {
       reviewsAboutYou: await q('select stars, tags, text, created_at from reviews where target_id=$1'),
       performerProfile: await this.db.one(`select kind, specialties, brands, tax_status, inn, cars, schedule, updated_at from performer_profiles where user_id=$1`, [id]),
       serviceBookings: await q('select number, need, status, when_day, works, amount, created_at from service_bookings where client_id=$1 or created_by=$1'),
+      // Export only the account's own purchases/requests. An insurer or
+      // courier must NOT receive the customer's personal files merely because
+      // they were assigned to process someone else's work.
+      shopOrders: await q(`select number, status, items, goods_total, delivery, delivery_price,
+                total, payment, created_at, updated_at
+           from shop_orders where client_id=$1 or created_by=$1 order by created_at`),
+      vehicleServiceRequests: await q(`select kind, status, comment, staff_note, policy_expires_on,
+                created_at, updated_at
+           from vehicle_service_requests where owner_id=$1 or requested_by=$1 order by created_at`),
       support: await q('select t.number, t.topic, t.status, t.created_at from support_tickets t where t.user_id=$1'),
+      supportMessagesWritten: await q(`select t.number as ticket_number, m.body, m.created_at
+           from support_messages m join support_tickets t on t.id=m.ticket_id
+          where m.sender_id=$1 and t.user_id=$1 order by m.created_at`),
+      // The courier may export the history of their own actions, never
+      // somebody else's receipt code, phone, address or order contents.
+      courierDeliveries: await q(`select id, status, created_at, updated_at
+           from shop_courier_deliveries where courier_id=$1 order by created_at`),
+      courierPresence: await this.db.one(`select online, updated_at from shop_courier_presence
+           where courier_id=$1`, [id]),
       notifications: await q('select title, body, created_at from notifications where user_id=$1 order by created_at desc limit 500'),
     };
   }
