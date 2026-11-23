@@ -60,6 +60,7 @@ test('fleet driver cannot cancel another driver purchase by known UUID; owner ca
 test('simultaneous cancel does not double-restock one reserved item',async()=>{
   const first=ok(await order(driverA.token));
   const before=await stock();
+  assert.ok(before!==undefined,'shop product must exist before stock release assertion');
   const results=await Promise.all([
     t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},driverA.token),
     t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},owner.token),
