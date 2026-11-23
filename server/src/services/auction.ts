@@ -120,7 +120,7 @@ export class AuctionService {
       if (ok) invited.push(r);
     }
     await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos, wave: stage?stageIndex+1:null, waves: stages?.length??null });
-    this.notifier.live([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', auction: true });
+    this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', auction: true });
     if (!invited.length) return stage ? undefined : this.finishEmpty(order, all.dispatch);
 
     const lim = this.limits(order, all.dispatch);
@@ -188,7 +188,7 @@ export class AuctionService {
     });
     await this.orders.event(this.db, orderId, user.id, 'offer', { price: p, eta });
     const diff = Math.round((p / lim.usual - 1) * 100);
-    await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', offers: true },
+    await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true },
       { kind: 'normal', title: 'Новый отклик', body: `${user.name ?? 'Исполнитель'}: ${rub(p)}${diff ? ` (${diff > 0 ? '+' : ''}${diff}%)` : ''}, подача ~${eta} мин`, data: { orderId } });
     return o;
   }
@@ -197,7 +197,7 @@ export class AuctionService {
     await this.db.query(`update bids set status='withdrawn', updated_at=now() where order_id=$1 and performer_id=$2 and status='active'`, [orderId, user.id]);
     await this.db.query(`update order_dispatch set status='declined', responded_at=$3 where order_id=$1 and performer_id=$2 and status='bidding'`, [orderId, user.id, this.now()]);
     const o = await this.db.one('select client_id, created_by from orders where id=$1', [orderId]);
-    if (o) this.notifier.live([o.client_id, o.created_by], { type: 'order', orderId, status: 'searching', offers: true });
+    if (o) this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true });
     return { ok: true };
   }
 
@@ -231,15 +231,36 @@ export class AuctionService {
   async choose(user: AuthUser | null, orderId: string, offerId: string) {
     const pre = await this.db.one('select o.client_id, o.created_by, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
     if (!pre) throw notFound('Отклик не найден');
-    if (user && pre.client_id !== user.id && pre.created_by !== user.id) throw forbidden();
+    if (user) {
+      const visible = await this.orders.mustSee(user, orderId);
+      if (this.orders.actorOf(user, visible) !== 'client')
+        throw forbidden('Только действующий клиент или водитель может выбрать отклик');
+    }
     // Исполнитель мог только что взять другую заявку — его отклик здесь больше не действует
     if (await this.orders.busyWith(this.db, pre.performer_id, orderId)) {
       await this.db.query(`update bids set status='withdrawn', updated_at=now() where id=$1 and status='active'`, [offerId]);
-      this.notifier.live([pre.client_id, pre.created_by], { type: 'order', orderId, status: 'searching', offers: true });
+      this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true });
       throw conflict('performer_busy', 'Этот исполнитель только что взял другую заявку — выберите другого');
     }
 
     const res = await this.db.tx(async (q) => {
+      // Check authorization again in the write transaction. Lock the active
+      // driver vehicle (FOR SHARE) so a concurrent revoke cannot commit before
+      // the acceptance. Creator UUID alone never authorizes a fleet order.
+      if (user) {
+        const row = await q.one<{client_id:string;created_by:string;vehicle_id:string|null}>(
+          'select client_id,created_by,vehicle_id from orders where id=$1', [orderId]);
+        if (!row) throw notFound('Заявка не найдена');
+        if (row.client_id !== user.id) {
+          if (row.created_by !== user.id) throw forbidden();
+          const live = await q.one<{ok:number}>(`select 1 as ok from users u
+            join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+            where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=$2
+              and ($3::uuid is null or v.id=$3)
+            limit 1 for share of v`, [user.id, row.client_id, row.vehicle_id]);
+          if (!live) throw forbidden('Водитель больше не закреплён за машиной этой заявки');
+        }
+      }
       // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
       // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
       await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
@@ -267,7 +288,7 @@ export class AuctionService {
       { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     this.notifier.live(res.losers, { type: 'order', orderId, status: 'lost' });
     if (!user) {
-      await this.notifier.notify([res.o.client_id, res.o.created_by], { type: 'order', orderId, status: 'accepted' },
+      await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'accepted' },
         { kind: 'normal', title: 'Исполнитель назначен', body: res.o.service === 'consult' ? 'Мастер на связи — он позвонит или напишет в чат' : `Выбрали лучшего из откликов: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     }
     await this.orders.systemMessage(orderId, res.o.service === 'consult'
