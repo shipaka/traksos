@@ -14,7 +14,7 @@ const out='e2e/shots/sandbox-real-browser';
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const failures=[];
-const widths=[320,360,390,412,768,900,1440,1672];
+const widths=[320,360,390,412,768,900,1024,1440,1672];
 try{
   for(const role of ['owner','driver']){
     for(const width of widths){
@@ -158,7 +158,31 @@ try{
             if(element===node || node.contains(element))return null;
             return element ? element.tagName+' '+element.className : 'outside viewport';
           });
-          if(blocker)throw Error('Action covered by '+blocker+': '+await action.innerText()+' @'+width);
+          if(blocker){
+            // Preserve real viewport evidence when a sticky header or other
+            // layer intercepts the button: no forced click or hidden chrome.
+            const details=await action.evaluate(node=>{
+              const rect=(el)=>{
+                const r=el.getBoundingClientRect(),style=getComputedStyle(el);
+                return {tag:el.tagName,className:String(el.className).slice(0,120),
+                  html:el.outerHTML.slice(0,260),x:r.x,y:r.y,width:r.width,height:r.height,
+                  position:style.position,zIndex:style.zIndex,pointerEvents:style.pointerEvents};
+              };
+              const r=node.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+              return {scrollY,viewport:{width:innerWidth,height:innerHeight},
+                target:rect(node),point:{x,y},
+                stack:document.elementsFromPoint(x,y).slice(0,5).map(rect),
+                top:document.querySelector('header.top')?rect(document.querySelector('header.top')):null};
+            });
+            await page.screenshot({path:out+'/no-performer-'+role+'-'+width+'-hit-blocked-viewport.png',
+              fullPage:false,animations:'disabled'});
+            console.error('NO PERFORMER ACTION INTERCEPTOR',role,width,JSON.stringify(details));
+            throw Error('Action covered by '+blocker+': '+await action.innerText()+' @'+width+
+              ' '+JSON.stringify(details).slice(0,1600));
+          }
+          // Playwright's trial action checks the actual pointer target at the
+          // current viewport without mutating the real exhausted order.
+          await action.click({trial:true,timeout:5_000});
         }
         // The hit-test above scrolled actions into view. A full-page capture
         // taken at that position would falsely paint the fixed 618 bottom
