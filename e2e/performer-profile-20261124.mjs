@@ -16,7 +16,7 @@ const bundle=await build({
    }));
  }}]
 });
-const source=bundle.outputFiles.find(f=>f.path.endsWith('.js'))?.text;
+const source=bundle.outputFiles[0]?.text;
 if(!source)throw Error('Bundled performer screen missing');
 const browser=await chromium.launch();
 const check=(value,message)=>{if(!value)throw Error(message)};
