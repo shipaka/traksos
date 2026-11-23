@@ -335,7 +335,7 @@ try{
             inspection:['#/inspections/processing','#/menu'],
             courier:['#/courier/jobs','#/courier/chat','#/menu'],
             moderator:['#/moderation/verify','#/menu'],
-            admin:['#/admin/section/orders','#/admin/test-center','#/menu'],
+            admin:['#/admin/section/orders','#/admin/section/demand','#/admin/test-center','#/menu'],
           };
           for(const destination of destinations[role]){
             await page.goto(base+'/'+destination,{waitUntil:'domcontentloaded'});
@@ -360,6 +360,27 @@ try{
                /Такой страницы нет|Не удалось открыть раздел|Вход по номеру телефона|Отсутствует приглашение/.test(state.preview)||
                state.obsolete || state.nativePreview || state.overflow>3)
               throw Error('Navigation regression '+role+' '+width+' '+destination+' '+JSON.stringify(state));
+            if(role==='admin' && destination==='#/admin/section/demand'){
+              // The existing admin tools must show live grouped data, not
+              // invented demand, placeholder locations or individual GPS.
+              const demand=page.getByLabel('Спрос на партнёров по зонам');
+              await demand.waitFor({state:'visible',timeout:15000});
+              await demand.getByText('Где подключать новых партнёров · услуга и зона').waitFor();
+              const api=await page.evaluate(async()=>{
+                const token=localStorage.getItem('traksos.token');
+                const response=await fetch('/api/admin/demand?days=7',{
+                  headers:{authorization:'Bearer '+token},cache:'no-store'
+                });
+                return {status:response.status,body:response.ok?await response.json():null};
+              });
+              if(api.status!==200 || !Array.isArray(api.body?.byServiceZone) ||
+                 api.body.byServiceZone.some(row=>Object.keys(row).some(
+                   key=>['lat','lng','phone','address','client_id'].includes(key))))
+                throw Error('Demand-by-zone admin API is unavailable or exposes private coordinates');
+              await page.screenshot({path:out+'/admin-'+width+'-demand-by-zone.png',
+                fullPage:true,animations:'disabled'});
+              console.log('ADMIN DEMAND BY ZONE BROWSER PASS',width,api.body.byServiceZone.length);
+            }
             if(destination==='#/menu' && !await page.locator('main.tr-mobile-menu-page').isVisible())
               throw Error('Approved role menu not mounted at '+role+' '+width);
             if(errors.length)throw Error('Navigation JavaScript exception '+role+' '+destination+': '+errors.join('; '));
