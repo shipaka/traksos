@@ -103,6 +103,15 @@ test('real staff escalation is taught accurately and does not auto-create a tick
 });
 
 
+test('performer training explains the actual immutable 0% promotion and fee cap',()=>{
+  const closing=practiceStages.performer.find(s=>s.title.includes('В истории'));
+  assert.ok(closing,'performer practice must end with real finance guidance');
+  assert.match(closing.explanation,/5 000 ₽/);
+  assert.match(closing.explanation,/0%/);
+  assert.match(closing.explanation,/баллов мастера равны нулю/);
+  assert.match(closing.why,/при создании реальной заявки/);
+});
+
 test('owner and driver course teaches the real verified-only dispatch policy',()=>{
   for(const role of ['owner','driver'] as const){
     const item=allowedScenario(role,'verified-only-search');
