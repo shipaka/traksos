@@ -173,6 +173,8 @@ export function AdminShopCatalog() {
       const done=await run(()=>post('/api/admin/shop/catalog/'+encodeURIComponent(item.id)+'/review',{
         reviewed,expectedUpdatedAt:item.updatedAt,
         expectedName:item.name,expectedSourceNote:item.sourceNote,
+        expectedBrand:item.brand,expectedArticle:item.article,
+        expectedCategory:item.category,expectedSearchTerms:item.searchTerms,
       }),reviewed?'Позиция проверена':'Позиция возвращена на проверку');
       if(actor===currentUserId.current && token===getToken()){
         // Also on a version-conflict refresh the actual row before retrying.
