@@ -138,10 +138,15 @@ export class ShopService {
   }
 
   async deleteProduct(actor: AuthUser, id: string) {
-    // Товар из прошлых заказов не удаляем — скрываем
-    await this.db.query('update shop_products set active=false, updated_at=now() where id=$1', [id]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'shop.product_hide', id, {}]);
-    return { ok: true };
+    // Hiding a product and its required audit must succeed or fail together.
+    return this.db.tx(async(q)=>{
+      const updated=await q.one<{id:string}>(
+        'update shop_products set active=false, updated_at=now() where id=$1 returning id',[id]);
+      if(!updated)throw notFound('Товар не найден');
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id,'shop.product_hide',id,{}]);
+      return {ok:true};
+    });
   }
 
   // ——— Internal supplier identifiers (admin only, never in client catalog) ———
