@@ -331,6 +331,66 @@ export class AuctionService {
     return n;
   }
 
+  /**
+   * Turn persisted terminal events into one durable inbox notification per
+   * recipient. Lock intents until the insert and acknowledgement COMMIT, so
+   * concurrent servers and retries cannot duplicate a stored notification.
+   * A push or WebSocket failure never removes the customer's stored inbox row.
+   */
+  async flushPendingNoPerformerAlerts(limit = 50): Promise<number> {
+    const delivered = await this.db.tx(async q => {
+      const rows = await q.query<{
+        eventId: string; userId: string; orderId: string;
+        status: string; latestEventId: string | null;
+      }>(`select a.event_id::text as "eventId",a.user_id as "userId",
+                   a.order_id as "orderId",o.status,
+                   (select max(e.id)::text from order_events e
+                     where e.order_id=a.order_id and e.type='no_performer') as "latestEventId"
+            from order_no_performer_alerts a
+            join orders o on o.id=a.order_id
+           where a.handled_at is null
+           order by a.created_at,a.event_id
+           limit $1
+           for update of a,o skip locked`,[Math.min(100,Math.max(1,limit))]);
+      const stored: {eventId:string;userId:string;orderId:string}[] = [];
+      for (const row of rows) {
+        // A retry can start a new search before this background attempt.
+        // Never notify the requester about a superseded terminal search.
+        const current = row.status === 'no_performer' &&
+          row.latestEventId === row.eventId;
+        if (current) {
+          const data = JSON.stringify({
+            orderId: row.orderId, terminalEventId: row.eventId,
+          });
+          await q.query(
+            `insert into notifications(user_id,kind,title,body,data)
+               values ($1,'order',$2,$3,$4::jsonb)`,
+            [row.userId,'Поиск исполнителя завершён',
+              'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.',
+              data]);
+          stored.push({eventId:row.eventId,userId:row.userId,orderId:row.orderId});
+        }
+        await q.query(
+          `update order_no_performer_alerts
+              set handled_at=now(),outcome=$3
+            where event_id=$1::bigint and user_id=$2`,
+          [row.eventId,row.userId,current?'stored':'obsolete']);
+      }
+      return stored;
+    });
+    // At least the in-app notification is durable even if the process stops
+    // between COMMIT and push. Push delivery itself is best effort.
+    for (const item of delivered) {
+      await this.notifier.deliverStored([item.userId],
+        {type:'order',orderId:item.orderId,status:'no_performer'},
+        {kind:'normal',title:'Поиск исполнителя завершён',
+          body:'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.',
+          data:{orderId:item.orderId}})
+        .catch(err=>console.warn('[no-performer delivery]',(err as Error).message));
+    }
+    return delivered.length;
+  }
+
   private async finishEmpty(order: any, dispatch: Settings['dispatch']) {
     // The requester can poll as soon as the status changes. Publish the status
     // and its immutable explanation in the same commit.
@@ -376,17 +436,26 @@ export class AuctionService {
         await q.query('rollback to savepoint classify_absence');
         console.error('[no-performer-classification]', err);
       }
-      await this.orders.event(q, order.id, null, 'no_performer',
-        { auction: true, absenceReason });
+      const terminal = await q.one<{id:string}>(
+        `insert into order_events(order_id,actor_id,type,data)
+           values ($1,null,'no_performer',$2::jsonb) returning id::text as id`,
+        [order.id,JSON.stringify({auction:true,absenceReason})]);
+      if (!terminal) throw new Error('Terminal search event was not persisted');
+      // The notification intent survives a later outage in notifications
+      // independently of the order status, without storing personal data.
+      await q.query(
+        `insert into order_no_performer_alerts(event_id,user_id,order_id)
+           select $1::bigint,recipient.user_id,$2::uuid
+             from (select distinct unnest($3::uuid[]) as user_id) recipient
+            where recipient.user_id is not null
+           on conflict (event_id,user_id) do nothing`,
+        [terminal.id,order.id,[order.client_id,order.created_by].filter(Boolean)]);
       return true;
     });
     if (!finished) return;
-    // The final status + immutable absence reason have already committed.
-    // A temporary notification-table/push failure must not make an exhausted
-    // search throw as though the status transition had failed. The customer
-    // can still poll the real no_performer status and use manual retry.
-    await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
-      { kind: 'normal', title: 'Поиск исполнителя завершён', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } })
-      .catch((err) => console.warn('[no-performer notify]', (err as Error).message));
+    // Try immediate delivery for a responsive UI. If notification storage
+    // is down, the scheduled drain retries the persisted intent after recovery.
+    await this.flushPendingNoPerformerAlerts()
+      .catch((err) => console.warn('[no-performer notify pending]', (err as Error).message));
   }
 }
