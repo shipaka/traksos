@@ -400,11 +400,23 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         intent.getStringExtra(EXTRA_PATH)?.let { path ->
             if (BuildConfig.DEBUG && path.startsWith("android-review/")) {
-                // The error screen uses loadDataWithBaseURL(null). Changing its
-                // hash keeps the fake error HTML instead of loading APK React.
-                // A fresh URL also works when the emulator has no network.
+                // Prefer SPA hash navigation when the genuine bundled React
+                // page is already loaded. Reloading the entire WebView just
+                // to switch review roles can leave a stale guest compositor
+                // frame on headless API35 even though React logs its render.
+                // The debug offline page is not the SPA, so recover it with
+                // a complete bundled URL load instead. No release behavior
+                // or production account navigation is changed.
                 failed = false
-                web.loadUrl(urlFor(path))
+                web.evaluateJavascript(
+                    "!!document.querySelector('meta[name=traksos-app]')"
+                ) { hasApp ->
+                    if (hasApp == "true") {
+                        web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
+                    } else {
+                        web.loadUrl(urlFor(path))
+                    }
+                }
             } else {
                 web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
             }
