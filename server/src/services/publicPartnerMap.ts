@@ -1,10 +1,12 @@
 import type { Db } from '../db/index.ts';
 import { bad, notFound, type AuthUser } from '../http/router.ts';
+import { maskPhones } from '../util.ts';
 
 type Workshop = {
   id:string; name:string; lat:number|null; lng:number|null;
   verification:string; paused:boolean; accepts_current:boolean;
   public_map_location_verified_at:string|null;
+  owner_active:boolean; owner_service:boolean;
 };
 type PublicPoint = { id:string; kind:'service'; name:string; lat:number; lng:number };
 
@@ -28,10 +30,15 @@ export class PublicPartnerMap {
         from service_centers c
         join users u on u.id=c.owner_id
        where c.public_map_opt_in=true
+         -- Consent must be AFTER an independent stationary-coordinate review.
+         -- A legacy/stale opt-in must not claim a verified GPS position.
+         and c.public_map_opted_at is not null
+         and c.public_map_location_verified_at is not null
+         and c.public_map_location_verified_at <= c.public_map_opted_at
+         and c.public_map_location_verified_at <= now()
          and c.verification='approved'
          and c.paused=false
          and c.accepts_confirmed_at >= now() - interval '7 days'
-         and c.public_map_location_verified_at is not null
          and u.status='active'
          and u.deleted_at is null
          and 'service'=any(u.roles)
@@ -41,7 +48,9 @@ export class PublicPartnerMap {
        limit 10000`);
     return {source:'verified_stationary_opt_in',
       points:rows.filter(r=>validStationaryPosition(r.lat,r.lng))
-        .map(r=>({id:r.id,kind:'service',name:r.name,lat:Number(r.lat),lng:Number(r.lng)}))};
+        .map(r=>({id:r.id,kind:'service',
+          name:maskPhones(String(r.name ?? '').trim().slice(0, 100)).text,
+          lat:Number(r.lat),lng:Number(r.lng)}))};
   }
 
   async visibility(user:AuthUser,enabled:boolean) {
@@ -52,12 +61,16 @@ export class PublicPartnerMap {
       const center=await q.one<Workshop>(`select c.id,c.name,c.lat,c.lng,
         c.verification,c.paused,
         (c.accepts_confirmed_at >= now() - interval '7 days') as accepts_current,
-        c.public_map_location_verified_at
-        from service_centers c
-        where c.owner_id=$1 for update`,[user.id]);
+        c.public_map_location_verified_at,
+        (u.status='active' and u.deleted_at is null) as owner_active,
+        ('service'=any(u.roles)) as owner_service
+        from service_centers c join users u on u.id=c.owner_id
+        where c.owner_id=$1 for update of c`,[user.id]);
       if(!center)throw notFound('Сначала заполните карточку СТО');
-      if(enabled && (center.verification!=='approved' || center.paused ||
+      if(enabled && (!center.owner_active || !center.owner_service ||
+        center.verification!=='approved' || center.paused ||
         !center.accepts_current || !center.public_map_location_verified_at ||
+        new Date(center.public_map_location_verified_at).getTime() > Date.now() ||
         !validStationaryPosition(center.lat,center.lng)))
         throw bad('public_map_not_ready',
           'Публичная карта доступна лишь СТО с проверенным адресом, подтверждёнными за последние 7 дней услугами и согласием на публикацию.');
