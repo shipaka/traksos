@@ -1,4 +1,5 @@
 import './orderCinematic.css';
+import './noPerformerApproved20261123.css';
 import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
@@ -1079,16 +1080,23 @@ function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: ()
   };
   const [heading, description] = messages[reason ?? 'unknown'] ?? messages.unknown;
   return (
-    <section className="card hi" aria-label="Результат поиска исполнителя">
-      <b>{heading}</b>
-      <span className="note">{description}</span>
-      <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
-        <button type="button" className="btn" style={{ minHeight: 44 }} disabled={busy}
-          onClick={() => run(() => post(`/api/orders/${id}/retry`)).then((r) => r && onDone())}>
-          Искать ещё раз
-        </button>
-        <a className="btn ghost" style={{ minHeight: 44 }} href="#/sos">Другая помощь</a>
-        <a className="btn ghost" style={{ minHeight: 44 }} href={`#/support/new?order=${id}`}>Поддержка</a>
+    <section className="traksos-no-performer" aria-label="Результат поиска исполнителя" aria-live="polite">
+      <div className="traksos-no-performer-copy">
+        <span className="traksos-no-performer-eyebrow">TrakSOS · поиск завершён</span>
+        <h2>{heading}</h2>
+        <p>{description}</p>
+        <div className="traksos-no-performer-actions">
+          <button type="button" className="btn" disabled={busy}
+            onClick={() => run(() => post(`/api/orders/${id}/retry`)).then((r) => r && onDone())}>
+            Искать ещё раз
+          </button>
+          <a className="btn ghost" href="#/sos">Другая помощь</a>
+          <a className="btn ghost" href={`#/support/new?order=${id}`}>Поддержка</a>
+        </div>
+      </div>
+      <div className="traksos-no-performer-art" aria-hidden="true">
+        <img src="/feature-art/traksos-no-performer-search-approved-20261123.svg" alt="" loading="lazy"
+          width="1402" height="1122" decoding="async"/>
       </div>
     </section>
   );
