@@ -27,6 +27,19 @@ const NEXT:Partial<Record<CourierStatus,{status:CourierStatus;label:string}>>={
 function directions(address:string|null){
   return address?.trim()?'https://yandex.ru/maps/?text='+encodeURIComponent(address.trim()):null;
 }
+/** Carton with visible folded flaps and sealing tape, not the old empty ▣
+ * glyph. One consistent small vector for the approved courier workspace. */
+function CourierParcelGlyph(){
+  return <svg className="courier-parcel-glyph" viewBox="0 0 100 96"
+    role="img" aria-label="Посылка" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 29 50 10 90 29 50 49Z" fill="#ffb15c" stroke="#fbd0a0" strokeWidth="2.5" strokeLinejoin="round"/>
+    <path d="M10 29 50 49v36L10 65Z" fill="#c75d21" stroke="#ffa15b" strokeWidth="2.5" strokeLinejoin="round"/>
+    <path d="M50 49 90 29v36L50 85Z" fill="#f18a35" stroke="#ffc083" strokeWidth="2.5" strokeLinejoin="round"/>
+    <path d="M35 17 74 37v14l-11 6V43L25 23Z" fill="#ffdfb0" opacity=".96"/>
+    <path d="M50 49v36" stroke="#7f3919" strokeWidth="2" opacity=".55"/>
+    <path d="M19 57 30 62M19 62l8 4" stroke="#ffe4ba" strokeWidth="2" strokeLinecap="round" opacity=".9"/>
+  </svg>;
+}
 function CourierProgress({status}:{status:CourierStatus}){
   const stages:CourierStatus[]=['picked_up','en_route','arrived','code_verified','received'];
   const index=stages.indexOf(status);
@@ -61,7 +74,7 @@ function CourierJobLink({job,focus=false}:{job:CourierJob;focus?:boolean}){
       <strong>Доставка №{job.orderNumber}</strong><span className="courier-trip-state">{STATUS[job.status]}</span>
     </div>
     <div className="courier-trip-content">
-      <span className="courier-trip-illustration" aria-hidden="true">▣</span>
+      <span className="courier-trip-illustration"><CourierParcelGlyph/></span>
       <div><b>{itemCount} ед. · {job.items.length} позиций</b>
         <small>{job.items.map(i=>i.name).slice(0,2).join(', ')||'Содержимое в карточке заказа'}</small></div>
     </div>
@@ -77,7 +90,7 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
   const current=active[0];
   const packages=active.reduce((n,j)=>n+j.items.reduce((s,i)=>s+(i.qty||0),0),0);
   return <main className="courier-android" aria-label="Рабочий кабинет курьера TrakSOS">
-    <div className="courier-role"><b>▣ Курьер TrakSOS</b><CourierStatusSwitch/></div>
+    <div className="courier-role"><b><span className="courier-role-parcel" aria-hidden="true"><CourierParcelGlyph/></span> Курьер TrakSOS</b><CourierStatusSwitch/></div>
     <h1>{section==='jobs'?'Мои доставки':section==='chat'?'Связь по доставкам':'Рабочий стол'}</h1>
     {section==='chat'?<>
       <p className="courier-muted">Сообщения с получателем пока не подключены. Вопросы по доставке решает поддержка TrakSOS — без раскрытия личных телефонов.</p>
@@ -103,11 +116,11 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
         : list.length
           ? list.map(j=><CourierJobLink job={j} key={j.id}/>)
           : <section className="courier-trip">Доставок пока нет.</section>}
-      {current&&section==='home'&&<div className="courier-main-actions">
-        <a className="courier-primary" href={'#/courier/jobs/'+encodeURIComponent(current.id)}>Продолжить доставку</a>
-        {directions(current.deliveryAddress)&&<a className="courier-navigation"
-          href={directions(current.deliveryAddress)!} target="_blank" rel="noopener noreferrer">Навигация</a>}
-      </div>}
+      {current&&section==='home'&&directions(current.deliveryAddress)&&
+        <div className="courier-main-actions">
+          <a className="courier-navigation" href={directions(current.deliveryAddress)!}
+            target="_blank" rel="noopener noreferrer">Навигация</a>
+        </div>}
     </>}
   </main>;
 }
