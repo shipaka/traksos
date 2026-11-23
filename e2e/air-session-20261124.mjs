@@ -154,6 +154,19 @@ try{
     await page.getByRole('checkbox').count()===1 &&
     await page.getByRole('button',{name:'Отправить'}).count()===0,
     'Staff permissions are not from current server snapshot');
+  // Permission changes on the SAME account ID must invalidate previously
+  // fetched moderation controls even when a fresh profile still canView.
+  await page.evaluate(()=>window.__switchAirIdentity({id:'staff-C',roles:['client']}));
+  await page.waitForFunction(()=>window.__airTest.gets.length>=9);
+  assert(await page.getByRole('button',{name:'Скрыть'}).count()===0 &&
+    await page.getByRole('checkbox').count()===0,
+    'Moderator powers persisted through a same-account role downgrade');
+  await page.evaluate(data=>window.__airTest.gets[8].resolve(data),
+    snapshot(['Роль ограничена'],{canPost:true,canModerate:false,canConfigure:false}));
+  await page.getByText('Роль ограничена').waitFor();
+  assert(await page.getByRole('button',{name:'Скрыть'}).count()===0 &&
+    await page.getByRole('button',{name:'Отправить'}).count()===1,
+    'Role downgrade did not load fresh server flags');
   if(errors.length)throw Error('Chromium runtime errors: '+errors.join('; '));
   console.log('PASS DriverAir: out-of-order polls, offline+retry, no automatic POST replay, A/B identity isolation and staff permissions');
 } finally { await browser.close(); }
