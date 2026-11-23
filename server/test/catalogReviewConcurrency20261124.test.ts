@@ -6,9 +6,9 @@ import assert from 'node:assert/strict';
 import {setup,ok,type T} from './helpers.ts';
 
 let t:T;
-before(async()=>{t=await setup()});
+let admin:{token:string;id:string};
+before(async()=>{t=await setup();admin=await t.login('+79990000001')});
 after(async()=>{await t?.close()});
-const adminPhone='+79990000001';
 const path='/api/admin/shop/catalog';
 const row=(suffix:string,name:string)=>({
   brand:'Scania',article:'CI-CATALOG-'+suffix,name,
@@ -30,7 +30,6 @@ const approval=(v:any,reviewed:boolean)=>({
 });
 
 test('admin catalog: dry-run cannot publish, fresh review succeeds and duplicate approval is a no-op',async()=>{
-  const admin=await t.login(adminPhone);
   const outsider=await t.login('+79993337771');
   const part=row('REVIEW-01','Гидравлический насос CI');
   const blocked=await t.api('POST',path+'/import',batch([part]),outsider.token);
@@ -64,7 +63,6 @@ test('admin catalog: dry-run cannot publish, fresh review succeeds and duplicate
 });
 
 test('re-import invalidates visible proof; stale confirmation cannot approve replaced text',async()=>{
-  const admin=await t.login(adminPhone);
   const original=row('REVIEW-02','Тормозной диск CI исходный');
   ok(await t.api('POST',path+'/import',batch([original]),admin.token));
   const seen=await find(original.article,admin.token);
@@ -81,7 +79,6 @@ test('re-import invalidates visible proof; stale confirmation cannot approve rep
 });
 
 test('concurrent review and changed import never leave an unreviewed replacement approved',async()=>{
-  const admin=await t.login(adminPhone);
   const original=row('REVIEW-03','Тестовый датчик давления CI один');
   ok(await t.api('POST',path+'/import',batch([original]),admin.token));
   const visible=await find(original.article,admin.token);
@@ -98,7 +95,6 @@ test('concurrent review and changed import never leave an unreviewed replacement
 });
 
 test('reviewed source is required even for old mobile admin clients without expected revision',async()=>{
-  const admin=await t.login(adminPhone);
   const item=row('REVIEW-04','Клапан тестовый CI');
   ok(await t.api('POST',path+'/import',batch([item]),admin.token));
   const entry=await find(item.article,admin.token);
