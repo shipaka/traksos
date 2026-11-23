@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {API_URL,fmtTime,get,getToken,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
 import { INSURANCE_STAGES, insurancePresentation, insuranceStepIndex } from '../insurancePresentation.ts';
@@ -35,6 +35,17 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
   const [step,setStep]=useState(0);
+  const formRef=useRef<HTMLFormElement>(null);
+  const [validationError,setValidationError]=useState<{step:number;key:string;message:string}|null>(null);
+  const reportError=(errorStep:number,key:string,message:string)=>{
+    setStep(errorStep);
+    setValidationError({step:errorStep,key,message});
+  };
+  // Step transitions can remount the target field. Focus after React paints it.
+  useEffect(()=>{
+    if(!validationError||validationError.step!==step)return;
+    formRef.current?.querySelector<HTMLElement>('[data-insurance-field="'+validationError.key+'"]')?.focus();
+  },[validationError,step]);
   const [selectedVehicleId,setSelectedVehicleId]=useState(vehicleId);
   const [showVehicleDetails,setShowVehicleDetails]=useState(false);
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
@@ -58,25 +69,48 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       trailerPlate:String(vehicle.trailer_plate??'')});
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
+  const missingVehicleField=():VehicleKey|null=>{
+    for(const key of ['brand','model','year','plate','vin'] as const) {
+      const value=truck[key].trim();
+      if(!value||(key==='year'&&!/^\d{4}$/.test(value))||
+        (key==='vin'&&value.length<11))return key;
+    }
+    return null;
+  };
+  const validateStep=(index:number)=>{
+    if(index===0&&!agentId){
+      reportError(0,'agent','Выберите страхового агента.');return false;
+    }
+    if(index===1&&(!applicant.lastName.trim()||!applicant.firstName.trim())){
+      const key=!applicant.lastName.trim()?'lastName':'firstName';
+      reportError(1,key,key==='lastName'?'Укажите фамилию страхователя.':'Укажите имя страхователя.');
+      return false;
+    }
+    if(index===2){
+      const missing=missingVehicleField();
+      if(missing){
+        const label=VEHICLE_FIELDS.find(([key])=>key===missing)?.[1]?.replace(' *','')??'поле';
+        reportError(2,missing,'Проверьте поле «'+label+'» и заполните его корректно.');
+        return false;
+      }
+    }
+    if(index===3&&!consent){
+      reportError(3,'consent','Подтвердите согласие на передачу данных страховому партнёру.');
+      return false;
+    }
+    return true;
+  };
   const nextStep=()=>{
-    if(step===0&&!agentId){window.alert('Выберите страхового агента');return;}
-    if(step===1&&(!applicant.firstName.trim()||!applicant.lastName.trim())){
-      window.alert('Укажите имя и фамилию страхователя');return;
-    }
-    if(step===2&&(!truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
-      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11)){
-      window.alert('Заполните марку, модель, год, номер и VIN автомобиля');return;
-    }
+    if(!validateStep(step))return;
+    setValidationError(null);
     setStep(v=>Math.min(3,v+1));
   };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(!agentId||!applicant.lastName.trim()||!applicant.firstName.trim()||
-      !truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
-      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11||!consent){
-      window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
-      return;
+    for(const index of [0,1,2,3]){
+      if(!validateStep(index))return;
     }
+    setValidationError(null);
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
       kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
@@ -91,20 +125,28 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
     {(!vehicles.data||!agents.data)?<Loading error={vehicles.error||agents.error}/>:
-    <form className="stack" onSubmit={submit} noValidate>
+    <form ref={formRef} className="stack" onSubmit={submit} noValidate>
       <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
         {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
           type="button" key={label} className={'btn ghost'+(step===index?' active':'')}
           aria-current={step===index?'step':undefined} disabled={index>step}
-          onClick={()=>setStep(index)}>{index+1}. {label}</button>)}
+          onClick={()=>{setValidationError(null);setStep(index);}}>{index+1}. {label}</button>)}
       </nav>
+      {validationError&&validationError.step===step&&
+        <div className="insurance-validation-alert" id="insurance-form-error" role="alert">
+          {validationError.message}
+        </div>}
       {step===0&&<section className="card stack">
         <span className="insurance-step-title">01 · Кому отправить</span><h2>Страховой агент</h2>
         <label>Выберите партнёра
-          <select className="field" value={agentId} onChange={e=>setAgentId(e.target.value)} required>
+          <select className="field" value={agentId} data-insurance-field="agent"
+            aria-invalid={validationError?.key==='agent'||undefined}
+            aria-describedby={validationError?.key==='agent'?'insurance-form-error':undefined}
+            onChange={e=>{setAgentId(e.target.value);setValidationError(null);}} required>
             <option value="">Выберите страхового агента</option>
             {agents.data.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
+          {validationError?.key==='agent'&&<small className="insurance-field-inline-error">{validationError.message}</small>}
         </label>
         {agents.data.length===0&&<span className="note">Пока нет доступных страховых агентов. Администратор должен подключить партнёра.</span>}
       </section>}
@@ -114,8 +156,12 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <div className="insurance-field-grid">
           {([['lastName','Фамилия'],['firstName','Имя'],['middleName','Отчество (при наличии)']] as const).map(([key,label])=>
             <label key={key}>{label}<input className="field" maxLength={90}
-              required={key!=='middleName'} value={applicant[key]}
-              onChange={e=>setApplicant(a=>({...a,[key]:e.target.value}))}/></label>)}
+              required={key!=='middleName'} value={applicant[key]} data-insurance-field={key}
+              aria-invalid={validationError?.key===key||undefined}
+              aria-describedby={validationError?.key===key?'insurance-form-error':undefined}
+              onChange={e=>{setApplicant(a=>({...a,[key]:e.target.value}));setValidationError(null);}}/>
+              {validationError?.key===key&&<small className="insurance-field-inline-error">{validationError.message}</small>}
+            </label>)}
         </div>
       </section>}
       {step===2&&<section className="card stack">
@@ -133,7 +179,11 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <div className="insurance-field-grid">
           {VEHICLE_FIELDS.filter(([,label])=>label.endsWith('*')).map(([key,label])=><label key={key}>{label}
             <input className="field" value={truck[key]} maxLength={120} required={label.endsWith('*')}
-              inputMode={key==='year'?'numeric':'text'} onChange={e=>fill(key,e.target.value)} />
+              inputMode={key==='year'?'numeric':'text'} data-insurance-field={key}
+              aria-invalid={validationError?.key===key||undefined}
+              aria-describedby={validationError?.key===key?'insurance-form-error':undefined}
+              onChange={e=>{fill(key,e.target.value);setValidationError(null);}} />
+            {validationError?.key===key&&<small className="insurance-field-inline-error">{validationError.message}</small>}
           </label>)}
         </div>
         <button className="btn ghost" type="button" aria-expanded={showVehicleDetails} onClick={()=>setShowVehicleDetails(v=>!v)}>
@@ -151,16 +201,18 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
           <textarea className="field" value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)}
             placeholder="Тип полиса, особенности эксплуатации, вопросы для агента"/></label>
         <label className="agree"><input type="checkbox" required checked={consent}
-          onChange={e=>setConsent(e.target.checked)}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
-        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length||!consent}>
+          data-insurance-field="consent" aria-invalid={validationError?.key==='consent'||undefined}
+          aria-describedby={validationError?.key==='consent'?'insurance-form-error':undefined}
+          onChange={e=>{setConsent(e.target.checked);setValidationError(null);}}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
+        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length}>
           Отправить заявку страховому агенту
         </button>
       </section>}
       {step<3&&<div className="insurance-wizard-actions">
-        {step>0&&<button type="button" className="btn ghost" onClick={()=>setStep(v=>v-1)}>Назад</button>}
+        {step>0&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(v=>v-1);}}>Назад</button>}
         <button type="button" className="btn insurance-main-action" onClick={nextStep}>Продолжить</button>
       </div>}
-      {step===3&&<button type="button" className="btn ghost" onClick={()=>setStep(2)}>Вернуться к автомобилю</button>}
+      {step===3&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(2);}}>Вернуться к автомобилю</button>}
     </form>}
   </main>;
 }

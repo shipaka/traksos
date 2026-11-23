@@ -147,7 +147,17 @@ try{
   await clientPage.goto(BASE+'/#/insurance/request/new/'+truck.id);
   await acceptPendingOffers(clientPage,owner.token,'client');
   await clientPage.getByRole('heading',{name:'Заявка на страхование грузовика'}).waitFor();
+  // Invalid steps must be explained inline, never open blocking Android/browser alerts.
+  clientPage.on('dialog',dialog=>{throw Error('Native browser dialog in insurance wizard: '+dialog.message());});
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
+  await clientPage.locator('.insurance-validation-alert').getByText('Выберите страхового агента.').waitFor();
+  assert(await clientPage.locator('[data-insurance-field="agent"]').getAttribute('aria-invalid')==='true',
+    'Missing agent must mark the field invalid');
+  assert(await clientPage.locator('[data-insurance-field="agent"]').evaluate(el=>document.activeElement===el),
+    'Missing agent validation must focus the input');
   await clientPage.locator('select').first().selectOption(partner.user.id);
+  assert(await clientPage.locator('.insurance-validation-alert').count()===0,
+    'Correcting agent must clear the validation error');
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('Фамилия').fill('Иванов');
   await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');

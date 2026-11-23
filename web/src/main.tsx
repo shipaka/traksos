@@ -11,6 +11,7 @@ import './premiumVehiclePolish.css';
 import './roleShared20261119.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
+import './insuranceInlineValidation20261123.css';
 // Mobile browser and Android use separate approved responsive layers.
 import './mobileBrowser.css';
 import './androidApproved20261119.css';
