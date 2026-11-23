@@ -28,7 +28,8 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     if (blurTimerRef.current !== null) clearTimeout(blurTimerRef.current);
   }, []);
 
-  const close = () => { cancelBlurTimer(); setOpen(false); setInputFocused(false); triggerRef.current?.focus(); };
+  const dismiss = () => { cancelBlurTimer(); setOpen(false); setInputFocused(false); };
+  const close = () => { dismiss(); triggerRef.current?.focus(); };
   // Android WebView can leave the layout viewport taller than the visible area
   // when the soft keyboard opens. Use visualViewport to anchor a compact panel
   // above the keyboard, without hiding the send field or covering the full app.
@@ -64,7 +65,7 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); close(); }
     };
-    const navigation = () => setOpen(false);
+    const navigation = () => dismiss();
     document.addEventListener('keydown', escape);
     window.addEventListener('hashchange', navigation);
     if (!openedRef.current) { closeRef.current?.focus(); openedRef.current = true; }
@@ -110,7 +111,7 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
             <span><b>TrakBot</b><small>Технический помощник TrakSOS</small></span></div>
           <button ref={closeRef} type="button" className="trakbot-dock-close" onClick={close} aria-label="Закрыть TrakBot">×</button>
         </header>
-        {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)}
+        {authenticated ? <TrakBotChat compact onNavigate={dismiss}
           onComposerSubmit={() => setInputFocused(false)} /> :
           <div className="trakbot-dock-guest">
             <div className="trakbot-dock-guest-mascot">
@@ -120,14 +121,14 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
               </p>
             </div>
             <nav aria-label="Вход и регистрация">
-              <a href="#/login" onClick={() => setOpen(false)}>Войти</a>
-              <a href="#/register" onClick={() => setOpen(false)}>Зарегистрироваться</a>
+              <a href="#/login" onClick={dismiss}>Войти</a>
+              <a href="#/register" onClick={dismiss}>Зарегистрироваться</a>
             </nav>
           </div>}
       </div>}
       <button ref={triggerRef} type="button" className="trakbot-dock-launcher"
         aria-label={open ? 'Закрыть TrakBot' : 'Открыть TrakBot'} aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}>
+        onClick={() => { if (open) close(); else setOpen(true); }}>
         <TrakBotMascot reaction={open ? 'ok' : 'hello'} size="small" ambient />
         <span className="trakbot-dock-label">{open ? 'Закрыть' : authenticated ? 'TrakBot' : 'Наш ИИ-помощник'}</span>
       </button>
