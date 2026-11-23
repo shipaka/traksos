@@ -68,11 +68,11 @@ export class DeveloperReportDelivery {
             order by delivery_next_at, created_at
             for update skip locked limit 1`);
         if (!row) return null;
-        const lease=await q.one<{delivery_lease_until:Date}>(
+        const lease=await q.one<{lease_token:string}>(
           "update admin_developer_reports set delivery_lease_until=now()+interval '45 seconds' " +
-          "where id=$1 returning delivery_lease_until",[row.id]);
+          "where id=$1 returning delivery_lease_until::text as lease_token",[row.id]);
         if(!lease)throw new Error('Developer report lease disappeared');
-        return {...row,leaseUntil:lease.delivery_lease_until};
+        return {...row,leaseToken:lease.lease_token};
       });
       if (!leased) break;
       const notice: DeveloperReportNotice = {
@@ -91,7 +91,7 @@ export class DeveloperReportDelivery {
                   delivery_attempts=delivery_attempts+1, delivery_last_error=null
             where id=$1 and delivery_sent_at is null
               and delivery_lease_until=$2::timestamptz`,
-          [leased.id,leased.leaseUntil]);
+          [leased.id,leased.leaseToken]);
       } catch {
         // A stale worker must not reschedule a newer worker's lease.
         // Never persist the URL, token, HTTP response or exception text.
@@ -107,7 +107,7 @@ export class DeveloperReportDelivery {
                   delivery_last_error='Не доставлено. Автоматический повтор.'
             where id=$1 and delivery_sent_at is null
               and delivery_lease_until=$3::timestamptz`,
-          [leased.id,minutes,leased.leaseUntil]);
+          [leased.id,minutes,leased.leaseToken]);
       }
       processed++;
     }
