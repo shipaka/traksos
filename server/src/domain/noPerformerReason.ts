@@ -49,7 +49,8 @@ export function classifyNoPerformerReason(p: {
 
   const hasLocation = p.lat != null && p.lng != null &&
     Number.isFinite(p.lat) && Number.isFinite(p.lng) &&
-    Math.abs(p.lat) <= 90 && Math.abs(p.lng) <= 180;
+    Math.abs(p.lat) <= 90 && Math.abs(p.lng) <= 180 &&
+    !(p.lat === 0 && p.lng === 0);
   if (!hasLocation || !Number.isFinite(p.radiusKm) || p.radiusKm <= 0) return 'unknown';
 
   // Only make a temporary unavailability claim if matching workers actually
@@ -58,6 +59,8 @@ export function classifyNoPerformerReason(p: {
     (!p.verifiedOnly || x.verification === 'approved') &&
     x.lat != null && x.lng != null && Number.isFinite(x.lat) &&
     Number.isFinite(x.lng) &&
+    Math.abs(x.lat) <= 90 && Math.abs(x.lng) <= 180 &&
+    !(x.lat === 0 && x.lng === 0) &&
     haversineKm({ lat: p.lat!, lng: p.lng! }, { lat: x.lat, lng: x.lng }) <= p.radiusKm);
   if (local.length > 0 && local.every(x =>
     x.paused || !!x.extras?.vacation ||

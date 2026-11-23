@@ -59,7 +59,12 @@ test('nearby offline, paused and vacation partners can be temporarily unavailabl
 test('unknown GPS, distant/unknown locations and active workers never prove no partner', () => {
   for (const options of [
     {lat:null, lng:null},
+    {lat:0, lng:0}, // Null Island is not a proven GPS fix
     {profiles:[partner({lat:null,lng:null})]},
+    {lat:0.01, lng:0.01,profiles:[partner({lat:0,lng:0,line_status:'offline'})]},
+    // A longitude one full rotation outside bounds can produce an
+    // artificially tiny haversine distance to the real order.
+    {profiles:[partner({lat:59.934,lng:390.335,line_status:'offline'})]},
     {profiles:[partner({lat:55.75,lng:37.62})]},
     {profiles:[partner()]},
     {verifiedOnly:true,profiles:[partner({verification:'pending',line_status:'offline'})]},
