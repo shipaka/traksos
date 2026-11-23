@@ -930,6 +930,11 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    const latestAbsence = o.status === 'no_performer' && actor === 'client'
+      ? [...events].reverse().find((event: any) => event.type === 'no_performer')?.data?.absenceReason
+      : null;
+    const absenceReason = ['not_connected', 'temporarily_unavailable', 'no_response'].includes(latestAbsence)
+      ? latestAbsence : 'unknown';
     // Cancellation terms are snapshotted in the immutable order event at the
     // moment of cancellation. Never recompute them from today's admin tariffs.
     const cancelEvent = o.status === 'cancelled'
@@ -1007,6 +1012,7 @@ export class OrdersService {
       : null;
     return {
       id: o.id, number: o.number, status: o.status as OrderStatus,
+      absenceReason: o.status === 'no_performer' && actor === 'client' ? absenceReason : undefined,
       statusLabel: unilateral?.status==='pending_client' ? 'Работа сдана · ожидаем клиента'
         : unilateral?.status==='disputed' ? 'Работа сдана · разбирательство'
         : statusLabels[o.status as OrderStatus],
