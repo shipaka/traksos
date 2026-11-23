@@ -86,6 +86,26 @@ test('two independently consented stations appear; unapproved or no-GPS entries 
   assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1);
 });
 
+test('weekly confirmation expires public pin; real confirmation restores the same verified consent',async()=>{
+  // Calendar aging in the disposable PostgreSQL test database, no fake API
+  // response and no manipulation of the approved location or opted-in flag.
+  await t.db.query(`update service_centers
+    set accepts_confirmed_at=now()-interval '6 days' where id=$1`,[centerId]);
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1,
+    'six-day-old confirmation is still current');
+  await t.db.query(`update service_centers
+    set accepts_confirmed_at=now()-interval '8 days' where id=$1`,[centerId]);
+  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[],
+    'eight-day-old workshop must not be advertised as currently confirmed');
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
+    'expired workshop cannot renew public consent without confirming services');
+  ok(await t.api('POST','/api/base/confirm-accepts',{},service.token));
+  const renewed=ok(await t.api('GET','/api/public/partner-map')).points;
+  assert.equal(renewed.length,1);
+  assert.equal(renewed[0].id,centerId,
+    'actual weekly confirmation immediately restores previously consented, verified station');
+});
+
 test('blocked, paused, revoked, absent and invalid locations disappear without cached pins',async()=>{
   await t.db.query('update service_centers set paused=true where id=$1',[centerId]);
   assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
