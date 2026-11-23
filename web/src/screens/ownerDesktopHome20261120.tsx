@@ -8,6 +8,11 @@ import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { FeatureArtwork } from '../featureArtwork20261122.tsx';
 import './ownerDesktopHome20261120.css';
 
+function dismissOnMouseLeave(event: import('react').MouseEvent<HTMLDetailsElement>) {
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) event.currentTarget.open = false;
+}
+
+
 /** The 20 November owner-approved desktop layout. Mobile stays on its separately approved view. */
 const primary = [
   ['Выездной мастер','Диагностика и ремонт на месте','van'],
@@ -77,13 +82,13 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           const opened=event.currentTarget.querySelector('details[open]') as HTMLDetailsElement|null;
           if(opened){opened.open=false;opened.querySelector('summary')?.focus();event.preventDefault();}
         }}>
-        <details><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
-        <details><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
-        <details><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
-        <details><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
+        <details onMouseLeave={dismissOnMouseLeave}><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
+        <details onMouseLeave={dismissOnMouseLeave}><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
+        <details onMouseLeave={dismissOnMouseLeave}><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
+        <details onMouseLeave={dismissOnMouseLeave}><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
         <a href="#/login">Поддержка</a>
       </nav>
-      <details className="owner20-compact-menu">
+      <details className="owner20-compact-menu" onMouseLeave={dismissOnMouseLeave}>
         <summary>☰ Разделы</summary>
         <nav aria-label="Разделы сайта на небольшом экране ПК">
           <a href="#/company">О платформе</a><a href="#/explore/van">Сервисы</a>
@@ -91,7 +96,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           <a href="#/join">Партнёрам</a><a href="#/login">Поддержка</a>
         </nav>
       </details>
-      <details className="owner20-region"><summary>⌖ Выбрать регион</summary><div className="owner20-region-menu"><b>Регион запуска</b><p>Санкт-Петербург и Ленинградская область</p><small>В остальных регионах сервисы появятся по мере подключения партнёров.</small><a href="#/login">Уточнить доступность →</a></div></details>
+      <details className="owner20-region" onMouseLeave={dismissOnMouseLeave}><summary>⌖ Доступность по регионам</summary><div className="owner20-region-menu"><b>TrakSOS — вся Россия</b><p>Регистрация и личный кабинет доступны по всей России.</p><small>Выездные услуги зависят от наличия подключённых партнёров в конкретном регионе.</small><a href="#/login">Уточнить доступность →</a></div></details>
       <a href="#/login" className="owner20-signin"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2.2a7 7 0 0 1 14 0V21"/></svg><span>Войти</span></a>
     </header>
     <section className="owner20-hero" aria-labelledby="owner20-heading">

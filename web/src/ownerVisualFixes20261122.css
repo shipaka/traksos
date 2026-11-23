@@ -1540,3 +1540,13 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
     display:none!important;
   }
 }
+
+/* Authorized browser footer: same baked-in logo, no black matte square. */
+.app:not(.guest-app) .site-footer .tr-approved-brand-logo,
+.app:not(.guest-app) .site-footer .tr-approved-brand-logo img {
+ background:transparent!important;box-shadow:none!important;
+}
+.app:not(.guest-app) .site-footer .tr-approved-brand-logo img {
+ mix-blend-mode:screen!important;
+ filter:contrast(1.7) brightness(1.06)!important;
+}

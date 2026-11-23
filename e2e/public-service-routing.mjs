@@ -88,6 +88,9 @@ try {
       const summary=menus.nth(0).locator('summary');
       await summary.click();
       check(await menus.nth(0).evaluate(el=>el.open),'Platform dropdown failed');
+      await page.mouse.move(0,0);
+      check(!await menus.nth(0).evaluate(el=>el.open),'Platform dropdown did not close on mouse leave');
+      await summary.click();
       const platformLinks=await menus.nth(0).locator('a').allTextContents();
       check(platformLinks.length===1&&platformLinks[0].trim()==='О нас',
         'Platform menu still exposes fees/tours/terms as public actions');
@@ -100,6 +103,11 @@ try {
       await page.locator('.owner20-region>summary').click();
       check(await page.locator('.owner20-region-menu').isVisible(),
         'Region disclosure does not open');
+      check(await page.locator('.owner20-region-menu').getByText('TrakSOS — вся Россия').count()===1,
+        'Region panel wrongly limits TrakSOS to SPb');
+      await page.mouse.move(0,0);
+      check(!await page.locator('.owner20-region').evaluate(el=>el.open),
+        'Region menu did not close on mouse leave');
       check(await page.locator('.owner20-region-menu a[href="#/login"]').count()===1,
         'Region availability should open sign-in');
       check(await page.locator('.owner20-map a[href="#/login"]').count()===1,
@@ -115,6 +123,8 @@ try {
       // "Возможности" menu: the old 4-link bottom tabbar is NOT allowed.
       check(await page.locator('.track-guest-tabbar').count()===0,
         'Retired unstyled guest tabbar returned below the legal footer');
+      check(await page.locator('.public-landing-region').getByText('TrakSOS — вся Россия').count()===1,
+        'Mobile landing incorrectly claims SPb-only platform');
       check(await page.locator('.guest-header-actions a[href="#/login"]').count()===1,
         'Mobile first-screen sign-in is missing');
       check(await page.locator('.guest-header-actions a[href="#/register"]').count()===1,

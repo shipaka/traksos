@@ -10,7 +10,7 @@ import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 const HERO_SLIDES = [
   { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
     description: 'Единая платформа для водителей, перевозчиков и всех, кто работает с грузовой техникой',
-    caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
+    caption: 'TrakSOS — платформа для всей России. Доступность выездных мастеров определяется по вашему региону.' },
   { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
     description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
     caption: 'Наличие исполнителя и условия выезда зависят от региона и выбранной заявки.' },
@@ -370,7 +370,7 @@ export function Login({ driver, entry, serviceContext }: {
     <main className="public-home public-landing" id="public-home"
       inert={showOverlay || undefined} aria-hidden={showOverlay || undefined}>
       <div className="public-landing-head">
-        <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
+        <span className="public-landing-region">◉ TrakSOS — вся Россия</span>
 
       </div>
 
@@ -386,7 +386,7 @@ export function Login({ driver, entry, serviceContext }: {
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
-            <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
+            <span><i aria-hidden="true">⌖</i>По всей России</span>
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
@@ -534,7 +534,7 @@ export function Login({ driver, entry, serviceContext }: {
           <a href="#/login" className="tr-native-welcome-login">Войти</a>
           <a href="#/register" className="tr-native-welcome-register">Зарегистрироваться</a>
         </div>
-        <small>Выездные услуги запускаются в Санкт-Петербурге и Ленинградской области.</small>
+        <small>TrakSOS — платформа для всей России. Выездная помощь зависит от подключения партнёров в регионе.</small>
       </section>
       <details className="tr-native-welcome-services" id="public-services">
         <summary>Услуги TrakSOS <span>Показать все <span aria-hidden="true">⌄</span></span></summary>
