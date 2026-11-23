@@ -131,3 +131,40 @@ test('terminal replacement search does not reuse offers or invitations from befo
     }
   } finally { await t.close(); }
 });
+
+
+test('terminal no-performer result survives notification write outage', async () => {
+  const { setup } = await import('./helpers.ts');
+  const t = await setup();
+  try {
+    const customer = await t.login('+79990003562','client');
+    const order = await t.db.one<{id:string}>(
+      `insert into orders(client_id,created_by,service,zone_id,status,estimate)
+        values ($1,$1,'hydraulics','spb','searching',$2::jsonb) returning id`,
+      [customer.id, JSON.stringify({callOut:100000,zoneName:'СПб'})]);
+    assert.ok(order);
+    await t.db.exec(`create function traksos_test_fail_absence_notice()
+      returns trigger language plpgsql as $$
+      begin raise exception 'injected notification outage'; end $$;
+      create trigger traksos_test_fail_absence_notice
+      before insert on notifications for each statement
+      execute function traksos_test_fail_absence_notice();`);
+    try {
+      // Real auction termination must commit even when downstream storage
+      // for an informational notification fails. Never fake a status change.
+      await t.app.auction.start(order.id);
+      const state = await t.db.one<{status:string}>(
+        'select status from orders where id=$1',[order.id]);
+      assert.equal(state?.status,'no_performer');
+      const events = await t.db.query<{id:number}>(
+        "select id from order_events where order_id=$1 and type='no_performer'",[order.id]);
+      assert.equal(events.length,1,'exactly one immutable terminal event is kept');
+      const response = await t.api('GET','/api/orders/'+order.id,undefined,customer.token);
+      assert.equal(response.status,200,'customer must still see the true terminal state');
+      assert.equal(response.body.status,'no_performer');
+    }finally{
+      await t.db.exec(`drop trigger if exists traksos_test_fail_absence_notice on notifications;
+        drop function if exists traksos_test_fail_absence_notice();`);
+    }
+  }finally{await t.close();}
+});

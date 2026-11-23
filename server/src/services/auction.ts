@@ -381,7 +381,12 @@ export class AuctionService {
       return true;
     });
     if (!finished) return;
+    // The final status + immutable absence reason have already committed.
+    // A temporary notification-table/push failure must not make an exhausted
+    // search throw as though the status transition had failed. The customer
+    // can still poll the real no_performer status and use manual retry.
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
-      { kind: 'normal', title: 'Поиск исполнителя завершён', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } });
+      { kind: 'normal', title: 'Поиск исполнителя завершён', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } })
+      .catch((err) => console.warn('[no-performer notify]', (err as Error).message));
   }
 }
