@@ -58,7 +58,11 @@ function useCart(): [Cart, (c: Cart) => void] {
     setCart(safe);
     window.dispatchEvent(new CustomEvent('traksos-cart',{detail:{owner,cart:safe}}));
   };
-  return [cart,update];
+  // Effects run after paint. Hide data from the previous account even
+  // during the first render with a different MeCtx identity.
+  const visibleCart=session.current.owner===owner&&session.current.token===getToken()
+    ? cart : {};
+  return [visibleCart,update];
 }
 const photoUrl = (p: any) => `${API_URL}/api/shop/products/${p.id}/photo?v=${p.photoVersion}`;
 const STATUS_TONE: Record<string, string> = { new: 'accent', confirmed: 'accent', ready: 'good', shipped: 'accent', done: '', cancelled: 'bad' };
