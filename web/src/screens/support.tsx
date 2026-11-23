@@ -17,7 +17,7 @@ export function SupportList() {
   return (
     <main>
       <Back to="profile" />
-      <div className="between"><h1>Поддержка</h1><button className="btn small" onClick={() => go('support/new')}>Написать</button></div>
+      <div className="between"><h1>Поддержка</h1><button type="button" className="btn small" onClick={() => go('support/new')}>Написать</button></div>
       <span className="note">Обращение сохраняется в личном кабинете. Первый ответ специалиста — в течение часа; если ответ задерживается, обращение передаётся администратору.</span>
       {!list.data ? <div className="stack">
         <Loading error={list.error} />
@@ -41,6 +41,10 @@ export function SupportNew() {
   const orderId = new URLSearchParams(location.hash.split('?')[1] ?? '').get('order') ?? undefined;
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
+  // Backend deduplicates order-linked tickets, but not standalone requests.
+  // A synchronous lock prevents two near-simultaneous taps making two tickets
+  // before React's busy state has had a chance to re-render the button.
+  const sendingRef = useRef(false);
   const [topic, setTopic] = useState('');
   const [text, setText] = useState('');
   return (
@@ -53,11 +57,19 @@ export function SupportNew() {
       </div>}
       {!topics.data && !topics.error && <span className="note" role="status">Получаем доступные темы поддержки…</span>}
       <div className="row" role="group" aria-label="Тема обращения">{(topics.data ?? []).map((t: string) =>
-        <button type="button" key={t} className="chip" aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
+        <button type="button" key={t} className="chip" disabled={busy} aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
       <textarea className="field" aria-label="Описание проблемы" maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
       <button type="button" className="btn" disabled={busy || !topics.data?.includes(topic) || text.trim().length < 3} onClick={async () => {
-        const r = await run(() => post('/api/support', { topic, text, orderId }), 'Отправлено — поддержка уже видит');
-        if (r) location.replace(`#/support/${r.id}`);
+        if (sendingRef.current) return;
+        sendingRef.current = true;
+        try {
+          const r = await run(() => post('/api/support', {
+            topic, text: text.trim(), orderId
+          }), 'Обращение зарегистрировано');
+          if (r) location.replace(`#/support/${r.id}`);
+          // If the mobile response was lost, do not erase the draft. The user
+          // can inspect the list before deliberately retrying a new ticket.
+        } finally { sendingRef.current = false; }
       }}>Отправить</button>
     </main>
   );
@@ -135,8 +147,8 @@ export function SupportQueue() {
   return (
     <div className="stack">
       <div className="grid2">
-        <button className="seg" aria-pressed={status === 'open'} onClick={() => setStatus('open')}>Открытые</button>
-        <button className="seg" aria-pressed={status === 'closed'} onClick={() => setStatus('closed')}>Закрытые</button>
+        <button type="button" className="seg" aria-pressed={status === 'open'} onClick={() => setStatus('open')}>Открытые</button>
+        <button type="button" className="seg" aria-pressed={status === 'closed'} onClick={() => setStatus('closed')}>Закрытые</button>
       </div>
       {!q.data ? <div className="stack">
         <Loading error={q.error} />
