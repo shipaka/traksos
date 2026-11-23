@@ -124,6 +124,7 @@ jobs:
           # Real moderator React queues: deep-link tabs, mobile deduplication, staff rights.
           node e2e/moderator-workspace-tabs-20261124.mjs
           node e2e/moderator-staff-route-20261124.mjs
+          node e2e/techbase-repair-hardening-20261124.mjs
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
