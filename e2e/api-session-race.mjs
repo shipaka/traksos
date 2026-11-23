@@ -46,8 +46,12 @@ try {
             auth:options.headers?.authorization,
             key:options.headers?.['idempotency-key']
           });
-          return Promise.resolve(response(orderCalls.length===1?503:200,
-            orderCalls.length===1?{error:'temporary'}:{order:{id:'CI-NEW-ORDER'}}));
+          return Promise.resolve(response(
+            orderCalls.length===1 || orderCalls.length===3 ? 503 : 200,
+            orderCalls.length===1 || orderCalls.length===3
+              ? {error:'temporary'}
+              : {order:{id:'CI-NEW-ORDER'}}
+          ));
         }
         return originalFetch(url,options);
       };
@@ -166,6 +170,16 @@ try {
         result.orderKeys=orderCalls.map(x=>x.key);
         result.orderAuth=orderCalls.map(x=>x.auth);
         result.newOrderId=orderCreated.order.id;
+
+        // Two attempts by the SAME user with an identical form after a
+        // temporary network/API error must retain one idempotency key.
+        module.setToken('CI-RETRY-SAME-USER');
+        const firstRetry=await module.postOrder(orderBody).catch(e=>e);
+        const successfulRetry=await module.postOrder(orderBody);
+        result.sameUserFirstStatus=firstRetry.status;
+        result.sameUserSecondId=successfulRetry.order.id;
+        result.sameUserKeys=orderCalls.slice(2).map(x=>x.key);
+        result.sameUserAuth=orderCalls.slice(2).map(x=>x.auth);
       } finally {
         window.fetch=originalFetch;
       }
@@ -218,6 +232,15 @@ try {
     assert.notEqual(actual.orderKeys[0],actual.orderKeys[1],
       'account switch reused previous user pending order idempotency key');
     assert.equal(actual.newOrderId,'CI-NEW-ORDER');
+    assert.equal(actual.sameUserFirstStatus,503);
+    assert.equal(actual.sameUserSecondId,'CI-NEW-ORDER');
+    assert.equal(actual.sameUserKeys.length,2);
+    assert.ok(actual.sameUserKeys[0]);
+    assert.equal(actual.sameUserKeys[0],actual.sameUserKeys[1],
+      'same-account retry changed idempotency key and could create a duplicate order');
+    assert.deepEqual(actual.sameUserAuth,[
+      'Bearer CI-RETRY-SAME-USER','Bearer CI-RETRY-SAME-USER'
+    ]);
     // Now exercise ACTUAL browser localStorage propagation across two
     // independent documents of the same origin, not just synthetic events.
     // Use the SAME isolated HTML fixture for two tabs. Browsers may render
