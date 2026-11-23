@@ -86,3 +86,72 @@ test('courier: concurrent assignment retries do not rotate the receipt nonce or 
    'select status from shop_orders where id=$1',[order.id]))?.status,'done');
  }finally{await t.close();}
 });
+
+
+test('courier: revoked driver of the same fleet cannot reveal code or confirm a former vehicle parcel', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const admin=await t.login('+79990000001');
+  const owner=await t.login('+79996671201');
+  const driver=await t.login('+79996671202','driver');
+  const courier=await t.login('+79996671203');
+  await t.db.query("update users set roles=array['courier']::text[] where id=$1",[courier.id]);
+  const car=ok(await t.api('POST','/api/vehicles',{
+   brand:'MAN',model:'TGX',year:2018,plate:'А651АА178',
+  },owner.token));
+  const other=ok(await t.api('POST','/api/vehicles',{
+   brand:'MAN',model:'TGS',year:2019,plate:'А652АА178',
+  },owner.token));
+  const fleet=ok(await t.api('GET','/api/fleet',undefined,owner.token));
+  const code=fleet.cars.find((v:any)=>v.id===car.id)?.qrCode;
+  assert.ok(code);
+  ok(await t.api('POST',`/api/qr/${code}/join`,{},driver.token));
+  const p=ok(await t.api('POST','/api/admin/shop/products',{
+    name:'Запчасть к MAN для теста отзыва доступа',price:22000,stock:3,
+  },admin.token));
+  ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true,delivery:true},admin.token));
+  const order=ok(await t.api('POST','/api/shop/orders',{
+   items:[{productId:p.id,qty:1}],delivery:'delivery',
+   address:'Тестовая площадка бывшего водителя, дом 25',vehicleId:car.id,
+  },driver.token));
+  for(const status of ['confirmed','ready'])
+   ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status},admin.token));
+  const assigned=ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/courier`,
+    {courierId:courier.id},admin.token));
+  for(const status of ['picked_up','en_route','arrived'])
+   ok(await t.api('POST',`/api/courier/jobs/${assigned.id}/stage`,{status},courier.token));
+  const codeBefore=ok(await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,
+   undefined,driver.token)).code;
+  assert.match(codeBefore,/^\d{6}$/);
+  const oldCount=(await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and kind='shop'",
+   [driver.id]))!.n;
+  // Same legal owner, NEW car: stale fleet ownership alone must not confer
+  // access to an old vehicle's delivery or its 6-digit handoff secret.
+  ok(await t.api('POST',`/api/vehicles/${other.id}/driver`,
+   {phone:'+79996671202'},owner.token));
+  assert.equal((await t.db.one<{driver_id:string|null}>(
+   'select driver_id from vehicles where id=$1',[car.id]))?.driver_id,null);
+  assert.equal((await t.db.one<{owner_id:string|null}>(
+   'select owner_id from users where id=$1',[driver.id]))?.owner_id,owner.id);
+  assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,
+   undefined,driver.token)).status,404);
+  assert.equal((await t.api('POST',`/api/shop/orders/${order.id}/confirm-received`,
+   {},driver.token)).status,404);
+  assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,
+   undefined,owner.token)).status,404,'owner is not the individual who receives this code');
+  ok(await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
+   {code:codeBefore},courier.token));
+  assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and kind='shop'",
+   [driver.id]))?.n,oldCount,
+   'private new verification events cannot reach the former driver');
+  assert.equal((await t.api('POST',`/api/shop/orders/${order.id}/confirm-received`,
+   {},driver.token)).status,404);
+  assert.equal((await t.db.one<{status:string}>(
+   'select status from shop_orders where id=$1',[order.id]))?.status,'shipped',
+   'revoked driver cannot close or pay an old fleet shipment');
+  assert.equal((await t.db.one<{status:string}>(
+   'select status from shop_courier_deliveries where id=$1',[assigned.id]))?.status,'code_verified');
+ }finally{await t.close();}
+});
