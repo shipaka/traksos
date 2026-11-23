@@ -223,7 +223,11 @@ export class SupportService {
          from support_messages m left join users u on u.id=m.sender_id where m.ticket_id=$1 order by m.id`, [ticketId]);
     const order = t.order_id ? await this.db.one('select id, number, status, service from orders where id=$1', [t.order_id]) : null;
     const author = isStaff(user) ? await this.db.one('select id, name, phone from users where id=$1', [t.user_id]) : null;
-    const entry = t.ledger_entry_id ? await this.db.one(
+    // A moderator may answer a user's ticket but must not receive that user's
+    // private ledger entry. The ticket owner and an administrator retain their
+    // existing right to inspect the linked operation.
+    const canReadLedger = t.user_id === user.id || user.roles.includes('admin');
+    const entry = canReadLedger && t.ledger_entry_id ? await this.db.one(
       `select l.id::int as id, l.kind, l.amount, l.note, l.account, l.created_at, o.number as order_number
          from ledger_entries l left join orders o on o.id=l.order_id where l.id=$1`, [t.ledger_entry_id]) : null;
     return { id: t.id, number: t.number, topic: t.topic, status: t.status,
