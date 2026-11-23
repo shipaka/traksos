@@ -108,6 +108,20 @@ try{
           throw Error('Mobile artwork is not above DOM copy '+JSON.stringify(details));
         if(width>700 && details.art.right<=details.text.right)
           throw Error('Desktop artwork is not to the right of text');
+        const copyProtection=await card.evaluate(el=>{
+          const art=el.querySelector('.traksos-no-performer-art');
+          const copy=el.querySelector('.traksos-no-performer-copy');
+          return {matte:getComputedStyle(art,'::after').backgroundImage,
+            pseudo:getComputedStyle(art,'::after').content,
+            artZ:getComputedStyle(art).zIndex,copyZ:getComputedStyle(copy).zIndex};
+        });
+        if(width>700 && (!copyProtection.matte.includes('linear-gradient') ||
+            copyProtection.copyZ!=='1'))
+          throw Error('Desktop Russia map puts high-glow marks behind text: '+
+            JSON.stringify(copyProtection));
+        if(width<=700 && copyProtection.pseudo!=='none')
+          throw Error('Approved mobile artwork must retain its original colors: '+
+            JSON.stringify(copyProtection));
         // Real computed CSS is the final truth; checking the source alone
         // would miss mobile 618's high-specificity legacy pink button rules.
         const retryColors=await card.getByRole('button',{name:'Искать ещё раз'})
