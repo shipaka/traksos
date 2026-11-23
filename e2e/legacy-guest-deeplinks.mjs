@@ -66,6 +66,17 @@ try {
         assert(await page.locator('main.guest-explore').count()===0,
           width+'px: obsolete public tour at #/'+path);
       }
+      // Partner onboarding must not inherit a previously selected
+      // CUSTOMER booking, even when the visitor opens #/join directly.
+      await preloadAbandonedChoice();
+      await page.goto(BASE+'/#/join',{waitUntil:'domcontentloaded'});
+      await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
+      await page.waitForFunction(() =>
+        sessionStorage.getItem('traksos.pendingLandingAction')===null &&
+        sessionStorage.getItem('traksos.pendingCatalogChoice')===null);
+      assert(await page.locator('.guest-partner-role').count()===4,
+        width+'px: partner registration lost its four approved choices');
+
       // The old #/privacy bookmark must still show the currently published
       // PUBLIC policy, not an unrelated registration screen or the
       // authenticated personal-data management form.
