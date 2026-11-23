@@ -144,8 +144,12 @@ export class TrakBotService {
   }
 
   async clearHistory(user: AuthUser) {
-    // Explicit user's own data only. Does not affect order chats, support, cases or DTC records.
-    await this.db.query('delete from trakbot_messages where user_id=$1', [user.id]);
+    // Serialize with the final commit of concurrent replies. A deleted thread
+    // must not retain half of a user/bot pair after another request commits.
+    await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['trakbot:' + user.id]);
+      await q.query('delete from trakbot_messages where user_id=$1', [user.id]);
+    });
     return { cleared: true };
   }
 
@@ -226,8 +230,16 @@ export class TrakBotService {
         );
         if (matches.length) {
           caseNotes = '\n\nИз проверенных кейсов коллег для похожей комплектации (не заводская инструкция):\n' +
-            matches.map((x) => x.code + ' · признаки: ' + x.symptoms +
-              '; проверяли: ' + x.checks_performed + '; в том случае помогло: ' + x.verified_fix).join('\n') +
+            matches.map((x) => {
+              // Approved legacy field cases may still contain names, VINs or
+              // telephone numbers. Publishing the case never authorizes sharing
+              // the former participant's contacts in another account's chat.
+              const safe = (value: string) => maskPhones(String(value ?? '')).text
+                .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, '[VIN скрыт]').slice(0, 500);
+              return safe(x.code) + ' · признаки: ' + safe(x.symptoms) +
+                '; проверяли: ' + safe(x.checks_performed) +
+                '; в том случае помогло: ' + safe(x.verified_fix);
+            }).join('\n') +
             '\nСравни конфигурацию и измерения до любых ремонтных действий.';
         }
       }
@@ -240,6 +252,15 @@ export class TrakBotService {
       : 'initial_triage';
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
+      // The early count is a cheap preflight (before any LLM call), not a
+      // concurrency barrier. This locked second count prevents 10 parallel
+      // requests from all passing the limit and writing at once.
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['trakbot:' + user.id]);
+      const current = await q.one<{ minute: number; day: number }>(
+        "select count(*) filter (where created_at > now() - interval '1 minute')::int as minute, count(*)::int as day from trakbot_messages where user_id=$1 and role='user' and created_at > now() - interval '1 day'",
+        [user.id]);
+      if ((current?.minute ?? 0) >= 10 || (current?.day ?? 0) >= 150)
+        throw bad('trakbot_rate_limit', 'Слишком много сообщений. Попробуйте позже или обратитесь к специалисту.');
       const [userMessage] = await q.query<{ id: string; role: 'user'; body: string; created_at: string }>(
         "insert into trakbot_messages(user_id,role,body) values($1,'user',$2) returning id::text as id,role,body,created_at",
         [user.id, message],
@@ -260,14 +281,18 @@ export class TrakBotService {
       if (profile?.verification !== 'approved') throw forbidden('Технический справочник доступен после проверки специалиста');
     }
     const q = query.trim().slice(0, 60);
-    if (q.length < 2) return { items: [] };
+    if (q.length < 2 || !/[\p{L}\p{N}]/u.test(q)) return { items: [] };
+    // Literal substring matching, not caller-supplied SQL LIKE wildcards:
+    // % / _ from a technician's query cannot enumerate an unrelated catalogue.
     const items = await this.db.query(
       `select protocol,make,ecu,code,title_en,title_ru,detail_en,detail_ru,
               causes,symptoms,source_url,source_license,review_state,updated_at
          from diagnostic_codes
-        where code ilike $1 or title_en ilike $2 or coalesce(title_ru,'') ilike $2
+        where left(upper(code),length($1))=upper($1)
+           or position(lower($2) in lower(title_en))>0
+           or position(lower($2) in lower(coalesce(title_ru,'')))>0
         order by case when code = upper($3) then 0 else 1 end, code limit 30`,
-      [q.toUpperCase() + '%', '%' + q.replace(/[%_\\]/g, '') + '%', q],
+      [q, q, q],
     );
     return { items };
   }
