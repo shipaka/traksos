@@ -63,13 +63,53 @@ try{
         fullPage:false,animations:'disabled'});
       await page.keyboard.press('Escape');
       await dialog.waitFor({state:'detached'});
-      if(!(await opener.evaluate(node=>node===document.activeElement)))
-        throw Error('Closing expanded map by Escape failed to return keyboard focus');
+      // Focus is restored after React's layout/effect frame; asserting in
+      // the very same tick as unmount would invent an intermittent failure.
+      await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')===
+        'Развернуть карту партнёров',null,{timeout:3000});
       if(!(await page.locator('aside.owner20-map .owner20-map-demo-tag').isVisible()))
         throw Error('Collapsed approved map changed after accessible close');
       console.log('APPROVED 617 PUBLIC PARTNER MAP PASS',evidence.ids.length,
         'verified points',Math.round(evidence.width)+'x'+Math.round(evidence.height));
+      // Secondary clickable control must work too, and clicking the backdrop
+      // must close the modal without changing the approved compact 617 art.
+      const footer=page.getByRole('button',{name:'Подробнее о покрытии'});
+      await footer.click();
+      await dialog.waitFor({state:'visible'});
+      await page.mouse.click(3,3);
+      await dialog.waitFor({state:'detached'});
+      await page.waitForFunction(()=>document.activeElement?.textContent?.includes('Подробнее о покрытии'),
+        null,{timeout:3000});
     }finally{await context.close();}
+  }
+  // Cover the real guest desktop breakpoints and keyboard activation, beyond
+  // the 1440px hero screenshot. 900/1024 can intentionally use wider dialogs
+  // for touch-friendly controls, while 1280+ uses the approved 70% overlay.
+  for(const width of [900,1024,1280,1536,1672]){
+    const context=await browser.newContext({viewport:{width,height:900},locale:'ru-RU'});
+    const page=await context.newPage();
+    try{
+      await page.goto(base+'/#/',{waitUntil:'domcontentloaded'});
+      const trigger=page.getByRole('button',{name:'Развернуть карту партнёров'});
+      await trigger.waitFor({state:'visible',timeout:25_000});
+      await trigger.focus();
+      await page.keyboard.press('Enter');
+      const dialog=page.getByRole('dialog',{name:'Карта партнёров TrakSOS'});
+      await dialog.waitFor({state:'visible'});
+      const rect=await dialog.boundingBox();
+      const expectedWidth=width<=1100?.86:.70;
+      const expectedHeight=width<=1100?.78:.70;
+      if(!rect || Math.abs(rect.width/width-expectedWidth)>.035 ||
+         Math.abs(rect.height/900-expectedHeight)>.035)
+        throw Error('Expanded map wrong responsive footprint '+width+': '+JSON.stringify(rect));
+      await page.screenshot({path:out+'/guest-'+width+'-expanded-partner-network.png',
+        fullPage:false,animations:'disabled'});
+      await page.keyboard.press('Escape');
+      await dialog.waitFor({state:'detached'});
+      await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')===
+        'Развернуть карту партнёров',null,{timeout:3000});
+      console.log('APPROVED MAP KEYBOARD/RESPONSIVE PASS',width,Math.round(rect.width),Math.round(rect.height));
+    } finally {await context.close();}
   }
   // 960px is crucial: formerly between mobile 899px and PC 1000px,
   // silently displaying the retired desktop dashboard.
