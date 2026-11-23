@@ -180,20 +180,40 @@ export class OnsiteService {
 
   /** «Причина найдена, на месте не исправить» — мастер советует сервис-партнёр; клиенту там скидка */
   async recommend(user: AuthUser, orderId: string, centerId: string | null) {
-    const o = await this.mine(user, orderId);
-    if (!['arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status)) throw conflict('bad_status', 'Советовать сервис можно после приезда');
-    if (centerId) {
-      const c = await this.db.one(`select id, name from service_centers where id=$1 and verification='approved'`, [centerId]);
-      if (!c) throw notFound('Сервис не найден');
-      await this.db.query('update orders set recommended_center_id=$2 where id=$1', [orderId, centerId]);
-      await this.orders.event(this.db, orderId, user.id, 'service_recommended', { centerId });
-      await this.orders.systemMessage(orderId, `Мастер советует сервис «${c.name}» — запишитесь из заявки, будет скидка.`);
-      await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: o.status },
-        { kind: 'normal', title: 'Мастер советует сервис', body: `«${c.name}» — со скидкой по совету мастера`, data: { orderId } });
-    } else {
-      await this.db.query('update orders set recommended_center_id=null where id=$1', [orderId]);
+    const result=await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['arrived','working','awaiting_confirmation','completed'].includes(o.status))
+        throw conflict('bad_status','Советовать сервис можно после приезда');
+      const center=centerId
+        ? await q.one<{id:string;name:string}>(
+            "select id,name from service_centers where id=$1 and verification='approved'",
+            [centerId])
+        : null;
+      if(centerId&&!center)throw notFound('Сервис не найден');
+      if((o.recommended_center_id??null)===(centerId??null))
+        return {o,center,message:null as any,changed:false};
+      await q.query('update orders set recommended_center_id=$2 where id=$1',[orderId,centerId]);
+      if(!center)return {o,center,message:null as any,changed:true};
+      await this.orders.event(q,orderId,user.id,'service_recommended',{centerId});
+      const message=await q.one<any>(
+        `insert into chat_messages(order_id,sender_id,kind,body)
+          values($1,null,'system',$2)
+          returning id,order_id,sender_id,kind,body,created_at`,
+        [orderId,`Мастер советует сервис «${center.name}» — запишитесь из заявки, будет скидка.`]);
+      return {o,center,message,changed:true};
+    });
+    if(result.message&&result.center){
+      this.notifier.live(await this.orders.participants(orderId),
+        {type:'chat',message:result.message});
+      await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId),
+        {type:'order',orderId,status:result.o.status},
+        {kind:'normal',title:'Мастер советует сервис',
+          body:`«${result.center.name}» — со скидкой по совету мастера`,data:{orderId}})
+        .catch(e=>console.warn('[onsite recommend notify]',e));
     }
-    return this.orders.view(user, orderId);
+    return this.orders.view(user,orderId);
   }
 
   async fixVehicle(user: AuthUser, orderId: string, v: { brand?: string; model?: string | null; year?: number | null; axles?: number | null }) {
