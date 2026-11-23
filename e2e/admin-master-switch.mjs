@@ -43,6 +43,18 @@ try {
   await page.locator('.account-menu > summary').click();
   await modeSwitch.getByRole('link',{name:'Администратор'}).click();
   await page.waitForURL(/#\/admin/);
+  // Desktop/admin quick link must enter the isolated real test center.
+  // Never silently set the LIVE administrator's local mode to client.
+  if(await page.locator('a[href="#/as/client"]').count())
+    throw Error('Admin still exposes unsafe live client-mode shortcut');
+  if(await page.locator('a[href="#/admin/test-center/client"]').count()<1)
+    throw Error('Admin lost real client sandbox entry');
+  await page.goto(BASE+'/#/admin/test-center/client');
+  await page.getByRole('heading',{name:'Клиент',exact:true}).waitFor();
+  if(await page.evaluate(()=>localStorage.getItem('traksos.mode'))!=='admin')
+    throw Error('Opening the client sandbox rewrote live admin role');
+  await page.getByRole('link',{name:'← Выбор кабинета'}).click();
+  await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   // One admin-only sandbox opens every simulated cabin with ZERO API writes.
   await page.goto(BASE+'/#/admin/test-center');
   await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();

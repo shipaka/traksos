@@ -100,6 +100,18 @@ try{
    report.screenshots.push(jobs);
    if(errors.length)throw Error('Courier navigation JS error '+errors.join(' | '));
    report.checks.push('real courier route and clickable jobs navigation '+width);
+   // Recipient messaging is not connected yet. The approved primary nav must
+   // offer the existing WORKING support thread, not a dead "Chat" promise.
+   if(await page.locator('a[href="#/courier/chat"]').count())
+     throw Error('Courier primary/menu still advertises unavailable recipient chat');
+   const supportNav=page.locator(width===1440
+     ? '.desktop-sidebar .desktop-nav a[href="#/support"]'
+     : '.tabbar a[href="#/support"]');
+   await supportNav.waitFor({state:'visible'});
+   await supportNav.click();
+   await page.getByRole('heading',{name:'Поддержка',exact:true}).waitFor();
+   await page.getByRole('button',{name:'Написать',exact:true}).waitFor();
+   report.checks.push('courier support shortcut opens real messages and new ticket '+width);
   }finally{await ctx.close();}
  }
 }finally{await browser.close();}

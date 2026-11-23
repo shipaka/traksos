@@ -346,7 +346,7 @@ function App() {
     : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
   const permitted = mode === 'courier' ? isCourier : mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
-    : isCustomer || isStaff;
+    : isCustomer;
   const allowedMode: Mode = permitted ? mode : fallback;
   const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
@@ -518,7 +518,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Доставки'], ['/courier/chat','▤','Чат']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Доставки'], ['/support','?','Поддержка']]
     : mode === 'performer'
     ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
@@ -534,7 +534,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/courier/chat','chat','Чат'], ['/menu','menu','Меню']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/support','?','Поддержка'], ['/menu','menu','Меню']]
     : mode === 'client'
     ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
@@ -563,7 +563,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
-    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/courier/chat','Связь по доставкам'], ['/profile','Профиль и настройки']]
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
     : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
@@ -605,7 +605,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/pricing-lab', 'Калькулятор прибыльности · проект'],
-         ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
+         ['/profile', 'Аккаунт'], ['/admin/test-center/client', 'Тестовый кабинет клиента']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
@@ -769,7 +769,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
+                      : [...tabs, ['/admin/test-center/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
                 <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href, links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
