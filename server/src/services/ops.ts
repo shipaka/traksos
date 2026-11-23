@@ -193,18 +193,31 @@ export class OpsService {
       if(users.length===0)throw bad('no_recipients',
         'Пока нет подходящих получателей. Объявление сохранено — можно повторить рассылку после подключения партнёров');
       if(users.length>500)throw bad('too_many_recipients','Для массовой рассылки более 500 исполнителям обратитесь к администратору сервера');
+      // Persist each recipient's in-app notice BEFORE claiming this announcement
+      // sent. If the transaction fails, both the claim and notifications roll
+      // back together, so the operator may safely retry without losing news.
+      // Push delivery happens only after commit and is best-effort.
+      await q.query(`insert into notifications(user_id,kind,title,body,data)
+        select recipients.user_id,'announcement',$2,$3,$4::jsonb
+        from unnest($1::uuid[]) as recipients(user_id)`,
+        [users.map(u=>u.id),row.title,row.body,JSON.stringify({announcementId:id})]);
       await q.query(`update worker_announcements set notified_at=$2,notified_count=$3 where id=$1`,
         [id,this.now(),users.length]);
       await q.query(`insert into audit_log(actor_id,action,target,data) values($1,'ops.announcement.notify',$2,$3)`,
         [actor.id,id,{audience:row.audience,service:row.service,count:users.length}]);
       return {title:row.title,body:row.body,ids:users.map(u=>u.id)};
     });
-    // The durable in-app notice exists regardless of push delivery / disabled device.
-    // If notification provider fails, its in-app message still exists in the cabinet.
+    // In-app notices were inserted atomically with notified_at. Do NOT call
+    // notify() here (which would insert duplicates outside the transaction).
+    // A transient push/live failure cannot make a committed send look retryable.
     for(let i=0;i<recipients.ids.length;i+=50){
-      await notifier.notify(recipients.ids.slice(i,i+50),
-        {type:'announcement',announcementId:id},
-        {kind:'normal',title:recipients.title,body:recipients.body,data:{announcementId:id}});
+      try{
+        await notifier.deliverStored(recipients.ids.slice(i,i+50),
+          {type:'announcement',announcementId:id},
+          {kind:'normal',title:recipients.title,body:recipients.body,data:{announcementId:id}});
+      }catch(error){
+        console.warn('[ops.announcement.delivery]',error);
+      }
     }
     return {ok:true,recipients:recipients.ids.length};
   }
