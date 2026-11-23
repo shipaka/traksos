@@ -101,3 +101,47 @@ test('post-commit status notification fault cannot mask successful admin change'
   assert.equal((await t.db.one<{status:string}>(
     'select status from shop_orders where id=$1',[first.id]))?.status,'confirmed');
 });
+
+
+test('stale fleet membership is denied inside the stock reservation transaction',async()=>{
+  const actor={id:driverA.id,owner_id:owner.id,roles:['driver']} as any;
+  const before=await stock();
+  // Simulate a driver removed AFTER their browser/session built this request.
+  await t.db.query('update users set owner_id=null where id=$1',[driverA.id]);
+  try{
+    const service=new ShopService(t.db,{notify:async()=>{}} as any,t.app.settings);
+    await assert.rejects(
+      service.order(actor,{items:[{productId,qty:1}],delivery:'pickup'}),
+      (e:any)=>e?.status===403);
+    assert.equal(await stock(),before);
+  }finally{
+    await t.db.query('update users set owner_id=$2 where id=$1',[driverA.id,owner.id]);
+  }
+});
+
+test('vehicle reassigned between pre-check and transaction cannot be billed to former driver',async()=>{
+  const v=ok(await t.api('POST','/api/vehicles',{
+    brand:'Scania',model:'R',plate:'А112АА178',year:2017,
+  },owner.token));
+  await t.db.query('update vehicles set driver_id=$2 where id=$1',[v.id,driverA.id]);
+  const before=await stock();
+  let revoked=false;
+  const racingDb={
+    ...t.db,
+    tx:async <T>(fn:(q:any)=>Promise<T>):Promise<T>=>{
+      if(!revoked){
+        revoked=true;
+        await t.db.query('update vehicles set driver_id=null where id=$1',[v.id]);
+      }
+      return t.db.tx(fn);
+    },
+  };
+  const service=new ShopService(racingDb as any,{notify:async()=>{}} as any,t.app.settings);
+  await assert.rejects(
+    service.order({id:driverA.id,owner_id:owner.id,roles:['driver']} as any,{
+      items:[{productId,qty:1}],delivery:'pickup',vehicleId:v.id,
+    }),
+    (e:any)=>e?.status===403);
+  assert.equal(revoked,true);
+  assert.equal(await stock(),before,'rejected binding must not reserve any stock');
+});
