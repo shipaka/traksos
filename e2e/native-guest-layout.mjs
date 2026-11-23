@@ -92,6 +92,12 @@ try {
       await page.locator('.tr-native-welcome-partner').click();
       await page.waitForURL('**/#/join');
       await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
+      for(const path of ['explore/guide','explore/pricing']){
+        await page.goto(BASE+'/#/'+path);
+        await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+        if(await page.locator('main.guest-explore').count())
+          throw Error(width+'px: obsolete native guest page at '+path);
+      }
       console.log('PASS Android welcome '+width+'px: entire approved truck, touch targets, real auth, no fake desktop');
     } finally {await ctx.close();}
   }

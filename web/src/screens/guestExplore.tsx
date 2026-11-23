@@ -12,7 +12,6 @@ const FEATURE_PREVIEWS: Record<string,{title:string;icon:string;description:stri
   garage:{title:'Мой гараж',icon:'▣',description:'Транспорт и история обслуживания с разграничением прав владельца и водителя. Фотография открывает историю именно выбранного автомобиля.',details:['Марка, модель, год и при наличии VIN','История заявок и ремонтов','Подбор работ и запчастей по машине']},
   training:{title:'Обучение работе с TrakSOS',icon:'?',description:'Пошаговые подсказки и тренажёр по вашей роли, которые должны обновляться вместе с логикой каждого выпуска.',details:['Клиент, мастер, эвакуаторщик, СТО и страховщик','Интерактивные безопасные учебные сценарии','Контекстные подсказки в кабинетах']},
   trakbot:{title:'TrakBot — личный помощник',icon:'✦',description:'Приватный помощник для технических вопросов. Не пишет в общий Эфир и не предлагает платные консультации без явного согласия.',details:['Бесплатные справочные ответы в пилоте','Указание источника и достоверности','Без автоматических списаний']},
-  pricing:{title:'Комиссии и тарифы TrakSOS',icon:'₽',description:'Для услуги базовой стоимостью 10 000 ₽ клиент платит 10 500 ₽, а исполнитель видит базовую цену 10 000 ₽ и свою комиссию 500 ₽ внутри неё.',details:['5% с клиента сверх стоимости услуги','5% с исполнителя внутри базовой цены','Не более 5 000 ₽ с каждой стороны для согласованных заказов']},
 };
 
 /** Read-only, public explanation of the selected service and its future cabinet.
@@ -45,38 +44,6 @@ export function GuestExplore({ id, itemKey }: {id: string; itemKey?: string}) {
           <div className="guest-explore-item"><span aria-hidden="true">✓</span><strong>Контакты и удобный регион</strong></div>
         </div>
         <p className="guest-explore-note">Это информационная страница. Наличие станции, запись и оформление диагностической карты не подтверждаются до проверки доступности услуги — здесь нет фиктивной записи или готового документа.</p>
-      </section>
-    </main>;
-  }
-  if (id === 'guide') {
-    return <main className="guest-explore guest-explore-guide">
-      <a className="guest-explore-back" href="#/">← На главную</a>
-      <section className="guest-explore-hero">
-        <span className="guest-explore-eyebrow">TRAKSOS · ПОЛЕЗНОЕ</span>
-        <span className="guest-explore-glyph" aria-hidden="true">?</span>
-        <h1>Как работает TrakSOS</h1>
-        <p>Выберите нужную помощь грузовику, узнайте порядок обращения и откройте соответствующий раздел. Для оформления реальной заявки нужен личный кабинет.</p>
-        <div className="guest-explore-actions">
-          <a className="guest-explore-cta" href="#/explore/van">Выбрать услугу</a>
-          <a className="guest-explore-secondary" href="#/login">Войти</a>
-        </div>
-      </section>
-      <section className="guest-explore-section">
-        <h2>Три шага к помощи</h2>
-        <div className="guest-explore-service-grid">
-          <div className="guest-explore-item"><span>01</span><strong>Опишите проблему, транспорт и место</strong></div>
-          <div className="guest-explore-item"><span>02</span><strong>Ознакомьтесь с доступными предложениями</strong></div>
-          <div className="guest-explore-item"><span>03</span><strong>Следите за статусом заявки в кабинете</strong></div>
-        </div>
-      </section>
-      <section className="guest-explore-section">
-        <h2>Разделы сервиса</h2>
-        <div className="guest-explore-service-grid">
-          {SERVICE_TILES.map(item => <a href={'#/explore/' + item.id} className="guest-explore-item" key={item.id} onClick={() => rememberGuestService(item.id)}>
-            <span aria-hidden="true">{item.icon}</span><strong>{item.title}</strong><span aria-hidden="true">›</span>
-          </a>)}
-        </div>
-        <p className="guest-explore-note">Доступность исполнителей, запчастей и страховых предложений зависит от региона и состояния подключённых услуг.</p>
       </section>
     </main>;
   }
