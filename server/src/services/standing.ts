@@ -77,8 +77,15 @@ export class StandingService {
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and u.status='active' and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
+    // Never present nationwide performers as if they were near the truck.
+    // All three counters and shown cards must cover the SAME proven geography.
+    const hasLocation=p.lat!=null && p.lng!=null;
+    const inScope=hasLocation
+      ? list.filter(c=>c.lat!=null&&c.lng!=null&&
+          haversineKm({lat:p.lat!,lng:p.lng!},{lat:c.lat,lng:c.lng})<=all.dispatch.radiusKm)
+      : list;
     const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
-    const free = list.filter((c) => !c.busy && c.line_status !== 'on_job');
+    const free = inScope.filter((c) => !c.busy && c.line_status !== 'on_job');
     const ranked = rankCandidates(order as any, free, { radiusKm: all.dispatch.radiusKm, maxCandidates: 20, cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now() });
     const byId = new Map(free.map((c) => [c.user_id, c]));
     const speed = all.dispatch.citySpeedKmh || 40;
@@ -93,6 +100,7 @@ export class StandingService {
         callOut: c.call_out_price ?? tierPrice,
       };
     });
-    return { online: list.length, free: free.length, match: ranked.length, items };
+    return { scope:hasLocation?'nearby':'network', radiusKm:hasLocation?all.dispatch.radiusKm:null,
+      online: inScope.length, free: free.length, match: ranked.length, items };
   }
 }

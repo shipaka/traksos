@@ -1419,7 +1419,15 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
     : prio === 'fast' ? (a.etaMin ?? 1e9) - (b.etaMin ?? 1e9) : (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)));
   return (
     <div className="card">
-      <div className="between"><b>Поиск рядом с вами</b>{!geo && <span className="note">без GPS — по всему городу</span>}</div>
+      <div className="between">
+        <b>{d.scope==='nearby'?'Поиск по указанной точке':'Исполнители в сети TrakSOS'}</b>
+        {d.scope==='nearby'?<span className="note">до {d.radiusKm} км от указанной точки</span>:
+          <span className="note">География не определена</span>}
+      </div>
+      {d.scope!=='nearby'&&<p className="note">
+        Координаты машины не указаны. Показатели ниже относятся ко всей сети TrakSOS, а не к ближайшему городу.
+        Для поиска мастеров рядом укажите точку машины или воспользуйтесь добровольной геолокацией.
+      </p>}
       <div className="grid3">
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.online}</b><span className="note">на линии</span></div>
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.free}</b><span className="note">свободны</span></div>
@@ -1437,7 +1445,8 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
       )) : <span className="note">{verifiedOnly?'Сейчас нет подходящих проверенных исполнителей. Снимите галочку «Только проверенные», чтобы видеть остальных, или оставьте её для поиска только проверенных.':'Свободных рядом сейчас нет — заявка уйдёт в торги, мастера откликнутся, когда освободятся.'}</span>}
-      <span className="note">Значок «Проверен» показывается только подтверждённым исполнителям. Они имеют преимущество в выдаче; непроверенные остаются доступными, если фильтр выключен.</span>
+      <span className="note">{d.scope==='nearby'?'Счётчики и список относятся к подтверждённому радиусу поиска. ':'Без координат нельзя утверждать, что исполнитель находится рядом. '}
+        Значок «Проверен» показывается только подтверждённым исполнителям. Они имеют преимущество в выдаче; непроверенные остаются доступными, если фильтр выключен.</span>
     </div>
   );
 }

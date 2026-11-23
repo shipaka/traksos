@@ -36,3 +36,25 @@ test('verifiedOnly persists in order and excludes pending masters from the actua
     "select d.performer_id as user_id from order_dispatch d where d.order_id=$1",[placed.order.id]);
   assert.ok(!dispatch.some(x=>x.user_id===pending.id),'pending partner was invited despite only-verified consent');
 });
+
+test('nearby counters share a real radius; unknown geography is explicitly nationwide',async()=>{
+  const distant=ok(await t.api('GET',
+    '/api/masters-nearby?service=electric&lat=55.75&lng=37.62',
+    undefined,client.token));
+  assert.equal(distant.scope,'nearby');
+  assert.equal(distant.online,0,'distant city must not inflate local online counts');
+  assert.equal(distant.free,0);
+  assert.equal(distant.match,0);
+  assert.equal(distant.items.length,0);
+  const near=ok(await t.api('GET',
+    '/api/masters-nearby?service=electric&lat=59.934&lng=30.335',
+    undefined,client.token));
+  assert.equal(near.scope,'nearby');
+  assert.ok(near.online>=2);
+  assert.ok(near.free>=2);
+  assert.ok(near.match>=2);
+  const unknown=ok(await t.api('GET','/api/masters-nearby?service=electric',
+    undefined,client.token));
+  assert.equal(unknown.scope,'network','unknown position must not claim one city');
+  assert.equal(unknown.radiusKm,null);
+});
