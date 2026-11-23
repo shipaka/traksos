@@ -441,16 +441,18 @@ export function ShopCart() {
   const contextSuffix = partsContextSuffix(contextParams);
   const selectedVehicleFromLink = contextParams.get('vehicleId');
   const fromServiceBooking = !!contextParams.get('bookingId');
-  const c = useLoad(() => get('/api/shop?light=1'), []);
-  const live = useLoad(() => get('/api/orders').catch(() => []), []);
   const { me } = useMe();
+  const c = useShopPrivateLoad<any>(() => get('/api/shop?light=1'), []);
+  // A failure is NOT "zero active jobs": it must not silently invalidate
+  // a user's master-delivery selection or let the UI use stale job IDs.
+  const live = useShopPrivateLoad<any[]>(() => get('/api/orders'), []);
   const [cart, setCart] = useCart();
   const selectedIds = Object.keys(cart).sort().join(',');
-  const selection = useLoad(() => c.data?.enabled && selectedIds
+  const selection = useShopPrivateLoad<{products:any[]}>(() => c.data?.enabled && selectedIds
     ? get(`/api/shop/selection?ids=${encodeURIComponent(selectedIds)}`)
-    : Promise.resolve({ products: [] }), [c.data?.enabled, selectedIds]);
-  const vehicles = useLoad(() => c.data?.enabled && selectedIds
-    ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, !!selectedIds]);
+    : Promise.resolve({products:[]}), [c.data?.enabled, selectedIds]);
+  const vehicles = useShopPrivateLoad<any[]>(() => c.data?.enabled && selectedIds
+    ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, selectedIds]);
   const [vehicleId, setVehicleId] = useState('');
   useEffect(() => {
     if (selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
