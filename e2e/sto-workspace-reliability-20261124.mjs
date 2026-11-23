@@ -4,6 +4,7 @@
 // cannot connect to production or mutate a real invoice.
 import { build } from 'esbuild';
 import { chromium } from 'playwright';
+import { mkdir } from 'node:fs/promises';
 
 const apiStub=`
 export const requests=()=>window.__sto.pending;
@@ -123,6 +124,7 @@ const booking=(name)=>({
   clarifyQ:'Уточнение для '+name,notes:[],works:[],history:[]
 });
 const browser=await chromium.launch();
+await mkdir('e2e/shots/sto-reliability',{recursive:true});
 try{
   const page=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
   const jsErrors=[];page.on('pageerror',e=>jsErrors.push(e.message));
@@ -176,6 +178,10 @@ try{
     'Account swap retained private old station data');
   await answer(4,center('СТО B'));
   await page.getByRole('heading',{name:'Рембаза «СТО B»'}).waitFor();
+  await page.screenshot({path:'e2e/shots/sto-reliability/sto-cabinet-390.png',fullPage:true});
+  await page.setViewportSize({width:1440,height:900});
+  await page.screenshot({path:'e2e/shots/sto-reliability/sto-cabinet-1440.png',fullPage:true});
+  await page.setViewportSize({width:390,height:844});
   await answer(3,center('Старое A НЕ показывать'));
   await page.waitForTimeout(70);
   assert(await page.getByText('Старое A НЕ показывать').count()===0,
@@ -205,6 +211,7 @@ try{
   const financeThird=await page.evaluate(()=>window.__sto.pending.findLastIndex(x=>x.path==='/api/base/money'));
   await answer(financeThird,money(200000));
   await page.getByRole('heading',{name:'Финансы'}).waitFor();
+  await page.screenshot({path:'e2e/shots/sto-reliability/sto-finance-390.png',fullPage:true});
 
   // Search preferences are scoped by actual identity and fully validated.
   await change('search');
@@ -242,6 +249,45 @@ try{
   await page.getByText('Уточнение для второй записи').waitFor();
   assert(await page.getByPlaceholder('Ответ сервису').inputValue()==='',
     'New booking inherited the previous private answer');
+  await page.screenshot({path:'e2e/shots/sto-reliability/sto-booking-390.png',fullPage:true});
+
+  // The user can answer the real booking form once; a pending response must
+  // never be submitted a second time from rapid presses.
+  await page.getByPlaceholder('Ответ сервису').fill('Подтверждаю данные по грузовику');
+  await page.getByRole('button',{name:'Ответить'}).click();
+  await page.waitForFunction(()=>window.__sto.pending.some(x=>x.path==='/api/bookings/booking-2/answer'));
+  assert(await page.evaluate(()=>window.__sto.pending.filter(
+    x=>x.path==='/api/bookings/booking-2/answer').length)===1,
+    'Duplicate booking answer POST');
+  const indexAnswer=await page.evaluate(()=>window.__sto.pending.findIndex(
+    x=>x.path==='/api/bookings/booking-2/answer'));
+  await answer(indexAnswer,{...booking('второй записи'),status:'expected',statusName:'Ожидаем'});
+  await page.getByText('Сервис ждёт вас. Опаздываете').waitFor();
+
+  // A separate request card must use the existing booking response API and
+  // keep the form editable after a lost/failed response (never auto-replay).
+  await change('request');
+  await page.getByRole('button',{name:'Готовы принять'}).click();
+  await page.getByRole('button',{name:'Отправить клиенту'}).click();
+  await page.waitForFunction(()=>window.__sto.pending.some(x=>x.path==='/api/base/bookings/request-1/respond'));
+  let responded=await page.evaluate(()=>window.__sto.pending.filter(
+    x=>x.path==='/api/base/bookings/request-1/respond'));
+  assert(responded.length===1 && responded[0].body.action==='accept',
+    'Accept did not use the single existing station response API');
+  const firstResponse=await page.evaluate(()=>window.__sto.pending.findIndex(
+    x=>x.path==='/api/base/bookings/request-1/respond'));
+  await reject(firstResponse,'Потеря ответа сервиса');
+  await page.getByRole('button',{name:'Отправить клиенту'}).waitFor();
+  assert(await page.evaluate(()=>window.__sto.pending.filter(
+    x=>x.path==='/api/base/bookings/request-1/respond').length)===1,
+    'Failed station response auto-replayed');
+  await page.getByRole('button',{name:'Отправить клиенту'}).click();
+  await page.waitForFunction(()=>window.__sto.pending.filter(
+    x=>x.path==='/api/base/bookings/request-1/respond').length===2);
+  const secondResponse=await page.evaluate(()=>window.__sto.pending.findLastIndex(
+    x=>x.path==='/api/base/bookings/request-1/respond'));
+  await answer(secondResponse,{id:'request-1',status:'expected'});
+  await page.waitForFunction(()=>window.__sto.done===1);
   assert(jsErrors.length===0,'Browser JavaScript errors: '+jsErrors.join('; '));
-  console.log('PASS STO: session/route-bound data, latest GET wins, retry without stale money, validated per-user search, isolated booking drafts');
+  console.log('PASS STO: station + booking + finance + search, session/route isolation, queued responses, retry and no duplicate writes');
 }finally{await browser.close()}
