@@ -362,9 +362,20 @@ export class AuctionService {
     const delivered = await this.db.tx(async q => {
       const rows = await q.query<{
         eventId: string; userId: string; orderId: string;
-        status: string; latestEventId: string | null;
+        status: string; latestEventId: string | null; stillRecipient: boolean;
       }>(`select a.event_id::text as "eventId",a.user_id as "userId",
                    a.order_id as "orderId",o.status,
+                   -- A previously enqueued alert is not a permanent right:
+                   -- only the owning client or the currently assigned creator
+                   -- may receive the private order notification.
+                   (a.user_id=o.client_id or
+                      (a.user_id=o.created_by and exists (
+                        select 1 from users u join vehicles v
+                          on v.owner_id=u.owner_id and v.driver_id=u.id
+                        where u.id=a.user_id and 'driver'=any(u.roles)
+                          and u.owner_id=o.client_id
+                          and (o.vehicle_id is null or v.id=o.vehicle_id)
+                      ))) as "stillRecipient",
                    (select max(e.id)::text from order_events e
                      where e.order_id=a.order_id and e.type='no_performer') as "latestEventId"
             from order_no_performer_alerts a
@@ -378,7 +389,7 @@ export class AuctionService {
         // A retry can start a new search before this background attempt.
         // Never notify the requester about a superseded terminal search.
         const current = row.status === 'no_performer' &&
-          row.latestEventId === row.eventId;
+          row.latestEventId === row.eventId && row.stillRecipient === true;
         if (current) {
           const data = JSON.stringify({
             orderId: row.orderId, terminalEventId: row.eventId,
