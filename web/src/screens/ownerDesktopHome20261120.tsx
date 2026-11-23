@@ -82,10 +82,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
   function closeMap(){ setMapOpen(false); }
   return <main className="owner20-home" id="public-home"
     inert={overlayBackground || undefined} aria-hidden={overlayBackground || undefined}>
-    <header className="owner20-top">
-      <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
-      <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
-      <nav className="owner20-topnav" aria-label="Основные разделы"
+    <header className="owner20-top"
         onClick={event => {
           // Native <details> remains keyboard-accessible. One menu at a time;
           // prevent old drop-downs from stacking over the next selection.
@@ -101,6 +98,9 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           const opened=event.currentTarget.querySelector('details[open]') as HTMLDetailsElement|null;
           if(opened){opened.open=false;opened.querySelector('summary')?.focus();event.preventDefault();}
         }}>
+      <a href="#/" className="owner20-mark" aria-label="TrakSOS — главная"><img src={APPROVED_VISUALS.logo} alt="TrakSOS" width="235" height="39" /></a>
+      <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
+      <nav className="owner20-topnav" aria-label="Основные разделы">
         <details onMouseLeave={dismissOnMouseLeave}><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
         <details onMouseLeave={dismissOnMouseLeave}><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen(event.currentTarget);}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
         <details onMouseLeave={dismissOnMouseLeave}><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>

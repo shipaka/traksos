@@ -393,6 +393,19 @@ try {
     await page.locator('.trakbot-dock-panel').waitFor({state:'detached'});
     if(!await botShortcut.evaluate(node=>node===document.activeElement))
       throw Error(width+': Escape did not return to the fifth tile');
+   const header=page.locator('header.owner20-top');
+   const region=header.locator('.owner20-region > summary');
+   const sections=header.locator('.owner20-compact-menu > summary:visible, .owner20-topnav summary:visible').first();
+   if(await region.isVisible() && await sections.isVisible()){
+     await sections.press('Enter');
+     await region.press('Enter');
+     const expanded=header.locator('details[open]');
+     if(await expanded.count()!==1 || !await expanded.evaluate(menu=>menu.classList.contains('owner20-region')))
+       throw Error(width+': region and section menus did not switch by keyboard');
+     await region.locator('..').getByRole('link').press('Escape');
+     if(await expanded.count() || !await region.evaluate(node=>node===document.activeElement))
+       throw Error(width+': Escape from region link did not close menu and return focus');
+   }
    if(width===1536){
     // All native drop-downs are mutually exclusive, including keyboard Escape.
     const menus=page.locator('.owner20-topnav details');
