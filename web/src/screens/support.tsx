@@ -162,27 +162,52 @@ export function useUnread() {
   const { me } = useMe();
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (!me) return;
-    const load = () => get('/api/me/notifications').then((r) => setN(r.unread)).catch(() => {});
+    // The header remains mounted through role switches. A previous account's
+    // unread badge (or a late GET for it) must never appear on the next login.
+    let active = true;
+    let generation = 0;
+    setN(0);
+    if (!me?.id) return () => { active = false; };
+    const load = () => {
+      const current = ++generation;
+      void get('/api/me/notifications')
+        .then((result: { unread: number }) => {
+          if (active && current === generation && Number.isSafeInteger(result.unread))
+            setN(Math.max(0,result.unread));
+        }).catch(() => { /* Keep last confirmed count; never fake zero on outage. */ });
+    };
     load();
     const stop = onEvent(() => load());
     window.addEventListener('traksos:notifications-read',load);
-    return () => { stop(); window.removeEventListener('traksos:notifications-read',load); };
+    return () => {
+      active = false;
+      stop();
+      window.removeEventListener('traksos:notifications-read',load);
+    };
   }, [me?.id]); // eslint-disable-line
   return n;
 }
 
 export function Notifications() {
-  const list = useLoad(() => get('/api/me/notifications'), []);
+  const { me } = useMe();
+  const list = useLoad(() => get('/api/me/notifications'), [me?.id]);
   const [readError,setReadError]=useState('');
   const [markingAll,setMarkingAll]=useState(false);
+  const [openingId,setOpeningId]=useState<number|null>(null);
   const open = async (n: any) => {
+    if (openingId !== null || markingAll) return;
+    setOpeningId(n.id);
+    setReadError('');
     if (!n.read_at) {
       try {
+        // Only the owning user can mark this actual row as read. The backend
+        // verifies user_id and returns 404 for foreign/missing IDs.
         await post(`/api/me/notifications/${n.id}/read`);
         window.dispatchEvent(new Event('traksos:notifications-read'));
+        void list.reload(); // update read styling for non-navigating messages
       } catch {
-        // Do not pretend that an offline mark was persisted; open the destination anyway.
+        setReadError('Не удалось отметить уведомление прочитанным. Повторите после восстановления связи.');
+        // The destination may still be useful offline; don't report success.
       }
     }
     if (n.data?.orderId) go(`order/${n.data.orderId}`);
@@ -190,12 +215,13 @@ export function Notifications() {
     else if (n.kind === 'verification') go('work/docs');
     else if (n.kind === 'balance') go('work');
     else if (n.kind === 'pricing') go('profile');
+    setOpeningId(null);
   };
   return (
     <main>
       <Back to="" />
       <div className="between notifications-header"><h1>Уведомления</h1>
-        <button className="btn ghost small" disabled={markingAll || !list.data?.unread} onClick={async()=>{
+        <button type="button" className="btn ghost small" disabled={markingAll || openingId !== null || !list.data?.unread} onClick={async()=>{
           setMarkingAll(true);setReadError('');
           try{
             await post('/api/me/notifications/read');
@@ -206,9 +232,15 @@ export function Notifications() {
         }}>Прочитать все</button>
       </div>
       {readError && <p className="err" role="alert">{readError}</p>}
-      {!list.data ? <Loading error={list.error} /> : !list.data.items.length ? <div className="empty">Пока ничего</div> : (
+      {!list.data ? <div className="stack">
+        <Loading error={list.error} />
+        {list.error && <button type="button" className="btn ghost small" onClick={() => void list.reload()}>Повторить загрузку уведомлений</button>}
+      </div> : !list.data.items.length ? <div className="empty">Пока ничего</div> : (
         <div className="rows">{list.data.items.map((n: any) => (
-          <button key={n.id} className="list-item" style={{ width: '100%', background: n.read_at ? 'transparent' : 'var(--accent-soft)', border: 0, textAlign: 'left', color: 'inherit' }} onClick={() => open(n)}>
+          <button type="button" key={n.id} className="list-item"
+            aria-label={`Уведомление: ${n.title ?? 'TrakSOS'}. ${n.read_at ? 'Прочитано' : 'Не прочитано'}`}
+            disabled={openingId !== null || markingAll}
+            style={{ width: '100%', background: n.read_at ? 'transparent' : 'var(--accent-soft)', border: 0, textAlign: 'left', color: 'inherit' }} onClick={() => void open(n)}>
             <div className="stack" style={{ gap: 2 }}>
               <b style={{ fontSize: 14 }}>{n.title ?? 'TrakSOS'}</b>
               <span style={{ fontSize: 14 }}>{n.body}</span>
