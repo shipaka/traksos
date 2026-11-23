@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import { get, post, patch, fmtTime } from '../api.ts';
+import { post, patch, fmtTime } from '../api.ts';
 import {useAction,useMe} from '../ui.tsx';
 import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
 import {parseAdminRubles,displayAdminRubles} from '../adminFinanceKopecks20261124.ts';
