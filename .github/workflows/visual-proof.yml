@@ -61,6 +61,8 @@ jobs:
       - name: "Активные ПК-заявки: Chromium, локальные синтетические данные, без оплаты"
         continue-on-error: true
         run: node e2e/approved-pc-active-work.mjs
+      - name: Проверить геометрию карты партнёров (180-й меридиан и совпадающие координаты)
+        run: node --experimental-strip-types e2e/partner-network-geometry.mjs
       - name: Проверка новой главной ПК 20 ноября (6 разрешений, реальные маршруты)
         run: node e2e/owner20-layout-check.mjs
       - name: Настоящий Android WebView-гостевой экран, без наложения текста на фуру
