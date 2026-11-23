@@ -88,20 +88,21 @@ try{
         if(role==='admin' && !marker.includes('Admin'))
           throw Error('Admin sandbox supervisor badge missing');
         if(width===390 && role==='client'){
-          // This verifies an actual HTTP resource decoded by Chromium. The
-          // no-performer component itself is covered by its server transition
-          // and source contract; do not manufacture fake orders in screenshots.
+          // The latest approved symbolic Russia-network illustration, never
+          // the cancelled #3 truck. This resource is decoded from the real
+          // server; the requester-specific card is audited separately.
           const art=await page.evaluate(async()=>{
-            const response=await fetch('/feature-art/traksos-no-performer-search-approved-20261123.webp',{cache:'no-store'});
+            const url='/feature-art/traksos-no-performer-network-russia-approved-v1.webp';
+            const response=await fetch(url,{cache:'no-store'});
             const img=new Image();
-            img.src='/feature-art/traksos-no-performer-search-approved-20261123.webp';
+            img.src=url;
             await img.decode();
             return {status:response.status,type:response.headers.get('content-type'),
               width:img.naturalWidth,height:img.naturalHeight};
           });
           if(art.status!==200 || !art.type?.includes('image/webp') ||
-             art.width!==480 || art.height!==384)
-            throw Error('Owner-approved #3 artwork absent or undecodable in Chromium: '+JSON.stringify(art));
+             art.width!==2172 || art.height!==724)
+            throw Error('Latest owner-approved Russia map absent or undecodable in Chromium: '+JSON.stringify(art));
         }
         const content=await page.locator('main').first().innerText();
         if(!content.trim() || /Вход по номеру телефона|Отсутствует приглашение/.test(content))
