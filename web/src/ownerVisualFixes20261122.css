@@ -1364,7 +1364,8 @@ html.traksos-native .guest-app .tr-native-welcome-actions{
 }
 html.traksos-native .guest-app .tr-native-welcome-actions a{
   display:flex;justify-content:center;align-items:center;text-align:center;
-  min-width:0;min-height:52px;padding:8px;border-radius:13px;
+  box-sizing:border-box;min-width:0;min-height:52px;padding:8px;border-radius:13px;
+  white-space:normal;overflow-wrap:anywhere;word-break:normal;
   text-decoration:none;font-size:13px;font-weight:850;line-height:1.2;
   border:1px solid #d9a457;color:#20180d;
   background:linear-gradient(145deg,#f1bb67,#d99135);
@@ -1449,6 +1450,13 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
   to{opacity:1;transform:translateY(0)}
 }
 @media(max-width:350px){
+  /* On genuine 320px APK windows, the 17-letter register label cannot fit
+     half a card without spilling into the neighbouring login button.
+     Stacking only at this width keeps full readable words and 52px targets;
+     360+ preserves the owner-approved side-by-side buttons. */
+  html.traksos-native .guest-app .tr-native-welcome-actions{
+    grid-template-columns:minmax(0,1fr);
+  }
   html.traksos-native .guest-app .tr-native-welcome{padding:9px!important;gap:9px!important}
   html.traksos-native .guest-app .tr-native-welcome-stage{padding:12px!important}
   html.traksos-native .guest-app .tr-native-welcome-photo{height:130px}
