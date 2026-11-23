@@ -215,6 +215,10 @@ export class OpsService {
     service?:string|null;commissionPct:number;startsAt:string;endsAt:string;enabled:boolean;reason:string;
   }) {
     if(p.service&&!SERVICES.includes(p.service as any)) throw bad('bad_service','Неизвестная услуга');
+    // ECU handoffs have no roadside auction; telephone consultation is
+    // billed separately. Neither can ever apply a worker commission campaign.
+    if(p.service==='ecu'||p.service==='consult')
+      throw bad('no_dispatch_commission','Для выбранной услуги нет комиссии выездного исполнителя');
     const start=new Date(p.startsAt),end=new Date(p.endsAt);
     if(!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start) throw bad('bad_dates','Проверьте даты');
     if(end.getTime()-start.getTime()>31*86_400_000) throw bad('too_long','Акция не длиннее 31 дня');
@@ -237,9 +241,9 @@ export class OpsService {
     });
   }
 
-  /** Called at order creation. Only dispatch work; consultations have their own fee. */
+  /** Called at order creation. Only dispatch work has a worker fee. */
   async commissionFor(service:string, at:Date) {
-    if(service==='consult')return null;
+    if(service==='consult'||service==='ecu')return null;
     return this.db.one<{id:string;commission_pct:number}>(`select id,commission_pct::float as commission_pct
       from commission_campaigns where enabled and starts_at <= $1 and ends_at > $1
       and (service=$2 or service is null)
