@@ -442,6 +442,7 @@ export function NewOrder({ service }: { service: string }) {
   const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
+  const [verifiedOnly,setVerifiedOnly]=useState(false);
   const [vehicleId, setVehicleId] = useState<string>('');
   const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name : '');
@@ -546,6 +547,7 @@ export function NewOrder({ service }: { service: string }) {
       continueFrom: continueFrom || undefined,
       recommendationId: recommendationId || undefined,
       preferredPerformerId: preferredPerformerId || undefined,
+      verifiedOnly,
       parallelWith: parallelWith || undefined,
       parallelConsent: parallelWith ? parallelAgree : undefined,
       parallelCallOut: parallelWith ? est?.callOut : undefined,
@@ -820,7 +822,19 @@ export function NewOrder({ service }: { service: string }) {
           </div>
         </details>
       )}
-      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
+      <div className="card stack" style={{gap:6}}>
+        <label className="row" style={{alignItems:'center',gap:10,cursor:'pointer'}}>
+          <input type="checkbox" checked={verifiedOnly}
+            onChange={e=>setVerifiedOnly(e.target.checked)}
+            aria-label="Только проверенные"/>
+          <b>Только проверенные</b>
+        </label>
+        <small className="note">
+          {verifiedOnly?'Заявка будет направляться исключительно исполнителям с подтверждённой проверкой TrakSOS. Если таких нет, поиск может занять больше времени.':
+            'Проверенные получают преимущество в поиске. Непроверенные тоже могут работать, но без значка подтверждения.'}
+        </small>
+      </div>
+      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} verifiedOnly={verifiedOnly} />}
 
       {isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
@@ -1393,16 +1407,16 @@ export async function logout() {
 
 const PRIO: [string, string][] = [['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
-function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: number; lng: number } | null; brand?: string }) {
+function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
   const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'near'; } catch { return 'near'; } });
-  const q = new URLSearchParams({ service, ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
-  const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, brand]);
+  const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
+  const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, geo?.lng, brand, verifiedOnly]);
   if (!l.data) return null;
   const d = l.data;
   const choose = (k: string) => { setPrio(k); try { localStorage.setItem('traksos.prio', k); } catch { /* */ } };
-  const items = [...d.items].sort((a: any, b: any) => prio === 'cheap' ? (a.callOut ?? 1e12) - (b.callOut ?? 1e12)
+  const items = [...d.items].sort((a: any, b: any) => Number(b.verification==='approved')-Number(a.verification==='approved') || (prio === 'cheap' ? (a.callOut ?? 1e12) - (b.callOut ?? 1e12)
     : prio === 'brand' ? (b.brandStars ?? 0) - (a.brandStars ?? 0) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)
-    : prio === 'fast' ? (a.etaMin ?? 1e9) - (b.etaMin ?? 1e9) : (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+    : prio === 'fast' ? (a.etaMin ?? 1e9) - (b.etaMin ?? 1e9) : (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)));
   return (
     <div className="card">
       <div className="between"><b>Поиск рядом с вами</b>{!geo && <span className="note">без GPS — по всему городу</span>}</div>
@@ -1417,13 +1431,13 @@ function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: n
       {items.length ? items.slice(0, 3).map((m: any, i: number) => (
         <div key={i} className="between">
           <span className="stack" style={{ gap: 0 }}>
-            <b>{i + 1} · Мастер {m.name} · {TIERS[m.tier as keyof typeof TIERS]?.name ?? ''} ✓</b>
+            <b>{i + 1} · Мастер {m.name} · {TIERS[m.tier as keyof typeof TIERS]?.name ?? ''} {m.verification==='approved'&&<span aria-label="Проверен TrakSOS" title="Проверен TrakSOS" className="pill good">✓ Проверен</span>}</b>
             <small className="note">{m.distanceKm != null ? `${String(m.distanceKm).replace('.', ',')} км · ~${m.etaMin} мин` : 'расстояние уточним'}{m.brandStars ? ` · ${brand} ${'★'.repeat(m.brandStars)}` : ''}{m.rating ? ` · ★ ${m.rating.toFixed(1)}` : ''}</small>
           </span>
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
-      )) : <span className="note">Свободных рядом сейчас нет — заявка уйдёт в торги, мастера откликнутся, когда освободятся.</span>}
-      <span className="note">✓ — прошёл проверку TrakSOS. Порядок — по вашему приоритету; он же будет первым в списке откликов.</span>
+      )) : <span className="note">{verifiedOnly?'Сейчас нет подходящих проверенных исполнителей. Снимите галочку «Только проверенные», чтобы видеть остальных, или оставьте её для поиска только проверенных.':'Свободных рядом сейчас нет — заявка уйдёт в торги, мастера откликнутся, когда освободятся.'}</span>}
+      <span className="note">Значок «Проверен» показывается только подтверждённым исполнителям. Они имеют преимущество в выдаче; непроверенные остаются доступными, если фильтр выключен.</span>
     </div>
   );
 }

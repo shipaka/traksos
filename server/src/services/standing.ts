@@ -55,7 +55,7 @@ export class StandingService {
     const near = mineKind.filter((o) => o.lat == null || p.lat == null || haversineKm({ lat: p.lat, lng: p.lng }, { lat: o.lat!, lng: o.lng! }) <= 50);
     // «Перед вами»: свободные коллеги того же вида, которые к этим заявкам ближе вас
     const others = await this.db.query<{ lat: number | null; lng: number | null }>(
-      `select lat, lng from performer_profiles where kind=$1 and user_id<>$2 and verification='approved' and line_status='online' and lat is not null`, [p.kind, user.id]);
+      `select p.lat, p.lng from performer_profiles p join users u on u.id=p.user_id where p.kind=$1 and p.user_id<>$2 and u.status='active' and p.line_status='online' and not p.paused and p.lat is not null`, [p.kind, user.id]);
     let ahead = 0;
     if (p.lat != null) {
       for (const c of others) {
@@ -66,7 +66,7 @@ export class StandingService {
   }
 
   /** Клиенту до вызова: сколько мастеров на линии, сколько свободны и подходят, и кто ближе всего — без контактов */
-  async mastersNearby(user: AuthUser, p: { service: string; lat?: number; lng?: number; brand?: string }) {
+  async mastersNearby(user: AuthUser, p: { service: string; lat?: number; lng?: number; brand?: string; verifiedOnly?: boolean }) {
     const all = await this.settings!.all();
     const kind = performerKindFor(p.service);
     const list = await this.db.query<Candidate & { name: string | null; tier: string; call_out_price: number | null; created_at: Date; jobs: number; busy: boolean }>(
@@ -76,7 +76,7 @@ export class StandingService {
               exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working')) as busy,
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
-        where p.kind=$1 and p.user_id<>$2 and p.verification='approved' and p.line_status in ('online','on_call','on_job')`, [kind, user.id]);
+        where p.kind=$1 and p.user_id<>$2 and u.status='active' and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
     const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
     const free = list.filter((c) => !c.busy && c.line_status !== 'on_job');
     const ranked = rankCandidates(order as any, free, { radiusKm: all.dispatch.radiusKm, maxCandidates: 20, cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now() });
@@ -87,7 +87,7 @@ export class StandingService {
       const c = byId.get(r.user_id)!;
       const tierPrice = (all.pricing.tiers as any)[c.tier]?.callOut ?? null;
       return {
-        name: (c.name ?? 'Мастер').split(/[\s(]/)[0], tier: c.tier, rating: c.rating == null ? null : Number(c.rating), jobs: (c as any).jobs,
+        name: (c.name ?? 'Мастер').split(/[\s(]/)[0], tier: c.tier, verification: c.verification, rating: c.rating == null ? null : Number(c.rating), jobs: (c as any).jobs,
         distanceKm: r.distanceKm, etaMin: r.distanceKm == null ? null : Math.max(10, Math.round((r.distanceKm * 1.3) / speed * 60) + ((c as any).prep_minutes ?? 0)),
         brandStars: p.brand ? LEVEL[(c.brands as any)?.[p.brand] ?? 'good'] ?? 2 : null,
         callOut: c.call_out_price ?? tierPrice,

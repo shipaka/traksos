@@ -838,6 +838,7 @@ export function createApp(d: Deps) {
      recommendationId: z.string().uuid().optional(),
     parallelConsent: z.boolean().optional(), parallelCallOut: money.optional(),
     preferredPerformerId: z.string().uuid().optional(),
+    verifiedOnly: z.boolean().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
@@ -856,7 +857,7 @@ export function createApp(d: Deps) {
     const q = c.query; const num = (x: string | null) => (x == null || x === '' || !Number.isFinite(Number(x)) ? undefined : Number(x));
     const service = q.get('service') ?? 'electric';
     if (!/^[a-z]{2,12}$/.test(service)) throw bad('bad_service', 'Нет такой услуги');
-    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined });
+    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined, verifiedOnly: q.get('verifiedOnly') === '1' });
   });
   r.post('/api/orders/:id/part', true, (c: AuthedCtx) => onsite.part(c.user, c.params.id, parse(z.object({ mode: z.enum(['wait', 'resume', 'return', 'tow']) }), c.body).mode));
 

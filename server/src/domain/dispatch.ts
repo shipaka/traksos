@@ -36,6 +36,7 @@ export interface DispatchOrder {
   lat: number | null;
   lng: number | null;
   group_trip: boolean;
+  verified_only?: boolean;
   cargo?: string | null;
 }
 
@@ -66,6 +67,8 @@ export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankO
   const kind = performerKindFor(order.service);
   const rows = list
     .filter((c) => c.kind === kind && c.user_status === 'active' && !c.paused)
+    // Owner/driver preference persists on the order and applies to EVERY dispatch stage.
+    .filter((c) => !order.verified_only || c.verification === 'approved')
     .filter((c) => kind !== 'master' || order.service === 'consult' || c.specialties.includes(order.service))
     .filter((c) => c.line_status === 'online' || c.line_status === 'on_call')
     // Распорядок: вне рабочего времени не звоним; в часы «на телефоне» — только консультации
