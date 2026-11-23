@@ -1550,3 +1550,24 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
  mix-blend-mode:screen!important;
  filter:contrast(1.7) brightness(1.06)!important;
 }
+
+/* Pointer-safe invisible bridges between desktop summaries and dropdowns.
+   Keep the approved 617 visual offset, but do not fire mouseleave while
+   travelling across its 11px gap into the real clickable menu. */
+@media(min-width:900px) and (hover:hover) and (pointer:fine){
+  .guest-app.guest-home .owner20-topnav details[open]::before {
+    content:"";position:absolute;top:100%;left:0;
+    width:max(100%,204px);height:13px;z-index:179;
+    background:transparent;pointer-events:auto;
+  }
+  .guest-app.guest-home .owner20-region[open]::before {
+    content:"";position:absolute;top:100%;right:-38px;
+    width:max(100%,250px);height:18px;z-index:98;
+    background:transparent;pointer-events:auto;
+  }
+  .guest-app.guest-home .owner20-compact-menu[open]::before {
+    content:"";position:absolute;top:100%;right:0;
+    width:190px;height:18px;z-index:96;
+    background:transparent;pointer-events:auto;
+  }
+}

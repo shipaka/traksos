@@ -97,6 +97,16 @@ try {
       await menus.nth(1).locator('summary').click();
       check(!await menus.nth(0).evaluate(el=>el.open),
         'Two desktop menus overlap');
+      // Physically move the mouse through the disclosure-to-popup gap.
+      // A premature mouseleave must not make its own links unreachable.
+      const serviceHeader=await menus.nth(1).locator('summary').boundingBox();
+      const serviceLink=menus.nth(1).locator('a[href="#/explore/van"]');
+      const serviceBox=await serviceLink.boundingBox();
+      check(!!serviceHeader&&!!serviceBox,'Services popup has no geometry');
+      await page.mouse.move(serviceHeader.x+serviceHeader.width/2,serviceHeader.y+serviceHeader.height/2);
+      await page.mouse.move(serviceBox.x+serviceBox.width/2,serviceBox.y+serviceBox.height/2,{steps:20});
+      check(await menus.nth(1).evaluate(el=>el.open),'Services dropdown closed while moving to its own link');
+      check(await serviceLink.isVisible(),'Services link vanished before mouse could reach it');
       await menus.nth(1).locator('summary').press('Escape');
       check(!await menus.nth(1).evaluate(el=>el.open),
         'Escape did not close the dropdown');
