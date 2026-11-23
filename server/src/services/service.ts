@@ -713,6 +713,18 @@ export class ServiceCenters {
       center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
   }
 
+  /** Keep a current-fleet predicate in the write itself, not only in GET. */
+  private customerWriteAcl(param: number): string {
+    const id = '$' + param + '::uuid';
+    return `(client_id=${id} or (created_by=${id} and vehicle_id is not null
+      and exists (
+        select 1 from vehicles v join users current_driver on current_driver.id=${id}
+         where v.id=service_bookings.vehicle_id and v.owner_id=service_bookings.client_id
+           and v.driver_id=${id} and current_driver.owner_id=v.owner_id
+           and 'driver'=any(current_driver.roles)
+      )))`;
+  }
+
   private async clientBooking(user: AuthUser, id: string) {
     const b = await this.db.one('select b.*, c.owner_id from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1', [id]);
     if (!b || !(await this.canSeeCustomerBooking(user, b)))
@@ -725,7 +737,7 @@ export class ServiceCenters {
     if (b.status !== 'clarify') throw conflict('bad_status', 'Сервис ничего не спрашивал');
     const updated = await this.db.one<any>(
       `update service_bookings set status='new', client_answer=$2, updated_at=now()
-        where id=$1 and status='clarify' returning id`, [id, text.trim()]);
+        where id=$1 and status='clarify' and ${this.customerWriteAcl(3)} returning id`, [id, text.trim(), user.id]);
     if (!updated) throw conflict('bad_status', 'Ответ по этой записи уже обработан');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'new' },
       { kind: 'normal', title: 'Клиент ответил', body: text.trim().slice(0, 120), data: { bookingId: id } });
@@ -737,7 +749,7 @@ export class ServiceCenters {
     if (!['new', 'clarify', 'expected'].includes(b.status)) throw conflict('bad_status', 'Машина уже в сервисе — отменить нельзя, напишите сервису');
     const updated = await this.db.one<any>(
       `update service_bookings set status='cancelled', updated_at=now()
-        where id=$1 and status in ('new','clarify','expected') returning id`, [id]);
+        where id=$1 and status in ('new','clarify','expected') and ${this.customerWriteAcl(2)} returning id`, [id, user.id]);
     if (!updated) throw conflict('bad_status', 'Запись уже перешла в следующий этап');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'cancelled' },
       { kind: 'normal', title: 'Клиент отменил запись', body: `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim() || 'Запись отменена', data: { bookingId: id } });
@@ -752,8 +764,8 @@ export class ServiceCenters {
       const updated = await this.db.one<any>(
         `update service_bookings set status='closed', closed_at=now(),
                 review_stars=$2, review_text=$3, updated_at=now()
-          where id=$1 and status='invoiced' returning id`,
-        [id, p.stars ?? null, p.text?.trim() || null]);
+          where id=$1 and status='invoiced' and ${this.customerWriteAcl(4)} returning id`,
+        [id, p.stars ?? null, p.text?.trim() || null, user.id]);
       if (!updated) throw conflict('bad_status', 'Работы уже подтверждены либо открыт спор');
       // New agreements award post-payment bonuses only after a recorded receipt.
       if (!b.payment_required) await this.referral?.afterBookingClosed(b.owner_id, id);
@@ -765,7 +777,7 @@ export class ServiceCenters {
       if (!why || why.length < 5) throw bad('empty', 'Напишите, с чем не согласны');
       const updated = await this.db.one<any>(
         `update service_bookings set status='disputed', updated_at=now()
-          where id=$1 and status='invoiced' returning id`, [id]);
+          where id=$1 and status='invoiced' and ${this.customerWriteAcl(2)} returning id`, [id, user.id]);
       if (!updated) throw conflict('bad_status', 'По этому счёту уже принято решение');
       const t = await this.support.open(user, { topic: 'Ремонт в сервисе', text: `Ремонт в сервисе, счёт №${b.number}: ${why}` }) as any;
       await this.onDispute?.({ userId: user.id, bookingId: id, ticketId: t?.id ?? null, text: why, targetId: b.owner_id, title: `Спор по ремонту в сервисе, счёт №${b.number}` });
