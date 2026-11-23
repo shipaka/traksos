@@ -104,6 +104,8 @@ jobs:
           node e2e/shop-offline-integrity-20261124.mjs
           # ShopCart/ShopHistory real React: fleet owner switch, stale selection, no automatic duplicate checkout.
           node e2e/shop-client-session-reliability-20261124.mjs
+          # Real ProductForm: reject bad photos, decode only bounded media and revoke temporary blob URL.
+          node e2e/shop-admin-photo-reliability-20261124.mjs
           # Actual DriverAir React UI: offline, A/B account boundary, delayed polls.
           node e2e/air-session-20261124.mjs
           # Real STO account, finance, search and booking React; isolated synthetic transport.
