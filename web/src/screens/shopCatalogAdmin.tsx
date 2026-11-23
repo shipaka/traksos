@@ -60,10 +60,33 @@ export function AdminShopCatalog() {
     const t = setTimeout(() => { setDebounced(query); setPage(0); }, 320);
     return () => clearTimeout(t);
   }, [query]);
-  const list = useLoad(() => get(
-    `/api/admin/shop/catalog?state=${encodeURIComponent(state)}&q=${encodeURIComponent(debounced)}&page=${page}`
-  ), [state, debounced, page, revision, me?.id]);
-
+  // A late GET for an old account or search filter may never repopulate
+  // the current moderator view with stale products or approval actions.
+  const listKey=JSON.stringify([me?.id,getToken(),state,debounced,page,revision]);
+  type ListData={items:any[];total:number;page:number;limit:number};
+  const [listResult,setListResult]=useState<{
+    key:string;data:ListData|null;error:string|null
+  }>({key:'',data:null,error:null});
+  useEffect(()=>{
+    let active=true;
+    const actor=me?.id,token=getToken();
+    setListResult({key:listKey,data:null,error:null});
+    if(!actor || !token)return ()=>{active=false;};
+    void get<ListData>('/api/admin/shop/catalog?state='+encodeURIComponent(state)+
+      '&q='+encodeURIComponent(debounced)+'&page='+page).then(data=>{
+      if(active&&currentUserId.current===actor&&getToken()===token)
+        setListResult({key:listKey,data,error:null});
+    }).catch(()=>{
+      if(active&&currentUserId.current===actor&&getToken()===token)
+        setListResult({key:listKey,data:null,error:'Не удалось получить список артикулов'});
+    });
+    return ()=>{active=false};
+  },[listKey]);
+  const list={
+    data:listResult.key===listKey?listResult.data:null,
+    error:listResult.key===listKey?listResult.error:null,
+    reload:()=>setRevision(n=>n+1),
+  };
   async function loadFile(file: File | undefined) {
     const readId = ++fileReadId.current;
     invalidate(); setFileError(''); setRows([]);
