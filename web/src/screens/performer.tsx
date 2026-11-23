@@ -16,6 +16,12 @@ import { PerformerHub } from './performerCabinet.tsx';
 // Линия: статус, геолокация, входящие ---------------------------------------
 
 export function Work({background=false}:{background?:boolean}={}) {
+  const { me } = useMe();
+  // Keep order lists, auction offers and balance scoped to the signed-in user.
+  // A role/account switch must mount a clean workspace before reading any data.
+  return <WorkForAccount key={(me?.id ?? 'guest') + ':' + (me?.performer?.kind ?? 'none')} background={background}/>;
+}
+function WorkForAccount({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
   const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
@@ -90,7 +96,7 @@ export function Work({background=false}:{background?:boolean}={}) {
       </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {!background && online && <Nearby />}
-      {p.verification !== 'approved' ? (
+      {p.verification !== 'approved' && (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
           <span className="note">{p.verification === 'rejected' ? (p.verification_note ?? 'Исправьте данные и отправьте ещё раз.')
@@ -98,9 +104,8 @@ export function Work({background=false}:{background?:boolean}={}) {
             : 'Проверка добровольная: подтверждённый профиль получает заметный значок и преимущество среди подходящих исполнителей.'}</span>
           <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
-      ) : (
-        <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={!background} />
       )}
+      <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={!background} />
 
       {active.length > 0 && (
         <div className="stack">
@@ -447,27 +452,34 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
 export function LocationSharing() {
+  const { me } = useMe();
+  const accountId = me?.id;
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
   let sandbox=false;
   try {sandbox=sessionStorage.getItem('traksos.sandboxMode')==='1';}catch{/* */ }
   const demo=sandbox||location.hash.startsWith('#/admin/test-center/');
   useEffect(() => {
+    setState('wait');
     // A test role must NEVER request the administrator's physical GPS location.
-    if(demo)return;
-    if (!navigator.geolocation) { setState('off'); return; }
+    if (demo) return;
+    if (!accountId || !navigator.geolocation) { setState('off'); return; }
     let last = 0;
+    let active = true;
     const id = navigator.geolocation.watchPosition(
       (pos) => {
+        // watchPosition callbacks may already be queued when React clears the
+        // old user's watcher. Never send previous-user GPS under a new token.
+        if (!active) return;
         setState('ok');
         if (Date.now() - last < 30_000) return;
         last = Date.now();
         post('/api/performer/location', { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => {});
       },
-      () => setState('off'),
+      () => { if (active) setState('off'); },
       { enableHighAccuracy: false, maximumAge: 60_000 },
     );
-    return () => navigator.geolocation.clearWatch(id);
-  }, [demo]);
+    return () => { active = false; navigator.geolocation.clearWatch(id); };
+  }, [demo, accountId]);
   if(demo)return <span className="note">Тестовый режим: GPS устройства отключён, заявки и координаты только вымышленные.</span>;
   return <span className="note">{state === 'ok' ? '✓ Геолокация включена — заявки рядом приходят вам первыми' : state === 'off' ? 'Геолокация выключена — без неё подбор хуже. Разрешите доступ к местоположению.' : 'Определяю место…'}</span>;
 }
