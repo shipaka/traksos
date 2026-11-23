@@ -101,6 +101,19 @@ test('a real insurance case serializes concurrent agent accept, quotes, customer
     const strangerPdf=await fetch(t.base+`/api/insurance/requests/${id}/policy`,{
       headers:{authorization:`Bearer ${outsider.token}`}});
     assert.equal(strangerPdf.status,403);
+
+    // A staff-side reassignment/correction must immediately revoke the former
+    // agent's PDF read privileges. Existing issued PDF belongs to the vehicle
+    // and current permitted parties, not the agent who originally uploaded it.
+    await t.db.query('update vehicle_service_requests set assigned_to=$2 where id=$1',
+      [id,outsider.id]);
+    const oldAgentPdf=await fetch(t.base+`/api/insurance/requests/${id}/policy`,{
+      headers:{authorization:`Bearer ${agent.token}`}});
+    assert.equal(oldAgentPdf.status,403,'former agent cannot read the buyer\'s PDF');
+    const newAgentPdf=await fetch(t.base+`/api/insurance/requests/${id}/policy`,{
+      headers:{authorization:`Bearer ${outsider.token}`}});
+    assert.equal(newAgentPdf.status,200);
+    assert.deepEqual(Buffer.from(await newAgentPdf.arrayBuffer()),pdfBytes);
   }finally{await t.close();}
 });
 
