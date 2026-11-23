@@ -57,6 +57,11 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
   if (token === requestToken)
     window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
   const j = await r.json().catch(() => null);
+  // Response payloads belong to the account that sent the request. Even a
+  // successful 200 from an old session must not populate the new account's
+  // shared React views after logout or a different sign-in.
+  if (requestToken && token !== requestToken)
+    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
   if (r.status === 401 && requestToken && token === requestToken) {
     setToken(null);
     // The app must drop the cached workspace immediately; a hash redirect
