@@ -85,6 +85,29 @@ test('HTTP/PG: parallel close is idempotent; failed closure event rolls back sta
       drop trigger reject_support_close_20261124 on support_messages;
       drop function reject_support_close_20261124();
     `);
+    // Closing as staff also creates the owner's durable inbox entry. A DB
+    // failure in that entry must roll back BOTH closed status and system event.
+    await t.db.exec(`
+      create function reject_support_inbox_20261124() returns trigger
+      language plpgsql as $ begin
+        if new.kind='support' and new.title like '%закрыто%' then
+          raise exception 'synthetic support inbox failure';
+        end if;
+        return new;
+      end; $;
+      create trigger reject_support_inbox_20261124 before insert on notifications
+        for each row execute function reject_support_inbox_20261124();
+    `);
+    const noInbox=await t.api('POST','/api/support/'+id+'/close',{},admin.token);
+    assert.ok(noInbox.status>=400,'closing without a durable owner inbox entry must roll back');
+    const stillOpen=ok(await t.api('GET','/api/support/'+id,undefined,owner.token));
+    assert.equal(stillOpen.status,'open');
+    assert.equal(stillOpen.messages.filter((x:any)=>!x.sender_id).length,0,
+      'failed inbox insert must not commit a terminal system event');
+    await t.db.exec(`
+      drop trigger reject_support_inbox_20261124 on notifications;
+      drop function reject_support_inbox_20261124();
+    `);
     const response=await Promise.all([
       t.api('POST','/api/support/'+id+'/close',{},admin.token),
       t.api('POST','/api/support/'+id+'/close',{},owner.token),
