@@ -259,12 +259,15 @@ export class ShopCourierDeliveries {
    */
   async resetReceipt(actor:AuthUser,orderId:string,reason:string){
     const result=await this.db.tx(async q=>{
-      const o=await q.one<{id:string;created_by:string;status:string}>(
-        'select id,created_by,status from shop_orders where id=$1 for update',[orderId]);
+      const o=await q.one<{id:string;client_id:string;created_by:string;vehicle_id:string|null;status:string}>(
+        'select id,client_id,created_by,vehicle_id,status from shop_orders where id=$1 for update',[orderId]);
       if(!o)throw notFound('Заказ магазина не найден');
       const delivery=await q.one<any>(
         'select * from shop_courier_deliveries where shop_order_id=$1 for update',[orderId]);
       if(!delivery)throw notFound('Курьерская доставка для заказа не назначена');
+      if(!await this.currentBuyer(q,o.client_id,o.created_by,o.vehicle_id,o.created_by,true))
+        throw conflict('receipt_buyer_unavailable',
+          'Получатель больше не закреплён за этой доставкой. Требуется ручное решение поддержки.');
       if(delivery.status!=='arrived'||o.status!=='shipped')
         throw conflict('receipt_reset_unavailable','Восстановить код можно только после прибытия курьера');
       if(delivery.code_attempts<5&&new Date(delivery.code_expires_at).getTime()>=Date.now())
@@ -280,14 +283,17 @@ export class ShopCourierDeliveries {
           shopOrderId:orderId,reason,previousAttempts:delivery.code_attempts,
           resetCount:updated.code_resets
         }]);
+      await this.storeInbox(q,[o.created_by],orderId,
+        'Для доставки обновлён код вручения',
+        'Откройте историю покупки. Показывайте новый код только прибывшему курьеру.');
       return {customer:o.created_by,id:delivery.id,expiresAt:updated.code_expires_at,
         resetCount:updated.code_resets};
     });
-    await this.notify.notify([result.customer],{type:'shop',shopOrderId:orderId},{
+    await this.notify.deliverStored([result.customer],{type:'shop',shopOrderId:orderId},{
       kind:'normal',title:'Для доставки обновлён код вручения',
       body:'Откройте историю покупки. Показывайте новый код только прибывшему курьеру.',
       data:{shopOrderId:orderId}
-    });
+    }).catch(e=>console.warn('[courier-reset-push]',e));
     return {shopOrderId:orderId,expiresAt:result.expiresAt,
       resetCount:result.resetCount,codeReissued:true};
   }
