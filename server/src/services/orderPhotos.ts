@@ -4,7 +4,7 @@
  * A preview APK has no API session and cannot call these methods.
  */
 import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'node:crypto';
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, conflict, forbidden, notFound } from '../http/router.ts';
 import type { OrdersService } from './orders.ts';
@@ -40,6 +40,31 @@ export class OrderPhotosService {
     return order;
   }
 
+  /** Recheck access under PostgreSQL share locks for private reads, not only
+   * via the preflight mustSee() snapshot. Revoked drivers cannot race a file
+   * read by transferring to another vehicle in the same owner fleet.
+   */
+  private async assertLiveRead(q:Queryable,user:AuthUser,orderId:string) {
+    const o=await q.one<{client_id:string;created_by:string;performer_id:string|null;
+      vehicle_id:string|null}>(
+      'select client_id,created_by,performer_id,vehicle_id from orders where id=$1 for share',
+      [orderId]);
+    if(!o)throw notFound('Заявка не найдена');
+    if(user.roles.includes('admin')||user.roles.includes('moderator')||
+       o.client_id===user.id||o.performer_id===user.id)return;
+    if(o.created_by===user.id && user.roles.includes('driver')) {
+      const linked=await q.one(
+        `select 1 from users u join vehicles v
+           on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and ($3::uuid is null or v.id=$3::uuid)
+          limit 1 for share of v`,
+        [user.id,o.client_id,o.vehicle_id]);
+      if(linked)return;
+    }
+    throw forbidden('Нет доступа к фотографиям прежнего автопарка');
+  }
+
   async upload(user: AuthUser, orderId: string, dataUrl: string) {
     const order=await this.orderForParticipant(user,orderId);
     if(this.orders.actorOf(user,order)!=='performer')
@@ -61,8 +86,15 @@ export class OrderPhotosService {
         throw forbidden('Эта заявка не назначена вам');
       if(['completed','cancelled','no_performer'].includes(current.status))
         throw conflict('order_closed','Завершённая заявка доступна только для просмотра');
-      const count=await tx.one<{n:number}>('select count(*)::int as n from order_photos where order_id=$1',[orderId]);
-      if(Number(count?.n??0)>=MAX_PER_ORDER)throw conflict('photos_limit','Не больше 12 фотографий на заявку');
+      // A lost HTTP ACK must be safely retryable even at the 12-photo limit.
+      const duplicate=await tx.one<{id:string;created_at:Date}>(
+        'select id,created_at from order_photos where order_id=$1 and uploader_id=$2 and sha256=$3',
+        [orderId,user.id,sha]);
+      if(duplicate)return {id:duplicate.id,createdAt:duplicate.created_at,duplicate:true};
+      const count=await tx.one<{n:number}>(
+        'select count(*)::int as n from order_photos where order_id=$1',[orderId]);
+      if(Number(count?.n??0)>=MAX_PER_ORDER)
+        throw conflict('photos_limit','Не больше 12 фотографий на заявку');
       const photo=await tx.one<any>(
         `insert into order_photos(order_id,uploader_id,mime,size_bytes,sha256,iv,tag,ciphertext)
          values($1,$2,$3,$4,$5,$6,$7,$8) on conflict(order_id,uploader_id,sha256) do nothing
@@ -78,16 +110,22 @@ export class OrderPhotosService {
 
   async list(user: AuthUser, orderId: string) {
     await this.orderForParticipant(user,orderId);
-    return this.db.query(
-      `select p.id,p.mime,p.size_bytes,p.created_at,u.name as uploader_name
-         from order_photos p join users u on u.id=p.uploader_id
-        where p.order_id=$1 order by p.created_at desc limit 12`,[orderId]);
+    return this.db.tx(async q=>{
+      await this.assertLiveRead(q,user,orderId);
+      return q.query(
+        `select p.id,p.mime,p.size_bytes,p.created_at,u.name as uploader_name
+           from order_photos p join users u on u.id=p.uploader_id
+          where p.order_id=$1 order by p.created_at desc limit 12`,[orderId]);
+    });
   }
 
   async file(user: AuthUser, orderId: string, photoId: string) {
     await this.orderForParticipant(user,orderId);
-    const row=await this.db.one<any>(
-      'select * from order_photos where id=$1 and order_id=$2',[photoId,orderId]);
+    const row=await this.db.tx(async q=>{
+      await this.assertLiveRead(q,user,orderId);
+      return q.one<any>(
+        'select * from order_photos where id=$1 and order_id=$2',[photoId,orderId]);
+    });
     if(!row)throw notFound('Фотография не найдена');
     const decipher=createDecipheriv('aes-256-gcm',key(),asBuffer(row.iv));
     decipher.setAuthTag(asBuffer(row.tag));
