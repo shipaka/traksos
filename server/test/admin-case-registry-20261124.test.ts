@@ -99,7 +99,9 @@ test('UI isolation gates: no stale record, note, export or external GPS on accou
   assert.match(cases,/exportingRef\.current=true/);
   assert.match(cases,/focusBack\?\.isConnected/);
   assert.match(cases,/Повторить загрузку обращения/);
-  assert.match(registry,/\[params,me\?\.id\]/);
+  assert.match(registry,/\[params,me\?\.id,reloadToken\]/);
+  assert.match(registry,/result\.data\.version===reloadToken/);
+  assert.match(registry,/setReloadToken\(v=>v\+1\)/);
   assert.match(registry,/result\.data\?\.ownerId===me\.id/);
   assert.match(registry,/activeAccount\.current!==owner/);
   assert.match(registry,/activeFilters\.current!==filterKey/);
