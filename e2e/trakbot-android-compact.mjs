@@ -181,6 +181,18 @@ try {
       return box && field && field.bottom<=box.bottom+3 && field.top>=box.top-3;
     });
     assert(last, width+'×'+height+': keyboard-focused input left the mini-chat');
+    // Closing with the launcher while the composer is focused used to leave
+    // inputFocused=true. Reopening then incorrectly jumped straight into the
+    // keyboard-editing geometry although the keyboard/input was no longer active.
+    await input.focus();
+    await page.locator('.trakbot-dock.trakbot-dock--editing').waitFor({timeout:3000});
+    await page.locator('.trakbot-dock-launcher').click();
+    assert(await page.locator('.trakbot-dock-panel').count()===0,
+      width+'×'+height+': launcher did not close the only bot panel');
+    await page.locator('.trakbot-dock-launcher').click();
+    await page.locator('.trakbot-dock-panel').waitFor({state:'visible'});
+    assert(!await page.locator('.trakbot-dock--editing').count(),
+      width+'×'+height+': reopened bot retained stale keyboard-editing state');
     await page.locator('.trakbot-dock-close').click();
     assert(await page.locator('.trakbot-dock-panel').count()===0,
       width+'×'+height+': close blocked');
