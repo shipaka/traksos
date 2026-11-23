@@ -19,6 +19,15 @@ const validMskWindow = (start:string,end:string,maxDays:number) => {
   const a=Date.parse(start+':00+03:00'),b=Date.parse(end+':00+03:00');
   return Number.isFinite(a)&&Number.isFinite(b)&&b>a&&b-a<=maxDays*86_400_000;
 };
+// A published future announcement is scheduled, not deliverable. A past
+// announcement remains in history; neither state may show a dead Send button.
+const workerNoticeWindow = (x:{starts_at:string;ends_at:string;published:boolean},at=Date.now()) => {
+  const starts=new Date(x.starts_at).getTime(),ends=new Date(x.ends_at).getTime();
+  if(!Number.isFinite(starts)||!Number.isFinite(ends)||ends<=starts)return 'invalid';
+  if(ends<=at)return 'expired';
+  if(!x.published)return 'draft';
+  return starts>at?'scheduled':'active';
+};
 const mskTime = (iso:string) => new Date(iso).toLocaleString('ru-RU', {
   timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
 })+' МСК';
@@ -270,14 +279,19 @@ export function WorkerCommunications() {
         <div key={x.id} className="list-item stack">
           <b>{x.title} · {labels[x.audience]??x.audience}</b>
           <span className="note">{x.body}</span>
-          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.published?'опубликовано':'черновик'}</span>
+          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {({
+             draft:'черновик',scheduled:'запланировано',active:'действует',
+             expired:'срок истёк',invalid:'неверные даты',
+           } as Record<string,string>)[workerNoticeWindow(x)]}</span>
           <span className="note">{x.notified_at?'Уведомление отправлено '+mskTime(x.notified_at)+' · получателей '+x.notified_count:'Push-рассылка ещё не отправлялась'}</span>
-          {x.published && !x.notified_at && <button className="btn small" disabled={busy} onClick={async()=>{
+          {workerNoticeWindow(x)==='scheduled' && !x.notified_at && <span className="note">Рассылка будет доступна с начала объявления. Обновите раздел после наступления даты.</span>}
+          {workerNoticeWindow(x)==='expired' && <span className="note">Срок закончился. Для нового периода создайте отдельное объявление.</span>}
+          {workerNoticeWindow(x)==='active' && !x.notified_at && <button className="btn small" disabled={busy} onClick={async()=>{
             if(!window.confirm('Отправить одно уведомление всем исполнителям выбранной группы? Повторная рассылка этого объявления будет заблокирована.'))return;
             const r=await run(()=>post('/api/admin/announcements/'+x.id+'/notify',{}),'Уведомления отправлены');
             if(r)notices.reload();
           }}>Разослать уведомление</button>}
-          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+          <button className="btn ghost small" disabled={busy||(!x.published && ['expired','invalid'].includes(workerNoticeWindow(x)))} onClick={async()=>{
             const r=await run(()=>put('/api/admin/announcements/'+x.id+'/status',{published:!x.published}),
               x.published?'Объявление снято':'Объявление опубликовано');
             if(r)notices.reload();
