@@ -97,6 +97,8 @@ jobs:
           node e2e/public-service-routing.mjs
           node e2e/legacy-guest-deeplinks.mjs
           node e2e/api-session-race.mjs
+          # Real React admin CSV import, partial-batch retry and account-change isolation (synthetic API only).
+          node e2e/catalog-import-browser-20261124.mjs
           # Local, synthetic, real IndexedDB; two concurrent tabs must not roll back the index.
           node e2e/shop-offline-integrity-20261124.mjs
           # Actual DriverAir React UI: offline, A/B account boundary, delayed polls.
