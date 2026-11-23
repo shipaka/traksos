@@ -11,7 +11,7 @@ test('failed retry cleanup rolls back status and event before re-dispatch', asyn
     const client = await t.login('+79992220051', 'client');
     for (const audience of ['client', 'privacy']) {
       const current = ok(await t.api('GET', '/api/offers/current/' + audience));
-      if (current.id) ok(await t.api('POST', '/api/offers/' + current.id + '/accept', {}, client.token));
+      if (current?.id) ok(await t.api('POST', '/api/offers/' + current.id + '/accept', {}, client.token));
     }
     const created = ok(await t.api('POST', '/api/orders', {
       service: 'hydraulics',
