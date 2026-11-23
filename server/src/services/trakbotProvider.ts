@@ -81,8 +81,43 @@ export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): 
     .map((c) => c.text ?? '').join('\n').trim();
 }
 
+/** Streaming byte limit: an absent or dishonest Content-Length is not
+ * permission to buffer arbitrarily large model output in server memory.
+ */
+async function readBoundedModelBody(response: Response): Promise<string | null> {
+  const maxBytes = 32_768;
+  const declared = response.headers.get('content-length');
+  if (declared !== null && /^\d+$/.test(declared) && Number(declared) > maxBytes)
+    return null;
+  if (!response.body) return null;
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    for (;;) {
+      const {done,value} = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export async function requestGeneratedText(
-  instructions: string,
+  instructions: string;
   input: string,
   maxTokens: number,
   timeoutMs: number,
@@ -93,10 +128,8 @@ export async function requestGeneratedText(
   try {
     const response = await fetch(request.url, { ...request.init, signal: AbortSignal.timeout(timeoutMs) });
     if (!response.ok) return null;
-    const length = Number(response.headers.get('content-length') ?? '0');
-    if (length > 32_768) return null;
-    const raw = await response.text();
-    if (raw.length > 32_768) return null;
+    const raw = await readBoundedModelBody(response);
+    if (raw === null) return null;
     const text = decodeLlmAnswer(JSON.parse(raw), settings.transport ?? 'api');
     return text && text.length <= 2_400 ? text : null;
   } catch {
