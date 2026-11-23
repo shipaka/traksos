@@ -90,11 +90,11 @@ function useShopPrivateLoad<T>(load:()=>Promise<T>, deps:unknown[],
       return ()=>{alive=false};
     }
     Promise.resolve().then(()=>fnRef.current()).then(data=>{
-      if(alive&&activeIdentity.current.actor===actor&&
+      if(alive&&getToken()===token&&activeIdentity.current.actor===actor&&
         activeIdentity.current.token===token)
         setResult({key,data,error:null});
     }).catch(error=>{
-      if(alive&&activeIdentity.current.actor===actor&&
+      if(alive&&getToken()===token&&activeIdentity.current.actor===actor&&
         activeIdentity.current.token===token)
         setResult({key,data:null,error:error instanceof Error?error.message:'Не удалось загрузить данные'});
     });
