@@ -116,7 +116,9 @@ function ClientHomeForAccount() {
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
-            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders tr-approved-empty-card">
+            {active.error ? <div className="desktop-empty-orders" role="alert">Не удалось загрузить заявки. 
+                <button type="button" className="btn ghost small" onClick={()=>{void active.reload();}}>Повторить загрузку заявок</button>
+                <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders tr-approved-empty-card">
                <ApprovedEmptyScene kind="orders" />
                <strong>Активных заявок пока нет</strong>
                <span>Выберите помощь — здесь появится ход реальной заявки, связь с исполнителем и статусы.</span>
@@ -965,7 +967,13 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
           ))}
         </div>
       )}
-      {showingNow && <h2>Текущие обращения и заявки на подтверждении · {(list.data ?? []).filter(live).length}</h2>}
+      {list.error&&<section className="card stack" role="alert">
+        <b>Не удалось загрузить заявки</b>
+        <button type="button" className="btn ghost small" onClick={()=>{void list.reload();}}>
+          Повторить загрузку заявок
+        </button>
+      </section>}
+      {showingNow&&list.data&&<h2>Текущие обращения и заявки на подтверждении · {list.data.filter(live).length}</h2>}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
       as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
@@ -986,7 +994,11 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
       )}
       {showingNow && <section className="stack" aria-label="Активные записи на СТО">
         <h2>Записи на СТО · {activeBookings.length}</h2>
-        {bookings.error ? <div className="note">Не удалось загрузить записи на СТО: {bookings.error}</div>
+        {bookings.error ? <div className="card stack" role="alert">
+          <span className="note">Не удалось загрузить записи на СТО: {bookings.error}</span>
+          <button type="button" className="btn ghost small"
+            onClick={()=>{void bookings.reload();}}>Повторить загрузку записей</button>
+        </div>
           : !bookings.data ? <Loading />
             : activeBookings.length > 0 ? <BookingList rows={activeBookings} />
               : <span className="note">Открытых записей на СТО сейчас нет. Завершённые — в истории.</span>}
@@ -997,9 +1009,13 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
 
 /** «Мои мастера»: кто уже был у вас — в избранное (предлагаем первым), «не предлагать», вызвать снова */
 function MyPerformers({ black }: { black: boolean }) {
-  const list = useLoad(() => get('/api/my-performers'), []);
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get('/api/my-performers'),
+    'my-performers:'+(me?.id??'guest'));
   const { busy, run } = useAction();
-  if (!list.data) return <Loading error={list.error} />;
+  if(!list.data)return <div className="stack"><Loading error={list.error}/>
+    {list.error&&<button className="btn ghost small" type="button"
+      onClick={()=>{void list.reload();}}>Повторить загрузку мастеров</button>}</div>;
   const rows = list.data.filter((p: any) => black ? p.pref === 'hide' : p.pref !== 'hide');
   const set = async (id: string, pref: string | null, msg: string) => { if (await run(() => put(`/api/my-performers/${id}`, { pref }), msg)) list.reload(); };
   if (!rows.length) return <div className="empty">{black ? 'Список пуст. «Не предлагать» — в карточке мастера во вкладке «Мои мастера».' : 'Здесь появятся мастера и эвакуаторщики, которые у вас уже были.'}</div>;
@@ -1038,9 +1054,13 @@ function HistoryTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void })
 }
 
 function PerformerBlacklist() {
-  const list = useLoad(() => get('/api/performer/blacklist'), []);
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get('/api/performer/blacklist'),
+    'performer-blacklist:'+(me?.id??'guest'));
   const { busy, run } = useAction();
-  if (!list.data) return <Loading error={list.error} />;
+  if(!list.data)return <div className="stack"><Loading error={list.error}/>
+    {list.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void list.reload();}}>Повторить загрузку чёрного списка</button>}</div>;
   return (
     <div className="stack">
       {!list.data.length ? <div className="empty">Список пуст</div> : list.data.map((b: any) => (
