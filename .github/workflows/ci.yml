@@ -94,6 +94,8 @@ jobs:
           node e2e/public-service-routing.mjs
           node e2e/legacy-guest-deeplinks.mjs
           node e2e/api-session-race.mjs
+          # Actual DriverAir React UI: offline, A/B account boundary, delayed polls.
+          node e2e/air-session-20261124.mjs
           # Real React+Chromium; synthetic error responses, never private production media.
           node e2e/order-photo-error-ui.mjs
           # Sign-in, client registration and partner onboarding must stay above the approved public page.
