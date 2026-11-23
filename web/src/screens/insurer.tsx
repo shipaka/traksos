@@ -316,7 +316,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 <textarea className="field" maxLength={2000} value={currentDraft?(inspectionNotes[r.id]??''):''}
                   onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
               <div className="row">
-                <a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>
+                {!inspectionOnly&&<a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>}
                 <button type="button" className="btn ghost small" disabled={busy||!currentDraft}
                   onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
               </div>
