@@ -39,7 +39,7 @@ export function PerformerHub() {
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
-    ['invite', 'Пригласить и получать баллы', 'баллы гасят до половины комиссии'],
+    ['invite', 'Пригласить и получать баллы', 'баллы используются по действующим правилам программы'],
     ['work/me/level', 'Мой уровень и точность', 'Новичок · Проверенный · Лучший, точность подсказок по телефону'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
     ['support', 'Поддержка', 'обращения и ответы'],
@@ -173,7 +173,7 @@ export function PhoneSection() {
       <h1>Телефон и вход</h1>
       <div className="card">
         <dl className="kv"><dt>Номер</dt><dd>{fmtPhone(me!.phone)}</dd></dl>
-        <span className="note">Вход — по этому номеру и коду из SMS. Клиенты ваш номер не видят: звонки идут через TrakSOS.</span>
+        <span className="note">Вход — по этому номеру и паролю, без SMS. SMS-код нужен только для регистрации и восстановления доступа. Клиенты ваш номер не видят: звонки идут через TrakSOS.</span>
       </div>
       <a className="btn ghost" href="#/support/new">Сменить номер — через поддержку</a>
       <span className="note">Номер меняем только после проверки, что это вы: на нём ваши выплаты и рейтинг.</span>
@@ -254,13 +254,21 @@ export function ScheduleSection() {
   const [hoursExpanded, setHoursExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900);
   const { reload } = useMe();
   const [s, setS] = useState(() => p.schedule ?? { on: true, days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, from: '09:00', to: '18:00', phoneTo: '20:00' });
-  const sel = (v: string, on: (x: string) => void, min?: string) => (
-    <select className="field" value={v} onChange={(e) => on(e.target.value)}>{TIMES.filter((t) => !min || t >= min).map((t) => <option key={t} value={t}>{t}</option>)}</select>
+  const sel = (v: string, on: (x: string) => void, min?: string, strictlyLater = false, stopBeforeLast = false) => (
+    <select className="field" value={v} onChange={(e) => on(e.target.value)}>
+      {TIMES.filter((t, i) => (!stopBeforeLast || i < TIMES.length - 1) && (!min || (strictlyLater ? t > min : t >= min)))
+        .map((t) => <option key={t} value={t}>{t}</option>)}
+    </select>
   );
+  // Keep all three times valid after changing the beginning of the day.
+  const changeStart = (from: string) => {
+    const to = s.to > from ? s.to : TIMES.find(t => t > from)!;
+    setS({ ...s, from, to, phoneTo: s.phoneTo >= to ? s.phoneTo : to });
+  };
   return (
     <main className="performer-schedule stack">
       <Back to="work/me" label="Профиль" />
-      <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
+      <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Вне рабочих часов заявки не предлагаются; ручной выход на линию может временно продлить работу.</div></div>
       <VacationToggle />
       <button className="opt performer-schedule-enabled" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
@@ -282,8 +290,8 @@ export function ScheduleSection() {
             <summary><span>Выезды и телефон<small>Выезды {s.from}–{s.to} · связь до {s.phoneTo}</small></span><span aria-hidden="true">⌄</span></summary>
             <div className="performer-schedule-panel">
               <div className="grid2">
-                <label>Начало выездов{sel(s.from, v => setS({ ...s, from: v }))}</label>
-                <label>Конец выездов{sel(s.to, v => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from)}</label>
+                <label>Начало выездов{sel(s.from, changeStart, undefined, false, true)}</label>
+                <label>Конец выездов{sel(s.to, v => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from, true)}</label>
               </div>
               <span className="note">В эти часы приходят все заявки.</span>
               <label>На телефоне до{sel(s.phoneTo, v => setS({ ...s, phoneTo: v }), s.to)}</label>
@@ -393,7 +401,7 @@ export function MoneySection() {
     <main>
       <Back to="work/me" label="Профиль" />
       <div><h1>Финансы</h1><div className="sub">Каждое движение денег — с причиной и заявкой. Непонятно — задайте вопрос прямо по операции.</div></div>
-      {balance.data && (
+      {!balance.data ? <Loading error={balance.error} /> : (
         <div className="card">
           <div className="sum total"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Уже выплачено</span><span>{rub(balance.data.paid)}</span></div>
@@ -404,7 +412,7 @@ export function MoneySection() {
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>
-          <a className="note" href="#/invite">Баллы за приглашения гасят до половины комиссии →</a>
+          <a className="note" href="#/invite">Баллы за приглашения — правила и остаток →</a>
         </div>
       )}
       <PointsPref />
