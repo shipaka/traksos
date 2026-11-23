@@ -23,21 +23,41 @@ try{
       try{
         const ticket=issueSandboxTicket(role,secret);
         await page.goto(base+'/#/sandbox-enter?ticket='+encodeURIComponent(ticket),{waitUntil:'domcontentloaded'});
-        await page.waitForFunction(expected=>location.hash===expected,SANDBOX_LANDING[role],{timeout:20_000});
+        await page.waitForFunction(expected=>
+          location.hash===expected && !!localStorage.getItem('traksos.token'),
+          SANDBOX_LANDING[role],{timeout:20_000});
+        await page.locator('header.top .sandbox-test-badge').waitFor({state:'visible',timeout:20_000});
         const marker='TRAKSOS_QA_NO_PERFORMER_20261123_'+role.toUpperCase();
-        const claim=await page.evaluate(async marker=>{
-          const token=localStorage.getItem('traksos.token');
-          if(!token)throw Error('Missing real sandbox login token');
-          const auth={authorization:'Bearer '+token};
-          const ordersResponse=await fetch('/api/orders',{headers:auth});
-          if(!ordersResponse.ok)throw Error('Cannot list real customer orders');
-          const list=await ordersResponse.json();
-          const order=list.find(o=>o.description===marker);
-          if(!order)throw Error('Real no-performer fixture missing: '+marker);
-          const detailResponse=await fetch('/api/orders/'+order.id,{headers:auth});
-          if(!detailResponse.ok)throw Error('Cannot load real protected order');
-          return {order,detail:await detailResponse.json()};
-        },marker);
+        let claim;
+        for(let navigationAttempt=0;navigationAttempt<3;navigationAttempt++){
+          try{
+            // The 900px owner breakpoint occasionally performs a real document
+            // navigation immediately after sandbox-enter. A lost JS execution
+            // context is not an API failure: re-run the same protected fetch
+            // only after the new authenticated document is fully ready.
+            claim=await page.evaluate(async marker=>{
+              const token=localStorage.getItem('traksos.token');
+              if(!token)throw Error('Missing real sandbox login token');
+              const auth={authorization:'Bearer '+token};
+              const ordersResponse=await fetch('/api/orders',{headers:auth});
+              if(!ordersResponse.ok)throw Error('Cannot list real customer orders');
+              const list=await ordersResponse.json();
+              const order=list.find(o=>o.description===marker);
+              if(!order)throw Error('Real no-performer fixture missing: '+marker);
+              const detailResponse=await fetch('/api/orders/'+order.id,{headers:auth});
+              if(!detailResponse.ok)throw Error('Cannot load real protected order');
+              return {order,detail:await detailResponse.json()};
+            },marker);
+            break;
+          }catch(error){
+            if(!/Execution context was destroyed|navigation/i.test(String(error)) ||
+               navigationAttempt===2)throw error;
+            await page.waitForLoadState('domcontentloaded');
+            await page.waitForFunction(expected=>
+              location.hash===expected && !!localStorage.getItem('traksos.token'),
+              SANDBOX_LANDING[role],{timeout:20_000});
+          }
+        }
         if(claim.detail.status!=='no_performer' || claim.detail.absenceReason!=='not_connected' ||
            !claim.detail.events?.some(e=>e.type==='no_performer' && e.data?.absenceReason==='not_connected'))
           throw Error('Not a truly exhausted customer order: '+JSON.stringify(claim.detail).slice(0,500));
