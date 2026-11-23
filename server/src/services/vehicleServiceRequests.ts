@@ -23,7 +23,14 @@ export class VehicleServiceRequests {
     return this.db.query(
       `select r.*, v.brand, v.model, v.plate from vehicle_service_requests r
        join vehicles v on v.id=r.vehicle_id
-       where r.owner_id=$1 and ($2::uuid = r.owner_id or v.driver_id=$2)
+       where r.owner_id=$1 and
+         ($2::uuid = r.owner_id or (v.driver_id=$2 and exists (
+            select 1 from users driver_u join users fleet_u
+              on fleet_u.id=driver_u.owner_id
+             where driver_u.id=$2 and driver_u.owner_id=r.owner_id
+               and 'driver'=any(driver_u.roles)
+               and (fleet_u.fleet->'allow'->>r.kind)::boolean is true
+         )))
          and r.kind = any($3::text[])
        order by r.created_at desc`, [owner, user.id, kinds]);
   }
@@ -46,7 +53,18 @@ export class VehicleServiceRequests {
               ), '[]'::json) as events
        from vehicle_service_requests r
        where r.vehicle_id=$1 and r.owner_id=$2 and r.kind=any($3::text[])
-       order by r.created_at desc`, [vehicleId, owner, kinds]);
+         -- Authorization is repeated in the SAME PostgreSQL snapshot as
+         -- the records. A separate vehicle check above is only a fast UX
+         -- error and cannot grant access after a reassignment between reads.
+         and ($4::uuid = r.owner_id or exists (
+           select 1 from vehicles vv join users driver_u on driver_u.id=$4
+             join users fleet_u on fleet_u.id=driver_u.owner_id
+            where vv.id=r.vehicle_id and vv.owner_id=r.owner_id
+              and vv.driver_id=driver_u.id and driver_u.owner_id=r.owner_id
+              and 'driver'=any(driver_u.roles)
+              and (fleet_u.fleet->'allow'->>r.kind)::boolean is true
+         ))
+       order by r.created_at desc`, [vehicleId, owner, kinds, user.id]);
   }
 
   async create(user: AuthUser, vehicleId: string | undefined, kind: VehicleServiceKind, comment?: string,
@@ -147,7 +165,9 @@ export class VehicleServiceRequests {
        where id=$1 and owner_id=$2 and status in ('submitted','in_review','need_documents')
        and ($3::uuid = owner_id or (requested_by=$3 and exists (
          select 1 from vehicles v join users u on u.id=v.owner_id
+           join users driver_u on driver_u.id=v.driver_id
          where v.id=vehicle_service_requests.vehicle_id and v.driver_id=$3
+           and driver_u.owner_id=v.owner_id and 'driver'=any(driver_u.roles)
            and (u.fleet->'allow'->>vehicle_service_requests.kind)::boolean is true
        ))) returning *`, [id, owner, user.id]);
     if (!r) throw notFound('Заявка не найдена или её уже нельзя отменить');
@@ -225,7 +245,9 @@ export class VehicleServiceRequests {
   async recipients(request: Row) {
     const drivers = await this.db.query<{ id: string }>(
       `select v.driver_id as id from vehicles v join users u on u.id=v.owner_id
+        join users driver_u on driver_u.id=v.driver_id
        where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+         and driver_u.owner_id=v.owner_id and 'driver'=any(driver_u.roles)
          and (u.fleet->'allow'->>$4)::boolean is true`,
       [request.vehicle_id, request.owner_id, request.requested_by, request.kind],
     );
