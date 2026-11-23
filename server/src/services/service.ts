@@ -553,7 +553,7 @@ export class ServiceCenters {
     const today = msk(this.now());
     const max = Math.max(1, ...rows.map((r: any) => r.closed_n));
     return rows
-      .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
+      .filter((c: any) => !p.need || (Object.hasOwn(NEEDS,p.need) && c.staff?.[p.need] !== 'none'))
       .map((c: any) => ({
         id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
@@ -586,7 +586,13 @@ export class ServiceCenters {
     const c = await this.db.one(`select * from service_centers where id=$1 and verification='approved' and not paused`, [centerId]);
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
-    if (!(p.need in NEEDS)) throw bad('bad_need', 'Что нужно?');
+    if (!Object.hasOwn(NEEDS, p.need)) throw bad('bad_need', 'Выберите существующую работу');
+    // Route-level YYYY-MM-DD shape is not enough: 2026-02-31 is not a day.
+    const parsedDay=new Date(p.day+'T00:00:00Z');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.day) ||
+        !Number.isFinite(parsedDay.getTime()) ||
+        parsedDay.toISOString().slice(0,10)!==p.day)
+      throw bad('bad_day','Выберите действительную дату записи');
     if (p.day < msk(this.now())) throw bad('past', 'Выберите сегодня или позже');
     if ((c.closed_days ?? []).some((d: any) => msk(new Date(d)) === p.day)) throw bad('closed', 'В этот день сервис не работает');
     const clientId = user.owner_id ?? user.id;
@@ -673,6 +679,16 @@ export class ServiceCenters {
         throw forbidden('Доступ к рекомендации есть только у действующего водителя этой машины');
       if (o.vehicle_id && p.vehicleId && o.vehicle_id !== p.vehicleId)
         throw bad('different_vehicle', 'Рекомендация относится к другому автомобилю');
+      if (o.vehicle_id && !p.vehicleId) {
+        // A referral is tied to this specific fleet truck. Never create a
+        // no-vehicle discounted booking while referencing another truck.
+        const sourceVehicle=await this.db.one<any>(
+          'select * from vehicles where id=$1 and owner_id=$2', [o.vehicle_id,clientId]);
+        if (!sourceVehicle) throw notFound('Машина рекомендованного обращения больше не доступна');
+        p={...p,vehicleId:sourceVehicle.id};
+        vehicle={brand:sourceVehicle.brand,model:sourceVehicle.model,year:sourceVehicle.year,
+          plate:sourceVehicle.plate,trailerPlate:sourceVehicle.trailer_plate};
+      }
       fromOrderId = o.id;
     }
     const b = await this.db.one(
