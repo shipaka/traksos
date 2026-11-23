@@ -69,6 +69,36 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
   };
 }
 
+// The weather vendor endpoint is fixed, but malformed/unbounded upstream JSON
+// must not force the public app server to allocate an unlimited response.
+async function boundedWeatherJson(response: Response): Promise<unknown | null> {
+  const maxBytes = 65_536;
+  const declared = response.headers.get('content-length');
+  if (declared !== null && /^\d+$/.test(declared) && Number(declared)>maxBytes)
+    return null;
+  if (!response.body) return null;
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const {done,value} = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const out = new Uint8Array(size);
+  let offset = 0;
+  for (const bytes of chunks) { out.set(bytes,offset); offset += bytes.byteLength; }
+  try { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(out)); }
+  catch { return null; }
+}
+
 export class PublicWeatherService {
   private cache: { expiresAt: number; value: PublicWeather | null } | null = null;
   private pending: Promise<PublicWeather | null> | null = null;
@@ -89,7 +119,7 @@ export class PublicWeatherService {
     })
       .then(async r => {
         if (!r.ok) return null;
-        const parsed = await r.json();
+        const parsed = await boundedWeatherJson(r);
         return parseYandexWeather(parsed, this.clock());
       })
       .catch(() => null)
