@@ -141,9 +141,8 @@ export class ProfilesService {
   async setLine(userId: string, s: { lineStatus?: 'online' | 'on_call' | 'busy' | 'offline'; busyUntil?: string | null; paused?: boolean }) {
     const p = await this.performer(userId);
     if (!p) throw notFound('Сначала заполните профиль исполнителя');
-    if (s.lineStatus === 'online' && p.verification !== 'approved') {
-      throw bad('not_verified', 'Заявки начнут приходить после проверки профиля');
-    }
+    // Verification photos are voluntary. The route separately enforces
+    // accepted terms; missing profiles and blocked users remain restricted.
     if (s.lineStatus && p.line_status === 'on_job' && s.lineStatus !== 'offline') {
       throw bad('on_job', 'Вы на выезде — статус сменится сам, когда клиент подтвердит сумму');
     }

@@ -99,7 +99,7 @@ function PerformerOnboarding() {
     const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
       cars: !isEcu && car.brand && car.plate ? [car] : [], car: !isEcu && car.brand && car.plate ? car : null };
     if (!isTow && !isEcu) body.specialties = spec;
-    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
+    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён. Фото для добровольной проверки можно добавить отдельно')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
     }
@@ -133,7 +133,7 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — добровольная проверка</button>
     </main>
   );
 }

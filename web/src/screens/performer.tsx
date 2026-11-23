@@ -244,7 +244,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
   const first = active[0];
   const [searchIntent,setSearchIntent] = useState<{scope:'incoming'|'mine'|'archive';count:number}>({scope:'mine',count:0});
   const [lineOptionsOpen,setLineOptionsOpen] = useState(false);
-  const switchable = p.verification === 'approved' && ['online','offline'].includes(p.line_status);
+  const switchable = ['online','offline'].includes(p.line_status);
   const stage:Record<string,string> = {
     accepted:'Принята — пора выезжать', en_route:'Вы в пути', arrived:'Вы на месте',
     working:'Идёт работа', awaiting_confirmation:'Ждём подтверждения клиента',
@@ -283,10 +283,10 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
     </nav>
     {p.verification !== 'approved' && <section className="card stack" aria-label="Проверка исполнителя">
       <strong>{p.verification==='rejected'?'Проверка не пройдена':p.submitted_at?'Профиль на проверке':'Подтвердите профиль'}</strong>
-      <span className="note">{p.verification_note || 'Для работы и доступа к заявкам проверьте настройки профиля.'}</span>
+      <span className="note">{p.verification_note || 'Подтверждение добровольное: оно даёт отметку доверия, но не блокирует выход на линию и получение заявок.'}</span>
       <a className="btn ghost" href="#/work/docs">Проверка и документы</a>
     </section>}
-    {p.verification === 'approved' && <div className="work-mobile-extra-presence">
+    {<div className="work-mobile-extra-presence">
       <button className="work-mobile-extra-button" type="button"
         aria-expanded={lineOptionsOpen} onClick={()=>setLineOptionsOpen(v=>!v)}>
         {p.line_status==='on_job'?'Статус: на выезде · настройки заблокированы':'Перерыв, статус звонка и настройки заявок'} 

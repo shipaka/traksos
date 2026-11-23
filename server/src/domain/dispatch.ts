@@ -65,7 +65,7 @@ export interface Ranked {
 export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankOptions): Ranked[] {
   const kind = performerKindFor(order.service);
   const rows = list
-    .filter((c) => c.kind === kind && c.user_status === 'active' && c.verification === 'approved' && !c.paused)
+    .filter((c) => c.kind === kind && c.user_status === 'active' && !c.paused)
     .filter((c) => kind !== 'master' || order.service === 'consult' || c.specialties.includes(order.service))
     .filter((c) => c.line_status === 'online' || c.line_status === 'on_call')
     // Распорядок: вне рабочего времени не звоним; в часы «на телефоне» — только консультации
@@ -90,6 +90,8 @@ export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankO
   rows.sort((a, b) =>
     Number(b.c.is_priority) - Number(a.c.is_priority) ||
     brandRank[a.level] - brandRank[b.level] ||
+    // A verified badge improves ranking, but not eligibility for work.
+    Number(b.c.verification === 'approved') - Number(a.c.verification === 'approved') ||
     // «на звонке» — виден, но ниже в очереди
     Number(a.c.line_status === 'on_call') - Number(b.c.line_status === 'on_call') ||
     (a.distanceKm ?? 1e6) - (b.distanceKm ?? 1e6) ||

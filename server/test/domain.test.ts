@@ -76,7 +76,17 @@ test('подбор: приоритетные → марка → расстоян
     cand('debtor', { cash_debt: 999_999 }),
   ];
   const r = rankCandidates(order, list, { radiusKm: 220, maxCandidates: 10, cashDebtLimit: 300_000 });
-  assert.deepEqual(r.map((x) => x.user_id), ['father', 'near-excellent', 'far-excellent', 'near-good']);
+  assert.deepEqual(r.map((x) => x.user_id), ['father', 'near-excellent', 'far-excellent', 'near-good', 'not-verified']);
+});
+
+test('добровольная проверка повышает порядок в выдаче, но не исключает неподтверждённых', () => {
+  const list=[cand('pending',{verification:'pending'}),cand('approved',{verification:'approved',lat:59.94})];
+  const ranked=rankCandidates({service:'electric',brand:'MAN',lat:59.93,lng:30.31,group_trip:false},
+    list,{radiusKm:50,maxCandidates:10,cashDebtLimit:300_000});
+  assert.deepEqual(ranked.map(x=>x.user_id),['approved','pending']);
+  assert.deepEqual(rankCandidates({service:'tow',brand:null,lat:null,lng:null,group_trip:false},
+    [cand('tow-pending',{kind:'tow',verification:'pending'})],
+    {radiusKm:50,maxCandidates:10,cashDebtLimit:300_000}).map(x=>x.user_id),['tow-pending']);
 });
 
 test('мастер с собственной СТО получает выездные заявки только по выбранным специализациям', () => {

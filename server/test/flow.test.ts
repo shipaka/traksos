@@ -49,8 +49,9 @@ test('исполнители: профиль, проверка, выход на 
       taxStatus: 'self_employed', inn: '780000000001', car: { brand: 'Lada Largus', color: 'белый', plate: 'А123ВС78' },
     }, u.token));
     assert.equal(p.verification, 'pending');
-    const early = await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token);
-    assert.equal(early.body.error, 'not_verified');
+    const early = ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token));
+    assert.equal(early.line_status, 'online');
+    assert.equal(early.verification, 'pending');
     ok(await t.api('POST', `/api/admin/performers/${u.id}/verify`, { decision: 'approved' }, admin.token));
     ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token));
     ok(await t.api('POST', '/api/performer/location', { lat, lng: 30.9 }, u.token));
