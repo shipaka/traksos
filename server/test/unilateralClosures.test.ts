@@ -44,6 +44,7 @@ function fixture() {
   const orders:any={
     money:(order:any)=>({total:Number(order.work_amount)+Number(order.call_out_amount)}),
     busyWith:async()=>false,
+    participants:async()=>[CLIENT_ID,PERF_ID],
     event:async()=>{eventCount++;}
   };
   const notifier:any={live:()=>{},deliverStored:async()=>{},notify:async()=>{}};
