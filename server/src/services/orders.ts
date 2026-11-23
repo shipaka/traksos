@@ -1312,7 +1312,9 @@ export class OrdersService {
   /** После release: клиентам — обновить отклики, исполнителю — закрыть вызовы; если там звонили приоритетным — звоним дальше */
   async afterRelease(r: { performerId: string; orders: { orderId: string; clients: string[] }[] }) {
     for (const o of r.orders) {
-      this.notifier.live(o.clients, { type: 'order', orderId: o.orderId, status: 'searching', offers: true });
+      this.notifier.live(await this.customerRecipients({
+        id: o.orderId, client_id: o.clients[0], created_by: o.clients[1],
+      }), { type: 'order', orderId: o.orderId, status: 'searching', offers: true });
       this.notifier.live([r.performerId], { type: 'order', orderId: o.orderId, status: 'released' });
       await this.ringNext(o.orderId);
     }
