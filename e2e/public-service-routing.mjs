@@ -378,5 +378,48 @@ try {
     check(await restrictedPage.getByRole('link',{name:'Войти',exact:true}).count()===1,
       'Login must remain reachable when the motion preference cannot be read');
   }finally{await restrictedContext.close();}
+  // The transport may receive a real 401 after React has mounted an account
+  // workspace. Mock ONLY this isolated browser network (never a production
+  // login): a fake test token is enough to reproduce the stale identity bug.
+  const expiredContext=await browser.newContext({viewport:{width:1024,height:900},locale:'ru-RU'});
+  try {
+    await expiredContext.addInitScript(()=>{
+      localStorage.setItem('traksos.token','CI-EXPIRED-FAKE-SESSION');
+    });
+    const expiredPage=await expiredContext.newPage();
+    let release401;
+    let sawTicket;
+    const ticketRequest=new Promise(resolve=>{sawTicket=resolve;});
+    await expiredPage.route('**/api/**',async route=>{
+      const url=new URL(route.request().url());
+      if(url.pathname==='/api/me')
+        return route.fulfill({status:200,contentType:'application/json',
+          body:JSON.stringify({
+            id:'ci-courier-identity',phone:'',name:null,roles:['courier'],
+            owner_id:null,company_name:null,company_inn:null,
+            rating:null,rating_count:0,performer:null
+          })});
+      if(url.pathname==='/api/auth/realtime-ticket'){
+        release401=()=>route.fulfill({status:401,contentType:'application/json',
+          body:JSON.stringify({error:'expired_session',message:'Session expired'})});
+        sawTicket();
+        return;
+      }
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    await expiredPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await expiredPage.locator('.app.role-courier').waitFor({state:'visible'});
+    await Promise.race([ticketRequest,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('Session ticket request did not start')),10000))]);
+    check(typeof release401==='function','WebSocket ticket did not reach the protected API');
+    await release401();
+    await expiredPage.waitForURL('**/#/login');
+    await expiredPage.locator('.app.role-courier').waitFor({state:'detached'});
+    await expiredPage.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
+    check(await expiredPage.evaluate(()=>localStorage.getItem('traksos.token'))===null,
+      '401 must clear the obsolete bearer token');
+    check(await expiredPage.locator('.tr-approved-route-unavailable').count()===0,
+      'Expired account must render sign-in, not a misleading already-signed-in page');
+  }finally{await expiredContext.close();}
 }finally{await browser.close();}
-console.log('PASS: owner-approved 617/618 routes, five quick services, unified TrakBot, guest gates, four partner roles, public docs, legal reconnect and restricted storage');
+console.log('PASS: owner-approved 617/618 routes, service auth, legal reconnect, restricted storage and expired-session unmount');
