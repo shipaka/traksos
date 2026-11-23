@@ -216,6 +216,18 @@ class MainActivity : AppCompatActivity() {
                 if (BuildConfig.DEBUG) android.util.Log.i("TrakSOSRuntime", "LEGACY_WEBVIEW_SOFTWARE_LAYER=$major")
             }
         }
+        // Headless API35 emulators on BOTH Ubuntu24 and Ubuntu26 sometimes
+        // leave the previous guest WebView frame on screen after React has
+        // mounted the next role (confirmed by real PNG + JS bridge logs),
+        // then their ADB/compositor transport crashes. Bypass only this
+        // emulator's GPU-backed WebView layer; never change release APKs or
+        // real-device rendering. CI still MUST prove fresh role PNG + DOM.
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM &&
+            (Build.HARDWARE.equals("ranchu", ignoreCase = true) ||
+             Build.HARDWARE.equals("goldfish", ignoreCase = true))) {
+            web.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+            android.util.Log.i("TrakSOSRuntime", "API35_EMULATOR_SOFTWARE_WEBVIEW_LAYER")
+        }
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val pkg = WebView.getCurrentWebViewPackage()
             android.util.Log.i("TrakSOSRuntime", "WEBVIEW_VERSION=" + (pkg?.versionName ?: "unknown"))
