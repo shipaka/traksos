@@ -5,7 +5,7 @@ import { setup, ok } from './helpers.ts';
 const profile = (name:string) => ({kind:'master',name,specialties:['electric'],
   taxStatus:'self_employed',inn:'780000000555'});
 
-test('verified and unpaused recipients only; 12 simultaneous sends never duplicate inbox', {timeout:60000},async()=>{
+test('verified partners, including paused ones, receive exactly one inbox notice despite 12 clicks', {timeout:60000},async()=>{
   const t=await setup();
   try{
     const admin=await t.login('+79990000001');
@@ -33,10 +33,10 @@ test('verified and unpaused recipients only; 12 simultaneous sends never duplica
     const notifications=await t.db.query<{user_id:string}>(`
       select user_id from notifications where kind='announcement'
       and data->>'announcementId'=$1`,[created.id]);
-    assert.deepEqual(notifications.map(x=>x.user_id),[approved.id]);
+    assert.deepEqual(notifications.map(x=>x.user_id).sort(),[approved.id,paused.id].sort());
     const report=await t.db.one<{notified_count:number;notified_at:Date|null}>(
       'select notified_count,notified_at from worker_announcements where id=$1',[created.id]);
-    assert.equal(report?.notified_count,1);
+    assert.equal(report?.notified_count,2);
     assert.ok(report?.notified_at);
     const audit=await t.db.one<{n:number}>(`select count(*)::int as n from audit_log
       where action='ops.announcement.notify' and target=$1`,[created.id]);
