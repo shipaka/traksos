@@ -33,7 +33,8 @@ try {
       };
       // A saved "tow" choice can come from the same browser tab. Opening an
       // obsolete bookmark must not send a subsequent login to a tow booking.
-      for (const path of ['help','explore/guide','explore/pricing','explore/unknown-feature']) {
+      for (const path of ['help','explore','explore/guide','explore/pricing',
+        'explore/unknown-feature','explore/old-marketing-page','unknown-legacy-screen']) {
         await preloadAbandonedChoice();
         await open(path);
         await page.waitForFunction(() =>
@@ -47,10 +48,32 @@ try {
           width+'px: guest #/'+path+' has no real sign-in input');
       }
 
+      // Public about and legal-index routes must remain readable while
+      // clearing unrelated abandoned service intent. No login gate or
+      // accidental redirect is allowed on these approved public pages.
+      for (const [path,heading] of [
+        ['company','Компания TrakSOS'],
+        ['offers','Оферты и документы'],
+      ]) {
+        await preloadAbandonedChoice();
+        await page.goto(BASE+'/#/'+path,{waitUntil:'domcontentloaded'});
+        await page.getByRole('heading',{name:heading,exact:true}).waitFor();
+        await page.waitForFunction(() =>
+          sessionStorage.getItem('traksos.pendingLandingAction')===null &&
+          sessionStorage.getItem('traksos.pendingCatalogChoice')===null);
+        assert(await page.locator('main.guest-info-page').count()===1,
+          width+'px: public informational page replaced: #/'+path);
+        assert(await page.locator('main.guest-explore').count()===0,
+          width+'px: obsolete public tour at #/'+path);
+      }
+      await open('explore/guide');
       await page.screenshot({path:'e2e/shots/legacy-guest/legacy-'+width+'.png'});
       // Existing approved service bookmarks must still retain the selected
       // destination; this is a regression check, not a fake login.
-      for (const key of ['tow','ecu','parts']) {
+      for (const key of [
+        'van','tow','sto','consult','insurance','parts','inspection',
+        'ecu','sos','air','club','tech','trakbot','garage','training'
+      ]) {
         await page.goto(BASE + '/#/', {waitUntil:'domcontentloaded'});
         await page.locator(landing).waitFor({state:'visible'});
         await page.evaluate(() => {
@@ -62,6 +85,11 @@ try {
           sessionStorage.getItem('traksos.pendingLandingAction')===service, key);
         assert(await page.getByText('Вы выбрали:',{exact:false}).count()===1,
           width+'px: valid #/explore/'+key+' lost its auth context');
+        assert(await page.evaluate(() =>
+          sessionStorage.getItem('traksos.pendingCatalogChoice')===null),
+          width+'px: stale booking details carried into #/explore/'+key);
+        assert(await page.locator('main.guest-explore, .guest-explore-hero').count()===0,
+          width+'px: obsolete guest UI at valid service #/explore/'+key);
         // Abandoning an auth flow using normal navigation cancels its hint.
         await page.goto(BASE+'/#/', {waitUntil:'domcontentloaded'});
         await page.locator(landing).waitFor({state:'visible'});
