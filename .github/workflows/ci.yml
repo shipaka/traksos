@@ -129,6 +129,10 @@ jobs:
           node e2e/techbase-repair-hardening-20261124.mjs
           node e2e/vehicle-service-history-20261124.mjs
           # Real read-only role switching, courier training and per-account course progress.
+          # Pure read-only courier/inspection training model and every role transition.
+          node e2e/training-demo-kinds-20261124.mjs
+          # Actual courier React: network retry, delivery-id/session isolation, no real writes.
+          node e2e/courier-offline-reliability-20261124.mjs
           node e2e/learning-role-hardening-20261124.mjs
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
