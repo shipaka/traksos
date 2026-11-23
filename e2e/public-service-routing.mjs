@@ -347,9 +347,12 @@ try {
       return route.fulfill({status:200,contentType:'application/json',body:'{}'});
     });
     for(const [service,route] of [
-      ['van','#/sos/master'],['ecu','#/new/ecu'],['sto','#/services'],
-      ['parts','#/shop'],['garage','#/garage'],['trakbot','#/trakbot'],
-      ['training','#/training'],['air','#/air']
+      ['van','#/sos/master'],['tow','#/new/tow'],['sto','#/services'],
+      ['consult','#/new/consult'],['insurance','#/insurance/request/new'],
+      ['parts','#/shop'],['inspection','#/garage'],['ecu','#/new/ecu'],
+      ['sos','#/sos'],['air','#/air'],['club','#/air'],
+      ['tech','#/techbase/driver'],['garage','#/garage'],
+      ['training','#/training'],['trakbot','#/trakbot']
     ]){
       await signedInPage.goto(BASE+'/#/explore/'+service,{waitUntil:'domcontentloaded'});
       await signedInPage.waitForFunction(expected=>location.hash===expected,route);
@@ -359,7 +362,29 @@ try {
         sessionStorage.getItem('traksos.pendingLandingAction'))===null,
         'Authenticated shortcut '+service+' left a stale service for the next sign-in');
     }
+    await signedInPage.goto(BASE+'/#/explore/unknown-ci-service');
+    await signedInPage.waitForFunction(()=>location.hash==='#/');
+    check(await signedInPage.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))===null,
+      'Unknown signed-in service left stale booking intent');
   }finally{await signedInContext.close();}
+  // A public deep link must not open client-only workspaces for a courier,
+  // master, station or other non-customer role.
+  const partnerContext=await browser.newContext({viewport:{width:1024,height:900},locale:'ru-RU'});
+  try {
+    await partnerContext.addInitScript(()=>localStorage.setItem('traksos.token','CI-COURIER-DEEPLINK'));
+    const partnerPage=await partnerContext.newPage();
+    await partnerPage.route('**/api/**',async route=>{
+      const path=new URL(route.request().url()).pathname;
+      if(path==='/api/me')return route.fulfill({status:200,contentType:'application/json',
+        body:JSON.stringify({id:'ci-courier',name:null,phone:'',roles:['courier'],
+          owner_id:null,company_name:null,company_inn:null,rating:null,rating_count:0,performer:null})});
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    await partnerPage.goto(BASE+'/#/explore/van',{waitUntil:'domcontentloaded'});
+    await partnerPage.waitForFunction(()=>location.hash==='#/');
+    check(!partnerPage.url().includes('/sos/master'),
+      'Public bookmark must not bypass role checks for a courier');
+  }finally{await partnerContext.close();}
   // The public legal footer must recover after its first API request fails;
   // neither a hard reload nor invented legal/contact data is acceptable.
   const legalContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
