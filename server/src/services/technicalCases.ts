@@ -7,14 +7,18 @@ export type RepairCaseInput = {
   symptoms: string; checksPerformed: string; verifiedFix: string; provenanceNote?: string;
 };
 
-const contact = /(?:\+?7|8)[\s()-]*\d{3}[\s()-]*\d{3}[\s()-]*\d{2}[\s()-]*\d{2}|\b[A-HJ-NPR-Z0-9]{17}\b|(?:госномер|гос\.номер|телефон|vin[:\s])/i;
+// Cases are shared with other verified specialists. Reject obvious customer
+// identifiers in EVERY free-text field before a record enters moderation.
+const contact = /(?:[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})|(?:\+?7|8)[\s().-]*\d{3}[\s().-]*\d{3}[\s().-]*\d{2}[\s().-]*\d{2}|\b[A-HJ-NPR-Z0-9]{17}\b|(?:^|[^\p{L}\p{N}])[АВЕКМНОРСТУХABEKMHOPCTYX]\s*\d{3}\s*[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\s*\d{2,3}(?![\p{L}\p{N}])|(?:госномер|гос\.номер|телефон|vin[:\s]|e-?mail[:\s]|паспорт[:\s])/iu;
+const normalized = (value: string) => value.normalize('NFKC')
+  .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
 
 function clean(data: RepairCaseInput): RepairCaseInput {
   const trimmed = {
-    make: data.make.trim(), model: (data.model ?? '').trim(), productionYear: data.productionYear,
-    ecu: (data.ecu ?? '').trim(), code: (data.code ?? '').trim().toUpperCase(),
-    symptoms: data.symptoms.trim(), checksPerformed: data.checksPerformed.trim(),
-    verifiedFix: data.verifiedFix.trim(), provenanceNote: (data.provenanceNote ?? '').trim(),
+    make: normalized(data.make), model: normalized(data.model ?? ''), productionYear: data.productionYear,
+    ecu: normalized(data.ecu ?? ''), code: normalized(data.code ?? '').toUpperCase(),
+    symptoms: normalized(data.symptoms), checksPerformed: normalized(data.checksPerformed),
+    verifiedFix: normalized(data.verifiedFix), provenanceNote: normalized(data.provenanceNote ?? ''),
   };
   if (Object.values(trimmed).some((v) => typeof v === 'string' && contact.test(v)))
     throw bad('personal_data', 'Не указывай VIN, номера телефонов, госномера и персональные данные клиентов');
@@ -31,7 +35,8 @@ export class TechnicalCasesService {
     if (user.roles.some((r) => ['admin','moderator'].includes(r))) return true;
     if (!user.roles.some((r) => ['master','service'].includes(r))) return false;
     const p = await this.db.one<{ verification: string }>(
-      'select verification from performer_profiles where user_id=$1', [user.id],
+      `select p.verification from performer_profiles p
+        join users u on u.id=p.user_id where p.user_id=$1 and u.status='active'`, [user.id],
     );
     return p?.verification === 'approved';
   }
@@ -49,10 +54,15 @@ export class TechnicalCasesService {
 
   async approved(user: AuthUser, term: string) {
     if (!(await this.canRead(user))) throw forbidden('Техническая база доступна проверенным специалистам');
-    const value = term.trim().slice(0, 80);
+    const value = normalized(term).toLowerCase().slice(0,80);
     const rows = await this.db.query(
-      "select id::text as id, make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note,reviewed_at from technical_repair_cases where review_state='approved' and ($1='' or code ilike $2 or make ilike $2 or model ilike $2 or ecu ilike $2) order by id desc limit 30",
-      [value, '%' + value.replace(/[%_\\]/g, '') + '%'],
+      `select id::text as id, make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note,reviewed_at
+         from technical_repair_cases where review_state='approved' and
+           ($1='' or strpos(lower(coalesce(code,'')),$1)>0
+                  or strpos(lower(coalesce(make,'')),$1)>0
+                  or strpos(lower(coalesce(model,'')),$1)>0
+                  or strpos(lower(coalesce(ecu,'')),$1)>0)
+        order by id desc limit 30`,[value],
     );
     return { items: rows };
   }
