@@ -196,6 +196,31 @@ try {
   await wait('GET',personal,3);
   await settle('GET',personal,2,'resolve',card('PRIVATE-D-ACCOUNT'));
   await page.getByRole('heading',{name:'PRIVATE-D-ACCOUNT'}).waitFor();
+  // A real protected refund form must use exactly the current paid balance,
+  // request explicit confirmation and never retry an ambiguous bank response.
+  const personalY='/api/admin/users/client-Y';
+  await page.evaluate(()=>window.__setAdminTarget('client-Y'));
+  await wait('GET',personalY,1);
+  const cardY=card('PRIVATE-D-CLIENT-Y');
+  cardY.user.id='client-Y';
+  cardY.payments=[{id:'payment-Y',number:'CI-2',kind:'work',method:'sbp',
+    total:8500,refunded_amount:0,status:'captured'}];
+  await settle('GET',personalY,0,'resolve',cardY);
+  await page.getByRole('heading',{name:'PRIVATE-D-CLIENT-Y'}).waitFor();
+  await page.getByRole('button',{name:'Платежи'}).click();
+  await page.getByRole('button',{name:'Вернуть деньги'}).click();
+  await page.getByRole('textbox',{name:'Причина возврата'})
+    .fill('Синтетическая корректировка подтвержденного возврата');
+  await page.getByRole('button',{name:/Вернуть 85/}).click();
+  const refund='/api/admin/payments/payment-Y/refund';
+  await wait('POST',refund,1);
+  const refundBody=await page.evaluate(path=>window.__adminStub.calls.find(x=>
+    x.method==='POST'&&x.path===path)?.body,refund);
+  assert(refundBody.amount===8500&&refundBody.from==='platform',
+    'Refund sent wrong amount or wrong liability source');
+  await settle('POST',refund,0,'reject','ambiguous bank acknowledgement');
+  await page.getByRole('alert').filter({hasText:'НЕ отправляйте запрос повторно'}).waitFor();
+  assert(await count('POST',refund)===1,'Failed refund POST replayed unexpectedly');
   await page.evaluate(()=>window.__setAdminUser({id:'unprivileged',roles:['client']}));
   await page.getByText('Карточки пользователей доступны только администратору.').waitFor();
   assert(errors.length===0,'Real React runtime errors: '+errors.join('; '));
