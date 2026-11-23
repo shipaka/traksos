@@ -143,16 +143,31 @@ export class OnsiteService {
   }
 
   async fixVehicle(user: AuthUser, orderId: string, v: { brand?: string; model?: string | null; year?: number | null; axles?: number | null }) {
-    const o = await this.mine(user, orderId);
-    if (o.vehicle_id) {
-      await this.db.query(
-        `update vehicles set brand=coalesce($2,brand), model=coalesce($3,model), year=coalesce($4,year), axles=coalesce($5,axles), fixed_by=$6, fixed_at=now() where id=$1`,
-        [o.vehicle_id, v.brand ?? null, v.model ?? null, v.year ?? null, v.axles ?? null, user.id]);
-    }
-    await this.db.query('update orders set brand=coalesce($2,brand), model=coalesce($3,model), year=coalesce($4,year) where id=$1',
-      [orderId, v.brand ?? null, v.model ?? null, v.year ?? null]);
-    await this.orders.event(this.db, orderId, user.id, 'vehicle_fixed', v);
-    return this.clientCard(user, orderId);
+    await this.db.tx(async q => {
+      // A finished mechanic must never rewrite the owner's garage later,
+      // especially when the vehicle has moved to another fleet.
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['arrived','working','awaiting_confirmation'].includes(o.status))
+        throw conflict('bad_status','Уточнять машину можно во время работ, до закрытия заявки');
+      if(o.vehicle_id) {
+        const vehicle=await q.one<{owner_id:string}>(
+          'select owner_id from vehicles where id=$1 for update',[o.vehicle_id]);
+        if(!vehicle||vehicle.owner_id!==o.client_id)
+          throw conflict('vehicle_owner_changed','Машина больше не принадлежит заказчику этой заявки');
+        await q.query(
+          `update vehicles set brand=coalesce($2,brand),model=coalesce($3,model),
+            year=coalesce($4,year),axles=coalesce($5,axles),
+            fixed_by=$6,fixed_at=now() where id=$1`,
+          [o.vehicle_id,v.brand??null,v.model??null,v.year??null,v.axles??null,user.id]);
+      }
+      await q.query(
+        'update orders set brand=coalesce($2,brand),model=coalesce($3,model),year=coalesce($4,year) where id=$1',
+        [orderId,v.brand??null,v.model??null,v.year??null]);
+      await this.orders.event(q,orderId,user.id,'vehicle_fixed',v);
+    });
+    return this.clientCard(user,orderId);
   }
 
   /** «Не брать заявки этого клиента» — личный чёрный список исполнителя */
