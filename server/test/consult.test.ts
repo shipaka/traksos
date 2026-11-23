@@ -73,7 +73,7 @@ test('консультация → выезд: подсказка у масте�
   assert.equal(c.followUps.length, 2);
   // чужую консультацию не подставить
   const stranger = await t.login('+79994445566');
-  assert.equal((await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', fromConsult: id }, stranger.token)).body.error, 'bad_consult');
+  assert.equal((await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', fromConsult: id }, stranger.token)).body.error, 'forbidden');
 });
 
 test('консультация не закрывается без согласия клиента даже через сутки', async () => {
