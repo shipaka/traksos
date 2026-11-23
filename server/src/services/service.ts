@@ -531,6 +531,12 @@ export class ServiceCenters {
   }
 
   async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null; recommendationId?: string | null }) {
+    if (!user.roles.some(role => role === 'client' || role === 'driver'))
+      throw forbidden('Для записи в СТО нужен клиентский аккаунт');
+    // A driver can book only their CURRENT assigned truck; a stale fleet
+    // session must never submit a phantom or previous-owner booking.
+    if (user.owner_id && !p.vehicleId && !p.caseOrderId)
+      throw forbidden('Выберите назначенную вам машину для записи');
     const c = await this.db.one(`select * from service_centers where id=$1 and verification='approved' and not paused`, [centerId]);
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
@@ -544,8 +550,15 @@ export class ServiceCenters {
     }
     let vehicle: any = {};
     if (p.vehicleId) {
-      const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [p.vehicleId, clientId]);
-      if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
+      const v = await this.db.one(
+        `select v.* from vehicles v
+          left join users current_driver on current_driver.id=$3
+         where v.id=$1 and v.owner_id=$2
+           and ($3::uuid=v.owner_id or
+             (v.driver_id=$3 and current_driver.owner_id=v.owner_id
+              and 'driver'=any(current_driver.roles)))`,
+        [p.vehicleId, clientId, user.id]);
+      if (!v) throw notFound('Машина не найдена');
       vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
     }
     // A case link is NOT a referral. Do not use from_order_id for tow->STO
@@ -582,13 +595,20 @@ export class ServiceCenters {
         throw bad('different_vehicle', 'Для продолжения используйте грузовик из исходного обращения');
       if (previous.vehicle_id && !p.vehicleId) {
         // Link the exact same garage vehicle, even if the user never reopened the picker.
-        const v = await this.db.one<any>('select * from vehicles where id=$1 and owner_id=$2', [previous.vehicle_id, clientId]);
-        if (!v || (user.owner_id && v.driver_id !== user.id))
-          throw forbidden('Машина этого обращения недоступна для записи');
+        const v = await this.db.one<any>(
+          `select v.* from vehicles v left join users current_driver on current_driver.id=$3
+            where v.id=$1 and v.owner_id=$2
+              and ($3::uuid=v.owner_id or
+                (v.driver_id=$3 and current_driver.owner_id=v.owner_id
+                 and 'driver'=any(current_driver.roles)))`,
+          [previous.vehicle_id, clientId, user.id]);
+        if (!v) throw forbidden('Машина этого обращения недоступна для записи');
         p = { ...p, vehicleId: previous.vehicle_id };
         vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
       }
       if (!previous.vehicle_id) {
+        if (user.owner_id)
+          throw forbidden('Водителю нужна действующая привязка к автомобилю исходного обращения');
         // Incidents created before the truck was added to a garage still retain
         // the brand/model/year snapshot in the following workshop booking.
         vehicle = { brand: previous.brand ?? null, model: previous.model ?? null, year: previous.year ?? null };
@@ -597,8 +617,17 @@ export class ServiceCenters {
     }
     let fromOrderId: string | null = null;
     if (p.fromOrderId) {
-      const o = await this.db.one('select id from orders where id=$1 and client_id=$2', [p.fromOrderId, clientId]);
-      fromOrderId = o?.id ?? null;
+      const o = await this.db.one<any>(
+        `select id,vehicle_id,created_by,recommended_center_id
+          from orders where id=$1 and client_id=$2`, [p.fromOrderId, clientId]);
+      if (!o || o.recommended_center_id !== centerId)
+        throw forbidden('Скидка действует только для рекомендованного мастером сервиса');
+      if (user.owner_id && (o.created_by !== user.id || !o.vehicle_id ||
+          o.vehicle_id !== p.vehicleId))
+        throw forbidden('Доступ к рекомендации есть только у действующего водителя этой машины');
+      if (o.vehicle_id && p.vehicleId && o.vehicle_id !== p.vehicleId)
+        throw bad('different_vehicle', 'Рекомендация относится к другому автомобилю');
+      fromOrderId = o.id;
     }
     const b = await this.db.one(
       `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id, continuation_recommendation_id)
