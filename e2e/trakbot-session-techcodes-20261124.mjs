@@ -99,8 +99,9 @@ try {
   await wait('GET',H,2);
   check(await page.getByText('SECRET-TRAKBOT-OWNER-A').count()===0,
     'Private messages from old chat survived account switch');
-  check(await page.getByText('SECRET-VEHICLE-A').count()===0,
-    'Old vehicle metadata became visible to account B');
+  // New chat must clear old vehicle input even if it is not rendered as text.
+  check(await page.getByRole('textbox',{name:'Марка'}).inputValue()==='',
+    'Old vehicle metadata was inherited by account B');
   check(await page.getByRole('checkbox').count()===0,
     'Old AI consent was inherited by account B');
   check(await messages.isDisabled(),'Account B can send before loading B history');
@@ -114,14 +115,20 @@ try {
   await finish('GET',H,1,'reject','offline');
   await page.getByRole('button',{name:'Повторить загрузку переписки'}).click();
   await wait('GET',H,3);
-  await finish('GET',H,2,'resolve',response([bot('bot-B','PRIVATE-TRAKBOT-OWNER-B')]));
+  await finish('GET',H,2,'resolve',response([bot('bot-B','PRIVATE-TRAKBOT-OWNER-B')],true));
   await page.getByText('PRIVATE-TRAKBOT-OWNER-B').waitFor();
+  check(!await page.getByRole('checkbox').isChecked(),
+    'Account B inherited account A external AI processing consent');
 
   // POST can commit before transport timeout. The UI reconciles while keeping
   // the original draft, and never silently posts the same body twice.
   await messages.fill('Вопрос Б');
   await page.getByRole('button',{name:'Отправить'}).click();
   await wait('POST',A,2);
+  const postB=await page.evaluate(()=>window.__botMock.calls.filter(x=>
+    x.method==='POST'&&x.path==='/api/trakbot/answer')[1]);
+  check(postB?.body?.allowAiProcessing===false,
+    'A previous account AI consent leaked into B POST');
   await finish('POST',A,1,'reject','connection lost after write');
   await wait('GET',H,4);
   check(await messages.isDisabled(),'Post reconciliation unlocked a racing composer');
