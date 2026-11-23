@@ -159,7 +159,13 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
       </header>
       <div className="tr-network-viewport" ref={surface} aria-label="Интерактивная карта подтверждённых партнёров"
         onPointerDown={event=>{
-          if(event.button!==0 || (event.target as HTMLElement).closest('button'))return;
+          // Capturing a pointer for panning must never steal a click from
+          // the verified partner's login link, zoom buttons or detail panels.
+          // Pointer capture otherwise retargets the matching pointerup/click
+          // to the map viewport instead of the interactive child.
+          const target=event.target as HTMLElement;
+          if(event.button!==0 || !event.isPrimary ||
+             target.closest('button,a,input,select,textarea,[role="button"],[contenteditable="true"],.tr-network-partner,.tr-network-cluster-list,.tr-network-zoom,.tr-network-notice,.tr-network-attribution'))return;
           drag.current={x:event.clientX,y:event.clientY,view};
           (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
         }}
