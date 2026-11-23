@@ -132,7 +132,11 @@ try {
       await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
       if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='air')
         throw Error(width+'px: native guest lost the selected Air destination');
-      await page.goto(BASE+'/#/');
+      // Hardware/system Back bypasses the dialog's Back button. Returning to
+      // the public home must cancel a service that was never submitted.
+      await page.goBack();
+      await welcome.waitFor({state:'visible'});
+      await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
       await login.click();
       await page.waitForURL('**/#/login');
       await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();

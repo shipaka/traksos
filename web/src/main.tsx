@@ -231,6 +231,17 @@ function App() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  // Android system Back and browser history navigation do not invoke the
+  // Login dialog's Back handler. Abandoned service selections must not send
+  // the next unrelated login to an old booking or assistant page. Keep the
+  // intent while explicitly moving from service to login/registration/reset.
+  useEffect(() => {
+    if (!ready || me || ['explore','login','register','reset','activate'].includes(route[0] ?? '')) return;
+    try {
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
+    } catch { /* Restricted private browsing */ }
+  }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   // Authenticated bookmarks must resolve to the user's real workspace, not
   // resurrect a guest-only service preview or a dead legacy route.
   useEffect(() => {
