@@ -70,6 +70,7 @@ done
 # Capture artifacts even on failure. Native app still gets a strict error gate.
 adb logcat -d -s AndroidRuntime:E > runtime-errors.log || true
 adb shell dumpsys activity activities > activity-dump.txt || true
+sdk_level=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 # A DOM-ready WebView can still be black at the compositor. Wait briefly
 # for the actual screenshot to contain nonuniform guest artwork and controls.
 screen_ok=0
@@ -81,7 +82,11 @@ for frame in 1 2 3 4; do
   fi
   sleep 3
 done
-if timeout 30s adb shell uiautomator dump /sdcard/traksos-window.xml >/dev/null 2>&1; then
+# Do not invoke UIAutomator on headless Android 15. Real APK #45206987070
+# rendered both React and the home screenshot correctly, but UIAutomator
+# killed its emulator/ADB transport before any role test could execute.
+# On API 34+, the strict DOM gate below uses the installed debug WebView.
+if [ "$sdk_level" -lt 34 ] && timeout 30s adb shell uiautomator dump /sdcard/traksos-window.xml >/dev/null 2>&1; then
   adb exec-out cat /sdcard/traksos-window.xml > emulator-ui.xml || true
 fi
 # Avoid counting the emulator's unrelated launcher ANR as a blank or bad
@@ -201,38 +206,38 @@ for role in client master; do
   else
     adb exec-out screencap -p > "android-review-$role.png" || true
   fi
-  # Collect true role pixels and fresh accessibility after the overlay is
-  # visibly gone, never from a prior role or from the React callback alone.
+  # Android 15's headless Pixel image can wedge/detach ADB when UIAutomator
+  # runs, even though the native Activity and React UI are healthy. Inspect the
+  # REAL packaged WebView DOM through its localhost-only debug DevTools socket.
+  # In production BuildConfig.DEBUG is false and the socket is not exposed.
+  if [ "$sdk_level" -ge 34 ]; then
+    web_pid=$(adb shell pidof ru.traksos.app.preview | tr -d '\r' | awk '{print $1}')
+    if [ -z "$web_pid" ]; then
+      echo "FAIL: no running native TrakSOS app process for role=$role"
+      exit 1
+    fi
+    adb forward --remove tcp:9222 >/dev/null 2>&1 || true
+    adb forward tcp:9222 "localabstract:webview_devtools_remote_$web_pid"
+    dom_confirmed=0
+    for attempt in $(seq 1 12); do
+      if timeout 15s python3 scripts/verify-android-webview.py "$role"; then
+        dom_confirmed=1
+        break
+      fi
+      sleep 2
+    done
+    adb forward --remove tcp:9222 >/dev/null 2>&1 || true
+    if [ "$dom_confirmed" -ne 1 ]; then
+      echo "FAIL: Android $sdk_level role=$role lacks independent live WebView DOM evidence"
+      exit 1
+    fi
+    echo "APK_REVIEW_LIVE_WEBVIEW_DOM=$role API=$sdk_level" >> runtime-ready.log
+  fi
+  # A DevTools DOM result alone is insufficient. We additionally require
+  # screenshot evidence from the actual emulator, not a browser mock,
+  # distinct from the guest AND the previously verified role.
   painted=0
   for attempt in 1 2 3 4 5; do
-    if [ "$sdk_level" -ge 34 ]; then
-      # Dump accessibility BEFORE capturing. Waiting for the dump can advance
-      # the compositor several frames past the guest or previous role.
-      # Every attempt needs a newly generated accessibility tree. Some
-      # Android 15 emulators report a successful dump but do not write XML,
-      # so stale or error-text files cannot be treated as valid role evidence.
-      adb shell rm -f /sdcard/traksos-role.xml || true
-      if ! timeout 25s adb shell uiautomator dump /sdcard/traksos-role.xml >/dev/null 2>&1 ||
-         ! adb shell test -s /sdcard/traksos-role.xml ||
-         ! adb exec-out cat /sdcard/traksos-role.xml > "android-review-$role-ui.xml" ||
-         ! grep -Fq '<hierarchy' "android-review-$role-ui.xml"; then
-        sleep 2
-        continue
-      fi
-      # API 35 sometimes wedges the emulator Pixel Launcher, not TrakSOS.
-      # Retry the screenshot ONLY after dismissing that specific system dialog.
-      if grep -Fq "Pixel Launcher isn't responding" "android-review-$role-ui.xml"; then
-        dismiss_pixel_launcher_anr "android-review-$role-ui.xml" || exit 1
-        continue
-      fi
-      marker='Владелец автопарка'
-      if [ "$role" = master ]; then marker='Сегодня'; fi
-      if ! grep -Fq 'Рабочий стол' "android-review-$role-ui.xml" ||
-         ! grep -Fq "$marker" "android-review-$role-ui.xml"; then
-        sleep 2
-        continue
-      fi
-    fi
     adb exec-out screencap -p > "android-review-$role.png"
     previous=(emulator-screen.png)
     if [ "$role" = master ]; then previous+=(android-review-client.png); fi
