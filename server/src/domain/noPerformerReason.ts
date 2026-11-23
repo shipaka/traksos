@@ -7,6 +7,7 @@ export type NoPerformerReason =
   | 'not_connected'
   | 'temporarily_unavailable'
   | 'no_response'
+  | 'offers_withdrawn'
   | 'unknown';
 
 export interface PartnerPresence {
@@ -28,10 +29,13 @@ export function classifyNoPerformerReason(p: {
   lng: number | null;
   radiusKm: number;
   invited: boolean;
+  hadOffer?: boolean;
   profiles: PartnerPresence[];
 }): NoPerformerReason {
-  // A recorded incoming-call invitation proves that at least one worker was
-  // actually invited, even if the profile has since been deleted/disabled.
+  // An actual offer was recorded in this search attempt, but no live bid
+  // remained when dispatch ended. Never tell the customer "nobody replied".
+  if (p.hadOffer) return 'offers_withdrawn';
+  // Incoming calls and bidding invitations are proven only from actual events.
   if (p.invited) return 'no_response';
 
   const kind = performerKindFor(p.service);
