@@ -4,6 +4,7 @@ import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { haversineKm } from '../domain/geo.ts';
 import { performerKindFor, rankCandidates, type Candidate } from '../domain/dispatch.ts';
+import { slot } from '../domain/schedule.ts';
 import type { SettingsService } from './settings.ts';
 
 export const LEVEL = { newbieJobs: 10, bestJobs: 50, bestRating: 4.7, minHintCases: 20, windowDays: 90 };
@@ -85,7 +86,17 @@ export class StandingService {
           haversineKm({lat:p.lat!,lng:p.lng!},{lat:c.lat,lng:c.lng})<=all.dispatch.radiusKm)
       : list;
     const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
-    const free = inScope.filter((c) => !c.busy && c.line_status !== 'on_job');
+    // Distinguish presence from genuine availability. Paused/vacation workers
+    // must never inflate the number of colleagues who can take an assignment.
+    const online=inScope.filter(c=>!c.paused&&!c.extras?.vacation);
+    const now=this.now();
+    const free=online.filter(c=>{
+      if(c.busy||c.line_status==='on_job')return false;
+      if(kind==='master'&&p.service!=='consult'&&!c.specialties.includes(p.service))
+        return false;
+      const available=slot(c.schedule,now,c.off_schedule_until);
+      return available==='work'||(available==='phone'&&p.service==='consult');
+    });
     // Preview all eligible candidates first: sorting after an arbitrary 8/20-person
     // cutoff can hide the actually cheapest/closest specialist.
     const ranked = rankCandidates(order as any, free, {
@@ -116,6 +127,6 @@ export class StandingService {
       return primary||(sortBy==='recommended'?near:verified||near);
     });
     return { scope:hasLocation?'nearby':'network', radiusKm:hasLocation?all.dispatch.radiusKm:null,
-      online: inScope.length, free: free.length, match: ranked.length, items:items.slice(0,8) };
+      online: online.length, free: free.length, match: ranked.length, items:items.slice(0,8) };
   }
 }

@@ -1429,7 +1429,7 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
       </p>}
       <div className="grid3">
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.online}</b><span className="note">на линии</span></div>
-        <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.free}</b><span className="note">свободны</span></div>
+        <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.free}</b><span className="note" title="Не заняты, не на паузе, не в отпуске и доступны по рабочему графику для этого вида помощи">свободны</span></div>
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22, color: 'var(--accent)' }}>{d.match}</b><span className="note">подходят вам</span></div>
       </div>
       <div className="row" style={{ gap: 6 }}>

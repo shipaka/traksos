@@ -111,3 +111,29 @@ test('explicit sort searches more than eight eligible masters before selecting a
   assert.ok(restricted.items.every((x:any)=>x.verification==='approved'),
     'client opt-in must still remove pending masters even under explicit price sort');
 });
+
+test('paused, vacation and off-schedule masters cannot inflate the free counter',async()=>{
+  const base='/api/masters-nearby?service=electric&lat=59.934&lng=30.335';
+  const initial=ok(await t.api('GET',base,undefined,client.token));
+  assert.ok(initial.free>=2);
+  await t.db.query('update performer_profiles set paused=true where user_id=$1',[pending.id]);
+  const paused=ok(await t.api('GET',base,undefined,client.token));
+  assert.equal(initial.free-paused.free,1,'paused master incorrectly counted as free');
+  await t.db.query('update performer_profiles set paused=false where user_id=$1',[pending.id]);
+
+  await t.db.query(
+    "update performer_profiles set extras=jsonb_set(coalesce(extras,'{}'::jsonb),'{vacation}','true'::jsonb) where user_id=$1",
+    [pending.id]);
+  const vacation=ok(await t.api('GET',base,undefined,client.token));
+  assert.equal(initial.free-vacation.free,1,'master on vacation counted as free');
+  await t.db.query("update performer_profiles set extras=extras-'vacation' where user_id=$1",[pending.id]);
+
+  const off={on:true,days:{mon:false,tue:false,wed:false,thu:false,fri:false,sat:false,sun:false},
+    from:'09:00',to:'18:00',phoneTo:'20:00'};
+  await t.db.query('update performer_profiles set schedule=$2,off_schedule_until=null where user_id=$1',
+    [pending.id,JSON.stringify(off)]);
+  const offDuty=ok(await t.api('GET',base,undefined,client.token));
+  assert.equal(initial.free-offDuty.free,1,'off-schedule master counted as free');
+  assert.ok(offDuty.free>=offDuty.match,'matching count cannot exceed available count');
+  await t.db.query('update performer_profiles set schedule=null where user_id=$1',[pending.id]);
+});
