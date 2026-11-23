@@ -169,11 +169,20 @@ try{
               target:{text:node.textContent?.trim(),top:rect.top,bottom:rect.bottom},
               cover:cover?{tag:cover.tagName,className:String(cover.className).slice(0,120),
                 text:cover.textContent?.trim().slice(0,80),
+                outerHTML:cover.outerHTML?.slice(0,550),
+                ancestor:cover.closest('header,nav,button,.traksos-no-performer')?.outerHTML.slice(0,280),
                 position:style.position,zIndex:style.zIndex,
                 pointerEvents:style.pointerEvents}:null};
           });
-          if(!hit.ok)throw Error('Action covered by another element @'+width+
-            ': '+JSON.stringify(hit));
+          if(!hit.ok){
+            // Capture the actual current viewport *at the failed hit-test*.
+            // A full-page image after scrolling can falsely paint sticky
+            // chrome through the centre of an otherwise usable action.
+            await page.screenshot({path:out+'/no-performer-'+role+'-'+width+
+              '-HIT-BLOCKED-viewport.png',fullPage:false,animations:'disabled'});
+            throw Error('Action covered by another element @'+width+
+              ': '+JSON.stringify(hit));
+          }
           await action.click({trial:true});
         }
         // The hit-test above scrolled actions into view. A full-page capture
