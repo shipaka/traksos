@@ -307,7 +307,9 @@ export class ServiceCenters {
       const updated = await this.db.one<any>(
         `update service_bookings set status='clarify', clarify_q=$2,
               client_answer=null, updated_at=now()
-          where id=$1 and ${allowed} returning *`, [id, q]);
+          where id=$1 and ${allowed}
+            and (status <> 'clarify' or clarify_q is distinct from $2::text)
+          returning *`, [id, q]);
       if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
       await this.tell(updated, 'Сервис уточняет', q);
     } else {
@@ -498,6 +500,7 @@ export class ServiceCenters {
   }
 
   async markPaidOut(admin: AuthUser, id: string, reference?: string) {
+    if (!admin.roles.includes('admin')) throw forbidden();
     const ref = reference?.trim() || null;
     const b = await this.db.tx(async q => {
       const paid = await q.one<any>(`update service_bookings
@@ -798,6 +801,8 @@ export class ServiceCenters {
     kind:'receipt'|'refund';amount:number;method:'invoice'|'online'|'cash'|'other';reference:string;
   }) {
     if (!admin.roles.includes('admin')) throw forbidden();
+    if (!Number.isSafeInteger(entry.amount) || entry.amount <= 0)
+      throw bad('bad_amount','Сумма внешней операции должна быть положительной и целой');
     const reference=entry.reference.trim();
     if (reference.length<4 || reference.length>200) throw bad('bad_reference','Укажите номер подтверждённой банковской или кассовой операции');
     const updated=await this.db.tx(async q=>{
@@ -839,6 +844,7 @@ export class ServiceCenters {
     return this.db.query(`select c.*, u.phone from service_centers c join users u on u.id=c.owner_id order by (c.verification='pending') desc, c.created_at desc limit 100`);
   }
   async verify(actor: AuthUser, id: string, decision: 'approved' | 'rejected') {
+    if (!actor.roles.some(role => role === 'admin' || role === 'moderator')) throw forbidden();
     // Business approval is NOT evidence that self-entered coordinates are real.
     // Fail closed on every standard verification; only a separate documented
     // stationary location review may enable the yellow public map pin.
@@ -868,6 +874,9 @@ export class ServiceCenters {
     reference:string;
     confirmed:true;
   }){
+    if (!actor.roles.some(role => role === 'admin' || role === 'moderator')) throw forbidden();
+    if (!['official_registry','site_visit','verified_document'].includes(proof.kind))
+      throw bad('public_location_evidence_required','Укажите вид подтверждённого документа или проверки');
     return this.db.tx(async q=>{
       const center=await q.one<any>('select * from service_centers where id=$1 for update',[id]);
       if(!center)throw notFound();
