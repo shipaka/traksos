@@ -43,6 +43,10 @@ try{
           throw Error('Not a truly exhausted customer order: '+JSON.stringify(claim.detail).slice(0,500));
         const id=claim.order.id;
         await page.goto(base+'/#/order/'+id,{waitUntil:'domcontentloaded'});
+        // A first-visit consent notice belongs to the real UI. Dismiss it
+        // by its own button before measuring actionable order controls.
+        const consent=page.getByRole('button',{name:'Понятно',exact:true});
+        if(await consent.count() && await consent.first().isVisible())await consent.first().click();
         const card=page.locator('section.traksos-no-performer');
         await card.waitFor({state:'visible',timeout:20_000});
         await card.getByRole('heading',{name:'По этому направлению пока нет партнёров'}).waitFor();
@@ -73,6 +77,17 @@ try{
         const expected=['Искать ещё раз','Другая помощь','Поддержка'];
         if(details.actions.length!==3 || details.actions.some((a,i)=>a.text!==expected[i]||a.height<44))
           throw Error('Unavailable/inaccessible actions '+JSON.stringify(details.actions));
+        // No "button that looks clickable but a fixed overlay intercepts":
+        // test each physical centre point after bringing the control into view.
+        for(const action of await card.locator('button,a').all()){
+          await action.scrollIntoViewIfNeeded();
+          const hit=await action.evaluate(node=>{
+            const box=node.getBoundingClientRect();
+            const element=document.elementFromPoint(box.left+box.width/2,box.top+box.height/2);
+            return element===node || node.contains(element);
+          });
+          if(!hit)throw Error('Action covered by another element: '+await action.innerText()+' @'+width);
+        }
         // Full rendered page evidence, not prop screenshots and not invented data.
         await page.screenshot({path:out+'/no-performer-'+role+'-'+width+'.png',
           fullPage:true,animations:'disabled'});
