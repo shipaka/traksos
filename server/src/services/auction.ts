@@ -365,6 +365,6 @@ export class AuctionService {
     await this.orders.event(this.db, order.id, null, 'no_performer',
       { auction: true, absenceReason });
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
-      { kind: 'normal', title: 'Нет откликов', body: 'Свободных исполнителей рядом сейчас нет. Попробуйте ещё раз или позвоните в поддержку.', data: { orderId: order.id } });
+      { kind: 'normal', title: 'Нет откликов', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } });
   }
 }
