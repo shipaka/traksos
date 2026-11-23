@@ -184,11 +184,14 @@ export class OpsService {
         left join performer_profiles p on p.user_id=u.id
         where u.status='active' and (
           ($1 in ('master','all_workers') and u.roles @> '{master}'::text[] and
-             ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))))
+             ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))
+                or ($2='ecu' and 'electric'=any(coalesce(p.specialties,'{}'::text[])))))
           or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[] and
              ($2::text is null or $2='tow'))
           or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[])
         ) limit 501`,[row.audience,row.service]);
+      if(users.length===0)throw bad('no_recipients',
+        'Пока нет подходящих получателей. Объявление сохранено — можно повторить рассылку после подключения партнёров');
       if(users.length>500)throw bad('too_many_recipients','Для массовой рассылки более 500 исполнителям обратитесь к администратору сервера');
       await q.query(`update worker_announcements set notified_at=$2,notified_count=$3 where id=$1`,
         [id,this.now(),users.length]);
