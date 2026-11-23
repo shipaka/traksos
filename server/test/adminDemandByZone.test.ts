@@ -99,3 +99,34 @@ test('hydraulic job may be targeted by admin communications and commission campa
     undefined,admin.token));
   assert.ok(listed.some((item:any)=>item.id===campaign.id&&item.service==='hydraulics'));
 });
+
+test('expired announcement stays draft and cannot be activated as real worker news',async()=>{
+  // These dates are relative to the injected application clock; drafts are
+  // historical records, but a published expired notice cannot be notified.
+  const now=t.clock.now().getTime();
+  const start=new Date(now-3*3_600_000).toISOString();
+  const end=new Date(now-2*3_600_000).toISOString();
+  const form={
+    audience:'master',service:'hydraulics',
+    title:'Учебное истёкшее объявление',
+    body:'Это временная запись для регрессии публикации.',
+    startsAt:start,endsAt:end
+  };
+  const published=await t.api('POST','/api/admin/announcements',{
+    ...form,published:true
+  },admin.token);
+  assert.equal(published.status,400,'already expired publication must be rejected');
+  const draft=ok(await t.api('POST','/api/admin/announcements',{
+    ...form,published:false
+  },admin.token));
+  assert.equal(draft.published,false);
+  const attempt=await t.api('PUT','/api/admin/announcements/'+draft.id+'/status',{
+    published:true
+  },admin.token);
+  assert.equal(attempt.status,400,'expired draft cannot become a live announcement');
+  const history=ok(await t.api('GET','/api/admin/announcements',
+    undefined,admin.token));
+  const saved=history.find((a:any)=>a.id===draft.id);
+  assert.ok(saved,'historical draft is still accessible');
+  assert.equal(saved.published,false,'failed publication never changes stored state');
+});
