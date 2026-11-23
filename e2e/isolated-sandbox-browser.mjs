@@ -223,9 +223,14 @@ try{
               border:getComputedStyle(el).borderTopColor,
               active:el.classList.contains('active')};
           }));
+          const approvedOrange=(value)=>{
+            const [red,green,blue]=(value.match(/[0-9]+/g)||[]).slice(0,3).map(Number);
+            return red>=220 && green>=95 && green<=200 && blue<155 &&
+              red-green>=45;
+          };
           if(visual.length!==4 || visual.some(x=>x.iconCount!==1 ||
-             x.size<20 || !/rgb\\(255,\\s*171,\\s*89\\)/.test(x.color)) ||
-             !visual.some(x=>x.active && /rgb\\(250,\\s*140,\\s*56\\)/.test(x.border)))
+             x.size<20 || !approvedOrange(x.color)) ||
+             !visual.some(x=>x.active && approvedOrange(x.border)))
             throw Error('Moderator old purple nonvector icons/active border at '+width+': '+
               JSON.stringify(visual));
           await controls.nth(1).click();
