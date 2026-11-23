@@ -485,6 +485,19 @@ export function BaseSetup() {
            Number.isFinite(f.lat)&&Number.isFinite(f.lng)?`GPS: ${f.lat.toFixed(4)}, ${f.lng.toFixed(4)} · Обновить`:
            'Я нахожусь на базе — отметить точку по GPS'}
         </button>
+        {!first && (Number.isFinite(f.lat) || Number.isFinite(f.lng)) &&
+          <button type="button" className="btn ghost small" disabled={busy}
+            onClick={async()=>{
+              // This is an immediate protected API update, not a cosmetic
+              // local clear: it atomically revokes public opt-in and geo proof.
+              if(await run(()=>basePut('/api/base',{lat:null,lng:null}),
+                'Координаты удалены. Публичная точка скрыта; для повторной публикации потребуется новая проверка.')){
+                setF((old:any)=>({...old,lat:null,lng:null}));
+                setGpsStatus('idle');
+                setGpsError('');
+                cab.reload();
+              }
+            }}>Удалить GPS-координаты и скрыть точку</button>}
         {gpsStatus==='error'&&<span className="err" role="alert">{gpsError}</span>}
         {gpsStatus==='ok'&&<span className="note" role="status">Точка получена. Проверьте, что отметка стоит у въезда на территорию СТО.</span>}
         <RoadsideMap kind="service"
