@@ -174,15 +174,32 @@ for role in client master; do
     echo "APK_REVIEW_SPLASH_DISMISSED=$role API=$sdk_level" >> runtime-ready.log
   fi
 
-  # A React callback alone does not prove the requested screen is PAINTED:
-  # Android 15 previously captured the guest page under the filename
-  # android-review-client.png, and the client under android-review-master.png.
-  # Allow the compositor to paint, then validate the visible native UI.
-  sleep 3
-  # Collect actual pixels BEFORE UIAutomator: API35 can fail to write its
-  # accessibility XML although the React role was rendered. Preserve the
-  # screenshot for independent QA even when this strict gate still fails.
-  adb exec-out screencap -p > "android-review-$role.png" || true
+  # A React effect and even a logged SPLASH_VISIBLE_MS do not guarantee
+  # that Android 15's actual compositor has removed the native truck splash.
+  # Never launch expensive UIAutomator while the splash still covers React:
+  # in the failing API 35 artifact it wedged the emulator/ADB transport.
+  sleep 2
+  if [ "$sdk_level" -ge 34 ]; then
+    splash_cleared=0
+    for attempt in $(seq 1 12); do
+      adb exec-out screencap -p > "android-review-$role.png" || true
+      if python3 scripts/verify-android-screen.py "android-review-$role.png" --reject-native-splash; then
+        splash_cleared=1
+        break
+      fi
+      sleep 2
+    done
+    if [ "$splash_cleared" -ne 1 ]; then
+      adb logcat -d -s TrakSOSRuntime:I >> runtime-ready.log || true
+      echo "FAIL: Android $sdk_level native splash still visibly covers role=$role after waiting"
+      exit 1
+    fi
+    echo "APK_REVIEW_SPLASH_PIXELS_CLEARED=$role API=$sdk_level" >> runtime-ready.log
+  else
+    adb exec-out screencap -p > "android-review-$role.png" || true
+  fi
+  # Collect true role pixels and fresh accessibility after the overlay is
+  # visibly gone, never from a prior role or from the React callback alone.
   painted=0
   for attempt in 1 2 3 4 5; do
     if [ "$sdk_level" -ge 34 ]; then
