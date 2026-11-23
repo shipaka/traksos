@@ -119,7 +119,7 @@ try{
             copyProtection.copyZ!=='1'))
           throw Error('Desktop Russia map puts high-glow marks behind text: '+
             JSON.stringify(copyProtection));
-        if(width<=700 && copyProtection.pseudo!=='none')
+        if(width<=700 && copyProtection.matte!=='none')
           throw Error('Approved mobile artwork must retain its original colors: '+
             JSON.stringify(copyProtection));
         // Real computed CSS is the final truth; checking the source alone
