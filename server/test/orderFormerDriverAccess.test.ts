@@ -107,6 +107,12 @@ test('different car in SAME fleet does not confer access to old car order', asyn
   assert.equal(vB?.driver_id,x.id);
   assert.equal((await t.api('GET','/api/orders/'+oldOrder.id,undefined,x.token)).status,403);
   assert.equal(hasOrder(ok(await t.api('GET','/api/orders',undefined,x.token)),oldOrder.id),false);
+  assert.equal((await t.api('POST','/api/orders',
+    {...apiOrder(b.id),service:'tow',continueFrom:oldOrder.id},x.token)).status,403,
+    'reassignment to another vehicle cannot continue the former car case');
+  assert.equal((await t.api('POST','/api/orders',
+    {...apiOrder(b.id),fromConsult:oldOrder.id},x.token)).status,403,
+    'old created_by cannot be used as private consultation/discount source');
   assert.equal((await t.api('GET','/api/orders/'+oldOrder.id,undefined,owner.token)).status,200);
 });
 
@@ -124,6 +130,10 @@ test('invalid/stale owner_id and former creator are not treated as permanent par
   assert.equal((await t.api('GET','/api/orders/'+order.id,undefined,driver.token)).status,403);
   assert.equal(hasOrder(ok(await t.api('GET','/api/orders',undefined,driver.token)),order.id),false);
   assert.equal((await t.api('GET','/api/orders/'+order.id+'/messages',undefined,driver.token)).status,403);
+  const staleCreate = await t.api('POST','/api/orders',
+    {service:'consult',zoneId:'spb',description:'Консультация после отзыва машины'},driver.token);
+  assert.equal(staleCreate.status,403,
+    'stale owner_id must not create even a no-vehicle consultation at the old owner expense');
 });
 
 test('realtime order participants follow the current vehicle assignment, never past created_by', async () => {
