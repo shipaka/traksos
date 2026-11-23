@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { get, post, fmtPhone } from '../api.ts';
-import { useAction, useLoad, useToast } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { post, fmtPhone } from '../api.ts';
+import { useAction, useMe, useToast } from '../ui.tsx';
+import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
 
 // Only non-staff accounts are manually provisioned here. Staff privileges
 // remain controlled by the dedicated server-side phone allowlists.
@@ -29,15 +30,22 @@ type DevReport = { id: string; user_id: string | null; phone: string | null; cat
   delivery_next_at: string; delivery_last_error: string | null };
 
 export function AdminAccountAccess() {
-  const { busy, run } = useAction();
-  const toast = useToast();
-  const reports = useLoad<DevReport[]>(() => get('/api/admin/developer-reports'), []);
-  // Deliveries happen on the server even if this screen remains open. Refresh
-  // only this lightweight list; clean up the timer when leaving the admin tab.
-  useEffect(() => {
-    const timer = window.setInterval(() => { void reports.reload(); }, 15_000);
-    return () => window.clearInterval(timer);
-  }, [reports.reload]);
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':admin-account-access';
+  const scopeRef=useRef(scope);
+  scopeRef.current=scope;
+  const {busy,run}=useAction();
+  const toast=useToast();
+  const reports=useAdminScopedResource<DevReport[]>('/api/admin/developer-reports',scope,admin);
+  const reloadRef=useRef(reports.reload);
+  reloadRef.current=reports.reload;
+  // An interval with a stable lifetime avoids polling storms on rerender.
+  useEffect(()=>{
+    if(!admin)return;
+    const timer=window.setInterval(()=>reloadRef.current(),15_000);
+    return ()=>window.clearInterval(timer);
+  },[scope,admin]);
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [roles, setRoles] = useState<string[]>(['client']);
@@ -47,27 +55,45 @@ export function AdminAccountAccess() {
   const [category, setCategory] = useState<ReportTopic>('registration');
   const [details, setDetails] = useState('');
   const [lastReport, setLastReport] = useState<string | null>(null);
+  const [draftScope,setDraftScope]=useState('');
+  const [error,setError]=useState('');
+  const currentDraft=draftScope===scope;
+  useEffect(()=>{
+    setPhone('');setName('');setRoles(['client']);setReason('');setCreated(null);
+    setReportPhone('');setCategory('registration');setDetails('');setLastReport(null);
+    setError('');setDraftScope(scope);
+  },[scope]);
 
   async function createAccount() {
-    if (!window.confirm('Создать новую учётную запись с указанными ролями? Пароль устанавливает сам владелец номера.')) return;
-    const result = await run(() => post<AccountResult>('/api/admin/users/manual', { phone, name, roles, reason }), null);
-    if (result) {
-      setCreated(result);
-      setReportPhone(result.user.phone);
-      toast('Учётная запись создана. Передайте инструкцию для активации.');
+    if(!admin||busy||!currentDraft)return;
+    if(roles.length<1||roles.length>3||reason.trim().length<10){
+      setError('Для регистрации нужно от одной до трёх ролей и причина не короче 10 символов.');return;
     }
+    if(!window.confirm('Создать новую учётную запись с указанными ролями? Пароль устанавливает сам владелец номера.'))return;
+    const startedAs=scope;
+    setError('');
+    const result=await run(()=>post<AccountResult>('/api/admin/users/manual',{
+      phone:phone.trim(),name:name.trim(),roles,reason:reason.trim(),
+    }),null);
+    if(scopeRef.current!==startedAs)return;
+    if(result?.user?.id){
+      setCreated(result);setReportPhone(result.user.phone);
+      toast('Учётная запись создана. Передайте инструкцию для активации.');
+    }else setError('Создание не подтверждено. Проверьте существующие аккаунты перед повтором, чтобы не создать дубль.');
   }
 
   async function fileReport() {
-    const result = await run(() => post<{ id: string }>('/api/admin/developer-reports', {
-      phone: reportPhone.trim() || undefined, category, details,
-    }), null);
-    if (result) {
-      setLastReport(result.id);
-      setDetails('');
-      reports.reload();
+    if(!admin||busy||!currentDraft||details.trim().length<10)return;
+    const startedAs=scope;
+    setError('');
+    const result=await run(()=>post<{id:string}>('/api/admin/developer-reports',{
+      phone:reportPhone.trim()||undefined,category,details:details.trim(),
+    }),null);
+    if(scopeRef.current!==startedAs)return;
+    if(result?.id){
+      setLastReport(result.id);setDetails('');reports.reload();
       toast('Обращение сохранено. Если канал подключён, уведомление отправится автоматически.');
-    }
+    }else setError('Сохранение обращения не подтверждено. Проверьте очередь перед повторной отправкой.');
   }
 
   async function copyReport(report: DevReport) {
@@ -81,7 +107,12 @@ export function AdminAccountAccess() {
     catch { toast('Не удалось скопировать. Откройте обращение на этом экране.'); }
   }
 
+  if(!admin)return <div className="card stack">
+    <h3>Администрирование аккаунтов</h3>
+    <p role="alert">Регистрация пользователей и технические обращения доступны только администратору.</p>
+  </div>;
   return <div className="stack">
+    {error&&<div className="banner warn" role="alert">{error}</div>}
     <div className="card stack">
       <div>
         <h3>Зарегистрировать человека вручную</h3>
