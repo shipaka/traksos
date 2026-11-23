@@ -4,6 +4,15 @@
 # All output is non-sensitive: readiness tags, screenshot, foreground state, crash log.
 set -Eeuo pipefail
 
+# Android 15 emulators can lose the adb transport *after* an app has already
+# launched. A bare adb exec-out/cat then blocks until GitHub cancels the whole
+# 35-minute job. Bound every direct adb subprocess and FAIL CLOSED instead:
+# no PASS without fresh screenshots, UI hierarchy and a responsive device.
+ADB_BIN="$(command -v adb)"
+adb() {
+  timeout --signal=TERM --kill-after=5s 35s "$ADB_BIN" "$@"
+}
+
 # Some API 35 GitHub emulator images sporadically show an ANR for their
 # SYSTEM Pixel Launcher over a correctly rendered TrakSOS WebView.
 # Dismiss ONLY that exact launcher dialog via its real accessibility bounds.
