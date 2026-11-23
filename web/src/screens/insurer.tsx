@@ -298,6 +298,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           <button type="button" className="chip" aria-pressed={inspectionView==='history'} onClick={()=>setInspectionView('history')}>История техосмотров</button>
           <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
         </div>
+        {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
         {!inspectionRows?<div className="empty" role={inspections.error?'alert':'status'}>{inspections.error?
             <>Не удалось загрузить техосмотры: {inspections.error}
               <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку техосмотров</button></>
@@ -316,7 +317,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                   onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
               <div className="row">
                 <a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>
-                <button type="button" className="btn ghost small" disabled={busy}
+                <button type="button" className="btn ghost small" disabled={busy||!currentDraft}
                   onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
               </div>
               <p className="note">Отметка выполнения не является выдачей диагностической карты.</p>
@@ -420,6 +421,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                   <label className="stack">
                     <span className="label">Действует до</span>
                     <input className="field" type="date" value={currentDraft?(expires[r.id]??''):''}
+                       min={new Date(Date.now()+86400000).toISOString().slice(0,10)}
                       onChange={(e) => setExpires((old) => ({ ...old, [r.id]: e.target.value }))} />
                   </label>
                   <textarea className="field" aria-label="Комментарий страховщика" maxLength={2000}
