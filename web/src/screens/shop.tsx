@@ -490,17 +490,59 @@ export function ShopCart() {
   const d = c.data;
   if (!d) return <main><Back to="shop" label="Магазин" /><Loading error={c.error} /></main>;
   if (!d.enabled) { go('shop'); return null; }
-  const lines = Object.entries(cart).map(([id, qty]) => ({ p: selection.data?.products?.find((x: any) => x.id === id), qty })).filter((l) => l.p);
-  const goods = lines.reduce((a, l) => a + l.p.price * l.qty, 0);
-  const dl = d.delivery;
-  const open = ((live.data ?? []) as any[]).filter((o) => ['accepted', 'en_route', 'arrived', 'working'].includes(o.status));
-  const opts = ([['pickup', 'Самовывоз', dl.pickupAddress || 'адрес пришлём'], ['delivery', 'Доставка', `${rub(dl.deliveryPrice)} · ${dl.deliveryNote}`], ['master', 'С мастером на заявке', 'мастер привезёт на выезд']] as const)
-    .filter(([k]) => (k === 'pickup' ? dl.pickup : k === 'delivery' ? dl.delivery : dl.withMaster && open.length > 0));
-  const total = goods + (delivery === 'delivery' ? dl.deliveryPrice : 0);
-  const setQty = (id: string, q: number) => { const n = { ...cart }; if (q <= 0) delete n[id]; else n[id] = Math.min(99, q); setCart(n); };
-  async function submit() {
-    const r = await run(() => post('/api/shop/orders', { items: lines.map((l) => ({ productId: l.p.id, qty: l.qty })), delivery, address: address || null, orderId: orderId || null, payment, comment: comment || null, vehicleId: vehicleId || null }), 'Заказ оформлен — подтвердим и напишем');
-    if (r) { setCart({}); go('shop'); }
+  const allIds=Object.keys(cart);
+  const productsById=new Map<string,any>((selection.data?.products??[]).map((p:any)=>[p.id,p]));
+  const lines=Object.entries(cart).map(([id,qty])=>({p:productsById.get(id),qty}))
+    .filter((entry):entry is {p:any;qty:number}=>!!entry.p);
+  const missing=selection.data?allIds.filter(id=>!productsById.has(id)):[];
+  const fullyVerified=!!selectedIds&&!!selection.data&&!selection.error&&
+    lines.length===allIds.length&&lines.length>0&&lines.length<=50;
+  const goods=lines.reduce((sum,item)=>sum+item.p.price*item.qty,0);
+  const dl=d.delivery;
+  const open=(live.data??[]).filter((o:any)=>
+    ['accepted','en_route','arrived','working'].includes(o.status));
+  const opts=([['pickup','Самовывоз',dl.pickupAddress||'адрес пришлём'],
+    ['delivery','Доставка',rub(dl.deliveryPrice)+' · '+dl.deliveryNote],
+    ['master','С мастером на заявке','мастер привезёт на выезд']] as const)
+    .filter(([k])=>k==='pickup'?dl.pickup:k==='delivery'?dl.delivery:
+      dl.withMaster&&!!live.data&&open.length>0);
+  const total=goods+(delivery==='delivery'?dl.deliveryPrice:0);
+  const setQty=(id:string,q:number)=>{
+    if(busy||submitLock.current)return;
+    const next={...cart};
+    if(q<=0)delete next[id];else next[id]=Math.min(99,q);
+    setCart(next);
+    setOutcomeUnknown(false);
+  };
+  const orderValid=delivery==='master'?!!live.data&&open.some((o:any)=>o.id===orderId):
+    delivery==='pickup'?!!dl.pickup:delivery==='delivery'?!!dl.delivery&&!!address.trim():false;
+  const selectedVehicleValid=!vehicleId||
+    (!!vehicles.data&&vehicles.data.some((v:any)=>v.id===vehicleId));
+  const maySubmit=fullyVerified&&orderValid&&selectedVehicleValid&&
+    !busy&&!submitLock.current&&!outcomeUnknown;
+  async function submit(){
+    if(!maySubmit||!me?.id||!getToken()||submitLock.current)return;
+    const actor=me.id,token=getToken();
+    const payload={
+      items:lines.map((item)=>({productId:item.p.id,qty:item.qty})),
+      delivery,address:address.trim()||null,orderId:orderId||null,
+      payment,comment:comment.trim()||null,vehicleId:vehicleId||null,
+    };
+    submitLock.current=true;
+    try{
+      // Never automatically re-submit: an offline timeout can follow the
+      // successful server insert and stock reservation.
+      const created=await run(()=>post('/api/shop/orders',payload),null);
+      if(latestOwner.current!==actor||getToken()!==token)return;
+      if(created){
+        setCart({});
+        go('shop/history');
+      }else{
+        setOutcomeUnknown(true);
+      }
+    }finally{
+      submitLock.current=false;
+    }
   }
   return (
     <main>
