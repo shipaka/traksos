@@ -160,7 +160,7 @@ try{
   }).click();
   await page.evaluate(()=>{window.__ciFailPost=false;});
   await submit.click();
-  await page.waitForFunction(()=>location.hash==='#/shop/history');
+  await page.waitForFunction(()=>location.hash==='#/shop');
   assert.equal(await page.evaluate(()=>window.__ciOrders.length),2);
   assert.deepEqual(await page.evaluate(()=>window.__ciOrders.map(o=>o.items[0].productId)),
     [idB,idB]);
