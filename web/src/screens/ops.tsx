@@ -246,6 +246,11 @@ function IncidentRow({order:o,editable,onSave,busy}:{order:any;editable:boolean;
 
 const DEFAULT_AUDIENCE='master';
 export function WorkerCommunications() {
+  const {me}=useMe();
+  if(!me?.roles.includes('admin'))return null;
+  return <AdminWorkerCommunications key={me.id} userId={me.id}/>;
+}
+function AdminWorkerCommunications({userId}:{userId:string}){
   const [audience,setAudience]=useState(DEFAULT_AUDIENCE);
   const [service,setService]=useState('');
   const [title,setTitle]=useState('');
@@ -253,8 +258,8 @@ export function WorkerCommunications() {
   const [from,setFrom]=useState(dateInput(Date.now()-60_000));
   const [to,setTo]=useState(dateInput(Date.now()+7*86_400_000));
   const [published,setPublished]=useState(true);
-  const notices=useLoad(()=>get('/api/admin/announcements'),[]);
-  const campaigns=useLoad(()=>get('/api/admin/commission-campaigns'),[]);
+  const notices=useOpsRead<any[]>(()=>get('/api/admin/announcements'),'admin-notices:'+userId);
+  const campaigns=useOpsRead<any[]>(()=>get('/api/admin/commission-campaigns'),'admin-campaigns:'+userId);
   const [promoService,setPromoService]=useState('');
   const [promoPct,setPromoPct]=useState('0');
   const [promoFrom,setPromoFrom]=useState(dateInput(Date.now()+60_000));
@@ -269,10 +274,15 @@ export function WorkerCommunications() {
   const campaignStart=Date.parse(promoFrom+':00+03:00');
   const campaignDatesOk=validMskWindow(promoFrom,promoTo,31) &&
     Number.isFinite(campaignStart) && campaignStart>=Date.now()-60_000;
-  const a=async()=>{const r=await run(()=>post('/api/admin/announcements',{
+  const a=async()=>{
+    if(!announcementDatesOk||title.trim().length<3||body.trim().length<3)return;
+    const r=await run(()=>post('/api/admin/announcements',{
     audience,service:service||null,title,body,startsAt:datetime(from),endsAt:datetime(to),published
   }),'Объявление создано');if(r){notices.reload();setTitle('');setBody('');}};
-  const c=async()=>{if(!window.confirm('Комиссия по новым заявкам в этот интервал изменится. Это финансовое действие. Подтвердить?'))return;
+  const c=async()=>{
+    if(!campaignDatesOk||reason.trim().length<3||promoPct.trim()===''||
+       !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>5)return;
+    if(!window.confirm('Комиссия по новым заявкам в этот интервал изменится. Это финансовое действие. Подтвердить?'))return;
     const r=await run(()=>post('/api/admin/commission-campaigns',{
       service:promoService||null,commissionPct:commissionRate,startsAt:datetime(promoFrom),
       endsAt:datetime(promoTo),enabled:true,reason
@@ -319,12 +329,13 @@ export function WorkerCommunications() {
       {!campaignDatesOk && <span className="note" role="status">Укажите будущие начало и конец акции по Москве; срок не более 31 дня.</span>}
       {(promoPct.trim()==='' || !Number.isFinite(commissionRate) || commissionRate<0 || commissionRate>5) &&
         <span className="note" role="status">Укажите комиссию от 0 до 5%. Акции уменьшают утверждённую ставку; пустое поле не означает 0%.</span>}
-      <button className="btn" disabled={busy||reason.trim().length<3||!campaignDatesOk||
-          !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>5} onClick={c}>Назначить комиссию</button>
+      <button className="btn" disabled={busy||reason.trim().length<3||promoPct.trim()===''||!campaignDatesOk||
+           !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>5} onClick={c}>Назначить комиссию</button>
     </div>
     <div className="card stack">
       <b>Объявления (история)</b>
-      {!notices.data?<Loading error={notices.error}/>:notices.data.length===0?<span className="note">Пока пусто</span>:notices.data.map((x:any)=>
+      {!notices.data?<div className="stack"><Loading error={notices.error}/>{notices.error&&
+        <button type="button" className="btn ghost small" onClick={()=>{void notices.reload();}}>Повторить загрузку объявлений</button>}</div>:notices.data.length===0?<span className="note">Пока пусто</span>:notices.data.map((x:any)=>
         <div key={x.id} className="list-item stack">
           <b>{x.title} · {labels[x.audience]??x.audience}</b>
           <span className="note">{x.body}</span>
@@ -349,7 +360,8 @@ export function WorkerCommunications() {
     </div>
     <div className="card stack">
       <b>Акции комиссии (история)</b>
-      {!campaigns.data?<Loading error={campaigns.error}/>:campaigns.data.length===0?<span className="note">Акций пока нет</span>:campaigns.data.map((x:any)=>
+      {!campaigns.data?<div className="stack"><Loading error={campaigns.error}/>{campaigns.error&&
+        <button type="button" className="btn ghost small" onClick={()=>{void campaigns.reload();}}>Повторить загрузку акций</button>}</div>:campaigns.data.length===0?<span className="note">Акций пока нет</span>:campaigns.data.map((x:any)=>
         <div key={x.id} className="list-item stack">
           <b>{x.commission_pct}% · {x.service?(SERVICES[x.service]?.name??x.service):'Все выездные услуги'}</b>
           <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.enabled?'включена':'выключена'} · {({
