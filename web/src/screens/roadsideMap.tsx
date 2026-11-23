@@ -1,3 +1,5 @@
+import {useState} from 'react';
+import {useMe} from '../ui.tsx';
 import './roadsideMap.css';
 
 type Point = { lat: number; lng: number };
@@ -14,8 +16,16 @@ export function RoadsideMap({point,kind='request',address,updatedAt,synthetic=fa
   point:Point|null|undefined;kind?:'request'|'performer'|'service';address?:string|null;
   updatedAt?:number|null;synthetic?:boolean;
 }){
+  const {me}=useMe();
+  const [approvedFor,setApprovedFor]=useState<string|null>(null);
   const good=valid(point);
   const lat=good?point.lat:0, lng=good?point.lng:0;
+  // Consent is scoped to the signed-in account, map kind, DEMO flag and
+  // precise location. Changing any dimension hides the previous iframe
+  // synchronously without depending on an effect after paint.
+  const consentScope=[me?.id??'guest',kind,synthetic?'demo':'real',
+    good?point.lat.toFixed(6):'none',good?point.lng.toFixed(6):'none'].join(':');
+  const showExternalMap=good && approvedFor===consentScope;
   const deltaLat=.014, deltaLng=.029;
   const bbox=good
     ? [lng-deltaLng,lat-deltaLat,lng+deltaLng,lat+deltaLat].map(v=>v.toFixed(6)).join(',')
@@ -36,15 +46,24 @@ export function RoadsideMap({point,kind='request',address,updatedAt,synthetic=fa
       </div>
       {synthetic&&<span className="roadside-map-badge">ДЕМО</span>}
     </div>
-    <div className={'roadside-map-viewport'+(!good?' is-empty':'')}>
-      {good?<iframe title={kind==='performer'?'Точка исполнителя на OpenStreetMap':kind==='service'?'Фактическое расположение СТО на OpenStreetMap':'Место вызова на OpenStreetMap'}
-        loading="lazy" referrerPolicy="no-referrer" src={url}/>:<div className="roadside-map-empty">
-          <span aria-hidden="true">⌖</span><b>Нужна точка на карте</b>
+    <div className={'roadside-map-viewport'+(!showExternalMap?' is-empty':'')}>
+      {showExternalMap?<iframe
+        title={kind==='performer'?'Точка исполнителя на OpenStreetMap':kind==='service'?'Фактическое расположение СТО на OpenStreetMap':'Место вызова на OpenStreetMap'}
+        loading="lazy" referrerPolicy="no-referrer" src={url}/>:
+       <div className="roadside-map-empty">
+        <span aria-hidden="true">⌖</span>
+        {good?<><b>Показать точку на карте</b>
+          <small>Для загрузки карты OpenStreetMap координаты этой точки будут переданы стороннему картографическому сервису. Вы можете не загружать карту и оставить адрес на экране.</small>
+          <button type="button" className="btn small roadside-map-load"
+            onClick={()=>setApprovedFor(consentScope)}>
+            Загрузить карту OpenStreetMap</button>
+        </>:<><b>Нужна точка на карте</b>
           <small>Укажите местоположение при оформлении заявки. Сервис не рисует условных мастеров как настоящих.</small>
-        </div>}
-      <div className="roadside-map-overlay" aria-hidden="true">
+        </>}
+       </div>}
+      {showExternalMap&&<div className="roadside-map-overlay" aria-hidden="true">
         <span className="roadside-map-dot"/><span>{kind==='performer'?'Последняя точка исполнителя':kind==='service'?'Адрес въезда на территорию СТО':'Место вашей заявки'}</span>
-      </div>
+      </div>}
     </div>
     <div className="roadside-map-foot">
       <span>{address?.trim()||(!good?'Адрес ещё не определён':'Метка по GPS-координатам')}</span>
