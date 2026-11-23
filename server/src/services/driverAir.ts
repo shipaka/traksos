@@ -134,18 +134,40 @@ export class DriverAirService {
   }
 
   async setBot(user:AuthUser,enabled:boolean) {
-    if(!user.roles.includes('admin')) throw forbidden('Настройки эфира доступны администратору');
-    await this.db.query('update driver_air_state set bot_enabled=$1,updated_at=$2 where id=true',[enabled,this.now()]);
-    return {botEnabled:enabled};
+    if(!user.roles.includes('admin'))throw forbidden('Настройки эфира доступны администратору');
+    // Repeated admin taps must not produce contradictory settings history.
+    // Keep the switch and its audit record in the same transaction.
+    const state=await this.db.tx(async q=>{
+      const row=await q.one<{bot_enabled:boolean}>(`update driver_air_state
+        set bot_enabled=$1,updated_at=$2
+        where id=true and bot_enabled is distinct from $1
+        returning bot_enabled`,[enabled,this.now()]);
+      if(!row){
+        const current=await q.one<{bot_enabled:boolean}>(
+          'select bot_enabled from driver_air_state where id=true for update');
+        if(!current)throw notFound('Эфир не настроен');
+        return current.bot_enabled;
+      }
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [user.id,'air.bot_settings','driver-air',{enabled}]);
+      return row.bot_enabled;
+    });
+    return {botEnabled:state};
   }
 
   async hide(user:AuthUser,id:string) {
-    if(!isStaff(user)) throw forbidden('Доступ только сотрудникам');
-    if(!/^[1-9]\d{0,17}$/.test(id)) throw bad('invalid_air_message');
-    const row=await this.db.one(
-      'update driver_air_messages set hidden_at=$2,hidden_by=$3 where id=$1::bigint and hidden_at is null returning id',
-      [id,this.now(),user.id]);
-    if(!row) throw notFound('Сообщение не найдено');
+    if(!isStaff(user))throw forbidden('Доступ только сотрудникам');
+    if(!/^[1-9]\\d{0,17}$/.test(id))throw bad('invalid_air_message');
+    await this.db.tx(async q=>{
+      const row=await q.one<{id:string}>(
+        `update driver_air_messages set hidden_at=$2,hidden_by=$3
+          where id=$1::bigint and hidden_at is null returning id::text as id`,
+        [id,this.now(),user.id]);
+      if(!row)throw notFound('Сообщение не найдено');
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [user.id,'air.message_hidden',id,{moderatorId:user.id}]);
+    });
     return {hidden:true};
   }
+
 }
