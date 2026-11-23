@@ -202,6 +202,23 @@ export class ServiceCenters {
     };
   }
 
+  /** A booking creator is NOT a permanent fleet participant. Owners retain
+   * their own history, but an ex-driver must still be assigned to THIS truck
+   * in THIS fleet, including when an old bearer token carries stale owner_id. */
+  private async canSeeCustomerBooking(user: AuthUser, b: any): Promise<boolean> {
+    if (!user.roles.some(role => role === 'client' || role === 'driver')) return false;
+    if (!user.owner_id) return b.client_id === user.id;
+    if (b.client_id !== user.owner_id || b.created_by !== user.id || !b.vehicle_id)
+      return false;
+    const current = await this.db.one<{ id: string }>(
+      `select v.id from vehicles v join users u on u.id=$3
+        where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+          and u.owner_id=v.owner_id
+          and 'driver'=any(u.roles)`,
+      [b.vehicle_id, b.client_id, user.id]);
+    return !!current;
+  }
+
   private async mineBooking(user: AuthUser, id: string) {
     const c = await this.mustMine(user);
     const b = await this.db.one('select * from service_bookings where id=$1 and center_id=$2', [id, c.id]);
@@ -227,9 +244,10 @@ export class ServiceCenters {
          left join users author on author.id=r.suggested_by
         where b.id=$1`, [id]);
     if (!b) throw notFound('Запись не найдена');
-    const asService = b.owner_id === user.id;
-    const clientId = user.owner_id ?? user.id;
-    if (!asService && b.client_id !== clientId && b.created_by !== user.id && !user.roles.some((r) => r === 'admin' || r === 'moderator')) throw forbidden();
+    const asService = b.owner_id === user.id && user.roles.includes('service');
+    const isStaff = user.roles.some(role => role === 'admin' || role === 'moderator');
+    if (!asService && !isStaff && !(await this.canSeeCustomerBooking(user, b)))
+      throw forbidden('Запись другого автопарка недоступна');
     const v = this.bookingView(b, asService ? 'service' : 'client', this.now().getTime() - 7 * 86400_000);
     const linkedTow = b.arrival === 'tow' && b.case_root_id
       ? await this.db.one<{number:number;status:string}>(
@@ -599,18 +617,31 @@ export class ServiceCenters {
   }
 
   async myBookings(user: AuthUser) {
-    const clientId = user.owner_id ?? user.id;
+    if (!user.roles.some(role => role === 'client' || role === 'driver')) throw forbidden();
+    // A driver may have made the booking, but leaving/reassigning the truck
+    // ends their access to its notes, repair status and financial history.
+    const filter = user.owner_id
+      ? `and b.created_by=$2 and b.vehicle_id is not null
+         and exists (
+           select 1 from vehicles v join users current_driver on current_driver.id=$2
+           where v.id=b.vehicle_id and v.owner_id=b.client_id
+             and v.driver_id=$2 and current_driver.owner_id=v.owner_id
+             and 'driver'=any(current_driver.roles)
+         )`
+      : '';
     const rows = await this.db.query(
-      `select b.*, c.name as center_name, c.address as center_address from service_bookings b join service_centers c on c.id=b.center_id
-        where b.client_id=$1 ${user.owner_id ? 'and b.created_by=$2' : ''} order by b.created_at desc limit 100`,
-      user.owner_id ? [clientId, user.id] : [clientId]);
-    return rows.map((b: any) => ({ ...this.bookingView(b, 'client'), center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
+      `select b.*, c.name as center_name, c.address as center_address
+         from service_bookings b join service_centers c on c.id=b.center_id
+        where b.client_id=$1 ${filter} order by b.created_at desc limit 100`,
+      user.owner_id ? [user.owner_id, user.id] : [user.id]);
+    return rows.map((b: any) => ({ ...this.bookingView(b, 'client'),
+      center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
   }
 
   private async clientBooking(user: AuthUser, id: string) {
     const b = await this.db.one('select b.*, c.owner_id from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1', [id]);
-    if (!b || (b.client_id !== (user.owner_id ?? user.id))) throw notFound('Запись не найдена');
-    if (user.owner_id && b.created_by !== user.id) throw notFound('Запись не найдена');
+    if (!b || !(await this.canSeeCustomerBooking(user, b)))
+      throw notFound('Запись не найдена');
     return b;
   }
 
