@@ -2,7 +2,6 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 import { FleetService } from '../src/services/fleet.ts';
-import { ProfilesService } from '../src/services/profiles.ts';
 
 let t: T;
 before(async () => { t = await setup(); });
