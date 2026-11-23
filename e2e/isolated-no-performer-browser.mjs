@@ -88,9 +88,19 @@ try{
           });
           if(!hit)throw Error('Action covered by another element: '+await action.innerText()+' @'+width);
         }
-        // Full rendered page evidence, not prop screenshots and not invented data.
+        // The hit-test above scrolled actions into view. A full-page capture
+        // taken at that position would falsely paint the fixed 618 bottom
+        // navigation and sticky 617 header in the *middle* of the long PNG.
+        // Reset only for evidence; never hide, detach or mock real UI chrome.
+        await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
+        await page.waitForFunction(()=>window.scrollY===0,{timeout:5_000});
         await page.screenshot({path:out+'/no-performer-'+role+'-'+width+'.png',
           fullPage:true,animations:'disabled'});
+        // Separate honest viewport frame at the relevant real card: sticky
+        // header and bottom bar remain in their actual on-screen positions.
+        await card.scrollIntoViewIfNeeded();
+        await page.screenshot({path:out+'/no-performer-'+role+'-'+width+'-viewport.png',
+          fullPage:false,animations:'disabled'});
         if(width===390){
           const another=card.getByRole('link',{name:'Другая помощь'});
           if(await another.getAttribute('href')!=='#/sos')
@@ -149,8 +159,13 @@ try{
           const overflow=await page.evaluate(()=>
             document.documentElement.scrollWidth-document.documentElement.clientWidth);
           if(overflow>3)throw Error('Withdrawn-offer card overflow at '+width+': '+overflow);
+          await page.evaluate(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
+          await page.waitForFunction(()=>window.scrollY===0,{timeout:5_000});
           await page.screenshot({path:out+'/offers-withdrawn-'+role+'-'+width+'.png',
             fullPage:true,animations:'disabled'});
+          await offered.scrollIntoViewIfNeeded();
+          await page.screenshot({path:out+'/offers-withdrawn-'+role+'-'+width+'-viewport.png',
+            fullPage:false,animations:'disabled'});
           console.log('WITHDRAWN OFFER CHROMIUM PASS',role,width,withdrawn.id);
         }
         console.log('NO PERFORMER CHROMIUM PASS',role,width,id,art.width+'x'+art.height);
