@@ -64,12 +64,26 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const [selected,setSelected]=useState<PartnerPoint|null>(null);
   const [expandedCluster,setExpandedCluster]=useState<Cluster|null>(null);
   const clusterTrigger=useRef<HTMLButtonElement|null>(null);
+  const selectedTrigger=useRef<HTMLButtonElement|null>(null);
+  const firstClusterOption=useRef<HTMLButtonElement|null>(null);
   const selectedDismiss=useRef<HTMLButtonElement|null>(null);
   useLayoutEffect(()=>{if(selected)selectedDismiss.current?.focus();},[selected]);
+  // Moving focus into a list makes its choices reachable immediately, even
+  // when many other markers precede the expanded cluster in Tab order.
+  useLayoutEffect(()=>{if(expandedCluster)firstClusterOption.current?.focus();},[expandedCluster]);
   const modal=useRef<HTMLElement|null>(null);
   const surface=useRef<HTMLDivElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
   const drag=useRef<{x:number;y:number;view:View}|null>(null);
+  function restoreMarkerFocus(marker:HTMLButtonElement|null){
+    requestAnimationFrame(()=>{
+      (marker?.isConnected?marker:closeRef.current)?.focus();
+    });
+  }
+  function dismissSelected(){
+    setSelected(null);
+    restoreMarkerFocus(selectedTrigger.current);
+  }
 
   useEffect(()=>{
     const previous=document.body.style.overflow;
@@ -85,9 +99,9 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
         event.preventDefault();
         if(expandedCluster){
           setExpandedCluster(null);
-          requestAnimationFrame(()=>clusterTrigger.current?.focus());
+          restoreMarkerFocus(clusterTrigger.current);
         }else if(selected){
-          setSelected(null);
+          dismissSelected();
         }else onClose();
         return;
       }
@@ -214,6 +228,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
                 setSelected(null);
               }
             }else{
+              selectedTrigger.current=event.currentTarget;
               setExpandedCluster(null);
               setSelected(cluster.members[0]);
             }
@@ -223,16 +238,18 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           <div className="tr-network-cluster-head"><b>Партнёры в одной точке ({expandedCluster.members.length})</b>
             <button type="button" aria-label="Скрыть список партнёров" onClick={()=>{
               setExpandedCluster(null);
-              requestAnimationFrame(()=>clusterTrigger.current?.focus());
+              restoreMarkerFocus(clusterTrigger.current);
             }}>✕</button></div>
           <div className="tr-network-cluster-options">
-            {expandedCluster.members.map(p=><button type="button" key={p.id}
-              onClick={()=>{setExpandedCluster(null);setSelected(p);}}>
+            {expandedCluster.members.map((p,index)=><button type="button" key={p.id}
+              ref={index===0?firstClusterOption:undefined}
+              onClick={()=>{selectedTrigger.current=clusterTrigger.current;
+                setExpandedCluster(null);setSelected(p);}}>
               СТО {p.name}</button>)}
           </div>
         </aside>}
         {selected&&<aside className="tr-network-partner" aria-label="Карточка партнёра">
-          <button type="button" ref={selectedDismiss} className="tr-network-dismiss" onClick={()=>setSelected(null)} aria-label="Скрыть карточку">✕</button>
+          <button type="button" ref={selectedDismiss} className="tr-network-dismiss" onClick={dismissSelected} aria-label="Скрыть карточку">✕</button>
           <b>{selected.name}</b><span>Проверенная стационарная СТО · партнёр сети</span>
           <small>Координаты опубликованы с согласия СТО. Наличие свободного времени уточняется при обращении.</small>
           <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a>
