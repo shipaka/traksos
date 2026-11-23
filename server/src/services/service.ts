@@ -80,6 +80,18 @@ export class ServiceCenters {
            values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now())`,
           [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays)]);
       } else {
+        // If the stationary public address, coordinates or label change,
+        // immediately revoke the *separate* public-map consent and moderator
+        // coordinate verification. The usual service listing is unaffected.
+        if ((p.name!==undefined && p.name.trim()!==cur.name) ||
+            (p.address!==undefined && p.address.trim()!==cur.address) ||
+            (p.lat!=null && Number(p.lat)!==Number(cur.lat)) ||
+            (p.lng!=null && Number(p.lng)!==Number(cur.lng))) {
+          await q.query(`update service_centers
+               set public_map_opt_in=false,public_map_opted_at=null,
+                   public_map_location_verified_at=null
+             where owner_id=$1`,[user.id]);
+        }
         await q.query(
           `update service_centers set name=coalesce($2::text,name), address=coalesce($3::text,address), lat=coalesce($4::float8,lat), lng=coalesce($5::float8,lng),
              hours=coalesce($6::text,hours), inn=coalesce($7::text,inn), brands=coalesce($8::text[],brands), staff=coalesce($9::jsonb,staff),
@@ -711,7 +723,16 @@ export class ServiceCenters {
     return this.db.query(`select c.*, u.phone from service_centers c join users u on u.id=c.owner_id order by (c.verification='pending') desc, c.created_at desc limit 100`);
   }
   async verify(actor: AuthUser, id: string, decision: 'approved' | 'rejected') {
-    const c = await this.db.one('update service_centers set verification=$2 where id=$1 returning *', [id, decision]);
+    // Existing moderation approval is the only gateway for validating public
+    // stationary coordinates. Never silently approve legacy rows on migration.
+    const c = await this.db.one(`update service_centers
+      set verification=$2,
+          public_map_location_verified_at=case
+            when $2='approved' and lat between -90 and 90 and lng between -180 and 180
+                 and not(lat=0 and lng=0) then now() else null end,
+          public_map_opt_in=case when $2='rejected' then false else public_map_opt_in end,
+          public_map_opted_at=case when $2='rejected' then null else public_map_opted_at end
+      where id=$1 returning *`, [id, decision]);
     if (!c) throw notFound();
     await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision }]);
     await this.notifier.notify([c.owner_id], { type: 'verification', decision },
