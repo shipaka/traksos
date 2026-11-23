@@ -126,60 +126,125 @@ export class ModerationService {
   }
 
   async decide(actor: AuthUser, id: string, decision: string, note?: string) {
-    const c = await this.db.one<any>('select * from mod_cases where id=$1', [id]);
-    if (!c) throw notFound('Случай не найден');
-    if (c.status !== 'open') throw conflict('resolved', 'Решение уже принято — сначала верните в очередь');
-    if (!DECISIONS[c.kind]?.[decision]) throw bad('bad_decision', 'Нет такого решения');
-    if (c.opened_by === actor.id) throw forbidden('Свой случай решает другой модератор');
-    await this.db.query(`update mod_cases set status='resolved', decision=$2, decision_note=$3, decided_by=$4, decided_at=$5 where id=$1`,
-      [id, decision, note?.trim() || null, actor.id, this.now()]);
-    // Последствия решения
-    if (c.kind === 'review' && c.review_id) {
-      await this.db.query('update reviews set hidden=$2, disputed=false where id=$1', [c.review_id, decision === 'hide']);
-      if (c.opened_by) await this.reviews.recompute(c.opened_by);
+    // Serialize the decision AND its business consequences. Two moderators
+    // cannot both resolve an open case, or commit a half-resolved dispute.
+    const result = await this.db.tx(async q => {
+      const c = await q.one<any>('select * from mod_cases where id=$1 for update', [id]);
+      if (!c) throw notFound('Случай не найден');
+      if (c.status !== 'open') throw conflict('resolved', 'Решение уже принято — сначала верните в очередь');
+      if (!DECISIONS[c.kind]?.[decision]) throw bad('bad_decision', 'Нет такого решения');
+      if (c.opened_by === actor.id) throw forbidden('Свой случай решает другой модератор');
+      await q.query(
+        `update mod_cases set status='resolved', decision=$2, decision_note=$3,
+           decided_by=$4, decided_at=$5 where id=$1`,
+        [id, decision, note?.trim() || null, actor.id, this.now()]);
+      if (c.kind === 'review' && c.review_id) {
+        await q.query('update reviews set hidden=$2, disputed=false where id=$1',
+          [c.review_id, decision === 'hide']);
+        // Rating recomputation belongs to THIS transaction. A failed rating
+        // update must also undo the moderation decision.
+        if (c.opened_by) await this.reviews.recompute(c.opened_by, q);
+      }
+      if (c.kind === 'appeal' && decision === 'upheld' && c.target_id) {
+        await q.query(`update users set status='active'
+          where id=$1 and status='blocked' and deleted_at is null`, [c.target_id]);
+      }
+      if (c.kind === 'dispute' && c.booking_id) {
+        await q.query(`update service_bookings set status='closed', closed_at=now(), updated_at=now()
+          where id=$1 and status='disputed'`, [c.booking_id]);
+      }
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id, 'mod.decide', id, { decision, note }]);
+      const body = `${DECISIONS[c.kind][decision]}${note?.trim() ? `: ${note.trim()}` : ''}`;
+      const parties: (string|null|undefined)[] = [c.opened_by, c.target_id];
+      if (c.order_id) {
+        const o = await q.one<any>(`select o.client_id,o.performer_id,
+            case when o.created_by<>o.client_id
+               and v.owner_id=o.client_id and v.driver_id=o.created_by
+               then o.created_by else null end as current_driver_id
+          from orders o left join vehicles v on v.id=o.vehicle_id where o.id=$1`, [c.order_id]);
+        // Do not send the case/order reference to a driver removed from fleet.
+        if (o) parties.push(o.client_id, o.performer_id, o.current_driver_id);
+      }
+      const recipients = [...new Set(parties.filter((p):p is string=>!!p))];
+      const title = `Решение модератора по случаю №${c.number}`;
+      // Inbox + audit + decision + financial/review effects commit together.
+      for (const recipient of recipients) {
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'mod_case',$2,$3,$4)`,
+          [recipient, title, body, { caseId: id }]);
+      }
+      return { c, recipients, title, body };
+    });
+    // Everything here is post-commit delivery, NOT another business write.
+    // Failure of optional SMS/push cannot make the client retry a committed
+    // decision and cannot leave partial data changes behind.
+    if (result.c.kind === 'appeal' && result.c.title === 'Оспорить блокировку' &&
+        result.c.target_id && this.sms) {
+      try {
+        const u = await this.db.one<{ phone: string }>(
+          'select phone from users where id=$1 and deleted_at is null', [result.c.target_id]);
+        if (u?.phone.startsWith('+')) await this.sms.send(u.phone,
+          `TrakSOS: ${decision === 'upheld' ? 'блокировка снята — можно входить' : 'блокировка остаётся'}${note?.trim() ? `. ${note.trim().slice(0, 100)}` : ''}`);
+      } catch (error) {
+        console.warn('[mod] appeal SMS delivery failed',
+          error instanceof Error ? error.message : String(error));
+      }
     }
-    if (c.kind === 'appeal' && decision === 'upheld' && c.target_id) {
-      await this.db.query(`update users set status='active' where id=$1 and status='blocked' and deleted_at is null`, [c.target_id]);
-    }
-    if (c.kind === 'dispute' && c.booking_id) {
-      await this.db.query(`update service_bookings set status='closed', closed_at=now(), updated_at=now() where id=$1 and status='disputed'`, [c.booking_id]);
-    }
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'mod.decide', id, { decision, note }]);
-    const text = `${DECISIONS[c.kind][decision]}${note?.trim() ? `: ${note.trim()}` : ''}`;
-    const parties = [c.opened_by, c.target_id];
-    if (c.order_id) {
-      const o = await this.db.one<any>('select client_id, created_by, performer_id from orders where id=$1', [c.order_id]);
-      if (o) parties.push(o.client_id, o.created_by, o.performer_id);
-    }
-    // Обжалование блокировки: человек не может войти — решение уходит по SMS
-    if (c.kind === 'appeal' && c.title === 'Оспорить блокировку' && c.target_id && this.sms) {
-      const u = await this.db.one<{ phone: string }>('select phone from users where id=$1', [c.target_id]);
-      if (u && u.phone.startsWith('+')) await this.sms.send(u.phone, `TrakSOS: ${decision === 'upheld' ? 'блокировка снята — можно входить' : 'блокировка остаётся'}${note?.trim() ? `. ${note.trim().slice(0, 100)}` : ''}`);
-    }
-    await this.notifier.notify(parties, { type: 'mod_case', caseId: id },
-      { kind: 'normal', title: `Решение модератора по случаю №${c.number}`, body: text, data: { caseId: id } });
+    await this.notifier.deliverStored(result.recipients,
+      { type: 'mod_case', caseId: id },
+      { kind: 'normal', title: result.title, body: result.body, data: { caseId: id } });
     return this.caseView(id);
   }
 
   async reopen(actor: AuthUser, id: string) {
-    const c = await this.db.one<any>(`update mod_cases set status='open', decision=null, decision_note=null, decided_by=null, decided_at=null where id=$1 and status='resolved' returning *`, [id]);
-    if (!c) throw conflict('open', 'Случай уже в очереди');
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'mod.reopen', id, {}]);
+    await this.db.tx(async q => {
+      const c = await q.one<any>('select * from mod_cases where id=$1 for update', [id]);
+      if (!c) throw notFound('Случай не найден');
+      if (c.status !== 'resolved') throw conflict('open', 'Случай уже в очереди');
+      await q.query(`update mod_cases set status='open', decision=null, decision_note=null,
+        decided_by=null, decided_at=null where id=$1`, [id]);
+      if (c.kind === 'review' && c.review_id) {
+        // An appealed review is disputed again. A previously hidden review
+        // stays hidden until a new explicit moderator decision.
+        await q.query('update reviews set disputed=true where id=$1', [c.review_id]);
+        if (c.opened_by) await this.reviews.recompute(c.opened_by, q);
+      }
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id, 'mod.reopen', id, {}]);
+    });
     return this.caseView(id);
   }
 
   async setPriority(actor: AuthUser, id: string, priority: number) {
-    await this.db.query('update mod_cases set priority=$2 where id=$1', [id, priority]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'mod.priority', id, { priority }]);
+    if (!Number.isInteger(priority) || priority < 1 || priority > 3)
+      throw bad('bad_priority', 'Приоритет должен быть от 1 до 3');
+    await this.db.tx(async q => {
+      const c = await q.one<{ status: string; priority: number }>(
+        'select status, priority from mod_cases where id=$1 for update', [id]);
+      if (!c) throw notFound('Случай не найден');
+      if (c.status !== 'open') throw conflict('resolved', 'Приоритет меняется у открытых случаев');
+      if (c.priority === priority) return;
+      await q.query('update mod_cases set priority=$2 where id=$1', [id, priority]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id, 'mod.priority', id, { priority }]);
+    });
     return this.caseView(id);
   }
 
-  /** Модератор зашёл в чат заявки — это пишется в журнал, стороны видят системное сообщение */
+  /** A moderator chat entry and its audit must succeed or fail together. */
   async enterChat(actor: AuthUser, id: string) {
-    const c = await this.db.one<any>('select order_id from mod_cases where id=$1', [id]);
-    if (!c?.order_id) throw bad('no_order', 'У этого случая нет заявки');
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'mod.chat_open', id, { orderId: c.order_id }]);
-    await this.db.query(`insert into chat_messages(order_id, sender_id, kind, body) values ($1, null, 'system', $2)`, [c.order_id, 'Модератор подключился к чату']);
-    return { orderId: c.order_id };
+    const orderId = await this.db.tx(async q => {
+      const c = await q.one<{ order_id: string | null }>(
+        'select order_id from mod_cases where id=$1 for update', [id]);
+      if (!c?.order_id) throw bad('no_order', 'У этого случая нет заявки');
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id, 'mod.chat_open', id, { orderId: c.order_id }]);
+      await q.query(`insert into chat_messages(order_id, sender_id, kind, body)
+        values ($1, null, 'system', $2)`, [c.order_id, 'Модератор подключился к чату']);
+      return c.order_id;
+    });
+    return { orderId };
   }
+
 }
