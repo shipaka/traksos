@@ -196,16 +196,21 @@ export class ShopCatalogService {
     expectedUpdatedAt?: string;
     expectedName?: string;
     expectedSourceNote?: string;
+    expectedBrand?: string;
+    expectedArticle?: string;
+    expectedCategory?: string;
+    expectedSearchTerms?: string | null;
   }) {
     return this.db.tx(async (q) => {
       // Import ON CONFLICT updates and moderator approvals must serialize on
       // the SAME row. Checking provenance outside this transaction allowed a
       // concurrent re-import to turn an unreviewed replacement into approved.
       const row = await q.one<{
-        id: string; source_note: string; name: string;
+        id: string; source_note: string; name: string; brand: string;
+        article: string; category: string; search_terms: string | null;
         reviewed: boolean; updated_at: Date | string;
       }>(
-        'select id, source_note, name, reviewed, updated_at ' +
+        'select id, source_note, name, brand, article, category, search_terms, reviewed, updated_at ' +
         'from shop_catalog_entries where id=$1 for update', [id]);
       if (!row) throw notFound('Позиция каталога не найдена');
       if (expected?.expectedUpdatedAt) {
@@ -214,7 +219,12 @@ export class ShopCatalogService {
         if (!Number.isFinite(oldTime) || oldTime !== currentTime ||
             (expected.expectedName !== undefined && expected.expectedName !== row.name) ||
             (expected.expectedSourceNote !== undefined &&
-             expected.expectedSourceNote !== row.source_note)) {
+             expected.expectedSourceNote !== row.source_note) ||
+            (expected.expectedBrand !== undefined && expected.expectedBrand !== row.brand) ||
+            (expected.expectedArticle !== undefined && expected.expectedArticle !== row.article) ||
+            (expected.expectedCategory !== undefined && expected.expectedCategory !== row.category) ||
+            (expected.expectedSearchTerms !== undefined &&
+             expected.expectedSearchTerms !== row.search_terms)) {
           throw bad('catalog_entry_changed',
             'Запись изменена другим участником. Обновите список и проверьте её повторно.');
         }
