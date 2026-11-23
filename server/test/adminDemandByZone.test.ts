@@ -11,10 +11,17 @@ before(async()=>{
   t=await setup();
   admin=await t.login('+79990000001');
   client=await t.login('+79991234671','client');
+  // A fresh disposable database may legitimately have NO published offer.
+  // Consent is required only if an actual current revision exists.
   for(const audience of ['client','privacy']){
-    const offer=ok(await t.api('GET','/api/offers/current/'+audience));
-    ok(await t.api('POST','/api/offers/'+offer.id+'/accept',{},client.token));
+    const response=await t.api('GET','/api/offers/current/'+audience);
+    assert.equal(response.status,200);
+    if(response.body?.id)
+      ok(await t.api('POST','/api/offers/'+response.body.id+'/accept',{},client.token));
   }
+  // The shared fixture starts at a frozen future timestamp while PostgreSQL
+  // uses its real clock for created_at; align these for real recent-demand SQL.
+  t.clock.set(new Date().toISOString());
 });
 after(()=>t.close());
 
