@@ -1408,12 +1408,31 @@ export async function logout() {
 const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
 function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
-  const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'near'; } });
-  const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', sort:prio, ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
-  const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, geo?.lng, brand, verifiedOnly, prio]);
+  const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'recommended'; } });
+  const hasGeo = !!geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lng)
+    && Math.abs(geo.lat) <= 90 && Math.abs(geo.lng) <= 180;
+  // A saved near/ETA preference is not meaningful without the truck's real GPS point.
+  // Never request or mark a sorting mode which the server cannot calculate.
+  const effectivePrio = (!PRIO.some(([key]) => key === prio)
+    || (!hasGeo && (prio === 'near' || prio === 'fast'))
+    || (!brand && prio === 'brand')) ? 'recommended' : prio;
+  useEffect(() => {
+    if (prio === effectivePrio) return;
+    setPrio(effectivePrio);
+    try { localStorage.setItem('traksos.prio', effectivePrio); } catch { /* */ }
+  }, [prio, effectivePrio]);
+  const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', sort:effectivePrio,
+    ...(hasGeo && geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}),
+    ...(brand ? { brand } : {}) });
+  const l = useLoad(() => get(`/api/masters-nearby?${q}`),
+    [service, geo?.lat, geo?.lng, brand, verifiedOnly, effectivePrio]);
   if (!l.data) return null;
   const d = l.data;
-  const choose = (k: string) => { setPrio(k); try { localStorage.setItem('traksos.prio', k); } catch { /* */ } };
+  const choose = (k: string) => {
+    if (!PRIO.some(([key]) => key === k) || (!hasGeo && (k === 'near' || k === 'fast'))) return;
+    setPrio(k);
+    try { localStorage.setItem('traksos.prio', k); } catch { /* */ }
+  };
   // Server sorts the FULL eligible pool before slicing eight displayed results.
   const items = d.items;
   return (
@@ -1433,8 +1452,18 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22, color: 'var(--accent)' }}>{d.match}</b><span className="note">подходят вам</span></div>
       </div>
       <div className="row" style={{ gap: 6 }}>
-        {PRIO.filter(([k]) => k !== 'brand' || brand).map(([k, n]) => <button key={k} type="button" className="chip" aria-pressed={prio === k} onClick={() => choose(k)}>{k === 'brand' && brand ? `Знает ${brand}` : n}</button>)}
+        {PRIO.filter(([k]) => k !== 'brand' || brand).map(([k, n]) => {
+          const needsGeo = k === 'near' || k === 'fast';
+          const disabled = needsGeo && !hasGeo;
+          return <button key={k} type="button" className="chip" aria-pressed={effectivePrio === k}
+            disabled={disabled} aria-describedby={disabled ? 'masters-nearby-geo-help' : undefined}
+            title={disabled ? 'Укажите GPS-точку машины для сортировки по близости и времени' : undefined}
+            onClick={() => choose(k)}>{k === 'brand' && brand ? `Знает ${brand}` : n}</button>;
+        })}
       </div>
+      {!hasGeo && <span className="note" id="masters-nearby-geo-help">
+        Для сортировки по близости и времени укажите GPS-точку машины. «Рекомендуем» и «Дешевле» работают без неё.
+      </span>}
       {items.length ? items.slice(0, 3).map((m: any, i: number) => (
         <div key={i} className="between">
           <span className="stack" style={{ gap: 0 }}>
