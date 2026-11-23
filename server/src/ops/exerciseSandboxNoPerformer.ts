@@ -43,7 +43,7 @@ async function virtualHold(url:string){
   await api('POST',path);
 }
 async function eventualOrder(userToken:string,id:string){
-  for(let retry=0;retry<40;retry++){
+  for(let retry=0;retry<120;retry++){
     const v=await api('GET','/api/orders/'+id,userToken);
     if(v.status==='no_performer')return v;
     if(v.status!=='searching'&&v.status!=='pending_payment')
