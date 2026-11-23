@@ -234,13 +234,13 @@ try {
    if(width===1440){
      // Some visual-proof jobs serve only static web assets. A missing API
      // remains a valid honest empty/error state, but focus MUST re-fetch it.
+     // Focus an existing control BEFORE the refresh, then verify that the
+     // asynchronous response leaves keyboard focus exactly where it was.
+     await zoomButton.focus();
      const refresh=page.waitForResponse(response=>
        response.url().includes('/api/public/partner-map'),{timeout:15_000});
      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
      const response=await refresh;
-     // A background refresh must never forcibly steal focus from a control
-     // that the user is interacting with inside the already-open dialog.
-     await zoomButton.focus();
      const stillFocused=await zoomButton.evaluate(node=>document.activeElement===node);
      if(!stillFocused)throw Error(width+': map focus was lost before refresh verification');
      // A static Vite preview may serve index.html with HTTP 200 for
