@@ -225,10 +225,16 @@ for role in client master; do
   sleep 2
   if [ "$sdk_level" -ge 34 ]; then
     splash_cleared=0
+    # A React event proves mounting, NOT that the native compositor switched
+    # away from the guest page. Run distinct-pixel proof before attaching
+    # DevTools; the old order could wedge API35 while its screenshot was still
+    # pixel-for-pixel the guest (run #45261164963, client 320x640).
+    prior_screens=(emulator-screen.png)
+    if [ "$role" = master ]; then prior_screens+=(android-review-client.png); fi
     for attempt in $(seq 1 12); do
       require_live_emulator "during $role pixel capture attempt $attempt"
       adb exec-out screencap -p > "android-review-$role.png" || true
-      if python3 scripts/verify-android-screen.py "android-review-$role.png" --reject-native-splash; then
+      if python3 scripts/verify-android-screen.py "android-review-$role.png" --reject-native-splash "${prior_screens[@]}"; then
         splash_cleared=1
         break
       fi
@@ -243,7 +249,7 @@ for role in client master; do
     done
     if [ "$splash_cleared" -ne 1 ]; then
       adb logcat -d -s TrakSOSRuntime:I >> runtime-ready.log || true
-      echo "FAIL: Android $sdk_level native splash still visibly covers role=$role after waiting"
+      echo "FAIL: Android $sdk_level role=$role has no distinct painted UI after navigation; may be splash, stale guest frame or compositor"
       exit 1
     fi
     echo "APK_REVIEW_SPLASH_PIXELS_CLEARED=$role API=$sdk_level" >> runtime-ready.log
