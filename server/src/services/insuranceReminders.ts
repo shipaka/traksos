@@ -10,21 +10,35 @@ const windows = [
 /** Claim reminders atomically; release a claim if notification persistence fails. */
 export async function sendInsuranceReminders(db: Db, notifier: Notifier) {
   for (const { days, column } of windows) {
-    const due = await db.query<{ id: string; owner_id: string; plate: string | null; policy_expires_on: string }>(
-      `select r.id, r.owner_id, v.plate, r.policy_expires_on::text
-         from vehicle_service_requests r
-         join vehicles v on v.id=r.vehicle_id
-         join users u on u.id=r.owner_id
-        where r.kind='insurance' and r.status='completed'
-          and u.insurance_reminders_enabled=true
-          and r.${column} is null
-          and r.policy_expires_on=current_date + $1::int
-        limit 500`, [days]);
-    for (const item of due) {
-      const claimed = await db.one<{ claimed_at: Date }>(
-        `update vehicle_service_requests set ${column}=now()
-         where id=$1 and ${column} is null and policy_expires_on=current_date + $2::int
-         returning ${column} as claimed_at`, [item.id, days]);
+    // Cursor paging avoids permanently skipping reminders beyond the first
+    // 500 policies due on a single date. UUID ordering is stable and bounded.
+    let cursor: string | null = null;
+    for (;;) {
+      const due = await db.query<{ id: string; owner_id: string; plate: string | null; policy_expires_on: string }>(
+        `select r.id, r.owner_id, v.plate, r.policy_expires_on::text
+           from vehicle_service_requests r
+           join vehicles v on v.id=r.vehicle_id and v.owner_id=r.owner_id
+           join users u on u.id=r.owner_id
+          where r.kind='insurance' and r.status='completed'
+            and u.insurance_reminders_enabled=true
+            and r.${column} is null
+            and r.policy_expires_on=current_date + $1::int
+            and ($2::uuid is null or r.id>$2::uuid)
+          order by r.id limit 500`, [days,cursor]);
+      for (const item of due) {
+        // The selection above is only a hint: consent, status, ownership and
+        // policy expiry can change before an UPDATE gets its row lock.
+        const claimed = await db.one<{ claimed_at: Date }>(
+          `update vehicle_service_requests r set ${column}=now()
+           where r.id=$1 and r.owner_id=$3::uuid and r.kind='insurance'
+             and r.status='completed' and r.${column} is null
+             and r.policy_expires_on=current_date + $2::int
+             and exists (
+               select 1 from vehicles v join users u on u.id=r.owner_id
+                where v.id=r.vehicle_id and v.owner_id=r.owner_id
+                  and u.insurance_reminders_enabled=true
+             )
+           returning r.${column} as claimed_at`, [item.id,days,item.owner_id]);
       if (!claimed) continue;
       try {
         await notifier.notify([item.owner_id], { type: 'insurance_expiry', requestId: item.id, days },
@@ -41,6 +55,9 @@ export async function sendInsuranceReminders(db: Db, notifier: Notifier) {
         );
         throw error;
       }
+      }
+      if(due.length<500)break;
+      cursor=due[due.length-1].id;
     }
   }
 }
