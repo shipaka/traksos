@@ -160,6 +160,26 @@ test('non-dispatch services cannot receive worker commission campaigns',async()=
   }
 });
 
+test('worker commission campaign cannot exceed the owner-approved 5% rate',async()=>{
+  const now=t.clock.now().getTime();
+  const body={
+    service:'electric',
+    startsAt:new Date(now+24*3_600_000).toISOString(),
+    endsAt:new Date(now+25*3_600_000).toISOString(),
+    enabled:true,
+    reason:'Проверка максимума агентской комиссии на отдельном сроке',
+  };
+  for(const commissionPct of [5.5,100,-1]){
+    const rejected=await t.api('POST','/api/admin/commission-campaigns',
+      {...body,commissionPct},admin.token);
+    assert.equal(rejected.status,400,
+      'a discount campaign must not raise the worker fee to '+commissionPct+'%');
+  }
+  const accepted=ok(await t.api('POST','/api/admin/commission-campaigns',
+    {...body,commissionPct:5},admin.token));
+  assert.equal(Number(accepted.commission_pct),5,'the approved baseline is valid');
+});
+
 test('empty audience cannot mark worker announcement as sent',async()=>{
   const now=t.clock.now().getTime();
   const notice=ok(await t.api('POST','/api/admin/announcements',{
