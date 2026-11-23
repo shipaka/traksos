@@ -116,6 +116,13 @@ try{
        throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
      }
      if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
+     if(c.id==='admin' && width===390) {
+       // 618 Chrome and Android must share the same mobile admin fallback.
+       if(await page.locator('.approved-pc').count())
+         throw Error('390px mobile admin incorrectly rendered the PC 617 workdesk');
+       if(!await page.locator('.tabbar a[href="#/admin"]').isVisible())
+         throw Error('Mobile admin has no working home navigation');
+     }
      if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
        throw Error('Moderator workdesk unexpectedly shows floating TrakBot: '+width);
      if(c.id==='owner' && width===390){
