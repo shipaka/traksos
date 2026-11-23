@@ -197,3 +197,45 @@ test('empty audience cannot mark worker announcement as sent',async()=>{
     'select notified_at from worker_announcements where id=$1',[notice.id]);
   assert.equal(stored?.notified_at,null);
 });
+
+test('ECU alert reaches an electric master once and survives as a durable in-app notification',async()=>{
+  // No fake external push or production recipient: an actual authenticated
+  // electric master is registered in the disposable PostgreSQL environment.
+  const master=await t.login('+79990000072','master');
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Тестовый автоэлектрик ЭБУ',
+    specialties:['electric'],brands:{Scania:'excellent'},
+    taxStatus:'self_employed',inn:'780000000072',
+    car:{brand:'Lada Largus',color:'белый',plate:'А123ВС78'}
+  },master.token));
+  const now=t.clock.now().getTime();
+  const notice=ok(await t.api('POST','/api/admin/announcements',{
+    audience:'master',service:'ecu',
+    title:'Учебное ЭБУ для автоэлектрика',
+    body:'Только одно внутреннее уведомление по реальному фильтру специализации.',
+    startsAt:new Date(now-60_000).toISOString(),
+    endsAt:new Date(now+3_600_000).toISOString(),
+    published:true
+  },admin.token));
+  assert.equal((await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',
+    {},client.token)).status,403,'a client cannot send partner announcements');
+  const result=ok(await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',
+    {},admin.token));
+  assert.equal(result.recipients,1,
+    'ECU notice must target the electric master rather than an empty audience');
+  const inbox=ok(await t.api('GET','/api/me/notifications',undefined,master.token));
+  const notices=inbox.items.filter((n:any)=>
+    n.kind==='announcement'&&n.data?.announcementId===notice.id);
+  assert.equal(notices.length,1,'one durable message must be visible in the real master inbox');
+  assert.equal(notices[0].title,'Учебное ЭБУ для автоэлектрика');
+  const stored=await t.db.one<{notified_at:Date|null;notified_count:number}>(
+    'select notified_at,notified_count from worker_announcements where id=$1',[notice.id]);
+  assert.ok(stored?.notified_at,'send status commits with the stored inbox message');
+  assert.equal(stored.notified_count,1);
+  assert.equal((await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',
+    {},admin.token)).status,400,'repeat click must not duplicate the same announcement');
+  const count=await t.db.one<{n:number}>(
+    'select count(*)::int as n from notifications where user_id=$1 and kind=$2 and data->>\'announcementId\'=$3',
+    [master.id,'announcement',notice.id]);
+  assert.equal(count?.n,1,'repeated sending does not create duplicate inbox records');
+});
