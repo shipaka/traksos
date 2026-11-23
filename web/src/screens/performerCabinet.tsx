@@ -96,8 +96,10 @@ function PerformerOnboarding() {
   const isTow = kind === 'tow';
   const isEcu = kind === 'ecu';
   async function save() {
-    const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
-      cars: !isEcu && car.brand && car.plate ? [car] : [], car: !isEcu && car.brand && car.plate ? car : null };
+    const cleanCar = { brand: car.brand.trim(), color: car.color.trim(), plate: car.plate.trim().toUpperCase() };
+    const hasCar = !isEcu && !!cleanCar.brand && !!cleanCar.plate;
+    const body: any = { kind, name: name.trim() || undefined, taxStatus: taxStatus || null, inn: inn || null,
+      cars: hasCar ? [cleanCar] : [], car: hasCar ? cleanCar : null };
     if (!isTow && !isEcu) body.specialties = spec;
     if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён. Фото для добровольной проверки можно добавить отдельно')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
@@ -191,10 +193,10 @@ export function PhoneSection() {
 function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: string; plate: string }; onChange: (c: any) => void; tow?: boolean }) {
   return (
     <>
-      <input className="field" placeholder={tow ? 'Марка эвакуатора: MAN TGS' : 'Марка: Lada Largus'} value={car.brand} onChange={(e) => onChange({ ...car, brand: e.target.value })} />
+      <input className="field" maxLength={50} placeholder={tow ? 'Марка эвакуатора: MAN TGS' : 'Марка: Lada Largus'} value={car.brand} onChange={(e) => onChange({ ...car, brand: e.target.value })} />
       <div className="grid2">
-        <input className="field" placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
-        <input className="field" placeholder="Госномер" value={car.plate} onChange={(e) => onChange({ ...car, plate: e.target.value.toUpperCase() })} />
+        <input className="field" maxLength={30} placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
+        <input className="field" maxLength={15} placeholder="Госномер" value={car.plate} onChange={(e) => onChange({ ...car, plate: e.target.value.toUpperCase() })} />
       </div>
     </>
   );
@@ -212,6 +214,8 @@ function CarsSectionForUser() {
   const [cars, setCars] = useState<any[]>(p.cars?.length ? p.cars : p.car ? [p.car] : []);
   const [today, setToday] = useState<string>(p.car?.plate ?? cars[0]?.plate ?? '');
   const [add, setAdd] = useState({ brand: '', color: '', plate: '' });
+  const cleanAdd = { brand: add.brand.trim(), color: add.color.trim(), plate: add.plate.trim().toUpperCase() };
+  const duplicatePlate = cars.some(c => String(c.plate).trim().toUpperCase() === cleanAdd.plate);
   const tow = p.kind === 'tow';
   const commit = (list: any[], t: string) => save({ cars: list, car: list.find((c) => c.plate === t) ?? list[0] ?? null }, 'Машины сохранены');
   return (
@@ -236,9 +240,9 @@ function CarsSectionForUser() {
         <div className="card">
           <b>Добавить {tow ? 'эвакуатор' : 'машину'}</b>
           <CarInputs car={add} onChange={setAdd} tow={tow} />
-          <button className="btn" disabled={busy || !add.brand || !add.plate || cars.some((c) => c.plate === add.plate)} onClick={async () => {
-            const list = [...cars, add];
-            const t = today || add.plate;
+          <button className="btn" disabled={busy || !cleanAdd.brand || !cleanAdd.plate || duplicatePlate} onClick={async () => {
+            const list = [...cars, cleanAdd];
+            const t = today || cleanAdd.plate;
             if (await commit(list, t)) { setCars(list); setToday(t); setAdd({ brand: '', color: '', plate: '' }); }
           }}>Добавить</button>
           {cars.length > 0 && <span className="note">Новую машину модератор может попросить подтвердить фото.</span>}
