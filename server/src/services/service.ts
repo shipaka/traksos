@@ -80,25 +80,35 @@ export class ServiceCenters {
            values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now())`,
           [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays)]);
       } else {
-        // If the stationary public address, coordinates or label change,
-        // immediately revoke the *separate* public-map consent and moderator
-        // coordinate verification. The usual service listing is unaffected.
-        if ((p.name!==undefined && p.name.trim()!==cur.name) ||
-            (p.address!==undefined && p.address.trim()!==cur.address) ||
-            (p.lat!=null && Number(p.lat)!==Number(cur.lat)) ||
-            (p.lng!=null && Number(p.lng)!==Number(cur.lng))) {
-          await q.query(`update service_centers
-               set public_map_opt_in=false,public_map_opted_at=null,
-                   public_map_location_verified_at=null
-             where owner_id=$1`,[user.id]);
-        }
+        // Nullable coordinates are a real edit: undefined means "leave alone",
+        // while an explicit null must delete the old public stationary location.
+        // Evaluate the old row in THIS UPDATE (not a stale pre-transaction
+        // snapshot), and revoke consent and moderator geo proof atomically.
+        const locationChanged = `(
+          ($2::text is not null and name is distinct from $2::text)
+          or ($3::text is not null and address is distinct from $3::text)
+          or ($4::boolean and lat is distinct from $5::float8)
+          or ($6::boolean and lng is distinct from $7::float8)
+        )`;
         await q.query(
-          `update service_centers set name=coalesce($2::text,name), address=coalesce($3::text,address), lat=coalesce($4::float8,lat), lng=coalesce($5::float8,lng),
-             hours=coalesce($6::text,hours), inn=coalesce($7::text,inn), brands=coalesce($8::text[],brands), staff=coalesce($9::jsonb,staff),
-             conditions=coalesce($10::text[],conditions), accepts=coalesce($11::text[],accepts), closed_days=coalesce($12::date[],closed_days),
-             paused=coalesce($13::boolean,paused), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
+          `update service_centers set
+             name=coalesce($2::text,name), address=coalesce($3::text,address),
+             lat=case when $4::boolean then $5::float8 else lat end,
+             lng=case when $6::boolean then $7::float8 else lng end,
+             hours=coalesce($8::text,hours), inn=coalesce($9::text,inn),
+             brands=coalesce($10::text[],brands), staff=coalesce($11::jsonb,staff),
+             conditions=coalesce($12::text[],conditions), accepts=coalesce($13::text[],accepts),
+             closed_days=coalesce($14::date[],closed_days),
+             paused=coalesce($15::boolean,paused),
+             accepts_confirmed_at=case when $13::text[] is not null or $14::date[] is not null then now() else accepts_confirmed_at end,
+             public_map_opt_in=case when ${locationChanged} then false else public_map_opt_in end,
+             public_map_opted_at=case when ${locationChanged} then null else public_map_opted_at end,
+             public_map_location_verified_at=case when ${locationChanged} then null else public_map_location_verified_at end
            where owner_id=$1`,
-          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused)]);
+          [user.id, v(p.name?.trim()), v(p.address?.trim()),
+           p.lat!==undefined, v(p.lat), p.lng!==undefined, v(p.lng),
+           v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions),
+           v(p.accepts), v(p.closedDays), v(p.paused)]);
       }
     });
     return this.cabinet(user);
