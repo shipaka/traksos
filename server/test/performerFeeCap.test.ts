@@ -8,7 +8,7 @@ import type { Notifier } from '../src/services/notify.ts';
 // A narrow service-level regression: the worker-facing amount returned to
 // the actual UI must match the approved 5 000 ₽ per-side ceiling. No payment,
 // user account or external notification is created by this unit test.
-function createOrders(priority = false) {
+function createOrders(priority = false, freeUntil: string | null = null) {
   const db = {
     one: async () => ({ is_priority: priority }),
   } as unknown as Db;
@@ -16,7 +16,7 @@ function createOrders(priority = false) {
     get: async () => ({
       performerCommissionPct: 5,
       priorityCommissionPct: 0,
-      freeUntil: null,
+      freeUntil,
     }),
   } as unknown as SettingsService;
   return new OrdersService(db, settings, {} as Notifier);
@@ -74,4 +74,21 @@ test('a low percentage is retained, with a cap only when the computed amount exc
   assert.ok('commission' in large && 'payout' in large);
   assert.equal(large.commission, 500_000);
   assert.equal(large.payout, 29_500_000);
+});
+
+test('free-fee period is fixed on creation, not the later payout view', async () => {
+  const free = await createOrders(false, '2025-01-31').moneyForViewer({
+    ...largeOrder, created_at: '2025-01-25T10:00:00+03:00',
+  }, 'performer');
+  assert.ok('commission' in free && 'payout' in free && 'commissionPct' in free);
+  assert.equal(free.commissionPct, 0);
+  assert.equal(free.commission, 0);
+  assert.equal(free.payout, largeOrder.call_out_amount);
+
+  const paid = await createOrders(false, '2025-01-31').moneyForViewer({
+    ...largeOrder, created_at: '2025-02-01T10:00:00+03:00',
+  }, 'performer');
+  assert.ok('commission' in paid && 'commissionPct' in paid);
+  assert.equal(paid.commissionPct, 5);
+  assert.equal(paid.commission, 500_000);
 });

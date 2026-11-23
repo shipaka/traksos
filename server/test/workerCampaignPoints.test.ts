@@ -7,7 +7,7 @@ import type { Notifier } from '../src/services/notify.ts';
 
 // Settlement-level regression for a ZERO-fee shortage promotion. No database,
 // bank, phone number, real points balance, or production payment is used.
-function fakeSettlement() {
+function fakeSettlement(freeUntil: string | null = null) {
   const queries: string[] = [];
   const q = {
     one: async (sql: string) => {
@@ -19,7 +19,7 @@ function fakeSettlement() {
     query: async (sql: string) => { queries.push(sql); return []; },
   } as unknown as Queryable;
   const fees = {
-    performerCommissionPct: 5, priorityCommissionPct: 0, freeUntil: null,
+    performerCommissionPct: 5, priorityCommissionPct: 0, freeUntil,
     clientFeePct: 5,
   };
   const settings = {
@@ -65,4 +65,19 @@ test('non-campaign expensive order remains subject to the 5000 RUB ceiling', asy
   await t.service.afterOrder(t.q,{...order,commission_pct_override:null},30_000_000);
   assert.deepEqual(t.spendBases,[500_000]);
   assert.deepEqual(t.ledgerAmounts,[[500_000,-500_000]]);
+});
+
+test('late confirmation of a free-period order never spends worker points', async () => {
+  const free = fakeSettlement('2025-01-31');
+  await free.service.afterOrder(free.q, {
+    ...order, created_at: '2025-01-25T10:00:00+03:00', commission_pct_override: null,
+  }, 1_000_000);
+  assert.deepEqual(free.spendBases, []);
+  assert.deepEqual(free.ledgerAmounts, []);
+
+  const paid = fakeSettlement('2025-01-31');
+  await paid.service.afterOrder(paid.q, {
+    ...order, created_at: '2025-02-01T10:00:00+03:00', commission_pct_override: null,
+  }, 1_000_000);
+  assert.deepEqual(paid.spendBases, [50_000]);
 });

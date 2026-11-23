@@ -879,7 +879,9 @@ export class OrdersService {
     const rate = commissionPct(fees, {
       isPriority: !!worker?.is_priority,
       overridePct: o.commission_pct_override == null ? null : Number(o.commission_pct_override),
-      at: this.now(),
+      // Eligibility for the general free-fee period belongs to the order
+      // creation date, not to a later amount-confirmation day.
+      at: o.created_at ? new Date(o.created_at) : this.now(),
     });
     // The agent's compensation is capped at 5 000 ₽ per side of an order.
     // The client fee already uses cappedPct above: the worker-visible payout

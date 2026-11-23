@@ -148,7 +148,8 @@ export class ReferralService {
     const commission = cappedPct(amount, commissionPct(fees, {
       isPriority: !!perf?.is_priority,
       overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override),
-      at: this.now(),
+      // The same free-fee entitlement must govern points settlement.
+      at: order.created_at ? new Date(order.created_at) : this.now(),
     }));
     // 1. Комиссия исполнителя баллами — возвращаем ему на счёт (наличные — уменьшаем долг)
     // Исполнитель сам решает в «Финансах»: гасить ли комиссию баллами и сколько максимум с заявки
