@@ -146,6 +146,44 @@ try{
   assert(requestId&&requestId!==truck.id,'New insurance dossier was not opened');
   await clientPage.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
   await clientPage.screenshot({path:OUT+'/client-sent-status.png',fullPage:true});
+  // Staff members can read the case but must not see a fake client garage
+  // or a composer that the server explicitly rejects with HTTP 403.
+  const staffCtx=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  const staffPage=await staffCtx.newPage();
+  await staffPage.addInitScript(t=>{
+    localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin');
+  },admin.token);
+  await staffPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await staffPage.getByText('ПРОСМОТР СОТРУДНИКА',{exact:true}).waitFor();
+  assert(await staffPage.locator('a.insurance-back[href="#/admin/section/vehicleServices"]').count()===1,
+    'Staff dossier must link back to real admin insurance queue, not client garage');
+  assert(await staffPage.locator('.insurance-chat-editor').count()===0,
+    'Staff must not see a forbidden insurance message composer');
+  await staffPage.getByText('Только просмотр: отправлять сообщения могут заявитель и назначенный страховой агент.').waitFor();
+  await api('POST','/api/insurance/requests/'+requestId+'/messages',
+    {message:'A moderator or admin must not send this'},admin.token,403);
+  await staffPage.screenshot({path:OUT+'/admin-insurance-readonly.png',fullPage:true});
+  await staffPage.goto(BASE+'/#/insurance/request/new');
+  await staffPage.getByText('Оформление страховой заявки доступно только клиенту').waitFor();
+  await staffCtx.close();
+
+  // Closed cases must retain their history but hide the forbidden composer.
+  // Mock only the response in isolated Chromium, not a real database update.
+  const openDetail=await api('GET','/api/insurance/requests/'+requestId,undefined,owner.token);
+  const detailPath='**/api/insurance/requests/'+requestId;
+  for(const closedStatus of ['cancelled','rejected']){
+    const closedHandler=route=>route.fulfill({status:200,contentType:'application/json',
+      body:JSON.stringify({...openDetail,request:{...openDetail.request,status:closedStatus}})});
+    await clientPage.route(detailPath,closedHandler);
+    await clientPage.reload();
+    await clientPage.getByText('Заявка закрыта. История переписки доступна только для чтения.').waitFor();
+    assert(await clientPage.locator('.insurance-chat-editor').count()===0,
+      closedStatus+': client still sees a composer on a closed insurance case');
+    await clientPage.getByRole('button',{name:/Показать переписку/}).waitFor();
+    await clientPage.unroute(detailPath,closedHandler);
+  }
+  await clientPage.reload();
+  await clientPage.locator('.insurance-chat-editor').waitFor();
   // The MAIN customer dashboard must not hide the newly submitted request.
   await clientPage.goto(BASE+'/#/');
   const homeInsurance=clientPage.getByRole('region',{name:'Мои активные страховые заявки'});

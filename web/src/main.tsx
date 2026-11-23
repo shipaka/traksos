@@ -400,7 +400,7 @@ function App() {
         ? <CourierDelivery id={route[2]} />
         : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
     case 'insurance': screen = b === 'request'
-      ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
+      ? (route[2] === 'new' ? (isCustomer ? <InsuranceApplication vehicleId={route[3]??''} /> : <UnavailableRole label="Оформление страховой заявки доступно только клиенту" />) : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
@@ -528,7 +528,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'insurer'
       ? [['/insurance', '▣', 'Рабочий стол'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'moderator'
-      ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
+      ? [['/moderation', '▦', 'Рабочий стол'], ['/moderation/verify', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
@@ -583,7 +583,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'insurer'
       ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
     : mode === 'moderator'
-      ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
+      ? [['/moderation', 'Очередь модерации'], ['/moderation/verify', 'Проверка мастеров'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin/test-center', 'Тестирование всех кабинетов'],
          ['/admin/section/queue', 'Модерация — очередь'],

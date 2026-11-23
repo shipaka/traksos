@@ -190,11 +190,19 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
   const isAgent=!!d?.isPartner;
+  // The backend deliberately lets staff READ a dossier, but only the applicant
+  // and assigned partner may SEND messages. Keep UI actions consistent with ACL.
+  const isStaffViewer=!!d&&!d.isClient&&!d.isPartner;
+  const isClosed=['cancelled','rejected'].includes(r?.status??'');
+  const canSendMessage=!!d&&(d.isClient||d.isPartner)&&!isClosed;
+  const backHref=isStaffViewer?(me?.roles.includes('admin')?'#/admin/section/vehicleServices':'#/moderation')
+    :isAgent?'#/insurance':'#/garage';
+  const backLabel=isStaffViewer?'К страховым обращениям':isAgent?'К списку страховых заявок':'Мой гараж';
   const status=insurancePresentation(stage,r?.status,isAgent?'partner':'client');
   const activeIndex=insuranceStepIndex(stage);
   const notify=()=>source.reload();
   const send=async()=>{
-    const m=message.trim();if(!m)return;
+    const m=message.trim();if(!m||!canSendMessage)return;
     const v=await run(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
     if(v){setMessage('');notify();}
   };
@@ -233,7 +241,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
   };
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
   return <main className="insurance-workflow stack">
-    <a className="insurance-back" href={isAgent?'#/insurance':'#/garage'}>← {isAgent?'К списку страховых заявок':'Мой гараж'}</a>
+    <a className="insurance-back" href={backHref}>← {backLabel}</a>
     {!d?<Loading error={source.error}/>:
     <>
       <section className="insurance-workflow-hero">
@@ -242,10 +250,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
         <div className={'insurance-live-status tone-'+status.tone} aria-live="polite">
           <span className="insurance-live-orb" aria-hidden="true">{status.tone==='done'?'✓':status.tone==='action'?'!':'◉'}</span>
           <div className="insurance-live-copy">
-            <span className="insurance-live-kicker">ТЕКУЩИЙ ЭТАП · {isAgent?'КАБИНЕТ СТРАХОВЩИКА':'МОЯ СТРАХОВКА'}</span>
+            <span className="insurance-live-kicker">ТЕКУЩИЙ ЭТАП · {isStaffViewer?'ПРОСМОТР СОТРУДНИКА':isAgent?'КАБИНЕТ СТРАХОВЩИКА':'МОЯ СТРАХОВКА'}</span>
             <strong>{status.label}</strong>
             <p>{status.detail}</p>
-            <span className="insurance-live-next">{status.next}</span>
+            {!isStaffViewer&&<span className="insurance-live-next">{status.next}</span>}
           </div>
         </div>
         <p className="insurance-hero-footnote">Страховой агент: {r?.agent_name||'назначенный партнёр'} · Все предложения, уточнения и полис находятся в этом деле. Расчёт и выпуск полиса пока выполняются вручную.</p>
@@ -307,14 +315,17 @@ export function InsuranceThread({requestId}:{requestId:string}){
               </div>)}
             </>}
           </section>
-          <div className="insurance-chat-editor">
+          {canSendMessage?<div className="insurance-chat-editor">
             <label>Сообщение агенту / клиенту
               <textarea className="field" maxLength={2000} rows={3} value={message}
                 onChange={e=>setMessage(e.target.value)}
                 placeholder="Уточнить сведения, запросить документы или ответить…" /></label>
-            <button type="button" className="btn small" disabled={busy||!message.trim()||r?.status==='rejected'}
+            <button type="button" className="btn small" disabled={busy||!message.trim()}
               onClick={send}>Отправить сообщение</button>
-          </div>
+          </div>:<div className="note" role="status">
+            {isStaffViewer?'Только просмотр: отправлять сообщения могут заявитель и назначенный страховой агент.'
+              :'Заявка закрыта. История переписки доступна только для чтения.'}
+          </div>}
         </section>
         <aside className="insurance-conversation-tools stack">
           <section className="card stack insurance-desktop-stage-map">
