@@ -30,8 +30,8 @@ before(async()=>{
   nearOrder=n.id;farOrder=f.id;
   // Coordinates are real PG snapshots for the fixture; no fabricated
   // distance is inserted by the service or by the nearby API.
-  await t.db.query('update orders set lat=59.95,lng=30.35 where id=$1',[nearOrder]);
-  await t.db.query('update orders set lat=57.8,lng=30.35 where id=$1',[farOrder]);
+  await t.db.query("update orders set lat=59.95,lng=30.35,status='searching' where id=$1",[nearOrder]);
+  await t.db.query("update orders set lat=57.8,lng=30.35,status='searching' where id=$1",[farOrder]);
 });
 after(()=>t.close());
 
