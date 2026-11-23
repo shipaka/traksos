@@ -116,6 +116,6 @@ test('support UI guard: real topics and 60-minute policy; unread state resets pe
   assert.match(code, /sendingRef\.current = true/);
   assert.match(code, /if \(sendingRef\.current\) return;/,
     'rapid taps may not create two standalone support tickets');
-  assert.match(code, /if \(r\) location\.replace/,
+  assert.match(code, /if \(r && alive\.current\) location\.replace/,
     'navigate to real ticket only after persisted server response');
 });
