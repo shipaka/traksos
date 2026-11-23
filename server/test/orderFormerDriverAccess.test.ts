@@ -36,6 +36,13 @@ test('revoked driver loses order detail, archive, chat, repair photos, billing a
   ok(await t.api('POST','/api/qr/'+qrA+'/join',{},driverX.token));
   const order = ok(await t.api('POST','/api/orders',apiOrder(carA.id),driverX.token)).order;
   assert.ok(order.id,'driver can create a real order for the assigned car');
+  assert.deepEqual(await t.app.orders.customerRecipientsForOrder(order.id),
+    [ownerA.id,driverX.id]);
+  const performer = await t.login(phone(1004),'master');
+  const bid = await t.db.one<{id:string}>(
+    'insert into bids(order_id,performer_id,price,hour_price,eta_minutes) values($1,$2,$3,$4,$5) returning id',
+    [order.id,performer.id,25_000,10_000,30]);
+  assert.ok(bid?.id);
   assert.ok(hasOrder(ok(await t.api('GET','/api/orders',undefined,driverX.token)),order.id));
   assert.equal((await t.api('GET','/api/orders/'+order.id,undefined,driverX.token)).status,200);
   assert.equal((await t.api('GET','/api/orders/'+order.id+'/messages',undefined,driverX.token)).status,200);
@@ -50,6 +57,8 @@ test('revoked driver loses order detail, archive, chat, repair photos, billing a
   assert.equal((await t.db.one<{owner_id:string|null}>(
     'select owner_id from users where id=$1',[driverX.id]))?.owner_id,ownerB.id);
 
+  assert.deepEqual(await t.app.orders.customerRecipientsForOrder(order.id),[ownerA.id],
+    'old creator must not receive order-related push notifications');
   const archived = ok(await t.api('GET','/api/orders',undefined,driverX.token));
   assert.equal(hasOrder(archived,order.id),false,'full former fleet archive is private');
   assert.equal((await t.api('GET','/api/orders/'+order.id,undefined,driverX.token)).status,403);
@@ -66,6 +75,7 @@ test('revoked driver loses order detail, archive, chat, repair photos, billing a
     ['cancel',{reason:'Отмена после смены владельца'}],
     ['retry',{}],['confirm',{}],['dispute',{reason:'Не согласен с суммой'}],
     ['messages',{body:'Бывший водитель пробует написать'}],
+    [`offers/${bid!.id}/choose`,{}],
   ] as const) {
     const attempt=await t.api('POST',`/api/orders/${order.id}/${suffix}`,body,driverX.token);
     assert.equal(attempt.status,403,'former driver cannot mutate '+suffix);
