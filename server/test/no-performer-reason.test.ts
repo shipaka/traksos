@@ -162,9 +162,30 @@ test('terminal no-performer result survives notification write outage', async ()
       const response = await t.api('GET','/api/orders/'+order.id,undefined,customer.token);
       assert.equal(response.status,200,'customer must still see the true terminal state');
       assert.equal(response.body.status,'no_performer');
+      const queued=await t.db.query<{event_id:string;user_id:string}>(
+        'select event_id::text,user_id from order_no_performer_alerts where order_id=$1 and handled_at is null',
+        [order.id]);
+      assert.equal(queued.length,1,
+        'outage must leave one durable alert intent for the actual customer');
     }finally{
       await t.db.exec(`drop trigger if exists traksos_test_fail_absence_notice on notifications;
         drop function if exists traksos_test_fail_absence_notice();`);
     }
+    // A later DB recovery (or service restart) must drain that old intent
+    // without creating a new order event or a duplicate inbox message.
+    const recovered=await t.app.auction.flushPendingNoPerformerAlerts();
+    assert.equal(recovered,1);
+    const stored=await t.db.query<{user_id:string;title:string;data:any}>(
+      `select user_id,title,data from notifications where data->>'orderId'=$1
+         and data ? 'terminalEventId'`,[order.id]);
+    assert.equal(stored.length,1);
+    assert.equal(stored[0].user_id,customer.id);
+    assert.equal(stored[0].title,'Поиск исполнителя завершён');
+    assert.equal(await t.app.auction.flushPendingNoPerformerAlerts(),0,
+      'second delivery must not duplicate an already committed inbox message');
+    const again=await t.db.query(
+      `select id from notifications where data->>'orderId'=$1
+         and data ? 'terminalEventId'`,[order.id]);
+    assert.equal(again.length,1);
   }finally{await t.close();}
 });
