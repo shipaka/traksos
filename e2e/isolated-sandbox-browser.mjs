@@ -429,7 +429,22 @@ try{
                     startsAt:new Date(now-3*86_400_000).toISOString(),
                     endsAt:new Date(now-2*86_400_000).toISOString(),
                     published:false});
-                  return {scheduled:scheduled.id,expired:expired.id};
+                  // A real disabled future campaign verifies history's time
+                  // label without touching actual commission calculation.
+                  const campaignResponse=await fetch('/api/admin/commission-campaigns',{
+                    method:'POST',headers:{'content-type':'application/json',
+                      authorization:'Bearer '+token},
+                    body:JSON.stringify({
+                      service:'hydraulics',commissionPct:0,
+                      startsAt:new Date(now+20*86_400_000).toISOString(),
+                      endsAt:new Date(now+21*86_400_000).toISOString(),
+                      enabled:false,reason:'Учебная неактивная акция на будущую дату'
+                    })
+                  });
+                  const campaign=await campaignResponse.json();
+                  if(!campaignResponse.ok)
+                    throw Error('Cannot save draft commission campaign: '+JSON.stringify(campaign));
+                  return {scheduled:scheduled.id,expired:expired.id,campaign:campaign.id};
                 });
                 if(!fixtures.scheduled||!fixtures.expired)
                   throw Error('Admin notice fixtures have no API IDs');
@@ -438,8 +453,14 @@ try{
                   .filter({hasText:'QA запланированное объявление'});
                 const expiredCard=page.locator('main.admin-workspace .list-item')
                   .filter({hasText:'QA истёкший черновик'});
+                const campaignCard=page.locator('main.admin-workspace .list-item')
+                  .filter({hasText:'Учебная неактивная акция на будущую дату'});
                 await scheduledCard.waitFor({state:'visible',timeout:15000});
                 await expiredCard.waitFor({state:'visible',timeout:15000});
+                await campaignCard.waitFor({state:'visible',timeout:15000});
+                if(!await campaignCard.getByText('начало впереди',{exact:false}).isVisible() ||
+                   !await campaignCard.getByRole('button',{name:'Включить акцию'}).isEnabled())
+                  throw Error('Future disabled commission campaign has a dead button or wrong period label');
                 if(!await scheduledCard.getByText('запланировано',{exact:false}).isVisible()||
                    await scheduledCard.getByRole('button',{name:'Разослать уведомление'}).count()!==0||
                    !await expiredCard.getByText('срок истёк',{exact:false}).isVisible()||
