@@ -335,7 +335,7 @@ try{
             inspection:['#/inspections/processing','#/menu'],
             courier:['#/courier/jobs','#/courier/chat','#/menu'],
             moderator:['#/moderation/verify','#/menu'],
-            admin:['#/admin/section/orders','#/admin/section/demand','#/admin/test-center','#/menu'],
+            admin:['#/admin/section/orders','#/admin/section/demand','#/admin/section/announcements','#/admin/test-center','#/menu'],
           };
           for(const destination of destinations[role]){
             await page.goto(base+'/'+destination,{waitUntil:'domcontentloaded'});
@@ -360,6 +360,28 @@ try{
                /Такой страницы нет|Не удалось открыть раздел|Вход по номеру телефона|Отсутствует приглашение/.test(state.preview)||
                state.obsolete || state.nativePreview || state.overflow>3)
               throw Error('Navigation regression '+role+' '+width+' '+destination+' '+JSON.stringify(state));
+            if(role==='admin' && destination==='#/admin/section/announcements'){
+              // Actual admin fields and enabled buttons, not a generated mock.
+              // A cleared datetime-local previously threw RangeError before
+              // useAction could handle it; saving must be impossible until the
+              // user fills a coherent date range.
+              const work=page.locator('main.admin-workspace');
+              await work.locator('input[maxlength="140"]').fill('Учебная проверка времени');
+              await work.locator('textarea[maxlength="3000"]').fill('Учебное сообщение для проверки формата дат.');
+              const announce=work.getByRole('button',{name:'Сохранить объявление'});
+              await announce.waitFor({state:'visible'});
+              const times=work.locator('input[type="datetime-local"]');
+              if(await times.count()!==4)throw Error('Admin date fields missing');
+              await times.nth(0).fill('');
+              if(!await announce.isDisabled())
+                throw Error('Empty announcement date must block real Save action');
+              await work.locator('textarea[maxlength="500"]').fill('Учебная проверка акции гидравлики');
+              const commission=work.getByRole('button',{name:'Назначить комиссию'});
+              await times.nth(2).fill('');
+              if(!await commission.isDisabled())
+                throw Error('Empty campaign date must block real finance action');
+              console.log('ADMIN DATE CONTROLS BROWSER PASS',width);
+            }
             if(role==='admin' && destination==='#/admin/section/demand'){
               // The existing admin tools must show live grouped data, not
               // invented demand, placeholder locations or individual GPS.
