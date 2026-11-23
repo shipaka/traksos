@@ -270,8 +270,9 @@ try{
   await page.getByRole('button',{name:'Готовы принять'}).click();
   await page.getByRole('button',{name:'Отправить клиенту'}).click();
   await page.waitForFunction(()=>window.__sto.pending.some(x=>x.path==='/api/base/bookings/request-1/respond'));
-  let responded=await page.evaluate(()=>window.__sto.pending.filter(
-    x=>x.path==='/api/base/bookings/request-1/respond'));
+  const responded=await page.evaluate(()=>window.__sto.pending.filter(
+    x=>x.path==='/api/base/bookings/request-1/respond')
+    .map(x=>({path:x.path,body:x.body})));
   assert(responded.length===1 && responded[0].body.action==='accept',
     'Accept did not use the single existing station response API');
   const firstResponse=await page.evaluate(()=>window.__sto.pending.findIndex(
