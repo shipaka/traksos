@@ -47,6 +47,13 @@
 .courier-trip-illustration{display:grid;place-items:center;font-size:55px;color:#f78029;
  aspect-ratio:1.4;border-radius:13px;border:1px solid #45748d;
  background:linear-gradient(140deg,#213e53,#0c283c)}
+.courier-trip-illustration .courier-parcel-glyph{
+  display:block;width:clamp(64px,20vw,104px);height:clamp(62px,18vw,96px);
+  max-width:96%;max-height:96%;filter:drop-shadow(0 5px 7px #081a2a96);
+}
+.courier-role>b{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.courier-role-parcel{display:inline-flex;flex:none;align-items:center;justify-content:center}
+.courier-role-parcel .courier-parcel-glyph{display:block;width:20px;height:20px}
 .courier-trip-address{display:flex;gap:10px;align-items:flex-start;padding:11px 1px;
  border-top:1px solid #375b73;border-bottom:1px solid #375b73}
 .courier-trip-address>b{font-size:20px;color:#ff872a}
