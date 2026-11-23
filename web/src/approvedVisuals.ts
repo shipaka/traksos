@@ -20,7 +20,7 @@ export const APPROVED_VISUALS = Object.freeze({
   desktopServiceScenes: '/traksos-service-scenes-desktop-hq.webp',
   publicPcPhoto: '/owner20-photo-background-approved-retouched.webp',
   // Approved 23 Nov 2026 variant #3; unique asset used only after exhausted SOS dispatch.
-  noPerformerSearch: '/feature-art/traksos-no-performer-search-approved-20261123.webp',
+  noPerformerSearch: '/feature-art/traksos-no-performer-network-russia-approved-v1.webp',
   publicPcAtlas: '/owner20-artwork-sprite-retouched.webp',
 } as const);
 
