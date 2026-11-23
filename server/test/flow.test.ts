@@ -184,6 +184,13 @@ test('пропущенные вызовы: 30 секунд, следующий, 
     assert.equal(await t.app.orders.tick(), 1);
     const v = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, client.token));
     assert.equal(v.status, 'no_performer');
+    assert.equal(v.absenceReason, 'no_response',
+      'a real ring invitation must never be described as no connected partners');
+    const staffView = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, admin.token));
+    assert.equal(staffView.absenceReason, undefined,
+      'customer-only no-performer explanation must not leak into staff contract');
+    const retryByMaster = await t.api('POST', `/api/orders/${o.id}/retry`, undefined, father.token);
+    assert.equal(retryByMaster.status, 403, 'workers cannot retry someone else\'s search');
   }
   const p = ok(await t.api('GET', '/api/performer/profile', undefined, father.token));
   assert.equal(p.line_status, 'offline');
