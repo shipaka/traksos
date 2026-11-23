@@ -29,7 +29,7 @@ try {
     const actual=await page.evaluate(async()=>{
       const module=await import('/__ci_api_session_race.mjs');
       const originalFetch=window.fetch.bind(window);
-      const pending=[],pendingImages=[];
+      const pending=[],pendingImages=[],orderCalls=[];
       window.fetch=(url,options)=>{
         if(String(url).endsWith('/api/me')){
           return new Promise(resolve=>pending.push({
@@ -40,6 +40,14 @@ try {
           return new Promise(resolve=>pendingImages.push({
             auth:options?.headers?.authorization,resolve
           }));
+        }
+        if(String(url).endsWith('/api/orders') && options?.method==='POST'){
+          orderCalls.push({
+            auth:options.headers?.authorization,
+            key:options.headers?.['idempotency-key']
+          });
+          return Promise.resolve(response(orderCalls.length===1?503:200,
+            orderCalls.length===1?{error:'temporary'}:{order:{id:'CI-NEW-ORDER'}}));
         }
         return originalFetch(url,options);
       };
@@ -127,6 +135,19 @@ try {
         }));
         result.crossTabLogoutToken=module.getToken();
         result.externalChanges=externalChanges;
+
+        // The first order failed ambiguously; its request key must remain
+        // reusable for THIS account only, not after a different login.
+        module.setToken('CI-ORDER-OLD');
+        const orderBody={service:'hydraulics',zoneId:'spb',
+          description:'CI idempotency isolation, no live booking'};
+        const ambiguous=await module.postOrder(orderBody).catch(e=>e);
+        result.ambiguousOrderStatus=ambiguous.status;
+        module.setToken('CI-ORDER-NEW');
+        const orderCreated=await module.postOrder(orderBody);
+        result.orderKeys=orderCalls.map(x=>x.key);
+        result.orderAuth=orderCalls.map(x=>x.auth);
+        result.newOrderId=orderCreated.order.id;
       } finally {
         window.fetch=originalFetch;
       }
@@ -168,6 +189,14 @@ try {
     assert.equal(actual.crossTabLogoutToken,null);
     assert.equal(actual.externalChanges,2,
       'external login and logout must both notify the app');
+    assert.equal(actual.ambiguousOrderStatus,503);
+    assert.equal(actual.orderAuth[0],'Bearer CI-ORDER-OLD');
+    assert.equal(actual.orderAuth[1],'Bearer CI-ORDER-NEW');
+    assert.equal(actual.orderKeys.length,2);
+    assert.ok(actual.orderKeys[0] && actual.orderKeys[1]);
+    assert.notEqual(actual.orderKeys[0],actual.orderKeys[1],
+      'account switch reused previous user pending order idempotency key');
+    assert.equal(actual.newOrderId,'CI-NEW-ORDER');
     // Now exercise ACTUAL browser localStorage propagation across two
     // independent documents of the same origin, not just synthetic events.
     // Open /api/health as a harmless origin-bound page without the React app.

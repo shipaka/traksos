@@ -11,7 +11,15 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ } store.set('traksos.savedOrderDraft.v1', null); }
+  if (token !== t) {
+    disconnectWs();
+    // A failed POST retains its idempotency key in module memory as well as
+    // sessionStorage. NEVER reuse that key for another signed-in account.
+    fallbackPending = null;
+    store.set('traksos.offlineIdentity', null);
+    try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ }
+    store.set('traksos.savedOrderDraft.v1', null);
+  }
   token = t;
   store.set('traksos.token', t);
 }
