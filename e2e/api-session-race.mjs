@@ -23,10 +23,15 @@ try {
     const actual=await page.evaluate(async()=>{
       const module=await import('/__ci_api_session_race.mjs');
       const originalFetch=window.fetch.bind(window);
-      const pending=[];
+      const pending=[],pendingImages=[];
       window.fetch=(url,options)=>{
         if(String(url).endsWith('/api/me')){
           return new Promise(resolve=>pending.push({
+            auth:options?.headers?.authorization,resolve
+          }));
+        }
+        if(String(url).endsWith('/api/private-image')){
+          return new Promise(resolve=>pendingImages.push({
             auth:options?.headers?.authorization,resolve
           }));
         }
@@ -67,6 +72,25 @@ try {
         result.afterCurrent401=module.getToken();
         result.expiredAfterCurrent=expiredEvents;
         result.loginHash=location.hash;
+
+        module.setToken('CI-IMAGE-OLD');
+        const staleImage=module.authedImage('/api/private-image').catch(e=>e);
+        result.oldImageAuth=pendingImages[0]?.auth;
+        module.setToken('CI-IMAGE-NEW');
+        pendingImages[0].resolve(new Response(new Blob(['sensitive-old-image']),{
+          status:200,headers:{'content-type':'image/png'}
+        }));
+        const imageError=await staleImage;
+        result.staleImageCode=imageError.code;
+        result.afterOldImage=module.getToken();
+        const currentImage=module.authedImage('/api/private-image');
+        result.newImageAuth=pendingImages[1]?.auth;
+        pendingImages[1].resolve(new Response(new Blob(['current-user-image']),{
+          status:200,headers:{'content-type':'image/png'}
+        }));
+        const currentImageUrl=await currentImage;
+        result.currentImageLoaded=currentImageUrl.startsWith('blob:');
+        URL.revokeObjectURL(currentImageUrl);
       } finally {
         window.fetch=originalFetch;
       }
@@ -88,6 +112,13 @@ try {
     assert.equal(actual.afterCurrent401,null);
     assert.equal(actual.expiredAfterCurrent,1);
     assert.equal(actual.loginHash,'#/login');
-    console.log('PASS: stale 200/401 cannot mix account data; current 401 unmounts account');
+    assert.equal(actual.oldImageAuth,'Bearer CI-IMAGE-OLD');
+    assert.equal(actual.staleImageCode,'session_changed',
+      'a private image from the old user must never reach the next account');
+    assert.equal(actual.afterOldImage,'CI-IMAGE-NEW');
+    assert.equal(actual.newImageAuth,'Bearer CI-IMAGE-NEW');
+    assert.equal(actual.currentImageLoaded,true,
+      'private images for the current account still load normally');
+    console.log('PASS: stale 200/401 and private images cannot mix account data');
   } finally { await context.close(); }
 } finally { await browser.close(); }

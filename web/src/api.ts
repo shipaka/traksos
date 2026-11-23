@@ -248,9 +248,20 @@ export function fmtTime(iso: string) {
 
 /** Картинка, которую отдают только с токеном (фото документов) → адрес для <img> */
 export async function authedImage(path: string) {
-  const r = await fetch(API_URL + path, { headers: token ? { authorization: `Bearer ${token}` } : {} });
+  const requestToken = token;
+  const r = await fetch(API_URL + path, {
+    headers: requestToken ? { authorization: `Bearer ${requestToken}` } : {},
+    cache: 'no-store',
+  });
+  // Private images can finish downloading after sign-out or account switch.
+  // Never return old-account document pixels as a reusable blob URL.
+  if (requestToken && token !== requestToken)
+    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
   if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
-  return URL.createObjectURL(await r.blob());
+  const data = await r.blob();
+  if (requestToken && token !== requestToken)
+    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+  return URL.createObjectURL(data);
 }
 
 /** Сжать фото с камеры: по длинной стороне до 1600 px, JPEG — чтобы грузилось и по слабому интернету */
