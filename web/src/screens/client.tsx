@@ -51,6 +51,8 @@ function ClientHomeForAccount() {
     'fleet-rules:'+(me?.id??'guest')+':'+(me?.owner_id??''));
   const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
     !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
+  const restrictionCopy=fleetRules.error?'Не удалось проверить права — повторите запрос'
+    :'Ограниченный доступ · разрешает владелец';
   const active = usePrivateRead<any[]>(()=>get('/api/orders'),
     'home-orders:'+(me?.id??'guest'),e=>e.type==='order');
   const services = usePrivateRead<any[]>(()=>get('/api/vehicle-service-requests'),
@@ -64,6 +66,16 @@ function ClientHomeForAccount() {
   // silently fell through to the obsolete desktop hero and widgets.
   // Keep fleet permissions and real order data identical across both.
   if (mobileWorkspace) return <main className="client-home client-dashboard">
+    {fleetRules.error&&<section className="card stack" role="alert">
+      <b>Не удалось проверить разрешения автопарка</b>
+      <button type="button" className="btn ghost small"
+        onClick={()=>{void fleetRules.reload();}}>Повторить проверку доступа</button>
+    </section>}
+    {services.error&&<section className="card stack" role="alert">
+      <b>Не удалось проверить активные страховые обращения</b>
+      <button type="button" className="btn ghost small"
+        onClick={()=>{void services.reload();}}>Повторить загрузку обращений</button>
+    </section>}
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
       disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
@@ -101,11 +113,22 @@ function ClientHomeForAccount() {
           </a>
         </section>;
       })()}
+      {fleetRules.error&&<section className="card stack" role="alert">
+        <b>Не удалось проверить разрешения автопарка</b>
+        <span className="note">Пока нет ответа сервера, действия с ограничениями недоступны. Это не означает блокировку владельцем.</span>
+        <button type="button" className="btn ghost small"
+          onClick={()=>{void fleetRules.reload();}}>Повторить проверку доступа</button>
+      </section>}
+      {services.error&&<section className="card stack" role="alert">
+        <b>Не удалось проверить активные страховые обращения</b>
+        <button type="button" className="btn ghost small"
+          onClick={()=>{void services.reload();}}>Повторить загрузку обращений</button>
+      </section>}
       <section className="desktop-quick-links" aria-label="Выберите помощь">
         <FleetShortcut href="#/sos" locked={false} className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><ApprovedServiceIllustration kind="repair" /><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>{restricted("tow") ? "Ограниченный доступ · разрешает владелец" : "Тягач, полуприцеп или сцепка"}</small></span><ApprovedServiceIllustration kind="tow" /><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>{restricted("service") ? "Ограниченный доступ · разрешает владелец" : "Выбор сервиса и запись на ремонт"}</small></span><ApprovedServiceIllustration kind="service" /><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>{restricted("consult") ? "Ограниченный доступ · разрешает владелец" : "Обсудить проблему со специалистом"}</small></span><ApprovedServiceIllustration kind="consult" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>{restricted("tow") ? restrictionCopy : "Тягач, полуприцеп или сцепка"}</small></span><ApprovedServiceIllustration kind="tow" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>{restricted("service") ? restrictionCopy : "Выбор сервиса и запись на ремонт"}</small></span><ApprovedServiceIllustration kind="service" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>{restricted("consult") ? restrictionCopy : "Обсудить проблему со специалистом"}</small></span><ApprovedServiceIllustration kind="consult" /><span aria-hidden="true">↗</span></FleetShortcut>
       </section>
 
       <div className="desktop-home-columns">
@@ -165,8 +188,8 @@ function ClientHomeForAccount() {
           </section>}
           <div className="desktop-section-heading"><h2>Сервисы TrakSOS</h2></div>
           <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
-            <FleetShortcut href="#/garage" locked={restricted("insurance") && restricted("inspection")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>{restricted("insurance") && restricted("inspection") ? "Ограниченный доступ · разрешает владелец" : "Документы и оформление для вашей техники"}</small><em>К автомобилям →</em></FleetShortcut>
-            <FleetShortcut href="#/shop" locked={restricted("shop")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>{restricted("shop") ? "Ограниченный доступ · разрешает владелец" : "Поиск, аналоги и история покупок. Магазин пока закрыт"}</small><em>Открыть раздел →</em></FleetShortcut>
+            <FleetShortcut href="#/garage" locked={restricted("insurance") && restricted("inspection")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>{restricted("insurance") && restricted("inspection") ? restrictionCopy : "Документы и оформление для вашей техники"}</small><em>К автомобилям →</em></FleetShortcut>
+            <FleetShortcut href="#/shop" locked={restricted("shop")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>{restricted("shop") ? restrictionCopy : "Поиск, аналоги и история покупок. Магазин пока закрыт"}</small><em>Открыть раздел →</em></FleetShortcut>
             <a href="#/garage"><span className="client-dashboard-hub-icon">▤</span><b>Мой транспорт</b><small>Грузовики, прицепы и история обслуживания</small><em>Мой гараж →</em></a>
             <a href="#/support"><span className="client-dashboard-hub-icon">☏</span><b>Поддержка</b><small>Обращения и помощь по вашим заявкам</small><em>Написать →</em></a>
           </section>
