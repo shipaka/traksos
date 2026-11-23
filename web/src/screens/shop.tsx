@@ -544,7 +544,8 @@ export function ShopCart() {
       if(latestOwner.current!==actor||getToken()!==token)return;
       if(created){
         setCart({});
-        go('shop/history');
+        // Preserve the approved post-checkout navigation.
+        go('shop');
       }else{
         setOutcomeUnknown(true);
       }
