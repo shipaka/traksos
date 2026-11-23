@@ -157,7 +157,7 @@ export class DriverAirService {
 
   async hide(user:AuthUser,id:string) {
     if(!isStaff(user))throw forbidden('Доступ только сотрудникам');
-    if(!/^[1-9]\\d{0,17}$/.test(id))throw bad('invalid_air_message');
+    if(!/^[1-9]\d{0,17}$/.test(id))throw bad('invalid_air_message');
     await this.db.tx(async q=>{
       const row=await q.one<{id:string}>(
         `update driver_air_messages set hidden_at=$2,hidden_by=$3
