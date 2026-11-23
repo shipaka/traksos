@@ -119,6 +119,10 @@ jobs:
           node e2e/sos-regional-pricing.mjs e2e/shots
           node e2e/archived-order-chat.mjs e2e/shots
           node e2e/client-order-sections.mjs e2e/shots
+          # Verified production private-read hook, real customer account-switch UI and order chat.
+          node e2e/client-private-read-20261124.mjs
+          node e2e/client-account-switch-20261124.mjs
+          node e2e/client-order-chat-20261124.mjs
           node e2e/performer-request-settings.mjs e2e/shots
           # Real performer React profile: same-route account isolation, schedule/finance and form contracts.
           node e2e/performer-profile-20261124.mjs
