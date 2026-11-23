@@ -254,7 +254,7 @@ export function AdminCaseCenter() {
             {detailFailure?.key===detailKey&&<button type="button" className="btn ghost small"
               onClick={()=>setRefresh(x=>x+1)}>Повторить загрузку обращения</button>}
           </div>}
-          {!detail&&!error&&<p className="note" role="status">Загружаю историю обращения…</p>
+          {!detail&&!error&&<p className="note" role="status">Загружаю историю обращения…</p>}
 
           {detail&&focused&&<div className="case-inspect-pane">
             <div className="case-inspect-top">
