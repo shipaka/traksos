@@ -767,6 +767,8 @@ function ProductForm({ p, products, categories, onDone }: { p: any; products: an
   const [analogSource, setAnalogSource] = useState('');
   const [verified, setVerified] = useState(false);
   const [photo, setPhoto] = useState<string | null | undefined>(undefined);
+  const [photoBusy,setPhotoBusy]=useState(false);
+  const [photoError,setPhotoError]=useState('');
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   async function save() {
     const body: any = { category: f.category, name: f.name, spec: f.spec || null, description: f.description || null, brand: f.brand || null, article: f.article || null, searchTerms: f.searchTerms || null, price: f.price, stock: f.stock, leadDays: f.leadDays, isKit: f.isKit, active: f.active, sort: f.sort };
@@ -800,11 +802,24 @@ function ProductForm({ p, products, categories, onDone }: { p: any; products: an
       <label className="agree"><input type="checkbox" checked={f.active} onChange={(e) => set('active', e.target.checked)} /><span>Показывать в магазине</span></label>
       <div className="row">
         {photo ? <img src={photo} alt="" width={64} height={64} style={{ borderRadius: 12, objectFit: 'cover' }} /> : p.hasPhoto && photo !== null ? <Thumb p={p} size={64} /> : null}
-        <label className="btn ghost small">Фото<input type="file" accept="image/*" hidden onChange={async (e) => { const file = e.target.files?.[0]; if (file) setPhoto(await resizeImage(file)); }} /></label>
-        {(p.hasPhoto || photo) && <button type="button" className="btn ghost small" onClick={() => setPhoto(null)}>Убрать фото</button>}
+        <label className="btn ghost small">Фото
+          <input type="file" accept="image/jpeg,image/png,image/webp" hidden
+            disabled={busy||photoBusy} onChange={async(e)=>{
+              const input=e.currentTarget,file=input.files?.[0];
+              if(!file)return;
+              setPhotoError('');setPhotoBusy(true);
+              try{setPhoto(await resizeImage(file));}
+              catch(error){setPhotoError(error instanceof Error?error.message:'Не удалось обработать фото');}
+              finally{input.value='';setPhotoBusy(false);}
+            }}/>
+        </label>
+        {(p.hasPhoto || photo) && <button type="button" className="btn ghost small"
+          disabled={busy||photoBusy} onClick={() => {setPhoto(null);setPhotoError('');}}>Убрать фото</button>}
+        {photoBusy && <span className="note" role="status">Подготавливаем фотографию…</span>}
+        {photoError && <span className="banner warn" role="alert">{photoError}</span>}
       </div>
       <div className="grid2">
-        <button className="btn" disabled={busy || f.name.trim().length < 2 || f.price == null} onClick={save}>Сохранить</button>
+        <button className="btn" disabled={busy || photoBusy || f.name.trim().length < 2 || f.price == null} onClick={save}>Сохранить</button>
         <button className="btn ghost" onClick={onDone}>Назад</button>
       </div>
       {p.id && <SupplierMapping productId={p.id} />}
