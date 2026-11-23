@@ -184,6 +184,7 @@ try {
     // Closing with the launcher while the composer is focused used to leave
     // inputFocused=true. Reopening then incorrectly jumped straight into the
     // keyboard-editing geometry although the keyboard/input was no longer active.
+    await page.locator('.trakbot-dock-launcher').focus();
     await input.focus();
     await page.locator('.trakbot-dock.trakbot-dock--editing').waitFor({timeout:3000});
     await page.locator('.trakbot-dock-launcher').click();
