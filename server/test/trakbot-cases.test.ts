@@ -3,10 +3,13 @@ import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 
 let t: T;
-let admin: any, client: any;
+let admin: any, reviewer: any, client: any;
 before(async () => {
   t = await setup();
   admin = await t.login('+79990000001');
+  reviewer = await t.login('+79997778002');
+  // Disposable account with independent admin rights to review another author's case.
+  await t.db.query("update users set roles=array['admin']::text[] where id=$1",[reviewer.id]);
   client = await t.login('+79997778001');
 });
 after(() => t.close());
@@ -32,8 +35,11 @@ test('repair case is pending until manual review, then searchable only by specia
   assert.equal((await t.api('GET','/api/admin/tech/repair-cases',undefined,client.token)).status,403);
   assert.equal((await t.api('POST', '/api/admin/tech/repair-cases/'+created.id+'/review',
     {approve:true,note:''},admin.token)).status, 400);
+  assert.equal((await t.api('POST','/api/admin/tech/repair-cases/'+created.id+'/review',
+    {approve:true,note:'Проверены описание и происхождение данных'},admin.token)).status,403,
+    'case author cannot self-approve even with staff role');
   ok(await t.api('POST','/api/admin/tech/repair-cases/'+created.id+'/review',
-    {approve:true,note:'Проверены описание и происхождение данных'},admin.token));
+    {approve:true,note:'Проверены описание и происхождение данных'},reviewer.token));
   const approved = ok(await t.api('GET','/api/tech/repair-cases?q=TEST-01',undefined,admin.token));
   assert.equal(approved.items.length,1);
   assert.equal(approved.items[0].code,'TEST-01');
