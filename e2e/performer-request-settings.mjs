@@ -69,13 +69,14 @@ try{
       const saturday=page.getByRole('button',{name:'Сб',exact:true});
       const initialDay=await saturday.getAttribute('aria-pressed');
       await saturday.click();
-      assert.notEqual(await saturday.getAttribute('aria-pressed'),initialDay,
+      const expectedPressed=initialDay==='true'?'false':'true';
+      assert.equal(await saturday.getAttribute('aria-pressed'),expectedPressed,
         'tapping a day must change its state');
-      if(await saturday.getAttribute('aria-pressed')==='true'){
-        const selected=await saturday.evaluate(el=>getComputedStyle(el).backgroundColor);
-        assert.equal(selected,'rgb(232, 173, 81)',
-          'selected workdays must use the approved gold, not pink');
-      }
+      // The control animates its background after aria-pressed changes.
+      await page.waitForFunction(({button,color})=>getComputedStyle(button).backgroundColor===color,{
+        button:await saturday.elementHandle(),
+        color:expectedPressed==='true'?'rgb(232, 173, 81)':'rgb(20, 42, 53)',
+      },{timeout:3000});
       await page.getByRole('button',{name:'Сохранить',exact:true}).click();
       await page.getByText('Распорядок сохранён').waitFor();
       await page.reload({waitUntil:'domcontentloaded'});
