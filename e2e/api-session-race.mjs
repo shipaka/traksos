@@ -162,6 +162,37 @@ try {
     assert.equal(actual.crossTabLogoutToken,null);
     assert.equal(actual.externalChanges,2,
       'external login and logout must both notify the app');
-    console.log('PASS: cross-tab auth, stale responses and protected images cannot mix accounts');
+    // Now exercise ACTUAL browser localStorage propagation across two
+    // independent documents of the same origin, not just synthetic events.
+    // Open /api/health as a harmless origin-bound page without the React app.
+    await context.route('**/__ci_api_session_race.mjs',route=>
+      route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
+    const tabA=await context.newPage();
+    const tabB=await context.newPage();
+    try {
+      await Promise.all([tabA.goto(BASE+'/api/health'),tabB.goto(BASE+'/api/health')]);
+      const loadModule=async page=>page.evaluate(async()=>{
+        window.ciApi=await import('/__ci_api_session_race.mjs');
+        window.ciExternalChanges=0;
+        window.addEventListener('traksos-auth-external-change',()=>
+          window.ciExternalChanges++);
+      });
+      await Promise.all([loadModule(tabA),loadModule(tabB)]);
+      await tabA.evaluate(()=>window.ciApi.setToken('CI-REAL-TAB-A'));
+      await tabB.waitForFunction(()=>window.ciApi.getToken()==='CI-REAL-TAB-A');
+      await tabB.evaluate(()=>window.ciApi.setToken('CI-REAL-TAB-B'));
+      await tabA.waitForFunction(()=>window.ciApi.getToken()==='CI-REAL-TAB-B');
+      await tabB.evaluate(()=>window.ciApi.setToken(null));
+      await tabA.waitForFunction(()=>window.ciApi.getToken()===null);
+      const [changesA,changesB]=await Promise.all([
+        tabA.evaluate(()=>window.ciExternalChanges),
+        tabB.evaluate(()=>window.ciExternalChanges),
+      ]);
+      assert.equal(changesA,2,'tab A must see tab B login AND logout');
+      assert.equal(changesB,1,'tab B must receive tab A login once');
+    } finally {
+      await Promise.all([tabA.close(),tabB.close()]);
+    }
+    console.log('PASS: real cross-tab login/logout, stale API responses and private images cannot mix accounts');
   } finally { await context.close(); }
 } finally { await browser.close(); }
