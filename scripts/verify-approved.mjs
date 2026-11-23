@@ -199,13 +199,14 @@ expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent 
   signedPcBotStyles.includes('.app:not(.guest-app)> .trakbot-dock'),
   'signed-in PC detail pages keep the approved larger floating technician without an old pill');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
-expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
-  ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
+const guestVisualFixes=await read('web/src/ownerVisualFixes20261122.css');
+expect(!ownerPcUiContract.includes('.owner20-feature-illustration') &&
+  !guestVisualFixes.includes('.owner20-feature-illustration') &&
   ownerPcUiContract.includes('rgba(0,0,0,.9) 13%,#000 27%') &&
   !ownerPcUiContract.includes('transparent 43%,#000 75%') &&
   !ownerPcUiContract.includes('transparent 53%,#000 84%') &&
   !ownerPcUiContract.includes('rgba(0,0,0,.50) 18%,#000 42%'),
-  '617 desktop uses one effective artwork crop, not stacked contradictory mask patches');
+  '617 feature cards omit retired sprite styles and retain the bottom-row crop');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
   ownerPcUiContract.includes('owner20-feature::before') &&
