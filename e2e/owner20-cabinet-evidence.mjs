@@ -285,6 +285,16 @@ try{
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     if(width===1440&&['owner','driver'].includes(c.id)){
+       const roleText=await page.locator('.tr-inner-overline').first().textContent();
+       const expected=c.id==='owner'?'Кабинет владельца автопарка':'Кабинет водителя автопарка';
+       if(!roleText?.includes(expected))throw Error('Inner page lost role-specific header: '+c.id);
+       if(await page.locator('.tr-inner-rail a[href="'+c.inside+'"]').count())
+         throw Error('Inner quick links contain current-route self-link: '+c.id);
+     }
+     if(width===1440&&c.id==='master'&&
+       await page.locator('.tr-inner-back').count())
+       throw Error('Master inner profile has duplicate back navigation');
      if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
        throw Error('Moderator inner page unexpectedly shows floating TrakBot: '+width);
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});

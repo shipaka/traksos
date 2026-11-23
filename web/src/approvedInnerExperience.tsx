@@ -38,6 +38,8 @@ const pageCopy: Record<string, RouteMeta> = {
 
 const roleCopy: Record<string,{name:string;home:string;actions:[string,string][]}> = {
   client:{name:'Кабинет клиента',home:'/',actions:[['/orders','Мои заявки'],['/garage','Моя техника'],['/support','Поддержка']]},
+  owner:{name:'Кабинет владельца автопарка',home:'/',actions:[['/orders','Мои заявки'],['/garage','Моя техника'],['/fleet','Мой автопарк']]},
+  driver:{name:'Кабинет водителя автопарка',home:'/',actions:[['/orders','Мои заявки'],['/garage','Моя техника'],['/support','Поддержка']]},
   performer:{name:'Кабинет специалиста',home:'/work',actions:[['/work/jobs','Мои заявки'],['/work/me/schedule','График'],['/work/me','Профиль']]},
   service:{name:'Кабинет СТО',home:'/base',actions:[['/base/inbox','Заявки СТО'],['/base/money','Финансы'],['/base/me','Профиль СТО']]},
   insurer:{name:'Страховой партнёр',home:'/insurance',actions:[['/insurance/requests','Страховые дела'],['/inspections','Техосмотры'],['/profile','Настройки']]},
@@ -83,7 +85,9 @@ export function ApprovedInnerHero({mode,route,title}:{mode:string;route:string[]
       <span className="tr-inner-overline">TRAKSOS <span aria-hidden="true">·</span> {role.name}</span>
       <h1>{info.title}</h1>
       <p>{info.subtitle}</p>
-      <a href={'#'+role.home} className="tr-inner-back"><span aria-hidden="true">←</span> На рабочий стол</a>
+      {/* The performer profile already owns a back link to the same workspace. */}
+      {!(route[0]==='work'&&route[1]==='me')&&
+        <a href={'#'+role.home} className="tr-inner-back"><span aria-hidden="true">←</span> На рабочий стол</a>}
     </div>
     <div className="tr-inner-hero-art" aria-hidden="true">
       <img src={APPROVED_VISUALS.workspaceTruck} alt="" loading="lazy"/>
@@ -100,7 +104,8 @@ export function ApprovedInnerRail({mode,route}:{mode:string;route:string[]}){
       <span className="tr-inner-rail-overline">БЫСТРЫЙ ДОСТУП</span>
       <h2>Всё под рукой</h2>
       <nav aria-label="Доступные действия в кабинете">
-        {role.actions.map(([href,text])=><a href={'#'+href} key={href}><span>{text}</span><span aria-hidden="true">↗</span></a>)}
+        {role.actions.filter(([href])=>href!=='/'+route.join('/')).map(([href,text])=>
+          <a href={'#'+href} key={href}><span>{text}</span><span aria-hidden="true">↗</span></a>)}
       </nav>
     </div>
     {staff?<div className="tr-inner-rail-card tr-inner-rail-status">
