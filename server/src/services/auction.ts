@@ -62,7 +62,7 @@ export class AuctionService {
     const stages = this.stages(order,all.dispatch);
     const stageIndex=Number(order.sos_dispatch_stage??0);
     const stage=stages?.[stageIndex]??null;
-    if (stages && !stage) return this.finishEmpty(order);
+    if (stages && !stage) return this.finishEmpty(order, all.dispatch);
     // Only one tick/HTTP worker claims a given wave. Cancellation wins if the
     // order has already left searching; a retry must clear auction_until first.
     if (stage) {
@@ -121,7 +121,7 @@ export class AuctionService {
     }
     await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos, wave: stage?stageIndex+1:null, waves: stages?.length??null });
     this.notifier.live([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', auction: true });
-    if (!invited.length) return stage ? undefined : this.finishEmpty(order);
+    if (!invited.length) return stage ? undefined : this.finishEmpty(order, all.dispatch);
 
     const lim = this.limits(order, all.dispatch);
     const ring = new Date(this.now().getTime() + Math.min(ms, all.dispatch.ringSeconds * 1000)).toISOString();
@@ -317,7 +317,7 @@ export class AuctionService {
             n++;
           }
         } else {
-          await this.finishEmpty(o);
+          await this.finishEmpty(o, all.dispatch);
           n++;
         }
         continue;
@@ -331,46 +331,53 @@ export class AuctionService {
     return n;
   }
 
-  private async finishEmpty(order: any) {
-    const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
-    if (!r.length) return;
-    await this.db.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
-    // Snapshot what we actually KNOW at the end of the final wave. Never
-    // infer a missing partner from no_performer status or an empty radius alone.
-    let absenceReason: NoPerformerReason = 'unknown';
-    try {
-      const evidence = await this.db.one<{ invited: boolean; hadOffer: boolean }>(
-        `select
-          exists(select 1 from order_events e where e.order_id=$1
-             and e.id>coalesce((select max(id) from order_events
-                                 where order_id=$1 and type='retry'),0)
-             and (e.type='ringing' or
-                  (e.type='auction_started' and
-                   coalesce(nullif(e.data->>'candidates','')::numeric,0)>0))) as invited,
-          exists(select 1 from order_events e where e.order_id=$1
-             and e.type='offer'
-             and e.id>coalesce((select max(id) from order_events
-                                 where order_id=$1 and type='retry'),0)) as "hadOffer"`,
-        [order.id]);
-      const profiles = await this.db.query<PartnerPresence>(
-        `select p.kind,p.specialties,u.status as user_status,p.verification,
-                p.line_status,p.paused,p.extras,p.lat,p.lng
-           from performer_profiles p join users u on u.id=p.user_id
-          where p.kind=$1`, [performerKindFor(order.service)]);
-      const dispatch = (await this.settings.all()).dispatch;
-      absenceReason = classifyNoPerformerReason({
-        service: order.service, verifiedOnly: !!order.verified_only,
-        lat: order.lat ?? null, lng: order.lng ?? null,
-        radiusKm: dispatch.radiusKm, invited: !!evidence?.invited,
-        hadOffer: !!evidence?.hadOffer, profiles
-      });
-    } catch (err) {
-      // Explanatory copy must never block the terminal order status, payment,
-      // immutable event or customer notification.
-      console.error('[no-performer-classification]', err);
-    }
-    await this.orders.event(this.db, order.id, null, 'no_performer',
-      { auction: true, absenceReason });
+  private async finishEmpty(order: any, dispatch: Settings['dispatch']) {
+    // The requester can poll as soon as the status changes. Publish the status
+    // and its immutable explanation in the same commit.
+    const finished = await this.db.tx(async (q) => {
+      const r = await q.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
+      if (!r.length) return false;
+      await q.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
+      // Snapshot what we actually KNOW at the end of the final wave. Never
+      // infer a missing partner from no_performer status or an empty radius alone.
+      let absenceReason: NoPerformerReason = 'unknown';
+      await q.query('savepoint classify_absence');
+      try {
+        const evidence = await q.one<{ invited: boolean; hadOffer: boolean }>(
+          `select
+            exists(select 1 from order_events e where e.order_id=$1
+               and e.id>coalesce((select max(id) from order_events
+                                   where order_id=$1 and type='retry'),0)
+               and (e.type='ringing' or
+                    (e.type='auction_started' and
+                     coalesce(nullif(e.data->>'candidates','')::numeric,0)>0))) as invited,
+            exists(select 1 from order_events e where e.order_id=$1
+               and e.type='offer'
+               and e.id>coalesce((select max(id) from order_events
+                                   where order_id=$1 and type='retry'),0)) as "hadOffer"`,
+          [order.id]);
+        const profiles = await q.query<PartnerPresence>(
+          `select p.kind,p.specialties,u.status as user_status,p.verification,
+                  p.line_status,p.paused,p.extras,p.lat,p.lng
+             from performer_profiles p join users u on u.id=p.user_id
+            where p.kind=$1`, [performerKindFor(order.service)]);
+        absenceReason = classifyNoPerformerReason({
+          service: order.service, verifiedOnly: !!order.verified_only,
+          lat: order.lat ?? null, lng: order.lng ?? null,
+          radiusKm: dispatch.radiusKm, invited: !!evidence?.invited,
+          hadOffer: !!evidence?.hadOffer, profiles
+        });
+      } catch (err) {
+        // Explanatory copy must never block the terminal order status, payment,
+        // immutable event or customer notification.
+        await q.query('rollback to savepoint classify_absence');
+        console.error('[no-performer-classification]', err);
+      }
+      await this.orders.event(q, order.id, null, 'no_performer',
+        { auction: true, absenceReason });
+      return true;
+    });
+    if (!finished) return;
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
       { kind: 'normal', title: 'Поиск исполнителя завершён', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } });
   }
