@@ -238,6 +238,12 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const [choice,setChoice]=useState('');
   const [expiresOn,setExpiresOn]=useState('');
   const [pdf,setPdf]=useState<File|null>(null);
+  const threadRef=useRef<HTMLElement>(null);
+  const [actionError,setActionError]=useState<{scope:'offers'|'policy'|'download';message:string}|null>(null);
+  const reportActionError=(scope:'offers'|'policy'|'download',message:string,selector?:string)=>{
+    setActionError({scope,message});
+    if(selector)threadRef.current?.querySelector<HTMLElement>(selector)?.focus();
+  };
   const d=source.data,r=d?.request;
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
@@ -262,17 +268,25 @@ export function InsuranceThread({requestId}:{requestId:string}){
     const data=drafts.map(o=>({company:o.company.trim(),product:o.product.trim(),
       premiumKopecks:Math.round(Number(o.price.replace(',','.'))*100),
       description:o.description.trim(),coverage:o.coverage.trim()}));
-    if(data.some(o=>!o.company||!o.product||!o.premiumKopecks||o.premiumKopecks<=0)){
-      window.alert('Для каждого предложения заполните компанию, продукт и стоимость.');
+    const invalid=data.findIndex(o=>!o.company||!o.product||!Number.isFinite(o.premiumKopecks)||o.premiumKopecks<=0);
+    if(invalid!==-1){
+      const offer=data[invalid];
+      const key=!offer.company?'company':!offer.product?'product':'price';
+      reportActionError('offers','Предложение '+(invalid+1)+': укажите компанию, продукт и положительную стоимость.',
+        '[data-insurance-offer-field="'+invalid+'-'+key+'"]');
       return;
     }
+    setActionError(null);
     const v=await run(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
     if(v)notify();
   };
   const upload=async()=>{
     if(!pdf||pdf.type!=='application/pdf'||pdf.size>4*1024*1024||pdf.size<100||!expiresOn){
-      window.alert('Прикрепите PDF до 4 МБ и укажите дату окончания полиса.');return;
+      reportActionError('policy','Прикрепите действительный PDF до 4 МБ и укажите дату окончания полиса.',
+        '[data-insurance-policy-field="'+(!expiresOn?'date':'file')+'"]');
+      return;
     }
+    setActionError(null);
     const dataUrl=await new Promise<string>((resolve,reject)=>{
       const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);
       reader.readAsDataURL(pdf);
@@ -289,10 +303,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
       const url=URL.createObjectURL(await response.blob());
       const link=document.createElement('a');link.href=url;link.download='insurance-policy.pdf';link.click();
       setTimeout(()=>URL.revokeObjectURL(url),30000);
-    }catch{window.alert('Не удалось скачать PDF. Проверьте интернет и повторите.');}
+    }catch{reportActionError('download','Не удалось скачать PDF. Проверьте интернет и повторите.');}
   };
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
-  return <main className="insurance-workflow stack">
+  return <main ref={threadRef} className="insurance-workflow stack">
     <a className="insurance-back" href={backHref}>← {backLabel}</a>
     {!d?<Loading error={source.error}/>:
     <>
@@ -353,6 +367,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <b>✓ Готовый страховой полис</b>
             <span>Агент прикрепил итоговый PDF. Документ доступен в этой переписке.</span>
             <button type="button" className="btn" onClick={download}>Скачать PDF-полис</button>
+            {actionError?.scope==='download'&&
+              <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
           </div>}
           <section className="insurance-chat-panel stack" aria-label="Уточнения по заявке">
             <button type="button" className="btn ghost" aria-expanded={chatExpanded}
@@ -412,13 +428,19 @@ export function InsuranceThread({requestId}:{requestId:string}){
           {isAgent&&stage==='preparing'&&<section className="card stack">
             <b>Предложения от страховых компаний</b>
             <p className="note">Можно отправить от 1 до 20 вариантов. Расчёт проводится агентом вне TrakSOS.</p>
+            {actionError?.scope==='offers'&&
+              <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
             {drafts.map((o,i)=><div className="insurance-quote-editor stack" key={i}>
               <b>Предложение {i+1}</b>
               {([['company','Страховая компания'],['product','Название полиса'],['price','Стоимость, ₽'],
                 ['coverage','Покрытие / условия'],['description','Примечание']] as const).map(([key,label])=>
                 <label key={key}>{label}<input className="field" value={o[key]}
                   inputMode={key==='price'?'decimal':'text'} maxLength={key==='price'?16:240}
-                  onChange={e=>updateDraft(i,key,e.target.value)}/></label>)}
+                  data-insurance-offer-field={i+'-'+key}
+                  aria-invalid={actionError?.scope==='offers'&&
+                    ((!o.company.trim()&&key==='company')||(!o.product.trim()&&key==='product')||
+                    (key==='price'&&!(Number(o.price.replace(',','.'))>0)))||undefined}
+                  onChange={e=>{updateDraft(i,key,e.target.value);setActionError(null);}}/></label>)}
               {drafts.length>1&&<button type="button" className="btn ghost small"
                 onClick={()=>setDrafts(old=>old.filter((_,n)=>n!==i))}>Удалить вариант</button>}
             </div>)}
@@ -430,11 +452,13 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <b>Отправить готовый полис</b>
             <p className="note">Оформите полис у страховой компании и прикрепите полученный PDF. Файл до 4 МБ хранится в защищённом виде.</p>
             <label>Дата окончания действия<input type="date" className="field" value={expiresOn}
-              onChange={e=>setExpiresOn(e.target.value)}/></label>
+              data-insurance-policy-field="date" onChange={e=>{setExpiresOn(e.target.value);setActionError(null);}}/></label>
             <label>Файл PDF<input type="file" accept="application/pdf,.pdf" className="field"
-              onChange={e=>setPdf(e.target.files?.[0]??null)}/></label>
-            <button className="btn" type="button" disabled={busy||!pdf||!expiresOn} onClick={upload}>
+              data-insurance-policy-field="file" onChange={e=>{setPdf(e.target.files?.[0]??null);setActionError(null);}}/></label>
+            <button className="btn" type="button" disabled={busy} onClick={upload}>
               Отправить готовый полис клиенту</button>
+            {actionError?.scope==='policy'&&
+              <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
           </section>}
         </aside>
       </div>

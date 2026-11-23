@@ -252,6 +252,13 @@ try{
   await inboxPage.getByRole('tab',{name:/^В работе/}).click();
   await inboxPage.getByText('Нет заявок в работе.',{exact:true}).waitFor();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
+  // Agent-side validation should stay inside the TrakSOS workdesk.
+  await inboxPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await inboxPage.getByRole('button',{name:'Отправить 1 предложений клиенту'}).click();
+  await inboxPage.locator('.insurance-validation-alert').getByText(/Предложение 1/).waitFor();
+  assert(await inboxPage.locator('[data-insurance-offer-field="0-company"]').evaluate(el=>document.activeElement===el),
+    'Missing insurance company should focus the offer field');
+  await inboxPage.goto(BASE+'/#/insurance');
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
     description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
   await api('POST','/api/insurance/requests/'+requestId+'/offers',
