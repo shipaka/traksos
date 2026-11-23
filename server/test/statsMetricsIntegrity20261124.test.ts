@@ -84,7 +84,7 @@ test('admin live orders prioritize SOS and show newest working orders first',
       const id=created.order.id as string;
       ids.push(id);
       await t.db.query(`update orders set status='searching',is_sos=$2,
-        created_at=now()-$3::int*interval 'minute' where id=$1`,
+        created_at=now()-$3::int*interval '1 minute' where id=$1`,
         [id,i===1,[120,10,5][i]]);
     }
     const list=ok(await t.api('GET','/api/admin/live',undefined,admin.token));
