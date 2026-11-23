@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { geographicCenter, mustExpandCluster } from './partnerNetworkGeometry20261123.ts';
 import './partnerNetworkMap20261123.css';
 
 type PartnerPoint={id:string;kind:'service';name:string;lat:number;lng:number};
@@ -61,6 +62,10 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const [points,setPoints]=useState<PartnerPoint[]>([]);
   const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
   const [selected,setSelected]=useState<PartnerPoint|null>(null);
+  const [expandedCluster,setExpandedCluster]=useState<Cluster|null>(null);
+  const clusterTrigger=useRef<HTMLButtonElement|null>(null);
+  const selectedDismiss=useRef<HTMLButtonElement|null>(null);
+  useLayoutEffect(()=>{if(selected)selectedDismiss.current?.focus();},[selected]);
   const modal=useRef<HTMLElement|null>(null);
   const surface=useRef<HTMLDivElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
@@ -70,9 +75,22 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
     const previous=document.body.style.overflow;
     document.body.style.overflow='hidden';
     closeRef.current?.focus();
-    const close=onClose;
+    return ()=>{document.body.style.overflow=previous;};
+  },[]);
+  // Keep Escape scoped: first close a list/card, then close the map itself.
+  // Do not re-focus the modal's Close button on every map state update.
+  useEffect(()=>{
     const onKey=(event:KeyboardEvent)=>{
-      if(event.key==='Escape'){event.preventDefault();close();return;}
+      if(event.key==='Escape'){
+        event.preventDefault();
+        if(expandedCluster){
+          setExpandedCluster(null);
+          requestAnimationFrame(()=>clusterTrigger.current?.focus());
+        }else if(selected){
+          setSelected(null);
+        }else onClose();
+        return;
+      }
       if(event.key==='Tab' && modal.current){
         const nodes=[...modal.current.querySelectorAll<HTMLElement>(
           'button:not([disabled]),a[href],input:not([disabled]),[tabindex="0"]'
@@ -84,8 +102,8 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
       }
     };
     document.addEventListener('keydown',onKey);
-    return ()=>{document.body.style.overflow=previous;document.removeEventListener('keydown',onKey);};
-  },[onClose]);
+    return ()=>document.removeEventListener('keydown',onKey);
+  },[onClose,selected,expandedCluster]);
   useEffect(()=>{
     const c=new AbortController();
     setState('loading');
@@ -126,6 +144,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   }
   function zoom(delta:number){
     setSelected(null);
+    setExpandedCluster(null);
     setView(v=>({...v,zoom:clamp(v.zoom+delta,MIN_ZOOM,MAX_ZOOM)}));
   }
   return <div className="tr-network-backdrop" role="presentation"
@@ -166,7 +185,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
         <div className="tr-network-zoom" aria-label="Масштаб карты">
           <button type="button" aria-label="Приблизить карту" disabled={view.zoom===MAX_ZOOM} onClick={()=>zoom(1)}>+</button>
           <button type="button" aria-label="Отдалить карту" disabled={view.zoom===MIN_ZOOM} onClick={()=>zoom(-1)}>−</button>
-          <button type="button" aria-label="Показать Россию" onClick={()=>{setView({lat:60,lng:93,zoom:3});setSelected(null);}}>Россия</button>
+          <button type="button" aria-label="Показать Россию" onClick={()=>{setView({lat:60,lng:93,zoom:3});setSelected(null);setExpandedCluster(null);}}>Россия</button>
         </div>
         {clusters.map(cluster=><button key={cluster.key} type="button"
           className={'tr-network-marker'+(cluster.members.length>1?' is-cluster':'')}
@@ -176,16 +195,38 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
             :'СТО '+cluster.members[0].name}
           title={cluster.members.length>1
             ?'Проверенных СТО: '+cluster.members.length:cluster.members[0].name}
-          onClick={()=>{
+          onClick={event=>{
             if(cluster.members.length>1){
-              const average=cluster.members.reduce((sum,p)=>({lat:sum.lat+p.lat,lng:sum.lng+p.lng}),{lat:0,lng:0});
-              setView(v=>({lat:average.lat/cluster.members.length,lng:average.lng/cluster.members.length,
-                zoom:clamp(v.zoom+2,MIN_ZOOM,MAX_ZOOM)}));
-              setSelected(null);
-            }else setSelected(cluster.members[0]);
+              if(mustExpandCluster(cluster.members,view.zoom,MAX_ZOOM)){
+                clusterTrigger.current=event.currentTarget;
+                setExpandedCluster(cluster);
+                setSelected(null);
+              }else{
+                const center=geographicCenter(cluster.members);
+                setView(v=>({...center,zoom:clamp(v.zoom+2,MIN_ZOOM,MAX_ZOOM)}));
+                setExpandedCluster(null);
+                setSelected(null);
+              }
+            }else{
+              setExpandedCluster(null);
+              setSelected(cluster.members[0]);
+            }
           }}>{cluster.members.length>1?cluster.members.length:'●'}</button>)}
+        {expandedCluster&&<aside className="tr-network-cluster-list"
+          role="group" aria-label="Выбрать СТО из группы">
+          <div className="tr-network-cluster-head"><b>Партнёры в одной точке ({expandedCluster.members.length})</b>
+            <button type="button" aria-label="Скрыть список партнёров" onClick={()=>{
+              setExpandedCluster(null);
+              requestAnimationFrame(()=>clusterTrigger.current?.focus());
+            }}>✕</button></div>
+          <div className="tr-network-cluster-options">
+            {expandedCluster.members.map(p=><button type="button" key={p.id}
+              onClick={()=>{setExpandedCluster(null);setSelected(p);}}>
+              СТО {p.name}</button>)}
+          </div>
+        </aside>}
         {selected&&<aside className="tr-network-partner" aria-label="Карточка партнёра">
-          <button type="button" className="tr-network-dismiss" onClick={()=>setSelected(null)} aria-label="Скрыть карточку">✕</button>
+          <button type="button" ref={selectedDismiss} className="tr-network-dismiss" onClick={()=>setSelected(null)} aria-label="Скрыть карточку">✕</button>
           <b>{selected.name}</b><span>Проверенная стационарная СТО · партнёр сети</span>
           <small>Координаты опубликованы с согласия СТО. Наличие свободного времени уточняется при обращении.</small>
           <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a>
