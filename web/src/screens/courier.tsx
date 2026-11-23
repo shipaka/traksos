@@ -3,7 +3,7 @@
  */
 import {useState} from 'react';
 import {get,put,post} from '../api.ts';
-import {useAction,useLoad} from '../ui.tsx';
+import {useAction,useLoad,useMe} from '../ui.tsx';
 import './courierApproved20261120.css';
 
 type CourierStatus='assigned'|'picked_up'|'en_route'|'arrived'|'code_verified'|'received'|'cancelled';
@@ -54,6 +54,14 @@ function CourierProgress({status}:{status:CourierStatus}){
 function CourierStatusSwitch(){
   const p=useLoad<{online:boolean}>(()=>get('/api/courier/presence'),[]);
   const {busy,run}=useAction();
+  // A failed presence GET must not impersonate "offline" indefinitely.
+  // Let the courier recover without leaving the workspace.
+  if(p.error)return <span className="courier-presence-error" role="alert">
+    Не удалось проверить статус линии
+    <button type="button" className="courier-switch" onClick={()=>{void p.reload();}}>
+      Повторить
+    </button>
+  </span>;
   return <button type="button" role="switch" className={'courier-switch'+(p.data?.online?' is-on':'')}
     aria-label="Доступность курьера для новых доставок"
     aria-checked={!!p.data?.online} disabled={busy||!p.data}
@@ -63,7 +71,7 @@ function CourierStatusSwitch(){
       if(result)p.reload();
     }}>
     <span aria-hidden="true" className="courier-presence-dot"/>
-    {p.data?.online?'На линии':'Не на линии'} <span aria-hidden="true" className="courier-switch-track"/>
+    {p.data?(p.data.online?'На линии':'Не на линии'):'Проверяем статус…'} <span aria-hidden="true" className="courier-switch-track"/>
   </button>;
 }
 function CourierJobLink({job,focus=false}:{job:CourierJob;focus?:boolean}){
@@ -85,7 +93,8 @@ function CourierJobLink({job,focus=false}:{job:CourierJob;focus?:boolean}){
 }
 export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={}){
   const tasks=useLoad<CourierJob[]>(()=>get('/api/courier/jobs'),[],e=>e.type==='shop');
-  const list=tasks.data??[];
+  // A failed refresh must not present previous delivery addresses as current.
+  const list=tasks.error?[]:(tasks.data??[]);
   const active=list.filter(j=>CURRENT.has(j.status));
   const current=active[0];
   const packages=active.reduce((n,j)=>n+j.items.reduce((s,i)=>s+(i.qty||0),0),0);
@@ -103,7 +112,7 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
         <a href="#/courier/jobs"><small>Посылки</small><strong>{packages}</strong></a>
         <a href="#/courier/jobs"><small>Остановки</small><strong>{active.length}</strong></a>
       </div>}
-      {!tasks.data?<section className="courier-trip">
+      {(!tasks.data||tasks.error)?<section className="courier-trip" role={tasks.error?'alert':undefined}>
         <b>{tasks.error?'Не удалось загрузить доставки':'Загружаем текущие доставки…'}</b>
         {tasks.error&&<button className="courier-primary" type="button" onClick={tasks.reload}>Повторить</button>}
       </section>:
@@ -125,10 +134,16 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
   </main>;
 }
 export function CourierDelivery({id}:{id:string}){
+  const {me}=useMe();
+  // A route/account switch must drop the prior order's 6-digit input
+  // and any late async GET response for that order.
+  return <CourierDeliveryForJob key={(me?.id??'guest')+':'+id} id={id}/>;
+}
+function CourierDeliveryForJob({id}:{id:string}){
   const d=useLoad<CourierJob>(()=>get('/api/courier/jobs/'+encodeURIComponent(id)),[id],e=>e.type==='shop');
   const {busy,run}=useAction();
   const [code,setCode]=useState('');
-  const job=d.data;
+  const job=d.error?null:d.data;
   const next=job&&NEXT[job.status];
   const nav=job&&directions(job.deliveryAddress);
   const advance=async(status:CourierStatus)=>{
@@ -139,7 +154,11 @@ export function CourierDelivery({id}:{id:string}){
   };
   return <main className="courier-android courier-detail" aria-label="Карточка курьерской доставки">
     <a className="courier-back" href="#/courier/jobs">← К моим доставкам</a>
-    {!job?<section className="courier-trip">{d.error||'Загружаем назначенную доставку…'}</section>:<>
+    {!job?<section className="courier-trip" role={d.error?'alert':'status'}>
+      <b>{d.error?'Не удалось обновить назначенную доставку':'Загружаем назначенную доставку…'}</b>
+      {d.error&&<button className="courier-primary" type="button"
+        onClick={()=>{void d.reload();}}>Повторить загрузку</button>}
+    </section>:<>
       <h1>Доставка №{job.orderNumber}</h1>
       <span className="courier-trip-state">{STATUS[job.status]}</span>
       <section className="courier-trip">
