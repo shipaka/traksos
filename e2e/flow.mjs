@@ -330,7 +330,10 @@ if (await a.locator('.and19-client .and19-services').count())
 await a.getByRole('link', { name: '← Выбор кабинета' }).click();
 await a.getByRole('heading', { name: 'Тестирование кабинетов' }).waitFor();
 await a.getByRole('link', { name: 'Вернуться в админку' }).click();
-await a.locator('main.approved-pc-admin').waitFor();
+// Returning from test center must mount the approved 618 mobile admin
+// workspace at phone width; approved 617 PC is used only at >=900px.
+await a.locator((await a.evaluate(() => window.innerWidth)) < 900
+  ? 'main.admin-workspace' : 'main.approved-pc-admin').waitFor();
 await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
 await m.getByText('← Назад').click();
