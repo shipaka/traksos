@@ -126,7 +126,10 @@ try{
           if(await page.locator('main.client-dashboard').count())
             throw Error('900–999px: obsolete client home mounted instead of approved PC workspace');
         }
-        if(role==='courier'){
+        if(role==='courier' && width<=390){
+          // Approved 618/Android has the courier-android desk. Desktop 617
+          // deliberately mounts a different role shell; do not assert its DOM
+          // is a phone layout at 960/1440px.
           const desk=page.locator('main.courier-android');
           await desk.waitFor({state:'visible'});
           const active=desk.locator('article.courier-trip.focus');
