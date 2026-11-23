@@ -107,6 +107,42 @@ test('переключатель «Сначала нам» выключен — 
   ok(await t.api('PUT', '/api/admin/settings/dispatch', { priorityFirst: true }, admin.token));
 });
 
+test('bidding-only поиск: без откликов причина no_response; пустой retry не наследует старые приглашения', async () => {
+  ok(await t.api('PUT','/api/admin/settings/dispatch',{priorityFirst:false},admin.token));
+  for(const u of [father,m1,m2])
+    ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},u.token));
+  try {
+    const originalCalls=kinds(father.id,'incoming_call').length;
+    const o=ok(await t.api('POST','/api/orders',{
+      service:'electric',zoneId:'spb',
+    },client.token)).order;
+    assert.equal(kinds(father.id,'incoming_call').length,originalCalls,
+      'bidding-only dispatch has no direct ringing invitation');
+    const started=ok(await t.api('GET',`/api/orders/${o.id}`,undefined,client.token));
+    const bidsStarted=started.events.filter((e:any)=>e.type==='auction_started');
+    assert.ok(bidsStarted.some((e:any)=>Number(e.data?.candidates)>0),
+      'server recorded actual bidding invitations; not an empty auction');
+    t.clock.advance(11*60);
+    await t.app.auction.tick();
+    const failed=ok(await t.api('GET',`/api/orders/${o.id}`,undefined,client.token));
+    assert.equal(failed.status,'no_performer');
+    assert.equal(failed.absenceReason,'no_response',
+      'bidding invitations without bids are a confirmed no-response, even without ringing');
+    for(const u of [father,m1,m2])
+      ok(await t.api('POST','/api/performer/line',{lineStatus:'offline'},u.token));
+    const retried=ok(await t.api('POST',`/api/orders/${o.id}/retry`,{},client.token));
+    assert.equal(retried.status,'no_performer');
+    assert.equal(retried.absenceReason,'unknown',
+      'a new empty attempt must not reuse immutable invitations before its retry event');
+    const attempts=retried.events.filter((e:any)=>e.type==='auction_started');
+    assert.ok(attempts.some((e:any)=>Number(e.data?.candidates)===0));
+  } finally {
+    ok(await t.api('PUT','/api/admin/settings/dispatch',{priorityFirst:true},admin.token));
+    for(const u of [father,m1,m2])
+      ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},u.token));
+  }
+});
+
 test('эвакуатор: торги с подачей «сборы + дорога», куда везти и что везём', async () => {
   const o = ok(await t.api('POST', '/api/orders', {
     service: 'tow', zoneId: 'kad30', address: 'Ленинградская область, КАД, 72-й км', destination: 'Шушары-Трак', cargo: 'coupling', loaded: 'loaded', driverOnSite: true,
