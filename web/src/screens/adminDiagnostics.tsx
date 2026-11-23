@@ -21,7 +21,7 @@ export function AdminDiagnostics() {
   const filters: DiagnosticFilters = {category,status,since,until,requestId};
   const filterKey = JSON.stringify(filters);
   const loaded = !!result && result.filterKey === filterKey && result.ownerId === me?.id;
-  const rows = loaded ? result.rows : [];
+  const rows = loaded && result ? result.rows : [];
 
   useEffect(() => {
     // Admin journal entries must never linger on a different authenticated
