@@ -157,8 +157,9 @@ export class OnsiteService {
 
   /** «Не брать заявки этого клиента» — личный чёрный список исполнителя */
   async block(user: AuthUser, orderId: string, on: boolean, reason?: string) {
-    const o = await this.db.one('select client_id from orders where id=$1', [orderId]);
-    if (!o) throw notFound();
+    // The old implementation let ANY master block a customer's fleet by
+    // guessing an order UUID. Only an actually assigned worker has that right.
+    const o = await this.mine(user, orderId);
     if (on) await this.db.query(`insert into performer_blocks(performer_id, client_id, reason) values ($1,$2,$3) on conflict do nothing`, [user.id, o.client_id, reason ?? null]);
     else await this.db.query('delete from performer_blocks where performer_id=$1 and client_id=$2', [user.id, o.client_id]);
     return { blocked: on };
