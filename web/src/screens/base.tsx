@@ -1,8 +1,8 @@
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
-import { useEffect, useState } from 'react';
-import { get, post, put, rub, fmtTime } from '../api.ts';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { get, post, put, rub, fmtTime, onEvent } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
-import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
+import { useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
@@ -42,11 +42,68 @@ const carName = (v: any) => [v?.brand, v?.model, v?.year].filter(Boolean).join('
 const toggle = (list: string[], x: string) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
 const isBookingEvent = (e: any) => e.type === 'booking';
 
+// A station's orders, payout amounts, vehicles and staff actions are private.
+// The generic useLoad can keep data after an error and lets an older request
+// overwrite newer results. This scoped query makes every render depend on the
+// *current account* and the *current query*, even before effects run.
+function useBaseLoad<T = any>(
+  read: () => Promise<T>, deps: unknown[], reloadOn?: (event: any) => boolean
+) {
+  const { me } = useMe();
+  const key = JSON.stringify([me?.id ?? null, ...deps]);
+  const activeKey = useRef(key);
+  activeKey.current = key;
+  const nextRequest = useRef(0);
+  const readRef = useRef(read);
+  readRef.current = read;
+  const [state, setState] = useState<{
+    key: string; data: T | null; error: string | null; loading: boolean
+  }>({ key: '', data: null, error: null, loading: true });
+  const reload = useCallback(async () => {
+    const request = ++nextRequest.current;
+    const requestKey = activeKey.current;
+    setState({ key: requestKey, data: null, error: null, loading: true });
+    try {
+      const data = await readRef.current();
+      if (nextRequest.current === request && activeKey.current === requestKey)
+        setState({ key: requestKey, data, error: null, loading: false });
+    } catch (reason) {
+      if (nextRequest.current === request && activeKey.current === requestKey)
+        setState({ key: requestKey, data: null,
+          error: reason instanceof Error ? reason.message : 'Не удалось загрузить данные',
+          loading: false });
+    }
+  }, []);
+  useEffect(() => {
+    void reload();
+    return () => { ++nextRequest.current; };
+  }, [key, reload]);
+  const eventRef = useRef(reloadOn);
+  eventRef.current = reloadOn;
+  useEffect(() => {
+    if (!eventRef.current) return;
+    return onEvent(event => {
+      if (eventRef.current?.(event)) void reload();
+    });
+  }, [key, reload]);
+  const current = state.key === key ? state : null;
+  const setData = useCallback((next: T | null) => {
+    setState(existing => existing.key === activeKey.current
+      ? { key: existing.key, data: next, error: null, loading: false } : existing);
+  }, []);
+  return {
+    data: current?.error ? null : current?.data ?? null,
+    error: current?.error ?? null,
+    loading: current?.loading ?? true,
+    reload, setData,
+  };
+}
+
 // ═══════════════════════ Кабинет рембазы ═══════════════════════
 
 /** Счёт рембазы: по желанию погасить баллами часть комиссии TrakSOS (не больше половины) */
 function InvoicePoints({ amount, value, onChange }: { amount: number | null; value: number | null; onChange: (v: number | null) => void }) {
-  const a = useLoad(() => (amount ? baseGet(`/api/base/points?amount=${amount}`) : Promise.resolve(null)), [amount]);
+  const a = useBaseLoad(() => (amount ? baseGet(`/api/base/points?amount=${amount}`) : Promise.resolve(null)), [amount]);
   const max: number = a.data?.max ?? 0;
   if (!amount || max <= 0) return null;
   const on = value != null && value > 0;
@@ -61,7 +118,7 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
 
 export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'expected' | 'ready' | 'done' } = {}) {
   const { me } = useMe();
-  const cab = useLoad(() => baseGet('/api/base'), [], isBookingEvent);
+  const cab = useBaseLoad(() => baseGet('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
   if (!cab.data) return <main>{<WorkerNotices audience="service" />}<Loading error={cab.error} /></main>;
@@ -280,7 +337,7 @@ export function RequestCard({ b, onDone }: { b: any; onDone: () => void }) {
 
 /** Карточка машины в сервисе: статус (клиент видит сразу), заметки, компания, история, «Машина готова → счёт» */
 export function BaseCar({ id }: { id: string }) {
-  const b = useLoad(() => baseGet(`/api/bookings/${id}`), [id], isBookingEvent);
+  const b = useBaseLoad(() => baseGet(`/api/bookings/${id}`), [id], isBookingEvent);
   const { busy, run } = useAction();
   const [note, setNote] = useState('');
   const [works, setWorks] = useState<string[] | null>(null);
@@ -430,7 +487,7 @@ export function BaseCar({ id }: { id: string }) {
 /** Карточка сервиса: один раз — что принимаете, кто есть, условия, дни без работы */
 export function BaseSetup() {
   const { reload } = useMe();
-  const cab = useLoad(() => baseGet('/api/base'), []);
+  const cab = useBaseLoad(() => baseGet('/api/base'), []);
   const { busy, run } = useAction();
   const [f, setF] = useState<any>(null);
   const [day, setDay] = useState('');
@@ -637,8 +694,8 @@ export function ServicesList() {
   const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
   const [pickPlace, setPickPlace] = useState(false);
   const gps = useGps(s.place === 'gps');
-  const cars = useLoad(() => get('/api/vehicles'), []);
-  const source = useLoad(() => caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
+  const cars = useBaseLoad(() => get('/api/vehicles'), []);
+  const source = useBaseLoad(() => caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
   // In a linked case the truck's position, not the fleet owner's phone GPS,
   // determines distances. Never geocode an address by guesswork.
   const brand = caseOrderId ? (source.data?.brand ?? source.data?.vehicle?.brand ?? '')
@@ -648,7 +705,7 @@ export function ServicesList() {
     ? {lat:source.data.lat,lng:source.data.lng} : null;
   const point = s.place === 'incident' ? incidentPoint :
     s.place === 'gps' ? gps : preset ?? null;
-  const list = useLoad(() => get(`/api/services?${new URLSearchParams({ ...(point ? { lat: String(point.lat), lng: String(point.lng) } : {}), ...(s.need ? { need: s.need } : {}), ...(brand ? { brand } : {}) })}`), [point?.lat, point?.lng, s.need, brand]);
+  const list = useBaseLoad(() => get(`/api/services?${new URLSearchParams({ ...(point ? { lat: String(point.lat), lng: String(point.lng) } : {}), ...(s.need ? { need: s.need } : {}), ...(brand ? { brand } : {}) })}`), [point?.lat, point?.lng, s.need, brand]);
   const nFilters = (s.open ? 1 : 0) + s.cond.length + s.accepts.length + (s.myBrand ? 1 : 0);
   const all: any[] = list.data ?? [];
   const inRadius = (c: any) => !s.radius || c.distanceKm == null || c.distanceKm <= s.radius;
@@ -774,7 +831,7 @@ function prefillOrder(service: string, place: { address?: string; destination?: 
 }
 
 export function CenterPage({ id }: { id: string }) {
-  const c = useLoad(() => get(`/api/services/${id}`), [id]);
+  const c = useBaseLoad(() => get(`/api/services/${id}`), [id]);
   const from = query().get('from');
   const caseOrderId=query().get('case');
   const recommendationId=query().get('recommendation');
@@ -829,12 +886,12 @@ export function CenterPage({ id }: { id: string }) {
 }
 
 export function BookForm({ id }: { id: string }) {
-  const c = useLoad(() => get(`/api/services/${id}`), [id]);
-  const cars = useLoad(() => get('/api/vehicles'), []);
+  const c = useBaseLoad(() => get(`/api/services/${id}`), [id]);
+  const cars = useBaseLoad(() => get('/api/vehicles'), []);
   const from = query().get('from');
   const caseOrderId=query().get('case');
   const recommendationId=query().get('recommendation');
-  const source=useLoad(()=>caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
+  const source=useBaseLoad(()=>caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
   const { busy, run } = useAction();
   const [vehicleId, setVehicle] = useState('');
   const [need, setNeed] = useState(query().get('need') ?? '');
@@ -898,7 +955,7 @@ export function BookForm({ id }: { id: string }) {
 
 /** Запись глазами клиента: статус ремонта, вопрос сервиса, заметки, счёт и сверка работ */
 export function BookingPage({ id }: { id: string }) {
-  const b = useLoad(() => baseGet(`/api/bookings/${id}`), [id], isBookingEvent);
+  const b = useBaseLoad(() => baseGet(`/api/bookings/${id}`), [id], isBookingEvent);
   const { busy, run } = useAction();
   const [answer, setAnswer] = useState('');
   const [mode, setMode] = useState<'' | 'agree' | 'dispute'>('');
@@ -1018,14 +1075,14 @@ export function BookingList({ rows }: { rows: any[] }) {
 
 /** Legacy independent listing for embedded history views. */
 export function BookingRows({ live }: { live: boolean }) {
-  const l = useLoad(() => get('/api/bookings'), [], isBookingEvent);
+  const l = useBaseLoad(() => get('/api/bookings'), [], isBookingEvent);
   return <BookingList rows={(l.data ?? []).filter((b: any) => live === isOpenBooking(b))} />;
 }
 
 /** Мастер на месте: «на месте не исправить — советую сервис» */
 export function RecommendService({ order, onDone }: { order: any; onDone: (o: any) => void }) {
   const [open, setOpen] = useState(false);
-  const list = useLoad(() => (open ? get(`/api/services${order.lat ? `?lat=${order.lat}&lng=${order.lng}` : ''}`) : Promise.resolve(null)), [open]);
+  const list = useBaseLoad(() => (open ? get(`/api/services${order.lat ? `?lat=${order.lat}&lng=${order.lng}` : ''}`) : Promise.resolve(null)), [open]);
   const { busy, run } = useAction();
   if (order.recommendedCenter) return <span className="note">Вы посоветовали сервис «{order.recommendedCenter.name}». Клиенту там скидка, вам — бонус после ремонта.</span>;
   if (!open) return <button className="btn ghost" onClick={() => setOpen(true)}>На месте не исправить — посоветовать сервис</button>;
@@ -1097,7 +1154,7 @@ function ServiceLocationReview({center,onDone}:{center:any;onDone:()=>void}){
 
 /** Модерация: проверка рембаз */
 export function AdminServices() {
-  const l = useLoad(() => get('/api/admin/services'), []);
+  const l = useBaseLoad(() => get('/api/admin/services'), []);
   const { busy, run } = useAction();
   if (!l.data) return <Loading error={l.error} />;
   if (!l.data.length) return <div className="empty">Рембаз пока нет</div>;
@@ -1130,8 +1187,8 @@ const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); ret
 
 /** Финансы рембазы: сверху — сколько придёт и когда, ниже — по месяцам, потом — каждый счёт со своей разбивкой. */
 export function BaseMoney() {
-  const m = useLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
-  const pts = useLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
+  const m = useBaseLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
+  const pts = useBaseLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
   const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
   if (!m.data) return <main><Loading error={m.error} /></main>;
   const { summary: s, months, items, rule } = m.data;
@@ -1218,7 +1275,7 @@ export function BaseMoney() {
 
 /** Админ: подтверждённые клиентами счета рембаз — отметить выплату */
 export function AdminServicePayouts() {
-  const l = useLoad(() => get('/api/admin/service-payouts'), []);
+  const l = useBaseLoad(() => get('/api/admin/service-payouts'), []);
   const { busy, run } = useAction();
   if (!l.data) return <Loading error={l.error} />;
   if (!l.data.length) return <span className="note">Выплачивать рембазам сейчас нечего.</span>;
