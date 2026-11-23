@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { VehicleServiceRequests } from '../src/services/vehicleServiceRequests.ts';
 
-const owner = { id: 'owner-1', roles: [] } as any;
-const driver = { id: 'driver-1', owner_id: 'owner-1', roles: [] } as any;
+const owner = { id: 'owner-1', roles: ['client'] } as any;
+const driver = { id: 'driver-1', owner_id: 'owner-1', roles: ['driver'] } as any;
 const admin = { id: 'admin-1', roles: ['admin'] } as any;
 const moderator = { id: 'mod-1', roles: ['moderator'] } as any;
 const outsider = { id: 'outsider-1', roles: [] } as any;
@@ -148,6 +148,22 @@ test('owner history includes both service kinds without driver restrictions', as
   };
   await new VehicleServiceRequests(db).history(owner, 'vehicle-1');
   assert.deepEqual(queries[0], ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
+});
+
+test('staff and partner roles cannot create customer vehicle-service requests at the service boundary', async () => {
+  let transactions = 0;
+  const db: any = { tx: async () => { transactions++; return null; } };
+  const requests = new VehicleServiceRequests(db);
+  for (const user of [admin,moderator,
+    {id:'master-1',roles:['master']},
+    {id:'insurer-1',roles:['insurer']},
+    {id:'courier-1',roles:['courier']},
+    {id:'service-1',roles:['service']}]) {
+    for (const kind of ['insurance','inspection'] as const) {
+      await assert.rejects(requests.create(user as any,'vehicle-1',kind), /только клиент или водитель/);
+    }
+  }
+  assert.equal(transactions,0);
 });
 
 test('owner can create a request for their vehicle and remains the requester', async () => {
@@ -345,7 +361,10 @@ test('assigned insurer can complete insurance but cannot touch inspections or ea
   const valid = mockDb({ id: 'request-1', kind: 'insurance', status: 'sent_to_partner', assigned_to: insurer.id });
   const completed = await new VehicleServiceRequests(valid.db).setStatus(insurer, 'request-1', 'completed', undefined, '2028-12-31');
   assert.equal(completed.status, 'completed');
-  assert.equal(valid.calls.find((c) => c.sql.startsWith('update vehicle_service_requests'))?.params[3], insurer.id);
+  const statusUpdate = valid.calls.find((c) => c.sql.startsWith('update vehicle_service_requests'));
+  assert.equal(statusUpdate?.params[3], '2028-12-31');
+  assert.doesNotMatch(statusUpdate!.sql, /assigned_to\s*=/);
+  assert.equal(completed.assigned_to, insurer.id);
   for (const current of [
     { id: 'request-1', kind: 'inspection', status: 'sent_to_partner', assigned_to: insurer.id },
     { id: 'request-1', kind: 'insurance', status: 'in_review', assigned_to: insurer.id },
