@@ -95,17 +95,20 @@ export class ShopService {
   async saveProduct(actor: AuthUser, id: string | null, p: ProductInput) {
     if (p.category && !SHOP_CATEGORIES[p.category]) throw bad('bad_category', 'Нет такой категории');
     const photo = p.photoDataUrl ? this.decodePhoto(p.photoDataUrl) : null;
+    // Product core, optional metadata and audit are one ACID unit. A missing
+    // audit or metadata write must never leave half-saved stock/pricing.
+    return this.db.tx(async(q)=>{
     let row: any;
     if (!id) {
       if (!p.name?.trim() || p.price == null) throw bad('need_name', 'Укажите название и цену');
-      row = await this.db.one(
+      row = await q.one(
         `insert into shop_products(category, name, spec, description, price, stock, lead_days, is_kit, active, sort, photo_mime, photo)
          values ($1,$2,$3,$4,$5,$6,coalesce($7,2),coalesce($8,false),coalesce($9,true),coalesce($10,100),$11,$12) returning ${this.cols}`,
         [p.category ?? 'other', p.name.trim(), p.spec?.trim() || null, p.description?.trim() || null, p.price, p.stock ?? null,
           p.leadDays ?? null, p.isKit ?? null, p.active ?? null, p.sort ?? null, photo?.mime ?? null, photo ? '\\x' + photo.buf.toString('hex') : null]);
     } else {
       const has = (k: keyof ProductInput) => Object.prototype.hasOwnProperty.call(p, k);
-      row = await this.db.one(
+      row = await q.one(
         `update shop_products set category=coalesce($2,category), name=coalesce($3,name),
            spec=case when $4::boolean then $5 else spec end, description=case when $6::boolean then $7 else description end,
            price=coalesce($8,price), stock=case when $9::boolean then $10::int else stock end, lead_days=coalesce($11,lead_days),
@@ -122,15 +125,16 @@ export class ShopService {
     // Explicit null clears it; omitted fields preserve the existing value.
     if (['brand', 'article', 'searchTerms'].some((k) => Object.prototype.hasOwnProperty.call(p, k))) {
       const has = (k: keyof ProductInput) => Object.prototype.hasOwnProperty.call(p, k);
-      await this.db.query(
+      await q.query(
         `update shop_products set brand=case when $2::boolean then $3 else brand end,
            article=case when $4::boolean then $5 else article end,
            search_terms=case when $6::boolean then $7 else search_terms end, updated_at=now() where id=$1`,
         [row.id, has('brand'), p.brand?.trim() || null, has('article'), p.article?.trim() || null, has('searchTerms'), p.searchTerms?.trim() || null]);
-      row = await this.db.one(`select ${this.cols} from shop_products where id=$1`, [row.id]);
+      row = await q.one(`select ${this.cols} from shop_products where id=$1`, [row.id]);
     }
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, id ? 'shop.product_update' : 'shop.product_create', row.id, { name: row.name, price: row.price, stock: row.stock }]);
+    await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, id ? 'shop.product_update' : 'shop.product_create', row.id, { name: row.name, price: row.price, stock: row.stock }]);
     return view(row);
+    });
   }
 
   async deleteProduct(actor: AuthUser, id: string) {
