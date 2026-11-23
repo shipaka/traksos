@@ -644,12 +644,37 @@ export function ShopCart() {
 // ═══════════════ Админ: магазин ═══════════════
 
 async function resizeImage(file: File): Promise<string> {
-  const img = await new Promise<HTMLImageElement>((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = URL.createObjectURL(file); });
-  const k = Math.min(1, 800 / Math.max(img.width, img.height));
-  const cv = document.createElement('canvas');
-  cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
-  cv.getContext('2d')!.drawImage(img, 0, 0, cv.width, cv.height);
-  return cv.toDataURL('image/jpeg', 0.82);
+  // Browser decoding is not free. Never allocate huge canvases or accept
+  // arbitrary image/* formats that the server will reject after upload.
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type))
+    throw new Error('Выберите фотографию JPEG, PNG или WEBP');
+  if (file.size > 10_000_000)
+    throw new Error('Исходная фотография слишком большая (максимум 10 МБ)');
+  const url=URL.createObjectURL(file);
+  try {
+    const img=await new Promise<HTMLImageElement>((resolve,reject)=>{
+      const image=new Image();
+      image.onload=()=>resolve(image);
+      image.onerror=()=>reject(new Error('Не удалось открыть фотографию'));
+      image.src=url;
+    });
+    if (!img.naturalWidth || !img.naturalHeight ||
+        img.naturalWidth*img.naturalHeight>40_000_000)
+      throw new Error('Слишком высокое разрешение фотографии');
+    const factor=Math.min(1,800/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(img.naturalWidth*factor));
+    canvas.height=Math.max(1,Math.round(img.naturalHeight*factor));
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw new Error('Устройство не поддерживает обработку фотографии');
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    const encoded=canvas.toDataURL('image/jpeg',0.82);
+    if(encoded.length>2_000_000)
+      throw new Error('Фотография после обработки больше допустимых 1,5 МБ');
+    return encoded;
+  }finally{
+    URL.revokeObjectURL(url);
+  }
 }
 
 export function AdminShop() {
