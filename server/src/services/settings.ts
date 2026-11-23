@@ -38,24 +38,34 @@ export class SettingsService {
 
   async set<K extends SettingsKey>(key: K, patch: Partial<Settings[K]>, actorId: string | null) {
     if (!(key in defaultSettings)) throw new Error(`Нет такой настройки: ${key}`);
-    const current = (await this.db.one<{ value: any }>('select value from settings where key=$1', [key]))?.value ?? {};
-    const value = { ...current, ...patch };
-    if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
-    if (key === 'payments') {
-      const v = value as { cash?: boolean; online?: boolean; invoice?: boolean };
-      v.cash = legacyCashFixtureEnabled();
-      v.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.online);
-      v.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.invoice);
-    }
-    if (key === 'shop') (value as { enabled?: boolean }).enabled = shopFixtureEnabled() && !!(value as { enabled?: boolean }).enabled;
-    await this.db.query(
-      `insert into settings(key, value, updated_by) values ($1,$2,$3)
-       on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by`,
-      [key, value, actorId],
-    );
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [
-      actorId, 'settings.update', key, patch,
-    ]);
+    // Key-level advisory lock serializes independent app instances, including
+    // the first INSERT when the settings row does not exist yet. Read/merge,
+    // policy clamps, durable value and audit must commit as ONE operation.
+    await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['traksos-settings:' + key]);
+      const current = (await q.one<{ value: any }>(
+        'select value from settings where key=$1 for update', [key]))?.value ?? {};
+      const value = { ...current, ...patch };
+      if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
+      if (key === 'payments') {
+        const v = value as { cash?: boolean; online?: boolean; invoice?: boolean };
+        v.cash = legacyCashFixtureEnabled();
+        v.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.online);
+        v.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.invoice);
+      }
+      if (key === 'shop')
+        (value as { enabled?: boolean }).enabled = shopFixtureEnabled() &&
+          !!(value as { enabled?: boolean }).enabled;
+      await q.query(
+        `insert into settings(key, value, updated_by) values ($1,$2,$3)
+         on conflict (key) do update set value = excluded.value,
+           updated_at = now(), updated_by = excluded.updated_by`,
+        [key, value, actorId],
+      );
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [
+        actorId, 'settings.update', key, patch,
+      ]);
+    });
     this.cache = null;
     return (await this.all())[key];
   }
