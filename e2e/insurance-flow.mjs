@@ -258,6 +258,22 @@ try{
   await inboxPage.locator('.insurance-validation-alert').getByText(/Предложение 1/).waitFor();
   assert(await inboxPage.locator('[data-insurance-offer-field="0-company"]').evaluate(el=>document.activeElement===el),
     'Missing insurance company should focus the offer field');
+  // Price is an exact monetary value, not a JavaScript expression or a
+  // rounded approximation. Never submit 1e3 or 3 fractional kopeck digits.
+  await inboxPage.locator('[data-insurance-offer-field="0-company"]').fill('Страховая А');
+  await inboxPage.locator('[data-insurance-offer-field="0-product"]').fill('ОСАГО грузовика');
+  const amount=inboxPage.locator('[data-insurance-offer-field="0-price"]');
+  for(const invalidPrice of ['1e3','32500.001','10000000.01','0']){
+    await amount.fill(invalidPrice);
+    await inboxPage.getByRole('button',{name:'Отправить 1 предложений клиенту'}).click();
+    await inboxPage.locator('.insurance-validation-alert')
+      .getByText(/не более двух знаков после запятой/).waitFor();
+    assert(await amount.getAttribute('aria-invalid')==='true',
+      'Invalid premium '+invalidPrice+' must be rejected and marked invalid');
+  }
+  await amount.fill('32 500,75');
+  assert(await amount.getAttribute('aria-invalid')!=='true',
+    'Valid Russian decimal amount should be accepted without rounding');
   await inboxPage.goto(BASE+'/#/insurance');
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
     description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
@@ -314,6 +330,12 @@ try{
   await agentPage.getByRole('button',{name:'Принято в работу'}).click();
   await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).waitFor();
   await agentPage.screenshot({path:OUT+'/agent-mobile-policy-action.png',fullPage:true});
+  await agentPage.locator('input[type=date]').fill('2000-01-01');
+  await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
+  await agentPage.locator('.insurance-validation-alert')
+    .getByText('Укажите корректную будущую дату окончания полиса.').waitFor();
+  assert(await agentPage.locator('[data-insurance-policy-field="date"]').evaluate(el=>document.activeElement===el),
+    'Expired policy date must keep focus in the insurance workdesk');
   await agentPage.locator('input[type=date]').fill('2030-12-31');
   await agentPage.locator('input[type=file]').setInputFiles({
     name:'policy.pdf',mimeType:'application/pdf',
@@ -323,6 +345,16 @@ try{
   await agentPage.getByText('Готовый страховой полис').first().waitFor();
   await clientPage.reload();
   await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).waitFor();
+  // Reject a non-PDF response even with HTTP 200; never download private
+  // HTML/error content as a trusted "insurance-policy.pdf".
+  const policyPath='**/api/insurance/requests/'+requestId+'/policy';
+  const badPdf=route=>route.fulfill({status:200,contentType:'text/html',
+    body:'<html>unexpected HTML response</html>'});
+  await clientPage.route(policyPath,badPdf);
+  await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).click();
+  await clientPage.locator('.insurance-validation-alert')
+    .getByText(/Не удалось скачать PDF/).waitFor();
+  await clientPage.unroute(policyPath,badPdf);
   const downloadEvent=clientPage.waitForEvent('download');
   await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).click();
   const dl=await downloadEvent;
