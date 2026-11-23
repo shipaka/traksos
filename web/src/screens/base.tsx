@@ -994,7 +994,15 @@ function BookFormPanel({ id }: { id: string }) {
       <div><h1>Запись в сервис</h1><div className="sub">Рембаза «{d.name}» · {d.address}</div></div>
       <div className="card">
         <Field label="Машина" group>
-          {cars.data?.length ? (
+          {cars.error ? (
+            <div className="stack" role="alert">
+              <span className="note">Не удалось проверить машины гаража: {cars.error}</span>
+              <button type="button" className="btn ghost small" onClick={cars.reload}>
+                Повторить загрузку машин
+              </button>
+            </div>
+          ) : !cars.data ? <span className="note" role="status">Загружаем автомобили…</span>
+            : cars.data.length ? (
             <div className="stack" style={{ gap: 6 }}>
               {cars.data.map((v: any) => (
                 <button key={v.id} type="button" className="opt" aria-pressed={vehicleId === v.id} onClick={() => setVehicle(v.id)}>
@@ -1024,7 +1032,14 @@ function BookFormPanel({ id }: { id: string }) {
       </div>
       {from && <span className="note">По совету мастера — скидка применится в счёте сама.</span>}
       {caseOrderId && <span className="note">Продолжение обращения №{source.data?.number??'…'}. СТО подтвердит запись и согласует отдельную смету; рекомендация не является оплатой. Если грузовик на эвакуаторе, запись предварительная и не означает доставку.</span>}
-      <button className="btn" disabled={busy || !need || !day || (!!caseOrderId && !source.data)} onClick={send}>Отправить запрос</button>
+      {caseOrderId && source.error && <div className="card stack" role="alert">
+        <b>Не удалось подтвердить исходную заявку</b>
+        <span className="note">{source.error}</span>
+        <button type="button" className="btn ghost small" onClick={source.reload}>
+          Повторить загрузку заявки
+        </button>
+      </div>}
+      <button className="btn" disabled={busy || !need || !day || !!cars.error || (!!caseOrderId && !source.data)} onClick={send}>Отправить запрос</button>
       <span className="note">Сервис подтвердит готовность или уточнит детали — придёт уведомление.</span>
     </main>
   );
