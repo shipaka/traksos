@@ -310,3 +310,51 @@ test('real auction: nearby offline specialist reports temporary unavailability; 
     }
   } finally { await t.close(); }
 });
+
+test('fleet owner and submitting driver can see and retry their exhausted SOS, unrelated client cannot', async () => {
+  const { setup } = await import('./helpers.ts');
+  const t = await setup();
+  try {
+    const owner = await t.login('+79990003571', 'client');
+    const driver = await t.login('+79990003572', 'driver');
+    const stranger = await t.login('+79990003573', 'client');
+    // A fleet driver's submitted SOS is owned by the fleet owner, while
+    // created_by records the initiating driver. Both must have requester
+    // rights; unrelated accounts must not see the terminal reason or retry.
+    const order = await t.db.one<{id:string}>(`
+      insert into orders(client_id,created_by,service,zone_id,status,estimate)
+      values ($1,$2,'hydraulics','spb','searching',$3::jsonb) returning id`,
+      [owner.id,driver.id,JSON.stringify({callOut:100000,zoneName:'СПб'})]);
+    assert.ok(order);
+    await t.app.auction.start(order.id);
+    const url = '/api/orders/' + order.id;
+    const [ownerView,driverView,foreignView] = await Promise.all([
+      t.api('GET',url,undefined,owner.token),
+      t.api('GET',url,undefined,driver.token),
+      t.api('GET',url,undefined,stranger.token)
+    ]);
+    assert.equal(ownerView.status,200);
+    assert.equal(driverView.status,200);
+    assert.equal(foreignView.status,403,'unrelated client cannot learn absence reason');
+    assert.equal(ownerView.body.status,'no_performer');
+    assert.equal(driverView.body.status,'no_performer');
+    assert.equal(ownerView.body.you,'client');
+    assert.equal(driverView.body.you,'client',
+      'submitting driver sees the same requester-only terminal card');
+    assert.equal(driverView.body.absenceReason,ownerView.body.absenceReason);
+    assert.ok(['not_connected','temporarily_unavailable','no_response',
+      'offers_withdrawn','unknown'].includes(driverView.body.absenceReason));
+    const forbiddenRetry = await t.api('POST',url+'/retry',{},stranger.token);
+    assert.equal(forbiddenRetry.status,403,'outsider cannot restart someone else\'s SOS');
+    const retried = await t.api('POST',url+'/retry',{},driver.token);
+    assert.equal(retried.status,200,'submitting driver can retry their own SOS');
+    assert.equal(retried.body.you,'client');
+    const events = await t.db.query<{type:string;actor_id:string}>(`
+      select type,actor_id from order_events
+      where order_id=$1 and type='retry'`,[order.id]);
+    assert.equal(events.length,1,'retry must not duplicate the transition');
+    assert.equal(events[0].actor_id,driver.id);
+    const stillForbidden = await t.api('GET',url,undefined,stranger.token);
+    assert.equal(stillForbidden.status,403,'retry never expands requester ACL');
+  } finally { await t.close(); }
+});
