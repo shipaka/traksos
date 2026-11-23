@@ -149,3 +149,35 @@ test('stale owner_id from a prior release can be repaired on a legitimate new QR
   ok(await t.api('POST','/api/qr/'+qr+'/join',{},user.token));
   assert.equal((await state(user.id))?.owner_id,newOwner.id);
 });
+
+test('revoking one car does not detach a legacy driver still assigned to another car', async () => {
+  const owner=await t.login(phone(1500));
+  const driver=await t.login(phone(1501),'driver');
+  const a=ok(await t.api('POST','/api/vehicles',car(61),owner.token));
+  const b=ok(await t.api('POST','/api/vehicles',car(62),owner.token));
+  const qr=(await fleet(owner,a.id)).qrCode;
+  ok(await t.api('POST','/api/qr/'+qr+'/join',{},driver.token));
+  // Older releases could allow one driver_id on more than one vehicle.
+  await t.db.query('update vehicles set driver_id=$2,driver_since=now() where id=$1',[b.id,driver.id]);
+  ok(await t.api('POST',`/api/fleet/vehicles/${a.id}/new-qr`,{},owner.token));
+  assert.equal((await state(driver.id))?.owner_id,owner.id,
+    'other still-assigned car must retain active fleet membership');
+  ok(await t.api('POST',`/api/fleet/vehicles/${b.id}/new-qr`,{},owner.token));
+  assert.equal((await state(driver.id))?.owner_id,null);
+});
+
+test('revoke and join racing for the same code cannot resurrect a revoked assignment', async () => {
+  const owner=await t.login(phone(1600));
+  const driver=await t.login(phone(1601),'driver');
+  const vehicle=ok(await t.api('POST','/api/vehicles',car(71),owner.token));
+  const qr=(await fleet(owner,vehicle.id)).qrCode;
+  const [joined,revoked] = await Promise.all([
+    t.api('POST','/api/qr/'+qr+'/join',{},driver.token),
+    t.api('POST',`/api/fleet/vehicles/${vehicle.id}/new-qr`,{},owner.token),
+  ]);
+  assert.ok([200,404].includes(joined.status),'join either precedes revoke or loses with 404');
+  assert.equal(revoked.status,200);
+  assert.equal((await assignment(vehicle.id))?.driver_id,null);
+  assert.equal((await state(driver.id))?.owner_id,null);
+  assert.equal((await t.api('POST','/api/qr/'+qr+'/join',{},driver.token)).status,404);
+});
