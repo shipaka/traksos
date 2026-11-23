@@ -2,7 +2,7 @@ import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
-import { bad, conflict, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 
 // Text-only shortcuts. «Я на месте» changes the order status; it must never be
@@ -42,7 +42,12 @@ export class ChatService {
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService) {}
 
   async list(user: AuthUser, orderId: string, afterId = 0) {
+    if (!Number.isSafeInteger(afterId) || afterId < 0) throw bad('bad_cursor', 'Некорректная позиция переписки');
     const order = await this.orders.mustSee(user, orderId);
+    // mustSee deliberately gives invited performers a redacted preview of the
+    // order. That does NOT grant access to the customer's private chat history.
+    const role = this.orders.actorOf(user, order);
+    if (!role) throw forbidden('Переписка доступна только участникам заявки');
     const msgs = await this.db.query(
       `select m.id::int as id, m.sender_id, u.name as sender_name, m.kind, m.body, m.masked, m.created_at,
               case when m.sender_id is null then 'system'
@@ -55,7 +60,6 @@ export class ChatService {
     );
     // Legacy shared system messages sometimes contained the customer's surcharge and final bill.
     // Never return those amounts to a performer/candidate, including old archived messages.
-    const role = this.orders.actorOf(user, order);
     const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
       if (m.sender_role !== 'system') return m;
       const body = String(m.body ?? '');
@@ -71,46 +75,96 @@ export class ChatService {
       `select count(*)::int as n from chat_messages m join orders o on o.id=m.order_id
         where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
     const ticket = await this.db.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
-    const participants = people.map((p) => ({ who: p.who, name: p.name, you: p.id === user.id }));
+    // A revoked fleet driver's old ID may remain in orders.created_by as
+    // historical evidence, but must not be a *current* chat participant.
+    const activePeople = new Set(await this.orders.participants(orderId));
+    const participants = people.filter(p => activePeople.has(p.id))
+      .map(p => ({ who: p.who, name: p.name, you: p.id === user.id }));
     if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
     return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role) };
   }
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
-    const o = await this.orders.mustSee(user, orderId);
-    const actor = this.orders.actorOf(user, o);
-    if (!actor) throw bad('not_participant', 'Писать могут только участники заявки');
-    if (['completed', 'cancelled', 'no_performer'].includes(o.status))
-      throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
+    // This initial check preserves the existing useful "not found/forbidden"
+    // contract for outsiders and invited performers. The real write authority
+    // is re-evaluated under the order row lock below.
+    await this.orders.mustSee(user, orderId);
     const text = body.trim().slice(0, 2000);
     if (!text) throw bad('empty', 'Пустое сообщение');
-    if (kind === 'quick' && !quickRepliesFor(o.service, o.status, actor).includes(text))
-      throw bad('invalid_quick_reply', 'Этот быстрый ответ недоступен на текущем этапе заявки');
     const { text: safe, masked } = maskPhones(text);
     const words = (await this.settings.get('chat')).suspiciousWords;
     const lower = safe.toLowerCase();
     const flagged = masked || words.some((w) => lower.includes(w));
-    const m = await this.db.one(
-      `insert into chat_messages(order_id, sender_id, kind, body, masked, flagged)
-       select o.id, $2, $3, $4, $5, $6 from orders o
-       where o.id=$1 and o.status not in ('completed', 'cancelled', 'no_performer')
-       for update of o
-       returning id::int as id, order_id, sender_id, kind, body, masked, created_at`,
-      [orderId, user.id, kind, safe, masked, flagged],
-    );
-    // The locked order row is rechecked when a concurrent confirmation commits.
-    // Never insert a message after an order has become terminal.
-    if (!m) throw conflict('chat_closed', 'Диалог завершён. Новые сообщения недоступны');
-    const message = { ...m, sender_name: user.name };
-    const ids = await this.orders.participants(orderId);
-    this.notifier.live(ids, { type: 'chat', message });
-    const others = ids.filter((id) => id !== user.id);
-    await this.notifier.notify(others, { type: 'chat_push', orderId }, {
-      kind: 'normal', title: `Заявка №${o.number}`, body: safe.slice(0, 120), data: { orderId },
+
+    const { message, number } = await this.db.tx(async q => {
+      // Status, performer and customer authority are checked in one snapshot.
+      // A previous owner/driver/performer check in another pooled connection
+      // is not sufficient while reassignments and closures are concurrent.
+      const o = await q.one<{
+        id: string; number: number; status: string; service: string;
+        client_id: string; created_by: string; performer_id: string | null;
+        vehicle_id: string | null;
+      }>(`select id,number,status,service,client_id,created_by,performer_id,vehicle_id
+            from orders where id=$1 for update`, [orderId]);
+      if (!o) throw forbidden('Заявка недоступна');
+      let actor: string | null = null;
+      if (user.roles.includes('admin') || user.roles.includes('moderator')) actor = 'admin';
+      else if (o.client_id === user.id) actor = 'client';
+      else if (o.performer_id === user.id) actor = 'performer';
+      else if (o.created_by === user.id) {
+        // A driver's previous creator_id does not survive removal from the
+        // vehicle/fleet. Lock the linked vehicle until this message commits.
+        const assignment = await q.one<{ ok: number }>(`
+          select 1 as ok from users u join vehicles v
+            on v.owner_id=u.owner_id and v.driver_id=u.id
+           where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+             and ($3::uuid is null or v.id=$3)
+           limit 1 for share of v`, [user.id, o.client_id, o.vehicle_id]);
+        if (assignment) actor = 'client';
+      }
+      if (!actor) throw forbidden('Переписка доступна только участникам заявки');
+      if (['completed', 'cancelled', 'no_performer'].includes(o.status))
+        throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
+      // A quick reply is not a stale action: its eligibility is checked against
+      // the CURRENT, row-locked service, status and actor.
+      if (kind === 'quick' && !quickRepliesFor(o.service, o.status, actor).includes(text))
+        throw bad('invalid_quick_reply', 'Этот быстрый ответ недоступен на текущем этапе заявки');
+      const m = await q.one<{
+        id: number; order_id: string; sender_id: string;
+        kind: string; body: string; masked: boolean; created_at: string;
+      }>(`insert into chat_messages(order_id, sender_id, kind, body, masked, flagged)
+          values ($1,$2,$3,$4,$5,$6)
+          returning id::int as id,order_id,sender_id,kind,body,masked,created_at`,
+        [orderId, user.id, kind, safe, masked, flagged]);
+      return { message: m!, number: o.number };
     });
-    if (masked) {
-      await this.orders.systemMessage(orderId, 'Номера телефонов в чате скрываются. Звоните через кнопку в заявке — так безопаснее для обеих сторон.');
+
+    const rendered = { ...message, sender_name: user.name };
+    // Never notify a former fleet driver merely because created_by was once
+    // associated with an order. The recipients helper checks the CURRENT link.
+    const ids = await this.orders.participants(orderId);
+    this.notifier.live(ids, { type: 'chat', message: rendered });
+    const others = ids.filter(id => id !== user.id);
+    try {
+      await this.notifier.notify(others, { type: 'chat_push', orderId }, {
+        kind: 'normal', title: `Заявка №${number}`, body: safe.slice(0, 120), data: { orderId },
+      });
+    } catch (error) {
+      // The message is already committed. Reporting a POST failure here would
+      // make mobile retries duplicate messages; the chat itself stays readable.
+      console.warn('[chat-notify]', error instanceof Error ? error.message : 'delivery failed');
     }
-    return message;
+    if (masked) {
+      try {
+        await this.orders.systemMessage(orderId,
+          'Номера телефонов в чате скрываются. Звоните через кнопку в заявке — так безопаснее для обеих сторон.');
+      } catch (error) {
+        // A secondary system tip is never a reason to lose the confirmed user
+        // message or ask the client to send it again.
+        console.warn('[chat-mask-tip]', error instanceof Error ? error.message : 'delivery failed');
+      }
+    }
+    return rendered;
+
   }
 }
