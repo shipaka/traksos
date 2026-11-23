@@ -1329,6 +1329,14 @@ export function createApp(d: Deps) {
   r.get('/api/admin/summary', ['admin'], () => stats.summary());
   r.get('/api/admin/live', ['admin'], () => stats.liveOrders());
   r.post('/api/admin/services/:id/verify', staff, (c: AuthedCtx) => centers.verify(c.user, c.params.id, parse(z.object({ decision: z.enum(['approved', 'rejected']) }), c.body).decision));
+  // Explicit moderator attestation with a distinct documentary / visit record.
+  // The routine business "verify" button must NEVER publish self-reported GPS.
+  r.post('/api/admin/services/:id/verify-location', staff, (c: AuthedCtx) =>
+    centers.verifyPublicLocation(c.user,c.params.id,parse(z.object({
+      kind:z.enum(['official_registry','site_visit','verified_document']),
+      reference:z.string().trim().min(8).max(500),
+      confirmed:z.literal(true),
+    }).strict(),c.body)));
 
   r.get('/api/my-performers', true, (c: AuthedCtx) => orders.myPerformers(c.user));
   r.put('/api/my-performers/:id', true, (c: AuthedCtx) => orders.setPref(c.user, c.params.id, parse(z.object({ pref: z.enum(['fav', 'hide']).nullable() }), c.body).pref));
