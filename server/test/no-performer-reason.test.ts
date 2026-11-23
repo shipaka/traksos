@@ -74,3 +74,52 @@ test('unknown GPS, distant/unknown locations and active workers never prove no p
     })), 'unknown');
   }
 });
+
+
+test('terminal replacement search does not reuse offers or invitations from before performer drop', async () => {
+  const { setup } = await import('./helpers.ts');
+  const t = await setup();
+  try {
+    const customer = await t.login('+79990003561', 'client');
+    for (const [afterDropInvitation, expected] of [
+      [false, 'not_connected'],
+      [true, 'no_response'],
+    ] as const) {
+      // The old accepted dispatch had both an invite and an offer. A later
+      // performer_dropped event marks the new search boundary.
+      const order = await t.db.one<{ id: string }>(
+        `insert into orders(client_id,created_by,service,zone_id,status,estimate)
+           values ($1,$1,'hydraulics','spb','searching',$2::jsonb) returning id`,
+        [customer.id, JSON.stringify({callOut:100000,zoneName:'СПб'})],
+      );
+      assert.ok(order);
+      await t.db.query(
+        `insert into order_events(order_id,actor_id,type,data)
+          values ($1,null,'ringing','{}'::jsonb),
+                 ($1,null,'offer','{}'::jsonb),
+                 ($1,null,'performer_dropped','{}'::jsonb)`,
+        [order.id],
+      );
+      if (afterDropInvitation) {
+        await t.db.query(
+          `insert into order_events(order_id,actor_id,type,data)
+            values ($1,null,'ringing','{}'::jsonb)`,
+          [order.id],
+        );
+      }
+      // This disposable fixture has no hydraulics partners. Complete a real
+      // auction/terminal transition, not an artificial no_performer status.
+      await t.app.auction.start(order.id);
+      const status = await t.db.one<{status:string}>(
+        'select status from orders where id=$1', [order.id]);
+      assert.equal(status?.status, 'no_performer');
+      const event = await t.db.one<{reason:string}>(
+        `select data->>'absenceReason' as reason from order_events
+          where order_id=$1 and type='no_performer' order by id desc limit 1`,
+        [order.id],
+      );
+      assert.equal(event?.reason, expected,
+        'the final explanation must reflect only the replacement search');
+    }
+  } finally { await t.close(); }
+});

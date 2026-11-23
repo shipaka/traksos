@@ -338,8 +338,11 @@ export class AuctionService {
       const r = await q.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
       if (!r.length) return false;
       await q.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
-      // Snapshot what we actually KNOW at the end of the final wave. Never
-      // infer a missing partner from no_performer status or an empty radius alone.
+      // Snapshot ONLY the current search attempt: after an accepted worker
+      // drops out, the old invitation and accepted offer belong to the
+      // previous search. A replacement with zero offers must not be labelled
+      // "offers withdrawn" because of that old bid.
+      // Never infer a missing partner from no_performer status alone.
       let absenceReason: NoPerformerReason = 'unknown';
       await q.query('savepoint classify_absence');
       try {
@@ -347,14 +350,14 @@ export class AuctionService {
           `select
             exists(select 1 from order_events e where e.order_id=$1
                and e.id>coalesce((select max(id) from order_events
-                                   where order_id=$1 and type='retry'),0)
+                                   where order_id=$1 and type in ('retry','performer_dropped')),0)
                and (e.type='ringing' or
                     (e.type='auction_started' and
                      coalesce(nullif(e.data->>'candidates','')::numeric,0)>0))) as invited,
             exists(select 1 from order_events e where e.order_id=$1
                and e.type='offer'
                and e.id>coalesce((select max(id) from order_events
-                                   where order_id=$1 and type='retry'),0)) as "hadOffer"`,
+                                   where order_id=$1 and type in ('retry','performer_dropped')),0)) as "hadOffer"`,
           [order.id]);
         const profiles = await q.query<PartnerPresence>(
           `select p.kind,p.specialties,u.status as user_status,p.verification,
