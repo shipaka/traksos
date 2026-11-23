@@ -25,12 +25,18 @@ export function ContextHelp({ page }: {page:string}) {
   if (!me || ['help','training','practice','offer','rules'].includes(page)) return null;
   const role = trainingRole(mode, me.roles, me.owner_id);
   const [title, description] = contexts[page] ?? contexts[''];
-  const roleHelp = ['master','tow','consultant','service'].includes(role) ? 'performer' : 'client';
+  // The offer audience is the actual role, not a generic client fallback.
+  const offerAudience:Record<string,string>={
+    owner:'client',driver:'client',client:'client',
+    master:'performer',tow:'performer',consultant:'performer',service:'performer',
+    insurer:'insurer',inspection:'inspection',
+  };
+  const roleHelp=offerAudience[role]??null;
   return <details className="tr-context-help">
     <summary aria-label={'Подсказка: ' + title}>? Что здесь делать?</summary>
     <div className="tr-context-help-content"><strong>{title}</strong><p>{description}</p>
       <div className="row"><a href={'#/training/' + role}>Обучение</a><a href={'#/practice/' + role}>Практика</a>
-        <a href={'#/offer/' + roleHelp}>Условия</a></div>
+        {roleHelp&&<a href={'#/offer/' + roleHelp}>Условия</a>}</div>
     </div>
   </details>;
 }
