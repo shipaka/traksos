@@ -74,6 +74,20 @@ try{
           throw Error('Mobile artwork is not above DOM copy '+JSON.stringify(details));
         if(width>700 && details.art.right<=details.text.right)
           throw Error('Desktop artwork is not to the right of text');
+        // Real computed CSS is the final truth; checking the source alone
+        // would miss mobile 618's high-specificity legacy pink button rules.
+        const retryColors=await card.getByRole('button',{name:'Искать ещё раз'})
+          .evaluate(button=>{
+            const style=getComputedStyle(button);
+            return {backgroundColor:style.backgroundColor,
+              backgroundImage:style.backgroundImage,color:style.color};
+          });
+        if(!/linear-gradient/i.test(retryColors.backgroundImage) ||
+           !/rgb\(250,\s*104,\s*23\)/.test(retryColors.backgroundImage) ||
+           !/rgb\(255,\s*150,\s*38\)/.test(retryColors.backgroundImage) ||
+           retryColors.color!=='rgb(255, 255, 255)')
+          throw Error('Owner-approved retry CTA is not orange on '+role+' '+width+
+            ': '+JSON.stringify(retryColors));
         const expected=['Искать ещё раз','Другая помощь','Поддержка'];
         if(details.actions.length!==3 || details.actions.some((a,i)=>a.text!==expected[i]||a.height<44))
           throw Error('Unavailable/inaccessible actions '+JSON.stringify(details.actions));
