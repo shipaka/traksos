@@ -7,7 +7,7 @@ import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pr
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, cappedPct, commissionPct, pct } from '../domain/money.ts';
+import { cancelStage, cancelSplit, cappedPct, commissionPct } from '../domain/money.ts';
 import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
@@ -881,7 +881,10 @@ export class OrdersService {
       overridePct: o.commission_pct_override == null ? null : Number(o.commission_pct_override),
       at: this.now(),
     });
-    const commission = pct(full.amount, rate);
+    // The agent's compensation is capped at 5 000 ₽ per side of an order.
+    // The client fee already uses cappedPct above: the worker-visible payout
+    // must apply the SAME approved cap, even on expensive repairs.
+    const commission = cappedPct(full.amount, rate);
     const pointsCommission = Math.min(commission, Math.max(0, Number(o.points_commission ?? 0)));
     return { ...base, commission, commissionPct: rate,
       pointsCommission, payout: full.amount - commission + pointsCommission,
