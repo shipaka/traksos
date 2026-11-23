@@ -98,9 +98,9 @@ export class ProfilesService {
            specialties=coalesce($3::text[], performer_profiles.specialties),
            brands=coalesce($4::jsonb, performer_profiles.brands),
            tier=coalesce($5::text, performer_profiles.tier),
-           call_out_price=case when excluded.kind='ecu' then null else coalesce($6::int,performer_profiles.call_out_price) end,
-           hour_price=case when excluded.kind='ecu' then null else coalesce($7::int,performer_profiles.hour_price) end,
-           km_rate=case when excluded.kind='ecu' then null else coalesce($8::int,performer_profiles.km_rate) end,
+           call_out_price=case when excluded.kind='ecu' then null when $15::boolean then $6::int else performer_profiles.call_out_price end,
+           hour_price=case when excluded.kind='ecu' then null when $16::boolean then $7::int else performer_profiles.hour_price end,
+           km_rate=case when excluded.kind='ecu' then null when $17::boolean then $8::int else performer_profiles.km_rate end,
            prep_minutes=coalesce($9::int, performer_profiles.prep_minutes),
            accepts_group=coalesce($10::boolean, performer_profiles.accepts_group),
            tax_status=coalesce($11::text, performer_profiles.tax_status),
@@ -110,7 +110,12 @@ export class ProfilesService {
            updated_at=now()`,
         [user.id, p.kind, p.specialties ?? null, p.brands ?? null, p.tier ?? null, p.callOutPrice ?? null, p.hourPrice ?? null,
           p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,
-          p.car ?? (p.cars?.length ? p.cars[0] : null), p.cars ? JSON.stringify(p.cars) : null],
+          p.car ?? (p.cars?.length ? p.cars[0] : null), p.cars ? JSON.stringify(p.cars) : null,
+          // SQL NULL is meaningful (reset to platform tier default); an omitted
+          // field must still keep its old value during partial profile saves.
+          Object.prototype.hasOwnProperty.call(p, 'callOutPrice'),
+          Object.prototype.hasOwnProperty.call(p, 'hourPrice'),
+          Object.prototype.hasOwnProperty.call(p, 'kmRate')],
       );
       if (extras !== undefined) {
         await q.query(
