@@ -74,7 +74,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const modal=useRef<HTMLElement|null>(null);
   const surface=useRef<HTMLDivElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
-  const drag=useRef<{x:number;y:number;view:View}|null>(null);
+  const drag=useRef<{x:number;y:number;pointerId:number;view:View}|null>(null);
   function restoreMarkerFocus(marker:HTMLButtonElement|null){
     requestAnimationFrame(()=>{
       (marker?.isConnected?marker:closeRef.current)?.focus();
@@ -213,17 +213,26 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           const target=event.target as HTMLElement;
           if(event.button!==0 || !event.isPrimary ||
              target.closest('button,a,input,select,textarea,[role="button"],[contenteditable="true"],.tr-network-partner,.tr-network-cluster-list,.tr-network-zoom,.tr-network-notice,.tr-network-attribution'))return;
-          drag.current={x:event.clientX,y:event.clientY,view};
-          (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+          drag.current={x:event.clientX,y:event.clientY,pointerId:event.pointerId,view};
+          event.currentTarget.setPointerCapture(event.pointerId);
         }}
         onPointerMove={event=>{
-          const d=drag.current;if(!d)return;
+          // A second touch may cross the viewport during a one-finger pan.
+          // Only the captured primary pointer can move this map: otherwise
+          // a two-finger gesture jumps to unrelated world coordinates.
+          const d=drag.current;if(!d || d.pointerId!==event.pointerId)return;
           const c=world(d.view.lat,d.view.lng,d.view.zoom);
           const next=unproject(c.x-(event.clientX-d.x),c.y-(event.clientY-d.y),d.view.zoom);
           setView({...d.view,lat:clamp(next.lat,-82,82),lng:next.lng});
         }}
-        onPointerUp={()=>{drag.current=null;}}
-        onPointerCancel={()=>{drag.current=null;}}
+        onPointerUp={event=>{
+          if(drag.current?.pointerId!==event.pointerId)return;
+          drag.current=null;
+          if(event.currentTarget.hasPointerCapture(event.pointerId))
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }}
+        onPointerCancel={event=>{if(drag.current?.pointerId===event.pointerId)drag.current=null;}}
+        onLostPointerCapture={event=>{if(drag.current?.pointerId===event.pointerId)drag.current=null;}}
         onKeyDown={event=>{
           if(event.target!==event.currentTarget)return;
           if(event.key==='ArrowLeft'){pan(-95,0);event.preventDefault();}

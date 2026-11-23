@@ -275,6 +275,39 @@ try {
    await probe.evaluate(link=>link.remove());
    if(stolen || activated!=='yes')
      throw Error(width+': map drag intercepted a nested link (captured='+stolen+', clicked='+activated+')');
+   // Real pointer capture must still allow map dragging. Interactions are
+   // verified only when the real API has no pins at the drag target.
+   if(await network.locator('.tr-network-marker').count()===0){
+     const mapView=network.locator('.tr-network-viewport');
+     const rect=await mapView.boundingBox();
+     if(!rect)throw Error(width+': map viewport missing for drag proof');
+     const x=rect.x+rect.width*.73,y=rect.y+rect.height*.7;
+     const beforePan=await network.locator('.tr-network-tiles img').first()
+       .evaluate(img=>getComputedStyle(img).left);
+     await page.mouse.move(x,y);
+     await page.mouse.down();
+     await page.mouse.move(x+45,y+25,{steps:5});
+     await page.mouse.up();
+     const afterPan=await network.locator('.tr-network-tiles img').first()
+       .evaluate(img=>getComputedStyle(img).left);
+     if(beforePan===afterPan)
+       throw Error(width+': physical map drag did not pan geographic tiles');
+     await network.getByRole('button',{name:'Показать Россию'}).click();
+   }
+   // All touch controls on the expanded map remain operable without tiny
+   // 30–36px hit targets. The compact approved 617 map is not modified.
+   const touchHit=await network.evaluate(dialog=>{
+     const temp=document.createElement('button');
+     temp.className='tr-network-marker';
+     temp.style.cssText='position:fixed;left:-200px;top:-200px';
+     dialog.append(temp);
+     const style=getComputedStyle(temp);
+     const markerMin=Math.min(parseFloat(style.minWidth),parseFloat(style.minHeight));
+     temp.remove();
+     return {markerMin};
+   });
+   if(touchHit.markerMin<44)
+     throw Error(width+': public map partner hit target below 44px');
    await page.screenshot({path:'e2e/shots/owner20-pc/partner-network-'+width+'.png',
      fullPage:false,animations:'disabled'});
    await page.keyboard.press('Escape');

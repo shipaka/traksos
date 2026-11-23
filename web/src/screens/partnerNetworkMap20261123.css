@@ -47,7 +47,7 @@
 .tr-network-zoom button:disabled{cursor:not-allowed;opacity:.45}
 .tr-network-zoom button:last-child{font-size:12px}
 .tr-network-marker{
-  position:absolute;z-index:3;min-width:36px;min-height:36px;
+  position:absolute;z-index:3;min-width:44px;min-height:44px;
   display:flex;align-items:center;justify-content:center;
   border:2px solid #fff2a7;background:#ffce24;color:#34250b;
   border-radius:50%;box-shadow:0 2px 0 #8f6b12,0 0 0 7px #ffd42b30,0 3px 16px #050a1299;
@@ -88,7 +88,7 @@
 .tr-network-partner small{font-size:12px;color:#bfd2de}
 .tr-network-partner a{font-weight:800;color:#ffe0b0;text-decoration:underline}
 .tr-network-dismiss{
-  position:absolute;right:7px;top:7px;min-width:30px;min-height:30px;
+  position:absolute;right:7px;top:7px;min-width:44px;min-height:44px;
   border:0;background:#3b5363;color:#fff;border-radius:7px;cursor:pointer}
 .tr-network-notice{
   position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);
