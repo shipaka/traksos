@@ -39,7 +39,29 @@ test('no map points before independently approved map consent',async()=>{
 test('approved stationary center requires explicit opt-in, then public lists exact known fields only',async()=>{
   ok(await t.api('POST',`/api/admin/services/${centerId}/verify`,{decision:'approved'},admin.token));
   assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[],
-    'approval alone never consents to public exact station coordinates');
+    'normal business approval never verifies self-reported location');
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
+    'ordinary approval cannot authorize a public real-GPS pin');
+  const locationRoute=`/api/admin/services/${centerId}/verify-location`;
+  assert.equal((await t.api('POST',locationRoute,{
+    kind:'verified_document',reference:'TEST-ONLY-STATIONARY-ADDRESS-DOCUMENT',confirmed:true
+  },service.token)).status,403,'station may not approve its own coordinates');
+  assert.equal((await t.api('POST',locationRoute,{
+    kind:'verified_document',reference:'TEST-ONLY-STATIONARY-ADDRESS-DOCUMENT',confirmed:true
+  },client.token)).status,403,'a customer cannot certify station coordinates');
+  assert.equal((await t.api('POST',locationRoute,{
+    kind:'verified_document',reference:'TEST-ONLY-STATIONARY-ADDRESS-DOCUMENT',confirmed:false
+  },admin.token)).status,400,'explicit documentary match is mandatory');
+  const verified=ok(await t.api('POST',locationRoute,{
+    kind:'verified_document',reference:'TEST-ONLY-STATIONARY-ADDRESS-DOCUMENT',confirmed:true
+  },admin.token));
+  assert.ok(verified.public_map_location_verified_at);
+  const audit=await t.db.query<any>(`select actor_id,data from audit_log
+    where action='service.public_location.verify' and target=$1`,[centerId]);
+  assert.equal(audit.length,1);
+  assert.equal(audit[0].actor_id,admin.id);
+  assert.equal(audit[0].data.reference,'TEST-ONLY-STATIONARY-ADDRESS-DOCUMENT');
+  assert.equal(audit[0].data.lat,59.97);
   const consent=ok(await t.api('PUT','/api/service/public-map',{enabled:true},service.token));
   assert.equal(consent.enabled,true);
   assert.ok(consent.optedAt);
@@ -61,6 +83,11 @@ test('changing stationary address revokes old opt-in and public coordinate proof
   assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
     'no republishing edited location before renewed moderator approval');
   ok(await t.api('POST',`/api/admin/services/${centerId}/verify`,{decision:'approved'},admin.token));
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
+    'second ordinary verification cannot silently certify changed coordinates');
+  ok(await t.api('POST',`/api/admin/services/${centerId}/verify-location`,{
+    kind:'site_visit',reference:'TEST-ONLY-SECOND-SITE-VISIT-ADDRESS-B',confirmed:true
+  },admin.token));
   ok(await t.api('PUT','/api/service/public-map',{enabled:true},service.token));
   assert.equal(ok(await t.api('GET','/api/public/partner-map')).points[0].lat,59.96);
 });
@@ -75,7 +102,11 @@ test('two independently consented stations appear; unapproved or no-GPS entries 
   assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1);
   ok(await t.api('POST',`/api/admin/services/${secondId}/verify`,{decision:'approved'},admin.token));
   assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1,
-    'mod approval does not itself opt-in');
+    'mod approval does not certify coordinates or opt-in');
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},second.token)).status,400);
+  ok(await t.api('POST',`/api/admin/services/${secondId}/verify-location`,{
+    kind:'official_registry',reference:'TEST-ONLY-OFFICIAL-LOCATION-RECORD-2',confirmed:true
+  },admin.token));
   ok(await t.api('PUT','/api/service/public-map',{enabled:true},second.token));
   const both=ok(await t.api('GET','/api/public/partner-map')).points;
   assert.equal(both.length,2);
