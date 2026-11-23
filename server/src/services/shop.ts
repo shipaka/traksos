@@ -447,10 +447,9 @@ export class ShopService {
   }
 
   async cancelMine(user: AuthUser, id: string) {
-    const o = await this.db.one<any>('select * from shop_orders where id=$1 and (client_id=$2 or created_by=$3)', [id, user.owner_id ?? user.id, user.id]);
-    if (!o) throw notFound('Заказ не найден');
-    if (o.status !== 'new') throw conflict('bad_status', 'Заказ уже собирают — напишите в поддержку');
-    return this.setStatus(null, id, 'cancelled', 'Отменил клиент');
+    // Same fleet != same buyer: drivers may only cancel orders THEY created.
+    // The authoritative check is repeated under FOR UPDATE inside setStatus.
+    return this.setStatus(null, id, 'cancelled', 'Отменил клиент', user);
   }
 
   // ——— Админ: заказы ———
@@ -474,16 +473,23 @@ export class ShopService {
       client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
   }
 
-  async setStatus(actor: AuthUser | null, id: string, status: string, note?: string) {
+  async setStatus(actor: AuthUser | null, id: string, status: string, note?: string,
+    buyer?: AuthUser) {
+    if (buyer && status !== 'cancelled') throw forbidden('Покупатель может только отменить заказ');
     const o = await this.db.one<any>('select * from shop_orders where id=$1', [id]);
-    if (!o) throw notFound('Заказ не найден');
+    const mayCancel=(order:{client_id:string;created_by:string})=>
+      !!buyer && order.client_id===(buyer.owner_id??buyer.id) &&
+      (!buyer.owner_id||order.created_by===buyer.id);
+    // Fail closed before exposing a foreign shop order's existence or status.
+    if (!o || (buyer && !mayCancel(o))) throw notFound('Заказ не найден');
     if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
     await this.db.tx(async (q) => {
-      // Serialize with courier handoff and buyer confirmation. An admin cannot
-      // mark an assigned courier delivery received or bypass its status order.
-      const locked=await q.one<{status:string}>(
-        'select status from shop_orders where id=$1 for update',[id]);
-      if(!locked||locked.status!==o.status)
+      // Authorization, status transition and stock restock share ONE row lock.
+      const locked=await q.one<{status:string;client_id:string;created_by:string}>(
+        'select status,client_id,created_by from shop_orders where id=$1 for update',[id]);
+      if(!locked || (buyer && !mayCancel(locked)))
+        throw notFound('Заказ не найден');
+      if(locked.status!==o.status)
         throw conflict('status_changed','Заказ изменился — обновите страницу');
       const courier=await q.one<{id:string;status:string}>(
         'select id,status from shop_courier_deliveries where shop_order_id=$1 for update',[id]);
@@ -504,10 +510,18 @@ export class ShopService {
       }
       await q.query(`update shop_orders set status=$2, cancel_reason = case when $2='cancelled' then $3 else cancel_reason end,
                        admin_note = case when $2<>'cancelled' and $3::text is not null then $3 else admin_note end, updated_at=now() where id=$1`, [id, status, note?.trim() || null]);
-      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor?.id ?? o.created_by, 'shop.status', id, { status, note }]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor?.id ?? buyer?.id ?? o.created_by, 'shop.status', id, { status, note }]);
     });
-    if (actor) await this.notifier.notify([o.client_id, o.created_by], { type: 'shop', shopOrderId: id },
-      { kind: 'normal', title: `Заказ в магазине №${o.number}: ${SHOP_STATUS[status].toLowerCase()}`, body: note?.trim() || (status === 'ready' ? 'Можно забирать' : ''), data: { shopOrderId: id } });
+    if (actor) {
+      try {
+        await this.notifier.notify([o.client_id, o.created_by], { type: 'shop', shopOrderId: id },
+          { kind: 'normal', title: `Заказ в магазине №${o.number}: ${SHOP_STATUS[status].toLowerCase()}`, body: note?.trim() || (status === 'ready' ? 'Можно забирать' : ''), data: { shopOrderId: id } });
+      } catch (error) {
+        // The locked SQL status/stock transaction already committed. Never
+        // signal a failed status change merely because push/email was offline.
+        console.warn('Shop status committed; notification failed:', error);
+      }
+    }
     const r = await this.db.one('select * from shop_orders where id=$1', [id]);
     return this.orderView(r);
   }
