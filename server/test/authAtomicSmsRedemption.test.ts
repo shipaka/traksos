@@ -159,3 +159,16 @@ test('blocked account SMS proof cannot rewrite password/roles or issue a new ses
   assert.equal((await sessionRows(registered.user.id)).length,1);
   assert.equal((await t.db.query('select phone from auth_codes where phone=$1',[phone])).length,0);
 });
+
+test('corrupted non-hex stored password is treated as bad credentials, not a 500 or new session',async()=>{
+  const phone=correctPhone('0018');
+  const registered=ok(await register(phone,await code(phone),'AValidPassword123'));
+  await t.db.query('update users set password_hash=$2 where id=$1',[
+    registered.user.id,'scrypt:'+'f'.repeat(32)+':'+'z'.repeat(128),
+  ]);
+  const before=(await sessionRows(registered.user.id)).length;
+  const response=await t.api('POST','/api/auth/login',{phone,password:'AValidPassword123'});
+  assert.equal(response.status,401);
+  assert.equal(response.body.error,'bad_credentials');
+  assert.equal((await sessionRows(registered.user.id)).length,before);
+});
