@@ -306,7 +306,16 @@ export function RequestCard({ b, onDone }: { b: any; onDone: () => void }) {
   const [mode, setMode] = useState<'' | 'accept' | 'clarify' | 'decline'>('');
   const [time, setTime] = useState(b.whenTime ?? '');
   const [q, setQ] = useState('');
-  const respond = async (body: any, okText: string) => { if (await run(() => basePost(`/api/base/bookings/${b.id}/respond`, body), okText)) { setMode(''); onDone(); } };
+  const responding = useRef(false);
+  const respond = async (body: any, okText: string) => {
+    if (responding.current) return;
+    responding.current = true;
+    try {
+      if (await run(() => basePost(`/api/base/bookings/${b.id}/respond`, body), okText)) {
+        setMode(''); onDone();
+      }
+    } finally { responding.current = false; }
+  };
   return (
     <div className="card hi">
       <div className="between"><b>Новый запрос · {fmtTime(b.createdAt)}</b><span className={`pill ${TONE[b.status]}`}>{b.statusName}</span></div>
