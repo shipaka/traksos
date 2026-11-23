@@ -286,25 +286,39 @@ export class ServiceCenters {
   async respond(user: AuthUser, id: string, p: { action: 'accept' | 'clarify' | 'decline' | 'undo'; time?: string; q?: string; reason?: string }) {
     const { b } = await this.mineBooking(user, id);
     if (p.action === 'undo') {
-      if (b.status !== 'expected') throw conflict('bad_status', 'Отменить можно, пока машина не приехала');
-      await this.db.query(`update service_bookings set status='new', accept_time=null, updated_at=now() where id=$1`, [id]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='new', accept_time=null, updated_at=now()
+          where id=$1 and status='expected' returning *`, [id]);
+      if (!updated) throw conflict('bad_status', 'Отменить можно, пока машина не приехала');
       return this.booking(user, id);
     }
-    if (!['new', 'clarify'].includes(b.status)) throw conflict('bad_status', 'На запрос уже ответили');
+    const allowed = "status in ('new','clarify')";
     if (p.action === 'accept') {
       const time = p.time?.trim() || b.when_time || null;
-      await this.db.query(`update service_bookings set status='expected', accept_time=$2, updated_at=now() where id=$1`, [id, time]);
-      await this.tell({ ...b, status: 'expected' }, 'Сервис ждёт вас', `Ждём вас ${fmtDay(b.when_day)}${time ? ` в ${time}` : ''}`);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='expected', accept_time=$2, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, time]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис ждёт вас',
+        `Ждём вас ${fmtDay(updated.when_day)}${time ? ` в ${time}` : ''}`);
     } else if (p.action === 'clarify') {
       const q = p.q?.trim();
       if (!q) throw bad('empty', 'Что уточнить?');
-      await this.db.query(`update service_bookings set status='clarify', clarify_q=$2, client_answer=null, updated_at=now() where id=$1`, [id, q]);
-      await this.tell({ ...b, status: 'clarify' }, 'Сервис уточняет', q);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='clarify', clarify_q=$2,
+              client_answer=null, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, q]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис уточняет', q);
     } else {
       const reason = p.reason?.trim();
       if (!reason) throw bad('empty', 'Укажите причину');
-      await this.db.query(`update service_bookings set status='declined', decline_reason=$2, updated_at=now() where id=$1`, [id, reason]);
-      await this.tell({ ...b, status: 'declined' }, 'Сервис не может принять', `${reason} — посмотрите другие сервисы рядом`);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='declined', decline_reason=$2, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, reason]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис не может принять',
+        `${reason} — посмотрите другие сервисы рядом`);
     }
     return this.booking(user, id);
   }
