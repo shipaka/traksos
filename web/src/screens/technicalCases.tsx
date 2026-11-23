@@ -128,39 +128,98 @@ export function RepairCases() {
 }
 
 export function TechnicalCasesReview() {
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const identity=(me?.id??'')+':'+String(admin);
+  const identityRef=useRef(identity);
+  identityRef.current=identity;
+  const requestSerial=useRef(0);
+  const [visibleIdentity,setVisibleIdentity]=useState('');
   const [items,setItems]=useState<RepairCase[]>([]);
   const [notes,setNotes]=useState<Record<string,string>>({});
   const [error,setError]=useState('');
+  const [notice,setNotice]=useState('');
   const [loading,setLoading]=useState(false);
+  const [reviewingId,setReviewingId]=useState<string|null>(null);
+  const currentItems=admin&&visibleIdentity===identity?items:[];
+
   const load=async()=>{
-    setLoading(true);
-    try{ const response=await get<{items:RepairCase[]}>('/api/admin/tech/repair-cases'); setItems(response.items);}
-    catch(e:any){setError(e.message||'Ошибка загрузки');}
-    finally{setLoading(false);}
-  };
-  useEffect(()=>{void load();},[]); // eslint-disable-line
-  const review=async(id:string,approve:boolean)=>{
+    if(!admin)return;
+    const requestedBy=identity;
+    const requestId=++requestSerial.current;
     setLoading(true);setError('');
-    try{await post('/api/admin/tech/repair-cases/'+id+'/review',{approve,note:notes[id]??''});await load();}
-    catch(e:any){setError(e.message||'Ошибка проверки');}
-    finally{setLoading(false);}
+    try{
+      const response=await get<{items:RepairCase[]}>('/api/admin/tech/repair-cases');
+      if(requestId!==requestSerial.current||identityRef.current!==requestedBy)return;
+      if(!Array.isArray(response?.items))throw new Error('Некорректный ответ очереди проверки');
+      setItems(response.items);
+    }catch(e:any){
+      if(requestId!==requestSerial.current||identityRef.current!==requestedBy)return;
+      setItems([]);
+      setError(e?.message||'Ошибка загрузки кейсов');
+    }finally{
+      if(requestId===requestSerial.current&&identityRef.current===requestedBy)setLoading(false);
+    }
   };
+  useEffect(()=>{
+    // Pending moderation includes unreviewed, private specialist details.
+    // Invalidate old requests immediately when the signed-in user changes.
+    requestSerial.current++;
+    setVisibleIdentity(identity);setItems([]);setNotes({});
+    setError('');setNotice('');setReviewingId(null);
+    if(admin)void load();
+    else setLoading(false);
+  },[identity]); // eslint-disable-line
+
+  const review=async(id:string,approve:boolean)=>{
+    if(!admin||reviewingId||loading)return;
+    const note=(notes[id]??'').trim();
+    if(approve&&note.length<10){
+      setError('Для одобрения необходимо основание проверки не менее 10 символов.');
+      return;
+    }
+    const requestedBy=identity;
+    setReviewingId(id);setError('');setNotice('');
+    try{
+      await post('/api/admin/tech/repair-cases/'+id+'/review',{approve,note});
+      if(identityRef.current!==requestedBy)return;
+      setItems(old=>old.filter(item=>item.id!==id));
+      setNotes(old=>{const next={...old};delete next[id];return next;});
+      setNotice(approve?'Кейс одобрен после проверки.':'Кейс отклонён.');
+      await load();
+    }catch(e:any){
+      if(identityRef.current===requestedBy)setError(e?.message||'Ошибка проверки кейса');
+    }finally{
+      if(identityRef.current===requestedBy)setReviewingId(null);
+    }
+  };
+  if(!admin)return <main><Back to="tech/codes"/><h1>Модерация технических кейсов</h1>
+    <p className="note">Проверка и публикация кейсов доступны только администратору.</p></main>;
   return <main>
     <Back to="tech/codes" />
     <h1>Модерация технических кейсов</h1>
     <p className="sub">Проверяй фактическую применяемость и происхождение информации. Отклоняй неподтверждённые решения, чужие документы и персональные данные.</p>
-    {error && <p role="alert" className="note">{error}</p>}
-    {!items.length && !loading && <div className="empty">Кейсов на проверке нет</div>}
-    {items.map((item)=><section key={item.id} className="card stack">
+    {error&&<div className="banner warn" role="alert">{error}
+      <button type="button" className="btn ghost small" disabled={loading||!!reviewingId}
+        onClick={()=>void load()}>Повторить загрузку очереди</button>
+    </div>}
+    {notice&&<p role="status" className="note">{notice}</p>}
+    {loading&&<div className="empty" role="status">Обновляем очередь технических кейсов…</div>}
+    {!currentItems.length&&!loading&&!error&&<div className="empty">Кейсов на проверке нет</div>}
+    {currentItems.map((item)=><section key={item.id} className="card stack">
       <h3>{item.make} {item.model} · {item.code || item.ecu}</h3>
       <span className="label">Симптомы</span><p style={{whiteSpace:'pre-wrap'}}>{item.symptoms}</p>
       <span className="label">Проверки</span><p style={{whiteSpace:'pre-wrap'}}>{item.checks_performed}</p>
       <span className="label">Исправление</span><p style={{whiteSpace:'pre-wrap'}}>{item.verified_fix}</p>
       <span className="note">{item.provenance_note}</span>
-      <textarea className="field" placeholder="Основание решения (обязательно для одобрения)" value={notes[item.id]??''} onChange={(e)=>setNotes(x=>({...x,[item.id]:e.target.value}))}/>
+      <textarea className="field" placeholder="Основание решения (обязательно для одобрения)" aria-label={'Основание проверки '+item.id}
+        maxLength={1000} disabled={!!reviewingId}
+        value={notes[item.id]??''} onChange={(e)=>setNotes(x=>({...x,[item.id]:e.target.value}))}/>
       <div className="row">
-        <button className="btn" disabled={loading||(notes[item.id]??'').trim().length<10} onClick={()=>void review(item.id,true)}>Одобрить</button>
-        <button className="btn ghost" disabled={loading} onClick={()=>void review(item.id,false)}>Отклонить</button>
+        <button className="btn" disabled={loading||!!reviewingId||(notes[item.id]??'').trim().length<10}
+          onClick={()=>void review(item.id,true)}>{reviewingId===item.id?'Проверяем…':'Одобрить'}</button>
+        <button className="btn ghost" disabled={loading||!!reviewingId}
+          onClick={()=>void review(item.id,false)}>Отклонить</button>
       </div>
     </section>)}
   </main>;
