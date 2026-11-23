@@ -77,9 +77,9 @@ try{
   await page.evaluate(()=>localStorage.setItem('traksos.scenario.progress.v1.CI-A.owner','["app-not-working"]'));
   await change({page:'cases',userId:'CI-A',mode:'client',roles:['owner']});
   await page.getByRole('region',{name:'Энциклопедия ситуаций TrakSOS'}).waitFor();
-  await page.getByLabel('Курсы пройдены: 1 из', {exact:false}).waitFor();
+  await page.locator('[aria-label^="Курсы пройдены: 1 из"]').waitFor();
   await change({userId:'CI-B',mode:'client',roles:['owner']});
-  await page.getByLabel('Курсы пройдены: 0 из',{exact:false}).waitFor();
+  await page.locator('[aria-label^="Курсы пройдены: 0 из"]').waitFor();
   await change({mode:'courier',roles:['courier'],caseId:'app-not-working'});
   await page.getByRole('link',{name:/Курьер: код проверен/}).waitFor();
   await page.getByRole('link',{name:/Курьер: код вручения/}).waitFor();
@@ -106,7 +106,7 @@ try{
     await page.getByRole('button',{name:step===2?'Показать итог':'Следующая ситуация'}).click();
   }
   await page.getByText('Вы разобрали ситуацию').waitFor();
-  await page.getByLabel('Курсы пройдены: 1 из',{exact:false}).waitFor();
+  await page.locator('[aria-label^="Курсы пройдены: 1 из"]').waitFor();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('traksos.scenario.progress.v1.CI-B.courier')));
   if(!saved.includes('courier-code-handover'))throw Error('Courier completion was not stored in its own scope');
 
@@ -115,11 +115,11 @@ try{
       JSON.stringify(['courier-code-handover','courier-code-locked']));
     window.dispatchEvent(new Event('storage'));
   });
-  await page.getByLabel('Курсы пройдены: 2 из',{exact:false}).waitFor();
+  await page.locator('[aria-label^="Курсы пройдены: 2 из"]').waitFor();
 
   await change({mode:'client',roles:['owner']});
   await page.getByText('Курс недоступен').waitFor();
-  await page.getByLabel('Курсы пройдены: 0 из',{exact:false}).waitFor();
+  await page.locator('[aria-label^="Курсы пройдены: 0 из"]').waitFor();
 
   if(errors.length)throw Error('Runtime error: '+errors.join('; '));
   if(requests.length)throw Error('Training triggered network: '+requests.join('; '));
