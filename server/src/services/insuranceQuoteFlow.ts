@@ -72,7 +72,7 @@ export class InsuranceQuoteFlow {
       from insurance_thread_messages m
       join vehicle_service_requests r on r.id=m.request_id
       where m.request_id=$1 order by m.id`,[id,user.id,r.assigned_to]);
-    const hasPolicy=await this.db.one<{has:boolean}>(
+    const hasPolicy=await q.one<{has:boolean}>(
       `select exists(select 1 from insurance_policy_files where request_id=$1) as has`,[id]);
     return {request,proposals,messages,hasPolicy:hasPolicy?.has??false,...permissions};
     });
