@@ -117,13 +117,18 @@ test('manual driver assignment cannot bypass role ACL and releases a replaced dr
   const owner = await t.login(phone(1300));
   const x = await t.login(phone(1301),'driver');
   const y = await t.login(phone(1302),'driver');
-  const courier = await t.login(phone(1303));
   const v = ok(await t.api('POST','/api/vehicles',car(41),owner.token));
-  await t.db.query("update users set roles='{courier}'::text[] where id=$1",[courier.id]);
-  const denied = await t.api('POST',`/api/vehicles/${v.id}/driver`,{phone:phone(1303)},owner.token);
-  assert.equal(denied.status,403);
-  assert.equal((await assignment(v.id))?.driver_id,null);
-  assert.deepEqual((await state(courier.id))?.roles,['courier']);
+  for (const [i,role] of ['master','tow','service','insurer','courier',
+    'inspection_operator','admin','moderator'].entries()) {
+    const rejected=await t.login(phone(1303+i));
+    await t.db.query('update users set roles=$2::text[] where id=$1',[rejected.id,[role]]);
+    const denied = await t.api('POST',`/api/vehicles/${v.id}/driver`,
+      {phone:phone(1303+i)},owner.token);
+    assert.equal(denied.status,403,'manual driver invitation must reject '+role);
+    assert.equal((await assignment(v.id))?.driver_id,null);
+    assert.deepEqual((await state(rejected.id))?.roles,[role]);
+    assert.equal((await state(rejected.id))?.owner_id,null);
+  }
   ok(await t.api('POST',`/api/vehicles/${v.id}/driver`,{phone:phone(1301)},owner.token));
   assert.equal((await state(x.id))?.owner_id,owner.id);
   ok(await t.api('POST',`/api/vehicles/${v.id}/driver`,{phone:phone(1302)},owner.token));
