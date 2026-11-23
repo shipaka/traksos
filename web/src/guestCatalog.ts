@@ -125,6 +125,22 @@ export const MASTER_SPECIALTIES = [
 /** Client-side route hint, never a permission, role or paid booking. */
 export type GuestAction = ServiceId | 'inspection' | 'ecu' | 'sos' | 'air' |
   'club' | 'tech' | 'trakbot' | 'garage' | 'training';
+
+// One destination table for successful customer login AND an already signed-in
+// customer opening an external/deep public-service link. Routes are not
+// permissions; the destination screen still enforces its real role checks.
+export const GUEST_CUSTOMER_DESTINATIONS: Readonly<Record<GuestAction,string>> = {
+  van:'#/sos/master', tow:'#/new/tow', sto:'#/services',
+  consult:'#/new/consult', insurance:'#/insurance/request/new',
+  parts:'#/shop', inspection:'#/garage', ecu:'#/new/ecu',
+  sos:'#/sos', air:'#/air', club:'#/air',
+  tech:'#/techbase/driver', garage:'#/garage',
+  training:'#/training', trakbot:'#/trakbot'
+};
+export function guestCustomerDestination(service: string | null | undefined): string | null {
+  if (!service || !Object.prototype.hasOwnProperty.call(GUEST_CUSTOMER_DESTINATIONS,service)) return null;
+  return GUEST_CUSTOMER_DESTINATIONS[service as GuestAction];
+}
 export function rememberGuestAction(service: GuestAction, item?: string) {
   try {
     sessionStorage.setItem('traksos.pendingLandingAction', service);

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, type GuestAction } from '../guestCatalog.ts';
+import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, guestCustomerDestination, type GuestAction } from '../guestCatalog.ts';
 import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 
 const HERO_SLIDES = [
@@ -335,14 +335,7 @@ export function Login({ driver, entry, serviceContext }: {
         pending = sessionStorage.getItem('traksos.pendingLandingAction');
         sessionStorage.removeItem('traksos.pendingLandingAction');
       } catch { /* private browsing */ }
-      const selectedDestination: string | undefined = customer ? ({
-        van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
-        consult: '#/new/consult', insurance: '#/insurance/request/new',
-        parts: '#/shop', inspection: '#/garage', ecu: '#/new/ecu',
-        sos: '#/sos', air: '#/air', club: '#/air',
-        tech: '#/techbase/driver', garage: '#/garage',
-        training: '#/training', trakbot: '#/trakbot'
-      } as Record<GuestAction,string>)[pending as GuestAction] : undefined;
+      const selectedDestination = customer ? guestCustomerDestination(pending) : null;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();

@@ -333,6 +333,30 @@ try {
       width+'px: horizontal overflow '+JSON.stringify(widths));
     await ctx.close();
   }
+  // Signed-in customers following a public service bookmark should open the
+  // existing working section immediately, not silently fall back to the desk.
+  const signedInContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    await signedInContext.addInitScript(()=>localStorage.setItem('traksos.token','CI-CUSTOMER-DEEPLINK'));
+    const signedInPage=await signedInContext.newPage();
+    await signedInPage.route('**/api/**',async route=>{
+      const path=new URL(route.request().url()).pathname;
+      if(path==='/api/me')return route.fulfill({status:200,contentType:'application/json',
+        body:JSON.stringify({id:'ci-customer',name:null,phone:'',roles:['client'],
+          owner_id:null,company_name:null,company_inn:null,rating:null,rating_count:0,performer:null})});
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    for(const [service,route] of [
+      ['van','#/sos/master'],['ecu','#/new/ecu'],['sto','#/services'],
+      ['parts','#/shop'],['garage','#/garage'],['trakbot','#/trakbot'],
+      ['training','#/training'],['air','#/air']
+    ]){
+      await signedInPage.goto(BASE+'/#/explore/'+service,{waitUntil:'domcontentloaded'});
+      await signedInPage.waitForFunction(expected=>location.hash===expected,route);
+      check(signedInPage.url().endsWith(route),
+        'Authenticated customer service link '+service+' did not open '+route);
+    }
+  }finally{await signedInContext.close();}
   // The public legal footer must recover after its first API request fails;
   // neither a hard reload nor invented legal/contact data is acceptable.
   const legalContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});

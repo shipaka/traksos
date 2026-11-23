@@ -62,6 +62,7 @@ import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
+import { guestCustomerDestination } from './guestCatalog.ts';
 // Native bridge is present before the bundled application starts.
 document.documentElement.classList.toggle('traksos-browser', !native.isApp);
 document.documentElement.classList.toggle('traksos-native', native.isApp);
@@ -284,12 +285,12 @@ function App() {
     if (!ready || !me || route[0] !== 'explore') return;
     // A stale render must not overwrite a newer signedIn() destination.
     if (!location.hash.startsWith('#/explore/')) return;
-    // A login initiated from a service controls its own post-auth destination.
-    // Do not race signedIn() and override the selected order/service route.
-    try {
-      if (sessionStorage.getItem('traksos.pendingLandingAction')) return;
-    } catch { /* Private browsing */ }
-    location.replace('#/');
+    // Public-service bookmarks and clicks from an already signed-in client
+    // must enter the same real working section as after new authentication.
+    // A parallel signedIn() may still choose its own QR/partner destination;
+    // it will update the hash after this effect without reopening the guest UI.
+    const customer = me.roles.includes('client') || me.roles.includes('driver');
+    location.replace((customer ? guestCustomerDestination(route[1]) : null) ?? '#/');
   }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
     // Refresh the role/profile when the device reconnects or returns to foreground.
