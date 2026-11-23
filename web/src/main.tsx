@@ -748,7 +748,25 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </nav>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
-          {me && <details className="account-menu" key={here}>
+          {me && <details className="account-menu" key={here}
+            onPointerLeave={event=>{
+              // Close desktop flyouts when the pointer actually leaves; don't
+              // treat touch scrolling/taps as a hover exit on Android.
+              if(event.pointerType==='mouse' &&
+                 window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                event.currentTarget.open=false;
+            }}
+            onBlur={event=>{
+              if(!event.currentTarget.contains(event.relatedTarget as Node | null))
+                event.currentTarget.open=false;
+            }}
+            onKeyDown={event=>{
+              if(event.key==='Escape' && event.currentTarget.open){
+                event.currentTarget.open=false;
+                (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus();
+                event.preventDefault();
+              }
+            }}>
             <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
             <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
