@@ -319,7 +319,7 @@ export function WorkerCommunications() {
              scheduled:'начало впереди',active:'текущий период'
            } as Record<string,string>)[campaignWindow(x)]}</span>
            {!x.enabled && campaignWindow(x)==='expired' &&
-             <span className="note">Истёкшую акцию нельзя включить. Для нового периода создайте новую.</span>
+             <span className="note">Истёкшую акцию нельзя включить. Для нового периода создайте новую.</span>}
           <span className="note">{x.reason}</span>
           <button className="btn ghost small" disabled={busy||(!x.enabled&&['expired','invalid'].includes(campaignWindow(x)))} onClick={async()=>{
             if(!window.confirm(x.enabled?'Отключить акцию для новых заявок? Уже созданные заявки сохранят свою ставку.':'Включить акцию для новых заявок?'))return;
