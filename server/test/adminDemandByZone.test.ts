@@ -71,3 +71,31 @@ test('admin demand groups historical unmet requests by service and coarse zone o
       'the grouped report must not expose addresses, phone numbers or coordinates');
   }
 });
+
+test('hydraulic job may be targeted by admin communications and commission campaign',async()=>{
+  // Real POSTs, no mock UI buttons: this valid service appears in both the
+  // admin dropdown and the API schema, and must be accepted by OpsService.
+  const start=new Date(t.clock.now().getTime()+5*60_000).toISOString();
+  const end=new Date(t.clock.now().getTime()+60*60_000).toISOString();
+  assert.equal((await t.api('POST','/api/admin/announcements',{
+    audience:'master',service:'hydraulics',title:'Гидравлика — запросы',
+    body:'Учебное уведомление для проверки сохранения фильтра услуги.',
+    startsAt:start,endsAt:end,published:false
+  },client.token)).status,403,'only admin may target workers');
+  const announcement=ok(await t.api('POST','/api/admin/announcements',{
+    audience:'master',service:'hydraulics',title:'Гидравлика — запросы',
+    body:'Учебное уведомление для проверки сохранения фильтра услуги.',
+    startsAt:start,endsAt:end,published:false
+  },admin.token));
+  assert.equal(announcement.service,'hydraulics');
+  assert.ok(announcement.id);
+  const campaign=ok(await t.api('POST','/api/admin/commission-campaigns',{
+    service:'hydraulics',commissionPct:0,startsAt:start,endsAt:end,
+    enabled:true,reason:'Учебное включение гидравлики в фильтр без влияния на боевые тарифы'
+  },admin.token));
+  assert.equal(campaign.service,'hydraulics');
+  assert.ok(campaign.id);
+  const listed=ok(await t.api('GET','/api/admin/commission-campaigns',
+    undefined,admin.token));
+  assert.ok(listed.some((item:any)=>item.id===campaign.id&&item.service==='hydraulics'));
+});
