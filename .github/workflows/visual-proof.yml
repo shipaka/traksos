@@ -74,8 +74,9 @@ jobs:
       - name: Реальная проверка TrakBot и переходов
         run: node e2e/ui-smoke.mjs
       - name: Реальные переходы и сервисы
-        run: node e2e/public-service-routing.mjs
-       node e2e/legacy-guest-deeplinks.mjs
+        run: |
+          node e2e/public-service-routing.mjs
+          node e2e/legacy-guest-deeplinks.mjs
       - name: Записать точную ревизию и происхождение скриншотов
         if: always()
         env:
