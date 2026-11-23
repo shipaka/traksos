@@ -15,11 +15,11 @@ export class StatsService {
     return this.db.one(
       `select (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
                  where p.kind='master' and p.verification='approved' and u.status='active'
-                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and not p.paused and coalesce(p.extras->>'vacation','false') in ('false','0','')
                    and p.line_status in ('online','on_call','on_job')) as masters_online,
               (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
                  where p.kind='tow' and p.verification='approved' and u.status='active'
-                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and not p.paused and coalesce(p.extras->>'vacation','false') in ('false','0','')
                    and p.line_status in ('online','on_call','on_job')) as tow_online,
               (select count(*)::int from orders where created_at >= $1) as orders_24h,
               (select count(*)::int from orders where status in ('accepted','en_route','arrived','working','awaiting_confirmation')) as in_work,
@@ -70,7 +70,7 @@ export class StatsService {
                 (select count(*)::int from performer_profiles where verification='approved') as performers_approved,
                 (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
                  where p.verification='approved' and u.status='active'
-                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and not p.paused and coalesce(p.extras->>'vacation','false') in ('false','0','')
                    and p.line_status in ('online','on_call','on_job')) as performers_online,
                 (select count(*)::int from performer_profiles where verification='pending' and submitted_at is not null) as verification_queue,
                 (select count(*)::int from users where company_inn is not null) as companies,
@@ -150,11 +150,11 @@ export class StatsService {
       `select (select count(*)::int from orders where created_at >= $1) as orders_today,
               (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
                  where p.kind='master' and p.verification='approved' and u.status='active'
-                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and not p.paused and coalesce(p.extras->>'vacation','false') in ('false','0','')
                    and p.line_status in ('online','on_call','on_job')) as masters_online,
               (select count(*)::int from performer_profiles p join users u on u.id=p.user_id
                  where p.kind='tow' and p.verification='approved' and u.status='active'
-                   and not p.paused and not coalesce((p.extras->>'vacation')::boolean,false)
+                   and not p.paused and coalesce(p.extras->>'vacation','false') in ('false','0','')
                    and p.line_status in ('online','on_call','on_job')) as tow_online,
               (select count(*)::int from mod_cases where status='open' and kind='dispute') as disputes_open,
               (select count(*)::int from mod_cases where status='open') as mod_open,
