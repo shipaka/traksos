@@ -39,39 +39,82 @@ export class PrivacyService {
   }
 
   async requestDelete(user: AuthUser) {
-    const busy = await this.db.one<{ n: number }>(
-      `select count(*)::int as n from orders where (client_id=$1 or created_by=$1 or performer_id=$1)
-         and status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation')`, [user.id]);
-    if (busy?.n) throw conflict('active_orders', 'Сначала завершите или отмените открытые заявки');
-    await this.db.query('update users set delete_requested_at=coalesce(delete_requested_at, $2) where id=$1', [user.id, this.now()]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [user.id, 'privacy.delete_requested', user.id, {}]);
-    const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
-    await this.notifier.notify(staff, { type: 'privacy' }, { kind: 'normal', title: 'Запрос на удаление данных', body: `Пользователь ${user.phone}: удалим через ${GRACE_DAYS} дней`, data: {} });
+    // Lock the user row so repeated requests (and the scheduled eraser) cannot
+    // generate duplicate audits/alerts. Consent state belongs to this account.
+    const created = await this.db.tx(async (q) => {
+      const current = await q.one<{ delete_requested_at: Date | null; deleted_at: Date | null }>(
+        'select delete_requested_at, deleted_at from users where id=$1 for update', [user.id]);
+      if (!current || current.deleted_at) throw conflict('account_unavailable', 'Аккаунт уже закрыт');
+      if (current.delete_requested_at) return false;
+      const busy = await q.one<{ n: number }>(
+        `select count(*)::int as n from orders where (client_id=$1 or created_by=$1 or performer_id=$1)
+           and status in ('awaiting_owner','searching','accepted','en_route','arrived','working','awaiting_confirmation')`, [user.id]);
+      if (busy?.n) throw conflict('active_orders', 'Сначала завершите или отмените открытые заявки');
+      await q.query('update users set delete_requested_at=$2 where id=$1', [user.id, this.now()]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [user.id, 'privacy.delete_requested', user.id, {}]);
+      return true;
+    });
+    if (created) {
+      // Notification delivery is secondary to the durable consent/audit change.
+      // A temporary delivery error must not tell the client the request failed,
+      // causing a retry that would otherwise duplicate it.
+      try {
+        const staff = (await this.db.query<{ id: string }>(
+          `select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
+        await this.notifier.notify(staff, { type: 'privacy' }, {
+          kind: 'normal', title: 'Запрос на удаление данных',
+          body: `Пользователь ${user.phone}: удалим через ${GRACE_DAYS} дней`, data: {},
+        });
+      } catch (error) {
+        console.warn('[privacy] delete request notification delivery failed',
+          error instanceof Error ? error.message : 'unknown error');
+      }
+    }
     return this.status(user);
   }
 
   async cancelDelete(user: AuthUser) {
-    await this.db.query('update users set delete_requested_at=null where id=$1', [user.id]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [user.id, 'privacy.delete_cancelled', user.id, {}]);
+    await this.db.tx(async (q) => {
+      const current = await q.one<{ delete_requested_at: Date | null; deleted_at: Date | null }>(
+        'select delete_requested_at, deleted_at from users where id=$1 for update', [user.id]);
+      if (!current || current.deleted_at) throw conflict('account_unavailable', 'Аккаунт уже закрыт');
+      if (!current.delete_requested_at) return;
+      await q.query('update users set delete_requested_at=null where id=$1', [user.id]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [user.id, 'privacy.delete_cancelled', user.id, {}]);
+    });
     return this.status(user);
   }
 
-  /** Раз в тик: срок вышел — обезличиваем. Номер, имя, компания, сессии, токены, машины — убираем. */
+  /** Раз в тик: срок вышел — обезличиваем. Номер, имя, компания, сессии, токены — убираем. */
   async processDeletions() {
+    const now = this.now();
     const due = await this.db.query<{ id: string }>(
-      `select id from users where delete_requested_at is not null and deleted_at is null and delete_requested_at < $1::timestamptz - interval '${GRACE_DAYS} days'`, [this.now()]);
+      `select id from users where delete_requested_at is not null and deleted_at is null and delete_requested_at < $1::timestamptz - interval '${GRACE_DAYS} days'`, [now]);
+    let processed = 0;
     for (const { id } of due) {
-      await this.db.tx(async (q) => {
-        await q.query(`update users set phone='deleted-' || id, name=null, company_name=null, company_inn=null, edo_operator=null, edo_id=null,
-                         status='blocked', deleted_at=$2, owner_id=null where id=$1`, [id, this.now()]);
+      // Recheck the deadline in the UPDATE while holding the row lock.
+      // Another worker may have deleted this user, or the user may have
+      // cancelled the request after the initial due-list was read.
+      const erased = await this.db.tx(async (q) => {
+        const updated = await q.one<{ id: string }>(
+          `update users set phone='deleted-' || id, name=null, company_name=null, company_inn=null,
+              edo_operator=null, edo_id=null, status='blocked', deleted_at=$2, owner_id=null
+             where id=$1 and deleted_at is null and delete_requested_at is not null
+               and delete_requested_at < $2::timestamptz - interval '${GRACE_DAYS} days'
+             returning id`, [id, now]);
+        if (!updated) return false;
         await q.query('delete from sessions where user_id=$1', [id]);
         await q.query('delete from push_tokens where user_id=$1', [id]);
         await q.query('update vehicles set driver_id=null where driver_id=$1', [id]);
         await q.query('delete from notifications where user_id=$1', [id]);
         await q.query(`update performer_profiles set inn=null, cars='[]', car=null, paused=true where user_id=$1`, [id]);
         await q.query('insert into audit_log(actor_id, action, target, data) values (null,$1,$2,$3)', ['privacy.deleted', id, {}]);
+        return true;
       });
+      if (erased) processed++;
     }
-    return due.length;
+    return processed;
   }
 }
