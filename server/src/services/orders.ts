@@ -137,6 +137,14 @@ export class OrdersService {
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
+    if (user.owner_id) {
+      // Stale membership alone may not charge an employer's fleet, even SOS.
+      const current = await this.db.one<{ok:number}>(`select 1 as ok from users u
+        join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+        where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+        limit 1`, [user.id, clientId]);
+      if (!current) throw forbidden('Водитель больше не закреплён за автопарком');
+    }
     if(i.recommendationId){
       // Advice is not a price acceptance: normal paid checkout follows.
       const parentId=i.parallelWith??i.continueFrom??i.fromConsult;
@@ -156,6 +164,9 @@ export class OrdersService {
       previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom ?? i.parallelWith]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
+      const source = await this.mustSee(user, previous.id);
+      if (this.actorOf(user, source) !== 'client')
+        throw forbidden('Продолжить можно только действующее обращение своего автопарка');
       if (i.parallelWith) {
         if (user.owner_id || user.roles.includes('driver'))
           throw forbidden('Параллельный второй выезд с отдельной оплатой подтверждает владелец автопарка');
@@ -226,8 +237,10 @@ export class OrdersService {
     let consultRootId: string | null = null;
     let discount = 0;
     if (i.fromConsult && !isConsult) {
-      const c = await this.db.one<any>(`select * from orders where id=$1 and service='consult' and (client_id=$2 or created_by=$3)`, [i.fromConsult, clientId, user.id]);
-      if (!c) throw bad('bad_consult', 'Консультация не найдена');
+      const c = await this.mustSee(user, i.fromConsult);
+      if (c.service !== 'consult' || c.client_id !== clientId ||
+          this.actorOf(user, c) !== 'client')
+        throw bad('bad_consult', 'Консультация не найдена');
       consultOf = c.id;
       // A phone consultation and the following visit are the same incident,
       // not two unrelated case timelines. Financial contracts stay separate.
@@ -262,7 +275,14 @@ export class OrdersService {
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
           create_request_key,create_request_hash,location_region,preferred_performer_id,parallel_consent,continuation_recommendation_id,verified_only)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41) returning *`,
+       select $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41
+       where $1=$2 or exists (
+         select 1 from users u join vehicles v
+           on v.owner_id=u.owner_id and v.driver_id=u.id
+         where u.id=$2 and u.owner_id=$1 and 'driver'=any(u.roles)
+           and ($3::uuid is null or v.id=$3)
+         limit 1 for share of v
+       ) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
@@ -287,7 +307,8 @@ export class OrdersService {
       throw e;
     });
     if (reused) return reuse(order!);
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos,
+    if (!order) throw forbidden('Вы больше не закреплены за машиной этого автопарка');
+    await this.event(this.db, order.id, user.id, 'created', { estimate: est, sos: !!i.isSos,
       continuationOf: previous?.id ?? null, parallel:!!i.parallelWith });
     if (i.parallelWith) {
       await this.event(this.db, previous!.id, user.id, 'parallel_tow_requested',
