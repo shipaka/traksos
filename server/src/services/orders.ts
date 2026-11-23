@@ -933,7 +933,7 @@ export class OrdersService {
     const latestAbsence = o.status === 'no_performer' && actor === 'client'
       ? [...events].reverse().find((event: any) => event.type === 'no_performer')?.data?.absenceReason
       : null;
-    const absenceReason = ['not_connected', 'temporarily_unavailable', 'no_response'].includes(latestAbsence)
+    const absenceReason = ['not_connected', 'temporarily_unavailable', 'no_response', 'offers_withdrawn'].includes(latestAbsence)
       ? latestAbsence : 'unknown';
     // Cancellation terms are snapshotted in the immutable order event at the
     // moment of cancellation. Never recompute them from today's admin tariffs.
