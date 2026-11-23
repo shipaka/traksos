@@ -6,7 +6,7 @@ type Workshop = {
   id:string; name:string; lat:number|null; lng:number|null;
   verification:string; paused:boolean; accepts_current:boolean;
   public_map_location_verified_at:string|null;
-  owner_active:boolean; owner_service:boolean;
+  owner_active:boolean; owner_service:boolean; location_review_current:boolean;
 };
 type PublicPoint = { id:string; kind:'service'; name:string; lat:number; lng:number };
 
@@ -47,7 +47,7 @@ export class PublicPartnerMap {
        order by c.id
        limit 10000`);
     return {source:'verified_stationary_opt_in',
-      points:rows.filter(r=>validStationaryPosition(r.lat,r.lng))
+      points:rows.filter(r=>validStationaryPosition(r.lat,r.lng) && String(r.name ?? '').trim().length>0)
         .map(r=>({id:r.id,kind:'service',
           name:maskPhones(String(r.name ?? '').trim().slice(0, 100)).text,
           lat:Number(r.lat),lng:Number(r.lng)}))};
@@ -63,14 +63,15 @@ export class PublicPartnerMap {
         (c.accepts_confirmed_at >= now() - interval '7 days') as accepts_current,
         c.public_map_location_verified_at,
         (u.status='active' and u.deleted_at is null) as owner_active,
-        ('service'=any(u.roles)) as owner_service
+        ('service'=any(u.roles)) as owner_service,
+        (c.public_map_location_verified_at <= now()) as location_review_current
         from service_centers c join users u on u.id=c.owner_id
         where c.owner_id=$1 for update of c`,[user.id]);
       if(!center)throw notFound('Сначала заполните карточку СТО');
       if(enabled && (!center.owner_active || !center.owner_service ||
         center.verification!=='approved' || center.paused ||
         !center.accepts_current || !center.public_map_location_verified_at ||
-        new Date(center.public_map_location_verified_at).getTime() > Date.now() ||
+        !center.location_review_current ||
         !validStationaryPosition(center.lat,center.lng)))
         throw bad('public_map_not_ready',
           'Публичная карта доступна лишь СТО с проверенным адресом, подтверждёнными за последние 7 дней услугами и согласием на публикацию.');
