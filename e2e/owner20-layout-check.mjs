@@ -286,6 +286,24 @@ try {
        .evaluate(img=>getComputedStyle(img).left);
      await page.mouse.move(x,y);
      await page.mouse.down();
+     const beforeOtherFinger=await network.locator('.tr-network-tiles img').first()
+       .evaluate(img=>getComputedStyle(img).left);
+     // Dispatch a distinct secondary touch while the real mouse pointer is
+     // captured. It must NOT jump the map or terminate the active drag.
+     await mapView.evaluate((element,point)=>{
+       element.dispatchEvent(new PointerEvent('pointermove',{
+         bubbles:true,pointerId:9999,pointerType:'touch',isPrimary:false,
+         clientX:point.x+160,clientY:point.y-120
+       }));
+       element.dispatchEvent(new PointerEvent('pointerup',{
+         bubbles:true,pointerId:9999,pointerType:'touch',isPrimary:false,
+         clientX:point.x+160,clientY:point.y-120
+       }));
+     },{x,y});
+     const afterOtherFinger=await network.locator('.tr-network-tiles img').first()
+       .evaluate(img=>getComputedStyle(img).left);
+     if(beforeOtherFinger!==afterOtherFinger)
+       throw Error(width+': secondary touch corrupted an active map pan');
      await page.mouse.move(x+45,y+25,{steps:5});
      await page.mouse.up();
      const afterPan=await network.locator('.tr-network-tiles img').first()
