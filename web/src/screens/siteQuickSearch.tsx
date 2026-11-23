@@ -48,7 +48,7 @@ export function SiteQuickSearch({ authenticated }: { authenticated:boolean }){
         aria-activedescendant={expanded&&found.length?`track-search-option-${found[selectedIndex].id}`:undefined}
         aria-expanded={expanded}
         onFocus={()=>setFocus(true)}
-        onChange={e=>{setValue(e.target.value);setActiveIndex(0);}}
+        onChange={e=>{setValue(e.target.value);setActiveIndex(0);setFocus(true);}}
         onKeyDown={e=>{
           if(e.key==='Escape'){
             if(expanded){e.preventDefault();setFocus(false);}
