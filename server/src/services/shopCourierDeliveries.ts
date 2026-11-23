@@ -238,15 +238,19 @@ export class ShopCourierDeliveries {
         where id=$1 returning *`,[id]);
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [courier.id,'courier.code_verified',id,{shopOrderId:d.shop_order_id}]);
+      await this.storeInbox(q,await this.lockedRecipients(q,d),d.shop_order_id,
+        'Подтвердите получение запчастей',
+        'Курьер проверил код. Заказ завершится только после вашего подтверждения.');
       return {ok:true,d:{...checked,client_id:d.client_id,created_by:d.created_by}};
     });
     if(!result.ok)throw bad('wrong_receipt_code','Код не совпадает. Проверьте шесть цифр с получателем.');
-    if(!('repeated' in result))await this.notify.notify(
+    if(!('repeated' in result))await this.notify.deliverStored(
       await this.currentRecipients(result.d.shop_order_id),
       {type:'shop',shopOrderId:result.d.shop_order_id},
       {kind:'normal',title:'Подтвердите получение запчастей',
        body:'Курьер проверил код. Заказ завершится только после вашего подтверждения.',
-       data:{shopOrderId:result.d.shop_order_id}});
+       data:{shopOrderId:result.d.shop_order_id}})
+      .catch(e=>console.warn('[courier-verified-push]',e));
     return this.one(courier,id);
   }
   /** Support-only receipt-code recovery after expiry or five failed attempts.
@@ -323,12 +327,16 @@ export class ShopCourierDeliveries {
         [d.shop_order_id]);
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [buyer.id,'courier.customer_received',d.id,{shopOrderId:orderId}]);
+      await this.storeInbox(q,[d.courier_id],orderId,
+        'Получение подтверждено клиентом',
+        'Доставка завершена. Заказ отмечен полученным покупателем.');
       return {...d,status:'received'};
     });
-    if(!d.repeated)await this.notify.notify([d.courier_id],{type:'shop',shopOrderId:orderId},
+    if(!d.repeated)await this.notify.deliverStored([d.courier_id],{type:'shop',shopOrderId:orderId},
       {kind:'normal',title:'Получение подтверждено клиентом',
        body:'Доставка завершена. Заказ отмечен полученным покупателем.',
-       data:{shopOrderId:orderId}});
+       data:{shopOrderId:orderId}})
+      .catch(e=>console.warn('[courier-received-push]',e));
     return {shopOrderId:orderId,status:'received',customerConfirmed:true};
   }
 }
