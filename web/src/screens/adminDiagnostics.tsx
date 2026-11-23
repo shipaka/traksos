@@ -91,7 +91,7 @@ export function AdminDiagnostics() {
       <p className="note">Фильтры изменены. Обновите выдачу перед просмотром и выгрузкой.</p>}
     {loaded && <p className="note" role="status">
       Записей: {rows.length}. Показаны максимум 1000 последних подходящих записей.
-      Сверено с сервером: {new Date(result.fetchedAt).toLocaleString('ru-RU')}.
+      Сверено с сервером: {new Date(result!.fetchedAt).toLocaleString('ru-RU')}.
     </p>}
     {loaded && !rows.length && <p className="empty">Для выбранных фильтров событий нет.</p>}
     {rows.map((row,i) => <div className="card" key={row.request_id+'-'+row.occurred_at+'-'+i}>
