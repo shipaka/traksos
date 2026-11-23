@@ -29,27 +29,67 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
   const [sort, setSort] = useState<(typeof SORTS)[number]['id']>(() => {
     try { return ({ near: 'distance', cheap: 'price', fast: 'eta' } as Record<string, (typeof SORTS)[number]['id']>)[localStorage.getItem('traksos.prio') ?? ''] ?? 'recommended'; } catch { return 'recommended'; }
   });
-  const [data, setData] = useState<any>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // Three refresh sources (initial, websocket and polling) used to compete:
+  // a late answer for another order/sort could overwrite newer proposals.
+  // Keep only responses belonging to the CURRENT order and latest request.
+  const key = d.id + ':' + sort;
+  const [response, setResponse] = useState<{key: string; value: any} | null>(null);
+  const [requestError, setRequestError] = useState<{key: string; message: string} | null>(null);
   const seen = useRef(new Set<string>());
-
-  const load = () => get('/api/orders/' + d.id + '/offers?sort=' + sort)
-    .then(response => { setData(response); setLoadError(null); })
-    .catch(e => setLoadError(e instanceof Error ? e.message : 'Нет связи с сервером'));
-  useEffect(() => { load(); }, [sort, d.id]); // eslint-disable-line
-  useEffect(() => onEvent((e) => { if (e.orderId === d.id && e.type === 'order') load(); }), [d.id, sort]); // eslint-disable-line
-  useEffect(() => { const t = setInterval(load, 10_000); return () => clearInterval(t); }, [d.id, sort]); // eslint-disable-line
+  const choosingRef = useRef(false);
+  const refreshRef = useRef<() => void>(() => {});
+  const data = response?.key === key ? response.value : null;
+  const loadError = requestError?.key === key ? requestError.message : null;
+  useEffect(() => { seen.current.clear(); choosingRef.current = false; }, [d.id]);
+  useEffect(() => {
+    let active = true;
+    let generation = 0;
+    const load = () => {
+      const current = ++generation;
+      void get('/api/orders/' + d.id + '/offers?sort=' + sort)
+        .then(value => {
+          if (!active || current !== generation) return;
+          setResponse({key, value});
+          setRequestError(null);
+        })
+        .catch(e => {
+          if (!active || current !== generation) return;
+          // An unsuccessful refresh is NOT evidence that earlier offers are
+          // still available. Hide the obsolete cards until a genuine 200.
+          setResponse(null);
+          setRequestError({key, message: e instanceof Error ? e.message : 'Нет связи с сервером'});
+        });
+    };
+    refreshRef.current = load;
+    load();
+    const stop = onEvent(e => {
+      if (e.orderId === d.id && e.type === 'order') load();
+    });
+    const interval = window.setInterval(load, 10_000);
+    return () => {
+      active = false;
+      generation++;
+      stop();
+      window.clearInterval(interval);
+      if (refreshRef.current === load) refreshRef.current = () => {};
+    };
+  }, [d.id, sort, key]);
 
   const offers: any[] = data?.offers ?? [];
   const isTow = d.service === 'tow';
   const phrases = isTow ? TOW_PHRASES : d.service === 'consult' ? CONSULT_PHRASES : PHRASES;
-  const phrase = usePhrase(phrases, offers.length > 0);
+  const phrase = usePhrase(phrases, !!loadError || offers.length > 0);
   const left = useLeft(d.autoPick ? d.auctionUntil : null);
   const lim = data?.limits ?? d.limits;
 
   async function choose(id: string) {
-    const r = await run(() => post(`/api/orders/${d.id}/offers/${id}/choose`));
-    if (r) { toast('Исполнитель выбран'); onChosen(); }
+    if (choosingRef.current || busy || loadError || !offers.some(offer => offer.id === id)) return;
+    choosingRef.current = true;
+    try {
+      const r = await run(() => post(`/api/orders/${d.id}/offers/${id}/choose`));
+      if (r) { toast('Исполнитель выбран'); onChosen(); }
+      else refreshRef.current(); // the offer could have expired remotely
+    } finally { choosingRef.current = false; }
   }
 
   return (
@@ -59,17 +99,18 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
         address={d.address} synthetic={String(d.id).startsWith('demo-')} />}
       <div className="card search-card">
         <Radar dots={Math.min(d.search?.candidates ?? 0, 8)} hits={offers.length} />
-        {loadError && <div className="and19-search-error" role="alert">Не удалось получить свежие отклики. <button type="button" onClick={load}>Повторить</button><small>{loadError}</small></div>}
+        {loadError && <div className="and19-search-error" role="alert">Не удалось получить свежие отклики. <button type="button" onClick={() => refreshRef.current()}>Повторить</button><small>{loadError}</small></div>}
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
-          <b className="search-title">{offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
+          <b className="search-title">{loadError ? 'Нет подтверждённых актуальных откликов' : offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
           <span className="note">
-            {offers.length
+            {loadError ? 'Повторите загрузку, чтобы увидеть актуальные предложения.'
+              : offers.length
               ? (d.autoPick && left != null ? `Выберите сами — или через ${mmss(left)} назначим лучшего` : 'Выберите исполнителя — остальным сообщим сами')
               : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
           </span>
         </div>
         <span className="note and19-radar-note">Радар — анимация ожидания, не карта перемещения мастеров. Количество откликов обновляется сервером.</span>
-        {d.searchStage && <div className="note" role="status">
+        {d.searchStage && !loadError && <div className="note" role="status">
           Ищем исполнителей: этап {d.searchStage.wave} из {d.searchStage.waves}.
           Приглашаем только тех, для кого дорожное время подачи подтверждено маршрутизатором
           и не превышает {d.searchStage.maxRoadEtaMinutes} минут с учётом сборов.
@@ -82,7 +123,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
       {offers.length > 0 && (
         <>
           <div className="scroll-x">
-            {SORTS.filter((s) => d.service !== 'consult' || s.id === 'recommended').map((s) => <button key={s.id} className="chip" aria-pressed={sort === s.id} onClick={() => setSort(s.id)}>{s.name}</button>)}
+            {SORTS.filter((s) => d.service !== 'consult' || s.id === 'recommended').map((s) => <button type="button" key={s.id} className="chip" aria-pressed={sort === s.id} onClick={() => setSort(s.id)}>{s.name}</button>)}
           </div>
           <div className="stack">
             {offers.map((o, i) => {
@@ -114,7 +155,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                   {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
                   {o.extras?.prepay === 'always' && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
                   {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
-                  <button className="btn small" style={{ width: '100%' }} disabled={busy} onClick={() => choose(o.id)}>Выбрать за {rub(o.price)}</button>
+                  <button className="btn small" style={{ width: '100%' }} disabled={busy || !!loadError} onClick={() => void choose(o.id)}>Выбрать за {rub(o.price)}</button>
                 </div>
               );
             })}
@@ -144,10 +185,13 @@ function Radar({ dots, hits }: { dots: number; hits: number }) {
 
 function Progress({ until }: { until: string }) {
   const [pct, setPct] = useState(100);
-  const start = useRef(Date.now());
   useEffect(() => {
-    const total = Math.max(1, new Date(until).getTime() - start.current);
-    const t = setInterval(() => setPct(Math.max(0, ((new Date(until).getTime() - Date.now()) / total) * 100)), 250);
+    const end = new Date(until).getTime();
+    const total = Math.max(1, end - Date.now());
+    const update = () => setPct(Math.max(0, Math.min(100,
+      Number.isFinite(end) ? ((end - Date.now()) / total) * 100 : 0)));
+    update();
+    const t = setInterval(update, 250);
     return () => clearInterval(t);
   }, [until]);
   return <div className="progress"><span style={{ width: `${pct}%` }} /></div>;
@@ -166,7 +210,11 @@ function usePhrase(list: readonly string[], stop: boolean) {
 function useLeft(until: string | null) {
   const calc = () => (until ? Math.max(0, Math.ceil((new Date(until).getTime() - Date.now()) / 1000)) : null);
   const [left, setLeft] = useState(calc);
-  useEffect(() => { const t = setInterval(() => setLeft(calc()), 500); return () => clearInterval(t); }, [until]); // eslint-disable-line
+  useEffect(() => {
+    setLeft(calc());
+    const t = setInterval(() => setLeft(calc()), 500);
+    return () => clearInterval(t);
+  }, [until]); // eslint-disable-line
   return left;
 }
 
@@ -186,9 +234,25 @@ export function OfferForm({ orderId, limits, myPrice, onDone, compact }: { order
   const [own, setOwn] = useState(false);
   const [price, setPrice] = useState<number>(myPrice ?? limits.usual);
   const step = 5_000;
-  const diff = Math.round((price / limits.usual - 1) * 100);
-  const send = (p?: number) => run(() => post(`/api/orders/${orderId}/offers`, p ? { price: p } : {}), 'Отклик отправлен — ждём выбора клиента').then((r) => r && onDone?.());
-  const skip = () => run(() => api_delete(`/api/orders/${orderId}/offers`)).then((r) => r && onDone?.());
+  const diff = limits.usual > 0 ? Math.round((price / limits.usual - 1) * 100) : 0;
+  const submittingRef = useRef(false);
+  useEffect(() => {
+    submittingRef.current = false;
+    setOwn(false);
+    setPrice(myPrice ?? limits.usual);
+  }, [orderId, myPrice, limits.usual]);
+  const submit = async (task: () => Promise<unknown>, message?: string) => {
+    if (submittingRef.current || busy) return;
+    submittingRef.current = true;
+    try {
+      const r = await run(task, message ?? null);
+      if (r) onDone?.();
+    } finally { submittingRef.current = false; }
+  };
+  const send = (p?: number) => submit(
+    () => post(`/api/orders/${orderId}/offers`, p !== undefined ? {price:p} : {}),
+    'Отклик отправлен — ждём выбора клиента');
+  const skip = () => submit(() => api_delete(`/api/orders/${orderId}/offers`));
 
   return (
     <div className="stack">
