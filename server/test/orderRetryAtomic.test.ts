@@ -31,6 +31,12 @@ test('failed retry cleanup rolls back status and event before re-dispatch', asyn
       order = ok(await t.api('GET', '/api/orders/' + id, undefined, client.token));
     }
     assert.equal(order.status, 'no_performer', 'fixture must be a genuinely exhausted search');
+    // The previous unsuccessful search may be hours old. Its SLA clock
+    // must never be carried into a fresh retry and trigger false incidents.
+    await t.db.query("update orders set dispatch_started_at=now()-interval '6 hours' where id=$1",[id]);
+    const priorStart=await t.db.one<{dispatch_started_at:string}>(
+      'select dispatch_started_at from orders where id=$1',[id]);
+    assert.ok(priorStart?.dispatch_started_at);
     const before = await t.db.one<{ count: number }>(
       "select count(*)::int as count from order_events where order_id=$1 and type='retry'", [id]);
 
@@ -47,6 +53,11 @@ test('failed retry cleanup rolls back status and event before re-dispatch', asyn
         'select status from orders where id=$1', [id]);
       assert.equal(retained?.status, 'no_performer',
         'a half-committed retry must never expose searching without valid dispatch');
+      const preserved=await t.db.one<{dispatch_started_at:string}>(
+        'select dispatch_started_at from orders where id=$1',[id]);
+      assert.equal(new Date(preserved!.dispatch_started_at).getTime(),
+        new Date(priorStart!.dispatch_started_at).getTime(),
+        'failed cleanup must also roll back the search clock');
       const events = await t.db.one<{ count: number }>(
         "select count(*)::int as count from order_events where order_id=$1 and type='retry'", [id]);
       assert.equal(events?.count, before?.count,
@@ -59,6 +70,12 @@ test('failed retry cleanup rolls back status and event before re-dispatch', asyn
     const retried = ok(await t.api('POST', '/api/orders/' + id + '/retry', {}, client.token));
     assert.ok(['searching', 'no_performer'].includes(retried.status),
       'after trigger removal the customer can start a real new search');
+    const newStart=await t.db.one<{dispatch_started_at:string}>(
+      'select dispatch_started_at from orders where id=$1',[id]);
+    assert.ok(newStart?.dispatch_started_at,'a fresh retry must start a new search clock');
+    assert.ok(new Date(newStart!.dispatch_started_at).getTime() >
+      new Date(priorStart!.dispatch_started_at).getTime()+5*60*1000,
+      'fresh retry must not inherit the original six-hour-old SLA clock');
     const after = await t.db.one<{ count: number }>(
       "select count(*)::int as count from order_events where order_id=$1 and type='retry'", [id]);
     assert.equal(after?.count, (before?.count ?? 0) + 1,
