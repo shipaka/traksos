@@ -95,13 +95,13 @@ test('failed session INSERT rolls back the already-created account and preserves
   const phone=correctPhone('0017');
   const once=await code(phone);
   await t.db.exec(`
-    CREATE FUNCTION auth_test_fail_session() RETURNS trigger LANGUAGE plpgsql AS $
+    CREATE FUNCTION auth_test_fail_session() RETURNS trigger LANGUAGE plpgsql AS $$
     BEGIN
       IF (SELECT phone FROM users WHERE id=NEW.user_id) = '+79996660017' THEN
         RAISE EXCEPTION 'synthetic session insertion fault';
       END IF;
       RETURN NEW;
-    END $;
+    END $$;
     CREATE TRIGGER auth_test_fail_session BEFORE INSERT ON sessions
       FOR EACH ROW EXECUTE FUNCTION auth_test_fail_session();
   `);
