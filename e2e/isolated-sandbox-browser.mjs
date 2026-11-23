@@ -375,6 +375,19 @@ try{
               await times.nth(0).fill('');
               if(!await announce.isDisabled())
                 throw Error('Empty announcement date must block real Save action');
+              // A past interval is valid for a retained draft, but not for
+              // an immediately published notice that could never be sent.
+              const pastStart=new Date(Date.now()-3*86_400_000).toISOString().slice(0,16);
+              const pastEnd=new Date(Date.now()-2*86_400_000).toISOString().slice(0,16);
+              await times.nth(0).fill(pastStart);
+              await times.nth(1).fill(pastEnd);
+              if(!await announce.isDisabled())
+                throw Error('An expired published announcement must block Save');
+              const publishCheckbox=work.getByLabel('Опубликовать после наступления даты');
+              await publishCheckbox.uncheck();
+              if(await announce.isDisabled())
+                throw Error('A historical draft must remain saveable with past dates');
+              await publishCheckbox.check();
               await work.locator('textarea[maxlength="500"]').fill('Учебная проверка акции гидравлики');
               const commission=work.getByRole('button',{name:'Назначить комиссию'});
               const percent=work.locator('input[type="number"][step="0.5"]');
