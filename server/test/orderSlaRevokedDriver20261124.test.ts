@@ -39,7 +39,7 @@ test('SLA incident inbox and push exclude historical order creator after QR reas
    [former.id]);
   assert.equal(after?.n,before?.n,'former driver never gets fresh private SLA alerts');
   for(const participant of [owner,worker,admin]){
-   const inbox=await t.db.query(
+   const inbox: Array<{id:string}>=await t.db.query<{id:string}>(
     "select id from notifications where user_id=$1 and kind='order_sla' and data->>'orderId'=$2",
     [participant.id,order.id]);
    assert.equal(inbox.length,1,'current owner, performer and staff keep one alert');
