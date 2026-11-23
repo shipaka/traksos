@@ -61,10 +61,11 @@ export function SupportThread({ id }: { id: string }) {
   useEffect(() => onEvent((e) => { if (e.type === 'support' && e.ticketId === id) th.reload(); }), [id]); // eslint-disable-line
   if (!th.data) return <main><Back to="support" /><Loading error={th.error} /></main>;
   const t = th.data;
-  const staff = mode === 'admin';
+  const staff = mode === 'admin' || mode === 'moderator';
+  const backTo = mode === 'moderator' ? 'moderation/support' : staff ? 'admin' : 'support';
   return (
     <main>
-      <Back to={staff ? 'admin' : 'support'} />
+      <Back to={backTo} />
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h1>№{t.number} · {t.topic}</h1>
@@ -74,7 +75,7 @@ export function SupportThread({ id }: { id: string }) {
       </div>
       <div className="row">
         {t.order && <a className="btn ghost small" href={`#/order/${t.order.id}`}>Открыть заявку</a>}
-        {staff && t.author && <a className="btn ghost small" href={`#/admin/user/${t.author.id}`}>{t.author.name ?? fmtPhone(t.author.phone)} — карточка</a>}
+        {mode === 'admin' && t.author && <a className="btn ghost small" href={`#/admin/user/${t.author.id}`}>{t.author.name ?? fmtPhone(t.author.phone)} — карточка</a>}
       </div>
       {t.entry && (
         <div className="card flat" style={{ gap: 4 }}>
