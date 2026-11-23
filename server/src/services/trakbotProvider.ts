@@ -76,9 +76,15 @@ export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): 
     const content = obj.choices?.[0]?.message?.content;
     return typeof content === 'string' ? content.trim() : '';
   }
-  return (obj.output ?? []).flatMap((o) => o.content ?? [])
-    .filter((c) => c.type === 'output_text')
-    .map((c) => c.text ?? '').join('\n').trim();
+  // Provider JSON is untrusted even when it came from the configured model.
+  // Ignore malformed content arrays and non-text values; never stringify
+  // arbitrary objects into a response that might reach a paying customer.
+  if (!Array.isArray(obj.output)) return '';
+  return obj.output.flatMap((o) =>
+      o && typeof o === 'object' && Array.isArray(o.content) ? o.content : [])
+    .filter((c) => c && typeof c === 'object' &&
+      c.type === 'output_text' && typeof c.text === 'string')
+    .map((c) => c.text).join('\n').trim();
 }
 
 /** Streaming byte limit: an absent or dishonest Content-Length is not
