@@ -111,6 +111,8 @@ jobs:
           node e2e/archived-order-chat.mjs e2e/shots
           node e2e/client-order-sections.mjs e2e/shots
           node e2e/performer-request-settings.mjs e2e/shots
+          # Real performer React profile: same-route account isolation, schedule/finance and form contracts.
+          node e2e/performer-profile-20261124.mjs
           node e2e/ws-ticket-url.mjs
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
