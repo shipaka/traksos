@@ -100,7 +100,13 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
       {status !== 'approved' && (
         <label className="btn ghost" style={{ cursor: 'pointer' }}>
           {busy ? 'Загружаю…' : r.doc ? 'Переснять' : 'Снять'}
-          <input type="file" accept="image/*" capture={r.camera} hidden disabled={busy} onChange={(e) => onFile(e.target.files?.[0])} />
+          <input type="file" accept="image/*" capture={r.camera} hidden disabled={busy} onChange={(e) => {
+            const file = e.currentTarget.files?.[0];
+            // Selecting the same photo after a failed upload must trigger change again.
+            // Clear only the input value; the captured File remains valid for compression.
+            e.currentTarget.value = '';
+            void onFile(file);
+          }} />
         </label>
       )}
     </div>
