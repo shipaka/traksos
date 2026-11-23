@@ -37,12 +37,27 @@ export class WarrantyRemediationService {
     if(j.claim_status!=='decision_recorded'||j.decision!==expected)
       throw conflict('warranty_decision_changed','Из-за обжалования или изменения решения исправление приостановлено');
   }
-  private canRead(u:AuthUser,j:any){
-    return isStaff(u)||[j.client_id,j.filed_by,j.performer_id,j.original_performer_id].includes(u.id);
+  /** Historical filed_by never grants a former fleet driver permanent rights. */
+  private async currentClaimant(q:Queryable,orderId:string,clientId:string,filedBy:string,
+    userId:string,lock=false){
+    if(filedBy!==userId||clientId===userId)return false;
+    const row=await q.one<{ok:number}>(
+      `select 1 as ok from orders o join users u on u.id=$3
+         join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+        where o.id=$1 and o.client_id=$2 and u.owner_id=o.client_id
+          and 'driver'=any(u.roles) and (o.vehicle_id is null or v.id=o.vehicle_id)
+        limit 1${lock?' for share of v':''}`,
+      [orderId,clientId,userId]);
+    return !!row;
+  }
+  private async canRead(u:AuthUser,j:any){
+    if(isStaff(u)||[j.client_id,j.performer_id,j.original_performer_id].includes(u.id))
+      return true;
+    return this.currentClaimant(this.db,j.original_order_id,j.client_id,j.filed_by,u.id);
   }
   async view(user:AuthUser,id:string){
     const j=await this.load(id);
-    if(!this.canRead(user,j))throw forbidden();
+    if(!await this.canRead(user,j))throw forbidden();
     const [events,expense]=await Promise.all([
       this.db.query<any>('select event,data,actor_id,created_at from warranty_rework_events where job_id=$1 order by id',[id]),
       this.db.one<any>('select amount_kopecks,bank_reference,transferred_at,recorded_at from warranty_platform_expenses where job_id=$1',[id]),
@@ -69,9 +84,10 @@ export class WarrantyRemediationService {
     const jobs=await this.db.query<{id:string;performer_id:string}>(
       'select id,performer_id from warranty_rework_jobs where claim_id=$1 order by authorized_at,id',
       [claimId]);
-    if(!isStaff(user)&&![c.client_id,c.filed_by,c.performer_id].includes(user.id)
-      &&!jobs.some(j=>j.performer_id===user.id))throw forbidden();
-    const allowed=jobs.filter(j=>isStaff(user)||[c.client_id,c.filed_by,c.performer_id,j.performer_id].includes(user.id));
+    const claimParty=isStaff(user)||[c.client_id,c.performer_id].includes(user.id)||
+      await this.currentClaimant(this.db,c.order_id,c.client_id,c.filed_by,user.id);
+    if(!claimParty&&!jobs.some(j=>j.performer_id===user.id))throw forbidden();
+    const allowed=jobs.filter(j=>claimParty||j.performer_id===user.id);
     return Promise.all(allowed.map(j=>this.view(user,j.id)));
   }
 
@@ -146,7 +162,9 @@ export class WarrantyRemediationService {
   async clientApproval(user:AuthUser,id:string,approve:boolean){
     await this.db.tx(async q=>{
       const j=await this.load(id,q,true);
-      if(![j.client_id,j.filed_by].includes(user.id))throw forbidden();
+      if(j.client_id!==user.id &&
+         !await this.currentClaimant(q,j.original_order_id,j.client_id,j.filed_by,user.id,true))
+        throw forbidden();
       this.currentDecision(j);
       if(j.status==='client_declined'&&!approve)return;
       if(j.client_approved_at&&approve)return;
@@ -199,7 +217,9 @@ export class WarrantyRemediationService {
   async clientConfirm(user:AuthUser,id:string){
     await this.db.tx(async q=>{
       const j=await this.load(id,q,true);
-      if(![j.client_id,j.filed_by].includes(user.id))throw forbidden();
+      if(j.client_id!==user.id &&
+         !await this.currentClaimant(q,j.original_order_id,j.client_id,j.filed_by,user.id,true))
+        throw forbidden();
       this.currentDecision(j);
       if(j.status==='client_confirmed')return;
       if(j.status!=='reported_done')throw conflict('warranty_job_state','Исполнитель ещё не сообщил об исправлении');
