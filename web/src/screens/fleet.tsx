@@ -260,8 +260,13 @@ export function QrJoin({ code }: { code: string }) {
   const v = info.data;
   const join = async () => {
     const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины');
-    try { sessionStorage.removeItem('traksos.qr'); } catch { /* */ }
-    if (r) { await reload(); go(''); }
+    // A failed join must keep the QR intent for retry after a transient error.
+    // Never clear it before the server confirms that vehicle access was granted.
+    if (r) {
+      try { sessionStorage.removeItem('traksos.qr'); } catch { /* private browsing */ }
+      await reload();
+      go('');
+    }
   };
   return (
     <main>
