@@ -26,10 +26,16 @@ export class OnsiteService {
 
   /** «Опаздываю»: клиент сразу видит новое время */
   async late(user: AuthUser, orderId: string, minutes: number) {
-    const o = await this.mine(user, orderId);
-    if (!['accepted', 'en_route'].includes(o.status)) throw conflict('bad_status', 'Опоздание отмечают до приезда');
-    await this.db.query('update orders set late_minutes = late_minutes + $2 where id=$1', [orderId, minutes]);
-    await this.orders.event(this.db, orderId, user.id, 'late', { minutes });
+    const o=await this.db.tx(async q=>{
+      const locked=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!locked)throw notFound('Заявка не найдена');
+      if(locked.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['accepted','en_route'].includes(locked.status))
+        throw conflict('bad_status','Опоздание отмечают до приезда');
+      await q.query('update orders set late_minutes=late_minutes+$2 where id=$1',[orderId,minutes]);
+      await this.orders.event(q,orderId,user.id,'late',{minutes});
+      return locked;
+    });
     const text = `Исполнитель предупредил: задерживается на ${minutes} мин.`;
     await this.orders.systemMessage(orderId, text + (minutes <= 40 ? ' До 40 минут для грузовых — в пределах нормы.' : ''));
     await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: o.status },
