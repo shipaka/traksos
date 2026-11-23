@@ -1,7 +1,7 @@
 import { before, after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
-import { ReferralService } from '../src/services/referral.ts';
+import { ReferralService, pointsBalance } from '../src/services/referral.ts';
 
 // Genuine PostgreSQL and HTTP regression; setup() destroys ONLY the dedicated
 // test schema. No production accounts, money provider or SMS are involved.
@@ -159,4 +159,21 @@ test('STO inviter earns once, only after real receipt, never for a foreign booki
     [service.id]), 1);
   assert.equal(await earned(inviter.id, 'ref_service'),
     (await t.app.settings.get('referral')).serviceReward);
+});
+
+test('FIFO points ledger is deterministic when debit and grants share exact timestamp', () => {
+  const day = new Date('2026-12-01T12:00:00Z');
+  const end = new Date('2026-12-31T12:00:00Z');
+  // The DB may return insertion rows in any order. Sequence, not undefined
+  // row order, determines whether the old 100-point lot or new 200-point lot
+  // was consumed, and which amount expires first.
+  const entries = [
+    { id: 3, amount: -8_000, created_at: day, expires_at: null },
+    { id: 2, amount: 20_000, created_at: day, expires_at: end },
+    { id: 1, amount: 10_000, created_at: day, expires_at: new Date('2026-12-05T00:00:00Z') },
+  ];
+  const result = pointsBalance(entries, new Date('2026-12-06T00:00:00Z'));
+  assert.deepEqual(result, { balance: 20_000, expiringSoon: 20_000 },
+    '8,000 cents spent from the first expiring lot; new lot untouched');
+  assert.deepEqual(pointsBalance([...entries].reverse(), new Date('2026-12-06T00:00:00Z')), result);
 });
