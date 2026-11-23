@@ -141,7 +141,7 @@ export function Shop() {
   const contextBookingId = params.get('bookingId');
   const contextVehicleId = params.get('vehicleId');
   const contextSuffix = partsContextSuffix(params);
-  const contextualVehicle = useLoad<any>(() =>
+  const contextualVehicle = useShopPrivateLoad<any>(() =>
     contextBookingId ? get('/api/bookings/' + encodeURIComponent(contextBookingId)).then((b:any) => b?.vehicle ?? null)
       : contextVehicleId ? get('/api/vehicles').then((fleet:any) =>
         Array.isArray(fleet) ? fleet.find((v:any) => v.id === contextVehicleId) ?? null : null)
@@ -157,7 +157,7 @@ export function Shop() {
       <span className="note">Поиск не подтверждает совместимость и не добавляет деталь автоматически в ремонт. Проверяйте применяемость по VIN и агрегату.</span>
     </section>
   );
-  const c = useLoad(() => get('/api/shop?light=1'), []);
+  const c = useShopPrivateLoad<any>(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
   const [term, setTerm] = useState('');
@@ -170,7 +170,7 @@ export function Shop() {
     const t = setTimeout(() => { setDebouncedTerm(term); setPage(0); }, 280);
     return () => clearTimeout(t);
   }, [term]);
-  const search = useLoad(() => c.data?.enabled
+  const search = useShopPrivateLoad<any>(() => c.data?.enabled
     ? get(`/api/shop/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}&page=${page}`)
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
     [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
@@ -178,13 +178,15 @@ export function Shop() {
   const localRefs = useLoad(() => searchOfflineReferences(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   // A separate small result set for reviewed reference entries without live pricing.
   // Do not fetch it before a search/category selection or while the shop is closed.
-  const references = useLoad(() =>
+  const references = useShopPrivateLoad<any>(() =>
     c.data?.enabled && (debouncedTerm.trim() || cat !== 'all')
       ? get(`/api/shop/catalog/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}`)
       : Promise.resolve({ enabled: false, items: [], total: 0 }),
     [c.data?.enabled, debouncedTerm, cat]);
   const d = c.data;
-  if (!d) return <main><Loading error={c.error} /></main>;
+  if (!d) return <main><Loading error={c.error} />
+    {c.error && <button className="btn ghost small" onClick={c.reload}>Повторить загрузку каталога</button>}
+  </main>;
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
   const add = (id: string) => setCart({ ...cart, [id]: (cart[id] ?? 0) + 1 });
   if (!d.enabled) return (
