@@ -791,7 +791,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
-          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
+          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
@@ -964,7 +964,7 @@ function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
       <span className="row note" style={{ gap: 12 }}>
         <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
-      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSos'}</span>
+      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSOS'}</span>
     </footer>
   );
 }
