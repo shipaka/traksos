@@ -126,6 +126,29 @@ try{
           if(await page.locator('main.client-dashboard').count())
             throw Error('900–999px: obsolete client home mounted instead of approved PC workspace');
         }
+        if(role==='courier'){
+          const desk=page.locator('main.courier-android');
+          await desk.waitFor({state:'visible'});
+          const active=desk.locator('article.courier-trip.focus');
+          await active.waitFor({state:'visible'});
+          // QA: actual 390px pixels showed an empty ▣ box and two identical
+          // delivery links. Do not consider a replaced text glyph a parcel.
+          const parcel=active.locator('.courier-trip-illustration svg.courier-parcel-glyph[role="img"]');
+          const shape=await parcel.evaluate(svg=>({
+            paths:svg.querySelectorAll('path').length,
+            width:svg.getBoundingClientRect().width,
+            height:svg.getBoundingClientRect().height,
+            visible:getComputedStyle(svg).display!=='none',
+          }));
+          if(!shape.visible || shape.paths<5 || shape.width<40 || shape.height<40)
+            throw Error('Courier still has an empty/nonvisual parcel: '+JSON.stringify(shape));
+          const actionLinks=await desk.locator('a[href^="#/courier/jobs/"]').evaluateAll(
+            nodes=>nodes.map(n=>({href:n.getAttribute('href'),text:n.textContent.trim()})));
+          if(actionLinks.length!==1 || !actionLinks[0].text.includes('Открыть доставку'))
+            throw Error('Courier has duplicate primary job actions: '+JSON.stringify(actionLinks));
+          if(await desk.getByRole('link',{name:'Продолжить доставку'}).count())
+            throw Error('Duplicated courier continue button returned');
+        }
         // Visited on a real backend, not mocked routes: these are the
         // high-value inner screens reached by approved menu/role actions.
         // Read-only navigation only: never accept offers, execute payments,
