@@ -233,3 +233,34 @@ test('blocked, paused, revoked, absent and invalid locations disappear without c
   assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[],
     'revocation must remove already-published data immediately');
 });
+
+test('station GPS deletion and concurrent publication opt-in never resurrect a stale pin',async()=>{
+  // Two real HTTP requests against disposable PostgreSQL deliberately race:
+  // even a consent toggle that was allowed at an earlier instant must not
+  // resurrect a public pin after its coordinates are explicitly removed.
+  for(let attempt=0;attempt<3;attempt++){
+    ok(await t.api('PUT','/api/base',{lat:59.97,lng:30.31},service.token));
+    ok(await t.api('POST',`/api/admin/services/${centerId}/verify-location`,{
+      kind:'site_visit',
+      reference:'TEST-ONLY-CONCURRENT-OPT-IN-'+attempt,
+      confirmed:true
+    },admin.token));
+    const ready=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+    assert.equal(ready.public_map_opt_in,false);
+    assert.ok(ready.public_map_location_verified_at);
+    const [cleared,enabled]=await Promise.all([
+      t.api('PUT','/api/base',{lat:null,lng:null},service.token),
+      t.api('PUT','/api/service/public-map',{enabled:true},service.token)
+    ]);
+    assert.equal(cleared.status,200,'station owner may always remove GPS');
+    assert.ok([200,400].includes(enabled.status),
+      'consent can precede deletion or reject an already-deleted GPS');
+    const after=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+    assert.equal(after.lat,null);
+    assert.equal(after.lng,null);
+    assert.equal(after.public_map_opt_in,false,'stale consent must never survive removal');
+    assert.equal(after.public_map_location_verified_at,null);
+    assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[],
+      'concurrent opt-in cannot republish an erased location');
+  }
+});
