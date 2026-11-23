@@ -113,4 +113,9 @@ test('support UI guard: real topics and 60-minute policy; unread state resets pe
     'a stale previous-account response must not repopulate unread badges');
   assert.match(code, /\[me\?\.id\]/,
     'user-specific lists must follow actual authentication identity');
+  assert.match(code, /sendingRef\.current = true/);
+  assert.match(code, /if \(sendingRef\.current\) return;/,
+    'rapid taps may not create two standalone support tickets');
+  assert.match(code, /if \(r\) location\.replace/,
+    'navigate to real ticket only after persisted server response');
 });
