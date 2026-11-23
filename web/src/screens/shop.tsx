@@ -697,7 +697,10 @@ export function AdminShop() {
 function ShopSwitch() {
   const s = useShopPrivateLoad<any>(() => get('/api/admin/settings'), []);
   const { busy, run } = useAction();
-  if (!s.data) return <Loading error={s.error} />;
+  if (!s.data) return <div className="stack">
+    <Loading error={s.error}/>
+    {s.error&&<button className="btn ghost small" onClick={s.reload}>Повторить загрузку настроек магазина</button>}
+  </div>;
   const on = s.data.shop.enabled;
   return (
     <div className={`banner col ${on ? '' : 'warn'}`}>
@@ -714,7 +717,10 @@ function ShopSettings() {
   const { busy, run } = useAction();
   const [f, setF] = useState<any>(null);
   useEffect(() => { if (s.data && !f) setF(s.data.shop); }, [s.data]); // eslint-disable-line
-  if (!f) return <Loading error={s.error} />;
+  if (!s.data||!f) return <div className="stack">
+    <Loading error={s.error}/>
+    {s.error&&<button className="btn ghost small" onClick={s.reload}>Повторить загрузку условий</button>}
+  </div>;
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
   return (
     <div className="card">
@@ -740,7 +746,11 @@ function AdminProducts() {
   const l = useShopPrivateLoad<any[]>(() => get('/api/admin/shop/products'), []);
   const cats = useShopPrivateLoad<any>(() => get('/api/shop'), []);
   const [edit, setEdit] = useState<any>(null);
-  if (!l.data || !cats.data) return <Loading error={l.error ?? cats.error} />;
+  if (!l.data||!cats.data) return <div className="stack">
+    <Loading error={l.error??cats.error}/>
+    {(l.error||cats.error)&&<button className="btn ghost small"
+      onClick={()=>{l.reload();cats.reload()}}>Повторить загрузку товаров</button>}
+  </div>;
   if (edit) return <ProductForm p={edit} products={l.data} categories={cats.data.categories} onDone={() => { setEdit(null); l.reload(); }} />;
   return (
     <div className="stack">
@@ -860,7 +870,10 @@ function SupplierMapping({ productId }: { productId: string }) {
     });
   }, [ref.data?.updatedAt, productId]); // eslint-disable-line
   const set = (key: keyof typeof form, value: string | boolean) => setForm((v) => ({ ...v, [key]: value }));
-  if (!ref.data) return <Loading error={ref.error} />;
+  if (!ref.data) return <div className="stack">
+    <Loading error={ref.error}/>
+    {ref.error&&<button className="btn ghost small" onClick={ref.reload}>Повторить получение артикула поставщика</button>}
+  </div>;
   return <div className="card stack" style={{ gap: 8 }}>
     <b>Артикул поставщика · Автоконтинент</b>
     <span className="note">Внутренняя закупка. Покупатель эти поля не видит. API поставщика ещё не подключён.</span>
@@ -975,7 +988,10 @@ function AdminShopOrders() {
   const l = useShopPrivateLoad<any[]>(() => get(`/api/admin/shop/orders${all ? '' : '?status=open'}`), [all], (e) => e.type === 'shop');
   const { busy, run } = useAction();
   const [note, setNote] = useState<Record<string, string>>({});
-  if (!l.data) return <Loading error={l.error} />;
+  if (!l.data) return <div className="stack">
+    <Loading error={l.error}/>
+    {l.error&&<button className="btn ghost small" onClick={l.reload}>Повторить загрузку заказов</button>}
+  </div>;
   const act = async (id: string, status: string, ok: string) => { if (await run(() => post(`/api/admin/shop/orders/${id}/status`, { status, note: note[id] || undefined }), ok)) { setNote({ ...note, [id]: '' }); l.reload(); } };
   return (
     <div className="stack">
