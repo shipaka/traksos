@@ -276,7 +276,7 @@ export class OrdersService {
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
           create_request_key,create_request_hash,location_region,preferred_performer_id,parallel_consent,continuation_recommendation_id,verified_only)
        select $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41
-       where $1=$2 or exists (
+       where $1::uuid=$2::uuid or exists (
          select 1 from users u join vehicles v
            on v.owner_id=u.owner_id and v.driver_id=u.id
          where u.id=$2 and u.owner_id=$1 and 'driver'=any(u.roles)
