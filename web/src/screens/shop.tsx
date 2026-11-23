@@ -1,19 +1,59 @@
 // Магазин: витрина, корзина, заказ; админ — выключатель, товары, заказы.
-import { useEffect, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, API_URL } from '../api.ts';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, put, del, rub, fmtTime, API_URL, getToken } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
+import { cartStorageKey, readCartFor, writeCartFor, type Cart } from '../shopCartStore.ts';
 
-const CART_KEY = 'traksos.cart';
-type Cart = Record<string, number>;
-const readCart = (): Cart => { try { return JSON.parse(localStorage.getItem(CART_KEY) ?? '{}'); } catch { return {}; } };
-const writeCart = (c: Cart) => { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch { /* */ } window.dispatchEvent(new Event('traksos-cart')); };
+/**
+ * The device can be shared by a fleet owner, drivers and masters.
+ * Never share one localStorage cart across their authenticated accounts.
+ */
 function useCart(): [Cart, (c: Cart) => void] {
-  const [c, setC] = useState<Cart>(readCart);
-  useEffect(() => { const f = () => setC(readCart()); window.addEventListener('traksos-cart', f); return () => window.removeEventListener('traksos-cart', f); }, []);
-  return [c, (n) => { writeCart(n); setC(n); }];
+  const { me } = useMe();
+  const owner = me?.id ?? null;
+  const session = useRef<{owner:string|null; token:string|null}>({owner,token:getToken()});
+  const [cart,setCart] = useState<Cart>(()=>readCartFor(owner));
+  useEffect(()=>{
+    session.current={owner,token:getToken()};
+    setCart(readCartFor(owner));
+    const refresh=()=>setCart(readCartFor(owner));
+    const onStorage=(event:StorageEvent)=>{
+      const key=cartStorageKey(owner);
+      if(key&&(event.key===key||event.key===null))refresh();
+    };
+    const onLocal=(event:Event)=>{
+      if((event as CustomEvent<{owner:string}>).detail?.owner===owner)refresh();
+    };
+    const invalidate=()=>{
+      session.current={owner:null,token:null};
+      setCart({});
+    };
+    window.addEventListener('storage',onStorage);
+    window.addEventListener('traksos-cart',onLocal);
+    window.addEventListener('traksos-auth-external-change',invalidate);
+    window.addEventListener('traksos-auth-expired',invalidate);
+    return ()=>{
+      window.removeEventListener('storage',onStorage);
+      window.removeEventListener('traksos-cart',onLocal);
+      window.removeEventListener('traksos-auth-external-change',invalidate);
+      window.removeEventListener('traksos-auth-expired',invalidate);
+    };
+  },[owner]);
+  const update=(next:Cart)=>{
+    // An old mounted page must not write account A's cart after B logs in.
+    if(!owner||!session.current.token||session.current.owner!==owner||
+      session.current.token!==getToken()){
+      setCart({});
+      return;
+    }
+    const safe=writeCartFor(owner,next);
+    setCart(safe);
+    window.dispatchEvent(new CustomEvent('traksos-cart',{detail:{owner}}));
+  };
+  return [cart,update];
 }
 const photoUrl = (p: any) => `${API_URL}/api/shop/products/${p.id}/photo?v=${p.photoVersion}`;
 const STATUS_TONE: Record<string, string> = { new: 'accent', confirmed: 'accent', ready: 'good', shipped: 'accent', done: '', cancelled: 'bad' };
