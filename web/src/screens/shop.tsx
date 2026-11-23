@@ -1,6 +1,6 @@
 // Магазин: витрина, корзина, заказ; админ — выключатель, товары, заказы.
 import { useEffect, useRef, useState } from 'react';
-import { get, post, put, del, rub, fmtTime, API_URL, getToken } from '../api.ts';
+import { get, post, put, del, rub, fmtTime, API_URL, getToken, onEvent } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
@@ -64,6 +64,61 @@ function useCart(): [Cart, (c: Cart) => void] {
     ? cart : {};
   return [visibleCart,update];
 }
+/**
+ * Private shop responses belong to the account, token AND exact query that
+ * initiated them. General useLoad deliberately keeps old data on retry errors;
+ * that is unsafe for fleet orders, prices, vehicles and purchase history.
+ */
+function useShopPrivateLoad<T>(load:()=>Promise<T>, deps:unknown[],
+  eventFilter?:(e:any)=>boolean) {
+  const {me}=useMe();
+  const actor=me?.id??null, token=getToken();
+  const [refresh,setRefresh]=useState(0);
+  const key=JSON.stringify([actor,token,...deps,refresh]);
+  const activeIdentity=useRef({actor,token});
+  activeIdentity.current={actor,token};
+  const [result,setResult]=useState<{
+    key:string;data:T|null;error:string|null
+  }>({key:'',data:null,error:null});
+  const fnRef=useRef(load);
+  fnRef.current=load;
+  useEffect(()=>{
+    let alive=true;
+    setResult({key,data:null,error:null});
+    if (!actor||!token) {
+      setResult({key,data:null,error:'Для доступа войдите в кабинет'});
+      return ()=>{alive=false};
+    }
+    Promise.resolve().then(()=>fnRef.current()).then(data=>{
+      if(alive&&activeIdentity.current.actor===actor&&
+        activeIdentity.current.token===token)
+        setResult({key,data,error:null});
+    }).catch(error=>{
+      if(alive&&activeIdentity.current.actor===actor&&
+        activeIdentity.current.token===token)
+        setResult({key,data:null,error:error instanceof Error?error.message:'Не удалось загрузить данные'});
+    });
+    return ()=>{alive=false};
+  },[key]);
+  useEffect(()=>{
+    const invalidate=()=>setRefresh(n=>n+1);
+    window.addEventListener('traksos-auth-external-change',invalidate);
+    window.addEventListener('traksos-auth-expired',invalidate);
+    return ()=>{
+      window.removeEventListener('traksos-auth-external-change',invalidate);
+      window.removeEventListener('traksos-auth-expired',invalidate);
+    };
+  },[]);
+  useEffect(()=>eventFilter?onEvent((event:any)=>{
+    if(eventFilter(event))setRefresh(n=>n+1);
+  }):undefined,[actor,token,...deps]);
+  return {
+    data:result.key===key?result.data:null,
+    error:result.key===key?result.error:null,
+    reload:()=>setRefresh(n=>n+1),
+  };
+}
+
 const photoUrl = (p: any) => `${API_URL}/api/shop/products/${p.id}/photo?v=${p.photoVersion}`;
 const STATUS_TONE: Record<string, string> = { new: 'accent', confirmed: 'accent', ready: 'good', shipped: 'accent', done: '', cancelled: 'bad' };
 const DELIVERY: Record<string, string> = { pickup: 'Самовывоз', delivery: 'Доставка', master: 'С мастером на заявке' };
