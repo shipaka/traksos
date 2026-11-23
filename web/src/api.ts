@@ -127,7 +127,12 @@ function newOrderRequestKey() {
   return 'web-' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 export async function postOrder<T = any>(body: unknown): Promise<T> {
+  // Hashing the request is async on mobile WebView. If another tab logs in
+  // while it runs, never submit THIS user's unfinished form as the new user.
+  const orderToken = token;
   const fingerprint = await fingerprintOrder(body);
+  if (orderToken !== token)
+    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Проверьте заявку перед отправкой.');
   const now = Date.now();
   let saved = fallbackPending;
   if (!fingerprint.startsWith('memory:')) {

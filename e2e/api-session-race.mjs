@@ -138,9 +138,27 @@ try {
 
         // The first order failed ambiguously; its request key must remain
         // reusable for THIS account only, not after a different login.
-        module.setToken('CI-ORDER-OLD');
         const orderBody={service:'hydraulics',zoneId:'spb',
           description:'CI idempotency isolation, no live booking'};
+        // Hold the asynchronous fingerprint half-way through an account
+        // switch: no POST may escape under the replacement account.
+        const digestOriginal=SubtleCrypto.prototype.digest;
+        let releaseDigest;
+        SubtleCrypto.prototype.digest=function(...args){
+          return new Promise(resolve=>{releaseDigest=()=>resolve(digestOriginal.apply(this,args));});
+        };
+        try {
+          module.setToken('CI-HASH-OLD');
+          const lateOrder=module.postOrder(orderBody).catch(e=>e);
+          module.setToken('CI-HASH-NEW');
+          releaseDigest();
+          const lateError=await lateOrder;
+          result.lateOrderCode=lateError.code;
+          result.ordersAfterLateFingerprint=orderCalls.length;
+        } finally {
+          SubtleCrypto.prototype.digest=digestOriginal;
+        }
+        module.setToken('CI-ORDER-OLD');
         const ambiguous=await module.postOrder(orderBody).catch(e=>e);
         result.ambiguousOrderStatus=ambiguous.status;
         module.setToken('CI-ORDER-NEW');
@@ -189,6 +207,9 @@ try {
     assert.equal(actual.crossTabLogoutToken,null);
     assert.equal(actual.externalChanges,2,
       'external login and logout must both notify the app');
+    assert.equal(actual.lateOrderCode,'session_changed');
+    assert.equal(actual.ordersAfterLateFingerprint,0,
+      'unfinished old-account form was POSTed as a new user while digesting');
     assert.equal(actual.ambiguousOrderStatus,503);
     assert.equal(actual.orderAuth[0],'Bearer CI-ORDER-OLD');
     assert.equal(actual.orderAuth[1],'Bearer CI-ORDER-NEW');
