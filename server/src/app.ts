@@ -962,8 +962,13 @@ export function createApp(d: Deps) {
       Number(c.query.get('page') ?? '0')));
   r.post('/api/admin/shop/catalog/:id/review', ['admin'], (c: AuthedCtx) => {
     if (!z.string().uuid().safeParse(c.params.id).success) throw bad('bad_id', 'Неверный идентификатор');
-    const b = parse(z.object({ reviewed: z.boolean() }), c.body);
-    return partCatalog.review(c.user, c.params.id, b.reviewed);
+    const b = parse(z.object({
+      reviewed: z.boolean(),
+      expectedUpdatedAt: z.string().datetime().optional(),
+      expectedName: z.string().max(120).optional(),
+      expectedSourceNote: z.string().max(300).optional(),
+    }), c.body);
+    return partCatalog.review(c.user, c.params.id, b.reviewed, b);
   });
   r.get('/api/shop/history', true, (c: AuthedCtx) => {
     const vehicleId = c.query.get('vehicleId');
