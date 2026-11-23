@@ -136,3 +136,26 @@ test('expired announcement stays draft and cannot be activated as real worker ne
   assert.ok(saved,'historical draft is still accessible');
   assert.equal(saved.published,false,'failed publication never changes stored state');
 });
+
+test('non-dispatch services cannot receive worker commission campaigns',async()=>{
+  // Both services are visible in announcements, but neither has the worker
+  // commission mechanism: ECU is a stationary handoff, consultation is a
+  // separately priced service. The API must reject even direct HTTP callers.
+  const start=new Date(t.clock.now().getTime()+2*3_600_000).toISOString();
+  const end=new Date(t.clock.now().getTime()+3*3_600_000).toISOString();
+  for(const service of ['ecu','consult']){
+    const body={
+      service,commissionPct:0,startsAt:start,endsAt:end,
+      enabled:true,reason:'Учебный запрос на несуществующий тип комиссии'
+    };
+    const response=await t.api('POST','/api/admin/commission-campaigns',body,admin.token);
+    assert.equal(response.status,400,'invalid worker fee service must be refused: '+service);
+    const msg=ok(await t.api('POST','/api/admin/announcements',{
+      audience:'master',service,title:'Учебное сообщение '+service,
+      body:'Объявления без комиссионных акций должны остаться возможны.',
+      startsAt:start,endsAt:end,published:false
+    },admin.token));
+    assert.equal(msg.service,service,
+      'disabling a nonsensical campaign must not disable real partner announcements');
+  }
+});
