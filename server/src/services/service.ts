@@ -100,7 +100,10 @@ export class ServiceCenters {
              conditions=coalesce($12::text[],conditions), accepts=coalesce($13::text[],accepts),
              closed_days=coalesce($14::date[],closed_days),
              paused=coalesce($15::boolean,paused),
-             accepts_confirmed_at=case when $13::text[] is not null or $14::date[] is not null then now() else accepts_confirmed_at end,
+             -- A form save is not the explicit weekly service attestation.
+             -- Full accepts/closedDays arrays are sent for ANY edited field;
+             -- only POST /api/base/confirm-accepts may renew this timestamp.
+
              public_map_opt_in=case when ${locationChanged} then false else public_map_opt_in end,
              public_map_opted_at=case when ${locationChanged} then null else public_map_opted_at end,
              public_map_location_verified_at=case when ${locationChanged} then null else public_map_location_verified_at end
