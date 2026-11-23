@@ -135,16 +135,17 @@ export function AdminAccountAccess() {
             {option.label}
           </button>)}
         </div>
-        <span className="note">Допустимо совмещать мастер + СТО. Несовместимые роли будут отклонены сервером. Администратора и модератора здесь создать нельзя.</span>
+        <span className="note">Допустимо совмещать мастер + СТО, не более трёх ролей. Несовместимые роли будут отклонены сервером. Администратора и модератора здесь создать нельзя.</span>
+        {roles.length>3&&<span className="note" role="alert">Выберите максимум три роли.</span>}
       </div>
       <label className="stack"><span className="label">Почему регистрируем вручную?</span>
         <textarea className="field" rows={2} maxLength={500}
           placeholder="Например: регистрация по обращению, помощь родственнику, сбой SMS"
           value={reason} onChange={e => setReason(e.target.value)} />
       </label>
-      <button className="btn" type="button" disabled={busy || !roles.length || reason.trim().length < 10 || phone.replace(/\D/g, '').length < 10}
+      <button className="btn" type="button" disabled={busy||!currentDraft||roles.length<1||roles.length>3||reason.trim().length<10||phone.replace(/\D/g,'').length<10}
         onClick={createAccount}>Создать учётную запись</button>
-      {created && <div className="card stack" role="status">
+      {created&&currentDraft&&<div className="card stack" role="status">
         <b>Создан аккаунт: {created.user.name ?? fmtPhone(created.user.phone)}</b>
         <span className="note">Роли: {created.user.roles.join(', ')}. Пользователь ещё не получил пароль и не вошёл.</span>
         <a className="btn ghost small" href={'#/admin/user/' + created.user.id}>Открыть карточку и управлять ролями</a>
@@ -169,10 +170,10 @@ export function AdminAccountAccess() {
           placeholder="Опишите ошибку, когда появилась и чего ожидали. Пароли и SMS-коды сюда не писать."
           value={details} onChange={e => setDetails(e.target.value)} />
       </label>
-      <button className="btn" type="button" disabled={busy || details.trim().length < 10} onClick={fileReport}>
+      <button className="btn" type="button" disabled={busy||!currentDraft||details.trim().length<10} onClick={fileReport}>
         Создать обращение разработчику
       </button>
-      {lastReport && <span className="note" role="status">Внутреннее обращение № {lastReport} сохранено в очереди.</span>}
+      {lastReport&&currentDraft&&<span className="note" role="status">Внутреннее обращение № {lastReport} сохранено в очереди.</span>}
       <span className="note">Обращения надёжно сохраняются в админке. При наличии настроенного закрытого HTTPS-канала сервер сам передаёт разработчику только номер обращения и категорию — без телефона, паролей и описания проблемы. Без подключения канала пользуйтесь копированием в закрытый чат.</span>
     </div>
 
