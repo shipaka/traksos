@@ -66,6 +66,20 @@ try {
         assert(await page.locator('main.guest-explore').count()===0,
           width+'px: obsolete public tour at #/'+path);
       }
+      // The old #/privacy bookmark must still show the currently published
+      // PUBLIC policy, not an unrelated registration screen or the
+      // authenticated personal-data management form.
+      await preloadAbandonedChoice();
+      await page.goto(BASE+'/#/privacy',{waitUntil:'domcontentloaded'});
+      await page.locator('main.public-offer-page').waitFor({state:'visible'});
+      await page.waitForFunction(() =>
+        sessionStorage.getItem('traksos.pendingLandingAction')===null &&
+        sessionStorage.getItem('traksos.pendingCatalogChoice')===null);
+      assert(await page.locator('main.auth-desktop-layout').count()===0,
+        width+'px: public privacy bookmark unexpectedly opens sign-in');
+      assert(await page.locator('main.guest-explore').count()===0,
+        width+'px: old public tour at #/privacy');
+
       if (width>=900) {
         // Secondary public pages use the shared header, NOT the owner 617
         // home header. Its menus must not remain open over legal documents.
