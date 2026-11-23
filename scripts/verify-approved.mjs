@@ -917,7 +917,8 @@ expect(
   emptyOrderArt.toString('ascii',8,12)==='WEBP' &&
   createHash('sha256').update(emptyOrderArt).digest('hex') ===
     '9b8bc42efa47a9eee1a9f5cc07a8b48e20c2d72517adb6e46c999b7e9094f257' &&
-  emptyOrderSource.includes('/feature-art/traksos-no-performer-search-approved-20261123.webp') &&
+  (await read('web/src/approvedVisuals.ts')).includes("noPerformerSearch: '/feature-art/traksos-no-performer-search-approved-20261123.webp'") &&
+  emptyOrderSource.includes('src={APPROVED_VISUALS.noPerformerSearch}') &&
   emptyOrderSource.includes('d.you === \'client\' && <Retry') &&
   emptyOrderSource.includes('href="#/sos"') &&
   emptyOrderSource.includes('/support/new?order=') &&

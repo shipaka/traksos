@@ -1,5 +1,6 @@
 import './orderCinematic.css';
 import './noPerformerApproved20261123.css';
+import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
@@ -1095,7 +1096,7 @@ function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: ()
         </div>
       </div>
       <div className="traksos-no-performer-art" aria-hidden="true">
-        <img src="/feature-art/traksos-no-performer-search-approved-20261123.webp" alt="" loading="lazy"
+        <img src={APPROVED_VISUALS.noPerformerSearch} alt="" loading="lazy"
           width="480" height="384" decoding="async"/>
       </div>
     </section>
