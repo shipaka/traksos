@@ -30,10 +30,15 @@ function hashPassword(password: string) {
 }
 function verifyPassword(password: string, stored: string | null) {
   if (!stored) return false;
-  const [algorithm, salt, expected] = stored.split(':');
-  if (algorithm !== 'scrypt' || !salt || !expected || expected.length !== 128) return false;
-  const actual = scryptSync(password, Buffer.from(salt,'hex'),64);
-  return timingSafeEqual(actual, Buffer.from(expected,'hex'));
+  const parts = stored.split(':');
+  if (parts.length !== 3) return false;
+  const [algorithm, salt, expected] = parts;
+  // A truncated/non-hex hash must fail as invalid credentials, never crash
+  // timingSafeEqual or turn a normal login into a 500 response.
+  if (algorithm !== 'scrypt' || !/^[0-9a-f]{32}$/i.test(salt) ||
+      !/^[0-9a-f]{128}$/i.test(expected)) return false;
+  const actual = scryptSync(password, Buffer.from(salt, 'hex'), 64);
+  return timingSafeEqual(actual, Buffer.from(expected, 'hex'));
 }
 
 
