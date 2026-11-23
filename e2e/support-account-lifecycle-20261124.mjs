@@ -191,6 +191,18 @@ try{
   assert(await page.getByRole('textbox',{name:'Описание проблемы'}).inputValue()==='',
     'A previous user's new-ticket draft survived account switch');
   await finish('GET','/api/support/topics',1,'resolve',['Другое']);
+  await page.getByRole('button',{name:'Другое'}).click();
+  await page.getByRole('textbox',{name:'Описание проблемы'}).fill('Late support request by B');
+  await page.getByRole('button',{name:'Отправить'}).click();
+  await wait('POST','/api/support',1);
+  const originalHash=await page.evaluate(()=>location.hash);
+  await page.evaluate(()=>window.__setSupportMe({id:'moderator-C',roles:['moderator']}));
+  await wait('GET','/api/support/topics',3);
+  await finish('POST','/api/support',0,'resolve',{id:'foreign-support-ticket'});
+  await page.waitForTimeout(40);
+  assert(await page.evaluate(()=>location.hash)===originalHash,
+    'Late previous-account ticket creation redirected the new user');
+  await finish('GET','/api/support/topics',2,'resolve',['Другое']);
 
   // The notifications screen must forget A's cached private inbox.
   await page.evaluate(()=>{
@@ -210,6 +222,24 @@ try{
     'Old notification was visible after switching accounts');
   await finish('GET',notifications,1,'resolve',{unread:0,items:[]});
   await page.getByText('Пока ничего').waitFor();
+  // A notification read may finish after logout. Its old navigation must NOT
+  // move the new user to the previous account's private order or ticket.
+  await page.evaluate(()=>window.__setSupportMe({id:'account-D',roles:['client']}));
+  await wait('GET',notifications,3);
+  await finish('GET',notifications,2,'resolve',{unread:1,items:[{
+    id:6,kind:'support',title:'Previous account alert',body:'Private',
+    created_at:'2026-11-24',read_at:null,data:{ticketId:'previous-owner-ticket'},
+  }]});
+  await page.getByRole('button',{name:/Уведомление: Previous account alert/}).click();
+  await wait('POST','/api/me/notifications/6/read',1);
+  const notificationHash=await page.evaluate(()=>location.hash);
+  await page.evaluate(()=>window.__setSupportMe({id:'account-E',roles:['client']}));
+  await wait('GET',notifications,4);
+  await finish('POST','/api/me/notifications/6/read',0,'resolve',{ok:true});
+  await page.waitForTimeout(40);
+  assert(await page.evaluate(()=>location.hash)===notificationHash,
+    'Late old-account notification navigated the new account to a private ticket');
+  await finish('GET',notifications,3,'resolve',{unread:0,items:[]});
   assert(errors.length===0,'React runtime errors: '+errors.join('; '));
   console.log('PASS: support thread, drafts, status filter, notifications and double POST scoped to account');
 } finally {await browser.close();}
