@@ -77,10 +77,31 @@ export class ReferralService {
 
   async grant(q: Queryable, p: { userId: string; amount: number; kind: string; orderId?: string | null; bookingId?: string | null; refUserId?: string | null; note: string }) {
     if (p.amount <= 0) return 0;
-    await q.query(
-      `insert into points_entries(user_id, amount, kind, order_id, booking_id, ref_user_id, note, expires_at, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    // The database uniquely identifies each referral event. A retry is not a
+    // second earning; do not issue either more points or another notification.
+    const inserted = await q.one<{ amount: number }>(
+      `insert into points_entries(user_id, amount, kind, order_id, booking_id, ref_user_id, note, expires_at, created_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing returning amount`,
       [p.userId, p.amount, p.kind, p.orderId ?? null, p.bookingId ?? null, p.refUserId ?? null, p.note, await this.expiresAt(), this.now()]);
-    await this.notifier.notify([p.userId], { type: 'points' }, { kind: 'normal', title: `+${rub(p.amount).replace(' ₽', '')} баллов`, body: p.note, data: {} });
+    if (!inserted) return 0;
+    const title = `+${rub(p.amount).replace(' ₽', '')} баллов`;
+    if (q !== this.db) {
+      // Do not open Notifier's separate DB transaction while holding locks in
+      // a settlement transaction: it could expose an uncommitted reward or
+      // deadlock on the same user's FK. Commit inbox + points atomically.
+      await q.query(
+        `insert into notifications(user_id,kind,title,body,data) values ($1,'points',$2,$3,$4)`,
+        [p.userId, title, p.note, {}]);
+    } else {
+      // Standalone grants are already durable. Optional push/inbox delivery
+      // failures may not turn them into retryable financial operations.
+      try {
+        await this.notifier.notify([p.userId], { type: 'points' },
+          { kind: 'normal', title, body: p.note, data: {} });
+      } catch (error) {
+        console.warn('[referral-notify]', error instanceof Error ? error.message : String(error));
+      }
+    }
     return p.amount;
   }
 
@@ -94,24 +115,40 @@ export class ReferralService {
   }
 
   async spend(q: Queryable, userId: string, base: number, note: string, orderId?: string | null, bookingId?: string | null, want?: number | null) {
+    // The caller supplies the settlement transaction. Serialize all point
+    // spends for this user across unrelated orders / workshop invoices before
+    // reading FIFO balance (an order-row lock alone is insufficient).
+    await q.one('select id from users where id=$1 for update', [userId]);
     const a = await this.available(userId, base, q);
     const use = Math.max(0, Math.min(a.max, want ?? a.max));
     if (use <= 0) return 0;
-    await q.query(`insert into points_entries(user_id, amount, kind, order_id, booking_id, note, created_at) values ($1,$2,'spend',$3,$4,$5,$6)`,
+    const row = await q.one<{ amount: number }>(
+      `insert into points_entries(user_id, amount, kind, order_id, booking_id, note, created_at)
+       values ($1,$2,'spend',$3,$4,$5,$6) on conflict do nothing returning amount`,
       [userId, -use, orderId ?? null, bookingId ?? null, note, this.now()]);
-    return use;
+    return row ? use : 0;
   }
 
   /** Вход по ссылке: только новый номер, не сам себя. Новому клиенту — приветственные баллы */
   async attach(user: AuthUser & { inserted?: boolean }, code: string) {
     if (!user.inserted) return false;
-    const ref = await this.db.one<{ id: string }>('select id from users where ref_code=$1', [code.trim().toUpperCase()]);
-    if (!ref || ref.id === user.id) return false;
-    const ok = await this.db.one('update users set referred_by=$2, referred_at=$3 where id=$1 and referred_by is null returning id', [user.id, ref.id, this.now()]);
-    if (!ok) return false;
-    const r = await this.settings.get('referral');
-    if (user.roles.includes('client')) await this.grant(this.db, { userId: user.id, amount: r.welcome, kind: 'welcome', refUserId: ref.id, note: 'Подарок за вход по приглашению — гасит сервисный сбор' });
-    return true;
+    const cleaned = code.trim().toUpperCase();
+    // The referral link and first welcome credit are one transaction. A DB
+    // failure cannot leave a permanently attached newcomer with no gift.
+    return this.db.tx(async (q) => {
+      const ref = await q.one<{ id: string }>('select id from users where ref_code=$1', [cleaned]);
+      if (!ref || ref.id === user.id) return false;
+      const ok = await q.one(
+        'update users set referred_by=$2, referred_at=$3 where id=$1 and referred_by is null returning id',
+        [user.id, ref.id, this.now()]);
+      if (!ok) return false;
+      const r = await this.settings.get('referral');
+      if (user.roles.includes('client')) await this.grant(q, {
+        userId: user.id, amount: r.welcome, kind: 'welcome',
+        refUserId: ref.id, note: 'Подарок за вход по приглашению — гасит сервисный сбор',
+      });
+      return true;
+    });
   }
 
   /** К клиентскому заказу: ограничение не выше 10% стоимости заказа и не выше самого сбора. */
@@ -126,12 +163,15 @@ export class ReferralService {
   async spendClientFee(q: Queryable, order: any, clientFee: number, want: number) {
     if (want <= 0) return 0;
     const amount = Number(order.call_out_amount ?? order.estimate?.callOut ?? 0) + Number(order.work_amount ?? 0);
+    await q.one('select id from users where id=$1 for update', [order.client_id]);
     const a = await this.clientAvailable(order.client_id, amount, clientFee, q);
     const used = Math.max(0, Math.min(a.max, want));
     if (used <= 0) return 0;
-    await q.query(`insert into points_entries(user_id,amount,kind,order_id,note,created_at)
-         values ($1,$2,'spend',$3,$4,$5)`,
+    const spent = await q.one<{ amount: number }>(
+      `insert into points_entries(user_id,amount,kind,order_id,note,created_at)
+       values ($1,$2,'spend',$3,$4,$5) on conflict do nothing returning amount`,
       [order.client_id,-used,order.id,`Сервисный сбор по заявке №${order.number}`,this.now()]);
+    if (!spent) return 0; // A replay must not add the discount a second time.
     await q.query(`update orders set points_fee=$2, discount_amount = discount_amount + $2,
         discount_reason = coalesce(discount_reason, 'Баллы') where id=$1`, [order.id, used]);
     return used;
@@ -167,7 +207,8 @@ export class ReferralService {
     }
     // 2. Пригласивший клиента — доля от оплаченной заявки, пока не прошло days дней
     const c = await q.one<{ referred_by: string | null; referred_at: Date | null; name: string | null }>('select referred_by, referred_at, name from users where id=$1', [order.client_id]);
-    if (c?.referred_by && c.referred_at && this.now().getTime() - new Date(c.referred_at).getTime() <= r.days * DAY) {
+    const referralAge = c?.referred_at ? this.now().getTime() - new Date(c.referred_at).getTime() : -1;
+    if (c?.referred_by && referralAge >= 0 && referralAge <= r.days * DAY) {
       const clientFee = cappedPct(amount, Number(order.client_fee_pct ?? fees.clientFeePct));
       const actualPoints = await q.one<{points_fee:number|null}>('select points_fee from orders where id=$1',[order.id]);
       const actualFee = Math.max(0, clientFee - Number(actualPoints?.points_fee ?? 0));
@@ -180,8 +221,9 @@ export class ReferralService {
       const p = await q.one<{ referred_by: string | null; n: number }>(
         `select u.referred_by, (select count(*)::int from orders o where o.performer_id=u.id and o.status='completed') as n from users u where u.id=$1`, [order.performer_id]);
       if (p?.referred_by && p.n >= r.performerJobs) {
-        const done = await q.one(`select 1 from points_entries where kind='ref_performer' and ref_user_id=$1`, [order.performer_id]);
-        if (!done) await this.grant(q, { userId: p.referred_by, amount: r.performerReward, kind: 'ref_performer', refUserId: order.performer_id,
+        // Unique ref_user_id for this kind protects concurrent milestones.
+        await this.grant(q, { userId: p.referred_by, amount: r.performerReward,
+          kind: 'ref_performer', refUserId: order.performer_id,
           note: `Приглашённый исполнитель выполнил ${r.performerJobs} заявок` });
       }
     }
@@ -195,12 +237,28 @@ export class ReferralService {
 
   async afterBookingClosed(ownerId: string, bookingId: string) {
     const r = await this.settings.get('referral');
-    const o = await this.db.one<{ referred_by: string | null; n: number }>(
-      `select u.referred_by, (select count(*)::int from service_bookings b join service_centers c on c.id=b.center_id where c.owner_id=u.id and b.status='closed') as n
-         from users u where u.id=$1`, [ownerId]);
-    if (!o?.referred_by || o.n < 1) return;
-    const done = await this.db.one(`select 1 from points_entries where kind='ref_service' and ref_user_id=$1`, [ownerId]);
-    if (!done) await this.grant(this.db, { userId: o.referred_by, amount: r.serviceReward, kind: 'ref_service', bookingId, refUserId: ownerId, note: 'Приглашённая рембаза закрыла первый счёт' });
+    await this.db.tx(async (q) => {
+      // The callback can be retried by a payment notification. Never trust a
+      // stale booking snapshot or pay an award for another owner's booking.
+      const valid = await q.one<{ id: string }>(
+        `select b.id from service_bookings b
+         join service_centers c on c.id=b.center_id
+         where b.id=$1 and c.owner_id=$2 and b.status='closed'
+           and (not coalesce(b.payment_required,false)
+             or coalesce(b.received_amount,0)-coalesce(b.refunded_amount,0)
+               >= coalesce(b.amount,0)+coalesce(b.client_fee,0)-coalesce(b.discount,0))`,
+        [bookingId, ownerId]);
+      if (!valid) return;
+      await q.one('select id from users where id=$1 for update', [ownerId]);
+      const o = await q.one<{ referred_by: string | null }>(
+        'select referred_by from users where id=$1', [ownerId]);
+      if (!o?.referred_by) return;
+      // The unique (kind, ref_user_id) ledger constraint admits one reward
+      // across multiple closed invoices, concurrent callbacks, and retries.
+      await this.grant(q, { userId: o.referred_by, amount: r.serviceReward,
+        kind: 'ref_service', bookingId, refUserId: ownerId,
+        note: 'Приглашённая рембаза закрыла первый счёт' });
+    });
   }
 
   /** Экран «Пригласить»: код, остаток, история, кого пригласили, правила */
