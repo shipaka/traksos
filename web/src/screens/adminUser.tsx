@@ -76,10 +76,23 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
   const [bonus, setBonus] = useState<number | null>(null);
   const [bonusReason, setBonusReason] = useState('');
   const [blockReason, setBlockReason] = useState('');
-  const act = (fn: () => Promise<unknown>, text: string) => run(fn, text).then((r) => r && reload());
+  const [profileError,setProfileError]=useState('');
+  const parsedFee=fee.trim()===''?null:Number(fee);
+  const validFee=fee.trim()===''||(/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(fee)&&
+    Number.isFinite(parsedFee)&&parsedFee!==null&&parsedFee>=0&&parsedFee<=30);
+  const validBonus=bonus!==null&&Number.isSafeInteger(bonus)&&bonus>0;
+  const act=(fn:()=>Promise<unknown>,message:string,confirmation?:string)=>{
+    if(confirmation&&!window.confirm(confirmation))return;
+    setProfileError('');
+    return run(fn,message).then(result=>{
+      if(result)reload();
+      else setProfileError('Изменение не подтверждено. Сверьте историю пользователя перед повтором.');
+    });
+  };
 
   return (
     <div className="stack">
+      {profileError&&<div className="banner warn" role="alert">{profileError}</div>}
       <div className="card">
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(u.phone)}</dd>
@@ -94,11 +107,16 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
         <b>Цена для этого клиента</b>
         <span className="note">Общий сбор площадки — {c.pricing.defaultFeePct}%. Персональный действует на новые заявки. Скидки и бонусы оплачивает площадка — исполнитель получает полностью.</span>
         <div className="compose">
-          <input className="field" inputMode="decimal" placeholder={`Сбор, % (пусто — ${c.pricing.defaultFeePct}%)`} value={fee} onChange={(e) => setFee(e.target.value.replace(/[^\d.]/g, ''))} />
+          <input className="field" inputMode="decimal" aria-label="Персональный сбор, %" placeholder={`Сбор, % (пусто — ${c.pricing.defaultFeePct}%)`}
+            value={fee} onChange={e=>setFee(e.target.value.replace(/[^\d.,]/g,'').replace(',','.'))} />
         </div>
         <input className="field" placeholder="Причина: свой клиент, компания с парком…" value={feeReason} onChange={(e) => setFeeReason(e.target.value)} />
-        <button className="btn small" disabled={busy || feeReason.length < 3} onClick={() =>
-          act(() => post(`/api/admin/users/${u.id}/fee`, { pct: fee === '' ? null : Number(fee), reason: feeReason }), fee === '' ? 'Вернули общий сбор' : `Сбор клиента — ${fee}%`)}>Сохранить сбор</button>
+        {!validFee&&<span className="note" role="alert">Сбор должен быть от 0 до 30%, не более двух знаков после запятой.</span>}
+        <button className="btn small" disabled={busy||!validFee||feeReason.trim().length<3} onClick={()=>void act(
+          ()=>post(`/api/admin/users/${u.id}/fee`,{pct:parsedFee,reason:feeReason.trim()}),
+          fee===''?'Вернули общий сбор':`Сбор клиента — ${fee}%`,
+          'Подтвердить персональный сервисный сбор для этого пользователя?'
+        )}>Сохранить сбор</button>
 
         <div className="hr" />
         <div className="between"><b>Бонусы</b><span className="pill good">{rub(c.pricing.bonus)}</span></div>
@@ -108,10 +126,12 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
         </div>
         <input className="field" placeholder="За что: первый заказ, извинения за ожидание…" value={bonusReason} onChange={(e) => setBonusReason(e.target.value)} />
         <div className="grid2">
-          <button className="btn ghost small" disabled={busy || !bonus || bonusReason.length < 3} onClick={() =>
-            act(() => post(`/api/admin/users/${u.id}/bonus`, { amount: -Math.abs(bonus!), reason: bonusReason }), 'Бонусы списаны')}>Списать</button>
-          <button className="btn small" disabled={busy || !bonus || bonusReason.length < 3} onClick={() =>
-            act(() => post(`/api/admin/users/${u.id}/bonus`, { amount: Math.abs(bonus!), reason: bonusReason }), 'Бонусы начислены')}>Начислить</button>
+          <button className="btn ghost small" disabled={busy||!validBonus||bonusReason.trim().length<3} onClick={() =>
+            act(()=>post(`/api/admin/users/${u.id}/bonus`,{amount:-Math.abs(bonus!),reason:bonusReason.trim()}),
+               'Бонусы списаны','Подтвердить списание баллов пользователя?')}>Списать</button>
+          <button className="btn small" disabled={busy||!validBonus||bonusReason.trim().length<3} onClick={() =>
+            act(()=>post(`/api/admin/users/${u.id}/bonus`,{amount:Math.abs(bonus!),reason:bonusReason.trim()}),
+               'Бонусы начислены','Подтвердить начисление баллов пользователя?')}>Начислить</button>
         </div>
         {c.pricing.bonusEntries.length > 0 && (
           <div className="stack" style={{ gap: 4 }}>
@@ -142,7 +162,11 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
         <span className="note">Блокировка сразу выкидывает со всех устройств; заявки в работе остаются — разберите их во вкладке «Заявки».</span>
         {u.status !== 'blocked' && <input className="field" placeholder="Причина" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} />}
         <button className={`btn ${u.status === 'blocked' ? '' : 'bad'}`} disabled={busy || (u.status !== 'blocked' && blockReason.length < 3)} onClick={() =>
-          act(() => post(`/api/admin/users/${u.id}/block`, { blocked: u.status !== 'blocked', reason: blockReason || undefined }), u.status === 'blocked' ? 'Разблокирован' : 'Заблокирован')}>
+          act(()=>post(`/api/admin/users/${u.id}/block`,
+            {blocked:u.status!=='blocked',reason:blockReason.trim()||undefined}),
+            u.status==='blocked'?'Разблокирован':'Заблокирован',
+            u.status==='blocked'?'Подтвердить снятие блокировки пользователя?':
+              'Подтвердить блокировку и немедленное завершение сеансов пользователя?')}>
           {u.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}
         </button>
       </div>
