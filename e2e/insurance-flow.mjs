@@ -337,8 +337,10 @@ try{
   assert(await agentPage.locator('[data-insurance-policy-field="date"]').evaluate(el=>document.activeElement===el),
     'Expired policy date must keep focus in the insurance workdesk');
   await agentPage.locator('input[type=date]').fill('2030-12-31');
+  // Android document pickers can provide a real .pdf with no MIME type.
+  // The UI must normalize its data URL; the server still checks PDF bytes.
   await agentPage.locator('input[type=file]').setInputFiles({
-    name:'policy.pdf',mimeType:'application/pdf',
+    name:'policy.pdf',mimeType:'',
     buffer:Buffer.from('%PDF-1.4\n'+'TrakSOS synthetic test '.repeat(20)),
   });
   await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
