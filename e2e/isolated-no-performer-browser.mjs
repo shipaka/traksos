@@ -151,38 +151,30 @@ try{
         // No "button that looks clickable but a fixed overlay intercepts":
         // test each physical centre point after bringing the control into view.
         for(const action of await card.locator('button,a').all()){
-          await action.evaluate(node=>node.scrollIntoView({block:innerWidth>=900?'start':'center',behavior:'instant'}));
-          const blocker=await action.evaluate(node=>{
-            const box=node.getBoundingClientRect();
-            const element=document.elementFromPoint(box.left+box.width/2,box.top+box.height/2);
-            if(element===node || node.contains(element))return null;
-            return element ? element.tagName+' '+element.className : 'outside viewport';
+          // With a sticky header, a control aligned at the very top can be
+          // covered despite being inside the viewport. Use a normal centred
+          // scroll (not force:true, not hidden chrome), then test its centre.
+          await action.scrollIntoViewIfNeeded();
+          await action.evaluate(node=>node.scrollIntoView({
+            block:'center',inline:'nearest',behavior:'instant'
+          }));
+          await action.evaluate(()=>new Promise(resolve=>
+            requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+          const hit=await action.evaluate(node=>{
+            const rect=node.getBoundingClientRect();
+            const x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+            const cover=document.elementFromPoint(x,y);
+            const style=cover&&getComputedStyle(cover);
+            return {ok:cover===node||node.contains(cover),x,y,scrollY,
+              target:{text:node.textContent?.trim(),top:rect.top,bottom:rect.bottom},
+              cover:cover?{tag:cover.tagName,className:String(cover.className).slice(0,120),
+                text:cover.textContent?.trim().slice(0,80),
+                position:style.position,zIndex:style.zIndex,
+                pointerEvents:style.pointerEvents}:null};
           });
-          if(blocker){
-            // Preserve real viewport evidence when a sticky header or other
-            // layer intercepts the button: no forced click or hidden chrome.
-            const details=await action.evaluate(node=>{
-              const rect=(el)=>{
-                const r=el.getBoundingClientRect(),style=getComputedStyle(el);
-                return {tag:el.tagName,className:String(el.className).slice(0,120),
-                  html:el.outerHTML.slice(0,260),x:r.x,y:r.y,width:r.width,height:r.height,
-                  position:style.position,zIndex:style.zIndex,pointerEvents:style.pointerEvents};
-              };
-              const r=node.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
-              return {scrollY,viewport:{width:innerWidth,height:innerHeight},
-                target:rect(node),point:{x,y},
-                stack:document.elementsFromPoint(x,y).slice(0,5).map(rect),
-                top:document.querySelector('header.top')?rect(document.querySelector('header.top')):null};
-            });
-            await page.screenshot({path:out+'/no-performer-'+role+'-'+width+'-hit-blocked-viewport.png',
-              fullPage:false,animations:'disabled'});
-            console.error('NO PERFORMER ACTION INTERCEPTOR',role,width,JSON.stringify(details));
-            throw Error('Action covered by '+blocker+': '+await action.innerText()+' @'+width+
-              ' '+JSON.stringify(details).slice(0,1600));
-          }
-          // Playwright's trial action checks the actual pointer target at the
-          // current viewport without mutating the real exhausted order.
-          await action.click({trial:true,timeout:5_000});
+          if(!hit.ok)throw Error('Action covered by another element @'+width+
+            ': '+JSON.stringify(hit));
+          await action.click({trial:true});
         }
         // The hit-test above scrolled actions into view. A full-page capture
         // taken at that position would falsely paint the fixed 618 bottom
@@ -219,6 +211,20 @@ try{
           const replay=await result.json();
           if(replay.status!=='no_performer' || replay.absenceReason!=='not_connected')
             throw Error('Real retry did not restart and complete empty search: '+JSON.stringify(replay).slice(0,400));
+          await page.locator('section.traksos-no-performer').waitFor({state:'visible'});
+        }
+        if(width===1440){
+          // Verify the PC primary CTA actually reaches the real backend, not
+          // merely that Chromium's elementFromPoint hit-test happens to pass.
+          const retry=page.locator('section.traksos-no-performer').getByRole('button',{name:'Искать ещё раз'});
+          const response=page.waitForResponse(r=>r.url().includes('/api/orders/'+id+'/retry') &&
+            r.request().method()==='POST',{timeout:15_000});
+          await retry.click();
+          const result=await response;
+          if(!result.ok())throw Error('PC retry action failed: HTTP '+result.status());
+          const replay=await result.json();
+          if(replay.status!=='no_performer'||replay.absenceReason!=='not_connected')
+            throw Error('Real PC retry did not complete: '+JSON.stringify(replay).slice(0,400));
           await page.locator('section.traksos-no-performer').waitFor({state:'visible'});
         }
         if(width===390 || width===1440){
