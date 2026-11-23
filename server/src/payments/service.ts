@@ -14,7 +14,7 @@ import type { SettingsService } from '../services/settings.ts';
 import type { Notifier } from '../services/notify.ts';
 import type { OrdersService, PaymentHooks } from '../services/orders.ts';
 import type { CreatePaymentInput, PaymentProvider, ProviderStatus } from './provider.ts';
-import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
+import { HttpError, bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { cancelSplit, commissionPct, cappedPct, split, type CancelStage } from '../domain/money.ts';
 import { agentReceipt } from './agentReceipt.ts';
 import { config } from '../config.ts';
@@ -1047,7 +1047,13 @@ export class PaymentsService implements PaymentHooks {
   }
 
   async forOrder(user: AuthUser, orderId: string) {
-    await this.orders.mustSee(user, orderId);
+    const order = await this.orders.mustSee(user, orderId);
+    // A ringing bidder may see a limited job preview, never the customer's
+    // bank checkout URL, client fee, refund history or paid total. The assigned
+    // performer uses its own payout ledger; only customer/staff may read this.
+    const actor = this.orders.actorOf(user, order);
+    if (actor !== 'client' && actor !== 'admin')
+      throw forbidden('Платёжные операции доступны только заказчику и уполномоченным сотрудникам');
     return this.db.query(
       `select p.id,p.kind,p.method,p.amount,p.client_fee,p.total,p.status,
               case when o.status='cancelled' then null else p.confirmation_url end as confirmation_url,
