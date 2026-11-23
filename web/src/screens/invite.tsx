@@ -1,4 +1,5 @@
 // «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию TrakSOS.
+import { useRef } from 'react';
 import { get, fmtTime } from '../api.ts';
 import { useLoad, useToast, Loading, useMe } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
@@ -14,15 +15,34 @@ export function Invite() {
   const {mode}=useMe();
   const d = useLoad(() => get('/api/me/referral'), [], (e) => e.type === 'points' || e.type === 'order');
   const toast = useToast();
+  const linkInput = useRef<HTMLInputElement>(null);
   if (!d.data) return <main><Loading error={d.error} /></main>;
   const r = d.data.rules;
   const link = `${location.origin}${location.pathname}#/r/${d.data.code}`;
   async function share() {
-    const text = `TrakSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку: ${link}`;
+    // The Web Share API adds "url" itself. Do not repeat it inside "text".
+    const text = `TrakSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку.`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'TrakSOS', text, url: link });
+        return;
+      } catch (error) {
+        // Closing the native share sheet is not a failure that needs a toast.
+        if (error instanceof Error && error.name === 'AbortError') return;
+        // Other failures may be recovered by copying the visible referral URL.
+      }
+    }
     try {
-      if (navigator.share) await navigator.share({ title: 'TrakSOS', text, url: link });
-      else { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); }
-    } catch { /* закрыли окно «Поделиться» */ }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+        toast('Ссылка скопирована');
+        return;
+      }
+    } catch { /* Clipboard may be unavailable on HTTP or denied by the browser. */ }
+    // Never leave «Поделиться» as a dead button in restricted WebViews.
+    linkInput.current?.focus();
+    linkInput.current?.select();
+    toast('Не удалось скопировать автоматически. Ссылка выделена — скопируйте вручную.');
   }
   return (
     <main>
@@ -46,7 +66,7 @@ export function Invite() {
       <div className="card">
         <b>Ваша ссылка</b>
         <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
-          <input className="field" readOnly value={link} onFocus={(e) => e.target.select()} style={{ fontSize: 13 }} />
+          <input ref={linkInput} className="field" readOnly aria-label="Ваша реферальная ссылка" value={link} onFocus={(e) => e.target.select()} style={{ fontSize: 13 }} />
           <button type="button" className="btn small" onClick={share}>Поделиться</button>
         </div>
         <details>
