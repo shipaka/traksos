@@ -51,6 +51,16 @@ try{
         await card.waitFor({state:'visible',timeout:20_000});
         await card.getByRole('heading',{name:'По этому направлению пока нет партнёров'}).waitFor();
         await card.getByText('Мы расширяем сеть TrakSOS',{exact:false}).waitFor();
+        // No performer means no visit and no work was booked. A preliminary
+        // "Цена / Выезд / Час работы" card below the approved illustration
+        // falsely looked like an invoice despite the terminal no-performer state.
+        if(await page.getByText('Цена',{exact:true}).count())
+          throw Error('False service price shown on an unfulfilled order: '+role+' '+width);
+        if(await page.getByRole('link',{name:/^Оплатить /}).count())
+          throw Error('Pending checkout must not be offered for no-performer: '+role+' '+width);
+        // Existing financial operations must remain visible; do not hide
+        // held/refunded data to make the false price disappear.
+        await page.getByText('Оплата',{exact:true}).first().waitFor({timeout:12_000});
         const art=await card.locator('img').evaluate(async image=>{
           await image.decode();
           return {width:image.naturalWidth,height:image.naturalHeight,
@@ -171,6 +181,10 @@ try{
           await offered.getByRole('heading',{name:'Сейчас нет действующих предложений'}).waitFor({timeout:20_000});
           await offered.getByText('Специалист откликнулся, но его предложение больше не действует',
             {exact:false}).waitFor();
+          if(await page.getByText('Цена',{exact:true}).count() ||
+             await page.getByRole('link',{name:/^Оплатить /}).count())
+            throw Error('False payable estimate shown after a withdrawn offer');
+          await page.getByText('Оплата',{exact:true}).first().waitFor({timeout:12_000});
           if(await offered.getByText('Пока никто не откликнулся').count())
             throw Error('Misleading no-response copy shown after a withdrawn bid');
           const image=offered.locator('img');
