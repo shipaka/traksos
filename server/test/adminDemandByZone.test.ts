@@ -159,3 +159,21 @@ test('non-dispatch services cannot receive worker commission campaigns',async()=
       'disabling a nonsensical campaign must not disable real partner announcements');
   }
 });
+
+test('empty audience cannot mark worker announcement as sent',async()=>{
+  const now=t.clock.now().getTime();
+  const notice=ok(await t.api('POST','/api/admin/announcements',{
+    audience:'master',service:'hydraulics',
+    title:'Учебное объявление для мастеров',
+    body:'Проверка отсутствия соответствующих специалистов.',
+    startsAt:new Date(now-60_000).toISOString(),
+    endsAt:new Date(now+3_600_000).toISOString(),
+    published:true
+  },admin.token));
+  const result=await t.api('POST','/api/admin/announcements/'+notice.id+'/notify',
+    {},admin.token);
+  assert.equal(result.status,400);
+  const stored=await t.db.one<{notified_at:Date|null}>(
+    'select notified_at from worker_announcements where id=$1',[notice.id]);
+  assert.equal(stored?.notified_at,null);
+});
