@@ -84,3 +84,25 @@ test('busy awaiting-confirmation jobs are not advertised as a free performer',as
   assert.equal(result.match,0);
   assert.deepEqual(result.items,[]);
 });
+
+
+test('closer worker counter excludes unverified, paused and busy colleagues',async()=>{
+  await t.db.query("update orders set lat=59.95,lng=30.35,status='searching' where id=$1",[nearOrder]);
+  await t.db.query('update performer_profiles set lat=59.97,lng=30.37 where user_id=$1',[worker.id]);
+  const closer=await t.login('+79994330103','master');
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Ближайший мастер',specialties:['electric'],
+    taxStatus:'self_employed',inn:'780000000555',
+  },closer.token));
+  ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},closer.token));
+  await t.db.query('update performer_profiles set lat=59.95,lng=30.35 where user_id=$1',[closer.id]);
+  const pending=ok(await t.api('GET','/api/performer/nearby',undefined,worker.token));
+  assert.equal(pending.openNearby,1);
+  assert.equal(pending.ahead,0,'an unverified competitor is not a dispatchable colleague');
+  ok(await t.api('POST',`/api/admin/performers/${closer.id}/verify`,
+    {decision:'approved'},admin.token));
+  const approved=ok(await t.api('GET','/api/performer/nearby',undefined,worker.token));
+  assert.equal(approved.ahead,1,'only the genuinely nearer available worker is ahead');
+  await t.db.query('update performer_profiles set paused=true where user_id=$1',[closer.id]);
+  assert.equal(ok(await t.api('GET','/api/performer/nearby',undefined,worker.token)).ahead,0);
+});
