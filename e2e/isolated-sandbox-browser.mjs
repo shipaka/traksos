@@ -223,6 +223,10 @@ try{
         // A real browser must switch roles without new SMS or new signed
         // admin handoff. Verify the resulting role cannot elevate itself.
         if(role==='admin'){
+          const currentMode=await page.evaluate(()=>localStorage.getItem('traksos.mode'));
+          if(currentMode!=='admin')throw Error('Sandbox admin mode lost on secondary routes: '+currentMode);
+          if(await page.getByRole('dialog',{name:'Оферта для клиентов'}).count())
+            throw Error('Sandbox admin route is incorrectly blocked by a client legal offer');
           await page.locator('.sandbox-supervisor-badge > summary').click();
           const choose=page.locator('#sandbox-switch-role');
           await choose.waitFor();

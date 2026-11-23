@@ -27,7 +27,7 @@ export function SandboxEnter() {
       // Regular fictitious role tickets must never inherit that authority.
       if (json.role === 'admin') sessionStorage.setItem('traksos.sandboxSupervisorToken', json.token);
       else sessionStorage.removeItem('traksos.sandboxSupervisorToken');
-      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
+      try { localStorage.setItem('traksos.mode',sandboxWorkspaceMode(json.role)); } catch { /* private mode */ }
       if (typeof json.returnUrl === 'string' && json.returnUrl.startsWith('https://'))
         sessionStorage.setItem('traksos.sandboxReturnUrl', json.returnUrl);
       setToken(json.token);
@@ -41,6 +41,16 @@ export function SandboxEnter() {
     <h1>{error ? 'Не удалось открыть кабинет' : 'Открываем рабочий кабинет TrakSOS'}</h1>
     <p>{error || 'Используются настоящие экраны приложения и тестовая база. Настоящие клиенты и платежи не затрагиваются.'}</p>
   </main>;
+}
+
+/** HMAC-authorized sandbox mode is a navigation preference, never an ACL grant.
+ * Keep it in sync with the role after a deep-link or a role switch, otherwise
+ * generic #/menu would fall back to client and show the wrong legal offer. */
+function sandboxWorkspaceMode(role:string) {
+  if(role==='owner'||role==='driver'||role==='client')return 'client';
+  if(role==='master'||role==='tow')return 'performer';
+  if(role==='master_service'||role==='service')return 'service';
+  return ['admin','moderator','courier','insurer','inspection'].includes(role)?role:'client';
 }
 
 const SANDBOX_ROLE_CHOICES = [
@@ -81,7 +91,7 @@ export function SandboxModeBadge() {
           typeof data?.token !== 'string' || typeof data?.landing !== 'string' ||
           !data.landing.startsWith('#/'))
         throw new Error(data?.message || 'Не удалось открыть тестовый кабинет');
-      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
+      try { localStorage.setItem('traksos.mode',sandboxWorkspaceMode(data.role)); } catch { /* private mode */ }
       setToken(data.token);
       location.replace(location.pathname + location.search + data.landing);
       location.reload();

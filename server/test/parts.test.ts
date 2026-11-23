@@ -18,6 +18,8 @@ before(async () => {
   ok(await t.api('POST', `/api/admin/performers/${master.id}/verify`, { decision: 'approved' }, admin.token));
   ok(await t.api('PUT', '/api/performer/extras', { waitRate: 90_000 }, master.token));
   ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, master.token));
+  // Local-search assertions need a real location, not a city-wide guess.
+  ok(await t.api('POST', '/api/performer/location', { lat: 59.934, lng: 30.335 }, master.token));
 });
 after(() => t.close());
 
