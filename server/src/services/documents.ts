@@ -57,7 +57,7 @@ export class DocumentsService {
 
   async upload(user: AuthUser, p: { kind: string; dataUrl: string; takenAt?: string }) {
     if (!DOC_KINDS[p.kind]) throw bad('bad_kind', 'Неизвестный тип документа');
-    const m = /^data:([\\w/+.-]+);base64,(.+)$/s.exec(p.dataUrl);
+    const m = /^data:([\w/+.-]+);base64,(.+)$/s.exec(p.dataUrl);
     if (!m || !MIMES.includes(m[1])) throw bad('bad_image', 'Нужна фотография JPEG, PNG или WEBP');
     const buf = Buffer.from(m[2], 'base64');
     if (buf.length > MAX_BYTES) throw bad('too_large', 'Фото больше 4 МБ — снимите ещё раз');
