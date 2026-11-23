@@ -63,6 +63,8 @@ jobs:
         run: node scripts/verify-current-policy.mjs
       - name: Магазин — изоляция корзины между аккаунтами и целостность данных
         run: node e2e/shop-cart-isolation-20261124.mjs
+      - name: Массовая загрузка каталога — строгая CSV валидация до записи
+        run: node e2e/catalog-import-integrity-20261124.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
