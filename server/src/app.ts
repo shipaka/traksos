@@ -576,9 +576,18 @@ export function createApp(d: Deps) {
   });
 
   // Operational demand analysis does not overwrite or hide any order.
+  // Do not pass NaN, Infinity or fractional query filters to a SQL time
+  // window: clients should receive a useful 400 rather than a Postgres 500.
+  const demandFilter = (raw: string | null, defaultValue: number, min: number, max: number) => {
+    if (raw === null) return defaultValue;
+    const n=Number(raw);
+    if (!raw.trim() || !Number.isSafeInteger(n))
+      throw bad('bad_demand_filter','Укажите целое число дней или минут');
+    return Math.min(max,Math.max(min,n));
+  };
   r.get('/api/admin/demand', ['admin'], (c: AuthedCtx) =>
-    ops.demand(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 7))),
-      Math.min(240,Math.max(5,Number(c.query.get('wait') ?? 15)))));
+    ops.demand(demandFilter(c.query.get('days'),7,1,365),
+      demandFilter(c.query.get('wait'),15,5,240)));
   r.put('/api/admin/demand/:id/review', ['admin'], (c: AuthedCtx) => {
     const b=parse(z.object({state:z.enum(['open','investigating','resolved']),
       note:z.string().max(1200)}),c.body);
