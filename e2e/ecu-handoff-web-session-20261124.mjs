@@ -167,7 +167,7 @@ try{
      public_name:'Демо мастерская',address:'Тестовый адрес',explanation:'Новая версия'
    }],summary:'OWNER-D',
  }));
- await page.getByText('49000 коп.').waitFor();
+ await page.locator('label.opt b').filter({hasText:'49000 коп.'}).waitFor();
  assert(await choose.isDisabled(),
    'old checkbox consent was reused after quote version or amount changed');
  await check.check();
