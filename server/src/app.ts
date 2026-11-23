@@ -623,7 +623,9 @@ export function createApp(d: Deps) {
       // Only paid dispatch services: ECU is a stationary handoff and
       // consultation has its own separate fee, not a worker campaign.
       service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow']).nullish(),
-      commissionPct:z.number().min(0).max(100),
+      // Promotions only reduce the approved 5% worker commission;
+      // 100% here could silently replace the ordinary fee on new orders.
+      commissionPct:z.number().min(0).max(5),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),
       enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
     }),c.body)));
