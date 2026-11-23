@@ -192,21 +192,44 @@ export class ShopCatalogService {
     return { items: rows, total: count?.n ?? 0, page: offset / take, limit: take };
   }
 
-  async review(actor: AuthUser, id: string, approved: boolean) {
-    const row = await this.db.one<{ id: string; source_note: string }>(
-      'select id, source_note from shop_catalog_entries where id=$1', [id]);
-    if (!row) throw notFound('Позиция каталога не найдена');
-    if (approved && row.source_note.trim().length < 3)
-      throw bad('missing_provenance', 'Для публикации необходим источник проверки');
-    await this.db.tx(async (q) => {
+  async review(actor: AuthUser, id: string, approved: boolean, expected?: {
+    expectedUpdatedAt?: string;
+    expectedName?: string;
+    expectedSourceNote?: string;
+  }) {
+    return this.db.tx(async (q) => {
+      // Import ON CONFLICT updates and moderator approvals must serialize on
+      // the SAME row. Checking provenance outside this transaction allowed a
+      // concurrent re-import to turn an unreviewed replacement into approved.
+      const row = await q.one<{
+        id: string; source_note: string; name: string;
+        reviewed: boolean; updated_at: Date | string;
+      }>(
+        'select id, source_note, name, reviewed, updated_at ' +
+        'from shop_catalog_entries where id=$1 for update', [id]);
+      if (!row) throw notFound('Позиция каталога не найдена');
+      if (expected?.expectedUpdatedAt) {
+        const oldTime = new Date(expected.expectedUpdatedAt).getTime();
+        const currentTime = new Date(row.updated_at).getTime();
+        if (!Number.isFinite(oldTime) || oldTime !== currentTime ||
+            (expected.expectedName !== undefined && expected.expectedName !== row.name) ||
+            (expected.expectedSourceNote !== undefined &&
+             expected.expectedSourceNote !== row.source_note)) {
+          throw bad('catalog_entry_changed',
+            'Запись изменена другим участником. Обновите список и проверьте её повторно.');
+        }
+      }
+      if (approved && row.source_note.trim().length < 3)
+        throw bad('missing_provenance', 'Для публикации необходим источник проверки');
+      if (row.reviewed === approved) return { ok: true, reviewed: approved, unchanged: true };
       await q.query(`update shop_catalog_entries set reviewed=$2,
         reviewed_by=case when $2 then $3::uuid else null end,
         reviewed_at=case when $2 then now() else null end,
         updated_at=now() where id=$1`, [id, approved, actor.id]);
       await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
         [actor.id, 'shop.catalog_review', id, { reviewed: approved }]);
+      return { ok: true, reviewed: approved, unchanged: false };
     });
-    return { ok: true, reviewed: approved };
   }
 
   /** Confirmed catalog-only results are informational, never directly purchasable.
