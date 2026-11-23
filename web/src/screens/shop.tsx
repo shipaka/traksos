@@ -448,9 +448,18 @@ export function ShopCart() {
   const live = useShopPrivateLoad<any[]>(() => get('/api/orders'), []);
   const [cart, setCart] = useCart();
   const selectedIds = Object.keys(cart).sort().join(',');
-  const selection = useShopPrivateLoad<{products:any[]}>(() => c.data?.enabled && selectedIds
-    ? get(`/api/shop/selection?ids=${encodeURIComponent(selectedIds)}`)
-    : Promise.resolve({products:[]}), [c.data?.enabled, selectedIds]);
+  const selection = useShopPrivateLoad<{products:any[]}>(async()=>{
+    if(!c.data?.enabled || !selectedIds) return {products:[]};
+    // The API intentionally caps each read at 50 IDs. Never use its first
+    // 50 results as if they described all lines in a larger saved cart.
+    const ids=selectedIds.split(',').filter(Boolean);
+    const pages=[];
+    for(let i=0;i<ids.length;i+=50) {
+      const part=await get(`/api/shop/selection?ids=${encodeURIComponent(ids.slice(i,i+50).join(','))}`);
+      pages.push(...(part.products??[]));
+    }
+    return {products:pages};
+  },[c.data?.enabled,selectedIds]);
   const vehicles = useShopPrivateLoad<any[]>(() => c.data?.enabled && selectedIds
     ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, selectedIds]);
   const [vehicleId, setVehicleId] = useState('');
@@ -464,6 +473,20 @@ export function ShopCart() {
   const [orderId, setOrderId] = useState('');
   const [payment, setPayment] = useState<'on_receipt' | 'invoice'>('on_receipt');
   const [comment, setComment] = useState('');
+  const [outcomeUnknown,setOutcomeUnknown]=useState(false);
+  const submitLock=useRef(false);
+  const latestOwner=useRef(me?.id);
+  latestOwner.current=me?.id;
+  useEffect(()=>{
+    // Form selections and free-text belong to one account and may not
+    // leak into the next fleet owner's checkout in the same SPA session.
+    setVehicleId('');setOrderId('');setDelivery('');
+    setAddress('');setComment('');setPayment('on_receipt');
+    setOutcomeUnknown(false);
+  },[me?.id]);
+  useEffect(()=>{
+    if(!selectedIds)setOutcomeUnknown(false);
+  },[selectedIds]);
   const d = c.data;
   if (!d) return <main><Back to="shop" label="Магазин" /><Loading error={c.error} /></main>;
   if (!d.enabled) { go('shop'); return null; }
