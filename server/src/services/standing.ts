@@ -10,6 +10,14 @@ import type { SettingsService } from './settings.ts';
 export const LEVEL = { newbieJobs: 10, bestJobs: 50, bestRating: 4.7, minHintCases: 20, windowDays: 90 };
 const SCORE: Record<string, number> = { yes: 1, part: 0.5, no: 0 };
 
+/** Incomplete coordinates and 0/0 are not evidence of a nearby truck. */
+function validPoint(lat: unknown, lng: unknown): boolean {
+  return typeof lat === 'number' && typeof lng === 'number' &&
+    Number.isFinite(lat) && Number.isFinite(lng) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 &&
+    !(lat === 0 && lng === 0);
+}
+
 export class StandingService {
   constructor(private db: Db, private now: () => Date, private settings?: SettingsService) {}
 
@@ -48,22 +56,41 @@ export class StandingService {
 
   /** На линии: открытых заявок рядом по вашему профилю и сколько свободных коллег ближе к ним */
   async nearby(user: AuthUser) {
-    const p = await this.db.one<any>('select kind, specialties, lat, lng from performer_profiles where user_id=$1', [user.id]);
-    if (!p) return null;
-    const open = await this.db.query<{ service: string; lat: number | null; lng: number | null }>(
-      `select service, lat, lng from orders where status='searching' and created_by<>$1`, [user.id]);
-    const mineKind = open.filter((o) => performerKindFor(o.service) === p.kind && (p.kind !== 'master' || o.service === 'consult' || (p.specialties ?? []).includes(o.service)));
-    const near = mineKind.filter((o) => o.lat == null || p.lat == null || haversineKm({ lat: p.lat, lng: p.lng }, { lat: o.lat!, lng: o.lng! }) <= 50);
-    // «Перед вами»: свободные коллеги того же вида, которые к этим заявкам ближе вас
-    const others = await this.db.query<{ lat: number | null; lng: number | null }>(
-      `select p.lat, p.lng from performer_profiles p join users u on u.id=p.user_id where p.kind=$1 and p.user_id<>$2 and u.status='active' and p.line_status='online' and not p.paused and p.lat is not null`, [p.kind, user.id]);
-    let ahead = 0;
-    if (p.lat != null) {
-      for (const c of others) {
-        if (near.some((o) => o.lat != null && haversineKm({ lat: c.lat!, lng: c.lng! }, { lat: o.lat, lng: o.lng! }) < haversineKm({ lat: p.lat, lng: p.lng }, { lat: o.lat, lng: o.lng! }))) ahead++;
-      }
+    const p = await this.db.one<any>(
+      'select kind,specialties,lat,lng from performer_profiles where user_id=$1',[user.id]);
+    if(!p)return null;
+    if(!validPoint(p.lat,p.lng))return {openNearby:0,ahead:0,locationKnown:false};
+    const open=await this.db.query<{service:string;lat:number|null;lng:number|null}>(
+      `select service,lat,lng from orders where status='searching' and created_by<>$1
+       and lat is not null and lng is not null`,[user.id]);
+    const near=open.filter(o=>validPoint(o.lat,o.lng) &&
+      performerKindFor(o.service)===p.kind &&
+      (p.kind!=='master'||o.service==='consult'||(p.specialties??[]).includes(o.service)) &&
+      haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})<=50);
+    // Only active, approved, available colleagues with valid positions can
+    // precede this performer for a geographically verified open request.
+    const others=await this.db.query<{
+      kind:string;specialties:string[];lat:number|null;lng:number|null;
+      schedule:any;off_schedule_until:Date|null;extras:any
+    }>(`select p.kind,p.specialties,p.lat,p.lng,p.schedule,p.off_schedule_until,p.extras
+         from performer_profiles p join users u on u.id=p.user_id
+        where p.kind=$1 and p.user_id<>$2 and u.status='active'
+          and p.verification='approved' and p.line_status='online' and not p.paused
+          and p.lat is not null and p.lng is not null
+          and not exists(select 1 from orders o where o.performer_id=p.user_id
+             and o.status in ('accepted','en_route','arrived','working'))`,
+      [p.kind,user.id]);
+    const now=this.now();
+    let ahead=0;
+    for(const c of others){
+      if(!validPoint(c.lat,c.lng)||c.extras?.vacation)continue;
+      if(slot(c.schedule,now,c.off_schedule_until)!=='work')continue;
+      if(near.some(o=>
+        (c.kind!=='master'||o.service==='consult'||(c.specialties??[]).includes(o.service)) &&
+        haversineKm({lat:c.lat!,lng:c.lng!},{lat:o.lat!,lng:o.lng!}) <
+        haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})))ahead++;
     }
-    return { openNearby: near.length, ahead };
+    return {openNearby:near.length,ahead,locationKnown:true};
   }
 
   /** Клиенту до вызова: сколько мастеров на линии, сколько свободны и подходят, и кто ближе всего — без контактов */
@@ -80,10 +107,10 @@ export class StandingService {
         where p.kind=$1 and p.user_id<>$2 and u.status='active' and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
     // Never present nationwide performers as if they were near the truck.
     // All three counters and shown cards must cover the SAME proven geography.
-    const hasLocation=p.lat!=null && p.lng!=null;
-    const inScope=hasLocation
-      ? list.filter(c=>c.lat!=null&&c.lng!=null&&
-          haversineKm({lat:p.lat!,lng:p.lng!},{lat:c.lat,lng:c.lng})<=all.dispatch.radiusKm)
+    const locationKnown=validPoint(p.lat,p.lng);
+    const inScope=locationKnown
+      ? list.filter(c=>validPoint(c.lat,c.lng)&&
+          haversineKm({lat:p.lat!,lng:p.lng!},{lat:c.lat!,lng:c.lng!})<=all.dispatch.radiusKm)
       : list;
     const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
     // Distinguish presence from genuine availability. Paused/vacation workers
@@ -126,7 +153,7 @@ export class StandingService {
         :sortBy==='near'?near:verified||near;
       return primary||(sortBy==='recommended'?near:verified||near);
     });
-    return { scope:hasLocation?'nearby':'network', radiusKm:hasLocation?all.dispatch.radiusKm:null,
+    return { scope:locationKnown?'nearby':'network', radiusKm:locationKnown?all.dispatch.radiusKm:null,
       online: online.length, free: free.length, match: ranked.length, items:items.slice(0,8) };
   }
 }
