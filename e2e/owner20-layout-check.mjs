@@ -232,14 +232,17 @@ try {
    // Network consent can change while the dialog remains open. Revalidate from
    // the REAL backend on window focus; this check never creates mock partners.
    if(width===1440){
+     // Some visual-proof jobs serve only static web assets. A missing API
+     // remains a valid honest empty/error state, but focus MUST re-fetch it.
      const refresh=page.waitForResponse(response=>
-       response.url().includes('/api/public/partner-map') && response.status()===200,
-       {timeout:15_000});
+       response.url().includes('/api/public/partner-map'),{timeout:15_000});
      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
      const response=await refresh;
-     const body=await response.json();
-     if(body.source!=='verified_stationary_opt_in')
-       throw Error('Partner map focus refresh accepted an unverified source');
+     if(response.ok()){
+       const body=await response.json();
+       if(body.source!=='verified_stationary_opt_in')
+         throw Error('Partner map focus refresh accepted an unverified source');
+     }
    }
    // Interaction-only DOM probe, not a fake partner or a map screenshot:
    // the pan handler must not capture pointer events from actual links nested
