@@ -469,7 +469,8 @@ expect(landing.includes('public-map-static'), 'public map does not depend on net
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
 expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
-expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
+expect(landing.includes('TrakSOS — вся Россия') && landing.includes('Выездная помощь зависит от подключения партнёров в регионе.'),
+  'federal platform reach and honest regional partner coverage are shown');
 expect(shell.includes("import './roleShared20261119.css';") && !shell.includes("import './finalCanon.css';"), 'the obsolete 14 Nov public CSS was physically removed');
 expect(!roleCss.includes('.public-landing'), 'old guest-home selectors absent from retained role styles');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
