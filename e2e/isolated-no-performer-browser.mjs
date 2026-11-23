@@ -115,6 +115,44 @@ try{
             throw Error('Real retry did not restart and complete empty search: '+JSON.stringify(replay).slice(0,400));
           await page.locator('section.traksos-no-performer').waitFor({state:'visible'});
         }
+        if(width===390 || width===1440){
+          // A second REAL terminal order for this user includes a durable
+          // offer+withdraw history. Never show the zero-bids copy here.
+          const withdrawn=await page.evaluate(async marker=>{
+            const token=localStorage.getItem('traksos.token');
+            const auth={authorization:'Bearer '+token};
+            const list=await fetch('/api/orders',{headers:auth}).then(r=>r.json());
+            const item=list.find(o=>o.description===marker);
+            if(!item)throw Error('No real withdrawn-offer fixture: '+marker);
+            const response=await fetch('/api/orders/'+item.id,{headers:auth});
+            if(!response.ok)throw Error('Withdrawn order not visible to requester');
+            return {id:item.id,detail:await response.json()};
+          },'TRAKSOS_QA_WITHDRAWN_20261123_'+role.toUpperCase());
+          if(withdrawn.detail.status!=='no_performer' ||
+             withdrawn.detail.absenceReason!=='offers_withdrawn' ||
+             !withdrawn.detail.events?.some(e=>e.type==='offer'))
+            throw Error('Historical real offer disappeared from API: '+role+
+              ' '+JSON.stringify(withdrawn.detail).slice(0,400));
+          await page.goto(base+'/#/order/'+withdrawn.id,{waitUntil:'domcontentloaded'});
+          const offered=page.locator('section.traksos-no-performer');
+          await offered.getByRole('heading',{name:'Сейчас нет действующих предложений'}).waitFor({timeout:20_000});
+          await offered.getByText('Специалист откликнулся, но его предложение больше не действует',
+            {exact:false}).waitFor();
+          if(await offered.getByText('Пока никто не откликнулся').count())
+            throw Error('Misleading no-response copy shown after a withdrawn bid');
+          const image=offered.locator('img');
+          await image.evaluate(img=>img.decode());
+          const actions=await offered.locator('button,a').evaluateAll(nodes=>
+            nodes.map(n=>({label:n.textContent?.trim(),height:n.getBoundingClientRect().height})));
+          if(actions.length!==3 || actions.some(n=>n.height<44))
+            throw Error('Withdrawal actions are missing or too small '+JSON.stringify(actions));
+          const overflow=await page.evaluate(()=>
+            document.documentElement.scrollWidth-document.documentElement.clientWidth);
+          if(overflow>3)throw Error('Withdrawn-offer card overflow at '+width+': '+overflow);
+          await page.screenshot({path:out+'/offers-withdrawn-'+role+'-'+width+'.png',
+            fullPage:true,animations:'disabled'});
+          console.log('WITHDRAWN OFFER CHROMIUM PASS',role,width,withdrawn.id);
+        }
         console.log('NO PERFORMER CHROMIUM PASS',role,width,id,art.width+'x'+art.height);
       }catch(error){
         const detail=String(error?.stack||error);
