@@ -752,6 +752,7 @@ export class OrdersService {
       const locked = await q.one<any>('select * from orders where id=$1 for update',[orderId]);
       if(!locked||locked.status!=='awaiting_confirmation')
         throw conflict('state_changed','Заявка изменилась — обновите экран');
+      await this.assertCustomerInTx(q, user, locked);
       const unilateral = await q.one<any>(
         'select * from order_unilateral_closures where order_id=$1 for update',[orderId]);
       if(unilateral){
@@ -820,9 +821,12 @@ export class OrdersService {
     if(unusual)
       throw conflict('use_emergency_dispute','Аварийное завершение оспаривается отдельно, без возврата мастера в работу');
     const to = transition(o.status, 'dispute_amount', 'client');
-    await this.guarded(this.db, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
+    await this.db.tx(async q => {
+      await this.assertCustomerInTx(q, user, o);
+      await this.guarded(q, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
         where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
-    await this.event(this.db, orderId, user.id, 'amount_disputed', { reason });
+      await this.event(q, orderId, user.id, 'amount_disputed', { reason });
+    });
     await this.systemMessage(orderId, `Клиент не согласен с расходниками: ${reason}. Время работы не меняется — исправьте строки расходников или позовите поддержку.`);
     await this.onDispute?.({ userId: user.id, orderId, text: reason, targetId: o.performer_id, title: `Не согласен с суммой по заявке №${o.number}` });
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
@@ -851,6 +855,7 @@ export class OrdersService {
     const invited = (await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId])).map((x) => x.performer_id);
     await this.db.tx(async (q) => {
+      await this.assertCustomerInTx(q, user, o);
       await this.guarded(q, `update orders set status='cancelled', cancelled_at=$5, cancelled_by=$2, cancel_reason=$3, cancel_stage=$4
           where id=$1 and status=$6 and performer_id is not distinct from $7`,
         [orderId, user.id, reason, stage, this.now(), o.status, o.performer_id]);
@@ -899,6 +904,7 @@ export class OrdersService {
     // with stale invitations/bids or without the immutable retry event.
     // Re-dispatch starts only after the reset has committed.
     await this.db.tx(async (q) => {
+      await this.assertCustomerInTx(q, user, o);
       await this.guarded(q, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0, dispatch_started_at=$2 where id=$1 and status='no_performer'`, [orderId, this.now()]);
       await q.query(`delete from order_dispatch where order_id=$1`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
@@ -960,6 +966,19 @@ export class OrdersService {
       where u.id=${userParam} and 'driver'=any(u.roles)
         and u.owner_id=${alias}.client_id
         and (${alias}.vehicle_id is null or v.id=${alias}.vehicle_id))`;
+  }
+
+  /** For financial/status changes, the live driver/car link is locked until COMMIT. */
+  private async assertCustomerInTx(q: Queryable, user: AuthUser, o: any) {
+    if (o.client_id === user.id || user.roles.includes('admin') ||
+        user.roles.includes('moderator')) return;
+    if (o.created_by !== user.id) throw forbidden('Это не ваша заявка');
+    const linked = await q.one<{ok:number}>(`select 1 as ok from users u
+      join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+      where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+        and ($3::uuid is null or v.id=$3)
+      limit 1 for share of v`, [user.id, o.client_id, o.vehicle_id]);
+    if (!linked) throw forbidden('Вы больше не закреплены за машиной этой заявки');
   }
 
   actorOf(user: AuthUser, o: any): Actor | null {
