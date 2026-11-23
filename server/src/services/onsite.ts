@@ -108,35 +108,74 @@ export class OnsiteService {
   /** Мастер на месте уточняет машину: следующий приедет подготовленным */
   /** «Нужна запчасть»: мастер ждёт (оплачивается ожидание), уедет и вернётся, или эвакуатор. Выбирает клиент или мастер. */
   async part(user: AuthUser, orderId: string, mode: 'wait' | 'resume' | 'return' | 'tow') {
-    // A previous creator or a driver of ANOTHER car in this fleet is not
-    // authorized to modify repair/waiting status for this order.
-    const o = await this.orders.mustSee(user, orderId);
-    const isClient = this.orders.actorOf(user, o) === 'client';
-    if (o.performer_id !== user.id && !isClient) throw forbidden();
-    if (!['arrived', 'working'].includes(o.status)) throw conflict('bad_status', 'Это решают на месте, во время работы');
-    const now = new Date();
-    if (mode === 'resume') {
-      if (!o.wait_started_at) throw conflict('not_waiting', 'Ожидание не идёт');
-      const min = Math.max(1, Math.round((now.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
-      await this.db.query('update orders set wait_minutes = wait_minutes + $2, wait_started_at=null where id=$1', [orderId, min]);
-      await this.orders.systemMessage(orderId, `Запчасть на месте — работа продолжается. Ожидание: ${min} мин.`);
-    } else {
-      if (o.wait_started_at && mode !== 'wait') {
-        const min = Math.max(1, Math.round((now.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
-        await this.db.query('update orders set wait_minutes = wait_minutes + $2, wait_started_at=null where id=$1', [orderId, min]);
+    // Serialize button clicks, QR revocation and status transitions around a
+    // single order row. Charging waiting twice would be a financial defect.
+    const result=await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id && o.client_id!==user.id){
+        if(o.created_by!==user.id)throw forbidden('Это не ваша заявка');
+        const linked=await q.one<{ok:number}>(`select 1 as ok
+          from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and ($3::uuid is null or v.id=$3)
+          limit 1 for share of v`,[user.id,o.client_id,o.vehicle_id]);
+        if(!linked)throw forbidden('Водитель больше не закреплён за машиной этой заявки');
       }
-      await this.db.query(`update orders set part_mode=$2, wait_started_at = case when $2='wait' then coalesce(wait_started_at, now()) else wait_started_at end where id=$1`, [orderId, mode]);
-      const p = await this.db.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [o.performer_id]);
-      const rate = p?.extras?.waitRate;
-      await this.orders.systemMessage(orderId, mode === 'wait'
-        ? `Нужна запчасть — мастер ждёт. Таймер на «ожидании»${rate ? ` по ставке ${(rate / 100).toLocaleString('ru-RU')} ₽/ч` : ''}. Привезли не ту деталь — ожидание продолжается.`
-        : mode === 'return' ? 'Нужна запчасть — мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд.'
-        : 'Нужна запчасть — мастер закроет работу с диагнозом, клиент вызывает эвакуатор.');
-    }
-    await this.orders.event(this.db, orderId, user.id, 'part', { mode });
-    await this.notifier.notify([...await this.orders.customerRecipientsForOrder(orderId),o.performer_id].filter((x: string) => x && x !== user.id), { type: 'order', orderId, status: o.status },
-      { kind: 'normal', title: 'Нужна запчасть', body: { wait: 'Мастер ждёт, таймер на ожидании', resume: 'Работа продолжается', return: 'Мастер вернётся с запчастью', tow: 'Эвакуатор' }[mode], data: { orderId } });
-    return this.orders.view(user, orderId);
+      if(!['arrived','working'].includes(o.status))
+        throw conflict('bad_status','Это решают на месте, во время работы');
+      // An identical retry must never count waiting twice or write another
+      // system message, including when the first HTTP response was lost.
+      if(mode==='wait'&&o.wait_started_at || mode!=='resume' && mode!=='wait' &&
+        !o.wait_started_at && o.part_mode===mode)
+        return {o,message:null as any};
+      if(mode==='resume'&&!o.wait_started_at)
+        throw conflict('not_waiting','Ожидание не идёт');
+      const now=new Date();
+      const min=o.wait_started_at && mode!=='wait'
+        ? Math.max(1,Math.round((now.getTime()-new Date(o.wait_started_at).getTime())/60_000))
+        : 0;
+      if(mode==='resume'){
+        await q.query('update orders set wait_minutes=wait_minutes+$2,wait_started_at=null where id=$1',
+          [orderId,min]);
+      }else{
+        await q.query(`update orders set wait_minutes=wait_minutes+$3,part_mode=$2,
+          wait_started_at=case when $2='wait' then coalesce(wait_started_at,now())
+            else null end where id=$1`,[orderId,mode,min]);
+      }
+      const p=mode==='wait'
+        ? await q.one<{extras:any}>('select extras from performer_profiles where user_id=$1',[o.performer_id])
+        : null;
+      const rate=p?.extras?.waitRate;
+      const text=mode==='resume'
+        ? `Запчасть на месте — работа продолжается. Ожидание: ${min} мин.`
+        : mode==='wait'
+          ? `Нужна запчасть — мастер ждёт. Таймер на «ожидании»${rate ? ` по ставке ${(rate/100).toLocaleString('ru-RU')} ₽/ч` : ''}. Привезли не ту деталь — ожидание продолжается.`
+          : mode==='return'
+            ? 'Нужна запчасть — мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд.'
+            : 'Нужна запчасть — мастер закроет работу с диагнозом, клиент вызывает эвакуатор.';
+      await this.orders.event(q,orderId,user.id,'part',{mode});
+      const message=await q.one<any>(
+        `insert into chat_messages(order_id,sender_id,kind,body)
+          values($1,null,'system',$2)
+          returning id,order_id,sender_id,kind,body,created_at`,[orderId,text]);
+      return {o,message};
+    });
+    if(!result.message)return this.orders.view(user,orderId);
+    // Both the order, audit and chat are already committed. Push is optional:
+    // it must not invite a user retry that would duplicate a waiting charge.
+    this.notifier.live(await this.orders.participants(orderId),
+      {type:'chat',message:result.message});
+    await this.notifier.notify(
+      [...await this.orders.customerRecipientsForOrder(orderId),result.o.performer_id]
+        .filter((x:string)=>x && x!==user.id),
+      {type:'order',orderId,status:result.o.status},
+      {kind:'normal',title:'Нужна запчасть',
+        body:{wait:'Мастер ждёт, таймер на ожидании',resume:'Работа продолжается',
+          return:'Мастер вернётся с запчастью',tow:'Эвакуатор'}[mode],
+        data:{orderId}})
+      .catch(e=>console.warn('[onsite part notify]',e));
+    return this.orders.view(user,orderId);
   }
 
   /** «Причина найдена, на месте не исправить» — мастер советует сервис-партнёр; клиенту там скидка */
