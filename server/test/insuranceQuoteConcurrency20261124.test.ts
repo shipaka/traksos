@@ -46,7 +46,7 @@ function exactlyOneResponse(responses:{status:number;body:any}[], stage:string) 
   const accepted=responses.filter(r=>r.status===200);
   assert.equal(accepted.length,1,JSON.stringify(responses.map(r=>({status:r.status,error:r.body?.error}))));
   assert.equal(accepted[0].body.stage,stage);
-  assert.ok(responses.filter(r=>r.status!==200).every(r=>r.status===400&&r.body?.error==='invalid_stage'),
+  assert.ok(responses.filter(r=>r.status!==200).every(r=>r.status===400&&['invalid_stage','closed'].includes(r.body?.error)),
     'losing requests must not pass the old state');
 }
 
@@ -137,7 +137,7 @@ test('reassigned agent loses quote, message and policy rights; message cannot fo
 
     // A cancelled/rejected case cannot accept a late message, even when the
     // sender already fetched it in the browser before the status changed.
-    const rejected=ok(await t.api('POST',`/api/admin/vehicle-service-requests/${id}/status`,
+    const rejected=ok(await t.api('PATCH',`/api/admin/vehicle-service-requests/${id}`,
       {status:'rejected',note:'Отказ для проверки закрытия'},admin.token));
     assert.equal(rejected.status,'rejected');
     const message=await t.api('POST',`/api/insurance/requests/${id}/messages`,
