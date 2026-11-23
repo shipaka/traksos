@@ -191,10 +191,8 @@ try{
   await page.getByText(/10\s?123[,.]45/).first().waitFor();
   const pointsIndex=await page.evaluate(()=>window.__sto.pending.findIndex(x=>x.path==='/api/me/referral'));
   await reject(pointsIndex,'Баллы недоступны');
-  await page.getByText('Не удалось проверить действующий лимит списания баллов').waitFor().catch(async()=>{
-    await page.locator('details').first().locator('summary').click();
-    await page.getByText('Не удалось проверить действующий лимит списания баллов').waitFor();
-  });
+  await page.locator('details').first().locator('summary').click();
+  await page.getByText('Не удалось проверить действующий лимит списания баллов').waitFor();
   await page.evaluate(()=>window.__sto.listeners.forEach(fn=>fn({type:'booking'})));
   await waitGet('/api/base/money',2);
   assert(await page.getByText(/10\s?123[,.]45/).count()===0,
