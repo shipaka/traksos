@@ -5,10 +5,12 @@ import { defaultSettings, type Settings, type SettingsKey } from '../domain/defa
 /** Настройки площадки: значения по умолчанию + то, что поменял админ. Кэш на 5 секунд. */
 export class SettingsService {
   private cache: { at: number; value: Settings } | null = null;
+  private cacheVersion = 0;
   constructor(private db: Db) {}
 
   async all(): Promise<Settings> {
     if (this.cache && Date.now() - this.cache.at < 5_000) return this.cache.value;
+    const version = this.cacheVersion;
     const rows = await this.db.query<{ key: string; value: any }>('select key, value from settings');
     const merged: any = structuredClone(defaultSettings);
     for (const r of rows) {
@@ -28,7 +30,10 @@ export class SettingsService {
     merged.payments.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.invoice);
     // An old admin toggle or restored DB must not reopen the unreleased store.
     merged.shop.enabled = shopFixtureEnabled() && !!merged.shop.enabled;
-    this.cache = { at: Date.now(), value: merged };
+    // An in-flight SELECT from before a completed admin write must not
+    // repopulate the cache with a stale snapshot after set() invalidates it.
+    if (version === this.cacheVersion)
+      this.cache = { at: Date.now(), value: merged };
     return merged;
   }
 
@@ -66,6 +71,7 @@ export class SettingsService {
         actorId, 'settings.update', key, patch,
       ]);
     });
+    this.cacheVersion++;
     this.cache = null;
     return (await this.all())[key];
   }
