@@ -3,12 +3,26 @@ import { get, post, patch, fmtTime, onEvent } from '../api.ts';
 import { useAction, useMe } from '../ui.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 
+const validFutureDate=(value:string):boolean=>{
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const date=new Date(value+'T00:00:00Z');
+  return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value
+    &&value>new Date().toISOString().slice(0,10);
+};
+
 /** Оформление заявки для владельца или водителя с разрешением владельца. */
 export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string; onCreated: () => void }) {
   const { busy, run } = useAction();
   const [kind, setKind] = useState<'insurance' | 'inspection'>('insurance');
   const [comment, setComment] = useState('');
   const [open, setOpen] = useState(false);
+  const vehicleIdRef=useRef(vehicleId);
+  vehicleIdRef.current=vehicleId;
+  useEffect(()=>{
+    // The vehicle selection can change without unmounting this form.
+    // Never retain the previous truck's comment or open submit action.
+    setKind('insurance');setComment('');setOpen(false);
+  },[vehicleId]);
   return (
     <div className="stack">
       <button type="button" className="btn ghost small" onClick={() => setOpen(!open)}>
@@ -18,7 +32,9 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
         e.preventDefault();
         if (kind === 'insurance') return;
         const created = await run(() => post('/api/vehicle-service-requests', { vehicleId, kind, comment: comment || undefined }), 'Заявка отправлена');
-        if (created) { setOpen(false); setComment(''); onCreated(); }
+        if (created && vehicleIdRef.current===vehicleId) {
+          setOpen(false);setComment('');onCreated();
+        }
       }}>
         <select className="field" aria-label="Услуга" value={kind} onChange={(e) => setKind(e.target.value as 'insurance' | 'inspection')}>
           <option value="insurance">Страхование</option>
@@ -187,19 +203,26 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
                 {renewing === r.id ? (
                   <div className="stack">
                     <label>Новая дата окончания полиса
-                      <input type="date" value={expiry} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setExpiry(e.target.value)} />
+                      <input type="date" value={expiry} min={new Date(Date.now()+86400000).toISOString().slice(0, 10)}
+                        aria-invalid={!!expiry&&!validFutureDate(expiry)||undefined}
+                        onChange={(e) => {setExpiry(e.target.value);setSavingError('');}} />
                     </label>
+                    {expiry&&!validFutureDate(expiry)&&
+                      <p className="note" role="alert">Новая дата должна быть корректной и позже сегодняшнего дня.</p>}
+                    {savingError&&<div className="banner warn" role="alert">{savingError}</div>}
                     <div className="row">
-                      <button className="btn small" disabled={busy || !expiry} onClick={async () => {
-                        const result = await run(() => patch(`/api/vehicle-service-requests/${r.id}/renewal`, { expiresOn: expiry }), 'Срок полиса обновлён');
-                        if (result && identityRef.current === identity) {
-                          setRenewing(null);setSavingError('');reloadHistory();
-                        }
+                      <button className="btn small" disabled={busy||!validFutureDate(expiry)} onClick={async () => {
+                        const result=await run(()=>patch(`/api/vehicle-service-requests/${r.id}/renewal`,
+                          {expiresOn:expiry}),'Срок полиса обновлён');
+                        if(identityRef.current!==identity)return;
+                        if(result){setRenewing(null);setSavingError('');reloadHistory();}
+                        else setSavingError('Срок не подтверждён. Проверьте историю заявки перед повторной отправкой.');
                       }}>Сохранить срок</button>
-                      <button className="btn ghost small" disabled={busy} onClick={() => setRenewing(null)}>Отмена</button>
+                      <button className="btn ghost small" disabled={busy}
+                        onClick={()=>{setRenewing(null);setSavingError('');}}>Отмена</button>
                     </div>
                   </div>
-                ) : <button className="btn ghost small" onClick={() => { setExpiry(r.policy_expires_on?.slice(0, 10) ?? ''); setRenewing(r.id); }}>Указать новый срок полиса</button>}
+                ) : <button className="btn ghost small" onClick={() => { setExpiry(r.policy_expires_on?.slice(0, 10) ?? '');setSavingError('');setRenewing(r.id); }}>Указать новый срок полиса</button>}
               </div>
             )}
           </div>
