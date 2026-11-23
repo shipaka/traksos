@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { setup, ok } from './helpers.ts';
 
 test('12 concurrent SOS submits with same key create exactly ONE order and ONE bank hold',
@@ -38,6 +39,15 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     const createdEvents=await t.db.query<any>(
       "select id from order_events where order_id=$1 and type='created'",[ids[0]]);
     assert.equal(createdEvents.length,1);
+    // The browser canonicalizes field order to reuse the same key after an
+    // ambiguous network response. The server must agree with that canonical
+    // meaning, not the order in which the form built the JSON properties.
+    const reordered=Object.fromEntries(Object.entries(data).reverse());
+    const replay=await send(customer,reordered);
+    assert.equal(replay.status,200,'reordered but identical fields are the same request');
+    assert.equal(replay.body.order.id,ids[0]);
+    assert.equal((await t.db.query('select id from orders where created_by=$1',[customer.id])).length,1);
+    assert.equal(t.payments.payments.size,1,'a harmless replay must not reserve money twice');
     const changed=await send(customer,{...data,description:'Другая машина и другое обращение'});
     assert.equal(changed.status,409);
     assert.equal(changed.body.error,'idempotency_conflict');
@@ -45,5 +55,12 @@ test('12 concurrent SOS submits with same key create exactly ONE order and ONE b
     const separately=await send(another);
     assert.equal(separately.status,200,'same key from another account is isolated');
     assert.notEqual(separately.body.order.id,ids[0]);
+    // A pre-upgrade stored hash used JSON.stringify without sorting. Replays
+    // of such orders must remain valid after deploying canonical hashing.
+    const legacyHash=createHash('sha256').update(JSON.stringify(data)).digest('hex');
+    await t.db.query('update orders set create_request_hash=$1 where id=$2',[legacyHash,separately.body.order.id]);
+    const legacyReplay=await send(another);
+    assert.equal(legacyReplay.status,200,'existing raw-JSON fingerprints remain replayable');
+    assert.equal(legacyReplay.body.order.id,separately.body.order.id);
   } finally {await t.close();}
 });
