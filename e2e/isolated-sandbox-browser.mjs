@@ -17,6 +17,60 @@ await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 const failures=[];
 try{
+  // Owner-approved 617 guest PC map must be an actual accessible expanded
+  // network, not a painted or falsely populated static screenshot. Inspect
+  // the SAME disposable server that supplies all real cabinet screenshots.
+  {
+    const context=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU'});
+    const page=await context.newPage();
+    try{
+      await page.goto(base+'/#/',{waitUntil:'domcontentloaded'});
+      const opener=page.getByRole('button',{name:'Развернуть карту партнёров'});
+      await opener.waitFor({state:'visible',timeout:25_000});
+      if(!(await page.locator('aside.owner20-map .owner20-map-demo-tag').isVisible()))
+        throw Error('Approved 617 compact map lost its DEMO label');
+      await opener.click();
+      const dialog=page.getByRole('dialog',{name:'Карта партнёров TrakSOS'});
+      await dialog.waitFor({state:'visible',timeout:15_000});
+      const evidence=await page.evaluate(async()=>{
+        const response=await fetch('/api/public/partner-map',{cache:'no-store'});
+        const payload=await response.json();
+        const modal=document.querySelector('.tr-network-dialog');
+        if(!modal)throw Error('Expanded map DOM missing');
+        const rect=modal.getBoundingClientRect();
+        return {status:response.status,source:payload.source,
+          ids:Array.isArray(payload.points)?payload.points.map(p=>p.id):null,
+          width:rect.width,height:rect.height,viewport:[innerWidth,innerHeight],
+          overlay:!!document.querySelector('.tr-network-backdrop'),
+          markers:[...modal.querySelectorAll('button.tr-network-marker')].length};
+      });
+      if(evidence.status!==200 || evidence.source!=='verified_stationary_opt_in' ||
+         !Array.isArray(evidence.ids) || !evidence.overlay ||
+         evidence.width<.64*evidence.viewport[0] || evidence.width>.75*evidence.viewport[0] ||
+         evidence.height<.64*evidence.viewport[1] || evidence.height>.75*evidence.viewport[1])
+        throw Error('Real 70% public partner map failed geometry/API contract: '+JSON.stringify(evidence));
+      if(evidence.ids.length===0){
+        await dialog.getByText('Пока нет СТО, разрешивших показывать проверенное местоположение',{exact:false}).waitFor();
+        if(evidence.markers!==0)
+          throw Error('Map invented yellow pins when no approved opted-in workshops exist');
+      }else if(evidence.markers===0){
+        // A populated API may be outside the initial Russia map viewport;
+        // no pin count is assumed until the map is panned/zoomed.
+        if(!evidence.ids.every(x=>typeof x==='string'))
+          throw Error('Non-stationary identifiers in public map payload');
+      }
+      await page.screenshot({path:out+'/guest-1440-expanded-partner-network.png',
+        fullPage:false,animations:'disabled'});
+      await page.keyboard.press('Escape');
+      await dialog.waitFor({state:'detached'});
+      if(!(await opener.evaluate(node=>node===document.activeElement)))
+        throw Error('Closing expanded map by Escape failed to return keyboard focus');
+      if(!(await page.locator('aside.owner20-map .owner20-map-demo-tag').isVisible()))
+        throw Error('Collapsed approved map changed after accessible close');
+      console.log('APPROVED 617 PUBLIC PARTNER MAP PASS',evidence.ids.length,
+        'verified points',Math.round(evidence.width)+'x'+Math.round(evidence.height));
+    }finally{await context.close();}
+  }
   // 960px is crucial: formerly between mobile 899px and PC 1000px,
   // silently displaying the retired desktop dashboard.
   for(const width of [320,390,960,1440]){
