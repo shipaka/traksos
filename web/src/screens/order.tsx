@@ -1224,7 +1224,12 @@ function WorksCheck({ id }: { id: string }) {
 
 // Чат -----------------------------------------------------------------------
 
-function Chat({ id, status }: { id: string; status: string }) {
+function Chat({id,status}:{id:string;status:string}) {
+  const {me}=useMe();
+  return <AccountOrderChat key={(me?.id??'guest')+':'+id}
+    id={id} status={status}/>;
+}
+function AccountOrderChat({id,status}:{id:string;status:string}) {
   const archived = ['completed', 'cancelled', 'no_performer'].includes(status);
   const { me } = useMe();
   const toast = useToast();
@@ -1235,21 +1240,40 @@ function Chat({ id, status }: { id: string; status: string }) {
   const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState(0);
   const [serverClosed, setServerClosed] = useState(false);
-  const readOnly = archived || serverClosed;
+  const [loading,setLoading]=useState(true);
+  const [loadError,setLoadError]=useState<string|null>(null);
+  const [retryVersion,setRetryVersion]=useState(0);
+  const [sending,setSending]=useState(false);
+  const sendingRef=useRef(false);
+  const readOnly = archived || serverClosed || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let alive = true;
-    // Re-read the current chat capabilities when the parent order changes stage.
-    // The server is authoritative: a closed order never has quick replies.
+    // A failed GET cannot claim "Сообщений пока нет"; hide any previous
+    // content and expose manual retry without navigating away from the order.
+    setLoading(true);setLoadError(null);
+    setMsgs([]);setQuick([]);setPeople([]);
     get(`/api/orders/${id}/messages`).then((r) => {
-      if (alive) { setMsgs(r.messages); setQuick(r.quickReplies); setPeople(r.participants ?? []); }
-    }).catch(() => {});
-    const off = onEvent((e) => {
-      if (e.type === 'chat' && e.message.order_id === id) setMsgs((m) => (m.some((x) => x.id === e.message.id) ? m : [...m, e.message]));
+      if(!alive)return;
+      const received=Array.isArray(r.messages)?r.messages:[];
+      setMsgs(current=>[...received,...current.filter(
+        (m:any)=>!received.some((item:any)=>item.id===m.id))]);
+      setQuick(Array.isArray(r.quickReplies)?r.quickReplies:[]);
+      setPeople(Array.isArray(r.participants)?r.participants:[]);
+      setLoading(false);
+    }).catch((error) => {
+      if(!alive)return;
+      setMsgs([]);setQuick([]);setPeople([]);
+      setLoadError(error instanceof Error?error.message:'Ошибка загрузки переписки');
+      setLoading(false);
+    });
+    const off=onEvent((e) => {
+      if(alive && e.type==='chat' && e.message?.order_id===id)
+        setMsgs((m)=>(m.some((x)=>x.id===e.message.id)?m:[...m,e.message]));
     });
     return () => { alive = false; off(); };
-  }, [id, status]);
+  }, [id, status, retryVersion]);
   useEffect(() => {
     setServerClosed(false);
     setOpen(new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
@@ -1259,16 +1283,22 @@ function Chat({ id, status }: { id: string; status: string }) {
   useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
-    if (!body.trim() || readOnly) return;
+    if(!body.trim()||readOnly||sendingRef.current)return;
+    sendingRef.current=true;
+    setSending(true);
     try {
       const m = await post(`/api/orders/${id}/messages`, { body, kind });
       setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
-      setText('');
+      // Do not erase a new draft typed while the previous message was posting.
+      setText(current=>current===body?'':current);
     } catch (e) {
       // Concurrent completion can beat the browser event. Fail closed immediately
       // even before the parent order status refreshes.
       if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
       toast((e as Error).message);
+    }finally{
+      sendingRef.current=false;
+      setSending(false);
     }
   }
 
@@ -1279,18 +1309,27 @@ function Chat({ id, status }: { id: string; status: string }) {
       <b>{readOnly ? 'Архив переписки' : '💬 Чат по заявке'}</b>
       <span className="row" style={{ gap: 6 }}>
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
-        <span className="note">{readOnly ? 'только чтение' : msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
+        <span className="note">{loadError?'ошибка загрузки · открыть для повтора':
+          loading?'загружаем переписку':readOnly?'только чтение':
+          msgs.length?`${msgs.length} сообщ.`:'открыть'} ▾</span>
       </span>
     </button>
   );
   return (
     <div className="card" aria-label={readOnly ? 'Архив переписки по заявке' : 'Чат по заявке'}>
       <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{readOnly ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
-      {readOnly && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
+      {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
+      {loadError&&<div className="stack" role="alert">
+        <span className="note">Не удалось загрузить переписку: {loadError}</span>
+        <button type="button" className="btn ghost small" onClick={()=>setRetryVersion(v=>v+1)}>
+          Повторить загрузку переписки
+        </button>
+      </div>}
+      {loading&&<span className="note" role="status">Загружаем переписку…</span>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
-        {msgs.length === 0 && <span className="note">Сообщений пока нет</span>}
-        {msgs.map((m) => {
+        {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}
+        {!loading&&!loadError&&msgs.map((m) => {
           const sys = m.kind === 'system' || !m.sender_id;
           const mine = m.sender_id === me?.id;
           return (
@@ -1303,10 +1342,11 @@ function Chat({ id, status }: { id: string; status: string }) {
       </div>
       {!readOnly && (
         <>
-          <div className="scroll-x">{quick.map((q) => <button key={q} className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}</div>
-          <form className="compose" onSubmit={(e) => { e.preventDefault(); send(text); }}>
+          <div className="scroll-x">{quick.map((q) => <button key={q} type="button"
+            className="chip" disabled={sending} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
+          <form className="compose" onSubmit={(e) => { e.preventDefault();void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
-            <button className="btn small" disabled={!text.trim()}>➤</button>
+            <button className="btn small" disabled={!text.trim()||sending}>{sending?'…':'➤'}</button>
           </form>
         </>
       )}
