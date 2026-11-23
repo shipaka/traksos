@@ -146,7 +146,7 @@ try {
      if(!card||!phone||!img||!bot)return {missing:true};
      if(!img.complete)await img.decode().catch(()=>{});
      const c=card.getBoundingClientRect(),p=phone.getBoundingClientRect(),
-       b=bot.getBoundingClientRect(),pseudo=getComputedStyle(card,'::after');
+       b=bot.getBoundingClientRect();
      const textCollision=[...card.querySelectorAll(':scope > b, :scope > p, :scope > .owner20-store')].some(el=>{
        const range=document.createRange();
        range.selectNodeContents(el);
@@ -170,11 +170,12 @@ try {
        phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
        assetLoaded:img.naturalWidth>30,branded:phone.textContent.includes('Trak')&&phone.textContent.includes('SOS'),
        rustore:card.querySelector('.owner20-store')?.textContent?.includes('RuStore')??false,
-       pseudoHidden:pseudo.display==='none',
+       pseudoHidden:['::before','::after'].every(side=>getComputedStyle(card,side).display==='none'),
+       phoneCount:card.querySelectorAll('.traksos-app-phone').length,
        inside:p.left>=c.left-2&&p.right<=c.right+2&&p.top>=c.top-2&&p.bottom<=c.bottom+2,
        overlaps:p.left<b.right&&p.right>b.left&&p.top<b.bottom&&p.bottom>b.top};
    });
-   if(phoneBot.missing||!phoneBot.assetLoaded||!phoneBot.branded||
+   if(phoneBot.missing||phoneBot.phoneCount!==1||!phoneBot.assetLoaded||!phoneBot.branded||
       !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps||phoneBot.textCollision||
       (width>=1200&&(phoneBot.headingLines>2||phoneBot.copyStoreCollision)))
      throw Error(width+': app-card copy clipped, broken or overlapping branded phone/RuStore/TrakBot: '+JSON.stringify(phoneBot));
