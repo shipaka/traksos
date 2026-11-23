@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useMe } from '../ui.tsx';
 import { get, post, fmtTime, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
 import '../adminCaseCenter.css';
@@ -27,38 +28,72 @@ const action = (name:string) => ({
 const status = (s?:string) => (s&&STATUS[s]?.name)||s||'—';
 
 export function AdminCaseCenter() {
+  const { me } = useMe();
   const [q,setQ]=useState('');
   const [scope,setScope]=useState<Scope>('all');
   const [refresh,setRefresh]=useState(0);
-  const [list,setList]=useState<any[]|null>(null);
-  const [listError,setListError]=useState('');
+  const [listState,setListState]=useState<{key:string;rows:any[]}|null>(null);
+  const [listFailure,setListFailure]=useState<{key:string;message:string}|null>(null);
   const [selected,setSelected]=useState<string|null>(null);
-  const [detail,setDetail]=useState<any|null>(null);
-  const [error,setError]=useState('');
+  const [detailState,setDetailState]=useState<{key:string;value:any}|null>(null);
+  const [detailFailure,setDetailFailure]=useState<{key:string;message:string}|null>(null);
+  const [actionError,setActionError]=useState('');
   const [tab,setTab]=useState<DetailTab>('overview');
   const [focused,setFocused]=useState<FocusCard|null>(null);
   const [comment,setComment]=useState('');
   const [saving,setSaving]=useState(false);
   const [exporting,setExporting]=useState(false);
   const dialog=useRef<HTMLElement|null>(null);
+  const opener=useRef<HTMLElement|null>(null);
+  const savingRef=useRef(false);
+  const exportingRef=useRef(false);
+  const active=useRef<{id:string|null;owner:string|null}>({id:null,owner:null});
+  active.current={id:selected,owner:me?.id??null};
+  const listKey=JSON.stringify([me?.id??null,q,scope,refresh]);
+  const detailKey=JSON.stringify([me?.id??null,selected,refresh]);
+  // Only show data returned for this exact filter, owner and selected case.
+  // Late calls can finish but cannot populate a new identity's workspace.
+  const list=listState?.key===listKey&&!listFailure ? listState.rows : null;
+  const listError=listFailure?.key===listKey?listFailure.message:'';
+  const detail=detailState?.key===detailKey&&!detailFailure?detailState.value:null;
+  const error=actionError||(detailFailure?.key===detailKey?detailFailure.message:'');
   useEffect(()=>{
+    setSelected(null);setFocused(null);setComment('');setActionError('');
+  },[me?.id]);
+  useEffect(()=>{
+    if(!me?.id)return;
     let live=true;
-    const handle=setTimeout(()=>{
-      get('/api/admin/cases?q='+encodeURIComponent(q)+'&scope='+scope)
-        .then((r:any)=>{if(live){setList(Array.isArray(r)?r:[]);setListError('');}})
-        .catch((e:any)=>{if(live){setListError(String(e?.message||e));setList([]);}});
+    const handle=window.setTimeout(()=>{
+      void get('/api/admin/cases?q='+encodeURIComponent(q)+'&scope='+scope)
+        .then((rows:any)=>{
+          if(!live)return;
+          if(!Array.isArray(rows))throw new Error('Сервер вернул неверный формат реестра');
+          setListState({key:listKey,rows});setListFailure(null);
+        }).catch((reason:any)=>{
+          if(live)setListFailure({key:listKey,message:String(reason?.message||reason)});
+        });
     },250);
-    return ()=>{live=false;clearTimeout(handle);};
-  },[q,scope,refresh]);
+    return ()=>{live=false;window.clearTimeout(handle);};
+  },[me?.id,q,scope,listKey]);
   useEffect(()=>{
-    if(!selected){setDetail(null);setError('');return;}
+    if(!selected||!me?.id)return;
     let live=true;
-    setDetail(null);setError('');
-    get('/api/admin/cases/'+encodeURIComponent(selected))
-      .then((r:any)=>{if(live)setDetail(r);})
-      .catch((e:any)=>{if(live)setError(String(e?.message||e));});
+    void get('/api/admin/cases/'+encodeURIComponent(selected))
+      .then((value:any)=>{
+        if(!live)return;
+        if(!Array.isArray(value?.stages))throw new Error('Сервер вернул неполные сведения об обращении');
+        setDetailState({key:detailKey,value});setDetailFailure(null);
+      }).catch((reason:any)=>{
+        if(live)setDetailFailure({key:detailKey,message:String(reason?.message||reason)});
+      });
     return ()=>{live=false;};
-  },[selected,refresh]);
+  },[selected,me?.id,detailKey]);
+  useEffect(()=>{
+    if(selected)return;
+    const focusBack=opener.current;
+    opener.current=null;
+    if(focusBack?.isConnected)focusBack.focus();
+  },[selected]);
   useEffect(()=>{
     if(!selected)return;
     dialog.current?.focus();
