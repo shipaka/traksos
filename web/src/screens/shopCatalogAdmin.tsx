@@ -65,57 +65,123 @@ export function AdminShopCatalog() {
   ), [state, debounced, page, revision, me?.id]);
 
   async function loadFile(file: File | undefined) {
-    setPreview(null); setProgress(''); setFileError(''); setRows([]);
+    const readId = ++fileReadId.current;
+    invalidate(); setFileError(''); setRows([]);
     if (!file) return;
+    const actor=me?.id, token=getToken(), rev=formRevision.current;
     try {
+      if (!actor || !token) throw new Error('Войдите заново перед загрузкой справочника');
       if (file.size > 2_000_000) throw new Error('Выберите CSV меньше 2 МБ.');
-      const parsed = parseCatalogCsv(await file.text(), config.data?.categories ?? {});
+      const source=await file.text();
+      if (readId!==fileReadId.current || !sameSession(actor,token,rev)) return;
+      const parsed=parseCatalogCsv(source,config.data?.categories ?? {});
+      if (readId!==fileReadId.current || !sameSession(actor,token,rev)) return;
       setRows(parsed);
     } catch (error) {
-      setFileError(error instanceof Error ? error.message : 'Не удалось прочитать CSV');
+      if (readId===fileReadId.current && formRevision.current===rev)
+        setFileError(error instanceof Error ? error.message : 'Не удалось прочитать CSV');
     }
   }
 
-  const valid = !!rows.length && rights && sourceNote.trim().length >= 3;
+  const valid = !!me?.id && !!rows.length && rights && sourceNote.trim().length >= 3;
+  const approvedPreview=!!preview && valid && preview.revision===formRevision.current &&
+    preview.actorId===me?.id && preview.token===getToken() &&
+    preview.processed===rows.length;
+
   async function check() {
-    const answer = await run(async () => {
-      let newRows = 0, existingRows = 0;
-      for (let i = 0; i < rows.length; i += 150) {
-        const chunk = rows.slice(i, i + 150);
-        const result = await post('/api/admin/shop/catalog/import', {
-          rows: chunk, sourceNote, rightsConfirmed: true, dryRun: true,
-        });
-        newRows += result.newRows;
-        existingRows += result.existingRows;
-        setProgress(`Проверено ${Math.min(i + chunk.length, rows.length)} из ${rows.length}`);
-      }
-      return { newRows, existingRows, processed: rows.length };
-    }, null);
-    if (answer) setPreview(answer);
+    if(requestBusy.current || !valid || !me?.id || !getToken()) return;
+    requestBusy.current=true;
+    const actor=me.id, token=getToken()!, revision=formRevision.current;
+    const snapshot=rows.map(row=>({...row}));
+    const provenance=sourceNote.trim();
+    setPreview(null);
+    setProgress('');
+    try {
+      const result=await run(async()=>{
+        let newRows=0, existingRows=0;
+        for(let i=0;i<snapshot.length;i+=150){
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Проверьте сведения заново.');
+          const chunk=snapshot.slice(i,i+150);
+          const answer=await post('/api/admin/shop/catalog/import',{
+            rows:chunk,sourceNote:provenance,rightsConfirmed:true,dryRun:true,
+          });
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Проверьте сведения заново.');
+          newRows+=answer.newRows;
+          existingRows+=answer.existingRows;
+          setProgress('Проверено '+Math.min(i+chunk.length,snapshot.length)+
+            ' из '+snapshot.length);
+        }
+        return {newRows,existingRows,processed:snapshot.length};
+      },null);
+      if(result && sameSession(actor,token,revision))
+        setPreview({...result,revision,actorId:actor,token});
+    } finally {
+      requestBusy.current=false;
+    }
   }
 
   async function importAll() {
-    const ok = await run(async () => {
-      for (let i = 0; i < rows.length; i += 150) {
-        const chunk = rows.slice(i, i + 150);
-        await post('/api/admin/shop/catalog/import', {
-          rows: chunk, sourceNote, rightsConfirmed: true, dryRun: false,
-        });
-        setProgress(`Загружено ${Math.min(i + chunk.length, rows.length)} из ${rows.length}`);
+    if(requestBusy.current || !approvedPreview || !me?.id || !getToken()) return;
+    requestBusy.current=true;
+    const actor=me.id, token=getToken()!, revision=formRevision.current;
+    const provenance=sourceNote.trim(),snapshot=rows.map(row=>({...row}));
+    let confirmed=0;
+    setProgress('Начинаем загрузку. Не закрывайте раздел до подтверждения последней партии.');
+    try {
+      const success=await run(async()=>{
+        for(let i=0;i<snapshot.length;i+=150){
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Загрузка остановлена.');
+          const chunk=snapshot.slice(i,i+150);
+          // Each batch is an atomic server transaction. Unknown network
+          // outcomes must NEVER be represented as completed imports.
+          const answer=await post('/api/admin/shop/catalog/import',{
+            rows:chunk,sourceNote:provenance,rightsConfirmed:true,dryRun:false,
+          });
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Загрузка остановлена.');
+          confirmed+=answer.processed;
+          setProgress('Сервер подтвердил '+confirmed+' из '+snapshot.length+
+            '. Эти позиции отправлены только на ручную проверку.');
+        }
+        return true;
+      },null);
+      if(!sameSession(actor,token,revision))return;
+      if(success){
+        setPreview(null);setRows([]);setProgress('');
+        ++formRevision.current;
+        if(inputRef.current)inputRef.current.value='';
+        stats.reload();setRevision(n=>n+1);
+      }else{
+        setPreview(null);
+        setProgress('Подтверждено сервером '+confirmed+' из '+snapshot.length+
+          '. Ответ по последней партии мог потеряться. Проверьте файл повторно и загрузите остаток; одинаковые записи не размножаются.');
       }
-      return true;
-    }, 'Справочник загружен на проверку');
-    if (ok) {
-      setPreview(null); setRows([]); setProgress('');
-      stats.reload(); setRevision((n) => n + 1);
+    } finally {
+      requestBusy.current=false;
     }
   }
 
-  const reviewEntry = async (id: string, reviewed: boolean) => {
-    if (reviewed && !window.confirm('Вы проверили номер детали и право использовать его описание? Подтвердить публикацию справочной записи?')) return;
-    const done = await run(() => post(`/api/admin/shop/catalog/${id}/review`, { reviewed }),
-      reviewed ? 'Позиция проверена' : 'Позиция возвращена на проверку');
-    if (done) { stats.reload(); list.reload(); }
+  const reviewEntry=async(item:any, reviewed:boolean)=>{
+    if(requestBusy.current || busy || !me?.id)return;
+    if(reviewed && !window.confirm('Вы проверили номер детали и право использовать его описание? Подтвердить публикацию справочной записи?'))return;
+    requestBusy.current=true;
+    const actor=me.id,token=getToken();
+    try {
+      const done=await run(()=>post('/api/admin/shop/catalog/'+encodeURIComponent(item.id)+'/review',{
+        reviewed,expectedUpdatedAt:item.updatedAt,
+        expectedName:item.name,expectedSourceNote:item.sourceNote,
+      }),reviewed?'Позиция проверена':'Позиция возвращена на проверку');
+      if(actor===currentUserId.current && token===getToken()){
+        // Also on a version-conflict refresh the actual row before retrying.
+        await Promise.all([stats.reload(),list.reload()]);
+      }
+      return done;
+    } finally {
+      requestBusy.current=false;
+    }
   };
 
   if (!config.data) return <Loading error={config.error} />;
