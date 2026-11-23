@@ -365,7 +365,8 @@ try {
     await restrictedContext.addInitScript(()=>{
       const realGet=Storage.prototype.getItem;
       Storage.prototype.getItem=function(key){
-        if(key==='traksos.reduceMotion')throw new DOMException('storage denied','SecurityError');
+        if(key==='traksos.reduceMotion' || key==='traksos.sandboxMode')
+          throw new DOMException('storage denied','SecurityError');
         return realGet.call(this,key);
       };
     });
@@ -374,7 +375,7 @@ try {
     restrictedPage.on('pageerror',e=>failures.push(e.message));
     await restrictedPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
     await restrictedPage.locator('main.public-landing').waitFor({state:'visible',timeout:15000});
-    check(failures.length===0,'Denied motion preference storage blanked the guest app: '+failures.join('; '));
+    check(failures.length===0,'Denied motion or sandbox preference storage blanked the guest app: '+failures.join('; '));
     check(await restrictedPage.getByRole('link',{name:'Войти',exact:true}).count()===1,
       'Login must remain reachable when the motion preference cannot be read');
   }finally{await restrictedContext.close();}

@@ -23,8 +23,19 @@ export class ApiError extends Error {
 export async function api<T = any>(method: string, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
   // The sandbox is the exact same frontend served from another origin.
   // Fail closed if a bundle was accidentally built with a remote production API.
-  if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
-      new URL(API_URL || location.origin, location.origin).origin !== location.origin)
+  const remoteOrigin = new URL(API_URL || location.origin, location.origin).origin !== location.origin;
+  let sandboxMode = false;
+  try {
+    sandboxMode = sessionStorage.getItem('traksos.sandboxMode') === '1';
+  } catch {
+    // Same-origin public browsing remains usable even when sessionStorage is
+    // forbidden. A foreign-origin transport cannot verify isolation and must
+    // not silently reach a live API.
+    if (remoteOrigin)
+      throw new ApiError(403, 'sandbox_storage_unavailable',
+        'Невозможно проверить изоляцию тестового окружения');
+  }
+  if (sandboxMode && remoteOrigin)
     throw new ApiError(403, 'sandbox_wrong_origin', 'Тестовые запросы не могут обращаться к другому серверу');
   // Bind authentication to THIS request, not to a token that may have been
   // replaced by a successful login while its response was in flight.
