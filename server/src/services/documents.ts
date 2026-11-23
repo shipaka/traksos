@@ -190,9 +190,10 @@ export class DocumentsService {
     const out = [];
     for (const u of people) {
       const docs = await this.db.query(
-        `select d.id, d.kind, d.status, d.note, d.taken_at, d.created_at, d.size,
+        `select distinct on (d.kind) d.id, d.kind, d.status, d.note, d.taken_at, d.created_at, d.size,
                 (select count(*)::int from documents x where x.sha256=d.sha256 and x.user_id<>d.user_id) as duplicates
-           from documents d where d.user_id=$1 order by d.created_at`, [u.id]);
+           from documents d where d.user_id=$1
+          order by d.kind, d.created_at desc, d.id desc`, [u.id]);
       const flags: string[] = [];
       for (const d of docs) {
         if (d.duplicates > 0) flags.push(`${DOC_KINDS[d.kind]?.name}: такое же фото есть в другом профиле`);
