@@ -50,6 +50,21 @@ test('approved stationary center requires explicit opt-in, then public lists exa
   }],'no phone, tax ID, owner ID or mobile GPS ever appears in public payload');
 });
 
+test('changing stationary address revokes old opt-in and public coordinate proof',async()=>{
+  ok(await t.api('PUT','/api/base',{
+    address:'Санкт-Петербург, другой въезд, дом 3',lat:59.96,lng:30.32
+  },service.token));
+  const after=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(after.public_map_opt_in,false);
+  assert.equal(after.public_map_location_verified_at,null);
+  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
+    'no republishing edited location before renewed moderator approval');
+  ok(await t.api('POST',`/api/admin/services/${centerId}/verify`,{decision:'approved'},admin.token));
+  ok(await t.api('PUT','/api/service/public-map',{enabled:true},service.token));
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points[0].lat,59.96);
+});
+
 test('blocked, paused, revoked, absent and invalid locations disappear without cached pins',async()=>{
   await t.db.query('update service_centers set paused=true where id=$1',[centerId]);
   assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
