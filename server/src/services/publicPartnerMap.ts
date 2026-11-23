@@ -4,6 +4,7 @@ import { bad, notFound, type AuthUser } from '../http/router.ts';
 type Workshop = {
   id:string; name:string; lat:number|null; lng:number|null;
   verification:string; paused:boolean; accepts_confirmed_at:string|null;
+  public_map_location_verified_at:string|null;
 };
 type PublicPoint = { id:string; kind:'service'; name:string; lat:number; lng:number };
 
@@ -30,6 +31,7 @@ export class PublicPartnerMap {
          and c.verification='approved'
          and c.paused=false
          and c.accepts_confirmed_at is not null
+         and c.public_map_location_verified_at is not null
          and u.status='active'
          and u.deleted_at is null
          and 'service'=any(u.roles)
@@ -44,14 +46,16 @@ export class PublicPartnerMap {
 
   async visibility(user:AuthUser,enabled:boolean) {
     const center=await this.db.one<Workshop>(`select c.id,c.name,c.lat,c.lng,
-      c.verification,c.paused,c.accepts_confirmed_at
+      c.verification,c.paused,c.accepts_confirmed_at,
+      c.public_map_location_verified_at
       from service_centers c
       where c.owner_id=$1`,[user.id]);
     if(!center)throw notFound('Сначала заполните карточку СТО');
     if(enabled && (center.verification!=='approved' || center.paused ||
-      !center.accepts_confirmed_at || !validStationaryPosition(center.lat,center.lng)))
+      !center.accepts_confirmed_at || !center.public_map_location_verified_at ||
+      !validStationaryPosition(center.lat,center.lng)))
       throw bad('public_map_not_ready',
-        'Публичная карта доступна лишь подтверждённой СТО с координатами стационарной точки и согласованными услугами.');
+        'Публичная карта доступна лишь СТО с проверенным модератором адресом/координатами и согласованными услугами.');
     const row=await this.db.one<{public_map_opt_in:boolean;public_map_opted_at:string|null}>(`
       update service_centers
          set public_map_opt_in=$2,
