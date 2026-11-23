@@ -27,6 +27,8 @@ async function find(article:string,token:string){
 const approval=(v:any,reviewed:boolean)=>({
   reviewed,expectedUpdatedAt:v.updatedAt,
   expectedName:v.name,expectedSourceNote:v.sourceNote,
+  expectedBrand:v.brand,expectedArticle:v.article,expectedCategory:v.category,
+  expectedSearchTerms:v.searchTerms,
 });
 
 test('admin catalog: dry-run cannot publish, fresh review succeeds and duplicate approval is a no-op',async()=>{
@@ -103,4 +105,17 @@ test('reviewed source is required even for old mobile admin clients without expe
   assert.equal(result.status,400);
   assert.equal(result.body.error,'missing_provenance');
   assert.equal((await find(item.article,admin.token)).reviewed,false);
+});
+
+test('same-millisecond category mutation cannot bypass visible review snapshot',async()=>{
+  const entry=row('REVIEW-05','Новый тестовый датчик CI');
+  ok(await t.api('POST',path+'/import',batch([entry]),admin.token));
+  const visible=await find(entry.article,admin.token);
+  await t.db.query(
+    "update shop_catalog_entries set category='sensors', updated_at=$2::timestamptz where id=$1",
+    [visible.id,visible.updatedAt]);
+  const denied=await t.api('POST',path+'/'+visible.id+'/review',approval(visible,true),admin.token);
+  assert.equal(denied.status,400);
+  assert.equal(denied.body.error,'catalog_entry_changed');
+  assert.equal((await find(entry.article,admin.token)).reviewed,false);
 });
