@@ -1245,7 +1245,8 @@ function AccountOrderChat({id,status}:{id:string;status:string}) {
   const [retryVersion,setRetryVersion]=useState(0);
   const [sending,setSending]=useState(false);
   const sendingRef=useRef(false);
-  const readOnly = archived || serverClosed || loading || !!loadError;
+  const archiveLabel=archived||serverClosed;
+  const readOnly = archiveLabel || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1306,7 +1307,7 @@ function AccountOrderChat({id,status}:{id:string;status:string}) {
   const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <b>{readOnly ? 'Архив переписки' : '💬 Чат по заявке'}</b>
+      <b>{archiveLabel ? 'Архив переписки' : '💬 Чат по заявке'}</b>
       <span className="row" style={{ gap: 6 }}>
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
         <span className="note">{loadError?'ошибка загрузки · открыть для повтора':
@@ -1316,8 +1317,8 @@ function AccountOrderChat({id,status}:{id:string;status:string}) {
     </button>
   );
   return (
-    <div className="card" aria-label={readOnly ? 'Архив переписки по заявке' : 'Чат по заявке'}>
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{readOnly ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+    <div className="card" aria-label={archiveLabel ? 'Архив переписки по заявке' : 'Чат по заявке'}>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
       {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
       {loadError&&<div className="stack" role="alert">
         <span className="note">Не удалось загрузить переписку: {loadError}</span>
