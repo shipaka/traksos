@@ -197,16 +197,23 @@ export class ModerationService {
         [actor.id, 'mod.decide', id, { decision, note }]);
       const body = `${DECISIONS[c.kind][decision]}${note?.trim() ? `: ${note.trim()}` : ''}`;
       const parties: (string|null|undefined)[] = [c.opened_by, c.target_id];
+      let revokedDriver: string|null=null;
       if (c.order_id) {
-        const o = await q.one<any>(`select o.client_id,o.performer_id,
+        const o = await q.one<any>(`select o.client_id,o.created_by,o.performer_id,
             case when o.created_by<>o.client_id
                and v.owner_id=o.client_id and v.driver_id=o.created_by
                then o.created_by else null end as current_driver_id
           from orders o left join vehicles v on v.id=o.vehicle_id where o.id=$1`, [c.order_id]);
-        // Do not send the case/order reference to a driver removed from fleet.
-        if (o) parties.push(o.client_id, o.performer_id, o.current_driver_id);
+        if (o) {
+          // Even opened_by/target_id can refer to the historical driver.
+          // Remove them from ALL recipient origins if fleet access was revoked.
+          if (o.created_by!==o.client_id && !o.current_driver_id)
+            revokedDriver=o.created_by;
+          parties.push(o.client_id, o.performer_id, o.current_driver_id);
+        }
       }
-      const recipients = [...new Set(parties.filter((p):p is string=>!!p))];
+      const recipients = [...new Set(
+        parties.filter((p):p is string=>!!p && p!==revokedDriver))];
       const title = `Решение модератора по случаю №${c.number}`;
       // Inbox + audit + decision + financial/review effects commit together.
       for (const recipient of recipients) {
