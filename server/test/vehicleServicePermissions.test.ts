@@ -147,7 +147,7 @@ test('owner history includes both service kinds without driver restrictions', as
     query: async (_sql: string, params: any[]) => { queries.push(params); return []; },
   };
   await new VehicleServiceRequests(db).history(owner, 'vehicle-1');
-  assert.deepEqual(queries[0], ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
+  assert.deepEqual(queries[0], ['vehicle-1', 'owner-1', ['insurance', 'inspection'], 'owner-1']);
 });
 
 test('staff and partner roles cannot create customer vehicle-service requests at the service boundary', async () => {
@@ -276,7 +276,7 @@ test('vehicle service history includes timeline only after ownership check', asy
   assert.match(captured[0].sql, /r\.requested_by/);
   assert.match(captured[0].sql, /e\.request_id=r\.id/);
   assert.match(captured[0].sql, /r\.vehicle_id=\$1 and r\.owner_id=\$2/);
-  assert.deepEqual(captured[0].params, ['vehicle-1', 'owner-1', ['insurance', 'inspection']]);
+  assert.deepEqual(captured[0].params, ['vehicle-1', 'owner-1', ['insurance', 'inspection'], 'owner-1']);
 });
 
 test('a prior staff comment cannot be reused as the reason for a new rejection', async () => {
