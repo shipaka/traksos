@@ -56,3 +56,42 @@ test('admin settings: concurrent independent writers preserve disjoint patches a
   assert.deepEqual(after?.value,before,'audit failure rolls back business configuration');
  }finally{await t.close();}
 });
+
+
+test('settings cache: an old in-flight SELECT cannot overwrite a newer committed admin patch', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const admin=await t.login('+79990000001');
+  let ready!:()=>void;
+  let release!:()=>void;
+  const scanned=new Promise<void>(resolve=>{ready=resolve;});
+  const proceed=new Promise<void>(resolve=>{release=resolve;});
+  let hold=true;
+  const proxy={
+   query:async(sql:string,params?:any[])=>{
+    if(hold&&sql==='select key, value from settings'){
+     hold=false;
+     const prior=await t.db.query(sql,params);
+     ready();
+     await proceed;
+     return prior;
+    }
+    return t.db.query(sql,params);
+   },
+   tx:(fn:any)=>t.db.tx(fn),
+   one:(sql:string,params?:any[])=>t.db.one(sql,params),
+  };
+  const instance=new SettingsService(proxy as any);
+  const stale=instance.all();
+  await scanned;
+  const written=await instance.set('shop',{closedTitle:'Новая подтверждённая надпись'},admin.id);
+  assert.equal(written.closedTitle,'Новая подтверждённая надпись');
+  release();
+  const oldResult=await stale;
+  assert.notEqual(oldResult.shop.closedTitle,'Новая подтверждённая надпись',
+    'the delayed read really obtained the old snapshot');
+  const latest=await instance.get('shop');
+  assert.equal(latest.closedTitle,'Новая подтверждённая надпись',
+    'old read must not repopulate the shared five-second cache');
+ }finally{await t.close();}
+});
