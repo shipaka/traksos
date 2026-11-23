@@ -139,8 +139,8 @@ try{
   await compose.fill('Message from B');
   await page.evaluate(()=>{
     const form=document.querySelector('.compose');
-    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
-    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    form.requestSubmit();
+    form.requestSubmit();
   });
   const postPath='/api/support/ticket-1/messages';
   await wait('POST',postPath,1);
