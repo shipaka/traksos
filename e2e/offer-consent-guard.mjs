@@ -10,6 +10,7 @@ const stubs = {
     export function onEvent() { return () => {}; }
     export function get(path) {
       const mock = window.__offerMock;
+      mock.ApiError = ApiError;
       mock.requests.push(path);
       if (path === '/api/me/offers') {
         return Promise.resolve([{audience:'client', name:'Оферта для клиентов',
@@ -40,9 +41,8 @@ const bundle = await build({
     import React from 'react';
     import {createRoot} from 'react-dom/client';
     import {OfferGate, reportApiError} from './web/src/screens/offers.tsx';
-    import {ApiError} from './web/src/api.ts';
     window.__sendOfferOutdated = () => {
-      const error = new ApiError('outdated');
+      const error = new window.__offerMock.ApiError('outdated');
       error.code = 'offer_outdated';
       reportApiError(error);
     };
