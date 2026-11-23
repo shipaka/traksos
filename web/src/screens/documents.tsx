@@ -53,9 +53,25 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
   const { busy, run } = useAction();
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
+    const abort = new AbortController();
     let url: string | null = null;
-    if (r.doc) authedImage(`/api/documents/${r.doc.id}/file`).then((u) => { url = u; setSrc(u); }).catch(() => {});
-    return () => { if (url) URL.revokeObjectURL(url); };
+    setSrc(null);
+    if (r.doc) {
+      authedImage(`/api/documents/${r.doc.id}/file`, {
+        signal: abort.signal,
+        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+      }).then(u => {
+        // An old photo request may settle after this row unmounts or its
+        // document ID changes. Revoke it immediately, never reuse its pixels.
+        if (abort.signal.aborted) { URL.revokeObjectURL(u); return; }
+        url = u;
+        setSrc(u);
+      }).catch(() => {});
+    }
+    return () => {
+      abort.abort();
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [r.doc?.id]);
 
   async function onFile(f: File | undefined) {
