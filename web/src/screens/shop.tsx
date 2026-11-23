@@ -188,7 +188,7 @@ export function Shop() {
     {c.error && <button className="btn ghost small" onClick={c.reload}>Повторить загрузку каталога</button>}
   </main>;
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  const add = (id: string) => setCart({ ...cart, [id]: (cart[id] ?? 0) + 1 });
+  const add = (id: string) => setCart({ ...cart, [id]: Math.min(99, (cart[id] ?? 0) + 1) });
   if (!d.enabled) return (
     <main className="track-shop-home">
       <div className="track-shop-hero"><span className="track-shop-eyebrow">TRAKSOS · ЗАПЧАСТИ ДЛЯ ГРУЗОВИКОВ</span><h1>Каталог запчастей</h1><p>Оригиналы, проверенные аналоги и история заказов вашей техники.</p><span className="track-shop-gear" aria-hidden="true"/></div>
@@ -398,8 +398,11 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
 }
 
 function HistoryAnalogs({ productId, add }: { productId: string; add: (id: string) => void }) {
-  const a = useLoad(() => get(`/api/shop/products/${productId}/analogs`), [productId]);
-  if (!a.data) return <Loading error={a.error} />;
+  const a = useShopPrivateLoad<any>(() => get(`/api/shop/products/${productId}/analogs`), [productId]);
+  if (!a.data) return <div className="stack">
+    <Loading error={a.error} />
+    {a.error && <button className="btn ghost small" onClick={a.reload}>Повторить проверку аналогов</button>}
+  </div>;
   if (!a.data.enabled) return <span className="note">Каталог аналогов пока в разработке.</span>;
   if (!a.data.items.length) return <span className="note">Подтверждённых аналогов пока нет — нельзя рекомендовать замену наугад.</span>;
   return <div className="stack">
