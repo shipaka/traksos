@@ -40,9 +40,10 @@ try{
         await page.waitForFunction(expected=>location.hash===expected,landing,{timeout:20_000});
         if(qaReturnUrl){
           const back=page.locator('header.top .sandbox-test-badge');
-          await back.getByText('Admin', {exact:false}).waitFor();
+          await back.waitFor({state:'visible'});
+          const visibleLabel=(await back.textContent())?.trim()??'';
           if(await back.getAttribute('href')!==qaReturnUrl ||
-             !(await back.getByText('Назад',{exact:false}).isVisible()))
+             !visibleLabel.includes('Admin') || !visibleLabel.includes('Назад'))
             throw Error('Signed sandbox handoff has no visible Admin / Back to owner test center');
         }
         // The role needs an actually usable desk. Clear mandatory legal
