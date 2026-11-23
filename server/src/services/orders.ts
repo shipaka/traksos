@@ -591,7 +591,8 @@ export class OrdersService {
     if (!['accepted', 'en_route'].includes(o.status)) throw conflict('bad_status', 'На месте отказаться уже нельзя — закройте выезд с итогом');
     await this.db.tx(async (q) => {
       await this.guarded(q,
-        `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null
+        `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null,
+            dispatch_started_at=null
           where id=$1 and status=$2 and performer_id=$3`, [orderId, o.status, user.id]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status in ('active','chosen','lost')`, [orderId]);
       await q.query(`delete from order_dispatch where order_id=$1 and performer_id<>$2`, [orderId, user.id]);

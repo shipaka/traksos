@@ -57,3 +57,25 @@ test('stalled accepted stage creates one durable alert, admin-only review, no st
   assert.equal((await t.db.query('select id from order_sla_incidents where order_id=$1',[id])).length,2);
   assert.equal((await t.db.one<{status:string}>('select status from orders where id=$1',[id]))?.status,'en_route');
 });
+
+
+test('performer handoff starts a fresh dispatch SLA clock instead of inheriting original search', async()=>{
+  const oldStart=new Date(t.clock.now().getTime()-3*60*60_000);
+  const id=(await t.db.one<{id:string}>(
+    "insert into orders(client_id,created_by,performer_id,service,zone_id,status,created_at,accepted_at,dispatch_started_at)" +
+    " values ($1,$1,$2,'electric','spb','accepted',$3,$3,$3) returning id",
+    [customer.id,master.id,oldStart]))!.id;
+  const dropped=ok(await t.api('POST','/api/orders/'+id+'/drop',
+    {reason:'Не могу продолжить выезд, нужна замена'},master.token));
+  assert.ok(['searching','no_performer'].includes(dropped.status),
+    'performer drop must start a new search without returning to the old worker');
+  const current=await t.db.one<{status:string;dispatch_started_at:string|null;performer_id:string|null}>(
+    'select status,dispatch_started_at,performer_id from orders where id=$1',[id]);
+  assert.equal(current?.performer_id,null,'dropped worker must be unassigned');
+  assert.ok(current?.dispatch_started_at===null ||
+    new Date(current.dispatch_started_at).getTime()>oldStart.getTime()+60*60_000,
+    'replacement dispatch must not carry over the exhausted original SLA clock');
+  const events=await t.db.one<{c:number}>(
+    "select count(*)::int c from order_events where order_id=$1 and type='performer_dropped'",[id]);
+  assert.equal(events?.c,1,'drop must have one immutable event');
+});
