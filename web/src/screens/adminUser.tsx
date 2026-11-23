@@ -325,27 +325,49 @@ function ReviewsTab({ c, reload }: { c: any; reload: () => void }) {
   );
 }
 
-export function RefundForm({ pay, onDone }: { pay: any; onDone: () => void }) {
-  const { busy, run } = useAction();
-  const [open, setOpen] = useState(false);
-  const left = pay.total - pay.refunded_amount;
-  const [amount, setAmount] = useState<number | null>(left);
-  const [from, setFrom] = useState<'platform' | 'performer'>('platform');
-  const [reason, setReason] = useState('');
-  if (!['captured', 'partially_refunded'].includes(pay.status) || left <= 0) return null;
-  if (!open) return <button className="btn ghost small" onClick={() => setOpen(true)}>Вернуть деньги</button>;
-  return (
-    <div className="stack">
-      <RubInput value={amount} onChange={setAmount} placeholder={`До ${rub(left)}`} />
-      <div className="grid2">
-        <button className="seg" aria-pressed={from === 'platform'} onClick={() => setFrom('platform')}>За счёт площадки</button>
-        <button className="seg" aria-pressed={from === 'performer'} onClick={() => setFrom('performer')}>Удержать у исполнителя</button>
-      </div>
-      <input className="field" placeholder="Причина — клиент её увидит" value={reason} onChange={(e) => setReason(e.target.value)} />
-      <button className="btn" disabled={busy || !amount || amount > left || reason.length < 3} onClick={() =>
-        run(() => post(`/api/admin/payments/${pay.id}/refund`, { amount, from, reason }), `Возврат ${rub(amount)} отправлен`).then((r) => r && onDone())}>Вернуть {rub(amount ?? 0)}</button>
+export function RefundForm({pay,onDone}:{pay:any;onDone:()=>void}) {
+  const {busy,run}=useAction();
+  const [open,setOpen]=useState(false);
+  const left=Number(pay.total)-Number(pay.refunded_amount);
+  const [amount,setAmount]=useState<number|null>(left);
+  const [from,setFrom]=useState<'platform'|'performer'>('platform');
+  const [reason,setReason]=useState('');
+  const [error,setError]=useState('');
+  useEffect(()=>{
+    setOpen(false);setAmount(left);setFrom('platform');setReason('');setError('');
+  },[pay.id,left]);
+  const validAmount=amount!==null&&Number.isSafeInteger(amount)&&amount>0&&
+    Number.isSafeInteger(left)&&left>0&&amount<=left;
+  async function submit() {
+    if(busy||!validAmount||reason.trim().length<3||reason.trim().length>300)return;
+    if(!window.confirm('Подтвердить возврат '+rub(amount!)+' за счёт '+
+      (from==='platform'?'площадки':'исполнителя')+'? Денежная операция может быть необратимой.'))return;
+    setError('');
+    const result=await run(()=>post(`/api/admin/payments/${pay.id}/refund`,
+      {amount,from,reason:reason.trim()}),'Заявка на возврат отправлена');
+    if(result){setOpen(false);onDone();}
+    else setError('Подтверждение возврата не получено. НЕ отправляйте запрос повторно до сверки реестра возвратов и статуса у банка.');
+  }
+  if(!['captured','partially_refunded'].includes(pay.status)||!Number.isSafeInteger(left)||left<=0)return null;
+  if(!open)return <button type="button" className="btn ghost small" onClick={()=>setOpen(true)}>Вернуть деньги</button>;
+  return <div className="stack">
+    <span className="note">Доступно к возврату: {rub(left)}. Перед повтором после сетевого сбоя проверьте платёжный журнал.</span>
+    <RubInput value={amount} onChange={setAmount} placeholder={`До ${rub(left)}`} />
+    <div className="grid2">
+      <button type="button" className="seg" aria-pressed={from==='platform'} onClick={()=>setFrom('platform')}>За счёт площадки</button>
+      <button type="button" className="seg" aria-pressed={from==='performer'} onClick={()=>setFrom('performer')}>Удержать у исполнителя</button>
     </div>
-  );
+    <input className="field" aria-label="Причина возврата" maxLength={300}
+      placeholder="Причина — клиент её увидит" value={reason} onChange={e=>setReason(e.target.value)}/>
+    {error&&<div className="banner warn" role="alert">{error}</div>}
+    {amount!==null&&!validAmount&&<span className="note" role="alert">Укажите сумму в целых копейках не больше доступного остатка.</span>}
+    <div className="row">
+      <button type="button" className="btn ghost small" disabled={busy} onClick={()=>setOpen(false)}>Отмена</button>
+      <button type="button" className="btn"
+        disabled={busy||!validAmount||reason.trim().length<3}
+        onClick={()=>void submit()}>Подтвердить возврат {validAmount?rub(amount!):''}</button>
+    </div>
+  </div>;
 }
 
 const PAY_STATUS: Record<string, string> = {
