@@ -71,6 +71,7 @@ function EcuStationWorkspaceInner(){
  const [name,setName]=useState('');
  const [address,setAddress]=useState('');
  const {busy,run}=useAction();
+ const lock=useRef(false);
  const s=station.data?.station;
  return <main className="work-live-dashboard stack">
   <Back to="work/me"/>
@@ -90,11 +91,14 @@ function EcuStationWorkspaceInner(){
     <input className="field" placeholder="Адрес для приёма блоков ЭБУ (не домашний адрес)"
      maxLength={300} value={address} onChange={e=>setAddress(e.target.value)}/>
     <span className="note">Изменение адреса сбросит прежнее одобрение до повторной проверки.</span>
-    <button className="btn small" disabled={busy||name.trim().length<3||address.trim().length<8}
+    <button className="btn small" disabled={busy||lock.current||name.trim().length<3||address.trim().length<8}
      onClick={async()=>{
-      const r=await run(()=>put('/api/ecu/station',{publicName:name,address}),
-       'Адрес отправлен на проверку');
-      if(r){station.reload();inbox.reload();setName('');setAddress('');}
+      if(lock.current)return;lock.current=true;
+      try{
+       const r=await run(()=>put('/api/ecu/station',{publicName:name,address}),
+        'Адрес отправлен на проверку');
+       if(r){void station.reload();void inbox.reload();setName('');setAddress('');}
+      }finally{lock.current=false;}
      }}>Сохранить точку и отправить на проверку</button>
    </>}
   </div>
@@ -246,16 +250,20 @@ function EcuHandoffPageInner({id}:{id:string}){
 function EcuClose({id,onDone}:{id:string;onDone:()=>void}){
  const [reason,setReason]=useState('');
  const {busy,run}=useAction();
+ const lock=useRef(false);
  return <div className="card stack">
   <b>Закрыть техническую передачу</b>
   <span className="note">Закрытие завершает только техническую передачу. Не меняет суммы, оплаты или статусы предыдущих заказов.</span>
   <textarea className="field" rows={2} maxLength={1000} value={reason}
    onChange={e=>setReason(e.target.value)}
    placeholder="Чем закончилась диагностика или почему закрываете передачу"/>
-  <button className="btn ghost small" disabled={busy||reason.trim().length<10}
+  <button className="btn ghost small" disabled={busy||lock.current||reason.trim().length<10}
    onClick={async()=>{
-    const r=await run(()=>post('/api/ecu/handoffs/'+id+'/close',{reason}),'Передача закрыта');
-    if(r)onDone();
+    if(lock.current)return;lock.current=true;
+    try{
+     const r=await run(()=>post('/api/ecu/handoffs/'+id+'/close',{reason}),'Передача закрыта');
+     if(r)onDone();
+    }finally{lock.current=false;}
    }}>Закрыть передачу с итоговым комментарием</button>
  </div>;
 }
@@ -269,6 +277,7 @@ function EcuAdminStationsInner(){
  const rows=usePrivateRead<any[]>(()=>me?get('/api/admin/ecu/stations'):Promise.resolve([]),
   (me?.id??'guest')+':admin-ecu-stations');
  const {busy,run}=useAction();
+ const lock=useRef(false);
  return <div className="stack">
   <div className="card stack"><b>Проверка стационарных точек ЭБУ</b>
    <span className="note">Проверяйте документы исполнителя и публичный адрес мастерской. Это не выездная услуга и не тариф по километрам.</span></div>
@@ -281,13 +290,19 @@ function EcuAdminStationsInner(){
      <span className="note">{s.address}</span>
      <span className="note">Документы: {s.verification} · адрес: {s.approved_at?'подтверждён':'на проверке'}</span>
      <div className="row">
-      <button className="btn small" disabled={busy||s.verification!=='approved'} onClick={async()=>{
-       if(await run(()=>post('/api/admin/ecu/stations/'+s.performer_id+'/verify',{approved:true}),
-        'Адрес подтверждён'))rows.reload();
+      <button className="btn small" disabled={busy||lock.current||s.verification!=='approved'} onClick={async()=>{
+       if(lock.current)return;lock.current=true;
+       try{
+        if(await run(()=>post('/api/admin/ecu/stations/'+s.performer_id+'/verify',{approved:true}),
+         'Адрес подтверждён'))void rows.reload();
+       }finally{lock.current=false;}
       }}>Подтвердить адрес</button>
-      <button className="btn ghost small" disabled={busy} onClick={async()=>{
-       if(await run(()=>post('/api/admin/ecu/stations/'+s.performer_id+'/verify',{approved:false}),
-        'Публикация точки приостановлена'))rows.reload();
+      <button className="btn ghost small" disabled={busy||lock.current} onClick={async()=>{
+       if(lock.current)return;lock.current=true;
+       try{
+        if(await run(()=>post('/api/admin/ecu/stations/'+s.performer_id+'/verify',{approved:false}),
+         'Публикация точки приостановлена'))void rows.reload();
+       }finally{lock.current=false;}
       }}>Снять одобрение</button>
      </div>
     </div>) : <div className="empty">Заявок на подтверждение адреса ЭБУ нет</div>}
