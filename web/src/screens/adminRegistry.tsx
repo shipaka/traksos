@@ -91,6 +91,7 @@ function RegistryEdit({item,onSaved,onCancel}:{item:any;onSaved:()=>void;onCance
 }
 
 export function AdminRegistry() {
+  const { me } = useMe();
   const [draft,setDraft]=useState<Filters>({...DEFAULT});
   const [applied,setApplied]=useState<Filters>({...DEFAULT});
   const [page,setPage]=useState(1);
@@ -98,12 +99,29 @@ export function AdminRegistry() {
   const [exporting,setExporting]=useState(false);
   const [exportError,setExportError]=useState('');
   const [exportInfo,setExportInfo]=useState('');
+  const [filterError,setFilterError]=useState('');
+  const exportLock=useRef(false);
+  const activeAccount=useRef<string|null>(null);
+  const activeFilters=useRef('');
+  activeAccount.current=me?.id??null;
+  const filterSnapshot=JSON.stringify(applied);
+  activeFilters.current=filterSnapshot;
+  const changed=filterSnapshot!==JSON.stringify(draft);
+  useEffect(()=>{
+    setDraft({...DEFAULT});setApplied({...DEFAULT});
+    setPage(1);setEditing(null);setExportError('');setExportInfo('');setFilterError('');
+  },[me?.id]);
   const params=useMemo(()=>{
     const p=selection(applied);p.set('page',String(page));p.set('pageSize','30');
     return p.toString();
   },[applied,page]);
-  const result=useLoad(()=>get('/api/admin/registry?'+params),[params]);
-  const total=Number(result.data?.total??0);
+  const result=useLoad<{ownerId:string|null;params:string;payload:any}>(
+    async()=>({ownerId:me?.id??null,params,payload:await get('/api/admin/registry?'+params)}),
+    [params,me?.id]);
+  const loaded=!!me?.id && !result.error && result.data?.ownerId===me.id &&
+    result.data.params===params;
+  const data=loaded?result.data!.payload:null;
+  const total=Number(data?.total??0);
   const pages=Math.max(1,Math.ceil(total/30));
   function set<K extends keyof Filters>(key:K,value:Filters[K]) {
     setDraft(prev=>({...prev,[key]:value}));
