@@ -1086,10 +1086,19 @@ function BookingPagePanel({ id }: { id: string }) {
   const [mode, setMode] = useState<'' | 'agree' | 'dispute'>('');
   const [stars, setStars] = useState(0);
   const [text, setText] = useState('');
+  const acting = useRef(false);
   const d = b.data;
   if (!d) return <main><Back to="orders" label="Заявки" /><StationLoading error={b.error} reload={b.reload} /></main>;
   if (d.mine) { go(`base/car/${id}`); return null; }
-  const act = async (path: string, body: any, okText: string) => { const r = await run(() => post(`/api/bookings/${id}/${path}`, body), okText); if (r) b.setData(r); return r; };
+  const act = async (path: string, body: any, okText: string) => {
+    if (acting.current) return undefined;
+    acting.current = true;
+    try {
+      const result = await run(() => post(`/api/bookings/${id}/${path}`, body), okText);
+      if (result) b.setData(result);
+      return result;
+    } finally { acting.current = false; }
+  };
   const steps = ['new', 'expected', 'arrived', 'in_work', 'ready', 'closed'];
   const at = d.status === 'clarify' ? 0 : ['diagnostics', 'waiting_part', 'agreeing'].includes(d.status) ? 3 : d.status === 'invoiced' || d.status === 'disputed' ? 4 : steps.indexOf(d.status);
   return (
