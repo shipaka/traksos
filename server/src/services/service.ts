@@ -120,7 +120,11 @@ export class ServiceCenters {
   /** Раз в неделю: «приём всё так же?» — одна кнопка */
   async confirmAccepts(user: AuthUser) {
     await this.mustMine(user);
-    await this.db.query('update service_centers set accepts_confirmed_at=now() where owner_id=$1', [user.id]);
+    // Use the same injectable application clock as cabinet.confirmDue, not
+    // the database clock. Real deployments agree; deterministic sandbox
+    // clocks may differ from PostgreSQL's wall clock.
+    await this.db.query('update service_centers set accepts_confirmed_at=$2 where owner_id=$1',
+      [user.id, this.now()]);
     return this.cabinet(user);
   }
 
