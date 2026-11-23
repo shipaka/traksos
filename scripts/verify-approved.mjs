@@ -893,14 +893,16 @@ expect(
 );
 
 
-// Guard the current desktop/mobile split. An old PR must not silently
-// restore the obsolete 1000px switch or hide the approved browser admin desk.
+// Guard the owner-approved 617 PC / 618 phone-tablet split. Mobile Chrome
+// and Android must BOTH render the same 618 fallback for admin; the retired
+// admin-only PC-at-390px exemption was a verified QA regression.
 const pcWorkspaceSource = await read('web/src/screens/approvedPcCabinets20261120.tsx');
 expect(
   pcWorkspaceSource.includes("matchMedia('(min-width: 900px)')") &&
-  pcWorkspaceSource.includes("role === 'admin' && !native.isApp") &&
+  pcWorkspaceSource.includes("if (!wide) return <>{fallback}</>") &&
+  !pcWorkspaceSource.includes("role === 'admin' && !native.isApp") &&
   !pcWorkspaceSource.includes("matchMedia('(min-width: 1000px)')"),
-  'approved PC/mobile boundary remains 900px and browser admin uses approved workspace'
+  'approved PC/mobile boundary remains 900px; browser admin and Android use identical 618 mobile fallback'
 );
 
 // The approved desktop stylesheet must not reintroduce 19 Nov Android as the
