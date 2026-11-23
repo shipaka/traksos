@@ -87,6 +87,23 @@ try{
  await render('CarsSection','first');
  await page.getByText('А111АА').waitFor();
  check(await page.getByText('А111АА').count()===1,'First car missing');
+ const brand=page.getByPlaceholder('Марка: Lada Largus');
+ const plate=page.getByPlaceholder('Госномер');
+ const addCar=page.getByRole('button',{name:'Добавить',exact:true});
+ await brand.fill('   ');
+ await plate.fill('   ');
+ check(await addCar.isDisabled(),'Whitespace-only vehicle must not be saved');
+ await brand.fill(' Volvo  ');
+ await plate.fill(' а111аа ');
+ check(await addCar.isDisabled(),'Duplicate plate with padding/case not detected');
+ await plate.fill(' в333вв ');
+ check(await addCar.isEnabled(),'Valid new vehicle incorrectly rejected');
+ await addCar.click();
+ await page.getByText('В333ВВ').waitFor();
+ const carSave=await page.evaluate(()=>window.__saves.at(-1));
+ check(carSave.path==='/api/performer/profile','Vehicle sent to wrong endpoint');
+ check(carSave.body.cars[1].plate==='В333ВВ'&&carSave.body.cars[1].brand==='Volvo',
+   'Vehicle fields were not trimmed and canonicalized before save');
  await render('CarsSection','second');
  await page.getByText('В222ВВ').waitFor();
  check(await page.getByText('В222ВВ').count()===1,'Second car missing');
