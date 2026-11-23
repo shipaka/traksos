@@ -19,7 +19,8 @@ export const APPROVED_VISUALS = Object.freeze({
   // Same four services; higher-resolution illustrative photos for PC cabinets only.
   desktopServiceScenes: '/traksos-service-scenes-desktop-hq.webp',
   publicPcPhoto: '/owner20-photo-background-approved-retouched.webp',
-  // Approved 23 Nov 2026 variant #3; unique asset used only after exhausted SOS dispatch.
+  // Latest owner-approved 23 Nov 2026 Russia network (#1), replacing the retired truck (#3).
+  // This symbolic panorama is ONLY for a confirmed exhausted SOS search; dots are not real GPS.
   noPerformerSearch: '/feature-art/traksos-no-performer-network-russia-approved-v1.webp',
   publicPcAtlas: '/owner20-artwork-sprite-retouched.webp',
 } as const);
