@@ -128,6 +128,11 @@ try {
         throw Error(width+'px services not touchable '+JSON.stringify(touch));
       await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-full.png',fullPage:true});
       if(errors.length)throw Error(width+'px Android guest JS errors '+errors.join('; '));
+      await services.locator('a[href="#/explore/air"]').click();
+      await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+      if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='air')
+        throw Error(width+'px: native guest lost the selected Air destination');
+      await page.goto(BASE+'/#/');
       await login.click();
       await page.waitForURL('**/#/login');
       await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
@@ -139,7 +144,7 @@ try {
       await page.locator('.tr-native-welcome-partner').click();
       await page.waitForURL('**/#/join');
       await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
-      for(const path of ['explore/guide','explore/pricing']){
+      for(const path of ['help','explore/guide','explore/pricing','explore/club']){
         await page.goto(BASE+'/#/'+path);
         await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
         if(await page.locator('main.guest-explore').count())

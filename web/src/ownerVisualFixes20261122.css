@@ -295,6 +295,14 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
   color:#edf4f6!important;
   box-shadow:0 14px 30px #0005;
 }
+/* The same document illustration as the public index. Keep it in normal
+   flow so long titles and the retry/support action remain unobstructed. */
+.guest-app .public-offer-page .offer-unpublished::before {
+  content:"";display:block;float:right;width:41px;height:62px;
+  margin:0 0 8px 14px;
+  background:url('/owner20-artwork-sprite-retouched.webp') -319px -159.5px / 509px 223px no-repeat;
+}
+.guest-app .public-offer-page .offer-unpublished h1 {overflow-wrap:anywhere}
 .guest-app .public-offer-page .offer-text {padding:clamp(19px,3vw,36px)!important}
 .guest-app .public-offer-page :is(h1,h2,h3){color:#fff!important}
 .guest-app .public-offer-page .guest-explore-back{color:#ffac73!important}

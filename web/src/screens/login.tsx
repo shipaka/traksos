@@ -123,7 +123,7 @@ export function Login({ driver, entry, serviceContext }: {
   // Preserve only an explicitly entered login phone while the user
   // switches to client registration. A direct new registration starts blank.
   useEffect(() => {
-    if (native.isApp || !serviceContext || !GUEST_SERVICE_NAMES[serviceContext]) return;
+    if (!serviceContext || !Object.prototype.hasOwnProperty.call(GUEST_SERVICE_NAMES, serviceContext)) return;
     rememberGuestAction(serviceContext as GuestAction);
   }, [serviceContext]);
   const [phone, setPhone] = useState(() => {

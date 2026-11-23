@@ -261,8 +261,12 @@ try {
         const document=page.locator('main.public-offer-page');
         await document.locator('.offer-text, .offer-unpublished').waitFor();
         check(!await document.getByRole('alert').count(),route+': legal document request failed');
-        if(await document.locator('.offer-unpublished').count())
+        const unpublished=document.locator('.offer-unpublished');
+        if(await unpublished.count()){
           await document.getByRole('heading',{name:selectedTitle,exact:true}).waitFor();
+          const art=await unpublished.evaluate(node=>getComputedStyle(node,'::before').backgroundImage);
+          check(art.includes('owner20-artwork-sprite-retouched.webp'),route+': missing approved document illustration');
+        }
       }
       if(route==='offers' && width<900){
         // Captured 390px legal page previously had TrakBot covering the note.
