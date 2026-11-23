@@ -1095,7 +1095,7 @@ function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: ()
         </div>
       </div>
       <div className="traksos-no-performer-art" aria-hidden="true">
-        <img src="/feature-art/traksos-no-performer-search-approved-20261123.svg" alt="" loading="lazy"
+        <img src="/feature-art/traksos-no-performer-search-approved-20261123.webp" alt="" loading="lazy"
           width="1402" height="1122" decoding="async"/>
       </div>
     </section>
