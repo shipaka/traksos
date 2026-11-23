@@ -50,7 +50,7 @@ export class ModerationService {
       [p.kind,p.openedBy??null,p.orderId??null,p.bookingId??null,p.reviewId??null]);
     if(same) {
       if(p.text)await q.query(
-        `update mod_cases set text=coalesce(text || E'\\\\n— ', '') || $2 where id=$1`,
+        `update mod_cases set text=coalesce(text || E'\\n— ', '') || $2 where id=$1`,
         [same.id,p.text]);
       return {id:same.id,number:0,created:false,staff:[] as string[]};
     }
