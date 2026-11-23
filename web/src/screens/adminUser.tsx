@@ -1,9 +1,10 @@
 // Карточка пользователя для администратора: всё о человеке и все действия над ним — по разделам.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { get, post, rub, fmtPhone, fmtTime } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
-import { useLoad, useAction, Loading, Back, RubInput, go } from '../ui.tsx';
+import {useAction,useMe,Back,RubInput,go} from '../ui.tsx';
+import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
 
 const ROLE_NAMES: Record<string, string> = {
   client: 'Клиент', driver: 'Водитель', master: 'Мастер', tow: 'Эвакуатор', service: 'Сервис / рембаза', insurer: 'Страховой партнёр', inspection_operator: 'Оператор техосмотра', moderator: 'Модератор', admin: 'Админ',
@@ -15,11 +16,30 @@ const TABS = [
 type Tab = (typeof TABS)[number][0];
 
 export function AdminUser({ id }: { id: string }) {
-  const card = useLoad(() => get(`/api/admin/users/${id}`), [id]);
-  const [tab, setTab] = useState<Tab>('profile');
-  if (!card.data) return <main><Back to="admin" /><Loading error={card.error} /></main>;
-  const c = card.data;
-  const u = c.user;
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':admin-user:'+id;
+  const card=useAdminScopedResource<any>(`/api/admin/users/${encodeURIComponent(id)}`,scope,admin);
+  const [tab,setTab]=useState<Tab>('profile');
+  useEffect(()=>setTab('profile'),[scope]);
+  if(!admin)return <main><Back to="admin"/>
+    <div className="card" role="alert">Карточки пользователей доступны только администратору.</div>
+  </main>;
+  if(!card.data?.user||!Array.isArray(card.data.user.roles)||!card.data.pricing||
+    !Array.isArray(card.data.asClient)||!Array.isArray(card.data.vehicles)||
+    !Array.isArray(card.data.sessions))
+    return <main><Back to="admin"/>
+      <div className="card stack" role={card.error||card.data?'alert':'status'}>
+        {card.error?'Не удалось загрузить пользователя: '+card.error:
+          card.data?'Карточка пользователя получена не полностью. Действия недоступны.':
+          'Загружаем карточку пользователя…'}
+        <button type="button" className="btn ghost small" onClick={card.reload}>
+          Повторить загрузку карточки
+        </button>
+      </div>
+    </main>;
+  const c=card.data;
+  const u=c.user;
   const tabs = TABS.filter(([k]) => k !== 'performer' || c.performer);
   return (
     <main>
@@ -36,12 +56,12 @@ export function AdminUser({ id }: { id: string }) {
         {c.performer && <span className="pill">{LINE[c.performer.line_status]}</span>}
       </div>
       <div className="scroll-x">{tabs.map(([k, n]) => <button key={k} className="chip" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}</div>
-      {tab === 'profile' && <ProfileTab c={c} reload={card.reload} />}
+      {tab==='profile'&&<ProfileTab key={scope+':profile'} c={c} reload={card.reload}/>}
       {tab === 'orders' && <OrdersTab c={c} />}
       {tab === 'cars' && <CarsTab c={c} />}
-      {tab === 'performer' && c.performer && <PerformerTab c={c} reload={card.reload} />}
-      {tab === 'reviews' && <ReviewsTab c={c} reload={card.reload} />}
-      {tab === 'payments' && <PaymentsTab c={c} reload={card.reload} />}
+      {tab==='performer'&&c.performer&&<PerformerTab key={scope+':performer'} c={c} reload={card.reload}/>}
+      {tab==='reviews'&&<ReviewsTab key={scope+':reviews'} c={c} reload={card.reload}/>}
+      {tab==='payments'&&<PaymentsTab key={scope+':payments'} c={c} reload={card.reload}/>}
       {tab === 'log' && <LogTab c={c} />}
     </main>
   );
