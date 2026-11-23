@@ -42,7 +42,7 @@ const roleCopy: Record<string,{name:string;home:string;actions:[string,string][]
   service:{name:'Кабинет СТО',home:'/base',actions:[['/base/inbox','Заявки СТО'],['/base/money','Финансы'],['/base/me','Профиль СТО']]},
   insurer:{name:'Страховой партнёр',home:'/insurance',actions:[['/insurance/requests','Страховые дела'],['/inspections','Техосмотры'],['/profile','Настройки']]},
   inspection:{name:'Оператор техосмотра',home:'/inspections',actions:[['/inspections/processing','Назначенные осмотры'],['/profile','Аккаунт'],['/support','Поддержка']]},
-  courier:{name:'Курьер',home:'/courier',actions:[['/courier/jobs','Мои доставки'],['/courier/chat','Чат'],['/profile','Аккаунт']]},
+  courier:{name:'Курьер',home:'/courier',actions:[['/courier/jobs','Мои доставки'],['/support','Поддержка'],['/profile','Аккаунт']]},
   moderator:{name:'Модератор',home:'/moderation',actions:[['/moderation/cases','Очередь дел'],['/moderation/support','Обращения'],['/moderation/verify','Проверки']]},
   admin:{name:'Администратор',home:'/admin',actions:[['/admin/section/orders','Все заявки'],['/admin/section/diagnostics','Диагностика'],['/admin/test-center','Тестовые кабинеты']]},
 };
