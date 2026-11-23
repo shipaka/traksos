@@ -215,10 +215,20 @@ export class SupportService {
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body) values ($1,null,false,$2)`,
         [ticketId, isStaff(user) && t.user_id !== user.id
           ? 'Поддержка закрыла обращение. Если вопрос остался — напишите новое.' : 'Обращение закрыто.']);
+      if (t.user_id !== user.id) {
+        // Durable inbox belongs to the same commit as the terminal state and
+        // its system message. A second close cannot create a second alert.
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'support',$2,$3,$4)`,
+          [t.user_id, `Обращение №${t.number} закрыто`,
+            'Если вопрос остался — напишите новое', { ticketId }]);
+      }
       return true;
     });
     if (closedNow && t.user_id !== user.id) {
-      await this.notifier.notify([t.user_id], { type: 'support', ticketId }, {
+      // Alert already exists in the user's inbox. Optional push failure
+      // must never turn the successful closure into a duplicate retry.
+      await this.notifier.deliverStored([t.user_id], { type: 'support', ticketId }, {
         kind: 'normal', title: `Обращение №${t.number} закрыто`,
         body: 'Если вопрос остался — напишите новое', data: { ticketId },
       });
