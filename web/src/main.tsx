@@ -775,7 +775,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                 // action, including Help and "show tour", before it obscures
                 // the destination screen. Plain whitespace doesn't dismiss.
                 if((event.target as Element).closest('a,button')){
-                  const menu=event.currentTarget.closest('details');
+                  const menu=event.currentTarget.closest('details') as HTMLDetailsElement | null;
                   if(menu)menu.open=false;
                 }
               }}>
