@@ -1,7 +1,7 @@
 // Карточка пользователя для администратора: всё о человеке и все действия над ним — по разделам.
 
 import { useEffect, useState } from 'react';
-import { get, post, rub, fmtPhone, fmtTime } from '../api.ts';
+import { post, rub, fmtPhone, fmtTime } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
 import {useAction,useMe,Back,RubInput,go} from '../ui.tsx';
 import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
@@ -365,7 +365,7 @@ export function RefundForm({pay,onDone}:{pay:any;onDone:()=>void}) {
       <button type="button" className="btn ghost small" disabled={busy} onClick={()=>setOpen(false)}>Отмена</button>
       <button type="button" className="btn"
         disabled={busy||!validAmount||reason.trim().length<3}
-        onClick={()=>void submit()}>Подтвердить возврат {validAmount?rub(amount!):''}</button>
+        onClick={()=>void submit()}>Вернуть {validAmount?rub(amount!):''}</button>
     </div>
   </div>;
 }
