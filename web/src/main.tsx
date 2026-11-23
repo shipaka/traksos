@@ -100,6 +100,7 @@ import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
+import { TrakAppPhone } from './trakAppPhone.tsx';
 import { APPROVED_VISUALS } from './approvedVisuals.ts';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
 import { Training } from './screens/training.tsx';
@@ -919,10 +920,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           </nav>
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
-            <span className="track-sidebar-app-phone" aria-hidden="true">
-              <img src={APPROVED_VISUALS.logo} alt="TrakSOS" loading="lazy" />
-              <small>TrakSOS</small>
-            </span>
+            <TrakAppPhone className="track-sidebar-app-phone"/>
             <span className="track-sidebar-app-copy">
               <b>TrakSOS в телефоне</b>
               <small>Заявки и связь с мастером в одном месте</small>

@@ -400,6 +400,7 @@ const brandedAppPhone=await read('web/src/trakAppPhone.tsx');
 const desktopAppLanding=await read('web/src/screens/ownerDesktopHome20261120.tsx');
 expect(landing.includes('<TrakAppPhone className="public-app-phone"/>') &&
        desktopAppLanding.includes('<TrakAppPhone/>') &&
+       shell.includes('<TrakAppPhone className="track-sidebar-app-phone"/>') &&
        brandedAppPhone.includes('/icon-192.png?v=approved-20261120') &&
        brandedAppPhone.includes('className="traksos-app-phone-mark" src={APPROVED_VISUALS.logo}') &&
        shell.includes('src={APPROVED_VISUALS.logo}') &&
