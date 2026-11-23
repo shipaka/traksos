@@ -1,6 +1,7 @@
 import './styles.css';
 import './reducedMotion.css';
-if (localStorage.getItem('traksos.reduceMotion') === '1') document.documentElement.classList.add('traksos-reduced-motion');
+try { if (localStorage.getItem('traksos.reduceMotion') === '1') document.documentElement.classList.add('traksos-reduced-motion'); }
+catch { /* Storage may be unavailable in private/locked-down browsers; keep the site usable. */ }
 import './cabinetPremium.css';
 import './trackVisual.css';
 import './trackSearch.css';
