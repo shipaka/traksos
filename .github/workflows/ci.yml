@@ -90,7 +90,7 @@ jobs:
           node e2e/native-guest-layout.mjs
           node e2e/trakbot-android-compact.mjs
           node e2e/public-service-routing.mjs
-           node e2e/legacy-guest-deeplinks.mjs
+          node e2e/legacy-guest-deeplinks.mjs
           node e2e/api-session-race.mjs
           # Real React+Chromium; synthetic error responses, never private production media.
           node e2e/order-photo-error-ui.mjs
