@@ -80,8 +80,10 @@ const b=await build({
      window.__clientRoute=setView;
      const id=view.user;
      window.__clientMock.user={
-       id,name:'Имя '+id,roles:['client'],phone:id==='A'?'+79991111111':'+79992222222',
-       owner_id:null,company_name:'Company '+id,company_inn:''
+       id,name:'Имя '+id,roles:id==='driver'?['client','driver']:['client'],
+       phone:id==='A'?'+79991111111':'+79992222222',
+       owner_id:id==='driver'?'owner-synthetic':null,
+       company_name:'Company '+id,company_inn:''
      };
      return view.page==='home'?<Home/>:
        view.page==='orders'?<Orders as="client"/>:
@@ -171,6 +173,25 @@ try {
    throw Error('Old account retained an open password form');
  if(await page.getByText('Company A').count())
    throw Error('Old company details leaked into profile B');
+ // Owner controls are unknown during network failure; do not mislabel an
+ // offline check as a restriction explicitly imposed by the fleet owner.
+ await nav('home','driver');
+ await wait('/api/fleet/rules','driver',1);
+ await wait('/api/orders','driver',1);
+ await wait('/api/vehicle-service-requests','driver',1);
+ await answer('/api/orders','driver',0,[]);
+ await answer('/api/vehicle-service-requests','driver',0,[]);
+ await answer('/api/fleet/rules','driver',0,'offline fleet',true);
+ await page.getByRole('button',{name:'Повторить проверку доступа'}).waitFor();
+ await page.getByText('Не удалось проверить права — повторите запрос').first().waitFor();
+ if(await page.getByText('Ограниченный доступ · разрешает владелец').count())
+   throw Error('Offline fleet permissions misreported as a policy restriction');
+ await page.getByRole('button',{name:'Повторить проверку доступа'}).click();
+ await wait('/api/fleet/rules','driver',2);
+ await answer('/api/fleet/rules','driver',1,{allow:{tow:true,service:true,consult:true,shop:true,
+   insurance:true,inspection:true,repair:true}});
+ await page.getByText('Тягач, полуприцеп или сцепка').waitFor();
+
  if(errors.length)throw Error('React runtime errors: '+errors.join('; '));
  console.log('PASS client Home, Orders, Garage, Profile account scope and offline retries');
 } finally {await browser.close();}
