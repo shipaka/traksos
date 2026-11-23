@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { get, post, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction, useMe } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, patch, fmtTime, onEvent } from '../api.ts';
+import { useAction, useMe } from '../ui.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 
 /** Оформление заявки для владельца или водителя с разрешением владельца. */
@@ -45,14 +45,55 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
 export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
   const { me } = useMe();
   const [open, setOpen] = useState(false);
-  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion],
-    (event) => event.type === 'connection_restored' || (event.type === 'vehicle_service' && event.vehicleId === id));
-  const items = history.data as any[] | undefined;
+  const identity=(me?.id??'')+':'+id;
+  const identityRef=useRef(identity);
+  identityRef.current=identity;
+  const serialRef=useRef(0);
+  const [reloadVersion,setReloadVersion]=useState(0);
+  const [history,setHistory]=useState<{
+    identity:string;items:any[]|null;error:string;loading:boolean;
+  }>({identity:'',items:null,error:'',loading:true});
+  const [renewing,setRenewing]=useState<string|null>(null);
+  const [expiry,setExpiry]=useState('');
+  const [savingError,setSavingError]=useState('');
   const { busy, run } = useAction();
-  const activeInsurance = (items ?? []).filter(r => r.kind === 'insurance' && !['completed','cancelled','rejected'].includes(r.status));
-  const [renewing, setRenewing] = useState<string | null>(null);
-  const [expiry, setExpiry] = useState('');
-  if (!items) return history.error ? <div className="note">Не удалось загрузить историю услуг: {history.error}</div> : null;
+  const reloadHistory=()=>setReloadVersion(version=>version+1);
+  useEffect(()=>{
+    // Every GET belongs to exactly one account and vehicle; old requests
+    // can never publish old plates or histories into the next workspace.
+    const serial=++serialRef.current;
+    const requestedBy=identity;
+    setHistory({identity,items:null,error:'',loading:true});
+    get<any[]>(`/api/vehicles/${id}/service-history`).then(result=>{
+      if(serial!==serialRef.current||identityRef.current!==requestedBy)return;
+      if(!Array.isArray(result))throw new Error('Некорректный ответ истории');
+      setHistory({identity:requestedBy,items:result,error:'',loading:false});
+    }).catch(e=>{
+      if(serial!==serialRef.current||identityRef.current!==requestedBy)return;
+      setHistory({identity:requestedBy,items:null,
+        error:e instanceof Error?e.message:'Не удалось получить историю',loading:false});
+    });
+    return ()=>{serialRef.current++;};
+  },[identity,refreshVersion,reloadVersion,id]);
+  useEffect(()=>onEvent(event=>{
+    if(event.type==='connection_restored'||(event.type==='vehicle_service'&&event.vehicleId===id))
+      reloadHistory();
+  }),[id]);
+  useEffect(()=>{
+    setOpen(false);setRenewing(null);setExpiry('');setSavingError('');
+  },[identity]);
+  const current=history.identity===identity?history:null;
+  const items=current&&!current.error?current.items:null;
+  const activeInsurance=(items??[]).filter(r=>r.kind==='insurance'&&
+    !['completed','cancelled','rejected'].includes(r.status));
+  if (!items) return <div className="stack" role="status">
+    {current?.error ? <div className="banner warn" role="alert">
+      Не удалось загрузить историю услуг: {current.error}
+      <button type="button" className="btn ghost small" onClick={reloadHistory}>
+        Повторить загрузку истории
+      </button>
+    </div> : <div className="note">Загружаем историю страхования и техосмотра…</div>}
+  </div>;
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -121,7 +162,7 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
                 onClick={async () => {
                   if (!window.confirm('Отменить заявку? После отмены её нельзя будет возобновить.')) return;
                   const result = await run(() => post(`/api/vehicle-service-requests/${r.id}/cancel`), 'Заявка отменена');
-                  if (result) history.reload();
+                  if (result && identityRef.current === identity) reloadHistory();
                 }}>
                 Отменить заявку
               </button>
@@ -151,7 +192,9 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
                     <div className="row">
                       <button className="btn small" disabled={busy || !expiry} onClick={async () => {
                         const result = await run(() => patch(`/api/vehicle-service-requests/${r.id}/renewal`, { expiresOn: expiry }), 'Срок полиса обновлён');
-                        if (result) { setRenewing(null); history.reload(); }
+                        if (result && identityRef.current === identity) {
+                          setRenewing(null);setSavingError('');reloadHistory();
+                        }
                       }}>Сохранить срок</button>
                       <button className="btn ghost small" disabled={busy} onClick={() => setRenewing(null)}>Отмена</button>
                     </div>
