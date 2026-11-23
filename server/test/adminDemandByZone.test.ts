@@ -208,6 +208,9 @@ test('ECU alert reaches an electric master once and survives as a durable in-app
     taxStatus:'self_employed',inn:'780000000072',
     car:{brand:'Lada Largus',color:'белый',plate:'А123ВС78'}
   },master.token));
+  // The production sender correctly addresses only verified specialists.
+  // Approve this synthetic electric master only in disposable PostgreSQL.
+  await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[master.id]);
   const now=t.clock.now().getTime();
   const notice=ok(await t.api('POST','/api/admin/announcements',{
     audience:'master',service:'ecu',
