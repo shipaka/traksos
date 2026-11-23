@@ -220,6 +220,35 @@ try {
    });
    if(actual.ok && actual.points.length===0 && await network.locator('.tr-network-marker').count()!==0)
      throw Error(width+': visual map invented yellow partner pins absent from real backend');
+   // Interaction-only DOM probe, not a fake partner or a map screenshot:
+   // the pan handler must not capture pointer events from actual links nested
+   // in the map (the verified workshop detail uses a native <a>).
+   await network.evaluate(dialog=>{
+     const surface=dialog.querySelector('.tr-network-viewport');
+     if(!surface)throw Error('Missing interactive map viewport');
+     const link=document.createElement('a');
+     link.textContent='Pointer accessibility probe';
+     link.href='#/login';
+     link.dataset.mapLinkProbe='1';
+     link.style.cssText='position:absolute;top:65px;left:40px;z-index:200;min-height:44px;padding:10px;background:#152b42;color:white';
+     link.addEventListener('pointerdown',event=>{link.dataset.pointerId=String(event.pointerId);});
+     link.addEventListener('click',event=>{event.preventDefault();link.dataset.clicked='yes';});
+     surface.append(link);
+   });
+   const probe=network.locator('a[data-map-link-probe]');
+   const probeBox=await probe.boundingBox();
+   if(!probeBox)throw Error(width+': map link probe not rendered');
+   await page.mouse.move(probeBox.x+probeBox.width/2,probeBox.y+probeBox.height/2);
+   await page.mouse.down();
+   const stolen=await probe.evaluate(link=>{
+     const surface=link.closest('.tr-network-viewport');
+     return surface.hasPointerCapture(Number(link.dataset.pointerId));
+   });
+   await page.mouse.up();
+   const activated=await probe.getAttribute('data-clicked');
+   await probe.evaluate(link=>link.remove());
+   if(stolen || activated!=='yes')
+     throw Error(width+': map drag intercepted a nested link (captured='+stolen+', clicked='+activated+')');
    await page.screenshot({path:'e2e/shots/owner20-pc/partner-network-'+width+'.png',
      fullPage:false,animations:'disabled'});
    await page.keyboard.press('Escape');
