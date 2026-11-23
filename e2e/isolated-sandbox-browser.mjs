@@ -117,7 +117,22 @@ try{
           if(await menu.getAttribute('open')!==null ||
              !(await trigger.evaluate(node=>node===document.activeElement)))
             throw Error('Escape failed to close account menu and return focus');
-          console.log('CABINET MENU POINTER PASS',width,'cross gap, hover link, leave, Escape');
+          // Clicking a link to the *same* route used to leave the native
+          // details menu expanded: no hash change means no remount. Exercise
+          // the real Profile link rather than a synthetic menu action.
+          await page.goto(base+'/#/profile',{waitUntil:'domcontentloaded'});
+          const sameRouteMenu=page.locator('header.top details.account-menu');
+          await sameRouteMenu.locator('summary').click();
+          const current=page.evaluate(()=>location.hash);
+          const sameLink=sameRouteMenu.locator('nav a[href="#/profile"]');
+          await sameLink.waitFor({state:'visible'});
+          await sameLink.click();
+          if(await sameRouteMenu.getAttribute('open')!==null ||
+             await current!=='#/profile' || await page.evaluate(()=>location.hash)!=='#/profile')
+            throw Error('Clicking account link for current route leaves dropdown open');
+          await page.goto(base+'/#/',{waitUntil:'domcontentloaded'});
+          await page.locator('header.top details.account-menu').waitFor({state:'visible'});
+          console.log('CABINET MENU POINTER PASS',width,'gap, hover, leave, Escape, same-route link');
         }
         if(role==='admin' && width<=390){
           const headerLayout=await page.locator('header.top').evaluate(header=>{
