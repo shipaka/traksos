@@ -28,6 +28,14 @@ const workerNoticeWindow = (x:{starts_at:string;ends_at:string;published:boolean
   if(!x.published)return 'draft';
   return starts>at?'scheduled':'active';
 };
+// Show the campaign's real time interval without changing recorded order fees.
+const campaignWindow = (x:{starts_at:string;ends_at:string},at=Date.now()) => {
+  const start=new Date(x.starts_at).getTime();
+  const end=new Date(x.ends_at).getTime();
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return 'invalid';
+  if(end<=at)return 'expired';
+  return start>at?'scheduled':'active';
+};
 const mskTime = (iso:string) => new Date(iso).toLocaleString('ru-RU', {
   timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
 })+' МСК';
@@ -306,9 +314,14 @@ export function WorkerCommunications() {
       {!campaigns.data?<Loading error={campaigns.error}/>:campaigns.data.length===0?<span className="note">Акций пока нет</span>:campaigns.data.map((x:any)=>
         <div key={x.id} className="list-item stack">
           <b>{x.commission_pct}% · {x.service?(SERVICES[x.service]?.name??x.service):'Все выездные услуги'}</b>
-          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.enabled?'включена':'выключена'}</span>
+          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.enabled?'включена':'выключена'} · {({
+             invalid:'некорректный срок',expired:'срок истёк',
+             scheduled:'начало впереди',active:'текущий период'
+           } as Record<string,string>)[campaignWindow(x)]}</span>
+           {!x.enabled && campaignWindow(x)==='expired' &&
+             <span className="note">Истёкшую акцию нельзя включить. Для нового периода создайте новую.</span>
           <span className="note">{x.reason}</span>
-          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+          <button className="btn ghost small" disabled={busy||(!x.enabled&&['expired','invalid'].includes(campaignWindow(x)))} onClick={async()=>{
             if(!window.confirm(x.enabled?'Отключить акцию для новых заявок? Уже созданные заявки сохранят свою ставку.':'Включить акцию для новых заявок?'))return;
             const r=await run(()=>put('/api/admin/commission-campaigns/'+x.id+'/status',{enabled:!x.enabled}),
               x.enabled?'Акция выключена':'Акция включена');
