@@ -221,13 +221,17 @@ try {
     ]){
       await page.goto(BASE+'/#/'+(route.startsWith('offer/')?'offers':''));
       const links=route.startsWith('offer/')?page.locator('.guest-info-grid'):page.locator('.site-footer');
-      await links.locator('a[href="#/'+route+'"]').click();
+      const link=links.locator('a[href="#/'+route+'"]');
+      const selectedTitle=route.startsWith('offer/')?await link.locator('b').innerText():null;
+      await link.click();
       await page.waitForURL('**/#/'+route);
       if(heading) await page.getByRole('heading',{name:heading,exact:true}).waitFor();
       else {
         const document=page.locator('main.public-offer-page');
         await document.locator('.offer-text, .offer-unpublished').waitFor();
         check(!await document.getByRole('alert').count(),route+': legal document request failed');
+        if(await document.locator('.offer-unpublished').count())
+          await document.getByRole('heading',{name:selectedTitle,exact:true}).waitFor();
       }
       if(route==='offers' && width<900){
         // Captured 390px legal page previously had TrakBot covering the note.

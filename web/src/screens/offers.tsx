@@ -57,11 +57,20 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
   );
 }
 
+const documentTitles = new Map([
+  ['client', 'Оферта для клиентов'],
+  ['performer', 'Условия для партнёров'],
+  ['privacy', 'Обработка персональных данных'],
+  ['insurer', 'Договор страхового партнёра'],
+  ['inspection', 'Договор оператора техосмотра'],
+]);
+
 /** Страница оферты по ссылке: #/offer/client, #/offer/performer, #/offer/privacy.
  * A network/server failure is NOT proof a legal version is unpublished.
  */
 export function OfferPage({ audience }: { audience: string }) {
   const [o, setO] = useState<any>(undefined);
+  const title = documentTitles.get(audience) ?? 'Документ';
   const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
 
@@ -84,7 +93,8 @@ export function OfferPage({ audience }: { audience: string }) {
       <a href="#/" className="guest-explore-back">← На главную</a>
       {loadError ? (
         <section className="offer-unpublished" role="alert">
-          <h1>Не удалось загрузить документ</h1>
+          <h1>{title}</h1>
+          <p>Не удалось загрузить документ</p>
           <p>Сервер не ответил или произошла ошибка соединения. Это не означает, что документ не опубликован.</p>
           <button type="button" className="btn" onClick={() => setRetry(value => value + 1)}>Попробовать снова</button>
         </section>
@@ -92,7 +102,8 @@ export function OfferPage({ audience }: { audience: string }) {
         <div className="empty" role="status">Загружаем документ…</div>
       ) : o === null ? (
         <section className="offer-unpublished" role="status">
-          <h1>Документ пока не опубликован</h1>
+          <h1>{title}</h1>
+          <p>Документ пока не опубликован</p>
           <p>На сервере пока нет доступной действующей редакции для этого раздела. Мы не заменяем юридический текст примером или черновиком.</p>
           <a href="#/login">Войти для обращения в поддержку</a>
         </section>
