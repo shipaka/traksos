@@ -226,8 +226,24 @@ export class ServiceCenters {
     return { c, b };
   }
 
+  /** Push recipients are LIVE participants, never a permanent created_by
+   * list. A revoked driver must not receive old fleet plates or repairs. */
+  private async currentCustomerRecipients(b: any): Promise<string[]> {
+    const recipients: string[] = [b.client_id];
+    if (b.created_by && b.created_by !== b.client_id && b.vehicle_id) {
+      const current = await this.db.one<{ id: string }>(
+        `select v.id from vehicles v join users u on u.id=$3
+          where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+            and u.owner_id=v.owner_id and 'driver'=any(u.roles)`,
+        [b.vehicle_id, b.client_id, b.created_by]);
+      if (current) recipients.push(b.created_by);
+    }
+    return recipients;
+  }
+
   private async tell(b: any, title: string, body: string) {
-    await this.notifier.notify([b.client_id, b.created_by], { type: 'booking', bookingId: b.id, status: b.status },
+    await this.notifier.notify(await this.currentCustomerRecipients(b),
+      { type: 'booking', bookingId: b.id, status: b.status },
       { kind: 'normal', title, body, data: { bookingId: b.id } });
   }
 
