@@ -723,21 +723,63 @@ export class ServiceCenters {
     return this.db.query(`select c.*, u.phone from service_centers c join users u on u.id=c.owner_id order by (c.verification='pending') desc, c.created_at desc limit 100`);
   }
   async verify(actor: AuthUser, id: string, decision: 'approved' | 'rejected') {
-    // Existing moderation approval is the only gateway for validating public
-    // stationary coordinates. Never silently approve legacy rows on migration.
+    // Business approval is NOT evidence that self-entered coordinates are real.
+    // Fail closed on every standard verification; only a separate documented
+    // stationary location review may enable the yellow public map pin.
     const c = await this.db.one(`update service_centers
       set verification=$2,
-          public_map_location_verified_at=case
-            when $2='approved' and lat between -90 and 90 and lng between -180 and 180
-                 and not(lat=0 and lng=0) then now() else null end,
-          public_map_opt_in=case when $2='rejected' then false else public_map_opt_in end,
-          public_map_opted_at=case when $2='rejected' then null else public_map_opted_at end
+          public_map_location_verified_at=null,
+          public_map_opt_in=false,
+          public_map_opted_at=null
       where id=$1 returning *`, [id, decision]);
     if (!c) throw notFound();
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision }]);
+    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision, locationVerified:false }]);
     await this.notifier.notify([c.owner_id], { type: 'verification', decision },
-      { kind: 'normal', title: decision === 'approved' ? 'Сервис проверен' : 'Проверка не пройдена', body: decision === 'approved' ? 'Клиенты видят вас на карте' : 'Напишите в поддержку', data: {} });
+      { kind: 'normal', title: decision === 'approved' ? 'Сервис проверен' : 'Проверка не пройдена',
+        body: decision === 'approved'
+          ? 'СТО одобрена для работы. Публичная карта требует отдельной проверки адреса и вашего согласия.'
+          : 'Напишите в поддержку', data: {} });
     return c;
+  }
+
+  /** Explicit evidence-based review of FIXED station location, separate from
+   * ordinary business approval. Requires a human staff member's affirmative
+   * match against an actual independent source; audit records source and the
+   * exact address/coords approved, never mobile master GPS.
+   */
+  async verifyPublicLocation(actor:AuthUser,id:string,proof:{
+    kind:'official_registry'|'site_visit'|'verified_document';
+    reference:string;
+    confirmed:true;
+  }){
+    return this.db.tx(async q=>{
+      const center=await q.one<any>('select * from service_centers where id=$1 for update',[id]);
+      if(!center)throw notFound();
+      const lat=Number(center.lat),lng=Number(center.lng);
+      if(center.verification!=='approved' || center.paused ||
+         center.lat==null || center.lng==null ||
+         !Number.isFinite(lat)||!Number.isFinite(lng)||
+         lat < -90 || lat > 90 || lng < -180 || lng > 180 ||
+         (lat===0&&lng===0) ||
+         typeof center.address!=='string' || center.address.trim().length<8)
+        throw bad('public_location_not_ready',
+          'Сначала одобрите действующую СТО и убедитесь, что указан её настоящий стационарный адрес.');
+      const reference=proof.reference.trim();
+      if(reference.length<8 || proof.confirmed!==true)
+        throw bad('public_location_evidence_required',
+          'Для геопроверки нужны подтверждённые документы/источник и явное подтверждение сверки.');
+      const row=await q.one(`update service_centers
+         set public_map_location_verified_at=now(),
+             public_map_opt_in=false,public_map_opted_at=null
+         where id=$1 returning *`,[id]);
+      await q.query(`insert into audit_log(actor_id,action,target,data)
+        values($1,$2,$3,$4::jsonb)`,
+        [actor.id,'service.public_location.verify',id,JSON.stringify({
+          kind:proof.kind,reference,address:center.address,
+          lat,lng,confirmed:true,verifiedAt:new Date().toISOString()
+        })]);
+      return row;
+    });
   }
 }
 
