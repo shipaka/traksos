@@ -42,7 +42,8 @@ try{
   const page=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
   const errors=[];const requests=[];
   page.on('pageerror',e=>errors.push(e.message));
-  page.on('request',r=>requests.push(r.url()));
+  // The one synthetic HTML navigation is a test fixture, not a service call.
+  page.on('request',r=>{if(!r.isNavigationRequest())requests.push(r.url());});
   // about:blank is an opaque origin and forbids localStorage. Fulfil one
   // synthetic secure top-level page in Chromium so actual localStorage and
   // storage/focus events run without an HTTP server or a production request.
