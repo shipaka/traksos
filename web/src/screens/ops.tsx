@@ -248,7 +248,7 @@ export function WorkerCommunications() {
       <span className="note">Ставка применяется только к новым заявкам в интервале, фиксируется в заявке и сохраняется до расчёта. Клиентский сервисный сбор, цены мастеров и старые заявки не изменяются. Наложение акций запрещено.</span>
       <label className="stack">Услуга
         <select className="field" value={promoService} onChange={e=>setPromoService(e.target.value)}>
-          <option value="">Все виды выезда</option>{Object.entries(SERVICES).filter(([k])=>k!=='consult').map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
+          <option value="">Все виды выезда</option>{Object.entries(SERVICES).filter(([k])=>k!=='consult'&&k!=='ecu').map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
         </select></label>
       <label className="stack">Комиссия платформы, % (0 — без комиссии)
         <input className="field" type="number" min={0} max={100} step={0.5} value={promoPct} onChange={e=>setPromoPct(e.target.value)}/></label>
