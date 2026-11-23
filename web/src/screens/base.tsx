@@ -135,7 +135,7 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
 type StationTab = 'req' | 'cars' | 'expected' | 'ready' | 'done';
 export function BaseHome({ initialTab='req' }: { initialTab?: StationTab } = {}) {
   const { me } = useMe();
-  return <BaseHomePanel key={me?.id ?? 'guest'} initialTab={initialTab} />;
+  return <BaseHomePanel key={(me?.id ?? 'guest')+':'+initialTab} initialTab={initialTab} />;
 }
 function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
   const { me } = useMe();
@@ -755,7 +755,7 @@ function ServicesListPanel() {
     const next = normalizeSearch({...x, ...v});
     // Incident location exists only inside an authorized order context and
     // cannot become a persisted "global GPS" preference in a later session.
-    const current={...next,place:caseOrderId && v.place==='incident' ? 'incident' : next.place};
+    const current={...next,place:caseOrderId && (v.place==='incident' || (v.place===undefined && x.place==='incident')) ? 'incident' : next.place};
     if (me?.id) {
       try { localStorage.setItem(searchKey(me.id), JSON.stringify(next)); } catch { /* restricted */ }
     }
