@@ -206,6 +206,15 @@ try {
    if(!modalBox || modalBox.width<width*.62 || modalBox.width>width*.96 ||
       modalBox.height<900*.57 || modalBox.height>900*.94)
      throw Error(width+': network modal is not around 70vw×70vh '+JSON.stringify(modalBox));
+   // The modal must keep keyboard navigation inside the map, even when
+   // there are no opted-in partners to draw. No synthetic public pins.
+   const mapClose=network.getByRole('button',{name:'Закрыть карту'});
+   if(!await mapClose.evaluate(node=>document.activeElement===node))
+     throw Error(width+': expanded map did not focus its Close control');
+   await page.keyboard.press('Shift+Tab');
+   if(!await network.evaluate(dialog=>dialog.contains(document.activeElement)))
+     throw Error(width+': Shift+Tab escaped the expanded map dialog');
+   await mapClose.focus();
    const zoomButton=network.getByRole('button',{name:'Приблизить карту'});
    await zoomButton.click();
    const tiles=network.locator('.tr-network-tiles img');
