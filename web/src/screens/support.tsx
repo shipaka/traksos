@@ -10,13 +10,19 @@ const ENTRY_KIND: Record<string, string> = {
 import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
 
 export function SupportList() {
-  const list = useLoad(() => get('/api/support'), [], (e) => e.type === 'support');
+  const { me } = useMe();
+  // Scope tickets to the authenticated account even when the route survives a
+  // fast logout/login; never show the previous user's cached conversation list.
+  const list = useLoad(() => get('/api/support'), [me?.id], (e) => e.type === 'support');
   return (
     <main>
       <Back to="profile" />
       <div className="between"><h1>Поддержка</h1><button className="btn small" onClick={() => go('support/new')}>Написать</button></div>
-      <span className="note">Отвечаем круглосуточно, обычно за 15 минут. По заявке быстрее — кнопка «Позвать поддержку» в самой заявке.</span>
-      {!list.data ? <Loading error={list.error} /> : !list.data.length ? <div className="empty">Обращений пока нет</div> : (
+      <span className="note">Обращение сохраняется в личном кабинете. Первый ответ специалиста — в течение часа; если ответ задерживается, обращение передаётся администратору.</span>
+      {!list.data ? <div className="stack">
+        <Loading error={list.error} />
+        {list.error && <button type="button" className="btn ghost small" onClick={() => void list.reload()}>Повторить загрузку обращений</button>}
+      </div> : !list.data.length ? <div className="empty">Обращений пока нет</div> : (
         <div className="rows">{list.data.map((t: any) => (
           <a key={t.id} href={`#/support/${t.id}`} className="list-item">
             <div className="stack" style={{ gap: 2 }}>
@@ -41,9 +47,15 @@ export function SupportNew() {
     <main>
       <Back to={orderId ? `order/${orderId}` : 'support'} />
       <h1>{orderId ? 'Позвать поддержку' : 'Написать в поддержку'}</h1>
-      <div className="row">{(topics.data ?? []).map((t: string) => <button key={t} className="chip" aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
-      <textarea className="field" placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
-      <button className="btn" disabled={busy || !topic || text.trim().length < 3} onClick={async () => {
+      {topics.error && <div className="stack" role="alert">
+        <span className="note">Не удалось загрузить темы обращений: {topics.error}</span>
+        <button type="button" className="btn ghost small" onClick={() => void topics.reload()}>Повторить загрузку тем</button>
+      </div>}
+      {!topics.data && !topics.error && <span className="note" role="status">Получаем доступные темы поддержки…</span>}
+      <div className="row" role="group" aria-label="Тема обращения">{(topics.data ?? []).map((t: string) =>
+        <button type="button" key={t} className="chip" aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
+      <textarea className="field" aria-label="Описание проблемы" maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
+      <button type="button" className="btn" disabled={busy || !topics.data?.includes(topic) || text.trim().length < 3} onClick={async () => {
         const r = await run(() => post('/api/support', { topic, text, orderId }), 'Отправлено — поддержка уже видит');
         if (r) location.replace(`#/support/${r.id}`);
       }}>Отправить</button>
@@ -117,15 +129,19 @@ export function SupportThread({ id }: { id: string }) {
 
 /** Очередь обращений для сотрудников */
 export function SupportQueue() {
+  const { me } = useMe();
   const [status, setStatus] = useState<'open' | 'closed'>('open');
-  const q = useLoad(() => get(`/api/admin/support?status=${status}`), [status], (e) => e.type === 'support');
+  const q = useLoad(() => get(`/api/admin/support?status=${status}`), [status, me?.id], (e) => e.type === 'support');
   return (
     <div className="stack">
       <div className="grid2">
         <button className="seg" aria-pressed={status === 'open'} onClick={() => setStatus('open')}>Открытые</button>
         <button className="seg" aria-pressed={status === 'closed'} onClick={() => setStatus('closed')}>Закрытые</button>
       </div>
-      {!q.data ? <Loading error={q.error} /> : !q.data.length ? <div className="empty">{status === 'open' ? 'Открытых обращений нет' : 'Пусто'}</div> : (
+      {!q.data ? <div className="stack">
+        <Loading error={q.error} />
+        {q.error && <button type="button" className="btn ghost small" onClick={() => void q.reload()}>Повторить загрузку очереди</button>}
+      </div> : !q.data.length ? <div className="empty">{status === 'open' ? 'Открытых обращений нет' : 'Пусто'}</div> : (
         <div className="rows">{q.data.map((t: any) => (
           <a key={t.id} href={`#/support/${t.id}`} className="list-item">
             <div className="stack" style={{ gap: 2 }}>
