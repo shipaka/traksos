@@ -175,7 +175,14 @@ try {
         // temporary network/API error must retain one idempotency key.
         module.setToken('CI-RETRY-SAME-USER');
         const firstRetry=await module.postOrder(orderBody).catch(e=>e);
-        const successfulRetry=await module.postOrder(orderBody);
+        // Structurally identical JSON, deliberately reinserted with a
+        // different key order (including a future nested vehicle object).
+        const reordered={
+          description:orderBody.description,
+          zoneId:orderBody.zoneId,
+          service:orderBody.service
+        };
+        const successfulRetry=await module.postOrder(reordered);
         result.sameUserFirstStatus=firstRetry.status;
         result.sameUserSecondId=successfulRetry.order.id;
         result.sameUserKeys=orderCalls.slice(2).map(x=>x.key);
@@ -237,7 +244,7 @@ try {
     assert.equal(actual.sameUserKeys.length,2);
     assert.ok(actual.sameUserKeys[0]);
     assert.equal(actual.sameUserKeys[0],actual.sameUserKeys[1],
-      'same-account retry changed idempotency key and could create a duplicate order');
+      'same-account retry with reordered JSON keys could create a duplicate order');
     assert.deepEqual(actual.sameUserAuth,[
       'Bearer CI-RETRY-SAME-USER','Bearer CI-RETRY-SAME-USER'
     ]);

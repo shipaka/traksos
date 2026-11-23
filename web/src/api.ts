@@ -115,9 +115,26 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
 type PendingOrderKey = { fingerprint: string; key: string; createdAt: number };
 let fallbackPending: PendingOrderKey | null = null;
 
+// A React form can recreate the SAME request with a different object-key
+// insertion order after reconnect. Fingerprint the JSON meaning, not its
+// JavaScript property order, or an ambiguous POST could get a fresh key.
+function canonicalOrderJson(body: unknown): string {
+  const value = JSON.parse(JSON.stringify(body));
+  const sorted = (item: any): any => {
+    if (Array.isArray(item)) return item.map(sorted);
+    if (item !== null && typeof item === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const key of Object.keys(item).sort()) result[key] = sorted(item[key]);
+      return result;
+    }
+    return item;
+  };
+  return JSON.stringify(sorted(value));
+}
 async function fingerprintOrder(body: unknown): Promise<string> {
-  const message = new TextEncoder().encode(JSON.stringify(body));
-  if (!globalThis.crypto?.subtle) return 'memory:' + JSON.stringify(body);
+  const canonical = canonicalOrderJson(body);
+  const message = new TextEncoder().encode(canonical);
+  if (!globalThis.crypto?.subtle) return 'memory:' + canonical;
   const digest = await globalThis.crypto.subtle.digest('SHA-256', message);
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
