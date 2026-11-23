@@ -592,8 +592,8 @@ export class OrdersService {
     await this.db.tx(async (q) => {
       await this.guarded(q,
         `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null,
-            dispatch_started_at=null
-          where id=$1 and status=$2 and performer_id=$3`, [orderId, o.status, user.id]);
+            dispatch_started_at=$4
+          where id=$1 and status=$2 and performer_id=$3`, [orderId, o.status, user.id, this.now()]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status in ('active','chosen','lost')`, [orderId]);
       await q.query(`delete from order_dispatch where order_id=$1 and performer_id<>$2`, [orderId, user.id]);
       await q.query(`update order_dispatch set status='declined' where order_id=$1 and performer_id=$2`, [orderId, user.id]);
@@ -878,7 +878,7 @@ export class OrdersService {
     // with stale invitations/bids or without the immutable retry event.
     // Re-dispatch starts only after the reset has committed.
     await this.db.tx(async (q) => {
-      await this.guarded(q, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0, dispatch_started_at=null where id=$1 and status='no_performer'`, [orderId]);
+      await this.guarded(q, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0, dispatch_started_at=$2 where id=$1 and status='no_performer'`, [orderId, this.now()]);
       await q.query(`delete from order_dispatch where order_id=$1`, [orderId]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
       await this.event(q, orderId, user.id, 'retry', {});

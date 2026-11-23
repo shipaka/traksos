@@ -78,8 +78,9 @@ test('performer handoff starts a fresh dispatch SLA clock instead of inheriting 
     'minimal acknowledgement must report the actual re-dispatch status');
   assert.equal((await t.api('GET','/api/orders/'+id,undefined,master.token)).status,403,
     'former performer must not regain access to private replacement order');
-  assert.ok(current?.dispatch_started_at===null ||
-    new Date(current.dispatch_started_at).getTime()>oldStart.getTime()+60*60_000,
+  assert.ok(current?.dispatch_started_at,
+    'the new dispatch clock must exist even if a later delivery fails');
+  assert.ok(new Date(current!.dispatch_started_at!).getTime()>oldStart.getTime()+60*60_000,
     'replacement dispatch must not carry over the exhausted original SLA clock');
   const events=await t.db.one<{c:number}>(
     "select count(*)::int c from order_events where order_id=$1 and type='performer_dropped'",[id]);
