@@ -101,7 +101,8 @@ const GUEST_SERVICE_NAMES: Record<string,string> = {
   van:'Выездной мастер',tow:'Эвакуация',sto:'СТО и ремонт',
   ecu:'Специалисты ЭБУ',consult:'Консультация',parts:'Запчасти',
   insurance:'Страхование',inspection:'Техосмотр',sos:'Помощь SOS',
-  air:'Эфир водителей',club:'Клуб TrakSOS',tech:'ТехБаза'
+  air:'Эфир водителей',club:'Клуб TrakSOS',tech:'ТехБаза',
+  garage:'Мой гараж',training:'Обучение',trakbot:'TrakBot'
 };
 export function Login({ driver, entry, serviceContext }: {
   driver?: boolean; entry?: Intent; serviceContext?: string;
@@ -339,8 +340,9 @@ export function Login({ driver, entry, serviceContext }: {
         consult: '#/new/consult', insurance: '#/insurance/request/new',
         parts: '#/shop', inspection: '#/garage', ecu: '#/new/ecu',
         sos: '#/sos', air: '#/air', club: '#/air',
-        tech: '#/techbase/driver'
-      } as Record<string,string>)[pending ?? ''] : undefined;
+        tech: '#/techbase/driver', garage: '#/garage',
+        training: '#/training', trakbot: '#/trakbot'
+      } as Record<GuestAction,string>)[pending as GuestAction] : undefined;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();

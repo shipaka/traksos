@@ -145,12 +145,14 @@ try {
       await page.waitForURL('**/#/join');
       await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
       for(const path of ['help','explore/guide','explore/pricing','explore/club',
-        'explore/van','explore/ecu','explore/parts']){
+        'explore/van','explore/ecu','explore/parts',
+        'explore/garage','explore/training','explore/trakbot']){
         await page.goto(BASE+'/#/'+path);
         await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
         if(await page.locator('main.guest-explore').count())
           throw Error(width+'px: obsolete native guest page at '+path);
-        if(path==='explore/van' || path==='explore/ecu' || path==='explore/parts'){
+        if(['explore/van','explore/ecu','explore/parts',
+          'explore/garage','explore/training','explore/trakbot'].includes(path)){
           const service=path.split('/')[1];
           if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!==service)
             throw Error(width+'px: Android deep link lost selected service '+service);
