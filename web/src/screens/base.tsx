@@ -552,10 +552,22 @@ export function BaseSetup() {
           : 'Точка скрыта от публичной карты'}</span>
         {!cab.data.center.public_map_location_verified_at &&
           <span className="note">Для публикации координаты и адрес въезда должен подтвердить модератор.</span>}
+        {cab.data.center.confirmDue && <div className="stack">
+          <span className="note">Прошло больше семи дней с подтверждения услуг.
+            {cab.data.center.public_map_opt_in
+              ? ' Согласие сохранено, но точка не показывается до подтверждения актуальности.'
+              : ' Чтобы включить публичную точку, сначала подтвердите актуальность услуг.'}
+          </span>
+          <button type="button" className="btn ghost" disabled={busy} onClick={async()=>{
+            if(await run(()=>basePost('/api/base/confirm-accepts',{}),
+              'Услуги подтверждены, публикация снова доступна'))cab.reload();
+          }}>Подтвердить актуальность услуг</button>
+        </div>}
         <button type="button" className={'btn'+(cab.data.center.public_map_opt_in?' ghost':'')}
           disabled={busy || (!cab.data.center.public_map_opt_in &&
             (cab.data.center.verification!=='approved' ||
-              cab.data.center.paused || !cab.data.center.public_map_location_verified_at))}
+              cab.data.center.paused || cab.data.center.confirmDue ||
+              !cab.data.center.public_map_location_verified_at))}
           onClick={async()=>{
             const enabled=!cab.data.center.public_map_opt_in;
             if(await run(()=>basePut('/api/service/public-map',{enabled}),
