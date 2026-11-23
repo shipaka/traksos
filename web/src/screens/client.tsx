@@ -1409,21 +1409,13 @@ const PRIO: [string, string][] = [['recommended','Рекомендуем'],['nea
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
 function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
   const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'near'; } });
-  const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
-  const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, geo?.lng, brand, verifiedOnly]);
+  const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', sort:prio, ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
+  const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, geo?.lng, brand, verifiedOnly, prio]);
   if (!l.data) return null;
   const d = l.data;
   const choose = (k: string) => { setPrio(k); try { localStorage.setItem('traksos.prio', k); } catch { /* */ } };
-  const items = [...d.items].sort((a:any,b:any)=>{
-    const verified=Number(b.verification==='approved')-Number(a.verification==='approved');
-    const near=(a.distanceKm??1e9)-(b.distanceKm??1e9);
-    const criterion=prio==='cheap'?(a.callOut??1e12)-(b.callOut??1e12)
-      :prio==='brand'?(b.brandStars??0)-(a.brandStars??0)||near
-      :prio==='fast'?(a.etaMin??1e9)-(b.etaMin??1e9)
-      :prio==='near'?near:verified||near;
-    // "Recommended" rewards verification. Explicit sort modes MUST take precedence.
-    return criterion||(prio==='recommended'?near:verified||near);
-  });
+  // Server sorts the FULL eligible pool before slicing eight displayed results.
+  const items = d.items;
   return (
     <div className="card">
       <div className="between">

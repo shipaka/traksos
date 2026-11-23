@@ -857,7 +857,11 @@ export function createApp(d: Deps) {
     const q = c.query; const num = (x: string | null) => (x == null || x === '' || !Number.isFinite(Number(x)) ? undefined : Number(x));
     const service = q.get('service') ?? 'electric';
     if (!/^[a-z]{2,12}$/.test(service)) throw bad('bad_service', 'Нет такой услуги');
-    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined, verifiedOnly: q.get('verifiedOnly') === '1' });
+    const sort=q.get('sort')??'recommended';
+    if(!['recommended','near','cheap','brand','fast'].includes(sort))
+      throw bad('bad_sort','Неизвестный порядок поиска мастеров');
+    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined,
+      verifiedOnly: q.get('verifiedOnly') === '1', sortBy:sort as 'recommended'|'near'|'cheap'|'brand'|'fast' });
   });
   r.post('/api/orders/:id/part', true, (c: AuthedCtx) => onsite.part(c.user, c.params.id, parse(z.object({ mode: z.enum(['wait', 'resume', 'return', 'tow']) }), c.body).mode));
 

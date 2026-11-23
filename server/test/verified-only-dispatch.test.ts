@@ -58,3 +58,17 @@ test('nearby counters share a real radius; unknown geography is explicitly natio
   assert.equal(unknown.scope,'network','unknown position must not claim one city');
   assert.equal(unknown.radiusKm,null);
 });
+
+test('explicit cheap sorting is applied across the full pool before truncation',async()=>{
+  await t.db.query('update performer_profiles set call_out_price=$2 where user_id=$1',[approved.id,800_000]);
+  await t.db.query('update performer_profiles set call_out_price=$2 where user_id=$1',[pending.id,100_000]);
+  const recommended=ok(await t.api('GET',
+    '/api/masters-nearby?service=electric&sort=recommended',undefined,client.token));
+  assert.equal(recommended.items[0].verification,'approved','default search should promote verified');
+  const cheap=ok(await t.api('GET',
+    '/api/masters-nearby?service=electric&sort=cheap',undefined,client.token));
+  assert.notEqual(cheap.items[0].verification,'approved','the explicit price sort must take precedence');
+  assert.ok(cheap.items[0].callOut < cheap.items[1].callOut);
+  const invalid=await t.api('GET','/api/masters-nearby?service=electric&sort=unknown',undefined,client.token);
+  assert.equal(invalid.status,400);
+});

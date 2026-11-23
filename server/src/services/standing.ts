@@ -66,7 +66,7 @@ export class StandingService {
   }
 
   /** Клиенту до вызова: сколько мастеров на линии, сколько свободны и подходят, и кто ближе всего — без контактов */
-  async mastersNearby(user: AuthUser, p: { service: string; lat?: number; lng?: number; brand?: string; verifiedOnly?: boolean }) {
+  async mastersNearby(user: AuthUser, p: { service: string; lat?: number; lng?: number; brand?: string; verifiedOnly?: boolean; sortBy?: 'recommended'|'near'|'cheap'|'brand'|'fast' }) {
     const all = await this.settings!.all();
     const kind = performerKindFor(p.service);
     const list = await this.db.query<Candidate & { name: string | null; tier: string; call_out_price: number | null; created_at: Date; jobs: number; busy: boolean }>(
@@ -86,11 +86,16 @@ export class StandingService {
       : list;
     const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
     const free = inScope.filter((c) => !c.busy && c.line_status !== 'on_job');
-    const ranked = rankCandidates(order as any, free, { radiusKm: all.dispatch.radiusKm, maxCandidates: 20, cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now() });
+    // Preview all eligible candidates first: sorting after an arbitrary 8/20-person
+    // cutoff can hide the actually cheapest/closest specialist.
+    const ranked = rankCandidates(order as any, free, {
+      radiusKm: all.dispatch.radiusKm, maxCandidates: free.length,
+      cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now()
+    });
     const byId = new Map(free.map((c) => [c.user_id, c]));
     const speed = all.dispatch.citySpeedKmh || 40;
     const LEVEL: Record<string, number> = { excellent: 3, good: 2, last_resort: 1 };
-    const items = ranked.slice(0, 8).map((r) => {
+    const items = ranked.map((r) => {
       const c = byId.get(r.user_id)!;
       const tierPrice = (all.pricing.tiers as any)[c.tier]?.callOut ?? null;
       return {
@@ -100,7 +105,17 @@ export class StandingService {
         callOut: c.call_out_price ?? tierPrice,
       };
     });
+    const sortBy=p.sortBy??'recommended';
+    items.sort((a,b)=>{
+      const verified=Number(b.verification==='approved')-Number(a.verification==='approved');
+      const near=(a.distanceKm??1e9)-(b.distanceKm??1e9);
+      const primary=sortBy==='cheap'?(a.callOut??1e12)-(b.callOut??1e12)
+        :sortBy==='brand'?(b.brandStars??0)-(a.brandStars??0)||near
+        :sortBy==='fast'?(a.etaMin??1e9)-(b.etaMin??1e9)
+        :sortBy==='near'?near:verified||near;
+      return primary||(sortBy==='recommended'?near:verified||near);
+    });
     return { scope:hasLocation?'nearby':'network', radiusKm:hasLocation?all.dispatch.radiusKm:null,
-      online: inScope.length, free: free.length, match: ranked.length, items };
+      online: inScope.length, free: free.length, match: ranked.length, items:items.slice(0,8) };
   }
 }
