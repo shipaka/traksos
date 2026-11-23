@@ -25,7 +25,7 @@ function invalid(value,pattern){
 }
 // These limits exactly match server src/app.ts import schema.
 invalid(csv(['V'.repeat(81)+';AA;Название;engine;']),/80/);
-invalid(csv(['Scania;A'.repeat(101)+';Название;engine;']),/артикул|100|строка/i);
+invalid(csv(['Scania;'+ 'A'.repeat(101)+';Название;engine;']),/артикул|100|строка/i);
 invalid(csv(['Scania;ABC;'+'Т'.repeat(121)+';engine;']),/120/);
 invalid(csv(['Scania;ABC;Название;engine;'+'x'.repeat(401)]),/400/);
 invalid(csv(['Scania;ABC;Название;unspecified;']),/неизвестная категория/);
