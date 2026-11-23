@@ -89,12 +89,12 @@ test('HTTP/PG: parallel close is idempotent; failed closure event rolls back sta
     // failure in that entry must roll back BOTH closed status and system event.
     await t.db.exec(`
       create function reject_support_inbox_20261124() returns trigger
-      language plpgsql as $ begin
+      language plpgsql as $$ begin
         if new.kind='support' and new.title like '%закрыто%' then
           raise exception 'synthetic support inbox failure';
         end if;
         return new;
-      end; $;
+      end; $$;
       create trigger reject_support_inbox_20261124 before insert on notifications
         for each row execute function reject_support_inbox_20261124();
     `);
