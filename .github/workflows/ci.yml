@@ -104,6 +104,8 @@ jobs:
           node e2e/order-photo-error-ui.mjs
           # Sign-in, client registration and partner onboarding must stay above the approved public page.
           node e2e/auth-overlay.mjs
+          # In-flight SMS and password responses cannot switch the user's identity.
+          node e2e/auth-session-transition-hardening-20261124.mjs
           node e2e/temporary-demo-entry.mjs
           node e2e/header-search.mjs
           # public-shots already ran before visual contract checks; avoid duplicate capture.
