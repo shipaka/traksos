@@ -857,10 +857,15 @@ export class OrdersService {
   async retry(user: AuthUser, orderId: string) {
     const o = await this.mustBeClient(user, orderId);
     transition(o.status, 'retry', 'client');
-    await this.guarded(this.db, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0 where id=$1 and status='no_performer'`, [orderId]);
-    await this.db.query(`delete from order_dispatch where order_id=$1`, [orderId]);
-    await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
-    await this.event(this.db, orderId, user.id, 'retry', {});
+    // A failed cleanup must not leave a customer-facing "searching" order
+    // with stale invitations/bids or without the immutable retry event.
+    // Re-dispatch starts only after the reset has committed.
+    await this.db.tx(async (q) => {
+      await this.guarded(q, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0 where id=$1 and status='no_performer'`, [orderId]);
+      await q.query(`delete from order_dispatch where order_id=$1`, [orderId]);
+      await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
+      await this.event(q, orderId, user.id, 'retry', {});
+    });
     await this.startDispatch(orderId);
     return this.view(user, orderId);
   }
