@@ -488,7 +488,10 @@ export function ShopCart() {
     if(!selectedIds)setOutcomeUnknown(false);
   },[selectedIds]);
   const d = c.data;
-  if (!d) return <main><Back to="shop" label="Магазин" /><Loading error={c.error} /></main>;
+  if (!d) return <main><Back to="shop" label="Магазин" />
+    <Loading error={c.error} />
+    {c.error && <button className="btn ghost small" onClick={c.reload}>Повторить загрузку магазина</button>}
+  </main>;
   if (!d.enabled) { go('shop'); return null; }
   const allIds=Object.keys(cart);
   const productsById=new Map<string,any>((selection.data?.products??[]).map((p:any)=>[p.id,p]));
@@ -512,7 +515,6 @@ export function ShopCart() {
     const next={...cart};
     if(q<=0)delete next[id];else next[id]=Math.min(99,q);
     setCart(next);
-    setOutcomeUnknown(false);
   };
   const orderValid=delivery==='master'?!!live.data&&open.some((o:any)=>o.id===orderId):
     delivery==='pickup'?!!dl.pickup:delivery==='delivery'?!!dl.delivery&&!!address.trim():false;
@@ -549,6 +551,38 @@ export function ShopCart() {
       <Back to={'shop' + contextSuffix} label="Магазин" />
       <div><h1>Корзина</h1><div className="sub">Доступные способы оплаты зависят от настроек магазина; компаниям — по счёту.</div></div>
       {fromServiceBooking && <div className="note">Подбор открыт из ремонта СТО. Заказ товаров не меняет стоимость ремонта и не добавляет детали в смету автоматически.</div>}
+      {selection.error && <div className="banner warn" role="alert">
+        Не удалось перепроверить цену и доступность выбранных деталей: {selection.error}
+        <button className="btn ghost small" onClick={selection.reload}>Повторить проверку товаров</button>
+      </div>}
+      {allIds.length>50 && <div className="banner warn" role="alert">
+        В заказе допускается не более 50 разных позиций. Уберите лишние товары перед оформлением.
+      </div>}
+      {missing.length>0 && <div className="banner warn" role="alert">
+        {missing.length} позиций уже недоступны в магазине. Удалите их из корзины перед оформлением.
+        <div className="row">
+          {missing.map(id=><button key={id} className="btn ghost small"
+            disabled={busy} onClick={()=>setQty(id,0)}>Убрать недоступную позицию</button>)}
+        </div>
+      </div>}
+      {live.error && <div className="banner warn" role="alert">
+        Не удалось проверить активные ремонтные заявки: {live.error}
+        <button className="btn ghost small" onClick={live.reload}>Повторить проверку заявок</button>
+      </div>}
+      {vehicles.error && <div className="banner warn" role="alert">
+        Не удалось проверить гараж: {vehicles.error}
+        <button className="btn ghost small" onClick={vehicles.reload}>Повторить проверку гаража</button>
+      </div>}
+      {outcomeUnknown && <div className="banner warn" role="alert">
+        Не получили подтверждение оформления. Сервер мог уже создать заказ и зарезервировать товары.
+        Сначала проверьте историю покупок. Не отправляйте заказ повторно вслепую.
+        <div className="row">
+          <a href="#/shop/history" className="btn ghost small">Проверить историю покупок</a>
+          <button className="btn ghost small" onClick={()=>setOutcomeUnknown(false)}>
+            Я проверил историю — разрешить новую отправку
+          </button>
+        </div>
+      </div>}
       {!lines.length ? <div className="empty">{selection.error ?? (selectedIds ? 'Проверяем актуальную цену и наличие…' : 'Корзина пуста')}</div> : <>
         <div className="stack">
           {lines.map(({ p, qty }) => (
@@ -556,9 +590,9 @@ export function ShopCart() {
               <Thumb p={p} size={48} />
               <div className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}><b>{p.name}</b><span className="note">{rub(p.price)} · {p.inStock ? 'в наличии' : `под заказ, от ${p.leadDays} дн.`}</span></div>
               <div className="row" style={{ flexWrap: 'nowrap', gap: 4 }}>
-                <button className="bell" aria-label="Меньше" onClick={() => setQty(p.id, qty - 1)}>−</button>
+                <button className="bell" aria-label="Меньше" disabled={busy} onClick={() => setQty(p.id, qty - 1)}>−</button>
                 <b style={{ minWidth: 20, textAlign: 'center' }}>{qty}</b>
-                <button className="bell" aria-label="Больше" onClick={() => setQty(p.id, qty + 1)}>+</button>
+                <button className="bell" aria-label="Больше" disabled={busy} onClick={() => setQty(p.id, qty + 1)}>+</button>
               </div>
             </div>
           ))}
@@ -598,7 +632,7 @@ export function ShopCart() {
           {delivery === 'delivery' && <><dt>Доставка</dt><dd>{rub(dl.deliveryPrice)}</dd></>}
           <dt>Итого</dt><dd><b>{rub(total)}</b></dd>
         </dl>
-        <button className="btn" disabled={busy || !delivery || (delivery === 'delivery' && !address.trim()) || (delivery === 'master' && !orderId)} onClick={submit}>Оформить заказ</button>
+        <button className="btn" disabled={!maySubmit} onClick={submit}>Оформить заказ</button>
         <span className="note">Что есть в наличии — отложим сразу. Под заказ — уточним срок и напишем.</span>
       </>}
     </main>
