@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { rememberGuestService, rememberGuestAction } from '../guestCatalog.ts';
 import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { requestTrakBotOpen } from '../trakbotEvents.ts';
@@ -64,11 +64,22 @@ function Feature({item}:{item:typeof features[number]}) {
 }
 export function OwnerDesktopHome20261120({ overlayBackground = false }: { overlayBackground?: boolean } = {}) {
   const [mapOpen,setMapOpen]=useState(false);
-  const mapLauncher=useRef<HTMLButtonElement|null>(null);
-  function closeMap(){
-    setMapOpen(false);
-    requestAnimationFrame(()=>mapLauncher.current?.focus());
+  const mapReturnFocus=useRef<HTMLButtonElement|null>(null);
+  // Restoring focus in a layout effect happens after React removes the modal
+  // but before Playwright or a screen reader observes the closed dialog.
+  // requestAnimationFrame was too late, and the footer has a different trigger.
+  useLayoutEffect(()=>{
+    if(!mapOpen && mapReturnFocus.current){
+      const opener=mapReturnFocus.current;
+      mapReturnFocus.current=null;
+      if(opener.isConnected && !opener.disabled) opener.focus();
+    }
+  },[mapOpen]);
+  function openMap(event:import('react').MouseEvent<HTMLButtonElement>){
+    mapReturnFocus.current=event.currentTarget;
+    setMapOpen(true);
   }
+  function closeMap(){ setMapOpen(false); }
   return <main className="owner20-home" id="public-home"
     inert={overlayBackground || undefined} aria-hidden={overlayBackground || undefined}>
     <header className="owner20-top">
@@ -122,15 +133,14 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
         <div className="owner20-map-inner">
           <div className="owner20-map-shape"><span className="owner20-map-source" aria-hidden="true" />
             <span className="owner20-map-demo-tag">ДЕМО</span>
-            <button type="button" className="owner20-map-open" ref={mapLauncher}
-              aria-label="Развернуть карту партнёров" aria-expanded={mapOpen}
-              onClick={()=>setMapOpen(true)}>
+            <button type="button" className="owner20-map-open" aria-label="Развернуть карту партнёров" aria-expanded={mapOpen}
+              onClick={openMap}>
               <span className="owner20-map-expand-label">Развернуть карту</span>
             </button>
           </div>
           <div className="owner20-map-legend"><p><i className="teal"/>Пример зоны покрытия</p><p><i/>Планируемое расширение</p><small>Доступность услуг зависит от региона и партнёрской сети.</small></div>
         </div>
-        <button type="button" className="owner20-map-footer-open" onClick={()=>setMapOpen(true)}>Подробнее о покрытии →</button>
+        <button type="button" className="owner20-map-footer-open" onClick={openMap}>Подробнее о покрытии →</button>
       </aside>
       {mapOpen && <PartnerNetworkMap onClose={closeMap}/>} 
     </section>
