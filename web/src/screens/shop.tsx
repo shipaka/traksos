@@ -417,11 +417,12 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
 
 /** Purchase history is loaded only when the customer opens this page, never for all fleet vehicles. */
 export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
+  const {me}=useMe();
   const [page, setPage] = useState(0);
   const c = useShopPrivateLoad(() => get('/api/shop?light=1'), []);
   const history = useShopPrivateLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
     [page, vehicleId], (e) => e.type === 'shop');
-  useEffect(()=>setPage(0),[vehicleId]);
+  useEffect(()=>setPage(0),[vehicleId,me?.id]);
   return <main>
     <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
     <h1>История покупок</h1>
