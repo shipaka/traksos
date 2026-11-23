@@ -33,6 +33,18 @@ test('actual invited calls take precedence and become no_response', () => {
   })), 'no_response');
 });
 
+test('real offer outranks invitation-only no_response when all bids are withdrawn', () => {
+  assert.equal(classifyNoPerformerReason(snapshot({
+    invited: true, hadOffer: true, profiles: [partner()],
+  })), 'offers_withdrawn');
+  assert.equal(classifyNoPerformerReason(snapshot({
+    invited: false, hadOffer: true, profiles: [],
+  })), 'offers_withdrawn', 'do not erase a proven bid when the worker profile is deleted');
+  assert.equal(classifyNoPerformerReason(snapshot({
+    invited: true, hadOffer: false, profiles: [partner()],
+  })), 'no_response', 'bidding invitations with zero bids remain no_response');
+});
+
 test('nearby offline, paused and vacation partners can be temporarily unavailable', () => {
   for (const patch of [
     {line_status:'offline'},
