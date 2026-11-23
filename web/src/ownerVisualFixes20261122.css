@@ -1334,7 +1334,7 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 }
 @media(min-width:900px) and (max-width:1279px){
   .guest-app.guest-home .owner20-quick>a{gap:4px!important;padding:9px 5px!important}
-  .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon{
+  .guest-app.guest-home .owner20-quick>a:not(.owner20-quick-trakbot)>.owner20-quick-icon{
     flex:0 0 25px!important;width:25px!important
   }
   .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon svg {

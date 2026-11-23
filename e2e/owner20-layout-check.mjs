@@ -192,6 +192,13 @@ try {
    await page.screenshot({path:'e2e/shots/owner20-pc/home-'+width+'.png',fullPage:true,animations:'disabled'});
     const botShortcut=page.locator('.owner20-quick-trakbot');
     if(await botShortcut.count()!==1) throw Error('TrakBot shortcut missing');
+    const mascotFits=await botShortcut.evaluate(tile=>{
+      const mascot=tile.querySelector('.trakbot-mascot-original').getBoundingClientRect();
+      const title=document.createRange();
+      title.selectNodeContents(tile.querySelector('b'));
+      return mascot.left>=tile.getBoundingClientRect().left && mascot.right<=title.getBoundingClientRect().left;
+    });
+    if(!mascotFits)throw Error(width+'px: fifth tile clips TrakBot or overlaps its label');
     await botShortcut.click();
     await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
     if(!page.url().endsWith('/#/')) throw Error('TrakBot shortcut navigated off 617 landing');
