@@ -116,7 +116,12 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
   );
 }
 
-export function BaseHome({ initialTab='req' }: { initialTab?: 'req' | 'cars' | 'expected' | 'ready' | 'done' } = {}) {
+type StationTab = 'req' | 'cars' | 'expected' | 'ready' | 'done';
+export function BaseHome({ initialTab='req' }: { initialTab?: StationTab } = {}) {
+  const { me } = useMe();
+  return <BaseHomePanel key={me?.id ?? 'guest'} initialTab={initialTab} />;
+}
+function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
   const { me } = useMe();
   const cab = useBaseLoad(() => baseGet('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
@@ -337,6 +342,10 @@ export function RequestCard({ b, onDone }: { b: any; onDone: () => void }) {
 
 /** Карточка машины в сервисе: статус (клиент видит сразу), заметки, компания, история, «Машина готова → счёт» */
 export function BaseCar({ id }: { id: string }) {
+  const { me } = useMe();
+  return <BaseCarPanel key={(me?.id ?? 'guest') + ':' + id} id={id} />;
+}
+function BaseCarPanel({ id }: { id: string }) {
   const b = useBaseLoad(() => baseGet(`/api/bookings/${id}`), [id], isBookingEvent);
   const { busy, run } = useAction();
   const [note, setNote] = useState('');
@@ -486,6 +495,10 @@ export function BaseCar({ id }: { id: string }) {
 
 /** Карточка сервиса: один раз — что принимаете, кто есть, условия, дни без работы */
 export function BaseSetup() {
+  const { me } = useMe();
+  return <BaseSetupPanel key={me?.id ?? 'guest'} />;
+}
+function BaseSetupPanel() {
   const { reload } = useMe();
   const cab = useBaseLoad(() => baseGet('/api/base'), []);
   const { busy, run } = useAction();
@@ -677,6 +690,10 @@ const loadSearch = (): Search => { try { return { ...SEARCH0, ...JSON.parse(loca
 /** Поиск рембазы: откуда искать и что нужно — сверху, сортировка и радиус — одной строкой, остальное — в «Фильтрах».
  *  В списке — только главное, подробности — в карточке сервиса. */
 export function ServicesList() {
+  const { me } = useMe();
+  return <ServicesListPanel key={(me?.id ?? 'guest')+':'+location.hash.split('?')[1]} />;
+}
+function ServicesListPanel() {
   const q = query();
   const from = q.get('from');
   const caseOrderId = q.get('case');
@@ -831,6 +848,10 @@ function prefillOrder(service: string, place: { address?: string; destination?: 
 }
 
 export function CenterPage({ id }: { id: string }) {
+  const { me } = useMe();
+  return <CenterPagePanel key={(me?.id ?? 'guest')+':'+id} id={id} />;
+}
+function CenterPagePanel({ id }: { id: string }) {
   const c = useBaseLoad(() => get(`/api/services/${id}`), [id]);
   const from = query().get('from');
   const caseOrderId=query().get('case');
@@ -886,6 +907,10 @@ export function CenterPage({ id }: { id: string }) {
 }
 
 export function BookForm({ id }: { id: string }) {
+  const { me } = useMe();
+  return <BookFormPanel key={(me?.id ?? 'guest')+':'+id+':'+location.hash.split('?')[1]} id={id} />;
+}
+function BookFormPanel({ id }: { id: string }) {
   const c = useBaseLoad(() => get(`/api/services/${id}`), [id]);
   const cars = useBaseLoad(() => get('/api/vehicles'), []);
   const from = query().get('from');
@@ -955,6 +980,10 @@ export function BookForm({ id }: { id: string }) {
 
 /** Запись глазами клиента: статус ремонта, вопрос сервиса, заметки, счёт и сверка работ */
 export function BookingPage({ id }: { id: string }) {
+  const { me } = useMe();
+  return <BookingPagePanel key={(me?.id ?? 'guest')+':'+id} id={id} />;
+}
+function BookingPagePanel({ id }: { id: string }) {
   const b = useBaseLoad(() => baseGet(`/api/bookings/${id}`), [id], isBookingEvent);
   const { busy, run } = useAction();
   const [answer, setAnswer] = useState('');
@@ -1075,12 +1104,20 @@ export function BookingList({ rows }: { rows: any[] }) {
 
 /** Legacy independent listing for embedded history views. */
 export function BookingRows({ live }: { live: boolean }) {
+  const { me } = useMe();
+  return <BookingRowsPanel key={(me?.id ?? 'guest')+':'+live} live={live} />;
+}
+function BookingRowsPanel({ live }: { live: boolean }) {
   const l = useBaseLoad(() => get('/api/bookings'), [], isBookingEvent);
   return <BookingList rows={(l.data ?? []).filter((b: any) => live === isOpenBooking(b))} />;
 }
 
 /** Мастер на месте: «на месте не исправить — советую сервис» */
 export function RecommendService({ order, onDone }: { order: any; onDone: (o: any) => void }) {
+  const { me } = useMe();
+  return <RecommendServicePanel key={(me?.id ?? 'guest')+':'+order?.id} order={order} onDone={onDone} />;
+}
+function RecommendServicePanel({ order, onDone }: { order: any; onDone: (o: any) => void }) {
   const [open, setOpen] = useState(false);
   const list = useBaseLoad(() => (open ? get(`/api/services${order.lat ? `?lat=${order.lat}&lng=${order.lng}` : ''}`) : Promise.resolve(null)), [open]);
   const { busy, run } = useAction();
@@ -1154,6 +1191,10 @@ function ServiceLocationReview({center,onDone}:{center:any;onDone:()=>void}){
 
 /** Модерация: проверка рембаз */
 export function AdminServices() {
+  const { me } = useMe();
+  return <AdminServicesPanel key={me?.id ?? 'guest'} />;
+}
+function AdminServicesPanel() {
   const l = useBaseLoad(() => get('/api/admin/services'), []);
   const { busy, run } = useAction();
   if (!l.data) return <Loading error={l.error} />;
@@ -1187,6 +1228,10 @@ const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); ret
 
 /** Финансы рембазы: сверху — сколько придёт и когда, ниже — по месяцам, потом — каждый счёт со своей разбивкой. */
 export function BaseMoney() {
+  const { me } = useMe();
+  return <BaseMoneyPanel key={me?.id ?? 'guest'} />;
+}
+function BaseMoneyPanel() {
   const m = useBaseLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
   const pts = useBaseLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
   const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
@@ -1275,6 +1320,10 @@ export function BaseMoney() {
 
 /** Админ: подтверждённые клиентами счета рембаз — отметить выплату */
 export function AdminServicePayouts() {
+  const { me } = useMe();
+  return <AdminServicePayoutsPanel key={me?.id ?? 'guest'} />;
+}
+function AdminServicePayoutsPanel() {
   const l = useBaseLoad(() => get('/api/admin/service-payouts'), []);
   const { busy, run } = useAction();
   if (!l.data) return <Loading error={l.error} />;
