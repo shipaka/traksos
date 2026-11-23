@@ -16,6 +16,19 @@ export function setToken(t: string | null) {
   store.set('traksos.token', t);
 }
 
+// Different browser tabs share localStorage but each JS bundle keeps its own
+// in-memory bearer token. Reflect external login/logout immediately, never
+// continue dispatching requests with a signed-out or replaced account.
+window.addEventListener('storage', event => {
+  if (event.key !== 'traksos.token' && event.key !== null) return;
+  try { if (event.storageArea !== localStorage) return; }
+  catch { return; } // Storage access may be denied in private mode.
+  const externalToken = event.key === null ? null : event.newValue;
+  if (externalToken === token) return;
+  setToken(externalToken);
+  window.dispatchEvent(new Event('traksos-auth-external-change'));
+});
+
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }

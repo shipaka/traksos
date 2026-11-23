@@ -240,6 +240,18 @@ function App() {
 
   useEffect(() => { reload(); }, [reload]);
   useEffect(() => {
+    const syncExternalSession = () => {
+      // An account changed in a sibling browser tab. Do not leave its
+      // previous orders, drafts, routes or role-specific UI mounted here.
+      setMe(null);
+      setReady(false);
+      location.replace('#/');
+      void reload();
+    };
+    window.addEventListener('traksos-auth-external-change', syncExternalSession);
+    return () => window.removeEventListener('traksos-auth-external-change', syncExternalSession);
+  }, [reload]);
+  useEffect(() => {
     // The transport invalidated the session: unmount protected workspaces
     // immediately instead of showing "already logged in" at #/login.
     const expire = () => {

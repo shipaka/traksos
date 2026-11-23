@@ -102,6 +102,25 @@ try {
         result.expiredImageStatus=expiredImage.status;
         result.afterExpiredImage=module.getToken();
         result.expiredEventsAfterImage=expiredEvents;
+
+        module.setToken('CI-TAB-OLD');
+        const oldTabRequest=module.api('GET','/api/me').catch(e=>e);
+        result.oldTabAuth=pending[3]?.auth;
+        let externalChanges=0;
+        window.addEventListener('traksos-auth-external-change',()=>externalChanges++);
+        window.dispatchEvent(new StorageEvent('storage',{
+          key:'traksos.token',oldValue:'CI-TAB-OLD',
+          newValue:'CI-TAB-NEW',storageArea:localStorage
+        }));
+        result.crossTabToken=module.getToken();
+        pending[3].resolve(response(200,{id:'old-tab-private-profile'}));
+        result.oldTabCode=(await oldTabRequest).code;
+        window.dispatchEvent(new StorageEvent('storage',{
+          key:'traksos.token',oldValue:'CI-TAB-NEW',
+          newValue:null,storageArea:localStorage
+        }));
+        result.crossTabLogoutToken=module.getToken();
+        result.externalChanges=externalChanges;
       } finally {
         window.fetch=originalFetch;
       }
@@ -136,6 +155,13 @@ try {
       'expired private-image request must clear its own bearer token');
     assert.equal(actual.expiredEventsAfterImage,2,
       'image 401 must unmount expired workspace just like a JSON API 401');
-    console.log('PASS: stale 200/401, private images, and image expiry cannot mix accounts');
+    assert.equal(actual.oldTabAuth,'Bearer CI-TAB-OLD');
+    assert.equal(actual.crossTabToken,'CI-TAB-NEW');
+    assert.equal(actual.oldTabCode,'session_changed',
+      'cross-tab login must reject the previous tab token payload');
+    assert.equal(actual.crossTabLogoutToken,null);
+    assert.equal(actual.externalChanges,2,
+      'external login and logout must both notify the app');
+    console.log('PASS: cross-tab auth, stale responses and protected images cannot mix accounts');
   } finally { await context.close(); }
 } finally { await browser.close(); }
