@@ -271,7 +271,7 @@ export function WorkerCommunications() {
           <option value="">Все виды выезда</option>{Object.entries(SERVICES).filter(([k])=>k!=='consult'&&k!=='ecu').map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
         </select></label>
       <label className="stack">Комиссия платформы, % (0 — без комиссии)
-        <input className="field" type="number" min={0} max={100} step={0.5} value={promoPct} onChange={e=>setPromoPct(e.target.value)}/></label>
+        <input className="field" type="number" min={0} max={5} step={0.5} value={promoPct} onChange={e=>setPromoPct(e.target.value)}/></label>
       <div className="grid2">
         <label className="stack">С (МСК)<input type="datetime-local" className="field" value={promoFrom} onChange={e=>setPromoFrom(e.target.value)}/></label>
         <label className="stack">До (МСК)<input type="datetime-local" className="field" value={promoTo} onChange={e=>setPromoTo(e.target.value)}/></label>
@@ -279,10 +279,10 @@ export function WorkerCommunications() {
       <label className="stack">Причина изменения
         <textarea className="field" rows={2} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
       {!campaignDatesOk && <span className="note" role="status">Укажите будущие начало и конец акции по Москве; срок не более 31 дня.</span>}
-      {(promoPct.trim()==='' || !Number.isFinite(commissionRate) || commissionRate<0 || commissionRate>100) &&
-        <span className="note" role="status">Укажите комиссию от 0 до 100%. Пустое поле не означает 0%.</span>}
+      {(promoPct.trim()==='' || !Number.isFinite(commissionRate) || commissionRate<0 || commissionRate>5) &&
+        <span className="note" role="status">Укажите комиссию от 0 до 5%. Акции уменьшают утверждённую ставку; пустое поле не означает 0%.</span>}
       <button className="btn" disabled={busy||reason.trim().length<3||!campaignDatesOk||
-          !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>100} onClick={c}>Назначить комиссию</button>
+          !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>5} onClick={c}>Назначить комиссию</button>
     </div>
     <div className="card stack">
       <b>Объявления (история)</b>
