@@ -1,4 +1,4 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 import type { Notifier } from './notify.ts';
@@ -21,6 +21,29 @@ type Access = 'owner'|'driver'|'origin'|'expert'|'candidate'|'admin';
 
 export class EcuHandoffService {
  constructor(private db:Db,private notifier:Notifier,private now:()=>Date){}
+
+ /** A historical creator is not permanently authorised to an ex-employer's
+  * vehicle. Keep the vehicle row share-locked for note writes until commit.
+  */
+ private async currentOrderDriver(q:Queryable,sourceOrderId:string,userId:string,lock=false){
+  const row=await q.one<{ok:number}>(
+   `select 1 as ok from orders o join users u on u.id=$2
+      join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+     where o.id=$1 and o.created_by=u.id and o.client_id=u.owner_id
+       and 'driver'=any(u.roles) and (o.vehicle_id is null or o.vehicle_id=v.id)
+     limit 1${lock?' for share of v':''}`,
+   [sourceOrderId,userId]);
+  return !!row;
+ }
+ private async liveClientRecipients(orderId:string){
+  const row=await this.db.one<{client_id:string;created_by:string}>(
+   'select client_id,created_by from orders where id=$1',[orderId]);
+  if(!row)return [];
+  const ids=[row.client_id];
+  if(row.created_by!==row.client_id &&
+     await this.currentOrderDriver(this.db,orderId,row.created_by))ids.push(row.created_by);
+  return ids;
+ }
  private async verified(id:string){
   return this.db.one<{performer_id:string;public_name:string;address:string}>(
    "select s.performer_id,s.public_name,s.address from ecu_stations s" +
@@ -137,7 +160,7 @@ export class EcuHandoffService {
    return {id:row!.id,isNew:true};
   });
   if(created.isNew){
-   await this.notifier.notify([source.client_id,source.created_by].filter(id=>id!==user.id),
+   await this.notifier.notify((await this.liveClientRecipients(sourceOrderId)).filter(id=>id!==user.id),
     {type:'ecu_handoff',handoffId:created.id,orderId:sourceOrderId},
     {kind:'normal',title:'Заключение направлено специалистам ЭБУ',
      body:'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',
@@ -159,8 +182,9 @@ export class EcuHandoffService {
   const source=await this.db.one<any>(
    'select client_id,created_by,performer_id,case_root_id from orders where id=$1',[orderId]);
   if(!source)throw notFound('Заявка не найдена');
-  if(![source.client_id,source.created_by,source.performer_id].includes(user.id)
-    && !user.roles.includes('admin'))throw forbidden();
+  if(![source.client_id,source.performer_id].includes(user.id)
+    && !user.roles.includes('admin')
+    && !await this.currentOrderDriver(this.db,orderId,user.id))throw forbidden();
   return this.db.one(
    'select id,source_order_id,state,created_at,selected_at from ecu_handoffs' +
    ' where root_order_id=$1 order by created_at desc limit 1',[source.case_root_id??orderId]);
@@ -173,8 +197,9 @@ export class EcuHandoffService {
    " where h.state='pending' or (h.state in ('selected','closed') and h.selected_performer_id=$1)" +
    ' order by h.created_at desc limit 100',[user.id]);
  }
- private async access(user:AuthUser,id:string):Promise<{h:Handoff;actor:Access}>{
-  const h=await this.db.one<Handoff>(
+ private async access(user:AuthUser,id:string,q:Queryable=this.db,lockDriver=false):
+  Promise<{h:Handoff;actor:Access}>{
+  const h=await q.one<Handoff>(
    'select h.*,o.service,o.number as source_number,o.performer_id as source_performer_id,' +
    ' o.created_by as source_created_by,' +
    ' o.brand,o.model,o.year,o.vehicle_id from ecu_handoffs h' +
@@ -182,7 +207,9 @@ export class EcuHandoffService {
   if(!h)throw notFound('Передача не найдена');
   if(user.roles.includes('admin'))return{h,actor:'admin'};
   if(user.id===h.client_id)return{h,actor:'owner'};
-  if(user.id===h.source_created_by && user.owner_id===h.client_id)return{h,actor:'driver'};
+  if(user.id===h.source_created_by && user.owner_id===h.client_id &&
+     await this.currentOrderDriver(q,h.source_order_id,user.id,lockDriver))
+   return{h,actor:'driver'};
   if(user.id===h.source_performer_id)return{h,actor:'origin'};
   if(['selected','closed'].includes(h.state) && h.selected_performer_id===user.id && user.roles.includes('master'))
    return{h,actor:'expert'}; // historical selected cases stay readable if station verification lapses
@@ -330,17 +357,22 @@ export class EcuHandoffService {
  }
 
  async note(user:AuthUser,id:string,body:string){
-  const {h,actor}=await this.access(user,id);
-  if(h.state!=='selected'||!['owner','driver','expert','admin'].includes(actor))
-   throw forbidden('Переписка доступна только участникам согласованной передачи');
   const clean=safe(body);
   if(clean.length<2)throw bad('empty','Введите сообщение');
-  const m=await this.db.one(
-   'insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3) returning id,body,created_at',
-   [id,user.id,clean]);
-  await this.notifier.notify([h.client_id,h.source_created_by,h.selected_performer_id].filter(x=>x!==user.id),
+  const result=await this.db.tx(async q=>{
+   const row=await q.one('select id from ecu_handoffs where id=$1 for update',[id]);
+   if(!row)throw notFound('Передача не найдена');
+   const {h,actor}=await this.access(user,id,q,true);
+   if(h.state!=='selected'||!['owner','driver','expert','admin'].includes(actor))
+    throw forbidden('Переписка доступна только участникам согласованной передачи');
+   const m=await q.one(
+    'insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3) returning id,body,created_at',
+    [id,user.id,clean]);
+   return {m,sourceId:h.source_order_id,worker:h.selected_performer_id};
+  });
+  await this.notifier.notify([...(await this.liveClientRecipients(result.sourceId)),result.worker].filter(x=>x!==user.id),
    {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
     body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}}).catch(()=>{});
-  return m;
+  return result.m;
  }
 }
