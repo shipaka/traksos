@@ -27,7 +27,11 @@ try{
  await page.addScriptTag({content:source});
  const render=async(name,user='first')=>{
    await page.evaluate(([n,u])=>window.__renderScreen(n,u),[name,user]);
-   await page.getByRole('heading').first().waitFor();
+   const heading={
+     ScheduleSection:'Распорядок',PhoneSection:'Телефон и вход',
+     MoneySection:'Финансы',FilterSection:'Настройки заявок',CarsSection:'Машины'
+   }[name];
+   await page.getByRole('heading',{name:heading,exact:true}).waitFor();
  };
  await page.getByRole('heading',{name:'Распорядок'}).waitFor();
  const start=page.getByLabel('Начало выездов');
@@ -49,6 +53,7 @@ try{
  check(saved.body.from==='11:00'&&saved.body.to==='12:30'&&saved.body.phoneTo==='12:30',
    'Invalid saved schedule');
  await render('ScheduleSection','second');
+ await page.waitForFunction(()=>document.querySelector('select.field')?.value==='08:00');
  check(await start.inputValue()==='08:00','Schedule draft leaked between users');
 
  await render('PhoneSection','second');
@@ -76,10 +81,14 @@ try{
 
  await render('FilterSection','second');
  await page.locator('details.profile-accordion summary').first().click();
+ await page.waitForFunction(()=>Array.from(document.querySelectorAll('label.profile-brand-check'))
+   .some(el=>el.textContent?.includes('Диагностика')&&el.querySelector('input')?.checked));
  check(await page.getByLabel('Диагностика').isChecked(),'Specialties leaked between accounts');
  await render('CarsSection','first');
+ await page.getByText('А111АА').waitFor();
  check(await page.getByText('А111АА').count()===1,'First car missing');
  await render('CarsSection','second');
+ await page.getByText('В222ВВ').waitFor();
  check(await page.getByText('В222ВВ').count()===1,'Second car missing');
  check(await page.getByText('А111АА').count()===0,'Old car shown to new account');
  check(errors.length===0,'Browser error: '+errors.join('; '));
