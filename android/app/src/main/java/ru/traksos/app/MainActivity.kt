@@ -492,8 +492,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hideStartupOverlay() {
-        startupOverlay?.visibility = View.GONE
+        // GONE alone is not sufficient on all Android 15 headless WebView
+        // compositors: a stale buffer can keep showing the approved truck
+        // splash even after SPLASH_VISIBLE_MS is logged. Detach the native
+        // cover from the root so the actual React WebView can paint.
+        val cover = startupOverlay ?: return
+        cover.visibility = View.GONE
+        (cover.parent as? android.view.ViewGroup)?.removeView(cover)
         startupOverlay = null
+        if (BuildConfig.DEBUG) {
+            android.util.Log.i("TrakSOSRuntime", "NATIVE_SPLASH_DETACHED")
+        }
     }
 
     /** No old mock dashboard: show an error and a real, bundled debug-only design review. */
