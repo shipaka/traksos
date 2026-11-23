@@ -58,6 +58,21 @@ if(policy.primaryConfigured) {
 }
 const car=await api('POST','/api/vehicles',{brand:'Scania',model:'R520',year:2020,plate:'Т123ТТ78'},owner.token);
 assert(car.id,'Vehicle was not created');
+// Neither a partner nor a staff account can create customer insurance/inspection
+// cases, even by bypassing the form and calling the API directly.
+const masterWithoutCustomerRole=await register('+79990000654','master');
+const beforeRejected=await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,owner.token);
+for(const actor of [partner,masterWithoutCustomerRole,...(admin.user.roles.some(r=>r==='client'||r==='driver')?[]:[admin])]){
+  assert(!actor.user.roles.some(r=>r==='client'||r==='driver'),
+    'Negative test actor unexpectedly has a customer role');
+  for(const kind of ['insurance','inspection']){
+    await api('POST','/api/vehicle-service-requests',
+      {vehicleId:car.id,kind,comment:'CI: prohibited non-customer role'},actor.token,403);
+  }
+}
+const afterRejected=await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,owner.token);
+assert(afterRejected.length===beforeRejected.length,
+  'Forbidden role inserted a customer request into vehicle history');
 await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,outsider.token,404);
 const request=await api('POST','/api/vehicle-service-requests',{vehicleId:car.id,kind:'insurance',comment:'CI: проверить новый полис'},owner.token);
 assert(request.id && request.kind==='insurance','Insurance request missing');
@@ -76,6 +91,24 @@ assert(completed.status==='completed','Insurer completion not saved');
 const history=await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,owner.token);
 assert(history.some(x=>x.id===request.id && x.status==='completed'),'Owner insurance history missing completion');
 assert(history.find(x=>x.id===request.id).events.length>=3,'History events not preserved');
+// A staff status transition must never overwrite the ID of a designated
+// insurer/inspection operator with the ID of the moderator or administrator.
+const rejectedRequest=await api('POST','/api/vehicle-service-requests',
+  {vehicleId:car.id,kind:'insurance',comment:'CI: preserve assigned insurer on rejection'},owner.token);
+await api('PATCH','/api/admin/vehicle-service-requests/'+rejectedRequest.id,
+  {status:'in_review'},admin.token);
+await api('PATCH','/api/admin/vehicle-service-requests/'+rejectedRequest.id,
+  {status:'sent_to_partner'},admin.token);
+await api('POST','/api/admin/vehicle-service-requests/'+rejectedRequest.id+'/assign-insurer',
+  {insurerId:partner.user.id},admin.token);
+const beforeStatus=await api('GET','/api/insurance/requests/'+rejectedRequest.id,undefined,admin.token);
+assert(beforeStatus.request.assigned_to===partner.user.id,
+  'Insurance partner assignment did not persist before staff review');
+await api('PATCH','/api/admin/vehicle-service-requests/'+rejectedRequest.id,
+  {status:'rejected',note:'Синтетический тест: отказано после проверки'},admin.token);
+const afterStatus=await api('GET','/api/insurance/requests/'+rejectedRequest.id,undefined,admin.token);
+assert(afterStatus.request.assigned_to===partner.user.id&&afterStatus.request.status==='rejected',
+  'Staff status update silently replaced the assigned insurance partner');
 
 const browser=await chromium.launch();
 try{

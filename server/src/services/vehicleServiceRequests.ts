@@ -51,6 +51,10 @@ export class VehicleServiceRequests {
 
   async create(user: AuthUser, vehicleId: string | undefined, kind: VehicleServiceKind, comment?: string,
     insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>; consentAt?:string}}) {
+    // A logged-in staff or contractor account is not a customer. Enforce
+    // the same customer boundary in the SERVICE, even if the UI is bypassed.
+    if (!user.roles?.some(role => role === 'client' || role === 'driver'))
+      throw forbidden('Создать обращение может только клиент или водитель автопарка');
     const owner = user.owner_id ?? user.id;
     if (!vehicleId && (!insurance || kind !== 'insurance')) throw bad('bad_vehicle', 'Выберите автомобиль');
     // Lock the owner before duplicate lookup: simultaneous insurance submissions cannot create two identical cars.
@@ -186,8 +190,11 @@ export class VehicleServiceRequests {
         }
       }
       const updated = await q.one(
-        `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
-         where id=$1 returning *`, [id, status, note?.trim() || null, isStaff ? staff.id : current.assigned_to, policyExpiresOn ?? null]);
+        `update vehicle_service_requests set status=$2, staff_note=$3,
+           policy_expires_on=coalesce($4::date, policy_expires_on), updated_at=now()
+         where id=$1 returning *`, [id, status, note?.trim() || null, policyExpiresOn ?? null]);
+      // assigned_to is the selected insurance/inspection PARTNER, never the
+      // administrator/moderator reviewing a status. Assignment has its own API.
       if (!updated) throw notFound('Заявка не найдена');
       return updated;
     });
