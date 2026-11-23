@@ -151,13 +151,14 @@ try{
         // No "button that looks clickable but a fixed overlay intercepts":
         // test each physical centre point after bringing the control into view.
         for(const action of await card.locator('button,a').all()){
-          await action.scrollIntoViewIfNeeded();
-          const hit=await action.evaluate(node=>{
+          await action.evaluate(node=>node.scrollIntoView({block:innerWidth>=900?'start':'center',behavior:'instant'}));
+          const blocker=await action.evaluate(node=>{
             const box=node.getBoundingClientRect();
             const element=document.elementFromPoint(box.left+box.width/2,box.top+box.height/2);
-            return element===node || node.contains(element);
+            if(element===node || node.contains(element))return null;
+            return element ? element.tagName+' '+element.className : 'outside viewport';
           });
-          if(!hit)throw Error('Action covered by another element: '+await action.innerText()+' @'+width);
+          if(blocker)throw Error('Action covered by '+blocker+': '+await action.innerText()+' @'+width);
         }
         // The hit-test above scrolled actions into view. A full-page capture
         // taken at that position would falsely paint the fixed 618 bottom

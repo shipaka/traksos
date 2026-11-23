@@ -1004,12 +1004,9 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 }
 .traksos-app-phone-camera{display:block;align-self:center;width:26%;height:3px;min-height:3px;
   border-radius:8px;background:#607b88}
-.traksos-app-phone-title{
-  display:block;font-size:clamp(10px,1.1vw,15px)!important;
-  font-weight:900!important;letter-spacing:-.5px!important;
-  line-height:1.1;color:#f8f6ef;white-space:nowrap;
+.traksos-app-phone-screen>.traksos-app-phone-mark{
+  display:block;width:88%;height:auto;object-fit:contain;mix-blend-mode:screen;
 }
-.traksos-app-phone-title b{color:#f69a59}
 .traksos-app-phone-icon{display:block!important;width:56%!important;max-width:64px!important;
   height:auto!important;max-height:55px!important;object-fit:contain!important;
   border-radius:9px;box-shadow:0 4px 12px #0007;filter:none!important;}
@@ -1058,10 +1055,7 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     overflow-wrap:normal!important;
     word-break:normal!important;
   }
-  .guest-app.guest-home .traksos-app-phone-title,
-  .guest-app.guest-home .owner20-bottom-card .traksos-app-phone-title b{
-    font-size:10px!important;
-  }
+
 }
 @media(max-width:899px){
   .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{
@@ -1071,13 +1065,11 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     padding:5px!important;gap:0!important;
     transform:rotate(3deg)!important;
   }
-  .guest-app .public-landing .traksos-app-phone-title{font-size:13px!important}
 }
 @media(max-width:370px){
   .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{
     width:84px!important;height:154px!important;min-height:154px!important;
   }
-  .guest-app .public-landing .traksos-app-phone-title{font-size:11px!important}
 }
 /* Native details are keyboard-accessible and do not create new routes. */
 @media(max-width:899px){

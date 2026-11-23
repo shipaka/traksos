@@ -78,6 +78,13 @@
       rgba(18,27,40,0) 86%);
   }
 }
+/* Leave room for the sticky cabinet header when the browser scrolls to a
+   focused action in the exhausted-search card. */
+@media (min-width:900px) {
+  .traksos-no-performer-actions :is(a,button) {
+    scroll-margin-block-start:96px;
+  }
+}
 @media (max-width:700px) {
   .traksos-no-performer {
     display:flex; flex-direction:column; min-height:0; padding:0; border-radius:14px;

@@ -142,8 +142,10 @@ try {
      const card=document.querySelector('.owner20-bottom-app');
      const phone=card?.querySelector('.traksos-app-phone');
      const img=phone?.querySelector('.traksos-app-phone-icon');
+     const mark=phone?.querySelector('.traksos-app-phone-mark');
      const bot=document.querySelector('.trakbot-dock-launcher');
-     if(!card||!phone||!img||!bot)return {missing:true};
+     if(!card||!phone||!img||!bot||!mark)return {missing:true};
+     await mark.decode();
      if(!img.complete)await img.decode().catch(()=>{});
      const c=card.getBoundingClientRect(),p=phone.getBoundingClientRect(),
        b=bot.getBoundingClientRect();
@@ -168,7 +170,8 @@ try {
        copyRect.top<storeRect.bottom&&copyRect.bottom>storeRect.top);
      return {textCollision,headingLines,copyStoreCollision,
        phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
-       assetLoaded:img.naturalWidth>30,branded:phone.textContent.includes('Trak')&&phone.textContent.includes('SOS'),
+       assetLoaded:img.naturalWidth>30,branded:mark.getAttribute('src')==='/traksos-brand-logo-approved-618.png' &&
+         mark.naturalWidth>0 && mark.clientWidth>0 && mark.clientHeight>0,
        rustore:card.querySelector('.owner20-store')?.textContent?.includes('RuStore')??false,
        pseudoHidden:['::before','::after'].every(side=>getComputedStyle(card,side).display==='none'),
        phoneCount:card.querySelectorAll('.traksos-app-phone').length,

@@ -602,7 +602,6 @@ select.field { appearance: none; }
 .public-landing .public-app-card p{font-size:12px;color:#d4e1ed;line-height:1.6;margin:0;}
 .public-landing .public-app-card small{font-size:10px;color:#a9bace;}
 .public-landing .public-app-phone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:min(155px,88%);min-height:185px;align-self:center;text-align:center;border:5px solid #111925;outline:2px solid #68798b;border-radius:25px;padding:20px 8px;background:radial-gradient(ellipse at 55% 80%,#d77a3599,transparent 50%),linear-gradient(155deg,#051525,#1c385a 70%,#5b3b20);box-shadow:10px 18px 30px #0009;color:#fff;transform:rotate(-5deg);}
-.public-landing .public-app-logo{font-family:var(--display);font-weight:900;font-size:16px;letter-spacing:-1px;}.public-landing .public-app-logo b{color:#ff994d;}
 .public-landing .public-app-phone-truck{font-size:38px;filter:drop-shadow(0 0 10px #ff6a13);}.public-landing .public-app-phone>span:last-child{font-size:10px;}
 .public-landing .public-rustore-soon{display:inline-block;align-self:stretch;text-align:center;padding:12px;border-radius:11px;background:#102a43;color:#fff;border:1px solid #7693b0;font-size:13px;font-weight:800;}
 .public-landing .public-why-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;padding:17px 12px;border-top:1px solid #27435f;border-bottom:1px solid #27435f;}

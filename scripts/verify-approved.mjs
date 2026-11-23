@@ -401,7 +401,7 @@ const desktopAppLanding=await read('web/src/screens/ownerDesktopHome20261120.tsx
 expect(landing.includes('<TrakAppPhone className="public-app-phone"/>') &&
        desktopAppLanding.includes('<TrakAppPhone/>') &&
        brandedAppPhone.includes('/icon-192.png?v=approved-20261120') &&
-       brandedAppPhone.includes('traksos-app-phone-title') &&
+       brandedAppPhone.includes('className="traksos-app-phone-mark" src={APPROVED_VISUALS.logo}') &&
        shell.includes('src={APPROVED_VISUALS.logo}') &&
        !shell.includes('tracksos-approved-logo-owner-20261119.webp'),
        'mobile and desktop promo share one real TrakSOS phone with the approved launcher icon');
