@@ -80,6 +80,20 @@ export function OpsDashboard() {
             <td>{SERVICES[r.service]?.name??r.service}</td><td>{r.total}</td><td>{r.unfilled}</td>
             <td>{r.cancelled_before_acceptance}</td><td>{r.waiting_now}</td></tr>)}</tbody></table></div>
       </div>
+      {admin && <div className="card stack" aria-label="Спрос на партнёров по зонам">
+        <b>Где подключать новых партнёров · услуга и зона</b>
+        <span className="note">Только реальные заявки за выбранный период, сгруппированные по виду работы и зоне заявки. «Без исполнителя» включает случаи, впоследствии найденные при повторном поиске. Зона не определена — географию заявки достоверно установить нельзя. Здесь нет адресов, телефонов и GPS водителей.</span>
+        {(d.byServiceZone??[]).length===0
+          ? <span className="note">Подтверждённых случаев отсутствия исполнителя за период нет.</span>
+          : <div className="scroll-x"><table>
+              <thead><tr><th>Услуга</th><th>Зона</th><th>Были без исполнителя</th><th>Всего заявок</th></tr></thead>
+              <tbody>{(d.byServiceZone??[]).map((r:any)=><tr key={r.service+':'+r.zone_id}>
+                <td>{SERVICES[r.service]?.name??r.service}</td>
+                <td>{r.zone_id==='unknown'?'Зона не определена':r.zone_id}</td>
+                <td>{r.unfilled}</td><td>{r.total}</td>
+              </tr>)}</tbody>
+            </table></div>}
+      </div>}
       {admin && <div className="card stack">
         <b>Контроль зависших этапов · третий табличный блок</b>
         <span className="note">Поиск, ожидание выезда, дорога, работа, подтверждение. Контрольный интервал — не доказательство вины. Выезд далеко за КАД требует отдельной проверки времени маршрута. Указанная причина остаётся в журнале.</span>
