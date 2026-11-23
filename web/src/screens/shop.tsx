@@ -5,7 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '.
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
-import { cartStorageKey, readCartFor, writeCartFor, type Cart } from '../shopCartStore.ts';
+import { cartStorageKey, normalizeCart, readCartFor, writeCartFor, type Cart } from '../shopCartStore.ts';
 
 /**
  * The device can be shared by a fleet owner, drivers and masters.
@@ -20,12 +20,17 @@ function useCart(): [Cart, (c: Cart) => void] {
     session.current={owner,token:getToken()};
     setCart(readCartFor(owner));
     const refresh=()=>setCart(readCartFor(owner));
+    const current=()=>!!owner&&session.current.owner===owner&&
+      !!session.current.token&&session.current.token===getToken();
     const onStorage=(event:StorageEvent)=>{
       const key=cartStorageKey(owner);
-      if(key&&(event.key===key||event.key===null))refresh();
+      if(current()&&key&&(event.key===key||event.key===null))refresh();
     };
     const onLocal=(event:Event)=>{
-      if((event as CustomEvent<{owner:string}>).detail?.owner===owner)refresh();
+      const detail=(event as CustomEvent<{owner:string;cart:Cart}>).detail;
+      // Same-tab events carry the validated cart. Private mode may forbid
+      // localStorage altogether; re-reading would erase its in-memory cart.
+      if(current()&&detail?.owner===owner)setCart(normalizeCart(detail.cart));
     };
     const invalidate=()=>{
       session.current={owner:null,token:null};
@@ -51,7 +56,7 @@ function useCart(): [Cart, (c: Cart) => void] {
     }
     const safe=writeCartFor(owner,next);
     setCart(safe);
-    window.dispatchEvent(new CustomEvent('traksos-cart',{detail:{owner}}));
+    window.dispatchEvent(new CustomEvent('traksos-cart',{detail:{owner,cart:safe}}));
   };
   return [cart,update];
 }
