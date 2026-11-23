@@ -47,17 +47,36 @@ function signature(payload: string, secret: string): Buffer {
 }
 const forbidden = () => new HttpError(403, 'sandbox_access_denied', 'Доступ к тестовому кабинету не подтверждён');
 
+/** The issuer controls the HTTPS return origin. A ticket may only navigate
+ * back to the approved administrator test-center route, never a caller's path.
+ * Reject credentials, search parameters and deceptive fragments outright.
+ */
+function safeAdminReturn(value: unknown): string | undefined {
+  if (value === '') return undefined;
+  if (typeof value !== 'string' || value.length > 512 || /[\\u0000-\\u001f\\u007f]/.test(value))
+    return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password &&
+      url.pathname === '/' && !url.search && url.hash === '#/admin/test-center'
+      ? url.href : undefined;
+  } catch { return undefined; }
+}
+
 export function issueSandboxTicket(role: SandboxRole, secret: string, now = Date.now(), returnUrl = ''): string {
   if (!secret || secret.length < 32 || !SANDBOX_ROLES.includes(role)) throw forbidden();
+  const back = safeAdminReturn(returnUrl);
+  if (returnUrl && !back) throw forbidden();
   const payload = Buffer.from(JSON.stringify({
     v: 1, aud: 'traksos-isolated-sandbox', role,
-    exp: now + 45_000, nonce: randomBytes(24).toString('hex'), returnUrl,
+    exp: now + 45_000, nonce: randomBytes(24).toString('hex'), returnUrl: back ?? '',
   })).toString('base64url');
   return payload + '.' + signature(payload, secret).toString('base64url');
 }
 
 export async function exchangeSandboxTicket(ticket: string, secret: string, db: Db, now = Date.now()) {
-  if (!secret || secret.length < 32 || ticket.length > 1300) throw forbidden();
+  if (!secret || secret.length < 32 || typeof ticket !== 'string' || ticket.length > 1300 ||
+      !Number.isSafeInteger(now)) throw forbidden();
   const segments = ticket.split('.');
   if (segments.length !== 2 || !/^[a-zA-Z0-9_-]+$/.test(segments[0]) ||
       !/^[a-zA-Z0-9_-]{43}$/.test(segments[1])) throw forbidden();
@@ -73,7 +92,8 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
   catch { throw forbidden(); }
   if (p?.v !== 1 || p.aud !== 'traksos-isolated-sandbox' ||
       !SANDBOX_ROLES.includes(p.role) || !/^[a-f0-9]{48}$/.test(p.nonce) ||
-      !Number.isSafeInteger(p.exp) || p.exp < now || p.exp > now + 45_000) throw forbidden();
+      !Number.isSafeInteger(p.exp) || p.exp <= now || p.exp > now + 45_000 ||
+      (p.returnUrl !== '' && !safeAdminReturn(p.returnUrl))) throw forbidden();
 
   const role = p.role as SandboxRole;
   const phone = SANDBOX_USER_PHONE[role];
@@ -98,7 +118,7 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
     return token;
   });
   return { token: result, role, landing: SANDBOX_LANDING[role], sandbox: true,
-    returnUrl: typeof p.returnUrl === 'string' && /^https:\/\//.test(p.returnUrl) ? p.returnUrl : undefined };
+    returnUrl: safeAdminReturn(p.returnUrl) };
 }
 
 // The long-lived (12-hour) supervisor comes from a one-time signed *admin*
