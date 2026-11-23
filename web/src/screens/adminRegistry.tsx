@@ -246,7 +246,7 @@ export function AdminRegistry() {
     </form>
     {filterError && <div className="banner bad" role="alert">{filterError}</div>}
     {changed && <p className="note">Фильтры изменены, но ещё не применены. Нажмите «Найти участников» для обновления выдачи и CSV.</p>}
-    {exportError && <div className="banner bad" role="alert">{exportError}</div>
+    {exportError && <div className="banner bad" role="alert">{exportError}</div>}
     {exportInfo && <p className="note" role="status">{exportInfo}</p>}
     <div className="tr-registry-results-header">
       <b>{data ? `Найдено участников: ${total}` : result.error?'Данные реестра недоступны':'Загружаем реестр'}</b>
