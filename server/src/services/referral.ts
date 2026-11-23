@@ -142,7 +142,14 @@ export class ReferralService {
     const r = await this.settings.get('referral');
     const fees = await this.settings.get('fees');
     const perf = order.performer_id ? await q.one<{ is_priority: boolean }>('select is_priority from performer_profiles where user_id=$1', [order.performer_id]) : null;
-    const commission = cappedPct(amount, commissionPct(fees, { isPriority: !!perf?.is_priority, at: this.now() }));
+    // A campaign's rate is frozen in the order at creation. Settlement must
+    // never spend worker points against the ordinary 5% fee when this
+    // particular order had a 0% or discounted campaign.
+    const commission = cappedPct(amount, commissionPct(fees, {
+      isPriority: !!perf?.is_priority,
+      overridePct: order.commission_pct_override == null ? null : Number(order.commission_pct_override),
+      at: this.now(),
+    }));
     // 1. Комиссия исполнителя баллами — возвращаем ему на счёт (наличные — уменьшаем долг)
     // Исполнитель сам решает в «Финансах»: гасить ли комиссию баллами и сколько максимум с заявки
     const pref = order.performer_id ? await q.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [order.performer_id]) : null;
