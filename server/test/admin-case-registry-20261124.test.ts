@@ -94,6 +94,8 @@ test('UI isolation gates: no stale record, note, export or external GPS on accou
   assert.match(cases,/\[me\?\.id,q,scope,listKey\]/);
   assert.match(cases,/listState\?\.key===listKey/);
   assert.match(cases,/detailState\?\.key===detailKey/);
+  assert.match(cases,/setListState\(null\);setListFailure\(null\)/);
+  assert.match(cases,/setDetailState\(null\);setDetailFailure\(null\)/);
   assert.match(cases,/active\.current\.id!==target\|\|active\.current\.owner!==owner/);
   assert.match(cases,/savingRef\.current=true/);
   assert.match(cases,/exportingRef\.current=true/);
