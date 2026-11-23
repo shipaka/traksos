@@ -87,6 +87,38 @@ try{
           throw Error('Signed owner handoff lost Admin/Back: '+role);
         if(role==='admin' && !marker.includes('Admin'))
           throw Error('Admin sandbox supervisor badge missing');
+        if(role==='client' && width===1440){
+          // The account dropdown must remain usable when the mouse crosses
+          // the deliberate 8px visual gap, then disappear on pointer exit.
+          // Also keep native keyboard Escape/focus, no manual link navigation.
+          const menu=page.locator('header.top details.account-menu');
+          const trigger=menu.locator('summary');
+          await trigger.click();
+          if(await menu.getAttribute('open')===null)
+            throw Error('Account menu did not open');
+          const triggerRect=await trigger.boundingBox();
+          const navRect=await menu.locator('nav').boundingBox();
+          if(!triggerRect || !navRect)throw Error('Account menu geometry missing');
+          const x=triggerRect.x+triggerRect.width/2;
+          await page.mouse.move(x,triggerRect.y+triggerRect.height/2);
+          await page.mouse.move(x,triggerRect.y+triggerRect.height+3);
+          await page.mouse.move(x,navRect.y+12);
+          if(await menu.getAttribute('open')===null)
+            throw Error('Menu closes while crossing approved dropdown gap');
+          await menu.locator('nav a').first().hover();
+          if(await menu.getAttribute('open')===null)
+            throw Error('Account menu links cannot be reached by mouse');
+          await page.mouse.move(20,Math.min(800,navRect.y+navRect.height+30));
+          await page.waitForFunction(()=>!document.querySelector('details.account-menu')?.open,
+            null,{timeout:5000});
+          await trigger.click();
+          if(await menu.getAttribute('open')===null)throw Error('Keyboard-close setup failed');
+          await page.keyboard.press('Escape');
+          if(await menu.getAttribute('open')!==null ||
+             !(await trigger.evaluate(node=>node===document.activeElement)))
+            throw Error('Escape failed to close account menu and return focus');
+          console.log('CABINET MENU POINTER PASS',width,'cross gap, hover link, leave, Escape');
+        }
         if(role==='admin' && width<=390){
           const headerLayout=await page.locator('header.top').evaluate(header=>{
             const badge=header.querySelector('.sandbox-test-badge');
