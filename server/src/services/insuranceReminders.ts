@@ -14,7 +14,7 @@ export async function sendInsuranceReminders(db: Db, notifier: Notifier) {
     // 500 policies due on a single date. UUID ordering is stable and bounded.
     let cursor: string | null = null;
     for (;;) {
-      const due = await db.query<{ id: string; owner_id: string; plate: string | null; policy_expires_on: string }>(
+      const due: Array<{ id: string; owner_id: string; plate: string | null; policy_expires_on: string }> = await db.query<{ id: string; owner_id: string; plate: string | null; policy_expires_on: string }>(
         `select r.id, r.owner_id, v.plate, r.policy_expires_on::text
            from vehicle_service_requests r
            join vehicles v on v.id=r.vehicle_id and v.owner_id=r.owner_id
