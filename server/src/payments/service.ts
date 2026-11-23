@@ -498,9 +498,9 @@ export class PaymentsService implements PaymentHooks {
         // URL is returned to the caller; only late recovery needs push.
         const needsPush = o?.status !== 'cancelled' &&
           (req.metadata.kind === 'work' || intent.attempts > 1);
-        if (o) this.notifier.live([o.client_id,o.created_by],
+        if (o) this.notifier.live(await this.orders.customerRecipientsForOrder(o.id),
           {type:'payment',orderId:o.id});
-        if (o && needsPush) await this.notifier.notify([o.client_id,o.created_by],
+        if (o && needsPush) await this.notifier.notify(await this.orders.customerRecipientsForOrder(o.id),
           {type:'payment',orderId:o.id,url:response.confirmationUrl},
           {kind:'normal',title:req.metadata.kind==='work' ? 'Оплатите работу' : 'Подтвердите оплату выезда',
             body:`Заявка №${o.number}: ${rub(req.total)}`,data:{orderId:o.id}})
@@ -625,9 +625,9 @@ export class PaymentsService implements PaymentHooks {
       if (result.changed) {
         const order = await this.db.one<any>(
           'select id,number,client_id,created_by,status from orders where id=$1', [intent.order_id]);
-        if (order) this.notifier.live([order.client_id,order.created_by],
+        if (order) this.notifier.live(await this.orders.customerRecipientsForOrder(order.id),
           {type:'payment',orderId:order.id});
-        if (order && order.status !== 'cancelled') await this.notifier.notify([order.client_id,order.created_by],
+        if (order && order.status !== 'cancelled') await this.notifier.notify(await this.orders.customerRecipientsForOrder(order.id),
           {type:'payment',orderId:order.id,url:actual.confirmationUrl ?? null},
           {kind:'normal',title:intent.request.metadata.kind==='work'
             ? 'Оплатите работу' : 'Подтвердите оплату выезда',
@@ -696,7 +696,7 @@ export class PaymentsService implements PaymentHooks {
     if (changed.dispatch) await this.orders.startDispatch(pay.order_id);
     if (changed.failedOrder) {
       const o = changed.failedOrder;
-      await this.notifier.notify([o.client_id, o.created_by],
+      await this.notifier.notify(await this.orders.customerRecipientsForOrder(o.id),
         { type: 'order', orderId: o.id, status: 'cancelled' },
         { kind: 'normal', title: 'Оплата не прошла', body: `Заявка №${o.number} не отправлена исполнителям`,
           data: { orderId: o.id } });
