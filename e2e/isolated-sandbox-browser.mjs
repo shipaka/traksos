@@ -745,6 +745,108 @@ try{
       }finally{await context.close();}
     }
   }
+  // Real positive pin proof: the test-only station must go through BOTH
+  // independent human geo review and its own explicit map consent. It never
+  // appears on production; the entire backend is a disposable CI sandbox.
+  // Revoke consent afterwards and verify the live map refresh actually
+  // removes the point/card without leaking any master's live location.
+  {
+    const serviceContext=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU'});
+    const adminContext=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU'});
+    const guestContext=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU'});
+    let centerId='',serviceToken='';
+    try{
+      const servicePage=await serviceContext.newPage();
+      await servicePage.goto(base+'/#/sandbox-enter?ticket='+
+        encodeURIComponent(issueSandboxTicket('service',secret,Date.now())),{waitUntil:'domcontentloaded'});
+      await servicePage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
+        null,{timeout:20000});
+      serviceToken=await servicePage.evaluate(()=>localStorage.getItem('traksos.token'));
+      const adminPage=await adminContext.newPage();
+      await adminPage.goto(base+'/#/sandbox-enter?ticket='+
+        encodeURIComponent(issueSandboxTicket('admin',secret,Date.now())),{waitUntil:'domcontentloaded'});
+      await adminPage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
+        null,{timeout:20000});
+      const adminToken=await adminPage.evaluate(()=>localStorage.getItem('traksos.token'));
+      const station=await serviceContext.request.get(base+'/api/base',{
+        headers:{authorization:'Bearer '+serviceToken}});
+      if(!station.ok())throw Error('Sandbox service station GET failed: '+station.status());
+      const existing=(await station.json()).center;
+      if(!existing?.id || !existing?.name)throw Error('Sandbox partner has no station');
+      centerId=existing.id;
+      const auth=(token)=>({authorization:'Bearer '+token});
+      const requestOk=async(response,step)=>{
+        if(!response.ok())throw Error(step+' rejected: '+response.status()+' '+(await response.text()).slice(0,200));
+        return response.json();
+      };
+      await requestOk(await serviceContext.request.put(base+'/api/base',{
+        headers:auth(serviceToken),data:{
+          address:'Тестовый стационарный адрес, Санкт-Петербург, 1',
+          lat:59.97,lng:30.31,accepts:['quick']
+        }}),'Set isolated stationary GPS');
+      await requestOk(await serviceContext.request.post(base+'/api/base/confirm-accepts',{
+        headers:auth(serviceToken),data:{}}),'Confirm isolated services');
+      await requestOk(await adminContext.request.post(base+'/api/admin/services/'+centerId+'/verify',{
+        headers:auth(adminToken),data:{decision:'approved'}}),'Approve isolated station');
+      await requestOk(await adminContext.request.post(base+'/api/admin/services/'+centerId+'/verify-location',{
+        headers:auth(adminToken),data:{
+          kind:'site_visit',reference:'TEST-ONLY-CHROMIUM-STATIONARY-MAP',confirmed:true
+        }}),'Independently verify isolated station location');
+      await requestOk(await serviceContext.request.put(base+'/api/service/public-map',{
+        headers:auth(serviceToken),data:{enabled:true}}),'Opt in isolated stationary map');
+      const guestPage=await guestContext.newPage();
+      await guestPage.goto(base+'/#/',{waitUntil:'domcontentloaded'});
+      await guestPage.getByRole('button',{name:'Развернуть карту партнёров'}).click();
+      const dialog=guestPage.getByRole('dialog',{name:'Карта партнёров TrakSOS'});
+      await dialog.waitFor({state:'visible'});
+      const partnerButton=dialog.getByRole('button',{name:'СТО '+existing.name,exact:true});
+      await partnerButton.waitFor({state:'visible',timeout:15000});
+      await partnerButton.click();
+      const partnerCard=dialog.locator('aside.tr-network-partner');
+      await partnerCard.getByText(existing.name,{exact:true}).waitFor({state:'visible'});
+      const exposed=await guestPage.evaluate(async()=>{
+        const r=await fetch('/api/public/partner-map',{cache:'no-store'});
+        const d=await r.json();
+        return {status:r.status,source:d.source,points:d.points};
+      });
+      const point=exposed.points?.find(p=>p.id===centerId);
+      if(exposed.status!==200 || exposed.source!=='verified_stationary_opt_in' ||
+         !point || point.kind!=='service' || point.name!==existing.name ||
+         Math.abs(point.lat-59.97)>.00001 || Math.abs(point.lng-30.31)>.00001 ||
+         Object.keys(point).sort().join(',')!=='id,kind,lat,lng,name')
+        throw Error('Real map pin mismatch or unsafe public fields: '+JSON.stringify(exposed));
+      await guestPage.screenshot({path:out+'/guest-1440-verified-opt-in-partner.png',
+        fullPage:false,animations:'disabled'});
+      await requestOk(await serviceContext.request.put(base+'/api/service/public-map',{
+        headers:auth(serviceToken),data:{enabled:false}}),'Revoke isolated map consent');
+      // Same event that the open map listens for on tab return: real server
+      // fetch, not mocked data or a page.reload hiding stale client state.
+      await guestPage.evaluate(()=>window.dispatchEvent(new Event('focus')));
+      await partnerButton.waitFor({state:'detached',timeout:15000});
+      await partnerCard.waitFor({state:'detached',timeout:15000});
+      const revoked=await guestPage.evaluate(async()=>{
+        const r=await fetch('/api/public/partner-map',{cache:'no-store'});
+        const d=await r.json();
+        return {status:r.status,stillPublished:d.points?.some(p=>p.id===centerId)};
+      });
+      if(revoked.status!==200 || revoked.stillPublished)
+        throw Error('Revoked station is still published to guests');
+      await guestPage.screenshot({path:out+'/guest-1440-partner-consent-revoked.png',
+        fullPage:false,animations:'disabled'});
+      console.log('LIVE PARTNER MAP CONSENT PASS',centerId,'published → selected → revoked');
+    }catch(error){
+      const detail=String(error instanceof Error?error.stack??error.message:error);
+      failures.push({role:'guest-map-live-opt-in',width:1440,detail});
+      console.error('LIVE PARTNER MAP CONSENT FAIL',detail);
+    }finally{
+      if(serviceToken && centerId){
+        await serviceContext.request.put(base+'/api/service/public-map',{
+          headers:{authorization:'Bearer '+serviceToken},data:{enabled:false}
+        }).catch(()=>{});
+      }
+      await Promise.all([serviceContext.close(),adminContext.close(),guestContext.close()]);
+    }
+  }
 }finally{await browser.close();}
 if(failures.length)
   throw Error('Isolated role browser review failed ('+failures.length+' cases): '+
