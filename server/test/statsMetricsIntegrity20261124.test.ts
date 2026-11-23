@@ -60,7 +60,7 @@ test('stats reject impossible periods and include awaiting-owner orders in activ
       [created.order.id]);
     const stats=ok(await t.api('GET','/api/admin/stats?days=30',undefined,admin.token));
     assert.ok(stats.totals.active>=1,'a draft awaiting fleet owner approval is still active');
-    for (const badDays of ['nope','2.5','0.5']) {
+    for (const badDays of ['nope','2.5','NaN']) {
       const response=await t.api('GET',`/api/admin/stats?days=${badDays}`,undefined,admin.token);
       assert.equal(response.status,400,'invalid day window must not leak a SQL 500');
     }
