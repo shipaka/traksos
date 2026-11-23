@@ -80,7 +80,7 @@ test('real UI uses scoped diagnostics and hides stale financial data after API f
   assert.match(diagnostics,/result\.filterKey === filterKey/);
   assert.match(diagnostics,/result\.ownerId === me\?\.id/);
   assert.match(diagnostics,/disabled=\{!loaded \|\| loading \|\| !rows\.length\}/);
-  assert.match(summary,/const d = !s\.error \? s\.data : null/);
+  assert.match(summary,/s\.data\?\.ownerId === me\?\.id/);
   assert.match(summary,/\[me\?\.id\]/);
   assert.match(summary,/Повторить загрузку сводки/);
   assert.match(summary,/Повторить загрузку живых заявок/);
