@@ -1,12 +1,16 @@
 /** One scalable TrakSOS service icon system. Existing approved photography and TrakBot are untouched. */
-import {useId, type ReactNode} from 'react';
+import type {ReactNode} from 'react';
 
 export type TrakServiceIconKind = 'van'|'master'|'tow'|'sto'|'service'|'insurance'|'insurer'|
   'consult'|'parts'|'tech'|'ecu'|'inspection'|'courier'|'orders';
 
 /** Chrome/amber glyphs for small navigation and full-size service tiles; no bitmap backplate. */
 export function TrakServiceIcon({kind,size=48}:{kind:TrakServiceIconKind;size?:number}) {
-  const prefix=useId().replace(/[^a-zA-Z0-9]/g,'');
+  // Keep the markup literally identical for each public/partner role alias.
+  // Shared SVG definitions intentionally have the same IDs and colour stops;
+  // it is safe for duplicate instances because their definitions are identical.
+  const canonical=kind==='master'?'van':kind==='service'?'sto':kind==='insurer'?'insurance':kind;
+  const prefix=canonical;
   const metal='trMetal'+prefix, gold='trGold'+prefix, glass='trGlass'+prefix;
   const m='url(#'+metal+')', g='url(#'+gold+')', v='url(#'+glass+')';
   const edge='#d3e2ef';
@@ -110,7 +114,7 @@ export function TrakServiceIcon({kind,size=48}:{kind:TrakServiceIconKind;size?:n
         <path d="M27 22h8m-8 12h8" stroke={edge} strokeWidth="2" strokeLinecap="round"/>
       </>;break;
   }
-  return <svg className="traksos-service-icon" data-traksos-service={kind}
+  return <svg className="traksos-service-icon" data-traksos-service={canonical}
     viewBox="0 0 48 48" width={size} height={size}
     fill="none" stroke="none" aria-hidden="true" focusable="false">
     <defs>
