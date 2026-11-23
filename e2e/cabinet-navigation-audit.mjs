@@ -106,7 +106,8 @@ try {
       if((kind==='owner'||kind==='driver') && !invitation.includes('не более 10% стоимости услуги'))
         throw Error(kind+': the invitation page shows the wrong client points cap');
       if(['master','tow','service','master_service'].includes(kind) &&
-         !invitation.includes('не более 50% комиссии TrakSOS'))
+         (!invitation.includes('не более 50% фактически начисленной комиссии TrakSOS') ||
+          !invitation.includes('акцией 0% списание баллов исполнителя равно нулю')))
         throw Error(kind+': the invitation page shows the wrong performer points cap');
       if(!invitation.includes('Приветственные баллы новому клиенту начисляются при регистрации'))
         throw Error(kind+': welcome reward timing contradicts actual referral logic');
