@@ -1019,10 +1019,11 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .top .logo { flex-shrink: 0; }
 }
 
-/* The 320px TEST administrator must keep its supervisor badge legible,
-   rather than shrink it under Bell/Account. Only the failing narrow admin
-   header gets a second flex row; 617 desktop and 618 client remain unchanged. */
-@media(max-width:359px){
+/* The 320–412px TEST administrator must keep its supervisor badge legible.
+   At 390px real Chromium found Bell physically covering the badge text.
+   Place the complete action row below the brand, not under a Bell overlay;
+   preserve all controls and never modify owner-approved PC/client layout. */
+@media(max-width:412px){
   .app.role-admin header.top{
     flex-wrap:wrap!important;
     row-gap:4px!important;
