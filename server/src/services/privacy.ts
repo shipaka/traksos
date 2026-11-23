@@ -141,7 +141,7 @@ export class PrivacyService {
           `select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
         await this.notifier.notify(staff, { type: 'privacy' }, {
           kind: 'normal', title: 'Запрос на удаление данных',
-          body: `Пользователь ${user.phone}: удалим через ${GRACE_DAYS} дней`, data: {},
+          body: `Пользователь ${user.phone}: запрос на удаление не ранее ${GRACE_DAYS} дней; активные обязательства должны быть завершены`, data: {},
         });
       } catch (error) {
         console.warn('[privacy] delete request notification delivery failed',
