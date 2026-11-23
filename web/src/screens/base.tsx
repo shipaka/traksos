@@ -88,6 +88,9 @@ function useBaseLoad<T = any>(
   }, [key, reload]);
   const current = state.key === key ? state : null;
   const setData = useCallback((next: T | null) => {
+    // A confirmed mutation wins over an older in-flight GET. Otherwise a
+    // delayed refresh could display the pre-invoice or pre-confirm state.
+    ++nextRequest.current;
     setState(existing => existing.key === activeKey.current
       ? { key: existing.key, data: next, error: null, loading: false } : existing);
   }, []);
