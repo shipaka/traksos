@@ -30,7 +30,7 @@ export function AdminSummary() {
   const [tab, setTab] = useState<'money' | 'work' | 'quality'>('money');
   // useLoad keeps the previous payload on GET failure; this is financial and
   // role-sensitive data, not a reusable estimate from a previous session.
-  const d = !s.error && s.data?.ownerId === me?.id ? s.data.payload : null;
+  const d = !s.error && !!me?.id && s.data && s.data.ownerId === me.id ? s.data.payload : null;
   if (!d) return <div className="stack">
     <Loading error={s.error} />
     {s.error && <button type="button" className="btn ghost small"
@@ -99,7 +99,7 @@ function LiveOrders() {
   const { me } = useMe();
   const l = useLoad(async () => ({ownerId:me?.id,rows:await get('/api/admin/live')}),
     [me?.id], (e) => e.type === 'order');
-  const rows = !l.error && l.data?.ownerId === me?.id ? l.data.rows : null;
+  const rows = !l.error && !!me?.id && l.data && l.data.ownerId === me.id ? l.data.rows : null;
   if (!rows) return <div className="stack">
     <Loading error={l.error} />
     {l.error && <button type="button" className="btn ghost small"
