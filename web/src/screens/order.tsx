@@ -96,14 +96,18 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
-      {d.you !== 'candidate' && d.status !== 'searching' && !isPerformer && <Money d={d} />}
+      {/* A failed search is not a booked call-out. Preserve actual payment history
+          below, but never advertise an estimated future visit as "Цена". */}
+      {d.you !== 'candidate' && !['searching','no_performer'].includes(d.status)
+        && !isPerformer && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
       {(d.you === 'client' || d.you === 'admin') && <OrderTimeline
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
-      {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
+      {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' &&
+        <PaymentsList id={id} admin={d.you === 'admin'} noPerformer={d.status==='no_performer'} />}
 
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
@@ -1298,17 +1302,22 @@ function Chat({ id, status }: { id: string; status: string }) {
 }
 
 // Деньги по заявке: клиенту — что списано и что вернули; админу — ещё и кнопка возврата
-function PaymentsList({ id, admin }: { id: string; admin: boolean }) {
+function PaymentsList({ id, admin, noPerformer = false }: { id: string; admin: boolean; noPerformer?: boolean }) {
   const list = useLoad(() => get(`/api/orders/${id}/payments`), [id], (e) => e.orderId === id);
   if (!list.data?.length) return null;
   return (
     <div className="card">
       <b>Оплата</b>
+      {noPerformer && <span className="note">
+        Исполнитель не найден. Ниже показаны только фактические финансовые операции
+        по заявке; статус резерва или возврата определяется платёжной системой,
+        а не предварительной стоимостью услуги.
+      </span>}
       {list.data.map((p: any) => (
         <div key={p.id} className="stack" style={{ gap: 4 }}>
           <div className="sum"><span>{p.kind === 'call_out' ? 'Выезд' : 'Работа'} · {payStatus(p.status)}</span><span>{rub(p.total)}</span></div>
           {p.refunded_amount > 0 && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Возвращено</span><span>{rub(p.refunded_amount)}</span></div>}
-          {p.status === 'pending' && p.confirmation_url && !admin && <a className="btn small" href={p.confirmation_url}>Оплатить {rub(p.total)}</a>}
+          {p.status === 'pending' && p.confirmation_url && !admin && !noPerformer && <a className="btn small" href={p.confirmation_url}>Оплатить {rub(p.total)}</a>}
           {admin && <RefundForm pay={p} onDone={list.reload} />}
         </div>
       ))}
