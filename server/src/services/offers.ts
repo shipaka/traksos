@@ -8,7 +8,7 @@ import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import { contractEconomyAnnex } from '../domain/economicsGuide.ts';
 import type { Notifier } from './notify.ts';
-import { HttpError, bad, notFound, type AuthUser } from '../http/router.ts';
+import { HttpError, bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 
 const PERFORMER_NOTICE_DAYS = 15;
 
@@ -77,9 +77,20 @@ export class OffersService {
   requireInspection = (user: AuthUser) => this.require(user, ['inspection', 'privacy']);
 
   async accept(user: AuthUser, offerId: string, ip: string) {
-    const o = await this.db.one('select id, effective_at from offers where id=$1', [offerId]);
+    const o = await this.db.one<{ id: string; audience: string }>(
+      'select id, audience from offers where id=$1', [offerId]);
     if (!o) throw notFound();
-    await this.db.query('insert into consents(user_id, offer_id, ip) values ($1,$2,$3) on conflict do nothing', [user.id, offerId, ip]);
+    // Contracts must be relevant to the account and effective NOW. Recording
+    // consent for a future, superseded or unrelated edition produces an
+    // invalid legal audit even though require() still checks the current one.
+    if (!this.audiences(user).includes(o.audience))
+      throw forbidden('Документ не относится к вашему кабинету');
+    const current = await this.current(o.audience);
+    if (!current || current.id !== o.id)
+      throw conflict('offer_outdated', 'Редакция условий изменилась. Ознакомьтесь с действующей версией');
+    await this.db.query(
+      'insert into consents(user_id, offer_id, ip) values ($1,$2,$3) on conflict do nothing',
+      [user.id, offerId, ip]);
     return this.status(user);
   }
 
