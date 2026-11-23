@@ -127,18 +127,26 @@ export function AdminRegistry() {
     setDraft(prev=>({...prev,[key]:value}));
   }
   async function exportFiltered() {
-    if(exporting)return;
-    setExporting(true);setExportError('');setExportInfo('');
+    if(exportLock.current||!loaded||changed||!me?.id)return;
+    const owner=me.id,filterKey=filterSnapshot;
+    exportLock.current=true;setExporting(true);setExportError('');setExportInfo('');
     try {
       const body:any={};
       for(const [k,v] of Object.entries(applied))if(v.trim())body[k]=v.trim();
-      const data=await post<{filename:string;csv:string;count:number;total:number;truncated:boolean}>('/api/admin/registry/export',body);
-      downloadCsv(data.filename,data.csv);
-      setExportInfo(data.truncated
-        ? `Выгружено ${data.count} из ${data.total}. Максимум 5000 строк за одну выгрузку — сузьте фильтры по региону или датам.`
-        : `Выгружено ${data.count} карточек в CSV. Действие зарегистрировано в журнале.`);
-    } catch(err) {setExportError(err instanceof Error?err.message:'Ошибка выгрузки');}
-    finally{setExporting(false);}
+      const response=await post<{filename:string;csv:string;count:number;total:number;truncated:boolean}>(
+        '/api/admin/registry/export',body);
+      if(activeAccount.current!==owner||activeFilters.current!==filterKey)return;
+      if(typeof response.csv!=='string'||!response.csv.startsWith('\uFEFF'))
+        throw new Error('Некорректный файл реестра от сервера');
+      const safeName=String(response.filename??'').replace(/[^a-zA-Z0-9_.-]/g,'_').slice(0,90);
+      downloadCsv(safeName.endsWith('.csv')?safeName:'traksos-registry.csv',response.csv);
+      setExportInfo(response.truncated
+        ? `Выгружено ${response.count} из ${response.total}. Максимум 5000 строк за одну выгрузку — сузьте фильтры по региону или датам.`
+        : `Выгружено ${response.count} карточек в CSV. Действие зарегистрировано в журнале.`);
+    } catch(reason) {
+      if(activeAccount.current===owner&&activeFilters.current===filterKey)
+        setExportError(reason instanceof Error?reason.message:'Ошибка выгрузки');
+    } finally{exportLock.current=false;setExporting(false);}
   }
   return <section className="tr-registry stack">
     <div className="tr-registry-intro">
