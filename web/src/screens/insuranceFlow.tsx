@@ -332,13 +332,19 @@ export function InsuranceThread({requestId}:{requestId:string}){
     const v=await run(async()=>{
       // A FileReader failure must pass through useAction's error handling.
       // The selected file remains in place for a manual retry.
-      const dataUrl=await new Promise<string>((resolve,reject)=>{
+      const fileDataUrl=await new Promise<string>((resolve,reject)=>{
         const reader=new FileReader();
         reader.onload=()=>resolve(String(reader.result));
         reader.onerror=()=>reject(reader.error??new Error('Ошибка чтения PDF'));
         reader.onabort=()=>reject(new Error('Чтение PDF отменено'));
         reader.readAsDataURL(file);
       });
+      // FileReader may emit data:application/octet-stream;base64,... for an
+      // Android-picked PDF with empty MIME. Server expects an exact PDF
+      // Data URL and independently validates the real %PDF- bytes.
+      if(!/^data:[^;,]*;base64,/.test(fileDataUrl))
+        throw new Error('Не удалось прочитать PDF');
+      const dataUrl=fileDataUrl.replace(/^data:[^;,]*;base64,/,'data:application/pdf;base64,');
       return post('/api/insurance/requests/'+requestId+'/policy',{
         dataUrl,fileName:file.name,expiresOn});
     },'Готовый PDF отправлен клиенту');
