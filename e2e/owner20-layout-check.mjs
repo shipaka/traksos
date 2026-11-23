@@ -238,7 +238,9 @@ try {
        response.url().includes('/api/public/partner-map'),{timeout:15_000});
      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
      const response=await refresh;
-     if(response.ok()){
+     // A static Vite preview may serve index.html with HTTP 200 for
+     // unavailable API routes; only JSON is a real public-map contract.
+     if(response.ok() && (response.headers()['content-type']||'').includes('application/json')){
        const body=await response.json();
        if(body.source!=='verified_stationary_opt_in')
          throw Error('Partner map focus refresh accepted an unverified source');
