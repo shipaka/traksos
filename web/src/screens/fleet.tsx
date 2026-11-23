@@ -235,13 +235,13 @@ function Sticker({ car }: { car: any }) {
       <div style="max-width:320px;margin:auto;border:2px solid #000;border-radius:16px;padding:16px">
       <h2 style="margin:0 0 4px">TrakSOS — помощь на дороге</h2><div>${esc(car.brand)} ${esc(car.model)} · ${esc(car.plate)}</div>
       <div style="width:240px;margin:12px auto">${svg}</div>
-      <div>Наведите камеру → телефон → код из SMS.<br>Сломались — жмите SOS.</div></div><script>setTimeout(()=>print(),300)</script>`);
+      <div>Сканируйте QR → войдите по паролю.<br>Нет аккаунта? Регистрация с SMS.<br>Затем подтвердите привязку к машине.</div></div><script>setTimeout(()=>print(),300)</script>`);
     w.document.close();
   }
   return (
     <div className="stack" style={{ alignItems: 'center' }}>
       <div style={{ width: 200, background: '#fff', borderRadius: 12, padding: 8 }} dangerouslySetInnerHTML={{ __html: svg }} role="img" aria-label={`QR-код для входа водителя ${car.brand} ${car.plate ?? ''}`} />
-      <span className="note" style={{ textAlign: 'center' }}>Новый водитель сканирует наклейку, вводит телефон и код из SMS — и сразу работает с этой машиной. Без регистрации и анкет.</span>
+      <span className="note" style={{ textAlign: 'center' }}>Водитель сканирует наклейку: с аккаунтом входит по паролю, без аккаунта регистрируется и подтверждает номер по SMS один раз. Затем нажимает «Я водитель этой машины», чтобы получить доступ. Предыдущий водитель теряет доступ.</span>
       <div className="grid2" style={{ width: '100%' }}>
         <button className="btn ghost small" onClick={print}>Распечатать</button>
         <button className="btn ghost small" onClick={() => { navigator.clipboard?.writeText(url).catch(() => {}); }}>Скопировать ссылку</button>
@@ -250,7 +250,7 @@ function Sticker({ car }: { car: any }) {
   );
 }
 
-/** Страница наклейки: водитель видит машину, входит по SMS — и он водитель этой машины */
+/** QR-страница: пароль для существующего аккаунта или SMS при регистрации; привязка — только после явного подтверждения. */
 export function QrJoin({ code }: { code: string }) {
   const { me, reload } = useMe();
   const info = useLoad(() => get(`/api/qr/${code}`), [code]);
@@ -267,7 +267,7 @@ export function QrJoin({ code }: { code: string }) {
     <main>
       <div>
         <h1>{v.brand} {v.model ?? ''}</h1>
-        <div className="sub">{v.plate ?? ''} · парк «{v.owner}». Войдите — и сразу работаете с этой машиной: SOS, мастер, эвакуатор.</div>
+        <div className="sub">{v.plate ?? ''} · парк «{v.owner}». Войдите в аккаунт, затем подтвердите привязку к этой машине. После привязки будут доступны разрешённые действия: SOS, мастер, эвакуатор.</div>
       </div>
       {me ? (
         <div className="card">
