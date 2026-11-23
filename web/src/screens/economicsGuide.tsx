@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLoad, useMe, Back } from '../ui.tsx';
 import { get, rub } from '../api.ts';
 import { learningRole } from './platformIntro.tsx';
@@ -10,10 +11,22 @@ export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
   const {me,mode}=useMe();
   const role=me?.owner_id?'driver':learningRole(mode,me?.roles??[]);
   const q=useLoad(()=>get<Guide>('/api/me/economics?role='+encodeURIComponent(role)),[me?.id,role]);
+  const [retrying,setRetrying]=useState(false);
+  const retry=async()=>{
+    if(retrying)return;
+    setRetrying(true);
+    try{await q.reload();}finally{setRetrying(false);}
+  };
   if(!me)return null;
-  if(!q.data)return <section className="card stack" aria-label="Финансовые условия">
+  // useLoad preserves its last successful response when a later refresh fails.
+  // Never present that cached financial response as current after a failed GET.
+  if(q.error||!q.data)return <section className="card stack" aria-label="Финансовые условия">
     <b>Комиссии, баллы и рефералы</b>
-    <span className="note">{q.error?'Не удалось загрузить актуальные условия. Не полагайтесь на старые цифры; проверьте связь или откройте оферту.':'Загружаем действующие условия из системы…'}</span>
+    <span className="note" role={q.error?'alert':'status'}>{q.error
+      ?'Не удалось загрузить актуальные условия. Не полагайтесь на старые цифры; проверьте связь или откройте оферту.'
+      :'Загружаем действующие условия из системы…'}</span>
+    {q.error&&<button className="btn small" type="button" disabled={retrying}
+      onClick={()=>{void retry();}}>{retrying?'Обновляем…':'Повторить загрузку'}</button>}
   </section>;
   const info=q.data;
   return <section className="card stack economics-guide" aria-label={'Финансовые условия: '+info.title}>
