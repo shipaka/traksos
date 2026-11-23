@@ -32,8 +32,8 @@ try {
       const pending=[],pendingImages=[],orderCalls=[];
       window.fetch=(url,options)=>{
         if(String(url).endsWith('/api/me')){
-          return new Promise(resolve=>pending.push({
-            auth:options?.headers?.authorization,resolve
+          return new Promise((resolve,reject)=>pending.push({
+            auth:options?.headers?.authorization,resolve,reject
           }));
         }
         if(String(url).endsWith('/api/private-image')){
@@ -140,6 +140,31 @@ try {
         result.crossTabLogoutToken=module.getToken();
         result.externalChanges=externalChanges;
 
+        // A network timeout from a previous account must not claim the
+        // NEW account has lost its connection. Current-account failures
+        // must still produce a normal network error and offline event.
+        let offlineEvents=0;
+        window.addEventListener('traksos-connection',e=>{
+          if(e.detail?.online===false)offlineEvents++;
+        });
+        module.setToken('CI-NETWORK-OLD');
+        const oldTimeout=module.api('GET','/api/me').catch(e=>e);
+        result.oldNetworkAuth=pending[4]?.auth;
+        module.setToken('CI-NETWORK-NEW');
+        pending[4].reject(new TypeError('synthetic old account network outage'));
+        const staleFailure=await oldTimeout;
+        result.oldNetworkCode=staleFailure.code;
+        result.networkEventsAfterOld=offlineEvents;
+        result.tokenAfterOldNetwork=module.getToken();
+
+        const currentTimeout=module.api('GET','/api/me').catch(e=>e);
+        result.currentNetworkAuth=pending[5]?.auth;
+        pending[5].reject(new TypeError('synthetic current account network outage'));
+        const currentFailure=await currentTimeout;
+        result.currentNetworkCode=currentFailure.code;
+        result.currentNetworkStatus=currentFailure.status;
+        result.networkEventsAfterCurrent=offlineEvents;
+
         // The first order failed ambiguously; its request key must remain
         // reusable for THIS account only, not after a different login.
         const orderBody={service:'hydraulics',zoneId:'spb',
@@ -228,6 +253,15 @@ try {
     assert.equal(actual.crossTabLogoutToken,null);
     assert.equal(actual.externalChanges,2,
       'external login and logout must both notify the app');
+    assert.equal(actual.oldNetworkAuth,'Bearer CI-NETWORK-OLD');
+    assert.equal(actual.oldNetworkCode,'session_changed');
+    assert.equal(actual.networkEventsAfterOld,0,
+      'old account timeout incorrectly marked the new account offline');
+    assert.equal(actual.tokenAfterOldNetwork,'CI-NETWORK-NEW');
+    assert.equal(actual.currentNetworkAuth,'Bearer CI-NETWORK-NEW');
+    assert.equal(actual.currentNetworkCode,'network');
+    assert.equal(actual.currentNetworkStatus,0);
+    assert.equal(actual.networkEventsAfterCurrent,1);
     assert.equal(actual.lateOrderCode,'session_changed');
     assert.equal(actual.ordersAfterLateFingerprint,0,
       'unfinished old-account form was POSTed as a new user while digesting');

@@ -79,10 +79,12 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
       clearTimeout(timer);
     }
   } catch {
-    // A request started by a previous account may time out after a new
-    // session has connected. Do not show the new account a stale offline alert.
-    if (token === requestToken)
-      window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
+    // A request that failed after another login is an obsolete request, NOT
+    // proof that the newly signed-in account is offline. Do not return a
+    // misleading network error or fire a connection alert for that account.
+    if (requestToken && token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
+    window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
   }
   // Network status belongs to the session that started the request.
