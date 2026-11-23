@@ -68,8 +68,11 @@ export class DeveloperReportDelivery {
             order by delivery_next_at, created_at
             for update skip locked limit 1`);
         if (!row) return null;
-        await q.query("update admin_developer_reports set delivery_lease_until=now()+interval '45 seconds' where id=$1", [row.id]);
-        return row;
+        const lease=await q.one<{delivery_lease_until:Date}>(
+          "update admin_developer_reports set delivery_lease_until=now()+interval '45 seconds' " +
+          "where id=$1 returning delivery_lease_until",[row.id]);
+        if(!lease)throw new Error('Developer report lease disappeared');
+        return {...row,leaseUntil:lease.delivery_lease_until};
       });
       if (!leased) break;
       const notice: DeveloperReportNotice = {
@@ -81,12 +84,16 @@ export class DeveloperReportDelivery {
       };
       try {
         await this.sender(notice);
+        // Fence against an expired lease reclaimed by another sender.
         await this.db.query(
           `update admin_developer_reports
               set delivery_sent_at=now(), delivery_lease_until=null,
                   delivery_attempts=delivery_attempts+1, delivery_last_error=null
-            where id=$1 and delivery_sent_at is null`, [leased.id]);
+            where id=$1 and delivery_sent_at is null
+              and delivery_lease_until=$2::timestamptz`,
+          [leased.id,leased.leaseUntil]);
       } catch {
+        // A stale worker must not reschedule a newer worker's lease.
         // Never persist the URL, token, HTTP response or exception text.
         // Retry after 1,2,4,... up to 60 minutes. Receiver must deduplicate
         // reportId / idempotency-key if an ACK is lost after acceptance.
@@ -98,7 +105,9 @@ export class DeveloperReportDelivery {
                   delivery_lease_until=null,
                   delivery_next_at=now()+($2::int * interval '1 minute'),
                   delivery_last_error='Не доставлено. Автоматический повтор.'
-            where id=$1 and delivery_sent_at is null`, [leased.id, minutes]);
+            where id=$1 and delivery_sent_at is null
+              and delivery_lease_until=$3::timestamptz`,
+          [leased.id,minutes,leased.leaseUntil]);
       }
       processed++;
     }
