@@ -1,7 +1,7 @@
 // Фото для проверки исполнителя: снимаем камерой, видим статус каждого, отправляем модератору.
 
 import { useEffect, useState } from 'react';
-import { get, post, del, authedImage, compressImage } from '../api.ts';
+import { get, post, del, authedImage, compressImage, getToken } from '../api.ts';
 import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
 
 export function Documents() {
@@ -60,8 +60,12 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
 
   async function onFile(f: File | undefined) {
     if (!f) return;
+    const uploadToken = getToken();
+    if (!uploadToken) return;
     const dataUrl = await compressImage(f).catch(() => null);
-    if (!dataUrl) return;
+    if (!dataUrl || getToken() !== uploadToken) return;
+    // Do not submit confidential identity/vehicle documents through another
+    // account if logout happened during canvas compression on mobile.
     const takenAt = f.lastModified ? new Date(f.lastModified).toISOString() : undefined;
     if (await run(() => post('/api/performer/documents', { kind: r.kind, dataUrl, takenAt }), 'Фото загружено')) onDone();
   }

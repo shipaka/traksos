@@ -45,9 +45,16 @@ export function OrderPhotoCapture({orderId,reviewOnly=false}:{
   const toast=useToast();
   const upload=async(file?:File)=>{
     if(!file || busy || reviewOnly)return;
+    const uploadToken=getToken();
+    if(!uploadToken){toast('Войдите в аккаунт перед отправкой фото');return;}
     setBusy(true);
     try{
       const dataUrl=await safeJpeg(file);
+      // JPEG recompression/EXIF removal is asynchronous on older phones.
+      // A user may have signed out or switched accounts while it runs.
+      // Never upload the previous user's file under the replacement bearer.
+      if(getToken()!==uploadToken)
+        throw new Error('Сессия изменилась. Откройте заявку и выберите фото снова.');
       await post('/api/orders/'+encodeURIComponent(orderId)+'/photos',{dataUrl});
       window.dispatchEvent(new CustomEvent('traksos-photo-added',{detail:{orderId}}));
       toast('Фото прикреплено к заявке');
