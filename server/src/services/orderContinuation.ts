@@ -19,11 +19,18 @@ export class OrderContinuationService {
  constructor(private db:Db,private notifier:Notifier,private now:()=>Date){}
  private async source(user:AuthUser,orderId:string) {
   const order=await this.db.one<any>(
-   'select id,client_id,created_by,performer_id,service,status,number from orders where id=$1',[orderId]);
+   `select o.id,o.client_id,o.created_by,o.performer_id,o.service,o.status,o.number,
+      exists (select 1 from users u join vehicles v
+        on v.owner_id=u.owner_id and v.driver_id=u.id
+        where u.id=o.created_by and 'driver'=any(u.roles)
+          and u.owner_id=o.client_id
+          and (o.vehicle_id is null or v.id=o.vehicle_id)) as current_driver_link
+      from orders o where o.id=$1`,[orderId]);
   if(!order)throw notFound('Исходная заявка не найдена');
   const owner=order.client_id===user.id && !user.owner_id;
   const origin=order.performer_id===user.id;
-  const driver=order.created_by===user.id && user.owner_id===order.client_id;
+  const driver=order.created_by===user.id && user.roles.includes('driver') &&
+    user.owner_id===order.client_id && order.current_driver_link===true;
   if(!owner&&!origin&&!driver&&!user.roles.includes('admin'))
    throw forbidden('Нет доступа к продолжению этого обращения');
   return {order,owner,origin,driver};
@@ -83,7 +90,8 @@ export class OrderContinuationService {
    return {id:prior.id,created:false};
   });
   if(result.created)await this.notifier.notify(
-   [order.client_id,order.created_by].filter((id:string)=>id!==user.id),
+   [order.client_id,...(order.current_driver_link && order.created_by!==order.client_id
+       ? [order.created_by]:[])].filter((id:string)=>id!==user.id),
    {type:'order',orderId,status:order.status},
    {kind:'normal',title:'Исполнитель рекомендует продолжить обращение',
     body:`По заявке №${order.number} предложен ${targetNames[target]}. Владелец решает, запускать ли поиск; новая платная заявка ещё не создана.`,
