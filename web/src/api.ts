@@ -47,10 +47,15 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
       clearTimeout(timer);
     }
   } catch {
-    window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
+    // A request started by a previous account may time out after a new
+    // session has connected. Do not show the new account a stale offline alert.
+    if (token === requestToken)
+      window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
   }
-  window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
+  // Network status belongs to the session that started the request.
+  if (token === requestToken)
+    window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
   const j = await r.json().catch(() => null);
   if (r.status === 401 && requestToken && token === requestToken) {
     setToken(null);
