@@ -86,7 +86,10 @@ test('requesting deletion while there is an active SOS remains forbidden',
         service:'electric',description:'Тест удаления и активного SOS',
         address:'Санкт-Петербург, тестовый сервис',regionId:'spb',zoneId:'spb',
       },customer.token));
-      assert.ok(created?.order?.id,'real active order fixture was not created');
+      assert.ok(created?.order?.id,'real order fixture was not created');
+      // No online synthetic partner can end the search immediately with
+      // no_performer. This test needs a genuinely open order lifecycle.
+      await t.db.query("update orders set status='searching' where id=$1",[created.order.id]);
       const denied=await t.api('POST','/api/me/delete',{},customer.token);
       assert.equal(denied.status,409);
       assert.equal(denied.body.error,'active_orders');
