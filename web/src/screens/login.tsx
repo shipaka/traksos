@@ -1,6 +1,6 @@
 import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.tsx';
 import { TrakAppPhone } from '../trakAppPhone.tsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
@@ -181,12 +181,49 @@ export function Login({ driver, entry, serviceContext }: {
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
+  // A delayed SMS/login response must not authenticate a different phone or
+  // redirect after the user has changed form or account. Each edit invalidates
+  // the previous operation, including when this component unmounts.
+  const authGeneration = useRef(0);
+  useEffect(() => {
+    authGeneration.current += 1;
+    return () => { authGeneration.current += 1; };
+  }, [phone, intent, password, code, role, customerType, hybridMasterService, specialties]);
+
+  const changeAuthPhone = (value: string) => {
+    authGeneration.current += 1;
+    setPhone(value);
+    setPassword('');
+    setCode('');
+    setDevCode(null);
+    setCodeError('');
+    setCodeStatus('');
+    setInsurerOnly(false);
+    if (step === 'code') setStep('phone');
+  };
+  const otherAuthNumber = () => {
+    authGeneration.current += 1;
+    setStep('phone');
+    setCode('');
+    setDevCode(null);
+    setPassword('');
+    setCodeStatus('');
+    setCodeError('');
+    setInsurerOnly(false);
+  };
 
   // A routed auth form must clear its URL as well as local state on Back.
   // Otherwise the guest header links to #/login, #/register or #/join
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
+    authGeneration.current += 1;
     setIntent(null);
+    setStep('phone');
+    setCode('');
+    setDevCode(null);
+    setPassword('');
+    setLoginBusy(false);
+    setCodeStatus('');
     try {
       sessionStorage.removeItem('traksos.authTransition');
       sessionStorage.removeItem('traksos.authPhoneDraft');
@@ -237,6 +274,7 @@ export function Login({ driver, entry, serviceContext }: {
     ? 'master_service' : role;
   async function sendCode() {
     if (busy) return;
+    const generation = ++authGeneration.current;
     setCodeError('');
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 11 || !/^[78]/.test(digits)) {
@@ -267,6 +305,7 @@ export function Login({ driver, entry, serviceContext }: {
         throw e;
       }
     }, null);
+    if (generation !== authGeneration.current) return;
     setCodeStatus('');
     if (r?.sent === true) {
       setDevCode(r.devCode ?? null);
@@ -280,6 +319,7 @@ export function Login({ driver, entry, serviceContext }: {
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
       if (loginBusy) return;
+      const generation = ++authGeneration.current;
       setLoginError('');
       const digits = phone.replace(/\D/g, '');
       if (digits.length !== 11 || !/^[78]/.test(digits)) {
@@ -293,14 +333,16 @@ export function Login({ driver, entry, serviceContext }: {
       setLoginBusy(true);
       try {
         const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
-        await signedIn(login);
+        if (generation === authGeneration.current) await signedIn(login, generation);
       } catch (e) {
-        setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
+        if (generation === authGeneration.current)
+          setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
       } finally {
-        setLoginBusy(false);
+        if (generation === authGeneration.current) setLoginBusy(false);
       }
       return;
     }
+    const generation = ++authGeneration.current;
     const r = await run(async () => {
       try {
         return await post('/api/auth/verify', { phone, code,
@@ -310,14 +352,20 @@ export function Login({ driver, entry, serviceContext }: {
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
-        if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
-        if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
+        if (generation === authGeneration.current &&
+            e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) {
+          setAppealToken(e.data.appealToken);
+          return null;
+        }
+        if (generation === authGeneration.current && e instanceof ApiError && e.code === 'insurer_only')
+          setInsurerOnly(true);
         throw e;
       }
     }, null);
-    if (r) await signedIn(r);
+    if (r && generation === authGeneration.current) await signedIn(r, generation);
   }
-  async function signedIn(r: any) {
+  async function signedIn(r: any, generation: number) {
+      if (generation !== authGeneration.current) return;
       if (intent === 'join' && (role === 'master' || hybridMasterService)) {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
@@ -335,6 +383,7 @@ export function Login({ driver, entry, serviceContext }: {
       setToken(r.token);
       connectWs();
       await reload();
+      if (generation !== authGeneration.current) return;
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
@@ -586,12 +635,12 @@ export function Login({ driver, entry, serviceContext }: {
         </div>
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { setPhone(e.target.value); setLoginError(''); }} /></Field>
-          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { changeAuthPhone(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
           <button type="button" className="btn ghost" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
-          <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
+          <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; setIntent('reset'); setStep('phone'); setCode(''); setDevCode(null); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
@@ -649,7 +698,7 @@ export function Login({ driver, entry, serviceContext }: {
             </details>}
           </div>}
           <Field label="Телефон">
-            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); setCodeError(''); }} />
+            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => changeAuthPhone(e.target.value)} />
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
@@ -665,21 +714,21 @@ export function Login({ driver, entry, serviceContext }: {
           {codeError && <div className="card" role="alert" style={{ borderColor: 'var(--danger, #e25b69)' }}>{codeError}</div>}
           {codeStatus && <div className="note" role="status">{codeStatus}</div>}
           <button className="btn" disabled={busy}>{busy ? 'Отправляем…' : 'Получить код'}</button>
-          {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
+          {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; setIntent('login'); otherAuthNumber(); }}>Уже есть аккаунт? Войти по паролю</button>}
           {!driver && <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>}
         </form>
       ) : (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
           <Field label={`Код из SMS на ${phone}`} hint={devCode ? `Тестовый режим: код ${devCode}` : undefined}>
             <input className="field" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
+              onChange={(e) => { authGeneration.current += 1; setCode(e.target.value.replace(/\D/g, '')); }} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
           </Field>
           <Field label={intent === 'reset' || intent === 'activate' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
-            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} />
+            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => { authGeneration.current += 1; setPassword(e.target.value); }} minLength={10} />
           </Field>
           <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : intent === 'activate' ? 'Активировать аккаунт' : 'Зарегистрироваться'}</button>
           {insurerOnly && <button type="button" className="btn" onClick={() => { setStep('phone'); setCode(''); setRole('insurer'); setIntent('join'); setInsurerOnly(false); }}>Перейти к страховому кабинету</button>}
-          <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
+          <button type="button" className="btn ghost" onClick={otherAuthNumber}>Другой номер</button>
         </form>
       )}
       </section>
