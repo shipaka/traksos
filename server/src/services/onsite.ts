@@ -32,7 +32,7 @@ export class OnsiteService {
     await this.orders.event(this.db, orderId, user.id, 'late', { minutes });
     const text = `Исполнитель предупредил: задерживается на ${minutes} мин.`;
     await this.orders.systemMessage(orderId, text + (minutes <= 40 ? ' До 40 минут для грузовых — в пределах нормы.' : ''));
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: o.status },
+    await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: o.status },
       { kind: 'normal', title: 'Мастер задерживается', body: `Заявка №${o.number}: +${minutes} мин`, data: { orderId } });
     return this.orders.view(user, orderId);
   }
@@ -93,9 +93,10 @@ export class OnsiteService {
   /** Мастер на месте уточняет машину: следующий приедет подготовленным */
   /** «Нужна запчасть»: мастер ждёт (оплачивается ожидание), уедет и вернётся, или эвакуатор. Выбирает клиент или мастер. */
   async part(user: AuthUser, orderId: string, mode: 'wait' | 'resume' | 'return' | 'tow') {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!o) throw notFound('Заявка не найдена');
-    const isClient = o.client_id === (user.owner_id ?? user.id) || o.created_by === user.id;
+    // A previous creator or a driver of ANOTHER car in this fleet is not
+    // authorized to modify repair/waiting status for this order.
+    const o = await this.orders.mustSee(user, orderId);
+    const isClient = this.orders.actorOf(user, o) === 'client';
     if (o.performer_id !== user.id && !isClient) throw forbidden();
     if (!['arrived', 'working'].includes(o.status)) throw conflict('bad_status', 'Это решают на месте, во время работы');
     const now = new Date();
@@ -118,7 +119,7 @@ export class OnsiteService {
         : 'Нужна запчасть — мастер закроет работу с диагнозом, клиент вызывает эвакуатор.');
     }
     await this.orders.event(this.db, orderId, user.id, 'part', { mode });
-    await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x: string) => x && x !== user.id), { type: 'order', orderId, status: o.status },
+    await this.notifier.notify([...await this.orders.customerRecipientsForOrder(orderId),o.performer_id].filter((x: string) => x && x !== user.id), { type: 'order', orderId, status: o.status },
       { kind: 'normal', title: 'Нужна запчасть', body: { wait: 'Мастер ждёт, таймер на ожидании', resume: 'Работа продолжается', return: 'Мастер вернётся с запчастью', tow: 'Эвакуатор' }[mode], data: { orderId } });
     return this.orders.view(user, orderId);
   }
@@ -133,7 +134,7 @@ export class OnsiteService {
       await this.db.query('update orders set recommended_center_id=$2 where id=$1', [orderId, centerId]);
       await this.orders.event(this.db, orderId, user.id, 'service_recommended', { centerId });
       await this.orders.systemMessage(orderId, `Мастер советует сервис «${c.name}» — запишитесь из заявки, будет скидка.`);
-      await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: o.status },
+      await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: o.status },
         { kind: 'normal', title: 'Мастер советует сервис', body: `«${c.name}» — со скидкой по совету мастера`, data: { orderId } });
     } else {
       await this.db.query('update orders set recommended_center_id=null where id=$1', [orderId]);
