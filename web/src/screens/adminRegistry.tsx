@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { get, post, fmtPhone } from '../api.ts';
-import { useLoad, Loading } from '../ui.tsx';
+import { useLoad, useMe, Loading } from '../ui.tsx';
 import './adminRegistry.css';
 
 type Filters = {
@@ -38,17 +38,32 @@ function RegistryEdit({item,onSaved,onCancel}:{item:any;onSaved:()=>void;onCance
   const [note,setNote]=useState(item.note??'');
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const submitting=useRef(false);
+  const mounted=useRef(true);
+  useEffect(()=>()=>{mounted.current=false;},[]);
   return <form className="tr-registry-editor" onSubmit={async e=>{
-    e.preventDefault();if(busy)return;
-    setBusy(true);setError('');
+    e.preventDefault();
+    if(submitting.current)return;
+    const cleanTags=tags.split(',').map(x=>x.trim()).filter(Boolean);
+    if(cleanTags.length>12){
+      setError('Допускается не более 12 тегов. Ничего не сохранено.');return;
+    }
+    if(cleanTags.some(x=>x.length>40)){
+      setError('Каждый тег должен быть не длиннее 40 символов.');return;
+    }
+    submitting.current=true;setBusy(true);setError('');
     try {
       await post('/api/admin/registry/'+encodeURIComponent(item.id)+'/metadata',{
         region:region.trim()||null,city:city.trim()||null,
-        tags:tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),note:note.trim(),
+        tags:[...new Set(cleanTags)],note:note.trim(),
       });
-      onSaved();
-    } catch(err){setError(err instanceof Error ? err.message:'Не удалось сохранить');}
-    finally{setBusy(false);}
+      if(mounted.current)onSaved();
+    } catch(err){
+      if(mounted.current)setError(err instanceof Error ? err.message:'Не удалось сохранить');
+    } finally{
+      submitting.current=false;
+      if(mounted.current)setBusy(false);
+    }
   }}>
     <p className="note">Редактируются только внутренние заметки реестра. Профиль, роли, телефоны, платежи и история заявок не изменятся.</p>
     <div className="tr-registry-fields">
@@ -70,7 +85,7 @@ function RegistryEdit({item,onSaved,onCancel}:{item:any;onSaved:()=>void;onCance
     {error && <div className="banner bad" role="alert">{error}</div>}
     <div className="row">
       <button className="btn small" disabled={busy} type="submit">{busy?'Сохраняется…':'Сохранить карточку'}</button>
-      <button className="btn ghost small" type="button" onClick={onCancel}>Отмена</button>
+      <button className="btn ghost small" type="button" disabled={busy} onClick={onCancel}>Отмена</button>
     </div>
   </form>;
 }
