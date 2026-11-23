@@ -324,6 +324,42 @@ try{
             console.log('SANDBOX ROUTE PASS',role,width,destination,state.mainClass);
           }
         }
+        if(role==='service' && (width===390 || width===960)){
+          // Real authenticated service UI against disposable Postgres. The
+          // location is test-only and must be erasable without a second
+          // confirmation step or a misleading cosmetic field reset.
+          const prepared=await page.evaluate(async()=>{
+            const token=localStorage.getItem('traksos.token');
+            if(!token)throw Error('No sandbox service auth token');
+            const headers={'content-type':'application/json',authorization:'Bearer '+token};
+            const before=await fetch('/api/base',{headers}).then(r=>r.json());
+            if(!before.center?.id)throw Error('Sandbox service card is missing');
+            const response=await fetch('/api/base',{
+              method:'PUT',headers,body:JSON.stringify({lat:59.97,lng:30.31})
+            });
+            if(!response.ok)throw Error('Cannot prepare disposable station GPS: '+response.status);
+            return {name:before.center.name,verification:before.center.verification};
+          });
+          await page.goto(base+'/#/base/me',{waitUntil:'domcontentloaded'});
+          const clear=page.getByRole('button',{name:'Удалить GPS-координаты и скрыть точку'});
+          await clear.waitFor({state:'visible',timeout:15000});
+          await clear.click(); // real DOM pointer event; protected PUT /api/base
+          await clear.waitFor({state:'detached',timeout:15000});
+          const result=await page.evaluate(async()=>{
+            const token=localStorage.getItem('traksos.token');
+            const response=await fetch('/api/base',{headers:{authorization:'Bearer '+token}});
+            if(!response.ok)throw Error('Cannot read saved station');
+            return (await response.json()).center;
+          });
+          if(result?.lat!==null || result?.lng!==null ||
+             result?.public_map_opt_in!==false || result?.public_map_location_verified_at!==null ||
+             result.name!==prepared.name || result.verification!==prepared.verification)
+            throw Error('GPS clear button did not atomically remove the station location: '+
+              JSON.stringify({prepared,result}));
+          await page.screenshot({path:out+'/service-'+width+'-gps-cleared.png',
+            fullPage:false,animations:'disabled'});
+          console.log('STATIONARY GPS CLEAR BROWSER PASS',width,result.id);
+        }
         if (width === 390 && (role === 'driver' || role === 'owner')) {
           const docs = [];
           for (const audience of ['client', 'privacy']) {
