@@ -101,7 +101,13 @@ export class StandingService {
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification, p.tier, p.call_out_price,
               p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras, u.name, p.prep_minutes,
               (select count(*)::int from orders o where o.performer_id=p.user_id and o.status='completed') as jobs,
-              exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working')) as busy,
+              exists (select 1 from orders x where x.performer_id=p.user_id
+                and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')
+                and not (x.status='awaiting_confirmation' and (
+                  x.service='consult' or exists(
+                    select 1 from order_unilateral_closures uc
+                     where uc.order_id=x.id and uc.status in ('pending_client','disputed')
+                  )))) as busy,
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and u.status='active' and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
@@ -112,7 +118,10 @@ export class StandingService {
       ? list.filter(c=>validPoint(c.lat,c.lng)&&
           haversineKm({lat:p.lat!,lng:p.lng!},{lat:c.lat!,lng:c.lng!})<=all.dispatch.radiusKm)
       : list;
-    const order = { service: p.service, brand: p.brand ?? null, lat: p.lat ?? null, lng: p.lng ?? null, group_trip: false };
+    // With no verified search GPS, rank on a network-wide basis. Invalid 0/0
+    // must not become a fictitious coordinate that hides all partners.
+    const order = { service: p.service, brand: p.brand ?? null,
+      lat: locationKnown ? p.lat! : null, lng: locationKnown ? p.lng! : null, group_trip: false };
     // Distinguish presence from genuine availability. Paused/vacation workers
     // must never inflate the number of colleagues who can take an assignment.
     const online=inScope.filter(c=>!c.paused&&!c.extras?.vacation);
