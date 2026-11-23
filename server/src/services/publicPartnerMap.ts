@@ -45,24 +45,29 @@ export class PublicPartnerMap {
   }
 
   async visibility(user:AuthUser,enabled:boolean) {
-    const center=await this.db.one<Workshop>(`select c.id,c.name,c.lat,c.lng,
-      c.verification,c.paused,
-      (c.accepts_confirmed_at >= now() - interval '7 days') as accepts_current,
-      c.public_map_location_verified_at
-      from service_centers c
-      where c.owner_id=$1`,[user.id]);
-    if(!center)throw notFound('Сначала заполните карточку СТО');
-    if(enabled && (center.verification!=='approved' || center.paused ||
-      !center.accepts_current || !center.public_map_location_verified_at ||
-      !validStationaryPosition(center.lat,center.lng)))
-      throw bad('public_map_not_ready',
-        'Публичная карта доступна лишь СТО с проверенным адресом, подтверждёнными за последние 7 дней услугами и согласием на публикацию.');
-    const row=await this.db.one<{public_map_opt_in:boolean;public_map_opted_at:string|null}>(`
-      update service_centers
-         set public_map_opt_in=$2,
-             public_map_opted_at=case when $2 then now() else null end
-       where owner_id=$1 returning public_map_opt_in,public_map_opted_at`,[user.id,enabled]);
-    return {enabled:!!row?.public_map_opt_in,optedAt:row?.public_map_opted_at??null,
-      note:'Только стационарные подтверждённые координаты СТО. Текущий GPS мастеров не публикуется.'};
+    // Lock the same station row that profile edits and staff geo review update.
+    // Otherwise an enabling request can read the old approved GPS, race a
+    // location deletion/review, and write stale consent after its revocation.
+    return this.db.tx(async q=>{
+      const center=await q.one<Workshop>(`select c.id,c.name,c.lat,c.lng,
+        c.verification,c.paused,
+        (c.accepts_confirmed_at >= now() - interval '7 days') as accepts_current,
+        c.public_map_location_verified_at
+        from service_centers c
+        where c.owner_id=$1 for update`,[user.id]);
+      if(!center)throw notFound('Сначала заполните карточку СТО');
+      if(enabled && (center.verification!=='approved' || center.paused ||
+        !center.accepts_current || !center.public_map_location_verified_at ||
+        !validStationaryPosition(center.lat,center.lng)))
+        throw bad('public_map_not_ready',
+          'Публичная карта доступна лишь СТО с проверенным адресом, подтверждёнными за последние 7 дней услугами и согласием на публикацию.');
+      const row=await q.one<{public_map_opt_in:boolean;public_map_opted_at:string|null}>(`
+        update service_centers
+           set public_map_opt_in=$2,
+               public_map_opted_at=case when $2 then now() else null end
+         where owner_id=$1 returning public_map_opt_in,public_map_opted_at`,[user.id,enabled]);
+      return {enabled:!!row?.public_map_opt_in,optedAt:row?.public_map_opted_at??null,
+        note:'Только стационарные подтверждённые координаты СТО. Текущий GPS мастеров не публикуется.'};
+    });
   }
 }
