@@ -82,12 +82,21 @@ try{
             return {backgroundColor:style.backgroundColor,
               backgroundImage:style.backgroundImage,color:style.color};
           });
+        // Both approved PC orange (#ed6724 → #fb8835) and mobile orange
+        // (#fa6817 → #ff9626) are valid, not a single exact RGB gradient.
+        // Reject pink/blue without changing the owner-approved desktop UI.
+        const gradientStops=[...retryColors.backgroundImage.matchAll(
+          /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g
+        )].map(match=>match.slice(1,4).map(Number));
+        const allApprovedOrange=gradientStops.length>=2 &&
+          gradientStops.every(([red,green,blue])=>
+            red>=215 && green>=65 && green<=175 && blue<=100 &&
+            red-green>=70 && green-blue>=20);
         if(!/linear-gradient/i.test(retryColors.backgroundImage) ||
-           !/rgb\(250,\s*104,\s*23\)/.test(retryColors.backgroundImage) ||
-           !/rgb\(255,\s*150,\s*38\)/.test(retryColors.backgroundImage) ||
+           !allApprovedOrange ||
            retryColors.color!=='rgb(255, 255, 255)')
           throw Error('Owner-approved retry CTA is not orange on '+role+' '+width+
-            ': '+JSON.stringify(retryColors));
+            ': '+JSON.stringify({retryColors,gradientStops}));
         const expected=['Искать ещё раз','Другая помощь','Поддержка'];
         if(details.actions.length!==3 || details.actions.some((a,i)=>a.text!==expected[i]||a.height<44))
           throw Error('Unavailable/inaccessible actions '+JSON.stringify(details.actions));
