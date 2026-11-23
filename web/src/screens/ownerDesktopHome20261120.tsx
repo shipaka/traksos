@@ -102,7 +102,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
           if(opened){opened.open=false;opened.querySelector('summary')?.focus();event.preventDefault();}
         }}>
         <details onMouseLeave={dismissOnMouseLeave}><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
-        <details onMouseLeave={dismissOnMouseLeave}><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen();}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
+        <details onMouseLeave={dismissOnMouseLeave}><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen(event.currentTarget);}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
         <details onMouseLeave={dismissOnMouseLeave}><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
         <details onMouseLeave={dismissOnMouseLeave}><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
         <a href="#/login">Поддержка</a>
@@ -146,7 +146,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
     </section>
     <nav className="owner20-quick" aria-label="Основные услуги" id="public-services">
       {primary.map(([title,hint,key])=>key==='trakbot'
-        ? <a href="#/trakbot" key={key} className="owner20-quick-trakbot" aria-label="Открыть TrakBot — ИИ-помощник" onClick={event=>{event.preventDefault();requestTrakBotOpen();}}><span className="owner20-quick-icon" aria-hidden="true"><TrakBotMascot reaction="hello" size="small" ambient /></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span></a>
+        ? <a href="#/trakbot" key={key} className="owner20-quick-trakbot" aria-label="Открыть TrakBot — ИИ-помощник" onClick={event=>{event.preventDefault();requestTrakBotOpen(event.currentTarget);}}><span className="owner20-quick-icon" aria-hidden="true"><TrakBotMascot reaction="hello" size="small" ambient /></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span></a>
         : <a href={route(key)} key={key} className={'owner20-quick-'+key} onClick={() => rememberAllowed(key)}><span className="owner20-quick-icon" aria-hidden="true"><OwnerIcon kind={key}/></span><span className="owner20-quick-copy"><b>{title}</b><small>{hint}</small></span><ApprovedServiceIllustration kind={key==='van'?'repair':key==='tow'?'tow':key==='sto'?'service':'consult'}/></a>)}
     </nav>
     <section className="owner20-features" aria-label="Дополнительные сервисы">

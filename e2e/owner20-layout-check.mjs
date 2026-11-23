@@ -276,6 +276,14 @@ try {
     if(await page.locator('.trakbot-dock-panel').count()!==1) throw Error('Duplicate TrakBot panels');
     await page.locator('.trakbot-dock-close').click();
     if(await page.locator('.trakbot-dock-panel').count()!==0) throw Error('TrakBot shortcut did not close');
+    if(!await botShortcut.evaluate(node=>node===document.activeElement))
+      throw Error(width+': closing TrakBot lost focus on the fifth tile');
+    await page.keyboard.press('Enter');
+    await page.locator('.trakbot-dock-panel').waitFor();
+    await page.keyboard.press('Escape');
+    await page.locator('.trakbot-dock-panel').waitFor({state:'detached'});
+    if(!await botShortcut.evaluate(node=>node===document.activeElement))
+      throw Error(width+': Escape did not return to the fifth tile');
    if(width===1536){
     // All native drop-downs are mutually exclusive, including keyboard Escape.
     const menus=page.locator('.owner20-topnav details');

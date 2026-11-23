@@ -6,9 +6,13 @@ import { TRAKBOT_OPEN_EVENT } from './trakbotEvents.ts';
 /** A user-opened side assistant, never a popup on its own. No public-feed activity. */
 export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
   const [open, setOpen] = useState(false);
+  const shortcutRef = useRef<HTMLElement | null>(null);
   // A shortcut opens this single existing dock; it never creates another chat.
   useEffect(() => {
-    const openExisting = () => setOpen(true);
+    const openExisting = (event: Event) => {
+      shortcutRef.current = event.target instanceof HTMLElement ? event.target : null;
+      setOpen(true);
+    };
     window.addEventListener(TRAKBOT_OPEN_EVENT, openExisting);
     return () => window.removeEventListener(TRAKBOT_OPEN_EVENT, openExisting);
   }, []);
@@ -28,8 +32,19 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     if (blurTimerRef.current !== null) clearTimeout(blurTimerRef.current);
   }, []);
 
-  const dismiss = () => { cancelBlurTimer(); setOpen(false); setInputFocused(false); };
-  const close = () => { dismiss(); triggerRef.current?.focus(); };
+  const dismiss = () => {
+    cancelBlurTimer();
+    shortcutRef.current = null;
+    setOpen(false);
+    setInputFocused(false);
+  };
+  const close = () => {
+    const shortcut = shortcutRef.current;
+    const closedMenu = shortcut?.closest('details:not([open])');
+    const opener = closedMenu ? closedMenu.querySelector('summary') : shortcut;
+    dismiss();
+    (opener?.isConnected ? opener : triggerRef.current)?.focus();
+  };
   // Android WebView can leave the layout viewport taller than the visible area
   // when the soft keyboard opens. Use visualViewport to anchor a compact panel
   // above the keyboard, without hiding the send field or covering the full app.

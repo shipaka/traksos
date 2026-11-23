@@ -515,7 +515,7 @@ expect(ownerPcHeader.includes("['Специалисты ЭБУ'") &&
   ownerPcHeader.includes('owner20-map-demo-tag'),
   '617 preserves approved compact map and opens the real partner network without duplicate ECU');
 expect(ownerPcHeader.includes("['TrakBot · ИИ','Наш технический помощник','trakbot']") &&
-  ownerPcHeader.includes('requestTrakBotOpen()') &&
+  ownerPcHeader.includes('requestTrakBotOpen(event.currentTarget)') &&
   ownerPcHeader.includes('className="owner20-quick-trakbot"') &&
   !/^\s*\[(?:[^\n]*?,)?\s*'ЭБУ',/m.test(ownerPcHeader),
   '617 fifth quick tile opens one canonical TrakBot instead of restoring duplicate ECU');
