@@ -47,6 +47,7 @@ test('revoked driver loses order detail, archive, chat, repair photos, billing a
   assert.equal((await t.api('GET','/api/orders/'+order.id,undefined,driverX.token)).status,200);
   assert.equal((await t.api('GET','/api/orders/'+order.id+'/messages',undefined,driverX.token)).status,200);
   assert.equal((await t.api('GET','/api/orders/'+order.id+'/photos',undefined,driverX.token)).status,200);
+  assert.equal((await t.api('GET','/api/orders/'+order.id+'/continuations',undefined,driverX.token)).status,200);
 
   // Remove X in the real UI lifecycle and immediately attach him to a
   // different fleet. Neither the same bearer token nor created_by is authority.
@@ -64,7 +65,7 @@ test('revoked driver loses order detail, archive, chat, repair photos, billing a
   assert.equal((await t.api('GET','/api/orders/'+order.id,undefined,driverX.token)).status,403);
   for (const route of [
     '/messages','/photos','/photos/00000000-0000-0000-0000-000000000001/file',
-    '/payments','/reviews','/offers',
+    '/payments','/reviews','/offers','/continuations',
   ]) {
     const result=await t.api('GET',`/api/orders/${order.id}`+route,undefined,driverX.token);
     assert.equal(result.status,403,'former driver must not read '+route);
@@ -76,6 +77,8 @@ test('revoked driver loses order detail, archive, chat, repair photos, billing a
     ['retry',{}],['confirm',{}],['dispute',{reason:'Не согласен с суммой'}],
     ['messages',{body:'Бывший водитель пробует написать'}],
     [`offers/${bid!.id}/choose`,{}],
+    ['part',{mode:'wait'}],
+    ['emergency-dispute',{reason:'Не согласен с аварийным завершением'}],
   ] as const) {
     const attempt=await t.api('POST',`/api/orders/${order.id}/${suffix}`,body,driverX.token);
     assert.equal(attempt.status,403,'former driver cannot mutate '+suffix);
