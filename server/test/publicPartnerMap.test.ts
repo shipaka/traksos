@@ -180,6 +180,36 @@ test('weekly confirmation expires public pin; real confirmation restores the sam
     'actual weekly confirmation immediately restores previously consented, verified station');
 });
 
+test('explicit null coordinates clear stale published GPS without retaining prior consent',async()=>{
+  // Real HTTP + disposable PostgreSQL. Omitted fields are not edits: hours
+  // changes must not silently revoke location review or map consent.
+  ok(await t.api('PUT','/api/service/public-map',{enabled:true},service.token));
+  assert.equal(ok(await t.api('GET','/api/public/partner-map')).points.length,1);
+  ok(await t.api('PUT','/api/base',{hours:'09:00–19:00'},service.token));
+  const unchanged=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(unchanged.public_map_opt_in,true);
+  assert.ok(unchanged.public_map_location_verified_at);
+  assert.equal(Number(unchanged.lat),59.97);
+
+  // lat:null was accepted by the contract but historically SQL COALESCE
+  // restored the old value and left the yellow public point exposed.
+  ok(await t.api('PUT','/api/base',{lat:null},service.token));
+  const clearedLat=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(clearedLat.lat,null,'an explicit null deletes the old coordinate');
+  assert.equal(Number(clearedLat.lng),30.31,'omitted longitude remains unchanged');
+  assert.equal(clearedLat.public_map_opt_in,false,'editing GPS immediately revokes consent');
+  assert.equal(clearedLat.public_map_location_verified_at,null,'fresh proof is required');
+  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[],
+    'public list must immediately remove the previously published location');
+  assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400);
+
+  ok(await t.api('PUT','/api/base',{lng:null},service.token));
+  const clearedBoth=ok(await t.api('GET','/api/base',undefined,service.token)).center;
+  assert.equal(clearedBoth.lat,null);
+  assert.equal(clearedBoth.lng,null);
+  assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
+});
+
 test('blocked, paused, revoked, absent and invalid locations disappear without cached pins',async()=>{
   await t.db.query('update service_centers set paused=true where id=$1',[centerId]);
   assert.deepEqual(ok(await t.api('GET','/api/public/partner-map')).points,[]);
