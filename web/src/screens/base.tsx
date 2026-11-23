@@ -701,7 +701,32 @@ function useGps(enabled: boolean) {
 type Search = { place: string; need: string; sort: 'near' | 'rating' | 'free'; radius: number; open: boolean; cond: string[]; accepts: string[]; myBrand: boolean };
 const SEARCH0: Search = { place: 'gps', need: '', sort: 'near', radius: 50, open: false, cond: [], accepts: [], myBrand: false };
 const RADII = [15, 30, 50, 100, 0];
-const loadSearch = (): Search => { try { return { ...SEARCH0, ...JSON.parse(localStorage.getItem('traksos.svcsearch') ?? '{}') }; } catch { return SEARCH0; } };
+// Filter preferences are per-account; the old global key has no trustworthy
+// owner and must not be inherited by another fleet user on a shared device.
+const searchKey = (userId: string) => 'traksos.svcsearch.v2:'+userId;
+const normalizeSearch = (raw: unknown): Search => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...SEARCH0 };
+  const v = raw as Record<string, unknown>;
+  const allowedPlace = v.place === 'gps' || PLACES.some(p => p.id === v.place);
+  const known = (xs: unknown, values: Record<string, unknown>) =>
+    Array.isArray(xs) ? xs.filter((x): x is string => typeof x === 'string' &&
+      Object.hasOwn(values, x)).slice(0, Object.keys(values).length) : [];
+  return {
+    place: allowedPlace ? v.place as string : SEARCH0.place,
+    need: typeof v.need === 'string' && Object.hasOwn(NEEDS, v.need) ? v.need : '',
+    sort: v.sort === 'rating' || v.sort === 'free' ? v.sort : 'near',
+    radius: typeof v.radius === 'number' && RADII.includes(v.radius) ? v.radius : SEARCH0.radius,
+    open: v.open === true,
+    cond: known(v.cond, CONDITIONS),
+    accepts: known(v.accepts, ACCEPTS),
+    myBrand: v.myBrand === true,
+  };
+};
+const loadSearch = (userId: string | null): Search => {
+  if (!userId) return { ...SEARCH0 };
+  try { return normalizeSearch(JSON.parse(localStorage.getItem(searchKey(userId)) ?? 'null')); }
+  catch { return { ...SEARCH0 }; }
+};
 
 /** Поиск рембазы: откуда искать и что нужно — сверху, сортировка и радиус — одной строкой, остальное — в «Фильтрах».
  *  В списке — только главное, подробности — в карточке сервиса. */
@@ -710,6 +735,7 @@ export function ServicesList() {
   return <ServicesListPanel key={(me?.id ?? 'guest')+':'+location.hash.split('?')[1]} />;
 }
 function ServicesListPanel() {
+  const { me } = useMe();
   const q = query();
   const from = q.get('from');
   const caseOrderId = q.get('case');
@@ -720,11 +746,21 @@ function ServicesListPanel() {
   if(recommendationId)linkQuery.set('recommendation',recommendationId);
   const linkSuffix=linkQuery.toString();
   const [s, setS0] = useState<Search>(() => {
-    const previous=loadSearch();
-    return {...previous,place:caseOrderId?'incident':previous.place==='incident'?'gps':previous.place,
-      ...(q.get('need') ? { need: q.get('need')! } : {})};
+    const previous=loadSearch(me?.id ?? null);
+    const requestedNeed=q.get('need');
+    return {...previous, place:caseOrderId?'incident':previous.place,
+      ...(requestedNeed && Object.hasOwn(NEEDS, requestedNeed) ? { need:requestedNeed } : {})};
   });
-  const setS = (v: Partial<Search>) => setS0((x) => { const n = { ...x, ...v }; try { localStorage.setItem('traksos.svcsearch', JSON.stringify(n)); } catch { /* */ } return n; });
+  const setS = (v: Partial<Search>) => setS0((x) => {
+    const next = normalizeSearch({...x, ...v});
+    // Incident location exists only inside an authorized order context and
+    // cannot become a persisted "global GPS" preference in a later session.
+    const current={...next,place:caseOrderId && v.place==='incident' ? 'incident' : next.place};
+    if (me?.id) {
+      try { localStorage.setItem(searchKey(me.id), JSON.stringify(next)); } catch { /* restricted */ }
+    }
+    return current;
+  });
   const [pickPlace, setPickPlace] = useState(false);
   const gps = useGps(s.place === 'gps');
   const cars = useBaseLoad(() => get('/api/vehicles'), []);
