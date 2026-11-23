@@ -541,6 +541,30 @@ export function BaseSetup() {
         </div>
         <span className="note">Стоит, пока сами не поменяете. В эти дни записаться к вам нельзя.</span>
       </div>
+      {!first && cab.data?.center && <section className="card stack" aria-label="Публикация СТО на карте партнёров">
+        <b>Показывать нашу СТО на карте TrakSOS</b>
+        <span className="note">Это отдельное добровольное разрешение на показ публичного
+          названия и проверенных координат именно СТАЦИОНАРНОЙ мастерской на карте покрытия.
+          Текущий GPS мобильных мастеров, личные телефоны и история маршрутов не публикуются.
+          Согласие можно отозвать в любой момент. После смены адреса требуется новая проверка модератора.</span>
+        <span className="pill">{cab.data.center.public_map_opt_in
+          ? 'Публикация разрешена · точка показывается при действующей проверке'
+          : 'Точка скрыта от публичной карты'}</span>
+        {!cab.data.center.public_map_location_verified_at &&
+          <span className="note">Для публикации координаты и адрес въезда должен подтвердить модератор.</span>}
+        <button type="button" className={'btn'+(cab.data.center.public_map_opt_in?' ghost':'')}
+          disabled={busy || (!cab.data.center.public_map_opt_in &&
+            (cab.data.center.verification!=='approved' ||
+              cab.data.center.paused || !cab.data.center.public_map_location_verified_at))}
+          onClick={async()=>{
+            const enabled=!cab.data.center.public_map_opt_in;
+            if(await run(()=>basePut('/api/service/public-map',{enabled}),
+              enabled?'Вы разрешили показывать стационарную СТО на карте':
+                      'СТО скрыта с публичной карты'))cab.reload();
+          }}>{cab.data.center.public_map_opt_in
+            ? 'Отозвать разрешение и скрыть точку'
+            : 'Разрешить показать нашу СТО на карте'}</button>
+      </section>}
       <button className="btn" disabled={busy || f.name.trim().length < 2 || f.address.trim().length < 3} onClick={save}>{first ? 'Сохранить и пройти проверку' : 'Сохранить'}</button>
     </main>
   );
