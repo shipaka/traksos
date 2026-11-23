@@ -129,6 +129,14 @@ sdk_level=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 for role in client master; do
   # Readiness logs fire on React effect and can precede WebView compositor.
   # Clear them before each role so an earlier render cannot falsely pass.
+  # Android 15's headless emulator can render the React review event via an
+  # onNewIntent/same-document WebView navigation but keep a stale GUEST
+  # compositor frame. Cold launch the *same installed APK* directly to each
+  # real review route on API34+, then demand fresh role pixels and UI hierarchy.
+  # This is stricter, not an invented screenshot or acceptance of a React log.
+  if [ "$sdk_level" -ge 34 ]; then
+    adb shell am force-stop ru.traksos.app.preview
+  fi
   adb logcat -c
   adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity --es path "android-review/$role" >/dev/null
   found=0
