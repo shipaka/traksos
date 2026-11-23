@@ -120,8 +120,19 @@ try {
         'Region menu did not close on mouse leave');
       check(await page.locator('.owner20-region-menu a[href="#/login"]').count()===1,
         'Region availability should open sign-in');
-      check(await page.locator('.owner20-map a[href="#/login"]').count()===1,
-        'Coverage details should open sign-in');
+      // The owner-approved coverage control now expands the live opt-in map
+      // rather than taking the guest directly to sign-in.
+      const coverage=page.getByRole('button',{name:'Подробнее о покрытии →'});
+      check(await coverage.count()===1,'Expanded coverage trigger missing');
+      await coverage.click();
+      const network=page.getByRole('dialog',{name:'Карта партнёров TrakSOS'});
+      await network.waitFor({state:'visible'});
+      check(await network.getByRole('button',{name:'Закрыть карту'}).count()===1,
+        'Network modal lacks accessible close action');
+      await page.keyboard.press('Escape');
+      await network.waitFor({state:'detached'});
+      check(await coverage.evaluate(el=>document.activeElement===el),
+        'Closing coverage map did not restore keyboard focus to footer trigger');
       check(await top.locator(':scope > a[href="#/join"]').count()===0,
         'Partner action must be inside submenu, not a second top-level link');
       await page.locator('.owner20-topnav details').nth(3).locator('summary').click();
