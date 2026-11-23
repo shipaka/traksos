@@ -199,6 +199,7 @@ export function Login({ driver, entry, serviceContext }: {
     setCodeError('');
     setCodeStatus('');
     setInsurerOnly(false);
+    setLoginBusy(false);
     if (step === 'code') setStep('phone');
   };
   const otherAuthNumber = () => {
