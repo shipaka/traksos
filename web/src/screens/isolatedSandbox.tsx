@@ -30,6 +30,7 @@ export function SandboxEnter() {
       try { localStorage.setItem('traksos.mode',sandboxWorkspaceMode(json.role)); } catch { /* private mode */ }
       if (typeof json.returnUrl === 'string' && json.returnUrl.startsWith('https://'))
         sessionStorage.setItem('traksos.sandboxReturnUrl', json.returnUrl);
+      else sessionStorage.removeItem('traksos.sandboxReturnUrl'); // Never reuse another ticket's back destination.
       setToken(json.token);
       location.replace(location.pathname + location.search + json.landing);
       location.reload();
@@ -103,10 +104,13 @@ export function SandboxModeBadge() {
 
   if (!supervisorToken) return returnUrl
     ? <a className="pill accent sandbox-test-badge" href={returnUrl}
-        aria-label="Тест. К выбору тестовых кабинетов" title="К выбору тестовых кабинетов">Тест</a>
+        aria-label="Admin · Тест · Назад к выбору кабинетов" title="Назад к выбору кабинетов">
+        Admin · Тест · ← Назад
+      </a>
     : <span className="pill accent sandbox-test-badge">Тест</span>;
-  return <details className="sandbox-supervisor-badge">
-    <summary className="pill accent sandbox-test-badge" aria-label="Тест. Переключить кабинет" title="Тестовые кабинеты">Тест</summary>
+  return <div className="sandbox-supervisor-controls">
+    <details className="sandbox-supervisor-badge">
+    <summary className="pill accent sandbox-test-badge" aria-label="Admin · Тест · Переключить кабинет" title="Тестовые кабинеты">Admin · Тест</summary>
     <div className="sandbox-supervisor-menu">
       <label htmlFor="sandbox-switch-role">Открыть тестовый кабинет</label>
       <select id="sandbox-switch-role" value={selectedRole} disabled={switching}
@@ -120,5 +124,7 @@ export function SandboxModeBadge() {
       {error && <span role="alert" className="sandbox-supervisor-error">{error}</span>}
       {returnUrl && <a href={returnUrl}>← К выбору кабинетов</a>}
     </div>
-  </details>;
+    </details>
+    {returnUrl && <a className="sandbox-review-back" href={returnUrl}>← Назад</a>}
+  </div>;
 }
