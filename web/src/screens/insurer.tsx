@@ -29,7 +29,10 @@ function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false)
     if(!enabled)return ()=>{serial.current++;};
     get<T>(path).then(data=>{
       if(serial.current!==request||scopeRef.current!==currentScope)return;
-      if(data==null)throw new Error('Пустой ответ от сервера');
+      if(data==null || (path==='/api/insurer/finance'
+          ? !(Array.isArray((data as any).entries)&&Array.isArray((data as any).totals))
+          : !Array.isArray(data)))
+        throw new Error('Некорректный ответ от сервера');
       setState({scope:currentScope,data,error:'',loading:false});
     }).catch(e=>{
       if(serial.current!==request||scopeRef.current!==currentScope)return;
@@ -62,15 +65,16 @@ export function InsurerChats() {
   const allowed=!!me?.roles.includes('insurer');
   const q=usePartnerResource<any[]>('/api/insurer/requests',
     (me?.id??'signed-out')+':insurer-chats',allowed,true);
+  const chats=Array.isArray(q.data)?q.data:null;
   return <main className="and19-chats and19-workspace and20-insurer-chats">
     <h1>Чаты по страховым делам</h1>
     <p>Уточнения и документы хранятся внутри соответствующей заявки.</p>
-    {!q.data&&<div className="and19-panel" role={q.error?'alert':'status'}>{q.error
+    {!chats&&<div className="and19-panel" role={q.error?'alert':'status'}>{q.error
       ? <>Не удалось открыть переписку: {q.error}
         <button type="button" className="btn ghost small" onClick={q.reload}>Повторить загрузку чатов</button></>
       : allowed?'Загружаем назначенные дела…':'Страховые дела доступны назначенному страховому партнёру.'}</div>}
-    {q.data?.length===0&&<div className="and19-panel">Назначенных страховых дел пока нет.</div>}
-    {q.data?.map(r=><a className="and19-row-link" key={r.id}
+    {chats?.length===0&&<div className="and19-panel">Назначенных страховых дел пока нет.</div>}
+    {chats?.map(r=><a className="and19-row-link" key={r.id}
       href={'#/insurance/request/'+encodeURIComponent(r.id)}>
       <span>{[r.brand,r.model].filter(Boolean).join(' ') || 'Страховое дело'}
         <small>{insurancePresentation(r.insurance_stage,r.status,'partner').label}</small>
@@ -81,7 +85,7 @@ export function InsurerChats() {
 }
 
 export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
-  const { me } = useMe();
+  const { me,mode } = useMe();
   const dualPartnerRole = !!me?.roles.includes('insurer') && !!me?.roles.includes('inspection_operator');
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const route = useRoute();
@@ -92,7 +96,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const canInsure=!!me?.roles.includes('insurer');
   const canInspect=!!me?.roles.some(role=>role==='insurer'||role==='inspection_operator');
   const identity=me?.id??'signed-out';
-  const accessScope=identity+':'+(inspectionOnly?'inspection':'insurance');
+  const accessScope=identity+':'+mode+':'+(inspectionOnly?'inspection':'insurance');
   const identityRef=useRef(accessScope);
   identityRef.current=accessScope;
   const finance=usePartnerResource<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>(
@@ -173,6 +177,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     }else setActionError('Решение по техосмотру не подтверждено. Обновите очередь перед повторной отправкой.');
   }
   const rows: any[] | undefined = Array.isArray(requests.data)?requests.data:undefined;
+  const inspectionRows:any[]|null=Array.isArray(inspections.data)?inspections.data:null;
+  const financeData=finance.data;
   const visible = (rows ?? []).filter((r) => {
     if (filter !== 'all' && insuranceQueueGroup(r.insurance_stage, r.status) !== filter) return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
@@ -180,8 +186,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   // Separate approved inspection detail: available only to the assigned operator.
   // The existing /api/insurer/inspections endpoint enforces tenant access.
   if(inspectionId) {
-    const item = (Array.isArray(inspections.data)?inspections.data:[])?.find(r=>String(r.id)===inspectionId);
-    if(!Array.isArray(inspections.data)) return <main className="cabinet-page and20-inspection-detail">
+    const item = inspectionRows?.find(r=>String(r.id)===inspectionId);
+    if(!inspectionRows) return <main className="cabinet-page and20-inspection-detail">
       <a href="#/inspections" className="and20-return">← К техосмотрам</a>
       <div className="card" role={inspections.error?'alert':'status'}>{inspections.error
         ? <>Не удалось загрузить техосмотр: {inspections.error}
@@ -283,31 +289,33 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       {workspace==='inspection'&&<section className="stack">
         <p className="sub">Здесь отображаются исключительно назначенные вам заявки на техосмотр. Страховые полисы и предложения в этом разделе не показываются.</p>
         <div className="cabinet-metrics">
-          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspections.data?.length??'—'}</b></div>
-          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspections.data?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
-          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspections.data?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspectionRows?.length??'—'}</b></div>
+          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspectionRows?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspectionRows?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
         </div>
         <div className="row" role="group" aria-label="Показ техосмотров">
           <button type="button" className="chip" aria-pressed={inspectionView==='active'} onClick={()=>setInspectionView('active')}>В работе</button>
           <button type="button" className="chip" aria-pressed={inspectionView==='history'} onClick={()=>setInspectionView('history')}>История техосмотров</button>
           <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
         </div>
-        {!inspections.data?<div className="empty">{inspections.error?'Не удалось загрузить техосмотры: '+inspections.error:'Загружаем техосмотры…'}</div>:
-          inspections.data.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
-          inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).length===0 ?
+        {!inspectionRows?<div className="empty" role={inspections.error?'alert':'status'}>{inspections.error?
+            <>Не удалось загрузить техосмотры: {inspections.error}
+              <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку техосмотров</button></>
+            :'Загружаем техосмотры…'}</div>:
+          inspectionRows.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
+          inspectionRows.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).length===0 ?
           <div className="empty">{inspectionView==='history'?'История техосмотров пока пуста':'Активных техосмотров сейчас нет'}</div> :
-          inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
+          inspectionRows.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
             <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
             {inspectionOnly&&<a className="btn" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть техосмотр и этапы →</a>}
             <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
             {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
             {r.status==='sent_to_partner'&&<>
               <label className="stack"><span className="label">Комментарий или причина отказа</span>
-                <textarea className="field" maxLength={2000} value={inspectionNotes[r.id]??''}
+                <textarea className="field" maxLength={2000} value={currentDraft?(inspectionNotes[r.id]??''):''}
                   onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
               <div className="row">
-                <button type="button" className="btn small" disabled={busy}
-                  onClick={()=>decideInspection(r.id,'completed')}>Отметить выполненным</button>
+                <a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>
                 <button type="button" className="btn ghost small" disabled={busy}
                   onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
               </div>
@@ -318,24 +326,28 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </section>}
       {workspace==='finance'&&<section className="stack">
         <p className="sub">Подтверждённые финансовые проводки по двум направлениям. Заявки без начислений не считаются доходом.</p>
-        {!finance.data?<div className="empty">{finance.error?'Не удалось загрузить финансы: '+finance.error:'Загружаем финансовый реестр…'}</div>:<>
+        {!financeData?<div className="empty" role={finance.error?'alert':'status'}>{finance.error
+          ? <>Не удалось загрузить финансы: {finance.error}
+            <button type="button" className="btn ghost small" onClick={finance.reload}>Повторить загрузку финансов</button></>
+          : 'Загружаем финансовый реестр…'}</div>:<>
           <div className="cabinet-metrics">
             {(['insurance','inspection'] as const).map(kind=>{
-              const total=finance.data!.totals.find(t=>t.kind===kind);
+              const total=financeData.totals.find(t=>t.kind===kind);
               return <div className="card tile" key={kind}>
                 <span className="label">{kind==='insurance'?'Страхование':'Техосмотры'}</span>
-                <b className="tile-value">{money(total?.balance??0)}</b>
-                <small>Начислено: {money(total?.accrued??0)} · Выплачено: {money(total?.paid??0)}</small>
+                <b className="tile-value">{money(total?.balance)}</b>
+                <small>Начислено: {money(total?.accrued)} · Выплачено: {money(total?.paid)}</small>
               </div>;
             })}
             <div className="card tile"><span className="label">Общий остаток</span>
-              <b className="tile-value">{money(finance.data.totals.reduce((sum,t)=>sum+Number(t.balance),0))}</b>
+              <b className="tile-value">{financeData.totals.every(t=>/^-?\d+$/.test(String(t.balance)))?
+                  money(financeData.totals.reduce((sum,t)=>sum+BigInt(t.balance),0n)):'—'}</b>
               <small>По всем подтверждённым проводкам</small>
             </div>
           </div>
           <h2>История операций</h2>
-          {finance.data.entries.length===0?<div className="empty">Подтверждённых операций пока нет.</div>:
-            finance.data.entries.map(entry=><article className="card between" key={entry.id}>
+          {financeData.entries.length===0?<div className="empty">Подтверждённых операций пока нет.</div>:
+            financeData.entries.map(entry=><article className="card between" key={entry.id}>
               <div className="stack"><b>{entry.kind==='insurance'?'Страхование':'Техосмотр'} · {entry.entry_type==='accrual'?'Начисление':entry.entry_type==='payout'?'Выплата':'Корректировка'}</b>
                 <small>{fmtTime(entry.created_at)}</small>{entry.note&&<small>{entry.note}</small>}</div>
               <b>{entry.entry_type==='accrual'?'+':'−'}{money(entry.amount_kopecks)}</b>
@@ -350,7 +362,12 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </section>}
       {workspace==='insurance'&&!inspectionOnly&&<>
       <div className="sub">Только страховые заявки, переданные вам TrakSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
-      {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
+      {!rows ? <div className="empty" role={requests.error?'alert':'status'}>{requests.error
+        ? <>Не удалось загрузить страховые дела: {requests.error}
+          <button type="button" className="btn ghost small" onClick={requests.reload}>
+            Повторить загрузку заявок
+          </button></>
+        : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
           <div className="cabinet-metrics insurer-insurance-metrics">
@@ -371,6 +388,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 value={search} onChange={(e) => setSearch(e.target.value)} />
             </label>
           </div>
+          {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
           <span className="label">Показано заявок: {visible.length}</span>
           {!visible.length && <div className="empty">{filter==='action'?'Нет заявок, требующих действий. Новые обращения появятся здесь.':filter==='active'?'Нет заявок в работе.':'По выбранным фильтрам заявок нет.'}</div>}
           <div className="web-insurance-grid">
@@ -401,14 +419,14 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 {r.status === 'sent_to_partner' && !r.insurance_stage && <>
                   <label className="stack">
                     <span className="label">Действует до</span>
-                    <input className="field" type="date" value={expires[r.id] ?? ''}
+                    <input className="field" type="date" value={currentDraft?(expires[r.id]??''):''}
                       onChange={(e) => setExpires((old) => ({ ...old, [r.id]: e.target.value }))} />
                   </label>
                   <textarea className="field" aria-label="Комментарий страховщика" maxLength={2000}
                     placeholder="Комментарий или причина отказа"
-                    value={notes[r.id] ?? ''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
+                    value={currentDraft?(notes[r.id]??''):''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
                   <div className="grid2">
-                    <button type="button" className="btn small" disabled={busy} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
+                    <button type="button" className="btn small" disabled={busy||!currentDraft||!futureDate(expires[r.id]??'')} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
                     <button type="button" className="btn ghost small" disabled={busy} onClick={() => update(r.id, 'rejected')}>Отказать</button>
                   </div>
                 </>}
