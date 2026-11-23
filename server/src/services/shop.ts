@@ -381,14 +381,22 @@ export class ShopService {
       const u = await this.db.one<{ company_inn: string | null }>('select company_inn from users where id=$1', [clientId]);
       if (!u?.company_inn) throw bad('need_inn', 'Счёт выставляем компаниям — укажите ИНН в профиле');
     }
-    let linkOrder: string | null = null;
-    if (p.delivery === 'master') {
-      const o = await this.db.one<{ id: string }>(
-        `select id from orders where id=$1 and (client_id=$2 or created_by=$3) and status in ('accepted','en_route','arrived','working')`, [p.orderId ?? null, clientId, user.id]);
-      if (!o) throw bad('need_order', 'Передать с мастером можно только по открытой заявке, пока мастер не приехал или работает');
-      linkOrder = o.id;
-    }
     return this.db.tx(async (q) => {
+      // Link to a repair job only while it remains open. A fleet driver may
+      // never attach parts to another driver's work order by knowing its UUID.
+      let linkOrder: string | null = null;
+      if (p.delivery === 'master') {
+        const o = await q.one<{ id: string }>(
+          `select id from orders where id=$1 and
+             (client_id=$2 or created_by=$3) and
+             ($4::boolean=false or created_by=$3) and
+             status in ('accepted','en_route','arrived','working')
+             for update`,
+          [p.orderId ?? null, clientId, user.id, !!user.owner_id]);
+        if (!o) throw bad('need_order',
+          'Передать с мастером можно только по своей открытой заявке');
+        linkOrder = o.id;
+      }
       const rows = await q.query<any>(`select id, name, brand, article, price, stock, active, lead_days from shop_products where id = any($1::uuid[]) for update`, [[...want.keys()]]);
       if (rows.length !== want.size || rows.some((r) => !r.active)) throw conflict('gone', 'Часть товаров уже недоступна — обновите корзину');
       const items = rows.map((r) => {
@@ -407,8 +415,14 @@ export class ShopService {
       return row;
     }).then(async (row: any) => {
       const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
-      await this.notifier.notify(staff, { type: 'shop', shopOrderId: row.id },
-        { kind: 'normal', title: `Магазин: заказ №${row.number}`, body: `${(row.total / 100).toLocaleString('ru-RU')} ₽ · ${row.items.length} поз.`, data: { shopOrderId: row.id } });
+      try {
+        await this.notifier.notify(staff, { type: 'shop', shopOrderId: row.id },
+          { kind: 'normal', title: `Магазин: заказ №${row.number}`, body: `${(row.total / 100).toLocaleString('ru-RU')} ₽ · ${row.items.length} поз.`, data: { shopOrderId: row.id } });
+      } catch (error) {
+        // SQL already committed. Claiming checkout failure would encourage the
+        // buyer to retry and reserve/place the same paid order a second time.
+        console.warn('Shop order committed; admin notification failed:', error);
+      }
       return this.orderView(row);
     });
   }
