@@ -2,7 +2,7 @@
  * No fabricated deliveries, GPS tracking, unmasked phone numbers or silent
  * completion. All transitions are locked in PostgreSQL and audited.
  */
-import type {Db} from '../db/index.ts';
+import type {Db,Queryable} from '../db/index.ts';
 import type {Notifier} from './notify.ts';
 import type {AuthUser} from '../http/router.ts';
 import {bad,conflict,forbidden,notFound,HttpError} from '../http/router.ts';
@@ -26,6 +26,37 @@ export function courierNextStage(status:string):string|null{
 }
 export class ShopCourierDeliveries {
   constructor(private db:Db,private notify:Notifier) {}
+  /** A fleet buyer's original order is not a permanent right to a previous
+   * employer's parcel. A vehicle-specific order requires that SAME vehicle.
+   * A legacy order without vehicle keeps the existing active-fleet contract.
+   */
+  private async currentBuyer(q:Queryable,clientId:string,createdBy:string,
+    vehicleId:string|null,buyerId:string,lock=false){
+    if(createdBy!==buyerId)return false;
+    if(createdBy===clientId)return true;
+    if(vehicleId){
+      const linked=await q.one<{ok:number}>(
+        `select 1 as ok from users u join vehicles v
+           on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and v.id=$3 limit 1${lock?' for share of u,v':''}`,
+        [buyerId,clientId,vehicleId]);
+      return !!linked;
+    }
+    const linked=await q.one<{ok:number}>(
+      `select 1 as ok from users u where u.id=$1 and u.owner_id=$2
+        and 'driver'=any(u.roles)${lock?' for share of u':''}`,
+      [buyerId,clientId]);
+    return !!linked;
+  }
+  private async currentRecipients(orderId:string){
+    const o=await this.db.one<{client_id:string;created_by:string;vehicle_id:string|null}>(
+      'select client_id,created_by,vehicle_id from shop_orders where id=$1',[orderId]);
+    if(!o)return [];
+    return [o.client_id,...(o.created_by!==o.client_id &&
+      await this.currentBuyer(this.db,o.client_id,o.created_by,o.vehicle_id,o.created_by)
+        ?[o.created_by]:[])];
+  }
   async presence(courier:AuthUser){
     const row=await this.db.one<{online:boolean;updated_at:Date}>(
       'select online,updated_at from shop_courier_presence where courier_id=$1',
@@ -145,7 +176,8 @@ export class ShopCourierDeliveries {
         [courier.id,'courier.stage',id,{status,shopOrderId:d.shop_order_id}]);
       return {...row,client_id:d.client_id,created_by:d.created_by};
     });
-    if(!d.unchanged)await this.notify.notify([d.client_id,d.created_by],{type:'shop',shopOrderId:d.shop_order_id},
+    if(!d.unchanged)await this.notify.notify(await this.currentRecipients(d.shop_order_id),
+      {type:'shop',shopOrderId:d.shop_order_id},
       {kind:'normal',title:'Доставка запчастей: новый этап',body:status==='arrived'?
         'Курьер прибыл — откройте заказ и покажите ему код получения':'Статус доставки обновлён',
         data:{shopOrderId:d.shop_order_id}});
@@ -179,7 +211,8 @@ export class ShopCourierDeliveries {
       return {ok:true,d:{...checked,client_id:d.client_id,created_by:d.created_by}};
     });
     if(!result.ok)throw bad('wrong_receipt_code','Код не совпадает. Проверьте шесть цифр с получателем.');
-    if(!('repeated' in result))await this.notify.notify([result.d.client_id,result.d.created_by],
+    if(!('repeated' in result))await this.notify.notify(
+      await this.currentRecipients(result.d.shop_order_id),
       {type:'shop',shopOrderId:result.d.shop_order_id},
       {kind:'normal',title:'Подтвердите получение запчастей',
        body:'Курьер проверил код. Заказ завершится только после вашего подтверждения.',
@@ -228,10 +261,12 @@ export class ShopCourierDeliveries {
    * reveal its receipt code or confirm receipt. A fleet owner must not
    * confirm a driver's parcel merely by owning the company. */
   async receiptCode(buyer:AuthUser,orderId:string){
-    const d=await this.db.one<any>(`select d.*,o.client_id,o.created_by,o.status as shop_status
+    const d=await this.db.one<any>(`select d.*,o.client_id,o.created_by,o.vehicle_id,
+          o.status as shop_status
       from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
       where o.id=$1 and o.created_by=$2`,[orderId,buyer.id]);
-    if(!d)throw notFound('Код для этого заказа недоступен');
+    if(!d||!await this.currentBuyer(this.db,d.client_id,d.created_by,d.vehicle_id,buyer.id))
+      throw notFound('Код для этого заказа недоступен');
     if(!['arrived','code_verified'].includes(d.status)||d.shop_status!=='shipped')
       throw conflict('courier_not_arrived','Код вручения будет доступен после прибытия курьера');
     if(new Date(d.code_expires_at).getTime()<Date.now())
@@ -242,11 +277,13 @@ export class ShopCourierDeliveries {
   }
   async confirmReceived(buyer:AuthUser,orderId:string){
     const d=await this.db.tx(async q=>{
-      const d=await q.one<any>(`select d.*,o.client_id,o.created_by,o.status as shop_status
+      const d=await q.one<any>(`select d.*,o.client_id,o.created_by,o.vehicle_id,
+          o.status as shop_status
         from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
        where o.id=$1 and o.created_by=$2 for update of d,o`,
        [orderId,buyer.id]);
-      if(!d)throw notFound('Заказ не найден в ваших доставках');
+      if(!d||!await this.currentBuyer(q,d.client_id,d.created_by,d.vehicle_id,buyer.id,true))
+        throw notFound('Заказ не найден в ваших доставках');
       if(d.status==='received')return {...d,repeated:true}; // repeat request cannot double-close
       if(d.status!=='code_verified'||!d.code_verified_at||d.shop_status!=='shipped')
         throw conflict('not_verified','Сначала курьер должен прибыть и проверить код вручения');
