@@ -339,16 +339,19 @@ export class AuctionService {
     // infer a missing partner from no_performer status or an empty radius alone.
     let absenceReason: NoPerformerReason = 'unknown';
     try {
-      const invited = await this.db.one<{ invited: boolean }>(
-        `select exists(
-          select 1 from order_events e
-           where e.order_id=$1
+      const evidence = await this.db.one<{ invited: boolean; hadOffer: boolean }>(
+        `select
+          exists(select 1 from order_events e where e.order_id=$1
              and e.id>coalesce((select max(id) from order_events
                                  where order_id=$1 and type='retry'),0)
              and (e.type='ringing' or
                   (e.type='auction_started' and
-                   coalesce(nullif(e.data->>'candidates','')::numeric,0)>0))
-        ) as invited`, [order.id]);
+                   coalesce(nullif(e.data->>'candidates','')::numeric,0)>0))) as invited,
+          exists(select 1 from order_events e where e.order_id=$1
+             and e.type='offer'
+             and e.id>coalesce((select max(id) from order_events
+                                 where order_id=$1 and type='retry'),0)) as "hadOffer"`,
+        [order.id]);
       const profiles = await this.db.query<PartnerPresence>(
         `select p.kind,p.specialties,u.status as user_status,p.verification,
                 p.line_status,p.paused,p.extras,p.lat,p.lng
@@ -358,7 +361,8 @@ export class AuctionService {
       absenceReason = classifyNoPerformerReason({
         service: order.service, verifiedOnly: !!order.verified_only,
         lat: order.lat ?? null, lng: order.lng ?? null,
-        radiusKm: dispatch.radiusKm, invited: !!invited?.invited, profiles
+        radiusKm: dispatch.radiusKm, invited: !!evidence?.invited,
+        hadOffer: !!evidence?.hadOffer, profiles
       });
     } catch (err) {
       // Explanatory copy must never block the terminal order status, payment,
@@ -368,6 +372,6 @@ export class AuctionService {
     await this.orders.event(this.db, order.id, null, 'no_performer',
       { auction: true, absenceReason });
     await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
-      { kind: 'normal', title: 'Нет откликов', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } });
+      { kind: 'normal', title: 'Поиск исполнителя завершён', body: 'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.', data: { orderId: order.id } });
   }
 }
