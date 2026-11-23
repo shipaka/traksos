@@ -80,6 +80,16 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const modal=useRef<HTMLElement|null>(null);
   const surface=useRef<HTMLDivElement|null>(null);
   const closeRef=useRef<HTMLButtonElement|null>(null);
+  // When consent is revoked while a details panel/cluster list owns focus,
+  // its focused control unmounts. Move focus to a still-present modal control.
+  // Ordinary voluntary close continues to restore focus to the map marker.
+  const revokedPanelFocus=useRef(false);
+  useLayoutEffect(()=>{
+    if(revokedPanelFocus.current && !selected && !expandedCluster){
+      revokedPanelFocus.current=false;
+      closeRef.current?.focus();
+    }
+  },[selected,expandedCluster]);
   const drag=useRef<{x:number;y:number;pointerId:number;view:View}|null>(null);
   function restoreMarkerFocus(marker:HTMLButtonElement|null){
     requestAnimationFrame(()=>{
@@ -152,14 +162,20 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           setSelected(old=>{
             if(!old)return null;
             const fresh=safe.find(p=>p.id===old.id);
-            if(!fresh)return null; // consent was withdrawn
+            if(!fresh){
+              revokedPanelFocus.current=true; // consent was withdrawn
+              return null;
+            }
             return samePartner(old,fresh)?old:fresh;
           });
           setExpandedCluster(old=>{
             if(!old)return null;
             const members=old.members.map(p=>safe.find(next=>next.id===p.id))
               .filter((p):p is PartnerPoint=>!!p);
-            if(members.length!==old.members.length)return null;
+            if(members.length!==old.members.length){
+              revokedPanelFocus.current=true; // one or more partners revoked consent
+              return null;
+            }
             return members.every((p,i)=>samePartner(p,old.members[i])) ? old : {...old,members};
           });
           setState('ready');
