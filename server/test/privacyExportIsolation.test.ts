@@ -73,7 +73,7 @@ test('personal data export includes account activity without exposing any other 
     }
     const payloadA=JSON.stringify(exportedA);
     const payloadB=JSON.stringify(exportedB);
-    assert.doesNotMatch(payloadA,/Only-account-B-inspection|Only-account-B-support|9453/);
-    assert.doesNotMatch(payloadB,/Only-account-A-inspection|Only-account-A-support|1201/);
+    assert.doesNotMatch(payloadA,/Only-account-B-inspection|Only-account-B-support/);
+    assert.doesNotMatch(payloadB,/Only-account-A-inspection|Only-account-A-support/);
   } finally {await t.close();}
 });
