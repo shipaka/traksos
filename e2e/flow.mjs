@@ -217,6 +217,16 @@ await k.locator('select[aria-label="Год выпуска"]').selectOption('2012
 await k.locator('input[placeholder^="Адрес"]').fill('Тосно, М-11, стоянка у АЗС');
 await k.getByRole('button', { name: 'Ленинградская область' }).click();
 await k.getByRole('button', { name: /Тосно/ }).click();
+const nearSort=k.getByRole('button',{name:'Ближе',exact:true});
+const fastSort=k.getByRole('button',{name:'Быстрее приедет',exact:true});
+await nearSort.waitFor();
+if(!await nearSort.isDisabled()||!await fastSort.isDisabled())
+  throw Error('Geographic sorting enabled without vehicle GPS');
+const cheapSort=k.getByRole('button',{name:'Дешевле',exact:true});
+await cheapSort.click();
+if(await cheapSort.getAttribute('aria-pressed')!=='true')
+  throw Error('Price sorting did not activate');
+await k.getByRole('button',{name:'Рекомендуем',exact:true}).click();
 await k.getByText('Проверьте перед вызовом').waitFor();
 await k.locator('.agree input').check();
 await shot(k, '04-client-new-order');
