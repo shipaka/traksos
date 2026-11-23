@@ -58,6 +58,10 @@ export function AdminCaseCenter() {
   const detail=detailState?.key===detailKey&&!detailFailure?detailState.value:null;
   const error=actionError||(detailFailure?.key===detailKey?detailFailure.message:'');
   useEffect(()=>{
+    // Clear even in-memory remnants of the previous admin session. A later
+    // re-login under the same ID must fetch again rather than reuse old data.
+    setListState(null);setListFailure(null);
+    setDetailState(null);setDetailFailure(null);
     setSelected(null);setFocused(null);setComment('');setActionError('');
   },[me?.id]);
   useEffect(()=>{
