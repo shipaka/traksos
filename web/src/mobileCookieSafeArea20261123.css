@@ -1,0 +1,27 @@
+/* 23 November mobile browser: genuine cookie consent stays clickable above
+ * the owner-approved fixed role tabbar. APK WebView has no signed-in web footer.
+ * OfferGate is z-index:50; this consent intentionally stays below legal modals. */
+@media(max-width:899px){
+  html.traksos-browser .app:not(.guest-app) .site-footer > .banner {
+    position:fixed!important;
+    left:max(12px,env(safe-area-inset-left))!important;
+    right:max(12px,env(safe-area-inset-right))!important;
+    bottom:calc(90px + env(safe-area-inset-bottom))!important;
+    width:auto!important;max-width:440px!important;
+    margin:0 auto!important;padding:13px!important;
+    z-index:20!important;
+    max-height:60vh;max-height:min(60dvh,280px);
+    overflow-y:auto;overscroll-behavior:contain;
+    border:1px solid rgba(255,163,89,.48)!important;
+    background:#102d3e!important;color:#ecf8fc!important;
+    box-shadow:0 14px 28px rgba(0,9,18,.58)!important;
+    border-radius:14px!important;
+  }
+  html.traksos-browser .app:not(.guest-app) .site-footer > .banner .btn {
+    min-height:42px!important;
+  }
+  html.traksos-browser.traksos-cookie-notice-open
+    .app:not(.guest-app) > .trakbot-dock {
+    visibility:hidden!important;pointer-events:none!important;
+  }
+}

@@ -54,6 +54,8 @@ import './authOverlay20261122.css';
 import './ownerVisualFixes20261122.css';
 // Owner-approved metallic-amber service icon styling, scoped to existing cards.
 import './trakServicePremium20261123.css';
+// Authorised mobile cookie consent must sit above the fixed role navigation.
+import './mobileCookieSafeArea20261123.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
@@ -906,8 +908,19 @@ function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
   const [l, setL] = useState<any>(null);
   const [cookieOk, setCookieOk] = useState(() => { try { return localStorage.getItem('traksos.cookie') === '1'; } catch { return true; } });
   useEffect(() => { (legalCache ??= get('/api/legal').catch(() => null)).then(setL); }, []);
+  // Prevent a floating bot from covering a mandatory cookie notice on phones.
+  useEffect(()=>{
+    document.documentElement.classList.toggle('traksos-cookie-notice-open',!cookieOk);
+    return ()=>document.documentElement.classList.remove('traksos-cookie-notice-open');
+  },[cookieOk]);
   const req = l ? [l.entity, l.inn && `ИНН ${l.inn}`, l.ogrn && `ОГРН ${l.ogrn}`].filter(Boolean).join(' · ') : '';
   const contacts = l ? [l.phone, l.email].filter(Boolean).join(' · ') : '';
+  // Older installations still serve the regional PILOT tagline from /api/legal.
+  // Correct only that exact retired default for national platform positioning;
+  // retain every custom tagline configured by the administrator.
+  const tagline = l?.tagline === 'Маркетплейс выездной помощи грузовикам · Санкт-Петербург и Ленинградская область'
+    ? 'TrakSOS — платформа помощи грузовому транспорту по всей России. Выездные услуги зависят от партнёров в регионе.'
+    : l?.tagline;
   return (
     <footer className="site-footer">
       {standalone && <span className="note site-footer-about">Маркетплейс выездной помощи грузовому транспорту</span>}
@@ -918,7 +931,7 @@ function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
         </div>
       )}
       <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
-      <span className="note">{l?.tagline}</span>
+      <span className="note">{tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}
       {contacts && <span className="note">Поддержка: {contacts}</span>}

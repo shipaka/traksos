@@ -281,6 +281,29 @@ try{
      if(c.id==='owner')await page.screenshot({
        path:out+'/'+c.id+'-home-'+width+'-retina2x.png',fullPage:false,animations:'disabled',scale:'device'
      });
+     if(width===390&&c.id==='owner'){
+       const notice=page.locator('footer.site-footer > .banner');
+       await notice.waitFor({state:'visible'});
+       const dismiss=notice.getByRole('button',{name:'Понятно'});
+       const buttonRect=await dismiss.boundingBox();
+       const tabRect=await page.locator('.tabbar').boundingBox();
+       if(!buttonRect||!tabRect||buttonRect.y+buttonRect.height>=tabRect.y-4)
+         throw Error('Cookie dismiss button lies under fixed role tabbar');
+       const clickable=await dismiss.evaluate(el=>{
+         const box=el.getBoundingClientRect();
+         const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+         return !!hit&&(hit===el||el.contains(hit));
+       });
+       if(!clickable)throw Error('Cookie dismiss button intercepted by overlay');
+       const floatingBot=page.locator('.trakbot-dock-launcher');
+       if(await floatingBot.count()&&await floatingBot.isVisible())
+         throw Error('Floating TrakBot overlaps mobile cookie consent');
+       await page.screenshot({path:out+'/owner-cookie-consent-390-viewport.png',
+         fullPage:false,animations:'disabled'});
+       await dismiss.click();
+       await notice.waitFor({state:'detached'});
+       if(await floatingBot.count())await floatingBot.waitFor({state:'visible'});
+     }
      await page.goto(BASE+'/'+c.inside,{waitUntil:'domcontentloaded'});
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);

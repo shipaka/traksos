@@ -72,3 +72,42 @@ test('explicit cheap sorting is applied across the full pool before truncation',
   const invalid=await t.api('GET','/api/masters-nearby?service=electric&sort=unknown',undefined,client.token);
   assert.equal(invalid.status,400);
 });
+
+test('explicit sort searches more than eight eligible masters before selecting a shortlist',async()=>{
+  // Reproduce a network with nine verified expensive workers and two cheap
+  // pending workers: the cheapest candidate starts OUTSIDE the old top-eight.
+  await t.db.query('update performer_profiles set call_out_price=$2 where user_id=$1',
+    [approved.id,900_000]);
+  await t.db.query('update performer_profiles set call_out_price=$2 where user_id=$1',
+    [pending.id,750_000]);
+  for(let i=0;i<9;i++){
+    const phone='+799933397'+String(i).padStart(2,'0');
+    const account=await t.login(phone,'master');
+    ok(await t.api('PUT','/api/performer/profile',{
+      kind:'master',name:i===8?'СамыйДешёвый':'Дорогой'+i,
+      specialties:['electric']
+    },account.token));
+    ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},account.token));
+    ok(await t.api('POST','/api/performer/location',{lat:59.934,lng:30.335},account.token));
+    if(i<8)ok(await t.api('POST','/api/admin/performers/'+account.id+'/verify',
+      {decision:'approved'},admin.token));
+    await t.db.query('update performer_profiles set call_out_price=$2 where user_id=$1',
+      [account.id,i===8?500:600_000+i*10_000]);
+  }
+  const base='/api/masters-nearby?service=electric&lat=59.934&lng=30.335';
+  const rec=ok(await t.api('GET',base+'&sort=recommended',undefined,client.token));
+  const cheap=ok(await t.api('GET',base+'&sort=cheap',undefined,client.token));
+  assert.ok(rec.match>=11,'preview must evaluate every eligible worker before slicing');
+  assert.equal(rec.items.length,8,'UI shortlist stays compact');
+  assert.ok(rec.items.every((x:any)=>x.verification==='approved'),
+    'default recommendations should prioritize verified candidates');
+  assert.equal(cheap.items.length,8);
+  assert.equal(cheap.items[0].name,'СамыйДешёвый',
+    'cheapest pending master cannot vanish behind eight recommended candidates');
+  assert.equal(cheap.items[0].verification!=='approved',true,
+    'unverified worker remains eligible without verified-only filter');
+  const restricted=ok(await t.api('GET',base+'&sort=cheap&verifiedOnly=1',
+    undefined,client.token));
+  assert.ok(restricted.items.every((x:any)=>x.verification==='approved'),
+    'client opt-in must still remove pending masters even under explicit price sort');
+});
