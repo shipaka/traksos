@@ -41,6 +41,7 @@ for(const [name,passes] of [
   ['Help uses neutral loading copy for financial uncertainty',help.includes('Действующий сервисный сбор пока не загружен') && help.includes('Актуальные условия возврата пока не загружены') && help.includes('Тариф консультации и условия возможной скидки')],
   ['QR sticker uses password for existing drivers and SMS for signup',fleet.includes('Сканируйте QR → войдите по паролю') && fleet.includes('Регистрация с SMS') && !fleet.includes('телефон → код из SMS') && !fleet.includes('Без регистрации и анкет')],
   ['QR on-screen flow asks for explicit vehicle linking',fleet.includes('Я водитель этой машины') && fleet.includes('Затем нажимает «Я водитель этой машины»')],
+  ['Driver QR intent survives failed join until server confirms success',/if\s*\(r\)\s*\{\s*try\s*\{\s*sessionStorage\.removeItem\('traksos\.qr'\)/.test(fleet)],
   ['Rules consume live economics',file('web/src/screens/rules.tsx').includes('<EconomicsGuide')],
   ['Legal view consumes live economics',terms.includes('<EconomicsGuide')],
   ['Role-scoped endpoint exists',api.includes("'/api/me/economics'")],
