@@ -280,7 +280,11 @@ function App() {
   // the next unrelated login to an old booking or assistant page. Keep the
   // intent while explicitly moving from service to login/registration/reset.
   useEffect(() => {
-    if (!ready || me || ['explore','login','register','reset','activate'].includes(route[0] ?? '')) return;
+    // Real service deep links keep their selection until sign-in, but retired
+    // catalogue links must NEVER reuse the previous service from this tab.
+    const knownExplore = route[0] === 'explore' && guestCustomerDestination(route[1]) !== null;
+    if (!ready || me || knownExplore ||
+        ['login','register','reset','activate'].includes(route[0] ?? '')) return;
     try {
       sessionStorage.removeItem('traksos.pendingLandingAction');
       sessionStorage.removeItem('traksos.pendingCatalogChoice');
