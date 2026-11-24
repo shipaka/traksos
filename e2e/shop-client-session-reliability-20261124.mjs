@@ -66,7 +66,7 @@ const compiled=await build({
   stdin:{contents:entry,resolveDir:new URL('../e2e/',import.meta.url).pathname,
     sourcefile:'shop-private-regression-entry.tsx',loader:'tsx'},
   // Match production JSX runtime; real screens import hooks, not a React global.
-  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',
+  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',jsx:'automatic',
   plugins:[{
     name:'mock-shop-api-and-other-screens',
     setup(b){
@@ -88,8 +88,10 @@ const compiled=await build({
   }],
 });
 const browser=await chromium.launch();
+const pageErrors=[];
 try{
   const page=await browser.newPage({serviceWorkers:'block'});
+  page.on('pageerror',error=>pageErrors.push(error.message));
   const crashes=[];
   page.on('pageerror',error=>{crashes.push(error.message);console.error('Shop browser error:',error.stack??error.message)});
   const idA='00000000-0000-4000-8000-000000000011';
@@ -174,5 +176,9 @@ try{
   await page.getByRole('heading',{name:'История покупок'}).waitFor();
   await page.getByText(/Заказ №B/).waitFor();
   assert.deepEqual(crashes,[],'real shop screens must not produce unhandled browser errors');
+  assert.deepEqual(pageErrors,[],'Unhandled React errors in cart/history');
   console.log('PASS: real ShopCart/ShopHistory React, account A→B, stale selection, failed POST no auto-repeat');
+}catch(error){
+  if(pageErrors.length)console.error('Browser runtime errors:',pageErrors.join('; '));
+  throw error;
 }finally{await browser.close()}
