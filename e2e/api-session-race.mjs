@@ -339,6 +339,88 @@ try {
     assert.deepEqual(actual.sameUserAuth,[
       'Bearer CI-RETRY-SAME-USER','Bearer CI-RETRY-SAME-USER'
     ]);
+    // Headers alone are not a completed request. Exercise the real compiled
+    // transport with a streaming body whose last bytes never arrive. Advance
+    // only the production deadline timer explicitly, not wall-clock sleeps.
+    const bodyDeadlines=await page.evaluate(async()=>{
+      const module=await import('/__ci_api_session_race.mjs');
+      const nativeFetch=window.fetch, nativeSet=window.setTimeout, nativeClear=window.clearTimeout;
+      const deadlines=new Map(), calls=[];
+      let activeStream;
+      window.setTimeout=function(fn,delay,...args){
+        const id=nativeSet.call(window,fn,delay,...args);
+        if(delay===12000||delay===30000)deadlines.set(id,{fn,delay,cleared:false});
+        return id;
+      };
+      window.clearTimeout=function(id){
+        if(deadlines.has(id))deadlines.get(id).cleared=true;
+        nativeClear.call(window,id);
+      };
+      window.fetch=async(url,opts)=>{
+        const signal=opts.signal;
+        let streamController;
+        const stream=new ReadableStream({
+          start(controller){streamController=controller;
+            controller.enqueue(new TextEncoder().encode('{'));
+          },
+        });
+        const abort=()=>{try{streamController.error(new DOMException('Aborted','AbortError'))}catch{}};
+        if(signal?.aborted)abort();
+        else signal?.addEventListener('abort',abort,{once:true});
+        activeStream=streamController;
+        calls.push({url:String(url),method:opts.method??'GET',signal});
+        return new Response(stream,{status:200,headers:{'content-type':
+          String(url).includes('image')?'image/png':'application/json'}});
+      };
+      const expect=(condition,message)=>{if(!condition)throw Error(message)};
+      async function scenario(start,expectedDelay,expectedCode,{switchAccount=false,caller}={}){
+        deadlines.clear();
+        const before=calls.length;
+        const request=start().then(value=>({value}),error=>({code:error.code,status:error.status}));
+        // fetch resolves to headers immediately; allow the body read to begin.
+        await Promise.resolve();await Promise.resolve();await Promise.resolve();
+        expect(calls.length===before+1,'Expected one request before body deadline');
+        const timers=[...deadlines.values()];
+        expect(timers.length===1&&timers[0].delay===expectedDelay&&!timers[0].cleared,
+          'Deadline must remain armed after headers: '+expectedDelay);
+        if(switchAccount)module.setToken('CI-BODY-REPLACEMENT');
+        if(caller)caller.abort();else timers[0].fn();
+        const result=await request;
+        expect(calls.at(-1).signal.aborted,'Body download signal was not aborted');
+        expect(result.code===expectedCode,'Unexpected body error: '+JSON.stringify(result));
+        expect(calls.length===before+1,'Body timeout must not replay the request');
+        expect(timers[0].cleared,'Deadline must be released after completion');
+        return result.code;
+      }
+      const result={};
+      try{
+        module.setToken('CI-BODY-OWNER');
+        result.get=await scenario(()=>module.api('GET','/ci-stalled-json'),12000,'network');
+        result.post=await scenario(()=>module.api('POST','/ci-stalled-write',{test:true}),30000,'network');
+        result.image=await scenario(()=>module.authedImage('/ci-stalled-image'),30000,'network');
+        const caller=new AbortController();
+        result.caller=await scenario(()=>module.authedImage('/ci-stalled-image',{signal:caller.signal}),
+          30000,'aborted',{caller});
+        result.stale=await scenario(()=>module.api('GET','/ci-stalled-json'),12000,'session_changed',{switchAccount:true});
+        result.replacementToken=module.getToken();
+        deadlines.clear();
+        const count=calls.length;
+        const alreadyAborted=new AbortController();alreadyAborted.abort();
+        result.preAborted=await module.authedImage('/ci-stalled-image',{signal:alreadyAborted.signal}).catch(e=>e.code);
+        expect(calls.length===count,'Pre-aborted image must not dispatch a fetch');
+        expect([...deadlines.values()].every(t=>t.cleared),'Pre-aborted image leaked timer');
+        return result;
+      }finally{
+        try{activeStream?.error(new DOMException('Fixture cleanup','AbortError'))}catch{}
+        for(const id of deadlines.keys())nativeClear.call(window,id);
+        window.fetch=nativeFetch;window.setTimeout=nativeSet;window.clearTimeout=nativeClear;
+      }
+    });
+    assert.deepEqual(bodyDeadlines,{
+      get:'network',post:'network',image:'network',caller:'aborted',
+      stale:'session_changed',replacementToken:'CI-BODY-REPLACEMENT',preAborted:'aborted',
+    });
+    console.log('PASS: JSON GET/POST and private-image deadlines remain active through streamed bodies');
     // Even a misconfigured sandbox build cannot send protected images to a
     // foreign API. This isolated module uses a synthetic token, never live.
     await page.route('**/__ci_api_remote_transport.mjs',route=>
