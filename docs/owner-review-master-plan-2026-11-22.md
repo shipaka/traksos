@@ -1122,3 +1122,12 @@
 - [x] [aff36f5](https://github.com/shipaka/traksos/commit/aff36f5ec42730302a2bf8c8235d22d13030a318), [ee71890](https://github.com/shipaka/traksos/commit/ee718908ca7f0505b9ebae3d646add4ff0c4dfe8): устранены дубли jsx:automatic и error listeners/shadowed arrays после параллельных изменений; диагностика pageerror теперь сохраняется и при исключении. Бизнес-assertions не удалены.
 - [x] [f95007a](https://github.com/shipaka/traksos/commit/f95007a2d8994c350164ab47952b36777a8dd1e0): в order-photo fixture заменён повреждённый synthetic PNG. Локально CRC IDAT старого файла не совпадает, Pillow decode выдаёт broken data stream; новый PNG имеет корректные CRC и успешно декодируется 1x1. Добавлен обязательный img.decode и проверка natural dimensions в реальном диалоге; проверки retry/logout/blob revoke сохранены.
 - [ ] Chromium execution нового SHA и полный main gate пока не подтверждены. [skip ci], не запускаем повторный Android CI; PR275, main/VPS, production UI/API и 617/618 не изменены.
+
+
+### 24.11.2026 · LOGIN-PENDING-PASSWORD-20261124 · отмена устаревшего входа
+
+Закрепление [#7134320057](https://github.com/shipaka/traksos/pull/274#issuecomment-7134320057). Source review: редактирование пароля во время pending login инвалидировало authGeneration, но не снимало loginBusy; finally устаревшего ответа игнорировался. Возврат из восстановления также мог сохранить блокировку.
+
+- [x] [6e1bb26](https://github.com/shipaka/traksos/commit/6e1bb263a5436a469dce65cb88388c60dc94bd99): синхронный request lock с владельцем поколения, явная отмена при правке номера/пароля, смене формы, возврате и регистрации; старый finally не снимает lock нового запроса. Вход по паролю, SMS-политика, API и визуальный дизайн сохранены.
+- [x] [3783696](https://github.com/shipaka/traksos/commit/3783696cea664548d73812619f9b5eb938a83d07), [52232a5](https://github.com/shipaka/traksos/commit/52232a52b078e18c27122831124050383b85b4e7): реальные React/Chromium regression scenarios на 390/1440 — смена только пароля, запоздалый успешный ответ старой попытки при новом pending, дублирующий submit, переход в восстановление и возврат, принятие только актуального токена. Заменены произвольные 30ms sleeps ожиданием кадров браузера.
+- [ ] Фактический Chromium PASS и полный exact-HEAD CI ещё не подтверждены; локально React/esbuild/Playwright отсутствуют. Коммиты [skip ci], без rerun/dispatch. #275, main, VPS, 617/618 не изменены.
