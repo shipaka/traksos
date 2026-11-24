@@ -50,11 +50,11 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
   const result = normalizeYandexCondition(fact.condition);
   if (!result || typeof fact.temp !== 'number' || !Number.isFinite(fact.temp) ||
       fact.temp < -80 || fact.temp > 65 ||
-      !Number.isFinite(fetchedMs) || fetchedMs < 0 ||
+      !Number.isFinite(fetchedMs) || fetchedMs < 0 || fetchedMs > 8.64e15 ||
       typeof fact.obs_time !== 'number' || !Number.isSafeInteger(fact.obs_time) ||
       fact.obs_time < 0) return null;
   const observationMs = fact.obs_time * 1000;
-  if (!Number.isFinite(observationMs) || observationMs > fetchedMs + 60_000 ||
+  if (!Number.isFinite(observationMs) || observationMs > 8.64e15 || observationMs > fetchedMs + 60_000 ||
       fetchedMs - observationMs > OBSERVATION_MAX_AGE_MS) return null;
   return {
     source: 'yandex',
@@ -113,7 +113,14 @@ export class PublicWeatherService {
   async current(): Promise<PublicWeather | null> {
     if (!this.apiKey?.trim()) return null;
     const at = this.clock();
-    if (this.cache && this.cache.expiresAt > at) return this.cache.value;
+    if (this.cache && this.cache.expiresAt > at) {
+      const value = this.cache.value;
+      // Keep the vendor call budget, but never display an observation that
+      // aged past the accepted window while it was in the local cache.
+      if (value && (at - value.observedEpochSeconds * 1000 > OBSERVATION_MAX_AGE_MS ||
+          value.observedEpochSeconds * 1000 > at + 60_000)) return null;
+      return value;
+    }
     if (this.pending) return this.pending;
     this.pending = Promise.resolve().then(() => this.requester(SERVICE_URL, {
       headers: { 'X-Yandex-Weather-Key': this.apiKey },
