@@ -140,3 +140,37 @@ test('insurance expiry reminders: lost live delivery never duplicates the durabl
    'select reminder_1_sent_at from vehicle_service_requests where id=$1',[request.id]))?.reminder_1_sent_at);
  }finally{await t.close();}
 });
+
+test('insurance expiry reminders: scan never freezes a previous vehicle plate', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79996672105');
+  const vehicle=ok(await t.api('POST','/api/vehicles',{
+   brand:'MAN',model:'TGX',year:2019,plate:'А558АА178',
+  },owner.token));
+  const request=ok(await t.api('POST','/api/vehicle-service-requests',{
+   vehicleId:vehicle.id,kind:'insurance',comment:'Проверка актуального номера машины',
+  },owner.token));
+  await t.db.query("update vehicle_service_requests set status='completed',policy_expires_on=current_date + 30 where id=$1",[request.id]);
+  await t.db.query('update users set insurance_reminders_enabled=true where id=$1',[owner.id]);
+  let changed=false;
+  const raced={
+   query:async(sql:string,params?:any[])=>{
+    const result=await t.db.query(sql,params);
+    if(!changed&&sql.includes('from vehicle_service_requests r')&&params?.[0]===30){
+     changed=true;
+     await t.db.query('update vehicles set plate=$2 where id=$1',[vehicle.id,'А559АА178']);
+    }
+    return result;
+   },
+   tx:t.db.tx.bind(t.db),
+  } as unknown as Db;
+  await sendInsuranceReminders(raced,new Notifier(t.db,t.app.hub,t.push));
+  assert.equal(changed,true);
+  const row=await t.db.one<{body:string}>(
+   "select body from notifications where user_id=$1 and kind='insurance_expiry'",[owner.id]);
+  assert.ok(row);
+  assert.match(row.body,/А559АА178/);
+  assert.doesNotMatch(row.body,/А558АА178/);
+ }finally{await t.close();}
+});
