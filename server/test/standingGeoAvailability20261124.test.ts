@@ -106,3 +106,42 @@ test('closer worker counter excludes unverified, paused and busy colleagues',asy
   await t.db.query('update performer_profiles set paused=true where user_id=$1',[closer.id]);
   assert.equal(ok(await t.api('GET','/api/performer/nearby',undefined,worker.token)).ahead,0);
 });
+
+
+test('nearby counters exclude refused brands and profiles whose account lost its role',async()=>{
+  const closer=(await t.db.one<{id:string}>('select id from users where phone=$1',['+79994330103']))!;
+  await t.db.query("update orders set brand='Scania',lat=59.95,lng=30.35,status='searching' where id=$1",[nearOrder]);
+  await t.db.query("update performer_profiles set paused=false,brands=$2::jsonb where user_id=$1",
+    [closer.id,JSON.stringify({Scania:'refuse'})]);
+  const refused=ok(await t.api('GET','/api/performer/nearby',undefined,worker.token));
+  assert.equal(refused.openNearby,1);
+  assert.equal(refused.ahead,0);
+  await t.db.query("update performer_profiles set brands=$2::jsonb where user_id=$1",
+    [worker.id,JSON.stringify({Scania:'refuse'})]);
+  assert.equal(ok(await t.api('GET','/api/performer/nearby',undefined,worker.token)).openNearby,0);
+  await t.db.query("update performer_profiles set brands='{}'::jsonb where user_id=any($1::uuid[])",[[worker.id,closer.id]]);
+  const search='/api/masters-nearby?service=electric&lat=59.95&lng=30.35';
+  const before=ok(await t.api('GET',search,undefined,client.token));
+  await t.db.query("update users set roles=array_remove(roles,'master') where id=$1",[closer.id]);
+  const after=ok(await t.api('GET',search,undefined,client.token));
+  assert.equal(after.online,before.online-1);
+  assert.equal(ok(await t.api('GET','/api/performer/nearby',undefined,worker.token)).ahead,0);
+  await t.db.query("update users set roles=array_append(roles,'master') where id=$1",[closer.id]);
+});
+
+test('arbitrary legacy vehicle brand keys cannot mutate the standing aggregation prototype',async()=>{
+  const closer=(await t.db.one<{id:string}>('select id from users where phone=$1',['+79994330103']))!;
+  await t.db.query("update orders set service='consult',performer_id=$2,brand='__proto__' where id=$1",[nearOrder,worker.id]);
+  await t.db.query("update orders set consult_of=$2,hint_check='yes',performer_id=$3 where id=$1",[farOrder,nearOrder,closer.id]);
+  try {
+    const result=ok(await t.api('GET','/api/performer/standing',undefined,worker.token));
+    assert.equal(result.accuracy.cases,1);
+    assert.equal(result.accuracy.value,1);
+    assert.equal(Object.prototype.hasOwnProperty.call(Object.prototype,'n'),false);
+    assert.equal(Object.prototype.hasOwnProperty.call(Object.prototype,'v'),false);
+  } finally {
+    // Prevent cross-test contamination even when run against the old implementation.
+    delete (Object.prototype as any).n;
+    delete (Object.prototype as any).v;
+  }
+});
