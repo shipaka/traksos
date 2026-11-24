@@ -692,3 +692,13 @@
 - [x] Код [78e870f](https://github.com/shipaka/traksos/commit/78e870ff7757b8feaf57dba4017991d0d13b4402): RuStore не следует редиректам с приватным payload, тело ответа освобождается без чтения; контракт сообщения и TTL сохранены.
 - [x] Написаны регрессии [a56ea8c](https://github.com/shipaka/traksos/commit/a56ea8c581edcab0780e9f468d8d6a98b1ce6650), [a2c52c7](https://github.com/shipaka/traksos/commit/a2c52c7b0fdfd09a4f6c5f07ff3960b578496826), [aed6de0](https://github.com/shipaka/traksos/commit/aed6de06c58d676f5195e72d7ce8d644d41ddbc6): редиректы и stream cleanup; реальная PostgreSQL очередь device lock, отзыв старой сессии, сохранение текущей привязки, исключение неподтверждённых устройств.
 - [ ] Server typecheck/npm test и exact-HEAD CI ещё не подтверждены. Остаточный риск уже переданного внешнему провайдеру сообщения не устранить серверной транзакцией. Main/VPS, 617/618, финансовые правила, чужие API не менялись. Зона освобождена после отчёта.
+
+
+### 24.11.2026 · WEATHER-TRANSPORT-FRESHNESS-20261124 · транспорт и свежесть публичной погоды
+
+Закрепление [#7121883579](https://github.com/shipaka/traksos/pull/274#issuecomment-7121883579), после освобождения #7116163843.
+
+- [x] Код [e6ca2b3](https://github.com/shipaka/traksos/commit/e6ca2b3a72326732ec6c5844b2099056572fdfab): запрещены внешние перенаправления запроса с ключом, отклонённые HTTP/oversize body отменяются; синхронный сбой транспорта проходит через существующий negative-cache и single-flight.
+- [x] Код [ca3e902](https://github.com/shipaka/traksos/commit/ca3e902a4cc3b3f66ed17e91f0e97c5caa68e71d): устаревшее наблюдение больше не выдаётся из cache после 3 часов, бюджет запросов сохранён; проверены границы JS Date.
+- [x] Написаны регрессии [f2ac23e](https://github.com/shipaka/traksos/commit/f2ac23e06913e3737ff847389287bf1afe6cc0a7): redirect policy, освобождение потоков при 503/oversize, synchronous transport failure, single-flight/negative-cache, freshness без дополнительного запроса.
+- [ ] Фактическое прохождение npm test/typecheck/exact-HEAD CI ещё не подтверждено. География, источник, UI 617/618, main/VPS не изменены. Участок освобождён после отчёта.
