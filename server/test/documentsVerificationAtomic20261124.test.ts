@@ -127,3 +127,55 @@ test('two simultaneous uploads of the same kind do not delete both photos',
       'select count(*)::int as n from documents where user_id=$1',[user.id]))?.n,1);
   }finally{await t.close();}
 });
+
+
+test('confidential file and verification decisions reject captured staff permissions after revocation',
+ {timeout:90000},async()=>{
+  const t=await setup();
+  try{
+    const admin=await t.login('+79990000001');
+    const master=await t.login('+79998892013','master');
+    const former=await t.login('+79998892014');
+    await t.db.query("update users set roles=array['moderator']::text[] where id=$1",[former.id]);
+    const actor=await t.app.auth.authenticate(former.token);
+    const owner=await t.app.auth.authenticate(master.token);
+    assert.ok(actor&&owner);
+    ok(await t.api('PUT','/api/performer/profile',
+      {kind:'master',name:'Тестовый мастер',specialties:['electric']},master.token));
+    const doc=ok(await t.api('POST','/api/performer/documents',
+      {kind:'passport',dataUrl:image()},master.token));
+    const denied=(e:unknown)=>(e as {status?:number}).status===403;
+    assert.equal((await t.app.documents.file(actor,doc.id)).mime,'image/jpeg');
+    const views=async()=> (await t.db.one<{n:number}>(
+      "select count(*)::int as n from audit_log where action='document.view' and target=$1",[doc.id]))?.n;
+    assert.equal(await views(),1);
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[former.id]);
+    await assert.rejects(t.app.documents.file(actor,doc.id),denied);
+    await assert.rejects(t.app.documents.review(actor,doc.id,{status:'approved'}),denied);
+    await assert.rejects(t.app.documents.decide(actor,master.id,'approved'),denied);
+    assert.equal(await views(),1,'denied private read must not create a successful access audit');
+    assert.equal((await t.db.one<{status:string}>('select status from documents where id=$1',[doc.id]))?.status,'pending');
+    assert.equal((await t.app.documents.file(owner,doc.id)).mime,'image/jpeg');
+    await t.db.query("update users set roles=array['moderator']::text[],status='blocked' where id=$1",[former.id]);
+    await assert.rejects(t.app.documents.file(actor,doc.id),denied);
+    for(const kind of ['selfie','car_front']){
+      ok(await t.api('POST','/api/performer/documents',{kind,dataUrl:image()},master.token));
+    }
+    ok(await t.api('POST','/api/performer/documents/submit',{},master.token));
+    assert.equal((await t.db.one<{n:number}>(
+      "select count(*)::int as n from notifications where user_id=$1 and kind='verification_queue'",[former.id]))?.n,0);
+    assert.equal((await t.db.one<{n:number}>(
+      "select count(*)::int as n from notifications where user_id=$1 and kind='verification_queue'",[admin.id]))?.n,1);
+    await t.db.query("update users set status='active' where id=$1",[former.id]);
+    assert.equal((await t.app.documents.file(actor,doc.id)).mime,'image/jpeg');
+    assert.equal(await views(),2);
+    await t.db.query("update users set status='blocked' where id=$1",[master.id]);
+    await assert.rejects(t.app.documents.mine(owner),denied);
+    await assert.rejects(t.app.documents.file(owner,doc.id),denied);
+    await assert.rejects(t.app.documents.upload(owner,{kind:'passport',dataUrl:image()}),denied);
+    await assert.rejects(t.app.documents.submit(owner),denied);
+    await assert.rejects(t.app.documents.deleteConfidential(owner),denied);
+    assert.equal((await t.db.one<{n:number}>(
+      'select count(*)::int as n from documents where user_id=$1',[master.id]))?.n,3);
+  }finally{await t.close();}
+});
