@@ -181,7 +181,9 @@ require_traksos_foreground() {
 }
 verify_gate_controls
 if [[ "${1:-}" == --self-test-focus ]]; then exit 0; fi
+# A missing or offline emulator must be reported before touching the APK.
 test -x "$ADB_BIN"
+require_live_emulator "before APK installation"
 rm -f emulator-ui.xml
 apk="apk/app-debug.apk"
 test -s "$apk"
