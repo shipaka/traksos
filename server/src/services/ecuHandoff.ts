@@ -381,10 +381,13 @@ export class EcuHandoffService {
      'Доступна новая техническая запись в цепочке обращения.',{handoffId:id}]);
    return {m,sourceId:h.source_order_id,worker:h.selected_performer_id,recipients};
   });
-  const liveIds=new Set([...(await this.liveClientRecipients(result.sourceId)),result.worker]);
-  await this.notifier.deliverStored(result.recipients.filter(x=>liveIds.has(x)),
-   {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
-    body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}}).catch(()=>{});
+  // Recipient refresh and optional delivery cannot invalidate a committed note.
+  try {
+   const liveIds=new Set([...(await this.liveClientRecipients(result.sourceId)),result.worker]);
+   await this.notifier.deliverStored(result.recipients.filter(x=>liveIds.has(x)),
+    {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
+     body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}});
+  } catch {}
   return result.m;
  }
 }
