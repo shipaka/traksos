@@ -92,3 +92,31 @@ test('Public partner map: status, role, weekly availability and coordinates are 
     assert.equal((await list()).length,0,'blocked partner cannot remain on public map');
   }finally{await t.close();}
 });
+
+
+test('Public partner map rejects future consent and weekly confirmation; masks before display clipping',async()=>{
+  const t=await setup();
+  try{
+    const station=await t.login(phone(4303),'service');
+    const center=await t.db.one<{id:string}>(`
+      insert into service_centers(owner_id,name,address,lat,lng,verification,
+        accepts_confirmed_at,public_map_location_verified_at,public_map_opt_in,public_map_opted_at)
+      values ($1,$2,'Санкт-Петербург, Тестовая 3',59.95,30.35,'approved',
+        now(),now()-interval '1 minute',true,now()+interval '1 hour')
+      on conflict(owner_id) do update set name=excluded.name,address=excluded.address,
+        lat=excluded.lat,lng=excluded.lng,verification='approved',
+        accepts_confirmed_at=now(),public_map_location_verified_at=now()-interval '1 minute',
+        public_map_opt_in=true,public_map_opted_at=now()+interval '1 hour'
+      returning id`,[station.id,'А'.repeat(93)+' +7 999 123-45-67']);
+    assert.ok(center?.id);
+    const list=async()=>ok(await t.api('GET','/api/public/partner-map')).points as any[];
+    assert.equal((await list()).length,0,'future consent is not current');
+    await t.db.query("update service_centers set public_map_opted_at=now(),accepts_confirmed_at=now()+interval '1 day' where id=$1",[center.id]);
+    assert.equal((await list()).length,0,'future confirmation cannot establish availability');
+    assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},station.token)).status,400);
+    await t.db.query('update service_centers set accepts_confirmed_at=now() where id=$1',[center.id]);
+    const points=await list();
+    assert.equal(points.length,1);
+    assert.ok(!points[0].name.includes('+7 999'),'mask the entire contact before clipping the public label');
+  }finally{await t.close();}
+});
