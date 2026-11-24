@@ -305,7 +305,7 @@ export class VehicleReferenceService {
     options: { includeHeavy?: boolean; workflow?: 'garage' | 'parts' | 'insurance' | 'inspection' | 'repair'; q?: string } = {}, db: Queryable = this.db) {
     this.checkContext(actor, context);
     const categories = vehicleCategoriesForContext(context, options);
-    const q = (options.q ?? '').normalize('NFKC').trim().slice(0, 80);
+    const q = normalizeAlias((options.q ?? '').normalize('NFKC').trim().slice(0, 80));
     const records = await db.query<BrandRow>(
       'select b.category,b.brand_key as key,b.display_name as name,b.aliases,s.source_key ' +
       'from vehicle_ref_brands b join vehicle_ref_snapshots v on v.id=b.snapshot_id ' +
@@ -314,10 +314,10 @@ export class VehicleReferenceService {
       'and b.category=any($1::text[]) order by b.category,b.brand_key,s.source_key limit 10000',
       [categories]);
     const map = new Map<string, BrandRow & { sources: string[]; conflict: boolean }>();
+    const matches = new Set<string>();
     for (const r of records) {
       const id = r.category + ':' + r.key;
-      if (q && ![r.name, ...r.aliases].some((name) => normalizeAlias(name).includes(normalizeAlias(q))))
-        continue;
+      if (!q || [r.name, ...r.aliases].some((name) => normalizeAlias(name).includes(q))) matches.add(id);
       const found = map.get(id);
       if (!found) map.set(id, { ...r, sources: [r.source_key], conflict: false });
       else {
@@ -325,7 +325,7 @@ export class VehicleReferenceService {
         if (found.name !== r.name) found.conflict = true;
       }
     }
-    return [...map.values()].sort((a, b) =>
+    return [...map.entries()].filter(([id]) => matches.has(id)).map(([, value]) => value).sort((a, b) =>
       a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'ru'));
   }
 
@@ -346,13 +346,15 @@ export class VehicleReferenceService {
       'join vehicle_ref_sources s on s.source_key=v.source_key ' +
       "where v.state='active' and s.state='approved' and s.redistribution_approved=true " +
       'and m.category=$1 and m.brand_key=$2 ' +
-      'and ($3::int is null or (m.year_from is null or m.year_from<=$3) ' +
-      'and (m.year_to is null or m.year_to>=$3)) ' +
       'order by m.model_key,s.source_key limit 10000',
-      [category, brand, year]);
+      [category, brand]);
     const map = new Map<string, ModelRow & { sources: string[]; conflict: boolean }>();
+    const matches = new Set<string>();
     for (const r of rows) {
-      if (q && ![r.name, ...r.aliases].some((name) => normalizeAlias(name).includes(q))) continue;
+      const yearMatches = year == null || ((r.year_from == null || r.year_from <= year) &&
+        (r.year_to == null || r.year_to >= year));
+      if (yearMatches && (!q || [r.name, ...r.aliases].some((name) => normalizeAlias(name).includes(q))))
+        matches.add(r.key);
       const found = map.get(r.key);
       if (!found) map.set(r.key, { ...r, sources: [r.source_key], conflict: false });
       else {
@@ -361,7 +363,10 @@ export class VehicleReferenceService {
             found.year_to !== r.year_to) found.conflict = true;
       }
     }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+    // Search and year filters select keys, not individual source rows: a
+    // conflicting source must never silently disappear from the result.
+    return [...map.entries()].filter(([key]) => matches.has(key)).map(([, value]) => value)
+      .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
   }
 
   async validateSelection(actor: AuthUser, context: CatalogRoleContext, selection: ReferenceSelection,
