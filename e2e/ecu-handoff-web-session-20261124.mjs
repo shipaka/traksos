@@ -57,7 +57,7 @@ const bundled=await build({
   }
   createRoot(document.getElementById('root')).render(<App/>);
  `,resolveDir:process.cwd(),sourcefile:'ecu-web-session-entry.tsx',loader:'tsx'},
- bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+ bundle:true,write:false,outdir:'./e2e/.tmp-ecu-handoff-web-session-20261124',platform:'browser',format:'iife',jsx:'automatic',
  plugins:[{name:'ecu-isolated-http',setup(b){
    b.onResolve({filter:/./},args=>{
     if(['../ui.tsx','./web/src/ui.tsx'].includes(args.path))
@@ -66,6 +66,7 @@ const bundled=await build({
     if(args.path==='../dict.ts')return {path:'dict',namespace:'ecu-mock'};
    });
    b.onLoad({filter:/./,namespace:'ecu-mock'},args=>({
+    resolveDir:process.cwd(),
     contents:args.path==='ui'?ui:args.path==='api'?api:dict,
     loader:args.path==='ui'?'tsx':'js'
    }));

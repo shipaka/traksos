@@ -62,6 +62,7 @@ const bundle=await build({
         if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'tech-stub'};
       });
       b.onLoad({filter:/./,namespace:'tech-stub'},args=>({
+        resolveDir:process.cwd(),
         contents:args.path==='shared-ui'?stubs['../ui.tsx']:stubs[args.path],
         loader:args.path==='shared-ui'||args.path.endsWith('.tsx')?'tsx':'js',
       }));

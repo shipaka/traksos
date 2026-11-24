@@ -61,7 +61,7 @@ const bundle=await build({
   }
   createRoot(document.getElementById('root')).render(<App/>);
  `,resolveDir:process.cwd(),sourcefile:'continuation-tour-entry.tsx',loader:'tsx'},
- bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+ bundle:true,write:false,outdir:'./e2e/.tmp-continuation-tour-role-20261124',platform:'browser',format:'iife',jsx:'automatic',
  plugins:[{name:'deferred-api-and-context',setup(b){
    b.onResolve({filter:/./},args=>{
      if(['../ui.tsx','./web/src/ui.tsx'].includes(args.path))
@@ -70,6 +70,7 @@ const bundle=await build({
      if(args.path==='./training.tsx')return {path:'training',namespace:'ct-stub'};
    });
    b.onLoad({filter:/./,namespace:'ct-stub'},args=>({
+     resolveDir:process.cwd(),
      contents:args.path==='ui'?uiStub:args.path==='api'?apiStub:trainingStub,
      loader:args.path==='ui'?'tsx':'js'
    }));

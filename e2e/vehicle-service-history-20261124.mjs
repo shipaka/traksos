@@ -69,6 +69,7 @@ const bundle=await build({
           return {path:'presentation',namespace:'vehicle-stub'};
       });
       b.onLoad({filter:/./,namespace:'vehicle-stub'},args=>({
+        resolveDir:process.cwd(),
         contents:args.path==='ui-shared'?uiStub:args.path==='api-shared'?apiStub:presentationStub,
         loader:args.path==='ui-shared'?'tsx':'js',
       }));

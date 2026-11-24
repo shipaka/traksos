@@ -34,7 +34,7 @@ const bundle=await build({
   bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
   plugins:[{name:'isolate-ui-only',setup(b){
     b.onResolve({filter:/^\.\.\/ui\.tsx$/},args=>({path:args.path,namespace:'training-ui-stub'}));
-    b.onLoad({filter:/./,namespace:'training-ui-stub'},()=>({contents:uiStub,loader:'tsx'}));
+    b.onLoad({filter:/./,namespace:'training-ui-stub'},()=>({resolveDir:process.cwd(),contents:uiStub,loader:'tsx'}));
   }}],
 });
 const browser=await chromium.launch();

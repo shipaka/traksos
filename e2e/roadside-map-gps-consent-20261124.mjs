@@ -27,7 +27,7 @@ const bundle=await build({
   }
   createRoot(document.getElementById('root')).render(<App/>);
  `,resolveDir:process.cwd(),sourcefile:'roadside-map-consent-entry.tsx',loader:'tsx'},
- bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+ bundle:true,write:false,outdir:'./e2e/.tmp-roadside-map-gps-consent-20261124',platform:'browser',format:'iife',jsx:'automatic',
  plugins:[{name:'isolate-roadside-context-and-css',setup(b){
    b.onResolve({filter:/./},args=>{
      if(['../ui.tsx','./web/src/ui.tsx'].includes(args.path))
@@ -35,7 +35,7 @@ const bundle=await build({
      if(args.path.endsWith('.css'))
        return {path:args.path,namespace:'roadside-css'};
    });
-   b.onLoad({filter:/./,namespace:'roadside-stub'},()=>({contents:ui,loader:'js'}));
+   b.onLoad({filter:/./,namespace:'roadside-stub'},()=>({resolveDir:process.cwd(),contents:ui,loader:'js'}));
    b.onLoad({filter:/./,namespace:'roadside-css'},()=>({contents:'',loader:'js'}));
  }}],
 });
