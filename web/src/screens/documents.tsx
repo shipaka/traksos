@@ -1,14 +1,45 @@
 // Фото для проверки исполнителя: снимаем камерой, видим статус каждого, отправляем модератору.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { get, post, del, authedImage, compressImage, getToken } from '../api.ts';
-import { useLoad, useAction, useMe, Loading, Back, go } from '../ui.tsx';
+import { useAction, useMe, useToast, Loading, Back, go } from '../ui.tsx';
+
+import {usePrivateRead} from './privateRead20261124.ts';
 
 export function Documents() {
-  const { reload: reloadMe } = useMe();
-  const st = useLoad(() => get('/api/performer/documents'), [], (e) => e.type === 'verification');
-  const { busy, run } = useAction();
-  if (!st.data) return <main><Back to="work" /><Loading error={st.error} /></main>;
+  const {me,reload}=useMe();
+  const token=getToken();
+  if(!me||!token)return null;
+  const scope=JSON.stringify([me.id,token]);
+  return <DocumentsAccount key={scope} scope={scope} token={token} reloadMe={reload}/>;
+}
+
+function DocumentsAccount({scope,token,reloadMe}:{scope:string;token:string;reloadMe:()=>Promise<void>}) {
+  const st=usePrivateRead<any>(()=>get('/api/performer/documents'),scope,e=>e.type==='verification');
+  const {run}=useAction();
+  const toast=useToast();
+  const [busy,setBusy]=useState(false);
+  const lock=useRef(false), active=useRef(true);
+  useLayoutEffect(()=>{active.current=true;return ()=>{active.current=false;};},[]);
+  const current=()=>active.current&&getToken()===token;
+  async function act(fn:()=>Promise<void>){
+    if(lock.current||!current())return;
+    lock.current=true;setBusy(true);
+    try{await fn();}finally{lock.current=false;if(current())setBusy(false);}
+  }
+  async function upload(kind:string,f:File){
+    await act(async()=>{
+      const dataUrl=await compressImage(f).catch(()=>null);
+      if(!current())return;
+      if(!dataUrl){toast('Не удалось подготовить фото. Выберите файл ещё раз.');return;}
+      const takenAt=f.lastModified?new Date(f.lastModified).toISOString():undefined;
+      if(await run(()=>post('/api/performer/documents',{kind,dataUrl,takenAt}),'Фото загружено')){
+        if(current())await st.reload();
+      }
+    });
+  }
+  if (st.error) return <main><Back to="work"/><div className="card stack" role="alert"><span>Не удалось загрузить документы проверки.</span><button className="btn small" type="button" onClick={()=>void st.reload()}>Повторить загрузку</button></div></main>;
+  if (!st.data) return <main><Back to="work" /><Loading /></main>;
   const d = st.data;
   const done = d.required.filter((r: any) => r.doc && r.doc.status !== 'rejected').length;
   const waiting = d.verification === 'pending' && d.submittedAt;
@@ -25,32 +56,33 @@ export function Documents() {
       {d.verification === 'rejected' && <div className="card hi"><b>Проверка не пройдена</b><span className="note">{d.note}</span></div>}
       {waiting && <div className="card hi"><b>На проверке у модератора</b><span className="note">Обычно до 24 часов. Пришлём уведомление.</span></div>}
 
-      <div className="progress"><span style={{ width: `${(done / d.required.length) * 100}%` }} /></div>
+      <div className="progress"><span style={{ width: `${d.required.length ? (done / d.required.length) * 100 : 0}%` }} /></div>
       <span className="note">{done} из {d.required.length}</span>
 
-      {d.required.map((r: any) => <DocRow key={r.kind} r={r} onDone={st.reload} />)}
+      {d.required.map((r: any) => <DocRow key={JSON.stringify([r.kind,r.doc?.id??null])} r={r} token={token} busy={busy} upload={upload} />)}
 
       {d.verification !== 'approved' && (
-        <button className="btn" disabled={busy || !d.complete} onClick={async () => {
-          if (await run(() => post('/api/performer/documents/submit'), 'Отправлено на проверку')) { st.reload(); reloadMe(); }
-        }}>{waiting ? 'Отправить ещё раз' : 'Отправить на проверку'}</button>
+        <button className="btn" disabled={busy || !d.complete} onClick={()=>void act(async()=>{
+          if (await run(() => post('/api/performer/documents/submit'), 'Отправлено на проверку')) {
+            if(current())await st.reload();if(current())await reloadMe();
+          }
+        })}>{waiting ? 'Отправить ещё раз' : 'Отправить на проверку'}</button>
       )}
       <div className="card stack">
         <b>Конфиденциальные данные</b>
         <span className="note">Можно удалить фотографии паспорта, селфи и транспорта. Подтверждение будет отозвано, аккаунт останется.</span>
-        <button className="btn bad" disabled={busy} onClick={async () => {
-          if (!confirm('Удалить все фотографии проверки? Статус подтверждения будет снят.')) return;
+        <button className="btn bad" disabled={busy} onClick={()=>void act(async()=>{
+          if (!confirm('Удалить все фотографии проверки? Статус подтверждения будет снят.')||!current()) return;
           const result = await run(() => del('/api/performer/documents/confidential'), 'Фотографии удалены');
-          if (result) { await st.reload(); await reloadMe(); }
-        }}>Удалить конфиденциальные данные</button>
+          if (result) { if(current())await st.reload();if(current())await reloadMe(); }
+        })}>Удалить конфиденциальные данные</button>
       </div>
       <button className="btn ghost" onClick={() => go('work')}>В кабинет</button>
     </main>
   );
 }
 
-function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
-  const { busy, run } = useAction();
+function DocRow({r,token,busy,upload}:{r:any;token:string;busy:boolean;upload:(kind:string,f:File)=>Promise<void>}) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     const abort = new AbortController();
@@ -63,7 +95,7 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
       }).then(u => {
         // An old photo request may settle after this row unmounts or its
         // document ID changes. Revoke it immediately, never reuse its pixels.
-        if (abort.signal.aborted) { URL.revokeObjectURL(u); return; }
+        if (abort.signal.aborted||getToken()!==token) { URL.revokeObjectURL(u); return; }
         url = u;
         setSrc(u);
       }).catch(() => {});
@@ -72,19 +104,7 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
       abort.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [r.doc?.id]);
-
-  async function onFile(f: File | undefined) {
-    if (!f) return;
-    const uploadToken = getToken();
-    if (!uploadToken) return;
-    const dataUrl = await compressImage(f).catch(() => null);
-    if (!dataUrl || getToken() !== uploadToken) return;
-    // Do not submit confidential identity/vehicle documents through another
-    // account if logout happened during canvas compression on mobile.
-    const takenAt = f.lastModified ? new Date(f.lastModified).toISOString() : undefined;
-    if (await run(() => post('/api/performer/documents', { kind: r.kind, dataUrl, takenAt }), 'Фото загружено')) onDone();
-  }
+  }, [r.doc?.id,token]);
 
   const status = r.doc?.status;
   return (
@@ -105,7 +125,7 @@ function DocRow({ r, onDone }: { r: any; onDone: () => void }) {
             // Selecting the same photo after a failed upload must trigger change again.
             // Clear only the input value; the captured File remains valid for compression.
             e.currentTarget.value = '';
-            void onFile(file);
+            if(file)void upload(r.kind,file);
           }} />
         </label>
       )}
