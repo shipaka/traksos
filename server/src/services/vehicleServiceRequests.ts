@@ -115,7 +115,7 @@ export class VehicleServiceRequests {
       if (insurance && vehicleId) {
         // A selected garage record must not be paired with an unrelated VIN or registration.
         const supplied = insurance.details.vehicle;
-        const norm = (value: unknown) => String(value ?? '').trim().toUpperCase().replace(/\\s+/g, '');
+        const norm = (value: unknown) => String(value ?? '').trim().toUpperCase().replace(/\s+/g, '');
         if (norm(locked.brand) !== norm(supplied.brand) ||
             (locked.model && norm(locked.model) !== norm(supplied.model)) ||
             (locked.year && Number(locked.year) !== Number(supplied.year)) ||
