@@ -57,6 +57,9 @@ export class ShopCatalogService {
     const rows = validateEntries(batch);
     const sourceNote = batch.sourceNote.trim();
     return this.db.tx(async (q) => {
+      // Sequence values are allocated before commit. Serialize catalogue writers
+      // before any row lock so a newer committed delta cannot hide an older one.
+      if (!batch.dryRun) await q.query("select pg_advisory_xact_lock(hashtext('shop_catalog_reference_writer'))");
       const args: string[] = [];
       const params: string[] = [];
       for (const row of rows) {
@@ -74,7 +77,9 @@ export class ShopCatalogService {
 
       // Keep each batch atomic. Repeated identical file uploads do not undo prior review.
       // Changes to the reference (including its provenance) invalidate old verification.
-      for (const r of rows) {
+      const ordered = [...rows].sort((a,b) => a.brandKey < b.brandKey ? -1 : a.brandKey > b.brandKey ? 1 :
+        a.articleKey < b.articleKey ? -1 : a.articleKey > b.articleKey ? 1 : 0);
+      for (const r of ordered) {
         await q.query(`insert into shop_catalog_entries(
           brand, article, brand_key, article_key, name, category, search_terms, source_note, updated_by)
           values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
@@ -103,11 +108,10 @@ export class ShopCatalogService {
   async indexManifest() {
     const settings = await this.settings.get('shop');
     if (!settings.enabled) return { enabled: false, revision: '0', count: 0 };
-    const count = await this.db.one<{ n: number }>(
-      'select count(*)::int as n from shop_catalog_entries where reviewed=true');
-    const latest = await this.db.one<{ revision: string }>(
-      'select coalesce(max(seq),0)::text as revision from shop_catalog_reference_changes');
-    return { enabled: true, revision: latest?.revision ?? '0', count: count?.n ?? 0 };
+    const snapshot = await this.db.one<{ n: number; revision: string }>(`select
+      (select count(*)::int from shop_catalog_entries where reviewed=true) as n,
+      (select coalesce(max(seq),0)::text from shop_catalog_reference_changes) as revision`);
+    return { enabled: true, revision: snapshot?.revision ?? '0', count: snapshot?.n ?? 0 };
   }
 
   /** Snapshot: six small strings per entry, ordered by UUID for cursor paging. */
@@ -202,6 +206,7 @@ export class ShopCatalogService {
     expectedSearchTerms?: string | null;
   }) {
     return this.db.tx(async (q) => {
+      await q.query("select pg_advisory_xact_lock(hashtext('shop_catalog_reference_writer'))");
       // Import ON CONFLICT updates and moderator approvals must serialize on
       // the SAME row. Checking provenance outside this transaction allowed a
       // concurrent re-import to turn an unreviewed replacement into approved.
@@ -247,7 +252,7 @@ export class ShopCatalogService {
   async search(query: string, category: string, page = 0) {
     const setting = await this.settings.get('shop');
     if (!setting.enabled) return { enabled: false, items: [], total: 0, page: 0, limit: 24 };
-    if (category && category !== 'all' && !SHOP_CATEGORIES[category])
+    if (category && category !== 'all' && !Object.prototype.hasOwnProperty.call(SHOP_CATEGORIES, category))
       throw bad('bad_category', 'Неизвестный раздел каталога');
     const params: unknown[] = [];
     const filters = ['reviewed=true'];
