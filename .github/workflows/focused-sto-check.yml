@@ -1,0 +1,30 @@
+name: Focused STO browser check
+on:
+  push:
+    branches: ['ci-focus/pr274-sto-20261124']
+permissions:
+  contents: read
+concurrency:
+  group: focused-sto-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  sto-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: STO isolated React browser regression
+        run: node e2e/sto-workspace-reliability-20261124.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: focused-sto-screenshots
+          path: e2e/shots/sto-reliability/
+          if-no-files-found: ignore
