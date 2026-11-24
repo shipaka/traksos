@@ -146,3 +146,32 @@ test('vehicle reassigned between pre-check and transaction cannot be billed to f
   assert.equal(revoked,true);
   assert.equal(await stock(),before,'rejected binding must not reserve any stock');
 });
+
+
+test('confirmed purchases are cancelled only by store, with one inventory restoration',async()=>{
+  const first=ok(await order(owner.token));
+  const reserved=await stock();
+  ok(await t.api('POST','/api/admin/shop/orders/'+first.id+'/status',{status:'confirmed'},admin.token));
+  const denied=await t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},owner.token);
+  assert.equal(denied.status,409);
+  assert.equal(await stock(),reserved);
+  assert.equal((await t.db.one<{status:string}>('select status from shop_orders where id=$1',[first.id]))?.status,'confirmed');
+  ok(await t.api('POST','/api/admin/shop/orders/'+first.id+'/status',{status:'cancelled'},admin.token));
+  assert.equal(await stock(),reserved!+1);
+});
+
+test('captured fleet credentials cannot cancel after membership revocation',async()=>{
+  const first=ok(await order(driverA.token));
+  const reserved=await stock();
+  const actor={id:driverA.id,owner_id:owner.id,roles:['driver']} as any;
+  const service=new ShopService(t.db,{notify:async()=>{}} as any,t.app.settings);
+  await t.db.query('update users set owner_id=null where id=$1',[driverA.id]);
+  try{
+    await assert.rejects(()=>service.cancelMine(actor,first.id),(e:any)=>e?.status===404);
+    assert.equal(await stock(),reserved);
+    assert.equal((await t.db.one<{status:string}>('select status from shop_orders where id=$1',[first.id]))?.status,'new');
+  }finally{
+    await t.db.query('update users set owner_id=$2 where id=$1',[driverA.id,owner.id]);
+    ok(await t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},owner.token));
+  }
+});
