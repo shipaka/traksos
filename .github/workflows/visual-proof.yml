@@ -23,7 +23,7 @@ jobs:
           POSTGRES_DB: traksos
         ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres -d traksos" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos
       ADMIN_PHONES: '+79990000348'
@@ -59,6 +59,9 @@ jobs:
       - name: "Курьер: настоящие ПК и Android, права доступа и рабочие кнопки"
         run: node e2e/approved-pc-courier-real.mjs
       - name: "Активные ПК-заявки: Chromium, локальные синтетические данные, без оплаты"
+        id: active_pc_work
+        # Capture the remaining screenshots even if this scenario fails.
+        # The final gate below checks the raw outcome, not the softened conclusion.
         continue-on-error: true
         run: node e2e/approved-pc-active-work.mjs
       - name: Проверить геометрию карты партнёров (180-й меридиан и совпадающие координаты)
@@ -105,3 +108,8 @@ jobs:
           echo "Source HEAD: ${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_STEP_SUMMARY"
           echo 'Artifact screens-real-browser contains actual HTML screenshots if build and Chromium launched.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Passing this job does not mean visual owner acceptance, Android acceptance, or production deployment.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Обязательный итог проверки активных ПК-заявок
+        if: ${{ always() && steps.active_pc_work.outcome == 'failure' }}
+        run: |
+          echo '::error::Active PC work regression failed; screenshot artifacts are diagnostic only.'
+          exit 1
