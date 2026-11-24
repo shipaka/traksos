@@ -740,3 +740,13 @@
 - [x] Код [09036eb](https://github.com/shipaka/traksos/commit/09036eb998dde31331919fbdf10599b3bd02b578): watermark и страницы дельт в одном PostgreSQL snapshot, сохранён watermark пустой страницы и формат API.
 - [x] Написаны HTTP/PG регрессии [3756413](https://github.com/shipaka/traksos/commit/3756413e6a955ced2e9aa9ba11327ff3b31716cb): противоположный порядок пересекающихся партий, одновременная модерация, pagination, пустая страница и отзыв позиции. Конфликт при отправке разрешён перечитыванием актуального blob без перезаписи чужой работы.
 - [ ] Actual server typecheck/npm test/exact-HEAD CI ещё не подтверждены. Прямые SQL writers вне сервиса не покрыты advisory lock; при добавлении таких writers требуется общая блокировка. Формат данных, права, цены, закрытие магазина, 617/618, main/VPS не изменены. Участок освобождён.
+
+
+### 24.11.2026 · VEHICLE-REFERENCE-CONSISTENT-SELECTION-20261124 · согласованность справочника техники
+
+Закрепление [#7122009979](https://github.com/shipaka/traksos/pull/274#issuecomment-7122009979), после освобождения #7115898030.
+
+- [x] Код [37a5c0f](https://github.com/shipaka/traksos/commit/37a5c0fccb07e9ab387aa38973c0fd4b4ee11ee0): проверка марки и модели в одной read-only PostgreSQL repeatable-read транзакции; конкурентная публикация не смешивает редакции.
+- [x] Код [4785eb2](https://github.com/shipaka/traksos/commit/4785eb2f3f12bddc15ee85962fef39956c7342ab): поисковые и годовые фильтры выбирают ключи, сохраняя все найденные источники и признаки конфликта. Не добавляется ложная VIN/fitment верификация.
+- [x] Написаны PostgreSQL-регрессии [481b196](https://github.com/shipaka/traksos/commit/481b1960e5ccf9e6bd8c67bcaff5f9a818615b20), [bccc62d](https://github.com/shipaka/traksos/commit/bccc62d930091cb589f07873c23d60a1260049f2): раздельные годы и названия конфликтующих источников, управляемая смена активной редакции между чтениями.
+- [ ] Фактическое прохождение npm test/typecheck/exact-HEAD CI ещё не подтверждено. Существующий лимит выдачи 10000 строк не изменён. Новые источники/лицензии, UI 617/618, финансовые правила, main/VPS не затронуты. Участок освобождён после отчёта.
