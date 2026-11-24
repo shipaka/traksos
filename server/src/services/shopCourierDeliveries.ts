@@ -313,11 +313,12 @@ export class ShopCourierDeliveries {
    * reveal its receipt code or confirm receipt. A fleet owner must not
    * confirm a driver's parcel merely by owning the company. */
   async receiptCode(buyer:AuthUser,orderId:string){
-    const d=await this.db.one<any>(`select d.*,o.client_id,o.created_by,o.vehicle_id,
+    return this.db.tx(async q=>{
+    const d=await q.one<any>(`select d.*,o.client_id,o.created_by,o.vehicle_id,
           o.status as shop_status
       from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
-      where o.id=$1 and o.created_by=$2`,[orderId,buyer.id]);
-    if(!d||!await this.currentBuyer(this.db,d.client_id,d.created_by,d.vehicle_id,buyer.id))
+      where o.id=$1 and o.created_by=$2 for share of d,o`,[orderId,buyer.id]);
+    if(!d||!await this.currentBuyer(q,d.client_id,d.created_by,d.vehicle_id,buyer.id,true))
       throw notFound('Код для этого заказа недоступен');
     if(!['arrived','code_verified'].includes(d.status)||d.shop_status!=='shipped')
       throw conflict('courier_not_arrived','Код вручения будет доступен после прибытия курьера');
@@ -326,6 +327,7 @@ export class ShopCourierDeliveries {
     return {shopOrderId:orderId,code:receiptCode(d.id,d.code_nonce),
       expiresAt:d.code_expires_at,verified:d.code_verified_at!==null,
       buyerConfirmationRequired:true};
+    });
   }
   async confirmReceived(buyer:AuthUser,orderId:string){
     const d=await this.db.tx(async q=>{
