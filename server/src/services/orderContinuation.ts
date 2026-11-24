@@ -1,4 +1,4 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 import type { Notifier } from './notify.ts';
@@ -17,16 +17,20 @@ const sensitive = (value:string) => maskPhones(value
  */
 export class OrderContinuationService {
  constructor(private db:Db,private notifier:Notifier,private now:()=>Date){}
- private async source(user:AuthUser,orderId:string) {
-  const order=await this.db.one<any>(
-   `select o.id,o.client_id,o.created_by,o.performer_id,o.service,o.status,o.number,
-      exists (select 1 from users u join vehicles v
-        on v.owner_id=u.owner_id and v.driver_id=u.id
-        where u.id=o.created_by and 'driver'=any(u.roles)
-          and u.owner_id=o.client_id
-          and (o.vehicle_id is null or v.id=o.vehicle_id)) as current_driver_link
-      from orders o where o.id=$1`,[orderId]);
+ private async source(q:Queryable,user:AuthUser,orderId:string) {
+  // Serialize access with assignment/status changes; lock the actual driver
+  // link before using it for either history or durable recipient selection.
+  const order=await q.one<any>(
+   'select id,client_id,created_by,performer_id,service,status,number,vehicle_id from orders where id=$1 for update',[orderId]);
   if(!order)throw notFound('Исходная заявка не найдена');
+  const link=order.created_by && order.created_by!==order.client_id
+    ? await q.one<{ok:number}>(`select 1 as ok from users u join vehicles v
+        on v.owner_id=u.owner_id and v.driver_id=u.id
+        where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=$2
+          and ($3::uuid is null or v.id=$3) limit 1 for share of v`,
+        [order.created_by,order.client_id,order.vehicle_id])
+    : null;
+  order.current_driver_link=!!link;
   const owner=order.client_id===user.id && !user.owner_id;
   const origin=order.performer_id===user.id;
   const driver=order.created_by===user.id && user.roles.includes('driver') &&
@@ -36,8 +40,9 @@ export class OrderContinuationService {
   return {order,owner,origin,driver};
  }
  async list(user:AuthUser,orderId:string) {
-  await this.source(user,orderId);
-  return this.db.query(
+  return this.db.tx(async q=>{
+   await this.source(q,user,orderId);
+   return q.query(
    `select r.id,r.source_order_id,r.target_kind,r.summary,r.status,
      r.created_at,r.decided_at,
      (select id from orders o where o.continuation_recommendation_id=r.id
@@ -50,9 +55,14 @@ export class OrderContinuationService {
        order by h.created_at desc limit 1) as next_ecu_handoff_id
     from order_continuation_recommendations r
     where r.source_order_id=$1 order by r.created_at,r.id`,[orderId]);
+  });
  }
  async propose(user:AuthUser,orderId:string,target:Target,reason:string) {
-  const {order,origin}=await this.source(user,orderId);
+  const summary=sensitive(reason);
+  if(summary.length<12||summary.length>1000)
+   throw bad('bad_summary','Опишите причину продолжения (12–1000 символов)');
+  const result=await this.db.tx(async q=>{
+  const {order,origin}=await this.source(q,user,orderId);
   if(!origin)throw forbidden('Предложить продолжение может назначенный исполнитель');
   // An assigned tow driver can advise an STO en route, to reserve a future
   // reception slot. Neither advice nor booking implies physical delivery.
@@ -66,10 +76,6 @@ export class OrderContinuationService {
    throw bad('unsupported_transition','ЭБУ передают после консультации или технической диагностики');
   if(target==='tow' && order.service==='tow')
    throw bad('unsupported_transition','Повторный эвакуатор требует отдельного обращения');
-  const summary=sensitive(reason);
-  if(summary.length<12||summary.length>1000)
-   throw bad('bad_summary','Опишите причину продолжения (12–1000 символов)');
-  const result=await this.db.tx(async q=>{
    const inserted=await q.query<{id:string}>(
     `insert into order_continuation_recommendations
       (source_order_id,client_id,suggested_by,target_kind,summary)
@@ -80,35 +86,39 @@ export class OrderContinuationService {
     await q.query(
      "insert into order_events(order_id,actor_id,type,data) values($1,$2,'continuation_recommended',$3)",
      [orderId,user.id,{recommendationId:inserted[0].id,target}]);
-    return {id:inserted[0].id,created:true};
+    const ids=[...new Set<string>([order.client_id,...(order.current_driver_link && order.created_by!==order.client_id
+       ? [order.created_by]:[])].filter((id:string)=>id!==user.id))];
+    const msg={kind:'normal' as const,title:'Исполнитель рекомендует продолжить обращение',
+     body:`По заявке №${order.number} предложен ${targetNames[target]}. Владелец решает, запускать ли поиск; новая платная заявка ещё не создана.`,
+     data:{orderId,recommendationId:inserted[0].id}};
+    for(const id of ids)await q.query(
+     "insert into notifications(user_id,kind,title,body,data) values($1,'order',$2,$3,$4)",
+     [id,msg.title,msg.body,msg.data]);
+    return {id:inserted[0].id,created:true,delivery:{ids,msg,status:order.status}};
    }
    const prior=await q.one<{id:string;suggested_by:string;status:string}>(
     'select id,suggested_by,status from order_continuation_recommendations where source_order_id=$1 and target_kind=$2',
     [orderId,target]);
    if(prior?.suggested_by!==user.id)
     throw conflict('already_recommended','Это продолжение уже предложено другим участником');
-   return {id:prior.id,created:false};
+   return {id:prior.id,created:false,delivery:null};
   });
-  if(result.created)await this.notifier.notify(
-   [order.client_id,...(order.current_driver_link && order.created_by!==order.client_id
-       ? [order.created_by]:[])].filter((id:string)=>id!==user.id),
-   {type:'order',orderId,status:order.status},
-   {kind:'normal',title:'Исполнитель рекомендует продолжить обращение',
-    body:`По заявке №${order.number} предложен ${targetNames[target]}. Владелец решает, запускать ли поиск; новая платная заявка ещё не создана.`,
-    data:{orderId,recommendationId:result.id}}).catch(()=>{});
-  return result;
+  if(result.delivery)await this.notifier.deliverStored(result.delivery.ids,
+   {type:'order',orderId,status:result.delivery.status},result.delivery.msg)
+   .catch(e=>console.warn('[continuation proposal delivery]',e));
+  return {id:result.id,created:result.created};
  }
  async decide(user:AuthUser,orderId:string,recommendationId:string,approve:boolean) {
-  const {order,owner}=await this.source(user,orderId);
-  if(!owner)throw forbidden('Следующую платную услугу согласовывает владелец автопарка');
   const desired=approve?'approved':'declined';
   const result=await this.db.tx(async q=>{
+   const {order,owner}=await this.source(q,user,orderId);
+   if(!owner)throw forbidden('Следующую платную услугу согласовывает владелец автопарка');
    const r=await q.one<{id:string;status:string;target_kind:Target;suggested_by:string}>(
     'select id,status,target_kind,suggested_by from order_continuation_recommendations where id=$1 and source_order_id=$2 for update',
     [recommendationId,orderId]);
    if(!r)throw notFound('Рекомендация не найдена');
    if(r.status!== 'pending'){
-    if(r.status===desired)return {changed:false,target:r.target_kind,notify:r.suggested_by};
+    if(r.status===desired)return null;
     throw conflict('already_decided','Решение уже принято, обновите карточку');
    }
    await q.query(
@@ -117,13 +127,19 @@ export class OrderContinuationService {
    await q.query(
     "insert into order_events(order_id,actor_id,type,data) values($1,$2,'continuation_decided',$3)",
     [orderId,user.id,{recommendationId,approved:approve,target:r.target_kind}]);
-   return {changed:true,target:r.target_kind,notify:r.suggested_by};
-  });
-  if(result.changed)await this.notifier.notify([result.notify],
-   {type:'order',orderId,status:order.status},
-   {kind:'normal',title:approve?'Клиент согласовал поиск следующего исполнителя':'Клиент отказался от продолжения',
+   // Historical performers cannot receive new private order events after
+   // reassignment. The owner's decision itself remains valid and recorded.
+   if(r.suggested_by!==order.performer_id)return null;
+   const msg={kind:'normal' as const,title:approve?'Клиент согласовал поиск следующего исполнителя':'Клиент отказался от продолжения',
     body:approve?'Клиент может оформить отдельную связанную заявку с ценой и условиями.':'Текущая заявка остаётся без изменений.',
-    data:{orderId,recommendationId}}).catch(()=>{});
+    data:{orderId,recommendationId}};
+   await q.query("insert into notifications(user_id,kind,title,body,data) values($1,'order',$2,$3,$4)",
+    [r.suggested_by,msg.title,msg.body,msg.data]);
+   return {id:r.suggested_by,msg,status:order.status};
+  });
+  if(result)await this.notifier.deliverStored([result.id],
+   {type:'order',orderId,status:result.status},result.msg)
+   .catch(e=>console.warn('[continuation decision delivery]',e));
   return {id:recommendationId,status:desired};
  }
  async validateForOrder(user:AuthUser,recommendationId:string,sourceOrderId:string,service:string){
