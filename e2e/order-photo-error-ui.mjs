@@ -66,7 +66,7 @@ const plugin={
       if(key)return {path:key,namespace:'photo-test'};
     });
     p.onLoad({filter:/.*/,namespace:'photo-test'},args=>
-      ({contents:snippets[args.path]||'',loader:'js'}));
+      ({contents:snippets[args.path]||'',loader:'js',resolveDir:process.cwd()}));
   }
 };
 const harness=`
@@ -80,13 +80,13 @@ const harness=`
 `;
 const compiled=await build({
   stdin:{contents:harness,resolveDir:process.cwd(),sourcefile:'order-photo-harness.tsx',loader:'tsx'},
-  platform:'browser',format:'iife',bundle:true,write:false,
+  platform:'browser',format:'iife',bundle:true,write:false,jsx:'automatic',
   plugins:[plugin],define:{'process.env.NODE_ENV':'"production"'},
 });
 const browser=await chromium.launch();
+const jsErrors=[];
 try{
   const page=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
-  const jsErrors=[];
   page.on('pageerror',err=>jsErrors.push(err.message));
   await page.goto('about:blank');
   await page.setContent('<!doctype html><html><body><div id="root"></div></body></html>');
@@ -139,6 +139,9 @@ try{
     'Unexpected server request/automatic photo retry: '+JSON.stringify(final.counts));
   assert(!jsErrors.length,'Runtime error: '+jsErrors.join('; '));
   console.log('PASS: order photo error/retry UI; review-only accessibility; private blob cleanup on logout');
+} catch(error) {
+  if(jsErrors.length)console.error('Browser runtime errors:',jsErrors.join('; '));
+  throw error;
 } finally {
   await browser.close();
 }
