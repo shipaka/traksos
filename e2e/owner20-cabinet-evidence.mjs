@@ -244,9 +244,10 @@ try{
            if(await compact.count()!==1||await live.count()||
              await compact.getAttribute('open')!==null)
              throw Error('No real coordinates: admin coverage must be one collapsed line');
-         }else if(await live.count()!==1 ||
-           await live.locator('.roadside-map iframe').count()!==1){
-           throw Error('Verified coordinates not displayed on actual admin map');
+         }else{
+           await live.locator('.roadside-map-load').waitFor({timeout:14000});
+           if(await live.count()!==1 || await live.locator('.roadside-map iframe').count()!==0)
+             throw Error('Verified coordinates must be behind explicit third-party map consent');
          }
        }
        if(c.id==='admin'&&width===1440){
@@ -263,17 +264,41 @@ try{
              lat:59.9343,lng:30.3351
            }]}}});
          };
+         const externalMap='https://www.openstreetmap.org/**';
+         const requested=[];
+         const isolateMap=async route=>{
+           requested.push(route.request().url());
+           // No synthetic or genuine private location leaves this CI process.
+           await route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Local map consent test</title>'});
+         };
+         await page.route(externalMap,isolateMap);
          await page.route(fixture,replaceCoverage);
-         await page.reload({waitUntil:'domcontentloaded'});
-         await page.locator('.approved-pc-geo-live .roadside-map iframe').waitFor({timeout:14000});
-         if(await page.locator('.approved-pc-geo-compact').count())
-           throw Error('New confirmed point did not expand verified partner map');
-         const mapUrl=await page.locator('.approved-pc-geo-live iframe').getAttribute('src');
-         if(!mapUrl?.includes('59.934300')||!mapUrl.includes('30.335100'))
-           throw Error('Admin map did not use API-confirmed coordinates');
-         await page.unroute(fixture,replaceCoverage);
-         await page.reload({waitUntil:'domcontentloaded'});
-         await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
+         try{
+           await page.reload({waitUntil:'domcontentloaded'});
+           const map=page.locator('.approved-pc-geo-live .roadside-map');
+           const load=map.getByRole('button',{name:'Загрузить карту OpenStreetMap'});
+           await load.waitFor({timeout:14000});
+           if(await page.locator('.approved-pc-geo-compact').count())
+             throw Error('New confirmed point did not expand verified partner map');
+           if(await map.locator('iframe').count()||requested.length)
+             throw Error('Admin map sent coordinates before explicit consent');
+           await load.click();
+           await map.locator('iframe').waitFor({timeout:14000});
+           await page.waitForFunction(()=>!!document.querySelector('.approved-pc-geo-live iframe')?.getAttribute('src'));
+           const mapUrl=await map.locator('iframe').getAttribute('src');
+           if(!mapUrl?.includes('59.934300')||!mapUrl.includes('30.335100'))
+             throw Error('Admin map did not use API-confirmed coordinates');
+         }finally{
+           await page.unroute(fixture,replaceCoverage);
+           // Restore genuine backend state before taking any evidence PNG.
+           // Keep the external request isolated through reload.
+           try{
+             await page.reload({waitUntil:'domcontentloaded'});
+             await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
+             if(await page.locator('.approved-pc-geo-live iframe').count())
+               throw Error('Admin map reused consent after reload');
+           }finally{await page.unroute(externalMap,isolateMap);}
+         }
        }
        if(c.id==='moderator'&&await workdesk.locator('.approved-pc-bot').count())
          throw Error('Moderator workdesk must not force TrakBot');
