@@ -140,7 +140,13 @@ try {
   check(await count('POST',A)===2,'POST silently retried after uncertain timeout');
 
   // Deletion is also isolated: a late DELETE from B cannot clear account C.
-  await page.getByRole('button',{name:'Очистить мою переписку'}).click();
+  // aria-label overrides the visible caption in the accessible name.
+  // Keep both contracts and a real pointer click; never force or call DELETE directly.
+  const clearButton=page.getByRole('button',{name:'Очистить историю TrakBot',exact:true});
+  await clearButton.waitFor({state:'visible'});
+  check((await clearButton.innerText()).trim()==='Очистить мою переписку',
+    'Clear-history action lost its visible caption');
+  await clearButton.click();
   await wait('DELETE',H,1);
   await page.evaluate(()=>window.__setBotMe({id:'owner-C',roles:['client'],performer:null}));
   await wait('GET',H,5);
