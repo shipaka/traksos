@@ -99,6 +99,55 @@ recover_launcher_anr() {
   echo "SYSTEM_LAUNCHER_ANR_WAIT=$context" >> runtime-ready.log
 }
 
+# DOM and nonuniform pixels do not prove that the actual app is foregrounded.
+# Require the exact native Activity window, not merely a running PID or an
+# underlying focused app while an Android dialog/another window owns input.
+has_traksos_focus() {
+  grep -Eq '^[[:space:]]*mCurrentFocus=Window\{[^}]*[[:space:]]ru\.traksos\.app\.preview/(ru\.traksos\.app\.MainActivity|\.MainActivity)[[:space:]]*\}[[:space:]]*$'
+}
+has_traksos_runtime_error() {
+  grep -Eq 'Process: ru\.traksos\.app\.preview([:,[:space:]]|$)|am_(anr|crash).*[,[:space:]]ru\.traksos\.app\.preview(:[^,[:space:]]+)?[,[:space:]]'
+}
+verify_gate_controls() {
+  local good='  mCurrentFocus=Window{abc u0 ru.traksos.app.preview/ru.traksos.app.MainActivity}'
+  local overlay='  mCurrentFocus=Window{abc u0 Application Not Responding: ru.traksos.app.preview}'
+  local underlying='  mFocusedApp=ActivityRecord{abc u0 ru.traksos.app.preview/ru.traksos.app.MainActivity}'
+  if ! has_traksos_focus <<< "$good" ||
+     ! has_traksos_focus <<< '  mCurrentFocus=Window{abc u0 ru.traksos.app.preview/.MainActivity}' ||
+     has_traksos_focus <<< "$overlay"$'\n'"$underlying" ||
+     has_traksos_focus <<< '  mCurrentFocus=Window{abc u0 com.android.systemui/.SomeDialog}' ||
+     has_traksos_focus <<< '  mCurrentFocus=Window{abc u0 ru.traksos.app.preview.other/.MainActivity}' ||
+     has_traksos_focus <<< '  mCurrentFocus=null' ||
+     has_traksos_focus <<< "$underlying"; then
+    echo 'FAIL: foreground gate negative/positive controls'
+    return 1
+  fi
+  if ! has_traksos_runtime_error <<< 'E AndroidRuntime: Process: ru.traksos.app.preview, PID: 42' ||
+     ! has_traksos_runtime_error <<< 'I am_anr: [0,42,ru.traksos.app.preview,0,reason]' ||
+     ! has_traksos_runtime_error <<< 'I am_crash: [0,42,ru.traksos.app.preview:worker,0,reason]' ||
+     has_traksos_runtime_error <<< 'I am_anr: [0,42,com.google.android.apps.nexuslauncher,0,reason]' ||
+     has_traksos_runtime_error <<< 'E AndroidRuntime: Process: ru.traksos.app.preview.other, PID: 42'; then
+    echo 'FAIL: native crash gate negative/positive controls'
+    return 1
+  fi
+  echo 'PASS: native foreground and crash parser controls'
+}
+require_traksos_foreground() {
+  local phase="$1" windows
+  require_live_emulator "$phase foreground"
+  windows="$(adb shell dumpsys window windows | tr -d '\r')" || return 1
+  {
+    printf '\n--- foreground checkpoint: %s ---\n' "$phase"
+    grep -E 'mCurrentFocus=|mFocusedApp=' <<< "$windows" || true
+  } >> android-compositor-diagnostics.log
+  if ! has_traksos_focus <<< "$windows"; then
+    echo "FAIL: TrakSOS Activity does not own the focused window ($phase)"
+    return 1
+  fi
+  echo "APK_FOREGROUND_CONFIRMED=$phase" >> runtime-ready.log
+}
+verify_gate_controls
+
 apk="apk/app-debug.apk"
 test -s "$apk"
 adb install -r "$apk"
@@ -116,7 +165,7 @@ capture_runtime_errors() {
   # AndroidRuntime identifies Java/native-process crashes; ActivityManager
   # event records also catch ANRs and crashes followed by an automatic restart.
   # Do not mistake the unrelated Pixel Launcher event for a TrakSOS event.
-  if grep -Eq 'Process: ru\.traksos\.app\.preview([:,[:space:]]|$)|am_(anr|crash).*[,[:space:]]ru\.traksos\.app\.preview(:[^,[:space:]]+)?[,[:space:]]' runtime-errors.log; then
+  if has_traksos_runtime_error < runtime-errors.log; then
     echo "FAIL: native TrakSOS crash or ANR observed ($phase)"
     return 1
   fi
@@ -200,6 +249,10 @@ if [ -z "$visible_ms" ] || [ "$visible_ms" -lt 3500 ]; then
   echo "FAIL: seasonal startup only ${visible_ms:-unknown}ms; expected >= 3500ms"
   exit 1
 fi
+require_traksos_foreground "guest-before-pixels"
+adb exec-out screencap -p > emulator-screen.png
+require_traksos_foreground "guest-after-pixels"
+python3 scripts/verify-android-screen.py emulator-screen.png
 adb shell pidof ru.traksos.app.preview
 if grep -F 'Process: ru.traksos.app.preview' runtime-errors.log; then
   echo 'FAIL: native app crash observed'
@@ -322,7 +375,9 @@ for role in client master; do
   painted=0
   for attempt in 1 2 3 4 5; do
     require_live_emulator "before $role role-specific screenshot attempt $attempt"
+    require_traksos_foreground "$role-before-pixels"
     adb exec-out screencap -p > "android-review-$role.png"
+    require_traksos_foreground "$role-after-pixels"
     previous=(emulator-screen.png)
     if [ "$role" = master ]; then previous+=(android-review-client.png); fi
     if python3 scripts/verify-android-screen.py "android-review-$role.png" "${previous[@]}"; then
@@ -344,5 +399,6 @@ for role in client master; do
   capture_runtime_errors "after-$role"
   echo "APK_ROLE_UI_CONFIRMED=$role API=$sdk_level" >> runtime-ready.log
 done
+require_traksos_foreground "final"
 capture_runtime_errors final
 echo "PASS: TrakSOS guest and painted React Android role screens verified on API=$sdk_level; splash ${visible_ms}ms; no TrakSOS crash or ANR in captured runtime logs"
