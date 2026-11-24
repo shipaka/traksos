@@ -1,8 +1,8 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
-import { bad, conflict, forbidden, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 
 // Text-only shortcuts. «Я на месте» changes the order status; it must never be
@@ -41,47 +41,80 @@ export const CONSULT_QUICK_REPLIES = [
 export class ChatService {
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService) {}
 
+  private async liveActor(q: Queryable, user: AuthUser, o: {
+    client_id: string; created_by: string; performer_id: string | null; vehicle_id: string | null;
+  }): Promise<'admin'|'client'|'performer'|null> {
+    const current = await q.one<{roles:string[]}>(
+      "select roles from users where id=$1 and status='active' for share", [user.id]);
+    if (!current) return null;
+    const roles = user.roles.filter(role => current.roles.includes(role));
+    if (roles.includes('admin') || roles.includes('moderator')) return 'admin';
+    if (o.client_id === user.id) return 'client';
+    if (o.performer_id === user.id) return 'performer';
+    if (o.created_by !== user.id || !roles.includes('driver')) return null;
+    const assignment = await q.one<{ok:number}>(`
+      select 1 as ok from users u join vehicles v
+        on v.owner_id=u.owner_id and v.driver_id=u.id
+      where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+        and ($3::uuid is null or v.id=$3)
+      limit 1 for share of v`, [user.id,o.client_id,o.vehicle_id]);
+    return assignment ? 'client' : null;
+  }
+
   async list(user: AuthUser, orderId: string, afterId = 0) {
     if (!Number.isSafeInteger(afterId) || afterId < 0) throw bad('bad_cursor', 'Некорректная позиция переписки');
-    const order = await this.orders.mustSee(user, orderId);
-    // mustSee deliberately gives invited performers a redacted preview of the
-    // order. That does NOT grant access to the customer's private chat history.
-    const role = this.orders.actorOf(user, order);
-    if (!role) throw forbidden('Переписка доступна только участникам заявки');
-    const msgs = await this.db.query(
-      `select m.id::int as id, m.sender_id, u.name as sender_name, m.kind, m.body, m.masked, m.created_at,
-              case when m.sender_id is null then 'system'
-                   when m.sender_id = o.performer_id then 'performer'
-                   when m.sender_id in (o.client_id, o.created_by) then 'client'
-                   else 'support' end as sender_role
-         from chat_messages m join orders o on o.id = m.order_id left join users u on u.id = m.sender_id
-        where m.order_id=$1 and m.id > $2 order by m.id limit 500`,
-      [orderId, afterId],
-    );
-    // Legacy shared system messages sometimes contained the customer's surcharge and final bill.
-    // Never return those amounts to a performer/candidate, including old archived messages.
-    const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
-      if (m.sender_role !== 'system') return m;
-      const body = String(m.body ?? '');
-      if (body.startsWith('Исполнитель закрыл выезд:') || /^Сумма\s+[\d\s,.]+\s*₽/.test(body))
-        return { ...m, body: 'Клиенту доступен подробный расчёт. Свои удержания и выплаты смотрите в разделе «Финансы».' };
-      return m;
-    }) : msgs;
-    // Кто в чате: владелец, водитель (если заказывал он), исполнитель, поддержка — если подключалась
-    const people = await this.db.query<{ id: string; name: string | null; who: string }>(
-      `select u.id, u.name, x.who from (values ($1::uuid, 'owner'), ($2::uuid, 'driver'), ($3::uuid, 'performer')) x(id, who) join users u on u.id = x.id
-        where x.id is not null`, [order.client_id, order.created_by !== order.client_id ? order.created_by : null, order.performer_id]);
-    const support = await this.db.one<{ n: number }>(
-      `select count(*)::int as n from chat_messages m join orders o on o.id=m.order_id
-        where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
-    const ticket = await this.db.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
-    // A revoked fleet driver's old ID may remain in orders.created_by as
-    // historical evidence, but must not be a *current* chat participant.
-    const activePeople = new Set(await this.orders.participants(orderId));
-    const participants = people.filter(p => activePeople.has(p.id))
-      .map(p => ({ who: p.who, name: p.name, you: p.id === user.id }));
-    if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
-    return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role) };
+    return this.db.tx(async q => {
+      const order = await q.one<{
+        client_id:string; created_by:string; performer_id:string|null; vehicle_id:string|null;
+        service:string; status:string;
+      }>('select client_id,created_by,performer_id,vehicle_id,service,status from orders where id=$1 for share',[orderId]);
+      if (!order) throw notFound('Заявка не найдена');
+      // Invitation grants a redacted order preview, never private history.
+      const role = await this.liveActor(q,user,order);
+      if (!role) throw forbidden('Переписка доступна только участникам заявки');
+      const msgs = await q.query(
+        `select m.id::int as id, m.sender_id, u.name as sender_name, m.kind, m.body, m.masked, m.created_at,
+                case when m.sender_id is null then 'system'
+                     when m.sender_id = o.performer_id then 'performer'
+                     when m.sender_id in (o.client_id, o.created_by) then 'client'
+                     else 'support' end as sender_role
+           from chat_messages m join orders o on o.id = m.order_id left join users u on u.id = m.sender_id
+          where m.order_id=$1 and m.id > $2 order by m.id limit 500`,
+        [orderId, afterId],
+      );
+      // Legacy shared system messages sometimes contained the customer's surcharge and final bill.
+      // Never return those amounts to a performer/candidate, including old archived messages.
+      const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
+        if (m.sender_role !== 'system') return m;
+        const body = String(m.body ?? '');
+        if (body.startsWith('Исполнитель закрыл выезд:') || /^Сумма\s+[\d\s,.]+\s*₽/.test(body))
+          return { ...m, body: 'Клиенту доступен подробный расчёт. Свои удержания и выплаты смотрите в разделе «Финансы».' };
+        return m;
+      }) : msgs;
+      // Кто в чате: владелец, водитель (если заказывал он), исполнитель, поддержка — если подключалась
+      const people = await q.query<{ id: string; name: string | null; who: string }>(
+        `select u.id, u.name, x.who from (values ($1::uuid, 'owner'), ($2::uuid, 'driver'), ($3::uuid, 'performer')) x(id, who) join users u on u.id = x.id
+          where x.id is not null`, [order.client_id, order.created_by !== order.client_id ? order.created_by : null, order.performer_id]);
+      const support = await q.one<{ n: number }>(
+        `select count(*)::int as n from chat_messages m join orders o on o.id=m.order_id
+          where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
+      const ticket = await q.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
+      // A revoked fleet driver's old ID may remain in orders.created_by as
+      // historical evidence, but must not be a *current* chat participant.
+      const activePeople = new Set([order.client_id,order.performer_id]);
+      if (order.created_by !== order.client_id) {
+        const currentDriver = await q.one<{ok:number}>(`
+          select 1 as ok from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles) and u.status='active'
+            and ($3::uuid is null or v.id=$3) limit 1`,
+          [order.created_by,order.client_id,order.vehicle_id]);
+        if (currentDriver) activePeople.add(order.created_by);
+      }
+      const participants = people.filter(p => activePeople.has(p.id))
+        .map(p => ({ who: p.who, name: p.name, you: p.id === user.id }));
+      if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
+      return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role) };
+    });
   }
 
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
@@ -107,21 +140,7 @@ export class ChatService {
       }>(`select id,number,status,service,client_id,created_by,performer_id,vehicle_id
             from orders where id=$1 for update`, [orderId]);
       if (!o) throw forbidden('Заявка недоступна');
-      let actor: string | null = null;
-      if (user.roles.includes('admin') || user.roles.includes('moderator')) actor = 'admin';
-      else if (o.client_id === user.id) actor = 'client';
-      else if (o.performer_id === user.id) actor = 'performer';
-      else if (o.created_by === user.id) {
-        // A driver's previous creator_id does not survive removal from the
-        // vehicle/fleet. Lock the linked vehicle until this message commits.
-        const assignment = await q.one<{ ok: number }>(`
-          select 1 as ok from users u join vehicles v
-            on v.owner_id=u.owner_id and v.driver_id=u.id
-           where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
-             and ($3::uuid is null or v.id=$3)
-           limit 1 for share of v`, [user.id, o.client_id, o.vehicle_id]);
-        if (assignment) actor = 'client';
-      }
+      const actor = await this.liveActor(q,user,o);
       if (!actor) throw forbidden('Переписка доступна только участникам заявки');
       if (['completed', 'cancelled', 'no_performer'].includes(o.status))
         throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
@@ -142,10 +161,10 @@ export class ChatService {
     const rendered = { ...message, sender_name: user.name };
     // Never notify a former fleet driver merely because created_by was once
     // associated with an order. The recipients helper checks the CURRENT link.
-    const ids = await this.orders.participants(orderId);
-    this.notifier.live(ids, { type: 'chat', message: rendered });
-    const others = ids.filter(id => id !== user.id);
     try {
+      const ids = await this.orders.participants(orderId);
+      this.notifier.live(ids, { type: 'chat', message: rendered });
+      const others = ids.filter(id => id !== user.id);
       await this.notifier.notify(others, { type: 'chat_push', orderId }, {
         kind: 'normal', title: `Заявка №${number}`, body: safe.slice(0, 120), data: { orderId },
       });
