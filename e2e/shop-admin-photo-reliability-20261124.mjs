@@ -52,7 +52,7 @@ const compiled=await build({
   stdin:{contents:entry,resolveDir:new URL('../e2e/',import.meta.url).pathname,
     sourcefile:'shop-admin-photo-entry.tsx',loader:'tsx'},
   // Match production JSX runtime; real screens import hooks, not a React global.
-  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',
+  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',jsx:'automatic',
   plugins:[{name:'mock-photo-ci-api',setup(b){
     b.onResolve({filter:/\/api\.ts$/},()=>({path:'api',namespace:'mock-photo'}));
     b.onResolve({filter:/\/ui\.tsx$/},()=>({path:'ui',namespace:'mock-photo'}));
@@ -71,6 +71,7 @@ const compiled=await build({
   }}],
 });
 const browser=await chromium.launch();
+const crashes=[];
 try{
   const page=await browser.newPage({serviceWorkers:'block'});
   const crashes=[];page.on('pageerror',error=>{crashes.push(error.message);console.error('Shop admin browser error:',error.stack??error.message)});
@@ -117,4 +118,7 @@ try{
   assert.equal(await file.inputValue(),'','same file can be selected again after reset');
   assert.deepEqual(crashes,[],'invalid photo must not produce unhandled React errors');
   console.log('PASS: real ProductForm rejects invalid media and releases blob URL after JPEG conversion');
+}catch(error){
+  if(crashes.length)console.error('Browser runtime errors:',crashes.join('; '));
+  throw error;
 }finally{await browser.close()}
