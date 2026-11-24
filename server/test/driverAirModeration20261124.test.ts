@@ -79,3 +79,36 @@ test('bot control only creates one settings audit on repeated action, rate limit
       [owner.id]))?.n,6);
   }finally{await t.close();}
 });
+
+
+test('Air service rechecks live permissions even when the request carries a stale authenticated actor',
+ {timeout:90000},async()=>{
+  const t=await setup();
+  try{
+    const {DriverAirService}=await import('../src/services/driverAir.ts');
+    const air=new DriverAirService(t.db,t.clock.now);
+    const admin=await t.login('+79990000001');
+    const owner=await t.login('+79998893031');
+    const adminActor=(await t.db.one<import('../src/http/router.ts').AuthUser>(
+      'select id,phone,name,roles,status,owner_id from users where id=$1',[admin.id]))!;
+    const ownerActor=(await t.db.one<import('../src/http/router.ts').AuthUser>(
+      'select id,phone,name,roles,status,owner_id from users where id=$1',[owner.id]))!;
+    await air.setBot(adminActor,false);
+    const first=await air.post(ownerActor,'Проверка актуальных прав участника');
+    const denied=(error:unknown)=>(error as {status?:number}).status===403;
+    await t.db.query("update users set roles=array['master']::text[] where id=$1",[owner.id]);
+    await assert.rejects(()=>air.list(ownerActor),denied);
+    await assert.rejects(()=>air.post(ownerActor,'Сообщение после отзыва роли'),denied);
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);
+    const downgraded=await air.list(adminActor);
+    assert.equal(downgraded.canModerate,false);
+    assert.equal(downgraded.canConfigure,false);
+    await assert.rejects(()=>air.setBot(adminActor,true),denied);
+    await assert.rejects(()=>air.hide(adminActor,first.message.id),denied);
+    const row=await t.db.one<{hidden_at:Date|null}>(
+      'select hidden_at from driver_air_messages where id=$1::bigint',[first.message.id]);
+    assert.equal(row?.hidden_at,null);
+    assert.equal((await t.db.one<{n:number}>(
+      "select count(*)::int as n from driver_air_messages where origin='human'"))?.n,1);
+  }finally{await t.close();}
+});
