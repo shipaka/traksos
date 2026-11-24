@@ -85,3 +85,40 @@ test('vehicle catalogue: matched row counts with changed model content fail SHA-
     assert.equal((await t.db.query('select id from vehicle_ref_registry_events where event_kind=\'revision_published\'')).length,0);
   }finally{await t.close();}
 });
+
+
+test('vehicle catalogue: text and year filtering cannot conceal conflicting source records', {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const actor=await t.db.one<any>(
+      "insert into users(phone,roles,status) values ('+79997763424',ARRAY['admin']::text[],'active') returning *");
+    const reader=await t.db.one<any>(
+      "insert into users(phone,roles,status) values ('+79997763425',ARRAY['client']::text[],'active') returning *");
+    const svc=new VehicleReferenceService(t.db);
+    for(const [key,brandName,modelName,yearFrom,yearTo] of [
+      ['conflict-a','Renault Trucks','Premium',2000,2010],
+      ['conflict-b','Renault Alternative','Premium Revised',2011,2030],
+    ] as const){
+      const data=catalog('v1','premium',modelName);
+      data.brands[0].name=brandName;
+      data.brands[0].models[0].yearFrom=yearFrom;
+      data.brands[0].models[0].yearTo=yearTo;
+      await svc.registerSource(actor,source(key));
+      await svc.approveSource(actor,key,'Synthetic rights independently checked for test');
+      await svc.stageSnapshot(actor,key,data);
+      await svc.activateSnapshot(actor,key,'v1','Verified synthetic records for publication');
+    }
+    const brands=await svc.brands(reader,'client',{q:'Alternative'});
+    const brand=brands.find(b=>b.key==='renault');
+    assert.equal(brand?.conflict,true);
+    assert.deepEqual(brand?.sources,['conflict-a','conflict-b']);
+    const models=await svc.models(reader,'client','truck','renault',{year:2020,q:'Revised'});
+    const model=models.find(m=>m.key==='premium');
+    assert.equal(model?.conflict,true);
+    assert.deepEqual(model?.sources,['conflict-a','conflict-b']);
+    assert.equal((await svc.models(reader,'client','truck','renault',{year:1990})).length,0);
+    await assert.rejects(svc.validateSelection(reader,'client',{
+      category:'truck',brandKey:'renault',modelKey:'premium',year:2020,
+    }),/различается/);
+  }finally{await t.close();}
+});
