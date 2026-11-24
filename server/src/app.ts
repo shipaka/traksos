@@ -353,7 +353,8 @@ export function createApp(d: Deps) {
       const activeSession = await q.one(
         `select s.token_hash from sessions s join users u on u.id=s.user_id
           where s.token_hash=$1 and s.user_id=$2 and s.expires_at>now()
-            and u.status='active' and (u.admin_preview_until is null or u.admin_preview_until>now())
+            and u.status='active' and u.deleted_at is null
+            and (u.admin_preview_until is null or u.admin_preview_until>now())
           for share of s,u`, [sessionHash,c.user.id]);
       if (!activeSession) throw forbidden('Сессия больше не действует');
       await q.query('delete from push_tokens where provider=$1 and token=$2', [b.provider, b.token]);
