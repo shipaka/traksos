@@ -885,3 +885,12 @@
 - [x] Код [e759582](https://github.com/shipaka/traksos/commit/e7595823a9a793ae6fffca80e709bc5d956dd201): текущие active account/roles и профиль верификации удерживаются shared lock при чтении/публикации/модерации кейсов; снятие прав не обходится captured AuthUser. Самопроверка и pending-only review сохранены.
 - [x] PG-регрессия [430dec1](https://github.com/shipaka/traksos/commit/430dec1049a3459ea27545393647c68f42be9e97), уточнение fixture [457daeb](https://github.com/shipaka/traksos/commit/457daebb3ca0221a6f8120604a398581983794eb): отзыв роли и верификации мастера, отзыв admin роли, сохранение pending, восстановление законного доступа.
 - [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI не подтверждено. UI, 617/618, main/VPS и бизнес-правила не изменены. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · CHAT-LIVE-READ-BOUNDARY-20261124 · доступ к переписке заявки
+
+Закрепление [#7122336291](https://github.com/shipaka/traksos/pull/274#issuecomment-7122336291), после освобождения #7116443254.
+
+- [x] Код [8ff2fe6](https://github.com/shipaka/traksos/commit/8ff2fe6f3ba59f17c9834cf481faaa080e35169b): чтение переписки под блокировкой заявки, текущего аккаунта и действующей водительской привязки; staff role проверяется заново; post использует тот же ACL; сбой поиска адресатов после commit не превращает сохранённую запись в ошибочный ответ.
+- [x] PG-регрессия [f664b2f](https://github.com/shipaka/traksos/commit/f664b2fc72cd0603f2e4b635cfd6313905bc9e2f): устаревшие полномочия сотрудника, отказ записи и чтения, успешный commit при ошибке определения адресатов.
+- [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI ещё не подтверждено. Существующая политика optional push сохранена. UI, 617/618, orders.ts, main/VPS и финансовые правила не изменены. Участок освобождён после отчёта.
