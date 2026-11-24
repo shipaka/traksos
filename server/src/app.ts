@@ -348,6 +348,14 @@ export function createApp(d: Deps) {
       // Same physical phone must never receive notifications for an old account.
       // Serialize token ownership even when an app switches accounts concurrently.
       await q.query('select pg_advisory_xact_lock(hashtext($1))', ['push:' + b.provider + ':' + b.token]);
+      // Authentication at HTTP entry is not enough: the session may have
+      // been revoked while this request waited for the device lock.
+      const activeSession = await q.one(
+        `select s.token_hash from sessions s join users u on u.id=s.user_id
+          where s.token_hash=$1 and s.user_id=$2 and s.expires_at>now()
+            and u.status='active' and (u.admin_preview_until is null or u.admin_preview_until>now())
+          for share of s,u`, [sessionHash,c.user.id]);
+      if (!activeSession) throw forbidden('Сессия больше не действует');
       await q.query('delete from push_tokens where provider=$1 and token=$2', [b.provider, b.token]);
       await q.query(`insert into push_tokens(user_id, provider, token, session_token_hash)
                      values ($1,$2,$3,$4)`, [c.user.id, b.provider, b.token, sessionHash]);
