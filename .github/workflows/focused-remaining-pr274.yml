@@ -1,4 +1,4 @@
-name: Focused archived order chat and privacy checks
+name: Focused PR274 remaining browser checks
 on:
   push:
     branches: ['ci-focus/pr274-remaining-20261124']
@@ -8,7 +8,7 @@ concurrency:
   group: focused-pr274-remaining-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  archive-only:
+  remaining-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     services:
@@ -41,8 +41,57 @@ jobs:
       - name: Continue remaining browser checks on the same disposable database
         run: |
           set -x
-          node e2e/archived-order-chat.mjs e2e/shots
-          node e2e/client-order-chat-20261124.mjs
+          node e2e/client-order-sections.mjs e2e/shots
+          # Verified production private-read hook, real customer account-switch UI and order chat.
+          node e2e/client-private-read-20261124.mjs
+          node e2e/client-account-switch-20261124.mjs
+          node e2e/performer-request-settings.mjs e2e/shots
+          # Real performer React profile: same-route account isolation, schedule/finance and form contracts.
+          node e2e/performer-profile-20261124.mjs
+          # An unverified desktop master can work; old GPS sessions cannot leak.
+          node e2e/performer-line-session-20261124.mjs
+          node e2e/ws-ticket-url.mjs
+          node e2e/admin-ops.mjs e2e/shots
+          SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
+          SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
+          node e2e/insurer-inspection-reliability-20261124.mjs
+          node e2e/admin-partner-finance-20261124.mjs
+          node e2e/admin-account-settings-20261124.mjs
+          node e2e/insurance-locked-ui.mjs
+          # Mixed-role admin must not be covered by an inactive client offer.
+          node e2e/offer-gate-role-ui.mjs
+          # No consent while legal text is pending, failed or mismatched.
+          node e2e/offer-consent-guard.mjs
+          node e2e/economics-retry-20261124.mjs
+          # Personal data/deletion actions must not leak across account changes.
+          node e2e/privacy-account-status-20261124.mjs
+          node e2e/moderator-permission-check.mjs
+          # Real moderator React queues: deep-link tabs, mobile deduplication, staff rights.
+          node e2e/moderator-workspace-tabs-20261124.mjs
+          node e2e/moderator-staff-route-20261124.mjs
+          node e2e/techbase-repair-hardening-20261124.mjs
+          node e2e/vehicle-service-history-20261124.mjs
+          # Real read-only role switching, courier training and per-account course progress.
+          # Pure read-only courier/inspection training model and every role transition.
+          node e2e/training-demo-kinds-20261124.mjs
+          # Actual courier React: network retry, delivery-id/session isolation, no real writes.
+          node e2e/courier-offline-reliability-20261124.mjs
+          # Real admin demand, SLA, notices and worker discounts under failures/account changes.
+          node e2e/ops-admin-reliability-20261124.mjs
+          node e2e/learning-role-hardening-20261124.mjs
+          node e2e/continuation-tour-role-20261124.mjs
+          node e2e/ecu-handoff-web-session-20261124.mjs
+          node e2e/roadside-map-gps-consent-20261124.mjs
+          node e2e/admin-master-switch.mjs
+          node e2e/staff-security.mjs
+          node e2e/cabinet-navigation-audit.mjs
+          node e2e/admin-navigation-ux.mjs
+          node e2e/cabinet-visual-sweep.mjs
+          node e2e/android-approved-workspaces.mjs
+          node e2e/cabinet-logout-and-shop.mjs
+          node e2e/approved-truck-hero.mjs
+          node e2e/visual-text-geometry.mjs
+          node e2e/preview-login.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
