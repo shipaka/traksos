@@ -61,7 +61,7 @@ export class StandingService {
   /** На линии: открытых заявок рядом по вашему профилю и сколько свободных коллег ближе к ним */
   async nearby(user: AuthUser) {
     const p = await this.db.one<any>(
-      'select p.kind,p.specialties,p.brands,p.lat,p.lng from performer_profiles p join users u on u.id=p.user_id where p.user_id=$1 and u.status=\'active\' and u.deleted_at is null and (case when p.kind=\'ecu\' then \'master\' else p.kind end)=any(u.roles)',[user.id]);
+      'select p.kind,p.specialties,p.brands,p.lat,p.lng from performer_profiles p join users u on u.id=p.user_id where p.user_id=$1 and u.status=\'active\' and u.deleted_at is null and (case when p.kind=\'ecu\' then \'master\' else p.kind::text end)=any(u.roles)',[user.id]);
     if(!p)return null;
     if(!validPoint(p.lat,p.lng))return {openNearby:0,ahead:0,locationKnown:false};
     const open=await this.db.query<{service:string;brand:string|null;lat:number|null;lng:number|null}>(
@@ -80,7 +80,7 @@ export class StandingService {
     }>(`select p.kind,p.specialties,p.lat,p.lng,p.schedule,p.off_schedule_until,p.extras,p.brands
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and u.status='active'
-          and u.deleted_at is null and (case when p.kind='ecu' then 'master' else p.kind end)=any(u.roles)
+          and u.deleted_at is null and (case when p.kind='ecu' then 'master' else p.kind::text end)=any(u.roles)
           and p.verification='approved' and p.line_status='online' and not p.paused
           and p.lat is not null and p.lng is not null
           and not exists(select 1 from orders o where o.performer_id=p.user_id
@@ -123,7 +123,7 @@ export class StandingService {
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and u.status='active' and u.deleted_at is null
-          and (case when p.kind='ecu' then 'master' else p.kind end)=any(u.roles) and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
+          and (case when p.kind='ecu' then 'master' else p.kind::text end)=any(u.roles) and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
     // Never present nationwide performers as if they were near the truck.
     // All three counters and shown cards must cover the SAME proven geography.
     const locationKnown=validPoint(p.lat,p.lng);
@@ -148,11 +148,14 @@ export class StandingService {
     });
     // Preview all eligible candidates first: sorting after an arbitrary 8/20-person
     // cutoff can hide the actually cheapest/closest specialist.
-    const ranked = rankCandidates(order as any, free, {
+    // Brand names are arbitrary user/catalog strings; only own JSON keys
+    // may describe expertise. Do not let Object.prototype supply a rank.
+    const candidates = free.map(c => ({...c, brands: Object.assign(Object.create(null), c.brands ?? {}) as Candidate['brands']}));
+    const ranked = rankCandidates(order as any, candidates, {
       radiusKm: all.dispatch.radiusKm, maxCandidates: free.length,
       cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now()
     });
-    const byId = new Map(free.map((c) => [c.user_id, c]));
+    const byId = new Map(candidates.map((c) => [c.user_id, c]));
     const speed = all.dispatch.citySpeedKmh || 40;
     const LEVEL: Record<string, number> = { excellent: 3, good: 2, last_resort: 1 };
     const items = ranked.map((r) => {
