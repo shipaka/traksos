@@ -25,10 +25,20 @@ export class WarrantyRemediationService {
     return value;
   }
   private async load(id:string,q:Queryable=this.db,lock:boolean|'share'=false){
+    // Every path uses the same parent-before-child order as offer() and
+    // forClaim(). A joined FOR UPDATE/SHARE may lock j before c, deadlocking
+    // against a concurrent offer that already holds the parent claim.
+    if(lock){
+      const parent=await q.one<{id:string}>(
+        `select c.id from warranty_claims c
+          where c.id=(select claim_id from warranty_rework_jobs where id=$1)
+          ${lock==='share'?'for share of c':'for update of c'}`,[id]);
+      if(!parent)throw notFound('Гарантийный выезд не найден');
+    }
     const job=await q.one<any>(
       `select j.*,c.filed_by,c.decision,c.status as claim_status,c.performer_id as liable_performer
          from warranty_rework_jobs j join warranty_claims c on c.id=j.claim_id
-        where j.id=$1${lock==='share'?' for share of j,c':lock?' for update':''}`,[id]);
+        where j.id=$1${lock==='share'?' for share of j':lock?' for update of j':''}`,[id]);
     if(!job)throw notFound('Гарантийный выезд не найден');
     return job;
   }
