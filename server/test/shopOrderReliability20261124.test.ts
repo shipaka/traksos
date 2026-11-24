@@ -175,3 +175,52 @@ test('captured fleet credentials cannot cancel after membership revocation',asyn
     ok(await t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},owner.token));
   }
 });
+
+
+test('vehicle reassignment removes private purchases from both fleet lists while owner retains access',async()=>{
+  const v=ok(await t.api('POST','/api/vehicles',{
+    brand:'DAF',model:'XF',plate:'А113АА178',year:2018,
+  },owner.token));
+  await t.db.query('update vehicles set driver_id=$2 where id=$1',[v.id,driverA.id]);
+  const first=ok(await t.api('POST','/api/shop/orders',{
+    items:[{productId,qty:1}],delivery:'pickup',vehicleId:v.id,
+  },driverA.token));
+  const actor={id:driverA.id,owner_id:owner.id,roles:['driver']} as any;
+  const service=new ShopService(t.db,{notify:async()=>{}} as any,t.app.settings);
+  assert.ok((await service.myOrders(actor)).some((x:any)=>x.id===first.id));
+  assert.ok((await service.history(actor,null)).items.some((x:any)=>x.id===first.id));
+  await t.db.query('update vehicles set driver_id=$2 where id=$1',[v.id,driverB.id]);
+  assert.ok(!(await service.myOrders(actor)).some((x:any)=>x.id===first.id));
+  assert.ok(!(await service.history(actor,null)).items.some((x:any)=>x.id===first.id));
+  await assert.rejects(()=>service.history(actor,v.id),(e:any)=>e?.status===403);
+  assert.ok(ok(await t.api('GET','/api/shop/orders',undefined,owner.token)).some((x:any)=>x.id===first.id));
+  ok(await t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},owner.token));
+});
+
+test('revoked fleet membership hides private order history even with captured actor',async()=>{
+  const first=ok(await order(driverA.token));
+  const actor={id:driverA.id,owner_id:owner.id,roles:['driver']} as any;
+  const service=new ShopService(t.db,{notify:async()=>{}} as any,t.app.settings);
+  await t.db.query('update users set owner_id=null where id=$1',[driverA.id]);
+  try{
+    assert.deepEqual(await service.myOrders(actor),[]);
+    assert.deepEqual((await service.history(actor,null)).items,[]);
+  }finally{
+    await t.db.query('update users set owner_id=$2 where id=$1',[driverA.id,owner.id]);
+    ok(await t.api('POST','/api/shop/orders/'+first.id+'/cancel',{},owner.token));
+  }
+});
+
+test('blocked account cannot reserve inventory or read orders with a stale auth snapshot',async()=>{
+  const actor={id:owner.id,owner_id:null,roles:['client']} as any;
+  const service=new ShopService(t.db,{notify:async()=>{}} as any,t.app.settings);
+  const reserved=await stock();
+  await t.db.query("update users set status='blocked' where id=$1",[owner.id]);
+  try{
+    await assert.rejects(()=>service.order(actor,{items:[{productId,qty:1}],delivery:'pickup'}),
+      (e:any)=>e?.status===403);
+    assert.equal(await stock(),reserved);
+    assert.deepEqual(await service.myOrders(actor),[]);
+    assert.deepEqual((await service.history(actor,null)).items,[]);
+  }finally{await t.db.query("update users set status='active' where id=$1",[owner.id]);}
+});
