@@ -115,3 +115,28 @@ test('insurance expiry reminders: inbox failure rolls back marker, parallel retr
    'select reminder_7_sent_at from vehicle_service_requests where id=$1',[request.id]))?.reminder_7_sent_at);
  }finally{await t.close();}
 });
+
+test('insurance expiry reminders: lost live delivery never duplicates the durable inbox', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79996672104');
+  const vehicle=ok(await t.api('POST','/api/vehicles',{
+   brand:'MAN',model:'TGX',year:2019,plate:'А557АА178',
+  },owner.token));
+  const request=ok(await t.api('POST','/api/vehicle-service-requests',{
+   vehicleId:vehicle.id,kind:'insurance',comment:'Проверка сбоя доставки напоминания',
+  },owner.token));
+  await t.db.query("update vehicle_service_requests set status='completed',policy_expires_on=current_date + 1 where id=$1",[request.id]);
+  await t.db.query('update users set insurance_reminders_enabled=true where id=$1',[owner.id]);
+  const notifier=new Notifier(t.db,t.app.hub,t.push);
+  let attempts=0;
+  const broken={deliverStored:async()=>{attempts++;throw new Error('simulated live failure');}} as unknown as Notifier;
+  await sendInsuranceReminders(t.db,broken);
+  await sendInsuranceReminders(t.db,notifier);
+  assert.equal(attempts,1);
+  assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and kind='insurance_expiry'",[owner.id]))?.n,1);
+  assert.ok((await t.db.one<{reminder_1_sent_at:Date|null}>(
+   'select reminder_1_sent_at from vehicle_service_requests where id=$1',[request.id]))?.reminder_1_sent_at);
+ }finally{await t.close();}
+});
