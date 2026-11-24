@@ -104,6 +104,8 @@ export class WarrantyRemediationService {
   async offer(user:AuthUser,claimId:string,p:{performerId:string;budgetKopecks:number;task:string}){
     if(!isAdmin(user))throw forbidden('Бюджет и гарантийное назначение подтверждает администратор');
     const task=this.sanitize(p.task);
+    const notice={kind:'normal' as const,title:'Гарантийное исправление',
+      body:'Есть отдельное исправительное задание. Клиент не оплачивает его повторно.'};
     const result=await this.db.tx(async q=>{
       const claim=await q.one<any>('select * from warranty_claims where id=$1 for update',[claimId]);
       if(!claim)throw notFound('Претензия не найдена');
@@ -124,7 +126,7 @@ export class WarrantyRemediationService {
         "select * from warranty_rework_jobs where claim_id=$1 and status not in ('declined','client_declined') for update",[claimId]);
       if(old){
         if(old.performer_id===p.performerId&&old.budget_kopecks===p.budgetKopecks&&old.task_description===task)
-          return {id:old.id,created:false};
+          return {id:old.id,created:false,recipients:[] as string[]};
         throw conflict('warranty_job_exists','Исправление уже согласовано, повторное назначение запрещено');
       }
       const o=await q.one<any>('select service from orders where id=$1',[claim.order_id]);
@@ -150,15 +152,16 @@ export class WarrantyRemediationService {
         {performerId:p.performerId,budgetKopecks:p.budgetKopecks,funding});
       await this.audit(q,user.id,'warranty.rework_offer',inserted.id,
         {claimId,sourceOrderId:claim.order_id,budgetKopecks:p.budgetKopecks,funding});
-      return {id:inserted.id,created:true};
+      const recipients=[...new Set<string>([claim.client_id,p.performerId])];
+      for(const recipient of recipients)
+        await q.query('insert into notifications(user_id,kind,title,body,data) values ($1,$2,$3,$4,$5)',
+          [recipient,'warranty',notice.title,notice.body,{claimId,jobId:inserted.id}]);
+      return {id:inserted.id,created:true,recipients};
     });
     if(result.created){
-      const j=await this.load(result.id);
-      await this.notifier.notify([j.client_id,j.performer_id],
-        {type:'warranty',claimId,jobId:j.id},
-        {kind:'normal',title:'Гарантийное исправление',
-          body:'Есть отдельное исправительное задание. Клиент не оплачивает его повторно.',
-          data:{claimId,jobId:j.id}}).catch(e=>console.warn('[warranty-job-push]',e));
+      await this.notifier.deliverStored(result.recipients,
+        {type:'warranty',claimId,jobId:result.id},
+        {...notice,data:{claimId,jobId:result.id}}).catch(e=>console.warn('[warranty-job-push]',e));
     }
     return this.view(user,result.id);
   }
