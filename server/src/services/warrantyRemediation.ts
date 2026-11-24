@@ -24,11 +24,11 @@ export class WarrantyRemediationService {
     if(value.length<10||value.length>max)throw bad('warranty_remedy_note','Опишите работу подробнее');
     return value;
   }
-  private async load(id:string,q:Queryable=this.db,lock=false){
+  private async load(id:string,q:Queryable=this.db,lock:boolean|'share'=false){
     const job=await q.one<any>(
       `select j.*,c.filed_by,c.decision,c.status as claim_status,c.performer_id as liable_performer
          from warranty_rework_jobs j join warranty_claims c on c.id=j.claim_id
-        where j.id=$1${lock?' for update':''}`,[id]);
+        where j.id=$1${lock==='share'?' for share of j,c':lock?' for update':''}`,[id]);
     if(!job)throw notFound('Гарантийный выезд не найден');
     return job;
   }
@@ -46,7 +46,7 @@ export class WarrantyRemediationService {
          join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
         where o.id=$1 and o.client_id=$2 and u.owner_id=o.client_id
           and 'driver'=any(u.roles) and (o.vehicle_id is null or v.id=o.vehicle_id)
-        limit 1${lock?' for share of v':''}`,
+        limit 1${lock?' for share of o,u,v':''}`,
       [orderId,clientId,userId]);
     return !!row;
   }
@@ -59,7 +59,7 @@ export class WarrantyRemediationService {
     return this.db.tx(q=>this.readView(q,user,id));
   }
   private async readView(q:Queryable,user:AuthUser,id:string){
-    const j=await this.load(id,q,true);
+    const j=await this.load(id,q,'share');
     if(!await this.canRead(q,user,j))throw forbidden();
     const [events,expense]=await Promise.all([
       q.query<any>('select event,data,actor_id,created_at from warranty_rework_events where job_id=$1 order by id',[id]),
@@ -83,7 +83,7 @@ export class WarrantyRemediationService {
   }
   async forClaim(user:AuthUser,claimId:string){
     return this.db.tx(async q=>{
-    const c=await q.one<any>('select * from warranty_claims where id=$1 for update',[claimId]);
+    const c=await q.one<any>('select * from warranty_claims where id=$1 for share',[claimId]);
     if(!c)throw notFound('Претензия не найдена');
     const jobs=await q.query<{id:string;performer_id:string}>(
       'select id,performer_id from warranty_rework_jobs where claim_id=$1 order by authorized_at,id',
