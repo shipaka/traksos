@@ -153,3 +153,29 @@ test('settings cache refreshes when wall clock moves backward',async()=>{
   assert.equal((await svc.get('shop')).closedTitle,'revision 2');
  }finally{Date.now=realNow;}
 });
+
+test('settings: committed update is acknowledged despite unavailable post-commit SELECT and repairs malformed row', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const admin=await t.login('+79990000001');
+  await t.db.query("insert into settings(key,value) values ('shop',$1::jsonb) on conflict(key) do update set value=excluded.value",
+   [JSON.stringify(['obsolete invalid section'])]);
+  let outsideReads=0;
+  const proxy={
+   tx:(fn:any)=>t.db.tx(fn),
+   query:async()=>{outsideReads++;throw Error('post_commit_read_unavailable');},
+  };
+  const service=new SettingsService(proxy as any);
+  const saved=await service.set('shop',{closedTitle:'Подтверждённая настройка'},admin.id);
+  assert.equal(saved.closedTitle,'Подтверждённая настройка');
+  assert.equal(saved.enabled,false);
+  assert.equal(typeof saved.closedText,'string');
+  assert.equal(Object.hasOwn(saved,'0'),false);
+  assert.equal(outsideReads,0,'successful write must not depend on a second database read');
+  const row=await t.db.one<{value:any}>("select value from settings where key='shop'");
+  assert.equal(row?.value.closedTitle,saved.closedTitle);
+  assert.equal(Object.hasOwn(row?.value??{},'0'),false);
+  const audits=await t.db.query("select id from audit_log where action='settings.update' and target='shop' and data->>'closedTitle'=$1",[saved.closedTitle]);
+  assert.equal(audits.length,1);
+ }finally{await t.close();}
+});
