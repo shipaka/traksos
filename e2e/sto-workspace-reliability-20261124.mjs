@@ -157,6 +157,7 @@ try{
   // A WebSocket refresh invalidates the old private snapshot immediately.
   await page.evaluate(()=>window.__sto.listeners.forEach(fn=>fn({type:'booking'})));
   await waitGet('/api/base',2);
+  await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor({timeout:2000});
   assert(await page.getByText('Рембаза «СТО A»').count()===0,
     'Old station still visible while refreshed data is unverified');
   await reject(1,'Эфирная сеть отключена');
@@ -174,6 +175,7 @@ try{
   await waitGet('/api/base',4);
   await change(undefined,'sto-B');
   await waitGet('/api/base',5);
+  await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor({timeout:2000});
   assert(await page.getByText('Рембаза «СТО A актуальная»').count()===0,
     'Account swap retained private old station data');
   await answer(4,center('СТО B'));
@@ -201,6 +203,10 @@ try{
   await page.getByText('Не удалось проверить действующий лимит списания баллов').waitFor();
   await page.evaluate(()=>window.__sto.listeners.forEach(fn=>fn({type:'booking'})));
   await waitGet('/api/base/money',2);
+  // A synchronous request registration precedes React's scheduled DOM commit.
+  // Keep the new response unresolved and require the actual loading UI before
+  // asserting that private stale amounts were removed. No fixed sleep.
+  await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor({timeout:2000});
   assert(await page.getByText(/10\s?123[,.]45/).count()===0,
     'Stale payout visible during finance refresh');
   const financeSecond=await page.evaluate(()=>window.__sto.pending.findLastIndex(x=>x.path==='/api/base/money'));
@@ -247,6 +253,7 @@ try{
   await page.getByPlaceholder('Ответ сервису').fill('Частный ответ первого заказа');
   await page.evaluate(()=>window.__sto.changeBooking('booking-2'));
   await waitGet('/api/bookings/booking-2');
+  await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor({timeout:2000});
   assert(await page.getByText('Уточнение для первой записи').count()===0,
     'Old booking shown after route switch');
   const nextBooking=await page.evaluate(()=>window.__sto.pending.findIndex(x=>x.path==='/api/bookings/booking-2'));
