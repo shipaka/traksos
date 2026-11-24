@@ -105,6 +105,7 @@ jobs:
             e2e/shots/owner20-cabinets/capture-report.json
             e2e/shots/pc-active-synthetic/report.json
             e2e/shots/role-click-matrix/report.json
+            e2e/shots/role-click-matrix/*-failure.json
           if-no-files-found: warn
           retention-days: 14
       - name: Честный протокол визуальной проверки
