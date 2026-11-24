@@ -183,7 +183,7 @@ try{
         const tabs=page.locator('main.approved-pc .approved-pc-tabs');
         await tabs.waitFor({state:'visible'});
         for(const name of queues){
-          const tab=tabs.getByRole('tab',{name:new RegExp('^'+name+'(?:\\\\s|\\\\d|$)')});
+          const tab=tabs.getByRole('tab',{name:new RegExp('^'+name)});
           await clickWorkingAction(tab,async()=>{
             await page.waitForFunction(label=>{
               const selected=Array.from(document.querySelectorAll('main.approved-pc .approved-pc-tabs [aria-selected="true"]'));
