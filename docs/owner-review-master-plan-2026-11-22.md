@@ -702,3 +702,12 @@
 - [x] Код [ca3e902](https://github.com/shipaka/traksos/commit/ca3e902a4cc3b3f66ed17e91f0e97c5caa68e71d): устаревшее наблюдение больше не выдаётся из cache после 3 часов, бюджет запросов сохранён; проверены границы JS Date.
 - [x] Написаны регрессии [f2ac23e](https://github.com/shipaka/traksos/commit/f2ac23e06913e3737ff847389287bf1afe6cc0a7): redirect policy, освобождение потоков при 503/oversize, synchronous transport failure, single-flight/negative-cache, freshness без дополнительного запроса.
 - [ ] Фактическое прохождение npm test/typecheck/exact-HEAD CI ещё не подтверждено. География, источник, UI 617/618, main/VPS не изменены. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · LLM-REDIRECT-STREAM-20261124 · транспорт TrakBot
+
+Закрепление [#7121975478](https://github.com/shipaka/traksos/pull/274#issuecomment-7121975478), освобождение предыдущей зоны #7116163843.
+
+- [x] Код [ac8bd47](https://github.com/shipaka/traksos/commit/ac8bd478a0cdf9df2aa1ea35f59060d313328381): запрет redirect для внешнего и локального LLM, отмена rejected HTTP/oversize response body, строгий массив choices локального провайдера.
+- [x] Регрессии [2d331fd](https://github.com/shipaka/traksos/commit/2d331fd53d7ff85d724324809c3c3f376090775f): запрет redirect, отмена потоков 503 и oversized, malformed choices. Конфликт HEAD при первом отправлении теста разрешён повторным чтением свежего файла, чужие изменения сохранены.
+- [ ] Реальный server test/typecheck и exact-HEAD CI не подтверждены. Ставки, согласия, модели, макеты, main/VPS не менялись. Участок освобождён.
