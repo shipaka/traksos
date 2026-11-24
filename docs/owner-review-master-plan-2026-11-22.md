@@ -923,3 +923,12 @@
 - [x] Код [0c0298d](https://github.com/shipaka/traksos/commit/0c0298daa8fb2cf94d96c44bcc313624374ec738): ограничение погрешности Haversine у антиподов.
 - [x] Написаны четыре чистые регрессии [2537373](https://github.com/shipaka/traksos/commit/2537373ad87befb9c8a005dd291d373f18265c3e): произвольные марки, отказ, повреждённые данные, GPS и антиподы.
 - [ ] Фактический server test/typecheck/exact-HEAD CI не подтверждены. Добровольная верификация, порядок приоритета, тарифы, 617/618, main/VPS не изменены. Все три пути освобождены.
+
+
+### 24.11.2026 · CI-REMINDER-WARRANTY-FIXTURES-20261124 · исправления по фактическому CI
+
+Закрепление [#7122656129](https://github.com/shipaka/traksos/pull/274#issuecomment-7122656129). На SHA 88668f121396d30e07deb539c7cd76914a91cdd5 пять workflow успешны; [Проверка #45328903988](https://github.com/shipaka/traksos/actions/runs/45328903988), job 138225036034, упала на серверных тестах. 
+
+- [x] [124f3be](https://github.com/shipaka/traksos/commit/124f3be455b2c09a865f0d6f8f9eb56ee3246547): исправлена синтаксическая ошибка PostgreSQL 42601 в гарантийном fault-injection trigger (test 674), именованный dollar-quote.
+- [x] [981dd6d](https://github.com/shipaka/traksos/commit/981dd6da41453d4470deb7960ca766dc1bd733c9): старые unit fixtures напоминаний (207/209/210) приведены к действующему атомарному контракту, сохранены проверки адресата, окон, конкурентного claim, rollback и повторов, добавлена проверка optional delivery failure.
+- [ ] Новый actual HEAD CI. Отдельные обнаруженные сбои не закрыты: documents test 124, publicPartnerMap 370–373, shop 477, PostgreSQL deadlocks warranty_claims/warranty_rework_jobs. Не изменялись production code, 617/618, main/VPS.
