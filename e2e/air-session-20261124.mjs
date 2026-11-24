@@ -68,6 +68,22 @@ try{
   const waitNextGet=index=>page.waitForFunction(i=>window.__airTest.gets.length>i,index);
   const resolveGet=(index,data)=>page.evaluate(({index,data})=>window.__airTest.gets[index].resolve(data),{index,data});
   await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
+  // The real room still installs/cleans its 12-second polling callback.
+  // Control only that interval in this fixture so a slow runner cannot
+  // insert an unsolicited GET into the explicit deferred-response queue.
+  await page.evaluate(()=>{
+    const nativeSet=window.setInterval.bind(window), nativeClear=window.clearInterval.bind(window);
+    const callbacks=new Map();let next=-1;
+    window.__airPolls=callbacks;
+    window.setInterval=(callback,delay,...args)=>{
+      if(delay!==12000||typeof callback!=='function')return nativeSet(callback,delay,...args);
+      const id=next--;callbacks.set(id,()=>callback(...args));return id;
+    };
+    window.clearInterval=id=>{
+      if(callbacks.has(id)){callbacks.delete(id);return;}
+      nativeClear(id);
+    };
+  });
   await page.addScriptTag({content:bundle.outputFiles[0].text});
   await page.waitForFunction(()=>window.__airTest.gets.length===1);
   await page.evaluate(data=>window.__airTest.gets[0].resolve(data),
@@ -77,8 +93,10 @@ try{
   await compose.fill('Черновик аккаунта A');
 
   // Polls are allowed to overlap, but only the NEWEST response wins.
+  assert(await page.evaluate(()=>window.__airPolls.size)===1,'Room did not install one polling timer');
   await page.evaluate(()=>{
-    window.dispatchEvent(new Event('online'));
+    // Real registered interval callback plus the actual online event.
+    window.__airPolls.forEach(tick=>tick());
     window.dispatchEvent(new Event('online'));
   });
   await page.waitForFunction(()=>window.__airTest.gets.length>=3);
@@ -216,6 +234,11 @@ try{
   assert(await page.getByRole('button',{name:'Скрыть'}).count()===0 &&
     await page.getByRole('button',{name:'Отправить'}).count()===1,
     'Role downgrade did not load fresh server flags');
+  assert(await page.evaluate(()=>window.__airPolls.size)===1,'Old account polling timer leaked after role change');
+  await page.evaluate(()=>window.__switchAirIdentity({id:'excluded-D',roles:['master']}));
+  await page.getByRole('heading',{name:'Эфир водителей'}).waitFor();
+  await page.waitForFunction(()=>window.__airPolls.size===0);
+  assert(await page.getByRole('textbox',{name:'Сообщение в эфир'}).count()===0,'Excluded role retained composer');
   if(errors.length)throw Error('Chromium runtime errors: '+errors.join('; '));
   console.log('PASS DriverAir: out-of-order polls, offline+retry, no automatic POST replay, A/B identity isolation, staff permissions and uncertain-write reconciliation');
 } finally { await browser.close(); }
