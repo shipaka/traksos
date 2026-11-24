@@ -22,6 +22,7 @@ const apiStub=`
    return new Promise((resolve,reject)=>m.pending.push({method,path,body,resolve,reject}));
  }
  export const get=(path)=>request('GET',path);
+ export const getToken=()=>window.__ctMock.token;
  export const post=(path,body)=>request('POST',path,body);
  export const fmtTime=()=> '24.11.2026';
  export function onEvent(cb){
@@ -43,13 +44,13 @@ const bundle=await build({
   import {OrderContinuations} from './web/src/screens/continuations.tsx';
   import {RoleTour} from './web/src/screens/roleTour.tsx';
   import {ContextHelp} from './web/src/screens/contextHelp.tsx';
-  window.__ctMock={calls:[],pending:[],listeners:new Set()};
+  window.__ctMock={calls:[],pending:[],listeners:new Set(),token:'fixture-token-A'};
   function App(){
     const [state,setState]=useState({
       me:{id:'user-A',owner_id:null,roles:['client']},mode:'client',
       page:'',order:{id:'order-1',you:'client',service:'electric',status:'accepted'}
     });
-    window.__ctSet=(patch)=>setState(prev=>({...prev,...patch}));
+    window.__ctSet=(patch)=>{if(patch.token)window.__ctMock.token=patch.token;setState(prev=>({...prev,...patch}));};
     return <C.Provider value={{me:state.me,mode:state.mode}}>
       <header className="top">TrakSOS test header</header>
       <nav className="account-menu"><summary>Меню</summary></nav>
@@ -146,6 +147,20 @@ try{
    'late POST for old order cleared new account draft');
  assert(await page.evaluate(path=>window.__ctMock.calls.filter(r=>r.method==='GET'&&r.path===path).length,H3)===1,
    'late POST caused an extra private reload in the new account');
+
+ // Rotate bearer without changing user or order: previous draft must not return.
+ await change({token:'fixture-token-B'});
+ await wait('GET',H3,2);
+ await finish('GET',H3,1,true,[]);
+ assert((await draft.inputValue())==='', 'draft leaked across bearer rotation');
+ await draft.fill('Черновик для новой сессии не должен вернуться после смены аккаунта');
+ await change({me:{id:'master-C',roles:['master'],owner_id:null}});
+ await wait('GET',H3,3);
+ await finish('GET',H3,2,true,[]);
+ await change({me:{id:'master-B',roles:['master'],owner_id:null}});
+ await wait('GET',H3,4);
+ await finish('GET',H3,3,true,[]);
+ assert((await draft.inputValue())==='', 'A-B-A restored a previous private draft');
 
  // Tour focus/geometry on mobile: no background Tab, Escape always closes.
  await change({me:{id:'owner-C',roles:['client'],owner_id:null},mode:'client',
