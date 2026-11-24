@@ -254,10 +254,7 @@ adb exec-out screencap -p > emulator-screen.png
 require_traksos_foreground "guest-after-pixels"
 python3 scripts/verify-android-screen.py emulator-screen.png
 adb shell pidof ru.traksos.app.preview
-if grep -F 'Process: ru.traksos.app.preview' runtime-errors.log; then
-  echo 'FAIL: native app crash observed'
-  exit 1
-fi
+capture_runtime_errors guest-final
 grep -F 'ru.traksos.app.preview' activity-dump.txt
 if [ -s emulator-ui.xml ] && grep -Eiq "System UI isn.t responding|App isn.t responding" emulator-ui.xml; then
   echo 'FAIL: Android ANR dialog covers the application'
@@ -328,7 +325,7 @@ for role in client master; do
       # the Android 15 software compositor/emulator transport disappearing.
       # Diagnostics never turn a failed image into a PASS.
       if [ "$attempt" -eq 1 ]; then
-        timeout 12s "$ADB_BIN" logcat -d -v brief -s TrakSOSRuntime:I AndroidRuntime:E SurfaceFlinger:W WindowManager:W           > android-compositor-diagnostics.log 2>&1 || true
+        timeout 12s "$ADB_BIN" logcat -d -v brief -s TrakSOSRuntime:I AndroidRuntime:E SurfaceFlinger:W WindowManager:W           >> android-compositor-diagnostics.log 2>&1 || true
       fi
       sleep 2
     done
