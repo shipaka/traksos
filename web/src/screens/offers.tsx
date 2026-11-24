@@ -139,6 +139,8 @@ function OfferPageEdition({audience}:{audience:string}) {
     get(`/api/offers/current/${encodeURIComponent(audience)}`)
       .then(value => {
         if(!active)return;
+        // This endpoint intentionally returns JSON null for unpublished documents.
+        if(value===null){setO(null);return;}
         if(!value||value.audience!==audience||typeof value.version!=='string'||!value.version.trim()||typeof value.body!=='string'||!value.body.trim()||!Number.isFinite(Date.parse(value.effective_at))) {
           setLoadError(true);return;
         }
