@@ -750,3 +750,14 @@
 - [x] Код [4785eb2](https://github.com/shipaka/traksos/commit/4785eb2f3f12bddc15ee85962fef39956c7342ab): поисковые и годовые фильтры выбирают ключи, сохраняя все найденные источники и признаки конфликта. Не добавляется ложная VIN/fitment верификация.
 - [x] Написаны PostgreSQL-регрессии [481b196](https://github.com/shipaka/traksos/commit/481b1960e5ccf9e6bd8c67bcaff5f9a818615b20), [bccc62d](https://github.com/shipaka/traksos/commit/bccc62d930091cb589f07873c23d60a1260049f2): раздельные годы и названия конфликтующих источников, управляемая смена активной редакции между чтениями.
 - [ ] Фактическое прохождение npm test/typecheck/exact-HEAD CI ещё не подтверждено. Существующий лимит выдачи 10000 строк не изменён. Новые источники/лицензии, UI 617/618, финансовые правила, main/VPS не затронуты. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · ECU-PHOTO-RETRY-ATOMIC-20261124 · ЭБУ и доказательства ремонта
+
+Закрепление [#7122025162](https://github.com/shipaka/traksos/pull/274#issuecomment-7122025162), после освобождения #7115846271 и #7115912144.
+
+- [x] Код [7d93675](https://github.com/shipaka/traksos/commit/7d93675aedf4bb9a85255c2445e371270e94bb39): создание передачи ЭБУ проверяет актуальный исходный заказ и согласованную рекомендацию под PostgreSQL locks, а не до transaction; действующая связь водителя проверяется с блокировкой пользователя, заказа и машины при записи заметок.
+- [x] Код [9a15fe4](https://github.com/shipaka/traksos/commit/9a15fe461887026ef381218362ba24e2f0d0aac6): предложение и выбор диагностики проверяют подтверждённую станцию под lock; изменения, события выбора и durable inbox атомарны, optional push после commit. Правила версии цены и отсутствие оплаты сохранены.
+- [x] Код [a51c2ad](https://github.com/shipaka/traksos/commit/a51c2adb4fcafceaf548199050e768275291e70d): потерянный ACK уже сохранённого фото можно повторить после закрытия заказа, новых загрузок нет, текущая привязка водителя защищена shared locks.
+- [x] Написаны HTTP/PostgreSQL регрессии [62064aa](https://github.com/shipaka/traksos/commit/62064aa16fcdc9003e10d0d108c34b28e408f5e9), [36a2fd1](https://github.com/shipaka/traksos/commit/36a2fd1dd64b45d04aa33dd408b3e46e20bcf945), [8e088ce](https://github.com/shipaka/traksos/commit/8e088ce66f6f1e9823ee1d01337ba5d9ec8eb781): повтор фото после completion, запрет новой загрузки, rollback предложения/выбора при отказе inbox, бывший исполнитель не создаёт передачу.
+- [ ] Exact-HEAD CI, typecheck и npm test ещё не подтверждены. Остаточная атомарность inbox создания/закрытия/заметок ЭБУ и read snapshots отдельная работа. Main/VPS, 617/618, цены, платежи, прочие файлы не менялись; закрепление снято после отчёта.
