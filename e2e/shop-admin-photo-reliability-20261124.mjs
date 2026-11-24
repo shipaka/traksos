@@ -100,19 +100,33 @@ try{
   await page.getByRole('tab',{name:'Товары'}).click();
   await page.getByRole('button',{name:/Добавить товар/}).click();
   const file=page.locator('input[type=file]');
-  await file.waitFor();
-  await file.setInputFiles({
+  // The actual photo control is a visible label wrapping a deliberately hidden input.
+  // Exercise the visible control, not an impossible visibility assertion on its input.
+  await file.waitFor({state:'attached'});
+  assert.equal(await file.isHidden(),true,'native file input must remain hidden behind the approved photo control');
+  const photoControl=page.locator('label').filter({has:file});
+  await photoControl.waitFor({state:'visible'});
+  const selectPhoto=async payload=>{
+    const [chooser]=await Promise.all([page.waitForEvent('filechooser'),photoControl.click()]);
+    await chooser.setFiles(payload);
+  };
+  await selectPhoto({
     name:'test.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.3\n'),
   });
   await page.getByText(/Выберите фотографию JPEG, PNG или WEBP/).waitFor();
   assert.equal(await page.evaluate(()=>window.__ciRevoked.length),0,
     'reject unsupported files before allocating object URLs');
   // One-pixel valid PNG; resized to genuine JPEG data URL.
-  await file.setInputFiles({
+  await selectPhoto({
     name:'pixel.png',mimeType:'image/png',
     buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64'),
   });
-  await page.locator('img[src^="data:image/jpeg"]').waitFor();
+  const preview=page.locator('img[src^="data:image/jpeg"]');
+  await preview.waitFor();
+  await preview.evaluate(async img=>{
+    await img.decode();
+    if(img.naturalWidth!==1||img.naturalHeight!==1)throw Error('JPEG preview must decode to the expected dimensions');
+  });
   assert.equal(await page.evaluate(()=>window.__ciRevoked.length),1,
     'blob URL must be revoked even on successful decode');
   assert.equal(await file.inputValue(),'','same file can be selected again after reset');
