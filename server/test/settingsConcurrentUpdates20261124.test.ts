@@ -95,3 +95,61 @@ test('settings cache: an old in-flight SELECT cannot overwrite a newer committed
     'old read must not repopulate the shared five-second cache');
  }finally{await t.close();}
 });
+
+
+test('settings cache isolates nested objects and arrays on initial and repeated reads',async()=>{
+ let reads=0;
+ const svc=new SettingsService({query:async()=>{reads++;return [];}} as any);
+ const first=await svc.all();
+ const original=first.pricing.zones[0].name;
+ first.pricing.zones[0].name='Изменение только в локальной копии';
+ first.pricing.zones.push({id:'local',name:'Не сохранённая зона',km:5});
+ first.legal.brand='Not the approved brand';
+ const next=await svc.all();
+ assert.equal(next.legal.brand,'TrakSOS');
+ assert.equal(next.pricing.zones[0].name,original);
+ assert.equal(next.pricing.zones.some(x=>x.id==='local'),false);
+ const nested=await svc.get('pricing');
+ nested.zones.length=0;
+ assert.ok((await svc.get('pricing')).zones.length>0);
+ assert.equal(reads,1,'isolated results still use the same cache');
+});
+
+test('settings accepts own sections only and ignores malformed restored rows',async()=>{
+ let writes=0;
+ const svc=new SettingsService({
+  query:async()=>[
+   {key:'__proto__',value:{bad:true}},
+   {key:'constructor',value:{bad:true}},
+   {key:'shop',value:['not a section']},
+   {key:'legal',value:null},
+  ],
+  tx:async()=>{writes++;throw Error('unexpected transaction');},
+ } as any);
+ const all=await svc.all();
+ assert.equal(Object.hasOwn(all,'__proto__'),false);
+ assert.equal(Object.hasOwn(all,'constructor'),false);
+ assert.equal(Object.hasOwn(all.shop,'0'),false);
+ assert.equal(all.legal.brand,'TrakSOS');
+ for(const key of ['__proto__','constructor','toString','unknown']){
+  await assert.rejects(svc.set(key as any,{} as any,null),/Нет такой настройки/);
+ }
+ assert.equal(writes,0);
+});
+
+test('settings cache refreshes when wall clock moves backward',async()=>{
+ const realNow=Date.now;
+ let now=100_000;
+ let reads=0;
+ const svc=new SettingsService({query:async()=>[
+  {key:'shop',value:{closedTitle:'revision '+(++reads)}},
+ ]} as any);
+ Date.now=()=>now;
+ try{
+  assert.equal((await svc.get('shop')).closedTitle,'revision 1');
+  now+=100;
+  assert.equal((await svc.get('shop')).closedTitle,'revision 1');
+  now-=1000;
+  assert.equal((await svc.get('shop')).closedTitle,'revision 2');
+ }finally{Date.now=realNow;}
+});
