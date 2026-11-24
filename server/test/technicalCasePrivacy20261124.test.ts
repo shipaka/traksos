@@ -98,3 +98,35 @@ test('technical case review is independent, pending-only, with literal search an
     assert.equal(huge.status,404,'malformed case ID must not produce database HTTP 500');
   }finally{await t.close();}
 });
+
+
+test('technical cases recheck verification and admin role for a previously authenticated actor',
+  {timeout:60000}, async()=>{
+  const t=await setup();
+  try{
+    const {admin,expert}=await specialist(t);
+    const {TechnicalCasesService}=await import('../src/services/technicalCases.ts');
+    const svc=new TechnicalCasesService(t.db);
+    const capturedExpert=await t.db.one<any>('select * from users where id=$1',[expert.id]);
+    const capturedAdmin=await t.db.one<any>('select * from users where id=$1',[admin.id]);
+    const first=await svc.submit(capturedExpert,base);
+    assert.ok(first.id);
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[expert.id]);
+    assert.equal(await svc.canRead(capturedExpert),false);
+    await assert.rejects(svc.submit(capturedExpert,base),/проверенные специалисты/);
+    await assert.rejects(svc.approved(capturedExpert,''),/проверенным специалистам/);
+    await t.db.query("update users set roles=array['master']::text[] where id=$1",[expert.id]);
+    await t.db.query("update performer_profiles set verification='pending' where user_id=$1",[expert.id]);
+    assert.equal(await svc.canRead(capturedExpert),false);
+    await assert.rejects(svc.submit(capturedExpert,base),/проверенные специалисты/);
+    await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[expert.id]);
+    assert.equal(await svc.canRead(capturedExpert),true);
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);
+    await assert.rejects(svc.pending(capturedAdmin),/администратору/);
+    await assert.rejects(svc.decide(capturedAdmin,first.id!,true,'Проверены измерения и результаты'),/администратору/);
+    assert.equal((await t.db.one<any>('select review_state from technical_repair_cases where id=$1',[first.id]))?.review_state,'pending');
+    await t.db.query("update users set roles=array['admin']::text[] where id=$1",[admin.id]);
+    await svc.decide(capturedAdmin,first.id!,true,'Проверены измерения и результаты');
+    assert.equal((await svc.approved(capturedExpert,'Scania')).items.length,1);
+  }finally{await t.close();}
+});
