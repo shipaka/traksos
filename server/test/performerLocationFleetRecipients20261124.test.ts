@@ -8,6 +8,7 @@ test('performer GPS events stop reaching the historical driver after reassignmen
     const owner = await t.login('+79996567901');
     const driver = await t.login('+79996567902', 'driver');
     const worker = await t.login('+79996567903', 'master');
+    ok(await t.api('PUT', '/api/performer/profile', { kind: 'master', name: 'Иван', specialties: ['electric'], taxStatus: 'self_employed', inn: '780000000001' }, worker.token));
     const a = ok(await t.api('POST', '/api/vehicles', { brand: 'Scania', model: 'R', year: 2017, plate: 'А313АА178' }, owner.token));
     const b = ok(await t.api('POST', '/api/vehicles', { brand: 'Scania', model: 'R', year: 2018, plate: 'А314АА178' }, owner.token));
     const fleet = ok(await t.api('GET', '/api/fleet', undefined, owner.token));
