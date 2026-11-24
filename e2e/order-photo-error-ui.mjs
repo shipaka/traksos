@@ -228,6 +228,14 @@ try{
     !document.querySelector('input[type=file]').disabled &&
     document.querySelector('input[type=file]').value==='');
   assert(await page.evaluate(()=>window.__uploadFixture.events[0])==='synthetic-B','Wrong current upload event');
+  // Account switch during conversion (including a repeated token value
+  // accompanied by an explicit auth boundary) must never send that file.
+  await pick();await waitDecode(6);
+  await page.evaluate(()=>window.dispatchEvent(new Event('traksos-auth-external-change')));
+  await page.waitForFunction(()=>!document.querySelector('input[type=file]').disabled);
+  await releaseDecode(5);await settle();
+  assert(await posts()===2,'Old JPEG submitted after explicit auth boundary');
+  assert(await page.evaluate(()=>window.__uploadFixture.events.length)===1,'Auth-cancelled conversion emitted an event');
   assert(!jsErrors.length,'Runtime error: '+jsErrors.join('; '));
   console.log('PASS: order photo error/retry UI; review-only accessibility; private blob cleanup on logout; delayed upload route/auth/review boundaries');
 } catch(error) {
