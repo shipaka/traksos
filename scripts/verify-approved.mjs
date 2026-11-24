@@ -564,7 +564,7 @@ expect(shell.includes("effMode === 'performer' && isPerformer && b") &&
   'approved 18 Nov performer popup shows live dashboard and real order with close/ESC, not fake cards');
 expect(['Работа','Клиент и ТС','Расчёт','Чат','История'].every(label=>liveOrderUi.includes(label)) &&
   liveOrderUi.includes("ptab === 'finance' ? <Money d={d} />") &&
-  liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} />"),
+  liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} />"),
   'approved performer order separates live work/vehicle/finance/chat/history in real tabs');
 
 console.log('VISUAL APPROVAL PENDING: exact 19 Nov source PNG vs real Chromium on the final commit.');
