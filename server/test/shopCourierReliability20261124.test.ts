@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok} from './helpers.ts';
+import {ShopCourierDeliveries} from '../src/services/shopCourierDeliveries.ts';
 
 test('courier: concurrent assignment retries do not rotate the receipt nonce or duplicate notifications', {timeout:60000},async()=>{
  const t=await setup();
@@ -153,5 +154,60 @@ test('courier: revoked driver of the same fleet cannot reveal code or confirm a 
    'revoked driver cannot close or pay an old fleet shipment');
   assert.equal((await t.db.one<{status:string}>(
    'select status from shop_courier_deliveries where id=$1',[assigned.id]))?.status,'code_verified');
+ }finally{await t.close();}
+});
+
+
+test('courier: captured authorization cannot reveal or advance delivery after role revocation', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const admin=await t.login('+79990000001');
+  const buyer=await t.login('+79996671301');
+  const courier=await t.login('+79996671302');
+  await t.db.query("update users set roles=array['courier']::text[] where id=$1",[courier.id]);
+  const captured=await t.db.one<any>('select * from users where id=$1',[courier.id]);
+  const service=new ShopCourierDeliveries(t.db,{deliverStored:async()=>{}} as any);
+  const p=ok(await t.api('POST','/api/admin/shop/products',
+    {name:'Тестовая деталь для проверки роли',price:21500,stock:3},admin.token));
+  ok(await t.api('PUT','/api/admin/settings/shop',{enabled:true,delivery:true},admin.token));
+  const order=ok(await t.api('POST','/api/shop/orders',{
+   items:[{productId:p.id,qty:1}],delivery:'delivery',address:'Тестовый адрес, дом 21',
+  },buyer.token));
+  for(const status of ['confirmed','ready'])
+   ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/status`,{status},admin.token));
+  const assigned=ok(await t.api('POST',`/api/admin/shop/orders/${order.id}/courier`,
+   {courierId:courier.id},admin.token));
+  assert.equal((await service.list(captured)).length,1);
+  await t.db.query("update users set roles=array['client']::text[] where id=$1",[courier.id]);
+  assert.deepEqual(await service.list(captured),[]);
+  await assert.rejects(service.one(captured,assigned.id));
+  await assert.rejects(service.progress(captured,assigned.id,'picked_up'),/Доступ курьера отозван/);
+  await assert.rejects(service.setPresence(captured,true),/Доступ курьера отозван/);
+  assert.equal((await t.db.one<{status:string}>(
+   'select status from shop_courier_deliveries where id=$1',[assigned.id]))?.status,'assigned');
+  await t.db.query("update users set roles=array['courier']::text[] where id=$1",[courier.id]);
+  assert.equal((await service.progress(captured,assigned.id,'picked_up')).status,'picked_up');
+ }finally{await t.close();}
+});
+
+test('courier: availability and its audit roll back together on audit failure', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const courier=await t.login('+79996671303');
+  await t.db.query("update users set roles=array['courier']::text[] where id=$1",[courier.id]);
+  const actor=await t.db.one<any>('select * from users where id=$1',[courier.id]);
+  const svc=new ShopCourierDeliveries(t.db,{} as any);
+  await svc.setPresence(actor,false);
+  const delimiter=String.fromCharCode(36,36);
+  await t.db.exec('create function reject_courier_availability_audit() returns trigger language plpgsql as '+delimiter+
+    " begin if new.action='courier.availability' then raise exception 'synthetic audit outage'; end if; return new; end; "+delimiter+
+    '; create trigger reject_courier_availability_audit before insert on audit_log for each row execute function reject_courier_availability_audit();');
+  try{
+   await assert.rejects(svc.setPresence(actor,true),/synthetic audit outage/);
+   assert.equal((await svc.presence(actor)).online,false);
+  }finally{
+   await t.db.exec('drop trigger reject_courier_availability_audit on audit_log; drop function reject_courier_availability_audit();');
+  }
+  assert.equal((await svc.setPresence(actor,true)).online,true);
  }finally{await t.close();}
 });
