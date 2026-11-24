@@ -201,3 +201,75 @@ test('ledger-related support also writes its first message inside the same trans
     'ledger first message must be inside the ticket transaction');
   assert.equal(notified,false,'failed atomic create must not notify staff');
 });
+
+
+test('HTTP/PG: reply inbox failure rolls back both message and first staff response',async()=>{
+  const t=await setup();
+  try{
+    const owner=await t.login(phone(4104));
+    const admin=await t.login('+79990000001');
+    const ticket=ok(await t.api('POST','/api/support',{
+      topic:'Не работает приложение',text:'Не загружается список заявок',
+    },owner.token));
+    const id=ticket.id;
+    await t.db.exec(`
+      create function reject_support_reply_inbox() returns trigger language plpgsql as $$
+      begin
+        if new.kind='support' then raise exception 'synthetic reply inbox failure'; end if;
+        return new;
+      end; $$;
+      create trigger reject_support_reply_inbox before insert on notifications
+        for each row execute function reject_support_reply_inbox();
+    `);
+    const path='/api/support/'+id+'/messages';
+    for(const token of [admin.token,owner.token]){
+      const failed=await t.api('POST',path,{body:'Проверка атомарного ответа'},token);
+      assert.ok(failed.status>=400);
+    }
+    const before=ok(await t.api('GET','/api/support/'+id,undefined,owner.token));
+    assert.equal(before.messages.length,1);
+    assert.equal(before.firstStaffReplyAt,null);
+    const assignment=await t.db.one<{assignee_id:string|null}>(
+      'select assignee_id from support_tickets where id=$1',[id]);
+    assert.equal(assignment?.assignee_id,null);
+    await t.db.exec(`
+      drop trigger reject_support_reply_inbox on notifications;
+      drop function reject_support_reply_inbox();
+    `);
+    const after=ok(await t.api('POST',path,{body:'Ответ специалиста после восстановления'},admin.token));
+    assert.equal(after.messages.length,2);
+    assert.ok(after.firstStaffReplyAt);
+    const inbox=await t.db.one<{n:number}>(`
+      select count(*)::int as n from notifications
+       where user_id=$1 and kind='support' and data->>'ticketId'=$2
+         and title like 'Поддержка ответила%'`,[owner.id,id]);
+    assert.equal(inbox?.n,1);
+  }finally{await t.close();}
+});
+
+test('HTTP/PG: private follow-up bypasses a former moderator and reaches active staff',async()=>{
+  const t=await setup();
+  try{
+    const owner=await t.login(phone(4105));
+    const former=await t.login(phone(4106));
+    const admin=await t.login('+79990000001');
+    const ticket=ok(await t.api('POST','/api/support',{
+      topic:'Другое',text:'Нужна помощь специалиста',
+    },owner.token));
+    const id=ticket.id;
+    // Model an assignment that survives a staff-role revocation.
+    await t.db.query('update support_tickets set assignee_id=$2 where id=$1',[id,former.id]);
+    const path='/api/support/'+id+'/messages';
+    const body='Конфиденциальное уточнение по обращению';
+    ok(await t.api('POST',path,{body},owner.token));
+    const recipients=await t.db.query<{user_id:string}>(`
+      select user_id from notifications where kind='support' and data->>'ticketId'=$1
+        and body=$2`,[id,body]);
+    assert.deepEqual(recipients.map(row=>row.user_id),[admin.id]);
+    assert.equal((await t.api('GET','/api/support/'+id,undefined,former.token)).status,403);
+    ok(await t.api('POST',path,{body:'Новый ответ действующего сотрудника'},admin.token));
+    const assigned=await t.db.one<{assignee_id:string}>(
+      'select assignee_id from support_tickets where id=$1',[id]);
+    assert.equal(assigned?.assignee_id,admin.id);
+  }finally{await t.close();}
+});
