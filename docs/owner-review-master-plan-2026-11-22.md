@@ -1079,3 +1079,12 @@
 - [x] Исправлен доказанный конфликт accessible name: [584b7e2](https://github.com/shipaka/traksos/commit/584b7e22e2cea657f2cb942a57ef56764c74c84d). Реальная кнопка имеет aria-label «Очистить историю TrakBot» и видимую подпись «Очистить мою переписку». Playwright проверяет оба контракта и выполняет обычный pointer click; DELETE и все проверки изоляции сохранены.
 - [x] Усилены отрицательные проверки поздних POST/DELETE/поиска TechBase: [ed72b63](https://github.com/shipaka/traksos/commit/ed72b63a3bcc771f00b2ad3538ab7f8be98697d0), ожидание двух кадров браузера после разрешения отложенного ответа вместо немедленной проверки; добавлен контроль блокировки composer при DELETE.
 - [ ] Фактический новый exact-HEAD CI, успешное завершение всей последовательности B→C и TechBase. P1-B не считать закрытым до прогона. Production UI/API, 617/618, main/VPS не изменены.
+
+
+### 24.11.2026 · NATIVE-RUNTIME-ROLE-LOG-20261124 · Android API29/35, идентичность экрана и сохранение crash/ANR
+
+Независимый QA [#7124086762](https://github.com/shipaka/traksos/pull/274#issuecomment-7124086762): ранее API29 проверял только React marker и различие PNG, а logcat очищался между ролями.
+
+- [x] Код [e9c9bad](https://github.com/shipaka/traksos/commit/e9c9bad3ec728936795b29781ac1638f9f081023): убран optional chaining из CDP-выражения для совместимости с Chromium 74 на Android 10, условия проверки роли сохранены.
+- [x] Код [48065bb](https://github.com/shipaka/traksos/commit/48065bb9d1b222baf4bf87ae35e3e00f403174d1): независимая проверка DOM установленного debug APK теперь обязательна и для API29; свежий role marker, реальные PNG и проверка процесса остаются. Crash/event logcat очищается только до запуска, сохраняется по этапам и при ошибке; TrakSOS am_anr/am_crash и AndroidRuntime crash блокируют PASS, посторонний Pixel Launcher не считается падением TrakSOS.
+- [ ] Фактический Android runtime API29/35 на exact HEAD и проверка артефактов ещё не подтверждены. Не считать дефект закрытым по записи кода. P1-A мобильного браузера остаётся отдельным. Production UI/API, 617/618, main/VPS не затронуты.
