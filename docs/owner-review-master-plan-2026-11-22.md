@@ -941,3 +941,12 @@
 - [x] Код [166c505](https://github.com/shipaka/traksos/commit/166c5055f0004012f22c9bd1b31e8f43bfb8d18d): активный неудалённый автор, актуальные staff/driver права и вес автора читаются под транзакционными блокировками; отозванный staff не читает чужую историю и не модерирует отзывы. Формула веса и прежние права активных участников по ID сохранены.
 - [x] Написана PostgreSQL-регрессия [9b032ee](https://github.com/shipaka/traksos/commit/9b032eebc38bda409055c3ef4151b7e15e11f70a): captured AuthUser после отзыва staff, блокировка/soft deletion участника, отсутствие записи/скрытия при отказе, восстановление staff.
 - [ ] Фактический exact-HEAD CI/typecheck/npm test ещё не подтверждены. На предыдущем SHA daca4ed нагрузки и справочник прошли, остальные четыре gate отменены при обновлении ветки, не считаются зелёными. UI 617/618, рейтинг-формула, main/VPS сохранены. Участки освобождаются после отчёта.
+
+
+### 24.11.2026 · CI-DOCUMENTS-MAP-CLOCK-20261124 · устранение падений 124, 370–373
+
+Закрепление [#7122664431](https://github.com/shipaka/traksos/pull/274#issuecomment-7122664431), реальный [run 45328903988](https://github.com/shipaka/traksos/actions/runs/45328903988) SHA 88668f1. 5/6 workflows success, общий CI дошёл до server tests (10 failures).
+
+- [x] [3ef718b](https://github.com/shipaka/traksos/commit/3ef718be52fa0af34ddd9cb6e87c30169a8ac2bb): исправлена фикстура 124: явно проверяется отказ auth по неразрешённому номеру; для service-level теста отзыва прав берётся синтетический captured actor, а не ослабляется production allowlist.
+- [x] [a544fe1](https://github.com/shipaka/traksos/commit/a544fe10d0702730287ad824596a00726a3a5916): подтверждение услуг и confirmDue используют PostgreSQL clock, согласованный с публичной картой; booking clock сохранён. [013cf45](https://github.com/shipaka/traksos/commit/013cf45f205361fd9a4f2fb13c8b14d3669315bb) — реальная HTTP/PG регрессия timestamps; запрет будущих/просроченных доказательств не ослаблен.
+- [ ] Exact HEAD CI для исправлений не подтверждён. Shop test 477 (отмена подтверждённого заказа) остаётся нерешённым бизнес-вопросом #7116717074; не менять ожидание или право клиента без согласования. Insurance/warranty fixtures взял другой исполнитель. 617/618, main/VPS не менялись. Участки освобождаются после отчёта.
