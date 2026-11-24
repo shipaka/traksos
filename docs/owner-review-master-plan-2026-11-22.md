@@ -848,3 +848,12 @@
 - [x] Код [d30f83f](https://github.com/shipaka/traksos/commit/d30f83f6240662fc71d028d9259a3239fce27520): разрешены только собственные ключи defaultSettings, некорректные типы секций восстановленной БД игнорируются.
 - [x] Написаны три регрессии [38f38a6](https://github.com/shipaka/traksos/commit/38f38a67b8bf7d79ef18c8b67cae9303510bcabc): мутация вложенных объектов, унаследованные ключи и повреждённые секции, откат часов.
 - [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI не подтверждено. Бизнес-значения, тарифы, payment/shop gates, 617/618, main/VPS не изменены. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · SETTINGS-COMMIT-ACK-20261124 · подтверждение сохранённых настроек
+
+Закрепление [#7122159790](https://github.com/shipaka/traksos/pull/274#issuecomment-7122159790), после освобождения #7122149760.
+
+- [x] Код [a170823](https://github.com/shipaka/traksos/commit/a1708234e80fbfc4197812b8e431ec2c6183eb77): set возвращает секцию своей успешной транзакции с defaults и прежними policy clamps, без второго SELECT после commit; некорректная сохранённая секция не переносит индексные ключи в новую запись.
+- [x] Написана PostgreSQL-регрессия [7e0f8c1](https://github.com/shipaka/traksos/commit/7e0f8c1c393b4570f0412640b35f91a971f59ee4): недоступное внешнее чтение не отменяет подтверждение записи, восстановление повреждённого массива, единый audit.
+- [ ] Exact-HEAD CI/typecheck/npm test ещё не подтверждены. Бизнес-значения, payment/shop gates, 617/618, main/VPS сохранены.
