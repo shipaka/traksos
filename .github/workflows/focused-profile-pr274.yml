@@ -1,0 +1,65 @@
+name: PR274 profile account isolation retry
+on:
+  push:
+    branches: ['ci-focus/pr274-profile-race-20261124']
+permissions:
+  contents: read
+concurrency:
+  group: pr274-profile-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  retry-failures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Check all previously failed scenarios
+        run: |
+          set -u
+          mkdir -p e2e/shots
+          results=e2e/shots/pr274-retry-results.tsv
+          printf 'test\tstatus\texit_code\n' > "$results"
+          passed=0; failed=0; timed_out=0
+          run_case() {
+            local name="$1" rc status
+            echo "::group::$name"
+            if timeout --kill-after=10s 240s node "$name"; then
+              rc=0; status=PASS; passed=$((passed+1))
+            else
+              rc=$?
+              if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+                status=TIMEOUT; timed_out=$((timed_out+1))
+              else
+                status=FAIL; failed=$((failed+1))
+              fi
+            fi
+            echo '::endgroup::'
+            printf '%s\t%s\t%s\n' "$name" "$status" "$rc" >> "$results"
+            echo "RESULT $status $name (exit $rc)"
+          }
+          run_case e2e/client-account-switch-20261124.mjs
+          echo "TOTAL: $passed PASS, $failed FAIL, $timed_out TIMEOUT"
+          {
+            echo '### PR274 — targeted 1-scenario retry'
+            echo "PASS: $passed / FAIL: $failed / TIMEOUT: $timed_out"
+            echo '| Scenario | Result | Exit code |'
+            echo '|---|---|---|'
+            tail -n +2 "$results" | while IFS=$'\t' read -r name status rc; do
+              printf '| %s | %s | %s |\n' "$name" "$status" "$rc"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+          test "$((passed+failed+timed_out))" -eq 1
+          test "$((failed+timed_out))" -eq 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr274-retry-results
+          path: e2e/shots/
+          if-no-files-found: ignore
