@@ -30,6 +30,7 @@ test('insurance expiry reminders: a consent withdrawal between scan and claim ne
     return result;
    },
    one:(sql:string,params?:any[])=>t.db.one(sql,params),
+   tx:t.db.tx.bind(t.db),
   } as unknown as Db;
   const notifier=new Notifier(t.db,t.app.hub,t.push);
   await sendInsuranceReminders(raced,notifier);
@@ -77,5 +78,40 @@ test('insurance expiry reminders: pagination processes beyond the first 500 due 
   assert.equal((await t.db.one<{n:number}>(
    "select count(*)::int as n from notifications where user_id=$1 and kind='insurance_expiry'",
    [owner.id]))?.n,501,'a second scheduler call is not a second reminder');
+ }finally{await t.close();}
+});
+
+test('insurance expiry reminders: inbox failure rolls back marker, parallel retry stores exactly once', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79996672103');
+  const vehicle=ok(await t.api('POST','/api/vehicles',{
+   brand:'Scania',model:'R',year:2018,plate:'А556АА178',
+  },owner.token));
+  const request=ok(await t.api('POST','/api/vehicle-service-requests',{
+   vehicleId:vehicle.id,kind:'insurance',comment:'Проверка атомарного напоминания ОСАГО',
+  },owner.token));
+  await t.db.query("update vehicle_service_requests set status='completed',policy_expires_on=current_date + 7 where id=$1",[request.id]);
+  await t.db.query('update users set insurance_reminders_enabled=true where id=$1',[owner.id]);
+  const notifier=new Notifier(t.db,t.app.hub,t.push);
+  // Fail the actual SQL inbox write after the reminder marker has been set.
+  await t.db.exec(`create function fail_insurance_reminder_inbox() returns trigger language plpgsql as $$
+   begin
+    if new.kind='insurance_expiry' then raise exception 'insurance inbox fault'; end if;
+    return new;
+   end; $$;
+   create trigger fail_insurance_reminder_inbox before insert on notifications
+   for each row execute function fail_insurance_reminder_inbox();`);
+  await assert.rejects(sendInsuranceReminders(t.db,notifier),/insurance inbox fault/);
+  assert.equal((await t.db.one<{reminder_7_sent_at:Date|null}>(
+   'select reminder_7_sent_at from vehicle_service_requests where id=$1',[request.id]))?.reminder_7_sent_at,null);
+  assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and kind='insurance_expiry'",[owner.id]))?.n,0);
+  await t.db.exec('drop trigger fail_insurance_reminder_inbox on notifications; drop function fail_insurance_reminder_inbox();');
+  await Promise.all(Array.from({length:6},()=>sendInsuranceReminders(t.db,notifier)));
+  assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and kind='insurance_expiry'",[owner.id]))?.n,1);
+  assert.ok((await t.db.one<{reminder_7_sent_at:Date|null}>(
+   'select reminder_7_sent_at from vehicle_service_requests where id=$1',[request.id]))?.reminder_7_sent_at);
  }finally{await t.close();}
 });
