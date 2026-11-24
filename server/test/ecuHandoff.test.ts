@@ -29,6 +29,13 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
   [source.id,master.id,t.clock.now(),'Проверены массы и питания, нет связи с блоком управления']);
  const countPayments=async()=>(await t.db.query('select id from payments where order_id=$1',[source.id])).length;
  const beforePayments=await countPayments();
+ // A former technician cannot create a handoff after reassignment.
+ await t.db.query('update orders set performer_id=$2 where id=$1',[source.id,expert.id]);
+ assert.equal((await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
+  summary:'Проверены цепи питания и масса, подозрение на ЭБУ'
+ },master.token)).status,403);
+ assert.equal((await t.db.query('select id from ecu_handoffs where source_order_id=$1',[source.id])).length,0);
+ await t.db.query('update orders set performer_id=$2 where id=$1',[source.id,master.id]);
  const sent=ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
   summary:'Проверены цепи питания и масса, подозрение на ЭБУ, VIN VF611MTA000123456, номер А222АА178'
  },master.token));
