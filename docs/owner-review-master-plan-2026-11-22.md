@@ -1039,3 +1039,14 @@
 
 - [x] Код CI [8618fd4](https://github.com/shipaka/traksos/commit/8618fd408d785eb40e96610591b9590c6b13ff27): шаг активных заявок сохраняет возможность снять остальные PNG, но финальный обязательный шаг проверяет исходный outcome и завершает job с ошибкой при failure, после публикации артефактов. Postgres healthcheck явно использует postgres/traksos.
 - [ ] Новое исполнение exact-HEAD GitHub Actions не подтверждено; визуальная приёмка PNG отдельна. 617/618, тесты, production API, main/VPS не изменялись. P1 vehicleReference fixture закреплён за #7123780475.
+
+
+### 24.11.2026 · VISUAL-RUNTIME-COVERAGE-20261124 · полный контроль поздних исключений браузера
+
+Закрепление [#7123874661](https://github.com/shipaka/traksos/pull/274#issuecomment-7123874661), независимый QA [P2 #7123854294](https://github.com/shipaka/traksos/pull/274#issuecomment-7123854294). Ранее Android guest и authenticated screenshots могли завершить PASS после позднего pageerror; аналогичные пропуски найдены в PC cabinets, courier support, debug preview и трёх контекстах active-work без слушателя.
+
+- [x] Общий sticky pageerror gate [579eafb](https://github.com/shipaka/traksos/commit/579eafbc0fcd53411f55138bbc04c2bbec943d22) и реальный Chromium negative control [e51a8c2](https://github.com/shipaka/traksos/commit/e51a8c29e119a5278f5f0bdf5d5f2024ebe577ae): поздняя ошибка после чистого checkpoint при видимом DOM, сохранение через навигацию, независимый чистый контекст.
+- [x] Android guest 7 ширин [9c66744](https://github.com/shipaka/traksos/commit/9c66744ca7e3507cd8d3fd46c19e39768aab2be8), Android owner/master меню и вложенные разделы [6f8c51e](https://github.com/shipaka/traksos/commit/6f8c51e92e27e18b0ed3c2260d8976ffb9bd8eae): контроль после переходов и перед завершением.
+- [x] ПК/мобильные кабинеты и инспекция [b023712](https://github.com/shipaka/traksos/commit/b023712ed9a0f26f6dd8ec30c5ced4499c802a5b), курьер 1440/390 и поддержка [dd7a9e7](https://github.com/shipaka/traksos/commit/dd7a9e7bdfa5ef42c0c5585f87c88d3cef7c68cb), активные заявки, мобильный владелец, ошибки API/retry [9637d2b](https://github.com/shipaka/traksos/commit/9637d2b0ab56db499c9be5c25529b583505c4c18), DEBUG и release-browser [2f3e79f](https://github.com/shipaka/traksos/commit/2f3e79f0585b0d8f7ca652c6b2d5fa952b0fc84d).
+- [x] Обязательный Chromium negative control подключён к visual workflow [b11b0fb](https://github.com/shipaka/traksos/commit/b11b0fb7584f65f2049f6b59ad48ff97913f7e2b). Старые assertions, маршруты, скриншоты и production код сохранены.
+- [ ] Реальный прогон нового exact HEAD и визуальная приёмка PNG. Не считать P2 принятым до исполнения. P1 vehicleReference fixture отдельно ждёт CI. 617/618, main/VPS не менялись.
