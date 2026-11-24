@@ -7,6 +7,9 @@ import {chromium} from 'playwright';
 const stubs={
   '../api.ts': `
     export function getToken(){return window.__privacyMock.token;}
+    export function onEvent(){return ()=>{};}
+    export function compressImage(){return new Promise(resolve=>{window.__privacyMock.compress=resolve;});}
+    export function authedImage(path){return new Promise(resolve=>{window.__privacyMock.photo={path,resolve};});}
     export function fmtTime(value){return String(value);}
     export function get(path) {
       const m=window.__privacyMock;
@@ -16,10 +19,12 @@ const stubs={
           m.pending={resolve,reject,user:window.__privacyUser?.id};
         });
       }
+      if(path==='/api/performer/documents')return new Promise((resolve,reject)=>{m.docs={resolve,reject};});
       if(path==='/api/me/export')return new Promise(resolve=>{m.exportResolve=resolve;});
       throw Error('Unexpected privacy GET '+path);
     }
     export function post(path) {
+      if(path.startsWith('/api/performer/documents')){window.__privacyMock.docWrites.push(path);return Promise.resolve({ok:true});}
       if(path!=='/api/me/delete')throw Error('Unexpected POST '+path);
       window.__privacyMock.posts.push({path,user:window.__privacyUser?.id});
       return Promise.resolve({deleteRequestedAt:'2026-11-24T00:00:00Z',deleteAt:'2027-01-08T00:00:00Z',graceDays:45});
@@ -31,8 +36,11 @@ const stubs={
     }
   `,
   '../ui.tsx': `
-    export function useMe(){return {me:window.__privacyUser};}
+    export function useMe(){return {me:window.__privacyUser,reload:async()=>{}};}
     export function useAction(){return {busy:false,run:async(fn)=>await fn()};}
+    export function useToast(){return ()=>{};}
+    export function Loading(){return <div>Загружаю…</div>;}
+    export function go(){}
     export function Back(){return <a href="#/profile">Профиль</a>;}
   `,
 };
@@ -41,11 +49,14 @@ const bundle=await build({
     import React from 'react';
     import {createRoot} from 'react-dom/client';
     import {Privacy} from './web/src/screens/privacy.tsx';
-    window.__privacyMock={gets:[],posts:[],deletes:[],pending:null,token:'A',exportResolve:null};
+    import {Documents} from './web/src/screens/documents.tsx';
+    window.__privacyMock={gets:[],posts:[],deletes:[],pending:null,token:'A',exportResolve:null,docWrites:[],compress:null,docs:null,photo:null};
     window.__privacyUser={id:'fixture-A'};
     const root=createRoot(document.getElementById('root'));
-    window.__setPrivacyUser=(id,token=id)=>{window.__privacyMock.token=token;window.__privacyUser={id};root.render(React.createElement(Privacy));};
-    root.render(React.createElement(Privacy));
+    let Screen=Privacy;
+    window.__setPrivacyUser=(id,token=id)=>{window.__privacyMock.token=token;window.__privacyUser={id};root.render(React.createElement(Screen));};
+    window.__showDocs=()=>{Screen=Documents;root.render(React.createElement(Screen));};
+    root.render(React.createElement(Screen));
   `,resolveDir:process.cwd(),sourcefile:'privacy-isolated-entry.tsx',loader:'tsx'},
   bundle:true,write:false,format:'iife',platform:'browser',jsx:'automatic',
   plugins:[{
@@ -125,6 +136,28 @@ try{
   await page.evaluate(()=>window.__privacyMock.pending.resolve({deleteRequestedAt:null,deleteAt:null,graceDays:30}));
   await page.getByText(/Через 30 дней аккаунт будет закрыт/).waitFor();
   check(await page.evaluate(()=>window.__privacyDownloads)===0,'Old session export downloaded after bearer rotation');
+  // Confidential document rows and in-flight image preparation are account-scoped.
+  await page.evaluate(()=>window.__showDocs());
+  await page.waitForFunction(()=>!!window.__privacyMock.docs);
+  const docs=(name,id)=>({verification:'pending',complete:true,required:[
+    {kind:'passport',name,hint:'fixture',doc:{id,status:'pending'}},
+    {kind:'selfie',name:'Селфи',hint:'fixture',doc:null}
+  ]});
+  await page.evaluate(data=>window.__privacyMock.docs.resolve(data),docs('PRIVATE PASSPORT B','private-B'));
+  await page.getByText('PRIVATE PASSPORT B',{exact:true}).waitFor();
+  await page.waitForFunction(()=>!!window.__privacyMock.photo);
+  await page.locator('input[type=file]').first().setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('synthetic')});
+  await page.waitForFunction(()=>!!window.__privacyMock.compress);
+  check(await page.locator('input[type=file]').last().isDisabled(),'Parallel document compression enabled');
+  check(await page.getByRole('button',{name:'Удалить конфиденциальные данные'}).isDisabled(),'Deletion enabled during compression');
+  await page.evaluate(()=>{window.__oldPhoto=window.__privacyMock.photo;window.__privacyMock.docs=null;window.__setPrivacyUser('fixture-C');});
+  await page.waitForFunction(()=>!!window.__privacyMock.docs);
+  check(await page.getByText('PRIVATE PASSPORT B',{exact:true}).count()===0,'Old passport metadata visible');
+  await page.evaluate(()=>{window.__privacyMock.compress('data:image/png;base64,AAAA');window.__oldPhoto.resolve(URL.createObjectURL(new Blob(['old'],{type:'image/png'})));});
+  await page.evaluate(data=>window.__privacyMock.docs.resolve(data),docs('PRIVATE PASSPORT C','private-C'));
+  await page.getByText('PRIVATE PASSPORT C',{exact:true}).waitFor();
+  check(await page.locator('img').count()===0,'Late old photo became visible');
+  check(await page.evaluate(()=>window.__privacyMock.docWrites.length)===0,'Old compressed document posted to new account');
   check(errors.length===0,'Browser exceptions: '+errors.join(';'));
   console.log('PASS: privacy account switch, loading/error/retry, real grace and delete/cancel');
 }finally{await browser.close();}
