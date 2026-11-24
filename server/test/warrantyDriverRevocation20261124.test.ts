@@ -118,17 +118,15 @@ test('revoked fleet claimant cannot reopen, read, appeal or approve historical w
     } finally {
       await t.db.exec('drop trigger fail_warranty_remedy_inbox on notifications; drop function fail_warranty_remedy_inbox();');
     }
-    const first=ok(await t.api('POST',offerPath,remedyPayload,admin.token));
-    const repeated=ok(await t.api('POST',offerPath,remedyPayload,admin.token));
-    assert.equal(repeated.id,first.id);
+    const attempts=await Promise.all(Array.from({length:4},()=>t.api('POST',offerPath,remedyPayload,admin.token)));
+    const first=ok(attempts[0]);
+    for(const attempt of attempts)assert.equal(ok(attempt).id,first.id);
     assert.equal((await t.db.one<{n:number}>(
       "select count(*)::int as n from notifications where kind='warranty' and data->>'jobId'=$1",[first.id]))?.n,2,
       'one durable inbox per recipient, no duplicate on retry');
     const respondPath=`/api/warranty-remedies/${first.id}/respond`;
-    for(let i=0;i<2;i++){
-      const declined=ok(await t.api('POST',respondPath,{accept:false},performer.token));
-      assert.equal(declined.status,'declined');
-    }
+    const declines=await Promise.all(Array.from({length:4},()=>t.api('POST',respondPath,{accept:false},performer.token)));
+    for(const attempt of declines)assert.equal(ok(attempt).status,'declined');
     const declinedRow=await t.db.one<{accepted_at:Date|null;updated_at:Date|null}>(
       'select accepted_at,updated_at from warranty_rework_jobs where id=$1',[first.id]);
     assert.ok(declinedRow?.updated_at,'declining never clears updated_at');
