@@ -37,6 +37,8 @@ const result=await build({
     "window.renderLogin('register','register-1');"
   ].join('\n'),resolveDir:process.cwd(),sourcefile:'auth-flow-proof.tsx',loader:'tsx'},
   bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+  // Explicit output name: esbuild otherwise reports the in-memory bundle as <stdout>.
+  outfile:'auth-flow-proof.js',
   plugins:[{name:'auth-isolation',setup(b){
     b.onResolve({filter:/./},a=>Object.hasOwn(stubs,a.path)?{path:a.path,namespace:'auth-stub'}:undefined);
     b.onLoad({filter:/./,namespace:'auth-stub'},a=>({resolveDir:process.cwd(),
