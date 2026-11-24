@@ -302,11 +302,11 @@ export class VehicleReferenceService {
   }
 
   async brands(actor: AuthUser, context: CatalogRoleContext,
-    options: { includeHeavy?: boolean; workflow?: 'garage' | 'parts' | 'insurance' | 'inspection' | 'repair'; q?: string } = {}) {
+    options: { includeHeavy?: boolean; workflow?: 'garage' | 'parts' | 'insurance' | 'inspection' | 'repair'; q?: string } = {}, db: Queryable = this.db) {
     this.checkContext(actor, context);
     const categories = vehicleCategoriesForContext(context, options);
     const q = (options.q ?? '').normalize('NFKC').trim().slice(0, 80);
-    const records = await this.db.query<BrandRow>(
+    const records = await db.query<BrandRow>(
       'select b.category,b.brand_key as key,b.display_name as name,b.aliases,s.source_key ' +
       'from vehicle_ref_brands b join vehicle_ref_snapshots v on v.id=b.snapshot_id ' +
       'join vehicle_ref_sources s on s.source_key=v.source_key ' +
@@ -330,7 +330,7 @@ export class VehicleReferenceService {
   }
 
   async models(actor: AuthUser, context: CatalogRoleContext, category: VehicleCategory,
-    brandKey: string, options: { includeHeavy?: boolean; workflow?: 'garage' | 'parts' | 'insurance' | 'inspection' | 'repair'; year?: number | null; q?: string } = {}) {
+    brandKey: string, options: { includeHeavy?: boolean; workflow?: 'garage' | 'parts' | 'insurance' | 'inspection' | 'repair'; year?: number | null; q?: string } = {}, db: Queryable = this.db) {
     this.checkContext(actor, context);
     const categories = vehicleCategoriesForContext(context, options);
     if (!categories.includes(category)) throw forbidden('Категория не разрешена в выбранном сценарии');
@@ -339,7 +339,7 @@ export class VehicleReferenceService {
     if (year != null && (!Number.isInteger(year) || year < 1900 || year > 2100))
       throw bad('vehicle_ref_year', 'Некорректный год');
     const q = normalizeAlias((options.q ?? '').slice(0, 80));
-    const rows = await this.db.query<ModelRow>(
+    const rows = await db.query<ModelRow>(
       'select m.category,m.brand_key,m.model_key as key,m.display_name as name,m.aliases,' +
       'm.year_from,m.year_to,s.source_key ' +
       'from vehicle_ref_models m join vehicle_ref_snapshots v on v.id=m.snapshot_id ' +
@@ -366,30 +366,35 @@ export class VehicleReferenceService {
 
   async validateSelection(actor: AuthUser, context: CatalogRoleContext, selection: ReferenceSelection,
     options: { includeHeavy?: boolean; workflow?: 'garage' | 'parts' | 'insurance' | 'inspection' | 'repair' } = {}) {
-    const brands = await this.brands(actor, context, options);
-    const brand = brands.find((b) => b.key === selection.brandKey && b.category === selection.category);
-    if (brand?.conflict) throw conflict('vehicle_ref_brand_conflict', 'Название марки различается между источниками');
-    const models = await this.models(actor, context, selection.category, selection.brandKey,
-      { ...options, year: selection.year });
-    const model = models.find((m) => m.key === selection.modelKey);
-    if (model?.conflict) throw conflict('vehicle_ref_model_conflict', 'Описание модели различается между источниками');
-    // The brand and the model must be supported by the SAME approved source.
-    // A composite "brand from A, model from B" must never claim to be an
-    // attested catalogue entry for A. Pick a deterministic common source.
-    const common = model && brand ? model.sources.filter((key) => brand.sources.includes(key)).sort() : [];
-    if (brand && model && !common.length)
-      throw conflict('vehicle_ref_provenance_conflict','Марка и модель не подтверждены одним источником');
-    try {
-      const selectedEntry=validateReferenceSelection(brands, models.map((m): ReferenceModel =>
-        ({ category: m.category, brandKey: m.brand_key, key: m.key, name: m.name, aliases: m.aliases,
-          yearFrom: m.year_from, yearTo: m.year_to, sourceKey: m.source_key })), selection);
-      return {
-        ...selectedEntry,
-        brand:{...selectedEntry.brand,sourceKey:common[0]},
-        model:{...selectedEntry.model,sourceKey:common[0]},
-      };
-    } catch (e) {
-      throw bad('vehicle_ref_selection_invalid', (e as Error).message);
-    }
+    return this.db.tx(async db => {
+    // A concurrent revision switch or rights revocation must not mix rows
+    // from two snapshots into a single verified selection.
+    await db.query('set transaction isolation level repeatable read, read only');
+      const brands = await this.brands(actor, context, options, db);
+      const brand = brands.find((b) => b.key === selection.brandKey && b.category === selection.category);
+      if (brand?.conflict) throw conflict('vehicle_ref_brand_conflict', 'Название марки различается между источниками');
+      const models = await this.models(actor, context, selection.category, selection.brandKey,
+        { ...options, year: selection.year }, db);
+      const model = models.find((m) => m.key === selection.modelKey);
+      if (model?.conflict) throw conflict('vehicle_ref_model_conflict', 'Описание модели различается между источниками');
+      // The brand and the model must be supported by the SAME approved source.
+      // A composite "brand from A, model from B" must never claim to be an
+      // attested catalogue entry for A. Pick a deterministic common source.
+      const common = model && brand ? model.sources.filter((key) => brand.sources.includes(key)).sort() : [];
+      if (brand && model && !common.length)
+        throw conflict('vehicle_ref_provenance_conflict','Марка и модель не подтверждены одним источником');
+      try {
+        const selectedEntry=validateReferenceSelection(brands, models.map((m): ReferenceModel =>
+          ({ category: m.category, brandKey: m.brand_key, key: m.key, name: m.name, aliases: m.aliases,
+            yearFrom: m.year_from, yearTo: m.year_to, sourceKey: m.source_key })), selection);
+        return {
+          ...selectedEntry,
+          brand:{...selectedEntry.brand,sourceKey:common[0]},
+          model:{...selectedEntry.model,sourceKey:common[0]},
+        };
+      } catch (e) {
+        throw bad('vehicle_ref_selection_invalid', (e as Error).message);
+      }
+    });
   }
 }
