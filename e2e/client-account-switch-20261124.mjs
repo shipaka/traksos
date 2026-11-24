@@ -92,6 +92,7 @@ const b=await build({
    createRoot(document.getElementById('root')).render(<App/>);
  `},
  bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+ outdir:'./e2e/.tmp-client-account-switch',
  plugins:[{name:'stub-external-and-preserve-private-read',setup(b){
    b.onResolve({filter:/./},a=>{
      if(Object.hasOwn(stubs,a.path))return {path:a.path,namespace:'client-stub'};
@@ -102,6 +103,7 @@ const b=await build({
  }}]
 });
 const js=b.outputFiles.find(x=>x.path.endsWith('.js'));
+if(!js)throw Error('Client account switch bundle did not produce JavaScript');
 const browser=await chromium.launch();
 try {
  const page=await browser.newPage({viewport:{width:1440,height:920}}),errors=[];
