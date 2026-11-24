@@ -52,7 +52,7 @@ const bundle = await build({
         if(args.path==='../api.ts')return {path:'api',namespace:'trakbot-stub'};
         if(args.path.endsWith('.css'))return {path:args.path,namespace:'trakbot-style'};
       });
-      b.onLoad({filter:/./,namespace:'trakbot-stub'},args=>({
+      b.onLoad({filter:/./,namespace:'trakbot-stub'},args=>({resolveDir:process.cwd(),
         contents:args.path==='ui'?uiStub:apiStub,
         loader:args.path==='ui'?'tsx':'js',
       }));
