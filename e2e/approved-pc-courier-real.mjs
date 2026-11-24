@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 /**
  * Owner-approved courier PC/Android: REAL Chromium + LOCAL backend proof.
  * No real shipments, customer data, payment, or public courier self-registration.
@@ -48,8 +49,8 @@ try{
  for(const width of [1440,390]){
   const ctx=await browser.newContext({viewport:{width,height:width===390?844:900},
     locale:'ru-RU',serviceWorkers:'block'});
-  const page=await ctx.newPage(),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const page=await ctx.newPage();
+  const assertClean=watchPageErrors(page);
   await page.addInitScript(token=>{
    localStorage.setItem('traksos.token',token);
    localStorage.setItem('traksos.mode','courier');
@@ -96,7 +97,7 @@ try{
     client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth
    }));
    if(sizes.scroll>sizes.client+3)throw Error('Horizontal overflow '+JSON.stringify(sizes));
-   if(errors.length)throw Error('JS error: '+errors.join(' | '));
+   await assertClean('courier '+width+' workdesk');
    const home='courier-home-'+width+'.png';
    await page.screenshot({path:output+'/'+home,fullPage:true,animations:'disabled'});
    report.screenshots.push(home);
@@ -107,7 +108,7 @@ try{
    const jobs='courier-jobs-'+width+'.png';
    await page.screenshot({path:output+'/'+jobs,fullPage:true,animations:'disabled'});
    report.screenshots.push(jobs);
-   if(errors.length)throw Error('Courier navigation JS error '+errors.join(' | '));
+   await assertClean('courier '+width+' deliveries');
    report.checks.push('real courier route and clickable jobs navigation '+width);
    // Recipient messaging is not connected yet. The approved primary nav must
    // offer the existing WORKING support thread, not a dead "Chat" promise.
@@ -120,6 +121,7 @@ try{
    await supportNav.click();
    await page.getByRole('heading',{name:'Поддержка',exact:true}).waitFor();
    await page.getByRole('button',{name:'Написать',exact:true}).waitFor();
+   await assertClean('courier '+width+' support');
    report.checks.push('courier support shortcut opens real messages and new ticket '+width);
   }finally{await ctx.close();}
  }
