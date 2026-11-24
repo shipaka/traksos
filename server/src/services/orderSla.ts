@@ -52,59 +52,67 @@ export class OrderSlaService {
     private now:()=>Date=()=>new Date()) {}
   async tick() {
     const now=this.now();
-    const rows=await this.db.query<StageOrder>(
-      "select id,number,service,status,is_sos,client_id,created_by,performer_id,created_at," +
-      " dispatch_started_at,accepted_at,en_route_at,arrived_at,work_started_at,amount_proposed_at,auction_until" +
-      " from orders o where status=any($1::text[]) and created_at<$2::timestamptz-interval '7 minutes'" +
-      " and not exists(select 1 from order_sla_incidents i where i.order_id=o.id and i.stage=o.status" +
-      " and i.stage_started_at=(case o.status when 'searching' then o.dispatch_started_at" +
-      " when 'awaiting_owner' then o.created_at when 'accepted' then o.accepted_at" +
-      " when 'en_route' then o.en_route_at when 'arrived' then o.arrived_at" +
-      " when 'working' then o.work_started_at when 'awaiting_confirmation' then o.amount_proposed_at end))" +
-      " order by o.created_at asc limit 300",[FIELDS,now]);
-    const admins=await this.db.query<{id:string}>(
-      "select id from users where 'admin'=any(roles) and status='active'");
+    // Filter actual overdue stages before LIMIT so an old, still-working
+    // backlog cannot starve newer overdue orders. The SQL uses the same
+    // thresholds as overdueOrderStage and preserves timestamp precision.
+    const startedSql="(case o.status "+FIELDS.map(stage=>
+      "when '"+stage+"' then o."+STAGE_COLUMN[stage]).join(" ")+" end)";
+    const limitSql="(case when o.status='searching' and o.is_sos then 7 "+
+      FIELDS.map(stage=>"when o.status='"+stage+"' then "+STAGE_LIMIT_MINUTES[stage]).join(" ")+" end)";
+    const fields="id,number,service,status,is_sos,client_id,created_by,performer_id,created_at,"+
+      "dispatch_started_at,accepted_at,en_route_at,arrived_at,work_started_at,amount_proposed_at,auction_until";
+    const rows=await this.db.query<{id:string}>(
+      "select o.id from orders o where status=any($1::text[])"+
+      " and "+startedSql+" + "+limitSql+" * interval '1 minute' <= $2::timestamptz"+
+      " and (o.status<>'searching' or o.auction_until is null or o.auction_until <= $2::timestamptz-interval '2 minutes')"+
+      " and not exists(select 1 from order_sla_incidents i where i.order_id=o.id and i.stage=o.status"+
+      " and i.stage_started_at="+startedSql+")"+
+      " order by "+startedSql+",o.id limit 300",[FIELDS,now]);
     let raised=0;
-    for(const o of rows) {
-      const late=overdueOrderStage(o,now);
-      if(!late)continue;
-      const {stage,started,due}=late;
-      // The historical creator may have been revoked from this vehicle.
-      // Recipients are captured under the same transaction that stores the
-      // incident and durable inbox, never from an old order.created_by alone.
-      const title='Проверьте этап заявки №'+o.number;
-      const body=STAGE_NAMES[stage]+': превышен контрольный интервал. Причина требует проверки.';
-      const message={kind:'normal' as const,title,body,data:{orderId:o.id}};
+    for(const candidate of rows) {
       const incident=await this.db.tx(async q=>{
+        const o=await q.one<StageOrder>("select "+fields+" from orders where id=$1 for update",[candidate.id]);
+        if(!o)return null;
+        const late=overdueOrderStage(o,now);
+        if(!late)return null;
+        const {stage}=late;
+        const minutes=stage==='searching'&&o.is_sos?7:STAGE_LIMIT_MINUTES[stage];
+        const column=STAGE_COLUMN[stage];
+        // Use the locked PostgreSQL timestamp, not a JS Date round-trip:
+        // microseconds are part of the unique incident key.
+        const inserted=await q.one<{id:string}>(
+          'insert into order_sla_incidents(order_id,stage,stage_started_at,due_at,performer_id)' +
+          ' select id,$2,'+column+','+column+" + $3::int * interval '1 minute',performer_id from orders"+
+          ' where id=$1 and status=$2 and '+column+" + $3::int * interval '1 minute' <= $4::timestamptz"+
+          ' on conflict (order_id,stage,stage_started_at) do nothing returning id',
+          [o.id,stage,minutes,now]);
+        if(!inserted)return null;
         const currentDriver=o.created_by!==o.client_id ? await q.one<{id:string}>(
           `select u.id from orders ord join users u on u.id=$2
              join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
             where ord.id=$1 and ord.created_by=u.id and ord.client_id=u.owner_id
               and 'driver'=any(u.roles) and (ord.vehicle_id is null or v.id=ord.vehicle_id)
-            limit 1 for share of v`,[o.id,o.created_by]) : null;
+            limit 1 for share of u,v`,[o.id,o.created_by]) : null;
+        const admins=await q.query<{id:string}>(
+          "select id from users where 'admin'=any(roles) and status='active'");
         const recipients=[...new Set([o.client_id,currentDriver?.id,o.performer_id,
           ...admins.map(a=>a.id)].filter((x):x is string=>!!x))];
-        const inserted=await q.one<{id:string}>(
-          'insert into order_sla_incidents(order_id,stage,stage_started_at,due_at,performer_id)' +
-          ' select id,$2,$3::timestamptz,$4::timestamptz,performer_id from orders' +
-          ' where id=$1 and status=$2 and '+STAGE_COLUMN[stage]+'=$3::timestamptz' +
-          ' on conflict (order_id,stage,stage_started_at) do nothing returning id',
-          [o.id,stage,started,due]);
-        if(!inserted)return null;
+        const title='Проверьте этап заявки №'+o.number;
+        const body=STAGE_NAMES[stage]+': превышен контрольный интервал. Причина требует проверки.';
+        const message={kind:'normal' as const,title,body,data:{orderId:o.id}};
         await q.query(
           'insert into notifications(user_id,kind,title,body,data)' +
           ' select id,$2,$3,$4,$5::jsonb from users where id=any($1::uuid[])',
           [recipients,'order_sla',title,body,JSON.stringify({orderId:o.id,incidentId:inserted.id})]);
-        return {id:inserted.id,recipients};
+        return {id:inserted.id,recipients,o,stage,message};
       });
       if(!incident)continue;
       raised++;
-      // Stored alerts survive restart even when WebSocket/push delivery fails.
+      const {o,stage,message}=incident;
       await this.notifier.deliverStored(incident.recipients,
         {type:'order_sla',orderId:o.id,incidentId:incident.id,stage},message).catch(e=>
         console.warn('[order-sla push]',(e as Error).message));
       if(stage==='searching' && !o.auction_until) {
-        // Safe one-time recovery of orphaned queue; no financial or status override.
         await this.orders.ringNext(o.id).catch(e=>
           console.warn('[order-sla recovery]',o.id,(e as Error).message));
       }
