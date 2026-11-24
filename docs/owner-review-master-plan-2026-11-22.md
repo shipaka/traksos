@@ -572,3 +572,10 @@
 
 
 **SHOP-ORDER-MULTISTAGE дополнительная техническая правка после записи:** [7dc78b8](https://github.com/shipaka/traksos/commit/7dc78b8f5fe0f2df5de6337882c755ebc662e67d) — точный синтаксис окончания PL/pgSQL trigger fault-injection теста; [143ed7c](https://github.com/shipaka/traksos/commit/143ed7c1f102b041dd949188cc1a33a66005ee49) — успешное оформление сохранено на **изначально согласованном маршруте** назад к витрине магазина, без самовольной смены UX; [0a80456](https://github.com/shipaka/traksos/commit/0a8045642abb3eaa9708ce650350c2db58acaa9e) — соответствующее ожидание реального Chromium теста. Эти три коммита тоже требуют exact-HEAD CI, не считать их PASS без фактического запуска.
+
+
+### 24.11.2026 · GPS-FLEET-RECIPIENT-20261124 · P1 утечка GPS бывшему водителю
+
+- [x] Код в Draft PR #274: [ebb57db](https://github.com/shipaka/traksos/commit/ebb57db6e6fd767f707a1108ed6c9ab20bcd597b) — POST /api/performer/location теперь использует общий OrdersService.customerRecipientsForOrder, а не безусловную рассылку historical created_by. Владелец и действующий водитель сохраняют доступ.
+- [x] Написана HTTP/PostgreSQL regression с открытыми Hub-сокетами до и после переназначения машины: [0913169](https://github.com/shipaka/traksos/commit/0913169c64b6db77ba089aede3c7121b0d80da42), [0163c03](https://github.com/shipaka/traksos/commit/0163c030a915753da3adbc05f8807163f628d63b). Проверяются точные получатели события, включая прежнего водителя в том же автопарке. Тест написан, не запущен.
+- [ ] Exact-HEAD server typecheck и npm test, независимая проверка гонок отзыва доступа/смены исполнителя. QA #7116125606 остаётся на приёмке. 617/618, main, VPS, финансовая логика не менялись; узкий маршрут и новый тест освобождены.
