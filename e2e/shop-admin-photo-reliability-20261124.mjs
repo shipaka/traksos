@@ -52,7 +52,7 @@ const compiled=await build({
   stdin:{contents:entry,resolveDir:new URL('../e2e/',import.meta.url).pathname,
     sourcefile:'shop-admin-photo-entry.tsx',loader:'tsx'},
   // Match production JSX runtime; real screens import hooks, not a React global.
-  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',jsx:'automatic',
+  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',
   plugins:[{name:'mock-photo-ci-api',setup(b){
     b.onResolve({filter:/\/api\.ts$/},()=>({path:'api',namespace:'mock-photo'}));
     b.onResolve({filter:/\/ui\.tsx$/},()=>({path:'ui',namespace:'mock-photo'}));
@@ -74,7 +74,7 @@ const browser=await chromium.launch();
 const crashes=[];
 try{
   const page=await browser.newPage({serviceWorkers:'block'});
-  const crashes=[];page.on('pageerror',error=>{crashes.push(error.message);console.error('Shop admin browser error:',error.stack??error.message)});
+  page.on('pageerror',error=>{crashes.push(error.message);console.error('Shop admin browser error:',error.stack??error.message)});
   await page.route('**/__ci_shop_photo_host',r=>r.fulfill({
     contentType:'text/html',body:'<!doctype html><meta charset="utf-8"><div id="root"></div>',
   }));
