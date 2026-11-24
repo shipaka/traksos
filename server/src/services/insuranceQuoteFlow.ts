@@ -36,15 +36,24 @@ export class InsuranceQuoteFlow {
     return r;
   }
 
+  private async liveActor(q:Queryable,user:AuthUser):Promise<AuthUser> {
+    const current=await q.one<Pick<AuthUser,'roles'|'owner_id'>>(
+      "select roles,owner_id from users where id=$1 and status='active' for share",[user.id]);
+    if(!current)throw forbidden('Учётная запись больше не активна');
+    // Never grant a new privilege to an already authenticated request.
+    return {...user,owner_id:current.owner_id,roles:user.roles.filter(role=>current.roles.includes(role))};
+  }
+
   private async clientAccess(q:Queryable,user:AuthUser,r:CaseRow) {
     if(r.owner_id===user.id)return true;
-    if(r.requested_by!==user.id||user.owner_id!==r.owner_id)return false;
+    if(r.requested_by!==user.id||user.owner_id!==r.owner_id||!user.roles.includes('driver'))return false;
     const right=await q.one<{id:string}>(`select v.id from vehicles v join users o on o.id=v.owner_id
       where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
-        and (o.fleet->'allow'->>'insurance')::boolean is true`,[r.vehicle_id,r.owner_id,user.id]);
+        and (o.fleet->'allow'->>'insurance')::boolean is true for share of v,o`,[r.vehicle_id,r.owner_id,user.id]);
     return !!right;
   }
   private async access(q:Queryable,user:AuthUser,r:CaseRow) {
+    user=await this.liveActor(q,user);
     const isClient=await this.clientAccess(q,user,r);
     const isPartner=canAgent(user,r);
     if(!isClient&&!isPartner&&!isStaff(user))throw forbidden('Нет доступа к этой страховой заявке');
@@ -81,7 +90,7 @@ export class InsuranceQuoteFlow {
   async accept(user:AuthUser,id:string) {
     return this.db.tx(async q=>{
       const r=await this.case(q,id,'update');
-      if(!canAgent(user,r))throw forbidden('Только назначенный страховой агент может принять заявку');
+      if(!canAgent(await this.liveActor(q,user),r))throw forbidden('Только назначенный страховой агент может принять заявку');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       const target=r.insurance_stage==='received'?'preparing':r.insurance_stage==='selected'?'processing':null;
       if(!target)throw bad('invalid_stage','Заявка сейчас не ожидает принятия в работу');
@@ -102,7 +111,7 @@ export class InsuranceQuoteFlow {
     }
     return this.db.tx(async q=>{
       const r=await this.case(q,id,'update');
-      if(!canAgent(user,r))throw forbidden('Только назначенный агент может отправлять предложения');
+      if(!canAgent(await this.liveActor(q,user),r))throw forbidden('Только назначенный агент может отправлять предложения');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='preparing')throw bad('invalid_stage','Сначала примите заявку в работу');
       const count=await q.one<{n:number}>('select count(*)::int as n from insurance_proposals where request_id=$1',[id]);
@@ -121,7 +130,7 @@ export class InsuranceQuoteFlow {
   async choose(user:AuthUser,id:string,proposalId:string) {
     return this.db.tx(async q=>{
       const r=await this.case(q,id,'update');
-      if(!await this.clientAccess(q,user,r))throw forbidden('Выбирать страховой полис может только заявитель');
+      if(!await this.clientAccess(q,await this.liveActor(q,user),r))throw forbidden('Выбирать страховой полис может только заявитель');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='offers_sent')throw bad('invalid_stage','Предложения пока не готовы или выбор уже сделан');
       const choice=await q.one<{company:string;product:string}>(
@@ -163,7 +172,7 @@ export class InsuranceQuoteFlow {
     const enc=Buffer.concat([cipher.update(bytes),cipher.final()]),tag=cipher.getAuthTag();
     return this.db.tx(async q=>{
       const r=await this.case(q,id,'update');
-      if(!canAgent(user,r))throw forbidden('Только назначенный агент может передать полис');
+      if(!canAgent(await this.liveActor(q,user),r))throw forbidden('Только назначенный агент может передать полис');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='processing')throw bad('invalid_stage','Сначала примите выбранный вариант в работу');
       const current=await q.one<{id:string}>(`select id from insurance_proposals where id=$1 and request_id=$2`,
