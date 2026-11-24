@@ -36,10 +36,27 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  },master.token)).status,403);
  assert.equal((await t.db.query('select id from ecu_handoffs where source_order_id=$1',[source.id])).length,0);
  await t.db.query('update orders set performer_id=$2 where id=$1',[source.id,master.id]);
- const sent=ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
-  summary:'Проверены цепи питания и масса, подозрение на ЭБУ, VIN VF611MTA000123456, номер А222АА178'
- },master.token));
- assert.equal(sent.created,true);
+ const openPath='/api/orders/'+source.id+'/ecu-handoff';
+ const payload={summary:'Проверены цепи питания и масса, подозрение на ЭБУ, VIN VF611MTA000123456, номер А222АА178'};
+ await t.db.exec(`create function reject_ecu_open_inbox() returns trigger language plpgsql as $$
+  begin if new.kind='ecu_handoff' then raise exception 'injected ECU open inbox outage'; end if; return new; end; $$;
+  create trigger reject_ecu_open_inbox before insert on notifications
+  for each row execute function reject_ecu_open_inbox();`);
+ try{
+  assert.ok((await t.api('POST',openPath,payload,master.token)).status>=400);
+  assert.equal((await t.db.query('select id from ecu_handoffs where source_order_id=$1',[source.id])).length,0);
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='ecu_handoff_created'",[source.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_open_inbox on notifications; drop function reject_ecu_open_inbox();');
+ }
+ const opens=await Promise.all(Array.from({length:4},()=>t.api('POST',openPath,payload,master.token)));
+ const replies=opens.map(ok);
+ const sent=replies.find(x=>x.created===true);
+ assert.ok(sent);
+ assert.equal(replies.filter(x=>x.created).length,1);
+ assert.ok(replies.every(x=>x.id===sent.id));
+ assert.equal((await t.db.one<{n:number}>(
+  "select count(*)::int as n from notifications where user_id=$1 and kind='ecu_handoff' and data->>'handoffId'=$2",[owner.id,sent.id]))?.n,1);
  assert.equal(ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
   summary:'Повторное нажатие из-за плохой связи — ничего нового не создаём'
  },master.token)).created,false);
@@ -77,8 +94,8 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
   'VIN и госномер не должны утекать в свободном техническом тексте кандидату');
  assert.match(candidate.summary,/VIN скрыт|госномер скрыт/);
  // Force a real database failure at the durable notification boundary.
- await t.db.exec(`create function reject_ecu_inbox() returns trigger language plpgsql as $
-  begin if new.kind='ecu_handoff' then raise exception 'injected ecu inbox outage'; end if; return new; end; $;
+ await t.db.exec(`create function reject_ecu_inbox() returns trigger language plpgsql as $$
+  begin if new.kind='ecu_handoff' then raise exception 'injected ecu inbox outage'; end if; return new; end; $$;
   create trigger reject_ecu_inbox before insert on notifications
   for each row execute function reject_ecu_inbox();`);
  try{
@@ -128,8 +145,8 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.equal(chosen.history.length,1,'selected specialist reads the source technician report');
  assert.match(chosen.history[0].resultNote,/цепи|питания|массы/i);
  assert.equal(chosen.station.public_name,'Стенд ЭБУ Север');
- await t.db.exec(`create function reject_ecu_note_close_inbox() returns trigger language plpgsql as $
-  begin if new.kind='ecu_handoff' then raise exception 'injected ecu note/close inbox outage'; end if; return new; end; $;
+ await t.db.exec(`create function reject_ecu_note_close_inbox() returns trigger language plpgsql as $$
+  begin if new.kind='ecu_handoff' then raise exception 'injected ecu note/close inbox outage'; end if; return new; end; $$;
   create trigger reject_ecu_note_close_inbox before insert on notifications
   for each row execute function reject_ecu_note_close_inbox();`);
  try{
