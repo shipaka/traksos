@@ -278,6 +278,25 @@ test('isolated PostgreSQL: license gate, staged revisions, rollback and revocati
     await assert.rejects(state.db.query(
       "delete from vehicle_ref_models where snapshot_id=$1", [staged.id]), /immutable/);
     await assert.rejects(service.registerSource(customer, source), /только администратор/);
+
+    // A previously authorized session must not retain write access after role revocation.
+    // Keep the original actor object (with its stale admin claim) while changing the live DB row.
+    await state.db.query("update users set roles=ARRAY['client']::text[] where id=$1", [actor.id]);
+    assert.ok(actor.roles.includes('admin'));
+    const staleAdminSource = { ...source, key: 'stale-admin-source' };
+    const before = await state.db.one<{ count: number }>(
+      'select count(*)::int as count from vehicle_ref_registry_events');
+    await assert.rejects(service.registerSource(actor, staleAdminSource), /только администратор/);
+    await assert.rejects(service.approveSource(actor, source.key, 'Stale session approval attempt'), /только администратор/);
+    await assert.rejects(service.revokeSource(actor, source.key, 'Stale session revocation attempt'), /только администратор/);
+    await assert.rejects(service.stageSnapshot(actor, source.key, sample), /только администратор/);
+    await assert.rejects(service.activateSnapshot(actor, source.key, sample.sourceRevision,
+      'Stale session activation attempt'), /только администратор/);
+    assert.equal(await state.db.one('select source_key from vehicle_ref_sources where source_key=$1',
+      [staleAdminSource.key]), null);
+    const after = await state.db.one<{ count: number }>(
+      'select count(*)::int as count from vehicle_ref_registry_events');
+    assert.equal(after?.count, before?.count, 'denied mutations must not append registry events');
   } finally {
     await state.close();
   }
