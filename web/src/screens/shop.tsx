@@ -69,14 +69,14 @@ function useCart(): [Cart, (c: Cart) => void] {
  * initiated them. General useLoad deliberately keeps old data on retry errors;
  * that is unsafe for fleet orders, prices, vehicles and purchase history.
  */
-function useShopPrivateLoad<T>(load:()=>Promise<T>, deps:unknown[],
+function useShopPrivateLoad<T>(load:(isCurrent:()=>boolean)=>Promise<T>, deps:unknown[],
   eventFilter?:(e:any)=>boolean) {
   const {me}=useMe();
   const actor=me?.id??null, token=getToken();
   const [refresh,setRefresh]=useState(0);
   const key=JSON.stringify([actor,token,...deps,refresh]);
-  const activeIdentity=useRef({actor,token});
-  activeIdentity.current={actor,token};
+  const activeIdentity=useRef({actor,token,key});
+  activeIdentity.current={actor,token,key};
   const [result,setResult]=useState<{
     key:string;data:T|null;error:string|null
   }>({key:'',data:null,error:null});
@@ -89,15 +89,24 @@ function useShopPrivateLoad<T>(load:()=>Promise<T>, deps:unknown[],
       setResult({key,data:null,error:'Для доступа войдите в кабинет'});
       return ()=>{alive=false};
     }
-    Promise.resolve().then(()=>fnRef.current()).then(data=>{
-      if(alive&&getToken()===token&&activeIdentity.current.actor===actor&&
-        activeIdentity.current.token===token)
-        setResult({key,data,error:null});
-    }).catch(error=>{
-      if(alive&&getToken()===token&&activeIdentity.current.actor===actor&&
-        activeIdentity.current.token===token)
-        setResult({key,data:null,error:error instanceof Error?error.message:'Не удалось загрузить данные'});
-    });
+    // Freeze the loader for this query. A queued microtask must not dispatch
+    // the next render's loader with this render's identity or a new bearer.
+    const request=fnRef.current;
+    const isCurrent=()=>alive&&getToken()===token&&
+      activeIdentity.current.actor===actor&&activeIdentity.current.token===token&&
+      activeIdentity.current.key===key;
+    void (async()=>{
+      try{
+        // Retain deferred dispatch, but recheck identity before network I/O.
+        await Promise.resolve();
+        if(!isCurrent())return;
+        const data=await request(isCurrent);
+        if(isCurrent())setResult({key,data,error:null});
+      }catch(error){
+        if(isCurrent())
+          setResult({key,data:null,error:error instanceof Error?error.message:'Не удалось загрузить данные'});
+      }
+    })();
     return ()=>{alive=false};
   },[key]);
   useEffect(()=>{
@@ -454,14 +463,18 @@ export function ShopCart() {
   const live = useShopPrivateLoad<any[]>(() => get('/api/orders'), []);
   const [cart, setCart] = useCart();
   const selectedIds = Object.keys(cart).sort().join(',');
-  const selection = useShopPrivateLoad<{products:any[]}>(async()=>{
+  const selection = useShopPrivateLoad<{products:any[]}>(async(isCurrent)=>{
     if(!c.data?.enabled || !selectedIds) return {products:[]};
     // The API intentionally caps each read at 50 IDs. Never use its first
     // 50 results as if they described all lines in a larger saved cart.
     const ids=selectedIds.split(',').filter(Boolean);
     const pages=[];
     for(let i=0;i<ids.length;i+=50) {
+      // A previous page may resolve after account/token/query invalidation.
+      // Never send the remaining IDs using another session's bearer.
+      if(!isCurrent())throw new Error('Запрос больше не актуален');
       const part=await get(`/api/shop/selection?ids=${encodeURIComponent(ids.slice(i,i+50).join(','))}`);
+      if(!isCurrent())throw new Error('Запрос больше не актуален');
       pages.push(...(part.products??[]));
     }
     return {products:pages};
