@@ -47,3 +47,39 @@ test('private order reviews follow live fleet and performer permissions, not his
   assert.equal((await t.api('GET',path,undefined,outsider.token)).status,200);
  }finally{await t.close();}
 });
+
+test('reviews reject stale staff authority and disabled participants within service transaction', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79996565201');
+  const master=await t.login('+79996565202','master');
+  const admin=await t.login('+79990000001');
+  const capture=async(id:string)=>{
+   const row=await t.db.one<import('../src/http/router.ts').AuthUser>(
+    'select id,phone,name,roles,status,owner_id from users where id=$1',[id]);
+   assert.ok(row);return row;
+  };
+  const oldAdmin=await capture(admin.id),oldOwner=await capture(owner.id),oldMaster=await capture(master.id);
+  const order=await t.db.one<{id:string}>(
+   "insert into orders(client_id,created_by,performer_id,service,zone_id,status) "+
+   "values ($1,$1,$2,'electric','spb','completed') returning id",[owner.id,master.id]);
+  assert.ok(order);
+  await t.app.reviews.leave(oldOwner,order.id,{stars:5});
+  const review=await t.db.one<{id:string;hidden:boolean}>('select id,hidden from reviews where order_id=$1',[order.id]);
+  assert.ok(review);
+  await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);
+  const forbidden=(e:any)=>e?.status===403;
+  await assert.rejects(t.app.reviews.forOrder(oldAdmin,order.id),forbidden);
+  await assert.rejects(t.app.reviews.moderate(oldAdmin,review.id,{hidden:true}),forbidden);
+  await t.db.query("update users set status='blocked' where id=$1",[master.id]);
+  await assert.rejects(t.app.reviews.forOrder(oldMaster,order.id),forbidden);
+  await assert.rejects(t.app.reviews.leave(oldMaster,order.id,{stars:5}),forbidden);
+  await t.db.query("update users set deleted_at=now() where id=$1",[owner.id]);
+  await assert.rejects(t.app.reviews.forOrder(oldOwner,order.id),forbidden);
+  assert.equal((await t.db.one<{hidden:boolean}>('select hidden from reviews where id=$1',[review.id]))?.hidden,false);
+  assert.equal((await t.db.query('select id from reviews where order_id=$1',[order.id])).length,1);
+  await t.db.query("update users set roles=$2 where id=$1",[admin.id,oldAdmin.roles]);
+  await t.app.reviews.moderate(oldAdmin,review.id,{hidden:true});
+  assert.equal((await t.db.one<{hidden:boolean}>('select hidden from reviews where id=$1',[review.id]))?.hidden,true);
+ }finally{await t.close();}
+});
