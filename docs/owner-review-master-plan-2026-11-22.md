@@ -579,3 +579,13 @@
 - [x] Код в Draft PR #274: [ebb57db](https://github.com/shipaka/traksos/commit/ebb57db6e6fd767f707a1108ed6c9ab20bcd597b) — POST /api/performer/location теперь использует общий OrdersService.customerRecipientsForOrder, а не безусловную рассылку historical created_by. Владелец и действующий водитель сохраняют доступ.
 - [x] Написана HTTP/PostgreSQL regression с открытыми Hub-сокетами до и после переназначения машины: [0913169](https://github.com/shipaka/traksos/commit/0913169c64b6db77ba089aede3c7121b0d80da42), [0163c03](https://github.com/shipaka/traksos/commit/0163c030a915753da3adbc05f8807163f628d63b). Проверяются точные получатели события, включая прежнего водителя в том же автопарке. Тест написан, не запущен.
 - [ ] Exact-HEAD server typecheck и npm test, независимая проверка гонок отзыва доступа/смены исполнителя. QA #7116125606 остаётся на приёмке. 617/618, main, VPS, финансовая логика не менялись; узкий маршрут и новый тест освобождены.
+
+
+### 24.11.2026 · REFERRAL-ECONOMICS-ACCOUNT-BOUNDARY · приватные финансовые экраны
+
+Закрепление [#7121661717](https://github.com/shipaka/traksos/pull/274#issuecomment-7121661717), тест [#7121671095](https://github.com/shipaka/traksos/pull/274#issuecomment-7121671095).
+
+- [x] Код: [36c802a](https://github.com/shipaka/traksos/commit/36c802a898b050aa198939ea6927e1f1d097ad65) — приватный баланс, история, имена приглашённых, ссылка и QR сбрасываются при смене аккаунта или bearer; ошибка GET не оставляет старые данные, есть повтор; fallback Share проверяет сессию.
+- [x] Код: [fb3c376](https://github.com/shipaka/traksos/commit/fb3c37631fbbbd938da28594bfaf2a2faafc0f96) — финансовая справка изолирована по аккаунту, bearer и роли, повтор не показывает старые ставки.
+- [x] Регрессия написана в существующем Chromium gate: [a19cdf1](https://github.com/shipaka/traksos/commit/a19cdf1302ebc8c0eab38a0679d06c5b42d25ded) — ошибка, повтор, смена роли, поздний ответ, изоляция приглашений. CI YAML, проценты, API, 617/618, main/VPS не изменены.
+- [ ] Фактический Chromium PASS и exact-HEAD gates не подтверждены. Зона освобождена.
