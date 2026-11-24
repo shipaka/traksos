@@ -1,6 +1,6 @@
 // Персональные данные: что собираем и зачем, скачать, исправить, удалить аккаунт.
-import { Fragment, useEffect, useState } from 'react';
-import { get, post, del, fmtTime } from '../api.ts';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { get, getToken, post, del, fmtTime } from '../api.ts';
 import { useAction, useMe, Back } from '../ui.tsx';
 
 const WHAT: [string, string][] = [
@@ -13,45 +13,59 @@ const WHAT: [string, string][] = [
 ];
 
 export function Privacy() {
-  const { me } = useMe();
+  const {me}=useMe();
+  const token=getToken();
+  if(!me||!token)return null;
+  return <PrivacyAccount key={JSON.stringify([me.id,token])} token={token} owner={me.id} isDriver={!!me.owner_id}/>;
+}
+
+function PrivacyAccount({token,owner,isDriver}:{token:string;owner:string;isDriver:boolean}){
+  const alive=useRef(true),lock=useRef(false);
+  useLayoutEffect(()=>{alive.current=true;return ()=>{alive.current=false;};},[]);
+  const current=()=>alive.current&&getToken()===token;
   // Deletion status is sensitive account-specific data; never show a previous
   // account's result while the next session is loading.
   const [status, setStatus] = useState<{owner:string; value:any}|null>(null);
   const [loadError, setLoadError] = useState<{owner:string; message:string}|null>(null);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
-    const owner = me?.id;
     let active = true;
     setStatus(null);
     setLoadError(null);
     if (owner) {
       get('/api/me/privacy').then((value:any) => {
-        if (!active) return;
+        if (!active||!current()) return;
         if (!value || !Number.isInteger(value.graceDays) || value.graceDays <= 0)
           throw Error('Invalid privacy status');
         setStatus({owner, value});
       }).catch(() => {
-        if (active) setLoadError({owner, message:'Не удалось получить статус удаления аккаунта'});
+        if (active&&current()) setLoadError({owner, message:'Не удалось получить статус удаления аккаунта'});
       });
     }
     return () => { active = false; };
-  }, [me?.id, retry]);
-  const { busy, run } = useAction();
-  async function download() {
-    const data = await run(() => get('/api/me/export'), 'Файл готов');
-    if (!data) return;
+  }, [owner, token, retry]);
+  const { run } = useAction();
+  const [busy,setBusy]=useState(false);
+  async function action(fn:()=>Promise<void>){
+    if(lock.current||!current())return;
+    lock.current=true;setBusy(true);
+    try{await fn();}finally{lock.current=false;if(current())setBusy(false);}
+  }
+  async function download(){await action(async()=>{
+    const data=await run(()=>get('/api/me/export'),'Файл готов');
+    if(!data||!current())return;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `traksos-moi-dannye-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  }
-  const s = status?.owner === me?.id ? status.value : null;
-  const statusError = loadError?.owner === me?.id ? loadError.message : null;
+  });}
+  const s = status?.owner === owner ? status.value : null;
+  const statusError = loadError?.owner === owner ? loadError.message : null;
   const applyStatus = (value:any) => {
-    if (me?.id) {
-      setStatus({owner:me.id, value});
+    if (current()) {
+      setStatus({owner, value});
       setLoadError(null);
     }
   };
@@ -77,17 +91,18 @@ export function Privacy() {
         ) : s.deleteRequestedAt ? (
           <>
             <span className="note" style={{ color: 'var(--warn)' }}>Запрос принят {fmtTime(s.deleteRequestedAt)}. Плановая дата — {fmtTime(s.deleteAt)}; если есть незавершённые заявки, заказы, ремонты или доставки, удаление откладывается до их закрытия. До этого можно передумать.</span>
-            <button className="btn ghost" disabled={busy} onClick={async () => { const r = await run(() => del('/api/me/delete'), 'Запрос на удаление отменён'); if (r) applyStatus(r); }}>Не удалять</button>
+            <button className="btn ghost" disabled={busy} onClick={()=>void action(async()=>{const r=await run(()=>del('/api/me/delete'),'Запрос на удаление отменён');if(r)applyStatus(r);})}>Не удалять</button>
           </>
         ) : (
           <>
             <span className="note">Через {s.graceDays} дней аккаунт будет закрыт, если завершены все действующие заявки, заказы, ремонты, страхование и доставки; иначе удаление будет отложено до их закрытия. Персональные поля профиля обезличиваются; часть данных о выполненных заявках и расчётах может сохраняться в установленных законом пределах; сведения о технике и истории заказов могут быть связаны с другими участниками.</span>
-            {me?.owner_id && <span className="note">Вы водитель: машины и заказы принадлежат владельцу и останутся у него.</span>}
-            <button className="btn bad" disabled={busy} onClick={async () => {
+            {isDriver && <span className="note">Вы водитель: машины и заказы принадлежат владельцу и останутся у него.</span>}
+            <button className="btn bad" disabled={busy} onClick={()=>void action(async()=>{
               if (!confirm('Первое подтверждение: вы хотите закрыть аккаунт TrakSOS и отправить запрос на удаление данных?')) return;
               if (!confirm('Второе подтверждение: вы действительно уверены? Действующие заявки необходимо завершить; после подтверждения начнётся установленная законом процедура удаления.')) return;
+              if(!current())return;
               const r = await run(() => post('/api/me/delete'), 'Запрос на удаление принят — срок указан в разделе'); if (r) applyStatus(r);
-            }}>Удалить аккаунт</button>
+            })}>Удалить аккаунт</button>
           </>
         )}
       </div>
