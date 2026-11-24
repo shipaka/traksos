@@ -82,3 +82,30 @@ test('valid provider output stays readable, malformed JSON and non-text content 
     assert.equal(await requestGeneratedText('safe','hello',256,2500,settings),null);
   }finally{globalThis.fetch=old;}
 });
+
+test('LLM transport refuses redirects and cancels rejected bodies before reading', async()=>{
+  const old=globalThis.fetch;
+  const local={...settings,transport:'local' as const,localUrl:'http://127.0.0.1:8000/v1/chat/completions'};
+  try{
+    for(const cfg of [settings,local]){
+      assert.equal(makeLlmRequest('safe','private input',256,cfg)?.init.redirect,'error');
+      let calls=0;
+      globalThis.fetch=(async (_url:unknown,init?:RequestInit)=>{
+        calls++;
+        assert.equal(init?.redirect,'error');
+        throw new TypeError('redirect blocked');
+      }) as typeof fetch;
+      assert.equal(await requestGeneratedText('safe','private input',256,2500,cfg),null);
+      assert.equal(calls,1);
+    }
+    for(const [status,headers] of [[503,{}],[200,{'content-length':'32769'}]] as [number,Record<string,string>][]){
+      let cancelled=0;
+      globalThis.fetch=(async()=>new Response(new ReadableStream<Uint8Array>({
+        cancel(){cancelled++;}
+      }),{status,headers})) as typeof fetch;
+      assert.equal(await requestGeneratedText('safe','hello',256,2500,settings),null);
+      assert.equal(cancelled,1);
+    }
+    assert.equal(decodeLlmAnswer({choices:{0:{message:{content:'invalid'}}}},'local'),'');
+  }finally{globalThis.fetch=old;}
+});
