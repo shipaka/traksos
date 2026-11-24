@@ -33,12 +33,13 @@ export class PublicPartnerMap {
          -- Consent must be AFTER an independent stationary-coordinate review.
          -- A legacy/stale opt-in must not claim a verified GPS position.
          and c.public_map_opted_at is not null
+         and c.public_map_opted_at <= now()
          and c.public_map_location_verified_at is not null
          and c.public_map_location_verified_at <= c.public_map_opted_at
          and c.public_map_location_verified_at <= now()
          and c.verification='approved'
          and c.paused=false
-         and c.accepts_confirmed_at >= now() - interval '7 days'
+         and c.accepts_confirmed_at between now() - interval '7 days' and now()
          and u.status='active'
          and u.deleted_at is null
          and 'service'=any(u.roles)
@@ -49,7 +50,7 @@ export class PublicPartnerMap {
     return {source:'verified_stationary_opt_in',
       points:rows.filter(r=>validStationaryPosition(r.lat,r.lng) && String(r.name ?? '').trim().length>0)
         .map(r=>({id:r.id,kind:'service',
-          name:maskPhones(String(r.name ?? '').trim().slice(0, 100)).text,
+          name:maskPhones(String(r.name ?? '').trim()).text.slice(0, 100),
           lat:Number(r.lat),lng:Number(r.lng)}))};
   }
 
@@ -60,13 +61,13 @@ export class PublicPartnerMap {
     return this.db.tx(async q=>{
       const center=await q.one<Workshop>(`select c.id,c.name,c.lat,c.lng,
         c.verification,c.paused,
-        (c.accepts_confirmed_at >= now() - interval '7 days') as accepts_current,
+        (c.accepts_confirmed_at between now() - interval '7 days' and now()) as accepts_current,
         c.public_map_location_verified_at,
         (u.status='active' and u.deleted_at is null) as owner_active,
         ('service'=any(u.roles)) as owner_service,
         (c.public_map_location_verified_at <= now()) as location_review_current
         from service_centers c join users u on u.id=c.owner_id
-        where c.owner_id=$1 for update of c`,[user.id]);
+        where c.owner_id=$1 for update of c for share of u`,[user.id]);
       if(!center)throw notFound('Сначала заполните карточку СТО');
       if(enabled && (!center.owner_active || !center.owner_service ||
         center.verification!=='approved' || center.paused ||
