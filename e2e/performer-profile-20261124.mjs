@@ -11,7 +11,7 @@ const bundle=await build({
    b.onResolve({filter:/./},args=>{
      if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'performer-stub'};
    });
-   b.onLoad({filter:/./,namespace:'performer-stub'},args=>({
+   b.onLoad({filter:/./,namespace:'performer-stub'},args=>({resolveDir:process.cwd(),
      contents:stubs[args.path],loader:args.path.endsWith('.tsx')?'tsx':'js'
    }));
  }}]
