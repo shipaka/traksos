@@ -1,6 +1,7 @@
 /*
  * TrakSOS — authenticated Android inner surfaces (20 Nov 2026).
- * Scope: NATIVE PHONE + secondary routes. Never alter the approved 618.png
+ * Scope: NATIVE PHONE + secondary routes; mobile menu selectors are shared
+ * with the phone browser at <=899px. Never alter the approved 618.png
  * client/master dashboards, desktop 617.png, data, roles or server actions.
  *
  * Deliberate motion: a single fast page reveal, menu disclosure and pressed
