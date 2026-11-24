@@ -102,12 +102,14 @@ export class DocumentsService {
   }
 
   async mine(user: AuthUser) {
-    const prof = await this.db.one(
-      'select kind, specialties, tier, verification, submitted_at, verification_note from performer_profiles where user_id=$1', [user.id]);
+    return this.db.tx(async q=>{
+    await this.currentActor(q,user);
+    const prof = await q.one(
+      'select kind, specialties, tier, verification, submitted_at, verification_note from performer_profiles where user_id=$1 for share', [user.id]);
     if (!prof) throw notFound('Сначала заполните профиль исполнителя');
     // A new photo may coexist with the last approved copy. Only the latest
     // image of each kind can satisfy a new verification request.
-    const docs = await this.db.query(
+    const docs = await q.query(
       `select id, kind, status, note, created_at from documents
         where user_id=$1 order by created_at desc, id desc`, [user.id]);
     const required = requiredKinds(prof);
@@ -121,6 +123,7 @@ export class DocumentsService {
         return !!newest && newest.status!=='rejected';
       }),
     };
+    });
   }
 
   async submit(user: AuthUser) {
@@ -153,9 +156,15 @@ export class DocumentsService {
       }
       return {staff,title,body};
     });
-    if (result) await this.notifier.deliverStored(result.staff,
-      {type:'verification_queue',userId:user.id},
-      {kind:'normal',title:result.title,body:result.body,data:{userId:user.id}});
+    if(result)try{
+      const current=await this.db.query<{id:string}>(
+        "select id from users where id=any($1::uuid[]) and roles && '{admin,moderator}'::text[]"+
+        " and status='active' and deleted_at is null and (admin_preview_until is null or admin_preview_until>now())",
+        [result.staff]);
+      await this.notifier.deliverStored(current.map(x=>x.id),
+        {type:'verification_queue',userId:user.id},
+        {kind:'normal',title:result.title,body:result.body,data:{userId:user.id}});
+    }catch{};
     return this.mine(user);
   }
 
