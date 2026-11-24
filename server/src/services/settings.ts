@@ -8,6 +8,21 @@ export class SettingsService {
   private cacheVersion = 0;
   constructor(private db: Db) {}
 
+  private applyPolicy(merged: Pick<Settings, 'legal' | 'payments' | 'shop'>) {
+    // Brand identity is immutable even when old admin settings exist in the database.
+    merged.legal.brand = 'TrakSOS';
+    // Existing database settings cannot reactivate a cancelled cash policy.
+    merged.payments.cash = legacyCashFixtureEnabled();
+    // This build has MOCK acquiring only. No bank-confirmed online or invoice
+    // checkout can be enabled by an old DB value or stale admin interface.
+    // Only the isolated fake-user sandbox gets built-in mock checkout. Live
+    // production remains closed regardless of a restored database setting.
+    merged.payments.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.online);
+    merged.payments.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.invoice);
+    // An old admin toggle or restored DB must not reopen the unreleased store.
+    merged.shop.enabled = shopFixtureEnabled() && !!merged.shop.enabled;
+  }
+
   async all(): Promise<Settings> {
     const age = this.cache ? Date.now() - this.cache.at : Infinity;
     if (this.cache && age >= 0 && age < 5_000) return structuredClone(this.cache.value);
@@ -21,18 +36,7 @@ export class SettingsService {
         merged[r.key] = { ...merged[r.key], ...r.value };
       }
     }
-    // Brand identity is immutable even when old admin settings exist in the database.
-    merged.legal.brand = 'TrakSOS';
-    // Existing database settings cannot reactivate a cancelled cash policy.
-    merged.payments.cash = legacyCashFixtureEnabled();
-    // This build has MOCK acquiring only. No bank-confirmed online or invoice
-    // checkout can be enabled by an old DB value or stale admin interface.
-    // Only the isolated fake-user sandbox gets built-in mock checkout. Live
-    // production remains closed regardless of a restored database setting.
-    merged.payments.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.online);
-    merged.payments.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.invoice);
-    // An old admin toggle or restored DB must not reopen the unreleased store.
-    merged.shop.enabled = shopFixtureEnabled() && !!merged.shop.enabled;
+    this.applyPolicy(merged);
     // An in-flight SELECT from before a completed admin write must not
     // repopulate the cache with a stale snapshot after set() invalidates it.
     if (version === this.cacheVersion)
@@ -51,11 +55,12 @@ export class SettingsService {
     // Key-level advisory lock serializes independent app instances, including
     // the first INSERT when the settings row does not exist yet. Read/merge,
     // policy clamps, durable value and audit must commit as ONE operation.
-    await this.db.tx(async q => {
+    const committed = await this.db.tx(async q => {
       await q.query('select pg_advisory_xact_lock(hashtext($1))', ['traksos-settings:' + key]);
       const current = (await q.one<{ value: any }>(
         'select value from settings where key=$1 for update', [key]))?.value ?? {};
-      const value = { ...current, ...patch };
+      const stored = current !== null && typeof current === 'object' && !Array.isArray(current) ? current : {};
+      const value = { ...stored, ...patch };
       if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
       if (key === 'payments') {
         const v = value as { cash?: boolean; online?: boolean; invoice?: boolean };
@@ -75,9 +80,14 @@ export class SettingsService {
       await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [
         actorId, 'settings.update', key, patch,
       ]);
+      // Return this transaction's committed section, not an unrelated later SELECT.
+      const result = structuredClone(defaultSettings);
+      Object.assign(result, { [key]: { ...result[key], ...value } });
+      this.applyPolicy(result);
+      return result[key];
     });
     this.cacheVersion++;
     this.cache = null;
-    return (await this.all())[key];
+    return committed;
   }
 }
