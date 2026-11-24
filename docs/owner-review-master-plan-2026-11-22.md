@@ -761,3 +761,12 @@
 - [x] Код [a51c2ad](https://github.com/shipaka/traksos/commit/a51c2adb4fcafceaf548199050e768275291e70d): потерянный ACK уже сохранённого фото можно повторить после закрытия заказа, новых загрузок нет, текущая привязка водителя защищена shared locks.
 - [x] Написаны HTTP/PostgreSQL регрессии [62064aa](https://github.com/shipaka/traksos/commit/62064aa16fcdc9003e10d0d108c34b28e408f5e9), [36a2fd1](https://github.com/shipaka/traksos/commit/36a2fd1dd64b45d04aa33dd408b3e46e20bcf945), [8e088ce](https://github.com/shipaka/traksos/commit/8e088ce66f6f1e9823ee1d01337ba5d9ec8eb781): повтор фото после completion, запрет новой загрузки, rollback предложения/выбора при отказе inbox, бывший исполнитель не создаёт передачу.
 - [ ] Exact-HEAD CI, typecheck и npm test ещё не подтверждены. Остаточная атомарность inbox создания/закрытия/заметок ЭБУ и read snapshots отдельная работа. Main/VPS, 617/618, цены, платежи, прочие файлы не менялись; закрепление снято после отчёта.
+
+
+### 24.11.2026 · ECU-NOTE-CLOSE-DURABILITY-20261124 · надёжность переписки ЭБУ
+
+Закрепление [#7122045360](https://github.com/shipaka/traksos/pull/274#issuecomment-7122045360), после освобождения #7122040895.
+
+- [x] Код [95ea8dd](https://github.com/shipaka/traksos/commit/95ea8dd940616c6bd3fec8a64ab842255c064f8e): заметки, завершение передачи, история и постоянные inbox-уведомления атомарны; действующая связь водителя проверяется под lock, получатели дедуплицируются. [ea898f0](https://github.com/shipaka/traksos/commit/ea898f0e89f0827ce3c7ebec6a574e0342fc399c): сбой повторной проверки получателей после commit не превращает сохранённую заметку в ошибочный HTTP retry.
+- [x] Тест [c99dc7c](https://github.com/shipaka/traksos/commit/c99dc7c3b6f89c5a38808b5ef6822b94a4d13704): исправлены SQL dollar quotes существующей фикстуры отказа inbox. [95a610d](https://github.com/shipaka/traksos/commit/95a610df38b4de68b49d95e2e254bfc52fca57e8): HTTP/PG rollback заметки и закрытия, три повторных закрытия, единственные события/inbox.
+- [ ] Фактический server test/typecheck/exact-HEAD CI ещё не подтверждены. Уведомления первоначального создания передачи и согласованное чтение деталей остаются отдельными задачами. Цены, платежи, 617/618, main/VPS не изменены. Участки освобождены после отчёта.
