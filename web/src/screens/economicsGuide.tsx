@@ -8,7 +8,8 @@ type Guide={role:string;title:string;cap:number;paragraphs:{title:string;text:st
   rules:{clientSharePct:number;referralDays:number;welcome:number;clientSpendCapPct:number;spendCapPct:number;performerReward:number;performerJobs:number;serviceReward:number;ttlDays:number}};
 /** Server-calculated, role-limited values: identical data powers economics and published offer annexes. */
 export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
-  const {me,mode}=useMe();
+  const context=useMe();
+  const me=context?.me,mode=context?.mode??'client';
   const role=me?.owner_id?'driver':learningRole(mode,me?.roles??[]);
   const token=getToken();
   const scope=JSON.stringify([me?.id??null,token,role]);
