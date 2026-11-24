@@ -98,7 +98,7 @@ const bundled=await build({
         if(!args.importer.endsWith('/web/src/screens/base.tsx'))return;
         if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'sto-stub'};
       });
-      b.onLoad({filter:/.*/,namespace:'sto-stub'},args=>({
+      b.onLoad({filter:/.*/,namespace:'sto-stub'},args=>({resolveDir:process.cwd(),
         contents:stubs[args.path],loader:args.path.endsWith('.tsx')?'tsx':'js'
       }));
     }
