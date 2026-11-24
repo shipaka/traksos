@@ -1164,3 +1164,11 @@
 - [x] [4546799](https://github.com/shipaka/traksos/commit/4546799d1ea6ca0e6851bf448dfbd67d1615bb39): отдельный real React Chromium harness с synthetic API — двойной клик, потеря POST, GET outage, ручное восстановление списка, успешная отметка, смена администратора, удаление панели при отзыве роли.
 - [x] [3ae09ac](https://github.com/shipaka/traksos/commit/3ae09ac41ce4871c2846135edbf1c864cd023bbf): обязательный шаг в существующем основном CI после STO сценария.
 - [ ] Реальный Chromium/typecheck/exact-HEAD PASS не подтверждён. Коммиты [skip ci], без rerun/dispatch. Правила выплат, суммы, утверждённая раскладка 617/618, #275/main/VPS не менялись.
+
+
+### 24.11.2026 · ORDER-PHOTO-UPLOAD-BOUNDARY-20261124 · изоляция отложенной отправки фото заявки
+
+Закрепление [#7141477686](https://github.com/shipaka/traksos/pull/274#issuecomment-7141477686). Source review: после async JPEG проверялся только token, не смена заявки, закрытие capture или review-only при прежнем token.
+- [x] [162d622](https://github.com/shipaka/traksos/commit/162d622c0d181b83edec7314febe7d0772a02490): синхронный lock с владельцем request, отмена жизненного цикла на orderId/reviewOnly/auth/unmount, проверка перед POST и после ответа; stale finally не снимает lock новой отправки, старые уведомления не попадают в новую сессию. JPEG/EXIF/лимиты/API и 617/618 сохранены.
+- [x] [c8d6922](https://github.com/shipaka/traksos/commit/c8d6922c50c4b49fd234ad884e1cb438ee40378e), [73ef18b](https://github.com/shipaka/traksos/commit/73ef18b0ebaccbc5b7f2e0a6176a747790dcb0c5): настоящий React capture с синтетическим PNG, отложенным createImageBitmap, A→B, review-only, unmount, auth boundary при том же bearer, stale POST completion, positive upload. Сохранены предыдущие проверки gallery retry/Blob URL.
+- [ ] Фактическое исполнение Chromium/typecheck/exact HEAD не подтверждено. Контроль 2a59e18: 5/6 workflow PASS, 702/702 server, shop cart/photo и DriverAir PASS, main остановился на STO finance stale payout (исправление в ветке отдельным пакетом). [skip ci], rerun/dispatch не запускал, #275/main/VPS не менял. Отправленный до смены сессии POST нельзя отозвать; stale UI effect блокируется.
