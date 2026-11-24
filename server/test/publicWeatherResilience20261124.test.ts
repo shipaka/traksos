@@ -92,3 +92,48 @@ test('vendor failures and oversized streams are negative-cached, bounded and nev
   assert.equal(await fresh.current(),null);
   assert.equal(calls,3,'bad upstream JSON is negatively cached');
 });
+
+test('weather refuses redirects, cancels rejected bodies and caches synchronous transport errors', async()=>{
+  let now=observedAt;
+  let calls=0;
+  let cancelled=0;
+  const provider=fetcher(async(_url,init)=>{
+    assert.equal(init.redirect,'error');
+    calls++;
+    const stream=new ReadableStream<Uint8Array>({cancel(){cancelled++;}});
+    return calls===1 ? new Response(stream,{status:503}) :
+      new Response(stream,{headers:{'content-length':'65537'}});
+  });
+  const service=new PublicWeatherService('fixture-only',provider,()=>now);
+  assert.equal(await service.current(),null);
+  assert.equal(cancelled,1);
+  now+=5*60_000;
+  assert.equal(await service.current(),null);
+  assert.equal(cancelled,2);
+  let failures=0;
+  const broken=(()=>{
+    failures++;
+    throw new Error('synchronous transport failure');
+  }) as typeof fetch;
+  const unavailable=new PublicWeatherService('fixture-only',broken,()=>now);
+  assert.deepEqual(await Promise.all([unavailable.current(),unavailable.current()]),[null,null]);
+  assert.equal(await unavailable.current(),null);
+  assert.equal(failures,1);
+});
+
+test('cached observations expire at the freshness boundary without extra upstream spending',async()=>{
+  let now=observedAt;
+  let calls=0;
+  const service=new PublicWeatherService('fixture-only',fetcher(async()=>{
+    calls++;
+    return new Response(JSON.stringify(weather(calls===1? observedAt-179*60_000:now)));
+  }),()=>now);
+  assert.ok(await service.current());
+  now+=2*60_000;
+  assert.equal(await service.current(),null);
+  assert.equal(calls,1);
+  now+=18*60_000;
+  assert.ok(await service.current());
+  assert.equal(calls,2);
+  assert.equal(parseYandexWeather(weather(9e15),9e15),null);
+});
