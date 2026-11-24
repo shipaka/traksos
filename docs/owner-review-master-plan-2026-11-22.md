@@ -681,3 +681,14 @@
 - [x] Тесты написаны: [e5f03f6](https://github.com/shipaka/traksos/commit/e5f03f6f4b6d1a409c687df1f85d86ce68b0b54d) (смена токена/аккаунта), [a7feb9e](https://github.com/shipaka/traksos/commit/a7feb9e09cc878ec9c303a1e0e9fc23bc9825321) (публичный документ, поздний/неверный ответ и retry), [f3bcfd9](https://github.com/shipaka/traksos/commit/f3bcfd9bbee32412b17beee4bed5fee784ca283c) (гостевой контекст).
 - [x] [d84904d](https://github.com/shipaka/traksos/commit/d84904d1cb794f1a1f9332b65f6f60abb40c0fbf): ранее не включённый тест экономики/приглашений добавлен одной строкой в обязательный CI. Другие проверки не изменены.
 - [ ] Реальные exact-HEAD CI и визуальная приёмка не подтверждены. Участки освобождены. Юридические тексты, правила, сервер, 617/618, main и VPS не менялись.
+
+
+### 24.11.2026 · PUSH-SESSION-DELIVERY-BOUNDARY-20261124 · безопасная доставка уведомлений
+
+Закрепление [#7121846222](https://github.com/shipaka/traksos/pull/274#issuecomment-7121846222), после освобождения #7115200228.
+
+- [x] Код [3ab806c](https://github.com/shipaka/traksos/commit/3ab806cb630992d697f3bab548855ecab5a67b0e): push только на привязанный к действующей сессии токен текущего активного пользователя; старые unbound/expired/blocked устройства исключены. Для legacy токенов нужно штатное повторное подключение на входе, inbox сохраняется.
+- [x] Код [31e059d](https://github.com/shipaka/traksos/commit/31e059dd4d14d4243a9fdb01b85e92a47809d35b): регистрация устройства перепроверяет действующий аккаунт и сессию после ожидания advisory lock, до удаления чужой актуальной привязки. Остальные API маршруты не изменены.
+- [x] Код [78e870f](https://github.com/shipaka/traksos/commit/78e870ff7757b8feaf57dba4017991d0d13b4402): RuStore не следует редиректам с приватным payload, тело ответа освобождается без чтения; контракт сообщения и TTL сохранены.
+- [x] Написаны регрессии [a56ea8c](https://github.com/shipaka/traksos/commit/a56ea8c581edcab0780e9f468d8d6a98b1ce6650), [a2c52c7](https://github.com/shipaka/traksos/commit/a2c52c7b0fdfd09a4f6c5f07ff3960b578496826), [aed6de0](https://github.com/shipaka/traksos/commit/aed6de06c58d676f5195e72d7ce8d644d41ddbc6): редиректы и stream cleanup; реальная PostgreSQL очередь device lock, отзыв старой сессии, сохранение текущей привязки, исключение неподтверждённых устройств.
+- [ ] Server typecheck/npm test и exact-HEAD CI ещё не подтверждены. Остаточный риск уже переданного внешнему провайдеру сообщения не устранить серверной транзакцией. Main/VPS, 617/618, финансовые правила, чужие API не менялись. Зона освобождена после отчёта.
