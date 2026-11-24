@@ -98,3 +98,51 @@ test('supervisor can switch only while active and target still has assigned role
     await assert.rejects(()=>switchSandboxRole(t.db,supervisor.token,'admin',Number.NaN),deny);
   }finally{await t.close();}
 });
+
+
+test('sandbox rejects soft-deleted target and supervisor accounts despite active status',
+  {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const adminId=await seed(t,'admin');
+    const courierId=await seed(t,'courier');
+    const at=Date.now();
+    const supervisor=await exchangeSandboxTicket(issueSandboxTicket('admin',SECRET,at),SECRET,t.db,at+100);
+    await t.db.query('update users set deleted_at=now() where id=$1',[courierId]);
+    const ticket=issueSandboxTicket('courier',SECRET,at);
+    await assert.rejects(()=>exchangeSandboxTicket(ticket,SECRET,t.db,at+200),deny);
+    await assert.rejects(()=>switchSandboxRole(t.db,supervisor.token,'courier',at+200),deny);
+    await t.db.query('update users set deleted_at=null where id=$1',[courierId]);
+    await t.db.query('update users set deleted_at=now() where id=$1',[adminId]);
+    await assert.rejects(()=>switchSandboxRole(t.db,supervisor.token,'courier',at+300),deny);
+    assert.equal((await t.db.one<{n:number}>('select count(*)::int n from sessions'))?.n,1);
+  }finally{await t.close();}
+});
+
+test('a ticket expiring during the account lock wait creates neither session nor consumed nonce',
+  {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const id=await seed(t,'client');
+    let acquired!:()=>void;
+    let release!:()=>void;
+    const ready=new Promise<void>(resolve=>{acquired=resolve});
+    const hold=new Promise<void>(resolve=>{release=resolve});
+    const blocker=t.db.tx(async q=>{
+      await q.one('select id from users where id=$1 for update',[id]);
+      acquired();
+      await hold;
+    });
+    await ready;
+    const at=Date.now();
+    const ticket=issueSandboxTicket('client',SECRET,at-44_900);
+    const outcome=exchangeSandboxTicket(ticket,SECRET,t.db,at).then(
+      ()=>false,error=>deny(error));
+    try{
+      await new Promise(resolve=>setTimeout(resolve,180));
+    }finally{release();await blocker;}
+    assert.equal(await outcome,true);
+    assert.equal((await t.db.one<{n:number}>('select count(*)::int n from sandbox_ticket_uses'))?.n,0);
+    assert.equal((await t.db.one<{n:number}>('select count(*)::int n from sessions'))?.n,0);
+  }finally{await t.close();}
+});
