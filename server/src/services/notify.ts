@@ -43,7 +43,7 @@ export class Notifier {
         `select distinct p.provider, p.token from push_tokens p
            join sessions s on s.token_hash=p.session_token_hash
              and s.user_id=p.user_id and s.expires_at > now()
-           join users u on u.id=p.user_id and u.status='active'
+           join users u on u.id=p.user_id and u.status='active' and u.deleted_at is null
              and (u.admin_preview_until is null or u.admin_preview_until>now())
            where p.user_id = any($1::uuid[])`, [ids],
       );
