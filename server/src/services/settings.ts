@@ -9,7 +9,8 @@ export class SettingsService {
   constructor(private db: Db) {}
 
   async all(): Promise<Settings> {
-    if (this.cache && Date.now() - this.cache.at < 5_000) return this.cache.value;
+    const age = this.cache ? Date.now() - this.cache.at : Infinity;
+    if (this.cache && age >= 0 && age < 5_000) return structuredClone(this.cache.value);
     const version = this.cacheVersion;
     const rows = await this.db.query<{ key: string; value: any }>('select key, value from settings');
     const merged: any = structuredClone(defaultSettings);
@@ -34,7 +35,9 @@ export class SettingsService {
     // repopulate the cache with a stale snapshot after set() invalidates it.
     if (version === this.cacheVersion)
       this.cache = { at: Date.now(), value: merged };
-    return merged;
+    // Consumers may transform a result locally; never expose the shared
+    // cached object or its nested collections as mutable configuration.
+    return structuredClone(merged);
   }
 
   async get<K extends SettingsKey>(key: K): Promise<Settings[K]> {
