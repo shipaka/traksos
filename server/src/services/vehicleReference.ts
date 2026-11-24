@@ -39,6 +39,12 @@ interface ModelRow {
 function requireAdmin(actor: AuthUser) {
   if (!actor?.roles?.includes('admin')) throw forbidden('Справочник транспорта редактирует только администратор');
 }
+async function requireLiveAdmin(q: Queryable, actor: AuthUser) {
+  const row = await q.one<{id:string}>(
+    "select id from users where id=$1 and status='active' and deleted_at is null "+
+    "and 'admin'=any(roles) for share", [actor.id]);
+  if (!row) throw forbidden('Справочник транспорта редактирует только администратор');
+}
 function slug(v: string) {
   if (typeof v !== 'string' || !/^[a-z0-9][a-z0-9_-]{1,63}$/.test(v))
     throw bad('vehicle_ref_key', 'Недопустимый идентификатор источника');
@@ -95,6 +101,7 @@ export class VehicleReferenceService {
     requireAdmin(actor);
     const s = sourcePayload(source);
     return this.db.tx(async (q) => {
+      await requireLiveAdmin(q, actor);
       const created = await q.one<SourceRow>(
         'insert into vehicle_ref_sources ' +
         '(source_key,source_name,origin_url,license_name,license_url,rights_evidence,created_by) ' +
@@ -120,6 +127,7 @@ export class VehicleReferenceService {
     const key = slug(sourceKey);
     const reason = permissionReason(approvalReason);
     return this.db.tx(async (q) => {
+      await requireLiveAdmin(q, actor);
       const row = await q.one<SourceRow>(
         'select * from vehicle_ref_sources where source_key=$1 for update', [key]);
       if (!row) throw notFound('Источник не зарегистрирован');
@@ -140,6 +148,7 @@ export class VehicleReferenceService {
     const key = slug(sourceKey);
     const reason = permissionReason(reasonInput);
     return this.db.tx(async (q) => {
+      await requireLiveAdmin(q, actor);
       const source = await q.one<SourceRow>(
         'select * from vehicle_ref_sources where source_key=$1 for update', [key]);
       if (!source) throw notFound('Источник не зарегистрирован');
@@ -162,6 +171,7 @@ export class VehicleReferenceService {
     try { normalized = normalizeCatalog(sourceInput); }
     catch (error) { throw bad('vehicle_ref_invalid_snapshot', (error as Error).message); }
     return this.db.tx(async (q) => {
+      await requireLiveAdmin(q, actor);
       const source = await q.one<SourceRow>(
         'select * from vehicle_ref_sources where source_key=$1 for update', [key]);
       if (!source || source.state !== 'approved' || !source.redistribution_approved)
@@ -261,6 +271,7 @@ export class VehicleReferenceService {
     const reason = permissionReason(reasonInput);
     const rev = plain(revision, 1, 100);
     return this.db.tx(async (q) => {
+      await requireLiveAdmin(q, actor);
       const source = await q.one<SourceRow>(
         'select * from vehicle_ref_sources where source_key=$1 for update', [key]);
       if (!source || source.state !== 'approved' || !source.redistribution_approved)
@@ -284,14 +295,19 @@ export class VehicleReferenceService {
 
   async listSources(actor: AuthUser) {
     requireAdmin(actor);
-    return this.db.query<SourceRow>(
-      'select * from vehicle_ref_sources order by source_key');
+    return this.db.tx(async q => {
+      await requireLiveAdmin(q, actor);
+      return q.query<SourceRow>('select * from vehicle_ref_sources order by source_key');
+    });
   }
   async listVersions(actor: AuthUser, sourceKey: string) {
     requireAdmin(actor);
-    return this.db.query<SnapshotRow>(
-      'select * from vehicle_ref_snapshots where source_key=$1 order by created_at desc,id',
-      [slug(sourceKey)]);
+    const key = slug(sourceKey);
+    return this.db.tx(async q => {
+      await requireLiveAdmin(q, actor);
+      return q.query<SnapshotRow>(
+        'select * from vehicle_ref_snapshots where source_key=$1 order by created_at desc,id', [key]);
+    });
   }
 
   private checkContext(actor: AuthUser, context: CatalogRoleContext) {
