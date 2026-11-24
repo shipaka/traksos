@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 /**
  * REAL Playwright/Chromium rendering with SYNTHETIC local API data.
  * Never a screenshot of production requests, not proof of real dispatch.
@@ -89,7 +90,7 @@ try{
  const master=await account({phone:'+79990000471',type:'master',mode:'performer',kind:'master'});
  const ctx=await browser.newContext({viewport:{width:1647,height:927},locale:'ru-RU',serviceWorkers:'block'});
  const page=await ctx.newPage();
- const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const assertMasterClean=watchPageErrors(page);
  let stepStatus='accepted';
  await page.route(url=>url.pathname==='/api/orders'&&url.searchParams.get('as')==='performer',
    route=>route.fulfill(json([order])));
@@ -118,10 +119,12 @@ try{
  assert(await page.getByRole('button',{name:'Выехал'}).count()===1,'Correct first status action missing');
  assert(await page.locator('.approved-pc-techbook').count()===1,'TechBase book not on vehicle photo');
  await page.screenshot({path:output+'/master-active-1647.png',fullPage:false,animations:'disabled'});
+ await assertMasterClean('master active order');
  await page.getByRole('button',{name:'Выехал'}).click();
  await page.getByRole('button',{name:'Подтвердить прибытие'}).waitFor();
  assert(stepStatus==='en_route','Server-controlled status was not changed');
  await page.screenshot({path:output+'/master-en-route-1647.png',fullPage:false,animations:'disabled'});
+ await assertMasterClean('master en route');
  // Internal case tabs must not create duplicate order selectors.
  await page.getByRole('tab',{name:'Клиент и ТС'}).click();
  assert(await page.getByText('Тестовый клиент CI').count()>0,'Client details tab broken');
@@ -132,7 +135,7 @@ try{
  await page.screenshot({path:output+'/master-new-proposals-1647.png',fullPage:false,animations:'disabled'});
  await page.getByRole('tab',{name:/Текущая работа/}).click();
  assert(await page.locator('.approved-pc-performer-case').count()===1,'Work mode not restored');
- assert(!errors.length,'Browser errors: '+errors.join(';'));
+ await assertMasterClean('master order tabs and proposals');
  report.push({role:'master',status:'PASS',scenarios:['selected work','status sequence','TechBase','case tabs','offers mode'],
    screenshots:['master-active-1647.png','master-en-route-1647.png','master-new-proposals-1647.png']});
  await ctx.close();
@@ -140,7 +143,7 @@ try{
  const owner=await account({phone:'+79990000472',type:'owner',mode:'client'});
  const oc=await browser.newContext({viewport:{width:1647,height:927},locale:'ru-RU',serviceWorkers:'block'});
  const op=await oc.newPage();
- const oe=[];op.on('pageerror',e=>oe.push(e.message));
+ const assertOwnerClean=watchPageErrors(op);
  await op.route(url=>url.pathname==='/api/orders',
    route=>route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'}])));
  await op.route(url=>url.pathname==='/api/orders/'+id,
@@ -172,6 +175,7 @@ try{
  assert(await op.getByText('Текущее местоположение исполнителя не подтверждено.').count()===1,
   'Stale or missing GPS incorrectly displayed as live');
  await op.screenshot({path:output+'/owner-active-1647.png',fullPage:false,animations:'disabled'});
+ await assertOwnerClean('owner active order');
  // Shared inner-screen banners must NOT overlay the old separate photo tile
  // on top of the approved full-card photograph, as caught in real screenshots.
  await op.goto(BASE+'/#/garage',{waitUntil:'domcontentloaded'});
@@ -189,7 +193,7 @@ try{
    visual.copyWidth>90 && visual.copyWidth<visual.cardWidth*.72,
    'Inner cabinet hero still has a rectangular pasted image, missing photo or clipped left copy: '+JSON.stringify(visual));
  await op.screenshot({path:output+'/owner-garage-full-bleed-1647.png',fullPage:false,animations:'disabled'});
- assert(!oe.length,'Owner browser errors: '+oe.join(';'));
+ await assertOwnerClean('owner garage');
  report.push({role:'owner',status:'PASS',scenarios:['selected order','performer details','safe GPS absence'],
    screenshots:['owner-active-1647.png']});
  await oc.close();
@@ -198,6 +202,7 @@ try{
  // viewport must not be consumed by an unsolicited multi-line tutorial.
  const mobileContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU',serviceWorkers:'block'});
  const mobilePage=await mobileContext.newPage();
+ const assertMobileClean=watchPageErrors(mobilePage);
  await mobilePage.addInitScript(({token,mode})=>{
    localStorage.setItem('traksos.token',token);
    localStorage.setItem('traksos.mode',mode);
@@ -210,6 +215,7 @@ try{
    'Mobile browser shows a second unsolicited introduction');
  await mobilePage.screenshot({path:output+'/owner-mobile-no-training-banner-390.png',
    fullPage:false,animations:'disabled'});
+ await assertMobileClean('owner mobile workdesk');
  report.push({role:'owner mobile browser',status:'PASS',
    scenarios:['approved 618 workspace starts without training banners'],
    screenshots:['owner-mobile-no-training-banner-390.png']});
@@ -219,6 +225,7 @@ try{
  // Retry must recover to the truthful server-confirmed empty state.
  const ec=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block'});
  const ep=await ec.newPage();
+ const assertRetryClean=watchPageErrors(ep);
  let ordersUnavailable=true;
  const unavailable={status:503,contentType:'application/json',body:JSON.stringify({error:'ci_outage',message:'Проверка недоступности API'})};
  await ep.route(url=>url.pathname==='/api/orders',
@@ -231,21 +238,25 @@ try{
    'Client desktop falsely claims no orders while API is unavailable');
  assert(!failedOwnerText.includes('Машины ещё не добавлены в автопарк.'),
    'Fleet desktop falsely claims there are no vehicles while API failed');
+ await assertRetryClean('owner API unavailable');
  ordersUnavailable=false;
  await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить'}).click();
  await ep.locator('.approved-pc-center').getByText(/Активных заявок сейчас нет/).waitFor();
+ await assertRetryClean('owner API retry');
  report.push({role:'owner API error/retry',status:'PASS',
    scenarios:['no false empty orders','no false empty fleet','retry on genuine empty response']});
  await ec.close();
 
  const mc=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block'});
  const mp=await mc.newPage();
+ const assertFailureClean=watchPageErrors(mp);
  await mp.route(url=>url.pathname==='/api/orders'&&url.searchParams.get('as')==='performer',
    route=>route.fulfill(unavailable));
  await open(mp,master.token,master.mode,'#/work');
  await mp.locator('.approved-pc-shift-empty').getByText(/Ошибка загрузки данных/).waitFor();
  assert(await mp.locator('.approved-pc-shift-empty [data-orders="0"]').count()===0,
    'Master dashboard must not display an empty shift until the server confirms zero orders');
+ await assertFailureClean('master API unavailable');
  report.push({role:'master API error',status:'PASS',scenarios:['no synthetic empty shift on server failure']});
  await mc.close();
 }finally{await browser.close()}
