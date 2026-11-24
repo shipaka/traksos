@@ -377,7 +377,22 @@ for (const tab of ['Заявки', 'Машины', 'Отзывы', 'Платеж
 }
 await a.locator('input[placeholder="Сумма, ₽"]').fill('300');
 await a.locator('input[placeholder^="За что"]').fill('Подарок за первый заказ');
+// The real admin form deliberately requires explicit confirmation of a financial mutation.
+// Playwright otherwise auto-dismisses native confirm dialogs.
+let bonusConfirmation;
+a.once('dialog', async dialog => {
+  bonusConfirmation = { type: dialog.type(), message: dialog.message() };
+  if (dialog.type() === 'confirm' && dialog.message() === 'Подтвердить начисление баллов пользователя?')
+    await dialog.accept();
+  else await dialog.dismiss();
+});
+const bonusResponse = a.waitForResponse(r => r.request().method() === 'POST' &&
+  /\/api\/admin\/users\/[^/]+\/bonus$/.test(new URL(r.url()).pathname));
 await a.getByRole('button', { name: 'Начислить' }).click();
+if (bonusConfirmation?.type !== 'confirm' || bonusConfirmation.message !== 'Подтвердить начисление баллов пользователя?')
+  throw Error('Expected explicit bonus confirmation: ' + JSON.stringify(bonusConfirmation));
+const credited = await bonusResponse;
+if (!credited.ok()) throw Error('Bonus API rejected confirmed credit: HTTP ' + credited.status() + ' ' + await credited.text());
 await a.getByText('Бонусы начислены').waitFor();
 await shot(a, '14-admin-user-card');
 await k.goto(BASE + '/#/profile');
