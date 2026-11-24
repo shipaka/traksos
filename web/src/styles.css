@@ -1764,3 +1764,16 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
     padding:5px 8px;
   }
 }
+
+/* Support list: allow real ticket titles and the heading/action pair to
+   wrap on phones rather than imposing their combined intrinsic width.
+   No global overflow clipping and no changes to the approved desktop layout. */
+@media(max-width:899px){
+  .app:not(.guest-app) .support-list-page,
+  .app:not(.guest-app) .support-list-page > .rows{min-width:0;max-width:100%;}
+  .app:not(.guest-app) .support-list-header{min-width:0;flex-wrap:wrap;}
+  .app:not(.guest-app) .support-list-header > h1{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+  .app:not(.guest-app) .support-list-header > .btn.small{flex:0 1 auto;min-width:0;max-width:100%;white-space:normal;}
+  .app:not(.guest-app) .support-list-page .list-item > .stack{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+  .app:not(.guest-app) .support-list-page .list-item > .pill{flex:0 0 auto;}
+}
