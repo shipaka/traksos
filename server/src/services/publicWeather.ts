@@ -111,7 +111,8 @@ export class PublicWeatherService {
   ) {}
 
   async current(): Promise<PublicWeather | null> {
-    if (!this.apiKey?.trim()) return null;
+    const apiKey = this.apiKey?.trim();
+    if (!apiKey) return null;
     const at = this.clock();
     if (this.cache && this.cache.expiresAt > at) {
       const value = this.cache.value;
@@ -123,7 +124,7 @@ export class PublicWeatherService {
     }
     if (this.pending) return this.pending;
     this.pending = Promise.resolve().then(() => this.requester(SERVICE_URL, {
-      headers: { 'X-Yandex-Weather-Key': this.apiKey },
+      headers: { 'X-Yandex-Weather-Key': apiKey },
       redirect: 'error',
       signal: AbortSignal.timeout(2500)
     }))
