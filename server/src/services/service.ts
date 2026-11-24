@@ -120,18 +120,20 @@ export class ServiceCenters {
   /** Раз в неделю: «приём всё так же?» — одна кнопка */
   async confirmAccepts(user: AuthUser) {
     await this.mustMine(user);
-    // Use the same injectable application clock as cabinet.confirmDue, not
-    // the database clock. Real deployments agree; deterministic sandbox
-    // clocks may differ from PostgreSQL's wall clock.
-    await this.db.query('update service_centers set accepts_confirmed_at=$2 where owner_id=$1',
-      [user.id, this.now()]);
+    // The public map validates evidence against PostgreSQL time. Record
+    // confirmation using that same clock, never a simulated booking clock.
+    await this.db.query('update service_centers set accepts_confirmed_at=now() where owner_id=$1',
+      [user.id]);
     return this.cabinet(user);
   }
 
   // ——— Кабинет рембазы ———
   async cabinet(user: AuthUser) {
-    const c = await this.mine(user);
+    const c = await this.db.one(
+      `select *, coalesce(accepts_confirmed_at between now()-interval '7 days' and now(),false) as accepts_current
+         from service_centers where owner_id=$1`,[user.id]);
     if (!c) return { center: null, groups: null };
+    const { accepts_current, ...center } = c;
     const rows = await this.db.query(
       `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating
          from service_bookings b join users u on u.id=b.client_id
@@ -140,11 +142,11 @@ export class ServiceCenters {
     const today = msk(this.now());
     const weekAgo = this.now().getTime() - 7 * 86400_000;
     const view = (b: any) => this.bookingView(b, 'service', weekAgo);
-    const confirmDue = !c.accepts_confirmed_at || new Date(c.accepts_confirmed_at).getTime() < weekAgo;
+    const confirmDue = !accepts_current;
     const rt = await this.db.one<{ r: number | null; n: number }>(
       `select round(avg(review_stars)::numeric, 1)::float as r, count(review_stars)::int as n from service_bookings where center_id=$1`, [c.id]);
     return {
-      center: { ...c, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
+      center: { ...center, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
       groups: {
         requests: rows.filter((b) => ['new', 'clarify'].includes(b.status)).map(view),
         expected: rows.filter((b) => b.status === 'expected').map(view),
