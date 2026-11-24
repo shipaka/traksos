@@ -119,3 +119,65 @@ test('same-millisecond category mutation cannot bypass visible review snapshot',
   assert.equal(denied.body.error,'catalog_entry_changed');
   assert.equal((await find(entry.article,admin.token)).reviewed,false);
 });
+
+
+test('opposite-order overlapping imports both finish and preserve a single identity per part',async()=>{
+  const first=row('ORDER-01','Тестовый насос первый');
+  const second=row('ORDER-02','Тестовый насос второй');
+  const variants=[first,second].map(p=>({...p,name:p.name+' обновлённый'}));
+  const replies=await Promise.all([
+    t.api('POST',path+'/import',batch([first,second]),admin.token),
+    t.api('POST',path+'/import',batch([...variants].reverse()),admin.token),
+  ]);
+  for(const reply of replies) assert.equal(reply.status,200,JSON.stringify(reply.body));
+  const saved=await t.db.query<{article:string;name:string;reviewed:boolean}>(
+    'select article,name,reviewed from shop_catalog_entries where article=any($1::text[]) order by article',
+    [[first.article,second.article]]);
+  assert.equal(saved.length,2);
+  assert.equal(saved.every(p=>!p.reviewed),true);
+  assert.ok(saved.every((p,i)=>p.name===[first,second][i].name) ||
+    saved.every((p,i)=>p.name===variants[i].name));
+});
+
+test('reference manifest and paginated deltas include parallel approvals and subsequent tombstone',async()=>{
+  await t.app.settings.set('shop',{enabled:true},admin.id);
+  const endpoint='/api/shop/catalog/index';
+  try {
+    const start=ok(await t.api('GET',endpoint+'/manifest',undefined,admin.token));
+    assert.equal(start.enabled,true);
+    const parts=[row('DELTA-01','Тестовый фильтр первый'),row('DELTA-02','Тестовый фильтр второй')];
+    ok(await t.api('POST',path+'/import',batch(parts),admin.token));
+    const entries=await Promise.all(parts.map(p=>find(p.article,admin.token)));
+    const results=await Promise.all(entries.map(e=>t.api('POST',path+'/'+e.id+'/review',approval(e,true),admin.token)));
+    for(const reply of results) assert.equal(reply.status,200,JSON.stringify(reply.body));
+    const end=ok(await t.api('GET',endpoint+'/manifest',undefined,admin.token));
+    assert.equal(end.count,start.count+2);
+    assert.ok(BigInt(end.revision)>BigInt(start.revision));
+    let cursor=start.revision;
+    const seen=new Set<string>();
+    for(let i=0;i<10;i++){
+      const page=ok(await t.api('GET',endpoint+'/changes?after='+cursor+'&limit=1',undefined,admin.token));
+      assert.equal(page.revision,end.revision);
+      for(const item of page.rows){
+        assert.ok(BigInt(item[0])>BigInt(cursor));
+        if(item.length>2)seen.add(item[1]);
+      }
+      if(!page.next)break;
+      cursor=page.next;
+    }
+    assert.ok(entries.every(e=>seen.has(e.id)));
+    const empty=ok(await t.api('GET',endpoint+'/changes?after='+end.revision,undefined,admin.token));
+    assert.deepEqual(empty.rows,[]);
+    assert.equal(empty.next,null);
+    assert.equal(empty.revision,end.revision);
+    const current=await find(parts[0].article,admin.token);
+    ok(await t.api('POST',path+'/'+current.id+'/review',approval(current,false),admin.token));
+    const delta=ok(await t.api('GET',endpoint+'/changes?after='+end.revision,undefined,admin.token));
+    assert.ok(delta.rows.some((item:any[])=>item.length===2&&item[1]===current.id));
+    const final=ok(await t.api('GET',endpoint+'/manifest',undefined,admin.token));
+    assert.equal(final.count,end.count-1);
+    assert.equal(final.revision,delta.revision);
+  } finally {
+    await t.app.settings.set('shop',{enabled:false},admin.id);
+  }
+});
