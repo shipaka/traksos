@@ -63,7 +63,7 @@ export function makeLlmRequest(
         store: false,
         max_output_tokens: maxOutputTokens,
       };
-  return { url, init: { method: 'POST', headers, body: JSON.stringify(payload) } };
+  return { url, init: { method: 'POST', redirect: 'error', headers, body: JSON.stringify(payload) } };
 }
 
 export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): string {
@@ -73,7 +73,8 @@ export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): 
     choices?: Array<{ message?: { content?: unknown } }>;
   };
   if (transport === 'local') {
-    const content = obj.choices?.[0]?.message?.content;
+    if (!Array.isArray(obj.choices)) return '';
+    const content = obj.choices[0]?.message?.content;
     return typeof content === 'string' ? content.trim() : '';
   }
   // Provider JSON is untrusted even when it came from the configured model.
@@ -93,8 +94,10 @@ export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): 
 async function readBoundedModelBody(response: Response): Promise<string | null> {
   const maxBytes = 32_768;
   const declared = response.headers.get('content-length');
-  if (declared !== null && /^\d+$/.test(declared) && Number(declared) > maxBytes)
+  if (declared !== null && /^\d+$/.test(declared) && Number(declared) > maxBytes) {
+    await response.body?.cancel().catch(() => {});
     return null;
+  }
   if (!response.body) return null;
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -133,7 +136,10 @@ export async function requestGeneratedText(
   if (!request) return null;
   try {
     const response = await fetch(request.url, { ...request.init, signal: AbortSignal.timeout(timeoutMs) });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => {});
+      return null;
+    }
     const raw = await readBoundedModelBody(response);
     if (raw === null) return null;
     const text = decodeLlmAnswer(JSON.parse(raw), settings.transport ?? 'api');
