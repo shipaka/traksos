@@ -21,7 +21,11 @@ try {
       const landing = width >= 900 ? '.owner20-home' : '.public-landing';
       const open = async path => {
         await page.goto(BASE + '/#/' + path, {waitUntil:'domcontentloaded'});
-        await page.getByRole('heading', {name:'Вход по номеру телефона'}).waitFor();
+        try {
+          await page.getByRole('heading', {name:'Вход по номеру телефона'}).waitFor();
+        } catch (error) {
+          throw new Error(width+'px: #/'+path+' did not open sign-in; actual URL '+page.url(), {cause:error});
+        }
       };
       const preloadAbandonedChoice = async () => {
         await page.goto(BASE + '/#/', {waitUntil:'domcontentloaded'});
