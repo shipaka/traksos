@@ -12,6 +12,15 @@ export const REVIEW_TAGS = {
 export class ReviewsService {
   constructor(private db: Db, private settings: SettingsService, private orders: OrdersService) {}
 
+
+  private async currentAuthor(q: Queryable, user: AuthUser) {
+    const current = await q.one<{roles:string[]; rating:string|null; rating_count:number}>(
+      "select roles,rating,rating_count from users where id=$1 and status='active' and deleted_at is null for share",
+      [user.id]);
+    if (!current) throw forbidden();
+    return {...current,roles:user.roles.filter(role=>current.roles.includes(role))};
+  }
+
   async leave(user: AuthUser, orderId: string, r: { stars: number; tags?: string[]; text?: string }) {
     const o = await this.orders.mustSee(user, orderId);
     if (o.status !== 'completed') throw bad('not_completed', 'Отзыв — после подтверждения суммы');
@@ -21,12 +30,11 @@ export class ReviewsService {
     else if (actor === 'performer') target = o.client_id;
     else throw forbidden('Отзыв оставляют участники заявки');
 
-    const author = await this.db.one<{ rating: string | null; rating_count: number }>('select rating, rating_count from users where id=$1', [user.id]);
-    const weight = authorWeight(await this.settings.get('reviews'), author?.rating == null ? null : Number(author.rating), author?.rating_count ?? 0);
+    const settings = await this.settings.get('reviews');
     // A review, recalculated reputation and the immutable order event are one
     // action. Serialize ratings for the same target across different orders.
     try {
-      await this.db.tx(async q=>{
+      return await this.db.tx(async q=>{
         const current=await q.one<{status:string;client_id:string;created_by:string;
           performer_id:string|null;vehicle_id:string|null}>(
           'select status,client_id,created_by,performer_id,vehicle_id from orders where id=$1 for share',
@@ -34,7 +42,12 @@ export class ReviewsService {
         if(!current||current.status!=='completed'||current.performer_id!==o.performer_id||
            current.client_id!==o.client_id)
           throw conflict('review_order_changed','Заявка изменилась, откройте её заново');
+        const author=await this.currentAuthor(q,user);
+        if(author.roles.some(role=>role==='admin'||role==='moderator'))
+          throw forbidden('Отзыв оставляют участники заявки');
+        const weight=authorWeight(settings,author.rating==null?null:Number(author.rating),author.rating_count);
         if(actor==='client' && current.client_id!==user.id) {
+          if(!author.roles.includes('driver'))throw forbidden();
           const live=await q.one(
             `select 1 from users u join vehicles v
               on v.owner_id=u.owner_id and v.driver_id=u.id
@@ -51,12 +64,12 @@ export class ReviewsService {
           [orderId,user.id,target,r.stars,r.tags??[],r.text??null,weight]);
         await this.recompute(target,q);
         await this.orders.event(q,orderId,user.id,'review',{stars:r.stars,target});
+        return {ok:true,weight};
       });
     } catch(e:any){
       if(e.code==='23505')throw conflict('already_reviewed','Отзыв по этой заявке уже оставлен');
       throw e;
     }
-    return {ok:true,weight};
   }
 
   /** Отзывы по заявке: мой, вес моего отзыва и — после моего — что написали обо мне */
@@ -66,9 +79,10 @@ export class ReviewsService {
       const o=await q.one<{client_id:string;created_by:string;performer_id:string|null;vehicle_id:string|null}>(
         'select client_id,created_by,performer_id,vehicle_id from orders where id=$1 for share',[orderId]);
       if(!o)throw notFound('Заявка не найдена');
-      if(!user.roles.some(role=>role==='admin'||role==='moderator') &&
+      const me=await this.currentAuthor(q,user);
+      if(!me.roles.some(role=>role==='admin'||role==='moderator') &&
          o.client_id!==user.id && o.performer_id!==user.id){
-        if(o.created_by!==user.id)throw forbidden();
+        if(o.created_by!==user.id || !me.roles.includes('driver'))throw forbidden();
         const linked=await q.one(
           `select 1 from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
            where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
@@ -76,8 +90,6 @@ export class ReviewsService {
            limit 1 for share of u,v`,[user.id,o.client_id,o.vehicle_id]);
         if(!linked)throw forbidden('Водитель больше не закреплён за заявкой');
       }
-      const me=await q.one<{rating:string|null;rating_count:number}>(
-        'select rating,rating_count from users where id=$1',[user.id]);
       const weight=authorWeight(settings,me?.rating==null?null:Number(me.rating),me?.rating_count??0);
       const mine=await q.one('select stars,tags,text,weight::float as weight,created_at from reviews where order_id=$1 and author_id=$2',[orderId,user.id]);
       const aboutMe=mine?await q.one(
@@ -108,6 +120,8 @@ export class ReviewsService {
   async moderate(actor: AuthUser, reviewId: string, p: { disputed?: boolean; hidden?: boolean }) {
     if(!actor.roles.some(role=>role==='admin'||role==='moderator'))throw forbidden();
     return this.db.tx(async q=>{
+      const current=await this.currentAuthor(q,actor);
+      if(!current.roles.some(role=>role==='admin'||role==='moderator'))throw forbidden();
       const existing=await q.one<{target_id:string}>(
         'select target_id from reviews where id=$1',[reviewId]);
       if(!existing)throw bad('not_found');
