@@ -35,11 +35,14 @@ const bundle=await build({
         const [mode,setMode]=useState('client');
         const [identity,setIdentity]=useState('ci-demo-user');
         const [invite,setInvite]=useState(false);
+        const [guest,setGuest]=useState(false);
+        window.__showGuestFinance=()=>{window.__economicsMock.token=null;setGuest(true);};
         window.__changeFinanceSession=(id,token)=>{window.__economicsMock.token=token;setIdentity(id);};
         window.__showInvite=()=>setInvite(true);
         window.__changeEconomicsRole=setMode;
         const me={id:identity,roles:mode==='client'?['client']:['master'],
           owner_id:null};
+        if(guest)return React.createElement(EconomicsGuide,{inOffer:true});
         return React.createElement(MeCtx.Provider,{
           value:{me,mode,reload:async()=>{},setMode}
         },React.createElement(invite?Invite:EconomicsGuide));
@@ -146,6 +149,10 @@ try{
   await page.evaluate(data=>window.__economicsMock.pending[7].resolve(data),referral('PRIVATE-C','PRIVATE INVITED C'));
   await link.waitFor();
   if(!(await link.inputValue()).endsWith('PRIVATE-C'))throw Error('Wrong C referral URL after retry');
+  await page.evaluate(()=>window.__showGuestFinance());
+  await link.waitFor({state:'detached'});
+  if(await page.getByRole('region',{name:/Финансовые условия/}).count())throw Error('Guest rendered private finances');
+  if(await page.evaluate(()=>window.__economicsMock.pending.length)!==8)throw Error('Guest triggered private finance request');
   if(errors.length)throw Error('Browser runtime errors: '+errors.join('; '));
   console.log('PASS: live EconomicsGuide/Invite private-read retry, late response and account isolation');
 }finally{await browser.close();}
