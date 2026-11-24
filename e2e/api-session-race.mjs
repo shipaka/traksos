@@ -378,10 +378,18 @@ try {
         deadlines.clear();
         const before=calls.length;
         const request=start().then(value=>({value}),error=>({code:error.code,status:error.status}));
-        // fetch resolves to headers immediately; allow the body read to begin.
-        await Promise.resolve();await Promise.resolve();await Promise.resolve();
+        // Native Response.blob() may start consuming on a later browser task,
+        // not within an arbitrary number of Promise microtasks. Synchronize
+        // with actual bodyUsed, using a bounded real-clock fixture watchdog.
+        // Do not advance the production deadline until body reading is proven.
+        const bodyStartLimit=performance.now()+2000;
+        while(calls.length===before+1&&!calls.at(-1).response.bodyUsed&&
+          performance.now()<bodyStartLimit){
+          await new Promise(resolve=>nativeSet.call(window,resolve,0));
+        }
         expect(calls.length===before+1,'Expected one request before body deadline');
-        expect(calls.at(-1).response.bodyUsed,'Expected response body consumption to have started');
+        expect(calls.at(-1).response.bodyUsed,
+          'Expected response body consumption to have started: '+calls.at(-1).method+' '+calls.at(-1).url);
         const timers=[...deadlines.values()];
         expect(timers.length===1&&timers[0].delay===expectedDelay&&!timers[0].cleared,
           'Deadline must remain armed after headers: '+expectedDelay);
