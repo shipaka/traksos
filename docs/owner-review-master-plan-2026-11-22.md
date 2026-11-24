@@ -711,3 +711,13 @@
 - [x] Код [ac8bd47](https://github.com/shipaka/traksos/commit/ac8bd478a0cdf9df2aa1ea35f59060d313328381): запрет redirect для внешнего и локального LLM, отмена rejected HTTP/oversize response body, строгий массив choices локального провайдера.
 - [x] Регрессии [2d331fd](https://github.com/shipaka/traksos/commit/2d331fd53d7ff85d724324809c3c3f376090775f): запрет redirect, отмена потоков 503 и oversized, malformed choices. Конфликт HEAD при первом отправлении теста разрешён повторным чтением свежего файла, чужие изменения сохранены.
 - [ ] Реальный server test/typecheck и exact-HEAD CI не подтверждены. Ставки, согласия, модели, макеты, main/VPS не менялись. Участок освобождён.
+
+
+### 24.11.2026 · SUPPORT-REPLY-DURABLE-RECIPIENT-20261124 · ответы поддержки и актуальные получатели
+
+Закрепление [#7121973480](https://github.com/shipaka/traksos/pull/274#issuecomment-7121973480), после освобождения #7115809497.
+
+- [x] Код [ee7b990](https://github.com/shipaka/traksos/commit/ee7b9903c2c7729390f1f3e0e89914172d018b23): сообщение, первое время ответа, назначение и durable inbox фиксируются одной транзакцией под блокировкой тикета; отказ inbox откатывает весь ответ. Optional delivery выполняется после commit.
+- [x] Код [8930724](https://github.com/shipaka/traksos/commit/893072461c991a9de64e1473aa70e4b6be6d272f): текущий активный сотрудник и актуальное назначение проверяются внутри транзакции; отозванное назначение не получает новые приватные сообщения, используется существующая очередь модераторов/администраторов. Правила SLA и права доступа сохранены.
+- [x] Написаны HTTP/PostgreSQL-регрессии [c761340](https://github.com/shipaka/traksos/commit/c761340c2072c9711372c87006f68fe7f36a54f9): rollback сообщения, SLA и назначения при отказе inbox; повтор после восстановления; исключение бывшего сотрудника и переназначение действующему.
+- [ ] Фактическое прохождение npm test/typecheck/exact-HEAD CI ещё не подтверждено. Frontend, 617/618, финансы, main/VPS не изменены. Участок освобождён после отчёта.
