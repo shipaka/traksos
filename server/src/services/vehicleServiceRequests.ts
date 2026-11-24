@@ -126,8 +126,12 @@ export class VehicleServiceRequests {
         // Do not overwrite missing VIN from unverified client text: insurer must verify documents.
       }
       if (user.owner_id) {
-        const settings = await q.one<any>('select fleet from users where id=$1', [owner]);
+        const settings = await q.one<any>('select fleet from users where id=$1 for share', [owner]);
         if (settings?.fleet?.allow?.[kind] !== true) throw forbidden('Владелец не разрешил эту услугу');
+        const driver = await q.one<{id:string}>(
+          "select id from users where id=$1 and owner_id=$2 and 'driver'=any(roles) and status='active' for share",
+          [user.id, owner]);
+        if (!driver) throw forbidden('Водитель больше не связан с этим автопарком');
       }
       const active = await q.one<{ id: string }>(
         `select id from vehicle_service_requests
@@ -138,7 +142,7 @@ export class VehicleServiceRequests {
       if (insurance) {
         if (kind !== 'insurance') throw bad('invalid_kind', 'Агент выбирается только для страхования');
         const partner=await q.one<{id:string}>(`select id from users
-          where id=$1 and 'insurer'=any(roles) and status='active'`,[insurance.agentId]);
+          where id=$1 and 'insurer'=any(roles) and status='active' for share`,[insurance.agentId]);
         if(!partner)throw notFound('Страховой агент недоступен');
       }
       const created = insurance
@@ -259,7 +263,7 @@ export class VehicleServiceRequests {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async (q) => {
       const partner = await q.one<{ id: string }>(
-        `select id from users where id=$1 and 'insurer'=any(roles) and status='active'`, [insurerId]);
+        `select id from users where id=$1 and 'insurer'=any(roles) and status='active' for share`, [insurerId]);
       if (!partner) throw notFound('Страховщик не найден');
       const request = await q.one(
         `update vehicle_service_requests set assigned_to=$3, updated_at=now()
@@ -302,7 +306,7 @@ export class VehicleServiceRequests {
     if (!staff.roles?.some(role => ['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async q => {
       const partner = await q.one<{id:string}>(
-        `select id from users where id=$1 and roles && '{insurer,inspection_operator}'::text[] and status='active'`, [partnerId]);
+        `select id from users where id=$1 and roles && '{insurer,inspection_operator}'::text[] and status='active' for share`, [partnerId]);
       if (!partner) throw notFound('Партнёр техосмотра не найден');
       const request = await q.one<any>(
         `update vehicle_service_requests set assigned_to=$3, status='sent_to_partner', updated_at=now()
