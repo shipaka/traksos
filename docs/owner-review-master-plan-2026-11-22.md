@@ -1088,3 +1088,13 @@
 - [x] Код [e9c9bad](https://github.com/shipaka/traksos/commit/e9c9bad3ec728936795b29781ac1638f9f081023): убран optional chaining из CDP-выражения для совместимости с Chromium 74 на Android 10, условия проверки роли сохранены.
 - [x] Код [48065bb](https://github.com/shipaka/traksos/commit/48065bb9d1b222baf4bf87ae35e3e00f403174d1): независимая проверка DOM установленного debug APK теперь обязательна и для API29; свежий role marker, реальные PNG и проверка процесса остаются. Crash/event logcat очищается только до запуска, сохраняется по этапам и при ошибке; TrakSOS am_anr/am_crash и AndroidRuntime crash блокируют PASS, посторонний Pixel Launcher не считается падением TrakSOS.
 - [ ] Фактический Android runtime API29/35 на exact HEAD и проверка артефактов ещё не подтверждены. Не считать дефект закрытым по записи кода. P1-A мобильного браузера остаётся отдельным. Production UI/API, 617/618, main/VPS не затронуты.
+
+
+### 24.11.2026 · MOBILE-ROLE-COOKIE-DIAGNOSTICS-20261124 · P1-A мобильная навигация
+
+Закрепление [#7126726605](https://github.com/shipaka/traksos/pull/274#issuecomment-7126726605), QA [#7126506852](https://github.com/shipaka/traksos/pull/274#issuecomment-7126506852), уточнение [#7126631721](https://github.com/shipaka/traksos/pull/274#issuecomment-7126631721). Базовый HEAD 4f8e401: 28/36 PASS, 8 FAIL mobile browser; PC 12/12 и Android bridge 12/12. Не переносить на новый SHA.
+
+- [x] [7642461](https://github.com/shipaka/traksos/commit/7642461a618bc20064e46dca2ef18f63feefe19f): штатный click «Понятно» после OfferGate, проверка исчезновения и сохранения cookie после reload. Нет force, предварительного consent в localStorage или ослабления assertions. При failure — PNG, размеры DOM, переполнения и elementFromPoint для видимых targets; JSON не содержит innerText, form values или storage.
+- [x] [4406324](https://github.com/shipaka/traksos/commit/4406324dc4c81db981713ba1835960876f46afed), [0ff644d](https://github.com/shipaka/traksos/commit/0ff644d6bf9b029f889fd88262e3943aff51ade2): точечная мобильная адаптация списка поддержки: заголовок и кнопка могут переноситься, текст карточки обращения сжимается и переносится, статус не сжимается. Без глобального clipping, изменения PC, данных, функций или композиции 617/618. Это исправление по source review; фактический источник каждого overflow подтвердить новыми DOM-данными.
+- [x] [391ece3](https://github.com/shipaka/traksos/commit/391ece3ed24f852175c4e176949686e20b417c2f): failure JSON включён в visual artifact вместе с PNG.
+- [ ] Exact-HEAD Chromium 36/36, затем контроль 320/412; по остаточным failures сверить геометрию menu/tabbar/support, устранить доказанные причины. Не закрывать P1-A до реального PASS. P1-B и native gate отдельно; main/VPS не изменены.
