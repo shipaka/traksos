@@ -1,5 +1,5 @@
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { get, post, put, rub, fmtTime, onEvent } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
@@ -1432,11 +1432,31 @@ function BaseMoneyPanel() {
 /** Админ: подтверждённые клиентами счета рембаз — отметить выплату */
 export function AdminServicePayouts() {
   const { me } = useMe();
-  return <AdminServicePayoutsPanel key={me?.id ?? 'guest'} />;
+  return <AdminServicePayoutsPanel key={(me?.id ?? 'guest')+':'+[...(me?.roles ?? [])].sort().join(',')} />;
 }
 function AdminServicePayoutsPanel() {
   const l = useBaseLoad(() => get('/api/admin/service-payouts'), []);
   const { busy, run } = useAction();
+  const acting = useRef(false);
+  const live = useRef(false);
+  useLayoutEffect(() => {
+    live.current = true;
+    return () => { live.current = false; };
+  }, []);
+  const markPaid = async (id: string) => {
+    if (!live.current || acting.current) return;
+    acting.current = true;
+    try {
+      await run(() => post(`/api/admin/bookings/${id}/paid`, {}), 'Отмечено: выплачено');
+    } finally {
+      try {
+        // A response can be lost after commit. Never replay the POST or offer
+        // the old payout list until a fresh server read has reconciled it.
+        // Do not initiate a read for a panel already replaced by another user.
+        if (live.current) await l.reload();
+      } finally { acting.current = false; }
+    }
+  };
   if (!l.data) return <StationLoading error={l.error} reload={l.reload} />;
   if (!l.data.length) return <span className="note">Выплачивать рембазам сейчас нечего.</span>;
   return (
@@ -1445,7 +1465,7 @@ function AdminServicePayoutsPanel() {
         <div key={b.id} className="card" style={{ gap: 6 }}>
           <div className="between"><b>{b.center_name} · счёт №{b.number}</b><b>{rub(b.payout)}</b></div>
           <span className="note">Работы {rub(b.amount)} − комиссия {rub(b.commission)} · ИНН {b.inn ?? '—'} · подтверждён {fmtDay(b.closed_at)}</span>
-          <button className="btn small" disabled={busy} onClick={async () => { if (await run(() => post(`/api/admin/bookings/${b.id}/paid`, {}), 'Отмечено: выплачено')) l.reload(); }}>Отметить выплату</button>
+          <button className="btn small" disabled={busy} onClick={() => void markPaid(b.id)}>Отметить выплату</button>
         </div>
       ))}
     </div>
