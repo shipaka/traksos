@@ -528,11 +528,27 @@ export class ShopService {
     if (!o || (buyer && !mayCancel(o))) throw notFound('Заказ не найден');
     if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
     await this.db.tx(async (q) => {
+      if(buyer){
+        const current=await q.one<{owner_id:string|null;roles:string[]}>(
+          "select owner_id,roles from users where id=$1 and status='active' and deleted_at is null for share",[buyer.id]);
+        if(!current || current.owner_id!==(buyer.owner_id??null) ||
+           !current.roles.some(role=>['client','driver','master','tow','service'].includes(role)) ||
+           (current.owner_id&&!current.roles.includes('driver')))
+          throw notFound('Заказ не найден');
+      }
       // Authorization, status transition and stock restock share ONE row lock.
-      const locked=await q.one<{status:string;client_id:string;created_by:string}>(
-        'select status,client_id,created_by from shop_orders where id=$1 for update',[id]);
+      const locked=await q.one<{status:string;client_id:string;created_by:string;vehicle_id:string|null}>(
+        'select status,client_id,created_by,vehicle_id from shop_orders where id=$1 for update',[id]);
       if(!locked || (buyer && !mayCancel(locked)))
         throw notFound('Заказ не найден');
+      if(buyer?.owner_id && locked.vehicle_id){
+        const assigned=await q.one('select id from vehicles where id=$1 and owner_id=$2 and driver_id=$3 for share',
+          [locked.vehicle_id,buyer.owner_id,buyer.id]);
+        if(!assigned)throw notFound('Заказ не найден');
+      }
+      // The customer can cancel only before the store confirms the order.
+      if(buyer && locked.status!=='new')
+        throw conflict('bad_status','Подтверждённый заказ отменяет только магазин');
       if(locked.status!==o.status)
         throw conflict('status_changed','Заказ изменился — обновите страницу');
       const courier=await q.one<{id:string;status:string}>(
