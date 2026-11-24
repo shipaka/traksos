@@ -8,6 +8,7 @@ const stubs = {
   '../api.ts': `
     export class ApiError extends Error {}
     export function onEvent() { return () => {}; }
+    export function getToken(){return window.__offerMock.token;}
     export function get(path) {
       const mock = window.__offerMock;
       mock.ApiError = ApiError;
@@ -28,7 +29,7 @@ const stubs = {
     }
   `,
   '../ui.tsx': `
-    export function useMe(){return {me:{id:'test-user'},mode:'client'};}
+    export function useMe(){return {me:{id:window.__offerMock.user},mode:'client'};}
     export function useAction(){return {
       busy:false,run:async(fn)=>{await fn();return true;}
     };}
@@ -46,8 +47,10 @@ const bundle = await build({
       error.code = 'offer_outdated';
       reportApiError(error);
     };
-    window.__offerMock = {requests:[],posts:[],resolve:null,reject:null};
-    createRoot(document.getElementById('root')).render(React.createElement(OfferGate));
+    window.__offerMock = {requests:[],posts:[],resolve:null,reject:null,user:'test-user',token:'A'};
+    const root=createRoot(document.getElementById('root'));
+    window.__switchOfferUser=(user,token)=>{window.__offerMock.user=user;window.__offerMock.token=token;root.render(React.createElement(OfferGate));};
+    root.render(React.createElement(OfferGate));
   `, resolveDir:process.cwd(), sourcefile:'offer-consent-entry.tsx', loader:'tsx' },
   bundle:true, write:false, platform:'browser', format:'iife', jsx:'automatic',
   plugins:[{
@@ -105,6 +108,16 @@ try {
   if(!await accept.isDisabled())throw Error('Acceptance activated without checkbox');
   await agree.check();
   if(await accept.isDisabled())throw Error('Valid accepted terms remain blocked');
+  // Another account with the same edition cannot inherit checked consent.
+  const readsBefore=await page.evaluate(()=>window.__offerMock.requests.filter(x=>x==='/api/offers/offer-1').length);
+  await page.evaluate(()=>window.__switchOfferUser('test-user-B','B'));
+  await page.waitForFunction(n=>window.__offerMock.requests.filter(x=>x==='/api/offers/offer-1').length>n,readsBefore);
+  await modal.waitFor();
+  if(!await accept.isDisabled()||await agree.isChecked())throw Error('Consent inherited by next account');
+  await page.evaluate(()=>window.__offerMock.resolve({id:'offer-1',audience:'client',version:'v1',body:'Текст действующей редакции для B'}));
+  await modal.getByText('Текст действующей редакции для B').waitFor();
+  if(await agree.isChecked()||!await accept.isDisabled())throw Error('New account inherited consent after load');
+  await agree.check();
   await accept.click();
   const posts=await page.evaluate(()=>window.__offerMock.posts);
   if(posts.length!==1 || posts[0]!=='/api/offers/offer-1/accept')
