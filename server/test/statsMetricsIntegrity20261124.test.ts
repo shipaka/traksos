@@ -92,3 +92,32 @@ test('admin live orders prioritize SOS and show newest working orders first',
       'highest priority first; newer orders before older within that priority');
   }finally{await t.close();}
 });
+
+test('online counts exclude revoked and soft-deleted performers, monetary sums exceed int32 safely',
+  {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const admin=await t.login('+79990000001');
+    const active=await profile(t,admin,'+79996663301','master');
+    const revoked=await profile(t,admin,'+79996663302','master');
+    const deleted=await profile(t,admin,'+79996663303','tow');
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[revoked.id]);
+    await t.db.query("update users set deleted_at=now() where id=$1",[deleted.id]);
+    const live=ok(await t.api('GET','/api/live',undefined,admin.token));
+    assert.equal(live.masters_online,1);
+    assert.equal(live.tow_online,0);
+    const at='2026-12-01T09:00:00Z';
+    // Individual ledger entries fit int32; their aggregate legitimately does not.
+    await t.db.query("insert into ledger_entries(account,amount,kind,created_at) values ('platform',1500000000,'commission',$1),('platform',1500000000,'commission',$1),('platform',-1200000000,'refund',$1),('platform',-1200000000,'adjustment',$1)",[at]);
+    await t.db.query("insert into ledger_entries(account,amount,kind,performer_id,created_at) values ('performer',1500000000,'payment',$1,$2),('performer',1500000000,'payment',$1,$2)",[active.id,at]);
+    const summary=ok(await t.api('GET','/api/admin/summary',undefined,admin.token));
+    assert.equal(summary.today.mastersOnline,1);
+    assert.equal(summary.today.towOnline,0);
+    assert.equal(summary.money.platformMonth,600000000);
+    assert.equal(summary.money.toPayout,3000000000);
+    const overview=ok(await t.api('GET','/api/admin/stats?days=30',undefined,admin.token));
+    assert.equal(overview.people.performers_online,1);
+    assert.equal(overview.money.platform_income,600000000);
+    assert.equal(overview.money.platform_costs,-2400000000);
+  }finally{await t.close();}
+});
