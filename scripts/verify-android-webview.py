@@ -96,7 +96,8 @@ def evaluate(target, role, port):
         # components (not static screenshots or a mocked browser).
         expression = """(() => {
           const root = document.querySelector('.and19-review-page');
-          const text = root?.innerText || '';
+          // Android 10 CI can still use Chromium 74 (no optional chaining).
+          const text = root ? root.innerText : '';
           const role = LOCATION_ROLE;
           const marker = role === 'client' ? 'Владелец автопарка' : 'Сегодня';
           return {
