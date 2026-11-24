@@ -26,6 +26,7 @@ type Entry = { id?: number; amount: number; expires_at: Date | null; created_at:
 /** Остаток с учётом сгорания: траты гасят самые старые начисления (FIFO) */
 export function pointsBalance(entries: Entry[], at: Date) {
   const lots: { left: number; exp: number }[] = [];
+  const now = at.getTime();
   // Equal timestamps are common in a single invoice transaction and in test
   // clocks. Use the monotonically increasing ledger id as the FIFO tie-breaker;
   // database row order without ORDER BY must never change an account balance.
@@ -33,6 +34,8 @@ export function pointsBalance(entries: Entry[], at: Date) {
     new Date(a.created_at).getTime() - new Date(b.created_at).getTime() ||
     (a.id ?? 0) - (b.id ?? 0))) {
     const t = new Date(e.created_at).getTime();
+    // A future-dated ledger event is not yet part of this balance snapshot.
+    if (t > now) continue;
     if (e.amount > 0) { lots.push({ left: e.amount, exp: e.expires_at ? new Date(e.expires_at).getTime() : Infinity }); continue; }
     let need = -e.amount;
     for (const l of lots) {
@@ -42,7 +45,6 @@ export function pointsBalance(entries: Entry[], at: Date) {
       l.left -= take; need -= take;
     }
   }
-  const now = at.getTime();
   const live = lots.filter((l) => l.exp > now && l.left > 0);
   const soon = live.filter((l) => l.exp - now < 30 * DAY).reduce((s, l) => s + l.left, 0);
   return { balance: live.reduce((s, l) => s + l.left, 0), expiringSoon: soon };
@@ -59,9 +61,18 @@ export class ReferralService {
     if (u?.ref_code) return u.ref_code;
     for (let i = 0; i < 5; i++) {
       const c = [...randomBytes(6)].map((b) => ALPHABET[b % ALPHABET.length]).join('');
-      const r = await this.db.one<{ ref_code: string }>(
-        `update users set ref_code=$2 where id=$1 and ref_code is null and not exists (select 1 from users where ref_code=$2) returning ref_code`, [userId, c]);
-      if (r) return r.ref_code;
+      try {
+        const r = await this.db.one<{ ref_code: string }>(
+          `update users set ref_code=$2 where id=$1 and ref_code is null and not exists (select 1 from users where ref_code=$2) returning ref_code`, [userId, c]);
+        if (r) return r.ref_code;
+      } catch (error) {
+        // NOT EXISTS cannot prevent a concurrent unique-index collision.
+        // Retry only a unique violation with evidence of this code collision;
+        // never hide unrelated database failures.
+        if ((error as { code?: string } | null)?.code !== '23505') throw error;
+        const collision = await this.db.one('select id from users where ref_code=$1', [c]);
+        if (!collision) throw error;
+      }
       const again = await this.db.one<{ ref_code: string | null }>('select ref_code from users where id=$1', [userId]);
       if (again?.ref_code) return again.ref_code;
     }
