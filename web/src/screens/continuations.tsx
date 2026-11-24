@@ -1,5 +1,5 @@
-import {useRef,useState} from 'react';
-import {get,post,fmtTime} from '../api.ts';
+import {useLayoutEffect,useRef,useState} from 'react';
+import {get,getToken,post,fmtTime} from '../api.ts';
 import {useAction,useMe} from '../ui.tsx';
 import {usePrivateRead} from './privateRead20261124.ts';
 
@@ -13,14 +13,18 @@ const titles:Record<string,string> = {
  * Neither the advice nor this decision changes the original order state.
  */
 export function OrderContinuations({order:o}:{order:any}) {
+ const context=useMe(),me=context?.me,token=getToken();
+ if(!me||!token||!['client','performer'].includes(o.you))return null;
+ const scope=JSON.stringify([me.id,token,context.mode,o.id,o.you,me.owner_id??null,o.service]);
+ return <ContinuationAccount key={scope} scope={scope} token={token} order={o}/>;
+}
+
+function ContinuationAccount({scope,token,order:o}:{scope:string;token:string;order:any}){
  const {me}=useMe();
- const scope=(me?.id??'guest')+':'+o.id;
- const scopeRef=useRef(scope);
- scopeRef.current=scope;
- const actionRef=useRef(false);
- const recs=usePrivateRead<any[]>(()=>me
-   ? get('/api/orders/'+o.id+'/continuations') : Promise.resolve([]),
-   scope, e=>e.orderId===o.id && e.type==='order');
+ const alive=useRef(true),actionRef=useRef(false);
+ useLayoutEffect(()=>{alive.current=true;return ()=>{alive.current=false;};},[]);
+ const current=()=>alive.current&&getToken()===token;
+ const recs=usePrivateRead<any[]>(()=>get('/api/orders/'+o.id+'/continuations'),scope,e=>e.orderId===o.id&&e.type==='order');
  const {busy,run}=useAction();
  const targets=o.service==='consult'?['master','tow','sto','ecu']
   :o.service==='tow'?['sto']:['tow','sto','ecu'];
@@ -37,16 +41,15 @@ export function OrderContinuations({order:o}:{order:any}) {
  const setTarget=(next:Target)=>setDraft({scope,target:next,reason});
  const setReason=(next:string)=>setDraft({scope,target,reason:next});
  const submit=async(request:()=>Promise<any>,message:string,onSuccess?:()=>void)=>{
-  if(actionRef.current||!me)return;
+  if(actionRef.current||!me||!current()||recs.loading||recs.error)return;
   actionRef.current=true;
-  const initiatedUnder=scope;
   try{
    const result=await run(request,message);
    // A response for account/order A may not clear B's draft or reload B's
    // private resource. Backend writes are authorized independently.
-   if(result && scopeRef.current===initiatedUnder){
+   if(result && current()){
     onSuccess?.();
-    void recs.reload();
+    await recs.reload();
    }
   }finally{actionRef.current=false;}
  };
