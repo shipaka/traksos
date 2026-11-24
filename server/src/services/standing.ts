@@ -9,6 +9,16 @@ import type { SettingsService } from './settings.ts';
 
 export const LEVEL = { newbieJobs: 10, bestJobs: 50, bestRating: 4.7, minHintCases: 20, windowDays: 90 };
 const SCORE: Record<string, number> = { yes: 1, part: 0.5, no: 0 };
+const BRAND_STARS: Record<string, number> = { excellent: 3, good: 2, last_resort: 1 };
+
+function brandStars(brands: Candidate['brands'], brand: string): number {
+  const level = brands && Object.hasOwn(brands, brand) ? brands[brand] : undefined;
+  return typeof level === 'string' && Object.hasOwn(BRAND_STARS, level) ? BRAND_STARS[level] : 2;
+}
+
+function hasSpecialty(specialties: unknown, service: string): boolean {
+  return Array.isArray(specialties) && specialties.includes(service);
+}
 
 /** Incomplete coordinates and 0/0 are not evidence of a nearby truck. */
 function validPoint(lat: unknown, lng: unknown): boolean {
@@ -69,7 +79,7 @@ export class StandingService {
        and lat is not null and lng is not null`,[user.id]);
     const near=open.filter(o=>validPoint(o.lat,o.lng) &&
       performerKindFor(o.service)===p.kind &&
-      (p.kind!=='master'||o.service==='consult'||(p.specialties??[]).includes(o.service)) &&
+      (p.kind!=='master'||o.service==='consult'||hasSpecialty(p.specialties,o.service)) &&
       (!o.brand||p.brands?.[o.brand]!=='refuse') &&
       haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})<=50);
     // Only active, approved, available colleagues with valid positions can
@@ -97,7 +107,7 @@ export class StandingService {
       if(available!=='work'&&available!=='phone')continue;
       if(near.some(o=>
         (available==='work'||o.service==='consult') &&
-        (c.kind!=='master'||o.service==='consult'||(c.specialties??[]).includes(o.service)) &&
+        (c.kind!=='master'||o.service==='consult'||hasSpecialty(c.specialties,o.service)) &&
         (!o.brand||c.brands?.[o.brand]!=='refuse') &&
         haversineKm({lat:c.lat!,lng:c.lng!},{lat:o.lat!,lng:o.lng!}) <
         haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})))ahead++;
@@ -141,7 +151,7 @@ export class StandingService {
     const now=this.now();
     const free=online.filter(c=>{
       if(c.busy||c.line_status==='on_job')return false;
-      if(kind==='master'&&p.service!=='consult'&&!c.specialties.includes(p.service))
+      if(kind==='master'&&p.service!=='consult'&&!hasSpecialty(c.specialties,p.service))
         return false;
       const available=slot(c.schedule,now,c.off_schedule_until);
       return available==='work'||(available==='phone'&&p.service==='consult');
@@ -153,18 +163,17 @@ export class StandingService {
     const candidates = free.map(c => ({...c, brands: Object.assign(Object.create(null), c.brands ?? {}) as Candidate['brands']}));
     const ranked = rankCandidates(order as any, candidates, {
       radiusKm: all.dispatch.radiusKm, maxCandidates: free.length,
-      cashDebtLimit: Number.MAX_SAFE_INTEGER, now: this.now()
+      cashDebtLimit: Number.MAX_SAFE_INTEGER, now
     });
     const byId = new Map(candidates.map((c) => [c.user_id, c]));
     const speed = all.dispatch.citySpeedKmh || 40;
-    const LEVEL: Record<string, number> = { excellent: 3, good: 2, last_resort: 1 };
     const items = ranked.map((r) => {
       const c = byId.get(r.user_id)!;
       const tierPrice = (all.pricing.tiers as any)[c.tier]?.callOut ?? null;
       return {
         name: (c.name ?? 'Мастер').split(/[\s(]/)[0], tier: c.tier, verification: c.verification, rating: c.rating == null ? null : Number(c.rating), jobs: (c as any).jobs,
         distanceKm: r.distanceKm, etaMin: r.distanceKm == null ? null : Math.max(10, Math.round((r.distanceKm * 1.3) / speed * 60) + ((c as any).prep_minutes ?? 0)),
-        brandStars: p.brand ? LEVEL[(c.brands as any)?.[p.brand] ?? 'good'] ?? 2 : null,
+        brandStars: p.brand ? brandStars(c.brands,p.brand) : null,
         callOut: c.call_out_price ?? tierPrice,
       };
     });
