@@ -1154,3 +1154,13 @@
 - [x] [c491ff1](https://github.com/shipaka/traksos/commit/c491ff18e18f84e5b903e070871c08dfd11f9038): единая сверка после POST отправки сообщения, скрытия, переключения бота (успех и ошибка), немедленная инвалидизация старых GET и прав, отсутствие автоматического повторения POST. Синхронная блокировка конкурентного действия сохранена.
 - [x] [b3cf1b4](https://github.com/shipaka/traksos/commit/b3cf1b4d96d5113fc2c179f2b97366714cd6fda7) и [45bbf94](https://github.com/shipaka/traksos/commit/45bbf94ad0d0093482d1484d78baaa314df634b2): реальный React/Chromium harness расширен потерянными ответами bot/hide, поздним GET, проверкой свежих прав и no replay; контролируемый интервал polling, проверка очистки таймера при смене роли.
 - [ ] Фактическое исполнение Chromium/typecheck/exact HEAD не подтверждено; изменения [skip ci], без rerun/dispatch. Фиксированный контрольный SHA, 617/618, UI layout, серверный контракт, PR275/main/VPS не изменены.
+
+
+### 24.11.2026 · STO-PAYOUT-RECONCILE-20261124 · актуальный реестр выплат рембазам
+
+Закрепление [#7141456285](https://github.com/shipaka/traksos/pull/274#issuecomment-7141456285). На контрольном `2a59e18` [main run 45420677210](https://github.com/shipaka/traksos/actions/runs/45420677210) завершился на stale payout assertion STO finance, предыдущие shop/air/API body сценарии PASS. Имеющееся исправление барьера DOM не переписывалось. Отдельный дефект исходника: admin /paid при потере ответа оставлял старый actionable реестр, busy не синхронный lock.
+
+- [x] [2ba0467](https://github.com/shipaka/traksos/commit/2ba046776fd288cf4e6012a76c5c53b26c416a50): синхронный lock на весь цикл POST + fresh GET, reconciliation при успехе/ошибке без автоматического replay, lifecycle guard не позволяет старой панели запустить новый GET после смены аккаунта, key учитывает роли.
+- [x] [4546799](https://github.com/shipaka/traksos/commit/4546799d1ea6ca0e6851bf448dfbd67d1615bb39): отдельный real React Chromium harness с synthetic API — двойной клик, потеря POST, GET outage, ручное восстановление списка, успешная отметка, смена администратора, удаление панели при отзыве роли.
+- [x] [3ae09ac](https://github.com/shipaka/traksos/commit/3ae09ac41ce4871c2846135edbf1c864cd023bbf): обязательный шаг в существующем основном CI после STO сценария.
+- [ ] Реальный Chromium/typecheck/exact-HEAD PASS не подтверждён. Коммиты [skip ci], без rerun/dispatch. Правила выплат, суммы, утверждённая раскладка 617/618, #275/main/VPS не менялись.
