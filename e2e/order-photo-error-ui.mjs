@@ -18,7 +18,7 @@ const snippets={
       window.__calls.gallery++;
       if(!path.includes('/api/orders/synthetic-order/photos'))throw Error('Unexpected request '+path);
       if(window.__galleryFailures-->0)throw Error('Temporary offline failure');
-      return [{id:'synthetic-photo',mime:'image/png',size_bytes:68,
+      return [{id:'synthetic-photo',mime:'image/png',size_bytes:70,
         created_at:'2026-11-22T12:00:00.000Z',uploader_name:'Тестовый мастер'}];
     }
     export async function authedImage(path,options={}){
@@ -28,7 +28,7 @@ const snippets={
       if(!window.__authToken)throw Error('No bearer token');
       if(window.__photoFailures-->0)throw Error('Temporary private photo error');
       if(options.signal?.aborted)throw Error('Request aborted');
-      const bytes=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9YVBi4IAAAAASUVORK5CYII='),x=>x.charCodeAt(0));
+      const bytes=Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),x=>x.charCodeAt(0));
       const url=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
       window.__loadedUrls.push(url);
       return url;
@@ -116,7 +116,13 @@ try{
   await page.getByRole('button',{name:/Повторить загрузку фото ремонта/}).click();
   await page.getByRole('button',{name:/Посмотреть фото ремонта/}).waitFor();
   await page.getByRole('button',{name:/Посмотреть фото ремонта/}).click();
-  await page.getByRole('dialog',{name:'Фото ремонта'}).waitFor();
+  const preview=page.getByRole('dialog',{name:'Фото ремонта'});
+  await preview.waitFor();
+  const previewImage=preview.getByRole('img',{name:'Фотография ремонта, прикреплённая к заявке'});
+  await previewImage.evaluate(async img=>{
+    await img.decode();
+    if(img.naturalWidth!==1||img.naturalHeight!==1)throw Error('Synthetic photo did not decode to its expected dimensions');
+  });
   await page.keyboard.press('Escape');
   assert(await page.getByRole('dialog',{name:'Фото ремонта'}).count()===0,
     'Escape did not close photo preview');
