@@ -180,6 +180,7 @@ try{
     await page.waitForFunction(()=>localStorage.getItem('traksos.token')===null);
     // Wait for actual reloaded guest UI; a revoked token must not survive in the backend.
     await page.locator('.account-menu').waitFor({state:'detached',timeout:15000});
+    await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor({state:'visible',timeout:15000});
     const old=await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
     if(old.status!==401)throw Error('Logged-out token still authorized: '+old.status);
     if(unexpectedDialogs.length)throw Error('Unexpected dialog(s): '+unexpectedDialogs.join(' | '));
