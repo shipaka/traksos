@@ -83,6 +83,8 @@ try {
     if(!q)throw Error('Missing '+method+' '+path+' #'+index);
     q[what](what==='reject'?Error(data):data);
   },{method,path,index,what,data});
+  // Let resolved deferred promises and React rendering settle before negative assertions.
+  const settleRender=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const messages=page.getByRole('textbox',{name:'Сообщение TrakBot'});
   await wait('GET',H,1);
   check(await messages.isDisabled(),'Chat could send before private history is known');
@@ -109,7 +111,7 @@ try {
     userMessage:human('user-A','Диагностика А'),
     message:bot('answer-A','SECRET-ASYNC-REPLY-A'),freePilot:true,
   });
-  await page.waitForTimeout(80);
+  await settleRender();
   check(await page.getByText('SECRET-ASYNC-REPLY-A').count()===0,
     'Late A POST reply appeared inside B session');
   await finish('GET',H,1,'reject','offline');
@@ -148,11 +150,13 @@ try {
     'Clear-history action lost its visible caption');
   await clearButton.click();
   await wait('DELETE',H,1);
+  check(await messages.isDisabled(),'Pending deletion did not lock the composer');
   await page.evaluate(()=>window.__setBotMe({id:'owner-C',roles:['client'],performer:null}));
   await wait('GET',H,5);
   await finish('GET',H,4,'resolve',response([bot('bot-C','PRIVATE-TRAKBOT-OWNER-C')]));
   await page.getByText('PRIVATE-TRAKBOT-OWNER-C').waitFor();
   await finish('DELETE',H,0,'resolve',{cleared:true});
+  await settleRender();
   check(await page.getByText('PRIVATE-TRAKBOT-OWNER-C').count()===1,
     'Old deletion cleared a newer account');
 
@@ -176,6 +180,7 @@ try {
     code:'P0087',title_en:'OLD-SECRET-TECH-RESULT',title_ru:null,
     detail_en:null,detail_ru:null,source_url:'https://example.com/old',review_state:'unverified',
   }]});
+  await settleRender();
   check(await page.getByText('OLD-SECRET-TECH-RESULT').count()===0,
     'Older search overwrote current specialist query');
   await finish('GET',pNew,0,'resolve',{items:[{
