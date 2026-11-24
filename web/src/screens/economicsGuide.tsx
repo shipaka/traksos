@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useLoad, useMe, Back } from '../ui.tsx';
-import { get, rub } from '../api.ts';
+import { useMe, Back } from '../ui.tsx';
+import { get, getToken, rub } from '../api.ts';
+import { usePrivateRead } from './privateRead20261124.ts';
 import { learningRole } from './platformIntro.tsx';
 
 type Example={amount:number;fee:number;total:number;partnerReceives?:number;title:string;formula:string};
@@ -10,23 +10,20 @@ type Guide={role:string;title:string;cap:number;paragraphs:{title:string;text:st
 export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
   const {me,mode}=useMe();
   const role=me?.owner_id?'driver':learningRole(mode,me?.roles??[]);
-  const q=useLoad(()=>get<Guide>('/api/me/economics?role='+encodeURIComponent(role)),[me?.id,role]);
-  const [retrying,setRetrying]=useState(false);
-  const retry=async()=>{
-    if(retrying)return;
-    setRetrying(true);
-    try{await q.reload();}finally{setRetrying(false);}
-  };
-  if(!me)return null;
-  // useLoad preserves its last successful response when a later refresh fails.
-  // Never present that cached financial response as current after a failed GET.
+  const token=getToken();
+  const scope=JSON.stringify([me?.id??null,token,role]);
+  const q=usePrivateRead<Guide|null>(()=>me&&token
+    ?get<Guide>('/api/me/economics?role='+encodeURIComponent(role))
+    :Promise.resolve(null),scope);
+  if(!me||!token)return null;
+  // Discard previous account/role data synchronously, including during reload.
   if(q.error||!q.data)return <section className="card stack" aria-label="Финансовые условия">
     <b>Комиссии, баллы и рефералы</b>
     <span className="note" role={q.error?'alert':'status'}>{q.error
       ?'Не удалось загрузить актуальные условия. Не полагайтесь на старые цифры; проверьте связь или откройте оферту.'
       :'Загружаем действующие условия из системы…'}</span>
-    {q.error&&<button className="btn small" type="button" disabled={retrying}
-      onClick={()=>{void retry();}}>{retrying?'Обновляем…':'Повторить загрузку'}</button>}
+    {q.error&&<button className="btn small" type="button" disabled={q.loading}
+      onClick={()=>{void q.reload();}}>Повторить загрузку</button>}
   </section>;
   const info=q.data;
   return <section className="card stack economics-guide" aria-label={'Финансовые условия: '+info.title}>
