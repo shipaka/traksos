@@ -13,9 +13,14 @@ before(async()=>{
   admin=await t.login('+79990000001');
   customer=await t.login('+79992221101');
   master=await t.login('+79992221102','master');
-  // Announcement dispatch now correctly targets only actually verified
-  // specialists. Approve this fake master only in the disposable test DB.
-  await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[master.id]);
+  // Registration alone need not create a performer profile. Create and
+  // approve a real test profile through the same HTTP flow as a partner.
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Тестовый мастер',specialties:['electric'],
+    taxStatus:'self_employed',inn:'780000000555',
+  },master.token));
+  ok(await t.api('POST',`/api/admin/performers/${master.id}/verify`,
+    {decision:'approved'},admin.token));
 });
 after(()=>t.close());
 
