@@ -29,6 +29,14 @@ test('repair photos: an acknowledged upload can be retried after all 12 photo sl
   assert.equal((await t.api('POST',url,{dataUrl:image()},worker.token)).status,409);
   assert.equal((await t.db.query('select id from order_photos where order_id=$1',
    [order.id])).length,12);
+  await t.db.query("update orders set status='completed' where id=$1",[order.id]);
+  const late=ok(await t.api('POST',url,{dataUrl:first},worker.token));
+  assert.equal(late.id,created.id);
+  assert.equal(late.duplicate,true,'lost upload ACK remains retryable after completion');
+  assert.equal((await t.api('POST',url,{dataUrl:image()},worker.token)).status,409,
+   'new evidence cannot be added to a closed order');
+  assert.equal((await t.db.query('select id from order_photos where order_id=$1',
+   [order.id])).length,12);
  }finally{await t.close();}
 });
 
