@@ -101,13 +101,13 @@ test('revoked fleet claimant cannot reopen, read, appeal or approve historical w
     const offerPath=`/api/admin/warranty-claims/${claim.id}/remedies`;
     // A failure inserting the offer inbox must roll back the entire offer,
     // including its event and audit. A retry can then create it normally.
-    await t.db.exec(`create function fail_warranty_remedy_inbox() returns trigger language plpgsql as $
+    await t.db.exec(`create function fail_warranty_remedy_inbox() returns trigger language plpgsql as $remedy_fault$
       begin
         if new.kind='warranty' and new.data->>'jobId' is not null then
           raise exception 'warranty remedy inbox fault';
         end if;
         return new;
-      end; $;
+      end; $remedy_fault$;
       create trigger fail_warranty_remedy_inbox before insert on notifications
       for each row execute function fail_warranty_remedy_inbox();`);
     try {
