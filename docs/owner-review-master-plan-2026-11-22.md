@@ -986,3 +986,12 @@
 - [x] Код [38e2a1f](https://github.com/shipaka/traksos/commit/38e2a1fb2e1e92d5b1627dac470bd62793050174) и [df63a2a](https://github.com/shipaka/traksos/commit/df63a2aeaffc73acfd974bcffeca2d1eb6824a9c): удалённый аккаунт с остаточной сессией не участвует в доставке push и не может зарегистрировать/перехватить токен устройства под lock.
 - [x] HTTP/PG регрессия написана [ba6acee](https://github.com/shipaka/traksos/commit/ba6acee44376b731f39e864bf91cd6bdd85f4bb0): действующий аккаунт получает push, удалённый исключён, токен действующего устройства не перехвачен.
 - [ ] Повторный exact-HEAD CI не подтверждён. На предыдущем SHA c9dc517 нагрузочный тест 200 пользователей и справочник TrakBot успешно завершились (runs 45331416925/45331416858), остальные проверки на момент сверки продолжались. Durable inbox, UI 617/618, main/VPS не менялись. Все три пути освобождены.
+
+
+### 24.11.2026 · SLA-ACTIVE-RECIPIENT-REVIEW-20261124 · актуальные получатели SLA и полномочия администратора
+
+Закрепление [#7122907050](https://github.com/shipaka/traksos/pull/274#issuecomment-7122907050), после освобождения #7121839411. 
+
+- [x] Код [50125d6](https://github.com/shipaka/traksos/commit/50125d6b27ae1ba6f70f908c6497493f66a4e120): driver JOIN и все фактические inbox/push получатели проверяют active/non-deleted в транзакции; review проверяет актуальные полномочия admin под shared lock. Инцидент, дедупликация и пороги сохранены.
+- [x] Написана PG-регрессия [1bc2ff5](https://github.com/shipaka/traksos/commit/1bc2ff514c78218883a2b40d0e850e09de97e9a8): исключение заблокированного водителя/удалённого мастера из inbox и транспорта, отказ captured admin после отзыва роли, восстановление законного доступа.
+- [ ] Фактический новый server test/typecheck/exact-HEAD CI не подтверждён. Browser esbuild gate оставлен его владельцу #7122882003. 617/618, санкции, платежи, main/VPS не менялись.
