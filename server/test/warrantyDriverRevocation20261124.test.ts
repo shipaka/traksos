@@ -96,10 +96,47 @@ test('revoked fleet claimant cannot reopen, read, appeal or approve historical w
       reason:'Бывший водитель пробует возобновить доступ по старому UUID',
     },formerDriver.token)).status,403);
 
-    const remedied=ok(await t.api('POST',`/api/admin/warranty-claims/${claim.id}/remedies`,{
-      performerId:performer.id,budgetKopecks:0,
-      task:'Бесплатно повторить проверку проводки и генератора с актом исправления',
-    },admin.token));
+    const remedyPayload={performerId:performer.id,budgetKopecks:0,
+      task:'Бесплатно повторить проверку проводки и генератора с актом исправления'};
+    const offerPath=`/api/admin/warranty-claims/${claim.id}/remedies`;
+    // A failure inserting the offer inbox must roll back the entire offer,
+    // including its event and audit. A retry can then create it normally.
+    await t.db.exec(`create function fail_warranty_remedy_inbox() returns trigger language plpgsql as $
+      begin
+        if new.kind='warranty' and new.data->>'jobId' is not null then
+          raise exception 'warranty remedy inbox fault';
+        end if;
+        return new;
+      end; $;
+      create trigger fail_warranty_remedy_inbox before insert on notifications
+      for each row execute function fail_warranty_remedy_inbox();`);
+    try {
+      const failed=await t.api('POST',offerPath,remedyPayload,admin.token);
+      assert.ok(failed.status>=400,'inbox fault must not return success');
+      assert.equal((await t.db.one<{n:number}>(
+        'select count(*)::int as n from warranty_rework_jobs where claim_id=$1',[claim.id]))?.n,0);
+    } finally {
+      await t.db.exec('drop trigger fail_warranty_remedy_inbox on notifications; drop function fail_warranty_remedy_inbox();');
+    }
+    const first=ok(await t.api('POST',offerPath,remedyPayload,admin.token));
+    const repeated=ok(await t.api('POST',offerPath,remedyPayload,admin.token));
+    assert.equal(repeated.id,first.id);
+    assert.equal((await t.db.one<{n:number}>(
+      "select count(*)::int as n from notifications where kind='warranty' and data->>'jobId'=$1",[first.id]))?.n,2,
+      'one durable inbox per recipient, no duplicate on retry');
+    const respondPath=`/api/warranty-remedies/${first.id}/respond`;
+    for(let i=0;i<2;i++){
+      const declined=ok(await t.api('POST',respondPath,{accept:false},performer.token));
+      assert.equal(declined.status,'declined');
+    }
+    const declinedRow=await t.db.one<{accepted_at:Date|null;updated_at:Date|null}>(
+      'select accepted_at,updated_at from warranty_rework_jobs where id=$1',[first.id]);
+    assert.ok(declinedRow?.updated_at,'declining never clears updated_at');
+    assert.equal(declinedRow?.accepted_at,null);
+    assert.equal((await t.db.one<{n:number}>(
+      "select count(*)::int as n from warranty_rework_events where job_id=$1 and event='declined'",[first.id]))?.n,1);
+    const remedied=ok(await t.api('POST',offerPath,remedyPayload,admin.token));
+    assert.notEqual(remedied.id,first.id,'declined offer can be replaced');
     assert.equal((await t.api('GET',`/api/warranty-remedies/${remedied.id}`,
       undefined,formerDriver.token)).status,403);
     assert.equal((await t.api('GET',`/api/warranty-claims/${claim.id}/remedies`,
