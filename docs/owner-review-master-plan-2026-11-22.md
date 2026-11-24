@@ -894,3 +894,13 @@
 - [x] Код [8ff2fe6](https://github.com/shipaka/traksos/commit/8ff2fe6f3ba59f17c9834cf481faaa080e35169b): чтение переписки под блокировкой заявки, текущего аккаунта и действующей водительской привязки; staff role проверяется заново; post использует тот же ACL; сбой поиска адресатов после commit не превращает сохранённую запись в ошибочный ответ.
 - [x] PG-регрессия [f664b2f](https://github.com/shipaka/traksos/commit/f664b2fc72cd0603f2e4b635cfd6313905bc9e2f): устаревшие полномочия сотрудника, отказ записи и чтения, успешный commit при ошибке определения адресатов.
 - [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI ещё не подтверждено. Существующая политика optional push сохранена. UI, 617/618, orders.ts, main/VPS и финансовые правила не изменены. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · CI-WEATHER-TS2769 / CI-GUEST-UNKNOWN-ROUTE · устранение двух блокеров CI
+
+Закрепления [#7122337026](https://github.com/shipaka/traksos/pull/274#issuecomment-7122337026), [#7122344089](https://github.com/shipaka/traksos/pull/274#issuecomment-7122344089).
+
+- Exact HEAD `8083ff68b7445b8ccc3a6fea3856a959cc5d18c0`: Android smoke, mixed-role load, isolated sandbox, TrakBot reference — success; [общий CI](https://github.com/shipaka/traksos/actions/runs/45327833963) — failure на typecheck TS2769 publicWeather.ts:126; [реальные скриншоты](https://github.com/shipaka/traksos/actions/runs/45327834107) — failure на ожидании входа legacy-guest-deeplinks.mjs:24/39.
+- [x] Код [f3b0fed](https://github.com/shipaka/traksos/commit/f3b0fede3702eece497a08029b426d36a8219431): проверенный непустой API key фиксируется в локальной константе перед Promise callback. Никакой передачи ключа клиенту, изменения vendor/TTL/GPS.
+- [x] Код [b98a11b](https://github.com/shipaka/traksos/commit/b98a11b9281b4744b894e99b6e92761d4240fe4e): неизвестный непустой гостевой hash открывает согласованный login вместо landing с intent=null, корень и реферальная ссылка сохранены. [2ac2862](https://github.com/shipaka/traksos/commit/2ac28625b1c31c7f5c236caf8732d9dcf1a8aab6) — регрессия по прежнему полному набору маршрутов с конкретным path/viewport при ошибке; ожидание и проверка не ослаблены.
+- [ ] Фактический новый exact-HEAD CI/Chromium не подтверждён; исходный лог не содержал конкретный path, fallback дефект подтверждён чтением кода. Не менять утверждённые 617/618, main/VPS. Участки освобождаются после отчёта.
