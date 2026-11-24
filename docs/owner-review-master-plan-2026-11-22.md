@@ -876,3 +876,12 @@
 - [x] Код [11d6128](https://github.com/shipaka/traksos/commit/11d612873c90fdc3c186ef5ec0e93833eb8dc2e7): пять онлайн-счётчиков исключают удалённые аккаунты и отозванные роли; overview, summary, liveOrders читают данные в одной repeatable-read read-only транзакции; денежные агрегаты больше int32 возвращаются числом, а не HTTP500. [71f81f7](https://github.com/shipaka/traksos/commit/71f81f70dc05cbad69e6a78fdf94c74544a6e24f) — аналогично сумма возвратов и корректировок.
 - [x] Написана HTTP/PG регрессия [a694ddb](https://github.com/shipaka/traksos/commit/a694ddb6bed662b5cc1f345a839e7b095444e3b0): утрата роли, soft deletion, 3 млрд копеек к выплате, 2,4 млрд копеек возвратов/корректировок.
 - [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI не подтверждено. Финансовые проводки, ставки, 617/618, main/VPS не менялись. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · TECHCASE-LIVE-VERIFICATION-20261124 · актуальная верификация технической базы
+
+Закрепление [#7122200856](https://github.com/shipaka/traksos/pull/274#issuecomment-7122200856), после освобождения #7116163843.
+
+- [x] Код [e759582](https://github.com/shipaka/traksos/commit/e7595823a9a793ae6fffca80e709bc5d956dd201): текущие active account/roles и профиль верификации удерживаются shared lock при чтении/публикации/модерации кейсов; снятие прав не обходится captured AuthUser. Самопроверка и pending-only review сохранены.
+- [x] PG-регрессия [430dec1](https://github.com/shipaka/traksos/commit/430dec1049a3459ea27545393647c68f42be9e97), уточнение fixture [457daeb](https://github.com/shipaka/traksos/commit/457daebb3ca0221a6f8120604a398581983794eb): отзыв роли и верификации мастера, отзыв admin роли, сохранение pending, восстановление законного доступа.
+- [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI не подтверждено. UI, 617/618, main/VPS и бизнес-правила не изменены. Участок освобождён после отчёта.
