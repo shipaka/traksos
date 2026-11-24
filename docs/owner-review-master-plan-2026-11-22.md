@@ -932,3 +932,12 @@
 - [x] [124f3be](https://github.com/shipaka/traksos/commit/124f3be455b2c09a865f0d6f8f9eb56ee3246547): исправлена синтаксическая ошибка PostgreSQL 42601 в гарантийном fault-injection trigger (test 674), именованный dollar-quote.
 - [x] [981dd6d](https://github.com/shipaka/traksos/commit/981dd6da41453d4470deb7960ca766dc1bd733c9): старые unit fixtures напоминаний (207/209/210) приведены к действующему атомарному контракту, сохранены проверки адресата, окон, конкурентного claim, rollback и повторов, добавлена проверка optional delivery failure.
 - [ ] Новый actual HEAD CI. Отдельные обнаруженные сбои не закрыты: documents test 124, publicPartnerMap 370–373, shop 477, PostgreSQL deadlocks warranty_claims/warranty_rework_jobs. Не изменялись production code, 617/618, main/VPS.
+
+
+### 24.11.2026 · REVIEWS-LIVE-ACTOR-20261124 · актуальные полномочия отзывов
+
+Закрепление [#7122659680](https://github.com/shipaka/traksos/pull/274#issuecomment-7122659680).
+
+- [x] Код [166c505](https://github.com/shipaka/traksos/commit/166c5055f0004012f22c9bd1b31e8f43bfb8d18d): активный неудалённый автор, актуальные staff/driver права и вес автора читаются под транзакционными блокировками; отозванный staff не читает чужую историю и не модерирует отзывы. Формула веса и прежние права активных участников по ID сохранены.
+- [x] Написана PostgreSQL-регрессия [9b032ee](https://github.com/shipaka/traksos/commit/9b032eebc38bda409055c3ef4151b7e15e11f70a): captured AuthUser после отзыва staff, блокировка/soft deletion участника, отсутствие записи/скрытия при отказе, восстановление staff.
+- [ ] Фактический exact-HEAD CI/typecheck/npm test ещё не подтверждены. На предыдущем SHA daca4ed нагрузки и справочник прошли, остальные четыре gate отменены при обновлении ветки, не считаются зелёными. UI 617/618, рейтинг-формула, main/VPS сохранены. Участки освобождаются после отчёта.
