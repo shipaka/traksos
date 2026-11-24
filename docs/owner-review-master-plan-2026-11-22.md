@@ -977,3 +977,12 @@
 - [x] Код [da11021](https://github.com/shipaka/traksos/commit/da1102117cfe65acbfbd4c95b7b5e79dbf6c3396): myOrders/history проверяют актуальную активную учётную запись, роль, членство в парке и привязку машины в том же SQL snapshot, что и приватные данные; checkout повторно проверяет active/non-deleted покупателя и владельца внутри транзакции резерва.
 - [x] Регрессии [9ab66ea](https://github.com/shipaka/traksos/commit/9ab66eaaed245e2ec2d6917f8f812b136ee4df76): перевод машины другому водителю, отзыв членства, сохранение прав владельца, заблокированный покупатель и неизменный склад.
 - [ ] Фактический новый server test/typecheck/exact-HEAD CI не подтверждён. Правило отмены new-only, цены, платежи, UI 617/618, main/VPS сохранены. Оба пути освобождены.
+
+
+### 24.11.2026 · PUSH-DELETED-ACCOUNT-20261124 · отключение push удалённых аккаунтов
+
+Закрепление [#7122739161](https://github.com/shipaka/traksos/pull/274#issuecomment-7122739161), после освобождения #7121864507.
+
+- [x] Код [38e2a1f](https://github.com/shipaka/traksos/commit/38e2a1fb2e1e92d5b1627dac470bd62793050174) и [df63a2a](https://github.com/shipaka/traksos/commit/df63a2aeaffc73acfd974bcffeca2d1eb6824a9c): удалённый аккаунт с остаточной сессией не участвует в доставке push и не может зарегистрировать/перехватить токен устройства под lock.
+- [x] HTTP/PG регрессия написана [ba6acee](https://github.com/shipaka/traksos/commit/ba6acee44376b731f39e864bf91cd6bdd85f4bb0): действующий аккаунт получает push, удалённый исключён, токен действующего устройства не перехвачен.
+- [ ] Повторный exact-HEAD CI не подтверждён. На предыдущем SHA c9dc517 нагрузочный тест 200 пользователей и справочник TrakBot успешно завершились (runs 45331416925/45331416858), остальные проверки на момент сверки продолжались. Durable inbox, UI 617/618, main/VPS не менялись. Все три пути освобождены.
