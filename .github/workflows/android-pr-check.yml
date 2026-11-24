@@ -101,6 +101,12 @@ jobs:
   # Launch the exact uploaded APK under Android 10 and Android 15, collect native crash logs.
   runtime-launch:
     needs: debug-apk
+    # The last confirmed green API35 run #45212277037 used the GitHub
+    # ubuntu-latest (Ubuntu 26.04) runner, both real role DOMs and PNGs.
+    # Repeated Ubuntu 24.04 API35 runs #45262965941/#45265914614 instead
+    # showed a stale guest frame then lost the emulator ADB transport.
+    # Restore the empirically successful runner; do not soften APK,
+    # native-crash, real-pixel or live-WebView DOM verification.
     runs-on: ubuntu-latest
     timeout-minutes: 35
     strategy:
@@ -157,6 +163,11 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: google_apis
           arch: x86_64
+          # Restore the graphics options used by the actual successful
+          # Android API35 run #45212277037 (both role DOM and PNG confirmed).
+          # The later -feature -Vulkan override did not cure API35 and has not
+          # produced a confirmed role PNG. Keep ALL runtime screenshot/DOM gates.
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash scripts/android-pr-runtime-smoke.sh
       - uses: actions/upload-artifact@v4
         if: always()
@@ -171,4 +182,5 @@ jobs:
             android-review-*-ui.xml
             emulator-ui.xml
             runtime-ready.log
+            android-compositor-diagnostics.log
           if-no-files-found: warn

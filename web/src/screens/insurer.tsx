@@ -1,23 +1,80 @@
 // Кабинет партнёра-страховщика: только назначенные администратором страховые заявки.
-import { useState } from 'react';
-import { get, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction, useMe, useRoute } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { get, patch, fmtTime, onEvent } from '../api.ts';
+import { useAction, useMe, useRoute } from '../ui.tsx';
 import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
+
+type PartnerResource<T>={scope:string;data:T|null;error:string;loading:boolean};
+
+/** Partner documents and finance must never survive an account/role switch.
+ * A late HTTP response from the previous session is explicitly discarded.
+ * Failed reads replace, rather than reuse, an older privileged result. */
+function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false) {
+  const [version,setVersion]=useState(0);
+  const [state,setState]=useState<PartnerResource<T>>({
+    scope:'',data:null,error:'',loading:true,
+  });
+  const serial=useRef(0);
+  const scopeRef=useRef(scope);
+  scopeRef.current=scope;
+  const reload=()=>setVersion(n=>n+1);
+  useEffect(()=>{
+    const request=++serial.current;
+    const currentScope=scope;
+    setState({scope:currentScope,data:null,error:'',loading:enabled});
+    if(!enabled)return ()=>{serial.current++;};
+    get<T>(path).then(data=>{
+      if(serial.current!==request||scopeRef.current!==currentScope)return;
+      if(data==null || (path==='/api/insurer/finance'
+          ? !(Array.isArray((data as any).entries)&&Array.isArray((data as any).totals))
+          : !Array.isArray(data)))
+        throw new Error('Некорректный ответ от сервера');
+      setState({scope:currentScope,data,error:'',loading:false});
+    }).catch(e=>{
+      if(serial.current!==request||scopeRef.current!==currentScope)return;
+      setState({scope:currentScope,data:null,
+        error:e instanceof Error?e.message:'Не удалось получить сведения',loading:false});
+    });
+    return ()=>{serial.current++;};
+  },[path,scope,enabled,version]);
+  useEffect(()=>{
+    if(!live||!enabled)return;
+    return onEvent(e=>{
+      if(e.type==='vehicle_service'||e.type==='connection_restored')reload();
+    });
+  },[live,enabled,scope]);
+  const current=state.scope===scope?state:null;
+  return {data:enabled?current?.data??null:null,error:enabled?current?.error??'':'',
+    loading:enabled?current?.loading??true:false,reload};
+}
+
+function futureDate(value:string):boolean {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const day=new Date(value+'T00:00:00Z');
+  return Number.isFinite(day.getTime())&&day.toISOString().slice(0,10)===value
+    &&value>new Date().toISOString().slice(0,10);
+}
 /** Chat entry always resolves to a real assigned insurance case, never a
  * generic or cross-partner inbox. The thread owns messages and permissions. */
 export function InsurerChats() {
-  const q=useLoad<any[]>(()=>get('/api/insurer/requests'),[],e=>e.type==='vehicle_service');
+  const {me}=useMe();
+  const allowed=!!me?.roles.includes('insurer');
+  const q=usePartnerResource<any[]>('/api/insurer/requests',
+    (me?.id??'signed-out')+':insurer-chats',allowed,true);
+  const chats=Array.isArray(q.data)?q.data:null;
   return <main className="and19-chats and19-workspace and20-insurer-chats">
     <h1>Чаты по страховым делам</h1>
     <p>Уточнения и документы хранятся внутри соответствующей заявки.</p>
-    {!q.data&&<div className="and19-panel">{q.error
-      ? 'Не удалось открыть переписку: '+q.error : 'Загружаем назначенные дела…'}</div>}
-    {q.data?.length===0&&<div className="and19-panel">Назначенных страховых дел пока нет.</div>}
-    {q.data?.map(r=><a className="and19-row-link" key={r.id}
+    {!chats&&<div className="and19-panel" role={q.error?'alert':'status'}>{q.error
+      ? <>Не удалось открыть переписку: {q.error}
+        <button type="button" className="btn ghost small" onClick={q.reload}>Повторить загрузку чатов</button></>
+      : allowed?'Загружаем назначенные дела…':'Страховые дела доступны назначенному страховому партнёру.'}</div>}
+    {chats?.length===0&&<div className="and19-panel">Назначенных страховых дел пока нет.</div>}
+    {chats?.map(r=><a className="and19-row-link" key={r.id}
       href={'#/insurance/request/'+encodeURIComponent(r.id)}>
       <span>{[r.brand,r.model].filter(Boolean).join(' ') || 'Страховое дело'}
         <small>{insurancePresentation(r.insurance_stage,r.status,'partner').label}</small>
@@ -28,7 +85,7 @@ export function InsurerChats() {
 }
 
 export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}={}) {
-  const { me } = useMe();
+  const { me,mode } = useMe();
   const dualPartnerRole = !!me?.roles.includes('insurer') && !!me?.roles.includes('inspection_operator');
   const [workspace,setWorkspace]=useState<'insurance'|'inspection'|'finance'|'common'>(inspectionOnly?'inspection':'insurance');
   const route = useRoute();
@@ -36,12 +93,27 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   // must open their own server-scoped case detail on desktop and mobile.
   const inspectionId = inspectionOnly && route[0]==='inspections' && route[1]!=='processing' ? route[1] : undefined;
   const [checkedSteps,setCheckedSteps] = useState<Record<string,boolean>>({});
-  const finance=useLoad(()=>get<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>('/api/insurer/finance'),[]);
-  const money=(value:string|number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(value)/100);
-  const inspections=useLoad(()=>get<any[]>('/api/insurer/inspections'),[],
-    event=>event.type==='vehicle_service');
-  const requests = useLoad(() => inspectionOnly ? Promise.resolve([]) : get('/api/insurer/requests'), [],
-    (event) => event.type === 'vehicle_service');
+  const canInsure=!!me?.roles.includes('insurer');
+  const canInspect=!!me?.roles.some(role=>role==='insurer'||role==='inspection_operator');
+  const identity=me?.id??'signed-out';
+  const accessScope=identity+':'+mode+':'+(inspectionOnly?'inspection':'insurance');
+  const identityRef=useRef(accessScope);
+  identityRef.current=accessScope;
+  const finance=usePartnerResource<{entries:{id:string;kind:string;entry_type:string;amount_kopecks:string;note:string|null;created_at:string}[];totals:{kind:string;accrued:string;paid:string;balance:string}[]}>(
+    '/api/insurer/finance',accessScope+':finance',canInspect,true);
+  // PostgreSQL monetary counters are text integers in kopecks. Avoid losing
+  // precision or printing "NaN ₽" for missing/malformed backend totals.
+  const money=(value:string|number|bigint|undefined|null)=>{
+    const literal=String(value??'');
+    if(!/^-?\d+$/.test(literal))return '—';
+    const cents=BigInt(literal),negative=cents<0n,abs=negative?-cents:cents;
+    const rubles=new Intl.NumberFormat('ru-RU').format(abs/100n);
+    return (negative?'−':'')+rubles+','+String(abs%100n).padStart(2,'0')+' ₽';
+  };
+  const inspections=usePartnerResource<any[]>('/api/insurer/inspections',
+    accessScope+':inspections',canInspect,true);
+  const requests=usePartnerResource<any[]>('/api/insurer/requests',
+    accessScope+':requests',!inspectionOnly&&canInsure,true);
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
@@ -50,35 +122,63 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const [filter, setFilter] = useState<'action' | 'active' | 'all' | 'closed'>(
     route[1]==='requests' ? 'all' : 'action');
   const [search, setSearch] = useState('');
+  const [actionError,setActionError]=useState('');
+  const [draftScope,setDraftScope]=useState('');
+  const currentDraft=draftScope===accessScope;
+  useEffect(()=>{
+    // This may be the same mounted component with a different login or a
+    // switched insurer/inspection workspace. Reset all case-specific input.
+    setDraftScope(accessScope);setCheckedSteps({});setNotes({});
+    setInspectionNotes({});setExpires({});setActionError('');
+    setSearch('');setInspectionView('active');
+    setWorkspace(inspectionOnly?'inspection':'insurance');
+    setFilter(route[1]==='requests'?'all':'action');
+  },[accessScope]);
   async function update(id: string, status: 'completed' | 'rejected') {
-    const note = (notes[id] ?? '').trim();
-    const policyExpiresOn = expires[id];
+    const startedAs=accessScope;
+    const note = (currentDraft?(notes[id]??''):'').trim();
+    const policyExpiresOn = currentDraft?expires[id]:undefined;
     if (status === 'rejected' && !note) {
-      alert('Укажите причину отказа — клиент должен её видеть.');
+      setActionError('Укажите причину отказа — клиент должен её видеть.');
       return;
     }
-    if (status === 'completed' && !policyExpiresOn) {
-      alert('Укажите дату окончания полиса.');
+    if(status==='completed'&&!futureDate(policyExpiresOn??'')){
+      setActionError('Укажите корректную будущую дату окончания полиса.');
       return;
     }
     if(inspectionOnly)return;
+    setActionError('');
     const result = await run(() => patch(`/api/insurer/requests/${id}`, {
       status, note: note || undefined,
       policyExpiresOn: status === 'completed' ? policyExpiresOn : undefined,
     }), 'Заявка обновлена');
-    if (result) {
-      setNotes((old) => { const value = { ...old }; delete value[id]; return value; });
+    if(identityRef.current!==startedAs)return;
+    if(result){
+      setNotes(old=>{const value={...old};delete value[id];return value;});
+      setExpires(old=>{const value={...old};delete value[id];return value;});
       requests.reload();
-    }
+    }else setActionError('Изменение заявки не подтверждено. Обновите очередь перед повторной отправкой.');
   }
   async function decideInspection(id:string,status:'completed'|'rejected') {
-    const note=(inspectionNotes[id]??'').trim();
-    if(status==='rejected'&&!note){alert('Укажите причину отказа');return;}
+    const startedAs=accessScope;
+    const note=(currentDraft?(inspectionNotes[id]??''):'').trim();
+    if(status==='rejected'&&!note){setActionError('Укажите причину отказа.');return;}
+    if(status==='completed'&&note.length<5){
+      setActionError('Укажите фактический результат осмотра (не менее 5 символов).');return;
+    }
+    setActionError('');
     const result=await run(()=>patch('/api/insurer/inspections/'+id,{status,note:note||undefined}),
       status==='completed'?'Техосмотр отмечен выполненным':'Заявка отклонена');
-    if(result) inspections.reload();
+    if(identityRef.current!==startedAs)return;
+    if(result){
+      setCheckedSteps(old=>Object.fromEntries(Object.entries(old).filter(([key])=>!key.startsWith(id+':'))));
+      setInspectionNotes(old=>{const values={...old};delete values[id];return values;});
+      inspections.reload();
+    }else setActionError('Решение по техосмотру не подтверждено. Обновите очередь перед повторной отправкой.');
   }
-  const rows: any[] | undefined = requests.data;
+  const rows: any[] | undefined = Array.isArray(requests.data)?requests.data:undefined;
+  const inspectionRows:any[]|null=Array.isArray(inspections.data)?inspections.data:null;
+  const financeData=finance.data;
   const visible = (rows ?? []).filter((r) => {
     if (filter !== 'all' && insuranceQueueGroup(r.insurance_stage, r.status) !== filter) return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
@@ -86,10 +186,12 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   // Separate approved inspection detail: available only to the assigned operator.
   // The existing /api/insurer/inspections endpoint enforces tenant access.
   if(inspectionId) {
-    const item = inspections.data?.find(r=>String(r.id)===inspectionId);
-    if(!inspections.data) return <main className="cabinet-page and20-inspection-detail">
+    const item = inspectionRows?.find(r=>String(r.id)===inspectionId);
+    if(!inspectionRows) return <main className="cabinet-page and20-inspection-detail">
       <a href="#/inspections" className="and20-return">← К техосмотрам</a>
-      <div className="card">{inspections.error ? 'Не удалось загрузить техосмотр: '+inspections.error
+      <div className="card" role={inspections.error?'alert':'status'}>{inspections.error
+        ? <>Не удалось загрузить техосмотр: {inspections.error}
+          <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку</button></>
         : 'Загрузка назначенного техосмотра…'}</div>
     </main>;
     if(!item) return <main className="cabinet-page and20-inspection-detail">
@@ -97,8 +199,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       <div className="card">Техосмотр не найден среди назначенных вам заявок.</div>
     </main>;
     const canRecord = item.status==='sent_to_partner';
-    const verified = ['documents','vehicle','result'].every(k=>checkedSteps[inspectionId+':'+k]===true);
-    const note=(inspectionNotes[inspectionId]??'').trim();
+    const verified = currentDraft&&['documents','vehicle','result'].every(k=>checkedSteps[inspectionId+':'+k]===true);
+    const note=(currentDraft?(inspectionNotes[inspectionId]??''):'').trim();
     return <main className="cabinet-page and20-inspection-detail">
       <a href="#/inspections" className="and20-return">← К техосмотрам</a>
       <section className="and20-role-header">
@@ -126,15 +228,16 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           ['vehicle','Осмотр транспортного средства'],
           ['result','Результат проверки'],
         ] as const).map(([key,label])=><label key={key} className="and20-inspection-check">
-          <input type="checkbox" checked={checkedSteps[inspectionId+':'+key]===true}
+          <input type="checkbox" checked={currentDraft&&checkedSteps[inspectionId+':'+key]===true}
             onChange={e=>setCheckedSteps(old=>({...old,[inspectionId+':'+key]:e.target.checked}))}/>
           <span>{label}</span>
         </label>)}
         <label className="and20-inspection-note">Комментарий / результат осмотра
-          <textarea className="field" maxLength={2000} value={inspectionNotes[inspectionId]||''}
+          <textarea className="field" maxLength={2000} value={currentDraft?(inspectionNotes[inspectionId]||''):''}
             placeholder="Фактические результаты проверки"
             onChange={e=>setInspectionNotes(old=>({...old,[inspectionId]:e.target.value}))}/>
         </label>
+        {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
         <button type="button" className="btn" disabled={busy||!verified||note.length<5}
           onClick={()=>decideInspection(inspectionId,'completed')}>Внести результат техосмотра</button>
         <button type="button" className="btn ghost" disabled={busy||note.length<5}
@@ -186,32 +289,35 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       {workspace==='inspection'&&<section className="stack">
         <p className="sub">Здесь отображаются исключительно назначенные вам заявки на техосмотр. Страховые полисы и предложения в этом разделе не показываются.</p>
         <div className="cabinet-metrics">
-          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspections.data?.length??'—'}</b></div>
-          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspections.data?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
-          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspections.data?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspectionRows?.length??'—'}</b></div>
+          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspectionRows?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspectionRows?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
         </div>
         <div className="row" role="group" aria-label="Показ техосмотров">
           <button type="button" className="chip" aria-pressed={inspectionView==='active'} onClick={()=>setInspectionView('active')}>В работе</button>
           <button type="button" className="chip" aria-pressed={inspectionView==='history'} onClick={()=>setInspectionView('history')}>История техосмотров</button>
           <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
         </div>
-        {!inspections.data?<div className="empty">{inspections.error?'Не удалось загрузить техосмотры: '+inspections.error:'Загружаем техосмотры…'}</div>:
-          inspections.data.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
-          inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).length===0 ?
+        {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+        {!inspectionRows?<div className="empty" role={inspections.error?'alert':'status'}>{inspections.error?
+            <>Не удалось загрузить техосмотры: {inspections.error}
+              <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку техосмотров</button></>
+            :'Загружаем техосмотры…'}</div>:
+          inspectionRows.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
+          inspectionRows.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).length===0 ?
           <div className="empty">{inspectionView==='history'?'История техосмотров пока пуста':'Активных техосмотров сейчас нет'}</div> :
-          inspections.data.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
+          inspectionRows.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
             <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
             {inspectionOnly&&<a className="btn" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть техосмотр и этапы →</a>}
             <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
             {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
             {r.status==='sent_to_partner'&&<>
               <label className="stack"><span className="label">Комментарий или причина отказа</span>
-                <textarea className="field" maxLength={2000} value={inspectionNotes[r.id]??''}
+                <textarea className="field" maxLength={2000} value={currentDraft?(inspectionNotes[r.id]??''):''}
                   onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
               <div className="row">
-                <button type="button" className="btn small" disabled={busy}
-                  onClick={()=>decideInspection(r.id,'completed')}>Отметить выполненным</button>
-                <button type="button" className="btn ghost small" disabled={busy}
+                {!inspectionOnly&&<a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>}
+                <button type="button" className="btn ghost small" disabled={busy||!currentDraft}
                   onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
               </div>
               <p className="note">Отметка выполнения не является выдачей диагностической карты.</p>
@@ -221,24 +327,28 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </section>}
       {workspace==='finance'&&<section className="stack">
         <p className="sub">Подтверждённые финансовые проводки по двум направлениям. Заявки без начислений не считаются доходом.</p>
-        {!finance.data?<div className="empty">{finance.error?'Не удалось загрузить финансы: '+finance.error:'Загружаем финансовый реестр…'}</div>:<>
+        {!financeData?<div className="empty" role={finance.error?'alert':'status'}>{finance.error
+          ? <>Не удалось загрузить финансы: {finance.error}
+            <button type="button" className="btn ghost small" onClick={finance.reload}>Повторить загрузку финансов</button></>
+          : 'Загружаем финансовый реестр…'}</div>:<>
           <div className="cabinet-metrics">
             {(['insurance','inspection'] as const).map(kind=>{
-              const total=finance.data!.totals.find(t=>t.kind===kind);
+              const total=financeData.totals.find(t=>t.kind===kind);
               return <div className="card tile" key={kind}>
                 <span className="label">{kind==='insurance'?'Страхование':'Техосмотры'}</span>
-                <b className="tile-value">{money(total?.balance??0)}</b>
-                <small>Начислено: {money(total?.accrued??0)} · Выплачено: {money(total?.paid??0)}</small>
+                <b className="tile-value">{money(total?.balance)}</b>
+                <small>Начислено: {money(total?.accrued)} · Выплачено: {money(total?.paid)}</small>
               </div>;
             })}
             <div className="card tile"><span className="label">Общий остаток</span>
-              <b className="tile-value">{money(finance.data.totals.reduce((sum,t)=>sum+Number(t.balance),0))}</b>
+              <b className="tile-value">{financeData.totals.every(t=>/^-?\d+$/.test(String(t.balance)))?
+                  money(financeData.totals.reduce((sum,t)=>sum+BigInt(t.balance),0n)):'—'}</b>
               <small>По всем подтверждённым проводкам</small>
             </div>
           </div>
           <h2>История операций</h2>
-          {finance.data.entries.length===0?<div className="empty">Подтверждённых операций пока нет.</div>:
-            finance.data.entries.map(entry=><article className="card between" key={entry.id}>
+          {financeData.entries.length===0?<div className="empty">Подтверждённых операций пока нет.</div>:
+            financeData.entries.map(entry=><article className="card between" key={entry.id}>
               <div className="stack"><b>{entry.kind==='insurance'?'Страхование':'Техосмотр'} · {entry.entry_type==='accrual'?'Начисление':entry.entry_type==='payout'?'Выплата':'Корректировка'}</b>
                 <small>{fmtTime(entry.created_at)}</small>{entry.note&&<small>{entry.note}</small>}</div>
               <b>{entry.entry_type==='accrual'?'+':'−'}{money(entry.amount_kopecks)}</b>
@@ -253,7 +363,12 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </section>}
       {workspace==='insurance'&&!inspectionOnly&&<>
       <div className="sub">Только страховые заявки, переданные вам TrakSOS. Остальные автомобили и сведения о клиентах недоступны.</div>
-      {!rows ? <div className="empty">{requests.error ? `Не удалось загрузить: ${requests.error}` : 'Загружаем заявки…'}</div>
+      {!rows ? <div className="empty" role={requests.error?'alert':'status'}>{requests.error
+        ? <>Не удалось загрузить страховые дела: {requests.error}
+          <button type="button" className="btn ghost small" onClick={requests.reload}>
+            Повторить загрузку заявок
+          </button></>
+        : 'Загружаем заявки…'}</div>
         : !rows.length ? <InsurerEmptyState onRefresh={requests.reload} />
         : <div className="stack">
           <div className="cabinet-metrics insurer-insurance-metrics">
@@ -274,6 +389,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 value={search} onChange={(e) => setSearch(e.target.value)} />
             </label>
           </div>
+          {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
           <span className="label">Показано заявок: {visible.length}</span>
           {!visible.length && <div className="empty">{filter==='action'?'Нет заявок, требующих действий. Новые обращения появятся здесь.':filter==='active'?'Нет заявок в работе.':'По выбранным фильтрам заявок нет.'}</div>}
           <div className="web-insurance-grid">
@@ -304,14 +420,15 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 {r.status === 'sent_to_partner' && !r.insurance_stage && <>
                   <label className="stack">
                     <span className="label">Действует до</span>
-                    <input className="field" type="date" value={expires[r.id] ?? ''}
+                    <input className="field" type="date" value={currentDraft?(expires[r.id]??''):''}
+                       min={new Date(Date.now()+86400000).toISOString().slice(0,10)}
                       onChange={(e) => setExpires((old) => ({ ...old, [r.id]: e.target.value }))} />
                   </label>
                   <textarea className="field" aria-label="Комментарий страховщика" maxLength={2000}
                     placeholder="Комментарий или причина отказа"
-                    value={notes[r.id] ?? ''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
+                    value={currentDraft?(notes[r.id]??''):''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
                   <div className="grid2">
-                    <button type="button" className="btn small" disabled={busy} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
+                    <button type="button" className="btn small" disabled={busy||!currentDraft||!futureDate(expires[r.id]??'')} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
                     <button type="button" className="btn ghost small" disabled={busy} onClick={() => update(r.id, 'rejected')}>Отказать</button>
                   </div>
                 </>}

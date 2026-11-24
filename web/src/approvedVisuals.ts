@@ -19,11 +19,14 @@ export const APPROVED_VISUALS = Object.freeze({
   // Same four services; higher-resolution illustrative photos for PC cabinets only.
   desktopServiceScenes: '/traksos-service-scenes-desktop-hq.webp',
   publicPcPhoto: '/owner20-photo-background-approved-retouched.webp',
+  // Latest owner-approved 23 Nov 2026 Russia network (#1), replacing the retired truck (#3).
+  // This symbolic panorama is ONLY for a confirmed exhausted SOS search; dots are not real GPS.
+  noPerformerSearch: '/feature-art/traksos-no-performer-network-russia-approved-v1.webp',
   publicPcAtlas: '/owner20-artwork-sprite-retouched.webp',
 } as const);
 
 export const APPROVED_SCENE_COPY = Object.freeze({
-  orders: 'Иллюстрация маршрута помощи на грузовом автомобиле. Это пример, не текущая заявка.',
+  orders: 'Нейтральная иллюстрация грузовика. Нет активной заявки или маршрута.',
   fleet: 'Иллюстрация грузового автомобиля. Это не зарегистрированная техника пользователя.',
   shift: 'Иллюстрация выездной помощи. Это не поступивший заказ.',
 } as const);

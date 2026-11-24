@@ -8,6 +8,11 @@ const services = ['Выездной мастер', 'Эвакуатор', 'СТО
  * There are deliberately NO app API, web socket or native bridge imports.
  */
 export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
+  // A workspace switch must reset the entire fictitious order, not reuse an
+  // index or personal text entered while training under a different role.
+  return <RoleTrainingPractice key={role} role={role} onBack={onBack}/>;
+}
+function RoleTrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
   const kind=practiceKindFor(role);
   const stages=practiceStages[kind];
   const [index,setIndex]=useState(0);
@@ -20,7 +25,8 @@ export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
   const stage=kind==='customer'?customerStageFor(service,index):stages[index];
   const isCustomer=kind==='customer';
   const isPerformer=kind==='performer';
-  const orderExample=isCustomer||isPerformer||kind==='service';
+  const isCourier=kind==='courier';
+  const orderExample=isCustomer||isPerformer||kind==='service'||isCourier;
   const input:PracticeInput={vehicle,problem,service};
   const advance=()=>{
     const next=nextPracticeStage(kind,index,input);
@@ -37,6 +43,8 @@ export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
   };
   const caseTitle=kind==='staff'?'Вопрос о сроке ответа':
     kind==='insurance'?'Страхование грузового автомобиля':
+    kind==='inspection'?'Проверка документов для техосмотра':
+    kind==='courier'?'Учебная доставка запчастей':
     kind==='service'?'Проверить электрику и зарядку':
     isPerformer&&role==='tow'?'Учебная эвакуация с трассы':'Не заводится грузовик, требуется диагностика';
   return <section className="training-practice stack" aria-label="Практическая часть обучения">
@@ -98,9 +106,9 @@ export function TrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
             <span className="training-demo-status">{stage.status}</span>
           </div>
           <div className="training-demo-details">
-            <div><span>Услуга</span><b>{isCustomer?service:isPerformer&&role==='tow'?'Эвакуатор':kind==='service'?'Ремонт в СТО':'Выездной мастер'}</b></div>
+            <div><span>Услуга</span><b>{isCustomer?service:isCourier?'Доставка запчастей':isPerformer&&role==='tow'?'Эвакуатор':kind==='service'?'Ремонт в СТО':'Выездной мастер'}</b></div>
             <div><span>Проблема</span><b>{isCustomer?(problem.trim()||'Только демонстрация'):caseTitle}</b></div>
-            <div><span>Место</span><b>Учебная стоянка · адрес не передаётся</b></div>
+            <div><span>Место</span><b>{isCourier?'Учебная точка доставки · адрес не передаётся':'Учебная стоянка · адрес не передаётся'}</b></div>
             <div><span>Стоимость</span><b>Не рассчитывается в тренажёре</b></div>
           </div>
           {isCustomer && index>=4 && index<=7 && <div className="training-demo-chat">

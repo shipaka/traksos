@@ -11,46 +11,99 @@ const store = {
 let token: string | null = store.get('traksos.token');
 export const getToken = () => token;
 export function setToken(t: string | null) {
-  if (token !== t) { disconnectWs(); store.set('traksos.offlineIdentity', null); try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ } store.set('traksos.savedOrderDraft.v1', null); }
+  if (token !== t) {
+    disconnectWs();
+    // A failed POST retains its idempotency key in module memory as well as
+    // sessionStorage. NEVER reuse that key for another signed-in account.
+    fallbackPending = null;
+    store.set('traksos.offlineIdentity', null);
+    try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ }
+    store.set('traksos.savedOrderDraft.v1', null);
+  }
   token = t;
   store.set('traksos.token', t);
 }
+
+// Different browser tabs share localStorage but each JS bundle keeps its own
+// in-memory bearer token. Reflect external login/logout immediately, never
+// continue dispatching requests with a signed-out or replaced account.
+window.addEventListener('storage', event => {
+  if (event.key !== 'traksos.token' && event.key !== null) return;
+  try { if (event.storageArea !== localStorage) return; }
+  catch { return; } // Storage access may be denied in private mode.
+  const externalToken = event.key === null ? null : event.newValue;
+  if (externalToken === token) return;
+  setToken(externalToken);
+  window.dispatchEvent(new Event('traksos-auth-external-change'));
+});
 
 export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string, public data?: any) { super(message); }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
-  // The sandbox is the exact same frontend served from another origin.
-  // Fail closed if a bundle was accidentally built with a remote production API.
-  if (sessionStorage.getItem('traksos.sandboxMode') === '1' &&
-      new URL(API_URL || location.origin, location.origin).origin !== location.origin)
-    throw new ApiError(403, 'sandbox_wrong_origin', 'Тестовые запросы не могут обращаться к другому серверу');
-  let r: Response;
+// A sandbox must reject remote API calls in every authenticated transport,
+// including protected image downloads, not just JSON requests.
+function assertSandboxOrigin() {
+  const remoteOrigin = new URL(API_URL || location.origin, location.origin).origin !== location.origin;
+  let sandboxMode = false;
   try {
-    // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
-    // A POST may have been accepted even if the client lost the response.
-    const timeout = new AbortController();
-    const timer = setTimeout(() => timeout.abort(), method === 'GET' ? 12_000 : 30_000);
-    try {
-      r = await fetch(API_URL + path, {
-        method,
-        headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        cache: 'no-store',
-        signal: timeout.signal,
-      });
-    } finally {
-      clearTimeout(timer);
-    }
+    sandboxMode = sessionStorage.getItem('traksos.sandboxMode') === '1';
   } catch {
+    if (remoteOrigin) throw new ApiError(403, 'sandbox_storage_unavailable',
+      'Невозможно проверить изоляцию тестового окружения');
+  }
+  if (sandboxMode && remoteOrigin)
+    throw new ApiError(403, 'sandbox_wrong_origin', 'Тестовые запросы не могут обращаться к другому серверу');
+}
+
+export async function api<T = any>(method: string, path: string, body?: unknown, options?: { idempotencyKey?: string }): Promise<T> {
+  assertSandboxOrigin();
+  // Bind authentication to THIS request, not to a token that may have been
+  // replaced by a successful login while its response was in flight.
+  const requestToken = token;
+  let r: Response, j: any;
+  // The deadline includes both headers AND the complete response body.
+  // A peer can send headers promptly and then stop transmitting JSON.
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), method === 'GET' ? 12_000 : 30_000);
+  try {
+    r = await fetch(API_URL + path, {
+      method,
+      headers: { 'content-type': 'application/json', ...(requestToken ? { authorization: `Bearer ${requestToken}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store',
+      signal: timeout.signal,
+    });
+    // Preserve the existing null fallback for non-JSON HTTP bodies, but
+    // do not misrepresent a failed/aborted body download as a success.
+    try { j = await r.json(); }
+    catch (error) {
+      if (timeout.signal.aborted || !(error instanceof SyntaxError)) throw error;
+      j = null;
+    }
+    if (timeout.signal.aborted) throw new Error('Response deadline exceeded');
+  } catch {
+    // A request that failed after another login is an obsolete request, NOT
+    // proof that the newly signed-in account is offline.
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
     window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
+  } finally {
+    clearTimeout(timer);
   }
-  window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
-  const j = await r.json().catch(() => null);
-  if (r.status === 401 && token) {
+  if (token === requestToken)
+    window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
+  // Response payloads belong to the account that sent the request. Even a
+  // successful 200 from an old session must not populate the new account's
+  // shared React views after logout or a different sign-in.
+  if (token !== requestToken)
+    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
+  if (r.status === 401 && requestToken && token === requestToken) {
     setToken(null);
+    // The app must drop the cached workspace immediately; a hash redirect
+    // alone leaves the old React identity mounted until a manual reload.
+    window.dispatchEvent(new Event('traksos-auth-expired'));
     location.hash = '#/login';
   }
   if (!r.ok) throw new ApiError(r.status, j?.error ?? 'error', j?.message ?? 'Ошибка', { ...(j?.data ?? {}), requestId: j?.requestId ?? r.headers.get('x-request-id') });
@@ -67,9 +120,26 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
 type PendingOrderKey = { fingerprint: string; key: string; createdAt: number };
 let fallbackPending: PendingOrderKey | null = null;
 
+// A React form can recreate the SAME request with a different object-key
+// insertion order after reconnect. Fingerprint the JSON meaning, not its
+// JavaScript property order, or an ambiguous POST could get a fresh key.
+function canonicalOrderJson(body: unknown): string {
+  const value = JSON.parse(JSON.stringify(body));
+  const sorted = (item: any): any => {
+    if (Array.isArray(item)) return item.map(sorted);
+    if (item !== null && typeof item === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const key of Object.keys(item).sort()) result[key] = sorted(item[key]);
+      return result;
+    }
+    return item;
+  };
+  return JSON.stringify(sorted(value));
+}
 async function fingerprintOrder(body: unknown): Promise<string> {
-  const message = new TextEncoder().encode(JSON.stringify(body));
-  if (!globalThis.crypto?.subtle) return 'memory:' + JSON.stringify(body);
+  const canonical = canonicalOrderJson(body);
+  const message = new TextEncoder().encode(canonical);
+  if (!globalThis.crypto?.subtle) return 'memory:' + canonical;
   const digest = await globalThis.crypto.subtle.digest('SHA-256', message);
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -79,7 +149,12 @@ function newOrderRequestKey() {
   return 'web-' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 export async function postOrder<T = any>(body: unknown): Promise<T> {
+  // Hashing the request is async on mobile WebView. If another tab logs in
+  // while it runs, never submit THIS user's unfinished form as the new user.
+  const orderToken = token;
   const fingerprint = await fingerprintOrder(body);
+  if (orderToken !== token)
+    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Проверьте заявку перед отправкой.');
   const now = Date.now();
   let saved = fallbackPending;
   if (!fingerprint.startsWith('memory:')) {
@@ -220,10 +295,58 @@ export function fmtTime(iso: string) {
 }
 
 /** Картинка, которую отдают только с токеном (фото документов) → адрес для <img> */
-export async function authedImage(path: string) {
-  const r = await fetch(API_URL + path, { headers: token ? { authorization: `Bearer ${token}` } : {} });
-  if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
-  return URL.createObjectURL(await r.blob());
+export async function authedImage(
+  path: string, options?: { signal?: AbortSignal; allowedMimeTypes?: readonly string[] },
+) {
+  assertSandboxOrigin();
+  const requestToken = token;
+  // Keep cancellation active until the last byte is read. A photo request
+  // without a component signal must also have a finite network deadline.
+  const controller = new AbortController();
+  const caller = options?.signal;
+  const cancel = () => controller.abort();
+  if (caller?.aborted) cancel();
+  else caller?.addEventListener('abort', cancel, { once: true });
+  const timer = setTimeout(cancel, 30_000);
+  try {
+    if (caller?.aborted) throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+    const r = await fetch(API_URL + path, {
+      headers: requestToken ? { authorization: `Bearer ${requestToken}` } : {},
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    // Private images can finish downloading after sign-out or account switch.
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+    if (r.status === 401 && requestToken) {
+      setToken(null);
+      window.dispatchEvent(new Event('traksos-auth-expired'));
+      location.hash = '#/login';
+    }
+    if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
+    const data = await r.blob();
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+    if (caller?.aborted)
+      throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+    if (controller.signal.aborted)
+      throw new ApiError(0, 'network', 'Не удалось загрузить фото. Проверьте интернет.');
+    if (options?.allowedMimeTypes && !options.allowedMimeTypes.includes(data.type))
+      throw new ApiError(415, 'invalid_image_type', 'Неподдерживаемый формат фотографии');
+    return URL.createObjectURL(data);
+  } catch (error) {
+    // Preserve the original HTTP error (including the current session's
+    // 401, which intentionally clears its token above).
+    if (error instanceof ApiError) throw error;
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+    if (caller?.aborted)
+      throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+    throw new ApiError(0, 'network', 'Не удалось загрузить фото. Проверьте интернет.');
+  } finally {
+    clearTimeout(timer);
+    caller?.removeEventListener('abort', cancel);
+  }
 }
 
 /** Сжать фото с камеры: по длинной стороне до 1600 px, JPEG — чтобы грузилось и по слабому интернету */

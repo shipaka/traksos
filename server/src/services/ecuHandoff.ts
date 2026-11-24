@@ -1,4 +1,4 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 import type { Notifier } from './notify.ts';
@@ -21,13 +21,36 @@ type Access = 'owner'|'driver'|'origin'|'expert'|'candidate'|'admin';
 
 export class EcuHandoffService {
  constructor(private db:Db,private notifier:Notifier,private now:()=>Date){}
- private async verified(id:string){
-  return this.db.one<{performer_id:string;public_name:string;address:string}>(
+
+ /** A historical creator is not permanently authorised to an ex-employer's
+  * vehicle. Keep the vehicle row share-locked for note writes until commit.
+  */
+ private async currentOrderDriver(q:Queryable,sourceOrderId:string,userId:string,lock=false){
+  const row=await q.one<{ok:number}>(
+   `select 1 as ok from orders o join users u on u.id=$2
+      join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+     where o.id=$1 and o.created_by=u.id and o.client_id=u.owner_id
+       and 'driver'=any(u.roles) and (o.vehicle_id is null or o.vehicle_id=v.id)
+     limit 1${lock?' for share of o,u,v':''}`,
+   [sourceOrderId,userId]);
+  return !!row;
+ }
+ private async liveClientRecipients(orderId:string,q:Queryable=this.db,lock=false){
+  const row=await q.one<{client_id:string;created_by:string}>(
+   'select client_id,created_by from orders where id=$1'+(lock?' for share':''),[orderId]);
+  if(!row)return [];
+  const ids=[row.client_id];
+  if(row.created_by!==row.client_id &&
+     await this.currentOrderDriver(q,orderId,row.created_by,lock))ids.push(row.created_by);
+  return ids;
+ }
+ private async verified(id:string,q:Queryable=this.db,lock=false){
+  return q.one<{performer_id:string;public_name:string;address:string}>(
    "select s.performer_id,s.public_name,s.address from ecu_stations s" +
    " join performer_profiles p on p.user_id=s.performer_id" +
    " join users u on u.id=p.user_id where s.performer_id=$1" +
    " and s.approved_at is not null and p.kind='ecu'" +
-   " and p.verification='approved' and u.status='active'",[id]);
+   " and p.verification='approved' and u.status='active'"+(lock?' for share of s,p,u':''),[id]);
  }
  async station(user:AuthUser){
   const p=await this.db.one<{kind:string;verification:string}>(
@@ -73,35 +96,35 @@ export class EcuHandoffService {
  }
 
  async open(user:AuthUser,sourceOrderId:string,note:string,recommendationId?:string){
-  const source=await this.db.one<any>('select * from orders where id=$1',[sourceOrderId]);
-  if(!source)throw notFound('Исходная заявка не найдена');
-  if(!repairServices.has(source.service))
-   throw bad('unsupported_handoff','Передача ЭБУ возможна после консультации или диагностики, но не из эвакуации и страховки');
-  const origin=source.performer_id===user.id;
-  const owner=source.client_id===user.id && user.roles.includes('client');
-  if(!owner&&!origin)throw forbidden('Передачу создаёт участник диагностики или владелец');
-  if(origin && (source.service==='consult'
-   ? !['awaiting_confirmation','completed'].includes(source.status)
-   : !['arrived','working','awaiting_confirmation','completed'].includes(source.status)))
-   throw conflict('not_diagnosed','Сначала зафиксируйте работу или завершите консультацию');
-  if(owner && !['awaiting_confirmation','completed'].includes(source.status))
-   throw conflict('not_diagnosed','Для передачи нужно заключение специалиста');
-  // A direct free technical handoff by the assigned performer remains allowed.
-  // Only an explicit owner action may consume an approved recommendation.
-  if(recommendationId){
-   if(!owner || user.owner_id)
-    throw forbidden('Рекомендацию ЭБУ подтверждает только владелец автопарка');
-   const rec=await this.db.one<{id:string}>(
-    "select id from order_continuation_recommendations where id=$1" +
-    " and source_order_id=$2 and client_id=$3 and target_kind='ecu'" +
-    " and status='approved'",[recommendationId,sourceOrderId,user.id]);
-   if(!rec)throw forbidden('Сначала согласуйте рекомендацию ЭБУ');
-  }
   const clean=safe(note);
   if(clean.length<10)throw bad('need_summary','Напишите техническое заключение (от 10 символов)');
-  const root=source.case_root_id??source.id;
   const created=await this.db.tx(async q=>{
-   await q.query('select pg_advisory_xact_lock(hashtext($1))',['ecu-case:'+root]);
+   const source=await q.one<any>('select * from orders where id=$1 for share',[sourceOrderId]);
+   if(!source)throw notFound('Исходная заявка не найдена');
+   if(!repairServices.has(source.service))
+    throw bad('unsupported_handoff','Передача ЭБУ возможна после консультации или диагностики, но не из эвакуации и страховки');
+   const origin=source.performer_id===user.id;
+   const owner=source.client_id===user.id && user.roles.includes('client');
+   if(!owner&&!origin)throw forbidden('Передачу создаёт участник диагностики или владелец');
+   if(origin && (source.service==='consult'
+    ? !['awaiting_confirmation','completed'].includes(source.status)
+    : !['arrived','working','awaiting_confirmation','completed'].includes(source.status)))
+    throw conflict('not_diagnosed','Сначала зафиксируйте работу или завершите консультацию');
+   if(owner && !['awaiting_confirmation','completed'].includes(source.status))
+    throw conflict('not_diagnosed','Для передачи нужно заключение специалиста');
+   // A direct free technical handoff by the assigned performer remains allowed.
+   // Only an explicit owner action may consume an approved recommendation.
+   if(recommendationId){
+    if(!owner || user.owner_id)
+     throw forbidden('Рекомендацию ЭБУ подтверждает только владелец автопарка');
+    const rec=await q.one<{id:string}>(
+     "select id from order_continuation_recommendations where id=$1" +
+     " and source_order_id=$2 and client_id=$3 and target_kind='ecu'" +
+     " and status='approved' for share",[recommendationId,sourceOrderId,user.id]);
+    if(!rec)throw forbidden('Сначала согласуйте рекомендацию ЭБУ');
+   }
+   const root=source.case_root_id??source.id;
+    await q.query('select pg_advisory_xact_lock(hashtext($1))',['ecu-case:'+root]);
    const fromSameSource=await q.one<{
     id:string;continuation_recommendation_id:string|null;state:string
    }>('select id,continuation_recommendation_id,state from ecu_handoffs where source_order_id=$1',
@@ -120,12 +143,12 @@ export class EcuHandoffService {
       "insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_recommendation_linked',$3)",
       [sourceOrderId,user.id,{handoffId:fromSameSource.id,recommendationId}]);
     }
-    return {id:fromSameSource.id,isNew:false};
+    return {id:fromSameSource.id,isNew:false as const};
    }
    const previous=await q.one<{id:string;source_order_id:string}>(
     "select id,source_order_id from ecu_handoffs where root_order_id=$1 and state in ('pending','selected')",[root]);
    if(previous){
-    if(previous.source_order_id===sourceOrderId)return {id:previous.id,isNew:false};
+    if(previous.source_order_id===sourceOrderId)return {id:previous.id,isNew:false as const};
     throw conflict('handoff_exists','По этому обращению уже создана передача ремонтникам ЭБУ');
    }
    const row=await q.one<{id:string}>(
@@ -134,47 +157,73 @@ export class EcuHandoffService {
     [root,sourceOrderId,source.client_id,user.id,clean,recommendationId??null]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_created',$3)",
     [sourceOrderId,user.id,{handoffId:row!.id}]);
-   return {id:row!.id,isNew:true};
-  });
-  if(created.isNew){
-   await this.notifier.notify([source.client_id,source.created_by].filter(id=>id!==user.id),
-    {type:'ecu_handoff',handoffId:created.id,orderId:sourceOrderId},
-    {kind:'normal',title:'Заключение направлено специалистам ЭБУ',
-     body:'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',
-     data:{handoffId:created.id,orderId:sourceOrderId}}).catch(()=>{});
-   const specialists=await this.db.query<{performer_id:string}>(
+   const customers=(await this.liveClientRecipients(sourceOrderId,q,true)).filter(id=>id!==user.id);
+   const specialists=(await q.query<{performer_id:string}>(
     "select s.performer_id from ecu_stations s join performer_profiles p on p.user_id=s.performer_id" +
     " join users u on u.id=s.performer_id where s.approved_at is not null" +
-    " and p.kind='ecu' and p.verification='approved' and u.status='active' limit 200");
-   await this.notifier.notify(specialists.map(x=>x.performer_id),
-    {type:'ecu_handoff',handoffId:created.id},
-    {kind:'normal',title:'Новая передача ЭБУ',
-     body:'Получено заключение из цепочки обращения. Можно предложить стоимость диагностики.',
-     data:{handoffId:created.id}}).catch(()=>{});
+    " and p.kind='ecu' and p.verification='approved' and u.status='active' order by s.performer_id limit 200 for share of s,p,u"
+   )).map(x=>x.performer_id);
+   const handoffId=row!.id;
+   for(const recipient of customers)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [recipient,'ecu_handoff','Заключение направлено специалистам ЭБУ',
+     'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',{handoffId,orderId:sourceOrderId}]);
+   for(const recipient of specialists)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [recipient,'ecu_handoff','Новая передача ЭБУ',
+     'Получено заключение из цепочки обращения. Можно предложить стоимость диагностики.',{handoffId}]);
+   return {id:handoffId,isNew:true as const,customers,specialists};
+  });
+  if(created.isNew){
+   try{
+    const liveCustomers=new Set(await this.liveClientRecipients(sourceOrderId));
+    await this.notifier.deliverStored(created.customers.filter(id=>liveCustomers.has(id)),
+     {type:'ecu_handoff',handoffId:created.id,orderId:sourceOrderId},
+     {kind:'normal',title:'Заключение направлено специалистам ЭБУ',
+      body:'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',
+      data:{handoffId:created.id,orderId:sourceOrderId}});
+   }catch{}
+   try{
+    const liveSpecialists=await this.db.query<{performer_id:string}>(
+     "select s.performer_id from ecu_stations s join performer_profiles p on p.user_id=s.performer_id" +
+     " join users u on u.id=s.performer_id where s.performer_id=any($1::uuid[]) and s.approved_at is not null" +
+     " and p.kind='ecu' and p.verification='approved' and u.status='active'",[created.specialists]);
+    await this.notifier.deliverStored(liveSpecialists.map(x=>x.performer_id),
+     {type:'ecu_handoff',handoffId:created.id},
+     {kind:'normal',title:'Новая передача ЭБУ',
+      body:'Получено заключение из цепочки обращения. Можно предложить стоимость диагностики.',
+      data:{handoffId:created.id}});
+   }catch{}
   }
   return {id:created.id,created:created.isNew};
  }
 
  async byOrder(user:AuthUser,orderId:string){
-  const source=await this.db.one<any>(
+  return this.db.tx(async q=>{
+  await q.query('set transaction isolation level repeatable read read only');
+  const source=await q.one<any>(
    'select client_id,created_by,performer_id,case_root_id from orders where id=$1',[orderId]);
   if(!source)throw notFound('Заявка не найдена');
-  if(![source.client_id,source.created_by,source.performer_id].includes(user.id)
-    && !user.roles.includes('admin'))throw forbidden();
-  return this.db.one(
+  if(![source.client_id,source.performer_id].includes(user.id)
+    && !user.roles.includes('admin')
+    && !await this.currentOrderDriver(q,orderId,user.id))throw forbidden();
+  return q.one(
    'select id,source_order_id,state,created_at,selected_at from ecu_handoffs' +
    ' where root_order_id=$1 order by created_at desc limit 1',[source.case_root_id??orderId]);
+  });
  }
  async inbox(user:AuthUser){
-  if(!await this.verified(user.id))return [];
-  return this.db.query(
+  return this.db.tx(async q=>{
+  await q.query('set transaction isolation level repeatable read read only');
+  if(!await this.verified(user.id,q))return [];
+  return q.query(
    "select h.id,h.summary,h.created_at,h.state,o.number as source_number," +
    " o.brand,o.model,o.year,o.service from ecu_handoffs h join orders o on o.id=h.source_order_id" +
    " where h.state='pending' or (h.state in ('selected','closed') and h.selected_performer_id=$1)" +
    ' order by h.created_at desc limit 100',[user.id]);
+  });
  }
- private async access(user:AuthUser,id:string):Promise<{h:Handoff;actor:Access}>{
-  const h=await this.db.one<Handoff>(
+ private async access(user:AuthUser,id:string,q:Queryable=this.db,lockDriver=false):
+  Promise<{h:Handoff;actor:Access}>{
+  const h=await q.one<Handoff>(
    'select h.*,o.service,o.number as source_number,o.performer_id as source_performer_id,' +
    ' o.created_by as source_created_by,' +
    ' o.brand,o.model,o.year,o.vehicle_id from ecu_handoffs h' +
@@ -182,46 +231,50 @@ export class EcuHandoffService {
   if(!h)throw notFound('Передача не найдена');
   if(user.roles.includes('admin'))return{h,actor:'admin'};
   if(user.id===h.client_id)return{h,actor:'owner'};
-  if(user.id===h.source_created_by && user.owner_id===h.client_id)return{h,actor:'driver'};
+  if(user.id===h.source_created_by && user.owner_id===h.client_id &&
+     await this.currentOrderDriver(q,h.source_order_id,user.id,lockDriver))
+   return{h,actor:'driver'};
   if(user.id===h.source_performer_id)return{h,actor:'origin'};
   if(['selected','closed'].includes(h.state) && h.selected_performer_id===user.id && user.roles.includes('master'))
    return{h,actor:'expert'}; // historical selected cases stay readable if station verification lapses
-  if(await this.verified(user.id)){
+  if(await this.verified(user.id,q,lockDriver)){
    if(h.state==='pending')return{h,actor:'candidate'};
   }
   throw forbidden('Нет доступа к передаче');
  }
  async detail(user:AuthUser,id:string){
-  const {h,actor}=await this.access(user,id);
+  return this.db.tx(async q=>{
+  await q.query('set transaction isolation level repeatable read read only');
+  const {h,actor}=await this.access(user,id,q);
   const full=actor!=='candidate';
   const [quotes,history,workshops,notes,station,vin]=await Promise.all([
-   full ? this.db.query(
+   full ? q.query(
     'select q.id,q.performer_id,q.diagnosis_price,q.explanation,q.version,q.updated_at,'+
     's.public_name,s.address from ecu_quotes q join ecu_stations s on s.performer_id=q.performer_id'+
     ' where q.handoff_id=$1 order by q.updated_at desc',[id])
-    : this.db.query(
+    : q.query(
     'select id,performer_id,diagnosis_price,explanation,version,updated_at from ecu_quotes'+
     ' where handoff_id=$1 and performer_id=$2',[id,user.id]),
-   full ? this.db.query(
+   full ? q.query(
     'select o.id,o.number,o.service,o.status,o.description,o.result,o.result_note,o.consult_hint,'+
     'o.created_at,o.completed_at,u.name as performer_name from orders o'+
     ' left join users u on u.id=o.performer_id where o.id=$1 or o.case_root_id=$1'+
     ' order by o.created_at,o.number',[h.root_order_id]) : Promise.resolve([]),
    // The shop publishes only technical notes explicitly marked public.
    // Internal notes, customer details, chats and financials are never shared.
-   full ? this.db.query(
+   full ? q.query(
     'select b.id,b.number,b.need,b.status,b.comment,b.works,b.notes,b.notes_public,'+
     'b.created_at,b.closed_at,c.name as center_name from service_bookings b'+
     ' join service_centers c on c.id=b.center_id where b.case_root_id=$1'+
     ' order by b.created_at,b.number',[h.root_order_id]) : Promise.resolve([]),
-   full ? this.db.query(
+   full ? q.query(
     'select n.id,n.body,n.created_at,u.name as author_name from ecu_handoff_notes n'+
     ' join users u on u.id=n.author_id where n.handoff_id=$1 order by n.id',[id]) : Promise.resolve([]),
-   full && h.selected_performer_id ? this.db.one(
+   full && h.selected_performer_id ? q.one(
     'select public_name,address from ecu_stations where performer_id=$1',[h.selected_performer_id])
     : Promise.resolve(null),
    full && h.vehicle_id && ['owner','driver','expert','admin'].includes(actor)
-    ? this.db.one<{vin:string|null}>(
+    ? q.one<{vin:string|null}>(
       'select vin from vehicles where id=$1 and owner_id=$2',[h.vehicle_id,h.client_id])
     : Promise.resolve(null),
   ]);
@@ -250,10 +303,9 @@ export class EcuHandoffService {
    quotes,notes,station,selectedQuoteId:h.selected_quote_id,selectedAt:h.selected_at,
    disclaimer:'Техническая передача бесплатна. Согласование суммы — не оплата и не автоматическая запись на ремонт.',
   };
+  });
  }
  async quote(user:AuthUser,id:string,price:number,explanation:string){
-  if(!await this.verified(user.id))
-   throw forbidden('Предложение может дать только проверенная стационарная точка ЭБУ');
   const clean=safe(explanation);
   if(clean.length<10)throw bad('need_explanation','Опишите, что входит в стоимость диагностики');
   const result=await this.db.tx(async q=>{
@@ -261,14 +313,19 @@ export class EcuHandoffService {
     'select client_id,state from ecu_handoffs where id=$1 for update',[id]);
    if(!h)throw notFound();
    if(h.state!=='pending')throw conflict('closed_for_quotes','Предложение уже выбрано');
+   if(!await this.verified(user.id,q,true))
+    throw forbidden('Предложение может дать только проверенная стационарная точка ЭБУ');
    const qrow=await q.one(
     'insert into ecu_quotes(handoff_id,performer_id,diagnosis_price,explanation) values($1,$2,$3,$4)'+
     ' on conflict(handoff_id,performer_id) do update set diagnosis_price=excluded.diagnosis_price,'+
     ' explanation=excluded.explanation,version=ecu_quotes.version+1,updated_at=$5 returning *',
     [id,user.id,price,clean,this.now()]);
+   await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [h.client_id,'ecu_handoff','Специалист ЭБУ прислал цену диагностики',
+     'Цена и описание доступны для отдельного подтверждения.',{handoffId:id}]);
    return {quote:qrow,clientId:h.client_id};
   });
-  await this.notifier.notify([result.clientId],{type:'ecu_handoff',handoffId:id},
+  await this.notifier.deliverStored([result.clientId],{type:'ecu_handoff',handoffId:id},
    {kind:'normal',title:'Специалист ЭБУ прислал цену диагностики',
     body:'Цена и описание доступны для отдельного подтверждения.',data:{handoffId:id}}).catch(()=>{});
   return result.quote;
@@ -288,19 +345,19 @@ export class EcuHandoffService {
    if(!qrow)throw notFound('Предложение не найдено');
    if(qrow.version!==version || Number(qrow.diagnosis_price)!==price)
     throw conflict('price_changed','Специалист изменил цену. Подтвердите свежую версию');
-   const approved=await q.one(
-    "select 1 from ecu_stations s join performer_profiles p on p.user_id=s.performer_id" +
-    " join users u on u.id=p.user_id where s.performer_id=$1 and s.approved_at is not null" +
-    " and p.kind='ecu' and p.verification='approved' and u.status='active'",[qrow.performer_id]);
+   const approved=await this.verified(qrow.performer_id,q,true);
    if(!approved)throw conflict('station_unavailable','Точка больше не подтверждена');
    await q.query(
     "update ecu_handoffs set state='selected',selected_quote_id=$2,selected_performer_id=$3,"+
     ' selected_at=$4 where id=$1',[id,quoteId,qrow.performer_id,this.now()]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_quote_selected',$3)",
     [h.source_order_id,user.id,{handoffId:id,quoteId,version,price}]);
+   await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [qrow.performer_id,'ecu_handoff','Клиент выбрал вашу диагностику ЭБУ',
+     'Согласована указанная цена, платёж не создавался. Обсудите передачу блока через защищённый диалог.',{handoffId:id}]);
    return {id,selectedPerformerId:qrow.performer_id,price,version};
   });
-  await this.notifier.notify([answer.selectedPerformerId],{type:'ecu_handoff',handoffId:id},
+  await this.notifier.deliverStored([answer.selectedPerformerId],{type:'ecu_handoff',handoffId:id},
    {kind:'normal',title:'Клиент выбрал вашу диагностику ЭБУ',
     body:'Согласована указанная цена, платёж не создавался. Обсудите передачу блока через защищённый диалог.',
     data:{handoffId:id}}).catch(()=>{});
@@ -321,26 +378,43 @@ export class EcuHandoffService {
     [id,user.id,'Закрыто: '+clean]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_closed',$3)",
     [h.source_order_id,user.id,{handoffId:id}]);
+   if(h.selected_performer_id)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [h.selected_performer_id,'ecu_handoff','Передача ЭБУ закрыта',
+     'В обращении сохранено итоговое заключение.',{handoffId:id}]);
    return {changed:true,sourceId:h.source_order_id,worker:h.selected_performer_id};
   });
-  if(info.changed)await this.notifier.notify([info.worker],{type:'ecu_handoff',handoffId:id},
+  if(info.changed)await this.notifier.deliverStored([info.worker],{type:'ecu_handoff',handoffId:id},
    {kind:'normal',title:'Передача ЭБУ закрыта',
     body:'В обращении сохранено итоговое заключение.',data:{handoffId:id}}).catch(()=>{});
   return {ok:true,state:'closed'};
  }
 
  async note(user:AuthUser,id:string,body:string){
-  const {h,actor}=await this.access(user,id);
-  if(h.state!=='selected'||!['owner','driver','expert','admin'].includes(actor))
-   throw forbidden('Переписка доступна только участникам согласованной передачи');
   const clean=safe(body);
   if(clean.length<2)throw bad('empty','Введите сообщение');
-  const m=await this.db.one(
-   'insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3) returning id,body,created_at',
-   [id,user.id,clean]);
-  await this.notifier.notify([h.client_id,h.source_created_by,h.selected_performer_id].filter(x=>x!==user.id),
-   {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
-    body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}}).catch(()=>{});
-  return m;
+  const result=await this.db.tx(async q=>{
+   const row=await q.one('select id from ecu_handoffs where id=$1 for update',[id]);
+   if(!row)throw notFound('Передача не найдена');
+   const {h,actor}=await this.access(user,id,q,true);
+   if(h.state!=='selected'||!['owner','driver','expert','admin'].includes(actor))
+    throw forbidden('Переписка доступна только участникам согласованной передачи');
+   const m=await q.one(
+    'insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3) returning id,body,created_at',
+    [id,user.id,clean]);
+   const recipients=[...new Set([...(await this.liveClientRecipients(h.source_order_id,q,true)),h.selected_performer_id]
+    .filter((x):x is string=>!!x && x!==user.id))];
+   for(const recipient of recipients)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [recipient,'ecu_handoff','Новое сообщение по передаче ЭБУ',
+     'Доступна новая техническая запись в цепочке обращения.',{handoffId:id}]);
+   return {m,sourceId:h.source_order_id,worker:h.selected_performer_id,recipients};
+  });
+  // Recipient refresh and optional delivery cannot invalidate a committed note.
+  try {
+   const liveIds=new Set([...(await this.liveClientRecipients(result.sourceId)),result.worker]);
+   await this.notifier.deliverStored(result.recipients.filter(x=>liveIds.has(x)),
+    {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
+     body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}});
+  } catch {}
+  return result.m;
  }
 }

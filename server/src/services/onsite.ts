@@ -26,33 +26,48 @@ export class OnsiteService {
 
   /** «Опаздываю»: клиент сразу видит новое время */
   async late(user: AuthUser, orderId: string, minutes: number) {
-    const o = await this.mine(user, orderId);
-    if (!['accepted', 'en_route'].includes(o.status)) throw conflict('bad_status', 'Опоздание отмечают до приезда');
-    await this.db.query('update orders set late_minutes = late_minutes + $2 where id=$1', [orderId, minutes]);
-    await this.orders.event(this.db, orderId, user.id, 'late', { minutes });
+    const o=await this.db.tx(async q=>{
+      const locked=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!locked)throw notFound('Заявка не найдена');
+      if(locked.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['accepted','en_route'].includes(locked.status))
+        throw conflict('bad_status','Опоздание отмечают до приезда');
+      await q.query('update orders set late_minutes=late_minutes+$2 where id=$1',[orderId,minutes]);
+      await this.orders.event(q,orderId,user.id,'late',{minutes});
+      return locked;
+    });
     const text = `Исполнитель предупредил: задерживается на ${minutes} мин.`;
     await this.orders.systemMessage(orderId, text + (minutes <= 40 ? ' До 40 минут для грузовых — в пределах нормы.' : ''));
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: o.status },
+    await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: o.status },
       { kind: 'normal', title: 'Мастер задерживается', body: `Заявка №${o.number}: +${minutes} мин`, data: { orderId } });
     return this.orders.view(user, orderId);
   }
 
   /** Отметки на месте: ожидание, погрузка, въезд — попадут в карточку клиента */
   async flags(user: AuthUser, orderId: string, flags: string[]) {
-    const o = await this.mine(user, orderId);
-    if (!['arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status)) throw conflict('bad_status', 'Отметки ставят после приезда');
-    const clean = [...new Set(flags.filter((f) => f in SITE_FLAGS))];
-    await this.db.query('update orders set site_flags=$2 where id=$1', [orderId, clean]);
-    await this.orders.event(this.db, orderId, user.id, 'site_flags', { flags: clean });
+    const clean=[...new Set(flags.filter(f=>f in SITE_FLAGS))];
+    await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['arrived','working','awaiting_confirmation','completed'].includes(o.status))
+        throw conflict('bad_status','Отметки ставят после приезда');
+      await q.query('update orders set site_flags=$2 where id=$1',[orderId,clean]);
+      await this.orders.event(q,orderId,user.id,'site_flags',{flags:clean});
+    });
     return this.orders.view(user, orderId);
   }
 
   /** Совпала ли подсказка мастера по телефону — для его точности, без штрафов */
   async hintCheck(user: AuthUser, orderId: string, result: 'yes' | 'part' | 'no') {
-    const o = await this.mine(user, orderId);
-    if (!o.consult_of) throw bad('no_hint', 'В этой заявке не было консультации');
-    await this.db.query('update orders set hint_check=$2 where id=$1', [orderId, result]);
-    await this.orders.event(this.db, orderId, user.id, 'hint_checked', { result });
+    await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!o.consult_of)throw bad('no_hint','В этой заявке не было консультации');
+      await q.query('update orders set hint_check=$2 where id=$1',[orderId,result]);
+      await this.orders.event(q,orderId,user.id,'hint_checked',{result});
+    });
     return this.orders.view(user, orderId);
   }
 
@@ -93,71 +108,147 @@ export class OnsiteService {
   /** Мастер на месте уточняет машину: следующий приедет подготовленным */
   /** «Нужна запчасть»: мастер ждёт (оплачивается ожидание), уедет и вернётся, или эвакуатор. Выбирает клиент или мастер. */
   async part(user: AuthUser, orderId: string, mode: 'wait' | 'resume' | 'return' | 'tow') {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!o) throw notFound('Заявка не найдена');
-    const isClient = o.client_id === (user.owner_id ?? user.id) || o.created_by === user.id;
-    if (o.performer_id !== user.id && !isClient) throw forbidden();
-    if (!['arrived', 'working'].includes(o.status)) throw conflict('bad_status', 'Это решают на месте, во время работы');
-    const now = new Date();
-    if (mode === 'resume') {
-      if (!o.wait_started_at) throw conflict('not_waiting', 'Ожидание не идёт');
-      const min = Math.max(1, Math.round((now.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
-      await this.db.query('update orders set wait_minutes = wait_minutes + $2, wait_started_at=null where id=$1', [orderId, min]);
-      await this.orders.systemMessage(orderId, `Запчасть на месте — работа продолжается. Ожидание: ${min} мин.`);
-    } else {
-      if (o.wait_started_at && mode !== 'wait') {
-        const min = Math.max(1, Math.round((now.getTime() - new Date(o.wait_started_at).getTime()) / 60_000));
-        await this.db.query('update orders set wait_minutes = wait_minutes + $2, wait_started_at=null where id=$1', [orderId, min]);
+    // Serialize button clicks, QR revocation and status transitions around a
+    // single order row. Charging waiting twice would be a financial defect.
+    const result=await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id && o.client_id!==user.id){
+        if(o.created_by!==user.id)throw forbidden('Это не ваша заявка');
+        const linked=await q.one<{ok:number}>(`select 1 as ok
+          from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and ($3::uuid is null or v.id=$3)
+          limit 1 for share of v`,[user.id,o.client_id,o.vehicle_id]);
+        if(!linked)throw forbidden('Водитель больше не закреплён за машиной этой заявки');
       }
-      await this.db.query(`update orders set part_mode=$2, wait_started_at = case when $2='wait' then coalesce(wait_started_at, now()) else wait_started_at end where id=$1`, [orderId, mode]);
-      const p = await this.db.one<{ extras: any }>('select extras from performer_profiles where user_id=$1', [o.performer_id]);
-      const rate = p?.extras?.waitRate;
-      await this.orders.systemMessage(orderId, mode === 'wait'
-        ? `Нужна запчасть — мастер ждёт. Таймер на «ожидании»${rate ? ` по ставке ${(rate / 100).toLocaleString('ru-RU')} ₽/ч` : ''}. Привезли не ту деталь — ожидание продолжается.`
-        : mode === 'return' ? 'Нужна запчасть — мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд.'
-        : 'Нужна запчасть — мастер закроет работу с диагнозом, клиент вызывает эвакуатор.');
-    }
-    await this.orders.event(this.db, orderId, user.id, 'part', { mode });
-    await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x: string) => x && x !== user.id), { type: 'order', orderId, status: o.status },
-      { kind: 'normal', title: 'Нужна запчасть', body: { wait: 'Мастер ждёт, таймер на ожидании', resume: 'Работа продолжается', return: 'Мастер вернётся с запчастью', tow: 'Эвакуатор' }[mode], data: { orderId } });
-    return this.orders.view(user, orderId);
+      if(!['arrived','working'].includes(o.status))
+        throw conflict('bad_status','Это решают на месте, во время работы');
+      // An identical retry must never count waiting twice or write another
+      // system message, including when the first HTTP response was lost.
+      if(mode==='wait'&&o.wait_started_at || mode!=='resume' && mode!=='wait' &&
+        !o.wait_started_at && o.part_mode===mode)
+        return {o,message:null as any};
+      if(mode==='resume'&&!o.wait_started_at)
+        throw conflict('not_waiting','Ожидание не идёт');
+      const now=new Date();
+      const min=o.wait_started_at && mode!=='wait'
+        ? Math.max(1,Math.round((now.getTime()-new Date(o.wait_started_at).getTime())/60_000))
+        : 0;
+      if(mode==='resume'){
+        await q.query('update orders set wait_minutes=wait_minutes+$2,wait_started_at=null where id=$1',
+          [orderId,min]);
+      }else{
+        await q.query(`update orders set wait_minutes=wait_minutes+$3,part_mode=$2,
+          wait_started_at=case when $2='wait' then coalesce(wait_started_at,now())
+            else null end where id=$1`,[orderId,mode,min]);
+      }
+      const p=mode==='wait'
+        ? await q.one<{extras:any}>('select extras from performer_profiles where user_id=$1',[o.performer_id])
+        : null;
+      const rate=p?.extras?.waitRate;
+      const text=mode==='resume'
+        ? `Запчасть на месте — работа продолжается. Ожидание: ${min} мин.`
+        : mode==='wait'
+          ? `Нужна запчасть — мастер ждёт. Таймер на «ожидании»${rate ? ` по ставке ${(rate/100).toLocaleString('ru-RU')} ₽/ч` : ''}. Привезли не ту деталь — ожидание продолжается.`
+          : mode==='return'
+            ? 'Нужна запчасть — мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд.'
+            : 'Нужна запчасть — мастер закроет работу с диагнозом, клиент вызывает эвакуатор.';
+      await this.orders.event(q,orderId,user.id,'part',{mode});
+      const message=await q.one<any>(
+        `insert into chat_messages(order_id,sender_id,kind,body)
+          values($1,null,'system',$2)
+          returning id,order_id,sender_id,kind,body,created_at`,[orderId,text]);
+      return {o,message};
+    });
+    if(!result.message)return this.orders.view(user,orderId);
+    // Both the order, audit and chat are already committed. Push is optional:
+    // it must not invite a user retry that would duplicate a waiting charge.
+    this.notifier.live(await this.orders.participants(orderId),
+      {type:'chat',message:result.message});
+    await this.notifier.notify(
+      [...await this.orders.customerRecipientsForOrder(orderId),result.o.performer_id]
+        .filter((x:string)=>x && x!==user.id),
+      {type:'order',orderId,status:result.o.status},
+      {kind:'normal',title:'Нужна запчасть',
+        body:{wait:'Мастер ждёт, таймер на ожидании',resume:'Работа продолжается',
+          return:'Мастер вернётся с запчастью',tow:'Эвакуатор'}[mode],
+        data:{orderId}})
+      .catch(e=>console.warn('[onsite part notify]',e));
+    return this.orders.view(user,orderId);
   }
 
   /** «Причина найдена, на месте не исправить» — мастер советует сервис-партнёр; клиенту там скидка */
   async recommend(user: AuthUser, orderId: string, centerId: string | null) {
-    const o = await this.mine(user, orderId);
-    if (!['arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status)) throw conflict('bad_status', 'Советовать сервис можно после приезда');
-    if (centerId) {
-      const c = await this.db.one(`select id, name from service_centers where id=$1 and verification='approved'`, [centerId]);
-      if (!c) throw notFound('Сервис не найден');
-      await this.db.query('update orders set recommended_center_id=$2 where id=$1', [orderId, centerId]);
-      await this.orders.event(this.db, orderId, user.id, 'service_recommended', { centerId });
-      await this.orders.systemMessage(orderId, `Мастер советует сервис «${c.name}» — запишитесь из заявки, будет скидка.`);
-      await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: o.status },
-        { kind: 'normal', title: 'Мастер советует сервис', body: `«${c.name}» — со скидкой по совету мастера`, data: { orderId } });
-    } else {
-      await this.db.query('update orders set recommended_center_id=null where id=$1', [orderId]);
+    const result=await this.db.tx(async q=>{
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['arrived','working','awaiting_confirmation','completed'].includes(o.status))
+        throw conflict('bad_status','Советовать сервис можно после приезда');
+      const center=centerId
+        ? await q.one<{id:string;name:string}>(
+            "select id,name from service_centers where id=$1 and verification='approved'",
+            [centerId])
+        : null;
+      if(centerId&&!center)throw notFound('Сервис не найден');
+      if((o.recommended_center_id??null)===(centerId??null))
+        return {o,center,message:null as any,changed:false};
+      await q.query('update orders set recommended_center_id=$2 where id=$1',[orderId,centerId]);
+      if(!center)return {o,center,message:null as any,changed:true};
+      await this.orders.event(q,orderId,user.id,'service_recommended',{centerId});
+      const message=await q.one<any>(
+        `insert into chat_messages(order_id,sender_id,kind,body)
+          values($1,null,'system',$2)
+          returning id,order_id,sender_id,kind,body,created_at`,
+        [orderId,`Мастер советует сервис «${center.name}» — запишитесь из заявки, будет скидка.`]);
+      return {o,center,message,changed:true};
+    });
+    if(result.message&&result.center){
+      this.notifier.live(await this.orders.participants(orderId),
+        {type:'chat',message:result.message});
+      await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId),
+        {type:'order',orderId,status:result.o.status},
+        {kind:'normal',title:'Мастер советует сервис',
+          body:`«${result.center.name}» — со скидкой по совету мастера`,data:{orderId}})
+        .catch(e=>console.warn('[onsite recommend notify]',e));
     }
-    return this.orders.view(user, orderId);
+    return this.orders.view(user,orderId);
   }
 
   async fixVehicle(user: AuthUser, orderId: string, v: { brand?: string; model?: string | null; year?: number | null; axles?: number | null }) {
-    const o = await this.mine(user, orderId);
-    if (o.vehicle_id) {
-      await this.db.query(
-        `update vehicles set brand=coalesce($2,brand), model=coalesce($3,model), year=coalesce($4,year), axles=coalesce($5,axles), fixed_by=$6, fixed_at=now() where id=$1`,
-        [o.vehicle_id, v.brand ?? null, v.model ?? null, v.year ?? null, v.axles ?? null, user.id]);
-    }
-    await this.db.query('update orders set brand=coalesce($2,brand), model=coalesce($3,model), year=coalesce($4,year) where id=$1',
-      [orderId, v.brand ?? null, v.model ?? null, v.year ?? null]);
-    await this.orders.event(this.db, orderId, user.id, 'vehicle_fixed', v);
-    return this.clientCard(user, orderId);
+    await this.db.tx(async q => {
+      // A finished mechanic must never rewrite the owner's garage later,
+      // especially when the vehicle has moved to another fleet.
+      const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!o)throw notFound('Заявка не найдена');
+      if(o.performer_id!==user.id)throw forbidden('Это не ваша заявка');
+      if(!['arrived','working','awaiting_confirmation'].includes(o.status))
+        throw conflict('bad_status','Уточнять машину можно во время работ, до закрытия заявки');
+      if(o.vehicle_id) {
+        const vehicle=await q.one<{owner_id:string}>(
+          'select owner_id from vehicles where id=$1 for update',[o.vehicle_id]);
+        if(!vehicle||vehicle.owner_id!==o.client_id)
+          throw conflict('vehicle_owner_changed','Машина больше не принадлежит заказчику этой заявки');
+        await q.query(
+          `update vehicles set brand=coalesce($2,brand),model=coalesce($3,model),
+            year=coalesce($4,year),axles=coalesce($5,axles),
+            fixed_by=$6,fixed_at=now() where id=$1`,
+          [o.vehicle_id,v.brand??null,v.model??null,v.year??null,v.axles??null,user.id]);
+      }
+      await q.query(
+        'update orders set brand=coalesce($2,brand),model=coalesce($3,model),year=coalesce($4,year) where id=$1',
+        [orderId,v.brand??null,v.model??null,v.year??null]);
+      await this.orders.event(q,orderId,user.id,'vehicle_fixed',v);
+    });
+    return this.clientCard(user,orderId);
   }
 
   /** «Не брать заявки этого клиента» — личный чёрный список исполнителя */
   async block(user: AuthUser, orderId: string, on: boolean, reason?: string) {
-    const o = await this.db.one('select client_id from orders where id=$1', [orderId]);
-    if (!o) throw notFound();
+    // The old implementation let ANY master block a customer's fleet by
+    // guessing an order UUID. Only an actually assigned worker has that right.
+    const o = await this.mine(user, orderId);
     if (on) await this.db.query(`insert into performer_blocks(performer_id, client_id, reason) values ($1,$2,$3) on conflict do nothing`, [user.id, o.client_id, reason ?? null]);
     else await this.db.query('delete from performer_blocks where performer_id=$1 and client_id=$2', [user.id, o.client_id]);
     return { blocked: on };

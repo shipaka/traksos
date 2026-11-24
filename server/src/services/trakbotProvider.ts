@@ -63,7 +63,7 @@ export function makeLlmRequest(
         store: false,
         max_output_tokens: maxOutputTokens,
       };
-  return { url, init: { method: 'POST', headers, body: JSON.stringify(payload) } };
+  return { url, init: { method: 'POST', redirect: 'error', headers, body: JSON.stringify(payload) } };
 }
 
 export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): string {
@@ -73,12 +73,56 @@ export function decodeLlmAnswer(payload: unknown, transport: TrakBotTransport): 
     choices?: Array<{ message?: { content?: unknown } }>;
   };
   if (transport === 'local') {
-    const content = obj.choices?.[0]?.message?.content;
+    if (!Array.isArray(obj.choices)) return '';
+    const content = obj.choices[0]?.message?.content;
     return typeof content === 'string' ? content.trim() : '';
   }
-  return (obj.output ?? []).flatMap((o) => o.content ?? [])
-    .filter((c) => c.type === 'output_text')
-    .map((c) => c.text ?? '').join('\n').trim();
+  // Provider JSON is untrusted even when it came from the configured model.
+  // Ignore malformed content arrays and non-text values; never stringify
+  // arbitrary objects into a response that might reach a paying customer.
+  if (!Array.isArray(obj.output)) return '';
+  return obj.output.flatMap((o) =>
+      o && typeof o === 'object' && Array.isArray(o.content) ? o.content : [])
+    .filter((c) => c && typeof c === 'object' &&
+      c.type === 'output_text' && typeof c.text === 'string')
+    .map((c) => c.text).join('\n').trim();
+}
+
+/** Streaming byte limit: an absent or dishonest Content-Length is not
+ * permission to buffer arbitrarily large model output in server memory.
+ */
+async function readBoundedModelBody(response: Response): Promise<string | null> {
+  const maxBytes = 32_768;
+  const declared = response.headers.get('content-length');
+  if (declared !== null && /^\d+$/.test(declared) && Number(declared) > maxBytes) {
+    await response.body?.cancel().catch(() => {});
+    return null;
+  }
+  if (!response.body) return null;
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    for (;;) {
+      const {done,value} = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 export async function requestGeneratedText(
@@ -92,11 +136,12 @@ export async function requestGeneratedText(
   if (!request) return null;
   try {
     const response = await fetch(request.url, { ...request.init, signal: AbortSignal.timeout(timeoutMs) });
-    if (!response.ok) return null;
-    const length = Number(response.headers.get('content-length') ?? '0');
-    if (length > 32_768) return null;
-    const raw = await response.text();
-    if (raw.length > 32_768) return null;
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => {});
+      return null;
+    }
+    const raw = await readBoundedModelBody(response);
+    if (raw === null) return null;
     const text = decodeLlmAnswer(JSON.parse(raw), settings.transport ?? 'api');
     return text && text.length <= 2_400 ? text : null;
   } catch {

@@ -39,6 +39,18 @@ export const SHOP_STATUS: Record<string, string> = {
 };
 const NEXT: Record<string, string[]> = { new: ['confirmed', 'cancelled'], confirmed: ['ready', 'shipped', 'cancelled'], ready: ['shipped', 'done', 'cancelled'], shipped: ['done', 'cancelled'] };
 const MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+// Read authorization belongs to the same SQL snapshot as the private order.
+// An old session or historical created_by alone never grants fleet access.
+const SHOP_ORDER_READ_ACL = `exists (
+  select 1 from users buyer where buyer.id=$2 and buyer.status='active' and buyer.deleted_at is null
+    and buyer.roles && '{client,driver,master,tow,service}'::text[]
+    and ((buyer.owner_id is null and buyer.id=s.client_id)
+      or (buyer.owner_id=s.client_id and 'driver'=any(buyer.roles) and s.created_by=buyer.id
+        and exists(select 1 from users owner where owner.id=buyer.owner_id and owner.status='active' and owner.deleted_at is null)
+        and (s.vehicle_id is null or exists(select 1 from vehicles v
+          where v.id=s.vehicle_id and v.owner_id=s.client_id and v.driver_id=buyer.id))))
+)`;
+
 
 export interface ProductInput {
   category?: string; name?: string; spec?: string | null; description?: string | null; price?: number; stock?: number | null;
@@ -95,17 +107,20 @@ export class ShopService {
   async saveProduct(actor: AuthUser, id: string | null, p: ProductInput) {
     if (p.category && !SHOP_CATEGORIES[p.category]) throw bad('bad_category', 'Нет такой категории');
     const photo = p.photoDataUrl ? this.decodePhoto(p.photoDataUrl) : null;
+    // Product core, optional metadata and audit are one ACID unit. A missing
+    // audit or metadata write must never leave half-saved stock/pricing.
+    return this.db.tx(async(q)=>{
     let row: any;
     if (!id) {
       if (!p.name?.trim() || p.price == null) throw bad('need_name', 'Укажите название и цену');
-      row = await this.db.one(
+      row = await q.one(
         `insert into shop_products(category, name, spec, description, price, stock, lead_days, is_kit, active, sort, photo_mime, photo)
          values ($1,$2,$3,$4,$5,$6,coalesce($7,2),coalesce($8,false),coalesce($9,true),coalesce($10,100),$11,$12) returning ${this.cols}`,
         [p.category ?? 'other', p.name.trim(), p.spec?.trim() || null, p.description?.trim() || null, p.price, p.stock ?? null,
           p.leadDays ?? null, p.isKit ?? null, p.active ?? null, p.sort ?? null, photo?.mime ?? null, photo ? '\\x' + photo.buf.toString('hex') : null]);
     } else {
       const has = (k: keyof ProductInput) => Object.prototype.hasOwnProperty.call(p, k);
-      row = await this.db.one(
+      row = await q.one(
         `update shop_products set category=coalesce($2,category), name=coalesce($3,name),
            spec=case when $4::boolean then $5 else spec end, description=case when $6::boolean then $7 else description end,
            price=coalesce($8,price), stock=case when $9::boolean then $10::int else stock end, lead_days=coalesce($11,lead_days),
@@ -122,22 +137,28 @@ export class ShopService {
     // Explicit null clears it; omitted fields preserve the existing value.
     if (['brand', 'article', 'searchTerms'].some((k) => Object.prototype.hasOwnProperty.call(p, k))) {
       const has = (k: keyof ProductInput) => Object.prototype.hasOwnProperty.call(p, k);
-      await this.db.query(
+      await q.query(
         `update shop_products set brand=case when $2::boolean then $3 else brand end,
            article=case when $4::boolean then $5 else article end,
            search_terms=case when $6::boolean then $7 else search_terms end, updated_at=now() where id=$1`,
         [row.id, has('brand'), p.brand?.trim() || null, has('article'), p.article?.trim() || null, has('searchTerms'), p.searchTerms?.trim() || null]);
-      row = await this.db.one(`select ${this.cols} from shop_products where id=$1`, [row.id]);
+      row = await q.one(`select ${this.cols} from shop_products where id=$1`, [row.id]);
     }
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, id ? 'shop.product_update' : 'shop.product_create', row.id, { name: row.name, price: row.price, stock: row.stock }]);
+    await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, id ? 'shop.product_update' : 'shop.product_create', row.id, { name: row.name, price: row.price, stock: row.stock }]);
     return view(row);
+    });
   }
 
   async deleteProduct(actor: AuthUser, id: string) {
-    // Товар из прошлых заказов не удаляем — скрываем
-    await this.db.query('update shop_products set active=false, updated_at=now() where id=$1', [id]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'shop.product_hide', id, {}]);
-    return { ok: true };
+    // Hiding a product and its required audit must succeed or fail together.
+    return this.db.tx(async(q)=>{
+      const updated=await q.one<{id:string}>(
+        'update shop_products set active=false, updated_at=now() where id=$1 returning id',[id]);
+      if(!updated)throw notFound('Товар не найден');
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id,'shop.product_hide',id,{}]);
+      return {ok:true};
+    });
   }
 
   // ——— Internal supplier identifiers (admin only, never in client catalog) ———
@@ -157,30 +178,43 @@ export class ShopService {
   async setSupplierRef(actor: AuthUser, productId: string, input: {
     article: string; brand?: string | null; sourceNote?: string | null; verified?: boolean;
   }) {
-    const product = await this.db.one<{ id: string }>('select id from shop_products where id=$1', [productId]);
-    if (!product) throw notFound('Товар не найден');
     const source = input.sourceNote?.trim() || null;
     if (input.verified && (!source || source.length < 3))
       throw bad('need_source', 'Для подтверждения артикула укажите источник сверки');
-    await this.db.query(
-      `insert into shop_supplier_refs(product_id, supplier_article, supplier_brand, source_note, verified, updated_by)
-       values ($1,$2,$3,$4,$5,$6)
-       on conflict(product_id) do update set
-         supplier_article=excluded.supplier_article, supplier_brand=excluded.supplier_brand,
-         source_note=excluded.source_note, verified=excluded.verified,
-         updated_by=excluded.updated_by, updated_at=now()`,
-      [productId, input.article.trim(), input.brand?.trim() || null, source, !!input.verified, actor.id]);
-    await this.db.query(
-      'insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-      [actor.id, 'shop.supplier_ref_set', productId, { supplier: 'autokontinent', verified: !!input.verified }]);
-    return this.supplierRef(productId);
+    return this.db.tx(async(q)=>{
+      // Lock the product to prevent concurrent hide/remove from splitting
+      // a supplier mapping from its audited modification.
+      const product=await q.one<{id:string}>(
+        'select id from shop_products where id=$1 for update',[productId]);
+      if(!product)throw notFound('Товар не найден');
+      const row=await q.one<any>(
+        `insert into shop_supplier_refs(product_id, supplier_article, supplier_brand, source_note, verified, updated_by)
+         values ($1,$2,$3,$4,$5,$6)
+         on conflict(product_id) do update set
+           supplier_article=excluded.supplier_article, supplier_brand=excluded.supplier_brand,
+           source_note=excluded.source_note, verified=excluded.verified,
+           updated_by=excluded.updated_by, updated_at=now()
+         returning supplier_article,supplier_brand,source_note,verified,updated_at`,
+        [productId,input.article.trim(),input.brand?.trim()||null,source,!!input.verified,actor.id]);
+      await q.query(
+        'insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id,'shop.supplier_ref_set',productId,
+          {supplier:'autokontinent',verified:!!input.verified}]);
+      return {
+        supplier:'autokontinent',article:row.supplier_article,
+        brand:row.supplier_brand,sourceNote:row.source_note,
+        verified:!!row.verified,updatedAt:row.updated_at,connected:false,
+      };
+    });
   }
 
   async clearSupplierRef(actor: AuthUser, productId: string) {
-    await this.db.query('delete from shop_supplier_refs where product_id=$1', [productId]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-      [actor.id, 'shop.supplier_ref_clear', productId, { supplier: 'autokontinent' }]);
-    return { ok: true };
+    return this.db.tx(async(q)=>{
+      await q.query('delete from shop_supplier_refs where product_id=$1',[productId]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [actor.id,'shop.supplier_ref_clear',productId,{supplier:'autokontinent'}]);
+      return {ok:true};
+    });
   }
 
   async supplierStatus() {
@@ -335,12 +369,8 @@ export class ShopService {
     await this.allowedVehicle(user, vehicleId);
     const ownerId = user.owner_id ?? user.id;
     const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
-    const params: unknown[] = [ownerId];
-    const filters = ['s.client_id=$1'];
-    if (user.owner_id) {
-      params.push(user.id);
-      filters.push(`s.created_by=$${params.length}`);
-    }
+    const params: unknown[] = [ownerId,user.id];
+    const filters = ['s.client_id=$1',SHOP_ORDER_READ_ACL];
     if (vehicleId) {
       params.push(vehicleId);
       filters.push(`s.vehicle_id=$${params.length}`);
@@ -381,14 +411,45 @@ export class ShopService {
       const u = await this.db.one<{ company_inn: string | null }>('select company_inn from users where id=$1', [clientId]);
       if (!u?.company_inn) throw bad('need_inn', 'Счёт выставляем компаниям — укажите ИНН в профиле');
     }
-    let linkOrder: string | null = null;
-    if (p.delivery === 'master') {
-      const o = await this.db.one<{ id: string }>(
-        `select id from orders where id=$1 and (client_id=$2 or created_by=$3) and status in ('accepted','en_route','arrived','working')`, [p.orderId ?? null, clientId, user.id]);
-      if (!o) throw bad('need_order', 'Передать с мастером можно только по открытой заявке, пока мастер не приехал или работает');
-      linkOrder = o.id;
-    }
     return this.db.tx(async (q) => {
+      // Fleet membership may be revoked while a user confirms a cart. Recheck
+      // the CURRENT user/vehicle under row locks, inside the same transaction
+      // that reserves parts and creates the buyer's order.
+      const currentUser=await q.one<{owner_id:string|null;roles:string[]}>(
+        "select owner_id,roles from users where id=$1 and status='active' and deleted_at is null for update",[user.id]);
+      if(!currentUser ||
+         (currentUser.owner_id??null)!==(user.owner_id??null) ||
+         !currentUser.roles.some(role=>['client','driver','master','tow','service'].includes(role)) ||
+         (currentUser.owner_id&&!currentUser.roles.includes('driver')))
+        throw forbidden('Доступ к покупкам изменился — обновите кабинет');
+      if(user.owner_id){
+        const owner=await q.one<{fleet:any}>(
+          "select fleet from users where id=$1 and status='active' and deleted_at is null for update",[user.owner_id]);
+        if(!owner || owner.fleet?.allow?.shop===false)
+          throw forbidden('Владелец не разрешил покупки в магазине');
+      }
+      if(vehicle){
+        const owned=await q.one<{id:string}>(
+          'select id from vehicles where id=$1 and owner_id=$2 '+
+          (user.owner_id?'and driver_id=$3 ':'')+'for update',
+          user.owner_id?[vehicle.id,clientId,user.id]:[vehicle.id,clientId]);
+        if(!owned)throw forbidden('Машина больше не назначена этому пользователю');
+      }
+      // Link to a repair job only while it remains open. A fleet driver may
+      // never attach parts to another driver's work order by knowing its UUID.
+      let linkOrder: string | null = null;
+      if (p.delivery === 'master') {
+        const o = await q.one<{ id: string }>(
+          `select id from orders where id=$1 and
+             (client_id=$2 or created_by=$3) and
+             ($4::boolean=false or created_by=$3) and
+             status in ('accepted','en_route','arrived','working')
+             for update`,
+          [p.orderId ?? null, clientId, user.id, !!user.owner_id]);
+        if (!o) throw bad('need_order',
+          'Передать с мастером можно только по своей открытой заявке');
+        linkOrder = o.id;
+      }
       const rows = await q.query<any>(`select id, name, brand, article, price, stock, active, lead_days from shop_products where id = any($1::uuid[]) for update`, [[...want.keys()]]);
       if (rows.length !== want.size || rows.some((r) => !r.active)) throw conflict('gone', 'Часть товаров уже недоступна — обновите корзину');
       const items = rows.map((r) => {
@@ -406,9 +467,15 @@ export class ShopService {
         [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null, vehicle?.id ?? null, vehicle ? JSON.stringify({ brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate, trailerPlate: vehicle.trailer_plate }) : null]);
       return row;
     }).then(async (row: any) => {
-      const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
-      await this.notifier.notify(staff, { type: 'shop', shopOrderId: row.id },
-        { kind: 'normal', title: `Магазин: заказ №${row.number}`, body: `${(row.total / 100).toLocaleString('ru-RU')} ₽ · ${row.items.length} поз.`, data: { shopOrderId: row.id } });
+      try {
+        const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
+        await this.notifier.notify(staff, { type: 'shop', shopOrderId: row.id },
+          { kind: 'normal', title: `Магазин: заказ №${row.number}`, body: `${(row.total / 100).toLocaleString('ru-RU')} ₽ · ${row.items.length} поз.`, data: { shopOrderId: row.id } });
+      } catch (error) {
+        // SQL already committed. Claiming checkout failure would encourage the
+        // buyer to retry and reserve/place the same paid order a second time.
+        console.warn('Shop order committed; admin notification failed:', error);
+      }
       return this.orderView(row);
     });
   }
@@ -425,18 +492,17 @@ export class ShopService {
     const rows = await this.db.query(
       `select s.*,d.status as courier_status
          from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
-        where s.client_id=$1 ${user.owner_id ? 'and s.created_by=$2' : ''}
+        where s.client_id=$1 and ${SHOP_ORDER_READ_ACL}
         order by s.created_at desc limit 50`,
-      user.owner_id ? [user.owner_id, user.id] : [user.id]);
+      [user.owner_id??user.id,user.id]);
     return rows.map((o: any) => ({...this.orderView(o),courierStatus:o.courier_status??null,
       canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id}));
   }
 
   async cancelMine(user: AuthUser, id: string) {
-    const o = await this.db.one<any>('select * from shop_orders where id=$1 and (client_id=$2 or created_by=$3)', [id, user.owner_id ?? user.id, user.id]);
-    if (!o) throw notFound('Заказ не найден');
-    if (o.status !== 'new') throw conflict('bad_status', 'Заказ уже собирают — напишите в поддержку');
-    return this.setStatus(null, id, 'cancelled', 'Отменил клиент');
+    // Same fleet != same buyer: drivers may only cancel orders THEY created.
+    // The authoritative check is repeated under FOR UPDATE inside setStatus.
+    return this.setStatus(null, id, 'cancelled', 'Отменил клиент', user);
   }
 
   // ——— Админ: заказы ———
@@ -460,16 +526,39 @@ export class ShopService {
       client: { name: o.company_name || o.client_name, phone: o.client_phone } }));
   }
 
-  async setStatus(actor: AuthUser | null, id: string, status: string, note?: string) {
+  async setStatus(actor: AuthUser | null, id: string, status: string, note?: string,
+    buyer?: AuthUser) {
+    if (buyer && status !== 'cancelled') throw forbidden('Покупатель может только отменить заказ');
     const o = await this.db.one<any>('select * from shop_orders where id=$1', [id]);
-    if (!o) throw notFound('Заказ не найден');
+    const mayCancel=(order:{client_id:string;created_by:string})=>
+      !!buyer && order.client_id===(buyer.owner_id??buyer.id) &&
+      (!buyer.owner_id||order.created_by===buyer.id);
+    // Fail closed before exposing a foreign shop order's existence or status.
+    if (!o || (buyer && !mayCancel(o))) throw notFound('Заказ не найден');
     if (!(NEXT[o.status] ?? []).includes(status)) throw conflict('bad_status', `Из «${SHOP_STATUS[o.status]}» в «${SHOP_STATUS[status] ?? status}» нельзя`);
     await this.db.tx(async (q) => {
-      // Serialize with courier handoff and buyer confirmation. An admin cannot
-      // mark an assigned courier delivery received or bypass its status order.
-      const locked=await q.one<{status:string}>(
-        'select status from shop_orders where id=$1 for update',[id]);
-      if(!locked||locked.status!==o.status)
+      if(buyer){
+        const current=await q.one<{owner_id:string|null;roles:string[]}>(
+          "select owner_id,roles from users where id=$1 and status='active' and deleted_at is null for share",[buyer.id]);
+        if(!current || current.owner_id!==(buyer.owner_id??null) ||
+           !current.roles.some(role=>['client','driver','master','tow','service'].includes(role)) ||
+           (current.owner_id&&!current.roles.includes('driver')))
+          throw notFound('Заказ не найден');
+      }
+      // Authorization, status transition and stock restock share ONE row lock.
+      const locked=await q.one<{status:string;client_id:string;created_by:string;vehicle_id:string|null}>(
+        'select status,client_id,created_by,vehicle_id from shop_orders where id=$1 for update',[id]);
+      if(!locked || (buyer && !mayCancel(locked)))
+        throw notFound('Заказ не найден');
+      if(buyer?.owner_id && locked.vehicle_id){
+        const assigned=await q.one('select id from vehicles where id=$1 and owner_id=$2 and driver_id=$3 for share',
+          [locked.vehicle_id,buyer.owner_id,buyer.id]);
+        if(!assigned)throw notFound('Заказ не найден');
+      }
+      // The customer can cancel only before the store confirms the order.
+      if(buyer && locked.status!=='new')
+        throw conflict('bad_status','Подтверждённый заказ отменяет только магазин');
+      if(locked.status!==o.status)
         throw conflict('status_changed','Заказ изменился — обновите страницу');
       const courier=await q.one<{id:string;status:string}>(
         'select id,status from shop_courier_deliveries where shop_order_id=$1 for update',[id]);
@@ -490,10 +579,18 @@ export class ShopService {
       }
       await q.query(`update shop_orders set status=$2, cancel_reason = case when $2='cancelled' then $3 else cancel_reason end,
                        admin_note = case when $2<>'cancelled' and $3::text is not null then $3 else admin_note end, updated_at=now() where id=$1`, [id, status, note?.trim() || null]);
-      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor?.id ?? o.created_by, 'shop.status', id, { status, note }]);
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor?.id ?? buyer?.id ?? o.created_by, 'shop.status', id, { status, note }]);
     });
-    if (actor) await this.notifier.notify([o.client_id, o.created_by], { type: 'shop', shopOrderId: id },
-      { kind: 'normal', title: `Заказ в магазине №${o.number}: ${SHOP_STATUS[status].toLowerCase()}`, body: note?.trim() || (status === 'ready' ? 'Можно забирать' : ''), data: { shopOrderId: id } });
+    if (actor) {
+      try {
+        await this.notifier.notify([o.client_id, o.created_by], { type: 'shop', shopOrderId: id },
+          { kind: 'normal', title: `Заказ в магазине №${o.number}: ${SHOP_STATUS[status].toLowerCase()}`, body: note?.trim() || (status === 'ready' ? 'Можно забирать' : ''), data: { shopOrderId: id } });
+      } catch (error) {
+        // The locked SQL status/stock transaction already committed. Never
+        // signal a failed status change merely because push/email was offline.
+        console.warn('Shop status committed; notification failed:', error);
+      }
+    }
     const r = await this.db.one('select * from shop_orders where id=$1', [id]);
     return this.orderView(r);
   }

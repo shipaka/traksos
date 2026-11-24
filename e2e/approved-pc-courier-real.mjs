@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 /**
  * Owner-approved courier PC/Android: REAL Chromium + LOCAL backend proof.
  * No real shipments, customer data, payment, or public courier self-registration.
@@ -48,8 +49,8 @@ try{
  for(const width of [1440,390]){
   const ctx=await browser.newContext({viewport:{width,height:width===390?844:900},
     locale:'ru-RU',serviceWorkers:'block'});
-  const page=await ctx.newPage(),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  const page=await ctx.newPage();
+  const assertClean=watchPageErrors(page);
   await page.addInitScript(token=>{
    localStorage.setItem('traksos.token',token);
    localStorage.setItem('traksos.mode','courier');
@@ -67,6 +68,15 @@ try{
    await page.locator(width===1440?'main.courier-pc':'main.courier-android')
      .waitFor({state:'visible',timeout:15000});
    if(width===1440){
+    // An empty courier account must not advertise an imaginary live trip.
+    if(await page.locator('.courier-pc-trip--empty').count()){
+      if(await page.getByText('Мой рейс',{exact:true}).count() ||
+         await page.getByText('Маршрутный лист',{exact:true}).count() ||
+         await page.locator('.courier-pc-trip--empty .courier-pc-progress').count() ||
+         await page.locator('.courier-pc-schematic--empty .courier-pc-route-line button').count())
+        throw Error('Empty courier workspace exposes a fictional active trip or route');
+      await page.getByText('Пока нет назначенных доставок',{exact:true}).first().waitFor();
+    }
     if(await page.locator('.courier-pc-bot img').count()!==1)
       throw Error('Approved TrakBot is missing');
     if(await page.locator('.app > .trakbot-dock').isVisible().catch(()=>false))
@@ -87,19 +97,32 @@ try{
     client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth
    }));
    if(sizes.scroll>sizes.client+3)throw Error('Horizontal overflow '+JSON.stringify(sizes));
-   if(errors.length)throw Error('JS error: '+errors.join(' | '));
+   await assertClean('courier '+width+' workdesk');
    const home='courier-home-'+width+'.png';
    await page.screenshot({path:output+'/'+home,fullPage:true,animations:'disabled'});
    report.screenshots.push(home);
    // Click the visible role workdesk link, not the hidden duplicate in common navigation.
    await page.locator((width===1440?'main.courier-pc':'main.courier-android')+' a[href="#/courier/jobs"]').first().click();
    await page.locator('main.courier-android').waitFor({state:'visible'});
-   await page.getByRole('heading',{name:'Мои рейсы'}).waitFor();
+   await page.getByRole('heading',{name:'Мои доставки'}).waitFor();
    const jobs='courier-jobs-'+width+'.png';
    await page.screenshot({path:output+'/'+jobs,fullPage:true,animations:'disabled'});
    report.screenshots.push(jobs);
-   if(errors.length)throw Error('Courier navigation JS error '+errors.join(' | '));
+   await assertClean('courier '+width+' deliveries');
    report.checks.push('real courier route and clickable jobs navigation '+width);
+   // Recipient messaging is not connected yet. The approved primary nav must
+   // offer the existing WORKING support thread, not a dead "Chat" promise.
+   if(await page.locator('a[href="#/courier/chat"]').count())
+     throw Error('Courier primary/menu still advertises unavailable recipient chat');
+   const supportNav=page.locator(width===1440
+     ? '.desktop-sidebar .desktop-nav a[href="#/support"]'
+     : '.tabbar a[href="#/support"]');
+   await supportNav.waitFor({state:'visible'});
+   await supportNav.click();
+   await page.getByRole('heading',{name:'Поддержка',exact:true}).waitFor();
+   await page.getByRole('button',{name:'Написать',exact:true}).waitFor();
+   await assertClean('courier '+width+' support');
+   report.checks.push('courier support shortcut opens real messages and new ticket '+width);
   }finally{await ctx.close();}
  }
 }finally{await browser.close();}

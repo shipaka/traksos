@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { practiceKindFor, practiceStages } from '../../web/src/screens/trainingDemoModel.ts';
 import {
   scenarioLibrary, scenariosForRole, allowedScenario, chooseScenarioOption,
   type CourseRole,
 } from '../../web/src/screens/scenarioLibrary.ts';
 
-const roles:CourseRole[]=['owner','driver','master','tow','service','insurer','inspection','moderator','admin'];
+const roles:CourseRole[]=['owner','driver','master','tow','service','insurer','inspection','courier','moderator','admin'];
 
 test('each role receives its own curated and searchable scenario encyclopedia',()=>{
   const names=new Set<string>();
@@ -99,4 +100,51 @@ test('real staff escalation is taught accurately and does not auto-create a tick
   assert.match(allowedScenario('driver','no-show')?.summary??'',/пропал/);
   // Only help routes are suggested; there is no attempt to call a production endpoint.
   assert.ok(scenarioLibrary.every(x=>x.link.startsWith('/')));
+});
+
+
+test('performer training explains the actual immutable 0% promotion and fee cap',()=>{
+  const closing=practiceStages.performer.find(s=>s.title.includes('В истории'));
+  assert.ok(closing,'performer practice must end with real finance guidance');
+  assert.match(closing.explanation,/5 000 ₽/);
+  assert.match(closing.explanation,/0%/);
+  assert.match(closing.explanation,/баллов мастера равны нулю/);
+  assert.match(closing.why,/при создании реальной заявки/);
+});
+
+test('owner and driver course teaches the real verified-only dispatch policy',()=>{
+  for(const role of ['owner','driver'] as const){
+    const item=allowedScenario(role,'verified-only-search');
+    assert.ok(item,role+' must receive verification choices');
+    assert.equal(item.steps.length,3);
+    const teaching=item.steps.map(step=>step.situation+' '+step.where+' '+step.why+' '+step.choices.map(c=>c.feedback).join(' ')).join(' ');
+    assert.match(teaching,/Только проверенные/);
+    assert.match(teaching,/непроверенн/);
+    assert.match(teaching,/сервер сохранит/);
+  }
+  assert.equal(allowedScenario('master','verified-only-search'),null);
+  assert.equal(allowedScenario('insurer','verified-only-search'),null);
+});
+
+test('courier has a private role-specific training path and truthful handover sequence',()=>{
+  assert.equal(practiceKindFor('courier'),'courier');
+  assert.equal(practiceKindFor('inspection'),'inspection');
+  assert.equal(practiceStages.courier.length,7);
+  assert.match(practiceStages.courier[4].explanation,/код/i);
+  assert.match(practiceStages.courier[5].explanation,/подтверждает сам клиент/i);
+  const courier=scenariosForRole('courier');
+  assert.ok(courier.length>=3,'courier should have two private situations and safe common cases');
+  assert.ok(courier.some(s=>s.id==='courier-code-handover'));
+  assert.ok(courier.some(s=>s.id==='courier-code-locked'));
+  assert.ok(courier.some(s=>s.id==='app-not-working'));
+  for(const id of ['courier-code-handover','courier-code-locked']){
+    const scenario=allowedScenario('courier',id);
+    assert.ok(scenario);
+    assert.equal(scenario.steps.length,3);
+    for(const wrongRole of ['owner','driver','master','tow','service','insurer','inspection','moderator','admin'] as const)
+      assert.equal(allowedScenario(wrongRole,id),null,wrongRole+' should not receive courier case');
+    const text=scenario.steps.map(x=>x.situation+' '+x.why+' '+x.choices.map(c=>c.label).join(' ')).join(' ');
+    assert.match(text,/код/i);
+  }
+  assert.ok(courier.every(x=>x.link.startsWith('/')));
 });

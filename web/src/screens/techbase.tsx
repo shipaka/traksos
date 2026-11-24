@@ -28,22 +28,47 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const [documentType,setDocumentType] = useState('');
   const [query,setQuery] = useState('');
   const [error,setError] = useState('');
+  const [vehicleError,setVehicleError] = useState('');
+  const [catalogRetry,setCatalogRetry] = useState(0);
+  const [vehiclesRetry,setVehiclesRetry] = useState(0);
   useEffect(() => {
     let active = true;
     setPayload(null); setError('');
     get('/api/techbase?audience='+audience)
-      .then((data:Payload) => { if(active) setPayload(data); })
+      .then((data:Payload) => { if(active) {
+        // An HTTP 200 with a malformed response must not look like an empty,
+        // verified manufacturer catalog.
+        if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences))
+          throw new Error('invalid_techbase');
+        setPayload(data);
+      }})
       .catch(() => { if(active) setError('Не удалось получить каталог. Проверьте подключение и права доступа.'); });
     return () => { active = false; };
-  }, [audience, me?.id]);
+  }, [audience, me?.id, catalogRetry]);
+  useEffect(() => {
+    // Garage vehicle names and plates belong to the current account. Clear
+    // the old user's options before a new authenticated GET can complete.
+    setVehicles([]);
+    setVehicleId(initialVehicleId);
+    setVehicleError('');
+  }, [me?.id, initialVehicleId]);
   useEffect(() => {
     if (isMaster) return;
     let active = true;
+    setVehicleError('');
     get('/api/vehicles').then((data:GarageVehicle[]) => {
-      if (active && Array.isArray(data)) setVehicles(data);
-    }).catch(() => {});
+      if (active) {
+        if(!Array.isArray(data))throw new Error('invalid_garage');
+        setVehicles(data);
+      }
+    }).catch(() => {
+      if(active) {
+        setVehicles([]);
+        setVehicleError('Не удалось загрузить машины из гаража. Можно искать вручную или повторить загрузку.');
+      }
+    });
     return () => {active=false;};
-  }, [isMaster, me?.id]);
+  }, [isMaster, me?.id, vehiclesRetry]);
   const chosen = vehicles.find(v => v.id === vehicleId);
   const selectedMake = (chosen?.brand || make).trim();
   const selectedModel = chosen?.model?.trim() || '';
@@ -78,6 +103,12 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       </div>
     </section>
     <section className="card stack techbase-filter" aria-label="Поиск технических материалов">
+      {!isMaster && vehicleError && <div className="banner warn" role="alert">
+        {vehicleError}
+        <button type="button" className="btn ghost small" onClick={()=>setVehiclesRetry(n=>n+1)}>
+          Повторить загрузку гаража
+        </button>
+      </div>}
       {!isMaster && vehicles.length>0 && <label className="stack">
         <b>Машина из моего гаража</b>
         <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind(e.target.value?'truck':'all');}}>
@@ -115,7 +146,11 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
         Документы по отдельным агрегатам требуют проверки маркировки блока — привязка к машине не доказывает их совместимость.</div>}
       {isMaster && <div className="techbase-context">Для электросхем и распиновок дополнительно проверьте номер блока, ревизию, двигатель и комплектацию. Без этого материалы являются справочными.</div>}
     </section>
-    {error && <div className="banner warn" role="alert">{error}</div>}
+    {error && <div className="banner warn" role="alert">{error}
+      <button type="button" className="btn ghost small" onClick={()=>setCatalogRetry(n=>n+1)}>
+        Повторить загрузку каталога
+      </button>
+    </div>}
     {!payload && !error && <div className="card" role="status">Загружаем каталог производителя…</div>}
     {payload && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>

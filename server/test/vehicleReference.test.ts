@@ -22,6 +22,14 @@ const admin = { id: 'a', roles: ['admin'] } as any;
 const driver = { id: 'd', roles: ['driver'] } as any;
 const master = { id: 'm', roles: ['master'] } as any;
 
+// Model the database authorization row independently of the captured session roles.
+const liveAdminSql = "select id from users where id=$1 and status='active' and deleted_at is null " +
+  "and 'admin'=any(roles) for share";
+function liveAdminRow(params: any[]) {
+  assert.deepEqual(params, [admin.id]);
+  return { id: admin.id };
+}
+
 test('stable digest is independent of import row order and model order', () => {
   const first = normalizeCatalog(sample);
   const reordered = normalizeCatalog({
@@ -84,7 +92,15 @@ test('unsupported source URL rejected, no source allowed without explicit approv
   let created = 0;
   const db: any = {
     tx: async (fn: (q: any) => any) => fn({
-      one: async () => { created++; return { source_key: 'internal-curated', state: 'pending', redistribution_approved: false }; },
+      one: async (sql: string, params: any[]) => {
+        if (sql === liveAdminSql) return liveAdminRow(params);
+        if (sql.startsWith('select * from vehicle_ref_sources')) {
+          assert.deepEqual(params, ['internal-curated']);
+          return { source_key: 'internal-curated', state: 'pending', redistribution_approved: false };
+        }
+        if (sql.startsWith('insert into vehicle_ref_sources')) created++;
+        throw new Error('Unexpected SQL: ' + sql);
+      },
     }),
   };
   const service = new VehicleReferenceService(db);
@@ -101,6 +117,7 @@ test('source registration is idempotent and different rights under same key conf
   const logs: string[] = [];
   const q: any = {
     one: async (sql: string, p: any[]) => {
+      if (sql === liveAdminSql) return liveAdminRow(p);
       if (sql.startsWith('insert into vehicle_ref_sources')) {
         if (stored) return null;
         stored = { source_key: p[0], source_name: p[1], origin_url: p[2], license_name: p[3],
@@ -128,6 +145,7 @@ test('source snapshot import is idempotent: no duplicated rows or cost of repeat
   let insertBrands = 0, insertModels = 0;
   const q: any = {
     one: async (sql: string, p: any[]) => {
+      if (sql === liveAdminSql) return liveAdminRow(p);
       if (sql.startsWith('select * from vehicle_ref_sources'))
         return { source_key: 'curated-1', state: 'approved', redistribution_approved: true };
       if (sql.startsWith('insert into vehicle_ref_snapshots')) {
@@ -260,6 +278,25 @@ test('isolated PostgreSQL: license gate, staged revisions, rollback and revocati
     await assert.rejects(state.db.query(
       "delete from vehicle_ref_models where snapshot_id=$1", [staged.id]), /immutable/);
     await assert.rejects(service.registerSource(customer, source), /только администратор/);
+
+    // A previously authorized session must not retain write access after role revocation.
+    // Keep the original actor object (with its stale admin claim) while changing the live DB row.
+    await state.db.query("update users set roles=ARRAY['client']::text[] where id=$1", [actor.id]);
+    assert.ok(actor.roles.includes('admin'));
+    const staleAdminSource = { ...source, key: 'stale-admin-source' };
+    const before = await state.db.one<{ count: number }>(
+      'select count(*)::int as count from vehicle_ref_registry_events');
+    await assert.rejects(service.registerSource(actor, staleAdminSource), /только администратор/);
+    await assert.rejects(service.approveSource(actor, source.key, 'Stale session approval attempt'), /только администратор/);
+    await assert.rejects(service.revokeSource(actor, source.key, 'Stale session revocation attempt'), /только администратор/);
+    await assert.rejects(service.stageSnapshot(actor, source.key, sample), /только администратор/);
+    await assert.rejects(service.activateSnapshot(actor, source.key, sample.sourceRevision,
+      'Stale session activation attempt'), /только администратор/);
+    assert.equal(await state.db.one('select source_key from vehicle_ref_sources where source_key=$1',
+      [staleAdminSource.key]), null);
+    const after = await state.db.one<{ count: number }>(
+      'select count(*)::int as count from vehicle_ref_registry_events');
+    assert.equal(after?.count, before?.count, 'denied mutations must not append registry events');
   } finally {
     await state.close();
   }

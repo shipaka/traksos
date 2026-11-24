@@ -28,7 +28,6 @@ a { color: var(--accent); }
 .app { max-width: 440px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
 .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 14px 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
 .logo { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: -.5px; }
-.logo b { color: var(--accent); font-weight: 700; }
 main { flex: 1; display: flex; flex-direction: column; gap: 18px; padding: 18px 0 110px; }
 h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 24px; line-height: 1.15; text-wrap: balance; }
 h2 { margin: 0; font-size: 17px; }
@@ -552,7 +551,6 @@ select.field { appearance: none; }
 .guest-app{--public-ink:#f7f9ff;--public-orange:#ff6a13;--public-cyan:#13d8ef;background:linear-gradient(150deg,#071424,#0b2541 62%,#071321);color:var(--public-ink);}
 .guest-app .top{background:#06182b;border-bottom:1px solid #203851;color:white;}
 .guest-app .top .logo{font-size:clamp(15px,2.2vw,24px);letter-spacing:-.6px;color:white;}
-.guest-app .top .logo b{color:var(--public-orange);}
 .guest-header-actions{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;}
 .guest-header-actions a{display:inline-flex;align-items:center;justify-content:center;border-radius:13px;padding:11px 16px;min-height:42px;border:1px solid var(--public-cyan);color:#f7fbff;font-weight:800;font-size:12px;text-decoration:none;white-space:nowrap;}
 .guest-header-actions a.register{border-color:#ff8f47;background:linear-gradient(120deg,#ff9b45,#ff6a13);color:#101e29;box-shadow:0 4px 19px #ff6a1340;}
@@ -602,7 +600,6 @@ select.field { appearance: none; }
 .public-landing .public-app-card p{font-size:12px;color:#d4e1ed;line-height:1.6;margin:0;}
 .public-landing .public-app-card small{font-size:10px;color:#a9bace;}
 .public-landing .public-app-phone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:min(155px,88%);min-height:185px;align-self:center;text-align:center;border:5px solid #111925;outline:2px solid #68798b;border-radius:25px;padding:20px 8px;background:radial-gradient(ellipse at 55% 80%,#d77a3599,transparent 50%),linear-gradient(155deg,#051525,#1c385a 70%,#5b3b20);box-shadow:10px 18px 30px #0009;color:#fff;transform:rotate(-5deg);}
-.public-landing .public-app-logo{font-family:var(--display);font-weight:900;font-size:16px;letter-spacing:-1px;}.public-landing .public-app-logo b{color:#ff994d;}
 .public-landing .public-app-phone-truck{font-size:38px;filter:drop-shadow(0 0 10px #ff6a13);}.public-landing .public-app-phone>span:last-child{font-size:10px;}
 .public-landing .public-rustore-soon{display:inline-block;align-self:stretch;text-align:center;padding:12px;border-radius:11px;background:#102a43;color:#fff;border:1px solid #7693b0;font-size:13px;font-weight:800;}
 .public-landing .public-why-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;padding:17px 12px;border-top:1px solid #27435f;border-bottom:1px solid #27435f;}
@@ -749,8 +746,6 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   background:rgba(5,23,41,.96);color:#f5fbff;
   border-color:#24445c;backdrop-filter:blur(16px);
 }
-.app:not(.guest-app) .top .logo b,
-.app:not(.guest-app) .site-footer .logo b {color:#fc247c;}
 .app:not(.guest-app) .top .pill.accent{background:rgba(30,207,237,.13);color:#72e7fa;border:1px solid #277e98;}
 .app:not(.guest-app) .bell{color:#c4effd;border-color:#345c79;background:rgba(16,47,72,.7);}
 .app:not(.guest-app) .card,
@@ -982,6 +977,14 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 }
 .account-menu > summary::-webkit-details-marker { display: none; }
 .account-menu[open] > summary { border-color: var(--accent); }
+.account-menu[open]::after {
+  /* Pointer bridge across the 8px visual gap between trigger and flyout.
+     Without it, the mouseleave handler closes the menu before the pointer
+     can reach its actual links. No visible color/geometry change to 617/618. */
+  content: ""; position: absolute; right: 0; top: 100%;
+  width: min(290px, calc(100vw - 24px)); height: 9px;
+  z-index: 29; pointer-events: auto;
+}
 .account-menu nav {
   position: absolute; right: 0; top: calc(100% + 8px);
   width: min(290px, calc(100vw - 24px)); max-height: min(65vh, 550px);
@@ -1017,6 +1020,33 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   .app:not(.guest-app) .top .pill.accent:not(.sandbox-test-badge) { display: none; }
   .app:not(.guest-app) .top > .row { min-width: 0; gap: 5px; }
   .app:not(.guest-app) .top .logo { flex-shrink: 0; }
+}
+
+/* The 320–412px TEST administrator must keep its supervisor badge legible.
+   At 390px real Chromium found Bell physically covering the badge text.
+   Place the complete action row below the brand, not under a Bell overlay;
+   preserve all controls and never modify owner-approved PC/client layout. */
+@media(max-width:412px){
+  .app.role-admin header.top{
+    flex-wrap:wrap!important;
+    row-gap:4px!important;
+    align-content:center;
+  }
+  .app.role-admin header.top > .row{
+    flex:1 0 100%;
+    width:100%;min-width:0;
+    box-sizing:border-box;
+    align-items:center;justify-content:space-between;
+    gap:8px!important;
+  }
+  .app.role-admin header.top .sandbox-supervisor-controls,
+  .app.role-admin header.top .sandbox-supervisor-badge,
+  .app.role-admin header.top .sandbox-test-badge{
+    flex:none;min-width:max-content;white-space:nowrap;
+  }
+  .app.role-admin header.top .sandbox-test-badge{
+    display:inline-flex;align-items:center;justify-content:center;min-height:44px;
+  }
 }
 
 /* Approved public palette and mobile readability, 2026-11-13.
@@ -1078,8 +1108,7 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
   --accent-soft: rgba(250,23,110,.14);
   --on-accent: #fff;
 }
-.guest-app .site-footer .logo,
-.guest-app .site-footer .logo b { color: #fa176e; }
+.guest-app .site-footer .logo { color: #fa176e; }
 @media(max-width:899px) {
   /* Keep the headline fully above the photo, and buttons below the cab. */
   .public-landing .public-hero-visual {
@@ -1616,12 +1645,14 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
 .moderator-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;}
 .moderator-action{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0;
   min-height:135px;padding:18px;border-radius:18px;border:1px solid #43637d;
-  background:radial-gradient(ellipse at 100% 0,#ae67e71f,transparent 55%),linear-gradient(145deg,#172d4d,#0e2943);
+  background:radial-gradient(ellipse at 100% 0,#fa8c251c,transparent 55%),linear-gradient(145deg,#172d4d,#0e2943);
   color:#e8f8ff;text-align:left;transition:transform .18s,border-color .18s,box-shadow .18s;}
-.moderator-action>span{font-size:27px;color:#bc9bff;}
+.moderator-action>span{display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;color:#ffab59;}
+.moderator-action>span svg{width:26px;height:26px;stroke:currentColor}
 .moderator-action b{font-size:13px;overflow-wrap:anywhere;}
 .moderator-action small{font-size:11px;color:#a6c8dd;margin-top:auto;}
-.moderator-action.active,.moderator-action:hover{border-color:#c2a0f6;
+.moderator-action.active,.moderator-action:hover{border-color:#ff9d46;
   box-shadow:0 10px 24px #0004;transform:translateY(-2px);}
 @media(max-width:800px){
  .moderator-action-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
@@ -1732,4 +1763,17 @@ body:has(.app:not(.guest-app)){background:#071526;color:#f2f8ff;}
     font-size:10px;
     padding:5px 8px;
   }
+}
+
+/* Support list: allow real ticket titles and the heading/action pair to
+   wrap on phones rather than imposing their combined intrinsic width.
+   No global overflow clipping and no changes to the approved desktop layout. */
+@media(max-width:899px){
+  .app:not(.guest-app) .support-list-page,
+  .app:not(.guest-app) .support-list-page > .rows{min-width:0;max-width:100%;}
+  .app:not(.guest-app) .support-list-header{min-width:0;flex-wrap:wrap;}
+  .app:not(.guest-app) .support-list-header > h1{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+  .app:not(.guest-app) .support-list-header > .btn.small{flex:0 1 auto;min-width:0;max-width:100%;white-space:normal;}
+  .app:not(.guest-app) .support-list-page .list-item > .stack{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+  .app:not(.guest-app) .support-list-page .list-item > .pill{flex:0 0 auto;}
 }

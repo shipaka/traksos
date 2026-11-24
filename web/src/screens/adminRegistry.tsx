@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { get, post, fmtPhone } from '../api.ts';
-import { useLoad, Loading } from '../ui.tsx';
+import { useLoad, useMe, Loading } from '../ui.tsx';
 import './adminRegistry.css';
 
 type Filters = {
@@ -38,17 +38,32 @@ function RegistryEdit({item,onSaved,onCancel}:{item:any;onSaved:()=>void;onCance
   const [note,setNote]=useState(item.note??'');
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const submitting=useRef(false);
+  const mounted=useRef(true);
+  useEffect(()=>()=>{mounted.current=false;},[]);
   return <form className="tr-registry-editor" onSubmit={async e=>{
-    e.preventDefault();if(busy)return;
-    setBusy(true);setError('');
+    e.preventDefault();
+    if(submitting.current)return;
+    const cleanTags=tags.split(',').map(x=>x.trim()).filter(Boolean);
+    if(cleanTags.length>12){
+      setError('Допускается не более 12 тегов. Ничего не сохранено.');return;
+    }
+    if(cleanTags.some(x=>x.length>40)){
+      setError('Каждый тег должен быть не длиннее 40 символов.');return;
+    }
+    submitting.current=true;setBusy(true);setError('');
     try {
       await post('/api/admin/registry/'+encodeURIComponent(item.id)+'/metadata',{
         region:region.trim()||null,city:city.trim()||null,
-        tags:tags.split(',').map(x=>x.trim()).filter(Boolean).slice(0,12),note:note.trim(),
+        tags:[...new Set(cleanTags)],note:note.trim(),
       });
-      onSaved();
-    } catch(err){setError(err instanceof Error ? err.message:'Не удалось сохранить');}
-    finally{setBusy(false);}
+      if(mounted.current)onSaved();
+    } catch(err){
+      if(mounted.current)setError(err instanceof Error ? err.message:'Не удалось сохранить');
+    } finally{
+      submitting.current=false;
+      if(mounted.current)setBusy(false);
+    }
   }}>
     <p className="note">Редактируются только внутренние заметки реестра. Профиль, роли, телефоны, платежи и история заявок не изменятся.</p>
     <div className="tr-registry-fields">
@@ -70,42 +85,71 @@ function RegistryEdit({item,onSaved,onCancel}:{item:any;onSaved:()=>void;onCance
     {error && <div className="banner bad" role="alert">{error}</div>}
     <div className="row">
       <button className="btn small" disabled={busy} type="submit">{busy?'Сохраняется…':'Сохранить карточку'}</button>
-      <button className="btn ghost small" type="button" onClick={onCancel}>Отмена</button>
+      <button className="btn ghost small" type="button" disabled={busy} onClick={onCancel}>Отмена</button>
     </div>
   </form>;
 }
 
 export function AdminRegistry() {
+  const { me } = useMe();
   const [draft,setDraft]=useState<Filters>({...DEFAULT});
   const [applied,setApplied]=useState<Filters>({...DEFAULT});
   const [page,setPage]=useState(1);
+  const [reloadToken,setReloadToken]=useState(0);
   const [editing,setEditing]=useState<string|null>(null);
   const [exporting,setExporting]=useState(false);
   const [exportError,setExportError]=useState('');
   const [exportInfo,setExportInfo]=useState('');
+  const [filterError,setFilterError]=useState('');
+  const exportLock=useRef(false);
+  const activeAccount=useRef<string|null>(null);
+  const activeFilters=useRef('');
+  activeAccount.current=me?.id??null;
+  const filterSnapshot=JSON.stringify(applied);
+  activeFilters.current=filterSnapshot;
+  const changed=filterSnapshot!==JSON.stringify(draft);
+  useEffect(()=>{
+    setDraft({...DEFAULT});setApplied({...DEFAULT});
+    setPage(1);setReloadToken(0);
+    setEditing(null);setExportError('');setExportInfo('');setFilterError('');
+  },[me?.id]);
   const params=useMemo(()=>{
     const p=selection(applied);p.set('page',String(page));p.set('pageSize','30');
     return p.toString();
   },[applied,page]);
-  const result=useLoad(()=>get('/api/admin/registry?'+params),[params]);
-  const total=Number(result.data?.total??0);
+  const result=useLoad<{ownerId:string|null;params:string;version:number;payload:any}>(
+    async()=>({ownerId:me?.id??null,params,version:reloadToken,
+      payload:await get('/api/admin/registry?'+params)}),
+    [params,me?.id,reloadToken]);
+  const loaded=!!me?.id && !result.error && result.data?.ownerId===me.id &&
+    result.data.params===params && result.data.version===reloadToken;
+  const data=loaded?result.data!.payload:null;
+  const total=Number(data?.total??0);
   const pages=Math.max(1,Math.ceil(total/30));
   function set<K extends keyof Filters>(key:K,value:Filters[K]) {
     setDraft(prev=>({...prev,[key]:value}));
   }
   async function exportFiltered() {
-    if(exporting)return;
-    setExporting(true);setExportError('');setExportInfo('');
+    if(exportLock.current||!loaded||changed||!me?.id)return;
+    const owner=me.id,filterKey=filterSnapshot;
+    exportLock.current=true;setExporting(true);setExportError('');setExportInfo('');
     try {
       const body:any={};
       for(const [k,v] of Object.entries(applied))if(v.trim())body[k]=v.trim();
-      const data=await post<{filename:string;csv:string;count:number;total:number;truncated:boolean}>('/api/admin/registry/export',body);
-      downloadCsv(data.filename,data.csv);
-      setExportInfo(data.truncated
-        ? `Выгружено ${data.count} из ${data.total}. Максимум 5000 строк за одну выгрузку — сузьте фильтры по региону или датам.`
-        : `Выгружено ${data.count} карточек в CSV. Действие зарегистрировано в журнале.`);
-    } catch(err) {setExportError(err instanceof Error?err.message:'Ошибка выгрузки');}
-    finally{setExporting(false);}
+      const response=await post<{filename:string;csv:string;count:number;total:number;truncated:boolean}>(
+        '/api/admin/registry/export',body);
+      if(activeAccount.current!==owner||activeFilters.current!==filterKey)return;
+      if(typeof response.csv!=='string'||!response.csv.startsWith('\uFEFF'))
+        throw new Error('Некорректный файл реестра от сервера');
+      const safeName=String(response.filename??'').replace(/[^a-zA-Z0-9_.-]/g,'_').slice(0,90);
+      downloadCsv(safeName.endsWith('.csv')?safeName:'traksos-registry.csv',response.csv);
+      setExportInfo(response.truncated
+        ? `Выгружено ${response.count} из ${response.total}. Максимум 5000 строк за одну выгрузку — сузьте фильтры по региону или датам.`
+        : `Выгружено ${response.count} карточек в CSV. Действие зарегистрировано в журнале.`);
+    } catch(reason) {
+      if(activeAccount.current===owner&&activeFilters.current===filterKey)
+        setExportError(reason instanceof Error?reason.message:'Ошибка выгрузки');
+    } finally{exportLock.current=false;setExporting(false);}
   }
   return <section className="tr-registry stack">
     <div className="tr-registry-intro">
@@ -113,7 +157,14 @@ export function AdminRegistry() {
         <p className="note">Сведения автоматически собраны из регистраций, карточек компаний, исполнителей, СТО и истории работ. Дублирующая база контактов не создаётся.</p></div>
       <a className="btn ghost small" href="#/admin/section/access">+ Создать участника</a>
     </div>
-    <form className="tr-registry-filter stack" onSubmit={e=>{e.preventDefault();setPage(1);setApplied({...draft});setEditing(null);}}>
+    <form className="tr-registry-filter stack" onSubmit={e=>{
+      e.preventDefault();
+      if(draft.from&&draft.to&&draft.from>draft.to){
+        setFilterError('Дата начала не может быть позже даты окончания.');return;
+      }
+      setFilterError('');setPage(1);setApplied({...draft});setEditing(null);
+      setExportError('');setExportInfo('');
+    }}>
       <div className="tr-registry-fields">
         <label className="stack">Поиск
           <input className="field" type="search" value={draft.q} onChange={e=>set('q',e.target.value)}
@@ -185,22 +236,33 @@ export function AdminRegistry() {
       </div>
       <div className="row">
         <button className="btn" type="submit">Найти участников</button>
-        <button className="btn ghost" type="button" onClick={()=>{setDraft({...DEFAULT});setApplied({...DEFAULT});setPage(1);setEditing(null);}}>Сбросить</button>
-        <button className="btn ghost" type="button" disabled={exporting} onClick={exportFiltered}>{exporting?'Формируем CSV…':'Выгрузить найденных · CSV'}</button>
+        <button className="btn ghost" type="button" onClick={()=>{
+          setDraft({...DEFAULT});setApplied({...DEFAULT});setPage(1);setEditing(null);
+          setFilterError('');setExportError('');setExportInfo('');
+        }}>Сбросить</button>
+        <button className="btn ghost" type="button" disabled={exporting||!loaded||changed}
+          onClick={()=>void exportFiltered()}>{exporting?'Формируем CSV…':'Выгрузить найденных · CSV'}</button>
       </div>
     </form>
+    {filterError && <div className="banner bad" role="alert">{filterError}</div>}
+    {changed && <p className="note">Фильтры изменены, но ещё не применены. Нажмите «Найти участников» для обновления выдачи и CSV.</p>}
     {exportError && <div className="banner bad" role="alert">{exportError}</div>}
     {exportInfo && <p className="note" role="status">{exportInfo}</p>}
     <div className="tr-registry-results-header">
-      <b>{result.data ? `Найдено участников: ${total}` : 'Загружаем реестр'}</b>
+      <b>{data ? `Найдено участников: ${total}` : result.error?'Данные реестра недоступны':'Загружаем реестр'}</b>
       <div className="row">
         <span className="note">Регион последней заявки — не подтверждённый адрес проживания или работы.</span>
-        <button type="button" className="btn ghost small" onClick={()=>result.reload()}>Обновить данные</button>
+        <button type="button" className="btn ghost small"
+          onClick={()=>setReloadToken(v=>v+1)}>Обновить данные</button>
       </div>
     </div>
-    {!result.data ? <Loading error={result.error} /> : <>
-      {result.data.items.length===0 && <div className="empty">По заданным параметрам участников нет. Измените фильтры.</div>}
-      {result.data.items.map((item:any)=><article className="tr-registry-card card" key={item.id}>
+    {!data ? <div className="stack">
+      <Loading error={result.error}/>
+      {result.error&&<button type="button" className="btn ghost small"
+        onClick={()=>void result.reload()}>Повторить загрузку реестра</button>}
+    </div> : <>
+      {data.items.length===0 && <div className="empty">По заданным параметрам участников нет. Измените фильтры.</div>}
+      {data.items.map((item:any)=><article className="tr-registry-card card" key={item.id}>
         <div className="between">
           <div className="stack tr-registry-identity">
             <a href={'#/admin/user/'+item.id}><b>{item.company_name||item.center_name||item.name||'Без имени'}</b></a>
@@ -232,11 +294,12 @@ export function AdminRegistry() {
         {item.note && <p className="note"><b>Заметка:</b> {item.note}</p>}
         <div className="row">
           <a className="btn ghost small" href={'#/admin/user/'+item.id}>Полная карточка и история</a>
-          <button className="btn ghost small" onClick={()=>setEditing(editing===item.id?null:item.id)}>
+          <button type="button" className="btn ghost small" onClick={()=>setEditing(editing===item.id?null:item.id)}>
             {editing===item.id?'Свернуть заметки':'Регион, теги и заметки'}
           </button>
         </div>
-        {editing===item.id && <RegistryEdit key={item.id} item={item} onSaved={()=>{setEditing(null);result.reload();}}
+        {editing===item.id && <RegistryEdit key={item.id} item={item}
+          onSaved={()=>{setEditing(null);setReloadToken(v=>v+1);}}
           onCancel={()=>setEditing(null)}/>}
       </article>)}
       {pages>1 && <div className="row tr-registry-pagination">

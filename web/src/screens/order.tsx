@@ -1,4 +1,6 @@
 import './orderCinematic.css';
+import './noPerformerApproved20261123.css';
+import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
@@ -17,10 +19,21 @@ import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
 import { OrderPhotoGallery } from './orderPhotos.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
 
 type PerformerOrderTab = 'order' | 'client' | 'finance' | 'chat' | 'history' | 'vehicle';
-export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: PerformerOrderTab }) {
-  const o = useLoad(() => get(`/api/orders/${id}`), [id], (e) => e.orderId === id && (e.type === 'order' || e.type === 'payment'));
+export function Order({id,initialTab='order'}:{id:string;initialTab?:PerformerOrderTab}) {
+  const {me}=useMe();
+  // Every account and request has isolated actions, chat drafts and cached data.
+  return <OrderForSession key={(me?.id??'guest')+':'+id}
+    id={id} initialTab={initialTab} userId={me?.id??'guest'}/>;
+}
+function OrderForSession({id,initialTab,userId}:{
+  id:string;initialTab:PerformerOrderTab;userId:string;
+}) {
+  const o=usePrivateRead<any>(()=>get(`/api/orders/${id}`),
+    'order:'+userId+':'+id,
+    (e:any)=>e.orderId===id&&(e.type==='order'||e.type==='payment'));
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
   useEffect(() => {
     setPerfPos(null); // Never display another order's last GPS position after switching the route.
@@ -39,9 +52,15 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
   }, [id, !!o.data]); // eslint-disable-line
   const { mode } = useMe();
   const [ptab, setPtab] = useState<PerformerOrderTab>(initialTab);
+  // Keep only the panel's open/closed preference across a same-order refresh.
+  // Private data and drafts still unmount while authorization is rechecked.
+  // OrderForSession is keyed by account and order, so this cannot cross either.
+  const [chatOpen, setChatOpen] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
   useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
-  if (!o.data) return <main><Back to={backTo} /><Loading error={o.error} /></main>;
+  if (!o.data) return <main className="stack"><Back to={backTo} />
+    <Loading error={o.error}/>{o.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void o.reload();}}>Повторить загрузку заявки</button>}</main>;
   const d = o.data;
   const isPerformer = d.you === 'performer';
   const done = ['completed', 'cancelled'].includes(d.status);
@@ -73,7 +92,7 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
       {(isPerformer || d.you === 'candidate') && (ptab === 'client' || ptab === 'vehicle')
         ? <ClientTab id={id} canEdit={isPerformer} historyOnly={ptab === 'vehicle'} />
         : isPerformer && ptab === 'finance' ? <Money d={d} />
-        : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} />
+        : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} />
         : isPerformer && ptab === 'history'
           ? <OrderTimeline events={d.events ?? []} createdAt={d.createdAt}
               acceptedAt={d.acceptedAt} arrivedAt={d.arrivedAt}
@@ -88,20 +107,24 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
       {isPerformer && (isConsult ? <ConsultFinish d={d} onDone={o.reload} /> : <PerformerActions d={d} onDone={o.reload} />)}
       {isConsult && !isPerformer && d.you !== 'candidate' && <ConsultClient d={d} />}
       {d.consultFrom?.hint && <ConsultHintCard from={d.consultFrom} />}
-      {d.status === 'no_performer' && !isPerformer && <Retry id={id} onDone={o.reload} />}
+      {d.status === 'no_performer' && d.you === 'client' && <Retry id={id} reason={d.absenceReason} onDone={o.reload} />}
 
       {d.performer && !isPerformer && <PerformerCard p={d.performer} pos={perfPos} consult={isConsult} to={d.lat != null ? { lat: d.lat, lng: d.lng } : null} moving={['accepted', 'en_route'].includes(d.status)} />}
       {isPerformer && <ClientCard d={d} />}
       {d.service === 'tow' && !isPerformer && d.you !== 'candidate' && d.destination && <TowInfo d={d} />}
 
-      {d.you !== 'candidate' && d.status !== 'searching' && !isPerformer && <Money d={d} />}
+      {/* A failed search is not a booked call-out. Preserve actual payment history
+          below, but never advertise an estimated future visit as "Цена". */}
+      {d.you !== 'candidate' && !['searching','no_performer'].includes(d.status)
+        && !isPerformer && <Money d={d} />}
 
       {d.you === 'admin' && <AdminPanel d={d} onDone={o.reload} />}
       {d.you === 'admin' && !isConsult && <AdminRouteMap orderId={id} />}
       {(d.you === 'client' || d.you === 'admin') && <OrderTimeline
         events={d.events} createdAt={d.createdAt} acceptedAt={d.acceptedAt}
         arrivedAt={d.arrivedAt} completedAt={d.completedAt} isAdmin={d.you === 'admin'} />}
-      {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' && <PaymentsList id={id} admin={d.you === 'admin'} />}
+      {(d.you === 'client' || d.you === 'admin') && d.paymentMethod !== 'cash' &&
+        <PaymentsList id={id} admin={d.you === 'admin'} noPerformer={d.status==='no_performer'} />}
 
       {!isPerformer && ['arrived', 'working'].includes(d.status) && d.service !== 'consult' && <WorkInProgress d={d} />}
       {d.you !== 'candidate' && d.you !== 'admin' && d.service !== 'tow' && d.service !== 'consult' && ['arrived', 'working'].includes(d.status) && <PartPicker d={d} onDone={o.reload} performer={isPerformer} />}
@@ -129,10 +152,11 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
       <OrderPhotoGallery orderId={id}/>
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} /></section>}
+      {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} /></section>}
       </>}
 
-      {d.you !== 'admin' && d.you !== 'candidate' && <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
+      {d.you !== 'admin' && d.you !== 'candidate' && !(d.you === 'client' && d.status === 'no_performer') &&
+        <a className="btn ghost" href={`#/support/new?order=${d.id}`}>Позвать поддержку</a>}
       {!done && d.status !== 'searching' && d.actions.includes('cancel') && !isPerformer && !(isConsult && d.status === 'awaiting_confirmation') && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.status === 'cancelled' && <div className="card stack">
         <b>Заявка отменена</b>
@@ -1056,14 +1080,51 @@ function ConsultHintCard({ from, title }: { from: any; title?: string }) {
   );
 }
 
-function Retry({ id, onDone }: { id: string; onDone: () => void }) {
+function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: () => void }) {
   const { busy, run } = useAction();
+  const messages: Record<string, [string, string]> = {
+    not_connected: [
+      'По этому направлению пока нет партнёров',
+      'Мы расширяем сеть TrakSOS и работаем над подключением специалистов по этой услуге.'
+    ],
+    temporarily_unavailable: [
+      'Сейчас нет доступных специалистов',
+      'Подходящие партнёры есть, но сейчас не могут принять вызов.'
+    ],
+    no_response: [
+      'Пока никто не откликнулся',
+      'Поиск завершён без подтверждённого исполнителя.'
+    ],
+    offers_withdrawn: [
+      'Сейчас нет действующих предложений',
+      'Специалист откликнулся, но его предложение больше не действует. Вы можете повторить поиск.'
+    ],
+    unknown: [
+      'Пока не удалось найти исполнителя',
+      'Поиск завершён. Мы не можем достоверно определить причину отсутствия откликов.'
+    ]
+  };
+  const [heading, description] = messages[reason ?? 'unknown'] ?? messages.unknown;
   return (
-    <div className="card hi">
-      <b>Сейчас никто не взял заявку</b>
-      <span className="note">Все свободные мастера рядом заняты. Можно позвать ещё раз — кто-то мог освободиться.</span>
-      <button className="btn" disabled={busy} onClick={() => run(() => post(`/api/orders/${id}/retry`)).then((r) => r && onDone())}>Искать ещё раз</button>
-    </div>
+    <section className="traksos-no-performer" aria-label="Результат поиска исполнителя" aria-live="polite">
+      <div className="traksos-no-performer-copy">
+        <span className="traksos-no-performer-eyebrow">TrakSOS · поиск завершён</span>
+        <h2>{heading}</h2>
+        <p>{description}</p>
+        <div className="traksos-no-performer-actions">
+          <button type="button" className="btn" disabled={busy}
+            onClick={() => run(() => post(`/api/orders/${id}/retry`)).then((r) => r && onDone())}>
+            Искать ещё раз
+          </button>
+          <a className="btn ghost" href="#/sos">Другая помощь</a>
+          <a className="btn ghost" href={`#/support/new?order=${id}`}>Поддержка</a>
+        </div>
+      </div>
+      <div className="traksos-no-performer-art" aria-hidden="true">
+        <img src={APPROVED_VISUALS.noPerformerSearch} alt="" loading="lazy"
+          width="480" height="384" decoding="async"/>
+      </div>
+    </section>
   );
 }
 
@@ -1167,7 +1228,13 @@ function WorksCheck({ id }: { id: string }) {
 
 // Чат -----------------------------------------------------------------------
 
-function Chat({ id, status }: { id: string; status: string }) {
+type ChatPanelProps = {id:string;status:string;open:boolean;setOpen:(open:boolean)=>void};
+function Chat({id,status,open,setOpen}:ChatPanelProps) {
+  const {me}=useMe();
+  return <AccountOrderChat key={(me?.id??'guest')+':'+id}
+    id={id} status={status} open={open} setOpen={setOpen}/>;
+}
+function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const archived = ['completed', 'cancelled', 'no_performer'].includes(status);
   const { me } = useMe();
   const toast = useToast();
@@ -1175,43 +1242,67 @@ function Chat({ id, status }: { id: string; status: string }) {
   const [quick, setQuick] = useState<string[]>([]);
   const [people, setPeople] = useState<any[]>([]);
   const [text, setText] = useState('');
-  const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState(0);
   const [serverClosed, setServerClosed] = useState(false);
-  const readOnly = archived || serverClosed;
+  const [loading,setLoading]=useState(true);
+  const [loadError,setLoadError]=useState<string|null>(null);
+  const [retryVersion,setRetryVersion]=useState(0);
+  const [sending,setSending]=useState(false);
+  const sendingRef=useRef(false);
+  const archiveLabel=archived||serverClosed;
+  const readOnly = archiveLabel || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let alive = true;
-    // Re-read the current chat capabilities when the parent order changes stage.
-    // The server is authoritative: a closed order never has quick replies.
+    // A failed GET cannot claim "Сообщений пока нет"; hide any previous
+    // content and expose manual retry without navigating away from the order.
+    setLoading(true);setLoadError(null);
+    setMsgs([]);setQuick([]);setPeople([]);
     get(`/api/orders/${id}/messages`).then((r) => {
-      if (alive) { setMsgs(r.messages); setQuick(r.quickReplies); setPeople(r.participants ?? []); }
-    }).catch(() => {});
-    const off = onEvent((e) => {
-      if (e.type === 'chat' && e.message.order_id === id) setMsgs((m) => (m.some((x) => x.id === e.message.id) ? m : [...m, e.message]));
+      if(!alive)return;
+      const received=Array.isArray(r.messages)?r.messages:[];
+      setMsgs(current=>[...received,...current.filter(
+        (m:any)=>!received.some((item:any)=>item.id===m.id))]);
+      setQuick(Array.isArray(r.quickReplies)?r.quickReplies:[]);
+      setPeople(Array.isArray(r.participants)?r.participants:[]);
+      setLoading(false);
+    }).catch((error) => {
+      if(!alive)return;
+      setMsgs([]);setQuick([]);setPeople([]);
+      setLoadError(error instanceof Error?error.message:'Ошибка загрузки переписки');
+      setLoading(false);
+    });
+    const off=onEvent((e) => {
+      if(alive && e.type==='chat' && e.message?.order_id===id)
+        setMsgs((m)=>(m.some((x)=>x.id===e.message.id)?m:[...m,e.message]));
     });
     return () => { alive = false; off(); };
-  }, [id, status]);
+  }, [id, status, retryVersion]);
   useEffect(() => {
     setServerClosed(false);
-    setOpen(new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
     setMsgs([]); setQuick([]); setPeople([]); setSeen(0);
   }, [id]);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
   useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
 
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
-    if (!body.trim() || readOnly) return;
+    if(!body.trim()||readOnly||sendingRef.current)return;
+    sendingRef.current=true;
+    setSending(true);
     try {
       const m = await post(`/api/orders/${id}/messages`, { body, kind });
       setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
-      setText('');
+      // Do not erase a new draft typed while the previous message was posting.
+      setText(current=>current===body?'':current);
     } catch (e) {
       // Concurrent completion can beat the browser event. Fail closed immediately
       // even before the parent order status refreshes.
       if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
       toast((e as Error).message);
+    }finally{
+      sendingRef.current=false;
+      setSending(false);
     }
   }
 
@@ -1219,21 +1310,30 @@ function Chat({ id, status }: { id: string; status: string }) {
   const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <b>{readOnly ? 'Архив переписки' : '💬 Чат по заявке'}</b>
+      <b>{archiveLabel ? 'Архив переписки' : '💬 Чат по заявке'}</b>
       <span className="row" style={{ gap: 6 }}>
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
-        <span className="note">{readOnly ? 'только чтение' : msgs.length ? `${msgs.length} сообщ.` : 'открыть'} ▾</span>
+        <span className="note">{loadError?'ошибка загрузки · открыть для повтора':
+          loading?'загружаем переписку':readOnly?'только чтение':
+          msgs.length?`${msgs.length} сообщ.`:'открыть'} ▾</span>
       </span>
     </button>
   );
   return (
-    <div className="card" aria-label={readOnly ? 'Архив переписки по заявке' : 'Чат по заявке'}>
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{readOnly ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
-      {readOnly && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
+    <div className="card" aria-label={archiveLabel ? 'Архив переписки по заявке' : 'Чат по заявке'}>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+      {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
+      {loadError&&<div className="stack" role="alert">
+        <span className="note">Не удалось загрузить переписку: {loadError}</span>
+        <button type="button" className="btn ghost small" onClick={()=>setRetryVersion(v=>v+1)}>
+          Повторить загрузку переписки
+        </button>
+      </div>}
+      {loading&&<span className="note" role="status">Загружаем переписку…</span>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
-        {msgs.length === 0 && <span className="note">Сообщений пока нет</span>}
-        {msgs.map((m) => {
+        {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}
+        {!loading&&!loadError&&msgs.map((m) => {
           const sys = m.kind === 'system' || !m.sender_id;
           const mine = m.sender_id === me?.id;
           return (
@@ -1246,10 +1346,11 @@ function Chat({ id, status }: { id: string; status: string }) {
       </div>
       {!readOnly && (
         <>
-          <div className="scroll-x">{quick.map((q) => <button key={q} className="chip" onClick={() => send(q, 'quick')}>{q}</button>)}</div>
-          <form className="compose" onSubmit={(e) => { e.preventDefault(); send(text); }}>
+          <div className="scroll-x">{quick.map((q) => <button key={q} type="button"
+            className="chip" disabled={sending} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
+          <form className="compose" onSubmit={(e) => { e.preventDefault();void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
-            <button className="btn small" disabled={!text.trim()}>➤</button>
+            <button className="btn small" disabled={!text.trim()||sending}>{sending?'…':'➤'}</button>
           </form>
         </>
       )}
@@ -1258,17 +1359,32 @@ function Chat({ id, status }: { id: string; status: string }) {
 }
 
 // Деньги по заявке: клиенту — что списано и что вернули; админу — ещё и кнопка возврата
-function PaymentsList({ id, admin }: { id: string; admin: boolean }) {
-  const list = useLoad(() => get(`/api/orders/${id}/payments`), [id], (e) => e.orderId === id);
-  if (!list.data?.length) return null;
+function PaymentsList({ id, admin, noPerformer = false }: { id: string; admin: boolean; noPerformer?: boolean }) {
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get(`/api/orders/${id}/payments`),
+    'order-payments:'+(me?.id??'guest')+':'+id,
+    (e:any)=>e.orderId===id);
+  if(list.error)return <section className="card stack" role="alert">
+    <b>Не удалось проверить актуальные платежи</b>
+    <span className="note">Для проверки оплаты или возврата повторите запрос. Старые данные не показываются как новые.</span>
+    <button type="button" className="btn ghost small" onClick={()=>{void list.reload();}}>
+      Повторить загрузку платежей
+    </button>
+  </section>;
+  if(!list.data?.length)return null;
   return (
     <div className="card">
       <b>Оплата</b>
+      {noPerformer && <span className="note">
+        Исполнитель не найден. Ниже показаны только фактические финансовые операции
+        по заявке; статус резерва или возврата определяется платёжной системой,
+        а не предварительной стоимостью услуги.
+      </span>}
       {list.data.map((p: any) => (
         <div key={p.id} className="stack" style={{ gap: 4 }}>
           <div className="sum"><span>{p.kind === 'call_out' ? 'Выезд' : 'Работа'} · {payStatus(p.status)}</span><span>{rub(p.total)}</span></div>
           {p.refunded_amount > 0 && <div className="sum" style={{ color: 'var(--good-fg)' }}><span>Возвращено</span><span>{rub(p.refunded_amount)}</span></div>}
-          {p.status === 'pending' && p.confirmation_url && !admin && <a className="btn small" href={p.confirmation_url}>Оплатить {rub(p.total)}</a>}
+          {p.status === 'pending' && p.confirmation_url && !admin && !noPerformer && <a className="btn small" href={p.confirmation_url}>Оплатить {rub(p.total)}</a>}
           {admin && <RefundForm pay={p} onDone={list.reload} />}
         </div>
       ))}

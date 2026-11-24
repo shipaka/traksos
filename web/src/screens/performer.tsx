@@ -16,6 +16,12 @@ import { PerformerHub } from './performerCabinet.tsx';
 // Линия: статус, геолокация, входящие ---------------------------------------
 
 export function Work({background=false}:{background?:boolean}={}) {
+  const { me } = useMe();
+  // Keep order lists, auction offers and balance scoped to the signed-in user.
+  // A role/account switch must mount a clean workspace before reading any data.
+  return <WorkForAccount key={(me?.id ?? 'guest') + ':' + (me?.performer?.kind ?? 'none')} background={background}/>;
+}
+function WorkForAccount({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
   const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
@@ -90,7 +96,7 @@ export function Work({background=false}:{background?:boolean}={}) {
       </section>
       <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
       {!background && online && <Nearby />}
-      {p.verification !== 'approved' ? (
+      {p.verification !== 'approved' && (
         <div className="card hi">
           <b>{p.verification === 'rejected' ? 'Проверка не пройдена' : p.submitted_at ? 'Профиль на проверке' : 'Пройдите проверку'}</b>
           <span className="note">{p.verification === 'rejected' ? (p.verification_note ?? 'Исправьте данные и отправьте ещё раз.')
@@ -98,9 +104,8 @@ export function Work({background=false}:{background?:boolean}={}) {
             : 'Проверка добровольная: подтверждённый профиль получает заметный значок и преимущество среди подходящих исполнителей.'}</span>
           <button className="btn" onClick={() => go('work/docs')}>{p.submitted_at ? 'Мои фото' : 'Снять фото'}</button>
         </div>
-      ) : (
-        <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={!background} />
       )}
+      <LineCard p={p} busy={busy} setLine={setLine} online={online} shareLocation={!background} />
 
       {active.length > 0 && (
         <div className="stack">
@@ -244,7 +249,7 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
   const first = active[0];
   const [searchIntent,setSearchIntent] = useState<{scope:'incoming'|'mine'|'archive';count:number}>({scope:'mine',count:0});
   const [lineOptionsOpen,setLineOptionsOpen] = useState(false);
-  const switchable = p.verification === 'approved' && ['online','offline'].includes(p.line_status);
+  const switchable = ['online','offline'].includes(p.line_status);
   const stage:Record<string,string> = {
     accepted:'Принята — пора выезжать', en_route:'Вы в пути', arrived:'Вы на месте',
     working:'Идёт работа', awaiting_confirmation:'Ждём подтверждения клиента',
@@ -283,10 +288,10 @@ function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, o
     </nav>
     {p.verification !== 'approved' && <section className="card stack" aria-label="Проверка исполнителя">
       <strong>{p.verification==='rejected'?'Проверка не пройдена':p.submitted_at?'Профиль на проверке':'Подтвердите профиль'}</strong>
-      <span className="note">{p.verification_note || 'Для работы и доступа к заявкам проверьте настройки профиля.'}</span>
+      <span className="note">{p.verification_note || 'Подтверждение добровольное: оно даёт отметку доверия, но не блокирует выход на линию и получение заявок.'}</span>
       <a className="btn ghost" href="#/work/docs">Проверка и документы</a>
     </section>}
-    {p.verification === 'approved' && <div className="work-mobile-extra-presence">
+    {<div className="work-mobile-extra-presence">
       <button className="work-mobile-extra-button" type="button"
         aria-expanded={lineOptionsOpen} onClick={()=>setLineOptionsOpen(v=>!v)}>
         {p.line_status==='on_job'?'Статус: на выезде · настройки заблокированы':'Перерыв, статус звонка и настройки заявок'} 
@@ -447,27 +452,34 @@ export function scheduleSlot(s: any, now: Date, offUntil?: string | null): 'work
 
 /** Отправляем координаты раз в 30 секунд, пока экран открыт (в приложении — и в фоне) */
 export function LocationSharing() {
+  const { me } = useMe();
+  const accountId = me?.id;
   const [state, setState] = useState<'wait' | 'ok' | 'off'>('wait');
   let sandbox=false;
   try {sandbox=sessionStorage.getItem('traksos.sandboxMode')==='1';}catch{/* */ }
   const demo=sandbox||location.hash.startsWith('#/admin/test-center/');
   useEffect(() => {
+    setState('wait');
     // A test role must NEVER request the administrator's physical GPS location.
-    if(demo)return;
-    if (!navigator.geolocation) { setState('off'); return; }
+    if (demo) return;
+    if (!accountId || !navigator.geolocation) { setState('off'); return; }
     let last = 0;
+    let active = true;
     const id = navigator.geolocation.watchPosition(
       (pos) => {
+        // watchPosition callbacks may already be queued when React clears the
+        // old user's watcher. Never send previous-user GPS under a new token.
+        if (!active) return;
         setState('ok');
         if (Date.now() - last < 30_000) return;
         last = Date.now();
         post('/api/performer/location', { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => {});
       },
-      () => setState('off'),
+      () => { if (active) setState('off'); },
       { enableHighAccuracy: false, maximumAge: 60_000 },
     );
-    return () => navigator.geolocation.clearWatch(id);
-  }, [demo]);
+    return () => { active = false; navigator.geolocation.clearWatch(id); };
+  }, [demo, accountId]);
   if(demo)return <span className="note">Тестовый режим: GPS устройства отключён, заявки и координаты только вымышленные.</span>;
   return <span className="note">{state === 'ok' ? '✓ Геолокация включена — заявки рядом приходят вам первыми' : state === 'off' ? 'Геолокация выключена — без неё подбор хуже. Разрешите доступ к местоположению.' : 'Определяю место…'}</span>;
 }
@@ -619,5 +631,8 @@ function useRinging() {
 function Nearby() {
   const n = useLoad(() => get('/api/performer/nearby'), [], (e) => e.type === 'order' || e.type === 'auction');
   if (!n.data) return null;
+  if (n.data.locationKnown === false) return <span className="note">
+    Нет подтверждённых координат. Пока нельзя определить заявки и свободных коллег рядом — проверьте геолокацию.
+  </span>;
   return <span className="note">{n.data.openNearby ? `${n.data.openNearby} открыт${n.data.openNearby === 1 ? 'ая заявка' : 'ых заявок'} рядом` : 'Открытых заявок рядом нет'} · {n.data.ahead ? `${n.data.ahead} свободн${n.data.ahead === 1 ? 'ый коллега ближе' : 'ых коллег ближе'} вас` : 'вы ближе всех свободных'}</span>;
 }

@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.tsx';
+import { TrakAppPhone } from '../trakAppPhone.tsx';
+import { useEffect, useRef, useState } from 'react';
 import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, type GuestAction } from '../guestCatalog.ts';
+import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, guestCustomerDestination, type GuestAction } from '../guestCatalog.ts';
 import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 
 const HERO_SLIDES = [
   { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
     description: 'Единая платформа для водителей, перевозчиков и всех, кто работает с грузовой техникой',
-    caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
+    caption: 'TrakSOS — платформа для всей России. Доступность выездных мастеров определяется по вашему региону.' },
   { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
     description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
     caption: 'Наличие исполнителя и условия выезда зависят от региона и выбранной заявки.' },
@@ -20,6 +22,10 @@ const HERO_SLIDES = [
 
 /** Approved 19 November visual system: recognisable service icons, not font glyph boxes. */
 function PublicTileIcon({ id }: { id: typeof PUBLIC_HOME_TILES[number]['id'] }) {
+  // Reuse the EXACT same approved service illustration on Android/mobile,
+  // desktop PC and partner onboarding, not a mobile-only wrench for the STO.
+  if(['van','tow','sto','consult','parts','insurance','ecu','inspection','tech'].includes(id))
+    return <TrakServiceIcon kind={id as TrakServiceIconKind}/>;
   const shared = { fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' as const, strokeLinejoin:'round' as const };
   return <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" focusable="false" {...shared}>
     {id === 'sos' ? <><path d="M24 5 45 42H3Z"/><path d="M24 17v13m0 6v1"/></>
@@ -95,7 +101,8 @@ const GUEST_SERVICE_NAMES: Record<string,string> = {
   van:'Выездной мастер',tow:'Эвакуация',sto:'СТО и ремонт',
   ecu:'Специалисты ЭБУ',consult:'Консультация',parts:'Запчасти',
   insurance:'Страхование',inspection:'Техосмотр',sos:'Помощь SOS',
-  air:'Эфир водителей',club:'Клуб TrakSOS',tech:'ТехБаза'
+  air:'Эфир водителей',club:'Клуб TrakSOS',tech:'ТехБаза',
+  garage:'Мой гараж',training:'Обучение',trakbot:'TrakBot'
 };
 export function Login({ driver, entry, serviceContext }: {
   driver?: boolean; entry?: Intent; serviceContext?: string;
@@ -117,7 +124,7 @@ export function Login({ driver, entry, serviceContext }: {
   // Preserve only an explicitly entered login phone while the user
   // switches to client registration. A direct new registration starts blank.
   useEffect(() => {
-    if (native.isApp || !serviceContext || !GUEST_SERVICE_NAMES[serviceContext]) return;
+    if (!serviceContext || !Object.prototype.hasOwnProperty.call(GUEST_SERVICE_NAMES, serviceContext)) return;
     rememberGuestAction(serviceContext as GuestAction);
   }, [serviceContext]);
   const [phone, setPhone] = useState(() => {
@@ -130,12 +137,14 @@ export function Login({ driver, entry, serviceContext }: {
     } catch { return '+7 '; }
   });
   const startClientRegistration = () => {
+    authGeneration.current += 1;
+    cancelPendingLogin();
     try {
       sessionStorage.setItem('traksos.authTransition', 'register');
       sessionStorage.setItem('traksos.authPhoneDraft', phone);
     } catch { /* Strict private browsing */ }
-    setIntent('register');
-    setStep('phone');
+    // The register route mounts a fresh form and restores the phone draft.
+    // Avoid a transient, editable registration form on the old login route.
     go('register');
   };
   const [step, setStep] = useState<'phone' | 'code'>('phone');
@@ -174,12 +183,59 @@ export function Login({ driver, entry, serviceContext }: {
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
+  // A delayed SMS/login response must not authenticate a different phone or
+  // redirect after the user has changed form or account. Each edit invalidates
+  // the previous operation, including when this component unmounts.
+  const authGeneration = useRef(0);
+  // The visible busy state is not a synchronous request lock. Track the
+  // generation that owns the lock so an obsolete response cannot unlock
+  // a newer password attempt, even before React commits the next render.
+  const loginPending = useRef<number | null>(null);
+  const cancelPendingLogin = () => {
+    loginPending.current = null;
+    setLoginBusy(false);
+  };
+  useEffect(() => {
+    authGeneration.current += 1;
+    return () => { authGeneration.current += 1; };
+  }, [phone, intent, password, code, role, customerType, hybridMasterService, specialties]);
+
+  const changeAuthPhone = (value: string) => {
+    authGeneration.current += 1;
+    setPhone(value);
+    setPassword('');
+    setCode('');
+    setDevCode(null);
+    setCodeError('');
+    setCodeStatus('');
+    setInsurerOnly(false);
+    cancelPendingLogin();
+    if (step === 'code') setStep('phone');
+  };
+  const otherAuthNumber = () => {
+    authGeneration.current += 1;
+    cancelPendingLogin();
+    setStep('phone');
+    setCode('');
+    setDevCode(null);
+    setPassword('');
+    setCodeStatus('');
+    setCodeError('');
+    setInsurerOnly(false);
+  };
 
   // A routed auth form must clear its URL as well as local state on Back.
   // Otherwise the guest header links to #/login, #/register or #/join
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
+    authGeneration.current += 1;
     setIntent(null);
+    setStep('phone');
+    setCode('');
+    setDevCode(null);
+    setPassword('');
+    cancelPendingLogin();
+    setCodeStatus('');
     try {
       sessionStorage.removeItem('traksos.authTransition');
       sessionStorage.removeItem('traksos.authPhoneDraft');
@@ -230,6 +286,7 @@ export function Login({ driver, entry, serviceContext }: {
     ? 'master_service' : role;
   async function sendCode() {
     if (busy) return;
+    const generation = ++authGeneration.current;
     setCodeError('');
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 11 || !/^[78]/.test(digits)) {
@@ -255,11 +312,15 @@ export function Login({ driver, entry, serviceContext }: {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
           accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
+        // A failed SMS response for a phone already edited by the user must
+        // not overwrite the current form with an error from the old number.
+        if (generation !== authGeneration.current) return null;
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
         setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
         throw e;
       }
     }, null);
+    if (generation !== authGeneration.current) return;
     setCodeStatus('');
     if (r?.sent === true) {
       setDevCode(r.devCode ?? null);
@@ -272,7 +333,8 @@ export function Login({ driver, entry, serviceContext }: {
   async function verify() {
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
-      if (loginBusy) return;
+      if (loginPending.current !== null) return;
+      const generation = ++authGeneration.current;
       setLoginError('');
       const digits = phone.replace(/\D/g, '');
       if (digits.length !== 11 || !/^[78]/.test(digits)) {
@@ -283,17 +345,20 @@ export function Login({ driver, entry, serviceContext }: {
         setLoginError('Введите пароль. Если забыли его, нажмите «Забыли пароль?».');
         return;
       }
+      loginPending.current = generation;
       setLoginBusy(true);
       try {
         const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
-        await signedIn(login);
+        if (generation === authGeneration.current) await signedIn(login, generation);
       } catch (e) {
-        setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
+        if (generation === authGeneration.current)
+          setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
       } finally {
-        setLoginBusy(false);
+        if (loginPending.current === generation) cancelPendingLogin();
       }
       return;
     }
+    const generation = ++authGeneration.current;
     const r = await run(async () => {
       try {
         return await post('/api/auth/verify', { phone, code,
@@ -302,39 +367,47 @@ export function Login({ driver, entry, serviceContext }: {
           purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
+        if (generation !== authGeneration.current) return null;
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
-        if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
-        if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
+        if (generation === authGeneration.current &&
+            e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) {
+          setAppealToken(e.data.appealToken);
+          return null;
+        }
+        if (generation === authGeneration.current && e instanceof ApiError && e.code === 'insurer_only')
+          setInsurerOnly(true);
         throw e;
       }
     }, null);
-    if (r) await signedIn(r);
+    if (r && generation === authGeneration.current) await signedIn(r, generation);
   }
-  async function signedIn(r: any) {
+  async function signedIn(r: any, generation: number) {
+      if (generation !== authGeneration.current) return;
       if (intent === 'join' && (role === 'master' || hybridMasterService)) {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
       toast('Вы вошли');
       try { localStorage.removeItem('traksos.ref'); } catch { /* */ }
+      // Consume the exact service selection BEFORE publishing the new
+      // authenticated identity. React may render protected navigation during
+      // reload(); a concurrent route effect must not steal or replay this hint.
+      let pending: string | null = null;
+      try {
+        pending = sessionStorage.getItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingCatalogChoice');
+      } catch { /* private browsing */ }
       setToken(r.token);
       connectWs();
+      // Publishing the authenticated profile naturally unmounts this guest
+      // form. Navigation after reload is part of the successful login, so do
+      // not treat that intentional unmount as cancellation.
       await reload();
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
       const customer = roles.includes('client') || roles.includes('driver');
-      let pending: string | null = null;
-      try {
-        pending = sessionStorage.getItem('traksos.pendingLandingAction');
-        sessionStorage.removeItem('traksos.pendingLandingAction');
-      } catch { /* private browsing */ }
-      const selectedDestination: string | undefined = customer ? ({
-        van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
-        consult: '#/new/consult', insurance: '#/insurance/request/new',
-        parts: '#/shop', inspection: '#/garage', ecu: '#/new/ecu',
-        sos: '#/sos', air: '#/air', club: '#/air',
-        tech: '#/techbase/driver'
-      } as Record<string,string>)[pending ?? ''] : undefined;
+      const selectedDestination = customer ? guestCustomerDestination(pending) : null;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
@@ -364,7 +437,7 @@ export function Login({ driver, entry, serviceContext }: {
     <main className="public-home public-landing" id="public-home"
       inert={showOverlay || undefined} aria-hidden={showOverlay || undefined}>
       <div className="public-landing-head">
-        <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
+        <span className="public-landing-region">◉ TrakSOS — вся Россия</span>
 
       </div>
 
@@ -380,7 +453,7 @@ export function Login({ driver, entry, serviceContext }: {
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
-            <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
+            <span><i aria-hidden="true">⌖</i>По всей России</span>
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
@@ -388,7 +461,7 @@ export function Login({ driver, entry, serviceContext }: {
               onClick={() => heroSlide === 0 ? go('register') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
               {heroSlide === 0 ? 'Зарегистрироваться' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
             </button>
-            <a className="public-button public-button-outline" href="#/explore/guide">Как это работает</a>
+            <a className="public-button public-button-outline" href="#/login">Войти в TrakSOS</a>
           </div>
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
@@ -432,11 +505,7 @@ export function Login({ driver, entry, serviceContext }: {
         {!(window as any).TrakSOSNative && <aside className="public-app-card">
           <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
-          <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Trak<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/icon-192.png?v=approved-20261120" alt="" loading="lazy" />
-            <span>Помощь грузовику<br/>в дороге</span>
-          </div>
+          <TrakAppPhone className="public-app-phone"/>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
           <span className="public-rustore-soon">Скоро в RuStore</span>
           <small>Ссылка на скачивание появится после публикации приложения.</small>
@@ -514,7 +583,41 @@ export function Login({ driver, entry, serviceContext }: {
     </main>
   );
 
-  if (!intent) return desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
+  // Native Android is designed for thumb interaction: a welcome stage with
+  // explicit sign-in/registration, followed by optional expandable services.
+  // Browser mobile and 617 PC keep their independently approved layouts.
+  const nativeLanding = (
+    <main className="public-home public-landing tr-native-welcome" id="public-home"
+      aria-label="Главная приложения TrakSOS">
+      <section className="tr-native-welcome-stage" aria-labelledby="tr-native-welcome-title">
+        <span className="tr-native-welcome-kicker">TRAKSOS · ПОМОЩЬ ГРУЗОВИКАМ</span>
+        <div className="tr-native-welcome-photo">
+          <img src="/tracksos-approved-hero-owner-20261119-retouched.webp"
+            alt="Фирменный грузовик TrakSOS на дороге" loading="eager" decoding="async"/>
+        </div>
+        <h1 id="tr-native-welcome-title">Помощь в дороге — <em>в одном приложении</em></h1>
+        <p>Выездные мастера, эвакуация, СТО и консультации. Заявки и история доступны после входа.</p>
+        <div className="tr-native-welcome-actions">
+          <a href="#/login" className="tr-native-welcome-login">Войти</a>
+          <a href="#/register" className="tr-native-welcome-register">Зарегистрироваться</a>
+        </div>
+        <small>TrakSOS — платформа для всей России. Выездная помощь зависит от подключения партнёров в регионе.</small>
+      </section>
+      <details className="tr-native-welcome-services" id="public-services">
+        <summary>Услуги TrakSOS <span>Показать все <span aria-hidden="true">⌄</span></span></summary>
+        <nav className="tr-native-welcome-service-list" aria-label="Услуги TrakSOS">
+          {PUBLIC_HOME_TILES.map(({id,title,href}) => (
+            <a key={id} href={href} className={'public-service-tile tr-native-welcome-service-'+id}>
+              <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
+              <strong>{title}</strong><span aria-hidden="true">›</span>
+            </a>
+          ))}
+        </nav>
+      </details>
+      <a href="#/join" className="tr-native-welcome-partner">Хотим работать с TrakSOS <span aria-hidden="true">›</span></a>
+    </main>
+  );
+  if (!intent) return native.isApp ? nativeLanding : desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
 
   return (
     <>
@@ -551,12 +654,12 @@ export function Login({ driver, entry, serviceContext }: {
         </div>
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { setPhone(e.target.value); setLoginError(''); }} /></Field>
-          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { changeAuthPhone(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; cancelPendingLogin(); setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
           <button type="button" className="btn ghost" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
-          <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
+          <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; cancelPendingLogin(); setIntent('reset'); setStep('phone'); setCode(''); setDevCode(null); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
@@ -585,7 +688,8 @@ export function Login({ driver, entry, serviceContext }: {
               <button key={r.id} type="button" className={'opt guest-partner-role guest-partner-role-' + r.id} aria-pressed={role === r.id}
                 aria-label={r.name} aria-describedby={'join-role-hint-' + r.id}
                 onClick={() => setRole(r.id)}>
-                <b>{r.name}</b><small id={'join-role-hint-' + r.id}>{r.hint}</small>
+                <span className="guest-partner-role-label"><TrakServiceIcon kind={r.id}/><b>{r.name}</b></span>
+                <small id={'join-role-hint-' + r.id}>{r.hint}</small>
               </button>
             ))}
             </div>
@@ -613,7 +717,7 @@ export function Login({ driver, entry, serviceContext }: {
             </details>}
           </div>}
           <Field label="Телефон">
-            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); setCodeError(''); }} />
+            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => changeAuthPhone(e.target.value)} />
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
@@ -629,21 +733,21 @@ export function Login({ driver, entry, serviceContext }: {
           {codeError && <div className="card" role="alert" style={{ borderColor: 'var(--danger, #e25b69)' }}>{codeError}</div>}
           {codeStatus && <div className="note" role="status">{codeStatus}</div>}
           <button className="btn" disabled={busy}>{busy ? 'Отправляем…' : 'Получить код'}</button>
-          {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
+          {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; setIntent('login'); otherAuthNumber(); }}>Уже есть аккаунт? Войти по паролю</button>}
           {!driver && <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>}
         </form>
       ) : (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
           <Field label={`Код из SMS на ${phone}`} hint={devCode ? `Тестовый режим: код ${devCode}` : undefined}>
             <input className="field" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
+              onChange={(e) => { authGeneration.current += 1; setCode(e.target.value.replace(/\D/g, '')); }} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
           </Field>
           <Field label={intent === 'reset' || intent === 'activate' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
-            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} />
+            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => { authGeneration.current += 1; setPassword(e.target.value); }} minLength={10} />
           </Field>
           <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : intent === 'activate' ? 'Активировать аккаунт' : 'Зарегистрироваться'}</button>
           {insurerOnly && <button type="button" className="btn" onClick={() => { setStep('phone'); setCode(''); setRole('insurer'); setIntent('join'); setInsurerOnly(false); }}>Перейти к страховому кабинету</button>}
-          <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
+          <button type="button" className="btn ghost" onClick={otherAuthNumber}>Другой номер</button>
         </form>
       )}
       </section>

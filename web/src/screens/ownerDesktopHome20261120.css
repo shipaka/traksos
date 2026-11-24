@@ -12,8 +12,6 @@
  .owner20-home a:focus-visible,.owner20-home summary:focus-visible{outline:3px solid #ffad78;outline-offset:2px}
  .owner20-top{height:66px;display:flex;align-items:center;gap:24px;padding:0 32px;background:#071923;border-bottom:1px solid #1c3541}
  .owner20-mark{display:flex;align-items:center;gap:10px;flex:0 0 auto;white-space:nowrap;font-size:clamp(22px,2.2vw,35px);font-style:italic;font-weight:900;letter-spacing:-1.6px}
- .owner20-mark svg{width:65px;height:42px;color:#fff}
- .owner20-mark strong{color:var(--orange)}
  .owner20-tagline{font-size:12px;line-height:1.35;color:#d5e1e6;margin-right:auto}
  .owner20-topnav{display:flex;align-items:center;justify-content:center;gap:clamp(12px,1.8vw,32px);font-size:13px;white-space:nowrap}
  .owner20-topnav details{position:relative}
@@ -62,7 +60,6 @@
  .owner20-feature-title{display:flex;align-items:center;gap:9px;font-size:16px;position:relative;z-index:2}
  .owner20-feature-title span{color:#d3ebf1;font-size:20px}
  .owner20-feature p{max-width:76%;font-size:11px;line-height:1.45;color:#c6d5dc;position:relative;z-index:2;margin:8px 0}
- .owner20-feature-illustration{position:absolute;right:-3px;bottom:-16px;font-size:115px;font-weight:900;line-height:1;color:#aec9d438;transform:rotate(-13deg)}
  .owner20-feature-cta{position:absolute;bottom:13px;left:12px;font-size:11px;border:1px solid #a6c0c9;padding:7px 12px;border-radius:20px;z-index:3}
  .owner20-bottom{margin:16px 2% 0;display:grid;gap:13px;grid-template-columns:1.1fr 1.1fr .79fr .91fr}
  .owner20-bottom-card{height:177px;position:relative;background:linear-gradient(130deg,#142b37,#071924);border:1px solid #3c535d;border-radius:14px;overflow:hidden;padding:18px 15px}
@@ -141,7 +138,6 @@
  .owner20-top{gap:12px}
  .owner20-region{font-size:11px}
  .owner20-mark{font-size:25px}
- .owner20-mark svg{width:50px}
  .owner20-lead{max-width:60%}
  .owner20-hero-links a{width:165px;font-size:12px}
  .owner20-map{width:34%;right:1%;padding:9px 8px}
@@ -247,7 +243,6 @@
     justify-self:start;
     gap:9px!important;
   }
-  .guest-app.guest-home .owner20-mark svg{width:63px!important;height:44px!important}
   .guest-app.guest-home .owner20-tagline{
     font-size:12px!important;line-height:1.35!important;
     margin:0!important;color:#d8dfe2!important;
@@ -433,34 +428,6 @@
     z-index:3!important;
     text-shadow:0 1px 5px #06141a;
   }
-  .guest-app.guest-home .owner20-feature-illustration{
-    display:block!important;
-    position:absolute!important;
-    top:auto!important;left:auto!important;
-    right:0!important;bottom:0!important;
-    transform:none!important;
-    width:167px;height:128px;
-    z-index:1!important;
-    font-size:0!important;
-    background-image:url('/owner20-artwork-sprite-retouched.webp')!important;
-    background-size:1018px 446px!important;
-    background-repeat:no-repeat!important;
-    background-position:0 -317px!important;
-    opacity:1!important;
-    color:transparent!important;
-  }
-  .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{
-    width:147px;height:128px;background-position:-172px -317px!important;
-  }
-  .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{
-    width:123px;height:128px;background-position:-324px -317px!important;
-  }
-  .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{
-    width:136px;height:125px;background-position:-452px -317px!important;
-  }
-  .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{
-    width:111px;height:126px;background-position:-594px -317px!important;
-  }
   .guest-app.guest-home .owner20-feature-cta{
     bottom:13px!important;left:15px!important;
     border-color:#9fb4c0!important;
@@ -545,21 +512,6 @@
    background-repeat:no-repeat;
    transform-origin:top left;
  }
- .guest-app.guest-home .owner20-feature-illustration{
-   display:block;position:absolute;
-   right:0;bottom:0;top:auto;left:auto;
-   width:148px;height:125px;
-   background-image:url('/owner20-artwork-sprite-retouched.webp');
-   background-position:0 -317px;
-   background-size:1018px 446px;
-   background-repeat:no-repeat;
-   font-size:0;color:transparent;
-   transform:none!important;
- }
- .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration{width:142px;background-position:-172px -317px}
- .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration{width:123px;background-position:-324px -317px}
- .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration{width:127px;background-position:-452px -317px}
- .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration{width:111px;background-position:-594px -317px}
  .guest-app.guest-home .owner20-bottom-air::after,
  .guest-app.guest-home .owner20-bottom-club::after{
    display:block;content:""!important;
@@ -643,8 +595,6 @@
    content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
    background:linear-gradient(90deg,rgba(9,27,37,.76) 0%,rgba(9,27,37,.62) 30%,rgba(9,27,37,.18) 67%,transparent 100%);
  }
- .guest-app.guest-home .owner20-feature-illustration {
- }
  .guest-app.guest-home .owner20-bottom-air::after,
  .guest-app.guest-home .owner20-bottom-club::after {
  }
@@ -668,25 +618,6 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
    another image of the caption behind the real accessible DOM labels.
    Every crop ends at its original atlas frame's right edge. */
 @media(min-width:900px){
- .guest-app.guest-home .owner20-feature-tech .owner20-feature-illustration {
-   width:112px!important;background-position:-55px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-ecu .owner20-feature-illustration {
-   width:94px!important;background-position:-225px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-parts .owner20-feature-illustration {
-   width:110px!important;background-position:-337px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-insurance .owner20-feature-illustration {
-   width:88px!important;background-position:-500px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-inspection .owner20-feature-illustration {
-   width:81px!important;background-position:-624px -317px!important;
- }
- .guest-app.guest-home .owner20-feature-illustration {
-   -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
-   mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 12%,#000 24%)!important;
- }
  .guest-app.guest-home .owner20-bottom-air::after {
    width:133px!important;background-position:-882px 0!important;
  }

@@ -95,10 +95,13 @@ function mark(k:string) {try{localStorage.setItem(k,'yes');}catch{/* private bro
 export function IntroInvitation({userId,mode,roles}:{userId:string;mode:string;roles:string[]}) {
   const role=learningRole(mode,roles);
   const k=key(userId,role);
-  const [dismissed,setDismissed]=useState(()=>marked(k));
+  // This component can stay mounted while a user switches accounts/roles.
+  // Never carry a previous user's dismissed state into the new workspace.
+  const [visibility,setVisibility]=useState(()=>({key:k,dismissed:marked(k)}));
+  const dismissed=visibility.key===k?visibility.dismissed:marked(k);
   if(dismissed)return null;
-  const start=()=>setDismissed(true);
-  const close=()=>{mark(k);setDismissed(true);};
+  const start=()=>setVisibility({key:k,dismissed:true});
+  const close=()=>{mark(k);setVisibility({key:k,dismissed:true});};
   return <section className="card" aria-label="Знакомство с TrakSOS"
     style={{display:'flex',gap:12,justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',margin:'12px 12px 4px',padding:14}}>
     <div style={{flex:'1 1 220px'}}>
@@ -116,12 +119,19 @@ export function IntroInvitation({userId,mode,roles}:{userId:string;mode:string;r
 export function PlatformIntro() {
   const {me,mode}=useMe();
   const role=learningRole(mode,me?.roles??[]);
+  // Remount all lesson/practice state on account or role changes. A six-step
+  // admin lesson must never index into a four-step service course.
+  return <RolePlatformIntro key={(me?.id??'guest')+':'+role}
+    userId={me?.id??null} role={role}/>;
+}
+
+function RolePlatformIntro({userId,role}:{userId:string|null;role:Role}) {
   const course=courses[role];
   const [index,setIndex]=useState(0);
   const [modeView,setModeView]=useState<'lessons'|'practice'>('lessons');
   const lesson=course.lessons[index];
   const finish=()=>{
-    if(me)mark(key(me.id,role));
+    if(userId)mark(key(userId,role));
     location.hash='#/help';
   };
   return <main className="stack" style={{maxWidth:1000}}>

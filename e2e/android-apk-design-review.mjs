@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 // Visual evidence from actual React Android components with a simulated DEBUG-only bridge.
 // Production/release APK cannot expose this route. Does not authenticate or mutate the API.
 import { chromium } from 'playwright';
@@ -13,9 +14,8 @@ const browser = await chromium.launch();
 try {
   const context = await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
   const page = await context.newPage();
-  const errors = [];
+  const assertClean=watchPageErrors(page);
   const apiMutations = [];
-  page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => {
     if (r.url().includes('/api/') && !['GET','HEAD','OPTIONS'].includes(r.method()))
       apiMutations.push(r.method() + ' ' + r.url());
@@ -150,7 +150,8 @@ try {
     if (!page.url().endsWith('/#/android-review/'+role))throw Error('Demo left safe review route');
     if (!await page.getByText('Это просмотр оформления.',{exact:false}).count())
       throw Error('Missing protected preview feedback');
-    if (errors.length || apiMutations.length)throw Error('Unsafe preview '+JSON.stringify({errors,apiMutations}));
+    await assertClean(role+' Android debug preview');
+    if (apiMutations.length)throw Error('Unsafe preview '+JSON.stringify({apiMutations}));
     console.log('REAL COMPONENT, SYNTHETIC DATA:',role,'390px');
   }
   await page.setViewportSize({width:320,height:740});
@@ -159,14 +160,18 @@ try {
   const narrow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
   if (narrow>3)throw Error('320px native layout overflows by '+narrow);
   await page.screenshot({path:output+'/client-320.png'});
+  await assertClean('Android debug preview 320px');
+  if(apiMutations.length)throw Error('Unsafe narrow preview '+JSON.stringify({apiMutations}));
   await context.close();
 
   // Even a spoofed hash without the DEBUG bridge cannot see fake review orders.
   const release=await browser.newContext({viewport:{width:390,height:844}});
   const releasePage=await release.newPage();
+  const assertReleaseClean=watchPageErrors(releasePage);
   await releasePage.goto(BASE+'/#/android-review/client',{waitUntil:'domcontentloaded'});
   await releasePage.locator('.app').waitFor();
   if (await releasePage.locator('.and19-review-page').count())
     throw Error('Fake debug preview visible to a release/public browser');
+  await assertReleaseClean('release browser rejects debug preview');
   await release.close();
 } finally { await browser.close(); }

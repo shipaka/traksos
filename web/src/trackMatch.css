@@ -6,8 +6,6 @@
 .app .top .logo,
 .guest-app .top .logo,
 .app .site-footer .logo {font-weight:900;letter-spacing:-1.1px;font-style:italic;color:#f6fcff;}
-.app .top .logo b,.guest-app .top .logo b,
-.app .site-footer .logo b{color:#23e3fa!important;text-shadow:0 0 14px #17c7f84a;}
 
 /* One coherent, photographic sunset: avoid two competing hard-edged scenes.
    The approved local Scania image supplies the road photo color and the

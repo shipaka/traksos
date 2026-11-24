@@ -1,5 +1,6 @@
-import { useLoad, useMe, Back } from '../ui.tsx';
-import { get, rub } from '../api.ts';
+import { useMe, Back } from '../ui.tsx';
+import { get, getToken, rub } from '../api.ts';
+import { usePrivateRead } from './privateRead20261124.ts';
 import { learningRole } from './platformIntro.tsx';
 
 type Example={amount:number;fee:number;total:number;partnerReceives?:number;title:string;formula:string};
@@ -7,13 +8,23 @@ type Guide={role:string;title:string;cap:number;paragraphs:{title:string;text:st
   rules:{clientSharePct:number;referralDays:number;welcome:number;clientSpendCapPct:number;spendCapPct:number;performerReward:number;performerJobs:number;serviceReward:number;ttlDays:number}};
 /** Server-calculated, role-limited values: identical data powers economics and published offer annexes. */
 export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
-  const {me,mode}=useMe();
+  const context=useMe();
+  const me=context?.me,mode=context?.mode??'client';
   const role=me?.owner_id?'driver':learningRole(mode,me?.roles??[]);
-  const q=useLoad(()=>get<Guide>('/api/me/economics?role='+encodeURIComponent(role)),[me?.id,role]);
-  if(!me)return null;
-  if(!q.data)return <section className="card stack" aria-label="Финансовые условия">
+  const token=getToken();
+  const scope=JSON.stringify([me?.id??null,token,role]);
+  const q=usePrivateRead<Guide|null>(()=>me&&token
+    ?get<Guide>('/api/me/economics?role='+encodeURIComponent(role))
+    :Promise.resolve(null),scope);
+  if(!me||!token)return null;
+  // Discard previous account/role data synchronously, including during reload.
+  if(q.error||!q.data)return <section className="card stack" aria-label="Финансовые условия">
     <b>Комиссии, баллы и рефералы</b>
-    <span className="note">{q.error?'Не удалось загрузить актуальные условия. Не полагайтесь на старые цифры; проверьте связь или откройте оферту.':'Загружаем действующие условия из системы…'}</span>
+    <span className="note" role={q.error?'alert':'status'}>{q.error
+      ?'Не удалось загрузить актуальные условия. Не полагайтесь на старые цифры; проверьте связь или откройте оферту.'
+      :'Загружаем действующие условия из системы…'}</span>
+    {q.error&&<button className="btn small" type="button" disabled={q.loading}
+      onClick={()=>{void q.reload();}}>Повторить загрузку</button>}
   </section>;
   const info=q.data;
   return <section className="card stack economics-guide" aria-label={'Финансовые условия: '+info.title}>
@@ -46,6 +57,7 @@ export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
       </div>
     </div>}
     <p className="note">Для конкретной заявки расчёт может отличаться из-за скидок, баллов, индивидуального тарифа, акций и этапа отмены. Окончательная сумма и условия подтверждаются в самой заявке.</p>
+    {(role==='master'||role==='tow') && <p className="note">Для выездной заявки сохраняется ставка комиссии на момент создания. При временной акции 0% комиссия и погашение её баллами равны нулю; при положительной ставке удержание не выше 5 000 ₽. Текущие примеры выше не пересчитывают старые заказы.</p>}
     <div className="row" style={{gap:12,flexWrap:'wrap'}}>
       <a href="#/help">Энциклопедия и вопросы</a>
       <a href="#/invite">Реферальная ссылка и мои баллы</a>

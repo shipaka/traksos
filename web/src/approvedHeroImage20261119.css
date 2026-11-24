@@ -85,7 +85,6 @@
   border:0!important;border-radius:0!important;filter:none!important;
   box-shadow:none!important;
 }
-.guest-app .public-landing .public-app-card .public-app-phone .public-app-logo,
 .guest-app .public-landing .public-app-card .public-app-phone>span:last-child{
   display:none!important;
 }

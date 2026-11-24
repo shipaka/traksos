@@ -28,6 +28,155 @@ async function verifyPage(page, label) {
   results.push({ label, ...layout });
 }
 
+async function verifyMobileBrowserHome(page,suffix,width,mobile){
+  await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
+  check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
+  check(await page.locator('.public-actions a.public-button-outline[href="#/login"]')
+    .getByText('Войти в TrakSOS',{exact:true}).isVisible(),
+    'Hero must open sign-in, not obsolete guide');
+  const image = await page.locator('.public-hero-visual').evaluate(async el => {
+    const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
+    const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
+    if (!match) return { ok: false, bg };
+    const img = new Image();
+    img.src = match[1];
+    await img.decode().catch(() => {});
+    return { ok: img.naturalWidth > 0, width: img.naturalWidth, height: img.naturalHeight };
+  });
+  check(image.ok, 'Hero image failed to load: ' + JSON.stringify(image));
+  if (mobile && width <= 430) {
+    const heroGeometry = await page.evaluate(() => {
+      const hero = document.querySelector('.public-brand-hero')?.getBoundingClientRect();
+      const visual = document.querySelector('.public-hero-visual')?.getBoundingClientRect();
+      const copy = document.querySelector('.public-hero-copy')?.getBoundingClientRect();
+      const paragraph = document.querySelector('.public-hero-copy > p')?.getBoundingClientRect();
+      const actions = document.querySelector('.public-actions')?.getBoundingClientRect();
+      const carousel = document.querySelector('.public-hero-carousel')?.getBoundingClientRect();
+      if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
+      return {heroWidth:hero.width,heroHeight:hero.height,
+        pictureWidth:visual.width,pictureHeight:visual.height,pictureBottom:visual.bottom,
+        paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
+        carouselTop:carousel.top,carouselHeight:carousel.height };
+    });
+    check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
+      suffix + ': regular Chrome must activate mobile browser styling');
+    check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
+      // The artwork stays at its original 2:1 aspect ratio. At 320px
+      // the available 238px width gives a correct 119px tall photograph.
+      heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
+      heroGeometry.pictureHeight < heroGeometry.heroHeight,
+      suffix + ': browser truck artwork must have a dedicated uncropped photo area: ' + JSON.stringify(heroGeometry));
+    check(await page.locator('.guest-header-actions a[href="#/login"]').isVisible() &&
+      await page.locator('.guest-header-actions a[href="#/register"]').isVisible(),
+      suffix + ': both entry actions must be visible in the mobile header');
+    check(heroGeometry.actionsTop >= heroGeometry.paragraphTop-2,
+      suffix + ': banner actions overlap its paragraph: ' + JSON.stringify(heroGeometry));
+    check(heroGeometry.copyBottom < heroGeometry.carouselTop-2,
+      suffix + ': carousel controls overlap text and actions: ' + JSON.stringify(heroGeometry));
+    check(heroGeometry.carouselHeight>=44,
+      suffix + ': hero carousel too small for touch: '+JSON.stringify(heroGeometry));
+  }
+  await verifyPage(page, suffix + ':home');
+  // Regression for the 20 Nov owner screenshot: benefits/insurance were
+  // inline text and enormous icons even while the overall page did not scroll.
+  if (width < 900) {
+    const publicLegibility = await page.evaluate(() => {
+      const errors = [];
+      const bounds = el => el?.getBoundingClientRect();
+      const benefits = [...document.querySelectorAll('.public-why-strip > article.public-benefit')];
+      if (benefits.length !== 3) errors.push('wrong number of benefit cards');
+      for (const [i, item] of benefits.entries()) {
+        const box = bounds(item);
+        const icon = bounds(item.querySelector('.public-benefit-icon svg'));
+        const title = bounds(item.querySelector('b'));
+        const detail = bounds(item.querySelector('small'));
+        if (!box || !icon || !title || !detail) {
+          errors.push('benefit ' + i + ' missing layout element'); continue;
+        }
+        if (icon.width > 50 || icon.height > 50)
+          errors.push('benefit ' + i + ' huge icon ' + icon.width + 'x' + icon.height);
+        if (detail.top < title.bottom - 2)
+          errors.push('benefit ' + i + ' title and description overlap');
+        if (detail.left < title.left - 2 || detail.right > box.right + 2 ||
+            title.right > box.right + 2 || icon.right > title.left + 2)
+          errors.push('benefit ' + i + ' columns overlap or overflow');
+        if (box.height < 95 || box.width < 200)
+          errors.push('benefit ' + i + ' tiny card');
+      }
+      const insurance = document.querySelector('.public-track-insurance');
+      const insuranceText = bounds(insurance?.querySelector('span'));
+      const insuranceLabel = bounds(insurance?.querySelector('span b'));
+      const insuranceDetail = bounds(insurance?.querySelector('span small'));
+      const insuranceAction = bounds(insurance?.querySelector(':scope > strong'));
+      const insuranceBox = bounds(insurance);
+      if (!insuranceBox || !insuranceText || !insuranceLabel || !insuranceDetail || !insuranceAction)
+        errors.push('insurance CTA incomplete');
+      else if (insuranceDetail.top < insuranceLabel.bottom - 2 ||
+               insuranceAction.top < insuranceText.bottom - 2 ||
+               insuranceAction.right > insuranceBox.right + 2)
+        errors.push('insurance CTA text concatenated/overlapping');
+      const extras = [...document.querySelectorAll('.public-track-extras-grid > a.public-track-extra')];
+      if (extras.length !== 3) errors.push('missing service links');
+      for (const [i, link] of extras.entries()) {
+        const b = bounds(link.querySelector('b'));
+        const s = bounds(link.querySelector('small'));
+        if (!b || !s || s.top < b.bottom - 2)
+          errors.push('service link ' + i + ' inline/overlapping');
+      }
+      const map = document.querySelector('.public-map-static');
+      if (!map || !getComputedStyle(map).backgroundImage.includes('radial-gradient') ||
+          !getComputedStyle(map, '::after').content.includes('демонстрационная'))
+        errors.push('blank or unlabelled mobile demo map');
+      const logo = document.querySelector('.top .guest-approved-mark img');
+      if (!logo || getComputedStyle(logo).mixBlendMode !== 'screen')
+        errors.push('public brand crop with exposed dark background');
+      return { count: benefits.length, issues: errors };
+    });
+    check(publicLegibility.count === 3 && !publicLegibility.issues.length,
+      suffix + ': owner-reported mobile text/icon/branding defect: ' + JSON.stringify(publicLegibility));
+  }
+  if (mobile && width <= 430) {
+    // 22 Nov owner approval: entry actions live on the FIRST screen.
+    // The former unstyled four-link guest bar was below legal documents,
+    // repeated registration, and must not return in the mobile browser/APK.
+    check(await page.locator('.track-guest-tabbar').count()===0,
+      suffix + ': obsolete guest bottom navigation returned');
+    const visibleCatalogue=page.locator('.guest-mobile-catalog > summary');
+    check(await visibleCatalogue.isVisible(),
+      suffix + ': mobile service catalogue is unreachable');
+
+    check(await page.locator('.guest-header-actions a[href="#/login"]').isVisible() &&
+      await page.locator('.guest-header-actions a[href="#/register"]').isVisible(),
+      suffix + ': approved first-screen entry links are missing');
+
+  }
+  // The latest 19 Nov public six tiles are the only approved public row.
+  if(width<900){
+    // A collapsed browser bot must be reachable without covering the
+    // truck or signup controls; it lives below the actual page content.
+    const layout=await page.evaluate(()=>{
+      const hero=document.querySelector('.public-brand-hero')?.getBoundingClientRect();
+      const dock=document.querySelector('.guest-app.guest-home > .trakbot-dock')?.getBoundingClientRect();
+      const launcher=document.querySelector('.guest-app.guest-home > .trakbot-dock .trakbot-dock-launcher');
+      return hero&&dock&&launcher?{
+        heroBottom:hero.bottom,dockTop:dock.top,mode:getComputedStyle(launcher.closest('.trakbot-dock')).position
+      }:null;
+    });
+    check(layout && layout.mode!=='fixed' && layout.dockTop>layout.heroBottom+8,
+      suffix+': collapsed TrakBot overlays approved public photo and actions: '+JSON.stringify(layout));
+    const launcher=page.getByRole('button',{name:'Открыть TrakBot'});
+    await launcher.click();
+    await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+    await page.getByRole('button',{name:'Закрыть TrakBot'}).last().click();
+  }
+  const services = page.locator('.public-service-tiles > a');
+  check(await services.count() === 6, suffix + ': six approved service cards required');
+  const labels = await services.locator('b').allTextContents();
+  check(JSON.stringify(labels) === JSON.stringify([
+    'SOS', 'Эфир', 'СТО', 'ЭБУ', 'Запчасти', 'Страхование'
+  ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
+}
+
 async function run(width, height, mobile, nativePreview = false) {
   const context = await browser.newContext({
     viewport: { width, height }, deviceScaleFactor: 1, isMobile: mobile,
@@ -62,158 +211,12 @@ async function run(width, height, mobile, nativePreview = false) {
       check(!errors.length,suffix+': JS errors '+errors.join('; '));
       return;
     }
-    await page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i }).waitFor();
-    check(await page.locator('.public-actions').getByRole('button', { name: 'Зарегистрироваться', exact: true }).isVisible(), 'Hero registration is not visible');
-    check(await page.locator('.public-actions').getByRole('link', { name: 'Как это работает', exact: true }).isVisible(), 'Hero guide is not visible');
-    const image = await page.locator('.public-hero-visual').evaluate(async el => {
-      const bg = [getComputedStyle(el).backgroundImage, getComputedStyle(el,'::after').backgroundImage].join(' | ');
-      const match = bg.match(/url\(["']?([^"')]+)["']?\)/);
-      if (!match) return { ok: false, bg };
-      const img = new Image();
-      img.src = match[1];
-      await img.decode().catch(() => {});
-      return { ok: img.naturalWidth > 0, width: img.naturalWidth, height: img.naturalHeight };
-    });
-    check(image.ok, 'Hero image failed to load: ' + JSON.stringify(image));
-    if (mobile && width <= 430) {
-      const heroGeometry = await page.evaluate(() => {
-        const hero = document.querySelector('.public-brand-hero')?.getBoundingClientRect();
-        const visual = document.querySelector('.public-hero-visual')?.getBoundingClientRect();
-        const copy = document.querySelector('.public-hero-copy')?.getBoundingClientRect();
-        const paragraph = document.querySelector('.public-hero-copy > p')?.getBoundingClientRect();
-        const actions = document.querySelector('.public-actions')?.getBoundingClientRect();
-        const carousel = document.querySelector('.public-hero-carousel')?.getBoundingClientRect();
-        if (!hero || !visual || !paragraph || !actions || !carousel || !copy) return null;
-        return {heroWidth:hero.width,heroHeight:hero.height,
-          pictureWidth:visual.width,pictureHeight:visual.height,pictureBottom:visual.bottom,
-          paragraphTop:paragraph.top,actionsTop:actions.top,copyBottom:copy.bottom,
-          carouselTop:carousel.top,carouselHeight:carousel.height };
-      });
-      if (nativePreview) {
-        check(!await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
-          suffix + ': Android must not activate browser-only styling');
-        // The approved native guest entry shows the complete truck photo above the
-        // text and actions. Do not demand an obsolete full-bleed overlay.
-        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
-          heroGeometry.pictureWidth >= heroGeometry.heroWidth * .75 &&
-          heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
-          heroGeometry.pictureHeight < heroGeometry.heroHeight &&
-          heroGeometry.pictureBottom <= heroGeometry.paragraphTop + 2,
-          suffix + ': native truck photo must be uncropped and separate from the text: ' + JSON.stringify(heroGeometry));
-      } else {
-        check(await page.evaluate(() => document.documentElement.classList.contains('traksos-browser')),
-          suffix + ': regular Chrome must activate mobile browser styling');
-        check(heroGeometry && heroGeometry.pictureWidth <= heroGeometry.heroWidth + 2 &&
-          // The artwork stays at its original 2:1 aspect ratio. At 320px
-          // the available 238px width gives a correct 119px tall photograph.
-          heroGeometry.pictureHeight >= heroGeometry.pictureWidth / 2 - 3 &&
-          heroGeometry.pictureHeight < heroGeometry.heroHeight,
-          suffix + ': browser truck artwork must have a dedicated uncropped photo area: ' + JSON.stringify(heroGeometry));
-        check(await page.locator('.guest-header-actions a[href="#/login"]').isVisible() &&
-          await page.locator('.guest-header-actions a[href="#/register"]').isVisible(),
-          suffix + ': both entry actions must be visible in the mobile header');
-      }
-      check(heroGeometry.actionsTop >= heroGeometry.paragraphTop-2,
-        suffix + ': banner actions overlap its paragraph: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.copyBottom < heroGeometry.carouselTop-2,
-        suffix + ': carousel controls overlap text and actions: ' + JSON.stringify(heroGeometry));
-      check(heroGeometry.carouselHeight>=44,
-        suffix + ': hero carousel too small for touch: '+JSON.stringify(heroGeometry));
+    if(nativePreview){
+      await page.locator('#tr-native-welcome-title').waitFor();
+      await verifyPage(page,suffix+':native-home');
+    } else {
+      await verifyMobileBrowserHome(page,suffix,width,mobile);
     }
-    await verifyPage(page, suffix + ':home');
-    // Regression for the 20 Nov owner screenshot: benefits/insurance were
-    // inline text and enormous icons even while the overall page did not scroll.
-    if (width < 900 && !nativePreview) {
-      const publicLegibility = await page.evaluate(() => {
-        const errors = [];
-        const bounds = el => el?.getBoundingClientRect();
-        const benefits = [...document.querySelectorAll('.public-why-strip > article.public-benefit')];
-        if (benefits.length !== 3) errors.push('wrong number of benefit cards');
-        for (const [i, item] of benefits.entries()) {
-          const box = bounds(item);
-          const icon = bounds(item.querySelector('.public-benefit-icon svg'));
-          const title = bounds(item.querySelector('b'));
-          const detail = bounds(item.querySelector('small'));
-          if (!box || !icon || !title || !detail) {
-            errors.push('benefit ' + i + ' missing layout element'); continue;
-          }
-          if (icon.width > 50 || icon.height > 50)
-            errors.push('benefit ' + i + ' huge icon ' + icon.width + 'x' + icon.height);
-          if (detail.top < title.bottom - 2)
-            errors.push('benefit ' + i + ' title and description overlap');
-          if (detail.left < title.left - 2 || detail.right > box.right + 2 ||
-              title.right > box.right + 2 || icon.right > title.left + 2)
-            errors.push('benefit ' + i + ' columns overlap or overflow');
-          if (box.height < 95 || box.width < 200)
-            errors.push('benefit ' + i + ' tiny card');
-        }
-        const insurance = document.querySelector('.public-track-insurance');
-        const insuranceText = bounds(insurance?.querySelector('span'));
-        const insuranceLabel = bounds(insurance?.querySelector('span b'));
-        const insuranceDetail = bounds(insurance?.querySelector('span small'));
-        const insuranceAction = bounds(insurance?.querySelector(':scope > strong'));
-        const insuranceBox = bounds(insurance);
-        if (!insuranceBox || !insuranceText || !insuranceLabel || !insuranceDetail || !insuranceAction)
-          errors.push('insurance CTA incomplete');
-        else if (insuranceDetail.top < insuranceLabel.bottom - 2 ||
-                 insuranceAction.top < insuranceText.bottom - 2 ||
-                 insuranceAction.right > insuranceBox.right + 2)
-          errors.push('insurance CTA text concatenated/overlapping');
-        const extras = [...document.querySelectorAll('.public-track-extras-grid > a.public-track-extra')];
-        if (extras.length !== 3) errors.push('missing service links');
-        for (const [i, link] of extras.entries()) {
-          const b = bounds(link.querySelector('b'));
-          const s = bounds(link.querySelector('small'));
-          if (!b || !s || s.top < b.bottom - 2)
-            errors.push('service link ' + i + ' inline/overlapping');
-        }
-        const map = document.querySelector('.public-map-static');
-        if (!map || !getComputedStyle(map).backgroundImage.includes('radial-gradient') ||
-            !getComputedStyle(map, '::after').content.includes('демонстрационная'))
-          errors.push('blank or unlabelled mobile demo map');
-        const logo = document.querySelector('.top .guest-approved-mark img');
-        if (!logo || getComputedStyle(logo).mixBlendMode !== 'screen')
-          errors.push('public brand crop with exposed dark background');
-        return { count: benefits.length, issues: errors };
-      });
-      check(publicLegibility.count === 3 && !publicLegibility.issues.length,
-        suffix + ': owner-reported mobile text/icon/branding defect: ' + JSON.stringify(publicLegibility));
-    }
-    if (mobile && width <= 430) {
-      const nav = page.locator('.track-guest-tabbar');
-      const navCount = await nav.locator('a').count();
-      const vectorCount = await nav.locator('a svg[aria-hidden="true"]').count();
-      check(navCount === 4 && vectorCount === 4,
-        suffix + ': all four authorized guest tabs must have vector icons, got ' + navCount + '/' + vectorCount);
-      for(const forbidden of ['Заявки','Помощь','Запчасти']) {
-        check(!(await nav.getByText(forbidden,{exact:true}).count()), suffix + ': protected tab visible before sign-in: '+forbidden);
-      }
-    }
-    // The latest 19 Nov public six tiles are the only approved public row.
-    if(width<900 && !nativePreview){
-      // A collapsed browser bot must be reachable without covering the
-      // truck or signup controls; it lives below the actual page content.
-      const layout=await page.evaluate(()=>{
-        const hero=document.querySelector('.public-brand-hero')?.getBoundingClientRect();
-        const dock=document.querySelector('.guest-app.guest-home > .trakbot-dock')?.getBoundingClientRect();
-        const launcher=document.querySelector('.guest-app.guest-home > .trakbot-dock .trakbot-dock-launcher');
-        return hero&&dock&&launcher?{
-          heroBottom:hero.bottom,dockTop:dock.top,mode:getComputedStyle(launcher.closest('.trakbot-dock')).position
-        }:null;
-      });
-      check(layout && layout.mode!=='fixed' && layout.dockTop>layout.heroBottom+8,
-        suffix+': collapsed TrakBot overlays approved public photo and actions: '+JSON.stringify(layout));
-      const launcher=page.getByRole('button',{name:'Открыть TrakBot'});
-      await launcher.click();
-      await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
-      await page.getByRole('button',{name:'Закрыть TrakBot'}).last().click();
-    }
-    const services = page.locator('.public-service-tiles > a');
-    check(await services.count() === 6, suffix + ': six approved service cards required');
-    const labels = await services.locator('b').allTextContents();
-    check(JSON.stringify(labels) === JSON.stringify([
-      'SOS', 'Эфир', 'СТО', 'ЭБУ', 'Запчасти', 'Страхование'
-    ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
     await page.screenshot({ path: OUT + '/home-' + suffix + '.png', fullPage: true });
 
     await page.goto(BASE + '/#/register');
@@ -303,23 +306,24 @@ async function run(width, height, mobile, nativePreview = false) {
     await page.screenshot({ path: OUT + '/login-' + suffix + '.png', fullPage: true });
 
     // Guest auth return/re-entry regression for the approved final design.
-    const mainTitle = page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i });
+    const entryActions = page.locator(nativePreview ? '.tr-native-welcome-actions' : '.guest-header-actions');
+    const mainTitle = nativePreview ? page.locator('#tr-native-welcome-title') : page.getByRole('heading', { name: /TrakSOS.*помощь.*в пути/i });
     const returnedHome = async (context) => {
       await mainTitle.waitFor();
       check(new URL(page.url()).hash === '#/', context + ': stale auth URL after Back');
     };
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('login');
-    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
+    await entryActions.getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
     await page.getByRole('button', { name: 'Забыли пароль?' }).click();
     await page.getByRole('heading', { name: 'Восстановить пароль' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('reset');
-    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
+    await entryActions.getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
     await page.goto(BASE + '/#/');
-    await page.locator('.guest-header-actions').getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
+    await entryActions.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click();
     await page.getByRole('heading', { name: 'Регистрация в TrakSOS' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('register');
@@ -334,20 +338,16 @@ async function run(width, height, mobile, nativePreview = false) {
     await page.getByRole('heading', { name: 'Работать с TrakSOS' }).waitFor();
     await page.getByRole('button', { name: 'Назад', exact: true }).click();
     await returnedHome('join');
-    await page.locator('.guest-header-actions').getByRole('link', { name: 'Войти', exact: true }).click();
+    await entryActions.getByRole('link', { name: 'Войти', exact: true }).click();
     await page.locator('input[type=password]').waitFor();
 
-    // The desktop header shows a real expandable catalogue, not a dead link.
-    if (width >= 900) {
-      await page.goto(BASE + '/#/');
-      const catalogue = page.locator('.guest-site-nav .guest-nav-group').first();
-      await catalogue.locator('summary').click();
-      await catalogue.locator('a[href="#/explore/van"]').click();
-      await page.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
-      check(await page.locator('.owner20-home').isVisible(),suffix+': service replaced approved 617 homepage');
-      await verifyPage(page, suffix + ':catalogue');
-    } else {
-      await page.goto(BASE + '/#/');
+    await page.goto(BASE + '/#/');
+    if(nativePreview){
+      const services=page.locator('.tr-native-welcome-services');
+      await services.locator('summary').click();
+      check(await services.locator('nav a:visible').count()===6,suffix+': native service list incomplete');
+      await verifyPage(page,suffix+':native-services');
+    }else{
       await page.locator('.guest-mobile-catalog > summary').click();
       await page.getByRole('navigation',{name:'Возможности TrakSOS'}).getByRole('link',{name:'О платформе'}).click();
       await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
@@ -365,8 +365,7 @@ try {
     [320, 720, true], [360, 780, true], [390, 844, true], [430, 932, true],
     [768, 1024, true], [1024, 768, false], [1440, 900, false]
   ]) await run(w, h, mobile);
-  // Same React/CSS inside Android WebView bridge: finger targets, navigation
-  // and hero copy must remain consistent with mobile Chrome.
+  // Exercise authentication and Back from the distinct native welcome screen.
   await run(390, 844, true, true);
 } finally {
   await browser.close();

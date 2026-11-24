@@ -3,10 +3,19 @@ import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 
 let t: T;
-let admin: any, client: any;
+let admin: any, specialist: any, client: any;
 before(async () => {
   t = await setup();
   admin = await t.login('+79990000001');
+  specialist = await t.login('+79997778002','master');
+  // The protected allowlist admits exactly ONE administrator. Use a genuine
+  // verified specialist as the author, rather than forging a second admin.
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Тестовый специалист',specialties:['electric'],
+    taxStatus:'self_employed',inn:'780000000555',
+  },specialist.token));
+  ok(await t.api('POST',`/api/admin/performers/${specialist.id}/verify`,
+    {decision:'approved'},admin.token));
   client = await t.login('+79997778001');
 });
 after(() => t.close());
@@ -22,7 +31,7 @@ const submission = {
 
 test('repair case is pending until manual review, then searchable only by specialist', async () => {
   assert.equal((await t.api('POST', '/api/tech/repair-cases', submission, client.token)).status, 403);
-  const created = ok(await t.api('POST','/api/tech/repair-cases',submission,admin.token));
+  const created = ok(await t.api('POST','/api/tech/repair-cases',submission,specialist.token));
   assert.equal(created.published, false);
   assert.equal(created.reviewState, 'pending');
   const beforeApproval = ok(await t.api('GET','/api/tech/repair-cases?q=TEST-01',undefined,admin.token));
@@ -32,6 +41,14 @@ test('repair case is pending until manual review, then searchable only by specia
   assert.equal((await t.api('GET','/api/admin/tech/repair-cases',undefined,client.token)).status,403);
   assert.equal((await t.api('POST', '/api/admin/tech/repair-cases/'+created.id+'/review',
     {approve:true,note:''},admin.token)).status, 400);
+  const ownCase = ok(await t.api('POST','/api/tech/repair-cases',
+    {...submission,code:'SELF-TEST'},admin.token));
+  assert.equal((await t.api('POST','/api/admin/tech/repair-cases/'+ownCase.id+'/review',
+    {approve:true,note:'Проверены описание и происхождение данных'},admin.token)).status,403,
+    'case author cannot self-approve even with staff role');
+  assert.equal((await t.api('POST','/api/admin/tech/repair-cases/'+created.id+'/review',
+    {approve:true,note:'Проверены описание и происхождение данных'},specialist.token)).status,403,
+    'verified specialist cannot approve cases');
   ok(await t.api('POST','/api/admin/tech/repair-cases/'+created.id+'/review',
     {approve:true,note:'Проверены описание и происхождение данных'},admin.token));
   const approved = ok(await t.api('GET','/api/tech/repair-cases?q=TEST-01',undefined,admin.token));

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES } from '../dict.ts';
-import { useLoad, useAction, go, Loading, Back } from '../ui.tsx';
+import { useLoad, useAction, useMe, go, Loading, Back } from '../ui.tsx';
 
 const KINDS: [string, string][] = [['dispute', 'Споры'], ['appeal', 'Обжалования'], ['review', 'Отзывы и отметки']];
 const PRI: Record<number, [string, string]> = { 1: ['Срочно', 'bad'], 2: ['Обычно', 'warn'], 3: ['Не горит', ''] };
@@ -20,10 +20,10 @@ export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}=
         <div className="card tile"><span className="label">В очереди</span><span className="tile-value">{total}</span></div>
         <div className="card tile"><span className="label">Срочно</span><span className="tile-value" style={{ color: urgent ? 'var(--bad)' : undefined }}>{urgent ?? '—'}</span><span className="note">в этой вкладке</span></div>
       </div>
-      <span className="note">Срочные — сверху. Проверка исполнителей и подозрительное — в соседних вкладках админки.</span>
-      <div className="scroll-x" role="tablist">
-        {KINDS.map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={kind === k} onClick={() => setKind(k)}>{n}{counts[k] ? ` · ${counts[k]}` : ''}</button>)}
-        <button className="chip" role="tab" aria-pressed={log} onClick={() => setKind('log')}>Журнал решений</button>
+      <span className="note">Срочные — сверху. Проверка исполнителей и подозрительное — в соседних разделах кабинета.</span>
+      <div className="scroll-x" role="group" aria-label="Типы обращений">
+        {KINDS.map(([k, n]) => <button type="button" key={k} className="chip" aria-pressed={kind === k} onClick={() => setKind(k)}>{n}{counts[k] ? ` · ${counts[k]}` : ''}</button>)}
+        <button type="button" className="chip" aria-pressed={log} onClick={() => setKind('log')}>Журнал решений</button>
       </div>
       {!q.data ? <Loading error={q.error} /> : !q.data.items.length ? <div className="empty">{log ? 'Решений пока нет' : 'Очередь пуста'}</div> : (
         <div className="rows">
@@ -43,15 +43,17 @@ export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}=
 }
 
 export function ModCase({ id }: { id: string }) {
+  const { mode } = useMe();
+  const backTo = mode === 'moderator' ? 'moderation/cases' : 'admin';
   const c = useLoad(() => get(`/api/mod/cases/${id}`), [id]);
   const { busy, run } = useAction();
   const [note, setNote] = useState('');
   const d = c.data;
-  if (!d) return <main><Back to="admin" label="Админ" /><Loading error={c.error} /></main>;
+  if (!d) return <main><Back to={backTo} label="Очередь" /><Loading error={c.error} /></main>;
   const act = async (path: string, body: any, okText: string) => { const r = await run(() => post(`/api/mod/cases/${id}/${path}`, body), okText); if (r) c.setData(r); return r; };
   return (
     <main>
-      <Back to="admin" label="Очередь" />
+      <Back to={backTo} label="Очередь" />
       <div>
         <h1>{d.kindName} №{d.number}</h1>
         <div className="sub">{d.title} · {fmtTime(d.createdAt)}</div>
@@ -103,7 +105,7 @@ export function ModCase({ id }: { id: string }) {
       {d.target && (
         <div className="card">
           <span className="label">О ком</span>
-          <a href={`#/admin/user/${d.target.id}`}><b>{d.target.name ?? d.target.phone}</b></a>
+          {mode === 'admin' ? <a href={`#/admin/user/${d.target.id}`}><b>{d.target.name ?? d.target.phone}</b></a> : <b>{d.target.name ?? d.target.phone}</b>}
           <span className="note">{d.target.status === 'blocked' ? 'Заблокирован' : 'Активен'}{d.target.rating ? ` · ★ ${d.target.rating.toFixed(2)}` : ''}</span>
         </div>
       )}

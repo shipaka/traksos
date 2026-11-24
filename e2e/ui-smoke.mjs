@@ -27,34 +27,61 @@ try {
         'The legal footer must not overlap any part of approved 617: '+JSON.stringify(fgeom));
       assert(await page.locator('header.owner20-top').count()===1,
         'Final PC should show exactly one approved header');
-      assert(await page.locator('.owner20-quick>a').count()===5,'Final PC services row must have 5 links');
+      assert(await page.locator('.owner20-quick>a').count()===5,'Owner 22 Nov: balanced five quick services');
+      assert(await page.locator('.owner20-quick>a').filter({hasText:'ЭБУ'}).count()===0,
+        'ECU must appear only in the illustrated specialist card');
       assert(await page.locator('.owner20-features>a').count()===5,'Final PC features row must have 5 links');
       assert(await page.locator('.owner20-bottom>.owner20-bottom-card').count()===4,'Final PC lower row must have 4 cards');
       // 617 cards: text on the left, source imagery on the right, continuous
       // dimming gradient, not a hard-masked half-image or text baked into CSS.
       const tiles=await page.locator('.owner20-feature').evaluateAll(items=>items.map(card=>{
-        const pic=card.querySelector('.owner20-feature-illustration');
-        const bounds=card.getBoundingClientRect(),art=pic?.getBoundingClientRect();
-        return {title:card.querySelector('b')?.textContent,
-          image:getComputedStyle(pic).backgroundImage,
-          gradient:getComputedStyle(card,'::before').backgroundImage,
-          artRight:art?.right,cardRight:bounds.right,
-          mask:getComputedStyle(pic).maskImage,
+        const picture=card.querySelector('picture[data-feature-art]');
+        const img=picture?.querySelector('img');
+        const title=card.querySelector('.owner20-feature-title');
+        const desc=card.querySelector('p');
+        const cta=card.querySelector('.owner20-feature-cta');
+        const art=picture?.getBoundingClientRect();
+        const bounds=card.getBoundingClientRect();
+        const titleRect=title?.getBoundingClientRect();
+        const descRect=desc?.getBoundingClientRect();
+        const ctaRect=cta?.getBoundingClientRect();
+        const overlay=getComputedStyle(card,'::before');
+        return {
+          key:picture?.getAttribute('data-feature-art'),
+          src:img?.currentSrc||img?.src,
+          loaded:!!img?.complete&&img.naturalWidth>=256&&img.naturalHeight>=150,
+          imageSize:img?[img.naturalWidth,img.naturalHeight]:null,
+          oldAtlas:!!card.querySelector('.owner20-feature-illustration'),
+          overlay:overlay.backgroundImage,
+          artFull:!!art&&Math.abs(art.left-bounds.left)<3&&Math.abs(art.right-bounds.right)<3&&
+            Math.abs(art.top-bounds.top)<3&&Math.abs(art.bottom-bounds.bottom)<3,
+          titleInBounds:!!titleRect&&titleRect.left>=bounds.left-2&&titleRect.right<=bounds.right+2,
+          descInBounds:!!descRect&&descRect.left>=bounds.left-2&&descRect.right<=bounds.right+2,
+          ctaInBounds:!!ctaRect&&ctaRect.left>=bounds.left-2&&ctaRect.right<=bounds.right+2&&ctaRect.bottom<=bounds.bottom+2,
+          textNotCovered:!!titleRect&&!!descRect&&!!ctaRect&&
+            titleRect.bottom<=descRect.top+2 && descRect.bottom<=ctaRect.top+3,
+          textFits:!!title&&!!desc&&title.scrollHeight<=title.clientHeight+2&&desc.scrollHeight<=desc.clientHeight+2,
+          caption:card.querySelector('b')?.textContent?.trim(),
         };
       }));
-      assert(tiles.length===5&&tiles.every(t=>
-        t.image?.includes('owner20-artwork-sprite-retouched.webp') &&
-        t.gradient?.includes('linear-gradient') &&
-        t.artRight <= t.cardRight+3 &&
-        t.mask?.includes('linear-gradient')),
-
-        width+'px: approved 617 right-image/left-copy card composition lost '+JSON.stringify(tiles));
-      const crop=await page.locator('.owner20-feature-illustration').evaluateAll(items=>items.map(el=>{
-        const r=el.getBoundingClientRect(),bg=getComputedStyle(el).backgroundPosition;
-        return {w:Math.round(r.width),bg};
-      }));
-      assert(crop.length===5 && crop.every(x=>x.w<=112),
-        width+'px: caption-bearing atlas region returned to feature cards '+JSON.stringify(crop));
+      const canonical=['tech','ecu','parts','insurance','inspection'];
+      assert(tiles.length===5&&tiles.every((tile,index)=>
+        tile.key===canonical[index] &&
+        tile.src?.includes('/feature-art/traksos-feature-'+tile.key+'-desktop-20261122.webp') &&
+        tile.loaded && tile.artFull && !tile.oldAtlas &&
+        tile.overlay?.includes('linear-gradient') &&
+        tile.titleInBounds && tile.descInBounds && tile.ctaInBounds &&
+        tile.textNotCovered && tile.textFits),
+        width+'px: new canonical full-card feature photo, visible DOM copy, or CTA failed: '+JSON.stringify(tiles));
+      const botShortcut=page.locator('.owner20-quick-trakbot');
+      assert(await botShortcut.count()===1,'TrakBot should occupy exactly the fifth quick tile');
+      await botShortcut.click();
+      await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+      assert(await page.locator('.trakbot-dock-panel').count()===1,
+        'Quick TrakBot entry must open one existing assistant');
+      assert(page.url().endsWith('/#/'),'Quick TrakBot must preserve approved landing route');
+      await page.locator('.trakbot-dock-close').click();
+      assert(await page.locator('.trakbot-dock-panel').count()===0,'Quick TrakBot remained open');
       const bot=page.getByRole('button',{name:'Открыть TrakBot'});
       assert(await bot.isVisible(), 'Final PC TrakBot must be user-opened');
       assert(await bot.locator('.trakbot-mascot-original').count()===1,'Owner-approved truck mascot missing');
@@ -112,11 +139,20 @@ try {
       continue;
     }
     await page.locator('.public-landing').waitFor({ timeout: 15000 });
+    assert(await page.locator('.track-guest-tabbar').count() === 0,
+      width + 'px: retired, unstyled guest menu returned below legal footer');
+    assert(await page.locator('.guest-header-actions a[href="#/login"]').count() === 1 &&
+      await page.locator('.guest-header-actions a[href="#/register"]').count() === 1,
+      width + 'px: guest entry actions missing after bottom-nav cleanup');
     // TrakBot is opt-in and does not interrupt the public landing.
     const botLauncher = page.getByRole('button', { name: 'Открыть TrakBot' });
     assert(await botLauncher.isVisible(), width + 'px: TrakBot entry not visible');
     assert(await botLauncher.locator('.trakbot-mascot-truck').count() === 1,
       width + 'px: approved truck technician missing from launcher');
+    const mascotMask = await botLauncher.locator('.trakbot-mascot-original')
+      .evaluate(el => getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage);
+    assert(mascotMask?.includes('radial-gradient'),
+      width + 'px: TrakBot still appears as a rectangular raster sticker: ' + mascotMask);
     assert(await page.locator('.trakbot-dock-panel').count() === 0,
       width + 'px: TrakBot opened automatically');
     await botLauncher.click();
@@ -324,6 +360,36 @@ try {
     }
     assert(await page.locator('.guest-partner-role[aria-pressed="true"]').count()===0,
       width+'px: a new partner must choose a role');
+    // Real role-by-role evidence, not a generated mock. Each approved photo
+    // panel and selected state is captured on the actual React form.
+    if (width===390) {
+      mkdirSync('e2e/shots/partners-review',{recursive:true});
+      for (const [key,roleLabel] of [
+        ['master','Мастер'],['tow','Эвакуаторщик'],['service','СТО'],['insurer','Страховой агент']
+      ]) {
+        await page.getByRole('button',{name:roleLabel,exact:true}).click();
+        const chosen=page.locator('.guest-partner-role-'+key);
+        assert(await chosen.getAttribute('aria-pressed')==='true',
+          key+': partner tile no longer selects its proper registration role');
+        const visual=await chosen.evaluate(el=>{
+          const style=getComputedStyle(el,'::before');
+          return {image:style.backgroundImage,position:style.backgroundPosition,size:style.backgroundSize};
+        });
+        assert(visual.image.includes(key==='insurer'?'linear-gradient':'traksos-service-scenes-desktop-hq.webp'),
+          key+': partner visual failed to load canonical scene '+JSON.stringify(visual));
+        if(key!=='insurer'){
+          const expected={master:0,tow:33.3333,service:66.6667}[key];
+          assert(Math.abs(parseFloat(visual.position)-expected)<0.5,
+            key+': partner selected card shows wrong 25% panorama frame '+JSON.stringify(visual));
+        } else {
+          const shield=await chosen.evaluate(el=>getComputedStyle(el,'::after').backgroundImage);
+          assert(shield.includes('owner20-artwork-sprite-retouched.webp'),
+            'insurance partner illustration is not loaded from approved art: '+shield);
+        }
+        await page.screenshot({path:'e2e/shots/partners-review/partner-'+key+'-390.png',
+          fullPage:true,animations:'disabled'});
+      }
+    }
     await page.getByRole('button',{name:'Мастер',exact:true}).click();
     for (const name of ['Электрик','Автономщик','Гидравлика']) {
       assert(await page.getByRole('button', {name,exact:true}).isVisible(),
@@ -344,8 +410,23 @@ try {
       width+'px: hybrid partner unexpectedly creates a fifth public role card');
     await page.goto(BASE + '/#/company');
     await page.getByRole('heading', {name:'Компания TrakSOS'}).waitFor();
+    if(width===390) {
+      mkdirSync('e2e/shots/public-documents',{recursive:true});
+      await page.screenshot({path:'e2e/shots/public-documents/company-390.png',
+        fullPage:true,animations:'disabled'});
+    }
     await page.goto(BASE + '/#/offers');
     await page.getByRole('heading', {name:'Оферты и документы'}).waitFor();
+    if(width===390) {
+      await page.screenshot({path:'e2e/shots/public-documents/offers-390.png',
+        fullPage:true,animations:'disabled'});
+      for(const [key,path] of [['rules','rules'],['privacy','offer/privacy']]) {
+        await page.goto(BASE+'/#/'+path);
+        await page.locator('main').first().waitFor();
+        await page.screenshot({path:'e2e/shots/public-documents/'+key+'-390.png',
+          fullPage:true,animations:'disabled'});
+      }
+    }
     assert(errors.length === 0, width + 'px: browser errors: ' + errors.join('; '));
     console.log('OK: viewport ' + width + 'px, 6 cards, Company/Offers, 4 partner roles, no overflow');
     await context.close();

@@ -1,4 +1,4 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, conflict, forbidden, notFound } from '../http/router.ts';
 import type { OrdersService } from './orders.ts';
@@ -15,8 +15,19 @@ type ClosureRecord = {
 
 export class UnilateralClosures {
   constructor(private db:Db, private orders:OrdersService, private notifier:Notifier,
-    private moderation:ModerationService, private now:()=>Date=()=>new Date()) {}
+    _moderation:ModerationService, private now:()=>Date=()=>new Date()) {}
 
+  /** A revoked driver must not receive an owner-only payment reminder. */
+  private async customers(q: Queryable, order: {id:string;client_id:string;created_by:string}): Promise<string[]> {
+    if (!order.created_by || order.created_by === order.client_id) return [order.client_id];
+    const linked = await q.one<{ok:number}>(`select 1 as ok from orders o
+      join users u on u.id=o.created_by
+      join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+      where o.id=$1 and o.created_by=$2 and u.owner_id=o.client_id
+        and 'driver'=any(u.roles) and (o.vehicle_id is null or v.id=o.vehicle_id)
+      limit 1 for share of v`, [order.id, order.created_by]);
+    return linked ? [order.client_id,order.created_by] : [order.client_id];
+  }
 
   /**
    * Non-payment SLA: remind once, then open one manual control case.
@@ -50,7 +61,7 @@ export class UnilateralClosures {
           [candidate.order_id]);
         if(!closure||closure.status!=='pending_client'||closure.reminder_sent_at||
           new Date(closure.created_at).getTime()>remindBefore.getTime())return null;
-        const customers=[...new Set([order.client_id,order.created_by].filter(Boolean))] as string[];
+        const customers=await this.customers(q,order);
         await q.query('update order_unilateral_closures set reminder_sent_at=$2 where order_id=$1',
           [order.id,now]);
         await this.orders.event(q,order.id,null,'emergency_reminder_sent',
@@ -123,7 +134,7 @@ export class UnilateralClosures {
             [staffId,'mod_case','Проверить завершение без ответа клиента · №'+order.number,
               'Просрочено ожидание ответа клиента. Не считать молчание согласием.',
               {caseId:caseRecord.id,orderId:order.id,unilateral:true}]);
-        const parties=[...new Set([order.client_id,order.created_by,order.performer_id].filter(Boolean))] as string[];
+        const parties=[...new Set([...await this.customers(q,order),order.performer_id].filter(Boolean))] as string[];
         return {order,parties,staff,system,caseId:caseRecord.id};
       });
       if(!item)continue;
@@ -182,7 +193,7 @@ export class UnilateralClosures {
         [orderId,'Исполнитель заявил о завершении работы без подтверждения клиента. '+
           'Причина: '+p.reason+'. Расчёт '+(price.total/100).toFixed(2)+
           ' ₽ ожидает ответа заказчика. Деньги не считаются выплаченными.']);
-      const customers=[...new Set([o.client_id,o.created_by].filter(Boolean))] as string[];
+      const customers=await this.customers(q,o);
       for(const customerId of customers)await q.query(
         'insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
         [customerId,'unilateral_pending','Подтвердите выполнение заявки №'+o.number,
@@ -191,7 +202,7 @@ export class UnilateralClosures {
       return {created:true,closure:rec!,order:o,system,customers};
     });
     if(result.created){
-      const participants=[...new Set([result.order.client_id,result.order.created_by,user.id].filter(Boolean))] as string[];
+      const participants=[...new Set([...(result.customers ?? []),user.id].filter(Boolean))] as string[];
       this.notifier.live(participants,{type:'chat',message:result.system});
       this.notifier.live([user.id],{type:'order',orderId,status:'awaiting_confirmation',unilateral:'pending_client'});
       this.notifier.live([user.id],{type:'line_status'});
@@ -214,13 +225,26 @@ export class UnilateralClosures {
     const result=await this.db.tx(async q=>{
       const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
       if(!o)throw notFound('Заявка не найдена');
-      if(o.client_id!==user.id&&o.created_by!==user.id)
-        throw forbidden('Ответить может только заказчик или его уполномоченный представитель');
+      if (o.client_id!==user.id) {
+        if (o.created_by!==user.id)
+          throw forbidden('Ответить может только заказчик или его уполномоченный представитель');
+        // This action changes a payment/dispute lifecycle. Lock the actual
+        // vehicle link to serialize against owner QR revocation/reassignment.
+        const linked=await q.one<{ok:number}>(`select 1 as ok from users u join vehicles v
+          on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and ($3::uuid is null or v.id=$3)
+          limit 1 for share of u,v`,[user.id,o.client_id,o.vehicle_id]);
+        if(!linked)throw forbidden('Вы больше не закреплены за машиной этой заявки');
+      }
       const c=await q.one<ClosureRecord>('select * from order_unilateral_closures where order_id=$1 for update',[orderId]);
       if(!c)throw conflict('no_emergency_closure','Аварийного завершения нет');
       if(c.status==='accepted'||o.status==='completed')
         throw conflict('emergency_already_accepted','Работа уже подтверждена');
-      if(c.status==='disputed')return {created:false,order:o,closure:c};
+      // The closure, chat, moderation case and durable alerts are one
+      // business operation. The order lock also serializes SLA escalation.
+      // A replay after moderation resolution must never reopen the dispute.
+      if(c.status==='disputed')return null;
       if(o.status!=='awaiting_confirmation')
         throw conflict('state_changed','Состояние заявки изменилось');
       const row=await q.one<ClosureRecord>(
@@ -234,39 +258,53 @@ export class UnilateralClosures {
         'returning id,order_id,sender_id,kind,body,created_at',
         [orderId,'Заказчик не согласен с односторонним завершением: '+reason+
           '. Расчёт остаётся на проверке; подключается модератор.']);
-      return {created:true,order:o,closure:row,message};
-    });
-    // Recover an outstanding moderation case on repeated requests if notification failed.
-    const existing=await this.db.one<any>(
-      "select id from mod_cases where order_id=$1 and kind='dispute' and status='open' limit 1",[orderId]);
-    if(!existing)await this.moderation.open({
-      kind:'dispute',openedBy:user.id,orderId,targetId:result.order.performer_id,
-      title:'Спор по аварийному завершению заявки №'+result.order.number,
-      text:'Клиент оспаривает завершение без связи: '+(result.closure.answer_reason||reason),priority:1});
-    else if(result.created){
-      // SLA escalation may have opened a monitoring case before the client replied.
-      // Upgrade that SAME case to a dispute instead of producing two moderator tickets.
-      await this.db.query(
-        "update mod_cases set priority=1, text=coalesce(text,'') || E'\\n— ' || $2 "+
-        "where id=$1 and status='open'",
-        [existing.id,'Клиент оспаривает завершение: '+reason]);
-      const staff=(await this.db.query<{id:string}>(
+      const existing=await q.one<{id:string;number:number}>(
+        "select id,number from mod_cases where order_id=$1 and kind='dispute' and status='open' "+
+        'order by created_at,id limit 1 for update',[orderId]);
+      let caseId:string;
+      if(existing){
+        caseId=existing.id;
+        await q.query(
+          "update mod_cases set priority=1,text=coalesce(text,'') || E'\\n— ' || $2 where id=$1",
+          [caseId,'Клиент оспаривает завершение: '+reason]);
+      }else{
+        const created=await q.one<{id:string}>(
+          "insert into mod_cases(kind,title,text,opened_by,target_id,order_id,priority) "+
+          "values('dispute',$1,$2,$3,$4,$5,1) returning id",
+          ['Спор по аварийному завершению заявки №'+o.number,
+           'Клиент оспаривает завершение без связи: '+reason,user.id,o.performer_id,orderId]);
+        if(!created)throw new Error('Failed to persist emergency dispute');
+        caseId=created.id;
+      }
+      const staff=(await q.query<{id:string}>(
         "select id from users where roles && '{admin,moderator}'::text[] and status='active'"))
         .map(x=>x.id);
-      await this.notifier.notify(staff,{type:'mod_case',caseId:existing.id},
-        {kind:'normal',title:'Клиент оспорил аварийное завершение №'+result.order.number,
-          body:'Новое возражение приложено к уже открытому делу; требуется разбор.',
-          data:{caseId:existing.id,orderId}})
-        .catch(e=>console.warn('[emergency dispute staff]',e));
-    }
-    if(result.created){
-      const parties=[...new Set([result.order.client_id,result.order.created_by,result.order.performer_id].filter(Boolean))] as string[];
-      this.notifier.live(parties,{type:'chat',message:result.message});
-      await this.notifier.notify([result.order.performer_id],
-        {type:'order',orderId,unilateral:'disputed'},
-        {kind:'normal',title:'Открыт спор по заявке №'+result.order.number,
-          body:'Заказчик оспорил аварийное завершение; ждите модерации',
-          data:{orderId}}).catch(e=>console.warn('[unilateral dispute notify]',e));
+      const staffMsg={kind:'normal' as const,title:'Клиент оспорил аварийное завершение №'+o.number,
+        body:existing?'Новое возражение приложено к уже открытому делу; требуется разбор.':
+          'Открыт спор по аварийному завершению; требуется разбор.',
+        data:{caseId,orderId}};
+      for(const id of staff)await q.query(
+        "insert into notifications(user_id,kind,title,body,data) values($1,'mod_case',$2,$3,$4)",
+        [id,staffMsg.title,staffMsg.body,staffMsg.data]);
+      const performerMsg={kind:'normal' as const,title:'Открыт спор по заявке №'+o.number,
+        body:'Заказчик оспорил аварийное завершение; ждите модерации',data:{orderId}};
+      if(o.performer_id)await q.query(
+        "insert into notifications(user_id,kind,title,body,data) values($1,'order',$2,$3,$4)",
+        [o.performer_id,performerMsg.title,performerMsg.body,performerMsg.data]);
+      return {order:o,message,caseId,staff,staffMsg,performerMsg};
+    });
+    if(result){
+      // Optional delivery must not turn an already durable response into
+      // a failed HTTP operation. Re-read the current participants for chat.
+      await this.notifier.deliverStored(result.staff,{type:'mod_case',caseId:result.caseId},
+        result.staffMsg).catch(e=>console.warn('[emergency dispute staff]',e));
+      try{
+        const parties=await this.orders.participants(orderId);
+        this.notifier.live(parties,{type:'chat',message:result.message});
+        if(parties.includes(result.order.performer_id))
+          await this.notifier.deliverStored([result.order.performer_id],
+            {type:'order',orderId,unilateral:'disputed'},result.performerMsg);
+      }catch(e){console.warn('[unilateral dispute notify]',e);}
     }
     return {ok:true,status:'disputed',paymentStatus:'under_review'};
   }

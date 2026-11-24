@@ -7,7 +7,7 @@ import {
 test('onboarding training scenarios cover all TrakSOS cabinet roles safely', () => {
   const variants: Record<string,PracticeKind> = {
     owner:'customer',driver:'customer',master:'performer',master_service:'performer',tow:'performer',
-    service:'service',insurer:'insurance',inspection:'insurance',
+    service:'service',insurer:'insurance',inspection:'inspection',courier:'courier',
     moderator:'staff',admin:'staff',
   };
   for(const [role,kind] of Object.entries(variants)) {

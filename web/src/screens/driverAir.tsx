@@ -7,69 +7,123 @@ type Air = { messages:Message[]; botEnabled:boolean; canModerate:boolean; canCon
 
 export function DriverAir() {
   const { me } = useMe();
-  const [air,setAir] = useState<Air|null>(null);
-  const [text,setText] = useState('');
-  const [error,setError] = useState('');
-  const [posting,setPosting] = useState(false);
-  const [supportHint,setSupportHint] = useState(false);
-  const [refresh,setRefresh] = useState(0);
-  const end = useRef<HTMLDivElement>(null);
-  const lastCount = useRef(0);
   const isStaff = !!me?.roles.some(r=>r==='admin'||r==='moderator');
   const ownerOrDriver = !!me?.roles.some(r=>r==='client'||r==='driver') &&
     !me?.roles.some(r=>['master','tow','service','insurer','inspection_operator','admin','moderator'].includes(r));
-  const canView = ownerOrDriver || isStaff;
+  if (!(ownerOrDriver || isStaff)) return <main><Back to="" /><h1>Эфир водителей</h1>
+    <p>Писать в общем эфире могут только водители и владельцы автопарков. Сотрудникам доступна модерация.</p></main>;
+  // A→B can preserve the same permission boolean. A keyed room unmounts every
+  // previous draft, moderator permission, support hint and in-flight response.
+  return <AirRoom key={me!.id+':'+[...me!.roles].sort().join(',')} />;
+}
+
+function AirRoom() {
+  const [air,setAir] = useState<Air|null>(null);
+  const [loading,setLoading] = useState(true);
+  const [text,setText] = useState('');
+  const [error,setError] = useState('');
+  const [actionError,setActionError] = useState('');
+  const [posting,setPosting] = useState(false);
+  const inFlight = useRef(false);
+  const snapshotGeneration = useRef(0);
+  const [supportHint,setSupportHint] = useState(false);
+  const [refresh,setRefresh] = useState(0);
+  const logRef = useRef<HTMLDivElement>(null);
+  const keepAtBottom = useRef(true);
+  const lastCount = useRef(0);
 
   useEffect(()=>{
-    if(!canView) return;
     let live=true;
+    let latestRequest=0;
+    const generation=snapshotGeneration.current;
+    const current=()=>live && generation===snapshotGeneration.current;
+    // On explicit refresh or after a POST, never keep displaying an old
+    // snapshot as though its permissions and messages are still current.
+    setAir(null);
+    setLoading(true);
+    setError('');
     const load=async()=>{
+      if(!current() || inFlight.current)return;
+      const request=++latestRequest;
+      setLoading(true);
       try {
         const result=await get<Air>('/api/air/messages');
-        if(live) {setAir(result);setError('');}
-      } catch(e:any) {if(live)setError(e.message||'Не удалось открыть эфир');}
+        if(current() && request===latestRequest) {setAir(result);setError('');}
+      } catch(e:any) {
+        if(current() && request===latestRequest) {
+          setAir(null);
+          setError(e?.message||'Не удалось открыть эфир');
+        }
+      } finally {
+        if(current() && request===latestRequest) setLoading(false);
+      }
     };
     void load();
-    const timer=setInterval(()=>void load(),12000);
-    return ()=>{live=false;clearInterval(timer);};
-  },[canView,refresh]);
+    // Two overlapping polls can finish out of order on mobile networks:
+    // only the newest response is allowed to replace the visible snapshot.
+    const timer=setInterval(()=>{
+      if(document.visibilityState==='visible' && navigator.onLine) void load();
+    },12000);
+    const online=()=>void load();
+    const offline=()=>{
+      if(!current())return;
+      ++latestRequest;
+      setAir(null);setLoading(false);
+      setError('Нет связи с сервером. Проверь интернет и повтори загрузку.');
+    };
+    window.addEventListener('online',online);
+    window.addEventListener('offline',offline);
+    return ()=>{
+      live=false;clearInterval(timer);
+      window.removeEventListener('online',online);
+      window.removeEventListener('offline',offline);
+    };
+  },[refresh]);
   useEffect(()=>{
     if(air && air.messages.length!==lastCount.current) {
       lastCount.current=air.messages.length;
-      end.current?.scrollIntoView({block:'nearest',behavior:'auto'});
+      // Follow new messages only if the user is already reading near the end;
+      // scrolling the whole page would interrupt someone reading old messages.
+      if(keepAtBottom.current && logRef.current)
+        logRef.current.scrollTop=logRef.current.scrollHeight;
     }
   },[air?.messages.length]);
 
+  // A lost write response may still mean the server committed the action.
+  // Invalidate all pending polls before releasing the synchronous write lock;
+  // never allow another action on the old moderation/permission snapshot.
+  const reconcileAfterWrite=()=>{
+    ++snapshotGeneration.current;
+    setAir(null);setLoading(true);setRefresh(n=>n+1);
+    inFlight.current=false;setPosting(false);
+  };
   const send = async()=>{
-    if(!air?.canPost||posting||!text.trim())return;
-    setPosting(true);setError('');
+    if(!air?.canPost||inFlight.current||!text.trim())return;
+    inFlight.current=true;setPosting(true);setActionError('');setSupportHint(false);
     try {
       const answer=await post<{supportSuggested:boolean}>('/api/air/messages',{body:text.trim()});
       setText('');
       setSupportHint(!!answer.supportSuggested);
-      setRefresh(n=>n+1);
     } catch(e:any) {
-      setError(e.message||'Не удалось отправить. Проверь соединение.');
+      setActionError(e?.message||'Не удалось отправить. Проверь соединение.');
       // A request may be accepted but its response lost; fetch history, never auto-retry.
-      setRefresh(n=>n+1);
-    } finally {setPosting(false);}
+      // Keep the typed draft so the user can compare it with actual history.
+    } finally {reconcileAfterWrite();}
   };
   const switchBot=async()=>{
-    if(!air||posting)return;
-    setPosting(true);
-    try {await post('/api/admin/air/bot',{enabled:!air.botEnabled});setRefresh(n=>n+1);}
-    catch(e:any){setError(e.message||'Не удалось изменить настройку');}
-    finally{setPosting(false);}
+    if(!air?.canConfigure||inFlight.current)return;
+    inFlight.current=true;setPosting(true);setActionError('');
+    try {await post('/api/admin/air/bot',{enabled:!air.botEnabled});}
+    catch(e:any){setActionError(e?.message||'Не удалось изменить настройку');}
+    finally{reconcileAfterWrite();}
   };
   const hide=async(id:string)=>{
-    if(posting||!window.confirm('Скрыть это сообщение из общего эфира?'))return;
-    setPosting(true);
-    try {await post('/api/admin/air/messages/'+encodeURIComponent(id)+'/hide');setRefresh(n=>n+1);}
-    catch(e:any){setError(e.message||'Не удалось скрыть сообщение');}
-    finally{setPosting(false);}
+    if(!air?.canModerate||inFlight.current||!window.confirm('Скрыть это сообщение из общего эфира?'))return;
+    inFlight.current=true;setPosting(true);setActionError('');
+    try {await post('/api/admin/air/messages/'+encodeURIComponent(id)+'/hide');}
+    catch(e:any){setActionError(e?.message||'Не удалось скрыть сообщение');}
+    finally{reconcileAfterWrite();}
   };
-  if(!canView) return <main><Back to="" /><h1>Эфир водителей</h1>
-    <p>Писать в общем эфире могут только водители и владельцы автопарков. Сотрудникам доступна модерация.</p></main>;
   return <main className="stack" style={{maxWidth:840}}>
     <Back to="" />
     <div className="between" style={{gap:12,flexWrap:'wrap'}}>
@@ -85,8 +139,13 @@ export function DriverAir() {
       {air && !air.botEnabled && <span className="note">Самостоятельные сообщения TrakBot сейчас выключены. При вызове модератора или админа он подскажет, как оформить обращение приватно.</span>}
     </div>
     <section className="card" aria-label="Общий эфир водителей">
-      <div role="log" aria-label="Сообщения эфира" aria-live="polite" style={{height:'min(53vh,520px)',minHeight:260,overflowY:'auto'}}>
-        {!air && <div className="empty">Загружаю сообщения…</div>}
+      <div ref={logRef} role="log" aria-label="Сообщения эфира" aria-live="polite"
+        onScroll={event=>{
+          const el=event.currentTarget;
+          keepAtBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<96;
+        }}
+        style={{height:'min(53vh,520px)',minHeight:260,overflowY:'auto'}}>
+        {!air && <div className="empty">{loading ? 'Загружаю сообщения…' : 'Сообщения пока недоступны.'}</div>}
         {air && !air.messages.length && <div className="empty">{air.canPost ? 'Эфир открыт. Начни разговор — например, расскажи, как проходит рейс.' : 'Сообщений пока нет.'}</div>}
         {air?.messages.map(item=><div key={item.id} className="card flat" style={{margin:'8px 0',padding:12}}>
           <div className="between" style={{gap:10}}>
@@ -99,9 +158,14 @@ export function DriverAir() {
           {air?.canModerate && <button className="btn ghost small" type="button" disabled={posting}
             style={{marginTop:8}} onClick={()=>void hide(item.id)}>Скрыть</button>}
         </div>)}
-        <div ref={end}/>
+
       </div>
-      {error && <p className="note" role="alert">{error}</p>}
+      {error && <div className="stack" role="alert">
+        <p className="note">{error}</p>
+        <button className="btn ghost small" type="button" disabled={loading}
+          onClick={()=>setRefresh(n=>n+1)}>Повторить загрузку эфира</button>
+      </div>}
+      {actionError && <p className="note" role="alert">{actionError}</p>}
       {supportHint && <div className="card flat">
         <b>TrakBot уточняет обращение</b>
         <p className="note">Проблема по заявке, поведению участника или работе сервиса? Напиши подробности в личной поддержке. Это не создаст обращение до твоего подтверждения.</p>
@@ -112,7 +176,7 @@ export function DriverAir() {
           onChange={e=>setText(e.target.value)} aria-label="Сообщение в эфир"
           placeholder="Напиши водителям… или @TrakBot, расскажи шутку" />
         <button className="btn" type="submit" disabled={posting||!text.trim()}>Отправить</button>
-      </form> : <p className="note">Режим наблюдения: писать в эфир могут только водители и владельцы автопарков. Модераторы и администраторы могут скрывать нарушения.</p>}
+      </form> : air ? <p className="note">Режим наблюдения: писать в эфир могут только водители и владельцы автопарков. Модераторы и администраторы могут скрывать нарушения.</p> : null}
       {air?.canPost && <p className="note">Для вызова помощи напиши @модератор или @админ. TrakBot уточнит, как оформить вопрос без раскрытия деталей в публичном чате.</p>}
     </section>
   </main>;

@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden, notFound } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
@@ -22,6 +22,14 @@ function allowRead(u:AuthUser) {
 }
 function allowWrite(u:AuthUser) {
   if(!canPostInDriverAir(u)) throw forbidden('Сообщения в эфир пишут только водители и владельцы автопарков');
+}
+// The request's authentication snapshot may become stale while waiting for a
+// transaction lock. Hold the current account row through the entire operation.
+async function currentAccount(q:Queryable,id:string):Promise<AuthUser> {
+  const user=await q.one<AuthUser>(`select id,phone,name,roles,status,owner_id from users
+    where id=$1 and status='active' and deleted_at is null for share`,[id]);
+  if(!user)throw forbidden('Доступ к эфиру отозван');
+  return user;
 }
 function recipient(text:string):'admin'|'moderator'|null {
   if(/@(?:admin|админ(?:истратор)?)(?![a-zа-я])|позов.{0,15}админ|вызови.{0,15}админ/i.test(text)) return 'admin';
@@ -53,14 +61,18 @@ export class DriverAirService {
   async list(user:AuthUser,after=0) {
     allowRead(user);
     const cursor=Number.isSafeInteger(after)&&after>0?after:0;
+    return this.db.tx(async q=>{
+    const actor=await currentAccount(q,user.id);
+    allowRead(actor);
     const rows=cursor
-      ? await this.db.query<AirRow>(
+      ? await q.query<AirRow>(
           'select id::text,author_label,body,origin,created_at from driver_air_messages where hidden_at is null and id>$1 order by id asc limit 100',[cursor])
-      : (await this.db.query<AirRow>(
+      : (await q.query<AirRow>(
           'select id::text,author_label,body,origin,created_at from driver_air_messages where hidden_at is null order by id desc limit 80')).reverse();
-    const state=await this.db.one<{bot_enabled:boolean}>('select bot_enabled from driver_air_state where id=true');
-    return {messages:expose(rows),botEnabled:!!state?.bot_enabled,canModerate:isStaff(user),
-      canConfigure:user.roles.includes('admin'),canPost:canPostInDriverAir(user),publicForDrivers:true};
+    const state=await q.one<{bot_enabled:boolean}>('select bot_enabled from driver_air_state where id=true');
+    return {messages:expose(rows),botEnabled:!!state?.bot_enabled,canModerate:isStaff(actor),
+      canConfigure:actor.roles.includes('admin'),canPost:canPostInDriverAir(actor),publicForDrivers:true};
+    });
   }
 
   async post(user:AuthUser,raw:string) {
@@ -69,6 +81,8 @@ export class DriverAirService {
     const call=recipient(text);
     const now=this.now();
     return this.db.tx(async q=>{
+      const actor=await currentAccount(q,user.id);
+      allowWrite(actor);
       // Shared row lock makes bot caps atomic across server instances.
       const state=await q.one<{bot_enabled:boolean;bot_last_at:Date|null;bot_day:string|null;bot_today:number}>(
         "select bot_enabled,bot_last_at,to_char(bot_day,'YYYY-MM-DD') as bot_day,bot_today from driver_air_state where id=true for update");
@@ -93,7 +107,7 @@ export class DriverAirService {
       const human=await q.one<AirRow>(
         "insert into driver_air_messages(user_id,author_label,body,origin,created_at) "+
         "values($1,$2,$3,'human',$4) returning id::text,author_label,body,origin,created_at",
-        [user.id,label(user),body,now]);
+        [actor.id,label(actor),body,now]);
       if(!human) throw bad('air_write');
       let bot:AirRow|null=null;
       if(call) {
@@ -134,18 +148,44 @@ export class DriverAirService {
   }
 
   async setBot(user:AuthUser,enabled:boolean) {
-    if(!user.roles.includes('admin')) throw forbidden('Настройки эфира доступны администратору');
-    await this.db.query('update driver_air_state set bot_enabled=$1,updated_at=$2 where id=true',[enabled,this.now()]);
-    return {botEnabled:enabled};
+    if(!user.roles.includes('admin'))throw forbidden('Настройки эфира доступны администратору');
+    // Repeated admin taps must not produce contradictory settings history.
+    // Keep the switch and its audit record in the same transaction.
+    const state=await this.db.tx(async q=>{
+      const actor=await currentAccount(q,user.id);
+      if(!actor.roles.includes('admin'))throw forbidden('Настройки эфира доступны администратору');
+      const row=await q.one<{bot_enabled:boolean}>(`update driver_air_state
+        set bot_enabled=$1,updated_at=$2
+        where id=true and bot_enabled is distinct from $1
+        returning bot_enabled`,[enabled,this.now()]);
+      if(!row){
+        const current=await q.one<{bot_enabled:boolean}>(
+          'select bot_enabled from driver_air_state where id=true for update');
+        if(!current)throw notFound('Эфир не настроен');
+        return current.bot_enabled;
+      }
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [user.id,'air.bot_settings','driver-air',{enabled}]);
+      return row.bot_enabled;
+    });
+    return {botEnabled:state};
   }
 
   async hide(user:AuthUser,id:string) {
-    if(!isStaff(user)) throw forbidden('Доступ только сотрудникам');
-    if(!/^[1-9]\d{0,17}$/.test(id)) throw bad('invalid_air_message');
-    const row=await this.db.one(
-      'update driver_air_messages set hidden_at=$2,hidden_by=$3 where id=$1::bigint and hidden_at is null returning id',
-      [id,this.now(),user.id]);
-    if(!row) throw notFound('Сообщение не найдено');
+    if(!isStaff(user))throw forbidden('Доступ только сотрудникам');
+    if(!/^[1-9]\d{0,17}$/.test(id))throw bad('invalid_air_message');
+    await this.db.tx(async q=>{
+      const actor=await currentAccount(q,user.id);
+      if(!isStaff(actor))throw forbidden('Доступ только сотрудникам');
+      const row=await q.one<{id:string}>(
+        `update driver_air_messages set hidden_at=$2,hidden_by=$3
+          where id=$1::bigint and hidden_at is null returning id::text as id`,
+        [id,this.now(),user.id]);
+      if(!row)throw notFound('Сообщение не найдено');
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [user.id,'air.message_hidden',id,{moderatorId:user.id}]);
+    });
     return {hidden:true};
   }
+
 }

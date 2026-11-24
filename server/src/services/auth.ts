@@ -30,10 +30,15 @@ function hashPassword(password: string) {
 }
 function verifyPassword(password: string, stored: string | null) {
   if (!stored) return false;
-  const [algorithm, salt, expected] = stored.split(':');
-  if (algorithm !== 'scrypt' || !salt || !expected || expected.length !== 128) return false;
-  const actual = scryptSync(password, Buffer.from(salt,'hex'),64);
-  return timingSafeEqual(actual, Buffer.from(expected,'hex'));
+  const parts = stored.split(':');
+  if (parts.length !== 3) return false;
+  const [algorithm, salt, expected] = parts;
+  // A truncated/non-hex hash must fail as invalid credentials, never crash
+  // timingSafeEqual or turn a normal login into a 500 response.
+  if (algorithm !== 'scrypt' || !/^[0-9a-f]{32}$/i.test(salt) ||
+      !/^[0-9a-f]{128}$/i.test(expected)) return false;
+  const actual = scryptSync(password, Buffer.from(salt, 'hex'), 64);
+  return timingSafeEqual(actual, Buffer.from(expected, 'hex'));
 }
 
 
@@ -134,73 +139,106 @@ export class AuthService {
     return { phone, sent: true, devCode: this.sms.exposesCode && !isProd ? code : undefined };
   }
 
-  /** role не передан — вход «как есть»: новый номер становится клиентом, у существующего роли не меняются */
+  /** SMS is for registration / recovery only. Redeem an SMS code exactly once. */
   async verify(rawPhone: string, code: string, role?: SelfRole, device?: string, accountType?: AccountChoice, password?: string, purpose: 'register' | 'reset' = 'register') {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
-    // Re-check on verification: users may forge accountType or re-use an old SMS.
     if (purpose === 'register') await this.ensureInsuranceRegistration(phone, accountType ?? (role as AccountChoice | undefined));
-    const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
-      'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1', [phone],
-    );
-    if (!row || new Date(row.expires_at) < this.now()) throw bad('code_expired', 'Код устарел, запросите новый');
-    if (row.purpose !== purpose && isProd) throw bad('wrong_purpose', 'Запросите код для выбранной операции');
     if (isProd && !passwordValid(password ?? '')) throw bad('weak_password', 'Пароль — от 10 до 128 символов');
-    if (row.attempts >= MAX_ATTEMPTS) throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код');
-    if (row.code_hash !== hmac(phone + ':' + code.trim())) {
-      await this.db.query('update auth_codes set attempts = attempts + 1 where phone=$1', [phone]);
-      throw bad('wrong_code', 'Неверный код');
-    }
-    await this.db.query('delete from auth_codes where phone=$1', [phone]);
 
-    // Production never grants administrator privileges from control of an SMS number alone.
-    // Historical development fixtures retain the old behavior solely outside production.
-    const extra = !isProd && config.adminPhones.includes(phone) ? ['admin'] : [];
+    // Reject invalid role pairs before using a one-time SMS code; a typo or
+    // forged category must not burn an otherwise valid registration attempt.
     const requested = purpose === 'reset' ? [] : accountType ? requestedRoles(accountType) : role ? [role] : [];
-    if (role && accountType && !requested.includes(role)) {
+    if (purpose !== 'reset' && role && accountType && !requested.includes(role))
       throw bad('invalid_role', 'Указанная специализация не соответствует типу регистрации');
-    }
-    // Serialize per-phone account creation/role changes, so two simultaneous requests
-    // cannot bypass the mutually exclusive role policy.
-    const user = await this.db.tx(async (q) => {
+
+    // Use the same advisory lock as requestCode(), plus a row lock: concurrent
+    // verify / resend requests cannot both redeem a code or increment a stale
+    // attempt counter. Account + password + new session + code deletion either
+    // commit together or do not change at all.
+    const result = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['sms:' + phone]);
+      const row = await q.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
+        'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1 for update', [phone]);
+      if (!row || new Date(row.expires_at) < this.now())
+        throw bad('code_expired', 'Код устарел, запросите новый');
+      if (row.purpose !== purpose && isProd)
+        throw bad('wrong_purpose', 'Запросите код для выбранной операции');
+      if (row.attempts >= MAX_ATTEMPTS)
+        throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код');
+
+      if (row.code_hash !== hmac(phone + ':' + code.trim())) {
+        // Return a tagged result rather than throwing inside the transaction:
+        // the increment must COMMIT even though the HTTP response is an error.
+        await q.query('update auth_codes set attempts=attempts+1 where phone=$1', [phone]);
+        return { kind: 'wrong_code' as const };
+      }
+
+      // Match the account lock used by other flows without losing the SMS lock.
       await q.query('select pg_advisory_xact_lock(hashtext($1))', [phone]);
-      const previous = await q.one<AuthUser>('select id, phone, name, roles, status, owner_id from users where phone=$1 for update', [phone]);
-      // A plain login never grants additional privileges. The legacy client default
-      // applies only to a genuinely new account without a selected category.
-      if (purpose === 'reset' && !previous) throw bad('not_registered', 'Такой аккаунт не найден');
-      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone) || (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone)))
+      const previous = await q.one<AuthUser>(
+        'select id, phone, name, roles, status, owner_id from users where phone=$1 for update', [phone]);
+      if (purpose === 'reset' && !previous)
+        throw bad('not_registered', 'Такой аккаунт не найден');
+      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') ||
+          config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone) ||
+          (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone)))
         throw new HttpError(403, 'staff_recovery_protected', 'Нельзя сбросить служебный пароль только по SMS.');
-      if (previous && purpose === 'register' && isProd) throw bad('already_registered', 'Аккаунт уже зарегистрирован');
+      if (previous && purpose === 'register' && isProd)
+        throw bad('already_registered', 'Аккаунт уже зарегистрирован');
+
+      // A blocked account can appeal using proof of its phone, but must not
+      // silently change password or roles before receiving the 403 response.
+      if (previous?.status !== undefined && previous.status !== 'active') {
+        await q.query('delete from auth_codes where phone=$1', [phone]);
+        return { kind: 'blocked' as const };
+      }
+
+      const extra = !isProd && config.adminPhones.includes(phone) ? ['admin'] : [];
+      let user: AuthUser | null;
       if (previous) {
         const roles = requested.length ? validateRoles(previous.roles, requested) : previous.roles;
         const normalized = [...new Set([...roles, ...extra])];
-        return await q.one<AuthUser>('update users set roles=$2::text[], password_hash=coalesce($3,password_hash), last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id,false as inserted',
+        if (!staffRoleAllowed(phone, normalized))
+          throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
+        user = await q.one<AuthUser>(
+          'update users set roles=$2::text[], password_hash=coalesce($3,password_hash), last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id,false as inserted',
           [previous.id, normalized, password ? hashPassword(password) : null]);
+      } else {
+        const roles = [...new Set([...(requested.length ? requested : ['client']), ...extra])];
+        validateRoles([], roles);
+        if (!staffRoleAllowed(phone, roles))
+          throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
+        user = await q.one<AuthUser>(
+          'insert into users(phone,roles,registration_kind,password_hash) values ($1,$2::text[],$3,$4) returning id,phone,name,roles,status,owner_id,true as inserted',
+          [phone, roles, accountType ?? (role === 'driver' ? 'driver' : role === 'master' || role === 'tow' || role === 'service' || role === 'insurer' ? role : 'owner'),
+            password ? hashPassword(password) : null]);
       }
-      const roles = [...new Set([...(requested.length ? requested : ['client']), ...extra])];
-      validateRoles([], roles);
-      return await q.one<AuthUser>('insert into users(phone,roles,registration_kind,password_hash) values ($1,$2::text[],$3,$4) returning id,phone,name,roles,status,owner_id,true as inserted',
-        [phone, roles, accountType ?? (role === 'driver' ? 'driver' : role === 'master' || role === 'tow' || role === 'service' || role === 'insurer' ? role : 'owner'), password ? hashPassword(password) : null]);
-    });
-    if (!user || user.status !== 'active') {
-      // Заблокированный может оспорить блокировку — номер подтверждён кодом, выдаём одноразовый пропуск на обжалование
-      throw new HttpError(403, 'blocked', 'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.', { appealToken: appealToken(phone, this.now()) });
-    }
+      if (!user) throw new Error('Не удалось сохранить подтверждённый аккаунт');
+      if (user.status !== 'active')
+        throw new HttpError(403, 'blocked', 'Подтверждённый аккаунт недоступен');
 
-    // Password reset invalidates every prior session; a stolen token cannot survive recovery.
-    if (purpose === 'reset') {
-      // Legacy tokens are not session-bound; clear them too when credentials change.
-      await this.db.query('delete from push_tokens where user_id=$1', [user.id]);
-      await this.db.query('delete from sessions where user_id=$1', [user.id]);
-      if (!staffRoleAllowed(phone, user.roles))
-      throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
-    await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
-    }
-    const token = newToken();
-    await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)', [
-      sha256(token), user.id, new Date(this.now().getTime() + SESSION_DAYS * 86_400_000), device ?? null,
-    ]);
-    return { token, user };
+      if (purpose === 'reset') {
+        // The credential rotation and revocation of all previous sessions,
+        // including push registrations, must be one transaction.
+        await q.query('delete from push_tokens where user_id=$1', [user.id]);
+        await q.query('delete from sessions where user_id=$1', [user.id]);
+        await q.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
+      }
+      await q.query('delete from auth_codes where phone=$1', [phone]);
+      const token = newToken();
+      await q.query(
+        'insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)',
+        [sha256(token), user.id, new Date(this.now().getTime() + SESSION_DAYS * 86_400_000), device ?? null]);
+      return { kind: 'ok' as const, token, user };
+    });
+
+    if (result.kind === 'wrong_code') throw bad('wrong_code', 'Неверный код');
+    if (result.kind === 'blocked')
+      throw new HttpError(403, 'blocked',
+        'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.',
+        { appealToken: appealToken(phone, this.now()) });
+    return { token: result.token, user: result.user };
   }
 
   /** Normal login: never sends SMS and never changes roles. */

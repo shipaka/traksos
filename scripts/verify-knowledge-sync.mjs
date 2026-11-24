@@ -24,6 +24,7 @@ const required=[
 for(const path of required) if(!existsSync(path))throw new Error('Knowledge release missing file: '+path);
 const econ=file('web/src/screens/economicsGuide.tsx');
 const help=file('web/src/screens/help.tsx');
+const fleet=file('web/src/screens/fleet.tsx');
 const terms=file('web/src/screens/offers.tsx');
 const api=file('server/src/app.ts');
 const finance=file('server/src/domain/money.ts');
@@ -35,6 +36,12 @@ const nav=file('web/src/main.tsx');
 const init=file('server/src/domain/defaults.ts');
 for(const [name,passes] of [
   ['Help consumes live economics',help.includes('<EconomicsGuide')],
+  ['Driver help uses password for repeat QR sign-in',help.includes('с существующим аккаунтом входит по паролю') && help.includes('разовым подтверждением номера по SMS')],
+  ['Help never promises guessed tariffs or default 100% refund',!help.match(/clientFeePct\s*\?\?\s*5|backDiscount:\s*20_000|backHours:\s*48|serviceReferralDiscountPct\s*\?\?\s*1|sc\[k\]\s*\?\?\s*0/)],
+  ['Help uses neutral loading copy for financial uncertainty',help.includes('Действующий сервисный сбор пока не загружен') && help.includes('Актуальные условия возврата пока не загружены') && help.includes('Тариф консультации и условия возможной скидки')],
+  ['QR sticker uses password for existing drivers and SMS for signup',fleet.includes('Сканируйте QR → войдите по паролю') && fleet.includes('Регистрация с SMS') && !fleet.includes('телефон → код из SMS') && !fleet.includes('Без регистрации и анкет')],
+  ['QR on-screen flow asks for explicit vehicle linking',fleet.includes('Я водитель этой машины') && fleet.includes('Затем нажимает «Я водитель этой машины»')],
+  ['Driver QR intent survives failed join until server confirms success',/if\s*\(r\)\s*\{\s*try\s*\{\s*sessionStorage\.removeItem\('traksos\.qr'\)/.test(fleet)],
   ['Rules consume live economics',file('web/src/screens/rules.tsx').includes('<EconomicsGuide')],
   ['Legal view consumes live economics',terms.includes('<EconomicsGuide')],
   ['Role-scoped endpoint exists',api.includes("'/api/me/economics'")],

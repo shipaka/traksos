@@ -23,7 +23,14 @@ export class VehicleServiceRequests {
     return this.db.query(
       `select r.*, v.brand, v.model, v.plate from vehicle_service_requests r
        join vehicles v on v.id=r.vehicle_id
-       where r.owner_id=$1 and ($2::uuid = r.owner_id or v.driver_id=$2)
+       where r.owner_id=$1 and
+         ($2::uuid = r.owner_id or (v.driver_id=$2 and exists (
+            select 1 from users driver_u join users fleet_u
+              on fleet_u.id=driver_u.owner_id
+             where driver_u.id=$2 and driver_u.owner_id=r.owner_id
+               and 'driver'=any(driver_u.roles)
+               and (fleet_u.fleet->'allow'->>r.kind)::boolean is true
+         )))
          and r.kind = any($3::text[])
        order by r.created_at desc`, [owner, user.id, kinds]);
   }
@@ -46,11 +53,26 @@ export class VehicleServiceRequests {
               ), '[]'::json) as events
        from vehicle_service_requests r
        where r.vehicle_id=$1 and r.owner_id=$2 and r.kind=any($3::text[])
-       order by r.created_at desc`, [vehicleId, owner, kinds]);
+         -- Authorization is repeated in the SAME PostgreSQL snapshot as
+         -- the records. A separate vehicle check above is only a fast UX
+         -- error and cannot grant access after a reassignment between reads.
+         and ($4::uuid = r.owner_id or exists (
+           select 1 from vehicles vv join users driver_u on driver_u.id=$4
+             join users fleet_u on fleet_u.id=driver_u.owner_id
+            where vv.id=r.vehicle_id and vv.owner_id=r.owner_id
+              and vv.driver_id=driver_u.id and driver_u.owner_id=r.owner_id
+              and 'driver'=any(driver_u.roles)
+              and (fleet_u.fleet->'allow'->>r.kind)::boolean is true
+         ))
+       order by r.created_at desc`, [vehicleId, owner, kinds, user.id]);
   }
 
   async create(user: AuthUser, vehicleId: string | undefined, kind: VehicleServiceKind, comment?: string,
     insurance?: {agentId:string; details:{ applicant:{firstName:string;lastName:string;middleName?:string}; vehicle:Record<string,string>; consentAt?:string}}) {
+    // A logged-in staff or contractor account is not a customer. Enforce
+    // the same customer boundary in the SERVICE, even if the UI is bypassed.
+    if (!user.roles?.some(role => role === 'client' || role === 'driver'))
+      throw forbidden('Создать обращение может только клиент или водитель автопарка');
     const owner = user.owner_id ?? user.id;
     if (!vehicleId && (!insurance || kind !== 'insurance')) throw bad('bad_vehicle', 'Выберите автомобиль');
     // Lock the owner before duplicate lookup: simultaneous insurance submissions cannot create two identical cars.
@@ -93,7 +115,7 @@ export class VehicleServiceRequests {
       if (insurance && vehicleId) {
         // A selected garage record must not be paired with an unrelated VIN or registration.
         const supplied = insurance.details.vehicle;
-        const norm = (value: unknown) => String(value ?? '').trim().toUpperCase().replace(/\\s+/g, '');
+        const norm = (value: unknown) => String(value ?? '').trim().toUpperCase().replace(/\s+/g, '');
         if (norm(locked.brand) !== norm(supplied.brand) ||
             (locked.model && norm(locked.model) !== norm(supplied.model)) ||
             (locked.year && Number(locked.year) !== Number(supplied.year)) ||
@@ -104,8 +126,12 @@ export class VehicleServiceRequests {
         // Do not overwrite missing VIN from unverified client text: insurer must verify documents.
       }
       if (user.owner_id) {
-        const settings = await q.one<any>('select fleet from users where id=$1', [owner]);
+        const settings = await q.one<any>('select fleet from users where id=$1 for share', [owner]);
         if (settings?.fleet?.allow?.[kind] !== true) throw forbidden('Владелец не разрешил эту услугу');
+        const driver = await q.one<{id:string}>(
+          "select id from users where id=$1 and owner_id=$2 and 'driver'=any(roles) and status='active' for share",
+          [user.id, owner]);
+        if (!driver) throw forbidden('Водитель больше не связан с этим автопарком');
       }
       const active = await q.one<{ id: string }>(
         `select id from vehicle_service_requests
@@ -116,7 +142,7 @@ export class VehicleServiceRequests {
       if (insurance) {
         if (kind !== 'insurance') throw bad('invalid_kind', 'Агент выбирается только для страхования');
         const partner=await q.one<{id:string}>(`select id from users
-          where id=$1 and 'insurer'=any(roles) and status='active'`,[insurance.agentId]);
+          where id=$1 and 'insurer'=any(roles) and status='active' for share`,[insurance.agentId]);
         if(!partner)throw notFound('Страховой агент недоступен');
       }
       const created = insurance
@@ -143,7 +169,9 @@ export class VehicleServiceRequests {
        where id=$1 and owner_id=$2 and status in ('submitted','in_review','need_documents')
        and ($3::uuid = owner_id or (requested_by=$3 and exists (
          select 1 from vehicles v join users u on u.id=v.owner_id
+           join users driver_u on driver_u.id=v.driver_id
          where v.id=vehicle_service_requests.vehicle_id and v.driver_id=$3
+           and driver_u.owner_id=v.owner_id and 'driver'=any(driver_u.roles)
            and (u.fleet->'allow'->>vehicle_service_requests.kind)::boolean is true
        ))) returning *`, [id, owner, user.id]);
     if (!r) throw notFound('Заявка не найдена или её уже нельзя отменить');
@@ -186,8 +214,11 @@ export class VehicleServiceRequests {
         }
       }
       const updated = await q.one(
-        `update vehicle_service_requests set status=$2, staff_note=$3, assigned_to=$4, policy_expires_on=coalesce($5::date, policy_expires_on), updated_at=now()
-         where id=$1 returning *`, [id, status, note?.trim() || null, isStaff ? staff.id : current.assigned_to, policyExpiresOn ?? null]);
+        `update vehicle_service_requests set status=$2, staff_note=$3,
+           policy_expires_on=coalesce($4::date, policy_expires_on), updated_at=now()
+         where id=$1 returning *`, [id, status, note?.trim() || null, policyExpiresOn ?? null]);
+      // assigned_to is the selected insurance/inspection PARTNER, never the
+      // administrator/moderator reviewing a status. Assignment has its own API.
       if (!updated) throw notFound('Заявка не найдена');
       return updated;
     });
@@ -218,7 +249,9 @@ export class VehicleServiceRequests {
   async recipients(request: Row) {
     const drivers = await this.db.query<{ id: string }>(
       `select v.driver_id as id from vehicles v join users u on u.id=v.owner_id
+        join users driver_u on driver_u.id=v.driver_id
        where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+         and driver_u.owner_id=v.owner_id and 'driver'=any(driver_u.roles)
          and (u.fleet->'allow'->>$4)::boolean is true`,
       [request.vehicle_id, request.owner_id, request.requested_by, request.kind],
     );
@@ -230,7 +263,7 @@ export class VehicleServiceRequests {
     if (!staff.roles?.some((role: string) => ['admin', 'moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async (q) => {
       const partner = await q.one<{ id: string }>(
-        `select id from users where id=$1 and 'insurer'=any(roles) and status='active'`, [insurerId]);
+        `select id from users where id=$1 and 'insurer'=any(roles) and status='active' for share`, [insurerId]);
       if (!partner) throw notFound('Страховщик не найден');
       const request = await q.one(
         `update vehicle_service_requests set assigned_to=$3, updated_at=now()
@@ -273,7 +306,7 @@ export class VehicleServiceRequests {
     if (!staff.roles?.some(role => ['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async q => {
       const partner = await q.one<{id:string}>(
-        `select id from users where id=$1 and roles && '{insurer,inspection_operator}'::text[] and status='active'`, [partnerId]);
+        `select id from users where id=$1 and roles && '{insurer,inspection_operator}'::text[] and status='active' for share`, [partnerId]);
       if (!partner) throw notFound('Партнёр техосмотра не найден');
       const request = await q.one<any>(
         `update vehicle_service_requests set assigned_to=$3, status='sent_to_partner', updated_at=now()

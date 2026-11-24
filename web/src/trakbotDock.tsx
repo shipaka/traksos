@@ -1,10 +1,21 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { TrakBotChat } from './screens/trakbot.tsx';
 import { TrakBotMascot } from './trakbotMascot.tsx';
+import { TRAKBOT_OPEN_EVENT } from './trakbotEvents.ts';
 
 /** A user-opened side assistant, never a popup on its own. No public-feed activity. */
 export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
   const [open, setOpen] = useState(false);
+  const shortcutRef = useRef<HTMLElement | null>(null);
+  // A shortcut opens this single existing dock; it never creates another chat.
+  useEffect(() => {
+    const openExisting = (event: Event) => {
+      shortcutRef.current = event.target instanceof HTMLElement ? event.target : null;
+      setOpen(true);
+    };
+    window.addEventListener(TRAKBOT_OPEN_EVENT, openExisting);
+    return () => window.removeEventListener(TRAKBOT_OPEN_EVENT, openExisting);
+  }, []);
   const [inputFocused, setInputFocused] = useState(false);
   const [visibleViewport, setVisibleViewport] = useState({ height: 700, width: 390, rightInset: 0, bottomInset: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -21,7 +32,19 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     if (blurTimerRef.current !== null) clearTimeout(blurTimerRef.current);
   }, []);
 
-  const close = () => { cancelBlurTimer(); setOpen(false); setInputFocused(false); triggerRef.current?.focus(); };
+  const dismiss = () => {
+    cancelBlurTimer();
+    shortcutRef.current = null;
+    setOpen(false);
+    setInputFocused(false);
+  };
+  const close = () => {
+    const shortcut = shortcutRef.current;
+    const closedMenu = shortcut?.closest('details:not([open])');
+    const opener = closedMenu ? closedMenu.querySelector('summary') : shortcut;
+    dismiss();
+    (opener?.isConnected ? opener : triggerRef.current)?.focus();
+  };
   // Android WebView can leave the layout viewport taller than the visible area
   // when the soft keyboard opens. Use visualViewport to anchor a compact panel
   // above the keyboard, without hiding the send field or covering the full app.
@@ -57,7 +80,7 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); close(); }
     };
-    const navigation = () => setOpen(false);
+    const navigation = () => dismiss();
     document.addEventListener('keydown', escape);
     window.addEventListener('hashchange', navigation);
     if (!openedRef.current) { closeRef.current?.focus(); openedRef.current = true; }
@@ -99,29 +122,29 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
       {open && <div className={'trakbot-dock-panel' + (!authenticated ? ' trakbot-dock-panel--guest' : '')}
         role="dialog" aria-label="TrakBot — личный помощник" aria-modal="false">
         <header className="trakbot-dock-head">
-          <div className="trakbot-dock-brand"><TrakBotMascot reaction="hello" size="small" />
+          <div className="trakbot-dock-brand"><TrakBotMascot reaction="hello" size="small" ambient />
             <span><b>TrakBot</b><small>Технический помощник TrakSOS</small></span></div>
           <button ref={closeRef} type="button" className="trakbot-dock-close" onClick={close} aria-label="Закрыть TrakBot">×</button>
         </header>
-        {authenticated ? <TrakBotChat compact onNavigate={() => setOpen(false)}
+        {authenticated ? <TrakBotChat compact onNavigate={dismiss}
           onComposerSubmit={() => setInputFocused(false)} /> :
           <div className="trakbot-dock-guest">
             <div className="trakbot-dock-guest-mascot">
-              <TrakBotMascot reaction="hello" size="small" />
+              <TrakBotMascot reaction="hello" size="small" ambient />
               <p><b>Привет! Я TrakBot.</b>
                 <span>Помощник TrakSOS. Хочешь познакомиться? Войди или зарегистрируйся.</span>
               </p>
             </div>
             <nav aria-label="Вход и регистрация">
-              <a href="#/login" onClick={() => setOpen(false)}>Войти</a>
-              <a href="#/register" onClick={() => setOpen(false)}>Зарегистрироваться</a>
+              <a href="#/login" onClick={dismiss}>Войти</a>
+              <a href="#/register" onClick={dismiss}>Зарегистрироваться</a>
             </nav>
           </div>}
       </div>}
       <button ref={triggerRef} type="button" className="trakbot-dock-launcher"
         aria-label={open ? 'Закрыть TrakBot' : 'Открыть TrakBot'} aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}>
-        <TrakBotMascot reaction={open ? 'ok' : 'hello'} size="small" />
+        onClick={() => { if (open) close(); else setOpen(true); }}>
+        <TrakBotMascot reaction={open ? 'ok' : 'hello'} size="small" ambient />
         <span className="trakbot-dock-label">{open ? 'Закрыть' : authenticated ? 'TrakBot' : 'Наш ИИ-помощник'}</span>
       </button>
     </aside>

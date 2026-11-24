@@ -3,7 +3,6 @@
 .app{--tv-cyan:#32e6fc;--tv-blue:#087db6;--tv-border:#356c96;--tv-pink:#f24fa7;}
 .app .top{background:linear-gradient(112deg,#06182d,#071d33 72%,#092b45);border-bottom:1px solid #184e75;box-shadow:0 4px 22px #0003;}
 .app .top .logo{color:#fff;font-weight:900;letter-spacing:-1.4px;font-style:italic;}
-.app .top .logo b{color:#10dff8;}
 .app .guest-header-actions a.register{background:linear-gradient(120deg,#06d4ed,#13aaf8);color:#041625;box-shadow:0 0 17px #1de5f45d;border:1px solid #60ecf9;}
 .app .bell{border-radius:13px;box-shadow:0 0 12px #1fe3fb18;}
 .app .account-menu summary{border:1px solid #3a7397;border-radius:12px;box-shadow:0 5px 18px #0003;}

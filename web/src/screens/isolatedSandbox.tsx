@@ -27,9 +27,10 @@ export function SandboxEnter() {
       // Regular fictitious role tickets must never inherit that authority.
       if (json.role === 'admin') sessionStorage.setItem('traksos.sandboxSupervisorToken', json.token);
       else sessionStorage.removeItem('traksos.sandboxSupervisorToken');
-      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
+      try { localStorage.setItem('traksos.mode',sandboxWorkspaceMode(json.role)); } catch { /* private mode */ }
       if (typeof json.returnUrl === 'string' && json.returnUrl.startsWith('https://'))
         sessionStorage.setItem('traksos.sandboxReturnUrl', json.returnUrl);
+      else sessionStorage.removeItem('traksos.sandboxReturnUrl'); // Never reuse another ticket's back destination.
       setToken(json.token);
       location.replace(location.pathname + location.search + json.landing);
       location.reload();
@@ -41,6 +42,16 @@ export function SandboxEnter() {
     <h1>{error ? 'Не удалось открыть кабинет' : 'Открываем рабочий кабинет TrakSOS'}</h1>
     <p>{error || 'Используются настоящие экраны приложения и тестовая база. Настоящие клиенты и платежи не затрагиваются.'}</p>
   </main>;
+}
+
+/** HMAC-authorized sandbox mode is a navigation preference, never an ACL grant.
+ * Keep it in sync with the role after a deep-link or a role switch, otherwise
+ * generic #/menu would fall back to client and show the wrong legal offer. */
+function sandboxWorkspaceMode(role:string) {
+  if(role==='owner'||role==='driver'||role==='client')return 'client';
+  if(role==='master'||role==='tow')return 'performer';
+  if(role==='master_service'||role==='service')return 'service';
+  return ['admin','moderator','courier','insurer','inspection'].includes(role)?role:'client';
 }
 
 const SANDBOX_ROLE_CHOICES = [
@@ -81,7 +92,7 @@ export function SandboxModeBadge() {
           typeof data?.token !== 'string' || typeof data?.landing !== 'string' ||
           !data.landing.startsWith('#/'))
         throw new Error(data?.message || 'Не удалось открыть тестовый кабинет');
-      try { localStorage.removeItem('traksos.mode'); } catch { /* private mode */ }
+      try { localStorage.setItem('traksos.mode',sandboxWorkspaceMode(data.role)); } catch { /* private mode */ }
       setToken(data.token);
       location.replace(location.pathname + location.search + data.landing);
       location.reload();
@@ -93,10 +104,13 @@ export function SandboxModeBadge() {
 
   if (!supervisorToken) return returnUrl
     ? <a className="pill accent sandbox-test-badge" href={returnUrl}
-        aria-label="Тест. К выбору тестовых кабинетов" title="К выбору тестовых кабинетов">Тест</a>
+        aria-label="Admin · Тест · Назад к выбору кабинетов" title="Назад к выбору кабинетов">
+        Admin · Тест · ← Назад
+      </a>
     : <span className="pill accent sandbox-test-badge">Тест</span>;
-  return <details className="sandbox-supervisor-badge">
-    <summary className="pill accent sandbox-test-badge" aria-label="Тест. Переключить кабинет" title="Тестовые кабинеты">Тест</summary>
+  return <div className="sandbox-supervisor-controls">
+    <details className="sandbox-supervisor-badge">
+    <summary className="pill accent sandbox-test-badge" aria-label="Admin · Тест · Переключить кабинет" title="Тестовые кабинеты">Admin · Тест</summary>
     <div className="sandbox-supervisor-menu">
       <label htmlFor="sandbox-switch-role">Открыть тестовый кабинет</label>
       <select id="sandbox-switch-role" value={selectedRole} disabled={switching}
@@ -110,5 +124,7 @@ export function SandboxModeBadge() {
       {error && <span role="alert" className="sandbox-supervisor-error">{error}</span>}
       {returnUrl && <a href={returnUrl}>← К выбору кабинетов</a>}
     </div>
-  </details>;
+    </details>
+    {returnUrl && <a className="sandbox-review-back" href={returnUrl}>← Назад</a>}
+  </div>;
 }

@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 // Real authenticated Android layout evidence from synthetic local CI accounts only.
 import {chromium} from 'playwright';
 import {mkdir} from 'node:fs/promises';
@@ -32,7 +33,7 @@ try{
     }
     const ctx=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU',deviceScaleFactor:2});
     const page=await ctx.newPage();
-    const errors=[];page.on('pageerror',err=>errors.push(err.message));
+    const assertClean=watchPageErrors(page);
     await page.addInitScript(({token,mode})=>{
       Object.defineProperty(window,'TrakSOSNative',{configurable:true,value:{
         isApp:()=>true,setSession:()=>{},pushToken:()=>'',performerOnline:()=>{},
@@ -135,9 +136,10 @@ try{
       }
       const size=await page.evaluate(()=>({client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
       if(size.scroll>size.client+3)throw Error(role+' horizontal overflow '+JSON.stringify(size));
-      if(errors.length)throw Error(role+' JS errors: '+errors.join('; '));
+      await assertClean(role+' Android workdesk');
       await page.screenshot({path:output+'/'+role+'-android-390.png',fullPage:true,scale:'css'});
       await page.screenshot({path:output+'/'+role+'-android-390-retina2x.png',fullPage:true,scale:'device'});
+      await assertClean(role+' Android workdesk screenshots');
       console.log('Captured real Android native-bridge browser workspace at CSS 390px + physical 2x: '+role);
       // After accepting the role's desktop, verify the WHOLE native app:
       // bottom Menu opens role-specific sections, not only the Profile screen.
@@ -146,6 +148,7 @@ try{
       await menuTab.click();
       const menu=page.locator('main.tr-mobile-menu-page');
       await menu.waitFor({state:'visible',timeout:15000});
+      await assertClean(role+' Android menu');
       const info=await menu.evaluate(el=>({
         title:el.querySelector('h1')?.textContent,
         groups:el.querySelectorAll('.tr-mobile-menu-section').length,
@@ -171,23 +174,38 @@ try{
       // Capture the real fully-painted menu, not the first 0%-opacity frame
       // of the approved 180ms opening animation. Only screenshot timing changes.
       await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
-      const helpDetails=page.locator('details.tr-mobile-menu-section').last();
-      if(await helpDetails.getAttribute('open')!==null)
-        throw Error(role+': help and documents must be collapsed until explicitly requested');
+      // The approved Account section is now a fourth, collapsed <details>.
+      // Locate Help by its accessible title, never by the fragile last() index.
+      const helpDetails=page.locator('details.tr-mobile-menu-section').filter({
+        has:page.locator('summary[aria-label="Помощь и документы"]')
+      });
+      if(await helpDetails.count()!==1||await helpDetails.getAttribute('open')!==null)
+        throw Error(role+': help and documents must exist and be collapsed until requested');
       await helpDetails.locator('summary').click();
       if(!await helpDetails.locator('a[href="#/help"]').isVisible())
         throw Error(role+': help menu failed to expand to the real section');
+      await assertClean(role+' Android help menu');
       await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
-      await page.locator('.tr-mobile-menu-account a[href="#/profile"]').click();
+      const accountDetails=page.locator('details.tr-mobile-menu-account');
+      if(await accountDetails.count()!==1||await accountDetails.getAttribute('open')!==null)
+        throw Error(role+': approved Account section must start collapsed');
+      await accountDetails.locator('summary').click();
+      if(!await accountDetails.locator('a[href="#/profile"]').isVisible()||
+         !await accountDetails.locator('button.tr-mobile-menu-logout').isVisible())
+        throw Error(role+': account did not reveal the real profile and logout actions');
+      await assertClean(role+' Android account menu');
+      await accountDetails.locator('a[href="#/profile"]').click();
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
       await page.locator('main.account-profile-page').waitFor({state:'visible',timeout:15000});
       if(await page.locator('main.tr-mobile-menu-page').count())
         throw Error(role+': Profile shortcut did not navigate to real settings');
       if(await page.locator('.tabbar a[href="#/menu"]').count()!==1)
         throw Error(role+': bottom Menu vanished inside profile/settings');
+      await assertClean(role+' Android profile');
       if(role==='master') {
         await page.goto(BASE+'/#/work/docs',{waitUntil:'domcontentloaded'});
         await page.locator('.tabbar a[href="#/menu"]').waitFor({state:'visible'});
+        await assertClean(role+' Android documents');
       }
       // Test an accessible small Android phone, without changing baseline 390px screenshots.
       await page.goto(BASE+'/#/menu',{waitUntil:'domcontentloaded'});
@@ -197,7 +215,7 @@ try{
       const narrow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
       if(narrow>3)throw Error(role+': menu horizontal overflow on 320px: '+narrow);
       await page.screenshot({path:output+'/'+role+'-menu-android-320.png',fullPage:true,scale:'css',animations:'disabled'});
-      if(errors.length)throw Error(role+': menu JavaScript error(s) '+errors.join('; '));
+      await assertClean(role+' Android narrow menu');
       // Important user-facing sections must be visually checked too; a
       // polished desktop must not hide unfinished empty Android subpages.
       const destinations = role==='owner'
@@ -231,7 +249,9 @@ try{
            !view.chrome?.title)
           throw Error(role+': section '+section+' is not a reachable styled Android page: '+JSON.stringify(view));
         await page.screenshot({path:output+'/'+role+'-'+section+'-android-390.png',fullPage:true,scale:'css'});
+        await assertClean(role+' Android '+section);
       }
+      await assertClean(role+' Android final');
     }finally{await ctx.close()}
   }
 }finally{await browser.close()}

@@ -1,9 +1,10 @@
 // Карточка пользователя для администратора: всё о человеке и все действия над ним — по разделам.
 
-import { useState } from 'react';
-import { get, post, rub, fmtPhone, fmtTime } from '../api.ts';
+import { useEffect, useState } from 'react';
+import { post, rub, fmtPhone, fmtTime } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
-import { useLoad, useAction, Loading, Back, RubInput, go } from '../ui.tsx';
+import {useAction,useMe,Back,RubInput,go} from '../ui.tsx';
+import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
 
 const ROLE_NAMES: Record<string, string> = {
   client: 'Клиент', driver: 'Водитель', master: 'Мастер', tow: 'Эвакуатор', service: 'Сервис / рембаза', insurer: 'Страховой партнёр', inspection_operator: 'Оператор техосмотра', moderator: 'Модератор', admin: 'Админ',
@@ -15,11 +16,30 @@ const TABS = [
 type Tab = (typeof TABS)[number][0];
 
 export function AdminUser({ id }: { id: string }) {
-  const card = useLoad(() => get(`/api/admin/users/${id}`), [id]);
-  const [tab, setTab] = useState<Tab>('profile');
-  if (!card.data) return <main><Back to="admin" /><Loading error={card.error} /></main>;
-  const c = card.data;
-  const u = c.user;
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':admin-user:'+id;
+  const card=useAdminScopedResource<any>(`/api/admin/users/${encodeURIComponent(id)}`,scope,admin);
+  const [tab,setTab]=useState<Tab>('profile');
+  useEffect(()=>setTab('profile'),[scope]);
+  if(!admin)return <main><Back to="admin"/>
+    <div className="card" role="alert">Карточки пользователей доступны только администратору.</div>
+  </main>;
+  if(!card.data?.user||!Array.isArray(card.data.user.roles)||!card.data.pricing||
+    !Array.isArray(card.data.asClient)||!Array.isArray(card.data.vehicles)||
+    !Array.isArray(card.data.sessions))
+    return <main><Back to="admin"/>
+      <div className="card stack" role={card.error||card.data?'alert':'status'}>
+        {card.error?'Не удалось загрузить пользователя: '+card.error:
+          card.data?'Карточка пользователя получена не полностью. Действия недоступны.':
+          'Загружаем карточку пользователя…'}
+        <button type="button" className="btn ghost small" onClick={card.reload}>
+          Повторить загрузку карточки
+        </button>
+      </div>
+    </main>;
+  const c=card.data;
+  const u=c.user;
   const tabs = TABS.filter(([k]) => k !== 'performer' || c.performer);
   return (
     <main>
@@ -36,12 +56,12 @@ export function AdminUser({ id }: { id: string }) {
         {c.performer && <span className="pill">{LINE[c.performer.line_status]}</span>}
       </div>
       <div className="scroll-x">{tabs.map(([k, n]) => <button key={k} className="chip" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}</div>
-      {tab === 'profile' && <ProfileTab c={c} reload={card.reload} />}
+      {tab==='profile'&&<ProfileTab key={scope+':profile'} c={c} reload={card.reload}/>}
       {tab === 'orders' && <OrdersTab c={c} />}
       {tab === 'cars' && <CarsTab c={c} />}
-      {tab === 'performer' && c.performer && <PerformerTab c={c} reload={card.reload} />}
-      {tab === 'reviews' && <ReviewsTab c={c} reload={card.reload} />}
-      {tab === 'payments' && <PaymentsTab c={c} reload={card.reload} />}
+      {tab==='performer'&&c.performer&&<PerformerTab key={scope+':performer'} c={c} reload={card.reload}/>}
+      {tab==='reviews'&&<ReviewsTab key={scope+':reviews'} c={c} reload={card.reload}/>}
+      {tab==='payments'&&<PaymentsTab key={scope+':payments'} c={c} reload={card.reload}/>}
       {tab === 'log' && <LogTab c={c} />}
     </main>
   );
@@ -56,10 +76,23 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
   const [bonus, setBonus] = useState<number | null>(null);
   const [bonusReason, setBonusReason] = useState('');
   const [blockReason, setBlockReason] = useState('');
-  const act = (fn: () => Promise<unknown>, text: string) => run(fn, text).then((r) => r && reload());
+  const [profileError,setProfileError]=useState('');
+  const parsedFee=fee.trim()===''?null:Number(fee);
+  const validFee=fee.trim()===''||(/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(fee)&&
+    Number.isFinite(parsedFee)&&parsedFee!==null&&parsedFee>=0&&parsedFee<=30);
+  const validBonus=bonus!==null&&Number.isSafeInteger(bonus)&&bonus>0;
+  const act=(fn:()=>Promise<unknown>,message:string,confirmation?:string)=>{
+    if(confirmation&&!window.confirm(confirmation))return;
+    setProfileError('');
+    return run(fn,message).then(result=>{
+      if(result)reload();
+      else setProfileError('Изменение не подтверждено. Сверьте историю пользователя перед повтором.');
+    });
+  };
 
   return (
     <div className="stack">
+      {profileError&&<div className="banner warn" role="alert">{profileError}</div>}
       <div className="card">
         <dl className="kv">
           <dt>Телефон</dt><dd>{fmtPhone(u.phone)}</dd>
@@ -74,11 +107,16 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
         <b>Цена для этого клиента</b>
         <span className="note">Общий сбор площадки — {c.pricing.defaultFeePct}%. Персональный действует на новые заявки. Скидки и бонусы оплачивает площадка — исполнитель получает полностью.</span>
         <div className="compose">
-          <input className="field" inputMode="decimal" placeholder={`Сбор, % (пусто — ${c.pricing.defaultFeePct}%)`} value={fee} onChange={(e) => setFee(e.target.value.replace(/[^\d.]/g, ''))} />
+          <input className="field" inputMode="decimal" aria-label="Персональный сбор, %" placeholder={`Сбор, % (пусто — ${c.pricing.defaultFeePct}%)`}
+            value={fee} onChange={e=>setFee(e.target.value.replace(/[^\d.,]/g,'').replace(',','.'))} />
         </div>
         <input className="field" placeholder="Причина: свой клиент, компания с парком…" value={feeReason} onChange={(e) => setFeeReason(e.target.value)} />
-        <button className="btn small" disabled={busy || feeReason.length < 3} onClick={() =>
-          act(() => post(`/api/admin/users/${u.id}/fee`, { pct: fee === '' ? null : Number(fee), reason: feeReason }), fee === '' ? 'Вернули общий сбор' : `Сбор клиента — ${fee}%`)}>Сохранить сбор</button>
+        {!validFee&&<span className="note" role="alert">Сбор должен быть от 0 до 30%, не более двух знаков после запятой.</span>}
+        <button className="btn small" disabled={busy||!validFee||feeReason.trim().length<3} onClick={()=>void act(
+          ()=>post(`/api/admin/users/${u.id}/fee`,{pct:parsedFee,reason:feeReason.trim()}),
+          fee===''?'Вернули общий сбор':`Сбор клиента — ${fee}%`,
+          'Подтвердить персональный сервисный сбор для этого пользователя?'
+        )}>Сохранить сбор</button>
 
         <div className="hr" />
         <div className="between"><b>Бонусы</b><span className="pill good">{rub(c.pricing.bonus)}</span></div>
@@ -88,10 +126,12 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
         </div>
         <input className="field" placeholder="За что: первый заказ, извинения за ожидание…" value={bonusReason} onChange={(e) => setBonusReason(e.target.value)} />
         <div className="grid2">
-          <button className="btn ghost small" disabled={busy || !bonus || bonusReason.length < 3} onClick={() =>
-            act(() => post(`/api/admin/users/${u.id}/bonus`, { amount: -Math.abs(bonus!), reason: bonusReason }), 'Бонусы списаны')}>Списать</button>
-          <button className="btn small" disabled={busy || !bonus || bonusReason.length < 3} onClick={() =>
-            act(() => post(`/api/admin/users/${u.id}/bonus`, { amount: Math.abs(bonus!), reason: bonusReason }), 'Бонусы начислены')}>Начислить</button>
+          <button className="btn ghost small" disabled={busy||!validBonus||bonusReason.trim().length<3} onClick={() =>
+            act(()=>post(`/api/admin/users/${u.id}/bonus`,{amount:-Math.abs(bonus!),reason:bonusReason.trim()}),
+               'Бонусы списаны','Подтвердить списание баллов пользователя?')}>Списать</button>
+          <button className="btn small" disabled={busy||!validBonus||bonusReason.trim().length<3} onClick={() =>
+            act(()=>post(`/api/admin/users/${u.id}/bonus`,{amount:Math.abs(bonus!),reason:bonusReason.trim()}),
+               'Бонусы начислены','Подтвердить начисление баллов пользователя?')}>Начислить</button>
         </div>
         {c.pricing.bonusEntries.length > 0 && (
           <div className="stack" style={{ gap: 4 }}>
@@ -122,7 +162,11 @@ function ProfileTab({ c, reload }: { c: any; reload: () => void }) {
         <span className="note">Блокировка сразу выкидывает со всех устройств; заявки в работе остаются — разберите их во вкладке «Заявки».</span>
         {u.status !== 'blocked' && <input className="field" placeholder="Причина" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} />}
         <button className={`btn ${u.status === 'blocked' ? '' : 'bad'}`} disabled={busy || (u.status !== 'blocked' && blockReason.length < 3)} onClick={() =>
-          act(() => post(`/api/admin/users/${u.id}/block`, { blocked: u.status !== 'blocked', reason: blockReason || undefined }), u.status === 'blocked' ? 'Разблокирован' : 'Заблокирован')}>
+          act(()=>post(`/api/admin/users/${u.id}/block`,
+            {blocked:u.status!=='blocked',reason:blockReason.trim()||undefined}),
+            u.status==='blocked'?'Разблокирован':'Заблокирован',
+            u.status==='blocked'?'Подтвердить снятие блокировки пользователя?':
+              'Подтвердить блокировку и немедленное завершение сеансов пользователя?')}>
           {u.status === 'blocked' ? 'Разблокировать' : 'Заблокировать'}
         </button>
       </div>
@@ -281,27 +325,49 @@ function ReviewsTab({ c, reload }: { c: any; reload: () => void }) {
   );
 }
 
-export function RefundForm({ pay, onDone }: { pay: any; onDone: () => void }) {
-  const { busy, run } = useAction();
-  const [open, setOpen] = useState(false);
-  const left = pay.total - pay.refunded_amount;
-  const [amount, setAmount] = useState<number | null>(left);
-  const [from, setFrom] = useState<'platform' | 'performer'>('platform');
-  const [reason, setReason] = useState('');
-  if (!['captured', 'partially_refunded'].includes(pay.status) || left <= 0) return null;
-  if (!open) return <button className="btn ghost small" onClick={() => setOpen(true)}>Вернуть деньги</button>;
-  return (
-    <div className="stack">
-      <RubInput value={amount} onChange={setAmount} placeholder={`До ${rub(left)}`} />
-      <div className="grid2">
-        <button className="seg" aria-pressed={from === 'platform'} onClick={() => setFrom('platform')}>За счёт площадки</button>
-        <button className="seg" aria-pressed={from === 'performer'} onClick={() => setFrom('performer')}>Удержать у исполнителя</button>
-      </div>
-      <input className="field" placeholder="Причина — клиент её увидит" value={reason} onChange={(e) => setReason(e.target.value)} />
-      <button className="btn" disabled={busy || !amount || amount > left || reason.length < 3} onClick={() =>
-        run(() => post(`/api/admin/payments/${pay.id}/refund`, { amount, from, reason }), `Возврат ${rub(amount)} отправлен`).then((r) => r && onDone())}>Вернуть {rub(amount ?? 0)}</button>
+export function RefundForm({pay,onDone}:{pay:any;onDone:()=>void}) {
+  const {busy,run}=useAction();
+  const [open,setOpen]=useState(false);
+  const left=Number(pay.total)-Number(pay.refunded_amount);
+  const [amount,setAmount]=useState<number|null>(left);
+  const [from,setFrom]=useState<'platform'|'performer'>('platform');
+  const [reason,setReason]=useState('');
+  const [error,setError]=useState('');
+  useEffect(()=>{
+    setOpen(false);setAmount(left);setFrom('platform');setReason('');setError('');
+  },[pay.id,left]);
+  const validAmount=amount!==null&&Number.isSafeInteger(amount)&&amount>0&&
+    Number.isSafeInteger(left)&&left>0&&amount<=left;
+  async function submit() {
+    if(busy||!validAmount||reason.trim().length<3||reason.trim().length>300)return;
+    if(!window.confirm('Подтвердить возврат '+rub(amount!)+' за счёт '+
+      (from==='platform'?'площадки':'исполнителя')+'? Денежная операция может быть необратимой.'))return;
+    setError('');
+    const result=await run(()=>post(`/api/admin/payments/${pay.id}/refund`,
+      {amount,from,reason:reason.trim()}),'Заявка на возврат отправлена');
+    if(result){setOpen(false);onDone();}
+    else setError('Подтверждение возврата не получено. НЕ отправляйте запрос повторно до сверки реестра возвратов и статуса у банка.');
+  }
+  if(!['captured','partially_refunded'].includes(pay.status)||!Number.isSafeInteger(left)||left<=0)return null;
+  if(!open)return <button type="button" className="btn ghost small" onClick={()=>setOpen(true)}>Вернуть деньги</button>;
+  return <div className="stack">
+    <span className="note">Доступно к возврату: {rub(left)}. Перед повтором после сетевого сбоя проверьте платёжный журнал.</span>
+    <RubInput value={amount} onChange={setAmount} placeholder={`До ${rub(left)}`} />
+    <div className="grid2">
+      <button type="button" className="seg" aria-pressed={from==='platform'} onClick={()=>setFrom('platform')}>За счёт площадки</button>
+      <button type="button" className="seg" aria-pressed={from==='performer'} onClick={()=>setFrom('performer')}>Удержать у исполнителя</button>
     </div>
-  );
+    <input className="field" aria-label="Причина возврата" maxLength={300}
+      placeholder="Причина — клиент её увидит" value={reason} onChange={e=>setReason(e.target.value)}/>
+    {error&&<div className="banner warn" role="alert">{error}</div>}
+    {amount!==null&&!validAmount&&<span className="note" role="alert">Укажите сумму в целых копейках не больше доступного остатка.</span>}
+    <div className="row">
+      <button type="button" className="btn ghost small" disabled={busy} onClick={()=>setOpen(false)}>Отмена</button>
+      <button type="button" className="btn"
+        disabled={busy||!validAmount||reason.trim().length<3}
+        onClick={()=>void submit()}>Вернуть {validAmount?rub(amount!):''}</button>
+    </div>
+  </div>;
 }
 
 const PAY_STATUS: Record<string, string> = {

@@ -169,3 +169,26 @@ html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:non
   background-size:100% 100%;
   background-position:center center;
 }
+
+
+/* One calm movement language for the approved TrakBot across docks, cabinets
+   and chat headers; reaction animation and reduced-motion controls win. */
+@media (prefers-reduced-motion:no-preference) {
+  html:not(.traksos-reduced-motion) .trakbot-mascot.is-ambient:not(.is-active) .trakbot-mascot-truck {
+    animation:trakbot-tech-bob 3.8s ease-in-out infinite;
+    transform-origin:50% 75%;
+  }
+}
+
+
+/* Approved v3 character originally comes as a square raster cell.
+   A shared soft-edge mask prevents visible rectangular stickers in the
+   public dock, guest greeting, cabinet cards and Android chat, while
+   leaving the source image, approved face and expressions unchanged. */
+.trakbot-mascot .trakbot-mascot-original {
+  border-radius:50%;
+  background-color:transparent;
+  box-shadow:none;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 51%,#000 0 58%,rgba(0,0,0,.96) 65%,transparent 82%);
+  mask-image:radial-gradient(ellipse at 50% 51%,#000 0 58%,rgba(0,0,0,.96) 65%,transparent 82%);
+}

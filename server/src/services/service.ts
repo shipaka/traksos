@@ -80,13 +80,38 @@ export class ServiceCenters {
            values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now())`,
           [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays)]);
       } else {
+        // Nullable coordinates are a real edit: undefined means "leave alone",
+        // while an explicit null must delete the old public stationary location.
+        // Evaluate the old row in THIS UPDATE (not a stale pre-transaction
+        // snapshot), and revoke consent and moderator geo proof atomically.
+        const locationChanged = `(
+          ($2::text is not null and name is distinct from $2::text)
+          or ($3::text is not null and address is distinct from $3::text)
+          or ($4::boolean and lat is distinct from $5::float8)
+          or ($6::boolean and lng is distinct from $7::float8)
+        )`;
         await q.query(
-          `update service_centers set name=coalesce($2::text,name), address=coalesce($3::text,address), lat=coalesce($4::float8,lat), lng=coalesce($5::float8,lng),
-             hours=coalesce($6::text,hours), inn=coalesce($7::text,inn), brands=coalesce($8::text[],brands), staff=coalesce($9::jsonb,staff),
-             conditions=coalesce($10::text[],conditions), accepts=coalesce($11::text[],accepts), closed_days=coalesce($12::date[],closed_days),
-             paused=coalesce($13::boolean,paused), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
+          `update service_centers set
+             name=coalesce($2::text,name), address=coalesce($3::text,address),
+             lat=case when $4::boolean then $5::float8 else lat end,
+             lng=case when $6::boolean then $7::float8 else lng end,
+             hours=coalesce($8::text,hours), inn=coalesce($9::text,inn),
+             brands=coalesce($10::text[],brands), staff=coalesce($11::jsonb,staff),
+             conditions=coalesce($12::text[],conditions), accepts=coalesce($13::text[],accepts),
+             closed_days=coalesce($14::date[],closed_days),
+             paused=coalesce($15::boolean,paused),
+             -- A form save is not the explicit weekly service attestation.
+             -- Full accepts/closedDays arrays are sent for ANY edited field;
+             -- only POST /api/base/confirm-accepts may renew this timestamp.
+
+             public_map_opt_in=case when ${locationChanged} then false else public_map_opt_in end,
+             public_map_opted_at=case when ${locationChanged} then null else public_map_opted_at end,
+             public_map_location_verified_at=case when ${locationChanged} then null else public_map_location_verified_at end
            where owner_id=$1`,
-          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused)]);
+          [user.id, v(p.name?.trim()), v(p.address?.trim()),
+           p.lat!==undefined, v(p.lat), p.lng!==undefined, v(p.lng),
+           v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions),
+           v(p.accepts), v(p.closedDays), v(p.paused)]);
       }
     });
     return this.cabinet(user);
@@ -95,14 +120,20 @@ export class ServiceCenters {
   /** Раз в неделю: «приём всё так же?» — одна кнопка */
   async confirmAccepts(user: AuthUser) {
     await this.mustMine(user);
-    await this.db.query('update service_centers set accepts_confirmed_at=now() where owner_id=$1', [user.id]);
+    // The public map validates evidence against PostgreSQL time. Record
+    // confirmation using that same clock, never a simulated booking clock.
+    await this.db.query('update service_centers set accepts_confirmed_at=now() where owner_id=$1',
+      [user.id]);
     return this.cabinet(user);
   }
 
   // ——— Кабинет рембазы ———
   async cabinet(user: AuthUser) {
-    const c = await this.mine(user);
+    const c = await this.db.one(
+      `select *, coalesce(accepts_confirmed_at between now()-interval '7 days' and now(),false) as accepts_current
+         from service_centers where owner_id=$1`,[user.id]);
     if (!c) return { center: null, groups: null };
+    const { accepts_current, ...center } = c;
     const rows = await this.db.query(
       `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating
          from service_bookings b join users u on u.id=b.client_id
@@ -111,11 +142,11 @@ export class ServiceCenters {
     const today = msk(this.now());
     const weekAgo = this.now().getTime() - 7 * 86400_000;
     const view = (b: any) => this.bookingView(b, 'service', weekAgo);
-    const confirmDue = !c.accepts_confirmed_at || new Date(c.accepts_confirmed_at).getTime() < weekAgo;
+    const confirmDue = !accepts_current;
     const rt = await this.db.one<{ r: number | null; n: number }>(
       `select round(avg(review_stars)::numeric, 1)::float as r, count(review_stars)::int as n from service_bookings where center_id=$1`, [c.id]);
     return {
-      center: { ...c, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
+      center: { ...center, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
       groups: {
         requests: rows.filter((b) => ['new', 'clarify'].includes(b.status)).map(view),
         expected: rows.filter((b) => b.status === 'expected').map(view),
@@ -173,6 +204,23 @@ export class ServiceCenters {
     };
   }
 
+  /** A booking creator is NOT a permanent fleet participant. Owners retain
+   * their own history, but an ex-driver must still be assigned to THIS truck
+   * in THIS fleet, including when an old bearer token carries stale owner_id. */
+  private async canSeeCustomerBooking(user: AuthUser, b: any): Promise<boolean> {
+    if (!user.roles.some(role => role === 'client' || role === 'driver')) return false;
+    if (!user.owner_id) return b.client_id === user.id;
+    if (b.client_id !== user.owner_id || b.created_by !== user.id || !b.vehicle_id)
+      return false;
+    const current = await this.db.one<{ id: string }>(
+      `select v.id from vehicles v join users u on u.id=$3
+        where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+          and u.owner_id=v.owner_id
+          and 'driver'=any(u.roles)`,
+      [b.vehicle_id, b.client_id, user.id]);
+    return !!current;
+  }
+
   private async mineBooking(user: AuthUser, id: string) {
     const c = await this.mustMine(user);
     const b = await this.db.one('select * from service_bookings where id=$1 and center_id=$2', [id, c.id]);
@@ -180,8 +228,24 @@ export class ServiceCenters {
     return { c, b };
   }
 
+  /** Push recipients are LIVE participants, never a permanent created_by
+   * list. A revoked driver must not receive old fleet plates or repairs. */
+  private async currentCustomerRecipients(b: any): Promise<string[]> {
+    const recipients: string[] = [b.client_id];
+    if (b.created_by && b.created_by !== b.client_id && b.vehicle_id) {
+      const current = await this.db.one<{ id: string }>(
+        `select v.id from vehicles v join users u on u.id=$3
+          where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+            and u.owner_id=v.owner_id and 'driver'=any(u.roles)`,
+        [b.vehicle_id, b.client_id, b.created_by]);
+      if (current) recipients.push(b.created_by);
+    }
+    return recipients;
+  }
+
   private async tell(b: any, title: string, body: string) {
-    await this.notifier.notify([b.client_id, b.created_by], { type: 'booking', bookingId: b.id, status: b.status },
+    await this.notifier.notify(await this.currentCustomerRecipients(b),
+      { type: 'booking', bookingId: b.id, status: b.status },
       { kind: 'normal', title, body, data: { bookingId: b.id } });
   }
 
@@ -198,9 +262,10 @@ export class ServiceCenters {
          left join users author on author.id=r.suggested_by
         where b.id=$1`, [id]);
     if (!b) throw notFound('Запись не найдена');
-    const asService = b.owner_id === user.id;
-    const clientId = user.owner_id ?? user.id;
-    if (!asService && b.client_id !== clientId && b.created_by !== user.id && !user.roles.some((r) => r === 'admin' || r === 'moderator')) throw forbidden();
+    const asService = b.owner_id === user.id && user.roles.includes('service');
+    const isStaff = user.roles.some(role => role === 'admin' || role === 'moderator');
+    if (!asService && !isStaff && !(await this.canSeeCustomerBooking(user, b)))
+      throw forbidden('Запись другого автопарка недоступна');
     const v = this.bookingView(b, asService ? 'service' : 'client', this.now().getTime() - 7 * 86400_000);
     const linkedTow = b.arrival === 'tow' && b.case_root_id
       ? await this.db.one<{number:number;status:string}>(
@@ -239,25 +304,41 @@ export class ServiceCenters {
   async respond(user: AuthUser, id: string, p: { action: 'accept' | 'clarify' | 'decline' | 'undo'; time?: string; q?: string; reason?: string }) {
     const { b } = await this.mineBooking(user, id);
     if (p.action === 'undo') {
-      if (b.status !== 'expected') throw conflict('bad_status', 'Отменить можно, пока машина не приехала');
-      await this.db.query(`update service_bookings set status='new', accept_time=null, updated_at=now() where id=$1`, [id]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='new', accept_time=null, updated_at=now()
+          where id=$1 and status='expected' returning *`, [id]);
+      if (!updated) throw conflict('bad_status', 'Отменить можно, пока машина не приехала');
       return this.booking(user, id);
     }
-    if (!['new', 'clarify'].includes(b.status)) throw conflict('bad_status', 'На запрос уже ответили');
+    const allowed = "status in ('new','clarify')";
     if (p.action === 'accept') {
       const time = p.time?.trim() || b.when_time || null;
-      await this.db.query(`update service_bookings set status='expected', accept_time=$2, updated_at=now() where id=$1`, [id, time]);
-      await this.tell({ ...b, status: 'expected' }, 'Сервис ждёт вас', `Ждём вас ${fmtDay(b.when_day)}${time ? ` в ${time}` : ''}`);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='expected', accept_time=$2, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, time]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис ждёт вас',
+        `Ждём вас ${fmtDay(updated.when_day)}${time ? ` в ${time}` : ''}`);
     } else if (p.action === 'clarify') {
       const q = p.q?.trim();
       if (!q) throw bad('empty', 'Что уточнить?');
-      await this.db.query(`update service_bookings set status='clarify', clarify_q=$2, client_answer=null, updated_at=now() where id=$1`, [id, q]);
-      await this.tell({ ...b, status: 'clarify' }, 'Сервис уточняет', q);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='clarify', clarify_q=$2,
+              client_answer=null, updated_at=now()
+          where id=$1 and ${allowed}
+            and (status <> 'clarify' or clarify_q is distinct from $2::text)
+          returning *`, [id, q]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис уточняет', q);
     } else {
       const reason = p.reason?.trim();
       if (!reason) throw bad('empty', 'Укажите причину');
-      await this.db.query(`update service_bookings set status='declined', decline_reason=$2, updated_at=now() where id=$1`, [id, reason]);
-      await this.tell({ ...b, status: 'declined' }, 'Сервис не может принять', `${reason} — посмотрите другие сервисы рядом`);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='declined', decline_reason=$2, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, reason]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис не может принять',
+        `${reason} — посмотрите другие сервисы рядом`);
     }
     return this.booking(user, id);
   }
@@ -278,9 +359,15 @@ export class ServiceCenters {
       if(movingTow)throw conflict('tow_not_delivered',
         `Эвакуатор №${movingTow.number} ещё не сообщил о доставке. СТО может подтвердить запись, но не отмечать приезд машины.`);
     }
-    await this.db.query(
-      `update service_bookings set status=$2, arrived_at=coalesce(arrived_at, now()), updated_at=now() where id=$1`, [id, status]);
-    await this.tell({ ...b, status }, `Ремонт: ${STATUS_NAME[status]}`, `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim());
+    const updated = await this.db.one<any>(
+      `update service_bookings set status=$2,
+              arrived_at=coalesce(arrived_at, now()), updated_at=now()
+        where id=$1 and status=any($3::text[]) and status<>$2
+        returning *`,
+      [id, status, ['expected', ...REPAIR_STATUSES]]);
+    if (!updated) throw conflict('bad_status', 'Статус изменился. Обновите карточку ремонта.');
+    await this.tell(updated, `Ремонт: ${STATUS_NAME[status]}`,
+      `${updated.vehicle?.brand ?? ''} ${updated.vehicle?.plate ?? ''}`.trim());
     return this.booking(user, id);
   }
 
@@ -299,7 +386,10 @@ export class ServiceCenters {
   async stillHere(user: AuthUser, id: string) {
     const { b } = await this.mineBooking(user, id);
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Машина не в ремонте');
-    await this.db.query('update service_bookings set still_here_at=now() where id=$1', [id]);
+    const changed = await this.db.one<any>(
+      'update service_bookings set still_here_at=now() where id=$1 and status=any($2::text[]) returning id',
+      [id, REPAIR_STATUSES]);
+    if (!changed) throw conflict('bad_status', 'Машина уже не отмечена в ремонте');
     return this.booking(user, id);
   }
 
@@ -309,8 +399,12 @@ export class ServiceCenters {
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Сначала отметьте, что машина приехала');
     const clean = [...new Set(works.map((w) => w.trim()).filter(Boolean))].slice(0, 20);
     if (!clean.length) throw bad('no_works', 'Отметьте, что делали');
-    await this.db.query(`update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now() where id=$1`, [id, clean]);
-    await this.tell({ ...b, status: 'ready' }, 'Машина готова', `Сделано: ${clean.join(', ')}`);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now()
+        where id=$1 and status=any($3::text[]) returning *`,
+      [id, clean, REPAIR_STATUSES]);
+    if (!updated) throw conflict('bad_status', 'Состояние ремонта изменилось. Обновите карточку.');
+    await this.tell(updated, 'Машина готова', `Сделано: ${clean.join(', ')}`);
     return this.booking(user, id);
   }
 
@@ -424,6 +518,7 @@ export class ServiceCenters {
   }
 
   async markPaidOut(admin: AuthUser, id: string, reference?: string) {
+    if (!admin.roles.includes('admin')) throw forbidden();
     const ref = reference?.trim() || null;
     const b = await this.db.tx(async q => {
       const paid = await q.one<any>(`update service_bookings
@@ -460,7 +555,7 @@ export class ServiceCenters {
     const today = msk(this.now());
     const max = Math.max(1, ...rows.map((r: any) => r.closed_n));
     return rows
-      .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
+      .filter((c: any) => !p.need || (Object.hasOwn(NEEDS,p.need) && c.staff?.[p.need] !== 'none'))
       .map((c: any) => ({
         id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
@@ -484,10 +579,22 @@ export class ServiceCenters {
   }
 
   async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null; recommendationId?: string | null }) {
+    if (!user.roles.some(role => role === 'client' || role === 'driver'))
+      throw forbidden('Для записи в СТО нужен клиентский аккаунт');
+    // A driver can book only their CURRENT assigned truck; a stale fleet
+    // session must never submit a phantom or previous-owner booking.
+    if (user.owner_id && !p.vehicleId && !p.caseOrderId)
+      throw forbidden('Выберите назначенную вам машину для записи');
     const c = await this.db.one(`select * from service_centers where id=$1 and verification='approved' and not paused`, [centerId]);
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
-    if (!(p.need in NEEDS)) throw bad('bad_need', 'Что нужно?');
+    if (!Object.hasOwn(NEEDS, p.need)) throw bad('bad_need', 'Выберите существующую работу');
+    // Route-level YYYY-MM-DD shape is not enough: 2026-02-31 is not a day.
+    const parsedDay=new Date(p.day+'T00:00:00Z');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.day) ||
+        !Number.isFinite(parsedDay.getTime()) ||
+        parsedDay.toISOString().slice(0,10)!==p.day)
+      throw bad('bad_day','Выберите действительную дату записи');
     if (p.day < msk(this.now())) throw bad('past', 'Выберите сегодня или позже');
     if ((c.closed_days ?? []).some((d: any) => msk(new Date(d)) === p.day)) throw bad('closed', 'В этот день сервис не работает');
     const clientId = user.owner_id ?? user.id;
@@ -497,8 +604,15 @@ export class ServiceCenters {
     }
     let vehicle: any = {};
     if (p.vehicleId) {
-      const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [p.vehicleId, clientId]);
-      if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
+      const v = await this.db.one(
+        `select v.* from vehicles v
+          left join users current_driver on current_driver.id=$3
+         where v.id=$1 and v.owner_id=$2
+           and ($3::uuid=v.owner_id or
+             (v.driver_id=$3 and current_driver.owner_id=v.owner_id
+              and 'driver'=any(current_driver.roles)))`,
+        [p.vehicleId, clientId, user.id]);
+      if (!v) throw notFound('Машина не найдена');
       vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
     }
     // A case link is NOT a referral. Do not use from_order_id for tow->STO
@@ -535,13 +649,20 @@ export class ServiceCenters {
         throw bad('different_vehicle', 'Для продолжения используйте грузовик из исходного обращения');
       if (previous.vehicle_id && !p.vehicleId) {
         // Link the exact same garage vehicle, even if the user never reopened the picker.
-        const v = await this.db.one<any>('select * from vehicles where id=$1 and owner_id=$2', [previous.vehicle_id, clientId]);
-        if (!v || (user.owner_id && v.driver_id !== user.id))
-          throw forbidden('Машина этого обращения недоступна для записи');
+        const v = await this.db.one<any>(
+          `select v.* from vehicles v left join users current_driver on current_driver.id=$3
+            where v.id=$1 and v.owner_id=$2
+              and ($3::uuid=v.owner_id or
+                (v.driver_id=$3 and current_driver.owner_id=v.owner_id
+                 and 'driver'=any(current_driver.roles)))`,
+          [previous.vehicle_id, clientId, user.id]);
+        if (!v) throw forbidden('Машина этого обращения недоступна для записи');
         p = { ...p, vehicleId: previous.vehicle_id };
         vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
       }
       if (!previous.vehicle_id) {
+        if (user.owner_id)
+          throw forbidden('Водителю нужна действующая привязка к автомобилю исходного обращения');
         // Incidents created before the truck was added to a garage still retain
         // the brand/model/year snapshot in the following workshop booking.
         vehicle = { brand: previous.brand ?? null, model: previous.model ?? null, year: previous.year ?? null };
@@ -550,8 +671,27 @@ export class ServiceCenters {
     }
     let fromOrderId: string | null = null;
     if (p.fromOrderId) {
-      const o = await this.db.one('select id from orders where id=$1 and client_id=$2', [p.fromOrderId, clientId]);
-      fromOrderId = o?.id ?? null;
+      const o = await this.db.one<any>(
+        `select id,vehicle_id,created_by,recommended_center_id
+          from orders where id=$1 and client_id=$2`, [p.fromOrderId, clientId]);
+      if (!o || o.recommended_center_id !== centerId)
+        throw forbidden('Скидка действует только для рекомендованного мастером сервиса');
+      if (user.owner_id && (o.created_by !== user.id || !o.vehicle_id ||
+          o.vehicle_id !== p.vehicleId))
+        throw forbidden('Доступ к рекомендации есть только у действующего водителя этой машины');
+      if (o.vehicle_id && p.vehicleId && o.vehicle_id !== p.vehicleId)
+        throw bad('different_vehicle', 'Рекомендация относится к другому автомобилю');
+      if (o.vehicle_id && !p.vehicleId) {
+        // A referral is tied to this specific fleet truck. Never create a
+        // no-vehicle discounted booking while referencing another truck.
+        const sourceVehicle=await this.db.one<any>(
+          'select * from vehicles where id=$1 and owner_id=$2', [o.vehicle_id,clientId]);
+        if (!sourceVehicle) throw notFound('Машина рекомендованного обращения больше не доступна');
+        p={...p,vehicleId:sourceVehicle.id};
+        vehicle={brand:sourceVehicle.brand,model:sourceVehicle.model,year:sourceVehicle.year,
+          plate:sourceVehicle.plate,trailerPlate:sourceVehicle.trailer_plate};
+      }
+      fromOrderId = o.id;
     }
     const b = await this.db.one(
       `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id, continuation_recommendation_id)
@@ -570,25 +710,53 @@ export class ServiceCenters {
   }
 
   async myBookings(user: AuthUser) {
-    const clientId = user.owner_id ?? user.id;
+    if (!user.roles.some(role => role === 'client' || role === 'driver')) throw forbidden();
+    // A driver may have made the booking, but leaving/reassigning the truck
+    // ends their access to its notes, repair status and financial history.
+    const filter = user.owner_id
+      ? `and b.created_by=$2 and b.vehicle_id is not null
+         and exists (
+           select 1 from vehicles v join users current_driver on current_driver.id=$2
+           where v.id=b.vehicle_id and v.owner_id=b.client_id
+             and v.driver_id=$2 and current_driver.owner_id=v.owner_id
+             and 'driver'=any(current_driver.roles)
+         )`
+      : '';
     const rows = await this.db.query(
-      `select b.*, c.name as center_name, c.address as center_address from service_bookings b join service_centers c on c.id=b.center_id
-        where b.client_id=$1 ${user.owner_id ? 'and b.created_by=$2' : ''} order by b.created_at desc limit 100`,
-      user.owner_id ? [clientId, user.id] : [clientId]);
-    return rows.map((b: any) => ({ ...this.bookingView(b, 'client'), center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
+      `select b.*, c.name as center_name, c.address as center_address
+         from service_bookings b join service_centers c on c.id=b.center_id
+        where b.client_id=$1 ${filter} order by b.created_at desc limit 100`,
+      user.owner_id ? [user.owner_id, user.id] : [user.id]);
+    return rows.map((b: any) => ({ ...this.bookingView(b, 'client'),
+      center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
+  }
+
+  /** Keep a current-fleet predicate in the write itself, not only in GET. */
+  private customerWriteAcl(param: number): string {
+    const id = '$' + param + '::uuid';
+    return `(client_id=${id} or (created_by=${id} and vehicle_id is not null
+      and exists (
+        select 1 from vehicles v join users current_driver on current_driver.id=${id}
+         where v.id=service_bookings.vehicle_id and v.owner_id=service_bookings.client_id
+           and v.driver_id=${id} and current_driver.owner_id=v.owner_id
+           and 'driver'=any(current_driver.roles)
+      )))`;
   }
 
   private async clientBooking(user: AuthUser, id: string) {
     const b = await this.db.one('select b.*, c.owner_id from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1', [id]);
-    if (!b || (b.client_id !== (user.owner_id ?? user.id))) throw notFound('Запись не найдена');
-    if (user.owner_id && b.created_by !== user.id) throw notFound('Запись не найдена');
+    if (!b || !(await this.canSeeCustomerBooking(user, b)))
+      throw notFound('Запись не найдена');
     return b;
   }
 
   async answer(user: AuthUser, id: string, text: string) {
     const b = await this.clientBooking(user, id);
     if (b.status !== 'clarify') throw conflict('bad_status', 'Сервис ничего не спрашивал');
-    await this.db.query(`update service_bookings set status='new', client_answer=$2, updated_at=now() where id=$1`, [id, text.trim()]);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='new', client_answer=$2, updated_at=now()
+        where id=$1 and status='clarify' and ${this.customerWriteAcl(3)} returning id`, [id, text.trim(), user.id]);
+    if (!updated) throw conflict('bad_status', 'Ответ по этой записи уже обработан');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'new' },
       { kind: 'normal', title: 'Клиент ответил', body: text.trim().slice(0, 120), data: { bookingId: id } });
     return this.booking(user, id);
@@ -597,7 +765,10 @@ export class ServiceCenters {
   async cancel(user: AuthUser, id: string) {
     const b = await this.clientBooking(user, id);
     if (!['new', 'clarify', 'expected'].includes(b.status)) throw conflict('bad_status', 'Машина уже в сервисе — отменить нельзя, напишите сервису');
-    await this.db.query(`update service_bookings set status='cancelled', updated_at=now() where id=$1`, [id]);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='cancelled', updated_at=now()
+        where id=$1 and status in ('new','clarify','expected') and ${this.customerWriteAcl(2)} returning id`, [id, user.id]);
+    if (!updated) throw conflict('bad_status', 'Запись уже перешла в следующий этап');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'cancelled' },
       { kind: 'normal', title: 'Клиент отменил запись', body: `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim() || 'Запись отменена', data: { bookingId: id } });
     return this.booking(user, id);
@@ -608,9 +779,12 @@ export class ServiceCenters {
     const b = await this.clientBooking(user, id);
     if (b.status !== 'invoiced') throw conflict('bad_status', 'Счёта ещё нет');
     if (p.agree) {
-      await this.db.query(
-        `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
-        [id, p.stars ?? null, p.text?.trim() || null]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='closed', closed_at=now(),
+                review_stars=$2, review_text=$3, updated_at=now()
+          where id=$1 and status='invoiced' and ${this.customerWriteAcl(4)} returning id`,
+        [id, p.stars ?? null, p.text?.trim() || null, user.id]);
+      if (!updated) throw conflict('bad_status', 'Работы уже подтверждены либо открыт спор');
       // New agreements award post-payment bonuses only after a recorded receipt.
       if (!b.payment_required) await this.referral?.afterBookingClosed(b.owner_id, id);
       else if (this.settlement(b).paymentStatus === 'received') await this.referral?.afterBookingClosed(b.owner_id, id);
@@ -619,7 +793,10 @@ export class ServiceCenters {
     } else {
       const why = p.why?.trim();
       if (!why || why.length < 5) throw bad('empty', 'Напишите, с чем не согласны');
-      await this.db.query(`update service_bookings set status='disputed', updated_at=now() where id=$1`, [id]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='disputed', updated_at=now()
+          where id=$1 and status='invoiced' and ${this.customerWriteAcl(2)} returning id`, [id, user.id]);
+      if (!updated) throw conflict('bad_status', 'По этому счёту уже принято решение');
       const t = await this.support.open(user, { topic: 'Ремонт в сервисе', text: `Ремонт в сервисе, счёт №${b.number}: ${why}` }) as any;
       await this.onDispute?.({ userId: user.id, bookingId: id, ticketId: t?.id ?? null, text: why, targetId: b.owner_id, title: `Спор по ремонту в сервисе, счёт №${b.number}` });
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'disputed' },
@@ -670,6 +847,8 @@ export class ServiceCenters {
     kind:'receipt'|'refund';amount:number;method:'invoice'|'online'|'cash'|'other';reference:string;
   }) {
     if (!admin.roles.includes('admin')) throw forbidden();
+    if (!Number.isSafeInteger(entry.amount) || entry.amount <= 0)
+      throw bad('bad_amount','Сумма внешней операции должна быть положительной и целой');
     const reference=entry.reference.trim();
     if (reference.length<4 || reference.length>200) throw bad('bad_reference','Укажите номер подтверждённой банковской или кассовой операции');
     const updated=await this.db.tx(async q=>{
@@ -711,12 +890,67 @@ export class ServiceCenters {
     return this.db.query(`select c.*, u.phone from service_centers c join users u on u.id=c.owner_id order by (c.verification='pending') desc, c.created_at desc limit 100`);
   }
   async verify(actor: AuthUser, id: string, decision: 'approved' | 'rejected') {
-    const c = await this.db.one('update service_centers set verification=$2 where id=$1 returning *', [id, decision]);
+    if (!actor.roles.some(role => role === 'admin' || role === 'moderator')) throw forbidden();
+    // Business approval is NOT evidence that self-entered coordinates are real.
+    // Fail closed on every standard verification; only a separate documented
+    // stationary location review may enable the yellow public map pin.
+    const c = await this.db.one(`update service_centers
+      set verification=$2,
+          public_map_location_verified_at=null,
+          public_map_opt_in=false,
+          public_map_opted_at=null
+      where id=$1 returning *`, [id, decision]);
     if (!c) throw notFound();
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision }]);
+    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision, locationVerified:false }]);
     await this.notifier.notify([c.owner_id], { type: 'verification', decision },
-      { kind: 'normal', title: decision === 'approved' ? 'Сервис проверен' : 'Проверка не пройдена', body: decision === 'approved' ? 'Клиенты видят вас на карте' : 'Напишите в поддержку', data: {} });
+      { kind: 'normal', title: decision === 'approved' ? 'Сервис проверен' : 'Проверка не пройдена',
+        body: decision === 'approved'
+          ? 'СТО одобрена для работы. Публичная карта требует отдельной проверки адреса и вашего согласия.'
+          : 'Напишите в поддержку', data: {} });
     return c;
+  }
+
+  /** Explicit evidence-based review of FIXED station location, separate from
+   * ordinary business approval. Requires a human staff member's affirmative
+   * match against an actual independent source; audit records source and the
+   * exact address/coords approved, never mobile master GPS.
+   */
+  async verifyPublicLocation(actor:AuthUser,id:string,proof:{
+    kind:'official_registry'|'site_visit'|'verified_document';
+    reference:string;
+    confirmed:true;
+  }){
+    if (!actor.roles.some(role => role === 'admin' || role === 'moderator')) throw forbidden();
+    if (!['official_registry','site_visit','verified_document'].includes(proof.kind))
+      throw bad('public_location_evidence_required','Укажите вид подтверждённого документа или проверки');
+    return this.db.tx(async q=>{
+      const center=await q.one<any>('select * from service_centers where id=$1 for update',[id]);
+      if(!center)throw notFound();
+      const lat=Number(center.lat),lng=Number(center.lng);
+      if(center.verification!=='approved' || center.paused ||
+         center.lat==null || center.lng==null ||
+         !Number.isFinite(lat)||!Number.isFinite(lng)||
+         lat < -90 || lat > 90 || lng < -180 || lng > 180 ||
+         (lat===0&&lng===0) ||
+         typeof center.address!=='string' || center.address.trim().length<8)
+        throw bad('public_location_not_ready',
+          'Сначала одобрите действующую СТО и убедитесь, что указан её настоящий стационарный адрес.');
+      const reference=proof.reference.trim();
+      if(reference.length<8 || proof.confirmed!==true)
+        throw bad('public_location_evidence_required',
+          'Для геопроверки нужны подтверждённые документы/источник и явное подтверждение сверки.');
+      const row=await q.one(`update service_centers
+         set public_map_location_verified_at=now(),
+             public_map_opt_in=false,public_map_opted_at=null
+         where id=$1 returning *`,[id]);
+      await q.query(`insert into audit_log(actor_id,action,target,data)
+        values($1,$2,$3,$4::jsonb)`,
+        [actor.id,'service.public_location.verify',id,JSON.stringify({
+          kind:proof.kind,reference,address:center.address,
+          lat,lng,confirmed:true,verifiedAt:new Date().toISOString()
+        })]);
+      return row;
+    });
   }
 }
 

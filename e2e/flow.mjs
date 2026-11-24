@@ -90,6 +90,7 @@ async function login(page, phoneNum, how) {
     const selected=page.getByRole('dialog',{name:'Вход по номеру телефона'});
     await selected.waitFor();
     await selected.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
+    await page.waitForURL('**/#/register');
     await page.getByRole('dialog',{name:'Регистрация в TrakSOS'}).waitFor();
   } else if (how === 'login') {
     await page.goto(BASE + '/#/login');
@@ -108,7 +109,11 @@ async function login(page, phoneNum, how) {
   // explicitly labelled terms/privacy consent authorizes registration.
   await page.getByRole('checkbox', { name: /Согласен с (агентским договором|офертой).*обработку персональных данных/ }).check();
   await page.getByRole('button', { name: 'Получить код' }).click();
-  const hint = await page.getByText(/Тестовый режим: код/).textContent();
+  const codeHint = page.getByText(/Тестовый режим: код/);
+  const error = page.locator('form [role=alert]');
+  await codeHint.or(error).first().waitFor();
+  if (await error.isVisible()) throw Error('Registration rejected: '+await error.innerText());
+  const hint = await codeHint.textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
   await page.locator('input[type=password]').fill(password);
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
@@ -128,8 +133,8 @@ await m.locator('input[placeholder="ИНН, 12 цифр"]').fill('780000000001')
 await m.locator('input[placeholder="Марка: Lada Largus"]').fill('Lada Largus');
 await m.locator('input[placeholder="Госномер"]').fill('а123вс78');
 await shot(m, '01-master-profile');
-await m.getByRole('button', { name: /Дальше — фото/ }).click();
-// Сразу после профиля — фото для проверки
+await m.getByRole('button', { name: 'Дальше — добровольная проверка' }).click();
+// Опциональная фото-проверка остаётся доступной после сохранения профиля
 await m.waitForURL(/work\/docs/);
 await m.getByText(/^0 из \d$/).waitFor();
 const n = await m.locator('input[type=file]').count();
@@ -212,6 +217,16 @@ await k.locator('select[aria-label="Год выпуска"]').selectOption('2012
 await k.locator('input[placeholder^="Адрес"]').fill('Тосно, М-11, стоянка у АЗС');
 await k.getByRole('button', { name: 'Ленинградская область' }).click();
 await k.getByRole('button', { name: /Тосно/ }).click();
+const nearSort=k.getByRole('button',{name:'Ближе',exact:true});
+const fastSort=k.getByRole('button',{name:'Быстрее приедет',exact:true});
+await nearSort.waitFor();
+if(!await nearSort.isDisabled()||!await fastSort.isDisabled())
+  throw Error('Geographic sorting enabled without vehicle GPS');
+const cheapSort=k.getByRole('button',{name:'Дешевле',exact:true});
+await cheapSort.click();
+if(await cheapSort.getAttribute('aria-pressed')!=='true')
+  throw Error('Price sorting did not activate');
+await k.getByRole('button',{name:'Рекомендуем',exact:true}).click();
 await k.getByText('Проверьте перед вызовом').waitFor();
 await k.locator('.agree input').check();
 await shot(k, '04-client-new-order');
@@ -303,12 +318,22 @@ await a.goto(BASE + '/#/admin/section/payments');
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
-// Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
-await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.and19-client .and19-services > a[href="#/sos"]').first().waitFor();
-await clickCabinetLink(a, 'Профиль и настройки');
-await a.getByRole('button', { name: 'Кабинет администратора' }).click();
-await a.locator('main.approved-pc-admin').waitFor();
+// Admin's "client" shortcut must go to the REAL isolated sandbox selector,
+// never turn the production/staff account into a pretend client role.
+await clickCabinetLink(a, 'Тестовый кабинет клиента');
+await a.waitForURL(/#\/admin\/test-center\/client$/);
+await a.getByRole('heading', { name: 'Клиент', exact: true }).waitFor();
+if (await a.evaluate(() => localStorage.getItem('traksos.mode')) !== 'admin')
+  throw new Error('Admin sandbox entry changed the active staff mode');
+if (await a.locator('.and19-client .and19-services').count())
+  throw new Error('Admin sandbox entry exposed the live client dashboard');
+await a.getByRole('link', { name: '← Выбор кабинета' }).click();
+await a.getByRole('heading', { name: 'Тестирование кабинетов' }).waitFor();
+await a.getByRole('link', { name: 'Вернуться в админку' }).click();
+// Returning from test center must mount the approved 618 mobile admin
+// workspace at phone width; approved 617 PC is used only at >=900px.
+await a.locator((await a.evaluate(() => window.innerWidth)) < 900
+  ? 'main.admin-workspace' : 'main.approved-pc-admin').waitFor();
 await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
 await m.getByText('← Назад').click();
@@ -352,7 +377,22 @@ for (const tab of ['Заявки', 'Машины', 'Отзывы', 'Платеж
 }
 await a.locator('input[placeholder="Сумма, ₽"]').fill('300');
 await a.locator('input[placeholder^="За что"]').fill('Подарок за первый заказ');
+// The real admin form deliberately requires explicit confirmation of a financial mutation.
+// Playwright otherwise auto-dismisses native confirm dialogs.
+let bonusConfirmation;
+a.once('dialog', async dialog => {
+  bonusConfirmation = { type: dialog.type(), message: dialog.message() };
+  if (dialog.type() === 'confirm' && dialog.message() === 'Подтвердить начисление баллов пользователя?')
+    await dialog.accept();
+  else await dialog.dismiss();
+});
+const bonusResponse = a.waitForResponse(r => r.request().method() === 'POST' &&
+  /\/api\/admin\/users\/[^/]+\/bonus$/.test(new URL(r.url()).pathname));
 await a.getByRole('button', { name: 'Начислить' }).click();
+if (bonusConfirmation?.type !== 'confirm' || bonusConfirmation.message !== 'Подтвердить начисление баллов пользователя?')
+  throw Error('Expected explicit bonus confirmation: ' + JSON.stringify(bonusConfirmation));
+const credited = await bonusResponse;
+if (!credited.ok()) throw Error('Bonus API rejected confirmed credit: HTTP ' + credited.status() + ' ' + await credited.text());
 await a.getByText('Бонусы начислены').waitFor();
 await shot(a, '14-admin-user-card');
 await k.goto(BASE + '/#/profile');

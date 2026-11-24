@@ -1,0 +1,1548 @@
+/*
+ * 22 Nov owner review: corrections ON TOP of the approved 617/618 layout.
+ * No asset replacement, role reflow, hidden controls, or changes to payments.
+ * Original approved collage includes raster captions: crop image-only zones.
+ */
+
+/* Logo has dark baked-in matte; screen blend + black-point removes its seam
+   on graphite headers without painting an opaque rectangle over the image. */
+.guest-app .top .guest-approved-mark img,
+.guest-app .site-footer .tr-approved-brand-logo img,
+.guest-app.guest-home .owner20-mark img,
+.app .top .tr-approved-brand-logo img {
+  mix-blend-mode:screen!important;
+  filter:contrast(1.7) brightness(1.06)!important;
+}
+.guest-app .site-footer .tr-approved-brand-logo,
+.guest-app.guest-home .owner20-mark,
+.guest-app .top .guest-approved-mark {
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+/* Shared interaction polish is deliberately scoped to already functional
+   controls. Disabled buttons stay disabled; semantic links remain links. */
+html.traksos-browser .app[class*="role-"] .desktop-content :is(.card,.tr-inner-rail-card,.approved-pc-card) {
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+html.traksos-browser .app[class*="role-"] .desktop-content :is(a,button):not(:disabled) {
+  transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+html.traksos-browser .app[class*="role-"] .desktop-content :is(a,button):focus-visible {
+  outline:2px solid #ff9c61;outline-offset:3px;
+}
+html.traksos-browser .app[class*="role-"] .tr-inner-hero-art {
+  border-radius:16px;overflow:hidden;
+}
+
+/* TrakBot is a floating approved truck, not a sticker in a square.
+   Close glyph is centred in a genuinely circular button. */
+.trakbot-dock .trakbot-dock-close {
+  display:grid!important;place-items:center!important;
+  flex:0 0 38px;width:38px!important;height:38px!important;
+  min-width:38px;min-height:38px;
+  padding:0!important;margin:0!important;
+  border-radius:50%!important;line-height:1!important;
+  font-size:25px!important;font-family:Arial,sans-serif!important;
+  background:#102f3c!important;
+}
+.trakbot-dock .trakbot-dock-close:hover {background:#22495a!important}
+.trakbot-dock-launcher .trakbot-mascot-original,
+.trakbot-dock-brand .trakbot-mascot-original {
+  /* Background shorthand erased the approved image. Remove only the matte. */
+  background-color:transparent!important;box-shadow:none!important;
+}
+
+@media(min-width:900px) {
+  .guest-app.guest-home .owner20-top{
+    position:relative;z-index:150;overflow:visible!important;
+  }
+  .guest-app.guest-home .owner20-topnav{position:relative;z-index:151}
+  .guest-app.guest-home .owner20-topnav details{z-index:auto}
+  .guest-app.guest-home .owner20-topnav details[open]{z-index:160}
+  .guest-app.guest-home .owner20-topnav summary{
+    display:inline-flex;align-items:center;gap:7px;
+    line-height:1.3;list-style:none;
+  }
+  .guest-app.guest-home .owner20-topnav summary::-webkit-details-marker{display:none}
+  .guest-app.guest-home .owner20-topnav summary::after{
+    content:""!important;display:inline-block;width:6px;height:6px;
+    margin:0 2px 3px 0!important;
+    border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+    transform:rotate(45deg);vertical-align:middle;
+    transition:transform .2s ease;
+  }
+  .guest-app.guest-home .owner20-topnav details[open] summary::after{
+    transform:translateY(3px) rotate(225deg);
+  }
+  .guest-app.guest-home .owner20-topnav details>div {
+    top:calc(100% + 11px)!important;left:0!important;
+    min-width:204px!important;
+    z-index:180!important;
+    background:#102631!important;
+    border:1px solid #4a6773!important;
+    box-shadow:0 18px 35px #0009!important;
+  }
+
+  /* Keep the original five-tile rhythm with a different, useful service:
+     ECU remains only below, while TrakBot is a shortcut to the ONE assistant. */
+  .guest-app.guest-home .owner20-quick {
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+  .guest-app.guest-home .owner20-quick .owner20-quick-trakbot {
+    position:relative;
+    background:linear-gradient(100deg,rgba(244,111,44,.10),rgba(18,51,62,.12))!important;
+  }
+  .guest-app.guest-home .owner20-quick-trakbot .owner20-quick-icon {
+    display:flex;align-items:center;justify-content:center;
+    flex:0 0 56px;width:56px;min-width:56px;height:58px;
+  }
+  .guest-app.guest-home .owner20-quick-trakbot .trakbot-mascot {
+    --bot-size:56px!important;width:56px!important;height:56px!important;
+  }
+  .guest-app.guest-home .owner20-quick-trakbot .trakbot-mascot-original {
+    border-radius:50%;box-shadow:none!important;
+    -webkit-mask-image:radial-gradient(ellipse,#000 0 59%,transparent 80%);
+    mask-image:radial-gradient(ellipse,#000 0 59%,transparent 80%);
+    mix-blend-mode:multiply;
+  }
+  .guest-app.guest-home .owner20-quick-trakbot b {
+    color:#ffba88!important;
+  }
+
+  /* Every photographic feature fills the card, with accessible DOM text
+     always on the left; approved illustrated image is isolated on the right. */
+  .guest-app.guest-home .owner20-feature {
+    background-image:linear-gradient(90deg,rgba(7,22,30,.94) 0%,rgba(10,27,35,.80) 48%,rgba(10,28,36,.40) 100%),
+      url('/traksos-service-scenes-desktop-hq.webp')!important;
+    background-color:#0c202a!important;
+    background-size:cover,auto 100%!important;
+    background-position:center,100% 50%!important;
+    background-repeat:no-repeat!important;
+  }
+  .guest-app.guest-home .owner20-feature-parts{
+    background-position:center,5% 50%!important;
+  }
+  .guest-app.guest-home .owner20-feature-insurance,
+  .guest-app.guest-home .owner20-feature-inspection{
+    background-position:center,67% 50%!important;
+  }
+  .guest-app.guest-home .owner20-feature::before {
+    background:linear-gradient(90deg,rgba(5,17,25,.42),rgba(5,17,25,.14) 58%,transparent 100%)!important;
+  }
+  .guest-app.guest-home .owner20-feature-title{
+    font-size:clamp(12px,1.02vw,16px)!important;gap:6px!important;
+    line-height:1.25!important;max-width:75%;
+  }
+  .guest-app.guest-home .owner20-feature p {
+    max-width:66%!important;line-height:1.32!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-feature-cta{
+    min-width:0;max-width:calc(100% - 25px);
+    white-space:nowrap;
+  }
+
+  /* Air and Club: full bleed scene under labels; image-only cuts on right.
+     This avoids the baked raster words on the source atlas. */
+  .guest-app.guest-home .owner20-bottom-air {
+    background-image:linear-gradient(90deg,rgba(8,25,34,.96),rgba(8,25,34,.82) 60%,rgba(8,25,34,.36)),
+      url('/owner20-photo-background-approved-retouched.webp')!important;
+    background-position:center,60% 50%!important;
+    background-size:cover,cover!important;
+  }
+  .guest-app.guest-home .owner20-bottom-club{
+    background-image:linear-gradient(90deg,rgba(8,25,34,.96),rgba(8,25,34,.80) 60%,rgba(8,25,34,.24)),
+      url('/traksos-service-scenes-desktop-hq.webp')!important;
+    background-position:center,67% 50%!important;
+    background-size:cover,auto 100%!important;
+  }
+  .guest-app.guest-home .owner20-bottom-air::after {
+    width:135px!important;height:167px!important;
+    background-position:-880px 0!important;
+  }
+  .guest-app.guest-home .owner20-bottom-club::after {
+    width:134px!important;height:167px!important;
+    background-position:-884px -170px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom-club::after {
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 15%)!important;
+    mask-image:linear-gradient(90deg,transparent,#000 15%)!important;
+    pointer-events:none!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club) p {
+    max-width:67%!important;
+  }
+
+  .guest-app.guest-home .owner20-bottom-app{
+    background:linear-gradient(110deg,#102a36,#09202a 68%,#172e38)!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app :is(b,p,.owner20-store){position:relative;z-index:3}
+  .guest-app.guest-home .owner20-bottom-app p{max-width:63%!important}
+
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot{
+    --bot-size:106px!important;width:106px!important;height:106px!important;
+  }
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:106px!important;min-width:106px!important;height:106px!important;min-height:106px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot-original{
+    background-color:transparent!important;border-radius:50%!important;
+  }
+}
+
+/* Partner registration: thematic photographic cards from the already
+   bundled approved master / towing / station art. Keep actual buttons. */
+.guest-partner-roles .guest-partner-role{
+  position:relative;isolation:isolate;overflow:hidden;
+  text-align:left;min-height:104px;
+  border-radius:14px!important;
+  background:linear-gradient(115deg,#102b37,#071c26)!important;
+  transition:border-color .2s ease,transform .2s ease,box-shadow .2s ease;
+}
+.guest-partner-roles .guest-partner-role::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(90deg,rgba(7,22,30,.98) 0%,rgba(7,22,30,.88) 49%,rgba(7,22,30,.25)),
+    url('/traksos-service-scenes-desktop-hq.webp');
+  background-size:cover,auto 100%;background-position:center,0% 50%;
+  background-repeat:no-repeat;
+}
+.guest-partner-roles .guest-partner-role-tow::before{background-position:center,34% 50%}
+.guest-partner-roles .guest-partner-role-service::before{background-position:center,67% 50%}
+.guest-partner-roles .guest-partner-role-insurer::before{
+  background-image:linear-gradient(90deg,#071b25,#15333e);
+}
+.guest-partner-roles .guest-partner-role-insurer::after {
+  content:"";position:absolute;z-index:0;right:5px;bottom:0;
+  width:92px;height:126px;pointer-events:none;
+  background:url('/owner20-artwork-sprite-retouched.webp') -497px -319px / 1018px 446px no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 15%);
+  mask-image:linear-gradient(90deg,transparent,#000 15%);
+}
+.guest-partner-roles .guest-partner-role :is(b,small){position:relative;z-index:1}
+.guest-partner-roles .guest-partner-role small{display:block;max-width:75%}
+.guest-partner-roles .guest-partner-role[aria-pressed="true"]{
+  border-color:#ff985a!important;box-shadow:0 0 0 1px #ff985a88,0 12px 25px #0006!important;
+}
+.guest-partner-roles .guest-partner-role:hover:not([aria-pressed="true"]){
+  transform:translateY(-2px);border-color:#b0ccd4!important;
+}
+
+/* Information and legal pages: consistent graphite cover with documents
+   aligned on the right rather than text hidden in a background collage. */
+.guest-app:not(.guest-home) .guest-info-page .guest-info-hero{
+  border-color:#48616c!important;
+  background:linear-gradient(110deg,#102d38,#081c27)!important;
+}
+.guest-app:not(.guest-home) .guest-info-offers .guest-info-hero::before{
+  content:""!important;display:block!important;
+  width:82px!important;height:125px!important;
+  right:8%!important;left:auto!important;
+  top:20%!important;bottom:auto!important;
+  background-image:url('/owner20-artwork-sprite-retouched.webp')!important;
+  background-size:1018px 446px!important;
+  background-position:-638px -319px!important;
+  background-repeat:no-repeat!important;
+  opacity:.92!important;transform:scale(1.45);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 14%)!important;
+  mask-image:linear-gradient(90deg,transparent,#000 14%)!important;
+  pointer-events:none;
+}
+.guest-app:not(.guest-home) .guest-info-offers .guest-info-grid {
+  max-width:82%;position:relative;z-index:2;
+}
+.guest-app:not(.guest-home) .guest-info-company-note{
+  border:1px solid #3a5360;border-radius:16px;
+  background:linear-gradient(110deg,#122a35,#091c26);
+  padding:18px clamp(18px,3vw,32px);
+}
+.guest-app:not(.guest-home) .guest-info-grid>a{
+  transition:border-color .18s,transform .18s,box-shadow .18s!important;
+}
+.guest-app:not(.guest-home) .guest-info-grid>a:hover{
+  transform:translateY(-2px);box-shadow:0 10px 20px #0005;
+}
+
+@media(max-width:899px){
+  .guest-partner-roles .guest-partner-role{min-height:92px}
+  .guest-app:not(.guest-home) .guest-info-offers .guest-info-grid{max-width:100%}
+  .guest-app:not(.guest-home) .guest-info-offers .guest-info-hero::before{
+    opacity:.18!important;right:1%!important;transform:scale(1)!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .guest-partner-role, .owner20-feature,.owner20-bottom-card,
+  .guest-info-grid>a,.trakbot-dock-launcher,
+  .app[class*="role-"] .desktop-content :is(a,button,.card) {
+    transition:none!important;animation:none!important;
+  }
+}
+html.traksos-reduced-motion .guest-partner-role,
+html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher{
+  transition:none!important;animation:none!important;
+}
+
+/* Legal pages share the same approved graphite shell as the public landing;
+   the actual document content and availability state stay untouched. */
+.guest-app .public-offer-page .offer-text,
+.guest-app .public-offer-page .offer-unpublished,
+.guest-app .public-offer-page > .empty {
+  background:linear-gradient(125deg,#132f3b,#081e29)!important;
+  border:1px solid #46606a!important;
+  border-radius:17px!important;
+  color:#edf4f6!important;
+  box-shadow:0 14px 30px #0005;
+}
+/* The same document illustration as the public index. Keep it in normal
+   flow so long titles and the retry/support action remain unobstructed. */
+.guest-app .public-offer-page .offer-unpublished::before {
+  content:"";display:block;float:right;width:41px;height:62px;
+  margin:0 0 8px 14px;
+  background:url('/owner20-artwork-sprite-retouched.webp') -319px -159.5px / 509px 223px no-repeat;
+}
+.guest-app .public-offer-page .offer-unpublished h1 {overflow-wrap:anywhere}
+.guest-app .public-offer-page .offer-text {padding:clamp(19px,3vw,36px)!important}
+.guest-app .public-offer-page :is(h1,h2,h3){color:#fff!important}
+.guest-app .public-offer-page .guest-explore-back{color:#ffac73!important}
+.guest-app .tr-rules-public{
+  width:min(1100px,calc(100% - 32px))!important;
+  max-width:1100px!important;
+  margin:20px auto 55px!important;
+  padding:clamp(12px,2.5vw,24px)!important;
+  color:#edf7f8!important;
+}
+.guest-app .tr-rules-public>div:first-of-type{
+  position:relative;overflow:hidden;
+  padding:clamp(23px,3.5vw,40px);
+  border:1px solid #4d6670;border-radius:17px;
+  background:linear-gradient(105deg,#142f3a,#091d26);
+  box-shadow:0 15px 35px #0006;
+}
+.guest-app .tr-rules-public>div:first-of-type::after{
+  content:"";position:absolute;right:8%;top:12px;width:81px;height:126px;opacity:.82;
+  background:url('/owner20-artwork-sprite-retouched.webp') -638px -319px / 1018px 446px no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 13%);
+  mask-image:linear-gradient(90deg,transparent,#000 13%);
+  pointer-events:none;
+}
+.guest-app .tr-rules-public>div:first-of-type :is(h1,.sub){
+  position:relative;z-index:1;max-width:78%;
+}
+.guest-app .tr-rules-public>div:first-of-type h1{color:#fff;margin:0 0 9px}
+.guest-app .tr-rules-public .card{
+  background:linear-gradient(115deg,#132c37,#0a1e29)!important;
+  border:1px solid #3c5966!important;
+  border-radius:13px!important;
+  color:#eaf6f8!important;
+}
+.guest-app .tr-rules-public .card button{
+  color:inherit!important;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group summary{
+  display:inline-flex;align-items:center;gap:7px;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group summary>span{
+  display:inline-block!important;line-height:1;
+  transform:translateY(-1px);transition:transform .2s ease;
+}
+.guest-app:not(.guest-home) .guest-site-nav .guest-nav-group[open] summary>span{
+  transform:rotate(180deg);
+}
+.guest-app:not(.guest-home) .guest-nav-dropdown{
+  position:absolute;z-index:200!important;
+  box-shadow:0 16px 32px #0009!important;
+}
+@media(max-width:899px){
+  .guest-app .tr-rules-public>div:first-of-type::after{opacity:.16}
+  .guest-app .tr-rules-public>div:first-of-type :is(h1,.sub){max-width:100%}
+}
+
+/* Authenticated insurance workspace: visually meaningful VERIFIED-empty
+   queue only. Errors and loading states never masquerade as empty data. */
+@media(min-width:900px) {
+ .approved-pc-insurance .approved-pc-insurance-empty-visual {
+   position:relative;isolation:isolate;overflow:hidden;
+   min-height:185px!important;padding-right:clamp(145px,29%,205px)!important;
+   background:linear-gradient(110deg,#102c38,#0b202b)!important;
+ }
+ .approved-pc-insurance .approved-pc-insurance-empty-visual::before {
+   content:"";position:absolute;right:10px;bottom:0;top:15px;
+   width:90px;z-index:-1;
+   background:url('/owner20-artwork-sprite-retouched.webp') -500px -319px / 1018px 446px no-repeat;
+   -webkit-mask-image:linear-gradient(to bottom,transparent 0 24px,#000 37px);
+   mask-image:linear-gradient(to bottom,transparent 0 24px,#000 37px);
+   opacity:.80;pointer-events:none;
+ }
+ .approved-pc-insurance .approved-pc-insurance-empty-visual>h2,
+ .approved-pc-insurance .approved-pc-insurance-empty-visual>.approved-pc-empty {
+   position:relative;z-index:2;
+ }
+}
+
+/* The approved mascot source has a baked pale rectangle. Blend the image
+   with its existing card surface, retaining the exact approved character,
+   rather than overlaying a dark replacement square. */
+.approved-pc .approved-pc-bot img {
+ mix-blend-mode:multiply!important;
+ filter:contrast(1.2) saturate(1.2)!important;
+ -webkit-mask-image:radial-gradient(ellipse at 50% 52%,#000 0 58%,rgba(0,0,0,.9) 66%,transparent 81%);
+ mask-image:radial-gradient(ellipse at 50% 52%,#000 0 58%,rgba(0,0,0,.9) 66%,transparent 81%);
+ border:0!important;box-shadow:none!important;
+}
+
+
+/* TrakBot v3 is the SAME character in every surface; enlarge the artwork,
+   never stretch or replace it. Android keeps the approved no-floating-dock
+   layout; this only affects existing web docks and live chat/cabinet cards. */
+@media(min-width:900px){
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:116px!important;min-width:116px!important;
+    height:116px!important;min-height:116px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {
+    --bot-size:116px!important;width:116px!important;height:116px!important;
+  }
+  html.traksos-browser .app:not(.guest-home) .trakbot-dock-launcher .trakbot-mascot {
+    --bot-size:52px!important;width:52px!important;height:52px!important;
+  }
+  html.traksos-browser .app:not(.guest-home) .trakbot-dock-launcher {
+    min-width:65px!important;min-height:60px!important;
+  }
+}
+@media (min-width:900px) and (max-width:1099px){
+  .guest-app.guest-home .trakbot-dock .trakbot-dock-launcher{
+    width:92px!important;min-width:92px!important;
+    height:92px!important;min-height:92px!important;
+  }
+  .guest-app.guest-home .trakbot-dock-launcher .trakbot-mascot {
+    --bot-size:92px!important;width:92px!important;height:92px!important;
+  }
+  .guest-app.guest-home .owner20-quick-trakbot .owner20-quick-icon{
+    flex-basis:43px;width:43px;min-width:43px;
+  }
+  .guest-app.guest-home .owner20-quick-trakbot .trakbot-mascot{
+    --bot-size:45px!important;width:45px!important;height:45px!important;
+  }
+}
+@media(max-width:899px){
+  html.traksos-browser .trakbot-dock-launcher{
+    min-width:58px!important;min-height:58px!important;
+    width:58px!important;height:58px!important;
+    padding:4px!important;justify-content:center!important;
+    border-radius:50%!important;
+  }
+  html.traksos-browser .trakbot-dock-launcher .trakbot-mascot{
+    --bot-size:50px!important;width:50px!important;height:50px!important;
+  }
+  .trakbot-chat-title .trakbot-mascot {
+    --bot-size:48px!important;width:48px!important;height:48px!important;
+  }
+  .trakbot-dock-brand .trakbot-mascot {
+    --bot-size:40px!important;width:40px!important;height:40px!important;
+  }
+  .trakbot-dock-guest-mascot .trakbot-mascot {
+    --bot-size:45px!important;width:45px!important;height:45px!important;
+  }
+}
+.approved-pc .approved-pc-bot .trakbot-mascot {
+  --bot-size:clamp(92px,9vw,130px);
+  width:var(--bot-size);height:var(--bot-size);
+  max-width:43%;aspect-ratio:1;flex-shrink:1;align-self:flex-end;
+  margin:0 2px 0 auto;
+}
+.approved-pc .approved-pc-bot .trakbot-mascot-original {
+  border-radius:50%;background-color:transparent!important;
+  mix-blend-mode:multiply;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 52%,#000 0 57%,rgba(0,0,0,.9) 68%,transparent 82%);
+  mask-image:radial-gradient(ellipse at 50% 52%,#000 0 57%,rgba(0,0,0,.9) 68%,transparent 82%);
+  box-shadow:none!important;
+}
+@media(min-width:900px){
+  .trakbot-chat-title .trakbot-mascot{
+    --bot-size:54px!important;width:54px!important;height:54px!important;
+  }
+}
+/* Windows with no mouse can still trigger the service via keyboard. */
+.guest-app.guest-home .owner20-quick-trakbot:focus-visible{
+  outline:3px solid #ffab7b!important;outline-offset:2px!important;
+}
+
+
+/* Partner portraits: each of the four already-approved HQ scenes is one
+   25% panorama panel. Isolate each frame exactly, instead of arbitrary
+   offsets that showed two cut-off scenes in one card. The master panel is
+   mirrored so the mechanic is on the right and copy remains readable. */
+.guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::before {
+  background-image:url('/traksos-service-scenes-desktop-hq.webp')!important;
+  background-size:400% 100%!important;
+  background-repeat:no-repeat!important;
+}
+.guest-partner-roles .guest-partner-role-master::before {
+  background-position:0% 50%!important;
+  transform:scaleX(-1);
+}
+.guest-partner-roles .guest-partner-role-tow::before {
+  background-position:33.3333% 50%!important;transform:none;
+}
+.guest-partner-roles .guest-partner-role-service::before {
+  background-position:66.6667% 50%!important;transform:none;
+}
+.guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::after {
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(7,22,30,.98) 0%,rgba(7,22,30,.85) 48%,rgba(7,22,30,.02) 100%);
+}
+.guest-partner-roles .guest-partner-role :is(b,small){
+  position:relative;z-index:2;
+  text-shadow:0 1px 7px #01070ad9;
+}
+
+
+/* Owner QA 22 Nov (390px): roleShared20261119.css uses a four-class
+   selector with an !important gradient-only background shorthand on
+   .auth-desktop-form .guest-partner-role::before. The selector below is
+   deliberately more specific, so the approved photography cannot disappear
+   underneath the old caption contrast shade. The gradient on ::after remains. */
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::before,
+html .guest-partner-roles .guest-partner-role:not(.guest-partner-role-insurer)::before {
+  background:url('/traksos-service-scenes-desktop-hq.webp') 0% 50% / 400% 100% no-repeat!important;
+}
+html .guest-partner-roles .guest-partner-role-master::before {
+  background-position:0% 50%!important;transform:scaleX(-1)!important;
+}
+html .guest-partner-roles .guest-partner-role-tow::before {
+  background-position:33.3333% 50%!important;transform:none!important;
+}
+html .guest-partner-roles .guest-partner-role-service::before {
+  background-position:66.6667% 50%!important;transform:none!important;
+}
+
+
+/* Owner QA insurer empty state — no glued-on sprite rectangle.
+   Keep the right-hand shield, but use the SAME approved insurance scene
+   as the feature card and header. Fade its left edge into the whole pane.
+   This is only decoration for a truly loaded empty queue; loading and errors
+   remain visible with their proper server-backed content. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc-insurance .approved-pc-insurance-empty-visual::before{
+    content:""!important;
+    top:0!important;bottom:0!important;right:0!important;left:auto!important;
+    width:clamp(150px,33%,250px)!important;height:100%!important;
+    background-image:url('/feature-art/traksos-feature-insurance-desktop-20261122.webp')!important;
+    background-size:cover!important;
+    background-repeat:no-repeat!important;
+    background-position:75% 50%!important;
+    -webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.8) 22%,#000 48%)!important;
+    mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.8) 22%,#000 48%)!important;
+    opacity:.72!important;transform:none!important;
+    border:0!important;box-shadow:none!important;
+  }
+}
+/* Shared pictograms on partner selection: same SVG paths as the public
+   Master, Tow, STO and Insurance service cards. Keep artwork to the right
+   and readable live labels in the left text zone. */
+.guest-app .guest-partner-roles .guest-partner-role-label {
+  display:flex!important;align-items:flex-start!important;gap:7px!important;
+  max-width:78%;position:relative!important;z-index:3!important;
+  margin-bottom:6px;line-height:1.22;
+}
+.guest-app .guest-partner-roles .guest-partner-role-label svg {
+  width:21px!important;height:21px!important;
+  flex:0 0 21px;stroke:#ffa367!important;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.7));
+}
+.guest-app .guest-partner-roles .guest-partner-role-label b {
+  display:block!important;min-width:0;
+  line-height:1.22!important;overflow-wrap:break-word;
+}
+.guest-app .guest-partner-roles .guest-partner-role>small{
+  max-width:74%!important;
+}
+@media(max-width:899px){
+  .guest-app .guest-partner-roles .guest-partner-role-label {
+    max-width:84%;gap:5px!important;
+    font-size:12px;
+  }
+  .guest-app .guest-partner-roles .guest-partner-role-label svg {
+    width:18px!important;height:18px!important;flex-basis:18px;
+  }
+}
+/* Actual 390px browser evidence: the guest legal footer fell through to
+   browser default blue/purple visited links below the cookie preference.
+   Keep published legal destinations unchanged, but use the approved
+   graphite/orange visual language on desktop AND narrow browser widths. */
+html.traksos-browser .guest-app .site-footer a,
+html.traksos-browser .guest-app .site-footer a:visited {
+  color:#cbe4ea!important;
+  text-decoration:none!important;
+}
+html.traksos-browser .guest-app .site-footer a:hover {
+  color:#ffb97e!important;text-decoration:underline!important;
+}
+html.traksos-browser .guest-app .site-footer a:focus-visible {
+  outline:2px solid #ffad71;outline-offset:3px;
+  border-radius:3px;
+}
+
+/* The important background shorthand above also defines position. Match its
+   specificity on each approved role to avoid showing the mechanic in the
+   tow/STO tiles. The standalone join page uses the shorter selectors. */
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role.guest-partner-role-master::before,
+html .guest-partner-roles .guest-partner-role.guest-partner-role-master::before {
+  background-position:0% 50%!important;
+  transform:scaleX(-1)!important;
+}
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role.guest-partner-role-tow::before,
+html .guest-partner-roles .guest-partner-role.guest-partner-role-tow::before {
+  background-position:33.3333% 50%!important;
+  transform:none!important;
+}
+html .guest-app .auth-desktop-form .guest-partner-roles .guest-partner-role.guest-partner-role-service::before,
+html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before {
+  background-position:66.6667% 50%!important;
+  transform:none!important;
+}
+
+/* Owner review 22 Nov: full-bleed authenticated workspace hero. */
+/* Use the SAME photo from approved 617, not a new truck or a stock image.
+   The original 1536px photo has a right-side UI matte beginning near x=985.
+   Scaling the background to 158% shows only the photographic left 972px:
+   the truck falls on the RIGHT of our card, and no baked-in grey panel appears.
+   A continuous dark gradient is OVER the photograph, not a detached text tile.
+   These are decorative-only visual rules: headings/actions remain real DOM. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc .approved-pc-heading,
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero {
+    isolation:isolate!important;
+    position:relative!important;
+    overflow:hidden!important;
+    background-color:#071b26!important;
+    background-image:
+      linear-gradient(90deg,rgba(5,17,25,.98) 0%,rgba(7,22,31,.92) 28%,rgba(8,24,33,.65) 50%,rgba(8,25,34,.24) 76%,rgba(5,17,25,.12) 100%),
+      url('/owner20-photo-background-approved-retouched.webp')!important;
+    background-size:100% 100%,158% auto!important;
+    background-position:center center,left center!important;
+    background-repeat:no-repeat,no-repeat!important;
+    border-color:#3e606c!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading {
+    display:flex!important;align-items:center!important;
+    min-height:132px!important;
+    padding:18px clamp(18px,2vw,30px)!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading > div:first-child {
+    position:relative!important;z-index:2!important;
+    width:min(62%,680px)!important;
+    min-width:0!important;
+    text-shadow:0 2px 10px rgba(0,0,0,.82);
+  }
+  /* The same photo is now across the WHOLE card, so don't draw an
+     extra cutout on its right. Keep the approved source URL in the DOM. */
+  html.traksos-browser .approved-pc .approved-pc-heading > img {
+    display:none!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading h1 {
+    max-width:100%;overflow-wrap:break-word;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading p {
+    max-width:100%;line-height:1.4;
+  }
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero {
+    display:flex!important;align-items:center!important;
+    min-height:188px!important;
+  }
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero-copy{
+    position:relative!important;z-index:2!important;
+    width:min(65%,720px)!important;
+    min-width:0!important;
+    text-shadow:0 2px 10px rgba(0,0,0,.75);
+  }
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero .tr-inner-hero-art {
+    display:none!important; /* photo already fills all of the hero */
+  }
+}
+@media(min-width:900px) and (max-width:1100px){
+  html.traksos-browser .approved-pc .approved-pc-heading > div:first-child,
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero-copy {
+    width:min(64%,580px)!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading {
+    min-height:125px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html.traksos-browser .app[class*="role-"] .desktop-content > .tr-inner-hero {
+    animation:none!important;
+  }
+}
+
+/* Owner 22 Nov: canonical full-bleed feature photographs — one asset family per service. */
+/* No old bitmap atlas, no extra cutout over the photo, no burnt-in words.
+   Desktop/mobile/Android variants come from featureArtwork20261122.tsx;
+   all five key names are stable throughout the project. */
+.guest-app.guest-home .owner20-features .owner20-feature {
+  isolation:isolate!important;
+  position:relative!important;
+  overflow:hidden!important;
+  background:#071b26!important;
+  border-color:#425765!important;
+  box-shadow:inset 0 0 0 1px rgba(176,213,223,.04);
+}
+.guest-app.guest-home .owner20-features .owner20-feature .traksos-feature-art,
+.traksos-feature-art {
+  position:absolute;inset:0;display:block;z-index:0;
+  overflow:hidden;pointer-events:none;
+  border-radius:inherit;
+}
+.guest-app.guest-home .owner20-features .owner20-feature .traksos-feature-art img,
+.traksos-feature-art img {
+  display:block;width:100%;height:100%;
+  object-fit:cover;object-position:right center;
+  max-width:none;filter:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature::before {
+  content:""!important;position:absolute!important;inset:0!important;
+  z-index:1!important;
+  background:linear-gradient(90deg,
+    rgba(3,15,23,.98) 0%,
+    rgba(5,19,28,.96) 24%,
+    rgba(7,22,32,.81) 47%,
+    rgba(9,24,33,.20) 76%,
+    rgba(7,22,31,.05) 100%)!important;
+  opacity:1!important;
+  border:0!important;box-shadow:none!important;
+  transform:none!important;pointer-events:none;
+}
+.guest-app.guest-home .owner20-features .owner20-feature::after {
+  display:none!important;content:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title,
+.guest-app.guest-home .owner20-features .owner20-feature p,
+.guest-app.guest-home .owner20-features .owner20-feature-cta {
+  position:relative;z-index:2!important;
+  color:#eff8fb!important;
+  text-shadow:0 2px 8px rgba(0,0,0,.93);
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title {
+  display:flex!important;align-items:flex-start!important;
+  max-width:76%!important;
+  gap:6px!important;line-height:1.17!important;
+  overflow-wrap:anywhere;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title span {
+  flex:0 0 20px;max-width:20px;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-title svg {
+  width:20px!important;height:20px!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature p {
+  max-width:66%!important;
+  line-height:1.26!important;
+  overflow-wrap:normal;hyphens:auto;
+  margin-top:8px!important;margin-bottom:30px!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature-cta {
+  position:absolute!important;left:12px!important;bottom:12px!important;
+  max-width:72%!important;margin:0!important;
+  min-height:26px;display:flex;align-items:center;
+  border-color:rgba(230,246,248,.77)!important;
+  background:rgba(8,23,32,.38)!important;
+  text-shadow:none!important;
+}
+.guest-app.guest-home .owner20-features .owner20-feature:focus-visible {
+  outline:3px solid #ffad79!important;outline-offset:3px!important;
+}
+@media(min-width:900px) and (max-width:1179px){
+  .guest-app.guest-home .owner20-features .owner20-feature {
+    height:155px!important;
+    padding:11px 9px!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature-title{
+    font-size:clamp(11px,1.14vw,14px)!important;
+    max-width:78%!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature p {
+    font-size:10px!important;
+    max-width:72%!important;
+    margin-top:6px!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature-cta{
+    left:9px!important;bottom:9px!important;
+    font-size:10px!important;padding:5px 7px!important;
+    max-width:80%!important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+ .guest-app.guest-home .owner20-features .traksos-feature-art img {transition:none!important}
+}
+
+/* Same canonical insurance and inspection illustrations in authenticated cabinets. */
+/* Keep existing live document/action UI: art is inert and contains no labels.
+   A soft blend, not a pasted rectangular photo, joins the left text surface. */
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] {
+  isolation:isolate!important;
+  background-image:linear-gradient(90deg,#071924,#102e3c 78%,#112735)!important;
+  background-size:cover!important;
+  background-position:center!important;
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art]::before {
+  content:"";position:absolute;inset:0;
+  z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,rgba(4,17,25,.98) 0%,
+    rgba(5,19,29,.91) 34%,rgba(5,19,29,.54) 56%,
+    rgba(5,19,29,.10) 90%)!important;
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > .traksos-feature-art {
+  left:auto!important;right:0!important;top:0!important;bottom:0!important;
+  width:56%!important;height:100%!important;z-index:0!important;
+  border-radius:0!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.92) 22%,#000 42%);
+  mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.92) 22%,#000 42%);
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > .traksos-feature-art img {
+  object-fit:cover!important;object-position:50% 52%!important;
+  height:100%!important;width:100%!important;
+}
+html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:first-child {
+  width:min(58%,680px)!important;position:relative!important;z-index:2!important;
+}
+
+/* Owner QA 900–1179: bottom cards were too shallow for long Russian copy.
+   Live screenshots showed "Эфир" and "Клуб" text running into a second
+   pasted image, the fifth "Почему" bullet clipped, and the RuStore label
+   under the phone. Keep all FOUR approved destinations and the one-row grid,
+   but give readable copy sufficient vertical space. Use continuous existing
+   photography instead of old sprite slices with embedded text. */
+@media(min-width:900px) {
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-air,
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-club {
+    background-image:
+      linear-gradient(90deg,rgba(5,17,24,.97) 0%,rgba(5,19,28,.93) 34%,rgba(7,21,30,.62) 62%,rgba(7,23,33,.05) 100%),
+      url('/traksos-service-scenes-desktop-hq.webp')!important;
+    background-size:100% 100%,auto 100%!important;
+    background-repeat:no-repeat,no-repeat!important;
+    background-position:center center,100% 50%!important;
+  }
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-club{
+    background-position:center center,72% 50%!important;
+  }
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-air::after,
+  .guest-app.guest-home .owner20-bottom > .owner20-bottom-club::after{
+    content:none!important;display:none!important;
+    background:none!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club) > b,
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club) > p {
+    position:relative!important;z-index:2!important;
+    text-shadow:0 2px 9px rgba(0,0,0,.92)!important;
+    max-width:66%!important;overflow-wrap:break-word;
+  }
+}
+@media(min-width:900px) and (max-width:1199px){
+  .guest-app.guest-home .owner20-bottom-card{
+    /* Let the longest Russian list establish the row's real height.
+       A hard 214px still cut its final bullet at 900px. */
+    min-height:228px!important;
+    height:auto!important;
+    padding:15px 12px 22px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card>b{
+    display:block!important;
+    max-width:100%;
+    font-size:clamp(12px,1.55vw,16px)!important;
+    line-height:1.25!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-card>p{
+    font-size:11px!important;line-height:1.35!important;
+    margin-top:10px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card:is(.owner20-bottom-air,.owner20-bottom-club)>p{
+    max-width:67%!important;
+  }
+  .guest-app.guest-home .owner20-bottom-card>span:not(.owner20-store){
+    left:12px!important;bottom:13px!important;
+    padding:6px 9px!important;font-size:11px!important;
+    max-width:calc(100% - 24px)!important;
+  }
+  .guest-app.guest-home .owner20-bottom-why ul{
+    font-size:11px!important;line-height:1.32!important;
+    padding-left:15px!important;margin:9px 0 0!important;
+  }
+  .guest-app.guest-home .owner20-bottom-why li{
+    margin-bottom:5px!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app>p{
+    max-width:53%!important;overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    display:block!important;position:absolute!important;
+    z-index:3!important;left:12px!important;bottom:13px!important;
+    width:53%!important;max-width:53%!important;
+    font-size:10px!important;line-height:1.25!important;
+    white-space:normal!important;overflow-wrap:break-word;
+  }
+}
+
+/* Narrow-desktop 617 QA: float must not cover app-phone artwork. */
+@media(min-width:900px) and (max-width:1199px){
+  .guest-app.guest-home .owner20-bottom-app>b{
+    display:block!important;max-width:58%!important;
+  }
+}
+
+/* Shared role identifiers in desktop cabinet banners: same shape as guest icons. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-title-row{
+    display:flex;align-items:center;gap:9px;
+    min-width:0;max-width:100%;
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-title-row h1{
+    margin:0!important;min-width:0;
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon{
+    display:grid;place-items:center;
+    flex:0 0 35px;width:35px;height:35px;
+    border:1px solid rgba(246,145,72,.52);
+    background-color:rgba(6,28,36,.75);
+    border-radius:10px;color:#ffa86e;
+    box-shadow:0 3px 12px rgba(0,0,0,.26);
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon svg{
+    width:25px;height:25px;display:block;
+  }
+}
+@media(min-width:900px) and (max-width:1100px){
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon{
+    flex-basis:29px;width:29px;height:29px;
+  }
+  html.traksos-browser .approved-pc-heading .approved-pc-heading-role-icon svg{
+    width:21px;height:21px;
+  }
+}
+
+/* 390px partner review: keep the evacuation title as one readable word. */
+@media(max-width:420px){
+  .guest-app .guest-partner-roles .guest-partner-role-tow .guest-partner-role-label {
+    max-width:100%!important;
+  }
+  .guest-app .guest-partner-roles .guest-partner-role-tow .guest-partner-role-label b{
+    font-size:12px!important;
+    letter-spacing:-.32px!important;
+    white-space:nowrap!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+  }
+}
+
+/* Owner-reviewed role portraits on all real PC workspace banners. */
+/* The photographic cell is naturally sized (400x134) and joined to the
+   whole-card background by a soft mask. No stretching or second truck.
+   Name/CTA stay live DOM nodes on the unobstructed LEFT. The atlas is
+   a review-sized asset; do not claim it is a high-resolution master. */
+@media(min-width:900px){
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]{
+    isolation:isolate!important;position:relative!important;overflow:hidden!important;
+    background-color:#071b26!important;
+    background-image:linear-gradient(105deg,#071923 0%,#0a2834 61%,#071b25 100%)!important;
+    background-size:100% 100%!important;background-repeat:no-repeat!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]::after{
+    content:""!important;display:block!important;position:absolute!important;
+    right:0!important;top:50%!important;left:auto!important;
+    width:min(400px,52%)!important;height:134px!important;z-index:0!important;
+    background-image:url('/role-art/traksos-role-banners-approved-atlas-20261122.webp')!important;
+    background-size:800px 670px!important;background-repeat:no-repeat!important;
+    background-position:var(--tr-role-art-pos,0 0)!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.75) 20%,#000 42%)!important;
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.75) 20%,#000 42%)!important;
+    transform:translateY(-50%)!important;
+    filter:none!important;opacity:1!important;pointer-events:none!important;
+    border:0!important;box-shadow:none!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]>img,
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]>.traksos-feature-art {
+    display:none!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art]>div:first-child{
+    position:relative!important;z-index:2!important;
+    width:min(62%,680px)!important;
+  }
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="owner"]{--tr-role-art-pos:0 0}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="driver"]{--tr-role-art-pos:-400px 0}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="admin"]{--tr-role-art-pos:0 -134px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="moderator"]{--tr-role-art-pos:-400px -134px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="insurer"]{--tr-role-art-pos:0 -268px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="inspection"]{--tr-role-art-pos:-400px -268px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="master"]{--tr-role-art-pos:0 -402px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="tow"]{--tr-role-art-pos:-400px -402px}
+  html.traksos-browser .approved-pc .approved-pc-heading[data-role-art="service"]{--tr-role-art-pos:0 -536px}
+}
+
+
+/* 23 Nov visual review of 95bced6 PNG: at 1536px the fixed TrakBot
+   launcher covered the lower portion of the illustration in the app card.
+   Keep the approved phone-and-bot concept, but give each its own space.
+   Narrow PC (900-1199) retains the previously tested composition. */
+@media(min-width:1200px){
+  .guest-app.guest-home > .trakbot-dock{
+    bottom:10px!important;
+  }
+}
+
+/* 23 Nov unified app preview and mobile settings controls */
+:root{--traksos-control-gold:#e8ad51;--traksos-control-gold-ink:#1b1e20}
+/* One real DOM phone in both 617/618, using the bundled TrakSOS app icon.
+   Previously CSS ::before/::after drew a second phone, without real branding. */
+.traksos-app-phone{
+  box-sizing:border-box;display:flex;align-items:stretch;justify-content:stretch;
+  width:104px;height:168px;min-height:0;min-width:0;padding:5px;
+  border:3px solid #334858;border-radius:20px;
+  background:#08111a;box-shadow:0 12px 25px #0009,0 0 0 1px #8197a0;
+  transform:rotate(4deg);pointer-events:none;flex-shrink:0;
+}
+.traksos-app-phone-screen{
+  min-width:0;min-height:0;flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-around;
+  padding:8px 4px 4px;border-radius:13px;overflow:hidden;
+  color:#fff;background:radial-gradient(circle at 52% 72%,#f0793147,transparent 66%),
+    linear-gradient(165deg,#0c2734,#152e3d 60%,#071b26);
+}
+.traksos-app-phone-camera{display:block;align-self:center;width:26%;height:3px;min-height:3px;
+  border-radius:8px;background:#607b88}
+.traksos-app-phone-screen>.traksos-app-phone-mark{
+  display:block;width:88%;height:auto;object-fit:contain;mix-blend-mode:screen;
+}
+.traksos-app-phone-icon{display:block!important;width:56%!important;max-width:64px!important;
+  height:auto!important;max-height:55px!important;object-fit:contain!important;
+  border-radius:9px;box-shadow:0 4px 12px #0007;filter:none!important;}
+.traksos-app-phone-caption{display:block;max-width:95%;font-size:9px;line-height:1.2;
+  font-weight:600;text-align:center;color:#dce9ea}
+.traksos-app-phone-home{display:block;width:24%;height:3px;min-height:3px;border-radius:8px;
+  background:#8ba7ac}
+@media(min-width:900px){
+  .guest-app.guest-home .owner20-bottom-app{
+    isolation:isolate;position:relative!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app::before,
+  .guest-app.guest-home .owner20-bottom-app::after{
+    content:none!important;display:none!important; /* no duplicate pseudo phone */
+  }
+  .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
+    position:absolute;z-index:2;top:8px;right:12px;
+    width:72px!important;height:110px!important;
+  }
+  .guest-app.guest-home .owner20-bottom-app> b,
+  .guest-app.guest-home .owner20-bottom-app>p,
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    position:relative;z-index:3;max-width:57%!important;
+    overflow-wrap:break-word;
+  }
+  .guest-app.guest-home .owner20-bottom-app>.owner20-store{
+    position:absolute!important;bottom:12px!important;left:12px!important;
+    max-width:56%!important;font-weight:800;color:#eab25a!important;
+  }
+}
+@media(min-width:1200px){
+  /* Keep the ONE approved phone at the right, above the fixed TrakBot.
+     Its former 92px inset left too little room for Russian copy at 1280px.
+     Shrink its height only enough to clear the fixed mascot at 1536px. */
+  .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
+    right:10px!important;top:5px!important;
+    height:84px!important;width:68px!important;
+    transform:rotate(2deg)!important;
+  }
+  #public-home .owner20-bottom-app>:is(b,p,.owner20-store){
+    display:block!important;
+    width:calc(100% - 102px)!important;
+    max-width:calc(100% - 102px)!important;
+    min-width:0!important;
+    white-space:normal!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+  }
+
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{
+    grid-column:2;grid-row:1/6;justify-self:center;align-self:center;
+    width:104px!important;max-width:100%!important;
+    height:174px!important;min-height:174px!important;
+    padding:5px!important;gap:0!important;
+    transform:rotate(3deg)!important;
+  }
+}
+@media(max-width:370px){
+  .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{
+    width:84px!important;height:154px!important;min-height:154px!important;
+  }
+}
+/* Native details are keyboard-accessible and do not create new routes. */
+@media(max-width:899px){
+  .app:not(.guest-app) .tr-mobile-menu-section>summary{
+    min-height:55px;cursor:pointer;touch-action:manipulation;
+  }
+  .app:not(.guest-app) .tr-mobile-menu-section[open]>.tr-mobile-menu-section-head{
+    border-color:var(--traksos-control-gold)!important;
+  }
+  .app:not(.guest-app) .tr-mobile-menu-section[open] .tr-mobile-menu-disclosure{
+    color:var(--traksos-control-gold)!important;transform:rotate(180deg);
+  }
+  .app:not(.guest-app) .tr-mobile-menu-section>summary:focus-visible,
+  .app:not(.guest-app) .performer-schedule-accordion>summary:focus-visible{
+    outline:2px solid var(--traksos-control-gold)!important;outline-offset:2px;
+  }
+  .app:not(.guest-app) .tr-mobile-menu-links a,
+  .app:not(.guest-app) .tr-mobile-menu-links button{min-height:44px;touch-action:manipulation}
+}
+.app .performer-schedule-accordion{
+  display:block;overflow:hidden;min-width:0;margin:0;
+  border:1px solid #466271;border-radius:13px;
+  background:linear-gradient(125deg,#112c37,#091d27);color:#edf7fa;
+}
+.app .performer-schedule-accordion>summary{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:57px;padding:13px 15px;list-style:none;cursor:pointer;
+  font-weight:800;touch-action:manipulation;
+}
+.app .performer-schedule-accordion>summary::-webkit-details-marker{display:none}
+.app .performer-schedule-accordion>summary>span:first-child{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+.app .performer-schedule-accordion>summary small{
+  font-size:11px;font-weight:500;color:#a6c1ce;overflow-wrap:anywhere;
+}
+.app .performer-schedule-accordion>summary>span:last-child{
+  flex:none;color:var(--traksos-control-gold);font-size:20px;
+  transition:transform .2s ease;
+}
+.app .performer-schedule-accordion[open]>summary{
+  border-bottom:1px solid #49616e;
+}
+.app .performer-schedule-accordion[open]>summary>span:last-child{
+  transform:rotate(180deg)
+}
+.app .performer-schedule-panel{
+  display:flex;flex-direction:column;gap:12px;padding:14px;min-width:0
+}
+.app .performer-schedule-panel label{
+  display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:750;
+}
+.app .performer-schedule-panel .grid7{
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;
+}
+.app .performer-schedule-panel .seg{
+  min-width:0;min-height:42px;padding:0!important;font-size:12px!important;
+  border-radius:9px;touch-action:manipulation
+}
+.app .performer-schedule .performer-schedule-panel .grid7 .seg[aria-pressed="true"]{
+  background:var(--traksos-control-gold)!important;
+  color:var(--traksos-control-gold-ink)!important;
+  border-color:#f2c780!important;box-shadow:inset 0 0 0 1px #fff3!important;
+}
+.app .performer-schedule .performer-schedule-panel .grid7 .seg[aria-pressed="false"]{
+  background:#142a35!important;color:#d6e9ed!important;border-color:#4a6068!important
+}
+.app .performer-schedule :is(input[type="checkbox"],input[type="radio"],input[type="date"],input[type="time"],select){
+  accent-color:var(--traksos-control-gold)!important;
+}
+@media(max-width:899px){
+  html.traksos-browser .app:not(.guest-app) :is(input[type="date"],input[type="time"],input[type="datetime-local"],input[type="checkbox"],input[type="radio"]),
+  html.traksos-native .app:not(.guest-app) :is(input[type="date"],input[type="time"],input[type="datetime-local"],input[type="checkbox"],input[type="radio"]){
+    accent-color:var(--traksos-control-gold)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+ .app .performer-schedule-accordion>summary>span:last-child{transition:none}
+}
+
+/* 23 Nov Android: vehicle complete within mobile photo frame */
+/* The source images must be visible COMPLETELY: a 2:1 cargo truck in
+   a 1:1 thumbnail must not lose its headlights, cabin or trailer.
+   A graphite photographic surround fills the entire tile instead of
+   distorting the vehicle to make it cover the frame. */
+@media(max-width:899px){
+  .app:not(.guest-app) .and19-main-order .tr-approved-order-truck,
+  .app:not(.guest-app) .and20-client-truck,
+  .app:not(.guest-app) .and20-tow-job .and20-tow-photo,
+  .app:not(.guest-app) .and20-sto-photo {
+    background:radial-gradient(ellipse at 70% 48%,#24485b,#0a2231 82%)!important;
+    overflow:hidden;
+  }
+  .app:not(.guest-app) .and19-main-order .tr-approved-order-truck img,
+  .app:not(.guest-app) .and19-main-order .and19-order-photo-link img,
+  .app:not(.guest-app) img.and20-client-truck,
+  .app:not(.guest-app) img.and20-tow-photo,
+  .app:not(.guest-app) img.and20-sto-photo {
+    width:100%!important;height:100%!important;
+    object-fit:contain!important;object-position:center center!important;
+    transform:none!important;
+  }
+  /* Keep accessible text for a reference, but don't print a tiny
+     "Иллюстрация" badge OVER the vehicle on the phone. PC retains it. */
+  .app:not(.guest-app) .tr-approved-order-truck.is-illustration > small {
+    display:none!important;
+  }
+}
+
+/* 23 Nov owner feedback: full-card quick artwork and native touch actions */
+/* Do not replace the approved 617 section, its five links or TrakBot.
+   The same licensed four-scene panorama used for Android is rendered here.
+   Gradients paint the full card; the subject stays at right, never over text. */
+@media(min-width:900px) {
+  .guest-app.guest-home .owner20-quick>a {
+    isolation:isolate!important;
+    min-width:0!important;overflow:hidden!important;
+    transition:filter .18s ease,border-color .18s ease!important;
+  }
+  .guest-app.guest-home .owner20-quick>a::before {
+    content:"";display:block;pointer-events:none;
+    position:absolute;inset:0;z-index:1;
+    background:linear-gradient(90deg,#0c202af0 0%,#0c202adb 32%,
+      #102633b5 52%,#10263305 94%);
+  }
+  .guest-app.guest-home .owner20-quick>a:focus-visible {
+    outline:3px solid #eab35d!important;outline-offset:-3px!important
+  }
+  .guest-app.guest-home .owner20-quick>a:hover,
+  .guest-app.guest-home .owner20-quick>a:focus-visible {
+    filter:brightness(1.09)
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon {
+    position:relative;z-index:3;flex-shrink:0;min-width:0;
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy {
+    position:relative;z-index:3;min-width:0;max-width:60%;overflow-wrap:break-word;
+    text-shadow:0 1px 4px #061820;
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration {
+    position:absolute!important;inset:auto 0 0 auto!important;z-index:0!important;
+    opacity:.95!important;width:140px!important;height:84px!important;
+    background-color:#102b36!important;
+    background-image:var(--tr-service-desktop)!important;
+    background-size:560px 84px!important;background-repeat:no-repeat!important;
+    transform:none!important;mask-image:none!important;-webkit-mask-image:none!important;
+    pointer-events:none!important;
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--repair{background-position:0 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--tow{background-position:-140px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--service{background-position:-280px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--consult{background-position:-420px 0!important}
+  .guest-app.guest-home .owner20-quick>a.owner20-quick-trakbot::before {
+    background:linear-gradient(90deg,#101f2de8,#17303bd2)
+  }
+}
+@media(min-width:900px) and (max-width:1279px){
+  .guest-app.guest-home .owner20-quick>a{gap:4px!important;padding:9px 5px!important}
+  .guest-app.guest-home .owner20-quick>a:not(.owner20-quick-trakbot)>.owner20-quick-icon{
+    flex:0 0 25px!important;width:25px!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-icon svg {
+    width:25px!important;height:25px!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy{
+    max-width:calc(100% - 28px)!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy b{
+    font-size:11.5px!important;line-height:1.15!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.owner20-quick-copy small {
+    display:none!important
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration {
+    width:90px!important;height:54px!important;
+    background-size:360px 54px!important;bottom:0!important;opacity:.85!important;
+  }
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--tow{background-position:-90px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--service{background-position:-180px 0!important}
+  .guest-app.guest-home .owner20-quick>a>.tr-service-illustration--consult{background-position:-270px 0!important}
+}
+/* Native 618 is a touch device: four actions become two rows of real
+   thumb-size, icon-left shortcuts. Routes remain unchanged; no PC carousel,
+   no huge vertical cards, and no accidental double-sized pictograms. */
+@media(max-width:899px){
+  html.traksos-native .app.role-client .and19-services{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;margin:0!important
+  }
+  html.traksos-native .app.role-client .and19-services>a{
+    position:relative;display:flex!important;flex-direction:row!important;
+    align-items:center!important;justify-content:flex-start!important;
+    gap:8px!important;min-width:0!important;
+    min-height:64px!important;max-height:none!important;
+    padding:9px!important;text-align:left!important;
+    border:1px solid #4c6674!important;border-radius:13px!important;
+    background:linear-gradient(120deg,#193445,#102531)!important;
+    color:#f6f9f8!important;
+    transition:transform .16s ease,border-color .16s ease!important
+  }
+  html.traksos-native .app.role-client .and19-services>a:first-child{
+    border-color:#d98e43!important;background:linear-gradient(120deg,#874016,#4b291d)!important
+  }
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-symbol {
+    position:relative;z-index:3;flex:0 0 28px!important;
+    display:grid!important;place-items:center!important;
+    width:28px!important;height:32px!important;
+    font-size:24px!important;line-height:1!important
+  }
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-symbol svg{
+    width:26px!important;height:26px!important;display:block
+  }
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-label {
+    position:relative;z-index:3;flex:1 1 auto;min-width:0;
+    font-size:12px!important;line-height:1.25!important;
+    text-align:left!important;font-weight:800!important;overflow-wrap:normal!important
+  }
+  html.traksos-native .app.role-client .and19-services>a>.tr-service-illustration{
+    z-index:0!important;opacity:.16!important;right:0!important;
+    width:88px!important;max-height:52px!important;
+    mask-image:linear-gradient(90deg,transparent,#000 75%)!important;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 75%)!important
+  }
+  html.traksos-native .app.role-client .and19-services>a:focus-visible{
+    outline:3px solid #e8ad51!important;outline-offset:2px!important
+  }
+  html.traksos-native .app.role-client .and19-services>a:active{
+    transform:scale(.985)
+  }
+}
+@media(max-width:345px){
+  html.traksos-native .app.role-client .and19-services>a{gap:5px!important;padding:7px!important}
+  html.traksos-native .app.role-client .and19-services>a>.and19-service-label{
+    font-size:11px!important
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html.traksos-native .app.role-client .and19-services>a,
+  .guest-app.guest-home .owner20-quick>a{transition:none!important}
+}
+
+/* 23 Nov Android native welcome: NOT a squeezed desktop website */
+html.traksos-native .guest-app .tr-native-welcome{
+  box-sizing:border-box!important;display:flex!important;
+  flex-direction:column!important;gap:12px!important;
+  width:100%!important;max-width:600px!important;
+  min-width:0!important;margin:0 auto!important;
+  padding:12px 14px max(20px,env(safe-area-inset-bottom))!important;
+  color:#f5f9fb!important;background:#091b26!important;
+}
+html.traksos-native .guest-app .tr-native-welcome-stage{
+  box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;
+  gap:10px;position:relative;padding:15px 15px 17px;
+  min-width:0;border:1px solid #395869;border-radius:20px;
+  background:linear-gradient(158deg,#122c3c,#071924 80%);
+  box-shadow:0 8px 24px #020b1666;
+}
+html.traksos-native .guest-app .tr-native-welcome-kicker{
+  font-size:10px;font-weight:850;letter-spacing:1.2px;color:#f0ba6c;
+}
+html.traksos-native .guest-app .tr-native-welcome-photo{
+  box-sizing:border-box;display:flex;justify-content:center;align-items:center;
+  width:100%;height:clamp(145px,29vh,235px);min-width:0;
+  padding:6px 8px;border-radius:14px;overflow:hidden;
+  background:radial-gradient(ellipse at 58% 65%,#284554 0%,#0c2230 75%);
+}
+html.traksos-native .guest-app .tr-native-welcome-photo img{
+  display:block;width:100%;height:100%;max-width:100%;
+  object-fit:contain!important;object-position:center center!important;
+  transform:none!important;filter:drop-shadow(0 7px 13px #0008);
+}
+html.traksos-native .guest-app .tr-native-welcome-stage h1{
+  font-size:clamp(23px,6.1vw,31px)!important;line-height:1.12!important;
+  font-weight:850;letter-spacing:-.4px;margin:2px 0!important;color:#f4f8fa;
+}
+html.traksos-native .guest-app .tr-native-welcome-stage h1 em{
+  color:#e8ad51!important;font-style:normal;
+}
+html.traksos-native .guest-app .tr-native-welcome-stage p{
+  font-size:13px;line-height:1.45;margin:0;color:#c5d6de;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions a{
+  display:flex;justify-content:center;align-items:center;text-align:center;
+  box-sizing:border-box;min-width:0;min-height:52px;padding:8px;border-radius:13px;
+  white-space:normal;overflow-wrap:anywhere;word-break:normal;
+  text-decoration:none;font-size:13px;font-weight:850;line-height:1.2;
+  border:1px solid #d9a457;color:#20180d;
+  background:linear-gradient(145deg,#f1bb67,#d99135);
+  transition:transform .14s ease,filter .14s ease;
+  touch-action:manipulation;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions .tr-native-welcome-register{
+  background:#183342;border-color:#577786;color:#e5f5f6;
+}
+html.traksos-native .guest-app .tr-native-welcome-actions a:active{transform:scale(.985)}
+html.traksos-native .guest-app .tr-native-welcome-actions a:focus-visible,
+html.traksos-native .guest-app .tr-native-welcome-services summary:focus-visible,
+html.traksos-native .guest-app .tr-native-welcome-service-list a:focus-visible,
+html.traksos-native .guest-app .tr-native-welcome-partner:focus-visible{
+  outline:3px solid #e8ad51!important;outline-offset:2px
+}
+html.traksos-native .guest-app .tr-native-welcome-stage>small{
+  font-size:10px;color:#9bb4bd;line-height:1.3
+}
+html.traksos-native .guest-app .tr-native-welcome-services{
+  display:block!important;width:100%;min-width:0;
+  border:1px solid #3c5c6c;border-radius:14px;overflow:hidden;
+  background:#102735;
+}
+html.traksos-native .guest-app .tr-native-welcome-services>summary{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-height:54px;padding:13px;list-style:none;
+  color:#f2f7f8;font-size:14px;font-weight:800;cursor:pointer;
+  touch-action:manipulation;
+}
+html.traksos-native .guest-app .tr-native-welcome-services>summary::-webkit-details-marker{display:none}
+html.traksos-native .guest-app .tr-native-welcome-services>summary>span{
+  font-size:11px;flex:none;color:#e9b76e;font-weight:650
+}
+html.traksos-native .guest-app .tr-native-welcome-services[open]>summary{
+  border-bottom:1px solid #476773
+}
+html.traksos-native .guest-app .tr-native-welcome-services[open]>summary>span>span{
+  display:inline-block;transform:rotate(180deg)
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list{
+  box-sizing:border-box;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px;padding:9px;
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{
+  box-sizing:border-box;position:relative;display:flex!important;
+  align-items:center;justify-content:flex-start;flex-direction:row!important;
+  gap:8px;min-height:59px!important;min-width:0;
+  border:1px solid #456474!important;border-radius:11px!important;
+  padding:8px!important;text-align:left!important;
+  background:#142f3e!important;color:#f6f8f9!important;
+  text-decoration:none;touch-action:manipulation;
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list .public-service-icon{
+  display:grid;place-items:center;flex:0 0 25px;
+  width:25px;height:25px;color:#e8ad51
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list .public-service-icon svg{
+  width:24px;height:24px
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list strong{
+  min-width:0;flex:1;font-size:12px;line-height:1.25;overflow-wrap:anywhere
+}
+html.traksos-native .guest-app .tr-native-welcome-service-list>a>span:last-child{
+  color:#e8ad51;font-size:18px
+}
+html.traksos-native .guest-app .tr-native-welcome-partner{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:12px 13px;min-height:48px;
+  font-size:12px;font-weight:750;line-height:1.25;
+  color:#d8ecf2;text-decoration:none;
+  border:1px solid #3e5f6e;border-radius:12px;background:#102735
+}
+html.traksos-native .guest-app .tr-native-welcome-partner>span{
+  color:#e8ad51;font-size:19px
+}
+html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
+  animation:tr-native-entry .25s ease-out both
+}
+@keyframes tr-native-entry{
+  from{opacity:.65;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:350px){
+  /* On genuine 320px APK windows, the 17-letter register label cannot fit
+     half a card without spilling into the neighbouring login button.
+     Stacking only at this width keeps full readable words and 52px targets;
+     360+ preserves the owner-approved side-by-side buttons. */
+  html.traksos-native .guest-app .tr-native-welcome-actions{
+    grid-template-columns:minmax(0,1fr);
+  }
+  html.traksos-native .guest-app .tr-native-welcome{padding:9px!important;gap:9px!important}
+  html.traksos-native .guest-app .tr-native-welcome-stage{padding:12px!important}
+  html.traksos-native .guest-app .tr-native-welcome-photo{height:130px}
+  html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{gap:5px;padding:6px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
+    animation:none!important
+  }
+  html.traksos-native .guest-app .tr-native-welcome-actions a{transition:none!important}
+}
+
+/* The approved 618 mobile guest home already keeps TrakBot IN page flow
+   rather than covering content. Apply that same non-overlay behavior to
+   secondary guest screens (published terms, privacy, rules, About).
+   The same approved mascot and launcher remain accessible after the footer. */
+@media(max-width:899px) {
+  html.traksos-browser .guest-app:not(.guest-home) > .trakbot-dock {
+    position:relative!important;
+    right:auto!important;left:auto!important;top:auto!important;bottom:auto!important;
+    margin:12px 14px calc(20px + env(safe-area-inset-bottom)) auto!important;
+    width:max-content;max-width:calc(100% - 28px);
+    pointer-events:auto;
+  }
+}
+/* moderator-mobile-duplicate-tabs:
+   Four real action tiles already select the working moderation sections.
+   On 618-sized screens a second row of the SAME four controls was repeated
+   directly underneath and wasted the first viewport. Keep PC tabs intact. */
+@media (max-width:899px) {
+  .app.role-moderator .moderator-workspace > .scroll-x[role="tablist"] {
+    display:none!important;
+  }
+}
+
+/* Authorized browser footer: same baked-in logo, no black matte square. */
+.app:not(.guest-app) .site-footer .tr-approved-brand-logo,
+.app:not(.guest-app) .site-footer .tr-approved-brand-logo img {
+ background:transparent!important;box-shadow:none!important;
+}
+.app:not(.guest-app) .site-footer .tr-approved-brand-logo img {
+ mix-blend-mode:screen!important;
+ filter:contrast(1.7) brightness(1.06)!important;
+}
+
+/* Pointer-safe invisible bridges between desktop summaries and dropdowns.
+   Keep the approved 617 visual offset, but do not fire mouseleave while
+   travelling across its 11px gap into the real clickable menu. */
+@media(min-width:900px) and (hover:hover) and (pointer:fine){
+  .guest-app.guest-home .owner20-topnav details[open]::before {
+    content:"";position:absolute;top:100%;left:0;
+    width:max(100%,204px);height:13px;z-index:179;
+    background:transparent;pointer-events:auto;
+  }
+  .guest-app.guest-home .owner20-region[open]::before {
+    content:"";position:absolute;top:100%;right:-38px;
+    width:max(100%,250px);height:18px;z-index:98;
+    background:transparent;pointer-events:auto;
+  }
+  .guest-app.guest-home .owner20-compact-menu[open]::before {
+    content:"";position:absolute;top:100%;right:0;
+    width:190px;height:18px;z-index:96;
+    background:transparent;pointer-events:auto;
+  }
+}
+
+/* Isolated, signed admin test sessions only: persistent visible return control.
+   Never render on public 617/618, production roles or unsupervised previews. */
+.sandbox-supervisor-controls {
+ display:inline-flex;align-items:center;gap:6px;min-width:0;
+}
+.sandbox-supervisor-controls .sandbox-supervisor-badge {
+ min-width:0;flex-shrink:0;
+}
+.sandbox-review-back {
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:6px 8px;min-height:36px;box-sizing:border-box;
+ border:1px solid var(--line);border-radius:8px;
+ color:var(--fg);font-size:12px;font-weight:700;text-decoration:none;
+ white-space:nowrap;
+}
+.sandbox-review-back:focus-visible {
+ outline:2px solid var(--accent);outline-offset:2px;
+}
+@media(max-width:420px){
+ .sandbox-supervisor-controls {gap:4px}
+ .sandbox-supervisor-controls .sandbox-test-badge {padding:5px 6px;font-size:11px}
+ .sandbox-review-back {padding:5px;font-size:11px}
+}

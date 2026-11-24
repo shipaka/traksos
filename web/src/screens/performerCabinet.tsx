@@ -39,7 +39,7 @@ export function PerformerHub() {
     ['work/me/schedule', 'Распорядок', p.schedule?.on ? `${dayList(p.schedule.days)} · выезды ${p.schedule.from}–${p.schedule.to} · телефон до ${p.schedule.phoneTo}` : 'не задан — заявки идут, пока вы на линии'],
     ['work/me/tax', 'Налоговый статус', p.tax_status ? `${p.tax_status === 'ip' ? 'ИП' : 'Самозанятый'} · ИНН ${p.inn ?? '—'}` : 'не указан'],
     ['work/me/money', 'Финансы', 'баланс, начисления, списания, выплаты'],
-    ['invite', 'Пригласить и получать баллы', 'баллы гасят до половины комиссии'],
+    ['invite', 'Пригласить и получать баллы', 'баллы используются по действующим правилам программы'],
     ['work/me/level', 'Мой уровень и точность', 'Новичок · Проверенный · Лучший, точность подсказок по телефону'],
     ['work/docs', 'Проверка и фото', p.verification === 'approved' ? 'пройдена' : p.submitted_at ? 'на проверке' : 'нужно пройти'],
     ['support', 'Поддержка', 'обращения и ответы'],
@@ -96,10 +96,12 @@ function PerformerOnboarding() {
   const isTow = kind === 'tow';
   const isEcu = kind === 'ecu';
   async function save() {
-    const body: any = { kind, name: name || undefined, taxStatus: taxStatus || null, inn: inn || null,
-      cars: !isEcu && car.brand && car.plate ? [car] : [], car: !isEcu && car.brand && car.plate ? car : null };
+    const cleanCar = { brand: car.brand.trim(), color: car.color.trim(), plate: car.plate.trim().toUpperCase() };
+    const hasCar = !isEcu && !!cleanCar.brand && !!cleanCar.plate;
+    const body: any = { kind, name: name.trim() || undefined, taxStatus: taxStatus || null, inn: inn || null,
+      cars: hasCar ? [cleanCar] : [], car: hasCar ? cleanCar : null };
     if (!isTow && !isEcu) body.specialties = spec;
-    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён — теперь фото для проверки')) {
+    if (await run(() => put('/api/performer/profile', body), 'Профиль сохранён. Фото для добровольной проверки можно добавить отдельно')) {
       try { sessionStorage.removeItem('traksos.masterSpecialties'); } catch {}
       await reload(); go('work/docs');
     }
@@ -133,7 +135,7 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — фото для проверки</button>
+      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — добровольная проверка</button>
     </main>
   );
 }
@@ -141,6 +143,11 @@ function PerformerOnboarding() {
 // Кто вы ----------------------------------------------------------------------
 
 export function AboutSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <AboutSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function AboutSectionForUser() {
   const { me } = useMe();
   const p = me!.performer!;
   const { busy, save } = useSave();
@@ -173,7 +180,7 @@ export function PhoneSection() {
       <h1>Телефон и вход</h1>
       <div className="card">
         <dl className="kv"><dt>Номер</dt><dd>{fmtPhone(me!.phone)}</dd></dl>
-        <span className="note">Вход — по этому номеру и коду из SMS. Клиенты ваш номер не видят: звонки идут через TrakSOS.</span>
+        <span className="note">Вход — по этому номеру и паролю, без SMS. SMS-код нужен только для регистрации и восстановления доступа. Клиенты ваш номер не видят: звонки идут через TrakSOS.</span>
       </div>
       <a className="btn ghost" href="#/support/new">Сменить номер — через поддержку</a>
       <span className="note">Номер меняем только после проверки, что это вы: на нём ваши выплаты и рейтинг.</span>
@@ -186,10 +193,10 @@ export function PhoneSection() {
 function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: string; plate: string }; onChange: (c: any) => void; tow?: boolean }) {
   return (
     <>
-      <input className="field" placeholder={tow ? 'Марка эвакуатора: MAN TGS' : 'Марка: Lada Largus'} value={car.brand} onChange={(e) => onChange({ ...car, brand: e.target.value })} />
+      <input className="field" maxLength={50} placeholder={tow ? 'Марка эвакуатора: MAN TGS' : 'Марка: Lada Largus'} value={car.brand} onChange={(e) => onChange({ ...car, brand: e.target.value })} />
       <div className="grid2">
-        <input className="field" placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
-        <input className="field" placeholder="Госномер" value={car.plate} onChange={(e) => onChange({ ...car, plate: e.target.value.toUpperCase() })} />
+        <input className="field" maxLength={30} placeholder="Цвет" value={car.color ?? ''} onChange={(e) => onChange({ ...car, color: e.target.value })} />
+        <input className="field" maxLength={15} placeholder="Госномер" value={car.plate} onChange={(e) => onChange({ ...car, plate: e.target.value.toUpperCase() })} />
       </div>
     </>
   );
@@ -197,11 +204,18 @@ function CarInputs({ car, onChange, tow }: { car: { brand: string; color?: strin
 
 export function CarsSection() {
   const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <CarsSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function CarsSectionForUser() {
+  const { me } = useMe();
   const p = me!.performer!;
   const { busy, save } = useSave();
   const [cars, setCars] = useState<any[]>(p.cars?.length ? p.cars : p.car ? [p.car] : []);
   const [today, setToday] = useState<string>(p.car?.plate ?? cars[0]?.plate ?? '');
   const [add, setAdd] = useState({ brand: '', color: '', plate: '' });
+  const cleanAdd = { brand: add.brand.trim(), color: add.color.trim(), plate: add.plate.trim().toUpperCase() };
+  const duplicatePlate = cars.some(c => String(c.plate).trim().toUpperCase() === cleanAdd.plate);
   const tow = p.kind === 'tow';
   const commit = (list: any[], t: string) => save({ cars: list, car: list.find((c) => c.plate === t) ?? list[0] ?? null }, 'Машины сохранены');
   return (
@@ -226,9 +240,9 @@ export function CarsSection() {
         <div className="card">
           <b>Добавить {tow ? 'эвакуатор' : 'машину'}</b>
           <CarInputs car={add} onChange={setAdd} tow={tow} />
-          <button className="btn" disabled={busy || !add.brand || !add.plate || cars.some((c) => c.plate === add.plate)} onClick={async () => {
-            const list = [...cars, add];
-            const t = today || add.plate;
+          <button className="btn" disabled={busy || !cleanAdd.brand || !cleanAdd.plate || duplicatePlate} onClick={async () => {
+            const list = [...cars, cleanAdd];
+            const t = today || cleanAdd.plate;
             if (await commit(list, t)) { setCars(list); setToday(t); setAdd({ brand: '', color: '', plate: '' }); }
           }}>Добавить</button>
           {cars.length > 0 && <span className="note">Новую машину модератор может попросить подтвердить фото.</span>}
@@ -246,37 +260,63 @@ const TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).
 
 export function ScheduleSection() {
   const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <ScheduleSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function ScheduleSectionForUser() {
+  const { me } = useMe();
   const p = me!.performer!;
   const { busy, run } = useAction();
+  // Mobile 618: start with two short disclosures instead of a tall form.
+  // Keep each disclosure state when a user selects a working day/time.
+  const [daysExpanded, setDaysExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900);
+  const [hoursExpanded, setHoursExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 900);
   const { reload } = useMe();
   const [s, setS] = useState(() => p.schedule ?? { on: true, days: { mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false }, from: '09:00', to: '18:00', phoneTo: '20:00' });
-  const sel = (v: string, on: (x: string) => void, min?: string) => (
-    <select className="field" value={v} onChange={(e) => on(e.target.value)}>{TIMES.filter((t) => !min || t >= min).map((t) => <option key={t} value={t}>{t}</option>)}</select>
+  const sel = (v: string, on: (x: string) => void, min?: string, strictlyLater = false, stopBeforeLast = false) => (
+    <select className="field" value={v} onChange={(e) => on(e.target.value)}>
+      {TIMES.filter((t, i) => (!stopBeforeLast || i < TIMES.length - 1) && (!min || (strictlyLater ? t > min : t >= min)))
+        .map((t) => <option key={t} value={t}>{t}</option>)}
+    </select>
   );
+  // Keep all three times valid after changing the beginning of the day.
+  const changeStart = (from: string) => {
+    const to = s.to > from ? s.to : TIMES.find(t => t > from)!;
+    setS({ ...s, from, to, phoneTo: s.phoneTo >= to ? s.phoneTo : to });
+  };
   return (
-    <main>
+    <main className="performer-schedule stack">
       <Back to="work/me" label="Профиль" />
-      <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Кончилось рабочее время — статус сам станет «Не на линии», пока вы не выйдете на линию вручную.</div></div>
+      <div><h1>Распорядок</h1><div className="sub">По нему решаем, звонить ли вам. Вне рабочих часов заявки не предлагаются; ручной выход на линию может временно продлить работу.</div></div>
       <VacationToggle />
-      <button className="opt" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
+      <button className="opt performer-schedule-enabled" aria-pressed={s.on} onClick={() => setS({ ...s, on: !s.on })}>
         <b>{s.on ? '✓ Работаю по графику' : 'Без графика'}</b><small>{s.on ? 'Заявки — только в рабочие дни и часы' : 'Заявки идут всегда, пока вы на линии'}</small>
       </button>
       {s.on && (
         <>
-          <div className="card">
-            <b>Рабочие дни</b>
-            <div className="grid7">{WEEK.map(([k, n]) => (
-              <button key={k} className="seg" style={{ fontSize: 13, padding: 0 }} aria-pressed={!!s.days[k]} onClick={() => setS({ ...s, days: { ...s.days, [k]: !s.days[k] } })}>{n}</button>
-            ))}</div>
-          </div>
-          <div className="card">
-            <b>Выезды</b>
-            <div className="grid2">{sel(s.from, (v) => setS({ ...s, from: v }))}{sel(s.to, (v) => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from)}</div>
-            <span className="note">В эти часы приходят все заявки.</span>
-            <b>На телефоне до</b>
-            {sel(s.phoneTo, (v) => setS({ ...s, phoneTo: v }), s.to)}
-            <span className="note">После выездов и до этого времени — только консультации по телефону. Не нужно — поставьте то же время, что конец выездов.</span>
-          </div>
+          <details className="performer-schedule-accordion" open={daysExpanded}
+            onToggle={event => setDaysExpanded(event.currentTarget.open)}>
+            <summary><span>Рабочие дни<small>{dayList(s.days)}</small></span><span aria-hidden="true">⌄</span></summary>
+            <div className="performer-schedule-panel">
+              <div className="grid7" role="group" aria-label="Выбрать рабочие дни">{WEEK.map(([k, n]) => (
+                <button key={k} type="button" className="seg" aria-pressed={!!s.days[k]}
+                  onClick={() => setS({ ...s, days: { ...s.days, [k]: !s.days[k] } })}>{n}</button>
+              ))}</div>
+            </div>
+          </details>
+          <details className="performer-schedule-accordion" open={hoursExpanded}
+            onToggle={event => setHoursExpanded(event.currentTarget.open)}>
+            <summary><span>Выезды и телефон<small>Выезды {s.from}–{s.to} · связь до {s.phoneTo}</small></span><span aria-hidden="true">⌄</span></summary>
+            <div className="performer-schedule-panel">
+              <div className="grid2">
+                <label>Начало выездов{sel(s.from, changeStart, undefined, false, true)}</label>
+                <label>Конец выездов{sel(s.to, v => setS({ ...s, to: v, phoneTo: s.phoneTo < v ? v : s.phoneTo }), s.from, true)}</label>
+              </div>
+              <span className="note">В эти часы приходят все заявки.</span>
+              <label>На телефоне до{sel(s.phoneTo, v => setS({ ...s, phoneTo: v }), s.to)}</label>
+              <span className="note">После выездов — только консультации по телефону. Не нужно — установите время окончания выездов.</span>
+            </div>
+          </details>
           <div className="card flat">
             <span className="note">Обед или заправка — статус «Перерыв» на «Линии»: 15 минут – 2 часа, потом снова «Свободен» сам.</span>
           </div>
@@ -314,6 +354,11 @@ function TaxInputs({ taxStatus, inn, onChange }: { taxStatus: string; inn: strin
 }
 
 export function TaxSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <TaxSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function TaxSectionForUser() {
   const { me } = useMe();
   const p = me!.performer!;
   const { busy, save } = useSave();
@@ -353,7 +398,7 @@ function PointsPref() {
   const ex = me?.performer?.extras ?? {};
   const on = ex.pointsAuto !== false;
   const [max, setMax] = useState<number | null>(ex.pointsMax ?? null);
-  if (!pts.data) return null;
+  if (!pts.data) return <div className="note" role={pts.error ? 'alert' : undefined}>{pts.error ? 'Не удалось загрузить баланс баллов. Повторите попытку позднее.' : 'Загружаем баланс баллов…'}</div>;
   const save = (body: any, ok: string) => run(() => put('/api/performer/extras', body), ok).then((r) => r && reload());
   return (
     <div className="card">
@@ -373,6 +418,11 @@ function PointsPref() {
 }
 
 export function MoneySection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <MoneySectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function MoneySectionForUser() {
   const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
   const ledger = useLoad(() => get('/api/performer/ledger'), [], (e) => e.type === 'balance' || e.type === 'order');
   const [ask, setAsk] = useState<number | null>(null);
@@ -380,7 +430,7 @@ export function MoneySection() {
     <main>
       <Back to="work/me" label="Профиль" />
       <div><h1>Финансы</h1><div className="sub">Каждое движение денег — с причиной и заявкой. Непонятно — задайте вопрос прямо по операции.</div></div>
-      {balance.data && (
+      {!balance.data ? <Loading error={balance.error} /> : (
         <div className="card">
           <div className="sum total"><span>К выплате</span><span>{rub(balance.data.to_pay)}</span></div>
           <div className="sum"><span>Уже выплачено</span><span>{rub(balance.data.paid)}</span></div>
@@ -391,7 +441,7 @@ export function MoneySection() {
           {balance.data.paused && <span className="err">Долг больше {rub(balance.data.cashDebtLimit)} — новые заявки на паузе до оплаты.</span>}
           <span className="note">TrakSOS работает как агент: отчёт агента и акт — раз в месяц.</span>
           <span className="note">{FEE_PURPOSE}</span>
-          <a className="note" href="#/invite">Баллы за приглашения гасят до половины комиссии →</a>
+          <a className="note" href="#/invite">Баллы за приглашения — правила и остаток →</a>
         </div>
       )}
       <PointsPref />
@@ -443,6 +493,11 @@ function AskAbout({ entryId, onDone, onCancel }: { entryId: number; onDone: (tic
 // Фильтр заявок ---------------------------------------------------------------
 
 export function FilterSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <FilterSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function FilterSectionForUser() {
   const { me, reload } = useMe();
   const p = me?.performer;
   const pricing = useLoad(() => get('/api/pricing'), []);
@@ -464,6 +519,16 @@ export function FilterSection() {
   const set = (patch: Partial<typeof f>) => setF({ ...f, ...patch });
   const isTow = p.kind === 'tow';
   const corridor = pricing.data?.tiers;
+  const extraNumbers: [string, number, number, string][] = [
+    ['weekendPct', 0, 100, 'Выходные'],
+    ['nightPct', 0, 100, 'Ночь'],
+    ['holidayPct', 0, 100, 'Праздники'],
+    ['waitRate', 0, 1_000_000, 'Ожидание'],
+    ['maxMass', 1, 100, 'Максимальная масса'],
+  ];
+  const invalidExtra = extraNumbers.find(([key, min, max]) =>
+    x[key] != null && x[key] !== '' && (!Number.isFinite(Number(x[key])) ||
+      Number(x[key]) < min || Number(x[key]) > max));
   const selectedBrands = BRANDS.filter(b => b !== 'Прочие' && Object.prototype.hasOwnProperty.call(f.brands,b));
   const tuned = selectedBrands.length;
   const body = () => isTow
@@ -617,7 +682,8 @@ export function FilterSection() {
               <Field label="Час работы"><RubInput value={f.hourPrice} onChange={(v) => set({ hourPrice: v })} placeholder={corridor ? rub(corridor[f.tier].hour) : ''} /></Field>
             </div>
           )}
-          {!isTow && <span className="note">Пусто — цена уровня по умолчанию. Коридор площадки: 1 500–7 000 ₽.</span>}
+          {!isTow && <span className="note">Пусто — тариф выбранного уровня по умолчанию. Актуальные суммы загружаются из настроек площадки.</span>}
+          {pricing.error && <span className="note" role="status">Тарифные подсказки временно недоступны. Введённые вами суммы можно сохранить после проверки ограничений на сервере.</span>}
           <Field label="За КАД, ₽ за км" hint="Считается расстояние × 1,5 — дорога туда и половина обратно.">
             <RubInput value={f.kmRate} onChange={(v) => set({ kmRate: v })} placeholder={isTow ? '110 ₽' : '50 ₽'} />
           </Field>
@@ -629,7 +695,7 @@ export function FilterSection() {
             {num('holidayPct', '0', 'Праздники, %')}
             {num('waitRate', 'например 900', 'Ожидание, ₽/ч')}
           </div>
-          <span className="note">Время ожидания и возможные надбавки — ориентиры для последующего согласования. Система не списывает их автоматически.</span>
+          <span className="note">Время ожидания и возможные надбавки — ориентиры для последующего согласования. Система не списывает их автоматически. Чтобы убрать ранее установленную процентную надбавку, укажите 0; пустое поле не удаляет прежнее значение.</span>
           {!isTow && (
             <>
               <b>Предоплата за работу</b>
@@ -642,7 +708,8 @@ export function FilterSection() {
         </div>
       )}
 
-      <button className="btn" disabled={busy || (!isTow && !f.specialties.length) || (isTow && !x.prepAck)} onClick={async () => {
+      {invalidExtra && <p className="err" role="alert">{invalidExtra[3]}: допустимый диапазон от {invalidExtra[1]} до {invalidExtra[2]}. Исправьте значение перед сохранением.</p>}
+      <button className="btn" disabled={busy || !!invalidExtra || (!isTow && !f.specialties.length) || (isTow && !x.prepAck)} onClick={async () => {
         const extras = extrasBody();
         Object.keys(extras).forEach((k) => extras[k] === undefined && delete extras[k]);
         const result = await run(
@@ -659,6 +726,11 @@ const LEVELS: [string, string, string][] = [['newbie', 'Новичок', 'пер
 
 /** Мой уровень и точность подсказок — видно только вам */
 export function LevelSection() {
+  const { me } = useMe();
+  // An account switch must discard the previous user's form draft and API data.
+  return <LevelSectionForUser key={me?.id ?? 'signed-out'} />;
+}
+function LevelSectionForUser() {
   const s = useLoad(() => get('/api/performer/standing'), []);
   const d = s.data;
   return (

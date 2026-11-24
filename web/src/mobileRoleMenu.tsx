@@ -65,16 +65,19 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
       <NavGlyph glyph="▦"/>
     </div>
     <MenuSection title="Быстрый доступ" caption="Основные рабочие действия" entries={quickEntries} icon="⌂" initiallyOpen/>
-    <MenuSection title="Разделы кабинета" caption="Заявки, техника, финансы и настройки по вашей роли" entries={workEntries} icon="▣" initiallyOpen={mode!=='admin'}/>
+    <MenuSection title="Разделы кабинета" caption="Заявки, техника, финансы и настройки по вашей роли" entries={workEntries} icon="▣"/>
     <MenuSection title="Помощь и документы" caption="Обучение, связь с поддержкой и правила" entries={helpEntries} icon="?"/>
-    <section className="tr-mobile-menu-section tr-mobile-menu-account" aria-label="Управление аккаунтом">
-      <header className="tr-mobile-menu-section-head"><span className="tr-mobile-menu-section-icon"><NavGlyph glyph="◉"/></span>
-        <span><h2>Аккаунт</h2><small>Настройки и безопасный выход</small></span></header>
+    <details className="tr-mobile-menu-section tr-mobile-menu-account">
+      <summary className="tr-mobile-menu-section-head" aria-label="Аккаунт и настройки">
+        <span className="tr-mobile-menu-section-icon"><NavGlyph glyph="◉"/></span>
+        <span className="tr-mobile-menu-section-copy"><strong>Аккаунт</strong><small>Настройки и безопасный выход</small></span>
+        <span className="tr-mobile-menu-disclosure" aria-hidden="true">⌄</span>
+      </summary>
       <div className="tr-mobile-menu-links">
         <a href="#/profile"><span>Профиль и настройки</span><span className="tr-mobile-menu-chevron" aria-hidden="true">›</span></a>
         <button type="button" className="tr-mobile-menu-logout" onClick={onLogout}>Выйти из аккаунта</button>
       </div>
-    </section>
+    </details>
     <a className="tr-mobile-menu-home" href={'#'+home}><NavGlyph glyph="⌂"/> Вернуться на рабочий стол</a>
   </main>;
 }

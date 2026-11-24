@@ -11,22 +11,16 @@ export function GuestCompany() {
         <a href="#/register">Зарегистрироваться</a><a href="#/join">Стать партнёром</a>
       </div>
     </section>
-    <section className="guest-info-section">
-      <h2>Направления работы</h2>
-      <div className="guest-info-grid">
-        <a href="#/explore/tow"><b>Эвакуация</b><small>Заявки на транспортировку</small></a>
-        <a href="#/explore/van"><b>Выездной мастер</b><small>Диагностика и ремонт на месте</small></a>
-        <a href="#/explore/sto"><b>СТО и сервисы</b><small>Ремонт и запись</small></a>
-        <a href="#/explore/parts"><b>Запчасти</b><small>Подбор оригиналов и аналогов</small></a>
-        <a href="#/explore/insurance"><b>Страхование</b><small>Обращения и документы</small></a>
-        <a href="#/explore/consult"><b>Консультации</b><small>Техническая помощь</small></a>
-      </div>
+    <section className="guest-info-section guest-info-company-note">
+      <h2>О платформе</h2>
+      <p>TrakSOS помогает владельцам грузового транспорта, водителям и профессиональным исполнителям взаимодействовать в единой системе. Для просмотра условий заказа, комиссий и работы сервисов необходим вход в личный кабинет.</p>
+      <p>Официальные реквизиты оператора платформы будут опубликованы здесь после окончательного согласования. Непроверенные данные не размещаем.</p>
     </section>
   </main>;
 }
 
 export function GuestOffers() {
-  return <main className="guest-info-page">
+  return <main className="guest-info-page guest-info-offers">
     <div className="guest-info-top"><a href="#/">← Главная</a><span>ЮРИДИЧЕСКАЯ ИНФОРМАЦИЯ</span></div>
     <section className="guest-info-hero">
       <span className="guest-info-overline">TRAKSOS · ДОКУМЕНТЫ</span>

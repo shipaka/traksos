@@ -28,7 +28,8 @@ test('cache collapses simultaneous requests and never exposes the key in the res
   const fakeFetch = async (_url: unknown, init: any) => {
     calls++;
     assert.equal(init.headers['X-Yandex-Weather-Key'], 'server-only-secret');
-    return { ok: true, json: async () => sample('light-snow') } as any;
+    return new Response(JSON.stringify(sample('light-snow')),
+      {status:200,headers:{'content-type':'application/json'}});
   };
   const service = new PublicWeatherService('server-only-secret', fakeFetch as any, () => ts);
   const results = await Promise.all(Array.from({ length: 40 }, () => service.current()));

@@ -10,6 +10,7 @@ on:
       - 'server/src/app.ts'
       - 'server/src/seedSandbox.ts'
       - 'e2e/isolated-sandbox-browser.mjs'
+      - 'e2e/isolated-no-performer-browser.mjs'
       - 'deploy/docker-compose.sandbox.yml'
       - '.github/workflows/sandbox-pr-realism.yml'
   workflow_dispatch:
@@ -107,6 +108,8 @@ jobs:
             node --import tsx server/src/ops/exerciseSandboxOrder.ts
           "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
             node --import tsx server/src/ops/exerciseSandboxTowSto.ts
+          "${compose[@]}" exec -T -e TRAKSOS_RUN_DISPOSABLE_SCENARIO=true sandbox-app \
+            node --import tsx server/src/ops/exerciseSandboxNoPerformer.ts
           "${compose[@]}" exec -T sandbox-app node --import tsx server/src/ops/auditSandbox.ts
           # Only ephemeral loopback on this GitHub-hosted runner, never a VPS port.
           curl --fail --silent --show-error --max-time 15 \
@@ -116,6 +119,10 @@ jobs:
           SANDBOX_SHARED_SECRET="$shared_secret" \
           TRAKSOS_RUN_DISPOSABLE_SCENARIO=true \
             node --import tsx ../e2e/isolated-sandbox-browser.mjs
+          SANDBOX_BROWSER_BASE_URL="http://127.0.0.1:38123" \
+          SANDBOX_SHARED_SECRET="$shared_secret" \
+          TRAKSOS_RUN_DISPOSABLE_SCENARIO=true \
+            node --import tsx ../e2e/isolated-no-performer-browser.mjs
           echo 'PASS: separate network/DB, real order engine, virtual money, real browser cabinets'
       - name: Upload actual 12 browser screenshots
         if: always()

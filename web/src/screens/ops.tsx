@@ -1,9 +1,9 @@
 // Operational control: historical unfilled orders, demand by Moscow hour,
 // targeted notices and commission campaigns. No fake metrics.
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, put } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
-import { useLoad, useAction, Loading, useMe } from '../ui.tsx';
+import { useAction, Loading, useMe } from '../ui.tsx';
 
 const labels: Record<string,string> = {
   master:'Выездные мастера', tow:'Эвакуаторщики', service:'СТО', all_workers:'Все исполнители',
@@ -11,9 +11,66 @@ const labels: Record<string,string> = {
 // Explicit Moscow time for promotions. The administrator's device can be abroad.
 const dateInput = (ms:number) => new Date(ms+3*3_600_000).toISOString().slice(0,16);
 const datetime = (x:string) => new Date(x+':00+03:00').toISOString();
+const validMskWindow = (start:string,end:string,maxDays:number) => {
+  // datetime-local can be cleared while editing. Avoid RangeError outside
+  // useAction's catch path; never show an enabled Save button for invalid dates.
+  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(start) ||
+     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(end))return false;
+  const a=Date.parse(start+':00+03:00'),b=Date.parse(end+':00+03:00');
+  return Number.isFinite(a)&&Number.isFinite(b)&&b>a&&b-a<=maxDays*86_400_000;
+};
+// A published future announcement is scheduled, not deliverable. A past
+// announcement remains in history; neither state may show a dead Send button.
+const workerNoticeWindow = (x:{starts_at:string;ends_at:string;published:boolean},at=Date.now()) => {
+  const starts=new Date(x.starts_at).getTime(),ends=new Date(x.ends_at).getTime();
+  if(!Number.isFinite(starts)||!Number.isFinite(ends)||ends<=starts)return 'invalid';
+  if(ends<=at)return 'expired';
+  if(!x.published)return 'draft';
+  return starts>at?'scheduled':'active';
+};
+// Show the campaign's real time interval without changing recorded order fees.
+const campaignWindow = (x:{starts_at:string;ends_at:string},at=Date.now()) => {
+  const start=new Date(x.starts_at).getTime();
+  const end=new Date(x.ends_at).getTime();
+  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return 'invalid';
+  if(end<=at)return 'expired';
+  return start>at?'scheduled':'active';
+};
 const mskTime = (iso:string) => new Date(iso).toLocaleString('ru-RU', {
   timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'
 })+' МСК';
+
+/**
+ * Account-scoped operational read: the generic useLoad retains a prior
+ * response on failure and can commit old filter/account responses out of order.
+ * Never show stale demand metrics, private notices or commission campaign data.
+ */
+function useOpsRead<T>(load:()=>Promise<T>,scope:string){
+  const loader=useRef(load);
+  loader.current=load;
+  const sequence=useRef(0);
+  const [snapshot,setSnapshot]=useState<{scope:string;data:T|null;error:string|null}>(
+    {scope,data:null,error:null});
+  const reload=useCallback(async()=>{
+    const request=++sequence.current;
+    setSnapshot({scope,data:null,error:null});
+    try{
+      const data=await loader.current();
+      if(request===sequence.current)setSnapshot({scope,data,error:null});
+    }catch(error){
+      if(request===sequence.current)setSnapshot({
+        scope,data:null,error:error instanceof Error?error.message:'Не удалось загрузить данные',
+      });
+    }
+  },[scope]);
+  useEffect(()=>{
+    void reload();
+    return ()=>{sequence.current++;};
+  },[reload]);
+  // Hide stale scope before the next effect, even during a fast role switch.
+  const current=snapshot.scope===scope?snapshot:null;
+  return {data:current?.data??null,error:current?.error??null,reload};
+}
 
 function Metric({name,value,hint}:{name:string;value:number|string;hint:string}) {
   return <div className="card tile"><span className="label">{name}</span>
@@ -21,14 +78,20 @@ function Metric({name,value,hint}:{name:string;value:number|string;hint:string})
 }
 
 export function OpsDashboard() {
-  const { me } = useMe();
-  const admin = !!me?.roles.includes('admin');
+  const {me}=useMe();
+  if(!me?.roles.includes('admin'))return null;
+  return <AdminOpsDashboard key={me.id} userId={me.id}/>;
+}
+function AdminOpsDashboard({userId}:{userId:string}) {
+  const admin=true;
   const [days,setDays]=useState(7);
   const [wait,setWait]=useState(15);
   const [filter,setFilter]=useState('all');
   const [onlyOpen,setOnlyOpen]=useState(false);
-  const report = useLoad(() => get('/api/admin/demand?days='+days+'&wait='+wait),[days,wait]);
-  const sla = useLoad(() => admin ? get('/api/admin/order-sla?days='+days) : Promise.resolve({incidents:[],repeat:[]}),[days,admin]);
+  const report = useOpsRead<any>(()=>get('/api/admin/demand?days='+days+'&wait='+wait),
+    'demand:'+userId+':'+days+':'+wait);
+  const sla = useOpsRead<any>(()=>get('/api/admin/order-sla?days='+days),
+    'sla:'+userId+':'+days);
   const {busy,run}=useAction();
   const d=report.data;
   const incidents=(d?.incidents??[]).filter((x:any)=>
@@ -80,6 +143,20 @@ export function OpsDashboard() {
             <td>{SERVICES[r.service]?.name??r.service}</td><td>{r.total}</td><td>{r.unfilled}</td>
             <td>{r.cancelled_before_acceptance}</td><td>{r.waiting_now}</td></tr>)}</tbody></table></div>
       </div>
+      {admin && <div className="card stack" aria-label="Спрос на партнёров по зонам">
+        <b>Где подключать новых партнёров · услуга и зона</b>
+        <span className="note">Только реальные заявки за выбранный период, сгруппированные по виду работы и зоне заявки. «Без исполнителя» включает случаи, впоследствии найденные при повторном поиске. Зона не определена — географию заявки достоверно установить нельзя. Здесь нет адресов, телефонов и GPS водителей.</span>
+        {(d.byServiceZone??[]).length===0
+          ? <span className="note">Подтверждённых случаев отсутствия исполнителя за период нет.</span>
+          : <div className="scroll-x"><table>
+              <thead><tr><th>Услуга</th><th>Зона</th><th>Были без исполнителя</th><th>Всего заявок</th></tr></thead>
+              <tbody>{(d.byServiceZone??[]).map((r:any)=><tr key={r.service+':'+r.zone_id}>
+                <td>{SERVICES[r.service]?.name??r.service}</td>
+                <td>{r.zone_id==='unknown'?'Зона не определена':r.zone_id}</td>
+                <td>{r.unfilled}</td><td>{r.total}</td>
+              </tr>)}</tbody>
+            </table></div>}
+      </div>}
       {admin && <div className="card stack">
         <b>Контроль зависших этапов · третий табличный блок</b>
         <span className="note">Поиск, ожидание выезда, дорога, работа, подтверждение. Контрольный интервал — не доказательство вины. Выезд далеко за КАД требует отдельной проверки времени маршрута. Указанная причина остаётся в журнале.</span>
@@ -87,7 +164,7 @@ export function OpsDashboard() {
         {!sla.data ? <Loading error={sla.error}/> : <>
           <div className="scroll-x"><table><thead><tr><th>Заявка / этап</th><th>Начало этапа</th><th>Контрольная дата</th><th>Текущий статус</th><th>Разбор</th></tr></thead>
             <tbody>{sla.data.incidents.length ? sla.data.incidents.map((i:any)=>
-              <SlaIncidentRow key={i.id} incident={i} onSaved={()=>sla.reload()}/>) :
+              <SlaIncidentRow key={i.id+':'+(i.reviewed_at??'')+':'+(i.review_state??'')} incident={i} onSaved={()=>sla.reload()}/>) :
               <tr><td colSpan={5}>Зависших этапов за период нет.</td></tr>}</tbody>
           </table></div>
           <b>Повторяющиеся случаи за 30 дней</b>
@@ -112,7 +189,7 @@ export function OpsDashboard() {
           <label className="row"><input type="checkbox" checked={onlyOpen} onChange={e=>setOnlyOpen(e.target.checked)}/> Только неразобранные</label>
         </div>
         {incidents.length===0 && <span className="note">За выбранный период случаев не найдено.</span>}
-        {incidents.map((o:any)=><IncidentRow key={o.id} order={o} editable={admin}
+        {incidents.map((o:any)=><IncidentRow key={o.id+':'+(o.reviewed_at??'')+':'+(o.review_state??'')} order={o} editable={admin}
           onSave={async (state,note)=>{const x=await run(()=>put('/api/admin/demand/'+o.id+'/review',{state,note}),'Разбор сохранён');if(x)report.reload();}} busy={busy}/>)}
       </div>
     </>}
@@ -169,6 +246,11 @@ function IncidentRow({order:o,editable,onSave,busy}:{order:any;editable:boolean;
 
 const DEFAULT_AUDIENCE='master';
 export function WorkerCommunications() {
+  const {me}=useMe();
+  if(!me?.roles.includes('admin'))return null;
+  return <AdminWorkerCommunications key={me.id} userId={me.id}/>;
+}
+function AdminWorkerCommunications({userId}:{userId:string}){
   const [audience,setAudience]=useState(DEFAULT_AUDIENCE);
   const [service,setService]=useState('');
   const [title,setTitle]=useState('');
@@ -176,20 +258,33 @@ export function WorkerCommunications() {
   const [from,setFrom]=useState(dateInput(Date.now()-60_000));
   const [to,setTo]=useState(dateInput(Date.now()+7*86_400_000));
   const [published,setPublished]=useState(true);
-  const notices=useLoad(()=>get('/api/admin/announcements'),[]);
-  const campaigns=useLoad(()=>get('/api/admin/commission-campaigns'),[]);
+  const notices=useOpsRead<any[]>(()=>get('/api/admin/announcements'),'admin-notices:'+userId);
+  const campaigns=useOpsRead<any[]>(()=>get('/api/admin/commission-campaigns'),'admin-campaigns:'+userId);
   const [promoService,setPromoService]=useState('');
-  const [promoPct,setPromoPct]=useState(0);
+  const [promoPct,setPromoPct]=useState('0');
   const [promoFrom,setPromoFrom]=useState(dateInput(Date.now()+60_000));
   const [promoTo,setPromoTo]=useState(dateInput(Date.now()+3_600_000));
   const [reason,setReason]=useState('');
   const {busy,run}=useAction();
-  const a=async()=>{const r=await run(()=>post('/api/admin/announcements',{
+  const announcementDatesOk=validMskWindow(from,to,90) &&
+    // Saved drafts can have old dates for historical audit, but a new
+    // publication with an expired end time would always fail server validation.
+    (!published || Date.parse(to+':00+03:00')>Date.now());
+  const commissionRate=promoPct.trim()===''?NaN:Number(promoPct);
+  const campaignStart=Date.parse(promoFrom+':00+03:00');
+  const campaignDatesOk=validMskWindow(promoFrom,promoTo,31) &&
+    Number.isFinite(campaignStart) && campaignStart>=Date.now()-60_000;
+  const a=async()=>{
+    if(!announcementDatesOk||title.trim().length<3||body.trim().length<3)return;
+    const r=await run(()=>post('/api/admin/announcements',{
     audience,service:service||null,title,body,startsAt:datetime(from),endsAt:datetime(to),published
   }),'Объявление создано');if(r){notices.reload();setTitle('');setBody('');}};
-  const c=async()=>{if(!window.confirm('Комиссия по новым заявкам в этот интервал изменится. Это финансовое действие. Подтвердить?'))return;
+  const c=async()=>{
+    if(!campaignDatesOk||reason.trim().length<3||promoPct.trim()===''||
+       !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>5)return;
+    if(!window.confirm('Комиссия по новым заявкам в этот интервал изменится. Это финансовое действие. Подтвердить?'))return;
     const r=await run(()=>post('/api/admin/commission-campaigns',{
-      service:promoService||null,commissionPct:promoPct,startsAt:datetime(promoFrom),
+      service:promoService||null,commissionPct:commissionRate,startsAt:datetime(promoFrom),
       endsAt:datetime(promoTo),enabled:true,reason
     }),'Акция комиссии сохранена');if(r){campaigns.reload();setReason('');}};
   return <div className="stack" style={{gap:14}}>
@@ -212,40 +307,51 @@ export function WorkerCommunications() {
         <label className="stack">Начало (МСК)<input type="datetime-local" className="field" value={from} onChange={e=>setFrom(e.target.value)}/></label>
         <label className="stack">Конец (МСК)<input type="datetime-local" className="field" value={to} onChange={e=>setTo(e.target.value)}/></label>
       </div>
+      {!announcementDatesOk && <span className="note" role="status">Укажите начало и конец объявления по Москве: конец позже начала, срок не более 90 дней; для публикации окончание должно быть в будущем.</span>}
       <label className="row"><input type="checkbox" checked={published} onChange={e=>setPublished(e.target.checked)}/> Опубликовать после наступления даты</label>
-      <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3} onClick={a}>Сохранить объявление</button>
+      <button className="btn" disabled={busy||title.trim().length<3||body.trim().length<3||!announcementDatesOk} onClick={a}>Сохранить объявление</button>
     </div>
     <div className="card stack">
       <b>Временная комиссия площадки</b>
       <span className="note">Ставка применяется только к новым заявкам в интервале, фиксируется в заявке и сохраняется до расчёта. Клиентский сервисный сбор, цены мастеров и старые заявки не изменяются. Наложение акций запрещено.</span>
       <label className="stack">Услуга
         <select className="field" value={promoService} onChange={e=>setPromoService(e.target.value)}>
-          <option value="">Все виды выезда</option>{Object.entries(SERVICES).filter(([k])=>k!=='consult').map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
+          <option value="">Все виды выезда</option>{Object.entries(SERVICES).filter(([k])=>k!=='consult'&&k!=='ecu').map(([k,v])=><option key={k} value={k}>{v.name}</option>)}
         </select></label>
       <label className="stack">Комиссия платформы, % (0 — без комиссии)
-        <input className="field" type="number" min={0} max={100} step={0.5} value={promoPct} onChange={e=>setPromoPct(Number(e.target.value))}/></label>
+        <input className="field" type="number" min={0} max={5} step={0.5} value={promoPct} onChange={e=>setPromoPct(e.target.value)}/></label>
       <div className="grid2">
         <label className="stack">С (МСК)<input type="datetime-local" className="field" value={promoFrom} onChange={e=>setPromoFrom(e.target.value)}/></label>
         <label className="stack">До (МСК)<input type="datetime-local" className="field" value={promoTo} onChange={e=>setPromoTo(e.target.value)}/></label>
       </div>
       <label className="stack">Причина изменения
         <textarea className="field" rows={2} maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
-      <button className="btn" disabled={busy||reason.trim().length<3} onClick={c}>Назначить комиссию</button>
+      {!campaignDatesOk && <span className="note" role="status">Укажите будущие начало и конец акции по Москве; срок не более 31 дня.</span>}
+      {(promoPct.trim()==='' || !Number.isFinite(commissionRate) || commissionRate<0 || commissionRate>5) &&
+        <span className="note" role="status">Укажите комиссию от 0 до 5%. Акции уменьшают утверждённую ставку; пустое поле не означает 0%.</span>}
+      <button className="btn" disabled={busy||reason.trim().length<3||promoPct.trim()===''||!campaignDatesOk||
+           !Number.isFinite(commissionRate)||commissionRate<0||commissionRate>5} onClick={c}>Назначить комиссию</button>
     </div>
     <div className="card stack">
       <b>Объявления (история)</b>
-      {!notices.data?<Loading error={notices.error}/>:notices.data.length===0?<span className="note">Пока пусто</span>:notices.data.map((x:any)=>
+      {!notices.data?<div className="stack"><Loading error={notices.error}/>{notices.error&&
+        <button type="button" className="btn ghost small" onClick={()=>{void notices.reload();}}>Повторить загрузку объявлений</button>}</div>:notices.data.length===0?<span className="note">Пока пусто</span>:notices.data.map((x:any)=>
         <div key={x.id} className="list-item stack">
           <b>{x.title} · {labels[x.audience]??x.audience}</b>
           <span className="note">{x.body}</span>
-          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.published?'опубликовано':'черновик'}</span>
+          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {({
+             draft:'черновик',scheduled:'запланировано',active:'действует',
+             expired:'срок истёк',invalid:'неверные даты',
+           } as Record<string,string>)[workerNoticeWindow(x)]}</span>
           <span className="note">{x.notified_at?'Уведомление отправлено '+mskTime(x.notified_at)+' · получателей '+x.notified_count:'Push-рассылка ещё не отправлялась'}</span>
-          {x.published && !x.notified_at && <button className="btn small" disabled={busy} onClick={async()=>{
+          {workerNoticeWindow(x)==='scheduled' && !x.notified_at && <span className="note">Рассылка будет доступна с начала объявления. Обновите раздел после наступления даты.</span>}
+          {workerNoticeWindow(x)==='expired' && <span className="note">Срок закончился. Для нового периода создайте отдельное объявление.</span>}
+          {workerNoticeWindow(x)==='active' && !x.notified_at && <button className="btn small" disabled={busy} onClick={async()=>{
             if(!window.confirm('Отправить одно уведомление всем исполнителям выбранной группы? Повторная рассылка этого объявления будет заблокирована.'))return;
             const r=await run(()=>post('/api/admin/announcements/'+x.id+'/notify',{}),'Уведомления отправлены');
             if(r)notices.reload();
           }}>Разослать уведомление</button>}
-          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+          <button className="btn ghost small" disabled={busy||(!x.published && ['expired','invalid'].includes(workerNoticeWindow(x)))} onClick={async()=>{
             const r=await run(()=>put('/api/admin/announcements/'+x.id+'/status',{published:!x.published}),
               x.published?'Объявление снято':'Объявление опубликовано');
             if(r)notices.reload();
@@ -254,12 +360,18 @@ export function WorkerCommunications() {
     </div>
     <div className="card stack">
       <b>Акции комиссии (история)</b>
-      {!campaigns.data?<Loading error={campaigns.error}/>:campaigns.data.length===0?<span className="note">Акций пока нет</span>:campaigns.data.map((x:any)=>
+      {!campaigns.data?<div className="stack"><Loading error={campaigns.error}/>{campaigns.error&&
+        <button type="button" className="btn ghost small" onClick={()=>{void campaigns.reload();}}>Повторить загрузку акций</button>}</div>:campaigns.data.length===0?<span className="note">Акций пока нет</span>:campaigns.data.map((x:any)=>
         <div key={x.id} className="list-item stack">
           <b>{x.commission_pct}% · {x.service?(SERVICES[x.service]?.name??x.service):'Все выездные услуги'}</b>
-          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.enabled?'включена':'выключена'}</span>
+          <span className="note">{mskTime(x.starts_at)} — {mskTime(x.ends_at)} · {x.enabled?'включена':'выключена'} · {({
+             invalid:'некорректный срок',expired:'срок истёк',
+             scheduled:'начало впереди',active:'текущий период'
+           } as Record<string,string>)[campaignWindow(x)]}</span>
+           {!x.enabled && campaignWindow(x)==='expired' &&
+             <span className="note">Истёкшую акцию нельзя включить. Для нового периода создайте новую.</span>}
           <span className="note">{x.reason}</span>
-          <button className="btn ghost small" disabled={busy} onClick={async()=>{
+          <button className="btn ghost small" disabled={busy||(!x.enabled&&['expired','invalid'].includes(campaignWindow(x)))} onClick={async()=>{
             if(!window.confirm(x.enabled?'Отключить акцию для новых заявок? Уже созданные заявки сохранят свою ставку.':'Включить акцию для новых заявок?'))return;
             const r=await run(()=>put('/api/admin/commission-campaigns/'+x.id+'/status',{enabled:!x.enabled}),
               x.enabled?'Акция выключена':'Акция включена');
@@ -272,15 +384,38 @@ export function WorkerCommunications() {
 
 export function WorkerNotices({audience}:{audience?:'service'}) {
   const {me}=useMe();
-  const mode=audience==='service'?'service':me?.roles.includes('tow')?'tow':'master';
-  const list=useLoad(()=>get('/api/worker/announcements?audience='+mode),[mode]);
-  const promos=useLoad(()=>get('/api/worker/commission-campaigns'),[mode]);
-  const specialties = (me?.performer?.specialties??[]) as string[];
+  if(!me?.roles.some(r=>r==='master'||r==='tow'||r==='service'))return null;
+  // A station-only account must never fall through to the roadside master feed.
+  const stationOnly=me.roles.includes('service')&&!me.roles.some(r=>r==='master'||r==='tow');
+  const mode=audience==='service'||stationOnly?'service':me.roles.includes('tow')?'tow':'master';
+  return <WorkerNoticesScoped key={me.id+':'+mode}
+    userId={me.id} mode={mode} specialties={me.performer?.specialties??[]}/>;
+}
+function WorkerNoticesScoped({userId,mode,specialties}:{
+  userId:string;mode:'service'|'tow'|'master';specialties:string[];
+}) {
+  const list=useOpsRead<any[]>(()=>get('/api/worker/announcements?audience='+mode),
+    'worker-notices:'+userId+':'+mode);
+  // Dispatch campaigns change only the mobile worker fee. Station (СТО)
+  // bookings use a separate contract; never advertise roadside 0% there.
+  const promos=useOpsRead<any[]>(()=>mode==='service'
+      ?Promise.resolve([]):get('/api/worker/commission-campaigns'),
+    'worker-campaigns:'+userId+':'+mode);
   const matching = (service?:string|null) => !service ||
     (mode==='service' ? true : mode==='tow' ? service==='tow' :
       specialties.includes(service) || (service==='ecu' && specialties.includes('electric')));
   const announcements=(list.data??[]).filter((x:any)=>matching(x.service));
   const offers=(promos.data??[]).filter((x:any)=>matching(x.service));
+  // A failed private GET cannot mean there are "no campaigns" and must not
+  // keep a previous account's discount or announcement visible.
+  if(list.error||promos.error)return <div className="card stack" role="alert">
+    <b>Не удалось проверить объявления и действующие акции</b>
+    <span className="note">Проверьте соединение. Актуальная ставка подтверждается в конкретной заявке.</span>
+    <button type="button" className="btn ghost small" onClick={()=>{
+      if(list.error)void list.reload();
+      if(promos.error)void promos.reload();
+    }}>Повторить загрузку</button>
+  </div>;
   if(!announcements.length&&!offers.length)return null;
   return <div className="stack" style={{gap:8}}>
     {offers.map((x:any)=><div key={'campaign-'+x.id} className="card hi">

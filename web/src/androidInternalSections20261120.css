@@ -1,6 +1,7 @@
 /*
  * TrakSOS — authenticated Android inner surfaces (20 Nov 2026).
- * Scope: NATIVE PHONE + secondary routes. Never alter the approved 618.png
+ * Scope: NATIVE PHONE + secondary routes; mobile menu selectors are shared
+ * with the phone browser at <=899px. Never alter the approved 618.png
  * client/master dashboards, desktop 617.png, data, roles or server actions.
  *
  * Deliberate motion: a single fast page reveal, menu disclosure and pressed
@@ -180,14 +181,14 @@
  }
  /* First-screen bottom tabs keep their exact previously approved artwork. */
  /* Full-screen menu - shared source of truth with header and role routing. */
- html.traksos-native .app:not(.guest-app) .desktop-content
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .desktop-content
    > main.tr-mobile-menu-page {
    padding-top:10px;
    display:flex;
    flex-direction:column;
    gap:14px;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero {
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-hero {
    min-width:0;
    display:flex;
    align-items:center;
@@ -199,17 +200,17 @@
    background:linear-gradient(120deg,#1d4258,#112b3f 65%,#122636);
    box-shadow:0 10px 24px rgba(0,9,26,.25);
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero > div{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-hero > div{
    flex:1;
    min-width:0;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-eyebrow{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-eyebrow{
    font-size:9px;
    color:#74dfed;
    font-weight:800;
    letter-spacing:.065em;
  }
- html.traksos-native .app:not(.guest-app) .desktop-content
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .desktop-content
    > main.tr-mobile-menu-page .tr-mobile-menu-hero h1{
    margin:6px 0;
    padding:0;
@@ -218,13 +219,13 @@
    color:#fff;
    line-height:1.15;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero p{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-hero p{
    margin:0;
    font-size:11px;
    color:#c9e0eb;
    line-height:1.4;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-hero > svg{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-hero > svg{
    flex:none;width:42px;height:42px;
    padding:9px;
    box-sizing:border-box;
@@ -232,7 +233,7 @@
    border-radius:13px;
    background:#1b3748;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section {
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section {
    display:flex;
    flex-direction:column;
    gap:9px;
@@ -243,11 +244,11 @@
    background:linear-gradient(145deg,#162f42,#0f2233);
    box-shadow:0 6px 16px rgba(0,8,20,.17);
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-head{
    display:flex;align-items:center;gap:10px;
    min-width:0;padding:1px 2px 4px;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-icon{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-icon{
    display:grid;place-items:center;flex:none;
    width:35px;height:35px;
    border:1px solid #d98648;
@@ -255,28 +256,28 @@
    border-radius:11px;
    color:#ffb279;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-icon svg{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-icon svg{
    width:18px;height:18px;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head > span:last-child{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-head > span:last-child{
    flex:1;min-width:0;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head h2{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-head h2{
    margin:0 0 3px;padding:0;
    font-size:14px;
    line-height:1.25;
    color:#fff;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-head small{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-head small{
    display:block;
    font-size:10px;
    line-height:1.35;
    color:#b9d4e4;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-links{
    display:flex;flex-direction:column;gap:5px;min-width:0;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > :is(a,button){
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-links > :is(a,button){
    display:flex;
    width:100%;
    min-width:0;
@@ -298,29 +299,29 @@
    overflow-wrap:anywhere;
    transition:border-color .16s ease,background-color .16s ease,transform .13s ease;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > a > span:first-child{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-links > a > span:first-child{
    flex:1;
    min-width:0;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > a:active{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-links > a:active{
    transform:scale(.993);
    background:#28536a;
    border-color:#7bb9cd;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-chevron{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-chevron{
    flex:none;
    font-size:21px;
    line-height:1;
    color:#87dbe8;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-logout{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-logout{
    cursor:pointer;
    border-color:#b76b71!important;
    background:#482a36!important;
    color:#ffefed!important;
    font-weight:770;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-home{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-home{
    display:flex;align-items:center;justify-content:center;gap:9px;
    min-height:47px;
    border:1px solid #dd8547;
@@ -332,14 +333,14 @@
    font-size:12px;
    font-weight:790;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-home svg {
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-home svg {
    flex:none;
    width:18px;height:18px;
  }
 }
 /* Only pointer devices: no distracting movement while scrolling a phone. */
 @media (hover:hover) and (pointer:fine) and (max-width:899px) {
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-links > a:hover {
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-links > a:hover {
    border-color:#6198ad;
    background:#245069;
  }
@@ -365,7 +366,7 @@ html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .account-menu[op
 /* Fold the help/docs section and long administrator index, with short,
  * non-distracting transitions and keyboard-operable native <details>. */
 @media(max-width:899px){
- html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section>summary {
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) details.tr-mobile-menu-section>summary {
    display:flex;
    align-items:center;
    cursor:pointer;
@@ -373,16 +374,16 @@ html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .account-menu[op
    min-height:45px;
    -webkit-tap-highlight-color:transparent;
  }
- html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section>summary::-webkit-details-marker{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) details.tr-mobile-menu-section>summary::-webkit-details-marker{
    display:none;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-copy{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-copy{
    flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-section-copy strong{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-section-copy strong{
    color:#fff;font-size:14px;font-weight:800;line-height:1.25;
  }
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-disclosure{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-disclosure{
    display:grid;place-items:center;flex:none;
    width:25px;height:25px;
    border:1px solid #55788d;
@@ -392,23 +393,23 @@ html.traksos-reduced-motion.traksos-native .app:not(.guest-app) .account-menu[op
    font-size:23px;line-height:1;
    transition:transform .18s ease;
  }
- html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section[open] .tr-mobile-menu-disclosure{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) details.tr-mobile-menu-section[open] .tr-mobile-menu-disclosure{
    transform:rotate(180deg);
  }
- html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section:not([open])>.tr-mobile-menu-links{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) details.tr-mobile-menu-section:not([open])>.tr-mobile-menu-links{
    display:none;
  }
- html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section[open]>.tr-mobile-menu-links{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) details.tr-mobile-menu-section[open]>.tr-mobile-menu-links{
    display:flex;
    margin-top:7px;
    animation:trAndroidMenuOpen .18s ease-out;
  }
 }
 @media(prefers-reduced-motion:reduce){
- html.traksos-native .app:not(.guest-app) .tr-mobile-menu-disclosure{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) .tr-mobile-menu-disclosure{
    transition:none!important;
  }
- html.traksos-native .app:not(.guest-app) details.tr-mobile-menu-section[open]>.tr-mobile-menu-links{
+ html:is(.traksos-native,.traksos-browser) .app:not(.guest-app) details.tr-mobile-menu-section[open]>.tr-mobile-menu-links{
    animation:none!important;
  }
 }

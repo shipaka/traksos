@@ -26,8 +26,25 @@ export class WarrantyClaimsService {
       [id,actorId,event,JSON.stringify(data)]);
   }
 
-  private canSee(user: AuthUser, claim: any) {
-    return isStaff(user) || [claim.client_id,claim.filed_by,claim.performer_id].includes(user.id);
+  /** Historic filed_by is not permanent fleet access. Lock the actual vehicle
+   * on writes so reassignment cannot race a complaint or appeal.
+   */
+  private async activeClaimant(q: Queryable, claim: any, userId: string, lock = false) {
+    if (claim.filed_by !== userId || claim.client_id === userId) return false;
+    const current=await q.one<{ok:number}>(
+      `select 1 as ok from orders o join users u on u.id=$3
+         join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+        where o.id=$1 and o.client_id=$2 and u.owner_id=o.client_id
+          and 'driver'=any(u.roles)
+          and (o.vehicle_id is null or o.vehicle_id=v.id)
+        limit 1${lock?' for share of v':''}`,
+      [claim.order_id,claim.client_id,userId]);
+    return !!current;
+  }
+
+  private async canSee(user: AuthUser, claim: any, q: Queryable = this.db, lock = false) {
+    if (isStaff(user) || [claim.client_id,claim.performer_id].includes(user.id)) return true;
+    return this.activeClaimant(q,claim,user.id,lock);
   }
 
   private async staffIds() {
@@ -50,8 +67,10 @@ export class WarrantyClaimsService {
       // Serialize duplicate client clicks with the order record.
       const o=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
       if (!o) throw notFound('Заказ не найден');
-      if (o.client_id!==user.id && o.created_by!==user.id)
-        throw forbidden('Гарантийную претензию подаёт участник заказа со стороны клиента');
+      if (o.client_id!==user.id &&
+          (o.created_by!==user.id ||
+           !await this.activeClaimant(q,{...o,filed_by:o.created_by,order_id:o.id},user.id,true)))
+        throw forbidden('Гарантийную претензию подаёт действующий участник заказа со стороны клиента');
       if (o.status!=='completed' || !o.performer_id)
         throw conflict('warranty_not_completed','Качество можно оспорить после завершения выполненной работы');
       const existing=await q.one<any>('select * from warranty_claims where order_id=$1',[orderId]);
@@ -92,7 +111,12 @@ export class WarrantyClaimsService {
       `select c.id,c.number,c.order_id,c.case_root_id,c.requested_remedy,c.status,
                c.decision,c.created_at,c.updated_at,o.number as order_number
           from warranty_claims c join orders o on o.id=c.order_id
-         where c.client_id=$1 or c.filed_by=$1 or c.performer_id=$1
+         where c.client_id=$1 or c.performer_id=$1
+            or (c.filed_by=$1 and exists (
+              select 1 from users u join vehicles v
+                on v.owner_id=u.owner_id and v.driver_id=u.id
+               where u.id=$1 and u.owner_id=c.client_id and 'driver'=any(u.roles)
+                 and (o.vehicle_id is null or o.vehicle_id=v.id)))
          order by c.created_at desc limit 100`,[user.id]);
     return rows.map(r=>({id:r.id,number:r.number,orderId:r.order_id,
       caseRootId:r.case_root_id,orderNumber:r.order_number,requestedRemedy:r.requested_remedy,
@@ -121,7 +145,7 @@ export class WarrantyClaimsService {
                o.status as order_status
           from warranty_claims c join orders o on o.id=c.order_id where c.id=$1`,[id]);
     if (!c) throw notFound('Претензия не найдена');
-    if (!this.canSee(user,c)) throw forbidden();
+    if (!await this.canSee(user,c)) throw forbidden();
     const events=await this.db.query<{actor_id:string;event:string;data:any;created_at:Date}>(
       'select actor_id,event,data,created_at from warranty_claim_events where claim_id=$1 order by id',[id]);
     return {
@@ -148,7 +172,7 @@ export class WarrantyClaimsService {
     await this.db.tx(async q=>{
       const c=await q.one<any>('select * from warranty_claims where id=$1 for update',[id]);
       if (!c) throw notFound('Претензия не найдена');
-      if (!this.canSee(user,c)) throw forbidden();
+      if (!await this.canSee(user,c,q,true)) throw forbidden();
       await this.record(q,id,user.id,'evidence_added',{note});
       await q.query('update warranty_claims set updated_at=$2 where id=$1',[id,this.now()]);
     });
@@ -222,7 +246,9 @@ export class WarrantyClaimsService {
     const c=await this.db.one<{client_id:string;filed_by:string;performer_id:string;order_id:string}>(
       'select client_id,filed_by,performer_id,order_id from warranty_claims where id=$1',[id]);
     if (c) await this.notifier.notify(
-      [c.client_id,c.filed_by,c.performer_id],
+      [c.client_id,
+       ...(await this.activeClaimant(this.db,c,c.filed_by) ? [c.filed_by] : []),
+       c.performer_id],
       {type:'warranty',claimId:id,orderId:c.order_id},
       {kind:'normal',title:'Рассмотрена претензия к качеству',
         body:'Решение зафиксировано. Возврат или повторный выезд не оформляются автоматически.',
@@ -241,8 +267,9 @@ export class WarrantyClaimsService {
     await this.db.tx(async q=>{
       const c=await q.one<any>('select * from warranty_claims where id=$1 for update',[id]);
       if (!c) throw notFound('Претензия не найдена');
-      if (![c.client_id,c.filed_by,c.performer_id].includes(user.id))
-        throw forbidden('Апелляцию подаёт участник выполненного заказа');
+      if (![c.client_id,c.performer_id].includes(user.id) &&
+          !await this.activeClaimant(q,c,user.id,true))
+        throw forbidden('Апелляцию подаёт действующий участник выполненного заказа');
       if (c.status!=='decision_recorded' || c.appeal_count>0)
         throw conflict('warranty_appeal_unavailable','Повторную претензию можно направить в поддержку');
       await q.query(

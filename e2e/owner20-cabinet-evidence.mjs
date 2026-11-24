@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 // Real rendered desktop cabinet evidence. Synthetic accounts ONLY on local CI,
 // never a production token, never a synthetic design/mock image.
 import { chromium } from 'playwright';
@@ -86,7 +87,7 @@ try{
    for(const width of (c.id==='admin'?[1440,1672,390]:[1440,390])){
     const context=await browser.newContext({viewport:{width,height:width===390?844:width===1672?941:900},locale:'ru-RU',deviceScaleFactor:c.id==='owner'?2:1});
     const page=await context.newPage();
-    const errors=[];page.on('pageerror',x=>errors.push(x.message));
+    const assertClean=watchPageErrors(page);
     await page.addInitScript(({token,mode})=>{localStorage.setItem('traksos.token',token);localStorage.setItem('traksos.mode',mode)}, {token,mode:c.mode});
     try {
      await page.goto(BASE+'/'+c.url,{waitUntil:'domcontentloaded'});
@@ -115,7 +116,14 @@ try{
            width:Math.round(el.getBoundingClientRect().width)})));
        throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
      }
-     if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
+     await assertClean(c.id+' '+width+' workdesk');
+     if(c.id==='admin' && width===390) {
+       // 618 Chrome and Android must share the same mobile admin fallback.
+       if(await page.locator('.approved-pc').count())
+         throw Error('390px mobile admin incorrectly rendered the PC 617 workdesk');
+       if(!await page.locator('.tabbar a[href="#/admin"]').isVisible())
+         throw Error('Mobile admin has no working home navigation');
+     }
      if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
        throw Error('Moderator workdesk unexpectedly shows floating TrakBot: '+width);
      if(c.id==='owner' && width===390){
@@ -153,6 +161,43 @@ try{
        const roleClass='approved-pc-'+(roleExpected==='owner'||roleExpected==='driver'?'client':roleExpected==='tow'||roleExpected==='master'?'performer':roleExpected==='insurer'?'insurance':roleExpected);
        if(!await workdesk.evaluate((node,cls)=>node.classList.contains(cls),roleClass))
          throw Error('Wrong approved role workdesk: '+c.id+' expected '+roleClass);
+       const roleArtKey={owner:'owner',driver:'driver',master:'master',
+         tow:'tow',service:'service',master_service:'service',
+         insurer:'insurer',moderator:'moderator',admin:'admin'}[c.id];
+       if(roleArtKey){
+         const art=await workdesk.locator('.approved-pc-heading').evaluate(el=>{
+           const style=getComputedStyle(el,'::after');
+           const old=el.querySelector(':scope>img');
+           const feature=el.querySelector(':scope>.traksos-feature-art');
+           return {key:el.getAttribute('data-role-art'),image:style.backgroundImage,
+             mask:style.maskImage,backgroundPos:style.backgroundPosition,
+             oldDisplay:old?getComputedStyle(old).display:'none',
+             featureDisplay:feature?getComputedStyle(feature).display:'none'};
+         });
+         if(art.key!==roleArtKey||
+           !art.image.includes('traksos-role-banners-approved-atlas-20261122.webp')||
+           !art.mask.includes('linear-gradient')||
+           art.oldDisplay!=='none'||art.featureDisplay!=='none')
+           throw Error('Approved role banner lost or second image reappeared: '+c.id+' '+JSON.stringify(art));
+       }
+       const symbolRoles={master:'master',tow:'tow',service:'service',
+         master_service:'service',insurer:'insurer'};
+       const symbolKind=symbolRoles[c.id];
+       if(symbolKind){
+         const roleSymbol=workdesk.locator('.approved-pc-heading-role-icon');
+         if(await roleSymbol.count()!==1||
+            await roleSymbol.getAttribute('data-role-icon')!==symbolKind||
+            await roleSymbol.locator('svg[aria-hidden="true"]').count()!==1)
+           throw Error('Desktop cabinet role icon differs from public/partner shared SVG for '+c.id);
+         const geom=await roleSymbol.evaluate(el=>{
+           const r=el.getBoundingClientRect();
+           const heading=el.closest('.approved-pc-heading')?.getBoundingClientRect();
+           return {right:r.right,bottom:r.bottom,left:r.left,
+             headingRight:heading?.right,headingBottom:heading?.bottom};
+         });
+         if(geom.right>geom.headingRight+2||geom.bottom>geom.headingBottom+2)
+           throw Error('Cabinet icon overlays outside its banner: '+JSON.stringify(geom));
+       }
        const columns=page.locator('.approved-pc-three');
        if(await columns.count()!==1)throw Error('Exactly one full-size workdesk expected: '+c.id);
        const realTabs=page.locator(['owner','driver'].includes(c.id)
@@ -168,6 +213,21 @@ try{
          await realTabs.nth(1).click();
          if((await realTabs.nth(1).getAttribute('aria-selected'))!=='true')throw Error('New offers mode did not change');
          await realTabs.nth(0).click();
+       }
+       if(c.id==='insurer') {
+         // A verified empty queue must use the SAME canonical insurance
+         // picture as the public tile, not the old rectangular shield cutout.
+         const pane=page.locator('.approved-pc-insurance-empty-visual');
+         if(await pane.count()){
+           const decoration=await pane.evaluate(el=>({
+             background:getComputedStyle(el,'::before').backgroundImage,
+             mask:getComputedStyle(el,'::before').maskImage,
+           }));
+           if(!decoration.background.includes('traksos-feature-insurance-desktop-20261122.webp')||
+              !decoration.mask.includes('linear-gradient')||
+              decoration.background.includes('owner20-artwork-sprite-retouched.webp'))
+             throw Error('Insurer empty queue still has a pasted shield rectangle: '+JSON.stringify(decoration));
+         }
        }
        if(c.id==='admin'){
          await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
@@ -185,9 +245,10 @@ try{
            if(await compact.count()!==1||await live.count()||
              await compact.getAttribute('open')!==null)
              throw Error('No real coordinates: admin coverage must be one collapsed line');
-         }else if(await live.count()!==1 ||
-           await live.locator('.roadside-map iframe').count()!==1){
-           throw Error('Verified coordinates not displayed on actual admin map');
+         }else{
+           await live.locator('.roadside-map-load').waitFor({timeout:14000});
+           if(await live.count()!==1 || await live.locator('.roadside-map iframe').count()!==0)
+             throw Error('Verified coordinates must be behind explicit third-party map consent');
          }
        }
        if(c.id==='admin'&&width===1440){
@@ -204,17 +265,41 @@ try{
              lat:59.9343,lng:30.3351
            }]}}});
          };
+         const externalMap='https://www.openstreetmap.org/**';
+         const requested=[];
+         const isolateMap=async route=>{
+           requested.push(route.request().url());
+           // No synthetic or genuine private location leaves this CI process.
+           await route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Local map consent test</title>'});
+         };
+         await page.route(externalMap,isolateMap);
          await page.route(fixture,replaceCoverage);
-         await page.reload({waitUntil:'domcontentloaded'});
-         await page.locator('.approved-pc-geo-live .roadside-map iframe').waitFor({timeout:14000});
-         if(await page.locator('.approved-pc-geo-compact').count())
-           throw Error('New confirmed point did not expand verified partner map');
-         const mapUrl=await page.locator('.approved-pc-geo-live iframe').getAttribute('src');
-         if(!mapUrl?.includes('59.934300')||!mapUrl.includes('30.335100'))
-           throw Error('Admin map did not use API-confirmed coordinates');
-         await page.unroute(fixture,replaceCoverage);
-         await page.reload({waitUntil:'domcontentloaded'});
-         await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
+         try{
+           await page.reload({waitUntil:'domcontentloaded'});
+           const map=page.locator('.approved-pc-geo-live .roadside-map');
+           const load=map.getByRole('button',{name:'Загрузить карту OpenStreetMap'});
+           await load.waitFor({timeout:14000});
+           if(await page.locator('.approved-pc-geo-compact').count())
+             throw Error('New confirmed point did not expand verified partner map');
+           if(await map.locator('iframe').count()||requested.length)
+             throw Error('Admin map sent coordinates before explicit consent');
+           await load.click();
+           await map.locator('iframe').waitFor({timeout:14000});
+           await page.waitForFunction(()=>!!document.querySelector('.approved-pc-geo-live iframe')?.getAttribute('src'));
+           const mapUrl=await map.locator('iframe').getAttribute('src');
+           if(!mapUrl?.includes('59.934300')||!mapUrl.includes('30.335100'))
+             throw Error('Admin map did not use API-confirmed coordinates');
+         }finally{
+           await page.unroute(fixture,replaceCoverage);
+           // Restore genuine backend state before taking any evidence PNG.
+           // Keep the external request isolated through reload.
+           try{
+             await page.reload({waitUntil:'domcontentloaded'});
+             await page.locator('.approved-pc-geo-compact, .approved-pc-geo-live').first().waitFor({timeout:14000});
+             if(await page.locator('.approved-pc-geo-live iframe').count())
+               throw Error('Admin map reused consent after reload');
+           }finally{await page.unroute(externalMap,isolateMap);}
+         }
        }
        if(c.id==='moderator'&&await workdesk.locator('.approved-pc-bot').count())
          throw Error('Moderator workdesk must not force TrakBot');
@@ -229,10 +314,55 @@ try{
      if(c.id==='owner')await page.screenshot({
        path:out+'/'+c.id+'-home-'+width+'-retina2x.png',fullPage:false,animations:'disabled',scale:'device'
      });
+     if(width===390&&c.id==='owner'){
+       const emptyPhoto=page.locator('.and19-empty .tr-approved-empty-scene--orders img');
+       if(await emptyPhoto.count()){
+         const fillsScene=await emptyPhoto.evaluate(async img=>{
+           await img.decode();
+           const frame=img.parentElement;
+           const idealHeight=frame.clientWidth*img.naturalHeight/img.naturalWidth;
+           return Math.abs(frame.clientHeight-idealHeight)<=1 &&
+             Math.abs(img.clientWidth-frame.clientWidth)<=1;
+         });
+         if(!fillsScene)throw Error('Empty orders photo leaves unused space or crops the truck');
+       }
+       const notice=page.locator('footer.site-footer > .banner');
+       await notice.waitFor({state:'visible'});
+       const dismiss=notice.getByRole('button',{name:'Понятно'});
+       const buttonRect=await dismiss.boundingBox();
+       const tabRect=await page.locator('.tabbar').boundingBox();
+       if(!buttonRect||!tabRect||buttonRect.y+buttonRect.height>=tabRect.y-4)
+         throw Error('Cookie dismiss button lies under fixed role tabbar');
+       const clickable=await dismiss.evaluate(el=>{
+         const box=el.getBoundingClientRect();
+         const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+         return !!hit&&(hit===el||el.contains(hit));
+       });
+       if(!clickable)throw Error('Cookie dismiss button intercepted by overlay');
+       const floatingBot=page.locator('.trakbot-dock-launcher');
+       if(await floatingBot.count()&&await floatingBot.isVisible())
+         throw Error('Floating TrakBot overlaps mobile cookie consent');
+       await page.screenshot({path:out+'/owner-cookie-consent-390-viewport.png',
+         fullPage:false,animations:'disabled'});
+       await dismiss.click();
+       await notice.waitFor({state:'detached'});
+       if(await floatingBot.count())await floatingBot.waitFor({state:'visible'});
+     }
+     await assertClean(c.id+' '+width+' workdesk interactions');
      await page.goto(BASE+'/'+c.inside,{waitUntil:'domcontentloaded'});
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
      if(await page.getByText('Не удалось открыть раздел').count())throw Error('Inner route crashed');
+     if(width===1440&&['owner','driver'].includes(c.id)){
+       const roleText=await page.locator('.tr-inner-overline').first().textContent();
+       const expected=c.id==='owner'?'Кабинет владельца автопарка':'Кабинет водителя автопарка';
+       if(!roleText?.includes(expected))throw Error('Inner page lost role-specific header: '+c.id);
+       if(await page.locator('.tr-inner-rail a[href="'+c.inside+'"]').count())
+         throw Error('Inner quick links contain current-route self-link: '+c.id);
+     }
+     if(width===1440&&c.id==='master'&&
+       await page.locator('.tr-inner-back').count())
+       throw Error('Master inner profile has duplicate back navigation');
      if(c.id==='moderator'&&await page.locator('.trakbot-dock').count())
        throw Error('Moderator inner page unexpectedly shows floating TrakBot: '+width);
      if(c.id==='admin') await page.locator('.admin-stage-content .admin-orders-zero, .admin-stage-content .list-item').first().waitFor({timeout:12000});
@@ -271,6 +401,7 @@ try{
      }
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     await assertClean(c.id+' '+width+' inner page');
      // The inspection API accepts both insurers and inspection operators.
      // Verify the partner UI applies the SAME role policy on direct navigation.
      if(c.id==='insurer'){
@@ -292,6 +423,7 @@ try{
          .first().waitFor({state:'visible',timeout:14000});
        await page.screenshot({path:out+'/insurer-inspection-'+width+'-viewport.png',
          fullPage:false,animations:'disabled',scale:'css'});
+       await assertClean(c.id+' '+width+' inspection list');
        // The selected assigned case MUST open its own detail, not return the
        // entire queue or a stale desktop workspace.
        const assignedLink=page.locator('a[href="#/inspections/'+assignedId+'"]').first();
@@ -300,18 +432,21 @@ try{
        await page.locator('.and20-inspection-detail h1').getByText(/LOCAL-TO-999/).waitFor({timeout:14000});
        if(await page.locator('.approved-pc').count())
          throw Error('Selected inspection was not opened as its case detail');
+       await assertClean(c.id+' '+width+' inspection detail');
        // Both submenu routes must resolve to their proper contents, rather
        // than the general approved dashboard or a fake missing inspection.
        await page.goto(BASE+'/#/inspections/processing',{waitUntil:'domcontentloaded'});
        await page.locator('.partner-workspaces').waitFor({state:'visible',timeout:14000});
        if(await page.getByText('Техосмотр не найден среди назначенных вам заявок.').count())
          throw Error('Inspection processing list was parsed as an inspection ID');
+       await assertClean(c.id+' '+width+' inspection processing');
        const unknownId='00000000-0000-4000-8000-000000000001';
        await page.goto(BASE+'/#/inspections/'+unknownId,{waitUntil:'domcontentloaded'});
        await page.getByText('Техосмотр не найден среди назначенных вам заявок.').waitFor({timeout:14000});
        if(await page.locator('.approved-pc').count())
          throw Error('A direct inspection detail route incorrectly showed the generic desktop dashboard');
      }
+     await assertClean(c.id+' '+width+' final');
      results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
        c.id+'-home-'+width+'.png',

@@ -89,6 +89,17 @@
   margin:6px 0 4px;
   border-radius:11px;
 }
+/* Preserve the whole orders photograph on phones, including both road edges. */
+@media (max-width:599px) {
+  .and19-empty .tr-approved-empty-scene--orders {
+    height:auto;
+  }
+  .and19-empty .tr-approved-empty-scene--orders img {
+    position:static;
+    display:block;
+    height:auto;
+  }
+}
 @media(prefers-reduced-motion:reduce) {
   .tr-approved-empty-action {transition:none;}
 }

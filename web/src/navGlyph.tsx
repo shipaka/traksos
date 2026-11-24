@@ -1,5 +1,8 @@
+import { TrakServiceIcon } from './trakServiceIcon.tsx';
 /** Consistent vector icons for the same mobile navigation on web and Android WebView. */
 export function NavGlyph({ glyph }: { glyph: string }) {
+  if (glyph === 'tow' || glyph === 'garage' || glyph === 'wrench' || glyph === 'headset')
+    return <TrakServiceIcon kind={glyph === 'tow' ? 'tow' : glyph === 'garage' ? 'sto' : glyph === 'wrench' ? 'master' : 'consult'} size={20}/>;
   return <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
     strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {glyph === 'wrench' ? <><path d="M14.7 6.3a4 4 0 0 0-5.2 5.2L3.7 17.3a2 2 0 0 0 2.9 2.9l5.8-5.8a4 4 0 0 0 5.2-5.2l-2.9 2.9-2.8-2.8z"/><path d="M4 4l4 4M3 5l2-2M17 17l4 4M16 20l4-4"/></>

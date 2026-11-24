@@ -18,6 +18,8 @@ before(async () => {
   ok(await t.api('POST', `/api/admin/performers/${master.id}/verify`, { decision: 'approved' }, admin.token));
   ok(await t.api('PUT', '/api/performer/extras', { waitRate: 90_000 }, master.token));
   ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, master.token));
+  // Local-search assertions need a real location, not a city-wide guess.
+  ok(await t.api('POST', '/api/performer/location', { lat: 59.934, lng: 30.335 }, master.token));
 });
 after(() => t.close());
 
@@ -30,7 +32,14 @@ async function take(body: Record<string, unknown>) {
 }
 
 test('рядом на линии: открытые заявки по профилю', async () => {
-  const o = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', description: 'Свет' }, client.token)).order;
+  const o = ok(await t.api('POST', '/api/orders', {
+    service:'electric',zoneId:'spb',regionId:'spb',
+    description:'Свет',address:'Санкт-Петербург, тестовая стоянка',
+    lat:59.934,lng:30.335,
+  },client.token)).order;
+  // This regression checks the nearby active list, not dispatch's real lack
+  // of available bidders; keep the synthetic order in an open search state.
+  await t.db.query("update orders set status='searching' where id=$1",[o.id]);
   const n = ok(await t.api('GET', '/api/performer/nearby', undefined, master.token));
   assert.equal(n.openNearby, 1);
   ok(await t.api('POST', `/api/orders/${o.id}/cancel`, { reason: 'тест' }, client.token));

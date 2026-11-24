@@ -5,6 +5,8 @@
 // This only verifies invariants; visual fidelity is additionally checked via screenshots.
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+// Master/desktop/mobile/Android scene identity and hashes for the five service tiles.
+import './verify-feature-art.mjs';
 
 const read = (path) => readFile(path, 'utf8');
 const failures = [];
@@ -197,13 +199,14 @@ expect(signedPcBotStyles.includes('Approved signed-in PC inner pages: prominent 
   signedPcBotStyles.includes('.app:not(.guest-app)> .trakbot-dock'),
   'signed-in PC detail pages keep the approved larger floating technician without an old pill');
 const ownerPcUiContract=await read('web/src/screens/ownerDesktopHome20261120.css');
-expect(ownerPcUiContract.includes('Source-sprite crop contract:') &&
-  ownerPcUiContract.includes('rgba(0,0,0,.9) 12%,#000 24%') &&
+const guestVisualFixes=await read('web/src/ownerVisualFixes20261122.css');
+expect(!ownerPcUiContract.includes('.owner20-feature-illustration') &&
+  !guestVisualFixes.includes('.owner20-feature-illustration') &&
   ownerPcUiContract.includes('rgba(0,0,0,.9) 13%,#000 27%') &&
   !ownerPcUiContract.includes('transparent 43%,#000 75%') &&
   !ownerPcUiContract.includes('transparent 53%,#000 84%') &&
   !ownerPcUiContract.includes('rgba(0,0,0,.50) 18%,#000 42%'),
-  '617 desktop uses one effective artwork crop, not stacked contradictory mask patches');
+  '617 feature cards omit retired sprite styles and retain the bottom-row crop');
 const botDockContract=await read('web/src/trakbotDock.css');
 expect(ownerPcUiContract.includes('UI CONTRACT 21.11: canonical desktop guest mascot') &&
   ownerPcUiContract.includes('owner20-feature::before') &&
@@ -241,7 +244,7 @@ expect(unifiedOrderPhoto.includes("vehicleReferencePhoto(brand,model,year)") &&
   unifiedMobile.includes('<ApprovedOrderTruck order={current} />') &&
   // Both signed-in workspaces use current as the selected live order.
   (unifiedMobile.match(/<ApprovedOrderTruck order=\{current\} \/>/g)?.length ?? 0)>=2 &&
-  unifiedSceneStyle.includes('prefers-reduced-motion:reduce') &&
+  !unifiedSceneStyle.includes('tr-approved-scene-route') &&
   ownerPcHeader.includes('src={APPROVED_VISUALS.logo}') &&
   !ownerPcHeader.includes('function TruckLogo()'),
   'one exact-generation truck photo source with honest fallback, reduced motion and identical public/Android brand');
@@ -393,10 +396,16 @@ for (const name of ['autumn.webp','spring.webp','summer.webp','winter.webp']) {
   try { await stat('android/app/src/main/assets/seasonal_splash/'+name); present = true; } catch {}
   expect(!present, 'retired pre-17 Nov Android scene is absent: '+name);
 }
-expect(landing.includes('/icon-192.png') &&
+const brandedAppPhone=await read('web/src/trakAppPhone.tsx');
+const desktopAppLanding=await read('web/src/screens/ownerDesktopHome20261120.tsx');
+expect(landing.includes('<TrakAppPhone className="public-app-phone"/>') &&
+       desktopAppLanding.includes('<TrakAppPhone/>') &&
+       shell.includes('<TrakAppPhone className="track-sidebar-app-phone"/>') &&
+       brandedAppPhone.includes('/icon-192.png?v=approved-20261120') &&
+       brandedAppPhone.includes('className="traksos-app-phone-mark" src={APPROVED_VISUALS.logo}') &&
        shell.includes('src={APPROVED_VISUALS.logo}') &&
        !shell.includes('tracksos-approved-logo-owner-20261119.webp'),
-       'mobile promo preserves approved launcher icon and shares 618 brand with Android and desktop');
+       'mobile and desktop promo share one real TrakSOS phone with the approved launcher icon');
 const demo = await read('web/src/screens/adminTestCenter.tsx');
 expect(!demo.includes('Открыть старый учебный тренажёр') &&
   !demo.includes('setFallback(true)'),
@@ -461,7 +470,8 @@ expect(landing.includes('public-map-static'), 'public map does not depend on net
 expect(!landing.includes('openstreetmap.org/export/embed'), 'no third-party iframe is required for offline public map');
 expect(landing.includes('Пример расположения услуг.'), 'demo map explicitly labels fictional service markers');
 expect(landing.includes('yandex.ru/maps/'), 'guest static map opens real Yandex Maps on click');
-expect(landing.includes('Санкт-Петербург и Ленинградская область'), 'launch region is shown');
+expect(landing.includes('TrakSOS — вся Россия') && landing.includes('Выездная помощь зависит от подключения партнёров в регионе.'),
+  'federal platform reach and honest regional partner coverage are shown');
 expect(shell.includes("import './roleShared20261119.css';") && !shell.includes("import './finalCanon.css';"), 'the obsolete 14 Nov public CSS was physically removed');
 expect(!roleCss.includes('.public-landing'), 'old guest-home selectors absent from retained role styles');
 expect(shell.includes('guest-site-nav'), 'the guest PC has horizontal navigation, not an alternative sidebar');
@@ -491,12 +501,28 @@ expect(shell.includes("route[0] === 'explore'") && shell.includes("route[0] === 
   'public catalogue, Company and Offers have real routes');
 expect(shell.includes('guest-mobile-catalog') && shell.includes('guest-nav-group'),
   'guest catalogue links work on mobile and desktop');
-// The first hero slide uses a dynamic label; verify the actual actions,
-// not the superseded static text markup.
+// A guest now enters the approved auth sheet, not a stale guided tour.
+// Keep the primary registration action and verify the new secondary destination.
 expect(landing.includes("heroSlide === 0 ? go('register')") &&
   landing.includes("heroSlide === 0 ? 'Зарегистрироваться'") &&
-  landing.includes('href="#/explore/guide">Как это работает</a>'),
-  'approved 19 Nov hero opens registration and explains the platform');
+  landing.includes('href="#/login">Войти в TrakSOS</a>') &&
+  !landing.includes('href="#/explore/guide">Как это работает</a>'),
+  'approved mobile hero retains registration and opens sign-in, not old guide');
+expect(ownerPcHeader.includes("['Специалисты ЭБУ'") &&
+  !/^\s*\[(?:[^\n]*?,)?\s*'ЭБУ',/m.test(ownerPcHeader) &&
+  ownerPcHeader.includes('aria-label="Развернуть карту партнёров"') &&
+  ownerPcHeader.includes('className="owner20-map-footer-open"') &&
+  ownerPcHeader.includes('<PartnerNetworkMap onClose={closeMap}/>') &&
+  ownerPcHeader.includes('owner20-map-demo-tag'),
+  '617 preserves approved compact map and opens the real partner network without duplicate ECU');
+expect(ownerPcHeader.includes("['TrakBot · ИИ','Наш технический помощник','trakbot']") &&
+  ownerPcHeader.includes('requestTrakBotOpen(event.currentTarget)') &&
+  ownerPcHeader.includes('className="owner20-quick-trakbot"') &&
+  !/^\s*\[(?:[^\n]*?,)?\s*'ЭБУ',/m.test(ownerPcHeader),
+  '617 fifth quick tile opens one canonical TrakBot instead of restoring duplicate ECU');
+expect(ownerPcHeader.includes('<a href="#/company">О нас</a>') &&
+  !ownerPcHeader.includes('<a href="#/offers">Оферты</a>'),
+  '617 Platform and partner menus use the owner-approved guest flow');
 try { await stat('web/public/approved-desktop.html'); expect(false, 'superseded static demo was deleted'); }
 catch { console.log('OK: superseded static HTML mockup not present'); }
 
@@ -521,7 +547,7 @@ expect(native.includes('BundledWeb(this)'), 'APK loads bundled web interface');
 expect(labels.includes('Шиномонтаж') && labels.includes('Эвакуатор') && labels.includes('Электрик'), 'truck services remain present');
 
 const publicStart = landing.indexOf('const mobileLanding = (');
-const publicEnd = landing.indexOf('\n  if (!intent) return desktopPublic', publicStart);
+const publicEnd = landing.indexOf('\n  // Native Android is designed for thumb interaction:', publicStart);
 expect(publicStart >= 0 && publicEnd > publicStart, 'browser auth still preserves the existing mobile guest landing');
 const publicPart = landing.slice(publicStart, publicEnd);
 for (const word of ['Аптека', 'Химчистка', 'Авиабилеты', 'Покупка авиабилетов', 'Магазин лекарств']) {
@@ -538,7 +564,7 @@ expect(shell.includes("effMode === 'performer' && isPerformer && b") &&
   'approved 18 Nov performer popup shows live dashboard and real order with close/ESC, not fake cards');
 expect(['Работа','Клиент и ТС','Расчёт','Чат','История'].every(label=>liveOrderUi.includes(label)) &&
   liveOrderUi.includes("ptab === 'finance' ? <Money d={d} />") &&
-  liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} />"),
+  liveOrderUi.includes("ptab === 'chat' ? <Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} />"),
   'approved performer order separates live work/vehicle/finance/chat/history in real tabs');
 
 console.log('VISUAL APPROVAL PENDING: exact 19 Nov source PNG vs real Chromium on the final commit.');
@@ -802,8 +828,9 @@ expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("'/api/mod/cases?kind='") &&
   pcSource.includes('OfferForm') &&
   pcSource.includes('RoadsideMap') &&
-  pcSource.includes('APPROVED_VISUALS.trakbotHello'),
-  'desktop cards, bids, inspections, moderation, map and bot use real API/approved assets');
+  pcSource.includes('<TrakBotMascot reaction="hello" size="large" ambient />') &&
+  pcSource.includes("import {TrakBotMascot} from '../trakbotMascot.tsx';"),
+  'desktop cards, bids, inspections, moderation, map and canonical animated bot use real API/approved assets');
 expect(pcSource.includes("href={'#/order/'+o.id+'?chat=1'}") &&
   pcSource.includes('owner?get<any>(\'/api/fleet\')') &&
   pcSource.includes('fleet.data?.cars') &&
@@ -870,14 +897,40 @@ expect(
 );
 
 
-// Guard the current desktop/mobile split. An old PR must not silently
-// restore the obsolete 1000px switch or hide the approved browser admin desk.
+// Guard the owner-approved 617 PC / 618 phone-tablet split. Mobile Chrome
+// and Android must BOTH render the same 618 fallback for admin; the retired
+// admin-only PC-at-390px exemption was a verified QA regression.
 const pcWorkspaceSource = await read('web/src/screens/approvedPcCabinets20261120.tsx');
 expect(
   pcWorkspaceSource.includes("matchMedia('(min-width: 900px)')") &&
-  pcWorkspaceSource.includes("role === 'admin' && !native.isApp") &&
+  pcWorkspaceSource.includes("if (!wide) return <>{fallback}</>") &&
+  !pcWorkspaceSource.includes("role === 'admin' && !native.isApp") &&
   !pcWorkspaceSource.includes("matchMedia('(min-width: 1000px)')"),
-  'approved PC/mobile boundary remains 900px and browser admin uses approved workspace'
+  'approved PC/mobile boundary remains 900px; browser admin and Android use identical 618 mobile fallback'
+);
+
+// Approved 23 Nov variant #3 is an actual bundled WebP, not a broken
+// reference or an image pasted over a new layout. Its bytes are immutable
+// until the owner separately approves a replacement. Text/actions remain DOM.
+const emptyOrderSource = await read('web/src/screens/order.tsx');
+const emptyOrderCss = await read('web/src/screens/noPerformerApproved20261123.css');
+const emptyOrderArt = await readFile('web/public/feature-art/traksos-no-performer-network-russia-approved-v1.webp');
+expect(
+  emptyOrderArt.length > 3000 &&
+  emptyOrderArt.toString('ascii',0,4)==='RIFF' &&
+  emptyOrderArt.toString('ascii',8,12)==='WEBP' &&
+  createHash('sha256').update(emptyOrderArt).digest('hex') ===
+    '95f4e06d414a77d6a3f3058fd7674e39d7b26e04415de0d7a161f84a90537d3d' &&
+  (await read('web/src/approvedVisuals.ts')).includes("noPerformerSearch: '/feature-art/traksos-no-performer-network-russia-approved-v1.webp'") &&
+  emptyOrderSource.includes('src={APPROVED_VISUALS.noPerformerSearch}') &&
+  emptyOrderSource.includes('d.you === \'client\' && <Retry') &&
+  emptyOrderSource.includes('href="#/sos"') &&
+  emptyOrderSource.includes('/support/new?order=') &&
+  emptyOrderCss.includes('.traksos-no-performer-art') &&
+  emptyOrderCss.includes('@media (max-width:700px)') &&
+  emptyOrderCss.includes('object-fit:cover') &&
+  emptyOrderCss.includes('object-position:right center'),
+  'owner-approved Russia-network art bundled byte-exact; requester-only DOM actions and mobile crop remain wired'
 );
 
 // The approved desktop stylesheet must not reintroduce 19 Nov Android as the

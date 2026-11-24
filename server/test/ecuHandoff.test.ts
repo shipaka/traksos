@@ -29,10 +29,34 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
   [source.id,master.id,t.clock.now(),'Проверены массы и питания, нет связи с блоком управления']);
  const countPayments=async()=>(await t.db.query('select id from payments where order_id=$1',[source.id])).length;
  const beforePayments=await countPayments();
- const sent=ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
-  summary:'Проверены цепи питания и масса, подозрение на ЭБУ, VIN VF611MTA000123456, номер А222АА178'
- },master.token));
- assert.equal(sent.created,true);
+ // A former technician cannot create a handoff after reassignment.
+ await t.db.query('update orders set performer_id=$2 where id=$1',[source.id,expert.id]);
+ assert.equal((await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
+  summary:'Проверены цепи питания и масса, подозрение на ЭБУ'
+ },master.token)).status,403);
+ assert.equal((await t.db.query('select id from ecu_handoffs where source_order_id=$1',[source.id])).length,0);
+ await t.db.query('update orders set performer_id=$2 where id=$1',[source.id,master.id]);
+ const openPath='/api/orders/'+source.id+'/ecu-handoff';
+ const payload={summary:'Проверены цепи питания и масса, подозрение на ЭБУ, VIN VF611MTA000123456, номер А222АА178'};
+ await t.db.exec(`create function reject_ecu_open_inbox() returns trigger language plpgsql as $$
+  begin if new.kind='ecu_handoff' then raise exception 'injected ECU open inbox outage'; end if; return new; end; $$;
+  create trigger reject_ecu_open_inbox before insert on notifications
+  for each row execute function reject_ecu_open_inbox();`);
+ try{
+  assert.ok((await t.api('POST',openPath,payload,master.token)).status>=400);
+  assert.equal((await t.db.query('select id from ecu_handoffs where source_order_id=$1',[source.id])).length,0);
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='ecu_handoff_created'",[source.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_open_inbox on notifications; drop function reject_ecu_open_inbox();');
+ }
+ const opens=await Promise.all(Array.from({length:4},()=>t.api('POST',openPath,payload,master.token)));
+ const replies=opens.map(ok);
+ const sent=replies.find(x=>x.created===true);
+ assert.ok(sent);
+ assert.equal(replies.filter(x=>x.created).length,1);
+ assert.ok(replies.every(x=>x.id===sent.id));
+ assert.equal((await t.db.one<{n:number}>(
+  "select count(*)::int as n from notifications where user_id=$1 and kind='ecu_handoff' and data->>'handoffId'=$2",[owner.id,sent.id]))?.n,1);
  assert.equal(ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
   summary:'Повторное нажатие из-за плохой связи — ничего нового не создаём'
  },master.token)).created,false);
@@ -69,6 +93,20 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.doesNotMatch(candidate.summary,/VF611MTA000123456|А222АА178/,
   'VIN и госномер не должны утекать в свободном техническом тексте кандидату');
  assert.match(candidate.summary,/VIN скрыт|госномер скрыт/);
+ // Force a real database failure at the durable notification boundary.
+ await t.db.exec(`create function reject_ecu_inbox() returns trigger language plpgsql as $$
+  begin if new.kind='ecu_handoff' then raise exception 'injected ecu inbox outage'; end if; return new; end; $$;
+  create trigger reject_ecu_inbox before insert on notifications
+  for each row execute function reject_ecu_inbox();`);
+ try{
+  const failed=await t.api('POST','/api/ecu/handoffs/'+sent.id+'/quote',{
+   diagnosisPrice:250000,explanation:'Диагностика на стенде, проверка питания и связи ЭБУ'
+  },expert.token);
+  assert.ok(failed.status>=400);
+  assert.equal((await t.db.query('select id from ecu_quotes where handoff_id=$1',[sent.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_inbox on notifications;');
+ }
  const q1=ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/quote',{
   diagnosisPrice:250000,explanation:'Диагностика на стенде, проверка питания и связи ЭБУ'
  },expert.token));
@@ -83,9 +121,23 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.equal((await t.api('POST','/api/ecu/handoffs/'+sent.id+'/choose',{
   quoteId:q2.id,version:2,price:350000,agree:false
  },owner.token)).status,400);
+ await t.db.exec('create trigger reject_ecu_inbox before insert on notifications for each row execute function reject_ecu_inbox();');
+ try{
+  const failed=await t.api('POST','/api/ecu/handoffs/'+sent.id+'/choose',{
+   quoteId:q2.id,version:2,price:350000,agree:true
+  },owner.token);
+  assert.ok(failed.status>=400);
+  assert.equal((await t.db.one<{state:string}>('select state from ecu_handoffs where id=$1',[sent.id]))?.state,'pending');
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='ecu_quote_selected'",[source.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_inbox on notifications; drop function reject_ecu_inbox();');
+ }
  ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/choose',{
   quoteId:q2.id,version:2,price:350000,agree:true
  },owner.token));
+ assert.equal((await t.db.one<{n:number}>(
+  "select count(*)::int as n from notifications where user_id=$1 and kind='ecu_handoff' and title='Клиент выбрал вашу диагностику ЭБУ' and data->>'handoffId'=$2",
+  [expert.id,sent.id]))?.n,1);
  assert.equal((await countPayments()),beforePayments,'no new payment/hold from technical handoff');
  const chosen=ok(await t.api('GET','/api/ecu/handoffs/'+sent.id,undefined,expert.token));
  assert.equal(chosen.actor,'expert');
@@ -93,6 +145,25 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.equal(chosen.history.length,1,'selected specialist reads the source technician report');
  assert.match(chosen.history[0].resultNote,/цепи|питания|массы/i);
  assert.equal(chosen.station.public_name,'Стенд ЭБУ Север');
+ await t.db.exec(`create function reject_ecu_note_close_inbox() returns trigger language plpgsql as $$
+  begin if new.kind='ecu_handoff' then raise exception 'injected ecu note/close inbox outage'; end if; return new; end; $$;
+  create trigger reject_ecu_note_close_inbox before insert on notifications
+  for each row execute function reject_ecu_note_close_inbox();`);
+ try{
+  const failedNote=await t.api('POST','/api/ecu/handoffs/'+sent.id+'/notes',{
+   body:'Техническое уточнение при сбое уведомлений'
+  },expert.token);
+  assert.ok(failedNote.status>=400);
+  const failedClose=await t.api('POST','/api/ecu/handoffs/'+sent.id+'/close',{
+   reason:'Попытка закрыть передачу при сбое уведомлений'
+  },owner.token);
+  assert.ok(failedClose.status>=400);
+  assert.equal((await t.db.query('select id from ecu_handoff_notes where handoff_id=$1',[sent.id])).length,0);
+  assert.equal((await t.db.one<{state:string}>('select state from ecu_handoffs where id=$1',[sent.id]))?.state,'selected');
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='ecu_handoff_closed'",[source.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_note_close_inbox on notifications; drop function reject_ecu_note_close_inbox();');
+ }
  const note=ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/notes',{
   body:'Нужна доставка блока. Позвоните +7 999 123 45 67'
  },expert.token));
@@ -104,6 +175,16 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  },owner.token));
  const closed=ok(await t.api('GET','/api/ecu/handoffs/'+sent.id,undefined,expert.token));
  assert.equal(closed.state,'closed');
+ const repeatedClose=await Promise.all(Array.from({length:3},()=>t.api('POST','/api/ecu/handoffs/'+sent.id+'/close',{
+  reason:'Повторное закрытие после восстановления связи'
+ },owner.token)));
+ repeatedClose.forEach(r=>assert.equal(r.status,200));
+ for(const [recipient,title] of [[owner.id,'Новое сообщение по передаче ЭБУ'],[expert.id,'Передача ЭБУ закрыта']]){
+  assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and kind='ecu_handoff' and title=$2 and data->>'handoffId'=$3",
+   [recipient,title,sent.id]))?.n,1);
+ }
+ assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='ecu_handoff_closed'",[source.id])).length,1);
  assert.equal((await countPayments()),beforePayments);
  assert.equal(ok(await t.api('POST','/api/orders/'+source.id+'/ecu-handoff',{
   summary:'Прежняя передача уже закрыта, новая не создаётся'

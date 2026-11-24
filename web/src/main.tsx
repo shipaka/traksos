@@ -1,6 +1,7 @@
 import './styles.css';
 import './reducedMotion.css';
-if (localStorage.getItem('traksos.reduceMotion') === '1') document.documentElement.classList.add('traksos-reduced-motion');
+try { if (localStorage.getItem('traksos.reduceMotion') === '1') document.documentElement.classList.add('traksos-reduced-motion'); }
+catch { /* Storage may be unavailable in private/locked-down browsers; keep the site usable. */ }
 import './cabinetPremium.css';
 import './trackVisual.css';
 import './trackSearch.css';
@@ -11,6 +12,7 @@ import './premiumVehiclePolish.css';
 import './roleShared20261119.css';
 // Insurance-only refinement follows the approved global visual canon.
 import './insurancePremiumStates.css';
+import './insuranceInlineValidation20261123.css';
 // Mobile browser and Android use separate approved responsive layers.
 import './mobileBrowser.css';
 import './androidApproved20261119.css';
@@ -49,17 +51,23 @@ import './approvedInnerDepth20261121.css';
 import './approvedStaffInnerCompact20261121.css';
 // Auth opens as a browser-only sheet above the approved landing, never a new visual page.
 import './authOverlay20261122.css';
+// Final narrowly-scoped owner review corrections; approved assets remain unchanged.
+import './ownerVisualFixes20261122.css';
+// Owner-approved metallic-amber service icon styling, scoped to existing cards.
+import './trakServicePremium20261123.css';
+// Authorised mobile cookie consent must sit above the fixed role navigation.
+import './mobileCookieSafeArea20261123.css';
 import { createRoot } from 'react-dom/client';
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import { get, post, getToken, connectWs, API_URL, onEvent, ApiError } from './api.ts';
 import { MeCtx, ToastProvider, useRoute, useToast, type Me } from './ui.tsx';
 import { native } from './native.ts';
+import { guestCustomerDestination } from './guestCatalog.ts';
 // Native bridge is present before the bundled application starts.
 document.documentElement.classList.toggle('traksos-browser', !native.isApp);
 document.documentElement.classList.toggle('traksos-native', native.isApp);
 document.documentElement.classList.add('traksos-compact-guest');
 import { Login } from './screens/login.tsx';
-import { GuestExplore } from './screens/guestExplore.tsx';
 import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
@@ -68,7 +76,7 @@ import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
 import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
-import { PUBLIC_CAPABILITIES } from './guestCatalog.ts';
+
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
 import { PerformerHub, ScheduleSection, AboutSection, PhoneSection, CarsSection, TaxSection, MoneySection, FilterSection, LevelSection } from './screens/performerCabinet.tsx';
@@ -92,6 +100,7 @@ import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
 import { TrakBotDock } from './trakbotDock.tsx';
+import { TrakAppPhone } from './trakAppPhone.tsx';
 import { APPROVED_VISUALS } from './approvedVisuals.ts';
 import { RepairCases, TechnicalCasesReview } from './screens/technicalCases.tsx';
 import { Training } from './screens/training.tsx';
@@ -153,13 +162,8 @@ const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 
 
-// The real service tiles open the existing auth panel over the approved guest
-// home; informational and legal routes keep their public readable pages.
-const GUEST_AUTH_SERVICE_ROUTES = new Set([
-  'van','tow','sto','ecu','consult','parts','insurance','inspection',
-  'sos','air','club','tech'
-]);
-
+// Every public catalogue route opens the same browser auth sheet.
+// Only About and published legal documents remain readable to guests.
 function App() {
   const route = useRoute();
   const toast = useToast();
@@ -190,13 +194,22 @@ function App() {
   const [mode, setModeState] = useState<Mode>(() => (localStorageGet('traksos.mode') as Mode) || 'client');
   const setMode = (m: Mode) => { setModeState(m); localStorageSet('traksos.mode', m); };
 
+  const reloadSequence = useRef(0);
   const reload = useCallback(async () => {
-    if (!getToken()) {
+    // Rapid reconnect/focus/role-switch can launch several /api/me reads for
+    // the SAME bearer token. Only the latest should update React or the
+    // offline navigation identity; earlier responses may contain old roles.
+    const requestSequence = ++reloadSequence.current;
+    const requestToken = getToken();
+    if (!requestToken) {
       try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
       setMe(null); setReady(true); return;
     }
     try {
       const m = await get<Me>('/api/me');
+      // An old /api/me may finish after logout, expiration or another login.
+      // Never resurrect the previous identity or cache it for offline mode.
+      if (getToken() !== requestToken || requestSequence !== reloadSequence.current) return;
       setMe(m);
       // Store only a minimal identity for read-only UI navigation without a network;
       // NEVER persist orders, chat, document images or the user's personal profile.
@@ -209,6 +222,9 @@ function App() {
       if (!localStorageGet('traksos.mode') && m.roles.includes('courier')) setMode('courier');
       else if (!localStorageGet('traksos.mode') && m.roles.some((r) => PERFORMER_ROLES.includes(r)) && !m.roles.includes('client')) setMode(m.roles.includes('service') && !m.roles.some((r) => r === 'master' || r === 'tow') ? 'service' : 'performer');
     } catch (error) {
+      // A failed request from a previous session must not clear or overwrite
+      // the current account, including its read-only offline identity.
+      if (getToken() !== requestToken || requestSequence !== reloadSequence.current) return;
       if (error instanceof ApiError && error.code === 'network' && getToken()) {
         try {
           const identity = JSON.parse(localStorage.getItem('traksos.offlineIdentity') ?? 'null');
@@ -225,23 +241,73 @@ function App() {
         setMe(null);
       }
     } finally {
-      setReady(true);
+      if (requestSequence === reloadSequence.current) setReady(true);
     }
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    const syncExternalSession = () => {
+      // An account changed in a sibling browser tab. Do not leave its
+      // previous orders, drafts, routes or role-specific UI mounted here.
+      // A service selected in this tab belongs to its previous account flow,
+      // not to a new customer signed in from a different tab.
+      try {
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingCatalogChoice');
+      } catch { /* Restricted private browsing */ }
+      setMe(null);
+      setReady(false);
+      location.replace('#/');
+      void reload();
+    };
+    window.addEventListener('traksos-auth-external-change', syncExternalSession);
+    return () => window.removeEventListener('traksos-auth-external-change', syncExternalSession);
+  }, [reload]);
+  useEffect(() => {
+    // The transport invalidated the session: unmount protected workspaces
+    // immediately instead of showing "already logged in" at #/login.
+    const expire = () => {
+      try { localStorage.removeItem('traksos.offlineIdentity'); } catch { /* */ }
+      setMe(null);
+      setReady(true);
+    };
+    window.addEventListener('traksos-auth-expired', expire);
+    return () => window.removeEventListener('traksos-auth-expired', expire);
+  }, []);
+  // Android system Back and browser history navigation do not invoke the
+  // Login dialog's Back handler. Abandoned service selections must not send
+  // the next unrelated login to an old booking or assistant page. Keep the
+  // intent while explicitly moving from service to login/registration/reset.
+  useEffect(() => {
+    // Real service deep links keep their selection until sign-in, but retired
+    // catalogue links must NEVER reuse the previous service from this tab.
+    const knownExplore = route[0] === 'explore' && guestCustomerDestination(route[1]) !== null;
+    if (!ready || me || knownExplore ||
+        ['login','register','reset','activate'].includes(route[0] ?? '')) return;
+    try {
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
+    } catch { /* Restricted private browsing */ }
+  }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   // Authenticated bookmarks must resolve to the user's real workspace, not
   // resurrect a guest-only service preview or a dead legacy route.
   useEffect(() => {
     if (!ready || !me || route[0] !== 'explore') return;
     // A stale render must not overwrite a newer signedIn() destination.
     if (!location.hash.startsWith('#/explore/')) return;
-    // A login initiated from a service controls its own post-auth destination.
-    // Do not race signedIn() and override the selected order/service route.
+    // Public-service bookmarks and clicks from an already signed-in client
+    // must enter the same real working section as after new authentication.
+    // A parallel signedIn() may still choose its own QR/partner destination;
+    // it will update the hash after this effect without reopening the guest UI.
+    const customer = me.roles.includes('client') || me.roles.includes('driver');
+    // Already-authenticated clicks must not survive into a later unrelated
+    // login. Successful sign-in consumed the hint before reload() above.
     try {
-      if (sessionStorage.getItem('traksos.pendingLandingAction')) return;
-    } catch { /* Private browsing */ }
-    if (GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '')) location.replace('#/');
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
+    } catch { /* Restricted private browsing */ }
+    location.replace((customer ? guestCustomerDestination(route[1]) : null) ?? '#/');
   }, [ready, me?.id, route.join('/')]); // eslint-disable-line
   useEffect(() => {
     // Refresh the role/profile when the device reconnects or returns to foreground.
@@ -324,11 +390,9 @@ function App() {
   // Ссылка-приглашение: запоминаем код, вход — как обычно
   if (route[0] === 'r' && route[1]) { try { localStorage.setItem('traksos.ref', route[1].toUpperCase()); } catch { /* */ } }
   if (!me) {
-    const guestServiceLogin = !native.isApp && route[0] === 'explore' &&
-      GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '');
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Help /> : route[0] === 'explore' ? (guestServiceLogin ? <Login key={route.join('/')} entry="login" serviceContext={route[1]} /> : <GuestExplore id={route[1] || ''} itemKey={route[2]} />) : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'privacy' ? <OfferPage audience="privacy" /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Login key="guest-help-login" entry="login" /> : route[0] === 'explore' ? <Login key={route.join('/')} entry="login" serviceContext={route[1]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : route[0] && route[0] !== 'r' ? 'login' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -350,7 +414,7 @@ function App() {
     : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
   const permitted = mode === 'courier' ? isCourier : mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
     : mode === 'performer' ? isPerformer : mode === 'service' ? isService
-    : isCustomer || isStaff;
+    : isCustomer;
   const allowedMode: Mode = permitted ? mode : fallback;
   const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
@@ -404,7 +468,7 @@ function App() {
         ? <CourierDelivery id={route[2]} />
         : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
     case 'insurance': screen = b === 'request'
-      ? (route[2] === 'new' ? <InsuranceApplication vehicleId={route[3]??''} /> : <InsuranceThread requestId={route[2]??''} />)
+      ? (route[2] === 'new' ? (isCustomer && effMode === 'client' ? <InsuranceApplication vehicleId={route[3]??''} /> : <UnavailableRole label="Оформление страховой заявки доступно только клиенту" />) : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
@@ -468,24 +532,26 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     return () => media.removeEventListener('change', sync);
   }, []);
   const isAuthEntry = !me && ['login', 'register', 'join', 'reset', 'activate'].includes(route[0] ?? '');
-  const isGuestServiceLogin = !me && !native.isApp && route[0] === 'explore' &&
-    GUEST_AUTH_SERVICE_ROUTES.has(route[1] ?? '');
+  const isGuestServiceLogin = !me && !native.isApp && route[0] === 'explore';
+  // One coherent public menu. The full catalogue, fees and learning remain
+  // accessible after login instead of exposing legacy guest detail screens.
+  const guestServiceLinks = [
+    {title:'Выездной мастер', href:'#/explore/van'},
+    {title:'Эвакуация', href:'#/explore/tow'},
+    {title:'СТО и ремонт', href:'#/explore/sto'},
+    {title:'Специалисты ЭБУ', href:'#/explore/ecu'},
+    {title:'Консультация', href:'#/explore/consult'},
+    {title:'Запчасти', href:'#/explore/parts'},
+    {title:'Страхование', href:'#/explore/insurance'},
+  ];
   const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
-    { title: 'О платформе', links: [
-      { title: 'О нас', href: '#/company' },
-      { title: 'Как работает', href: '#/explore/guide' },
-      { title: 'Комиссии', href: '#/explore/pricing' },
-      { title: 'Оферты и документы', href: '#/offers' },
-    ] },
-    { title: 'Сервисы', links: PUBLIC_CAPABILITIES.map(item => ({ title: item.title, href: item.href })) },
+    { title: 'О платформе', links: [{ title: 'О нас', href: '#/company' }] },
+    { title: 'Сервисы', links: guestServiceLinks },
     { title: 'Сообщество', links: [
       { title: 'Эфир', href: '#/explore/air' },
       { title: 'Клуб TrakSOS', href: '#/explore/club' },
     ] },
-    { title: 'Партнёрам', links: [
-      { title: 'Хотим работать', href: '#/join' },
-      { title: 'Оферты партнёров', href: '#/offers' },
-    ] },
+    { title: 'Партнёрам', links: [{ title: 'Хотим работать', href: '#/join' }] },
   ];
   useEffect(() => {
     setOpenGuestGroup(null);
@@ -520,7 +586,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
   const tabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Рейсы'], ['/courier/chat','▤','Чат']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','☷','Доставки'], ['/support','?','Поддержка']]
     : mode === 'performer'
     ? [['/work', '⌂', 'Главная'], ['/work/jobs', '☷', 'Заявки'], ['/work/me/schedule', '▦', 'График'], ['/profile', '◉', 'Профиль']]
     : mode === 'service'
@@ -530,13 +596,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'insurer'
       ? [['/insurance', '▣', 'Рабочий стол'], ['/profile', '◉', 'Аккаунт']]
     : mode === 'moderator'
-      ? [['/moderation', '▦', 'Рабочий стол'], ['/admin/section/queue', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
+      ? [['/moderation', '▦', 'Рабочий стол'], ['/moderation/verify', '⚑', 'Проверки'], ['/support', '?', 'Обращения']]
     : mode === 'admin'
       ? [['/admin', '▦', 'Рабочий стол'], ['/admin/section/orders', '☰', 'Заявки'], ['/admin/section/support', '?', 'Обращения']]
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Рейсы'], ['/courier/chat','chat','Чат'], ['/menu','menu','Меню']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/support','?','Поддержка'], ['/menu','menu','Меню']]
     : mode === 'client'
     ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
@@ -565,7 +631,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
-    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои рейсы'], ['/courier/chat','Связь по доставкам'], ['/profile','Профиль и настройки']]
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
     : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
@@ -585,7 +651,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'insurer'
       ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
     : mode === 'moderator'
-      ? [['/moderation', 'Очередь модерации'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
+      ? [['/moderation', 'Очередь модерации'], ['/moderation/verify', 'Проверка мастеров'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin/test-center', 'Тестирование всех кабинетов'],
          ['/admin/section/queue', 'Модерация — очередь'],
@@ -607,7 +673,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/pricing-lab', 'Калькулятор прибыльности · проект'],
-         ['/profile', 'Аккаунт'], ['/as/client', 'Кабинет клиента']]
+         ['/profile', 'Аккаунт'], ['/admin/test-center/client', 'Тестовый кабинет клиента']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
@@ -632,6 +698,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
   const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
+  // Browser-only header must distinguish fleet owner and driver just as the approved dashboard does.
+  const browserInnerRole = innerRole==='client'
+    ? (me?.owner_id||me?.roles.includes('driver')?'driver':'owner') : innerRole;
   const workspaceHref = mobileTabs[0]?.[0] || '/';
   const sectionPath = here.split('?')[0];
   const innerSection = !!me && native.isApp &&
@@ -703,23 +772,23 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               </div>
             </details>
           ))}
-          <a href="#/help">Поддержка</a>
+          <a href="#/login">Поддержка</a>
         </nav>}
         {!me && !isAuthEntry && <details className="guest-mobile-catalog" open={mobileCatalogOpen}>
           <summary onClick={event => { event.preventDefault(); setMobileCatalogOpen(v => !v); }}>Возможности <span aria-hidden="true">⌄</span></summary>
           <nav aria-label="Возможности TrakSOS">
-            {PUBLIC_CAPABILITIES.map(item =>
+            {guestServiceLinks.map(item =>
               <a key={item.href} href={item.href} onClick={() => setMobileCatalogOpen(false)}>{item.title}</a>)}
             <a href="#/company" onClick={() => setMobileCatalogOpen(false)}>О платформе</a>
-            <a href="#/economics" onClick={() => setMobileCatalogOpen(false)}>Тарифы</a>
-            <a href="#/help" onClick={() => setMobileCatalogOpen(false)}>Помощь</a>
+            <a href="#/join" onClick={() => setMobileCatalogOpen(false)}>Партнёрам</a>
+            <a href="#/login" onClick={() => setMobileCatalogOpen(false)}>Поддержка</a>
           </nav>
         </details>}
         {!isAuthEntry && <SiteQuickSearch authenticated={!!me} />}
         <div className="row" style={{ flexWrap: 'nowrap' }}>
           {me && <SandboxModeBadge />}
           {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
-          {!me && !isAuthEntry && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
+          {!me && !isAuthEntry && !(native.isApp && route.length === 0) && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
           {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
           {me && mode === 'admin' && <span className="pill accent">админ</span>}
           {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
@@ -742,9 +811,37 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </nav>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
-          {me && <details className="account-menu" key={here}>
+          {me && <details className="account-menu" key={here}
+            onPointerLeave={event=>{
+              // Close desktop flyouts when the pointer actually leaves; don't
+              // treat touch scrolling/taps as a hover exit on Android.
+              if(event.pointerType==='mouse' &&
+                 window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                event.currentTarget.open=false;
+            }}
+            onBlur={event=>{
+              if(!event.currentTarget.contains(event.relatedTarget as Node | null))
+                event.currentTarget.open=false;
+            }}
+            onKeyDown={event=>{
+              if(event.key==='Escape' && event.currentTarget.open){
+                event.currentTarget.open=false;
+                (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus();
+                event.preventDefault();
+              }
+            }}>
             <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
-            <nav aria-label="Все разделы кабинета">
+            <nav aria-label="Все разделы кабинета"
+              onClick={event=>{
+                // A link may point to the current route, so keyed remounting
+                // alone cannot close native <details>. Close on any real
+                // action, including Help and "show tour", before it obscures
+                // the destination screen. Plain whitespace doesn't dismiss.
+                if((event.target as Element).closest('a,button')){
+                  const menu=event.currentTarget.closest('details') as HTMLDetailsElement | null;
+                  if(menu)menu.open=false;
+                }
+              }}>
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
@@ -759,7 +856,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {me && !mobileShell && <ContextHelp page={route[0] ?? ''} />}
       <div className="desktop-layout">
         <aside className="desktop-sidebar" aria-label="Навигация по сайту">
-          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSos · вход и документы' : 'TrakSos · помощь в дороге'}</div>
+          <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
               {(mode === 'client'
@@ -771,7 +868,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/as/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
+                      : [...tabs, ['/admin/test-center/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
                 <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href, links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
@@ -827,22 +924,19 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           </nav>
           {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
-            <span className="track-sidebar-app-phone" aria-hidden="true">
-              <img src={APPROVED_VISUALS.logo} alt="TrakSOS" loading="lazy" />
-              <small>TrakSOS</small>
-            </span>
+            <TrakAppPhone className="track-sidebar-app-phone"/>
             <span className="track-sidebar-app-copy">
               <b>TrakSOS в телефоне</b>
               <small>Заявки и связь с мастером в одном месте</small>
               <span className="track-sidebar-app-soon">Скоро в RuStore</span>
             </span>
           </aside>}
-          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Санкт-Петербург и Ленинградская область</small></div>
+          <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Вся Россия · доступность по регионам</small></div>
         </aside>
         <div className="desktop-content">
-          {approvedInnerRoute && <ApprovedInnerHero mode={innerRole} route={route} title={sectionLabel}/>}
+          {approvedInnerRoute && <ApprovedInnerHero mode={browserInnerRole} route={route} title={sectionLabel}/>}
           {innerSection && <MobileSectionChrome title={sectionLabel} homeHref={workspaceHref} route={route} mode={innerRole}/>}
-          {approvedInnerRoute && <ApprovedInnerRail mode={innerRole} route={route}/>} 
+          {approvedInnerRoute && <ApprovedInnerRail mode={browserInnerRole} route={route}/>} 
           {me && route[0] === 'menu'
             ? <MobileRoleMenu mode={mode} quick={mobileTabs} account={accountLinks} help={helpLinks} onLogout={safeLogout} />
             : children}
@@ -852,15 +946,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {(!native.isApp || !me) && <SiteFooter />}
         </div>
       </div>
-      {!me && !route[0] && (
-        <nav className="track-guest-tabbar" aria-label="Гостевая навигация TrakSOS">
-          <a href="#/" className="active" aria-current="page"><span aria-hidden="true"><NavGlyph glyph="⌂" /></span>Главная</a>
-          <a href="#/" onClick={e => { e.preventDefault(); document.getElementById('public-services')?.scrollIntoView({behavior:'smooth',block:'start'}); }}>
-            <span aria-hidden="true"><NavGlyph glyph="▤" /></span>Услуги</a>
-          <a href="#/login"><span aria-hidden="true"><NavGlyph glyph="◉" /></span>Войти</a>
-          <a href="#/register"><span aria-hidden="true"><NavGlyph glyph="＋" /></span>Регистрация</a>
-        </nav>
-      )}
+      {/* Public 618 already puts sign-in/registration on the first screen and
+          services in the accessible “Возможности” menu. The old guest tabbar
+          was an extra, unstyled block AFTER legal documents (purple links);
+          it must not reappear below the footer. Authenticated role tabs
+          remain below and are intentionally unchanged. */}
       {/* On Android the primary menu must remain reachable from every inner page. */}
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
@@ -901,13 +991,44 @@ function NetworkStatus() {
 }
 
 /** Подвал: реквизиты площадки (их заполняет админ в «Настройках»), ссылки на документы; плашка про cookie — один раз */
-let legalCache: Promise<any> | null = null;
 function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
   const [l, setL] = useState<any>(null);
   const [cookieOk, setCookieOk] = useState(() => { try { return localStorage.getItem('traksos.cookie') === '1'; } catch { return true; } });
-  useEffect(() => { (legalCache ??= get('/api/legal').catch(() => null)).then(setL); }, []);
+  useEffect(() => {
+    // A one-time rejected promise previously cached an empty legal footer for
+    // the entire SPA session. Re-read verified details after reconnect/return;
+    // retain the last successful response if the next request is offline.
+    let active = true;
+    let lastRequest = 0;
+    const refresh = () => {
+      const request = ++lastRequest;
+      void get('/api/legal').then(data => {
+        if (active && request === lastRequest && data) setL(data);
+      }).catch(() => { /* Keep verified details; retry on reconnect/visibility. */ });
+    };
+    const visible = () => { if (!document.hidden) refresh(); };
+    refresh();
+    window.addEventListener('online', refresh);
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      active = false;
+      window.removeEventListener('online', refresh);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, []);
+  // Prevent a floating bot from covering a mandatory cookie notice on phones.
+  useEffect(()=>{
+    document.documentElement.classList.toggle('traksos-cookie-notice-open',!cookieOk);
+    return ()=>document.documentElement.classList.remove('traksos-cookie-notice-open');
+  },[cookieOk]);
   const req = l ? [l.entity, l.inn && `ИНН ${l.inn}`, l.ogrn && `ОГРН ${l.ogrn}`].filter(Boolean).join(' · ') : '';
   const contacts = l ? [l.phone, l.email].filter(Boolean).join(' · ') : '';
+  // Older installations still serve the regional PILOT tagline from /api/legal.
+  // Correct only that exact retired default for national platform positioning;
+  // retain every custom tagline configured by the administrator.
+  const tagline = l?.tagline === 'Маркетплейс выездной помощи грузовикам · Санкт-Петербург и Ленинградская область'
+    ? 'TrakSOS — платформа помощи грузовому транспорту по всей России. Выездные услуги зависят от партнёров в регионе.'
+    : l?.tagline;
   return (
     <footer className="site-footer">
       {standalone && <span className="note site-footer-about">Маркетплейс выездной помощи грузовому транспорту</span>}
@@ -918,14 +1039,14 @@ function SiteFooter({ standalone = false }: { standalone?: boolean } = {}) {
         </div>
       )}
       <span className="logo tr-approved-brand-logo"><img src={APPROVED_VISUALS.logo} width="220" height="37" alt="TrakSOS" /></span>
-      <span className="note">{l?.tagline}</span>
+      <span className="note">{tagline}</span>
       {req && <span className="note">{req}</span>}
       {l?.address && <span className="note">{l.address}</span>}
       {contacts && <span className="note">Поддержка: {contacts}</span>}
       <span className="row note" style={{ gap: 12 }}>
         <a href="#/company">Компания</a><a href="#/offers">Оферты</a><a href="#/offer/privacy">Персональные данные</a><a href="#/rules">Правила площадки</a>
       </span>
-      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSos'}</span>
+      <span className="note">© {new Date().getFullYear()} {l?.brand ?? 'TrakSOS'}</span>
     </footer>
   );
 }

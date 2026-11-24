@@ -198,6 +198,11 @@ class MainActivity : AppCompatActivity() {
             .setDomain(Uri.parse(Session.server(this)).host ?: "traksos.ru")
             .addPathHandler("/", BundledWeb(this))
             .build()
+        // CI needs the actual installed WebView's DOM on Android 15 because
+        // that emulator's system UIAutomator can hang and drop ADB. Expose the
+        // localhost DevTools socket ONLY in unsigned debug builds; release
+        // builds and production accounts must never enable remote inspection.
+        if (BuildConfig.DEBUG) WebView.setWebContentsDebuggingEnabled(true)
         web = WebView(this)
         // Legacy Android 10 Google-API system images can carry Chromium WebView 74.
         // On a headless/software GPU its hardware-backed surface may stay blank,
@@ -210,6 +215,18 @@ class MainActivity : AppCompatActivity() {
                 web.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
                 if (BuildConfig.DEBUG) android.util.Log.i("TrakSOSRuntime", "LEGACY_WEBVIEW_SOFTWARE_LAYER=$major")
             }
+        }
+        // Headless API35 emulators on BOTH Ubuntu24 and Ubuntu26 sometimes
+        // leave the previous guest WebView frame on screen after React has
+        // mounted the next role (confirmed by real PNG + JS bridge logs),
+        // then their ADB/compositor transport crashes. Bypass only this
+        // emulator's GPU-backed WebView layer; never change release APKs or
+        // real-device rendering. CI still MUST prove fresh role PNG + DOM.
+        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM &&
+            (Build.HARDWARE.equals("ranchu", ignoreCase = true) ||
+             Build.HARDWARE.equals("goldfish", ignoreCase = true))) {
+            web.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+            android.util.Log.i("TrakSOSRuntime", "API35_EMULATOR_SOFTWARE_WEBVIEW_LAYER")
         }
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val pkg = WebView.getCurrentWebViewPackage()
@@ -395,11 +412,23 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         intent.getStringExtra(EXTRA_PATH)?.let { path ->
             if (BuildConfig.DEBUG && path.startsWith("android-review/")) {
-                // The error screen uses loadDataWithBaseURL(null). Changing its
-                // hash keeps the fake error HTML instead of loading APK React.
-                // A fresh URL also works when the emulator has no network.
+                // Prefer SPA hash navigation when the genuine bundled React
+                // page is already loaded. Reloading the entire WebView just
+                // to switch review roles can leave a stale guest compositor
+                // frame on headless API35 even though React logs its render.
+                // The debug offline page is not the SPA, so recover it with
+                // a complete bundled URL load instead. No release behavior
+                // or production account navigation is changed.
                 failed = false
-                web.loadUrl(urlFor(path))
+                web.evaluateJavascript(
+                    "!!document.querySelector('meta[name=traksos-app]')"
+                ) { hasApp ->
+                    if (hasApp == "true") {
+                        web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
+                    } else {
+                        web.loadUrl(urlFor(path))
+                    }
+                }
             } else {
                 web.evaluateJavascript("location.hash = ${JSONObject.quote("#/$path")}", null)
             }
@@ -476,8 +505,11 @@ class MainActivity : AppCompatActivity() {
     private fun checkDebugRenderedUi(attempt: Int = 0) {
         if (!BuildConfig.DEBUG || debugUiReadyLogged || failed || !::web.isInitialized) return
         web.evaluateJavascript(
-            "!!(document.querySelector('main.public-landing .public-brand-hero') && " +
-                "document.querySelector('.public-actions button'))"
+            "!!((document.querySelector('main.tr-native-welcome') && " +
+                "document.querySelector('.tr-native-welcome-login') && " +
+                "document.querySelector('.tr-native-welcome-register')) || " +
+                "(document.querySelector('main.public-landing .public-brand-hero') && " +
+                "document.querySelector('.public-actions button')))"
         ) { rendered ->
             if (rendered == "true") {
                 debugUiReadyLogged = true
@@ -489,8 +521,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hideStartupOverlay() {
-        startupOverlay?.visibility = View.GONE
+        // GONE alone is not sufficient on all Android 15 headless WebView
+        // compositors: a stale buffer can keep showing the approved truck
+        // splash even after SPLASH_VISIBLE_MS is logged. Detach the native
+        // cover from the root so the actual React WebView can paint.
+        val cover = startupOverlay ?: return
+        cover.visibility = View.GONE
+        (cover.parent as? android.view.ViewGroup)?.removeView(cover)
         startupOverlay = null
+        if (BuildConfig.DEBUG) {
+            android.util.Log.i("TrakSOSRuntime", "NATIVE_SPLASH_DETACHED")
+        }
     }
 
     /** No old mock dashboard: show an error and a real, bundled debug-only design review. */

@@ -165,3 +165,12 @@
  .courier-pc-bot{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.courier-pc *, .courier-pc-presence i:after{transition:none!important}}
 }
+/* Zero real courier jobs = no fictional line/route on an approved tile. */
+.courier-pc-schematic--empty:before,
+.courier-pc-trip--empty .courier-pc-stops>button { display:none!important; }
+.courier-pc-schematic--empty .courier-pc-route-line {
+  min-height:52px;justify-content:flex-start;
+}
+.courier-pc-schematic--empty .courier-pc-route-line>span {
+  display:block;font-weight:650;color:#dcebf3;
+}

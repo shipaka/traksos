@@ -33,7 +33,8 @@ try {
   page.on('pageerror',e=>exceptions.push(e.message));
   await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin')},token);
   await page.goto(BASE+'/#/admin');
-  await page.locator('main.approved-pc-admin').waitFor();
+  const mobileDesk=page.locator('main.admin-workspace');
+  await mobileDesk.getByRole('heading',{name:'Рабочий стол',exact:true}).waitFor();
   const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
   await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
@@ -43,6 +44,18 @@ try {
   await page.locator('.account-menu > summary').click();
   await modeSwitch.getByRole('link',{name:'Администратор'}).click();
   await page.waitForURL(/#\/admin/);
+  // Desktop/admin quick link must enter the isolated real test center.
+  // Never silently set the LIVE administrator's local mode to client.
+  if(await page.locator('a[href="#/as/client"]').count())
+    throw Error('Admin still exposes unsafe live client-mode shortcut');
+  await mobileDesk.getByRole('link',{name:'Тестирование кабинетов ролей'}).click();
+  await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
+  await page.locator('main.sandbox-root a.sandbox-role-card[href="#/admin/test-center/client"]').click();
+  await page.getByRole('heading',{name:'Клиент',exact:true}).waitFor();
+  if(await page.evaluate(()=>localStorage.getItem('traksos.mode'))!=='admin')
+    throw Error('Opening the client sandbox rewrote live admin role');
+  await page.getByRole('link',{name:'← Выбор кабинета'}).click();
+  await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
   // One admin-only sandbox opens every simulated cabin with ZERO API writes.
   await page.goto(BASE+'/#/admin/test-center');
   await page.getByRole('heading',{name:'Тестирование кабинетов'}).waitFor();
@@ -66,7 +79,7 @@ try {
   }
   if(writes.length)throw new Error('Sandbox unexpectedly changed live API');
   await page.getByRole('link',{name:'Вернуться в админку'}).click();
-  await page.locator('main.approved-pc-admin').waitFor();
+  await mobileDesk.getByRole('heading',{name:'Рабочий стол',exact:true}).waitFor();
   if(exceptions.length)throw new Error('JavaScript error: '+exceptions.join(' | '));
   console.log('Admin and master cabinets switch correctly within one account');
   await context.close();
@@ -106,6 +119,17 @@ try {
   }, moderator.token);
   await page.goto(BASE+'/#/moderation');
   await page.getByRole('heading',{name:'Модерация'}).waitFor();
+  // Real 390px Android/phone UI: four clickable action tiles, not four more
+  // duplicated tab chips below them. Preserve the actual verification action.
+  const modTiles=page.locator('.moderator-workspace .moderator-action-grid button');
+  await modTiles.first().waitFor();
+  if(await modTiles.count()!==4)throw Error('Moderator lost one of the four work sections');
+  if(await page.locator('.moderator-workspace > .scroll-x[role="tablist"]').isVisible())
+    throw Error('Moderator mobile displays a second identical control row');
+  const verify=modTiles.filter({hasText:'Проверка мастеров'});
+  await verify.click();
+  if(await verify.getAttribute('aria-pressed')!=='true')
+    throw Error('Moderator verification tile does not open the real section');
   const modeSwitch=page.getByRole('navigation',{name:'Режим кабинета'});
   await modeSwitch.getByRole('link',{name:'Выездной мастер'}).click();
   await page.waitForURL(/#\/work/);
