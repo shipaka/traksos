@@ -14,7 +14,8 @@ export function reportApiError(e: unknown) {
 }
 
 export function OfferGate() {
-  const {me,mode}=useMe();
+  const context=useMe();
+  const me=context?.me,mode=context?.mode??'client';
   const token=getToken();
   if(!me||!token)return null;
   return <OfferGateAccount key={JSON.stringify([me.id,token,mode])} token={token} mode={mode}/>;
@@ -122,6 +123,10 @@ const documentTitles = new Map([
  * A network/server failure is NOT proof a legal version is unpublished.
  */
 export function OfferPage({ audience }: { audience: string }) {
+  return <OfferPageEdition key={audience} audience={audience}/>;
+}
+
+function OfferPageEdition({audience}:{audience:string}) {
   const [o, setO] = useState<any>(undefined);
   const title = documentTitles.get(audience) ?? 'Документ';
   const [loadError, setLoadError] = useState(false);
@@ -131,8 +136,14 @@ export function OfferPage({ audience }: { audience: string }) {
     let active = true;
     setO(undefined);
     setLoadError(false);
-    get(`/api/offers/current/${audience}`)
-      .then(value => { if (active) setO(value); })
+    get(`/api/offers/current/${encodeURIComponent(audience)}`)
+      .then(value => {
+        if(!active)return;
+        if(!value||value.audience!==audience||typeof value.version!=='string'||!value.version.trim()||typeof value.body!=='string'||!value.body.trim()||!Number.isFinite(Date.parse(value.effective_at))) {
+          setLoadError(true);return;
+        }
+        setO(value);
+      })
       .catch(error => {
         if (!active) return;
         if (error instanceof ApiError && error.status === 404) setO(null);
