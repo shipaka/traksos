@@ -122,3 +122,41 @@ test('vehicle catalogue: text and year filtering cannot conceal conflicting sour
     }),/различается/);
   }finally{await t.close();}
 });
+
+
+test('vehicle catalogue: publication between brand and model reads cannot mix revisions', {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const actor=await t.db.one<any>(
+      "insert into users(phone,roles,status) values ('+79997763426',ARRAY['admin']::text[],'active') returning *");
+    const reader=await t.db.one<any>(
+      "insert into users(phone,roles,status) values ('+79997763427',ARRAY['client']::text[],'active') returning *");
+    const svc=new VehicleReferenceService(t.db);
+    const key='snapshot-switch';
+    await svc.registerSource(actor,source(key));
+    await svc.approveSource(actor,key,'Synthetic rights independently reviewed for test');
+    await svc.stageSnapshot(actor,key,catalog('v1','premium','Premium Original'));
+    await svc.activateSnapshot(actor,key,'v1','Original synthetic revision verified');
+    const revised=catalog('v2','premium','Premium Revised');
+    revised.brands[0].name='Renault Revised';
+    await svc.stageSnapshot(actor,key,revised);
+    let switched=false;
+    const wrapped={...t.db,tx: <T>(fn:(q:import('../src/db/index.ts').Queryable)=>Promise<T>)=>
+      t.db.tx(q=>fn({...q,query:async <R=import('../src/db/index.ts').Row>(sql:string,params?:unknown[])=>{
+        const rows=await q.query<R>(sql,params);
+        if(!switched && sql.includes('from vehicle_ref_brands b join')){
+          switched=true;
+          await svc.activateSnapshot(actor,key,'v2','Revised synthetic catalogue verified');
+        }
+        return rows;
+      }}))};
+    const selection={category:'truck' as const,brandKey:'renault',modelKey:'premium',year:2020};
+    const original=await new VehicleReferenceService(wrapped).validateSelection(reader,'client',selection);
+    assert.equal(switched,true);
+    assert.equal(original.brand.name,'Renault Trucks');
+    assert.equal(original.model.name,'Premium Original');
+    const current=await svc.validateSelection(reader,'client',selection);
+    assert.equal(current.brand.name,'Renault Revised');
+    assert.equal(current.model.name,'Premium Revised');
+  }finally{await t.close();}
+});
