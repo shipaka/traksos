@@ -780,3 +780,13 @@
 - [x] Код [3b2e851](https://github.com/shipaka/traksos/commit/3b2e851ec5d0456fa3b0ea311f571d4dc93d8df4): preview использует только собственные ключи справочника компетенций, без наследования Object.prototype; тип профиля приведён к text для SQL сравнения ролей.
 - [x] Написаны HTTP/PG регрессии [7437ec3](https://github.com/shipaka/traksos/commit/7437ec3af022f3d43af2db2fcdd997995fcf48b0): отказ по марке, отзыв роли, отсутствие изменения Object.prototype при историческом названии марки.
 - [ ] Server test/typecheck/exact-HEAD CI не подтверждены. Диспетчеризация, правила уровня/рейтинга, 617/618, main/VPS и чужие файлы не менялись. Участок освобождён.
+
+
+### 24.11.2026 · ECU-OPEN-READ-DURABILITY-20261124 · создание и приватное чтение передачи
+
+Закрепление [#7122064871](https://github.com/shipaka/traksos/pull/274#issuecomment-7122064871), после освобождения #7122056451.
+
+- [x] Код [3dc7f5d](https://github.com/shipaka/traksos/commit/3dc7f5d3e06808a52dc24edd3945374d2f82ac89): создание передачи, событие и inbox владельца/действующего водителя и подтверждённых станций атомарны. Получатели optional push повторно проверяются после commit; сбой optional delivery не отменяет сохранение.
+- [x] Код [5e0bc31](https://github.com/shipaka/traksos/commit/5e0bc31d272252749edd457b265ebce21ffa6279): byOrder, inbox и detail читают полномочия и данные из одного PostgreSQL repeatable-read snapshot; не смешивают состояние до и после переназначения или отзыва доступа.
+- [x] HTTP/PG регрессия [024351d](https://github.com/shipaka/traksos/commit/024351da46ea4d3fea137d071b54cdb5adb9f6ec): отказ inbox откатывает создание и event; 4 параллельных повторных запроса оставляют одну передачу и одно уведомление. В актуальном GitHub blob проверены все три исправленные пары SQL dollar quotes.
+- [ ] Фактический exact-HEAD CI/typecheck/npm test ещё не подтверждён. 617/618, цена, оплата, main/VPS и чужие файлы не менялись. Зона освобождена после отчёта.
