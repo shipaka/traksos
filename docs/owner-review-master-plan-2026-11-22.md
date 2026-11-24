@@ -770,3 +770,13 @@
 - [x] Код [95ea8dd](https://github.com/shipaka/traksos/commit/95ea8dd940616c6bd3fec8a64ab842255c064f8e): заметки, завершение передачи, история и постоянные inbox-уведомления атомарны; действующая связь водителя проверяется под lock, получатели дедуплицируются. [ea898f0](https://github.com/shipaka/traksos/commit/ea898f0e89f0827ce3c7ebec6a574e0342fc399c): сбой повторной проверки получателей после commit не превращает сохранённую заметку в ошибочный HTTP retry.
 - [x] Тест [c99dc7c](https://github.com/shipaka/traksos/commit/c99dc7c3b6f89c5a38808b5ef6822b94a4d13704): исправлены SQL dollar quotes существующей фикстуры отказа inbox. [95a610d](https://github.com/shipaka/traksos/commit/95a610df38b4de68b49d95e2e254bfc52fca57e8): HTTP/PG rollback заметки и закрытия, три повторных закрытия, единственные события/inbox.
 - [ ] Фактический server test/typecheck/exact-HEAD CI ещё не подтверждены. Уведомления первоначального создания передачи и согласованное чтение деталей остаются отдельными задачами. Цены, платежи, 617/618, main/VPS не изменены. Участки освобождены после отчёта.
+
+
+### 24.11.2026 · STANDING-BRAND-ROLE-BOUNDARY-20261124 · точность и доступность исполнителей
+
+Закрепление [#7122050740](https://github.com/shipaka/traksos/pull/274#issuecomment-7122050740), после освобождения #7116216073.
+
+- [x] Код [febfb38](https://github.com/shipaka/traksos/commit/febfb38faf25e2aa7acf3cd8aeabfb13e583b342): агрегат точности по произвольным маркам использует Map, а не Object.prototype; поиск и счётчики исключают удалённые аккаунты и утратившие требуемую роль профили (ЭБУ соответствует master); ближайшие заявки и коллеги учитывают отказ по марке и собственные заявки клиента.
+- [x] Код [3b2e851](https://github.com/shipaka/traksos/commit/3b2e851ec5d0456fa3b0ea311f571d4dc93d8df4): preview использует только собственные ключи справочника компетенций, без наследования Object.prototype; тип профиля приведён к text для SQL сравнения ролей.
+- [x] Написаны HTTP/PG регрессии [7437ec3](https://github.com/shipaka/traksos/commit/7437ec3af022f3d43af2db2fcdd997995fcf48b0): отказ по марке, отзыв роли, отсутствие изменения Object.prototype при историческом названии марки.
+- [ ] Server test/typecheck/exact-HEAD CI не подтверждены. Диспетчеризация, правила уровня/рейтинга, 617/618, main/VPS и чужие файлы не менялись. Участок освобождён.
