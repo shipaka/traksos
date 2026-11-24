@@ -41,9 +41,11 @@ export class Notifier {
     try {
       const tokens = await this.db.query<{ provider: string; token: string }>(
         `select distinct p.provider, p.token from push_tokens p
-           left join sessions s on s.token_hash=p.session_token_hash and s.expires_at > now()
-           where p.user_id = any($1::uuid[])
-             and (p.session_token_hash is null or s.token_hash is not null)`, [ids],
+           join sessions s on s.token_hash=p.session_token_hash
+             and s.user_id=p.user_id and s.expires_at > now()
+           join users u on u.id=p.user_id and u.status='active'
+             and (u.admin_preview_until is null or u.admin_preview_until>now())
+           where p.user_id = any($1::uuid[])`, [ids],
       );
       if (tokens.length) await this.push.send(tokens, msg);
     } catch (error) {
