@@ -1031,3 +1031,11 @@
 - [x] Код [05459ca](https://github.com/shipaka/traksos/commit/05459caa4179ab751ecb8516b51631c91f0845fb): проверка действующих active/non-deleted admin полномочий под shared lock в пяти операциях регистрации/одобрения/отзыва источника, импорта/публикации версии и двух административных списках.
 - [x] Написана PG-регрессия [1b641dc](https://github.com/shipaka/traksos/commit/1b641dcf54571a7d35068cd96cad45b1b9c23832): отзыв роли, блокировка и soft-delete, семь операций отклоняются в каждом состоянии; отсутствие неразрешённых изменений и восстановление доступа.
 - [ ] Actual server typecheck/npm test/exact-HEAD CI не подтверждены. SHA-проверка, лицензии, клиентский каталог, 617/618, main/VPS сохранены. Участки освобождаются после отчёта.
+
+
+### 24.11.2026 · VISUAL-ACTIVE-GATE-20261124 · обязательный результат активных ПК-заявок
+
+Закрепление [#7123801811](https://github.com/shipaka/traksos/pull/274#issuecomment-7123801811). На HEAD `2dc00bd7403542f7e4a3dce45d5066ad8d3a68e9` [visual run 45336590224](https://github.com/shipaka/traksos/actions/runs/45336590224) прошёл, но `continue-on-error` мог скрыть будущую регрессию активной работы; журнал Postgres содержал периодические FATAL role root от healthcheck.
+
+- [x] Код CI [8618fd4](https://github.com/shipaka/traksos/commit/8618fd408d785eb40e96610591b9590c6b13ff27): шаг активных заявок сохраняет возможность снять остальные PNG, но финальный обязательный шаг проверяет исходный outcome и завершает job с ошибкой при failure, после публикации артефактов. Postgres healthcheck явно использует postgres/traksos.
+- [ ] Новое исполнение exact-HEAD GitHub Actions не подтверждено; визуальная приёмка PNG отдельна. 617/618, тесты, production API, main/VPS не изменялись. P1 vehicleReference fixture закреплён за #7123780475.
