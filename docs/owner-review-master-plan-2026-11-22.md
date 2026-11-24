@@ -1098,3 +1098,11 @@
 - [x] [4406324](https://github.com/shipaka/traksos/commit/4406324dc4c81db981713ba1835960876f46afed), [0ff644d](https://github.com/shipaka/traksos/commit/0ff644d6bf9b029f889fd88262e3943aff51ade2): точечная мобильная адаптация списка поддержки: заголовок и кнопка могут переноситься, текст карточки обращения сжимается и переносится, статус не сжимается. Без глобального clipping, изменения PC, данных, функций или композиции 617/618. Это исправление по source review; фактический источник каждого overflow подтвердить новыми DOM-данными.
 - [x] [391ece3](https://github.com/shipaka/traksos/commit/391ece3ed24f852175c4e176949686e20b417c2f): failure JSON включён в visual artifact вместе с PNG.
 - [ ] Exact-HEAD Chromium 36/36, затем контроль 320/412; по остаточным failures сверить геометрию menu/tabbar/support, устранить доказанные причины. Не закрывать P1-A до реального PASS. P1-B и native gate отдельно; main/VPS не изменены.
+
+### 24.11.2026 · NATIVE-FOREGROUND-GATE-20261124 · активное окно APK
+
+Закрепление [#7126761080](https://github.com/shipaka/traksos/pull/274#issuecomment-7126761080), остаток P2 [#7126721686](https://github.com/shipaka/traksos/pull/274#issuecomment-7126721686).
+
+- [x] Код [c979bcb](https://github.com/shipaka/traksos/commit/c979bcb16ec9f86416aee48d43da4e2e47f04c82): API29/35 обязаны подтвердить native mCurrentFocus конкретной Activity до/после итоговых PNG guest/client/master и в финале; underlying focused app, ANR, чужой пакет и null не проходят. Добавлены синтетические позитивные/негативные проверки парсеров окна и crash/ANR, обязательные в runtime script до установки APK.
+- [x] [c0b7bf0](https://github.com/shipaka/traksos/commit/c0b7bf0b07229f8225526e6a2fd7402d5c6810bb): диагностический лог не перезаписывает предыдущие checkpoint; повторный накопительный crash/ANR gate после финального guest PNG, единый точный детектор пакета.
+- [ ] Реальный прогон API29/35, parser controls и exact-HEAD CI не подтверждены; прежний PASS не переносится. P1-A/P1-B отдельно. 617/618, production, main/VPS не менялись.
