@@ -13,7 +13,11 @@ const assert=(ok,message)=>{if(!ok)throw new Error(message)};
 const snippets={
   api:`
     export const getToken=()=>window.__authToken;
-    export const post=async()=>{throw Error('No real upload allowed in this fixture')};
+    export const post=(path,body)=>{
+      if(!window.__uploadFixture||!/^\\/api\\/orders\\/synthetic-(?:A|B)\\/photos$/.test(path))
+        throw Error('No real upload allowed in this fixture: '+path);
+      return new Promise((resolve,reject)=>window.__uploadFixture.posts.push({path,body,resolve,reject}));
+    };
     export async function get(path){
       window.__calls.gallery++;
       if(!path.includes('/api/orders/synthetic-order/photos'))throw Error('Unexpected request '+path);
@@ -77,6 +81,8 @@ const harness=`
   root.render(React.createElement(React.Fragment,null,
     React.createElement(OrderPhotoCapture,{orderId:'synthetic-order',reviewOnly:true}),
     React.createElement(OrderPhotoGallery,{orderId:'synthetic-order'})));
+  window.renderCapture=(orderId,reviewOnly=false)=>root.render(orderId
+    ?React.createElement(OrderPhotoCapture,{orderId,reviewOnly}):null);
 `;
 const compiled=await build({
   stdin:{contents:harness,resolveDir:process.cwd(),sourcefile:'order-photo-harness.tsx',loader:'tsx'},
@@ -143,8 +149,87 @@ try{
     'Old-account private Blob URL not revoked on external sign-out: '+JSON.stringify(final));
   assert(final.counts.gallery===2&&final.counts.photo===2,
     'Unexpected server request/automatic photo retry: '+JSON.stringify(final.counts));
+  // Real file conversion and a deferred transport; no actual server upload.
+  // Use the SAME component instance across order changes (no key-based reset).
+  await page.evaluate(()=>{
+    window.__authToken='upload-token';
+    window.__uploadFixture={decodes:[],posts:[],events:[]};
+    const realDecode=window.createImageBitmap.bind(window);
+    window.createImageBitmap=async(file,...args)=>{
+      const bitmap=await realDecode(file,...args);
+      return new Promise(resolve=>window.__uploadFixture.decodes.push(()=>resolve(bitmap)));
+    };
+    window.addEventListener('traksos-photo-added',event=>window.__uploadFixture.events.push(event.detail.orderId));
+    window.renderCapture('synthetic-A');
+  });
+  const fileInput=page.locator('input[type=file]');
+  await fileInput.waitFor({state:'attached'});
+  // A deterministic noisy synthetic image is large enough for safeJpeg's
+  // actual min/max JPEG contract. No user photo or external data.
+  const png=await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=c.height=128;
+    const ctx=c.getContext('2d'), data=ctx.createImageData(128,128);
+    let seed=11;
+    for(let i=0;i<data.data.length;i+=4){
+      seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+      data.data[i]=seed>>>24;data.data[i+1]=(seed>>>16)&255;data.data[i+2]=(seed>>>8)&255;data.data[i+3]=255;
+    }
+    ctx.putImageData(data,0,0);
+    return c.toDataURL('image/png').split(',')[1];
+  });
+  const pick=()=>fileInput.setInputFiles({name:'synthetic.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  const waitDecode=count=>page.waitForFunction(n=>window.__uploadFixture.decodes.length===n,count);
+  const releaseDecode=i=>page.evaluate(i=>window.__uploadFixture.decodes[i](),i);
+  const settle=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const posts=()=>page.evaluate(()=>window.__uploadFixture.posts.length);
+  await pick();await waitDecode(1);
+  assert(await fileInput.isDisabled(),'Pending file conversion must lock input');
+  await page.evaluate(()=>window.renderCapture('synthetic-B'));
+  await page.waitForFunction(()=>!document.querySelector('input[type=file]').disabled);
+  await pick();await waitDecode(2);
+  await releaseDecode(0);await settle();
+  assert(await posts()===0,'Old-order JPEG was submitted after route switch');
+  assert(await fileInput.isDisabled(),'Old-order conversion unlocked new upload');
+  await releaseDecode(1);
+  await page.waitForFunction(()=>window.__uploadFixture.posts.length===1);
+  const posted=await page.evaluate(()=>window.__uploadFixture.posts.map(x=>({path:x.path,jpeg:x.body.dataUrl.startsWith('data:image/jpeg;base64,')})));
+  assert(posted[0].path==='/api/orders/synthetic-B/photos'&&posted[0].jpeg,'Active-order photo did not reach expected JPEG endpoint');
+  // Simulate switching account while the write result is pending: no old
+  // success toast/event and no automatic replay under replacement token.
+  const toastCount=await page.evaluate(()=>window.__toasts.length);
+  await page.evaluate(()=>{
+    window.__authToken='replacement-token';
+    window.dispatchEvent(new Event('traksos-auth-external-change'));
+    window.__uploadFixture.posts[0].resolve({ok:true});
+  });
+  await settle();
+  assert(await page.evaluate(()=>window.__uploadFixture.events.length)===0,'Old upload completion notified replacement workspace');
+  assert(await page.evaluate(()=>window.__toasts.length)===toastCount,'Old upload completion notified replacement account');
+  await pick();await waitDecode(3);
+  await page.evaluate(()=>window.renderCapture('synthetic-B',true));
+  await page.getByRole('img',{name:/только демонстрация/}).waitFor();
+  await releaseDecode(2);await settle();
+  assert(await posts()===1,'Review-only transition submitted old file');
+  await page.evaluate(()=>window.renderCapture('synthetic-A'));
+  await fileInput.waitFor({state:'attached'});
+  await pick();await waitDecode(4);
+  await page.evaluate(()=>window.renderCapture(null));
+  await fileInput.waitFor({state:'detached'});
+  await releaseDecode(3);await settle();
+  assert(await posts()===1,'Unmounted capture submitted old file');
+  // Positive control: a current upload completes, emits only its own event
+  // and clears the file. Cancellation tests cannot pass by disabling uploads.
+  await page.evaluate(()=>window.renderCapture('synthetic-B'));
+  await fileInput.waitFor({state:'attached'});
+  await pick();await waitDecode(5);await releaseDecode(4);
+  await page.waitForFunction(()=>window.__uploadFixture.posts.length===2);
+  await page.evaluate(()=>window.__uploadFixture.posts[1].resolve({ok:true}));
+  await page.waitForFunction(()=>window.__uploadFixture.events.length===1 &&
+    !document.querySelector('input[type=file]').disabled &&
+    document.querySelector('input[type=file]').value==='');
+  assert(await page.evaluate(()=>window.__uploadFixture.events[0])==='synthetic-B','Wrong current upload event');
   assert(!jsErrors.length,'Runtime error: '+jsErrors.join('; '));
-  console.log('PASS: order photo error/retry UI; review-only accessibility; private blob cleanup on logout');
+  console.log('PASS: order photo error/retry UI; review-only accessibility; private blob cleanup on logout; delayed upload route/auth/review boundaries');
 } catch(error) {
   if(jsErrors.length)console.error('Browser runtime errors:',jsErrors.join('; '));
   throw error;
