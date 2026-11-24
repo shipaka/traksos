@@ -721,3 +721,12 @@
 - [x] Код [8930724](https://github.com/shipaka/traksos/commit/893072461c991a9de64e1473aa70e4b6be6d272f): текущий активный сотрудник и актуальное назначение проверяются внутри транзакции; отозванное назначение не получает новые приватные сообщения, используется существующая очередь модераторов/администраторов. Правила SLA и права доступа сохранены.
 - [x] Написаны HTTP/PostgreSQL-регрессии [c761340](https://github.com/shipaka/traksos/commit/c761340c2072c9711372c87006f68fe7f36a54f9): rollback сообщения, SLA и назначения при отказе inbox; повтор после восстановления; исключение бывшего сотрудника и переназначение действующему.
 - [ ] Фактическое прохождение npm test/typecheck/exact-HEAD CI ещё не подтверждено. Frontend, 617/618, финансы, main/VPS не изменены. Участок освобождён после отчёта.
+
+
+### 24.11.2026 · REPORT-HTTP-ACK-STREAM-20261124 · закрытие потока служебного webhook
+
+Закрепление [#7121990258](https://github.com/shipaka/traksos/pull/274#issuecomment-7121990258).
+
+- [x] Код [0157511](https://github.com/shipaka/traksos/commit/0157511fb05d3cec6328f012eff2583cf18a05c3): HTTP body закрывается при успехе и отказе без чтения и логирования. Выделена тестируемая фабрика транспорта с прежней HTTPS/secret policy.
+- [x] Регрессии [c951670](https://github.com/shipaka/traksos/commit/c95167003d053b2af5877ba74133d2ed013f4693): ACK/503, отмена потоков, redirect policy, отказ недопустимой конфигурации, сохранение idempotency-key и минимального payload.
+- [ ] Exact-HEAD CI, npm test и typecheck не подтверждены. Lease/backoff, API, 617/618, main/VPS не менялись. Участок освобождён.
