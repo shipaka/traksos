@@ -995,3 +995,12 @@
 - [x] Код [50125d6](https://github.com/shipaka/traksos/commit/50125d6b27ae1ba6f70f908c6497493f66a4e120): driver JOIN и все фактические inbox/push получатели проверяют active/non-deleted в транзакции; review проверяет актуальные полномочия admin под shared lock. Инцидент, дедупликация и пороги сохранены.
 - [x] Написана PG-регрессия [1bc2ff5](https://github.com/shipaka/traksos/commit/1bc2ff514c78218883a2b40d0e850e09de97e9a8): исключение заблокированного водителя/удалённого мастера из inbox и транспорта, отказ captured admin после отзыва роли, восстановление законного доступа.
 - [ ] Фактический новый server test/typecheck/exact-HEAD CI не подтверждён. Browser esbuild gate оставлен его владельцу #7122882003. 617/618, санкции, платежи, main/VPS не менялись.
+
+
+### 24.11.2026 · STANDING-PREVIEW-CONSISTENCY-20261124 · согласованность выдачи мастеров
+
+Закрепление [#7123317284](https://github.com/shipaka/traksos/pull/274#issuecomment-7123317284), после освобождения #7122065244.
+
+- [x] Код [5eea21e](https://github.com/shipaka/traksos/commit/5eea21e1cdd3a5c1462481328b056d2692feb288): только собственные допустимые ключи уровней марки в числовом brandStars; повреждённые специализации исключаются из preview/nearby; свободные и подходящие вычисляются на едином snapshot времени смены.
+- [x] Регрессии [118d1f7](https://github.com/shipaka/traksos/commit/118d1f717e3e7b400f916f7d3c9aef80141729a2), [dc3dec6](https://github.com/shipaka/traksos/commit/dc3dec6483a6894a457d7ba080a4745d11e52dbc): реальные HTTP/PG карточки с legacy brand values, корректные оценки; mock пограничной минуты и malformed specialties; отделена занятость предыдущей фикстуры.
+- [ ] Фактический новый server test/typecheck/exact-HEAD CI не подтверждён. Тарифы, порядок отбора, 617/618, main/VPS не менялись. Browser esbuild закреплён за #7122882003.
