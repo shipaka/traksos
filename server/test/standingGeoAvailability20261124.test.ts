@@ -151,6 +151,9 @@ test('arbitrary legacy vehicle brand keys cannot mutate the standing aggregation
 test('preview always serializes numeric brand stars for legacy or inherited levels',async()=>{
   const closer=(await t.db.one<{id:string}>('select id from users where phone=$1',['+79994330103']))!;
   await t.db.query("update performer_profiles set paused=false,line_status='online',schedule='{\"on\":false}'::jsonb where user_id=$1",[closer.id]);
+  // The preceding consultation-accuracy fixture assigned the colleague to farOrder.
+  // Finish that historical stage before testing availability of the same colleague.
+  await t.db.query("update orders set status='completed' where id=$1",[farOrder]);
   try {
     for(const [level,expected] of [['constructor',2],['__proto__',2],['excellent',3],['last_resort',1]] as const){
       await t.db.query('update performer_profiles set brands=$2::jsonb where user_id=$1',
