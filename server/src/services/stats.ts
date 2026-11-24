@@ -65,7 +65,7 @@ export class StatsService {
            from orders where created_at >= $1`, p),
       q.one(
         `select coalesce(sum(amount) filter (where account='platform'), 0)::float8 as platform_income,
-                coalesce(sum(amount) filter (where account='platform' and kind in ('refund','adjustment')), 0)::int as platform_costs,
+                coalesce(sum(amount) filter (where account='platform' and kind in ('refund','adjustment')), 0)::float8 as platform_costs,
                 coalesce(-sum(amount) filter (where account='client' and kind='payment'), 0)::float8 as online_turnover,
                 coalesce(sum(amount) filter (where account='client' and kind='refund'), 0)::float8 as refunds
            from ledger_entries where created_at >= $1`, p),
