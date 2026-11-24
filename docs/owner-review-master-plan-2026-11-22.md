@@ -730,3 +730,13 @@
 - [x] Код [0157511](https://github.com/shipaka/traksos/commit/0157511fb05d3cec6328f012eff2583cf18a05c3): HTTP body закрывается при успехе и отказе без чтения и логирования. Выделена тестируемая фабрика транспорта с прежней HTTPS/secret policy.
 - [x] Регрессии [c951670](https://github.com/shipaka/traksos/commit/c95167003d053b2af5877ba74133d2ed013f4693): ACK/503, отмена потоков, redirect policy, отказ недопустимой конфигурации, сохранение idempotency-key и минимального payload.
 - [ ] Exact-HEAD CI, npm test и typecheck не подтверждены. Lease/backoff, API, 617/618, main/VPS не менялись. Участок освобождён.
+
+
+### 24.11.2026 · CATALOG-SNAPSHOT-IMPORT-ORDER-20261124 · надёжность справочника запчастей
+
+Закрепление [#7122001499](https://github.com/shipaka/traksos/pull/274#issuecomment-7122001499), после освобождения #7115649669.
+
+- [x] Код [9ba6d7e](https://github.com/shipaka/traksos/commit/9ba6d7eadd512fae98b9b8785560d3ce3f066e78): сериализация штатных импортов и модерации до row locks, одинаковый порядок ключей, согласованный manifest count/revision, проверка собственной категории без наследуемых ключей. Исключает пропуск более старой последовательности из-за порядка commit между штатными writers.
+- [x] Код [09036eb](https://github.com/shipaka/traksos/commit/09036eb998dde31331919fbdf10599b3bd02b578): watermark и страницы дельт в одном PostgreSQL snapshot, сохранён watermark пустой страницы и формат API.
+- [x] Написаны HTTP/PG регрессии [3756413](https://github.com/shipaka/traksos/commit/3756413e6a955ced2e9aa9ba11327ff3b31716cb): противоположный порядок пересекающихся партий, одновременная модерация, pagination, пустая страница и отзыв позиции. Конфликт при отправке разрешён перечитыванием актуального blob без перезаписи чужой работы.
+- [ ] Actual server typecheck/npm test/exact-HEAD CI ещё не подтверждены. Прямые SQL writers вне сервиса не покрыты advisory lock; при добавлении таких writers требуется общая блокировка. Формат данных, права, цены, закрытие магазина, 617/618, main/VPS не изменены. Участок освобождён.
