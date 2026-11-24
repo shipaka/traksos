@@ -45,7 +45,7 @@ const bundle=await build({
         if(args.path==='../api.ts')return {path:'api',namespace:'air-test'};
         if(args.path==='../ui.tsx')return {path:'ui',namespace:'air-test'};
       });
-      b.onLoad({filter:/.*/,namespace:'air-test'},args=>({
+      b.onLoad({filter:/.*/,namespace:'air-test'},args=>({resolveDir:process.cwd(),
         contents:args.path==='api'?apiStub:uiStub,loader:'js'
       }));
     }
