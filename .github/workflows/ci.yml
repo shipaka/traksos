@@ -37,6 +37,8 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Проверка конфигурации браузерных React-тестов до долгих прогонов
+        run: node scripts/verify-browser-harness-jsx.mjs
       - name: Предрелизная проверка Docker Compose и резервного копирования
         run: |
           bash -n deploy/launch.sh
