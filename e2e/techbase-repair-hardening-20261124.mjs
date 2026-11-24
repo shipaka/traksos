@@ -116,7 +116,9 @@ try{
   await settle('GET',catalog,1,'resolve',{audiences:['driver'],documents:[doc('Документ владельца A','Scania')]});
   await settle('GET',garage,1,'resolve',[{id:'vehicle-A',brand:'Scania',model:'R450',year:2021,plate:'А111АА'}]);
   await page.getByRole('heading',{name:'Документ владельца A'}).waitFor();
-  await page.getByRole('option',{name:/А111АА/}).waitFor();
+  await page.getByRole('option',{name:/А111АА/}).waitFor({state:'attached'});
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('vehicle-A');
+  ensure(await page.getByRole('combobox',{name:'Машина из моего гаража'}).inputValue()==='vehicle-A','Garage vehicle A cannot be selected');
 
   // A signed-in account change must clear old owner plates and old catalog
   // while the new authenticated reads are pending or have failed.
@@ -134,7 +136,9 @@ try{
   await settle('GET',catalog,3,'resolve',{audiences:['driver'],documents:[doc('Документ владельца B','DAF')]});
   await settle('GET',garage,3,'resolve',[{id:'vehicle-B',brand:'DAF',model:'XF',year:2020,plate:'В222ВВ'}]);
   await page.getByRole('heading',{name:'Документ владельца B'}).waitFor();
-  await page.getByRole('option',{name:/В222ВВ/}).waitFor();
+  await page.getByRole('option',{name:/В222ВВ/}).waitFor({state:'attached'});
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('vehicle-B');
+  ensure(await page.getByRole('combobox',{name:'Машина из моего гаража'}).inputValue()==='vehicle-B','Garage vehicle B cannot be selected');
 
   // Real repair-cases component: two overlapping searches must not let an
   // older response replace the later explicitly requested search results.

@@ -60,8 +60,11 @@ try{
  await load.waitFor();
  assert(await iframe.count()===0,'GPS iframe auto-loaded without permission');
  assert(external.length===0,'third-party map request was sent on initial render');
+ const firstRequest=page.waitForRequest(r=>r.url().includes('openstreetmap.org/export/embed.html'));
  await load.click();
  await iframe.waitFor();
+ await iframe.scrollIntoViewIfNeeded();
+ await firstRequest;
  await page.waitForFunction(()=>document.querySelector('.roadside-map iframe')?.getAttribute('src')?.includes('59.943123'));
  assert(external.length===1,'a single explicit consent should cause exactly one OSM request');
  assert(external[0].includes('30.318321'),'user approved GPS was not sent');
@@ -75,13 +78,21 @@ try{
 
  // Switching account while preserving identical coordinates also revokes
  // the prior user's external map consent.
+ const secondRequest=page.waitForRequest(r=>r.url().includes('openstreetmap.org/export/embed.html')&&r.url().includes('59.960123'));
  await load.click();
  await iframe.waitFor();
+ await iframe.scrollIntoViewIfNeeded();
+ await secondRequest;
  assert(external.length===2,'second deliberate consent did not load new map');
+ assert(external[1].includes('30.360321'),'second consent sent wrong GPS');
  await change({me:{id:'owner-B'}});
  await load.waitFor();
  assert(await iframe.count()===0,'old account consent reused after logout/login');
  assert(external.length===2,'account switch triggered external map request');
+ await change({me:{id:'owner-A'}});
+ await load.waitFor();
+ assert(await iframe.count()===0,'returning account revived revoked consent');
+ assert(external.length===2,'returning account sent GPS without fresh consent');
 
  await change({point:null});
  await page.getByText('Нужна точка на карте').waitFor();

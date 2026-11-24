@@ -26,6 +26,9 @@ export function RoadsideMap({point,kind='request',address,updatedAt,synthetic=fa
   // synchronously without depending on an effect after paint.
   const consentScope=[me?.id??'guest',kind,synthetic?'demo':'real',
     good?point.lat.toFixed(6):'none',good?point.lng.toFixed(6):'none'].join(':');
+  // Revoke previous consent rather than caching it for a future return to the
+  // same account/point. Render-phase adjustment prevents a stale iframe.
+  if(approvedFor!==null && approvedFor!==consentScope)setApprovedFor(null);
   const showExternalMap=good && approvedFor===consentScope;
   const deltaLat=.014, deltaLng=.029;
   const bbox=good

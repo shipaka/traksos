@@ -385,7 +385,9 @@ function AdminWorkerCommunications({userId}:{userId:string}){
 export function WorkerNotices({audience}:{audience?:'service'}) {
   const {me}=useMe();
   if(!me?.roles.some(r=>r==='master'||r==='tow'||r==='service'))return null;
-  const mode=audience==='service'?'service':me.roles.includes('tow')?'tow':'master';
+  // A station-only account must never fall through to the roadside master feed.
+  const stationOnly=me.roles.includes('service')&&!me.roles.some(r=>r==='master'||r==='tow');
+  const mode=audience==='service'||stationOnly?'service':me.roles.includes('tow')?'tow':'master';
   return <WorkerNoticesScoped key={me.id+':'+mode}
     userId={me.id} mode={mode} specialties={me.performer?.specialties??[]}/>;
 }

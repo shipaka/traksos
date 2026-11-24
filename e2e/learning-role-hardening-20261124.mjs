@@ -11,7 +11,8 @@ const uiStub = `
 `;
 const bundle=await build({
   stdin:{contents:`
-    import React,{createRoot} from 'react';
+    import React from 'react';
+    import {createRoot} from 'react-dom/client';
     import {IntroInvitation,PlatformIntro} from './web/src/screens/platformIntro.tsx';
     import {ScenarioEncyclopedia,ScenarioLesson} from './web/src/screens/scenarioEncyclopedia.tsx';
     import {allowedScenario} from './web/src/screens/scenarioLibrary.ts';
