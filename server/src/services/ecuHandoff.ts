@@ -143,12 +143,12 @@ export class EcuHandoffService {
       "insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_recommendation_linked',$3)",
       [sourceOrderId,user.id,{handoffId:fromSameSource.id,recommendationId}]);
     }
-    return {id:fromSameSource.id,isNew:false};
+    return {id:fromSameSource.id,isNew:false as const};
    }
    const previous=await q.one<{id:string;source_order_id:string}>(
     "select id,source_order_id from ecu_handoffs where root_order_id=$1 and state in ('pending','selected')",[root]);
    if(previous){
-    if(previous.source_order_id===sourceOrderId)return {id:previous.id,isNew:false};
+    if(previous.source_order_id===sourceOrderId)return {id:previous.id,isNew:false as const};
     throw conflict('handoff_exists','По этому обращению уже создана передача ремонтникам ЭБУ');
    }
    const row=await q.one<{id:string}>(
@@ -157,23 +157,41 @@ export class EcuHandoffService {
     [root,sourceOrderId,source.client_id,user.id,clean,recommendationId??null]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_created',$3)",
     [sourceOrderId,user.id,{handoffId:row!.id}]);
-   return {id:row!.id,isNew:true};
-  });
-  if(created.isNew){
-   await this.notifier.notify((await this.liveClientRecipients(sourceOrderId)).filter(id=>id!==user.id),
-    {type:'ecu_handoff',handoffId:created.id,orderId:sourceOrderId},
-    {kind:'normal',title:'Заключение направлено специалистам ЭБУ',
-     body:'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',
-     data:{handoffId:created.id,orderId:sourceOrderId}}).catch(()=>{});
-   const specialists=await this.db.query<{performer_id:string}>(
+   const customers=(await this.liveClientRecipients(sourceOrderId,q,true)).filter(id=>id!==user.id);
+   const specialists=(await q.query<{performer_id:string}>(
     "select s.performer_id from ecu_stations s join performer_profiles p on p.user_id=s.performer_id" +
     " join users u on u.id=s.performer_id where s.approved_at is not null" +
-    " and p.kind='ecu' and p.verification='approved' and u.status='active' limit 200");
-   await this.notifier.notify(specialists.map(x=>x.performer_id),
-    {type:'ecu_handoff',handoffId:created.id},
-    {kind:'normal',title:'Новая передача ЭБУ',
-     body:'Получено заключение из цепочки обращения. Можно предложить стоимость диагностики.',
-     data:{handoffId:created.id}}).catch(()=>{});
+    " and p.kind='ecu' and p.verification='approved' and u.status='active' order by s.performer_id limit 200 for share of s,p,u"
+   )).map(x=>x.performer_id);
+   const handoffId=row!.id;
+   for(const recipient of customers)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [recipient,'ecu_handoff','Заключение направлено специалистам ЭБУ',
+     'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',{handoffId,orderId:sourceOrderId}]);
+   for(const recipient of specialists)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [recipient,'ecu_handoff','Новая передача ЭБУ',
+     'Получено заключение из цепочки обращения. Можно предложить стоимость диагностики.',{handoffId}]);
+   return {id:handoffId,isNew:true as const,customers,specialists};
+  });
+  if(created.isNew){
+   try{
+    const liveCustomers=new Set(await this.liveClientRecipients(sourceOrderId));
+    await this.notifier.deliverStored(created.customers.filter(id=>liveCustomers.has(id)),
+     {type:'ecu_handoff',handoffId:created.id,orderId:sourceOrderId},
+     {kind:'normal',title:'Заключение направлено специалистам ЭБУ',
+      body:'Передано техническое заключение без оплаты. Предложения по диагностике согласуются отдельно.',
+      data:{handoffId:created.id,orderId:sourceOrderId}});
+   }catch{}
+   try{
+    const liveSpecialists=await this.db.query<{performer_id:string}>(
+     "select s.performer_id from ecu_stations s join performer_profiles p on p.user_id=s.performer_id" +
+     " join users u on u.id=s.performer_id where s.performer_id=any($1::uuid[]) and s.approved_at is not null" +
+     " and p.kind='ecu' and p.verification='approved' and u.status='active'",[created.specialists]);
+    await this.notifier.deliverStored(liveSpecialists.map(x=>x.performer_id),
+     {type:'ecu_handoff',handoffId:created.id},
+     {kind:'normal',title:'Новая передача ЭБУ',
+      body:'Получено заключение из цепочки обращения. Можно предложить стоимость диагностики.',
+      data:{handoffId:created.id}});
+   }catch{}
   }
   return {id:created.id,created:created.isNew};
  }
