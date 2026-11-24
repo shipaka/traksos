@@ -73,6 +73,35 @@ async function visibleRoute(page,href,assertClean){
   if(size.s>size.w+3)throw Error('Horizontal overflow on '+href+': '+JSON.stringify(size));
   await assertClean('route '+href);
 }
+async function acceptBrowserCookie(page,home,assertClean){
+  const notice=page.locator('.site-footer > .banner');
+  // Fresh browser context: prove that the actual consent button is usable.
+  await notice.waitFor({state:'visible',timeout:15000});
+  await notice.getByRole('button',{name:'Понятно',exact:true}).click();
+  await notice.waitFor({state:'detached'});
+  await page.waitForFunction(()=>localStorage.getItem('traksos.cookie')==='1');
+  await page.reload({waitUntil:'domcontentloaded'});
+  await visibleRoute(page,home,assertClean);
+  if(await notice.count())throw Error('Cookie notice returned after reload');
+}
+async function failureGeometry(page){
+  return page.evaluate(()=>{
+    const root=document.documentElement,w=root.clientWidth,h=root.clientHeight;
+    const rect=el=>{const r=el.getBoundingClientRect();return {x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height),right:Math.round(r.right)};};
+    const tag=el=>el?{tag:el.tagName,classes:typeof el.className==='string'?el.className.slice(0,160):'',rect:rect(el)}:null;
+    const candidates=Array.from(document.querySelectorAll('.app *')).filter(el=>{
+      const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&(r.right>w+3||r.left < -3||el.scrollWidth>el.clientWidth+3&&el.clientWidth>0);
+    }).slice(0,50).map(el=>({...tag(el),clientWidth:el.clientWidth,scrollWidth:el.scrollWidth}));
+    const hitTargets=Array.from(document.querySelectorAll('.tr-mobile-menu-page summary,.tr-mobile-menu-page a,.tabbar a,.site-footer > .banner button')).flatMap(el=>{
+      const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+      if(r.width<=0||r.height<=0||x<0||x>=w||y<0||y>=h)return [];
+      const hit=document.elementFromPoint(x,y);
+      return [{target:tag(el),hit:tag(hit),reachable:!!hit&&el.contains(hit)}];
+    }).slice(0,50);
+    // No innerText, form values, localStorage, headers or tokens in diagnostics.
+    return {viewport:{width:w,height:h,scrollWidth:root.scrollWidth},route:location.hash.split('?')[0],candidates,hitTargets};
+  });
+}
 async function linksOf(locator){return locator.evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href')));}
 async function clickRoute(page,locator,href,assertClean){
   await locator.waitFor({state:'visible',timeout:15000});
@@ -102,12 +131,12 @@ try{
   for(const surface of surfaces){
    const result={role,mode,surface:surface.name,clicked:[],status:'FAIL'};
    report.push(result);
-   let ctx;
+   let ctx,page;
    try{
     const {token}=await login(phone,pass);
     ctx=await browser.newContext({viewport:{width:surface.width,height:surface.height},locale:'ru-RU',
       ...(surface.width===390?{isMobile:true,hasTouch:true}:{}),serviceWorkers:'block'});
-    const page=await ctx.newPage();
+    page=await ctx.newPage();
     const assertClean=watchPageErrors(page);
     const unexpectedDialogs=[];
     page.on('dialog',async dialog=>{
@@ -139,6 +168,10 @@ try{
       await dlg.waitFor({state:'detached'});
     }
     await visibleRoute(page,home,assertClean);
+    if(surface.name==='mobile-browser'){
+      await acceptBrowserCookie(page,home,assertClean);
+      result.cookieConsentPersisted=true;
+    }
     if(surface.width===390){
       assertRoleTabs(mode,await linksOf(page.locator('.tabbar a')));
       for(const href of expectedTabs[mode]){
@@ -236,7 +269,14 @@ try{
     result.logoutRevoked=true;
     result.status='PASS';
     console.log(role,surface.name,'real clicks:',result.clicked.length,'logout revoked');
-   }catch(error){result.error=String(error);console.error(role,surface.name,result.error);}
+   }catch(error){
+     result.error=String(error);console.error(role,surface.name,result.error);
+     if(page){
+       const prefix=OUT+'/'+role+'-'+surface.name+'-failure';
+       try{await page.screenshot({path:prefix+'.png',timeout:5000});result.failureScreenshot=prefix+'.png';}catch{}
+       try{const geometry=await failureGeometry(page);await writeFile(prefix+'.json',JSON.stringify(geometry,null,2));result.failureGeometry=prefix+'.json';}catch{}
+     }
+   }
    finally{await ctx?.close();}
   }
  }
