@@ -171,10 +171,18 @@ try {
  const original=page.locator('input[autocomplete="current-password"]');
  await original.fill('PRIVATE-A-CURRENT-PASSWORD');
  await nav('profile','B');
+ // setState is asynchronous. Observe B's committed identity before asserting
+ // that no private A form or values survived the account switch.
+ await page.getByRole('textbox',{name:'Имя',exact:true}).waitFor();
+ await page.waitForFunction(()=>document.querySelector('.account-profile-page form input')?.value==='Имя B');
  if(await page.locator('input[autocomplete="current-password"]').count())
    throw Error('Old account retained an open password form');
- if(await page.getByText('Company A').count())
+ const company=page.getByRole('textbox',{name:/Компания · если работаете/});
+ if(await company.inputValue()!=='Company B')
    throw Error('Old company details leaked into profile B');
+ await page.getByRole('button',{name:'Сменить пароль'}).click();
+ if(await page.locator('input[autocomplete="current-password"]').inputValue()!=='')
+   throw Error('New account inherited previous password value');
  // Owner controls are unknown during network failure; do not mislabel an
  // offline check as a restriction explicitly imposed by the fleet owner.
  await nav('home','driver');
