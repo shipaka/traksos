@@ -1,7 +1,8 @@
 // «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию TrakSOS.
-import { useRef } from 'react';
-import { get, fmtTime } from '../api.ts';
-import { useLoad, useToast, Loading, useMe } from '../ui.tsx';
+import { useLayoutEffect, useRef } from 'react';
+import { get, getToken, fmtTime } from '../api.ts';
+import { useToast, Loading, useMe } from '../ui.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
 import { qrSvg } from '../qr.ts';
 
 const pts = (k: number) => Math.round(k / 100).toLocaleString('ru-RU');
@@ -12,14 +13,26 @@ const KIND: Record<string, string> = {
 const WHO: Record<string, string> = { client: 'клиент', performer: 'исполнитель', service: 'рембаза' };
 
 export function Invite() {
-  const {mode}=useMe();
-  const d = useLoad(() => get('/api/me/referral'), [], (e) => e.type === 'points' || e.type === 'order');
+  const {me,mode}=useMe();
+  const token=getToken();
+  if(!me||!token)return null;
+  const scope=JSON.stringify([me.id,token]);
+  return <InviteAccount key={scope} scope={scope} mode={mode} token={token} />;
+}
+
+function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string}) {
+  const d = usePrivateRead<any>(() => get('/api/me/referral'), scope, (e) => e.type === 'points' || e.type === 'order');
+  const active=useRef(true);
+  useLayoutEffect(()=>{active.current=true;return ()=>{active.current=false;};},[]);
+  const current=()=>active.current && getToken()===token;
   const toast = useToast();
   const linkInput = useRef<HTMLInputElement>(null);
-  if (!d.data) return <main><Loading error={d.error} /></main>;
+  if (d.error) return <main><div className="card stack" role="alert"><span>Не удалось загрузить актуальные баллы и приглашения.</span><button type="button" className="btn small" onClick={()=>void d.reload()}>Повторить загрузку</button></div></main>;
+  if (!d.data) return <main><Loading /></main>;
   const r = d.data.rules;
   const link = `${location.origin}${location.pathname}#/r/${d.data.code}`;
   async function share() {
+    if(!current())return;
     // The Web Share API adds "url" itself. Do not repeat it inside "text".
     const text = `TrakSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку.`;
     if (navigator.share) {
@@ -32,14 +45,16 @@ export function Invite() {
         // Other failures may be recovered by copying the visible referral URL.
       }
     }
+    if(!current())return;
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(link);
-        toast('Ссылка скопирована');
+        if(current())toast('Ссылка скопирована');
         return;
       }
     } catch { /* Clipboard may be unavailable on HTTP or denied by the browser. */ }
     // Never leave «Поделиться» as a dead button in restricted WebViews.
+    if(!current())return;
     linkInput.current?.focus();
     linkInput.current?.select();
     toast('Не удалось скопировать автоматически. Ссылка выделена — скопируйте вручную.');
