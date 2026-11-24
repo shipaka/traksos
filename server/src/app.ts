@@ -738,9 +738,12 @@ export function createApp(d: Deps) {
     const accepted = await profiles.setLocation(c.user.id, b.lat, b.lng);
     if (!accepted) return { ok: true, accepted: false };
     // Клиенту в заявке — только точка, прошедшая проверку скачков
-    const active = await d.db.query<{ id: string; client_id: string; created_by: string }>(
-      `select id, client_id, created_by from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
-    for (const o of active) hub.send([o.client_id, o.created_by], { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
+    const active = await d.db.query<{ id: string }>(
+      `select id from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
+    for (const o of active) {
+      const recipients = await orders.customerRecipientsForOrder(o.id);
+      hub.send(recipients, { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
+    }
     return { ok: true };
   });
   // Проверка: фото документов и машины
