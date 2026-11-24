@@ -35,13 +35,13 @@ export class EcuHandoffService {
    [sourceOrderId,userId]);
   return !!row;
  }
- private async liveClientRecipients(orderId:string){
-  const row=await this.db.one<{client_id:string;created_by:string}>(
-   'select client_id,created_by from orders where id=$1',[orderId]);
+ private async liveClientRecipients(orderId:string,q:Queryable=this.db,lock=false){
+  const row=await q.one<{client_id:string;created_by:string}>(
+   'select client_id,created_by from orders where id=$1'+(lock?' for share':''),[orderId]);
   if(!row)return [];
   const ids=[row.client_id];
   if(row.created_by!==row.client_id &&
-     await this.currentOrderDriver(this.db,orderId,row.created_by))ids.push(row.created_by);
+     await this.currentOrderDriver(q,orderId,row.created_by,lock))ids.push(row.created_by);
   return ids;
  }
  private async verified(id:string,q:Queryable=this.db,lock=false){
@@ -213,7 +213,7 @@ export class EcuHandoffService {
   if(user.id===h.source_performer_id)return{h,actor:'origin'};
   if(['selected','closed'].includes(h.state) && h.selected_performer_id===user.id && user.roles.includes('master'))
    return{h,actor:'expert'}; // historical selected cases stay readable if station verification lapses
-  if(await this.verified(user.id)){
+  if(await this.verified(user.id,q,lockDriver)){
    if(h.state==='pending')return{h,actor:'candidate'};
   }
   throw forbidden('Нет доступа к передаче');
@@ -351,9 +351,12 @@ export class EcuHandoffService {
     [id,user.id,'Закрыто: '+clean]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_handoff_closed',$3)",
     [h.source_order_id,user.id,{handoffId:id}]);
+   if(h.selected_performer_id)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [h.selected_performer_id,'ecu_handoff','Передача ЭБУ закрыта',
+     'В обращении сохранено итоговое заключение.',{handoffId:id}]);
    return {changed:true,sourceId:h.source_order_id,worker:h.selected_performer_id};
   });
-  if(info.changed)await this.notifier.notify([info.worker],{type:'ecu_handoff',handoffId:id},
+  if(info.changed)await this.notifier.deliverStored([info.worker],{type:'ecu_handoff',handoffId:id},
    {kind:'normal',title:'Передача ЭБУ закрыта',
     body:'В обращении сохранено итоговое заключение.',data:{handoffId:id}}).catch(()=>{});
   return {ok:true,state:'closed'};
@@ -371,9 +374,15 @@ export class EcuHandoffService {
    const m=await q.one(
     'insert into ecu_handoff_notes(handoff_id,author_id,body) values($1,$2,$3) returning id,body,created_at',
     [id,user.id,clean]);
-   return {m,sourceId:h.source_order_id,worker:h.selected_performer_id};
+   const recipients=[...new Set([...(await this.liveClientRecipients(h.source_order_id,q,true)),h.selected_performer_id]
+    .filter((x):x is string=>!!x && x!==user.id))];
+   for(const recipient of recipients)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [recipient,'ecu_handoff','Новое сообщение по передаче ЭБУ',
+     'Доступна новая техническая запись в цепочке обращения.',{handoffId:id}]);
+   return {m,sourceId:h.source_order_id,worker:h.selected_performer_id,recipients};
   });
-  await this.notifier.notify([...(await this.liveClientRecipients(result.sourceId)),result.worker].filter(x=>x!==user.id),
+  const liveIds=new Set([...(await this.liveClientRecipients(result.sourceId)),result.worker]);
+  await this.notifier.deliverStored(result.recipients.filter(x=>liveIds.has(x)),
    {type:'ecu_handoff',handoffId:id},{kind:'normal',title:'Новое сообщение по передаче ЭБУ',
     body:'Доступна новая техническая запись в цепочке обращения.',data:{handoffId:id}}).catch(()=>{});
   return result.m;
