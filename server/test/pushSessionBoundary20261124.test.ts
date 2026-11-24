@@ -63,3 +63,25 @@ test('revoked registration waiting for device lock cannot steal a current accoun
   assert.deepEqual(t.push.sent.slice(before).flatMap(x=>x.tokens),[device]);
  }finally{await t.close();}
 });
+
+
+test('soft-deleted accounts with residual sessions cannot receive or register device pushes', {timeout:60000},async()=>{
+ const t=await setup();
+ try{
+  const retired=await t.login('+79994442307');
+  const active=await t.login('+79994442308');
+  const retiredDevice='retired-push-test-device';
+  const activeDevice='current-push-test-device';
+  ok(await t.api('POST','/api/me/push-token',register(retiredDevice),retired.token));
+  ok(await t.api('POST','/api/me/push-token',register(activeDevice),active.token));
+  await t.db.query('update users set deleted_at=now() where id=$1',[retired.id]);
+  const before=t.push.sent.length;
+  await t.app.notifier.deliverStored([retired.id,active.id],event,msg);
+  assert.deepEqual(t.push.sent.slice(before).flatMap(x=>x.tokens),[activeDevice]);
+  const attempt=await t.api('POST','/api/me/push-token',register(activeDevice),retired.token);
+  assert.ok([401,403].includes(attempt.status),'retired account must not take another device binding');
+  const binding=await t.db.one<{user_id:string}>(
+    "select user_id from push_tokens where provider='rustore' and token=$1",[activeDevice]);
+  assert.equal(binding?.user_id,active.id);
+ }finally{await t.close();}
+});
