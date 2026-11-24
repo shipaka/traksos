@@ -137,6 +137,8 @@ export function Login({ driver, entry, serviceContext }: {
     } catch { return '+7 '; }
   });
   const startClientRegistration = () => {
+    authGeneration.current += 1;
+    cancelPendingLogin();
     try {
       sessionStorage.setItem('traksos.authTransition', 'register');
       sessionStorage.setItem('traksos.authPhoneDraft', phone);
@@ -185,6 +187,14 @@ export function Login({ driver, entry, serviceContext }: {
   // redirect after the user has changed form or account. Each edit invalidates
   // the previous operation, including when this component unmounts.
   const authGeneration = useRef(0);
+  // The visible busy state is not a synchronous request lock. Track the
+  // generation that owns the lock so an obsolete response cannot unlock
+  // a newer password attempt, even before React commits the next render.
+  const loginPending = useRef<number | null>(null);
+  const cancelPendingLogin = () => {
+    loginPending.current = null;
+    setLoginBusy(false);
+  };
   useEffect(() => {
     authGeneration.current += 1;
     return () => { authGeneration.current += 1; };
@@ -199,11 +209,12 @@ export function Login({ driver, entry, serviceContext }: {
     setCodeError('');
     setCodeStatus('');
     setInsurerOnly(false);
-    setLoginBusy(false);
+    cancelPendingLogin();
     if (step === 'code') setStep('phone');
   };
   const otherAuthNumber = () => {
     authGeneration.current += 1;
+    cancelPendingLogin();
     setStep('phone');
     setCode('');
     setDevCode(null);
@@ -223,7 +234,7 @@ export function Login({ driver, entry, serviceContext }: {
     setCode('');
     setDevCode(null);
     setPassword('');
-    setLoginBusy(false);
+    cancelPendingLogin();
     setCodeStatus('');
     try {
       sessionStorage.removeItem('traksos.authTransition');
@@ -322,7 +333,7 @@ export function Login({ driver, entry, serviceContext }: {
   async function verify() {
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
-      if (loginBusy) return;
+      if (loginPending.current !== null) return;
       const generation = ++authGeneration.current;
       setLoginError('');
       const digits = phone.replace(/\D/g, '');
@@ -334,6 +345,7 @@ export function Login({ driver, entry, serviceContext }: {
         setLoginError('Введите пароль. Если забыли его, нажмите «Забыли пароль?».');
         return;
       }
+      loginPending.current = generation;
       setLoginBusy(true);
       try {
         const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
@@ -342,7 +354,7 @@ export function Login({ driver, entry, serviceContext }: {
         if (generation === authGeneration.current)
           setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
       } finally {
-        if (generation === authGeneration.current) setLoginBusy(false);
+        if (loginPending.current === generation) cancelPendingLogin();
       }
       return;
     }
@@ -643,11 +655,11 @@ export function Login({ driver, entry, serviceContext }: {
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
           <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { changeAuthPhone(e.target.value); setLoginError(''); }} /></Field>
-          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; setPassword(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; cancelPendingLogin(); setPassword(e.target.value); setLoginError(''); }} /></Field>
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
           <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
           <button type="button" className="btn ghost" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
-          <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; setIntent('reset'); setStep('phone'); setCode(''); setDevCode(null); }}>Забыли пароль?</button>
+          <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; cancelPendingLogin(); setIntent('reset'); setStep('phone'); setCode(''); setDevCode(null); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
