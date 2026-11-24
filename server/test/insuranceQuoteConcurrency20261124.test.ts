@@ -160,3 +160,42 @@ test('reassigned agent loses quote, message and policy rights; message cannot fo
     assert.equal((await statuses(t,id)).filter(m=>m.body==='После закрытия').length,0);
   }finally{await t.close();}
 });
+
+test('insurance service rejects captured actor permissions after role or fleet revocation',
+  {timeout:90000},async()=>{
+  const t=await setup();
+  try {
+    const {client,agent,vehicle,request}=await fixture(t,'773');
+    const driver=await t.login('+79998887734','driver');
+    const {InsuranceQuoteFlow}=await import('../src/services/insuranceQuoteFlow.ts');
+    const svc=new InsuranceQuoteFlow(t.db);
+    const capturedAgent=await t.db.one<any>('select * from users where id=$1',[agent.id]);
+    const capturedOwner=await t.db.one<any>('select * from users where id=$1',[client.id]);
+    const id=request.id;
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[agent.id]);
+    await assert.rejects(svc.detail(capturedAgent,id),/Нет доступа/);
+    await assert.rejects(svc.accept(capturedAgent,id),/Только назначенный/);
+    await assert.rejects(svc.message(capturedAgent,id,'Недопустимое сообщение'),/Нет доступа/);
+    assert.equal((await t.db.one<any>('select insurance_stage from vehicle_service_requests where id=$1',[id]))?.insurance_stage,'received');
+    await t.db.query("update users set roles=array['insurer']::text[] where id=$1",[agent.id]);
+    assert.equal((await svc.accept(capturedAgent,id)).stage,'preparing');
+    assert.equal((await svc.publish(capturedAgent,id,quotes)).stage,'offers_sent');
+    const available=await results(t,id);
+
+    // Represent an originally driver-created request while keeping the
+    // existing owner, vehicle, and chosen insurance partner unchanged.
+    ok(await t.api('PUT','/api/fleet',{mode:'limit',allow:{insurance:true}},client.token));
+    const fleet=ok(await t.api('GET','/api/fleet',undefined,client.token));
+    const qr=fleet.cars.find((v:any)=>v.id===vehicle.id)?.qrCode;
+    assert.ok(qr);
+    ok(await t.api('POST','/api/qr/'+qr+'/join',{},driver.token));
+    await t.db.query('update vehicle_service_requests set requested_by=$2 where id=$1',[id,driver.id]);
+    const capturedDriver=await t.db.one<any>('select * from users where id=$1',[driver.id]);
+    assert.equal((await svc.detail(capturedDriver,id)).isClient,true);
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[driver.id]);
+    await assert.rejects(svc.detail(capturedDriver,id),/Нет доступа/);
+    await assert.rejects(svc.choose(capturedDriver,id,available[0].id),/только заявитель/);
+    await assert.rejects(svc.downloadPolicy(capturedDriver,id),/Нет доступа/);
+    assert.equal((await svc.choose(capturedOwner,id,available[0].id)).stage,'selected');
+  }finally{await t.close();}
+});
