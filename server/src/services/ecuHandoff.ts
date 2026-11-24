@@ -44,13 +44,13 @@ export class EcuHandoffService {
      await this.currentOrderDriver(this.db,orderId,row.created_by))ids.push(row.created_by);
   return ids;
  }
- private async verified(id:string){
-  return this.db.one<{performer_id:string;public_name:string;address:string}>(
+ private async verified(id:string,q:Queryable=this.db,lock=false){
+  return q.one<{performer_id:string;public_name:string;address:string}>(
    "select s.performer_id,s.public_name,s.address from ecu_stations s" +
    " join performer_profiles p on p.user_id=s.performer_id" +
    " join users u on u.id=p.user_id where s.performer_id=$1" +
    " and s.approved_at is not null and p.kind='ecu'" +
-   " and p.verification='approved' and u.status='active'",[id]);
+   " and p.verification='approved' and u.status='active'"+(lock?' for share of s,p,u':''),[id]);
  }
  async station(user:AuthUser){
   const p=await this.db.one<{kind:string;verification:string}>(
@@ -279,8 +279,6 @@ export class EcuHandoffService {
   };
  }
  async quote(user:AuthUser,id:string,price:number,explanation:string){
-  if(!await this.verified(user.id))
-   throw forbidden('Предложение может дать только проверенная стационарная точка ЭБУ');
   const clean=safe(explanation);
   if(clean.length<10)throw bad('need_explanation','Опишите, что входит в стоимость диагностики');
   const result=await this.db.tx(async q=>{
@@ -288,14 +286,19 @@ export class EcuHandoffService {
     'select client_id,state from ecu_handoffs where id=$1 for update',[id]);
    if(!h)throw notFound();
    if(h.state!=='pending')throw conflict('closed_for_quotes','Предложение уже выбрано');
+   if(!await this.verified(user.id,q,true))
+    throw forbidden('Предложение может дать только проверенная стационарная точка ЭБУ');
    const qrow=await q.one(
     'insert into ecu_quotes(handoff_id,performer_id,diagnosis_price,explanation) values($1,$2,$3,$4)'+
     ' on conflict(handoff_id,performer_id) do update set diagnosis_price=excluded.diagnosis_price,'+
     ' explanation=excluded.explanation,version=ecu_quotes.version+1,updated_at=$5 returning *',
     [id,user.id,price,clean,this.now()]);
+   await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [h.client_id,'ecu_handoff','Специалист ЭБУ прислал цену диагностики',
+     'Цена и описание доступны для отдельного подтверждения.',{handoffId:id}]);
    return {quote:qrow,clientId:h.client_id};
   });
-  await this.notifier.notify([result.clientId],{type:'ecu_handoff',handoffId:id},
+  await this.notifier.deliverStored([result.clientId],{type:'ecu_handoff',handoffId:id},
    {kind:'normal',title:'Специалист ЭБУ прислал цену диагностики',
     body:'Цена и описание доступны для отдельного подтверждения.',data:{handoffId:id}}).catch(()=>{});
   return result.quote;
@@ -315,19 +318,19 @@ export class EcuHandoffService {
    if(!qrow)throw notFound('Предложение не найдено');
    if(qrow.version!==version || Number(qrow.diagnosis_price)!==price)
     throw conflict('price_changed','Специалист изменил цену. Подтвердите свежую версию');
-   const approved=await q.one(
-    "select 1 from ecu_stations s join performer_profiles p on p.user_id=s.performer_id" +
-    " join users u on u.id=p.user_id where s.performer_id=$1 and s.approved_at is not null" +
-    " and p.kind='ecu' and p.verification='approved' and u.status='active'",[qrow.performer_id]);
+   const approved=await this.verified(qrow.performer_id,q,true);
    if(!approved)throw conflict('station_unavailable','Точка больше не подтверждена');
    await q.query(
     "update ecu_handoffs set state='selected',selected_quote_id=$2,selected_performer_id=$3,"+
     ' selected_at=$4 where id=$1',[id,quoteId,qrow.performer_id,this.now()]);
    await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'ecu_quote_selected',$3)",
     [h.source_order_id,user.id,{handoffId:id,quoteId,version,price}]);
+   await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+    [qrow.performer_id,'ecu_handoff','Клиент выбрал вашу диагностику ЭБУ',
+     'Согласована указанная цена, платёж не создавался. Обсудите передачу блока через защищённый диалог.',{handoffId:id}]);
    return {id,selectedPerformerId:qrow.performer_id,price,version};
   });
-  await this.notifier.notify([answer.selectedPerformerId],{type:'ecu_handoff',handoffId:id},
+  await this.notifier.deliverStored([answer.selectedPerformerId],{type:'ecu_handoff',handoffId:id},
    {kind:'normal',title:'Клиент выбрал вашу диагностику ЭБУ',
     body:'Согласована указанная цена, платёж не создавался. Обсудите передачу блока через защищённый диалог.',
     data:{handoffId:id}}).catch(()=>{});
