@@ -15,7 +15,9 @@ export class SettingsService {
     const rows = await this.db.query<{ key: string; value: any }>('select key, value from settings');
     const merged: any = structuredClone(defaultSettings);
     for (const r of rows) {
-      if (r.key in merged && typeof merged[r.key] === 'object' && !Array.isArray(merged[r.key])) {
+      if (Object.hasOwn(defaultSettings, r.key) && r.value !== null &&
+          typeof r.value === 'object' && !Array.isArray(r.value) &&
+          typeof merged[r.key] === 'object' && !Array.isArray(merged[r.key])) {
         merged[r.key] = { ...merged[r.key], ...r.value };
       }
     }
@@ -45,7 +47,7 @@ export class SettingsService {
   }
 
   async set<K extends SettingsKey>(key: K, patch: Partial<Settings[K]>, actorId: string | null) {
-    if (!(key in defaultSettings)) throw new Error(`Нет такой настройки: ${key}`);
+    if (!Object.hasOwn(defaultSettings, key)) throw new Error(`Нет такой настройки: ${key}`);
     // Key-level advisory lock serializes independent app instances, including
     // the first INSERT when the settings row does not exist yet. Read/merge,
     // policy clamps, durable value and audit must commit as ONE operation.
