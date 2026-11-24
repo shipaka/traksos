@@ -1145,3 +1145,12 @@
 - [x] [077b0ed](https://github.com/shipaka/traksos/commit/077b0ed17b2cf8dcb1983a16bd0400d2596e1c7d): прежний deadline GET 12s/write 30s охватывает весь JSON body, а не только headers; ошибка чтения тела не считается успешным null. Private image получает 30s deadline, сохраняет отмену вызывающей стороны, очищает timer/listener. Сохранены stale-token, HTTP401, sandbox и MIME checks; POST не переотправляется.
 - [x] [aa8abe0](https://github.com/shipaka/traksos/commit/aa8abe032b421ada5bf0a30b8a0b471fe8dfa9fd), [2949ead](https://github.com/shipaka/traksos/commit/2949eadbbdb9c1304f14b8deebe6314882aac059): regression для реального compiled API в Chromium с synthetic ReadableStream: GET/POST/image deadline, caller abort, stale session, pre-aborted no fetch, cleanup и ровно один запрос. Обязательный bodyUsed и 2s watchdog теста. Прежние сценарии сохранены.
 - [ ] Фактический Chromium/typecheck/exact-HEAD CI не подтверждены, только source/diff review. [skip ci], без rerun/dispatch; фиксированный контрольный SHA 48a889e, #275, 617/618, main/VPS не изменены. Тайм-ауты не доказывают устранение исторической причины Android transport loss.
+
+
+### 24.11.2026 · AIR-MODERATION-RECONCILE-20261124 · неопределённый ответ модерации и эфир
+
+Закрепление [#7134608533](https://github.com/shipaka/traksos/pull/274#issuecomment-7134608533).
+
+- [x] [c491ff1](https://github.com/shipaka/traksos/commit/c491ff18e18f84e5b903e070871c08dfd11f9038): единая сверка после POST отправки сообщения, скрытия, переключения бота (успех и ошибка), немедленная инвалидизация старых GET и прав, отсутствие автоматического повторения POST. Синхронная блокировка конкурентного действия сохранена.
+- [x] [b3cf1b4](https://github.com/shipaka/traksos/commit/b3cf1b4d96d5113fc2c179f2b97366714cd6fda7) и [45bbf94](https://github.com/shipaka/traksos/commit/45bbf94ad0d0093482d1484d78baaa314df634b2): реальный React/Chromium harness расширен потерянными ответами bot/hide, поздним GET, проверкой свежих прав и no replay; контролируемый интервал polling, проверка очистки таймера при смене роли.
+- [ ] Фактическое исполнение Chromium/typecheck/exact HEAD не подтверждено; изменения [skip ci], без rerun/dispatch. Фиксированный контрольный SHA, 617/618, UI layout, серверный контракт, PR275/main/VPS не изменены.
