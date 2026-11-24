@@ -46,12 +46,7 @@ jobs:
       - name: Запуск тестового сервера
         run: |
           npm -w server start > /tmp/traksos-visual-server.log 2>&1 &
-          for attempt in {1..60}; do
-            if curl -fsS http://127.0.0.1:8080/api/health >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          cat /tmp/traksos-visual-server.log
-          exit 1
+          bash scripts/ci-wait-health.sh "$!" /tmp/traksos-visual-server.log
       - name: Реальные снимки ПК и телефона на утверждённых размерах
         run: node e2e/public-shots.mjs e2e/shots
       - name: Реальные ПК-кабинеты всех доступных тестовых ролей
