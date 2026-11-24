@@ -26,7 +26,7 @@ jobs:
           POSTGRES_DB: traksos_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres -d traksos_test" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_test
     steps:
@@ -83,8 +83,8 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
-          TRAKSOS_LEGACY_CASH_FIXTURES=1 TRAKSOS_SHOP_FIXTURES=1 TRAKSOS_PAYMENT_FIXTURES=1 DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start &
-          until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
+          TRAKSOS_LEGACY_CASH_FIXTURES=1 TRAKSOS_SHOP_FIXTURES=1 TRAKSOS_PAYMENT_FIXTURES=1 DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start > /tmp/traksos-ci-server.log 2>&1 &
+          bash scripts/ci-wait-health.sh "$!" /tmp/traksos-ci-server.log
           node e2e/public-shots.mjs e2e/shots
           # Approved 617.png desktop is a real responsive DOM, not a design JPEG.
           node e2e/owner20-layout-check.mjs
