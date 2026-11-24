@@ -96,7 +96,7 @@ const b=await build({
    b.onResolve({filter:/./},a=>{
      if(Object.hasOwn(stubs,a.path))return {path:a.path,namespace:'client-stub'};
    });
-   b.onLoad({filter:/./,namespace:'client-stub'},a=>({
+   b.onLoad({filter:/./,namespace:'client-stub'},a=>({resolveDir:process.cwd(),
      contents:stubs[a.path],loader:a.path.endsWith('.tsx')?'tsx':'js'
    }));
  }}]
