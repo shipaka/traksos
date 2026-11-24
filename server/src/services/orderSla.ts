@@ -1,7 +1,7 @@
 // Stalled order-stage guardrail. No automatic penalties, charges or cancellations.
 import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
-import { bad, notFound } from '../http/router.ts';
+import { bad, forbidden, notFound } from '../http/router.ts';
 import type { OrdersService } from './orders.ts';
 import type { Notifier } from './notify.ts';
 
@@ -91,12 +91,17 @@ export class OrderSlaService {
           `select u.id from orders ord join users u on u.id=$2
              join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
             where ord.id=$1 and ord.created_by=u.id and ord.client_id=u.owner_id
+              and u.status='active' and u.deleted_at is null
               and 'driver'=any(u.roles) and (ord.vehicle_id is null or v.id=ord.vehicle_id)
             limit 1 for share of u,v`,[o.id,o.created_by]) : null;
-        const admins=await q.query<{id:string}>(
-          "select id from users where 'admin'=any(roles) and status='active'");
-        const recipients=[...new Set([o.client_id,currentDriver?.id,o.performer_id,
-          ...admins.map(a=>a.id)].filter((x):x is string=>!!x))];
+        const participants=[...new Set([o.client_id,currentDriver?.id,o.performer_id]
+          .filter((x):x is string=>!!x))];
+        // Both durable inbox and optional transport use the same live recipients.
+        const active=await q.query<{id:string}>(
+          "select id from users where status='active' and deleted_at is null "+
+          "and (id=any($1::uuid[]) or 'admin'=any(roles)) order by id for share",
+          [participants]);
+        const recipients=active.map(a=>a.id);
         const title='Проверьте этап заявки №'+o.number;
         const body=STAGE_NAMES[stage]+': превышен контрольный интервал. Причина требует проверки.';
         const message={kind:'normal' as const,title,body,data:{orderId:o.id}};
@@ -144,9 +149,14 @@ export class OrderSlaService {
     return {days,incidents,repeat,thresholdMinutes:STAGE_LIMIT_MINUTES};
   }
   async review(actor:AuthUser,id:string,state:'investigating'|'confirmed'|'excused',note:string) {
+    if(!actor.roles.includes('admin'))throw forbidden();
     const reason=note.trim();
     if(reason.length<10)throw bad('review_reason','Причина и доказательства — от 10 символов');
     return this.db.tx(async q=>{
+      const admin=await q.one<{id:string}>(
+        "select id from users where id=$1 and status='active' and deleted_at is null "+
+        "and 'admin'=any(roles) for share",[actor.id]);
+      if(!admin)throw forbidden();
       const incident=await q.one<{stage:string;performer_id:string|null}>(
         'select stage,performer_id from order_sla_incidents where id=$1 for update',[id]);
       if(!incident)throw notFound('Инцидент не найден');
