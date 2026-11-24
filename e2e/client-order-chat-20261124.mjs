@@ -75,6 +75,7 @@ const b=await build({
     `,
   },
   bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+  outdir:'./e2e/.tmp-client-order-chat',
   plugins:[{
     name:'all-private-imports-isolated',
     setup(b){
