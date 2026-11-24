@@ -15,9 +15,8 @@ export type DeveloperReportNotice = {
 
 export type ReportSender = (notice: DeveloperReportNotice) => Promise<void>;
 
-function configuredSender(): ReportSender | null {
-  const url = config.developerReports.webhookUrl.trim();
-  const secret = config.developerReports.webhookSecret;
+export function createDeveloperReportSender(rawUrl: string, secret: string): ReportSender | null {
+  const url = rawUrl.trim();
   if (!url && !secret) return null;
   // An HTTPS endpoint and a long server-side secret are both mandatory.
   // The remote server must be under the operator's control; do not configure
@@ -39,6 +38,9 @@ function configuredSender(): ReportSender | null {
       },
       body: JSON.stringify(notice),
     });
+    // The webhook response is only an acknowledgement, never report content.
+    // Release its body on both success and failure; do not buffer or log it.
+    await response.body?.cancel().catch(() => {});
     if (!response.ok) throw new Error('delivery_failed');
   };
 }
@@ -46,7 +48,8 @@ function configuredSender(): ReportSender | null {
 export class DeveloperReportDelivery {
   private readonly sender: ReportSender | null;
   readonly enabled: boolean;
-  constructor(private db: Db, sender: ReportSender | null = configuredSender()) {
+  constructor(private db: Db, sender: ReportSender | null = createDeveloperReportSender(
+    config.developerReports.webhookUrl, config.developerReports.webhookSecret)) {
     this.sender = sender;
     this.enabled = sender !== null;
   }
