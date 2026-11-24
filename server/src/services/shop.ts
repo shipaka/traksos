@@ -39,6 +39,18 @@ export const SHOP_STATUS: Record<string, string> = {
 };
 const NEXT: Record<string, string[]> = { new: ['confirmed', 'cancelled'], confirmed: ['ready', 'shipped', 'cancelled'], ready: ['shipped', 'done', 'cancelled'], shipped: ['done', 'cancelled'] };
 const MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+// Read authorization belongs to the same SQL snapshot as the private order.
+// An old session or historical created_by alone never grants fleet access.
+const SHOP_ORDER_READ_ACL = `exists (
+  select 1 from users buyer where buyer.id=$2 and buyer.status='active' and buyer.deleted_at is null
+    and buyer.roles && '{client,driver,master,tow,service}'::text[]
+    and ((buyer.owner_id is null and buyer.id=s.client_id)
+      or (buyer.owner_id=s.client_id and 'driver'=any(buyer.roles) and s.created_by=buyer.id
+        and exists(select 1 from users owner where owner.id=buyer.owner_id and owner.status='active' and owner.deleted_at is null)
+        and (s.vehicle_id is null or exists(select 1 from vehicles v
+          where v.id=s.vehicle_id and v.owner_id=s.client_id and v.driver_id=buyer.id))))
+)`;
+
 
 export interface ProductInput {
   category?: string; name?: string; spec?: string | null; description?: string | null; price?: number; stock?: number | null;
@@ -357,12 +369,8 @@ export class ShopService {
     await this.allowedVehicle(user, vehicleId);
     const ownerId = user.owner_id ?? user.id;
     const safePage = Math.max(0, Math.min(1000, Math.floor(page)));
-    const params: unknown[] = [ownerId];
-    const filters = ['s.client_id=$1'];
-    if (user.owner_id) {
-      params.push(user.id);
-      filters.push(`s.created_by=$${params.length}`);
-    }
+    const params: unknown[] = [ownerId,user.id];
+    const filters = ['s.client_id=$1',SHOP_ORDER_READ_ACL];
     if (vehicleId) {
       params.push(vehicleId);
       filters.push(`s.vehicle_id=$${params.length}`);
@@ -408,14 +416,15 @@ export class ShopService {
       // the CURRENT user/vehicle under row locks, inside the same transaction
       // that reserves parts and creates the buyer's order.
       const currentUser=await q.one<{owner_id:string|null;roles:string[]}>(
-        'select owner_id,roles from users where id=$1 for update',[user.id]);
+        "select owner_id,roles from users where id=$1 and status='active' and deleted_at is null for update",[user.id]);
       if(!currentUser ||
          (currentUser.owner_id??null)!==(user.owner_id??null) ||
-         !currentUser.roles.some(role=>['client','driver','master','tow','service'].includes(role)))
+         !currentUser.roles.some(role=>['client','driver','master','tow','service'].includes(role)) ||
+         (currentUser.owner_id&&!currentUser.roles.includes('driver')))
         throw forbidden('Доступ к покупкам изменился — обновите кабинет');
       if(user.owner_id){
         const owner=await q.one<{fleet:any}>(
-          'select fleet from users where id=$1 for update',[user.owner_id]);
+          "select fleet from users where id=$1 and status='active' and deleted_at is null for update",[user.owner_id]);
         if(!owner || owner.fleet?.allow?.shop===false)
           throw forbidden('Владелец не разрешил покупки в магазине');
       }
@@ -483,9 +492,9 @@ export class ShopService {
     const rows = await this.db.query(
       `select s.*,d.status as courier_status
          from shop_orders s left join shop_courier_deliveries d on d.shop_order_id=s.id
-        where s.client_id=$1 ${user.owner_id ? 'and s.created_by=$2' : ''}
+        where s.client_id=$1 and ${SHOP_ORDER_READ_ACL}
         order by s.created_at desc limit 50`,
-      user.owner_id ? [user.owner_id, user.id] : [user.id]);
+      [user.owner_id??user.id,user.id]);
     return rows.map((o: any) => ({...this.orderView(o),courierStatus:o.courier_status??null,
       canConfirmCourierReceipt:!!o.courier_status&&o.created_by===user.id}));
   }
