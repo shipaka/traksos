@@ -56,6 +56,7 @@ try{
       await page.setContent('<!doctype html><div id="root"></div>');
       await page.addScriptTag({content:js});
       const resolve=(i,data)=>page.evaluate(([i,data])=>window.mock.requests[i].resolve(data),[i,data]);
+      const settle=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
       await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
       let form=page.locator('form').last();
       await form.locator('input[type=tel]').fill('+79996660021');
@@ -64,7 +65,7 @@ try{
       await page.waitForFunction(()=>window.mock.requests.length===1);
       await form.locator('input[type=tel]').fill('+79996660022');
       await resolve(0,{sent:true,devCode:'1234'});
-      await page.waitForTimeout(30);
+      await settle();
       if(await page.locator('input[autocomplete="one-time-code"]').count())
         throw Error(width+'px: stale SMS showed OTP field for wrong phone');
       await form.getByRole('button',{name:'Получить код'}).click();
@@ -77,7 +78,7 @@ try{
       await page.waitForFunction(()=>window.mock.requests.length===3);
       await form.getByRole('button',{name:'Другой номер'}).click();
       await resolve(2,{token:'STALE_REGISTER',user:{roles:['client']}});
-      await page.waitForTimeout(30);
+      await settle();
       if(await page.evaluate(()=>window.mock.tokens.length))
         throw Error(width+'px: cancelled registration saved token');
       await page.evaluate(()=>window.renderLogin('login','login-2'));
@@ -89,13 +90,30 @@ try{
       await page.waitForFunction(()=>window.mock.requests.length===4);
       await form.locator('input[type=tel]').fill('+79996660032');
       await resolve(3,{token:'STALE_LOGIN',user:{roles:['client']}});
-      await page.waitForTimeout(30);
+      await settle();
       if(await page.evaluate(()=>window.mock.tokens.length))
         throw Error(width+'px: stale login changed account');
       await form.locator('input[type=password]').fill('PasswordBBBB');
       await form.getByRole('button',{name:'Войти',exact:true}).click();
       await page.waitForFunction(()=>window.mock.requests.length===5);
-      await resolve(4,{token:'CURRENT_LOGIN',user:{roles:['client']}});
+      // Editing only the password (same phone, same form) must release the
+      // cancelled attempt immediately. Its delayed reply must neither set a
+      // token nor unlock the newer in-flight request.
+      await form.locator('input[type=password]').fill('PasswordCCCC');
+      await form.getByRole('button',{name:'Войти',exact:true}).click();
+      await page.waitForFunction(()=>window.mock.requests.length===6);
+      await resolve(4,{token:'STALE_PASSWORD',user:{roles:['client']}});
+      await settle();
+      if(await page.evaluate(()=>window.mock.tokens.length))
+        throw Error(width+'px: stale password attempt saved token');
+      if(!await form.getByRole('button',{name:'Входим…',exact:true}).isDisabled())
+        throw Error(width+'px: stale response unlocked a newer login');
+      // Even a queued form submit event must not issue a second request.
+      await form.evaluate(el=>el.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+      await settle();
+      if(await page.evaluate(()=>window.mock.requests.length)!==6)
+        throw Error(width+'px: duplicate login request while pending');
+      await resolve(5,{token:'CURRENT_LOGIN',user:{roles:['client']}});
       await page.waitForFunction(()=>window.mock.tokens.length===1);
       if(await page.evaluate(()=>window.mock.tokens[0])!=='CURRENT_LOGIN')
         throw Error('Wrong login token accepted');
