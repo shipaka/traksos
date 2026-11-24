@@ -116,7 +116,7 @@ test('technical cases recheck verification and admin role for a previously authe
     await assert.rejects(svc.submit(capturedExpert,base),/проверенные специалисты/);
     await assert.rejects(svc.approved(capturedExpert,''),/проверенным специалистам/);
     await t.db.query("update users set roles=array['master']::text[] where id=$1",[expert.id]);
-    await t.db.query("update performer_profiles set verification='pending' where user_id=$1",[expert.id]);
+    await t.db.query("update performer_profiles set verification='rejected' where user_id=$1",[expert.id]);
     assert.equal(await svc.canRead(capturedExpert),false);
     await assert.rejects(svc.submit(capturedExpert,base),/проверенные специалисты/);
     await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[expert.id]);
