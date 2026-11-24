@@ -139,16 +139,21 @@ export class ShopCatalogService {
     if (!/^\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n)
       throw bad('bad_cursor', 'Неверная версия справочника');
     const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
-    const latest = await this.db.one<{ revision: string }>(
-      'select coalesce(max(seq),0)::text as revision from shop_catalog_reference_changes');
-    const revision = latest?.revision ?? '0';
-    const events = await this.db.query<any>(
-      `select c.seq::text as seq, c.entry_id, c.removed,
-        p.id, p.reviewed, p.category, p.brand, p.article, p.name, p.search_terms
-       from shop_catalog_reference_changes c
-       left join shop_catalog_entries p on p.id=c.entry_id
-       where c.seq>$1::bigint and c.seq<=$2::bigint
-       order by c.seq limit $3`, [after, revision, take + 1]);
+    // Revision and page must observe the same PostgreSQL statement snapshot.
+    // LEFT JOIN LATERAL retains the watermark even when the page is empty.
+    const snapshot = await this.db.query<any>(
+      `with watermark as (select coalesce(max(seq),0) as revision from shop_catalog_reference_changes)
+       select w.revision::text as revision, e.*
+       from watermark w left join lateral (
+         select c.seq::text as seq, c.seq as seq_order, c.entry_id, c.removed,
+           p.id, p.reviewed, p.category, p.brand, p.article, p.name, p.search_terms
+         from shop_catalog_reference_changes c
+         left join shop_catalog_entries p on p.id=c.entry_id
+         where c.seq>$1::bigint and c.seq<=w.revision
+         order by c.seq limit $2
+       ) e on true order by e.seq_order`, [after, take + 1]);
+    const revision = snapshot[0]?.revision ?? '0';
+    const events = snapshot.filter(p=>p.seq !== null);
     const page = events.slice(0, take);
     return {
       enabled: true,
