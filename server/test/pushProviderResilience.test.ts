@@ -29,6 +29,7 @@ test('RuStore sends one bounded data message per unique matching device only',as
   assert.deepEqual(sent.map(({init})=>JSON.parse(String(init.body)).message.token),['phone-a','phone-b']);
   for(const {init} of sent) {
     assert.equal(init.method,'POST');
+    assert.equal(init.redirect,'error','never forward private message data to a redirect');
     assert.equal((init.headers as Record<string,string>).authorization,'Bearer secret-test');
     assert.ok(init.signal instanceof AbortSignal,'push request must have a real timeout signal');
     const body=JSON.parse(String(init.body)).message;
@@ -89,4 +90,20 @@ test('empty list or non-RuStore tokens return without making external requests',
   } finally {
     globalThis.fetch=original;
   }
+});
+
+test('RuStore discards untrusted provider bodies and refuses redirect responses',async()=>{
+ const original=globalThis.fetch;
+ let cancelled=0;
+ globalThis.fetch=(async(_url:URL|string|Request,init?:RequestInit)=>{
+  assert.equal(init?.redirect,'error');
+  return new Response(new ReadableStream({cancel(){cancelled++;}}),{
+   status:307,headers:{location:'https://example.invalid/redirect'},
+  });
+ }) as typeof fetch;
+ try{
+  await assert.rejects(new RuStorePush('project','secret').send(devices('test-device'),normal),
+   /failed for 1 of 1 devices/);
+  assert.equal(cancelled,1);
+ }finally{globalThis.fetch=original;}
 });
