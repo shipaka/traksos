@@ -19,10 +19,10 @@ export class SupportService {
   // moderator exists; otherwise admin is alerted once the SLA is breached.
   private intakeStaffIds = async (q: Queryable = this.db) => {
     const moderators = await q.query<{ id: string }>(
-      `select id from users where roles && '{moderator}'::text[]`);
+      `select id from users where status='active' and roles && '{moderator}'::text[] order by id for share`);
     if (moderators.length) return moderators.map(r => r.id);
     const admins = await q.query<{ id: string }>(
-      `select id from users where roles && '{admin}'::text[]`);
+      `select id from users where status='active' and roles && '{admin}'::text[] order by id for share`);
     return admins.map(r => r.id);
   };
 
@@ -177,17 +177,27 @@ export class SupportService {
       if (!locked) throw notFound('Обращение не найдено');
       if (locked.status === 'closed')
         throw conflict('closed', 'Обращение закрыто — создайте новое');
-      const staff = isStaff(user) && locked.user_id !== user.id;
+      const staff = locked.user_id !== user.id;
+      if (staff) {
+        const currentStaff = await q.one<{ id: string }>(
+          "select id from users where id=$1 and status='active' and roles && '{admin,moderator}'::text[] for share",
+          [user.id]);
+        if (!currentStaff || !isStaff(user)) throw forbidden();
+      }
+      // A former or blocked employee must not receive a new private reply.
+      const assignee = locked.assignee_id ? await q.one<{ id: string }>(
+        "select id from users where id=$1 and status='active' and roles && '{admin,moderator}'::text[] for share",
+        [locked.assignee_id]) : null;
       const postedAt = this.now();
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body)
         values ($1,$2,$3,$4)`, [ticketId, user.id, staff, staff ? text : safeText]);
       await q.query(`update support_tickets
-        set updated_at=$2, assignee_id=coalesce(assignee_id,$3),
+        set updated_at=$2, assignee_id=$3,
             first_staff_reply_at=case when $4::boolean then coalesce(first_staff_reply_at,$2::timestamptz)
                else first_staff_reply_at end where id=$1`,
-        [ticketId, postedAt, staff ? user.id : null, staff]);
+        [ticketId, postedAt, assignee?.id ?? (staff ? user.id : null), staff]);
       const ids = staff ? [locked.user_id] :
-        locked.assignee_id ? [locked.assignee_id] : await this.intakeStaffIds(q);
+        assignee ? [assignee.id] : await this.intakeStaffIds(q);
       const title = staff ? `Поддержка ответила · №${locked.number}` : `Новое сообщение · №${locked.number}`;
       const msg = { kind: 'normal' as const, title, body: safeText.slice(0, 120), data: { ticketId } };
       // Persist the message, first-response timestamp and inbox in one commit.
