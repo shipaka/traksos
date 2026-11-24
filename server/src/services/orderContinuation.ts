@@ -39,6 +39,22 @@ export class OrderContinuationService {
    throw forbidden('Нет доступа к продолжению этого обращения');
   return {order,owner,origin,driver};
  }
+ // A committed inbox entry was authorized under a row lock. Recheck
+ // recipients immediately before optional external delivery as well, so
+ // an intervening reassignment does not send a stale push or socket event.
+ private async deliver(orderId:string,ids:string[],kind:'customer'|'performer',
+   msg:Parameters<Notifier['deliverStored']>[2]) {
+  const order=await this.db.one<{client_id:string;created_by:string;performer_id:string|null;status:string;linked:boolean}>(
+   `select o.client_id,o.created_by,o.performer_id,o.status,exists (
+      select 1 from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+      where u.id=o.created_by and u.owner_id=o.client_id and 'driver'=any(u.roles)
+        and (o.vehicle_id is null or v.id=o.vehicle_id)) as linked
+     from orders o where o.id=$1`,[orderId]);
+  if(!order)return;
+  const eligible=ids.filter(id=>kind==='performer'
+   ? id===order.performer_id : id===order.client_id||(id===order.created_by&&order.linked));
+  await this.notifier.deliverStored(eligible,{type:'order',orderId,status:order.status},msg);
+ }
  async list(user:AuthUser,orderId:string) {
   return this.db.tx(async q=>{
    await this.source(q,user,orderId);
@@ -94,7 +110,7 @@ export class OrderContinuationService {
     for(const id of ids)await q.query(
      "insert into notifications(user_id,kind,title,body,data) values($1,'order',$2,$3,$4)",
      [id,msg.title,msg.body,msg.data]);
-    return {id:inserted[0].id,created:true,delivery:{ids,msg,status:order.status}};
+    return {id:inserted[0].id,created:true,delivery:{ids,msg}};
    }
    const prior=await q.one<{id:string;suggested_by:string;status:string}>(
     'select id,suggested_by,status from order_continuation_recommendations where source_order_id=$1 and target_kind=$2',
@@ -103,8 +119,7 @@ export class OrderContinuationService {
     throw conflict('already_recommended','Это продолжение уже предложено другим участником');
    return {id:prior.id,created:false,delivery:null};
   });
-  if(result.delivery)await this.notifier.deliverStored(result.delivery.ids,
-   {type:'order',orderId,status:result.delivery.status},result.delivery.msg)
+  if(result.delivery)await this.deliver(orderId,result.delivery.ids,'customer',result.delivery.msg)
    .catch(e=>console.warn('[continuation proposal delivery]',e));
   return {id:result.id,created:result.created};
  }
@@ -135,10 +150,9 @@ export class OrderContinuationService {
     data:{orderId,recommendationId}};
    await q.query("insert into notifications(user_id,kind,title,body,data) values($1,'order',$2,$3,$4)",
     [r.suggested_by,msg.title,msg.body,msg.data]);
-   return {id:r.suggested_by,msg,status:order.status};
+   return {id:r.suggested_by,msg};
   });
-  if(result)await this.notifier.deliverStored([result.id],
-   {type:'order',orderId,status:result.status},result.msg)
+  if(result)await this.deliver(orderId,[result.id],'performer',result.msg)
    .catch(e=>console.warn('[continuation decision delivery]',e));
   return {id:recommendationId,status:desired};
  }
