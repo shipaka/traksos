@@ -3,8 +3,9 @@
 // No order, payment, or delivery is submitted. Logout touches synthetic sessions only.
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
-import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu} from './role-click-contract.mjs';
+import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,assertDesktopActions} from './role-click-contract.mjs';
 import {watchPageErrors} from './visual-page-errors.mjs';
+import {clickWorkingAction} from './desktop-working-action.mjs';
 
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8080';
 if(!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))throw Error('Local visual CI only');
@@ -156,6 +157,53 @@ try{
       await clickRoute(page,menu.locator('.tr-mobile-menu-home'),home,assertClean);
       result.clicked.push('return-home');
     }else{
+      const sidebar=page.locator('.desktop-sidebar .desktop-nav');
+      await sidebar.waitFor({state:'visible'});
+      assertDesktopActions(role,await linksOf(sidebar.locator('a[href^="#/"]')),home);
+      const clickDesktop=async href=>{
+        const link=sidebar.locator('a[href="'+href+'"]');
+        await clickWorkingAction(link,async()=>{
+          await visibleRoute(page,href,assertClean);
+          await page.waitForFunction(target=>{
+            const nav=document.querySelector('.desktop-sidebar .desktop-nav');
+            const active=Array.from(nav?.querySelectorAll('a.active')??[]);
+            return active.length===1&&active[0].getAttribute('href')===target;
+          },href,{timeout:10000});
+        });
+        result.clicked.push('desktop:'+href);
+      };
+      // Queue tabs are actual work actions, particularly for insurance and
+      // inspections where the sidebar only exposes home and profile.
+      const queues={
+        service:['Входящие','В ремонте','К выдаче','История'],
+        insurer:['Требуют действий','В работе','Все','История'],
+        inspection:['Осмотры в работе','История']
+      }[mode];
+      if(queues){
+        const tabs=page.locator('main.approved-pc .approved-pc-tabs');
+        await tabs.waitFor({state:'visible'});
+        for(const name of queues){
+          const tab=tabs.getByRole('tab',{name:new RegExp('^'+name+'(?:\\\\s|\\\\d|$)')});
+          await clickWorkingAction(tab,async()=>{
+            await page.waitForFunction(label=>{
+              const selected=Array.from(document.querySelectorAll('main.approved-pc .approved-pc-tabs [aria-selected="true"]'));
+              return selected.length===1&&selected[0].textContent.startsWith(label);
+            },name);
+            await assertClean(role+' queue '+name);
+          });
+          result.clicked.push('queue:'+name);
+        }
+      }
+      // Inspect a safe incoming-work page via the existing dashboard CTA.
+      if(mode==='service'){
+        const incoming=page.locator('main.approved-pc-service a[href="#/base/inbox"]');
+        await clickWorkingAction(incoming,()=>visibleRoute(page,'#/base/inbox',assertClean));
+        result.clicked.push('workdesk:#/base/inbox');
+        await clickDesktop(home);
+      }
+      for(const href of desktopActions[role])await clickDesktop(href);
+      await clickDesktop(home);
+      result.clicked.push('desktop:return-home');
       let menu=await openHeaderMenu(page);
       assertRoleMenu(mode,await linksOf(menu.locator('nav a[href^="#/"]')));
       for(const href of ['#/profile','#/support','#/help']){
