@@ -41,6 +41,8 @@ jobs:
         run: npm -w web run build
       - name: Установка Chromium
         run: npx playwright install --with-deps chromium
+      - name: Контроль обнаружения поздней JavaScript-ошибки в Chromium
+        run: node e2e/visual-page-errors.test.mjs
       - name: Запуск тестового сервера
         run: |
           npm -w server start > /tmp/traksos-visual-server.log 2>&1 &
