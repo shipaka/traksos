@@ -631,3 +631,12 @@
 - [x] Код [58ec64b](https://github.com/shipaka/traksos/commit/58ec64b0bd17e71a1fe27a72eedb7f3cffc483d1): назначение гарантийного задания, событие, аудит и inbox владельца/исполнителя атомарны; доставка push после commit, повтор назначения не дублирует inbox.
 - [x] Написаны HTTP/PostgreSQL регрессии [fa173ff](https://github.com/shipaka/traksos/commit/fa173ff61bcecc60922139c95c5423391a5a9c19), [862a4b4](https://github.com/shipaka/traksos/commit/862a4b46ce703c04d5d137797e9e3d0c407fc66f): SQL inbox fault откатывает предложение, 4 параллельных назначения и отказа не дублируются, после отказа создаётся новое задание, права владельца и запрет бывшему водителю сохранены. 
 - [ ] Успешный server typecheck/npm test и весь CI на exact HEAD ещё не подтверждены. Правила бесплатного исправления и финансовый учёт не менялись. Main/VPS, 617/618 и чужие файлы не затронуты; зона освобождена после отчёта.
+
+
+### 24.11.2026 · OFFER-PUBLICATION-DURABILITY-20261124 · публикация и согласия с офертами
+
+Закрепление [#7121757625](https://github.com/shipaka/traksos/pull/274#issuecomment-7121757625).
+
+- [x] Код [0ff3f3b](https://github.com/shipaka/traksos/commit/0ff3f3b53d4e05163ea06c4432df49552e55ec3a): публикация редакции, аудит и постоянные inbox-уведомления в одной PostgreSQL transaction; внешний push после commit; параллельные публикации сериализованы по audience, первая публикация не позволяет обойти установленный срок для второй. Согласие с действующей редакцией проверяется и пишется под тем же lock, пакет согласий при входе атомарен. Тексты, ставки, сроки и API сохранены.
+- [x] Регрессии [9388a5c](https://github.com/shipaka/traksos/commit/9388a5c6c8e060e0842ab782de2c1c9e72700d62): HTTP/PostgreSQL fault injection на inbox, отсутствие частичного offer/audit, успешный повтор, дубли версии, конкурирующие первые партнёрские редакции.
+- [ ] Фактический server test/typecheck и exact-HEAD CI ещё не подтверждены. Пути освобождены; main/VPS, утверждённые 617/618 не изменены.
