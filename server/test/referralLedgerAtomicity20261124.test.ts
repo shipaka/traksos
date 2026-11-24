@@ -177,3 +177,49 @@ test('FIFO points ledger is deterministic when debit and grants share exact time
     '8,000 cents spent from the first expiring lot; new lot untouched');
   assert.deepEqual(pointsBalance([...entries].reverse(), new Date('2026-12-06T00:00:00Z')), result);
 });
+
+
+test('ledger snapshot ignores both future credits and future debits, including exact time boundary', () => {
+  const date = (day: number) => new Date(Date.UTC(2026, 11, day));
+  const entries = [
+    { id: 1, amount: 1000, created_at: date(1), expires_at: date(20) },
+    { id: 2, amount: -300, created_at: date(4), expires_at: null },
+    { id: 3, amount: 500, created_at: date(5), expires_at: date(25) },
+  ];
+  assert.deepEqual(pointsBalance(entries, date(3)), {balance:1000,expiringSoon:1000});
+  assert.deepEqual(pointsBalance(entries, date(4)), {balance:700,expiringSoon:700});
+  assert.deepEqual(pointsBalance(entries, date(5)), {balance:1200,expiringSoon:1200});
+  assert.deepEqual(pointsBalance(entries, date(20)), {balance:500,expiringSoon:500});
+});
+
+test('referral code retries a proven concurrent uniqueness collision but propagates unrelated failures', async () => {
+  let attempts=0;
+  let collidedCode:string|undefined;
+  const db={
+    one:async(sql:string,args:string[])=>{
+      if(sql.startsWith('update users')){
+        attempts++;
+        if(attempts===1){
+          collidedCode=args[1];
+          throw Object.assign(new Error('unique collision'),{code:'23505'});
+        }
+        return {ref_code:args[1]};
+      }
+      if(sql==='select id from users where ref_code=$1'){
+        assert.equal(args[0],collidedCode);
+        return {id:'other-user'};
+      }
+      return {ref_code:null};
+    }
+  };
+  const service=new ReferralService(db as any,t.app.settings,t.app.notifier,t.clock.now);
+  const code=await service.code('new-user');
+  assert.equal(attempts,2);
+  assert.match(code,/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/);
+  const unrelated=Object.assign(new Error('unrelated unique violation'),{code:'23505'});
+  const broken=new ReferralService({one:async(sql:string)=>{
+    if(sql.startsWith('update users'))throw unrelated;
+    return null;
+  }} as any,t.app.settings,t.app.notifier,t.clock.now);
+  await assert.rejects(()=>broken.code('new-user'),err=>err===unrelated);
+});
