@@ -39,7 +39,7 @@ const result=await build({
   bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
   plugins:[{name:'auth-isolation',setup(b){
     b.onResolve({filter:/./},a=>Object.hasOwn(stubs,a.path)?{path:a.path,namespace:'auth-stub'}:undefined);
-    b.onLoad({filter:/./,namespace:'auth-stub'},a=>({
+    b.onLoad({filter:/./,namespace:'auth-stub'},a=>({resolveDir:process.cwd(),
       contents:stubs[a.path],loader:a.path.endsWith('.tsx')?'tsx':'js'
     }));
   }}]
