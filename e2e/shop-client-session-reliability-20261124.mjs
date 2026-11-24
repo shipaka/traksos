@@ -136,7 +136,20 @@ try{
     };
   },{idA,idB});
   await page.evaluate(()=>import('/__ci_shop_private.mjs'));
-  await page.getByRole('heading',{name:'Корзина'}).waitFor();
+  try{
+    await page.getByRole('heading',{name:'Корзина'}).waitFor();
+  }catch(error){
+    // The host contains only synthetic CI data. Preserve the failing
+    // assertion and distinguish empty React mount from loading/API errors.
+    const state=await page.evaluate(()=>({
+      rootPresent:!!document.getElementById('root'),
+      rootText:document.getElementById('root')?.innerText.slice(0,500)??'',
+      actor:window.__ciActor,
+      selectionRequested:typeof window.__ciResolveA==='function',
+    })).catch(()=>null);
+    console.error('Cart initial mount diagnostics:',JSON.stringify(state));
+    throw error;
+  }
   await page.waitForFunction(()=>typeof window.__ciResolveA==='function');
   // Switch account while A's catalog request is still in-flight.
   await page.evaluate(({idA})=>{
