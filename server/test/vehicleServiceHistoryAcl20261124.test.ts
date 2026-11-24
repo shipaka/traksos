@@ -87,3 +87,53 @@ test('vehicle service history and notification recipients follow live fleet/vehi
       .some((r:any)=>r.id===request.id),false);
   }finally{await t.close();}
 });
+
+
+test('vehicle-service creation checks the live driver role rather than a captured AuthUser', {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const owner=await t.login('+79997763214');
+    const driver=await t.login('+79997763215','driver');
+    const car=ok(await t.api('POST','/api/vehicles',{
+      brand:'Scania',model:'R',year:2018,plate:'А923АА178',
+    },owner.token));
+    ok(await t.api('PUT','/api/fleet',{mode:'limit',allow:{inspection:true,insurance:true}},owner.token));
+    const fleet=ok(await t.api('GET','/api/fleet',undefined,owner.token));
+    const qr=fleet.cars.find((v:any)=>v.id===car.id)?.qrCode;
+    assert.ok(qr);
+    ok(await t.api('POST',`/api/qr/${qr}/join`,{},driver.token));
+    const captured=await t.db.one<any>('select * from users where id=$1',[driver.id]);
+    const svc=new VehicleServiceRequests(t.db);
+    // Keep the vehicle link but revoke the role after authentication.
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[driver.id]);
+    await assert.rejects(svc.create(captured,car.id,'inspection'),/больше не связан/);
+    assert.equal((await t.db.query('select id from vehicle_service_requests where vehicle_id=$1',[car.id])).length,0);
+    await t.db.query("update users set roles=array['driver']::text[] where id=$1",[driver.id]);
+    const created=await svc.create(captured,car.id,'inspection','Проверка действующей связи');
+    assert.equal(created.requested_by,driver.id);
+    assert.equal(created.owner_id,owner.id);
+  }finally{await t.close();}
+});
+
+test('selected insurance vehicle matches harmless whitespace but rejects another identifier', {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const owner=await t.login('+79997763216');
+    const agent=await t.login('+79997763217','insurer');
+    const car=ok(await t.api('POST','/api/vehicles',{
+      brand:'Scania',model:'R',year:2018,plate:'А924АА178',
+    },owner.token));
+    const actor=await t.db.one<any>('select * from users where id=$1',[owner.id]);
+    const svc=new VehicleServiceRequests(t.db);
+    const insurance={agentId:agent.id,details:{
+      applicant:{firstName:'Иван',lastName:'Тестов'},
+      vehicle:{brand:'Scania',model:'R',year:'2018',plate:'А 924 АА 178',vin:'YS2R4X20001234567'},
+    }};
+    await assert.rejects(svc.create(actor,car.id,'insurance',undefined,{
+      ...insurance,details:{...insurance.details,vehicle:{...insurance.details.vehicle,plate:'А 925 АА 178'}},
+    }),/Данные заявки не совпадают/);
+    const created=await svc.create(actor,car.id,'insurance',undefined,insurance);
+    assert.equal(created.vehicle_id,car.id);
+    assert.equal(created.assigned_to,agent.id);
+  }finally{await t.close();}
+});
