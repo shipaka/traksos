@@ -137,7 +137,11 @@ test('confidential file and verification decisions reject captured staff permiss
     const master=await t.login('+79998892013','master');
     const former=await t.login('+79998892014');
     await t.db.query("update users set roles=array['moderator']::text[] where id=$1",[former.id]);
-    const actor=await t.app.auth.authenticate(former.token);
+    // Simulate a staff request already admitted before role revocation.
+    // The synthetic phone is not on the staff allowlist.
+    assert.equal(await t.app.auth.authenticate(former.token),null);
+    const actor=await t.db.one<NonNullable<Awaited<ReturnType<typeof t.app.auth.authenticate>>>>(
+      'select id,phone,name,roles,status,owner_id from users where id=$1',[former.id]);
     const owner=await t.app.auth.authenticate(master.token);
     assert.ok(actor&&owner);
     ok(await t.api('PUT','/api/performer/profile',
