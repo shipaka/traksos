@@ -1004,3 +1004,12 @@
 - [x] Код [5eea21e](https://github.com/shipaka/traksos/commit/5eea21e1cdd3a5c1462481328b056d2692feb288): только собственные допустимые ключи уровней марки в числовом brandStars; повреждённые специализации исключаются из preview/nearby; свободные и подходящие вычисляются на едином snapshot времени смены.
 - [x] Регрессии [118d1f7](https://github.com/shipaka/traksos/commit/118d1f717e3e7b400f916f7d3c9aef80141729a2), [dc3dec6](https://github.com/shipaka/traksos/commit/dc3dec6483a6894a457d7ba080a4745d11e52dbc): реальные HTTP/PG карточки с legacy brand values, корректные оценки; mock пограничной минуты и malformed specialties; отделена занятость предыдущей фикстуры.
 - [ ] Фактический новый server test/typecheck/exact-HEAD CI не подтверждён. Тарифы, порядок отбора, 617/618, main/VPS не менялись. Browser esbuild закреплён за #7122882003.
+
+
+### 24.11.2026 · CATALOG-LIVE-ADMIN-20261124 · актуальные права импорта и публикации справочника
+
+Закрепление [#7123342839](https://github.com/shipaka/traksos/pull/274#issuecomment-7123342839), после освобождения #7122018528.
+
+- [x] Код [4cf739a](https://github.com/shipaka/traksos/commit/4cf739ac91a8c16c669526ee33f7a68d0a3c91c7): действующие active/non-deleted admin права повторно проверяются под share lock внутри транзакции импорта, предпросмотра и публикации, после writer lock там, где он нужен.
+- [x] Написана PG-регрессия [f704da2](https://github.com/shipaka/traksos/commit/f704da2a577429fc2a64692a7c8b2eaaa393b059): отзыв роли, блокировка/удаление аккаунта, отсутствие неразрешённого импорта и публикации, восстановление полномочий.
+- [ ] Actual server typecheck/npm test/exact-HEAD CI не подтверждены. Существующие provenance, порядок writers, цены, 617/618, main/VPS не менялись. Участки освобождены после отчёта.
