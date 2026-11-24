@@ -118,3 +118,34 @@ test('Chat: failure of optional notification must NOT make committed user messag
     `);
   }finally{await t.close();}
 });
+
+
+test('Chat: captured staff permissions are revoked and a failed recipient lookup cannot undo a committed post',
+  {timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const admin=await t.login('+79990000001');
+    const owner=await t.login(phone(4207));
+    const vehicle=ok(await t.api('POST','/api/vehicles',vehicleBody(454),owner.token));
+    const order=ok(await t.api('POST','/api/orders',orderBody(vehicle.id),owner.token)).order;
+    await t.db.query("update orders set status='searching' where id=$1",[order.id]);
+    const capturedAdmin=await t.db.one<any>('select * from users where id=$1',[admin.id]);
+    const capturedOwner=await t.db.one<any>('select * from users where id=$1',[owner.id]);
+    const {ChatService}=await import('../src/services/chat.ts');
+    let lookups=0;
+    const svc=new ChatService(t.db,t.app.settings,{} as any,{
+      mustSee:async()=>({id:order.id}),
+      participants:async()=>{lookups++;throw Error('synthetic recipient lookup failure');},
+    } as any);
+    await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);
+    await assert.rejects(svc.list(capturedAdmin,order.id),/только участникам/);
+    await assert.rejects(svc.post(capturedAdmin,order.id,'Former staff message'),/только участникам/);
+    assert.equal(lookups,0);
+    const posted=await svc.post(capturedOwner,order.id,'Committed despite recipient lookup failure');
+    assert.ok(posted.id);
+    assert.equal(lookups,1);
+    const history=await svc.list(capturedOwner,order.id);
+    assert.equal(history.messages.filter((m:any)=>m.body==='Committed despite recipient lookup failure').length,1);
+    assert.equal(history.messages.some((m:any)=>m.body==='Former staff message'),false);
+  }finally{await t.close();}
+});
