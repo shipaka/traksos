@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 // Native TrakSOS welcome. A PHONE is not a scaled-down PC page.
 // Browser tests use an Android-like bridge, touch, and real local routes only.
 import { chromium } from 'playwright';
@@ -14,8 +15,7 @@ try {
       hasTouch:true,deviceScaleFactor:1,locale:'ru-RU'});
     try {
       const page=await ctx.newPage();
-      const errors=[];
-      page.on('pageerror',e=>errors.push(e.message));
+      const assertClean=watchPageErrors(page);
       await page.addInitScript(()=>{
         Object.defineProperty(window,'TrakSOSNative',{configurable:true,value:{
           isApp:()=>true,setSession:()=>{},pushToken:()=>'',performerOnline:()=>{},
@@ -127,27 +127,32 @@ try {
       if(touch.h<48||touch.w<100)
         throw Error(width+'px services not touchable '+JSON.stringify(touch));
       await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-full.png',fullPage:true});
-      if(errors.length)throw Error(width+'px Android guest JS errors '+errors.join('; '));
+      await assertClean(width+'px native service drawer');
       await services.locator('a[href="#/explore/air"]').click();
       await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
       if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='air')
         throw Error(width+'px: native guest lost the selected Air destination');
+      await assertClean(width+'px Air sign-in');
       // Hardware/system Back bypasses the dialog's Back button. Returning to
       // the public home must cancel a service that was never submitted.
       await page.goBack();
       await welcome.waitFor({state:'visible'});
       await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
+      await assertClean(width+'px system Back');
       await login.click();
       await page.waitForURL('**/#/login');
       await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+      await assertClean(width+'px login');
       await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
       await page.locator('.tr-native-welcome-register').click();
       await page.waitForURL('**/#/register');
       await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
+      await assertClean(width+'px registration');
       await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
       await page.locator('.tr-native-welcome-partner').click();
       await page.waitForURL('**/#/join');
       await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
+      await assertClean(width+'px partner registration');
       for(const path of ['help','explore/guide','explore/pricing','explore/club',
         'explore/van','explore/ecu','explore/parts',
         'explore/garage','explore/training','explore/trakbot']){
@@ -161,7 +166,9 @@ try {
           if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!==service)
             throw Error(width+'px: Android deep link lost selected service '+service);
         }
+        await assertClean(width+'px '+path);
       }
+      await assertClean(width+'px native guest final');
       console.log('PASS Android welcome '+width+'px: entire approved truck, touch targets, real auth, no fake desktop');
     } finally {await ctx.close();}
   }
