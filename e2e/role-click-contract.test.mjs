@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu} from './role-click-contract.mjs';
+import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,assertDesktopActions} from './role-click-contract.mjs';
 for(const [mode,tabs] of Object.entries(expectedTabs)){
   assertRoleTabs(mode,tabs);
   assert.throws(()=>assertRoleTabs(mode,tabs.slice(1)),/unexpected role tabs/);
@@ -16,3 +16,33 @@ for(const [mode,tabs] of Object.entries(expectedTabs)){
   if(mode!=='admin')assert.throws(()=>assertRoleMenu(mode,[...links,'#/admin/section/orders']),/administrator links exposed/);
 }
 console.log('PASS role navigation contract: missing/extra tabs, wrong active state, menu permissions and missing profile rejected');
+
+for(const [role,actions] of Object.entries(desktopActions)){
+  const home=({owner:'#/',driver:'#/',master:'#/work',tow:'#/work',service:'#/base',
+    'hybrid-service':'#/base','hybrid-master':'#/work',insurer:'#/insurance',
+    inspection:'#/inspections',courier:'#/courier',moderator:'#/moderation',admin:'#/admin'})[role];
+  const links=[home,...actions];
+  assertDesktopActions(role,links,home);
+  for(const href of links)assert.throws(()=>assertDesktopActions(role,links.filter(x=>x!==href),home),/missing or duplicate desktop action/);
+  assert.throws(()=>assertDesktopActions(role,[...links,actions[0]],home),/missing or duplicate desktop action/);
+}
+assert.throws(()=>assertDesktopActions('driver',['#/',...desktopActions.driver,'#/fleet'],'#/'),/Driver sees owner fleet action/);
+
+// Actual Chromium negative controls: an overlay intercepts pointer events;
+// a decorative button receives the click but never changes its destination.
+const {chromium}=await import('playwright');
+const {clickWorkingAction}=await import('./desktop-working-action.mjs');
+const browser=await chromium.launch();
+try{
+  const page=await browser.newPage();
+  await page.setContent('<button id="action" onclick="document.body.dataset.done=\'yes\'">Work</button><div id="cover" style="position:fixed;inset:0;z-index:100;background:transparent"></div>');
+  const target=page.locator('#action');
+  const verify=async()=>assert.equal(await page.locator('body').getAttribute('data-done'),'yes','Action did not change destination');
+  await assert.rejects(()=>clickWorkingAction(target,verify,600),/Timeout/);
+  await page.locator('#cover').evaluate(el=>el.remove());
+  await target.evaluate(el=>el.removeAttribute('onclick'));
+  await assert.rejects(()=>clickWorkingAction(target,verify),/Action did not change destination/);
+  await target.evaluate(el=>el.addEventListener('click',()=>document.body.dataset.done='yes'));
+  await clickWorkingAction(target,verify);
+}finally{await browser.close();}
+console.log('PASS desktop action matrix: missing and duplicate links, covered and inert actions rejected');
