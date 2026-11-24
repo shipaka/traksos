@@ -137,10 +137,10 @@ try{
   await link.waitFor();
   if(!(await link.inputValue()).endsWith('PRIVATE-B'))throw Error('Wrong B referral URL');
   await page.getByText('Кого пригласили · 1').click();
-  await page.getByText('PRIVATE INVITED B',{exact:true}).waitFor();
+  await page.locator('details .sum > span').filter({hasText:'PRIVATE INVITED B'}).waitFor();
   await page.evaluate(()=>window.__changeFinanceSession('ci-user-C','bearer-C'));
   await page.waitForFunction(()=>window.__economicsMock.pending.length===7);
-  if(await link.count()||await page.getByText('PRIVATE INVITED B',{exact:true}).count())
+  if(await link.count()||await page.locator('details .sum > span').filter({hasText:'PRIVATE INVITED B'}).count())
     throw Error('Old private invitation data after account switch');
   await page.evaluate(()=>window.__economicsMock.pending[6].reject(Error('offline-C')));
   await page.getByRole('alert').waitFor();

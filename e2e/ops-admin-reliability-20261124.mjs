@@ -66,6 +66,7 @@ const bundle=await build({
         if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'ops-stub'};
       });
       b.onLoad({filter:/./,namespace:'ops-stub'},args=>({
+        resolveDir:process.cwd(),
         contents:stubs[args.path],loader:args.path.endsWith('.tsx')?'tsx':'js',
       }));
     }
@@ -138,7 +139,7 @@ try{
   await switchTo('dashboard','admin-B',['admin']);
   await waitFor(seven,2);
   assert(await page.getByText('Старая запись').count()===0,
-    'Former admin's private report visible to replacement session');
+    "Former admin's private report visible to replacement session");
   await finish(seven,1,demand(5));
   await page.waitForFunction(()=>document.querySelector('.tile-value')?.textContent?.trim()==='5');
 
