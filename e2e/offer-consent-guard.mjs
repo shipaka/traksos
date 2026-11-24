@@ -13,6 +13,7 @@ const stubs = {
       const mock = window.__offerMock;
       mock.ApiError = ApiError;
       mock.requests.push(path);
+      if(path.startsWith('/api/offers/current/'))return new Promise((resolve,reject)=>mock.publicReads.push({path,resolve,reject}));
       if (path === '/api/me/offers') {
         return Promise.resolve([{audience:'client', name:'Оферта для клиентов',
           accepted:false, current:{id:'offer-1', version:'v1',
@@ -41,16 +42,17 @@ const bundle = await build({
   stdin: { contents: `
     import React from 'react';
     import {createRoot} from 'react-dom/client';
-    import {OfferGate, reportApiError} from './web/src/screens/offers.tsx';
+    import {OfferGate, OfferPage, reportApiError} from './web/src/screens/offers.tsx';
     window.__sendOfferOutdated = () => {
       const error = new window.__offerMock.ApiError('outdated');
       error.code = 'offer_outdated';
       reportApiError(error);
     };
-    window.__offerMock = {requests:[],posts:[],resolve:null,reject:null,user:'test-user',token:'A'};
+    window.__offerMock = {requests:[],posts:[],resolve:null,reject:null,user:'test-user',token:'A',publicReads:[]};
     const root=createRoot(document.getElementById('root'));
     window.__switchOfferUser=(user,token)=>{window.__offerMock.user=user;window.__offerMock.token=token;root.render(React.createElement(OfferGate));};
     root.render(React.createElement(OfferGate));
+    window.__showPublicOffer=audience=>root.render(React.createElement(OfferPage,{audience}));
   `, resolveDir:process.cwd(), sourcefile:'offer-consent-entry.tsx', loader:'tsx' },
   bundle:true, write:false, platform:'browser', format:'iife', jsx:'automatic',
   plugins:[{
@@ -129,6 +131,28 @@ try {
   await page.evaluate(()=>window.__sendOfferOutdated());
   await page.waitForFunction(n=>
     window.__offerMock.requests.filter(x=>x==='/api/me/offers').length>n,before);
+  // Public route switches must not render another audience's document,
+  // even if the old request resolves later or a proxy supplies a wrong payload.
+  await page.evaluate(()=>window.__showPublicOffer('client'));
+  await page.waitForFunction(()=>window.__offerMock.publicReads.length===1);
+  const doc=(audience,body)=>({id:'public-'+audience,audience,version:'v1',body,effective_at:'2026-01-01T00:00:00Z'});
+  await page.evaluate(data=>window.__offerMock.publicReads[0].resolve(data),doc('client','CLIENT LEGAL TEXT'));
+  await page.getByText('CLIENT LEGAL TEXT',{exact:true}).waitFor();
+  await page.evaluate(()=>window.__showPublicOffer('performer'));
+  await page.waitForFunction(()=>window.__offerMock.publicReads.length===2);
+  if(await page.getByText('CLIENT LEGAL TEXT',{exact:true}).count())throw Error('Old client legal text visible in partner document');
+  await page.evaluate(()=>window.__showPublicOffer('privacy'));
+  await page.waitForFunction(()=>window.__offerMock.publicReads.length===3);
+  await page.evaluate(data=>window.__offerMock.publicReads[1].resolve(data),doc('performer','LATE PARTNER LEGAL TEXT'));
+  await page.evaluate(data=>window.__offerMock.publicReads[2].resolve(data),doc('client','WRONG AUDIENCE TEXT'));
+  await page.getByRole('alert').waitFor();
+  for(const body of ['CLIENT LEGAL TEXT','LATE PARTNER LEGAL TEXT','WRONG AUDIENCE TEXT']){
+    if(await page.getByText(body,{exact:true}).count())throw Error('Unexpected legal edition: '+body);
+  }
+  await page.getByRole('button',{name:'Попробовать снова'}).click();
+  await page.waitForFunction(()=>window.__offerMock.publicReads.length===4);
+  await page.evaluate(data=>window.__offerMock.publicReads[3].resolve(data),doc('privacy','CURRENT PRIVACY TEXT'));
+  await page.getByText('CURRENT PRIVACY TEXT',{exact:true}).waitFor();
   if(errors.length)throw Error('Browser errors: '+errors.join('; '));
   await page.close();
   console.log('PASS: real OfferGate disallows pending/failed/stale consent; retry and valid acceptance work');
