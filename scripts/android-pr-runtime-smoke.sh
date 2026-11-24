@@ -102,7 +102,33 @@ recover_launcher_anr() {
 apk="apk/app-debug.apk"
 test -s "$apk"
 adb install -r "$apk"
-adb logcat -c
+# Clear all relevant buffers ONCE, before the first launch. Never erase
+# crash/ANR evidence between roles.
+adb logcat -b main -b system -b crash -b events -c
+: > runtime-errors.log
+capture_runtime_errors() {
+  local phase="$1" snapshot
+  printf '\n--- runtime checkpoint: %s ---\n' "$phase" >> runtime-errors.log
+  snapshot="$(adb logcat -b main -b crash -d -s AndroidRuntime:E)" || return 1
+  printf '%s\n' "$snapshot" >> runtime-errors.log
+  snapshot="$(adb logcat -b events -d -s am_anr:I am_crash:I)" || return 1
+  printf '%s\n' "$snapshot" >> runtime-errors.log
+  # AndroidRuntime identifies Java/native-process crashes; ActivityManager
+  # event records also catch ANRs and crashes followed by an automatic restart.
+  # Do not mistake the unrelated Pixel Launcher event for a TrakSOS event.
+  if grep -Eq 'Process: ru\.traksos\.app\.preview([:,[:space:]]|$)|am_(anr|crash).*[,[:space:]]ru\.traksos\.app\.preview(:[^,[:space:]]+)?[,[:space:]]' runtime-errors.log; then
+    echo "FAIL: native TrakSOS crash or ANR observed ($phase)"
+    return 1
+  fi
+}
+preserve_failure_logs() {
+  local rc=$?
+  if [ "$rc" -ne 0 ]; then
+    capture_runtime_errors "failure-exit" || true
+  fi
+  return "$rc"
+}
+trap preserve_failure_logs EXIT
 adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity
 
 ready=0
@@ -118,7 +144,7 @@ for attempt in $(seq 1 75); do
 done
 
 # Capture artifacts even on failure. Native app still gets a strict error gate.
-adb logcat -d -s AndroidRuntime:E > runtime-errors.log || true
+capture_runtime_errors guest-render
 adb shell dumpsys activity activities > activity-dump.txt || true
 sdk_level=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 # A DOM-ready WebView can still be black at the compositor. Wait briefly
@@ -189,7 +215,7 @@ fi
 sdk_level=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
 for role in client master; do
   # Readiness logs fire on React effect and can precede WebView compositor.
-  # Clear them before each role so an earlier render cannot falsely pass.
+  # Role markers must be absent before navigation; retain all crash evidence.
   # API35 Google-API headless AVD on GitHub repeatedly loses the *entire*
   # emulator/ADB connection after force-stop of an already-rendered APK.
   # MainActivity is singleTask; onNewIntent() explicitly reloads the REAL
@@ -197,11 +223,17 @@ for role in client master; do
   # A stale compositor frame still fails the real-pixel comparison below,
   # and the live WebView DOM must independently show the correct role.
   require_live_emulator "before $role navigation"
-  adb logcat -c
+  capture_runtime_errors "before-$role"
+  existing_markers="$(adb logcat -d -s TrakSOSRuntime:I)"
+  if grep -Fq "DESIGN_REVIEW_RENDERED=$role" <<< "$existing_markers"; then
+    echo "FAIL: stale role readiness marker before $role navigation"
+    exit 1
+  fi
   adb shell am start -W -n ru.traksos.app.preview/ru.traksos.app.MainActivity --es path "android-review/$role" >/dev/null
   found=0
   for attempt in $(seq 1 35); do
-    if adb logcat -d -s TrakSOSRuntime:I | grep -Fq "DESIGN_REVIEW_RENDERED=$role"; then
+    role_markers="$(adb logcat -d -s TrakSOSRuntime:I)"
+    if grep -Fq "DESIGN_REVIEW_RENDERED=$role" <<< "$role_markers"; then
       found=1
       break
     fi
@@ -259,8 +291,9 @@ for role in client master; do
   # Android 15's headless Pixel image can wedge/detach ADB when UIAutomator
   # runs, even though the native Activity and React UI are healthy. Inspect the
   # REAL packaged WebView DOM through its localhost-only debug DevTools socket.
+  # The same independent role identity check is required on API29 too.
   # In production BuildConfig.DEBUG is false and the socket is not exposed.
-  if [ "$sdk_level" -ge 34 ]; then
+  if [ "$sdk_level" -ge 29 ]; then
     web_pid=$(adb shell pidof ru.traksos.app.preview | tr -d '\r' | awk '{print $1}')
     if [ -z "$web_pid" ]; then
       echo "FAIL: no running native TrakSOS app process for role=$role"
@@ -308,11 +341,8 @@ for role in client master; do
     echo "FAIL: native Android $sdk_level did not visibly display expected role=$role after React render"
     exit 1
   fi
+  capture_runtime_errors "after-$role"
   echo "APK_ROLE_UI_CONFIRMED=$role API=$sdk_level" >> runtime-ready.log
 done
-adb logcat -d -s AndroidRuntime:E >> runtime-errors.log || true
-if grep -F 'Process: ru.traksos.app.preview' runtime-errors.log; then
-  echo 'FAIL: native app crash during review'
-  exit 1
-fi
-echo "PASS: TrakSOS guest and painted React Android role screens verified on API=$sdk_level; splash ${visible_ms}ms; no native crash or ANR"
+capture_runtime_errors final
+echo "PASS: TrakSOS guest and painted React Android role screens verified on API=$sdk_level; splash ${visible_ms}ms; no TrakSOS crash or ANR in captured runtime logs"
