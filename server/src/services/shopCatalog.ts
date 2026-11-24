@@ -2,7 +2,7 @@
 // Records have no sale price. Bulk imports are never published automatically.
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
-import { bad, notFound, type AuthUser } from '../http/router.ts';
+import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { SHOP_CATEGORIES } from './shop.ts';
 
 export interface CatalogEntryInput {
@@ -54,12 +54,17 @@ export class ShopCatalogService {
   constructor(private db: Db, private settings: SettingsService) {}
 
   async importBatch(actor: AuthUser, batch: CatalogBatchInput) {
+    if (!actor.roles.includes('admin')) throw forbidden();
     const rows = validateEntries(batch);
     const sourceNote = batch.sourceNote.trim();
     return this.db.tx(async (q) => {
       // Sequence values are allocated before commit. Serialize catalogue writers
       // before any row lock so a newer committed delta cannot hide an older one.
       if (!batch.dryRun) await q.query("select pg_advisory_xact_lock(hashtext('shop_catalog_reference_writer'))");
+      const admin = await q.one<{id:string}>(
+        "select id from users where id=$1 and status='active' and deleted_at is null "+
+        "and 'admin'=any(roles) for share", [actor.id]);
+      if (!admin) throw forbidden();
       const args: string[] = [];
       const params: string[] = [];
       for (const row of rows) {
@@ -210,8 +215,13 @@ export class ShopCatalogService {
     expectedCategory?: string;
     expectedSearchTerms?: string | null;
   }) {
+    if (!actor.roles.includes('admin')) throw forbidden();
     return this.db.tx(async (q) => {
       await q.query("select pg_advisory_xact_lock(hashtext('shop_catalog_reference_writer'))");
+      const admin = await q.one<{id:string}>(
+        "select id from users where id=$1 and status='active' and deleted_at is null "+
+        "and 'admin'=any(roles) for share", [actor.id]);
+      if (!admin) throw forbidden();
       // Import ON CONFLICT updates and moderator approvals must serialize on
       // the SAME row. Checking provenance outside this transaction allowed a
       // concurrent re-import to turn an unreviewed replacement into approved.
