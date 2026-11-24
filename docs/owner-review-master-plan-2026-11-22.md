@@ -589,3 +589,13 @@
 - [x] Код: [fb3c376](https://github.com/shipaka/traksos/commit/fb3c37631fbbbd938da28594bfaf2a2faafc0f96) — финансовая справка изолирована по аккаунту, bearer и роли, повтор не показывает старые ставки.
 - [x] Регрессия написана в существующем Chromium gate: [a19cdf1](https://github.com/shipaka/traksos/commit/a19cdf1302ebc8c0eab38a0679d06c5b42d25ded) — ошибка, повтор, смена роли, поздний ответ, изоляция приглашений. CI YAML, проценты, API, 617/618, main/VPS не изменены.
 - [ ] Фактический Chromium PASS и exact-HEAD gates не подтверждены. Зона освобождена.
+
+
+### 24.11.2026 · RELEASE-GATE-FIXTURES-20261124-0702 · исправление трёх доказанных блокеров CI
+
+- Закрепление: [#7121673623](https://github.com/shipaka/traksos/pull/274#issuecomment-7121673623). Источник: фактические server [#45286862361](https://github.com/shipaka/traksos/actions/runs/45286862361) и screenshot [#45286862604](https://github.com/shipaka/traksos/actions/runs/45286862604) на предыдущем `8bcda5e`.
+- [x] `ops_campaigns.test.ts`, тест 269: создание профиля мастера и его верификация через настоящий HTTP вместо UPDATE потенциально отсутствующей строки. [788683c](https://github.com/shipaka/traksos/commit/788683c4931f5a3ec0588342b5054014dea4f9dd).
+- [x] `trakbot-cases.test.ts`, тест 527: вместо второго неразрешённого администратора — проверенный мастер-автор и единственный разрешённый администратор-рецензент; самостоятельные проверки запрета self-approval администратора и approval мастером сохранены/добавлены. [34dfe7b](https://github.com/shipaka/traksos/commit/34dfe7b36226e5b0b0b7cfcab7c2af44756ea9a9).
+- [x] `e2e/owner20-cabinet-evidence.mjs`: screenshot gate учитывает явное согласие на загрузку OSM. До клика iframe отсутствует, после клика проверяются точные synthetic fixture координаты; внешний запрос перехватывается локально, fixture снимается и реальное состояние восстанавливается до PNG. [5854797](https://github.com/shipaka/traksos/commit/5854797b2ee067514f6bddcbc76a9606af96aefc).
+- [ ] Реальный повторный прогон на актуальном HEAD; выше только кодовые изменения, не PASS. Тест 446 `shop.test.ts` (отмена подтверждённого заказа) остаётся отдельным неразрешённым бизнес-вопросом из #7116717074; не меняли контракт. Android API35 отдельно у ранее работавшего исполнителя; на старом SHA ошибка runtime/ADB, APK/API29 PASS.
+- Все три тестовых пути освобождены, production source, утверждённые 617/618, main, VPS не изменены. Другие чаты не дублируют этот пакет, а проверяют новые результаты Actions.
