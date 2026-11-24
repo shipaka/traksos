@@ -1,8 +1,8 @@
 // Обязательное согласие с офертой: если действующая редакция не принята — окно поверх всего,
 // с текстом и галочкой. Пока не принял, ключевые действия сервер не пропустит.
 
-import { useEffect, useState } from 'react';
-import { get, post, onEvent, ApiError } from '../api.ts';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { get, getToken, post, onEvent, ApiError } from '../api.ts';
 import { useAction, useMe } from '../ui.tsx';
 import { Markdown } from '../markdown.tsx';
 import { EconomicsGuide } from './economicsGuide.tsx';
@@ -14,12 +14,28 @@ export function reportApiError(e: unknown) {
 }
 
 export function OfferGate() {
-  const { me, mode } = useMe();
-  const [pending, setPending] = useState<any[]>([]);
-  const load = () => get('/api/me/offers').then((list: any[]) => setPending(list.filter((x) => x.current && !x.accepted))).catch(() => {});
-  useEffect(() => { if (me) load(); }, [me?.id]); // eslint-disable-line
-  useEffect(() => onEvent((e) => { if (e.type === 'offer') load(); }), []);
-  useEffect(() => { const f = () => load(); offerRequired.addEventListener('need', f); return () => offerRequired.removeEventListener('need', f); }, []);
+  const {me,mode}=useMe();
+  const token=getToken();
+  if(!me||!token)return null;
+  return <OfferGateAccount key={JSON.stringify([me.id,token,mode])} token={token} mode={mode}/>;
+}
+
+function OfferGateAccount({token,mode}:{token:string;mode:string}){
+  const [pending,setPending]=useState<any[]>([]);
+  const serial=useRef(0),active=useRef(true);
+  useLayoutEffect(()=>{active.current=true;return ()=>{active.current=false;serial.current++;};},[]);
+  const load=useCallback(async()=>{
+    if(!active.current||getToken()!==token)return;
+    const n=++serial.current;
+    try{
+      const list=await get<any[]>('/api/me/offers');
+      if(active.current&&getToken()===token&&serial.current===n)
+        setPending(list.filter(x=>x.current&&!x.accepted));
+    }catch{/* Keep only this session's pending agreements; the server still enforces consent. */}
+  },[token]);
+  useEffect(()=>{void load();},[load]);
+  useEffect(()=>onEvent(e=>{if(e.type==='offer')void load();}),[load]);
+  useEffect(()=>{const f=()=>void load();offerRequired.addEventListener('need',f);return ()=>offerRequired.removeEventListener('need',f);},[load]);
   // Mixed-role accounts must only see agreements for the ACTIVE workspace.
   // Mandatory server-side consent checks are unchanged on role-specific actions.
   const audiencesByMode: Record<string,string[]> = {
@@ -29,12 +45,15 @@ export function OfferGate() {
   };
   const visible = pending.filter(item => item.audience === 'privacy' ||
     audiencesByMode[mode]?.includes(item.audience));
-  if (!me || !visible.length) return null;
-  return <OfferModal key={visible[0].current.id} item={visible[0]} left={visible.length} onDone={load} />;
+  if (!visible.length) return null;
+  return <OfferModal key={JSON.stringify([visible[0].current.id,visible[0].current.version,visible[0].audience])} token={token} item={visible[0]} left={visible.length} onDone={load} />;
 }
 
-function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: () => void }) {
+function OfferModal({ item, left, onDone, token }: { item: any; left: number; onDone: () => void; token:string }) {
   const { busy, run } = useAction();
+  const activeSession=useRef(true), submitting=useRef(false);
+  useLayoutEffect(()=>{activeSession.current=true;return ()=>{activeSession.current=false;};},[]);
+  const current=()=>activeSession.current&&getToken()===token;
   const [agree, setAgree] = useState(false);
   const [full, setFull] = useState<any>(null);
   const [loadError, setLoadError] = useState(false);
@@ -46,7 +65,7 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
     setAgree(false);
     get(`/api/offers/${item.current.id}`)
       .then((value: any) => {
-        if (!active) return;
+        if (!active||!current()) return;
         // Consent is only allowed for the actual, readable, current edition.
         if (value?.id !== item.current.id ||
             value?.version !== item.current.version ||
@@ -57,7 +76,7 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
         }
         setFull(value);
       })
-      .catch(() => { if (active) setLoadError(true); });
+      .catch(() => { if (active&&current()) setLoadError(true); });
     return () => { active = false; };
   }, [item.current.id, item.current.version, item.audience, retry]);
   const canAccept = !!full && !loadError && !busy;
@@ -79,8 +98,13 @@ function OfferModal({ item, left, onDone }: { item: any; left: number; onDone: (
         <span>Я прочитал и принимаю «{item.name}», редакция {item.current.version}</span>
       </label>
       <button className="btn" disabled={!agree || !canAccept} onClick={async () => {
-        if (!agree || !canAccept) return;
-        if (await run(() => post(`/api/offers/${item.current.id}/accept`), 'Спасибо — условия приняты')) onDone();
+        if (!agree || !canAccept || submitting.current || !current()) return;
+        submitting.current=true;
+        try{
+          if(await run(()=>post(`/api/offers/${item.current.id}/accept`),'Спасибо — условия приняты')){
+            if(current()){setAgree(false);onDone();}
+          }
+        }finally{submitting.current=false;}
       }}>Принимаю</button>
     </div>
   );
