@@ -174,6 +174,9 @@ test('weekly confirmation expires public pin; real confirmation restores the sam
   assert.equal((await t.api('PUT','/api/service/public-map',{enabled:true},service.token)).status,400,
     'expired workshop cannot renew public consent without confirming services');
   ok(await t.api('POST','/api/base/confirm-accepts',{},service.token));
+  const fresh=await t.db.one<{current:boolean}>(
+    "select accepts_confirmed_at between now()-interval '1 minute' and now() as current from service_centers where id=$1",[centerId]);
+  assert.equal(fresh?.current,true,'confirmation must use the database clock, not the simulated booking clock');
   const renewed=ok(await t.api('GET','/api/public/partner-map')).points;
   assert.equal(renewed.length,1);
   assert.equal(renewed[0].id,centerId,
