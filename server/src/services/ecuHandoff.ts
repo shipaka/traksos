@@ -197,23 +197,29 @@ export class EcuHandoffService {
  }
 
  async byOrder(user:AuthUser,orderId:string){
-  const source=await this.db.one<any>(
+  return this.db.tx(async q=>{
+  await q.query('set transaction isolation level repeatable read read only');
+  const source=await q.one<any>(
    'select client_id,created_by,performer_id,case_root_id from orders where id=$1',[orderId]);
   if(!source)throw notFound('Заявка не найдена');
   if(![source.client_id,source.performer_id].includes(user.id)
     && !user.roles.includes('admin')
-    && !await this.currentOrderDriver(this.db,orderId,user.id))throw forbidden();
-  return this.db.one(
+    && !await this.currentOrderDriver(q,orderId,user.id))throw forbidden();
+  return q.one(
    'select id,source_order_id,state,created_at,selected_at from ecu_handoffs' +
    ' where root_order_id=$1 order by created_at desc limit 1',[source.case_root_id??orderId]);
+  });
  }
  async inbox(user:AuthUser){
-  if(!await this.verified(user.id))return [];
-  return this.db.query(
+  return this.db.tx(async q=>{
+  await q.query('set transaction isolation level repeatable read read only');
+  if(!await this.verified(user.id,q))return [];
+  return q.query(
    "select h.id,h.summary,h.created_at,h.state,o.number as source_number," +
    " o.brand,o.model,o.year,o.service from ecu_handoffs h join orders o on o.id=h.source_order_id" +
    " where h.state='pending' or (h.state in ('selected','closed') and h.selected_performer_id=$1)" +
    ' order by h.created_at desc limit 100',[user.id]);
+  });
  }
  private async access(user:AuthUser,id:string,q:Queryable=this.db,lockDriver=false):
   Promise<{h:Handoff;actor:Access}>{
@@ -237,36 +243,38 @@ export class EcuHandoffService {
   throw forbidden('Нет доступа к передаче');
  }
  async detail(user:AuthUser,id:string){
-  const {h,actor}=await this.access(user,id);
+  return this.db.tx(async q=>{
+  await q.query('set transaction isolation level repeatable read read only');
+  const {h,actor}=await this.access(user,id,q);
   const full=actor!=='candidate';
   const [quotes,history,workshops,notes,station,vin]=await Promise.all([
-   full ? this.db.query(
+   full ? q.query(
     'select q.id,q.performer_id,q.diagnosis_price,q.explanation,q.version,q.updated_at,'+
     's.public_name,s.address from ecu_quotes q join ecu_stations s on s.performer_id=q.performer_id'+
     ' where q.handoff_id=$1 order by q.updated_at desc',[id])
-    : this.db.query(
+    : q.query(
     'select id,performer_id,diagnosis_price,explanation,version,updated_at from ecu_quotes'+
     ' where handoff_id=$1 and performer_id=$2',[id,user.id]),
-   full ? this.db.query(
+   full ? q.query(
     'select o.id,o.number,o.service,o.status,o.description,o.result,o.result_note,o.consult_hint,'+
     'o.created_at,o.completed_at,u.name as performer_name from orders o'+
     ' left join users u on u.id=o.performer_id where o.id=$1 or o.case_root_id=$1'+
     ' order by o.created_at,o.number',[h.root_order_id]) : Promise.resolve([]),
    // The shop publishes only technical notes explicitly marked public.
    // Internal notes, customer details, chats and financials are never shared.
-   full ? this.db.query(
+   full ? q.query(
     'select b.id,b.number,b.need,b.status,b.comment,b.works,b.notes,b.notes_public,'+
     'b.created_at,b.closed_at,c.name as center_name from service_bookings b'+
     ' join service_centers c on c.id=b.center_id where b.case_root_id=$1'+
     ' order by b.created_at,b.number',[h.root_order_id]) : Promise.resolve([]),
-   full ? this.db.query(
+   full ? q.query(
     'select n.id,n.body,n.created_at,u.name as author_name from ecu_handoff_notes n'+
     ' join users u on u.id=n.author_id where n.handoff_id=$1 order by n.id',[id]) : Promise.resolve([]),
-   full && h.selected_performer_id ? this.db.one(
+   full && h.selected_performer_id ? q.one(
     'select public_name,address from ecu_stations where performer_id=$1',[h.selected_performer_id])
     : Promise.resolve(null),
    full && h.vehicle_id && ['owner','driver','expert','admin'].includes(actor)
-    ? this.db.one<{vin:string|null}>(
+    ? q.one<{vin:string|null}>(
       'select vin from vehicles where id=$1 and owner_id=$2',[h.vehicle_id,h.client_id])
     : Promise.resolve(null),
   ]);
@@ -295,6 +303,7 @@ export class EcuHandoffService {
    quotes,notes,station,selectedQuoteId:h.selected_quote_id,selectedAt:h.selected_at,
    disclaimer:'Техническая передача бесплатна. Согласование суммы — не оплата и не автоматическая запись на ремонт.',
   };
+  });
  }
  async quote(user:AuthUser,id:string,price:number,explanation:string){
   const clean=safe(explanation);
