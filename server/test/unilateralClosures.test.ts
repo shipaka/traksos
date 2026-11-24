@@ -32,7 +32,8 @@ function fixture() {
       if(sql.startsWith('insert into chat_messages')){
         msgCount++;return {id:msgCount,order_id:ORDER_ID,kind:'system',body:args[1]};
       }
-      if(sql.startsWith('select id from mod_cases'))return null;
+      if(sql.startsWith('select id,number from mod_cases'))return modCount?{id:'mod-case',number:1}:null;
+      if(sql.startsWith('insert into mod_cases')){modCount++;return {id:'mod-case'};}
       return null;
     },
     query:async(sql:string)=>{
@@ -94,7 +95,7 @@ test('disagreement keeps financial order unresolved and opens moderation once',a
   const repeat=await f.closureService.disagree(f.client,ORDER_ID,'Не согласен с результатом диагностики');
   assert.equal(repeat.status,'disputed');
   assert.equal(f.stats().msgCount,2);
-  assert.equal(f.stats().modCount,2); // Fake DB does not record mod_cases; real service de-duplicates.
+  assert.equal(f.stats().modCount,1); // Replays never create a second case.
 });
 
 test('emergency dispute requires a customer and a specific reason',async()=>{
