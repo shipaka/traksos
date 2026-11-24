@@ -30,9 +30,9 @@ function SupportListSession() {
   // fast logout/login; never show the previous user's cached conversation list.
   const list = useLoad(() => get('/api/support'), [me?.id], (e) => e.type === 'support');
   return (
-    <main>
+    <main className="support-list-page">
       <Back to="profile" />
-      <div className="between"><h1>Поддержка</h1><button type="button" className="btn small" onClick={() => go('support/new')}>Написать</button></div>
+      <div className="between support-list-header"><h1>Поддержка</h1><button type="button" className="btn small" onClick={() => go('support/new')}>Написать</button></div>
       <span className="note">Обращение сохраняется в личном кабинете. Первый ответ специалиста — в течение часа; если ответ задерживается, обращение передаётся администратору.</span>
       {!list.data ? <div className="stack">
         <Loading error={list.error} />
