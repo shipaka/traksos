@@ -61,36 +61,39 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
   // Bind authentication to THIS request, not to a token that may have been
   // replaced by a successful login while its response was in flight.
   const requestToken = token;
-  let r: Response;
+  let r: Response, j: any;
+  // The deadline includes both headers AND the complete response body.
+  // A peer can send headers promptly and then stop transmitting JSON.
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), method === 'GET' ? 12_000 : 30_000);
   try {
-    // Bounded waits are crucial on unstable mobile data. Never retry writes silently.
-    // A POST may have been accepted even if the client lost the response.
-    const timeout = new AbortController();
-    const timer = setTimeout(() => timeout.abort(), method === 'GET' ? 12_000 : 30_000);
-    try {
-      r = await fetch(API_URL + path, {
-        method,
-        headers: { 'content-type': 'application/json', ...(requestToken ? { authorization: `Bearer ${requestToken}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        cache: 'no-store',
-        signal: timeout.signal,
-      });
-    } finally {
-      clearTimeout(timer);
+    r = await fetch(API_URL + path, {
+      method,
+      headers: { 'content-type': 'application/json', ...(requestToken ? { authorization: `Bearer ${requestToken}` } : {}), ...(options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store',
+      signal: timeout.signal,
+    });
+    // Preserve the existing null fallback for non-JSON HTTP bodies, but
+    // do not misrepresent a failed/aborted body download as a success.
+    try { j = await r.json(); }
+    catch (error) {
+      if (timeout.signal.aborted || !(error instanceof SyntaxError)) throw error;
+      j = null;
     }
+    if (timeout.signal.aborted) throw new Error('Response deadline exceeded');
   } catch {
     // A request that failed after another login is an obsolete request, NOT
-    // proof that the newly signed-in account is offline. Do not return a
-    // misleading network error or fire a connection alert for that account.
+    // proof that the newly signed-in account is offline.
     if (token !== requestToken)
       throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте раздел снова.');
     window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: false } }));
     throw new ApiError(0, 'network', 'Нет связи с сервером. Проверьте интернет.');
+  } finally {
+    clearTimeout(timer);
   }
-  // Network status belongs to the session that started the request.
   if (token === requestToken)
     window.dispatchEvent(new CustomEvent('traksos-connection', { detail: { online: true } }));
-  const j = await r.json().catch(() => null);
   // Response payloads belong to the account that sent the request. Even a
   // successful 200 from an old session must not populate the new account's
   // shared React views after logout or a different sign-in.
@@ -297,31 +300,53 @@ export async function authedImage(
 ) {
   assertSandboxOrigin();
   const requestToken = token;
-  const r = await fetch(API_URL + path, {
-    headers: requestToken ? { authorization: `Bearer ${requestToken}` } : {},
-    cache: 'no-store',
-    signal: options?.signal,
-  });
-  // Private images can finish downloading after sign-out or account switch.
-  // Never return old-account document pixels as a reusable blob URL.
-  if (token !== requestToken)
-    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
-  if (r.status === 401 && requestToken) {
-    // The image may be the first authenticated request to discover expiry.
-    // Match ordinary API behavior and immediately remove the old workspace.
-    setToken(null);
-    window.dispatchEvent(new Event('traksos-auth-expired'));
-    location.hash = '#/login';
+  // Keep cancellation active until the last byte is read. A photo request
+  // without a component signal must also have a finite network deadline.
+  const controller = new AbortController();
+  const caller = options?.signal;
+  const cancel = () => controller.abort();
+  if (caller?.aborted) cancel();
+  else caller?.addEventListener('abort', cancel, { once: true });
+  const timer = setTimeout(cancel, 30_000);
+  try {
+    if (caller?.aborted) throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+    const r = await fetch(API_URL + path, {
+      headers: requestToken ? { authorization: `Bearer ${requestToken}` } : {},
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    // Private images can finish downloading after sign-out or account switch.
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+    if (r.status === 401 && requestToken) {
+      setToken(null);
+      window.dispatchEvent(new Event('traksos-auth-expired'));
+      location.hash = '#/login';
+    }
+    if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
+    const data = await r.blob();
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+    if (caller?.aborted)
+      throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+    if (controller.signal.aborted)
+      throw new ApiError(0, 'network', 'Не удалось загрузить фото. Проверьте интернет.');
+    if (options?.allowedMimeTypes && !options.allowedMimeTypes.includes(data.type))
+      throw new ApiError(415, 'invalid_image_type', 'Неподдерживаемый формат фотографии');
+    return URL.createObjectURL(data);
+  } catch (error) {
+    // Preserve the original HTTP error (including the current session's
+    // 401, which intentionally clears its token above).
+    if (error instanceof ApiError) throw error;
+    if (token !== requestToken)
+      throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
+    if (caller?.aborted)
+      throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
+    throw new ApiError(0, 'network', 'Не удалось загрузить фото. Проверьте интернет.');
+  } finally {
+    clearTimeout(timer);
+    caller?.removeEventListener('abort', cancel);
   }
-  if (!r.ok) throw new ApiError(r.status, 'image', 'Не удалось загрузить фото');
-  const data = await r.blob();
-  if (token !== requestToken)
-    throw new ApiError(409, 'session_changed', 'Сессия изменилась. Откройте фото снова.');
-  if (options?.signal?.aborted)
-    throw new ApiError(0, 'aborted', 'Загрузка фотографии отменена');
-  if (options?.allowedMimeTypes && !options.allowedMimeTypes.includes(data.type))
-    throw new ApiError(415, 'invalid_image_type', 'Неподдерживаемый формат фотографии');
-  return URL.createObjectURL(data);
 }
 
 /** Сжать фото с камеры: по длинной стороне до 1600 px, JPEG — чтобы грузилось и по слабому интернету */
