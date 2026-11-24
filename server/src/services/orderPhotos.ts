@@ -58,7 +58,7 @@ export class OrderPhotosService {
            on v.owner_id=u.owner_id and v.driver_id=u.id
           where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
             and ($3::uuid is null or v.id=$3::uuid)
-          limit 1 for share of v`,
+          limit 1 for share of u,v`,
         [user.id,o.client_id,o.vehicle_id]);
       if(linked)return;
     }
@@ -84,13 +84,13 @@ export class OrderPhotosService {
       const current=await tx.one<any>('select * from orders where id=$1 for update',[orderId]);
       if(!current || current.performer_id!==user.id)
         throw forbidden('Эта заявка не назначена вам');
-      if(['completed','cancelled','no_performer'].includes(current.status))
-        throw conflict('order_closed','Завершённая заявка доступна только для просмотра');
       // A lost HTTP ACK must be safely retryable even at the 12-photo limit.
       const duplicate=await tx.one<{id:string;created_at:Date}>(
         'select id,created_at from order_photos where order_id=$1 and uploader_id=$2 and sha256=$3',
         [orderId,user.id,sha]);
       if(duplicate)return {id:duplicate.id,createdAt:duplicate.created_at,duplicate:true};
+      if(['completed','cancelled','no_performer'].includes(current.status))
+        throw conflict('order_closed','Завершённая заявка доступна только для просмотра');
       const count=await tx.one<{n:number}>(
         'select count(*)::int as n from order_photos where order_id=$1',[orderId]);
       if(Number(count?.n??0)>=MAX_PER_ORDER)
