@@ -108,6 +108,8 @@ try{
   await photoControl.waitFor({state:'visible'});
   const selectPhoto=async payload=>{
     const [chooser]=await Promise.all([page.waitForEvent('filechooser'),photoControl.click()]);
+    assert.equal(await chooser.element().evaluate(el=>el.matches('input[type=file][hidden]')),true,
+      'visible photo control must open the intended hidden file input');
     await chooser.setFiles(payload);
   };
   await selectPhoto({
@@ -116,6 +118,10 @@ try{
   await page.getByText(/Выберите фотографию JPEG, PNG или WEBP/).waitFor();
   assert.equal(await page.evaluate(()=>window.__ciRevoked.length),0,
     'reject unsupported files before allocating object URLs');
+  await page.waitForFunction(()=>{
+    const input=document.querySelector('input[type=file]');
+    return input && input.value==='' && !input.disabled;
+  });
   // One-pixel valid PNG; resized to genuine JPEG data URL.
   await selectPhoto({
     name:'pixel.png',mimeType:'image/png',
