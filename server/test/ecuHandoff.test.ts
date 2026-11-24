@@ -69,6 +69,20 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.doesNotMatch(candidate.summary,/VF611MTA000123456|А222АА178/,
   'VIN и госномер не должны утекать в свободном техническом тексте кандидату');
  assert.match(candidate.summary,/VIN скрыт|госномер скрыт/);
+ // Force a real database failure at the durable notification boundary.
+ await t.db.exec(`create function reject_ecu_inbox() returns trigger language plpgsql as $
+  begin if new.kind='ecu_handoff' then raise exception 'injected ecu inbox outage'; end if; return new; end; $;
+  create trigger reject_ecu_inbox before insert on notifications
+  for each row execute function reject_ecu_inbox();`);
+ try{
+  const failed=await t.api('POST','/api/ecu/handoffs/'+sent.id+'/quote',{
+   diagnosisPrice:250000,explanation:'Диагностика на стенде, проверка питания и связи ЭБУ'
+  },expert.token);
+  assert.ok(failed.status>=400);
+  assert.equal((await t.db.query('select id from ecu_quotes where handoff_id=$1',[sent.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_inbox on notifications;');
+ }
  const q1=ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/quote',{
   diagnosisPrice:250000,explanation:'Диагностика на стенде, проверка питания и связи ЭБУ'
  },expert.token));
@@ -83,9 +97,23 @@ test('ECU handoff: named original worker, no money, verified station, versioned 
  assert.equal((await t.api('POST','/api/ecu/handoffs/'+sent.id+'/choose',{
   quoteId:q2.id,version:2,price:350000,agree:false
  },owner.token)).status,400);
+ await t.db.exec('create trigger reject_ecu_inbox before insert on notifications for each row execute function reject_ecu_inbox();');
+ try{
+  const failed=await t.api('POST','/api/ecu/handoffs/'+sent.id+'/choose',{
+   quoteId:q2.id,version:2,price:350000,agree:true
+  },owner.token);
+  assert.ok(failed.status>=400);
+  assert.equal((await t.db.one<{state:string}>('select state from ecu_handoffs where id=$1',[sent.id]))?.state,'pending');
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='ecu_quote_selected'",[source.id])).length,0);
+ }finally{
+  await t.db.exec('drop trigger reject_ecu_inbox on notifications; drop function reject_ecu_inbox();');
+ }
  ok(await t.api('POST','/api/ecu/handoffs/'+sent.id+'/choose',{
   quoteId:q2.id,version:2,price:350000,agree:true
  },owner.token));
+ assert.equal((await t.db.one<{n:number}>(
+  "select count(*)::int as n from notifications where user_id=$1 and kind='ecu_handoff' and title='Клиент выбрал вашу диагностику ЭБУ' and data->>'handoffId'=$2",
+  [expert.id,sent.id]))?.n,1);
  assert.equal((await countPayments()),beforePayments,'no new payment/hold from technical handoff');
  const chosen=ok(await t.api('GET','/api/ecu/handoffs/'+sent.id,undefined,expert.token));
  assert.equal(chosen.actor,'expert');
