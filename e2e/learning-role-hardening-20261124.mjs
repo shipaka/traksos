@@ -99,7 +99,11 @@ try{
   // Switching case IDs while an answer/step is selected must remount all
   // per-case lesson state and prevent a previous answer becoming actionable.
   const first=await page.evaluate(()=>window.__recommended('courier','app-not-working',0));
-  await page.getByRole('button',{name:first,exact:true}).click();
+  // The accessible button name also contains its shuffled ordinal. Match the
+  // exact answer label within the actual decision button, not the ordinal.
+  const answerButton=label=>page.locator('.scenario-decision-panel button.scenario-answer').filter({has:page.getByText(label,{exact:true})});
+  if(!first)throw Error('Missing recommended answer for first courier step');
+  await answerButton(first).click();
   await page.getByRole('button',{name:'Следующая ситуация'}).click();
   await page.getByText('Решение 2 из 3').waitFor();
   await change({caseId:'courier-code-handover'});
@@ -112,7 +116,7 @@ try{
   for(let step=0;step<3;step++){
     const label=await page.evaluate(step=>window.__recommended('courier','courier-code-handover',step),step);
     if(!label)throw Error('Missing recommended answer for courier step '+step);
-    await page.getByRole('button',{name:label,exact:true}).click();
+    await answerButton(label).click();
     await page.getByRole('button',{name:step===2?'Показать итог':'Следующая ситуация'}).click();
   }
   await page.getByText('Вы разобрали ситуацию').waitFor();
