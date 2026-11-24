@@ -867,3 +867,12 @@
 - [x] Код [a386177](https://github.com/shipaka/traksos/commit/a386177c618bf204be0f6c1b2ed07a834ac16b16): sandbox исключает soft-deleted аккаунты при обмене билета и смене роли, перепроверяет срок после ожидания lock и расходования nonce, проверяет диапазон времени. Существующие 12 ролей и сроки сессий сохранены.
 - [x] Написаны HTTP/PG регрессии [6a6343c](https://github.com/shipaka/traksos/commit/6a6343ca498518054930c8d6349e2dd5603ce384) (будущие отметки и маскирование до обрезки), [a9e0c64](https://github.com/shipaka/traksos/commit/a9e0c64bf6db98ec64f52a881e1ba1eaace9303a) (удалённые аккаунты, истечение билета при блокировке без создания сессии/nonce).
 - [ ] Фактические server tests/typecheck/exact-HEAD CI не подтверждены. 617/618, API, цены, main/VPS не изменены. Все четыре пути освобождены.
+
+
+### 24.11.2026 · STATS-LIVE-ROLE-SNAPSHOT-20261124 · достоверная аналитика
+
+Закрепление [#7122187880](https://github.com/shipaka/traksos/pull/274#issuecomment-7122187880), после освобождения BIG-BATCH-STATS-TECHCASE-SANDBOX.
+
+- [x] Код [11d6128](https://github.com/shipaka/traksos/commit/11d612873c90fdc3c186ef5ec0e93833eb8dc2e7): пять онлайн-счётчиков исключают удалённые аккаунты и отозванные роли; overview, summary, liveOrders читают данные в одной repeatable-read read-only транзакции; денежные агрегаты больше int32 возвращаются числом, а не HTTP500. [71f81f7](https://github.com/shipaka/traksos/commit/71f81f70dc05cbad69e6a78fdf94c74544a6e24f) — аналогично сумма возвратов и корректировок.
+- [x] Написана HTTP/PG регрессия [a694ddb](https://github.com/shipaka/traksos/commit/a694ddb6bed662b5cc1f345a839e7b095444e3b0): утрата роли, soft deletion, 3 млрд копеек к выплате, 2,4 млрд копеек возвратов/корректировок.
+- [ ] Фактическое прохождение server test/typecheck/exact-HEAD CI не подтверждено. Финансовые проводки, ставки, 617/618, main/VPS не менялись. Участок освобождён после отчёта.
