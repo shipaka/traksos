@@ -1,6 +1,6 @@
 // Поддержка: обращения по заявке или без неё. Пишут пользователь и сотрудники; закрыть может любой из них.
 
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -17,11 +17,11 @@ export class SupportService {
 
   // Moderators own the first response. Admin receives intake only when no
   // moderator exists; otherwise admin is alerted once the SLA is breached.
-  private intakeStaffIds = async () => {
-    const moderators = await this.db.query<{ id: string }>(
+  private intakeStaffIds = async (q: Queryable = this.db) => {
+    const moderators = await q.query<{ id: string }>(
       `select id from users where roles && '{moderator}'::text[]`);
     if (moderators.length) return moderators.map(r => r.id);
-    const admins = await this.db.query<{ id: string }>(
+    const admins = await q.query<{ id: string }>(
       `select id from users where roles && '{admin}'::text[]`);
     return admins.map(r => r.id);
   };
@@ -167,17 +167,17 @@ export class SupportService {
   }
 
   async post(user: AuthUser, ticketId: string, body: string) {
-    const t = await this.mustSee(user, ticketId);
-    if (t.status === 'closed') throw conflict('closed', 'Обращение закрыто — создайте новое');
+    await this.mustSee(user, ticketId);
     const text = body.trim();
     if (!text) throw bad('empty', 'Пустое сообщение');
     const safeText = maskPhones(text).text;
-    const staff = isStaff(user) && t.user_id !== user.id;
-    await this.db.tx(async q => {
-      const locked = await q.one<{ status: string }>(
-        'select status from support_tickets where id=$1 for update', [ticketId]);
-      if (!locked || locked.status === 'closed')
+    const delivery = await this.db.tx(async q => {
+      const locked = await q.one<{ status: string; user_id: string; number: number; assignee_id: string | null }>(
+        'select status, user_id, number, assignee_id from support_tickets where id=$1 for update', [ticketId]);
+      if (!locked) throw notFound('Обращение не найдено');
+      if (locked.status === 'closed')
         throw conflict('closed', 'Обращение закрыто — создайте новое');
+      const staff = isStaff(user) && locked.user_id !== user.id;
       const postedAt = this.now();
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body)
         values ($1,$2,$3,$4)`, [ticketId, user.id, staff, staff ? text : safeText]);
@@ -186,17 +186,20 @@ export class SupportService {
             first_staff_reply_at=case when $4::boolean then coalesce(first_staff_reply_at,$2::timestamptz)
                else first_staff_reply_at end where id=$1`,
         [ticketId, postedAt, staff ? user.id : null, staff]);
+      const ids = staff ? [locked.user_id] :
+        locked.assignee_id ? [locked.assignee_id] : await this.intakeStaffIds(q);
+      const title = staff ? `Поддержка ответила · №${locked.number}` : `Новое сообщение · №${locked.number}`;
+      const msg = { kind: 'normal' as const, title, body: safeText.slice(0, 120), data: { ticketId } };
+      // Persist the message, first-response timestamp and inbox in one commit.
+      for (const id of ids) {
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'support',$2,$3,$4)`, [id, msg.title, msg.body, msg.data]);
+      }
+      return { ids, msg };
     });
-    if (staff) {
-      await this.notifier.notify([t.user_id], { type: 'support', ticketId }, {
-        kind: 'normal', title: `Поддержка ответила · №${t.number}`, body: safeText.slice(0, 120), data: { ticketId },
-      });
-    } else {
-      const to = t.assignee_id ? [t.assignee_id] : await this.intakeStaffIds();
-      await this.notifier.notify(to, { type: 'support', ticketId }, {
-        kind: 'normal', title: `Новое сообщение · №${t.number}`, body: safeText.slice(0, 120), data: { ticketId },
-      });
-    }
+    // The inbox is durable even when an optional live delivery fails.
+    await this.notifier.deliverStored(delivery.ids, { type: 'support', ticketId }, delivery.msg)
+      .catch(() => {});
     return this.thread(user, ticketId);
   }
 
