@@ -50,17 +50,20 @@ export class WarrantyRemediationService {
       [orderId,clientId,userId]);
     return !!row;
   }
-  private async canRead(u:AuthUser,j:any){
+  private async canRead(q:Queryable,u:AuthUser,j:any){
     if(isStaff(u)||[j.client_id,j.performer_id,j.original_performer_id].includes(u.id))
       return true;
-    return this.currentClaimant(this.db,j.original_order_id,j.client_id,j.filed_by,u.id);
+    return this.currentClaimant(q,j.original_order_id,j.client_id,j.filed_by,u.id,true);
   }
   async view(user:AuthUser,id:string){
-    const j=await this.load(id);
-    if(!await this.canRead(user,j))throw forbidden();
+    return this.db.tx(q=>this.readView(q,user,id));
+  }
+  private async readView(q:Queryable,user:AuthUser,id:string){
+    const j=await this.load(id,q,true);
+    if(!await this.canRead(q,user,j))throw forbidden();
     const [events,expense]=await Promise.all([
-      this.db.query<any>('select event,data,actor_id,created_at from warranty_rework_events where job_id=$1 order by id',[id]),
-      this.db.one<any>('select amount_kopecks,bank_reference,transferred_at,recorded_at from warranty_platform_expenses where job_id=$1',[id]),
+      q.query<any>('select event,data,actor_id,created_at from warranty_rework_events where job_id=$1 order by id',[id]),
+      q.one<any>('select amount_kopecks,bank_reference,transferred_at,recorded_at from warranty_platform_expenses where job_id=$1',[id]),
     ]);
     return {id:j.id,claimId:j.claim_id,sourceOrderId:j.original_order_id,
       caseRootId:j.case_root_id,clientId:j.client_id,performerId:j.performer_id,
@@ -79,16 +82,20 @@ export class WarrantyRemediationService {
         actorId:e.actor_id,createdAt:e.created_at}))};
   }
   async forClaim(user:AuthUser,claimId:string){
-    const c=await this.db.one<any>('select * from warranty_claims where id=$1',[claimId]);
+    return this.db.tx(async q=>{
+    const c=await q.one<any>('select * from warranty_claims where id=$1 for update',[claimId]);
     if(!c)throw notFound('Претензия не найдена');
-    const jobs=await this.db.query<{id:string;performer_id:string}>(
+    const jobs=await q.query<{id:string;performer_id:string}>(
       'select id,performer_id from warranty_rework_jobs where claim_id=$1 order by authorized_at,id',
       [claimId]);
     const claimParty=isStaff(user)||[c.client_id,c.performer_id].includes(user.id)||
-      await this.currentClaimant(this.db,c.order_id,c.client_id,c.filed_by,user.id);
+      await this.currentClaimant(q,c.order_id,c.client_id,c.filed_by,user.id,true);
     if(!claimParty&&!jobs.some(j=>j.performer_id===user.id))throw forbidden();
     const allowed=jobs.filter(j=>claimParty||j.performer_id===user.id);
-    return Promise.all(allowed.map(j=>this.view(user,j.id)));
+    const views=[];
+    for(const j of allowed)views.push(await this.readView(q,user,j.id));
+    return views;
+    });
   }
 
   /** An admin offers a nonbillable task only after a reviewed decision.
@@ -193,8 +200,9 @@ export class WarrantyRemediationService {
       const status=accept?'accepted':'declined';
       if(j.status===status)return;
       if(j.status!=='offered')throw conflict('warranty_job_state','Предложение уже обработано');
-      await q.query('update warranty_rework_jobs set status=$2,accepted_at=$3,updated_at=$3 where id=$1',
-        [id,status,accept?this.now():null]);
+      const now=this.now();
+      await q.query('update warranty_rework_jobs set status=$2,accepted_at=$3,updated_at=$4 where id=$1',
+        [id,status,accept?now:null,now]);
       await this.event(q,id,user.id,status,{});
     });
     return this.view(user,id);
