@@ -82,6 +82,10 @@ jobs:
         run: |
           node e2e/public-service-routing.mjs
           node e2e/legacy-guest-deeplinks.mjs
+      - name: Реальные клики и выход в 12 режимах кабинетов на ПК, мобильном сайте и Android bridge
+        run: |
+          node e2e/role-click-contract.test.mjs
+          node e2e/role-click-matrix-20261124.mjs
       - name: Записать точную ревизию и происхождение скриншотов
         if: always()
         env:
@@ -100,6 +104,7 @@ jobs:
             e2e/shots/capture-provenance.json
             e2e/shots/owner20-cabinets/capture-report.json
             e2e/shots/pc-active-synthetic/report.json
+            e2e/shots/role-click-matrix/report.json
           if-no-files-found: warn
           retention-days: 14
       - name: Честный протокол визуальной проверки
