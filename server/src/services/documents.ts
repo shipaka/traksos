@@ -1,7 +1,7 @@
 // Проверка исполнителей: фото документов и машины, очередь модератора.
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -55,8 +55,18 @@ function asBuf(v: unknown): Buffer {
 export class DocumentsService {
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService, private now: () => Date) {}
 
+  private async currentActor(q:Queryable,user:AuthUser,requireStaff=false) {
+    const actor=await q.one<{roles:string[]}>(
+      "select roles from users where id=$1 and status='active' and deleted_at is null"+
+      " and (admin_preview_until is null or admin_preview_until>now()) for share",[user.id]);
+    if(!actor)throw forbidden();
+    const staff=user.roles.some(role=>(role==='admin'||role==='moderator')&&actor.roles.includes(role));
+    if(requireStaff&&!staff)throw forbidden();
+    return {staff};
+  }
+
   async upload(user: AuthUser, p: { kind: string; dataUrl: string; takenAt?: string }) {
-    if (!DOC_KINDS[p.kind]) throw bad('bad_kind', 'Неизвестный тип документа');
+    if (!Object.hasOwn(DOC_KINDS,p.kind)) throw bad('bad_kind', 'Неизвестный тип документа');
     const m = /^data:([\w/+.-]+);base64,(.+)$/s.exec(p.dataUrl);
     if (!m || !MIMES.includes(m[1])) throw bad('bad_image', 'Нужна фотография JPEG, PNG или WEBP');
     const buf = Buffer.from(m[2], 'base64');
@@ -67,6 +77,7 @@ export class DocumentsService {
     // The performer profile is the per-user serialization point for upload,
     // submit and staff decisions. Losing an insert cannot erase the old photo.
     return this.db.tx(async q => {
+      await this.currentActor(q,user);
       const prof = await q.one<{ verification: string }>(
         'select verification from performer_profiles where user_id=$1 for update', [user.id]);
       if (!prof) throw bad('no_profile', 'Сначала заполните профиль исполнителя');
@@ -114,6 +125,7 @@ export class DocumentsService {
 
   async submit(user: AuthUser) {
     const result = await this.db.tx(async q => {
+      await this.currentActor(q,user);
       const prof = await q.one<any>(
         'select kind, specialties, tier, verification, submitted_at from performer_profiles where user_id=$1 for update',
         [user.id]);
@@ -130,7 +142,8 @@ export class DocumentsService {
       // The inbox entry is in the same transaction as submission. If a DB
       // write fails, neither the queue status nor partial staff alerts persist.
       const staff=(await q.query<{id:string}>(
-        `select id from users where roles && '{admin,moderator}'::text[]`)).map(r=>r.id);
+        `select id from users where roles && '{admin,moderator}'::text[] and status='active'
+          and deleted_at is null and (admin_preview_until is null or admin_preview_until>now()) for share`)).map(r=>r.id);
       const title='Новый исполнитель на проверке';
       const body=`${user.name ?? user.phone} отправил документы`;
       for(const id of staff) {
@@ -149,6 +162,7 @@ export class DocumentsService {
   /** Voluntary verification: remove all confidential images and revoke verification. */
   async deleteConfidential(user: AuthUser) {
     await this.db.tx(async (q) => {
+      await this.currentActor(q,user);
       // Use the same per-performer lock as upload/submit/review. A slow
       // concurrent upload must not restore a photo after this delete commits.
       await q.one('select user_id from performer_profiles where user_id=$1 for update', [user.id]);
@@ -169,7 +183,7 @@ export class DocumentsService {
       // may be fetched successfully after a concurrent committed deletion.
       const file=await q.one<any>('select * from documents where id=$1 for share', [id]);
       if(!file)throw notFound();
-      const staff=user.roles.includes('admin')||user.roles.includes('moderator');
+      const {staff}=await this.currentActor(q,user);
       if(file.user_id!==user.id&&!staff)throw forbidden();
       if(file.user_id!==user.id){
         await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
@@ -212,6 +226,7 @@ export class DocumentsService {
     if (p.status==='rejected' && !p.note?.trim())
       throw bad('note_required', 'Напишите, что переснять');
     const result = await this.db.tx(async q => {
+      await this.currentActor(q,admin,true);
       const candidate=await q.one<{user_id:string;kind:string}>(
         'select user_id,kind from documents where id=$1', [id]);
       if (!candidate) throw notFound();
@@ -253,6 +268,7 @@ export class DocumentsService {
     const requireDocs = decision==='approved' &&
       (await this.settings.get('verification')).requireDocs;
     const changed = await this.db.tx(async q => {
+      await this.currentActor(q,admin,true);
       const prof=await q.one<any>(
         'select kind,specialties,tier,verification,verification_note from performer_profiles where user_id=$1 for update',
         [userId]);
