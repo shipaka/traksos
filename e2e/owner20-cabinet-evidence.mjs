@@ -1,3 +1,4 @@
+import { watchPageErrors } from './visual-page-errors.mjs';
 // Real rendered desktop cabinet evidence. Synthetic accounts ONLY on local CI,
 // never a production token, never a synthetic design/mock image.
 import { chromium } from 'playwright';
@@ -86,7 +87,7 @@ try{
    for(const width of (c.id==='admin'?[1440,1672,390]:[1440,390])){
     const context=await browser.newContext({viewport:{width,height:width===390?844:width===1672?941:900},locale:'ru-RU',deviceScaleFactor:c.id==='owner'?2:1});
     const page=await context.newPage();
-    const errors=[];page.on('pageerror',x=>errors.push(x.message));
+    const assertClean=watchPageErrors(page);
     await page.addInitScript(({token,mode})=>{localStorage.setItem('traksos.token',token);localStorage.setItem('traksos.mode',mode)}, {token,mode:c.mode});
     try {
      await page.goto(BASE+'/'+c.url,{waitUntil:'domcontentloaded'});
@@ -115,7 +116,7 @@ try{
            width:Math.round(el.getBoundingClientRect().width)})));
        throw Error('Horizontal overflow '+JSON.stringify({dims,offenders}));
      }
-     if(errors.length)throw Error('Uncaught errors '+errors.join('; '));
+     await assertClean(c.id+' '+width+' workdesk');
      if(c.id==='admin' && width===390) {
        // 618 Chrome and Android must share the same mobile admin fallback.
        if(await page.locator('.approved-pc').count())
@@ -347,6 +348,7 @@ try{
        await notice.waitFor({state:'detached'});
        if(await floatingBot.count())await floatingBot.waitFor({state:'visible'});
      }
+     await assertClean(c.id+' '+width+' workdesk interactions');
      await page.goto(BASE+'/'+c.inside,{waitUntil:'domcontentloaded'});
      await page.locator('.account-menu > summary').waitFor({timeout:12000});
      await page.waitForTimeout(500);
@@ -399,6 +401,7 @@ try{
      }
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'-viewport.png',fullPage:false,animations:'disabled',scale:'css'});
      await page.screenshot({path:out+'/'+c.id+'-inside-'+width+'.png',fullPage:true,animations:'disabled',scale:'css'});
+     await assertClean(c.id+' '+width+' inner page');
      // The inspection API accepts both insurers and inspection operators.
      // Verify the partner UI applies the SAME role policy on direct navigation.
      if(c.id==='insurer'){
@@ -420,6 +423,7 @@ try{
          .first().waitFor({state:'visible',timeout:14000});
        await page.screenshot({path:out+'/insurer-inspection-'+width+'-viewport.png',
          fullPage:false,animations:'disabled',scale:'css'});
+       await assertClean(c.id+' '+width+' inspection list');
        // The selected assigned case MUST open its own detail, not return the
        // entire queue or a stale desktop workspace.
        const assignedLink=page.locator('a[href="#/inspections/'+assignedId+'"]').first();
@@ -428,18 +432,21 @@ try{
        await page.locator('.and20-inspection-detail h1').getByText(/LOCAL-TO-999/).waitFor({timeout:14000});
        if(await page.locator('.approved-pc').count())
          throw Error('Selected inspection was not opened as its case detail');
+       await assertClean(c.id+' '+width+' inspection detail');
        // Both submenu routes must resolve to their proper contents, rather
        // than the general approved dashboard or a fake missing inspection.
        await page.goto(BASE+'/#/inspections/processing',{waitUntil:'domcontentloaded'});
        await page.locator('.partner-workspaces').waitFor({state:'visible',timeout:14000});
        if(await page.getByText('Техосмотр не найден среди назначенных вам заявок.').count())
          throw Error('Inspection processing list was parsed as an inspection ID');
+       await assertClean(c.id+' '+width+' inspection processing');
        const unknownId='00000000-0000-4000-8000-000000000001';
        await page.goto(BASE+'/#/inspections/'+unknownId,{waitUntil:'domcontentloaded'});
        await page.getByText('Техосмотр не найден среди назначенных вам заявок.').waitFor({timeout:14000});
        if(await page.locator('.approved-pc').count())
          throw Error('A direct inspection detail route incorrectly showed the generic desktop dashboard');
      }
+     await assertClean(c.id+' '+width+' final');
      results.push({role:c.id,width,height:width===390?844:width===1672?941:900,result:'screens saved',files:[
        c.id+'-home-'+width+'-viewport.png',
        c.id+'-home-'+width+'.png',
