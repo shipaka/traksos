@@ -368,9 +368,10 @@ try {
         if(signal?.aborted)abort();
         else signal?.addEventListener('abort',abort,{once:true});
         activeStream=streamController;
-        calls.push({url:String(url),method:opts.method??'GET',signal});
-        return new Response(stream,{status:200,headers:{'content-type':
+        const response=new Response(stream,{status:200,headers:{'content-type':
           String(url).includes('image')?'image/png':'application/json'}});
+        calls.push({url:String(url),method:opts.method??'GET',signal,response});
+        return response;
       };
       const expect=(condition,message)=>{if(!condition)throw Error(message)};
       async function scenario(start,expectedDelay,expectedCode,{switchAccount=false,caller}={}){
@@ -380,12 +381,19 @@ try {
         // fetch resolves to headers immediately; allow the body read to begin.
         await Promise.resolve();await Promise.resolve();await Promise.resolve();
         expect(calls.length===before+1,'Expected one request before body deadline');
+        expect(calls.at(-1).response.bodyUsed,'Expected response body consumption to have started');
         const timers=[...deadlines.values()];
         expect(timers.length===1&&timers[0].delay===expectedDelay&&!timers[0].cleared,
           'Deadline must remain armed after headers: '+expectedDelay);
         if(switchAccount)module.setToken('CI-BODY-REPLACEMENT');
         if(caller)caller.abort();else timers[0].fn();
-        const result=await request;
+        let watchdog;
+        let result;
+        try{
+          result=await Promise.race([request,new Promise((_,reject)=>{
+            watchdog=nativeSet.call(window,()=>reject(Error('Body cancellation did not settle')),2000);
+          })]);
+        }finally{nativeClear.call(window,watchdog)}
         expect(calls.at(-1).signal.aborted,'Body download signal was not aborted');
         expect(result.code===expectedCode,'Unexpected body error: '+JSON.stringify(result));
         expect(calls.length===before+1,'Body timeout must not replay the request');
