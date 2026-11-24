@@ -113,7 +113,21 @@ try{
       await settle();
       if(await page.evaluate(()=>window.mock.requests.length)!==6)
         throw Error(width+'px: duplicate login request while pending');
-      await resolve(5,{token:'CURRENT_LOGIN',user:{roles:['client']}});
+      // Moving from login to password recovery also cancels the active
+      // login. Returning to login must not retain its busy state.
+      await form.getByRole('button',{name:'Забыли пароль?'}).click();
+      await page.getByRole('heading',{name:'Восстановить пароль'}).waitFor();
+      await resolve(5,{token:'STALE_BEFORE_RESET',user:{roles:['client']}});
+      await settle();
+      if(await page.evaluate(()=>window.mock.tokens.length))
+        throw Error(width+'px: cancelled login authenticated during password recovery');
+      await page.locator('form').last().getByRole('button',{name:'Уже есть аккаунт? Войти по паролю'}).click();
+      await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+      form=page.locator('form').last();
+      await form.locator('input[type=password]').fill('PasswordDDDD');
+      await form.getByRole('button',{name:'Войти',exact:true}).click();
+      await page.waitForFunction(()=>window.mock.requests.length===7);
+      await resolve(6,{token:'CURRENT_LOGIN',user:{roles:['client']}});
       await page.waitForFunction(()=>window.mock.tokens.length===1);
       if(await page.evaluate(()=>window.mock.tokens[0])!=='CURRENT_LOGIN')
         throw Error('Wrong login token accepted');
