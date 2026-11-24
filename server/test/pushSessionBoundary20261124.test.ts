@@ -34,10 +34,9 @@ test('revoked registration waiting for device lock cannot steal a current accoun
   const current=await t.login('+79994442306');
   const device='shared-test-device-token';
   ok(await t.api('POST','/api/me/push-token',register(device),current.token));
-  let attempt:ReturnType<typeof t.api>|undefined;
-  await t.db.tx(async q=>{
+  const {attempt}=await t.db.tx(async q=>{
    await q.query('select pg_advisory_xact_lock(hashtext($1))',['push:rustore:'+device]);
-   attempt=t.api('POST','/api/me/push-token',register(device),previous.token);
+   const attempt=t.api('POST','/api/me/push-token',register(device),previous.token);
    // Wait until the authenticated request reaches the held advisory lock.
    // No sleeps are used as evidence of the race; verify PostgreSQL's waiter.
    const deadline=Date.now()+5000;
@@ -50,8 +49,8 @@ test('revoked registration waiting for device lock cannot steal a current accoun
    }
    assert.ok(waiting,'authenticated registration reached the device lock');
    await q.query('delete from sessions where token_hash=$1',[sha256(previous.token)]);
+   return {attempt};
   });
-  assert.ok(attempt);
   assert.equal((await attempt).status,403);
   const row=await t.db.one<{user_id:string;session_token_hash:string}>(
     "select user_id,session_token_hash from push_tokens where provider='rustore' and token=$1",[device]);
