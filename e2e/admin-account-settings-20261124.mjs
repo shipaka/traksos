@@ -76,6 +76,7 @@ const bundle=await build({
         return {path:'api',namespace:'admin-test'};
     });
     b.onLoad({filter:/./,namespace:'admin-test'},a=>({
+      resolveDir:process.cwd(),
       contents:a.path==='ui'?uiStub:apiStub,
       loader:a.path==='ui'?'tsx':'js',
     }));

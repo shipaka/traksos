@@ -53,6 +53,7 @@ const bundle=await build({
       if(a.path==='../api.ts')return {path:'api',namespace:'stub'};
     });
     b.onLoad({filter:/./,namespace:'stub'},a=>({
+      resolveDir:process.cwd(),
       contents:a.path==='ui'?ui:api,loader:a.path==='ui'?'tsx':'js'
     }));
   }}],

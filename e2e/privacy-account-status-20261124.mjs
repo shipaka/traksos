@@ -66,6 +66,7 @@ const bundle=await build({
         if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'privacy-mock'};
       });
       build.onLoad({filter:/./,namespace:'privacy-mock'},args=>({
+        resolveDir:process.cwd(),
         contents:stubs[args.path],loader:args.path.endsWith('.tsx')?'tsx':'js'
       }));
     }

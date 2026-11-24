@@ -61,6 +61,7 @@ const bundle=await build({
       if(a.path==='../ui.tsx'||a.path==='./web/src/ui.tsx')return {path:'ui',namespace:'synthetic'};
     });
     b.onLoad({filter:/./,namespace:'synthetic'},a=>({
+      resolveDir:process.cwd(),
       contents:a.path==='ui'?uiStub:apiStub,loader:a.path==='ui'?'tsx':'js'
     }));
   }}],

@@ -12,6 +12,7 @@ const bundle=await build({
      if(Object.hasOwn(stubs,args.path))return {path:args.path,namespace:'performer-line-stub'};
    });
    b.onLoad({filter:/./,namespace:'performer-line-stub'},args=>({
+     resolveDir:process.cwd(),
      contents:stubs[args.path],loader:args.path.endsWith('.tsx')?'tsx':'js'
    }));
  }}]
