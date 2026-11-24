@@ -1,4 +1,4 @@
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden, notFound } from '../http/router.ts';
 
@@ -31,66 +31,83 @@ function clean(data: RepairCaseInput): RepairCaseInput {
 export class TechnicalCasesService {
   constructor(private db: Db) {}
 
-  async canRead(user: AuthUser): Promise<boolean> {
-    if (user.roles.some((r) => ['admin','moderator'].includes(r))) return true;
-    if (!user.roles.some((r) => ['master','service'].includes(r))) return false;
-    const p = await this.db.one<{ verification: string }>(
-      `select p.verification from performer_profiles p
-        join users u on u.id=p.user_id where p.user_id=$1 and u.status='active'`, [user.id],
-    );
+  private async liveRoles(q: Queryable, user: AuthUser): Promise<string[]> {
+    const current = await q.one<{roles:string[]}>(
+      "select roles from users where id=$1 and status='active' for share", [user.id]);
+    return current ? user.roles.filter(role => current.roles.includes(role)) : [];
+  }
+
+  private async canReadIn(q: Queryable, user: AuthUser): Promise<boolean> {
+    const roles = await this.liveRoles(q, user);
+    if (roles.some(r => ['admin','moderator'].includes(r))) return true;
+    if (!roles.some(r => ['master','service'].includes(r))) return false;
+    const p = await q.one<{verification:string}>(
+      'select verification from performer_profiles where user_id=$1 for share', [user.id]);
     return p?.verification === 'approved';
   }
 
+  async canRead(user: AuthUser): Promise<boolean> {
+    return this.db.tx(q => this.canReadIn(q,user));
+  }
+
   async submit(user: AuthUser, data: RepairCaseInput) {
-    if (!(await this.canRead(user))) throw forbidden('Добавлять кейсы могут проверенные специалисты');
-    const value = clean(data);
-    const saved = await this.db.one<{ id: string }>(
-      'insert into technical_repair_cases (author_id,make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id::text as id',
-      [user.id, value.make, value.model, value.productionYear ?? null, value.ecu, value.code,
-       value.symptoms, value.checksPerformed, value.verifiedFix, value.provenanceNote],
-    );
-    return { id: saved?.id, reviewState: 'pending', published: false };
+    return this.db.tx(async q => {
+      if (!(await this.canReadIn(q,user))) throw forbidden('Добавлять кейсы могут проверенные специалисты');
+      const value = clean(data);
+      const saved = await q.one<{ id: string }>(
+        'insert into technical_repair_cases (author_id,make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id::text as id',
+        [user.id, value.make, value.model, value.productionYear ?? null, value.ecu, value.code,
+         value.symptoms, value.checksPerformed, value.verifiedFix, value.provenanceNote],
+      );
+      return { id: saved?.id, reviewState: 'pending', published: false };
+    });
   }
 
   async approved(user: AuthUser, term: string) {
-    if (!(await this.canRead(user))) throw forbidden('Техническая база доступна проверенным специалистам');
-    const value = normalized(term).toLowerCase().slice(0,80);
-    const rows = await this.db.query(
-      `select id::text as id, make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note,reviewed_at
-         from technical_repair_cases where review_state='approved' and
-           ($1='' or strpos(lower(coalesce(code,'')),$1)>0
-                  or strpos(lower(coalesce(make,'')),$1)>0
-                  or strpos(lower(coalesce(model,'')),$1)>0
-                  or strpos(lower(coalesce(ecu,'')),$1)>0)
-        order by id desc limit 30`,[value],
-    );
-    return { items: rows };
+    return this.db.tx(async q => {
+      if (!(await this.canReadIn(q,user))) throw forbidden('Техническая база доступна проверенным специалистам');
+      const value = normalized(term).toLowerCase().slice(0,80);
+      const rows = await q.query(
+        `select id::text as id, make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note,reviewed_at
+           from technical_repair_cases where review_state='approved' and
+             ($1='' or strpos(lower(coalesce(code,'')),$1)>0
+                    or strpos(lower(coalesce(make,'')),$1)>0
+                    or strpos(lower(coalesce(model,'')),$1)>0
+                    or strpos(lower(coalesce(ecu,'')),$1)>0)
+          order by id desc limit 30`,[value],
+      );
+      return { items: rows };
+    });
   }
 
   async pending(user: AuthUser) {
-    if (!user.roles.includes('admin')) throw forbidden('Проверка кейсов доступна администратору');
-    return { items: await this.db.query(
-      "select id::text as id,author_id,make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note,created_at from technical_repair_cases where review_state='pending' order by id limit 100",
-    ) };
+    return this.db.tx(async q => {
+      if (!(await this.liveRoles(q,user)).includes('admin')) throw forbidden('Проверка кейсов доступна администратору');
+      return { items: await q.query(
+        "select id::text as id,author_id,make,model,production_year,ecu,code,symptoms,checks_performed,verified_fix,provenance_note,created_at from technical_repair_cases where review_state='pending' order by id limit 100",
+      ) };
+    });
   }
 
   async decide(user: AuthUser, id: string, approve: boolean, note: string) {
-    if (!user.roles.includes('admin')) throw forbidden('Проверка кейсов доступна администратору');
-    // An oversized numeric path must not turn a missing case into PostgreSQL
-    // bigint overflow (HTTP 500). A reviewer cannot approve their own case.
-    if (!/^\d{1,19}$/.test(id) || BigInt(id) > 9223372036854775807n) throw notFound();
-    const reason = normalized(note).slice(0,1000);
-    if (approve && reason.length < 10)
-      throw bad('review_note_required', 'Укажи основание технической проверки — не менее 10 символов');
-    const own = await this.db.one<{author_id:string}>(
-      'select author_id from technical_repair_cases where id=$1::bigint', [id]);
-    if (own?.author_id === user.id)
-      throw forbidden('Проверку собственного технического кейса проводит другой администратор');
-    const row = await this.db.one(
-      "update technical_repair_cases set review_state=$2,reviewed_by=$3,reviewed_at=now(),review_note=$4 where id=$1::bigint and review_state='pending' and author_id<>$3 returning id::text as id,review_state",
-      [id, approve ? 'approved' : 'rejected', user.id, reason],
-    );
-    if (!row) throw notFound('Кейс не найден или уже проверен');
-    return row;
+    return this.db.tx(async q => {
+      if (!(await this.liveRoles(q,user)).includes('admin')) throw forbidden('Проверка кейсов доступна администратору');
+      // An oversized numeric path must not turn a missing case into PostgreSQL
+      // bigint overflow (HTTP 500). A reviewer cannot approve their own case.
+      if (!/^\d{1,19}$/.test(id) || BigInt(id) > 9223372036854775807n) throw notFound();
+      const reason = normalized(note).slice(0,1000);
+      if (approve && reason.length < 10)
+        throw bad('review_note_required', 'Укажи основание технической проверки — не менее 10 символов');
+      const own = await q.one<{author_id:string}>(
+        'select author_id from technical_repair_cases where id=$1::bigint', [id]);
+      if (own?.author_id === user.id)
+        throw forbidden('Проверку собственного технического кейса проводит другой администратор');
+      const row = await q.one(
+        "update technical_repair_cases set review_state=$2,reviewed_by=$3,reviewed_at=now(),review_note=$4 where id=$1::bigint and review_state='pending' and author_id<>$3 returning id::text as id,review_state",
+        [id, approve ? 'approved' : 'rejected', user.id, reason],
+      );
+      if (!row) throw notFound('Кейс не найден или уже проверен');
+      return row;
+    });
   }
 }
