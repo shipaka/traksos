@@ -52,6 +52,10 @@ function OrderForSession({id,initialTab,userId}:{
   }, [id, !!o.data]); // eslint-disable-line
   const { mode } = useMe();
   const [ptab, setPtab] = useState<PerformerOrderTab>(initialTab);
+  // Keep only the panel's open/closed preference across a same-order refresh.
+  // Private data and drafts still unmount while authorization is rechecked.
+  // OrderForSession is keyed by account and order, so this cannot cross either.
+  const [chatOpen, setChatOpen] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
   useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main className="stack"><Back to={backTo} />
@@ -88,7 +92,7 @@ function OrderForSession({id,initialTab,userId}:{
       {(isPerformer || d.you === 'candidate') && (ptab === 'client' || ptab === 'vehicle')
         ? <ClientTab id={id} canEdit={isPerformer} historyOnly={ptab === 'vehicle'} />
         : isPerformer && ptab === 'finance' ? <Money d={d} />
-        : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} />
+        : isPerformer && ptab === 'chat' ? <Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} />
         : isPerformer && ptab === 'history'
           ? <OrderTimeline events={d.events ?? []} createdAt={d.createdAt}
               acceptedAt={d.acceptedAt} arrivedAt={d.arrivedAt}
@@ -148,7 +152,7 @@ function OrderForSession({id,initialTab,userId}:{
       <OrderPhotoGallery orderId={id}/>
       {d.status === 'completed' && <Review id={id} you={d.you} />}
 
-      {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} /></section>}
+      {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} /></section>}
       </>}
 
       {d.you !== 'admin' && d.you !== 'candidate' && !(d.you === 'client' && d.status === 'no_performer') &&
@@ -1224,12 +1228,13 @@ function WorksCheck({ id }: { id: string }) {
 
 // Чат -----------------------------------------------------------------------
 
-function Chat({id,status}:{id:string;status:string}) {
+type ChatPanelProps = {id:string;status:string;open:boolean;setOpen:(open:boolean)=>void};
+function Chat({id,status,open,setOpen}:ChatPanelProps) {
   const {me}=useMe();
   return <AccountOrderChat key={(me?.id??'guest')+':'+id}
-    id={id} status={status}/>;
+    id={id} status={status} open={open} setOpen={setOpen}/>;
 }
-function AccountOrderChat({id,status}:{id:string;status:string}) {
+function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const archived = ['completed', 'cancelled', 'no_performer'].includes(status);
   const { me } = useMe();
   const toast = useToast();
@@ -1237,7 +1242,6 @@ function AccountOrderChat({id,status}:{id:string;status:string}) {
   const [quick, setQuick] = useState<string[]>([]);
   const [people, setPeople] = useState<any[]>([]);
   const [text, setText] = useState('');
-  const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState(0);
   const [serverClosed, setServerClosed] = useState(false);
   const [loading,setLoading]=useState(true);
@@ -1277,7 +1281,6 @@ function AccountOrderChat({id,status}:{id:string;status:string}) {
   }, [id, status, retryVersion]);
   useEffect(() => {
     setServerClosed(false);
-    setOpen(new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
     setMsgs([]); setQuick([]); setPeople([]); setSeen(0);
   }, [id]);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
