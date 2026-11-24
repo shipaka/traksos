@@ -25,6 +25,7 @@ function AirRoom() {
   const [actionError,setActionError] = useState('');
   const [posting,setPosting] = useState(false);
   const inFlight = useRef(false);
+  const snapshotGeneration = useRef(0);
   const [supportHint,setSupportHint] = useState(false);
   const [refresh,setRefresh] = useState(0);
   const logRef = useRef<HTMLDivElement>(null);
@@ -34,24 +35,27 @@ function AirRoom() {
   useEffect(()=>{
     let live=true;
     let latestRequest=0;
+    const generation=snapshotGeneration.current;
+    const current=()=>live && generation===snapshotGeneration.current;
     // On explicit refresh or after a POST, never keep displaying an old
     // snapshot as though its permissions and messages are still current.
     setAir(null);
     setLoading(true);
     setError('');
     const load=async()=>{
+      if(!current() || inFlight.current)return;
       const request=++latestRequest;
       setLoading(true);
       try {
         const result=await get<Air>('/api/air/messages');
-        if(live && request===latestRequest) {setAir(result);setError('');}
+        if(current() && request===latestRequest) {setAir(result);setError('');}
       } catch(e:any) {
-        if(live && request===latestRequest) {
+        if(current() && request===latestRequest) {
           setAir(null);
           setError(e?.message||'Не удалось открыть эфир');
         }
       } finally {
-        if(live && request===latestRequest) setLoading(false);
+        if(current() && request===latestRequest) setLoading(false);
       }
     };
     void load();
@@ -62,6 +66,7 @@ function AirRoom() {
     },12000);
     const online=()=>void load();
     const offline=()=>{
+      if(!current())return;
       ++latestRequest;
       setAir(null);setLoading(false);
       setError('Нет связи с сервером. Проверь интернет и повтори загрузку.');
@@ -84,6 +89,14 @@ function AirRoom() {
     }
   },[air?.messages.length]);
 
+  // A lost write response may still mean the server committed the action.
+  // Invalidate all pending polls before releasing the synchronous write lock;
+  // never allow another action on the old moderation/permission snapshot.
+  const reconcileAfterWrite=()=>{
+    ++snapshotGeneration.current;
+    setAir(null);setLoading(true);setRefresh(n=>n+1);
+    inFlight.current=false;setPosting(false);
+  };
   const send = async()=>{
     if(!air?.canPost||inFlight.current||!text.trim())return;
     inFlight.current=true;setPosting(true);setActionError('');setSupportHint(false);
@@ -91,27 +104,25 @@ function AirRoom() {
       const answer=await post<{supportSuggested:boolean}>('/api/air/messages',{body:text.trim()});
       setText('');
       setSupportHint(!!answer.supportSuggested);
-      setRefresh(n=>n+1);
     } catch(e:any) {
       setActionError(e?.message||'Не удалось отправить. Проверь соединение.');
       // A request may be accepted but its response lost; fetch history, never auto-retry.
       // Keep the typed draft so the user can compare it with actual history.
-      setRefresh(n=>n+1);
-    } finally {inFlight.current=false;setPosting(false);}
+    } finally {reconcileAfterWrite();}
   };
   const switchBot=async()=>{
     if(!air?.canConfigure||inFlight.current)return;
     inFlight.current=true;setPosting(true);setActionError('');
-    try {await post('/api/admin/air/bot',{enabled:!air.botEnabled});setRefresh(n=>n+1);}
+    try {await post('/api/admin/air/bot',{enabled:!air.botEnabled});}
     catch(e:any){setActionError(e?.message||'Не удалось изменить настройку');}
-    finally{inFlight.current=false;setPosting(false);}
+    finally{reconcileAfterWrite();}
   };
   const hide=async(id:string)=>{
     if(!air?.canModerate||inFlight.current||!window.confirm('Скрыть это сообщение из общего эфира?'))return;
     inFlight.current=true;setPosting(true);setActionError('');
-    try {await post('/api/admin/air/messages/'+encodeURIComponent(id)+'/hide');setRefresh(n=>n+1);}
+    try {await post('/api/admin/air/messages/'+encodeURIComponent(id)+'/hide');}
     catch(e:any){setActionError(e?.message||'Не удалось скрыть сообщение');}
-    finally{inFlight.current=false;setPosting(false);}
+    finally{reconcileAfterWrite();}
   };
   return <main className="stack" style={{maxWidth:840}}>
     <Back to="" />
