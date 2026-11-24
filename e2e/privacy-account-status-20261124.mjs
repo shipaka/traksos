@@ -6,6 +6,7 @@ import {chromium} from 'playwright';
 
 const stubs={
   '../api.ts': `
+    export function getToken(){return window.__privacyMock.token;}
     export function fmtTime(value){return String(value);}
     export function get(path) {
       const m=window.__privacyMock;
@@ -15,7 +16,7 @@ const stubs={
           m.pending={resolve,reject,user:window.__privacyUser?.id};
         });
       }
-      if(path==='/api/me/export')return Promise.resolve({account:{id:window.__privacyUser?.id}});
+      if(path==='/api/me/export')return new Promise(resolve=>{m.exportResolve=resolve;});
       throw Error('Unexpected privacy GET '+path);
     }
     export function post(path) {
@@ -40,10 +41,10 @@ const bundle=await build({
     import React from 'react';
     import {createRoot} from 'react-dom/client';
     import {Privacy} from './web/src/screens/privacy.tsx';
-    window.__privacyMock={gets:[],posts:[],deletes:[],pending:null};
+    window.__privacyMock={gets:[],posts:[],deletes:[],pending:null,token:'A',exportResolve:null};
     window.__privacyUser={id:'fixture-A'};
     const root=createRoot(document.getElementById('root'));
-    window.__setPrivacyUser=(id)=>{window.__privacyUser={id};root.render(React.createElement(Privacy));};
+    window.__setPrivacyUser=(id,token=id)=>{window.__privacyMock.token=token;window.__privacyUser={id};root.render(React.createElement(Privacy));};
     root.render(React.createElement(Privacy));
   `,resolveDir:process.cwd(),sourcefile:'privacy-isolated-entry.tsx',loader:'tsx'},
   bundle:true,write:false,format:'iife',platform:'browser',jsx:'automatic',
@@ -114,6 +115,16 @@ try{
   log=await page.evaluate(()=>window.__privacyMock.deletes);
   check(log.length===1&&log[0].user==='fixture-B',
     'Cancellation submitted for wrong account: '+JSON.stringify(log));
+  // Export completed after session switch must not trigger a download.
+  await page.evaluate(()=>{window.__privacyDownloads=0;const original=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download)window.__privacyDownloads++;else original.call(this);};});
+  await page.getByRole('button',{name:'Скачать мои данные'}).click();
+  await page.waitForFunction(()=>typeof window.__privacyMock.exportResolve==='function');
+  await page.evaluate(()=>window.__setPrivacyUser('fixture-B','rotated-B-token'));
+  await page.getByText('Загружаем статус удаления аккаунта…').waitFor();
+  await page.evaluate(()=>window.__privacyMock.exportResolve({account:{id:'old-B'}}));
+  await page.evaluate(()=>window.__privacyMock.pending.resolve({deleteRequestedAt:null,deleteAt:null,graceDays:30}));
+  await page.getByText(/Через 30 дней аккаунт будет закрыт/).waitFor();
+  check(await page.evaluate(()=>window.__privacyDownloads)===0,'Old session export downloaded after bearer rotation');
   check(errors.length===0,'Browser exceptions: '+errors.join(';'));
   console.log('PASS: privacy account switch, loading/error/retry, real grace and delete/cancel');
 }finally{await browser.close();}
