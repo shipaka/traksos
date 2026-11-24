@@ -62,5 +62,18 @@ test('continuation advice and decisions are atomic with durable inbox and curren
   assert.equal(await count('notifications'),1);
   assert.equal((await t.api('GET',url,undefined,owner.token)).status,200);
   assert.equal((await t.api('GET',url,undefined,next.token)).status,200);
+  // The currently assigned worker still receives exactly one decision.
+  const nextAdvice=ok(await t.api('POST',url,{target:'sto',summary:'Необходим ремонт в стационарном сервисе'},next.token));
+  assert.equal(nextAdvice.created,true);
+  const decisionUrl=url+'/'+nextAdvice.id+'/decision';
+  const decisions=await Promise.all([1,2,3].map(()=>t.api('POST',decisionUrl,{approve:false},owner.token)));
+  assert.ok(decisions.every(r=>r.status===200),JSON.stringify(decisions));
+  assert.equal((await t.db.one<{n:number}>(
+   "select count(*)::int as n from notifications where user_id=$1 and data->>'recommendationId'=$2",
+   [next.id,nextAdvice.id]))?.n,1);
+  assert.equal(await count('events'),4);
+  assert.equal(await count('notifications'),3);
+  assert.equal((await t.api('POST',decisionUrl,{approve:true},owner.token)).status,409);
+
  }finally{await t.close();}
 });
