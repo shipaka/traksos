@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
+import {watchPageErrors} from './visual-page-errors.mjs';
 
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
@@ -52,7 +53,7 @@ const rootDir=new URL('../',import.meta.url).pathname;
 const compiled=await build({
   stdin:{contents:entry,resolveDir:new URL('../e2e/',import.meta.url).pathname,
     sourcefile:'catalog-admin-ci-entry.tsx',loader:'tsx'},
-  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',
+  bundle:true,write:false,platform:'browser',format:'esm',target:'es2022',jsx:'automatic',
   plugins:[{name:'mock-admin-api',setup(b){
     b.onResolve({filter:/\/api\.ts$/},()=>({path:'api',namespace:'ci-mock'}));
     b.onResolve({filter:/\/ui\.tsx$/},()=>({path:'ui',namespace:'ci-mock'}));
@@ -64,6 +65,7 @@ const compiled=await build({
 const browser=await chromium.launch();
 try{
   const page=await browser.newPage({serviceWorkers:'block',locale:'ru-RU'});
+  const assertClean=watchPageErrors(page);
   await page.route('**/__ci_catalog_admin_host',route=>route.fulfill({
     status:200,contentType:'text/html',
     body:'<!doctype html><html lang="ru"><meta charset="utf-8"><div id="root"></div></html>',
@@ -97,7 +99,9 @@ try{
     };
   });
   await page.evaluate(()=>import('/__ci_catalog_admin.mjs'));
-  await page.getByText('Массовая загрузка справочника запчастей').waitFor();
+  try { await page.getByText('Массовая загрузка справочника запчастей').waitFor(); }
+  catch(error){ await assertClean('catalog mount'); throw error; }
+  await assertClean('catalog mount');
   const rows=Array.from({length:301},(_,i)=>
     'Scania;CI-'+String(i+1).padStart(5,'0')+';Тестовый насос '+i+';engine;');
   const csv='бренд;артикул;название;категория;синонимы\n'+rows.join('\n')+'\n';
@@ -148,5 +152,6 @@ try{
   });
   assert.equal(await importButton.isDisabled(),true,
     'account B must never see account A dry-run approval');
+  await assertClean('catalog import and cross-account reset');
   console.log('PASS: real React 301-row CSV, partial retry, immutable preview and cross-account reset');
 }finally{await browser.close()}
