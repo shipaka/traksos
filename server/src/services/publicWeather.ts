@@ -74,8 +74,10 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
 async function boundedWeatherJson(response: Response): Promise<unknown | null> {
   const maxBytes = 65_536;
   const declared = response.headers.get('content-length');
-  if (declared !== null && /^\d+$/.test(declared) && Number(declared)>maxBytes)
+  if (declared !== null && /^\d+$/.test(declared) && Number(declared)>maxBytes) {
+    await response.body?.cancel().catch(() => {});
     return null;
+  }
   if (!response.body) return null;
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -113,12 +115,16 @@ export class PublicWeatherService {
     const at = this.clock();
     if (this.cache && this.cache.expiresAt > at) return this.cache.value;
     if (this.pending) return this.pending;
-    this.pending = this.requester(SERVICE_URL, {
+    this.pending = Promise.resolve().then(() => this.requester(SERVICE_URL, {
       headers: { 'X-Yandex-Weather-Key': this.apiKey },
+      redirect: 'error',
       signal: AbortSignal.timeout(2500)
-    })
+    }))
       .then(async r => {
-        if (!r.ok) return null;
+        if (!r.ok) {
+          await r.body?.cancel().catch(() => {});
+          return null;
+        }
         const parsed = await boundedWeatherJson(r);
         return parseYandexWeather(parsed, this.clock());
       })
