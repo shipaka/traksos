@@ -44,10 +44,14 @@ export class StandingService {
       `select avg(case f.hint_check when 'yes' then 1 when 'part' then 0.5 else 0 end)::float as v, count(*)::int as n
          from orders c join orders f on f.consult_of=c.id where c.service='consult' and f.hint_check is not null and f.performer_id <> c.performer_id`);
     const acc = mine.length ? mine.reduce((a, r) => a + (SCORE[r.hint_check] ?? 0), 0) / mine.length : null;
-    const byBrand: Record<string, { n: number; v: number }> = {};
-    for (const r of mine) if (r.brand) { const b = (byBrand[r.brand] ??= { n: 0, v: 0 }); b.n++; b.v += SCORE[r.hint_check] ?? 0; }
+    const byBrand = new Map<string, { n: number; v: number }>();
+    for (const r of mine) if (r.brand) {
+      const b = byBrand.get(r.brand) ?? { n: 0, v: 0 };
+      b.n++; b.v += SCORE[r.hint_check] ?? 0;
+      byBrand.set(r.brand,b);
+    }
     const norm = all?.v ?? null;
-    const strong = Object.entries(byBrand).filter(([, b]) => b.n >= 5 && norm != null && b.v / b.n > norm + 0.1).map(([k]) => k);
+    const strong = [...byBrand.entries()].filter(([, b]) => b.n >= 5 && norm != null && b.v / b.n > norm + 0.1).map(([k]) => k);
     return {
       level, jobs, rating: s.rating, drops: s.drops, lostDisputes: s.lost, toBest, thresholds: LEVEL,
       accuracy: { cases: mine.length, value: acc, norm, counted: mine.length >= LEVEL.minHintCases, strongIn: strong },
@@ -57,24 +61,26 @@ export class StandingService {
   /** На линии: открытых заявок рядом по вашему профилю и сколько свободных коллег ближе к ним */
   async nearby(user: AuthUser) {
     const p = await this.db.one<any>(
-      'select kind,specialties,lat,lng from performer_profiles where user_id=$1',[user.id]);
+      'select p.kind,p.specialties,p.brands,p.lat,p.lng from performer_profiles p join users u on u.id=p.user_id where p.user_id=$1 and u.status=\'active\' and u.deleted_at is null and (case when p.kind=\'ecu\' then \'master\' else p.kind end)=any(u.roles)',[user.id]);
     if(!p)return null;
     if(!validPoint(p.lat,p.lng))return {openNearby:0,ahead:0,locationKnown:false};
-    const open=await this.db.query<{service:string;lat:number|null;lng:number|null}>(
-      `select service,lat,lng from orders where status='searching' and created_by<>$1
+    const open=await this.db.query<{service:string;brand:string|null;lat:number|null;lng:number|null}>(
+      `select service,brand,lat,lng from orders where status='searching' and created_by<>$1 and client_id<>$1
        and lat is not null and lng is not null`,[user.id]);
     const near=open.filter(o=>validPoint(o.lat,o.lng) &&
       performerKindFor(o.service)===p.kind &&
       (p.kind!=='master'||o.service==='consult'||(p.specialties??[]).includes(o.service)) &&
+      (!o.brand||p.brands?.[o.brand]!=='refuse') &&
       haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})<=50);
     // Only active, approved, available colleagues with valid positions can
     // precede this performer for a geographically verified open request.
     const others=await this.db.query<{
       kind:string;specialties:string[];lat:number|null;lng:number|null;
-      schedule:any;off_schedule_until:Date|null;extras:any
-    }>(`select p.kind,p.specialties,p.lat,p.lng,p.schedule,p.off_schedule_until,p.extras
+      schedule:any;off_schedule_until:Date|null;extras:any;brands:Record<string,string>|null
+    }>(`select p.kind,p.specialties,p.lat,p.lng,p.schedule,p.off_schedule_until,p.extras,p.brands
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and u.status='active'
+          and u.deleted_at is null and (case when p.kind='ecu' then 'master' else p.kind end)=any(u.roles)
           and p.verification='approved' and p.line_status='online' and not p.paused
           and p.lat is not null and p.lng is not null
           and not exists(select 1 from orders o where o.performer_id=p.user_id
@@ -92,6 +98,7 @@ export class StandingService {
       if(near.some(o=>
         (available==='work'||o.service==='consult') &&
         (c.kind!=='master'||o.service==='consult'||(c.specialties??[]).includes(o.service)) &&
+        (!o.brand||c.brands?.[o.brand]!=='refuse') &&
         haversineKm({lat:c.lat!,lng:c.lng!},{lat:o.lat!,lng:o.lng!}) <
         haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})))ahead++;
     }
@@ -115,7 +122,8 @@ export class StandingService {
                   )))) as busy,
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
-        where p.kind=$1 and p.user_id<>$2 and u.status='active' and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
+        where p.kind=$1 and p.user_id<>$2 and u.status='active' and u.deleted_at is null
+          and (case when p.kind='ecu' then 'master' else p.kind end)=any(u.roles) and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly]);
     // Never present nationwide performers as if they were near the truck.
     // All three counters and shown cards must cover the SAME proven geography.
     const locationKnown=validPoint(p.lat,p.lng);
