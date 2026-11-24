@@ -147,6 +147,7 @@ jobs:
           node e2e/offer-gate-role-ui.mjs
           # No consent while legal text is pending, failed or mismatched.
           node e2e/offer-consent-guard.mjs
+          node e2e/economics-retry-20261124.mjs
           # Personal data/deletion actions must not leak across account changes.
           node e2e/privacy-account-status-20261124.mjs
           node e2e/moderator-permission-check.mjs
