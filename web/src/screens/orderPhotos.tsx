@@ -4,7 +4,7 @@
  * Images are re-encoded via canvas to strip EXIF/location before encryption by
  * the server. Debug preview never opens a picker or sends an API request.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { authedImage, get, getToken, post } from '../api.ts';
 import { useLoad, useToast } from '../ui.tsx';
 import { NavGlyph } from '../navGlyph.tsx';
@@ -43,23 +43,50 @@ export function OrderPhotoCapture({orderId,reviewOnly=false}:{
   const [busy,setBusy]=useState(false);
   const input=useRef<HTMLInputElement>(null);
   const toast=useToast();
+  const pending=useRef<{token:string}|null>(null);
+  useLayoutEffect(()=>{
+    // A new order, review-only mode or auth boundary owns a different
+    // capture session, even if the bearer happens to remain identical.
+    const invalidate=()=>{
+      pending.current=null;
+      setBusy(false);
+      if(input.current)input.current.value='';
+    };
+    invalidate();
+    window.addEventListener('traksos-auth-external-change',invalidate);
+    window.addEventListener('traksos-auth-expired',invalidate);
+    return ()=>{
+      pending.current=null;
+      window.removeEventListener('traksos-auth-external-change',invalidate);
+      window.removeEventListener('traksos-auth-expired',invalidate);
+    };
+  },[orderId,reviewOnly]);
   const upload=async(file?:File)=>{
-    if(!file || busy || reviewOnly)return;
+    if(!file || pending.current || reviewOnly)return;
     const uploadToken=getToken();
     if(!uploadToken){toast('Войдите в аккаунт перед отправкой фото');return;}
+    const request={token:uploadToken};
+    pending.current=request;
+    const current=()=>pending.current===request && getToken()===request.token;
     setBusy(true);
     try{
       const dataUrl=await safeJpeg(file);
-      // JPEG recompression/EXIF removal is asynchronous on older phones.
-      // A user may have signed out or switched accounts while it runs.
-      // Never upload the previous user's file under the replacement bearer.
-      if(getToken()!==uploadToken)
-        throw new Error('Сессия изменилась. Откройте заявку и выберите фото снова.');
+      // A delayed JPEG must never be sent after changing order/account or
+      // closing the capture. The check is immediately before POST dispatch.
+      if(!current())return;
       await post('/api/orders/'+encodeURIComponent(orderId)+'/photos',{dataUrl});
+      if(!current())return;
       window.dispatchEvent(new CustomEvent('traksos-photo-added',{detail:{orderId}}));
       toast('Фото прикреплено к заявке');
-    }catch(e){toast(e instanceof Error?e.message:'Не удалось загрузить фото')}
-    finally{setBusy(false);if(input.current)input.current.value='';}
+    }catch(e){if(current())toast(e instanceof Error?e.message:'Не удалось загрузить фото')}
+    finally{
+      // A stale request cannot unlock a newer upload or clear its file.
+      if(pending.current===request){
+        pending.current=null;
+        setBusy(false);
+        if(input.current)input.current.value='';
+      }
+    }
   };
   // An explanatory control in review-only mode must not pretend it can launch
   // a camera or upload to a real order.
