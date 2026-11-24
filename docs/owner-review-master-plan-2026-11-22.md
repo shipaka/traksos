@@ -950,3 +950,12 @@
 - [x] [3ef718b](https://github.com/shipaka/traksos/commit/3ef718be52fa0af34ddd9cb6e87c30169a8ac2bb): исправлена фикстура 124: явно проверяется отказ auth по неразрешённому номеру; для service-level теста отзыва прав берётся синтетический captured actor, а не ослабляется production allowlist.
 - [x] [a544fe1](https://github.com/shipaka/traksos/commit/a544fe10d0702730287ad824596a00726a3a5916): подтверждение услуг и confirmDue используют PostgreSQL clock, согласованный с публичной картой; booking clock сохранён. [013cf45](https://github.com/shipaka/traksos/commit/013cf45f205361fd9a4f2fb13c8b14d3669315bb) — реальная HTTP/PG регрессия timestamps; запрет будущих/просроченных доказательств не ослаблен.
 - [ ] Exact HEAD CI для исправлений не подтверждён. Shop test 477 (отмена подтверждённого заказа) остаётся нерешённым бизнес-вопросом #7116717074; не менять ожидание или право клиента без согласования. Insurance/warranty fixtures взял другой исполнитель. 617/618, main/VPS не менялись. Участки освобождаются после отчёта.
+
+
+### 24.11.2026 · WARRANTY-LOCK-ORDER-20261124 · конкурентные гарантийные исправления
+
+Закрепление [#7122671415](https://github.com/shipaka/traksos/pull/274#issuecomment-7122671415). [Run 45328903988](https://github.com/shipaka/traksos/actions/runs/45328903988), job 138225036034, SHA 88668f1: PostgreSQL обнаружил повторные deadlocks между offer (claim FOR UPDATE, затем job) и readView (join FOR SHARE OF j,c); часть операций спасалась повтором транзакции. Не ослаблять блокировки и проверки прав.
+
+- [x] Код [ab3ba52](https://github.com/shipaka/traksos/commit/ab3ba52a8991d913fe48ba54f7b4c23fbed6fa4f): load явно блокирует parent claim перед job, одинаково для чтения/записи, offer и forClaim; проверка решения остаётся внутри транзакции.
+- [x] Написан HTTP/PG тест [ef4b41c](https://github.com/shipaka/traksos/commit/ef4b41c4400612d69380a24a7f74d20a2e093a1c): 18 параллельных повторов offer и чтений владельцем/мастером, один job, событие и два inbox. 
+- [ ] Actual exact-HEAD CI и отсутствие повторных deadlocks не подтверждены. Незакрытый вопрос shop 477 остаётся на бизнес-согласовании (не подменять тест). Тарифы, платежи, UI 617/618, main/VPS не затронуты.
