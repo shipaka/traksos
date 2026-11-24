@@ -31,19 +31,26 @@ jobs:
           node-version: '22'
       - run: npm install
       - run: npm -w web run build
-      - name: Create verified disposable accounts and order history using real flow
+      - name: Start isolated database and test server
         run: |
           npx playwright install --with-deps chromium
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
           TRAKSOS_LEGACY_CASH_FIXTURES=1 TRAKSOS_SHOP_FIXTURES=1 TRAKSOS_PAYMENT_FIXTURES=1 DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start > /tmp/traksos-ci-server.log 2>&1 &
           bash scripts/ci-wait-health.sh "$!" /tmp/traksos-ci-server.log
-          node e2e/flow.mjs e2e/shots
+      - name: Prepare verified accounts and order history (record failure, continue diagnostics)
+        id: fixtures
+        continue-on-error: true
+        run: timeout --kill-after=10s 240s node e2e/flow.mjs e2e/shots
       - name: Continue remaining browser checks on the same disposable database
+        env:
+          FIXTURE_OUTCOME: ${{ steps.fixtures.outcome }}
         run: |
           set -u
           mkdir -p e2e/shots
           results=e2e/shots/pr274-browser-results.tsv
           printf 'test\tstatus\texit_code\n' > "$results"
+          echo "FIXTURE_OUTCOME=$FIXTURE_OUTCOME"
+          printf '%s\n' "$FIXTURE_OUTCOME" > e2e/shots/pr274-fixture-outcome.txt
           passed=0; failed=0; timed_out=0
           run_case() {
             local name="$2" rc status
@@ -105,6 +112,7 @@ jobs:
           echo "TOTAL: $passed PASS, $failed FAIL, $timed_out TIMEOUT"
           {
             echo '### PR274 — all 40 browser scenarios'
+            echo "Fixture preparation: $FIXTURE_OUTCOME (if failed, investigate dependent failures separately)."
             echo "PASS: $passed / FAIL: $failed / TIMEOUT: $timed_out"
             echo '| Scenario | Result | Exit code |'
             echo '|---|---|---|'
@@ -114,6 +122,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           test "$((passed+failed+timed_out))" -eq 40
           test "$((failed+timed_out))" -eq 0
+          test "$FIXTURE_OUTCOME" = success
       - uses: actions/upload-artifact@v4
         if: always()
         with:
