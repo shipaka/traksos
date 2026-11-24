@@ -31,7 +31,7 @@ export class EcuHandoffService {
       join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
      where o.id=$1 and o.created_by=u.id and o.client_id=u.owner_id
        and 'driver'=any(u.roles) and (o.vehicle_id is null or o.vehicle_id=v.id)
-     limit 1${lock?' for share of v':''}`,
+     limit 1${lock?' for share of o,u,v':''}`,
    [sourceOrderId,userId]);
   return !!row;
  }
@@ -96,35 +96,35 @@ export class EcuHandoffService {
  }
 
  async open(user:AuthUser,sourceOrderId:string,note:string,recommendationId?:string){
-  const source=await this.db.one<any>('select * from orders where id=$1',[sourceOrderId]);
-  if(!source)throw notFound('Исходная заявка не найдена');
-  if(!repairServices.has(source.service))
-   throw bad('unsupported_handoff','Передача ЭБУ возможна после консультации или диагностики, но не из эвакуации и страховки');
-  const origin=source.performer_id===user.id;
-  const owner=source.client_id===user.id && user.roles.includes('client');
-  if(!owner&&!origin)throw forbidden('Передачу создаёт участник диагностики или владелец');
-  if(origin && (source.service==='consult'
-   ? !['awaiting_confirmation','completed'].includes(source.status)
-   : !['arrived','working','awaiting_confirmation','completed'].includes(source.status)))
-   throw conflict('not_diagnosed','Сначала зафиксируйте работу или завершите консультацию');
-  if(owner && !['awaiting_confirmation','completed'].includes(source.status))
-   throw conflict('not_diagnosed','Для передачи нужно заключение специалиста');
-  // A direct free technical handoff by the assigned performer remains allowed.
-  // Only an explicit owner action may consume an approved recommendation.
-  if(recommendationId){
-   if(!owner || user.owner_id)
-    throw forbidden('Рекомендацию ЭБУ подтверждает только владелец автопарка');
-   const rec=await this.db.one<{id:string}>(
-    "select id from order_continuation_recommendations where id=$1" +
-    " and source_order_id=$2 and client_id=$3 and target_kind='ecu'" +
-    " and status='approved'",[recommendationId,sourceOrderId,user.id]);
-   if(!rec)throw forbidden('Сначала согласуйте рекомендацию ЭБУ');
-  }
   const clean=safe(note);
   if(clean.length<10)throw bad('need_summary','Напишите техническое заключение (от 10 символов)');
-  const root=source.case_root_id??source.id;
   const created=await this.db.tx(async q=>{
-   await q.query('select pg_advisory_xact_lock(hashtext($1))',['ecu-case:'+root]);
+   const source=await q.one<any>('select * from orders where id=$1 for share',[sourceOrderId]);
+   if(!source)throw notFound('Исходная заявка не найдена');
+   if(!repairServices.has(source.service))
+    throw bad('unsupported_handoff','Передача ЭБУ возможна после консультации или диагностики, но не из эвакуации и страховки');
+   const origin=source.performer_id===user.id;
+   const owner=source.client_id===user.id && user.roles.includes('client');
+   if(!owner&&!origin)throw forbidden('Передачу создаёт участник диагностики или владелец');
+   if(origin && (source.service==='consult'
+    ? !['awaiting_confirmation','completed'].includes(source.status)
+    : !['arrived','working','awaiting_confirmation','completed'].includes(source.status)))
+    throw conflict('not_diagnosed','Сначала зафиксируйте работу или завершите консультацию');
+   if(owner && !['awaiting_confirmation','completed'].includes(source.status))
+    throw conflict('not_diagnosed','Для передачи нужно заключение специалиста');
+   // A direct free technical handoff by the assigned performer remains allowed.
+   // Only an explicit owner action may consume an approved recommendation.
+   if(recommendationId){
+    if(!owner || user.owner_id)
+     throw forbidden('Рекомендацию ЭБУ подтверждает только владелец автопарка');
+    const rec=await q.one<{id:string}>(
+     "select id from order_continuation_recommendations where id=$1" +
+     " and source_order_id=$2 and client_id=$3 and target_kind='ecu'" +
+     " and status='approved' for share",[recommendationId,sourceOrderId,user.id]);
+    if(!rec)throw forbidden('Сначала согласуйте рекомендацию ЭБУ');
+   }
+   const root=source.case_root_id??source.id;
+    await q.query('select pg_advisory_xact_lock(hashtext($1))',['ecu-case:'+root]);
    const fromSameSource=await q.one<{
     id:string;continuation_recommendation_id:string|null;state:string
    }>('select id,continuation_recommendation_id,state from ecu_handoffs where source_order_id=$1',
