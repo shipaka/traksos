@@ -58,8 +58,13 @@ try{
         };
         if(path.startsWith(prefix+'changes')){
           if(mode==='race')return new Promise(resolve=>queue.push(resolve));
+          // PostgreSQL bigint sequences are serialized as decimal strings
+          // by both real index endpoints; numeric JSON is deliberately invalid.
+          if(mode==='numeric-delta')return {
+            enabled:true,rows:[[4,...row(id,'плохой насос')]],next:null,revision:'4',
+          };
           if(mode==='bad-delta')return {
-            enabled:true,rows:[[4,...row(id,'плохой насос')]],next:'5',revision:'4',
+            enabled:true,rows:[['4',...row(id,'плохой насос')]],next:'5',revision:'4',
           };
           return {enabled:true,rows:[],next:null,revision};
         }
@@ -72,24 +77,32 @@ try{
       if(!(await sync()).complete||(await search('старый')).length!==1)
         throw Error('Valid initial snapshot failed');
       mode='race';revision='3';
+      // Two independent IDB connections read the same committed checkpoint.
+      // Establish request order explicitly rather than assuming promise order.
       const first=sync().then(()=>({ok:true}),e=>({ok:false,error:String(e.message)}));
+      for(let n=0;n<160&&queue.length<1;n++)await pause(10);
+      if(queue.length!==1)throw Error(dbName+': first race barrier was never reached');
       const second=sync().then(()=>({ok:true}),e=>({ok:false,error:String(e.message)}));
       for(let n=0;n<160&&queue.length<2;n++)await pause(10);
-      if(queue.length!==2)throw Error('Race barrier was never reached');
-      queue[1]({enabled:true,rows:[[3,...row(id,'новый насос')]],next:null,revision:'3'});
-      if(!(await second).ok)throw Error('Fresh tab did not commit');
-      queue[0]({enabled:true,rows:[[2,...row(id,'старый после обновления')]],next:null,revision:'2'});
+      if(queue.length!==2)throw Error(dbName+': second race barrier was never reached');
+      queue[1]({enabled:true,rows:[['3',...row(id,'новый насос')]],next:null,revision:'3'});
+      const fresh=await second;
+      if(!fresh.ok)throw Error(dbName+': Fresh tab did not commit: '+fresh.error);
+      queue[0]({enabled:true,rows:[['2',...row(id,'старый после обновления')]],next:null,revision:'2'});
       const stale=await first;
       if(stale.ok||!stale.error.includes('другой вкладке'))throw Error('Stale tab not rejected');
       if((await search('новый')).length!==1||(await search('старый после')).length)
         throw Error('Stale data overwrote the committed delta');
-      mode='bad-delta';revision='4';rejected=false;
-      try{await sync()}catch{rejected=true}
-      if(!rejected||(await search('новый')).length!==1)
-        throw Error('Malformed delta committed');
+      revision='4';
+      for(const invalidMode of ['numeric-delta','bad-delta']){
+        mode=invalidMode;rejected=false;
+        try{await sync()}catch{rejected=true}
+        if(!rejected||(await search('новый')).length!==1||(await search('плохой')).length)
+          throw Error(dbName+': malformed delta committed: '+invalidMode);
+      }
       mode='idle';revision='3';
       if(!(await sync()).unchanged)throw Error('Committed revision was rolled back');
-      return {snapshotGuard:true,initialPage:true,crossTabCas:true,deltaGuard:true,checkpoint:true};
+      return {snapshotGuard:true,initialPage:true,crossTabCas:true,deltaGuard:true,numericSequenceGuard:true,checkpoint:true};
     }
     return {
       parts:await exercise(false,module.syncOfflineParts,module.searchOfflineParts,partId),
@@ -99,5 +112,5 @@ try{
   for(const type of ['parts','references'])
     for(const [key,value] of Object.entries(results[type]))
       assert.equal(value,true,type+':'+key);
-  console.log('PASS: 10 Chromium/IndexedDB integrity assertions for both offline indexes');
+  console.log('PASS: 12 Chromium/IndexedDB integrity assertions for both offline indexes');
 }finally{await browser.close()}
