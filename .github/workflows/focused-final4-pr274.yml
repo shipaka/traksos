@@ -1,4 +1,4 @@
-name: PR274 targeted retry of final four browser scenarios
+name: PR274 final learning scenario retry
 on:
   push:
     branches: ['ci-focus/pr274-final4-20261124']
@@ -44,13 +44,10 @@ jobs:
             printf '%s\t%s\t%s\n' "$name" "$status" "$rc" >> "$results"
             echo "RESULT $status $name (exit $rc)"
           }
-          run_case e2e/techbase-repair-hardening-20261124.mjs
-          run_case e2e/ops-admin-reliability-20261124.mjs
           run_case e2e/learning-role-hardening-20261124.mjs
-          run_case e2e/roadside-map-gps-consent-20261124.mjs
           echo "TOTAL: $passed PASS, $failed FAIL, $timed_out TIMEOUT"
           {
-            echo '### PR274 — targeted 4-scenario retry'
+            echo '### PR274 — targeted 1-scenario retry'
             echo "PASS: $passed / FAIL: $failed / TIMEOUT: $timed_out"
             echo '| Scenario | Result | Exit code |'
             echo '|---|---|---|'
@@ -58,7 +55,7 @@ jobs:
               printf '| %s | %s | %s |\n' "$name" "$status" "$rc"
             done
           } >> "$GITHUB_STEP_SUMMARY"
-          test "$((passed+failed+timed_out))" -eq 4
+          test "$((passed+failed+timed_out))" -eq 1
           test "$((failed+timed_out))" -eq 0
       - uses: actions/upload-artifact@v4
         if: always()
