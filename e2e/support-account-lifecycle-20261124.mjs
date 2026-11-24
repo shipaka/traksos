@@ -189,7 +189,7 @@ try{
   await page.evaluate(()=>window.__setSupportMe({id:'moderator-B',roles:['moderator']}));
   await wait('GET','/api/support/topics',2);
   assert(await page.getByRole('textbox',{name:'Описание проблемы'}).inputValue()==='',
-    'A previous user's new-ticket draft survived account switch');
+    "A previous user's new-ticket draft survived account switch");
   await finish('GET','/api/support/topics',1,'resolve',['Другое']);
   await page.getByRole('button',{name:'Другое'}).click();
   await page.getByRole('textbox',{name:'Описание проблемы'}).fill('Late support request by B');
