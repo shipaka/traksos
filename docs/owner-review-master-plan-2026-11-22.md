@@ -640,3 +640,14 @@
 - [x] Код [0ff3f3b](https://github.com/shipaka/traksos/commit/0ff3f3b53d4e05163ea06c4432df49552e55ec3a): публикация редакции, аудит и постоянные inbox-уведомления в одной PostgreSQL transaction; внешний push после commit; параллельные публикации сериализованы по audience, первая публикация не позволяет обойти установленный срок для второй. Согласие с действующей редакцией проверяется и пишется под тем же lock, пакет согласий при входе атомарен. Тексты, ставки, сроки и API сохранены.
 - [x] Регрессии [9388a5c](https://github.com/shipaka/traksos/commit/9388a5c6c8e060e0842ab782de2c1c9e72700d62): HTTP/PostgreSQL fault injection на inbox, отсутствие частичного offer/audit, успешный повтор, дубли версии, конкурирующие первые партнёрские редакции.
 - [ ] Фактический server test/typecheck и exact-HEAD CI ещё не подтверждены. Пути освобождены; main/VPS, утверждённые 617/618 не изменены.
+
+
+### 24.11.2026 · CONFIDENTIAL-DOCS-CONSENT-SESSION · документы, согласие, персональные данные
+
+Закрепление [#7121755462](https://github.com/shipaka/traksos/pull/274#issuecomment-7121755462).
+
+- [x] Код [bcb3319](https://github.com/shipaka/traksos/commit/bcb33199aad2ffa85ab5eee877dc4968787aecc3): фото и список проверки изолированы по аккаунту и токену; старые blob URL отзываются, ошибки списка имеют повтор, одна общая блокировка upload/compress/submit/delete исключает пересечение действий, старый файл не отправляется при смене сессии.
+- [x] Код [b0eda94](https://github.com/shipaka/traksos/commit/b0eda948ba08b5849ef28ae3e2672ea49fd891c4): OfferGate разделён по аккаунту, bearer и режиму; старый ответ списка не заменяет свежий, галочка согласия не переносится даже при той же редакции, повторная отправка блокируется.
+- [x] Код [deb99c1](https://github.com/shipaka/traksos/commit/deb99c135065e6e6a6ac47e97858da6d6b50ecb3): статус, экспорт и удаление аккаунта изолированы по сессии, поздний экспорт не запускает скачивание, действия сериализованы.
+- [x] Регрессии написаны в существующих CI-сценариях: [b7ee2f4](https://github.com/shipaka/traksos/commit/b7ee2f49e65ecfad1a82eb54e770cd9ad4e68715) (согласие), [ffe5e76](https://github.com/shipaka/traksos/commit/ffe5e768a266faf75879991e3d2f1fcec56846e3) (экспорт), [51d0da7](https://github.com/shipaka/traksos/commit/51d0da71116c284858ca8959713bc82ead8aa500) (фото, компрессия, смена аккаунта). CI YAML, юридические тексты, API, тарифы, 617/618, main/VPS не изменены.
+- [ ] Exact-HEAD Chromium/build/CI ещё не подтверждены. Кодовые участки освобождены для QA.
