@@ -22,6 +22,14 @@ const admin = { id: 'a', roles: ['admin'] } as any;
 const driver = { id: 'd', roles: ['driver'] } as any;
 const master = { id: 'm', roles: ['master'] } as any;
 
+// Model the database authorization row independently of the captured session roles.
+const liveAdminSql = "select id from users where id=$1 and status='active' and deleted_at is null " +
+  "and 'admin'=any(roles) for share";
+function liveAdminRow(params: any[]) {
+  assert.deepEqual(params, [admin.id]);
+  return { id: admin.id };
+}
+
 test('stable digest is independent of import row order and model order', () => {
   const first = normalizeCatalog(sample);
   const reordered = normalizeCatalog({
@@ -84,7 +92,15 @@ test('unsupported source URL rejected, no source allowed without explicit approv
   let created = 0;
   const db: any = {
     tx: async (fn: (q: any) => any) => fn({
-      one: async () => { created++; return { source_key: 'internal-curated', state: 'pending', redistribution_approved: false }; },
+      one: async (sql: string, params: any[]) => {
+        if (sql === liveAdminSql) return liveAdminRow(params);
+        if (sql.startsWith('select * from vehicle_ref_sources')) {
+          assert.deepEqual(params, ['internal-curated']);
+          return { source_key: 'internal-curated', state: 'pending', redistribution_approved: false };
+        }
+        if (sql.startsWith('insert into vehicle_ref_sources')) created++;
+        throw new Error('Unexpected SQL: ' + sql);
+      },
     }),
   };
   const service = new VehicleReferenceService(db);
@@ -101,6 +117,7 @@ test('source registration is idempotent and different rights under same key conf
   const logs: string[] = [];
   const q: any = {
     one: async (sql: string, p: any[]) => {
+      if (sql === liveAdminSql) return liveAdminRow(p);
       if (sql.startsWith('insert into vehicle_ref_sources')) {
         if (stored) return null;
         stored = { source_key: p[0], source_name: p[1], origin_url: p[2], license_name: p[3],
@@ -128,6 +145,7 @@ test('source snapshot import is idempotent: no duplicated rows or cost of repeat
   let insertBrands = 0, insertModels = 0;
   const q: any = {
     one: async (sql: string, p: any[]) => {
+      if (sql === liveAdminSql) return liveAdminRow(p);
       if (sql.startsWith('select * from vehicle_ref_sources'))
         return { source_key: 'curated-1', state: 'approved', redistribution_approved: true };
       if (sql.startsWith('insert into vehicle_ref_snapshots')) {
