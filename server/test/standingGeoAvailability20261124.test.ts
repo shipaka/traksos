@@ -1,6 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
+import { StandingService } from '../src/services/standing.ts';
 
 let t:T;
 let admin:{id:string;token:string};
@@ -144,4 +145,44 @@ test('arbitrary legacy vehicle brand keys cannot mutate the standing aggregation
     delete (Object.prototype as any).n;
     delete (Object.prototype as any).v;
   }
+});
+
+
+test('preview always serializes numeric brand stars for legacy or inherited levels',async()=>{
+  const closer=(await t.db.one<{id:string}>('select id from users where phone=$1',['+79994330103']))!;
+  await t.db.query("update performer_profiles set paused=false,line_status='online',schedule='{\"on\":false}'::jsonb where user_id=$1",[closer.id]);
+  try {
+    for(const [level,expected] of [['constructor',2],['__proto__',2],['excellent',3],['last_resort',1]] as const){
+      await t.db.query('update performer_profiles set brands=$2::jsonb where user_id=$1',
+        [closer.id,JSON.stringify({Scania:level})]);
+      const result=ok(await t.api('GET','/api/masters-nearby?service=electric&brand=Scania&lat=59.95&lng=30.35',
+        undefined,client.token));
+      const card=result.items.find((p:any)=>p.name==='Ближайший');
+      assert.ok(card,'eligible colleague must remain visible');
+      assert.equal(card.brandStars,expected);
+    }
+  } finally {
+    await t.db.query("update performer_profiles set brands='{}'::jsonb where user_id=$1",[closer.id]);
+  }
+});
+
+test('preview takes one shift-clock snapshot and safely excludes malformed specialties',async()=>{
+  const candidate={
+    user_id:'valid',kind:'master',specialties:['electric'],brands:{},is_priority:false,
+    paused:false,line_status:'online',verification:'approved',lat:59.95,lng:30.35,
+    rating:5,accepts_group:false,user_status:'active',name:'Мастер',tier:'standard',
+    call_out_price:null,busy:false,jobs:0,extras:{},cash_debt:0,
+    schedule:{on:true,days:{mon:true},from:'09:00',to:'18:00',phoneTo:'20:00'},
+  };
+  let reads=0;
+  const service=new StandingService(
+    {query:async()=>[candidate,{...candidate,user_id:'legacy',specialties:null}]} as any,
+    ()=>new Date(reads++===0?'2026-11-23T14:59:59Z':'2026-11-23T15:00:00Z'),
+    {all:async()=>({dispatch:{radiusKm:50,citySpeedKmh:40},pricing:{tiers:{}}})} as any,
+  );
+  const result=await service.mastersNearby({id:'client'} as any,{service:'electric',lat:59.95,lng:30.35});
+  assert.equal(reads,1,'free and match must use one shift snapshot');
+  assert.equal(result.free,1);
+  assert.equal(result.match,1);
+  assert.equal(result.items.length,1);
 });
