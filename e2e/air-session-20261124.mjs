@@ -62,6 +62,11 @@ const browser=await chromium.launch();
 try{
   const page=await browser.newPage({viewport:{width:390,height:844},locale:'ru-RU'});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  // Drain the React render after explicitly releasing a deferred response.
+  const settle=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const getCount=()=>page.evaluate(()=>window.__airTest.gets.length);
+  const waitNextGet=index=>page.waitForFunction(i=>window.__airTest.gets.length>i,index);
+  const resolveGet=(index,data)=>page.evaluate(({index,data})=>window.__airTest.gets[index].resolve(data),{index,data});
   await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
   await page.addScriptTag({content:bundle.outputFiles[0].text});
   await page.waitForFunction(()=>window.__airTest.gets.length===1);
@@ -82,7 +87,7 @@ try{
   await page.getByText('Новые данные A').waitFor();
   await page.evaluate(data=>window.__airTest.gets[1].resolve(data),
     snapshot(['Устаревший ответ A']));
-  await page.waitForTimeout(80);
+  await settle();
   assert(await page.getByText('Устаревший ответ A').count()===0,
     'Older delayed poll overwrote newer messages');
   assert(await page.getByText('Новые данные A').count()===1,
@@ -136,7 +141,7 @@ try{
     'New user inherited previous account draft');
   await page.evaluate(data=>window.__airTest.gets[5].resolve(data),
     snapshot(['Запоздалое сообщение A']));
-  await page.waitForTimeout(80);
+  await settle();
   assert(await page.getByText('Запоздалое сообщение A').count()===0,
     'Previous-account response repopulated new chat');
 
@@ -154,19 +159,63 @@ try{
     await page.getByRole('checkbox').count()===1 &&
     await page.getByRole('button',{name:'Отправить'}).count()===0,
     'Staff permissions are not from current server snapshot');
+  // A failed staff POST can have committed on the server. Retire the old
+  // snapshot, ignore an older in-flight poll, and require a fresh read before
+  // allowing another moderation action. No speculative/replayed writes.
+  const staffFlags={canPost:false,canModerate:true,canConfigure:true};
+  const oldStaffPoll=await getCount();
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await waitNextGet(oldStaffPoll);
+  const botRefresh=await getCount();
+  await page.getByRole('checkbox').click();
+  await page.waitForFunction(()=>window.__airTest.posts.length===2);
+  assert(await page.evaluate(()=>window.__airTest.posts[1].path==='/api/admin/air/bot' &&
+    window.__airTest.posts[1].body.enabled===false),'Wrong bot toggle request');
+  assert(await page.getByRole('checkbox').isDisabled() &&
+    await page.getByRole('button',{name:'Скрыть'}).isDisabled(),'Staff actions remained enabled during pending write');
+  await page.evaluate(()=>window.__airTest.posts[1].reject(Error('Потерян ответ настройки')));
+  await page.getByText('Потерян ответ настройки').waitFor();
+  await waitNextGet(botRefresh);
+  assert(await page.getByRole('checkbox').count()===0 &&
+    await page.getByRole('button',{name:'Скрыть'}).count()===0,
+    'Uncertain bot write retained stale moderation controls');
+  await resolveGet(oldStaffPoll,snapshot(['Старый ответ модерации'],staffFlags));
+  await settle();
+  assert(await page.getByText('Старый ответ модерации').count()===0 &&
+    await page.getByRole('checkbox').count()===0,'Old staff poll restored stale permissions');
+  await resolveGet(botRefresh,snapshot(['Сообщение для скрытия'],{...staffFlags,botEnabled:false}));
+  await page.getByText('Сообщение для скрытия').waitFor();
+  assert(!(await page.getByRole('checkbox').isChecked()),'Fresh server bot state not applied');
+  assert(await page.evaluate(()=>window.__airTest.posts.length)===2,'Bot setting POST auto-replayed');
+
+  const hideRefresh=await getCount();
+  page.once('dialog',dialog=>dialog.accept());
+  await page.getByRole('button',{name:'Скрыть'}).click();
+  await page.waitForFunction(()=>window.__airTest.posts.length===3);
+  assert(await page.evaluate(()=>window.__airTest.posts[2].path==='/api/admin/air/messages/synthetic-0/hide'),
+    'Wrong hide endpoint');
+  await page.evaluate(()=>window.__airTest.posts[2].reject(Error('Потерян ответ скрытия')));
+  await page.getByText('Потерян ответ скрытия').waitFor();
+  await waitNextGet(hideRefresh);
+  assert(await page.getByText('Сообщение для скрытия').count()===0 &&
+    await page.getByRole('button',{name:'Скрыть'}).count()===0,'Uncertain hide retained old message/action');
+  await resolveGet(hideRefresh,snapshot(['Актуальный список после скрытия'],{...staffFlags,botEnabled:false}));
+  await page.getByText('Актуальный список после скрытия').waitFor();
+  assert(await page.evaluate(()=>window.__airTest.posts.length)===3,'Hide POST auto-replayed');
+
   // Permission changes on the SAME account ID must invalidate previously
   // fetched moderation controls even when a fresh profile still canView.
+  const downgrade=await getCount();
   await page.evaluate(()=>window.__switchAirIdentity({id:'staff-C',roles:['client']}));
-  await page.waitForFunction(()=>window.__airTest.gets.length>=9);
+  await waitNextGet(downgrade);
   assert(await page.getByRole('button',{name:'Скрыть'}).count()===0 &&
     await page.getByRole('checkbox').count()===0,
     'Moderator powers persisted through a same-account role downgrade');
-  await page.evaluate(data=>window.__airTest.gets[8].resolve(data),
-    snapshot(['Роль ограничена'],{canPost:true,canModerate:false,canConfigure:false}));
+  await resolveGet(downgrade,snapshot(['Роль ограничена'],{canPost:true,canModerate:false,canConfigure:false}));
   await page.getByText('Роль ограничена').waitFor();
   assert(await page.getByRole('button',{name:'Скрыть'}).count()===0 &&
     await page.getByRole('button',{name:'Отправить'}).count()===1,
     'Role downgrade did not load fresh server flags');
   if(errors.length)throw Error('Chromium runtime errors: '+errors.join('; '));
-  console.log('PASS DriverAir: out-of-order polls, offline+retry, no automatic POST replay, A/B identity isolation and staff permissions');
+  console.log('PASS DriverAir: out-of-order polls, offline+retry, no automatic POST replay, A/B identity isolation, staff permissions and uncertain-write reconciliation');
 } finally { await browser.close(); }
