@@ -84,7 +84,7 @@ const bundle=await build({
         if(arg.path==='../ui.tsx'||arg.path==='./web/src/ui.tsx')return {path:'ui',namespace:'support-stub'};
         if(arg.path==='../api.ts'||arg.path==='./web/src/api.ts')return {path:'api',namespace:'support-stub'};
       });
-      b.onLoad({filter:/./,namespace:'support-stub'},arg=>({
+      b.onLoad({filter:/./,namespace:'support-stub'},arg=>({resolveDir:process.cwd(),
         contents:arg.path==='ui'?uiStub:apiStub,loader:arg.path==='ui'?'tsx':'js',
       }));
     },
