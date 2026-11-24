@@ -44,6 +44,7 @@ export class RuStorePush implements PushProvider {
     const results = await Promise.allSettled(devices.map(async token => {
       const response = await fetch(url, {
         method: 'POST',
+        redirect: 'error',
         headers: { authorization: `Bearer ${this.serviceToken}`, 'content-type': 'application/json' },
         signal: AbortSignal.timeout(10_000),
         body: JSON.stringify({
@@ -57,6 +58,8 @@ export class RuStorePush implements PushProvider {
       // Do not read/log the external response body: it can contain device
       // tokens, service details or account information. HTTP status is enough
       // to record failure for this best-effort delivery layer.
+      // Release the response stream without reading provider content.
+      if (response.body) void response.body.cancel().catch(() => {});
       if (!response.ok) throw new Error('RuStore rejected push');
     }));
     const failed = results.filter(result => result.status === 'rejected').length;
