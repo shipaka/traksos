@@ -83,7 +83,7 @@ const b=await build({
       b.onResolve({filter:/./},a=>{
         if(Object.hasOwn(stubs,a.path))return {path:a.path,namespace:'fake-module'};
       });
-      b.onLoad({filter:/./,namespace:'fake-module'},a=>({
+      b.onLoad({filter:/./,namespace:'fake-module'},a=>({resolveDir:process.cwd(),
         contents:stubs[a.path],loader:a.path.endsWith('.tsx')?'tsx':'js'
       }));
     }
