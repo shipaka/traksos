@@ -4,7 +4,7 @@
 // Закон о платформенной экономике (289-ФЗ): условия для исполнителей меняются с уведомлением
 // не позже чем за 15 дней.
 
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import { contractEconomyAnnex } from '../domain/economicsGuide.ts';
 import type { Notifier } from './notify.ts';
@@ -38,10 +38,14 @@ export class OffersService {
     return a;
   }
 
-  async current(audience: string) {
-    return this.db.one(
+  private async lockAudience(q: Queryable, audience: string) {
+    await q.query('select pg_advisory_xact_lock(hashtext($1))', ['traksos-offers:'+audience]);
+  }
+
+  async current(audience: string, q: Queryable = this.db, at = this.now()) {
+    return q.one(
       `select id, audience, version, url, summary, body, published_at, effective_at
-         from offers where audience=$1 and effective_at <= $2 order by effective_at desc, published_at desc limit 1`, [audience, this.now()]);
+         from offers where audience=$1 and effective_at <= $2 order by effective_at desc, published_at desc limit 1`, [audience, at]);
   }
 
   /** По каждой нужной человеку оферте: действующая редакция, принял ли он её, что вступит позже */
@@ -77,69 +81,81 @@ export class OffersService {
   requireInspection = (user: AuthUser) => this.require(user, ['inspection', 'privacy']);
 
   async accept(user: AuthUser, offerId: string, ip: string) {
-    const o = await this.db.one<{ id: string; audience: string }>(
-      'select id, audience from offers where id=$1', [offerId]);
-    if (!o) throw notFound();
-    // Contracts must be relevant to the account and effective NOW. Recording
-    // consent for a future, superseded or unrelated edition produces an
-    // invalid legal audit even though require() still checks the current one.
-    if (!this.audiences(user).includes(o.audience))
-      throw forbidden('Документ не относится к вашему кабинету');
-    const current = await this.current(o.audience);
-    if (!current || current.id !== o.id)
-      throw conflict('offer_outdated', 'Редакция условий изменилась. Ознакомьтесь с действующей версией');
-    await this.db.query(
-      'insert into consents(user_id, offer_id, ip) values ($1,$2,$3) on conflict do nothing',
-      [user.id, offerId, ip]);
+    await this.db.tx(async q => {
+      const o = await q.one<{ id: string; audience: string }>(
+        'select id, audience from offers where id=$1', [offerId]);
+      if (!o) throw notFound();
+      if (!this.audiences(user).includes(o.audience))
+        throw forbidden('Документ не относится к вашему кабинету');
+      await this.lockAudience(q,o.audience);
+      const current = await this.current(o.audience,q);
+      if (!current || current.id !== o.id)
+        throw conflict('offer_outdated', 'Редакция условий изменилась. Ознакомьтесь с действующей версией');
+      await q.query(
+        'insert into consents(user_id, offer_id, ip) values ($1,$2,$3) on conflict do nothing',
+        [user.id, offerId, ip]);
+    });
     return this.status(user);
   }
 
   /** Галочка при входе: принять все действующие редакции, нужные этому человеку */
   async acceptCurrent(user: AuthUser, ip: string) {
-    for (const a of this.audiences(user)) {
-      const cur = await this.current(a);
-      if (cur) await this.db.query('insert into consents(user_id, offer_id, ip) values ($1,$2,$3) on conflict do nothing', [user.id, cur.id, ip]);
-    }
+    await this.db.tx(async q => {
+      const audiences=this.audiences(user).sort();
+      for (const a of audiences) await this.lockAudience(q,a);
+      const at=this.now();
+      for (const a of audiences) {
+        const cur = await this.current(a,q,at);
+        if (cur) await q.query('insert into consents(user_id, offer_id, ip) values ($1,$2,$3) on conflict do nothing', [user.id, cur.id, ip]);
+      }
+    });
   }
 
   async publish(admin: AuthUser, p: { audience: 'client' | 'performer' | 'insurer' | 'inspection' | 'privacy'; version: string; body: string; summary?: string; effectiveAt?: string }) {
-    const hasPrev = await this.db.one('select 1 from offers where audience=$1', [p.audience]);
-    const minDate = ['performer','insurer','inspection'].includes(p.audience) && hasPrev ? new Date(this.now().getTime() + PERFORMER_NOTICE_DAYS * 86_400_000) : this.now();
-    const eff = p.effectiveAt ? new Date(p.effectiveAt) : minDate;
-    if (Number.isNaN(eff.getTime())) throw bad('bad_date', 'Неверная дата');
-    if (eff.getTime() < minDate.getTime() - 60_000) {
-      throw bad('notice_too_short', `Новые условия для исполнителей — не раньше ${minDate.toLocaleDateString('ru-RU')} (за ${PERFORMER_NOTICE_DAYS} дней)`);
-    }
-    const dup = await this.db.one('select 1 from offers where audience=$1 and version=$2', [p.audience, p.version]);
-    if (dup) throw bad('version_exists', `Редакция ${p.version} уже есть — укажите новый номер`);
-    // Immutable financial annex is generated from the exact current settings
-    // at publication. Editing an accepted edition is prohibited; a later
-    // tariff change requires another published and accepted contract version.
+    // Resolve the existing immutable annex outside the transaction: this
+    // avoids taking another pooled connection while holding the audience lock.
     const marker='\n\n<!-- TRAKSOS-ECONOMICS-ANNEX:V1 -->';
     const baseBody=p.body.split(marker)[0].trimEnd();
     const body=this.settings && p.audience!=='privacy'
       ? baseBody+marker+contractEconomyAnnex(await this.settings.all(),p.audience)
       : p.body;
-    const offer = await this.db.one(
-      `insert into offers(audience, version, body, summary, effective_at, published_at) values ($1,$2,$3,$4,$5,$6) returning *`,
-      [p.audience, p.version, body, p.summary ?? null, eff, this.now()]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-      [admin.id, 'offer.publish', offer!.id, { audience: p.audience, version: p.version, effectiveAt: eff }]);
-
-    // Уведомляем всех, кого касается
-    const who = p.audience === 'performer'
-      ? `select id from users where roles && '{master,tow,service}'::text[]`
-      : p.audience === 'insurer' ? `select id from users where roles && '{insurer}'::text[]`
-      : p.audience === 'inspection' ? `select id from users where roles && '{inspection_operator}'::text[]`
-      : p.audience === 'client' ? `select id from users where roles && '{client,driver}'::text[]` : `select id from users`;
-    const ids = (await this.db.query<{ id: string }>(who)).map((r) => r.id);
-    const when = eff.getTime() <= this.now().getTime() + 60_000 ? 'с сегодняшнего дня' : `с ${eff.toLocaleDateString('ru-RU')}`;
-    await this.notifier.notify(ids, { type: 'offer', offerId: offer!.id, audience: p.audience }, {
-      kind: 'normal', title: 'Меняются условия TrakSOS',
-      body: `${AUDIENCE_NAMES[p.audience]}, редакция ${p.version} — действует ${when}. ${p.summary ?? ''}`.trim(),
-      data: { offerId: offer!.id },
+    const result=await this.db.tx(async q=>{
+      await this.lockAudience(q,p.audience);
+      const now=this.now();
+      const hasPrev = await q.one('select 1 from offers where audience=$1', [p.audience]);
+      const minDate = ['performer','insurer','inspection'].includes(p.audience) && hasPrev
+        ? new Date(now.getTime() + PERFORMER_NOTICE_DAYS * 86_400_000) : now;
+      const eff = p.effectiveAt ? new Date(p.effectiveAt) : minDate;
+      if (Number.isNaN(eff.getTime())) throw bad('bad_date', 'Неверная дата');
+      if (eff.getTime() < minDate.getTime() - 60_000)
+        throw bad('notice_too_short', `Новые условия для исполнителей — не раньше ${minDate.toLocaleDateString('ru-RU')} (за ${PERFORMER_NOTICE_DAYS} дней)`);
+      const dup = await q.one('select 1 from offers where audience=$1 and version=$2', [p.audience, p.version]);
+      if (dup) throw bad('version_exists', `Редакция ${p.version} уже есть — укажите новый номер`);
+      const offer = await q.one(
+        'insert into offers(audience, version, body, summary, effective_at, published_at) values ($1,$2,$3,$4,$5,$6) returning *',
+        [p.audience, p.version, body, p.summary ?? null, eff, now]);
+      if(!offer)throw new Error('Offer publication was not persisted');
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
+        [admin.id, 'offer.publish', offer.id, { audience: p.audience, version: p.version, effectiveAt: eff }]);
+      const who = p.audience === 'performer'
+        ? `select id from users where roles && '{master,tow,service}'::text[]`
+        : p.audience === 'insurer' ? `select id from users where roles && '{insurer}'::text[]`
+        : p.audience === 'inspection' ? `select id from users where roles && '{inspection_operator}'::text[]`
+        : p.audience === 'client' ? `select id from users where roles && '{client,driver}'::text[]` : 'select id from users';
+      const ids=(await q.query<{id:string}>(who)).map(r=>r.id);
+      const when = eff.getTime() <= now.getTime()+60_000 ? 'с сегодняшнего дня' : `с ${eff.toLocaleDateString('ru-RU')}`;
+      const msg={kind:'normal' as const,title:'Меняются условия TrakSOS',
+        body:`${AUDIENCE_NAMES[p.audience]}, редакция ${p.version} — действует ${when}. ${p.summary ?? ''}`.trim(),
+        data:{offerId:offer.id}};
+      for(const id of ids)
+        await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',
+          [id,'offer',msg.title,msg.body,msg.data]);
+      return {offer,ids,msg};
     });
-    return offer;
+    await this.notifier.deliverStored(result.ids,
+      {type:'offer',offerId:result.offer.id,audience:p.audience},result.msg)
+      .catch(e=>console.warn('[offer delivery]',e));
+    return result.offer;
   }
 
   /** Audit against settings without mutating a previously accepted legal text. */
