@@ -104,10 +104,12 @@ try{
   await page.goto(BASE+'/__ci_shop_private_host');
   await page.evaluate(({idA,idB})=>{
     window.__ciActor='A';window.__ciToken='token-A';window.__ciScreen='cart';
-    localStorage.setItem('traksos.cart.user.A',JSON.stringify({[idA]:1}));
+    const aCart=Object.fromEntries([[idA,1],...Array.from({length:50},(_,i)=>['zz-ci-old-'+String(i).padStart(2,'0'),1])]);
+    localStorage.setItem('traksos.cart.user.A',JSON.stringify(aCart));
     localStorage.setItem('traksos.cart.user.B',JSON.stringify({[idB]:1}));
     window.__ciOrders=[];window.__ciFailPost=true;
     window.__ciHoldASelection=true;
+    window.__ciSelectionRequests=[];
     window.__ciGet=async path=>{
       if(path==='/api/shop?light=1')return {
         enabled:true,delivery:{pickup:true,pickupAddress:'CI',delivery:false,
@@ -116,6 +118,10 @@ try{
       if(path==='/api/orders')throw Error('Сеть недоступна для списка заявок');
       if(path==='/api/vehicles')return [];
       if(path.startsWith('/api/shop/selection?')){
+        window.__ciSelectionRequests.push({
+          actor:window.__ciActor,
+          ids:new URLSearchParams(path.split('?')[1]).get('ids').split(','),
+        });
         if(window.__ciActor==='A'&&window.__ciHoldASelection)
           return new Promise(resolve=>{window.__ciResolveA=resolve});
         return {products:[{id:idB,name:'Деталь Б',price:12000,
@@ -151,7 +157,10 @@ try{
     throw error;
   }
   await page.waitForFunction(()=>typeof window.__ciResolveA==='function');
-  // Switch account while A's catalog request is still in-flight.
+  const aRequests=await page.evaluate(()=>window.__ciSelectionRequests.filter(r=>r.actor==='A'));
+  assert.equal(aRequests.length,1,'first account must have exactly one pending batch');
+  assert.equal(aRequests[0].ids.length,50,'test must exercise the 50-ID page boundary');
+  // Switch account while A's first catalog batch is still in-flight.
   await page.evaluate(({idA})=>{
     window.__ciActor='B';window.__ciToken='token-B';
     window.dispatchEvent(new Event('traksos-auth-external-change'));
@@ -161,6 +170,14 @@ try{
   },{idA});
   await page.getByText('Деталь Б').waitFor();
   assert.equal(await page.getByText('Секретная деталь A').count(),0);
+  // Allow the old continuation and the new account render to settle.
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const requests=await page.evaluate(()=>window.__ciSelectionRequests);
+  assert.equal(requests.filter(r=>r.actor==='A').length,1,'old request must not dispatch another batch');
+  const bRequests=requests.filter(r=>r.actor==='B');
+  assert.ok(bRequests.length>0,'new account must request its own products');
+  assert.ok(bRequests.every(r=>r.ids.length===1&&r.ids[0]===idB),
+    'no old account product IDs may be dispatched with the new bearer');
   await page.getByText(/Не удалось проверить активные ремонтные заявки/).waitFor();
   const submit=page.getByRole('button',{name:'Оформить заказ'});
   assert.equal(await submit.isDisabled(),true,'delivery not chosen');
