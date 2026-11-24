@@ -26,6 +26,11 @@ export function courierNextStage(status:string):string|null{
 }
 export class ShopCourierDeliveries {
   constructor(private db:Db,private notify:Notifier) {}
+  private async requireCourier(q:Queryable,courier:AuthUser,lock=false){
+    if(!courier.roles.includes('courier')||!await q.one(
+      "select id from users where id=$1 and status='active' and 'courier'=any(roles)"+(lock?' for share':''),[courier.id]))
+      throw forbidden('Доступ курьера отозван');
+  }
   /** A fleet buyer's original order is not a permanent right to a previous
    * employer's parcel. A vehicle-specific order requires that SAME vehicle.
    * A legacy order without vehicle keeps the existing active-fleet contract.
@@ -33,19 +38,20 @@ export class ShopCourierDeliveries {
   private async currentBuyer(q:Queryable,clientId:string,createdBy:string,
     vehicleId:string|null,buyerId:string,lock=false){
     if(createdBy!==buyerId)return false;
-    if(createdBy===clientId)return true;
+    if(createdBy===clientId)return !!await q.one(
+      "select id from users where id=$1 and status='active'"+(lock?' for share':''),[buyerId]);
     if(vehicleId){
       const linked=await q.one<{ok:number}>(
         `select 1 as ok from users u join vehicles v
            on v.owner_id=u.owner_id and v.driver_id=u.id
-          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+          where u.id=$1 and u.owner_id=$2 and u.status='active' and 'driver'=any(u.roles)
             and v.id=$3 limit 1${lock?' for share of u,v':''}`,
         [buyerId,clientId,vehicleId]);
       return !!linked;
     }
     const linked=await q.one<{ok:number}>(
       `select 1 as ok from users u where u.id=$1 and u.owner_id=$2
-        and 'driver'=any(u.roles)${lock?' for share of u':''}`,
+        and u.status='active' and 'driver'=any(u.roles)${lock?' for share of u':''}`,
       [buyerId,clientId]);
     return !!linked;
   }
@@ -71,19 +77,23 @@ export class ShopCourierDeliveries {
         ?[o.created_by]:[])];
   }
   async presence(courier:AuthUser){
+    await this.requireCourier(this.db,courier);
     const row=await this.db.one<{online:boolean;updated_at:Date}>(
       'select online,updated_at from shop_courier_presence where courier_id=$1',
       [courier.id]);
     return {online:row?.online??false,updatedAt:row?.updated_at??null};
   }
   async setPresence(courier:AuthUser,online:boolean){
-    const row=await this.db.one<{online:boolean;updated_at:Date}>(`
+    return this.db.tx(async q=>{
+    await this.requireCourier(q,courier,true);
+    const row=await q.one<{online:boolean;updated_at:Date}>(`
       insert into shop_courier_presence(courier_id,online) values ($1,$2)
       on conflict(courier_id) do update set online=excluded.online,updated_at=now()
       returning online,updated_at`,[courier.id,online]);
-    await this.db.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+    await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
       [courier.id,'courier.availability',courier.id,{online}]);
     return {online:row!.online,updatedAt:row!.updated_at};
+    });
   }
   async candidates(){
     return this.db.query<{id:string;name:string|null}>(
@@ -108,7 +118,7 @@ export class ShopCourierDeliveries {
       if(o.delivery!=='delivery'||o.status!=='ready'||!o.address)
         throw conflict('delivery_unavailable','Назначение возможно только для собранного заказа с адресной доставкой');
       const courier=await q.one<{id:string}>(
-        `select id from users where id=$1 and 'courier'=any(roles) and status='active'`,[courierId]);
+        `select id from users where id=$1 and 'courier'=any(roles) and status='active' for share`,[courierId]);
       if(!courier)throw bad('invalid_courier','Выберите активного курьера TrakSOS');
       const old=await q.one<{id:string;status:Stage;courier_id:string}>(
         'select id,status,courier_id from shop_courier_deliveries where shop_order_id=$1 for update',[orderId]);
@@ -161,7 +171,7 @@ export class ShopCourierDeliveries {
       `select d.*,o.number as order_number,o.items,o.address,o.vehicle_snapshot
          from shop_courier_deliveries d
          join shop_orders o on o.id=d.shop_order_id
-        where d.courier_id=$1 order by
+        where d.courier_id=$1 and exists(select 1 from users u where u.id=$1 and u.status='active' and 'courier'=any(u.roles)) order by
           case when d.status in ('received','cancelled') then 1 else 0 end,
           d.updated_at desc limit 100`,[courier.id]);
     return rows.map(d=>this.view(d));
@@ -171,7 +181,7 @@ export class ShopCourierDeliveries {
       `select d.*,o.number as order_number,o.items,o.address,o.vehicle_snapshot
          from shop_courier_deliveries d
          join shop_orders o on o.id=d.shop_order_id
-        where d.id=$1 and d.courier_id=$2`,[id,courier.id]);
+        where d.id=$1 and d.courier_id=$2 and exists(select 1 from users u where u.id=$2 and u.status='active' and 'courier'=any(u.roles))`,[id,courier.id]);
     if(!d)throw notFound('Доставка не назначена этому курьеру');
     return this.view(d);
   }
@@ -182,6 +192,7 @@ export class ShopCourierDeliveries {
          from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
+      await this.requireCourier(q,courier,true);
       if(d.status===status)return {...d,unchanged:true}; // idempotent network retry
       if(courierNextStage(d.status)!==status)
         throw conflict('invalid_stage','Нельзя пропускать или откатывать этапы доставки');
@@ -219,6 +230,7 @@ export class ShopCourierDeliveries {
         from shop_courier_deliveries d join shop_orders o on o.id=d.shop_order_id
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
+      await this.requireCourier(q,courier,true);
       if(d.status==='code_verified')return {ok:true,d,repeated:true};
       if(d.status!=='arrived'||d.shop_status!=='shipped')
         throw conflict('invalid_stage','Код можно проверить только после прибытия по открытой доставке');
