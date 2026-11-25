@@ -3,6 +3,7 @@ import type { SettingsService } from './settings.ts';
 import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
+import { cappedPct } from '../domain/money.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
 import { assertRoleExtension, validateRoles } from '../domain/roles.ts';
 
@@ -278,7 +279,7 @@ export class ProfilesService {
       user.owner_id ? [id, user.id] : [id]);
     // Записи в сервис-партнёр — в той же истории, с меткой «Ремонт на рембазе»
     const bookings = await this.db.query(
-      `select b.id, b.number, b.status, b.need, b.works, b.created_at, b.closed_at, b.amount, b.discount, c.name as center_name
+      `select b.id, b.number, b.status, b.need, b.works, b.created_at, b.closed_at, b.amount, b.discount, b.client_fee, b.parts_amount, c.name as center_name
          from service_bookings b join service_centers c on c.id=b.center_id
         where b.vehicle_id=$1 and b.status not in ('cancelled','declined') ${user.owner_id ? 'and b.created_by=$2' : ''}
         order by b.created_at desc limit 100`,
@@ -287,10 +288,12 @@ export class ProfilesService {
       rows.push({
         id: b.id, number: b.number, kind: 'service', service: 'service', status: b.status === 'closed' ? 'completed' : b.status,
         problem: 'Ремонт на рембазе', description: b.works?.length ? b.works.join(', ') : null, performer_name: `Рембаза «${b.center_name}»`,
-        created_at: b.created_at, completed_at: b.closed_at, amount: b.amount != null ? b.amount - b.discount : 0,
+        created_at: b.created_at, completed_at: b.closed_at, amount: b.amount != null ? Math.max(0,Number(b.amount)+Number(b.client_fee??0)-Number(b.discount??0)) : 0,
         lines: b.amount != null ? [
-          { label: `Работы${b.works?.length ? `: ${b.works.join(', ')}` : ''}`, amount: b.amount },
-          ...(b.discount ? [{ label: 'Скидка по совету мастера', amount: -b.discount }] : []),
+          { label: `Работы${b.works?.length ? `: ${b.works.join(', ')}` : ''}`, amount: Number(b.amount)-Number(b.parts_amount??0) },
+          ...(b.parts_amount ? [{ label: 'Материалы и запчасти', amount: Number(b.parts_amount) }] : []),
+          ...(b.client_fee ? [{ label: 'Сервисный сбор', amount: Number(b.client_fee) }] : []),
+          ...(b.discount ? [{ label: 'Скидка', amount: -Math.min(Number(b.discount),Number(b.amount)+Number(b.client_fee??0)) }] : []),
         ] : null,
       });
     }
@@ -300,8 +303,8 @@ export class ProfilesService {
       const callOut = Number(r.call_out_amount ?? 0), work = Number(r.work_amount ?? 0);
       if (!callOut && !work) { r.lines = null; continue; }
       const b = r.bill;
-      const fee = Math.round(((callOut + work) * Number(r.client_fee_pct ?? 0)) / 100);
-      const disc = Number(r.discount_amount ?? 0), pts = Number(r.points_fee ?? 0);
+      const fee = cappedPct(callOut+work,Number(r.client_fee_pct??0));
+      const disc = Math.max(0,Math.min(Number(r.discount_amount??0),callOut+work+fee)), pts = Math.max(0,Math.min(Number(r.points_fee??0),disc));
       r.lines = [
         { label: r.service === 'consult' ? 'Консультация' : r.service === 'tow' ? 'Перевозка' : 'Выезд', amount: callOut },
         ...(b ? [
@@ -316,7 +319,7 @@ export class ProfilesService {
       r.amount = callOut + work + fee - disc;
     }
     for (const r of rows as any[]) { delete r.bill; delete r.call_out_amount; delete r.work_amount; delete r.client_fee_pct; delete r.discount_amount; delete r.discount_reason; delete r.points_fee; }
-    rows.sort((a: any, b: any) => +new Date(b.created_at) - +new Date(a.created_at));
+    rows.sort((a: any, b: any) => +new Date(b.created_at) - +new Date(a.created_at)||String(b.id).localeCompare(String(a.id)));
     const done = rows.filter((r: any) => r.status === 'completed');
     return {
       vehicle: v,
@@ -361,6 +364,7 @@ export class ProfilesService {
         const current = await q.one<{ id: string; owner_id: string | null; roles: string[] }>(
           'select id, owner_id, roles from users where phone=$1 for update', [phone]);
         if (current) {
+          if(current.id===owner.id)throw bad('owner','Нельзя назначить самого себя водителем');
           if (current.roles.some(r => ['admin','moderator','master','tow','service','insurer',
             'inspection_operator','courier'].includes(r)) ||
             !current.roles.some(r => r === 'client' || r === 'driver'))
