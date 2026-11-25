@@ -5,7 +5,7 @@ import type { Notifier } from './notify.ts';
 import { maskPhones } from '../util.ts';
 import { TECHBASE_ILLUSTRATED } from '../domain/techbaseIllustrated.ts';
 import { partRefsForCard, samePart } from '../domain/techbasePartRefs.ts';
-import { requireProfessionalTechAccess, verifiedRepairPerformer } from '../domain/techbaseAccess.ts';
+import { requireProfessionalTechAccess } from '../domain/techbaseAccess.ts';
 
 type Origin='order'|'booking';
 const sourceColumn=(origin:Origin)=>origin==='booking'?'source_booking_id':'source_order_id';
@@ -22,29 +22,46 @@ const productView=(p:any)=>({id:p.id,name:p.name,brand:p.brand,article:p.article
 export class PartRecommendations {
  constructor(private db:Db,private settings:SettingsService,private notifier:Notifier){}
  private active(user:AuthUser){if(user.status!=='active')throw forbidden();}
- private async approved(user:AuthUser,q:Queryable=this.db){
-  if(!await verifiedRepairPerformer(q,user))throw forbidden('Требуется подтверждённый профиль мастера или СТО');
- }
  private async professional(user:AuthUser){
   await requireProfessionalTechAccess(this.db,user);
  }
- private async context(user:AuthUser,id:string,q:Queryable=this.db,lock=false,origin:Origin='order'){
+ // The source, its actual parties and the current role/assignment must be
+ // observed under the same transaction. A historical created_by is not ACL.
+ private async context(user:AuthUser,id:string,q:Queryable,write=false,origin:Origin='order'){
   this.active(user);
   const o=origin==='booking'
-   ?await q.one<any>('select b.id,b.client_id,b.created_by,b.vehicle_id,b.status,b.number,c.owner_id as performer_id,c.verification as center_verification from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1'+(lock?' for update of b,c':''),[id])
-   :await q.one<any>('select id,client_id,created_by,performer_id,vehicle_id,service,status,number from orders where id=$1'+(lock?' for update':''),[id]);
+   ?await q.one<any>('select b.id,b.client_id,b.created_by,b.vehicle_id,b.status,b.number,c.owner_id as performer_id,c.verification as center_verification from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1'+(write?' for update of b,c':' for share of b,c'),[id])
+   :await q.one<any>('select id,client_id,created_by,performer_id,vehicle_id,service,status,number from orders where id=$1'+(write?' for update':' for share'),[id]);
   if(!o)throw notFound('Заявка не найдена');
-  const owner=o.client_id===user.id&&!user.owner_id&&user.roles.includes('client');
-  const performer=o.performer_id===user.id;
-  const driver=o.created_by===user.id&&user.owner_id===o.client_id&&user.roles.includes('driver');
-  const staff=user.roles.some(x=>x==='admin'||x==='moderator');
+  type Party={id:string;roles:string[];owner_id:string|null;status:string;deleted_at:unknown};
+  const parties=await q.query<Party>('select id,roles,owner_id,status,deleted_at from users where id=any($1::uuid[]) order by id for share',[[...new Set([user.id,o.client_id])]]);
+  const live=(p:Party|undefined):p is Party=>!!p&&p.status==='active'&&p.deleted_at==null;
+  const actor=parties.find(p=>p.id===user.id),client=parties.find(p=>p.id===o.client_id);
+  if(!live(actor))throw forbidden();
+  const roles=user.roles.filter(r=>actor.roles.includes(r));
+  const staff=roles.some(r=>r==='admin'||r==='moderator');
+  const liveClient=live(client)&&client.owner_id==null&&client.roles.includes('client');
+  const owner=liveClient&&o.client_id===user.id&&!user.owner_id&&!actor.owner_id&&roles.includes('client');
+  let driver=false,performer=false;
+  if(liveClient&&o.created_by===user.id&&user.owner_id===o.client_id&&actor.owner_id===o.client_id&&roles.includes('driver')){
+   // Same current assignment rule as orders; workshop bookings require the
+   // actual vehicle, whereas a vehicle-less roadside order needs any live link.
+   if(o.vehicle_id||origin==='order'){
+    const assigned=await q.one('select id from vehicles where owner_id=$1 and driver_id=$2 and ($3::uuid is null or id=$3) order by id limit 1 for share',[o.client_id,user.id,o.vehicle_id]);
+    driver=!!assigned;
+   }
+  }
+  if(liveClient&&o.performer_id===user.id){
+   if(origin==='booking')performer=roles.includes('service')&&o.center_verification==='approved';
+   else if(roles.includes('master')&&o.service!=='tow'){
+    performer=!!await q.one("select user_id from performer_profiles where user_id=$1 and kind in ('master','ecu') and verification='approved' for share",[user.id]);
+   }
+  }
   if(!owner&&!performer&&!driver&&!staff)throw forbidden('Нет доступа к заявке');
   return {o,owner,performer};
  }
- private async canSuggest(user:AuthUser,c:{o:any;performer:boolean},q:Queryable,origin:Origin){
-  if(!c.performer)return false;
-  if(origin==='booking')return user.roles.includes('service')&&c.o.center_verification==='approved'&&repairStatuses.includes(c.o.status);
-  return c.o.service!=='tow'&&orderStatuses.includes(c.o.status)&&await verifiedRepairPerformer(q,user);
+ private canSuggest(c:{o:any;performer:boolean},origin:Origin){
+  return c.performer&&(origin==='booking'?repairStatuses:orderStatuses).includes(c.o.status);
  }
  private async recordEvent(q:Queryable,origin:Origin,id:string,userId:string,event:string,data:Record<string,unknown>){
   if(origin==='booking'){
@@ -66,9 +83,11 @@ export class PartRecommendations {
   return {enabled:true,products:rows.slice(0,20).map(productView),ambiguous:rows.length>1};
  }
  async list(user:AuthUser,id:string,origin:Origin='order'){
-  const c=await this.context(user,id,this.db,false,origin);
-  const rows=await this.db.query<any>('select * from part_recommendations where '+sourceColumn(origin)+'=$1 order by created_at desc,id',[id]);
-  return {canSuggest:await this.canSuggest(user,c,this.db,origin),canDecide:c.owner,items:rows.map(safeRow)};
+  return this.db.tx(async q=>{
+   const c=await this.context(user,id,q,false,origin);
+   const rows=await q.query<any>('select * from part_recommendations where '+sourceColumn(origin)+'=$1 order by created_at desc,id',[id]);
+   return {canSuggest:this.canSuggest(c,origin),canDecide:c.owner,items:rows.map(safeRow)};
+  });
  }
  async propose(user:AuthUser,id:string,p:Proposal,origin:Origin='order'){
   const brand=p.brand.trim(),article=p.article.trim(),reason=clean(p.reason),name=clean(p.name);
@@ -81,10 +100,8 @@ export class PartRecommendations {
    if(!performer)throw forbidden('Предложение отправляет назначенный специалист или обслуживающее СТО');
    if(origin==='order'){
     if(o.service==='tow')throw forbidden();
-    await this.approved(user,q);
     if(!orderStatuses.includes(o.status))throw conflict('too_early','Сначала проведите диагностику');
    }else{
-    if(!user.roles.includes('service')||o.center_verification!=='approved')throw forbidden('Требуется подтверждённое СТО');
     if(!repairStatuses.includes(o.status))throw conflict('too_early','Сначала примите автомобиль в ремонт');
    }
    let product:any=null;
