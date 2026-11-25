@@ -572,7 +572,10 @@ export function createApp(d: Deps) {
     requestKey: z.string().uuid().optional(), requestedRole: z.enum(['admin','moderator']).optional(),
   }), c.body)));
   r.get('/api/support/:id', true, (c: AuthedCtx) => support.thread(c.user, c.params.id));
-  r.post('/api/support/:id/messages', true, (c: AuthedCtx) => support.post(c.user, c.params.id, parse(z.object({ body: z.string().min(1).max(2000) }), c.body).body));
+  r.post('/api/support/:id/messages', true, (c: AuthedCtx) => {
+    const input = parse(z.object({ body: z.string().min(1).max(2000), requestKey: z.string().uuid().optional() }), c.body);
+    return support.post(c.user, c.params.id, input.body, input.requestKey);
+  });
   r.post('/api/support/:id/close', true, (c: AuthedCtx) => support.close(c.user, c.params.id));
   r.get('/api/live', true, () => stats.live());
   r.get('/api/admin/stats', ['admin'], (c: AuthedCtx) => stats.overview(Math.min(365, Math.max(1, Number(c.query.get('days') ?? 30)))));
