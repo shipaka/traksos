@@ -127,7 +127,7 @@ export function createApp(d: Deps) {
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
   const adminCases = new AdminCaseCenter(d.db);
   const adminRegistry = new AdminRegistry(d.db);
-  const adminAccess = new AdminAccessService(d.db);
+  const adminAccess = new AdminAccessService(d.db, now);
   const developerReportDelivery = new DeveloperReportDelivery(d.db);
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
@@ -285,8 +285,8 @@ export function createApp(d: Deps) {
   });
   r.post('/api/auth/login', false, (c: Ctx) => {
     if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
-    const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
-    return auth.loginPassword(b.phone, b.password, b.device, c.ip);
+    const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional(), newPassword: z.string().min(1).max(128).optional() }), c.body);
+    return auth.loginPassword(b.phone, b.password, b.device, c.ip, b.newPassword);
   });
   // Known-password rotation requires the active bearer and never contacts SMS.
   r.post('/api/auth/change-password', true, (c: AuthedCtx) => {
@@ -1626,6 +1626,11 @@ export function createApp(d: Deps) {
       roles: z.array(z.enum(MANUAL_ROLES)).min(1).max(3),
       reason: z.string().trim().min(10).max(500),
     }).strict(), c.body)));
+  r.post('/api/admin/users/primary-insurer-invite', ['admin'], (c: AuthedCtx) =>
+    adminAccess.invitePrimaryInsurer(c.user, parse(z.object({
+      phone: z.string().min(1).max(40), name: z.string().max(120).optional(),
+      reason: z.string().trim().min(10).max(500),
+    }).strict(), c.body)));
   // Внутренняя очередь: не отправлять персональные данные в публичный GitHub.
   r.post('/api/admin/developer-reports', ['admin'], (c: AuthedCtx) =>
     adminAccess.fileReport(c.user, parse(z.object({
@@ -1841,6 +1846,7 @@ export function createApp(d: Deps) {
     }
     if (req.method === 'OPTIONS') return send(res, 204, undefined, cors);
     const url = new URL(req.url ?? '/', 'http://x');
+    if (url.pathname === '/api/admin/users/primary-insurer-invite') cors['cache-control'] = 'no-store';
     try {
       const m = r.match(req.method ?? 'GET', url.pathname);
       if (!m) throw notFound('Нет такого адреса');

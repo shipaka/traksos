@@ -444,6 +444,11 @@ function App() {
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
     case 'work':
+      if (b && (!['profile','me','filter','jobs','chats','docs'].includes(b) ||
+          (b==='me' && route[2] && !['about','phone','schedule','cars','tax','money','level'].includes(route[2])))) {
+        screen=<UnavailableRole label="Раздел кабинета мастера не найден" />;
+        break;
+      }
       if (!isPerformer) {
         // A station owner may add the mobile-master workplace using the
         // existing real performer onboarding; no fake ninth UI shell.
@@ -452,12 +457,12 @@ function App() {
         break;
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
-        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
+        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <UnavailableRole label="Раздел настроек мастера не найден" />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)
-      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
+      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : b===undefined ? <ApprovedPcDesk role="service" fallback={<BaseHome />} /> : <UnavailableRole label="Раздел СТО не найден" />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
@@ -466,13 +471,13 @@ function App() {
       ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
-        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
+        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : b===undefined ? <ApprovedPcDesk role="courier" fallback={<CourierDesk />} /> : <UnavailableRole label="Раздел курьерского кабинета не найден" />; break;
     case 'insurance': screen = b === 'request'
       ? (route[2] === 'new' ? (isCustomer && effMode === 'client' ? <InsuranceApplication vehicleId={route[3]??''} /> : <UnavailableRole label="Оформление страховой заявки доступно только клиенту" />) : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
-          : <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} />
+          : b===undefined ? <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} /> : <UnavailableRole label="Раздел страхового кабинета не найден" />
         : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
@@ -484,7 +489,7 @@ function App() {
       : me.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r)))
       ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
       : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
-    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
+    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : b===undefined ? <Help /> : <UnavailableRole label="Раздел технической базы недоступен или не найден" />; break;
     case 'training': screen = <Training chapter={b} />; break;
     case 'practice': screen = <TrainingPractice chapter={b} />; break;
     case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <main><div className="empty">Нет доступа</div></main>; break;

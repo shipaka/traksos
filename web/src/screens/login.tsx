@@ -150,6 +150,8 @@ export function Login({ driver, entry, serviceContext }: {
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteChange, setInviteChange] = useState(false);
+  const [inviteNewPassword, setInviteNewPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [codeError, setCodeError] = useState('');
   const [codeStatus, setCodeStatus] = useState('');
@@ -200,12 +202,13 @@ export function Login({ driver, entry, serviceContext }: {
   useEffect(() => {
     authGeneration.current += 1;
     return () => { authGeneration.current += 1; };
-  }, [phone, intent, password, code, role, customerType, hybridMasterService, specialties]);
+  }, [phone, intent, password, code, role, customerType, hybridMasterService, specialties, inviteNewPassword]);
 
   const changeAuthPhone = (value: string) => {
     authGeneration.current += 1;
     setPhone(value);
     setPassword('');
+    setInviteChange(false); setInviteNewPassword('');
     setCode('');
     setDevCode(null);
     setCodeError('');
@@ -221,6 +224,7 @@ export function Login({ driver, entry, serviceContext }: {
     setCode('');
     setDevCode(null);
     setPassword('');
+    setInviteChange(false); setInviteNewPassword('');
     setCodeStatus('');
     setCodeError('');
     setInsurerOnly(false);
@@ -236,6 +240,7 @@ export function Login({ driver, entry, serviceContext }: {
     setCode('');
     setDevCode(null);
     setPassword('');
+    setInviteChange(false); setInviteNewPassword('');
     cancelPendingLogin();
     setCodeStatus('');
     try {
@@ -348,14 +353,17 @@ export function Login({ driver, entry, serviceContext }: {
         setLoginError('Введите пароль. Если забыли его, нажмите «Забыли пароль?».');
         return;
       }
+      if (inviteChange && inviteNewPassword.length < 10) { setLoginError('Введите новый пароль (не менее 10 символов).'); return; }
       loginPending.current = generation;
       setLoginBusy(true);
       try {
-        const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
+        const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200), ...(inviteChange ? {newPassword:inviteNewPassword}: {}) });
         if (generation === authGeneration.current) await signedIn(login, generation);
       } catch (e) {
-        if (generation === authGeneration.current)
+        if (generation === authGeneration.current) {
+          if (e instanceof ApiError && e.code === 'insurer_password_change_required') setInviteChange(true);
           setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
+        }
       } finally {
         if (loginPending.current === generation) cancelPendingLogin();
       }
@@ -667,9 +675,10 @@ export function Login({ driver, entry, serviceContext }: {
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
           <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { changeAuthPhone(e.target.value); setLoginError(''); }} /></Field>
-          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; cancelPendingLogin(); setPassword(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; cancelPendingLogin(); setPassword(e.target.value); setInviteChange(false); setInviteNewPassword(''); setLoginError(''); }} /></Field>
+          {inviteChange && <Field label="Придумайте свой пароль (от 10 символов)"><input className="field" type="password" autoComplete="new-password" minLength={10} maxLength={128} value={inviteNewPassword} onChange={e=>{authGeneration.current+=1;cancelPendingLogin();setInviteNewPassword(e.target.value);}} /></Field>}
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
-          <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
+          <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : inviteChange ? 'Установить пароль и войти' : 'Войти'}</button>
           <button type="button" className="btn ghost" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
           <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; cancelPendingLogin(); setIntent('reset'); setStep('phone'); setCode(''); setDevCode(null); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>

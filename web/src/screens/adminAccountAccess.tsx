@@ -24,6 +24,7 @@ const REPORT_TOPICS = [
 ] as const;
 type ReportTopic = typeof REPORT_TOPICS[number]['value'];
 type AccountResult = { user: { id: string; phone: string; name: string | null; roles: string[] }; activation: 'sms_reset' };
+type InsurerInvite = {user: {id:string;phone:string}; temporaryPassword:string; expiresAt:string};
 type DevReport = { id: string; user_id: string | null; phone: string | null; category: string;
   details: string; status: string; created_at: string; user_name: string | null;
   delivery_configured: boolean; delivery_sent_at: string | null; delivery_attempts: number;
@@ -51,6 +52,7 @@ export function AdminAccountAccess() {
   const [roles, setRoles] = useState<string[]>(['client']);
   const [reason, setReason] = useState('');
   const [created, setCreated] = useState<AccountResult | null>(null);
+  const [insurerInvite,setInsurerInvite]=useState<InsurerInvite|null>(null);
   const [reportPhone, setReportPhone] = useState('');
   const [category, setCategory] = useState<ReportTopic>('registration');
   const [details, setDetails] = useState('');
@@ -59,7 +61,7 @@ export function AdminAccountAccess() {
   const [error,setError]=useState('');
   const currentDraft=draftScope===scope;
   useEffect(()=>{
-    setPhone('');setName('');setRoles(['client']);setReason('');setCreated(null);
+    setPhone('');setName('');setRoles(['client']);setReason('');setCreated(null);setInsurerInvite(null);
     setReportPhone('');setCategory('registration');setDetails('');setLastReport(null);
     setError('');setDraftScope(scope);
   },[scope]);
@@ -80,6 +82,19 @@ export function AdminAccountAccess() {
       setCreated(result);setReportPhone(result.user.phone);
       toast('Учётная запись создана. Передайте инструкцию для активации.');
     }else setError('Создание не подтверждено. Проверьте существующие аккаунты перед повтором, чтобы не создать дубль.');
+  }
+
+  async function createInsurerInvite() {
+    if(!admin||busy||!currentDraft||reason.trim().length<10||roles.length!==1||roles[0]!=='insurer')return;
+    if(!window.confirm('Подтверждаете личность страхового агента вне SMS? Создать одноразовый пароль на 24 часа для закреплённого номера? Если приглашение уже выдавалось, прежний временный пароль перестанет действовать.'))return;
+    const startedAs=scope;
+    setInsurerInvite(null);setError('');
+    const result=await run(()=>post<InsurerInvite>('/api/admin/users/primary-insurer-invite',{
+      phone:phone.trim(),name:name.trim(),reason:reason.trim()
+    }),null);
+    if(scopeRef.current!==startedAs)return;
+    if(result?.temporaryPassword) {setInsurerInvite(result);setCreated(null);}
+    else setError('Выдача не подтверждена. Проверьте номер, права и существующую учётную запись.');
   }
 
   async function fileReport() {
@@ -120,7 +135,7 @@ export function AdminAccountAccess() {
       </div>
       <label className="stack"><span className="label">Номер телефона</span>
         <input className="field" type="tel" autoComplete="off" placeholder="+7 999 123-45-67" value={phone}
-          onChange={e => { setPhone(e.target.value); setCreated(null); }} />
+          onChange={e => { setPhone(e.target.value); setCreated(null); setInsurerInvite(null); }} />
       </label>
       <label className="stack"><span className="label">Имя (необязательно)</span>
         <input className="field" maxLength={120} placeholder="Имя пользователя" value={name}
@@ -131,7 +146,7 @@ export function AdminAccountAccess() {
         <div className="row" style={{ flexWrap: 'wrap' }}>
           {ROLE_OPTIONS.map(option => <button type="button" key={option.id} className="chip"
             aria-pressed={roles.includes(option.id)}
-            onClick={() => { setRoles(current => current.includes(option.id) ? current.filter(x => x !== option.id) : [...current, option.id]); setCreated(null); }}>
+            onClick={() => { setRoles(current => current.includes(option.id) ? current.filter(x => x !== option.id) : [...current, option.id]); setCreated(null); setInsurerInvite(null); }}>
             {option.label}
           </button>)}
         </div>
@@ -145,6 +160,17 @@ export function AdminAccountAccess() {
       </label>
       <button className="btn" type="button" disabled={busy||!currentDraft||roles.length<1||roles.length>3||reason.trim().length<10||phone.replace(/\D/g,'').length<10}
         onClick={createAccount}>Создать учётную запись</button>
+      {roles.length===1&&roles[0]==='insurer'&&<div className="card stack">
+        <b>Закреплённый страховой агент без SMS</b>
+        <span className="note">Только для номера, заданного на VPS. Подтвердите личность вне SMS. При первом входе агент обязан создать собственный пароль; временный действует 24 часа. Действующий аккаунт не перезаписывается.</span>
+        <button className="btn ghost" type="button" disabled={busy||!currentDraft||reason.trim().length<10||phone.replace(/\D/g,'').length<10} onClick={createInsurerInvite}>Создать страхового агента / перевыпустить приглашение</button>
+        {insurerInvite&&currentDraft&&<div className="card stack" role="status">
+          <span>Логин: {fmtPhone(insurerInvite.user.phone)}</span>
+          <span>Временный пароль: <strong style={{overflowWrap:'anywhere'}}>{insurerInvite.temporaryPassword}</strong></span>
+          <span className="note">Действует до {new Date(insurerInvite.expiresAt).toLocaleString('ru-RU')}. Передайте лично по защищённому каналу. Не сохраняйте в обращениях или журнале.</span>
+          <button type="button" className="btn ghost small" onClick={()=>setInsurerInvite(null)}>Скрыть пароль</button>
+        </div>}
+      </div>}
       {created&&currentDraft&&<div className="card stack" role="status">
         <b>Создан аккаунт: {created.user.name ?? fmtPhone(created.user.phone)}</b>
         <span className="note">Роли: {created.user.roles.join(', ')}. Пользователь ещё не получил пароль и не вошёл.</span>

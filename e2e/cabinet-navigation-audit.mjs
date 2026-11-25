@@ -142,7 +142,23 @@ try {
       if(state.overflow)throw Error(kind+': horizontal overflow on '+href);
       if(errors.length)throw Error(kind+': script error at '+href+': '+errors.join('; '));
     }
-    report.push({role:kind,visited:paths.length});
+    const invalidRoutes={
+      owner:['#/tech/retired-page'],
+      driver:['#/tech/retired-page'],
+      master:['#/work/me/retired-page','#/work/retired-page'],
+      tow:['#/work/me/retired-page'],
+      service:['#/base/retired-page'],
+      master_service:['#/base/retired-page'],
+      insurer:['#/insurance/retired-page'],
+    }[kind]??[];
+    for(const href of invalidRoutes){
+      await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
+      await page.locator('main.tr-approved-route-unavailable').waitFor({state:'visible',timeout:12000});
+      if(await page.locator('main.approved-pc,main.performer-workspace,main.base-workspace').count())
+        throw Error(kind+': unrelated dashboard fallback on unknown route '+href);
+      if(errors.length)throw Error(kind+': script error on invalid route '+href+': '+errors.join('; '));
+    }
+    report.push({role:kind,visited:paths.length,unknownRoutesRejected:invalidRoutes.length});
     await ctx.close();
   }
 } finally {await browser.close();}
