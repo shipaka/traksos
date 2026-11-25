@@ -116,6 +116,19 @@ try{
   await answer(5,snapshot('online','После восстановления связи'));
   await log.getByText('После восстановления связи',{exact:true}).waitFor();
   await composer.waitFor();
+
+  // Reopening with the SAME tail still rebuilds the cleared scrollable DOM.
+  // A bottom reader must not be left at the top simply because no ID changed.
+  await log.evaluate(el=>{el.scrollTop=el.scrollHeight;el.dispatchEvent(new Event('scroll'));});
+  await waitBottom();
+  await visibility(false);
+  await composer.waitFor({state:'hidden'});
+  await visibility(true);
+  await waitCount(7);
+  await answer(6,snapshot('online','После восстановления связи'));
+  await composer.waitFor();
+  await log.getByText('После восстановления связи',{exact:true}).waitFor();
+  await waitBottom();
   assert.deepEqual(errors,[]);
-  console.log('PASS Air: bounded tail, reading position, foreground generation, offline/reconnect');
+  console.log('PASS Air: bounded tail, reading position, foreground generation, offline/reconnect, same-tail rehydration');
 }finally{await browser.close();}
