@@ -1234,7 +1234,7 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     background:linear-gradient(90deg,#101f2de8,#17303bd2)
   }
 }
-@media(min-width:900px) and (max-width:1279px){
+@media(min-width:900px) and (max-width:1280px){
   .guest-app.guest-home .owner20-quick>a{gap:4px!important;padding:9px 5px!important}
   .guest-app.guest-home .owner20-quick>a:not(.owner20-quick-trakbot)>.owner20-quick-icon{
     flex:0 0 25px!important;width:25px!important
@@ -1545,4 +1545,37 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
  .sandbox-supervisor-controls {gap:4px}
  .sandbox-supervisor-controls .sandbox-test-badge {padding:5px 6px;font-size:11px}
  .sandbox-review-back {padding:5px;font-size:11px}
+}
+
+/* Public 617 tile reading order: keep the art and approved row geometry, but
+   let title, copy and CTA participate in one layout rather than collide.
+   On a narrow/zoomed desktop the whole row may grow to fit real copy. */
+@media(min-width:900px){
+  .guest-app.guest-home .owner20-features .owner20-feature{
+    display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+    height:auto!important;min-height:144px!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature-title{
+    flex:none;min-width:0;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature p{
+    flex:none;margin-bottom:8px!important;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature-cta{
+    position:relative!important;inset:auto!important;
+    flex:none;margin-top:auto!important;margin-bottom:0!important;
+    white-space:normal!important;overflow-wrap:break-word;
+    line-height:1.15;
+  }
+  .guest-app.guest-home .owner20-features .owner20-feature:focus-visible{
+    outline-offset:-4px!important;
+  }
+}
+@media(min-width:900px) and (max-width:1179px){
+  .guest-app.guest-home .owner20-features .owner20-feature{min-height:155px!important;}
+}
+@media(min-width:900px) and (max-width:1280px){
+  .guest-app.guest-home .owner20-quick>a.owner20-quick-trakbot>.owner20-quick-copy{
+    max-width:calc(100% - 52px)!important;
+  }
 }
