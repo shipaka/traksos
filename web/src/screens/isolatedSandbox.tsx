@@ -55,7 +55,7 @@ function sandboxWorkspaceMode(role:string) {
 }
 
 const SANDBOX_ROLE_CHOICES = [
-  ['client','Клиент'], ['owner','Владелец автопарка'],
+  ['owner','Владелец автопарка'],
   ['driver','Водитель'], ['master','Выездной мастер'],
   ['tow','Эвакуаторщик'], ['service','СТО / рембаза'],
   ['master_service','Мастер и СТО'], ['insurer','Страховой партнёр'],
@@ -64,7 +64,7 @@ const SANDBOX_ROLE_CHOICES = [
 ] as const;
 
 export function SandboxModeBadge() {
-  const [selectedRole, setSelectedRole] = useState<string>('client');
+  const [selectedRole, setSelectedRole] = useState<string>('owner');
   const [switching, setSwitching] = useState(false);
   const [error, setError] = useState('');
   let active = false;
