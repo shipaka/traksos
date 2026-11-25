@@ -59,8 +59,8 @@ export class SupportService {
   async tickSla() {
     const now = this.now();
     const { overdue, adminIds } = await this.db.tx(async q => {
-      const overdue = await q.query<{ id: string; number: number; topic: string; sla_deadline_at: Date }>(
-        `select id, number, topic, sla_deadline_at from support_tickets
+      const overdue = await q.query<{ id: string; number: number; sla_deadline_at: Date }>(
+        `select id, number, sla_deadline_at from support_tickets
           where sla_deadline_at is not null and sla_deadline_at <= $1
             and sla_overdue_at is null
             and (first_staff_reply_at is null or first_staff_reply_at > sla_deadline_at)
@@ -79,7 +79,7 @@ export class SupportService {
           await q.query(
             `insert into notifications(user_id,kind,title,body,data) values ($1,'support',$2,$3,$4)`,
             [admin.id, `Поддержка: просрочка №${ticket.number}`,
-              `60 минут без своевременного ответа: ${ticket.topic}`,
+              '60 минут без своевременного ответа. Откройте личное обращение.',
               { ticketId: ticket.id, sla: 'first_reply_overdue' }]);
         }
       }
@@ -91,7 +91,7 @@ export class SupportService {
         type: 'support', ticketId: ticket.id, sla: 'first_reply_overdue',
       }, {
         kind: 'normal', title: `Поддержка: просрочка №${ticket.number}`,
-        body: `60 минут без своевременного ответа: ${ticket.topic}`,
+        body: '60 минут без своевременного ответа. Откройте личное обращение.',
         data: { ticketId: ticket.id, sla: 'first_reply_overdue' },
       });
     }
@@ -107,7 +107,7 @@ export class SupportService {
     const safeText = maskPhones(text).text;
     const fingerprint = createHash('sha256').update(JSON.stringify([p.topic, text, p.requestedRole ?? null])).digest('hex');
     const result = await this.db.tx(async q => {
-      const actor = await this.liveActor(q,user);
+      await this.liveActor(q,user);
       if (p.requestKey) {
         await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:standalone:' + user.id + ':' + p.requestKey]);
         const prior = await q.one<{id:string;client_request_hash:string}>(
@@ -128,8 +128,8 @@ export class SupportService {
       await q.query('insert into support_messages(ticket_id,sender_id,body) values($1,$2,$3)',
         [ticket.id,user.id,safeText]);
       const ids = await this.intakeStaffIds(q,p.requestedRole);
-      const msg = { kind:'normal' as const, title:maskPhones(`Обращение №${ticket.number}: ${p.topic}`).text,
-        body:maskPhones(`${actor.name??actor.phone}: ${safeText.slice(0,100)}`).text, data:{ticketId:ticket.id} };
+      const msg = { kind:'normal' as const, title:`Новое обращение №${ticket.number}`,
+        body:'Откройте личное обращение, чтобы прочитать сообщение.', data:{ticketId:ticket.id} };
       for(const id of ids) await q.query(
         "insert into notifications(user_id,kind,title,body,data) values($1,'support',$2,$3,$4)",
         [id,msg.title,msg.body,msg.data]);
@@ -146,9 +146,8 @@ export class SupportService {
     if (text.length < 3) throw bad('empty', 'Опишите, что случилось');
     if (!p.orderId && !p.ledgerEntryId) return this.openStandalone(user,p,text);
     if (p.requestKey || p.requestedRole) throw bad('support_context','Этот способ доступен только для личного обращения без привязки к заявке.');
-    // The stored body and notification preview share one redacted version.
+    // Only the stored thread contains the redacted text, never notice previews.
     const safeText = maskPhones(text).text;
-    let number: number | null = null;
     // Вопрос по конкретной операции: начисление, списание, выплата — поддержка увидит её целиком
     if (p.ledgerEntryId) {
       const e = await this.db.one<{ id: number; order_id: string | null }>(
@@ -178,8 +177,8 @@ export class SupportService {
       }
       const t = result;
       await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-        kind: 'normal', title: `Обращение №${t!.number}: вопрос по операции`,
-        body: maskPhones(`${user.name ?? user.phone}: ${safeText.slice(0, 100)}`).text,
+        kind: 'normal', title: `Новое обращение №${t!.number}`,
+        body: 'Откройте личное обращение, чтобы прочитать сообщение.',
         data: { ticketId: t!.id },
       });
       return this.thread(user, t!.id);
@@ -188,7 +187,6 @@ export class SupportService {
     if (p.orderId) {
       const o = await this.orders.mustSee(user, p.orderId);
       if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
-      number = o.number;
       // One open thread per customer + order. All concurrent requests serialize
       // before the SELECT/INSERT; no silent duplicate conversations are created.
       const result = await this.db.tx(async (q) => {
@@ -228,8 +226,8 @@ export class SupportService {
     }
     if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId ?? null, ticketId: t!.id, text, topic: p.topic });
     await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-      kind: 'normal', title: maskPhones(`Обращение №${t!.number}: ${p.topic}`).text,
-      body: maskPhones(`${user.name ?? user.phone}${number ? ` · заявка №${number}` : ''}: ${safeText.slice(0, 100)}`).text,
+      kind: 'normal', title: `Новое обращение №${t!.number}`,
+      body: 'Откройте личное обращение, чтобы прочитать сообщение.',
       data: { ticketId: t!.id },
     });
     return this.thread(user, t!.id);
