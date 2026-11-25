@@ -641,19 +641,22 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
        ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
-  // A nested route must highlight one real mobile tab, never both its parent
-  // and its child (for example /courier and /courier/jobs).
+  // An order detail belongs to its role's order list or chat, not to a
+  // different cabinet. Highlight the owning section without changing the URL.
+  const navigationPath = route[0] === 'order'
+    ? mode === 'performer' ? (route[2] === 'chat' ? '/work/chats' : '/work/jobs')
+      : mode === 'client' ? '/orders' : here
+    : mode === 'insurer' && route[0] === 'insurance' && route[1] === 'request'
+      ? '/insurance/requests' : here;
+  const matchesSection = (href:string) => navigationPath === href ||
+    (href !== '/' && navigationPath.startsWith(href + '/'));
+  // A nested route must highlight one real tab, never both parent and child.
   const activeMobileTabHref = mobileTabs
-    .filter(([href]) => here === href ||
-      (href !== '/' && here.startsWith(href + '/')) ||
-      (href === '/orders' && route[0] === 'order') ||
-      (href === '/insurance/requests' && route[0] === 'insurance' && route[1] === 'request'))
+    .filter(([href]) => matchesSection(href))
     .sort((a,b) => b[0].length - a[0].length)[0]?.[0];
-  // Desktop primary navigation follows the same deepest-match rule.
   const isDesktopPrimaryActive = (href: string, links: readonly (readonly string[])[]) =>
-    (here === href || (href !== '/' && here.startsWith(href + '/'))) &&
-    !links.some(([other]) => other !== href && other.length > href.length &&
-      (here === other || here.startsWith(other + '/')));
+    matchesSection(href) &&
+    !links.some(([other]) => other !== href && other.length > href.length && matchesSection(other));
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
@@ -998,7 +1001,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={shellHref(href)} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} aria-current={activeMobileTabHref === href ? 'page' : undefined} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}
