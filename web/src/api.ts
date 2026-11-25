@@ -188,6 +188,36 @@ export const put = <T = any>(p: string, b: unknown = {}) => api<T>('PUT', p, b);
 export const patch = <T = any>(p: string, b: unknown = {}) => api<T>('PATCH', p, b);
 export const del = <T = any>(p: string) => api<T>('DELETE', p);
 
+// Keep explicit logout in the already-loaded transport bundle. A first
+// sign-out while offline must not depend on fetching a new JS chunk.
+const logoutPending = new Set<string>();
+export async function logoutSession(clearNative:(origin:string)=>void) {
+  const requestToken=getToken();
+  if(!requestToken||logoutPending.has(requestToken))return;
+  logoutPending.add(requestToken);
+  try{
+    try{
+      await post('/api/auth/logout');
+    }catch(error){
+      if(getToken()!==requestToken)return;
+      const uncertain=error instanceof ApiError&&(error.status===0||error.status>=500);
+      if(!uncertain){
+        window.alert(error instanceof Error?error.message:'Не удалось завершить выход');
+        return;
+      }
+      if(!window.confirm('Сервер не подтвердил выход. Выйти только на этом устройстве? Сессия на сервере и статус исполнителя могут оставаться активными. При восстановлении связи проверьте их.'))return;
+    }
+    if(getToken()!==requestToken)return;
+    setToken(null);
+    window.dispatchEvent(new Event('traksos-auth-expired'));
+    try{clearNative(API_URL||location.origin);}catch{/* Local web session is already cleared. */}
+    location.replace('#/login');
+  }finally{
+    logoutPending.delete(requestToken);
+  }
+}
+
+
 // WebSocket с переподключением ---------------------------------------------
 
 type Listener = (e: any) => void;
