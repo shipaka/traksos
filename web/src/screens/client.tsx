@@ -56,6 +56,8 @@ function ClientHomeForAccount() {
       :'Ограниченный доступ · разрешает владелец';
   const active = usePrivateRead<any[]>(()=>get('/api/orders'),
     'home-orders:'+(me?.id??'guest'),e=>e.type==='order');
+  const garage = usePrivateRead<any[]>(()=>get('/api/vehicles'),
+    'home-vehicles:'+(me?.id??'guest'),e=>e.type==='vehicle'||e.type==='fleet'||e.type==='connection_restored');
   const services = usePrivateRead<any[]>(()=>get('/api/vehicle-service-requests'),
     'home-services:'+(me?.id??'guest'),
     e=>e.type==='vehicle_service'||e.type==='connection_restored');
@@ -79,6 +81,7 @@ function ClientHomeForAccount() {
     </section>}
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
+      garageVehicles={garage.data} garageError={garage.error}
       disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
   </main>;
   return (
