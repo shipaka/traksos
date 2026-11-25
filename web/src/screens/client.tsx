@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { get, getToken, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
-import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
+import { BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
@@ -1017,9 +1017,9 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
         </button>
       </section>}
       {showingNow&&list.data&&<h2>Текущие обращения и заявки на подтверждении · {list.data.filter(live).length}</h2>}
-      {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
+      {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} bookingRead={bookings} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
-      as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
+      as === 'client' && ctab === 'hist' ? (!list.data && !list.error ? <Loading /> : null) : !list.data ? <Loading error={list.error} /> : !shown!.length ?
         showingNow && (!bookings.data || activeBookings.length > 0)
           ? <span className="note">Активных выездов и консультаций сейчас нет.</span>
           : <div className="empty">{showingNow ? 'Активных выездов и записей на СТО сейчас нет' : 'Выездов пока нет'}</div> : (
@@ -1036,7 +1036,7 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
         </div>
       )}
       {showingNow && <section className="stack" aria-label="Активные записи на СТО">
-        <h2>Записи на СТО · {activeBookings.length}</h2>
+        <h2>Записи на СТО{bookings.data ? ` · ${activeBookings.length}` : ''}</h2>
         {bookings.error ? <div className="card stack" role="alert">
           <span className="note">Не удалось загрузить записи на СТО: {bookings.error}</span>
           <button type="button" className="btn ghost small"
@@ -1610,10 +1610,9 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
 }
 
 /** Архив задач: одна поломка — одна задача. Консультация, выезды по ней и ремонт в сервисе по совету мастера — вместе. */
-function TaskArchive({ orders }: { orders: any[] }) {
-  const b = useLoad(() => get('/api/bookings'), []);
-  const bookings = ((b.data ?? []) as any[]).filter((x) => !isOpenBooking(x));
-  const root = (o: any) => o.consult_of ?? o.id;
+function TaskArchive({ orders, bookingRead }: { orders: any[]; bookingRead: {data: any[] | null; error: string | null; reload: () => Promise<void>} }) {
+  const bookings = (bookingRead.data ?? []).filter((x) => !isOpenBooking(x));
+  const root = (o: any) => o.case_root_id ?? o.consult_of ?? o.id;
   const groups = new Map<string, { orders: any[]; bookings: any[] }>();
   for (const o of [...orders].sort((x, y) => +new Date(x.created_at) - +new Date(y.created_at))) {
     const k = root(o);
@@ -1623,43 +1622,53 @@ function TaskArchive({ orders }: { orders: any[] }) {
   const loose: any[] = [];
   for (const bk of bookings) {
     const o = bk.fromOrderId && orders.find((x) => x.id === bk.fromOrderId);
-    if (o && groups.has(root(o))) groups.get(root(o))!.bookings.push(bk); else loose.push(bk);
+    const key = bk.caseRootId ?? (o ? root(o) : null);
+    if (key && groups.has(key)) groups.get(key)!.bookings.push(bk); else loose.push(bk);
   }
   const list = [...groups.values()].sort((x, y) => +new Date(y.orders[y.orders.length - 1].created_at) - +new Date(x.orders[x.orders.length - 1].created_at));
-  if (!list.length && !loose.length) return <div className="empty">Здесь появятся прошлые задачи: консультация, выезды и ремонт по одной поломке — вместе.</div>;
-  const sum = (o: any) => o.status === 'completed' ? (o.call_out_amount ?? 0) + (o.work_amount ?? 0) : 0;
+  if (bookingRead.data && !list.length && !loose.length) return <div className="empty">Здесь появятся прошлые задачи: консультация, выезды и ремонт по одной поломке — вместе.</div>;
+  // Only authoritative server totals, never reconstruct fees/discounts from raw work amounts.
+  const validAmount = (value: unknown): number | null => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
+  const sum = (o: any) => o.status === 'completed' ? validAmount(o.money?.total) : 0;
+  const bookingSum = (x: any) => x.status === 'closed' ? validAmount(x.toPay) : 0;
   return (
     <div className="stack">
       <span className="note">Одна поломка — одна задача: консультация, выезды, эвакуатор и сервис по ней собраны вместе.</span>
+      {bookingRead.error ? <div className="card stack" role="alert">
+        <span className="note">Не удалось загрузить историю записей на СТО. Состав задач и суммы могут быть неполными.</span>
+        <button type="button" className="btn ghost small" onClick={()=>{void bookingRead.reload();}}>Повторить загрузку записей</button>
+      </div> : !bookingRead.data ? <div role="status" className="note">Загружаются записи на СТО. Итоги задач пока не подтверждены.</div> : null}
       {list.map((g) => {
         const first = g.orders[0];
-        const total = g.orders.reduce((a, o) => a + sum(o), 0) + g.bookings.reduce((a, x) => a + (x.status === 'closed' ? x.toPay ?? 0 : 0), 0);
+        const amounts = [...g.orders.map(sum), ...g.bookings.map(bookingSum)];
+        const total = bookingRead.data && amounts.every((amount): amount is number => amount !== null)
+          ? amounts.reduce((a, amount) => a + amount, 0) : null;
         const steps = g.orders.length + g.bookings.length;
         const title = first.problem ? (SYMPTOMS.find((p) => p.id === first.problem)?.name ?? first.description) : first.description || SERVICES[first.service]?.name;
         if (steps === 1) return (
           <a key={first.id} href={`#/order/${first.id}`} className="list-item">
-            <div className="stack" style={{ gap: 2 }}><b>{title || `№${first.number}`}</b><span className="note">№{first.number} · {SERVICES[first.service]?.name} · {fmtTime(first.created_at)}{total ? ` · ${rub(total)}` : ''}</span></div>
+            <div className="stack" style={{ gap: 2 }}><b>{title || `№${first.number}`}</b><span className="note">№{first.number} · {SERVICES[first.service]?.name} · {fmtTime(first.created_at)}{total === null ? ' · Сумма уточняется' : total > 0 ? ` · ${rub(total)}` : ''}</span></div>
             <span className={`pill ${STATUS[first.status]?.tone}`}>{STATUS[first.status]?.name}</span>
           </a>
         );
         return (
           <div key={first.id} className="card">
-            <div className="between"><b>{title || 'Задача'}</b>{total > 0 && <span className="pill">{rub(total)}</span>}</div>
+            <div className="between"><b>{title || 'Задача'}</b>{total === null ? <span className="note">Сумма уточняется</span> : total > 0 && <span className="pill">{rub(total)}</span>}</div>
             <span className="note">{fmtTime(first.created_at)} · {steps} шага</span>
             <ol className="tl">
               {g.orders.map((o) => (
                 <li key={o.id}><i className={o.status === 'completed' ? 'ok' : 'off'} /><a href={`#/order/${o.id}`}><b>{SERVICES[o.service]?.name ?? o.service}</b></a>
-                  <small>№{o.number} · {STATUS[o.status]?.name}{sum(o) ? ` · ${rub(sum(o))}` : ''}</small></li>
+                  <small>№{o.number} · {STATUS[o.status]?.name}{sum(o) === null ? ' · Сумма уточняется' : sum(o) ? ` · ${rub(sum(o))}` : ''}</small></li>
               ))}
               {g.bookings.map((x) => (
                 <li key={x.id}><i className={x.status === 'closed' ? 'ok' : 'off'} /><a href={`#/booking/${x.id}`}><b>Ремонт на рембазе «{x.center.name}»</b></a>
-                  <small>{x.statusName}{x.toPay ? ` · ${rub(x.toPay)}` : ''}</small></li>
+                  <small>{x.statusName}{bookingSum(x) === null ? ' · Сумма уточняется' : bookingSum(x) ? ` · ${rub(bookingSum(x))}` : ''}</small></li>
               ))}
             </ol>
           </div>
         );
       })}
-      {loose.length > 0 && <BookingRows live={false} />}
+      {loose.length > 0 && <BookingList rows={loose} />}
     </div>
   );
 }
