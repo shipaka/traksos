@@ -60,14 +60,23 @@ export function SupportNew() {
   return <SupportNewSession key={(me?.id ?? 'guest') + ':' + (orderId ?? '') + ':' + (getToken()??'')} orderId={orderId} owner={me?.id??'guest'} token={getToken()} />;
 }
 
+function supportRequestKey() {
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  bytes[6]=(bytes[6]&15)|64;
+  bytes[8]=(bytes[8]&63)|128;
+  const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+}
+
 function SupportNewSession({ orderId,owner,token }: { orderId?: string;owner:string;token:string|null }) {
   const alive = useSupportSessionAlive();
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
-  // Backend deduplicates order-linked tickets, but not standalone requests.
-  // A synchronous lock prevents two near-simultaneous taps making two tickets
-  // before React's busy state has had a chance to re-render the button.
+  // Retain the exact standalone request identity until its outcome is known.
+  // Do not create a new request merely because a response was lost.
   const sendingRef = useRef(false);
+  const requestKey=useRef<string|null>(null);
+  const [uncertain,setUncertain]=useState(false);
   const [topic, setTopic] = useState('');
   const [text, setText] = useState('');
   const [recipient,setRecipient]=useState<'admin'|'moderator'|null>(null);
@@ -85,27 +94,30 @@ function SupportNewSession({ orderId,owner,token }: { orderId?: string;owner:str
     <main>
       <Back to={orderId ? `order/${orderId}` : 'support'} />
       <h1>{orderId ? 'Позвать поддержку' : 'Написать в поддержку'}</h1>
-      {recipient && <p className="note" role="status">Личное обращение: вы указали {recipient==='admin'?'администратора':'модератора'}. Текст не опубликован в эфире. Обращение поступит в общую приватную очередь поддержки; выберите тему и подтвердите отправку.</p>}
+      {recipient && <p className="note" role="status">Личное обращение: вы указали {recipient==='admin'?'администратора':'модератора'}. Текст не опубликован в эфире. Выбранная роль получит уведомление в первую очередь; если таких доступных сотрудников нет, обращение попадёт к другим сотрудникам поддержки. Выберите тему и подтвердите отправку.</p>}
       {topics.error && <div className="stack" role="alert">
         <span className="note">Не удалось загрузить темы обращений: {topics.error}</span>
         <button type="button" className="btn ghost small" onClick={() => void topics.reload()}>Повторить загрузку тем</button>
       </div>}
       {!topics.data && !topics.error && <span className="note" role="status">Получаем доступные темы поддержки…</span>}
       <div className="row" role="group" aria-label="Тема обращения">{(topics.data ?? []).map((t: string) =>
-        <button type="button" key={t} className="chip" disabled={busy} aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
-      <textarea className="field" aria-label="Описание проблемы" maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
+        <button type="button" key={t} className="chip" disabled={busy||uncertain} aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
+      <textarea className="field" aria-label="Описание проблемы" disabled={busy||uncertain} maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
+      {uncertain && <p role="status" className="note">Ответ сервера не подтверждён. Повторите тот же запрос — новое обращение не создастся, если предыдущее уже зарегистрировано. Или проверьте список обращений.</p>}
       <button type="button" className="btn" disabled={busy || !topics.data?.includes(topic) || text.trim().length < 3} onClick={async () => {
-        if (sendingRef.current || !token || getToken()!==token) return;
+        if (sendingRef.current) return;
+        if (!token || getToken()!==token) return;
         sendingRef.current = true;
         try {
+          if(!orderId && !requestKey.current) requestKey.current=supportRequestKey();
           const r = await run(() => post('/api/support', {
-            topic, text: text.trim(), orderId
+            topic, text: text.trim(), orderId,
+            ...(!orderId ? {requestKey:requestKey.current,requestedRole:recipient??undefined} : {})
           }), 'Обращение зарегистрировано');
           if (r && alive.current && getToken()===token) location.replace(`#/support/${r.id}`);
-          // If the mobile response was lost, do not erase the draft. The user
-          // can inspect the list before deliberately retrying a new ticket.
+          else if(!orderId && alive.current && getToken()===token) setUncertain(true);
         } finally { sendingRef.current = false; }
-      }}>Отправить</button>
+      }}>{uncertain?'Повторить отправку':'Отправить'}</button>
     </main>
   );
 }
@@ -142,7 +154,7 @@ function SupportThreadSession({ id }: { id: string }) {
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h1>№{t.number} · {t.topic}</h1>
-          <div className="sub">{fmtTime(t.createdAt)}{t.order ? ` · заявка №${t.order.number}` : ''}</div>
+          <div className="sub">{fmtTime(t.createdAt)}{t.order ? ` · заявка №${t.order.number}` : ''}{t.requestedRole ? ` · обращение к ${t.requestedRole==='admin'?'администратору':'модератору'}` : ''}</div>
         </div>
         <span className={`pill ${t.status === 'open' ? 'accent' : ''}`}>{t.status === 'open' ? 'Открыто' : 'Закрыто'}</span>
       </div>
