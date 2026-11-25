@@ -733,7 +733,8 @@ expect(unifiedMobile.includes("action:'depart'|'arrive'|'start_work'") &&
   unifiedMobile.includes('className="and19-stage-complete is-disabled"') &&
   unifiedMobile.includes('commissionPct') &&
   unifiedMobile.includes('money.payout') &&
-  appPerformer.includes('todayCount={todayCount}') &&
+  appPerformer.includes('todayCount={jobs.data&&!jobs.error?todayCount:null}') &&
+  unifiedMobile.includes('todayCount') &&
   appPerformer.includes('reloadJobs={jobs.reload}'),
   '618.png master next-step confirmation, disabled premature finish and private real commission/payout');
 
