@@ -103,6 +103,11 @@ export class OrdersService {
 
   async create(user: AuthUser, i: CreateOrderInput, idempotencyKey?: string) {
     if (!SERVICES.includes(i.service)) throw bad('bad_service', 'Неизвестная услуга');
+    // The existing checkout is immediate dispatch, not a deferred order.
+    // Fail closed before INSERT, fleet approval, payment or dispatch, even
+    // for a direct API client or restored draft. Consult ignores site data.
+    if (i.service !== 'consult' && (i.site?.when === 'today' || i.site?.when === 'tomorrow' || !!i.site?.time?.trim()))
+      throw conflict('planned_order_not_ready', 'Запись на время пока недоступна. Для немедленного вызова выберите «Сейчас» и очистите желаемое время.');
     // The old auction-based 'ecu' type had a roadside tariff. ECU workshops
     // cannot be assigned/charged using that contract; use free handoffs.
     if(i.service==='ecu')throw bad('ecu_station_only',

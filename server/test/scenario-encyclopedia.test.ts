@@ -157,6 +157,7 @@ test('calendar training separates pending proposals, reservations and actual ava
     assert.equal(item.steps.length,3);
     const text=item.steps.map(step=>step.situation+' '+step.why+' '+step.choices.map(c=>c.feedback).join(' ')).join(' ');
     assert.match(text,/желаемое время не обещает/);
+    assert.match(text,/блокирует отправку и оплату/);
     assert.match(text,/неистёкший подтверждённый резерв/);
     assert.match(text,/пустой календарь не гарантирует/);
     assert.equal(item.link,'/help','course must not link a performer to a customer-only calendar');

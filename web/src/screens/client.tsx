@@ -591,7 +591,7 @@ function NewOrderForAccount({service}:{service:string}) {
   }, [methods?.online, methods?.invoice, methods?.cash, method]);
 
   async function submit() {
-    if (!methods?.[method]) return;
+    if (!methods?.[method] || plannedTime) return;
     const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -623,6 +623,7 @@ function NewOrderForAccount({service}:{service:string}) {
   }
 
   const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
+  const plannedTime = !isConsult && !isTow && (site.when === 'today' || site.when === 'tomorrow' || !!site.time?.trim());
   const [savedDraft,setSavedDraft]=useState<SavedNewOrderDraft|null>(null);
   useEffect(()=>{
     let active=true;
@@ -661,6 +662,7 @@ function NewOrderForAccount({service}:{service:string}) {
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
+    plannedTime && { id: 'f-site', name: 'выберите «Сейчас»: запись на время пока недоступна' },
     !isConsult && !regionId && { id: 'f-where', name: 'регион' },
     !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
     !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
@@ -863,9 +865,10 @@ function NewOrderForAccount({service}:{service:string}) {
           {site.state && site.state !== 'free' && <span className="note">Мастеру придётся работать параллельно — это может стоить дороже, он скажет сумму до начала.</span>}
           <span className="label">Когда</span>
           <div className="grid3">{([['now', 'Сейчас'], ['today', 'Сегодня'], ['tomorrow', 'Завтра']] as const).map(([k, n]) => (
-            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => setSite({ ...site, when: k })}>{n}</button>
+            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => { setSite({ ...site, when: k, time: k === 'now' ? undefined : site.time }); setAgree(false); }}>{n}</button>
           ))}</div>
-          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => setSite({ ...site, time: e.target.value })} />}
+          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => { setSite({ ...site, time: e.target.value }); setAgree(false); }} />}
+          {plannedTime && <div role="alert" className="banner warn">Запись на время пока недоступна. Заявка не будет отправлена и оплата не начнётся. Для помощи сейчас выберите «Сейчас»; для будущей записи можно сохранить черновик на устройстве.</div>}
         </Step>
       )}
 
