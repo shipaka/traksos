@@ -119,7 +119,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     </section>
     {error && <div className="banner warn" role="alert">{error}</div>}
     {!payload && !error && <div className="card" role="status">Загружаем каталог производителя…</div>}
-    {isMaster && payload?.audiences.includes('master') && payload.illustrated && <TechBaseIllustrated key={me?.id} data={payload.illustrated}/>}
+    {isMaster && payload?.audiences.includes('master') && payload.illustrated && <TechBaseIllustrated key={me?.id} data={payload.illustrated} specialties={Array.isArray(me?.performer?.specialties)?me.performer.specialties:[]}/>}
     {payload && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>
       {docs.length===0 && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
