@@ -111,6 +111,7 @@ export class AdminRegistry {
           ($1::text='' or r.phone ilike $1 or coalesce(r.name,'') ilike $1
             or coalesce(r.company_name,'') ilike $1 or coalesce(r.company_inn,'') ilike $1
             or coalesce(r.center_name,'') ilike $1 or coalesce(r.center_address,'') ilike $1
+            or coalesce(r.center_inn,'') ilike $1
             or coalesce(r.worker_inn,'') ilike $1 or r.id::text ilike $1
             or exists (select 1 from vehicles v where v.owner_id=r.id
                        and (coalesce(v.plate,'') ilike $1 or coalesce(v.trailer_plate,'') ilike $1)))

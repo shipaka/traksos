@@ -58,6 +58,49 @@ try {
       if(geometry.mainWidth < 200)throw Error(width+'px, '+label+': inaccessible workspace '+JSON.stringify(geometry));
       if(jsErrors.length)throw Error(width+'px, '+label+': JavaScript error '+jsErrors.join('; '));
     };
+
+    // Focused pre-flow verification entry diagnostic, on the real local Shell.
+    // Log only route/role/visibility and response status, never queue contents.
+    if(process.argv.includes('--verify-entry')){
+      const statuses=[];
+      page.on('response',response=>{
+        if(new URL(response.url()).pathname==='/api/admin/verification')statuses.push(response.status());
+      });
+      const verify=async(label,action)=>{
+        try{
+          const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/admin/verification',{timeout:15000});
+          await action();
+          await page.waitForURL(/#\/admin\/section\/verify$/,{timeout:15000});
+          await page.getByRole('region',{name:'Рабочий раздел: Проверка'}).waitFor();
+          await page.getByRole('heading',{name:'Проверка',exact:true}).waitFor();
+          const result=await response;
+          if(!result.ok())throw Error('Verification queue HTTP '+result.status());
+          const items=await result.json();
+          if(!Array.isArray(items))throw Error('Unexpected verification queue shape');
+          if(items.length)await page.getByRole('button',{name:'Одобрить',exact:true}).first().waitFor();
+          else await page.getByText('Очередь пуста — все проверены',{exact:true}).waitFor();
+          await checkLayout(label);
+        }catch(error){
+          const state=await page.evaluate(()=>({
+            hash:location.hash,roleClass:[...document.querySelector('.app')?.classList??[]].filter(x=>x.startsWith('role-')),
+            stage:!!document.querySelector('.admin-stage'),
+            exactHeadingCount:[...document.querySelectorAll('h1,h2,h3')].filter(e=>e.textContent?.trim()==='Проверка').length,
+            loginDialog:!!document.querySelector('input[type=password]'),
+            visibleStage:!!document.querySelector('.admin-stage')?.getClientRects().length
+          }));
+          throw Error(width+'px '+label+' '+JSON.stringify({...state,statuses,pageErrorCount:jsErrors.length}),{cause:error});
+        }
+      };
+      await openNav();
+      await verify('verification via authorized menu',()=>navigation.getByRole('button',{name:'Проверка',exact:true}).click());
+      await page.goto(BASE+'/#/admin/section/summary');
+      await page.locator('.admin-stage-head h2').getByText('Сводка',{exact:true}).waitFor();
+      await verify('verification via direct link',()=>page.goto(BASE+'/#/admin/section/verify'));
+      console.log('PASS admin verification entry (real protected queue): '+width+'px');
+      await context.close();
+      continue;
+    }
+
     // A normal admin navigation must never silently enter a client sandbox.
     if(await page.locator('.desktop-nav a[href*="/admin/test-center/client"], .admin-navigation a[href*="/admin/test-center"]').count())
       throw Error('Duplicate or implicit sandbox link in ordinary admin navigation');
