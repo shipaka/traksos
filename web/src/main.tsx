@@ -947,7 +947,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a className="desktop-nav-link" href="#/offer/privacy"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Документы</span></a>
                         </>}
           </nav>
-          {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
+          {!me && <a href="#/app-info" className="track-sidebar-app" aria-label="Информация о мобильном приложении TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
             <TrakAppPhone className="track-sidebar-app-phone"/>
             <span className="track-sidebar-app-copy">
@@ -955,7 +955,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <small>Заявки и связь с мастером в одном месте</small>
               <span className="track-sidebar-app-soon">Скоро в RuStore</span>
             </span>
-          </aside>}
+          </a>}
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Вся Россия · доступность по регионам</small></div>
         </aside>
         <div className="desktop-content">
