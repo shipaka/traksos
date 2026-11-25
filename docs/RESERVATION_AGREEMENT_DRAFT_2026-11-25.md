@@ -62,3 +62,18 @@ Explicit terminal transitions of existing linked orders now synchronize their
 reservation state at the database boundary. This is not a writer for creating a
 planned order. Legacy unlinked negotiations and historical rows are untouched;
 no automatic cancellation on reassignment or failed search is introduced.
+
+## Planned order intent and fleet permission (internal)
+
+The planned intent is deliberately separate from orders.awaiting_owner, whose
+existing approval launches immediate dispatch. An actual vehicle is required;
+current owner/driver assignment and allowed service are checked under locks at
+request and decision. Only the owner can allow a plan; all driver plans require
+explicit owner permission regardless of estimated amount. A revoked driver or
+newly forbidden service cannot be approved. Rejection can close an obsolete
+request. Idempotency, exact version, time validation, atomic event history and
+rollback are covered. Owner permission is NOT financial consent: no price,
+reservation, order, payment, notifications or dispatch are created. Before
+exposure, implement owner-visible pending list, reservation linkage, full
+pricing/limits/current-offer validation at conversion, and final acceptance.
+No production route or scheduler is enabled.
