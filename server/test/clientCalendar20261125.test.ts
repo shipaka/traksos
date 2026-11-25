@@ -21,6 +21,11 @@ before(async () => {
     values($1,$2,$3,$4,'{"brand":"DAF","model":"XF"}','electric','2026-12-02','11:00','Личные заметки') returning id`, [center.id, owner.id, driver.id, vehicle]);
   booking = b.id;
   order = ok(await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', vehicleId: vehicle, description: 'Не горит свет' }, driver.token)).order.id;
+  // The normal immediate checkout can already finish with no_performer
+  // because this fixture has no online master. The calendar deliberately
+  // excludes that terminal status. Seed a searching linked order explicitly
+  // for the read-only calendar contract, not a fake successful live booking.
+  await t.db.query("update orders set status='searching' where id=$1",[order]);
   const r = await t.db.one<any>(`insert into performer_time_reservations(performer_id,client_id,order_id,starts_at,ends_at)
     values($1,$2,$3,'2026-12-01T21:30:00Z','2026-12-01T22:30:00Z') returning id`, [master.id,owner.id,order]);
   reservation = r.id;
@@ -33,6 +38,8 @@ test('customer calendar distinguishes requests from confirmed appointments and u
   assert.equal(result.truncated,false);
   const sto = result.items.find((x:any)=>x.id===booking);
   const mobile = result.items.find((x:any)=>x.id===reservation);
+  assert.ok(sto,'linked STO fixture must be present');
+  assert.ok(mobile,'linked non-terminal order fixture must be present');
   assert.equal(sto.confirmation,'pending');
   assert.equal(sto.confirmed_time,null);
   assert.equal(sto.requested_time,'11:00');
@@ -48,6 +55,18 @@ test('customer calendar distinguishes requests from confirmed appointments and u
   const cancelled = ok(await t.api('GET',path,undefined,owner.token)).items.find((x:any)=>x.id===booking);
   assert.equal(cancelled.confirmation,'cancelled');
   assert.equal(cancelled.confirmed_time,null);
+});
+
+test('failed search does not appear as a live appointment; restoring a live fixture restores the calendar',async()=>{
+  await t.db.query("update orders set status='no_performer' where id=$1",[order]);
+  try {
+    const result=ok(await t.api('GET',path,undefined,owner.token));
+    assert.ok(!result.items.some((x:any)=>x.id===reservation));
+    assert.equal((await t.db.one<any>('select status from performer_time_reservations where id=$1',[reservation]))?.status,'proposed');
+  }finally{
+    await t.db.query("update orders set status='searching' where id=$1",[order]);
+  }
+  assert.ok(ok(await t.api('GET',path,undefined,owner.token)).items.some((x:any)=>x.id===reservation));
 });
 
 test('calendar has role, account and live vehicle isolation and validates date ranges', async () => {
@@ -94,11 +113,13 @@ test('performer calendar is private, links only accessible real orders and agree
 
 
 test('overnight reservation appears inside requested Moscow day, keeping actual interval in both calendars',async()=>{
-  await t.db.query("update orders set status='accepted',performer_id=$2 where id=$1",[order,master.id]);
+  // Separate order: never resurrect the cancelled order from the prior test.
+  const overnightOrder=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb',vehicleId:vehicle},owner.token)).order.id;
+  await t.db.query("update orders set status='accepted',performer_id=$2 where id=$1",[overnightOrder,master.id]);
   const r=await t.db.one<any>(`insert into performer_time_reservations
     (performer_id,client_id,order_id,starts_at,ends_at,status,decision_at,decided_by)
     values($1,$2,$3,'2026-12-01T20:30:00Z','2026-12-01T22:30:00Z','confirmed',$4,$2) returning id`,
-    [master.id,owner.id,order,t.clock.now()]);
+    [master.id,owner.id,overnightOrder,t.clock.now()]);
   const p='/api/performer/calendar?from=2026-12-02&to=2026-12-02';
   const a=ok(await t.api('GET',path,undefined,owner.token)).items.find((x:any)=>x.id===r.id);
   const b=ok(await t.api('GET',p,undefined,master.token)).items.find((x:any)=>x.id===r.id);

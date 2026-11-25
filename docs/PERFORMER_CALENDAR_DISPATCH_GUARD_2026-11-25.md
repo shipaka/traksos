@@ -28,3 +28,13 @@ release after failed search, or reassignment-based cancellation is performed.
 Existing order notifications and financial hooks remain authoritative. Linked
 reservation notification delivery and review of historical inconsistent rows
 remain open until the full planned-order workflow is integrated.
+
+## CI regression correction
+
+Full CI on 0b0c72c: 724/726 server tests passed, including reservation concurrency,
+reschedule, notification outbox, deadline handling, and performer calendar.
+The two failures were customer calendar fixture assumptions: immediate checkout
+without an online performer reaches no_performer, which is intentionally hidden
+from the live calendar. Fixtures now explicitly seed a live linked order,
+assert exclusion in no_performer, and use a separate order for overnight tests.
+This does not relax the production query or claim the new run passed.
