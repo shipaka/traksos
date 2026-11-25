@@ -2,7 +2,7 @@ import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.ts
 import { TrakAppPhone } from '../trakAppPhone.tsx';
 import { useEffect, useRef, useState } from 'react';
 import { native } from '../native.ts';
-import { post, setToken, connectWs, ApiError } from '../api.ts';
+import { post, setToken, getToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
 import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, guestCustomerDestination, type GuestAction } from '../guestCatalog.ts';
 import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
@@ -191,6 +191,8 @@ export function Login({ driver, entry, serviceContext }: {
   // generation that owns the lock so an obsolete response cannot unlock
   // a newer password attempt, even before React commits the next render.
   const loginPending = useRef<number | null>(null);
+  const smsPending=useRef(false);
+  const verifyPending=useRef(false);
   const cancelPendingLogin = () => {
     loginPending.current = null;
     setLoginBusy(false);
@@ -285,7 +287,7 @@ export function Login({ driver, entry, serviceContext }: {
   const partnerAccountType = intent === 'join' && (role === 'master' || role === 'service') && hybridMasterService
     ? 'master_service' : role;
   async function sendCode() {
-    if (busy) return;
+    if (busy||smsPending.current||verifyPending.current||intent==='login'||!intent) return;
     const generation = ++authGeneration.current;
     setCodeError('');
     const digits = phone.replace(/\D/g, '');
@@ -307,6 +309,7 @@ export function Login({ driver, entry, serviceContext }: {
     }
     setInsurerOnly(false);
     setCodeStatus('Проверяем номер и отправляем SMS…');
+    smsPending.current=true;
     const r = await run(async () => {
       try {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
@@ -319,7 +322,7 @@ export function Login({ driver, entry, serviceContext }: {
         setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
         throw e;
       }
-    }, null);
+    }, null).finally(()=>{smsPending.current=false;});
     if (generation !== authGeneration.current) return;
     setCodeStatus('');
     if (r?.sent === true) {
@@ -358,7 +361,9 @@ export function Login({ driver, entry, serviceContext }: {
       }
       return;
     }
+    if(busy||verifyPending.current||smsPending.current||step!=='code'||code.length<4||password.length<10)return;
     const generation = ++authGeneration.current;
+    setCodeError('');verifyPending.current=true;
     const r = await run(async () => {
       try {
         return await post('/api/auth/verify', { phone, code,
@@ -376,13 +381,19 @@ export function Login({ driver, entry, serviceContext }: {
         }
         if (generation === authGeneration.current && e instanceof ApiError && e.code === 'insurer_only')
           setInsurerOnly(true);
+        if(generation===authGeneration.current)setCodeError(authErrorMessage(e,'Не удалось подтвердить код. Проверьте данные и подключение.'));
         throw e;
       }
-    }, null);
+    }, null).finally(()=>{verifyPending.current=false;});
     if (r && generation === authGeneration.current) await signedIn(r, generation);
   }
   async function signedIn(r: any, generation: number) {
       if (generation !== authGeneration.current) return;
+      if(typeof r?.token!=='string'||!r.token||!Array.isArray(r?.user?.roles)){
+        const message='Сервер не подтвердил вход. Повторите попытку.';
+        if(intent==='login')setLoginError(message);else setCodeError(message);
+        return;
+      }
       if (intent === 'join' && (role === 'master' || hybridMasterService)) {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
@@ -403,6 +414,7 @@ export function Login({ driver, entry, serviceContext }: {
       // form. Navigation after reload is part of the successful login, so do
       // not treat that intentional unmount as cancellation.
       await reload();
+      if(getToken()!==r.token)return;
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
@@ -745,8 +757,10 @@ export function Login({ driver, entry, serviceContext }: {
           <Field label={intent === 'reset' || intent === 'activate' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
             <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => { authGeneration.current += 1; setPassword(e.target.value); }} minLength={10} />
           </Field>
+          {codeError&&<div className="card" role="alert">{codeError}</div>}
           <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : intent === 'activate' ? 'Активировать аккаунт' : 'Зарегистрироваться'}</button>
           {insurerOnly && <button type="button" className="btn" onClick={() => { setStep('phone'); setCode(''); setRole('insurer'); setIntent('join'); setInsurerOnly(false); }}>Перейти к страховому кабинету</button>}
+          <button type="button" className="btn ghost" disabled={busy} onClick={()=>{setCode('');setDevCode(null);setCodeError('');setStep('phone');}}>Запросить новый код</button>
           <button type="button" className="btn ghost" onClick={otherAuthNumber}>Другой номер</button>
         </form>
       )}
