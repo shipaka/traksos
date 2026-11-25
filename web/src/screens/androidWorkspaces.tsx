@@ -1,9 +1,9 @@
 /* Android workspaces approved 19.11.2026. Only real API-backed values. */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { native } from '../native.ts';
 import { get, post, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
-import { useLoad, useAction } from '../ui.tsx';
+import { useLoad, useAction, useMe } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 
@@ -258,15 +258,21 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
 }
 
 export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance,
-  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false }: {
+  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false, jobsLoading=false, jobsError=null, auctionsError=null }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
   setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
-  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean;
+  reloadJobs?: () => void | Promise<void>; todayCount?: number | null; pendingReview?: number; reviewOnly?:boolean;
+  jobsLoading?:boolean; jobsError?:string|null; auctionsError?:string|null;
 }) {
   const tow = performer.kind === 'tow';
   const inJob = performer.line_status === 'on_job';
   const current=active[0];
   const { busy: stageBusy, run: runStage } = useAction();
+  const stepLock=useRef(false);
+  const [reconciling,setReconciling]=useState(false);
+  const [uncertainStep,setUncertainStep]=useState('');
+  const stepKey=current ? String(current.id)+':'+current.status : '';
+  const needsRefresh=!!stepKey&&uncertainStep===stepKey;
   const stepForStatus: Record<string, {action:'depart'|'arrive'|'start_work';label:string}> = {
     accepted:{action:'depart',label:'Выехал'},
     en_route:{action:'arrive',label:'Я на месте'},
@@ -274,11 +280,17 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
   };
   const nextStep=current ? stepForStatus[current.status] : null;
   const confirmStep=async()=>{
-    if(!current || !nextStep || stageBusy || busy)return;
+    if(!current || !nextStep || stageBusy || busy || stepLock.current || jobsError || needsRefresh || reviewOnly)return;
     if(!window.confirm('Подтвердить этап «'+nextStep.label+'» по заявке №'+current.number+'?'))return;
-    const changed=await runStage(()=>post('/api/orders/'+current.id+'/step',
-      {action:nextStep.action}), 'Этап заявки обновлён');
-    if(changed)reloadJobs?.();
+    stepLock.current=true;setReconciling(true);
+    try{
+      await runStage(()=>post('/api/orders/'+current.id+'/step',
+        {action:nextStep.action}), 'Этап заявки обновлён');
+      // Even a timed-out write may have been accepted. Reconcile by reading;
+      // do not automatically send the same status mutation a second time.
+      setUncertainStep(stepKey);
+      await reloadJobs?.();
+    }finally{stepLock.current=false;setReconciling(false);}
   };
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
@@ -292,11 +304,12 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     </div>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
-      <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount} заяв.</strong></span></a>
+      <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount==null?'—':todayCount+' заяв.'}</strong></span></a>
       <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1).replace('.',',') : '—'}</strong></span></a>
       <a href="#/work/me/money"><NavGlyph glyph="coins"/><span><small>К выплате</small><strong>{balance?.to_pay != null ? rub(balance.to_pay) : '—'}</strong></span></a>
     </div>
-    {active.length ? <section className="and19-panel and19-main-order">
+    {jobsError&&<section className="and19-panel" role="alert"><strong>Не удалось обновить заявки</strong><p>{jobsError}</p><button className="and19-action" type="button" onClick={()=>{void reloadJobs?.();}}>Повторить загрузку</button></section>}
+    {jobsLoading&&!active.length?<MobileLoading label="Проверяем рабочие заявки"/>:jobsError&&!active.length?null:active.length ? <section className="and19-panel and19-main-order">
       <div className="and19-order-open">
         <a href={'#/order/'+current.id} className="and19-order-heading-link"
           aria-label={'Открыть заявку №'+current.number}><OrderTitle order={current}/></a>
@@ -317,21 +330,15 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       </div>
       <div className="and19-stage-actions">
         {nextStep ? <button type="button" className="and19-stage-primary"
-          disabled={stageBusy||busy} onClick={()=>{void confirmStep()}}>
+          disabled={stageBusy||busy||reconciling||!!jobsError||needsRefresh||reviewOnly} onClick={()=>{void confirmStep()}}>
           <NavGlyph glyph={current.status==='en_route'?'pin':'check'}/>
-          {nextStep.label}
+          {stageBusy||reconciling?'Обновляем этап…':nextStep.label}
         </button> : <a className="and19-stage-primary"
-          href={'#/order/'+current.id+'/finance'}>
-          {current.status==='working'?'Оформить результат':'Проверить заявку'}
+          href={'#/order/'+current.id+(current.status==='working'?'/finance':'')}>
+          {current.status==='working'?'Завершить работу и расчёт':'Открыть заявку'}
         </a>}
-        {current.status==='working'
-          ? <a href={'#/order/'+current.id+'/finance'} className="and19-stage-complete">
-              <NavGlyph glyph="check"/>Завершить
-            </a>
-          : <span className="and19-stage-complete is-disabled" aria-disabled="true">
-              <NavGlyph glyph="check"/>Завершить
-            </span>}
       </div>
+      {needsRefresh&&!reconciling&&<p className="note" role="status">Проверьте текущий статус в <a href={'#/order/'+current.id}>карточке заявки</a>. Повторная отправка с рабочего стола заблокирована до изменения этапа.</p>}
       {active.length>1 && <a className="and19-row-link" href="#/work/jobs">
         Другие активные заявки: {active.length-1} ›</a>}
     </section> : <section className="and19-panel and19-empty">
@@ -353,6 +360,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
           <strong>{Number.isFinite(current.money.payout)?rub(current.money.payout):'—'}</strong></span>
       </a>}
     {pendingReview > 0 && <a className="and19-row-link" href="#/work/jobs">Работы завершены физически, ожидают решения клиента: {pendingReview} ›</a>}
+    {auctionsError&&<section className="and19-panel" role="alert"><strong>Не удалось обновить предложения</strong><button className="and19-action" type="button" onClick={reloadAuctions}>Повторить</button></section>}
     {auctions.length > 0 && <section className="and19-auctions">
       <h2>Новые подходящие заявки ({auctions.length})</h2>
       {auctions.map((a: any) => <div className="and19-panel" key={a.order_id}>
@@ -379,7 +387,11 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
 }
 
 export function AndroidMasterChats() {
-  const l = useLoad<any[]>(() => get('/api/orders?as=performer'), []);
+  const {me}=useMe();
+  return <AndroidMasterChatsForAccount key={me?.id??'guest'}/>;
+}
+function AndroidMasterChatsForAccount() {
+  const l = useLoad<any[]>(() => get('/api/orders?as=performer'), [],e=>e.type==='order'||e.type==='connection_restored');
   const rows = (l.data || []).filter(o => o && o.id && ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status));
   return <main className="and19-chats and19-workspace">
     <h1>Чаты по заявкам</h1>
