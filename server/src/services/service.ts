@@ -3,6 +3,7 @@
 
 import type { Db } from '../db/index.ts';
 import { assertRoleExtension } from '../domain/roles.ts';
+import { validInn } from '../domain/inn.ts';
 import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import type { SupportService } from './support.ts';
@@ -70,10 +71,15 @@ export class ServiceCenters {
     assertRoleExtension(existingRoles, 'service');
     const cur = await this.mine(user);
     if (!cur && (!p.name?.trim() || !p.address?.trim())) throw bad('need_name', 'Укажите название и адрес');
-    if (p.inn && !/^(\d{10}|\d{12})$/.test(p.inn)) throw bad('bad_inn', 'ИНН — 10 или 12 цифр');
+
     const v = (x: unknown) => (x === undefined ? null : x);
     await this.db.tx(async (q) => {
       await q.query(`update users set roles = (select array(select distinct unnest(roles || '{service}'::text[]))) where id=$1`, [user.id]);
+      if(p.inn!=null){
+        const current=await q.one<{inn:string|null}>('select inn from service_centers where owner_id=$1 for update',[user.id]);
+        if(p.inn!==current?.inn&&!validInn(p.inn))
+          throw bad('bad_inn','ИНН организации — 10 цифр, физлица или ИП — 12. Проверьте контрольные цифры.');
+      }
       if (!cur) {
         await q.query(
           `insert into service_centers(owner_id, name, address, lat, lng, hours, inn, brands, staff, conditions, accepts, closed_days, accepts_confirmed_at)
