@@ -13,9 +13,9 @@ const bundle=await build({
  function App(){
   const [s,set]=useState({id:'A',mode:'order',source:'one'});
   window.__switch=(id,mode,source,token=id)=>{window.__p.token=token;set({id,mode,source});};
-  return <TestContext.Provider value={{me:{id:s.id,roles:s.mode==='admin'?['admin']:['client']}}}>
-   {s.mode==='order'?<OrderPartRecommendations order={{id:s.source,you:'client'}}/>:
-    s.mode==='booking'?<BookingPartRecommendations bookingId={s.source}/>:
+  return <TestContext.Provider value={{me:{id:s.id,roles:s.mode==='admin'?['admin']:s.mode==='performer'?['master']:s.mode==='workshop'?['service']:['client']}}}>
+   {(s.mode==='order'||s.mode==='performer')?<OrderPartRecommendations order={{id:s.source,you:s.mode==='performer'?'performer':'client'}}/>:
+    (s.mode==='booking'||s.mode==='workshop')?<BookingPartRecommendations bookingId={s.source}/>:
     s.mode==='history'?<PartRecommendationHistory vehicleId={s.source}/>:<AdminPartSourcing/>}
   </TestContext.Provider>;
  }
@@ -51,7 +51,7 @@ try{
   await page.setContent('<html lang="ru"><body><div id="root"></div></body></html>');
   await page.addScriptTag({content:bundle.outputFiles[0].text});
   const count=n=>page.waitForFunction(n=>window.__p.reads.length>=n,n);
-  const answer=(i,data,fail=false)=>page.evaluate(({i,data,fail})=>{const p=window.__p.reads[i];if(fail)p.reject(Error('offline'));else p.resolve(data);},{i,data,fail});
+  const answer=(i,data,fail=false)=>page.evaluate(({i,data,fail})=>{const p=window.__p.reads[i];if(fail)p.reject(Object.assign(Error('offline'),{status:typeof fail==='number'?fail:0}));else p.resolve(data);},{i,data,fail});
   const change=(...args)=>page.evaluate(args=>window.__switch(...args),args);
   const emit=e=>page.evaluate(e=>window.__emit(e),e);
   const visible=name=>page.getByText(name,{exact:true}).waitFor();
@@ -103,6 +103,49 @@ try{
   await path(18,'/api/shop/part-recommendations?page=0&vehicleId=truck3');await hidden('HISTORY-CURRENT');
   await answer(18,{items:[],hasMore:false});await visible('Рекомендаций пока нет');
 
+  // Inline proposal is unmounted during private revalidation; only locally
+  // entered fields survive, never old catalogue results or fitment consent.
+  const allowed={items:[],canSuggest:true,canDecide:false};
+  const open=()=>page.getByRole('button',{name:'Предложить по маркировке детали'}).click();
+  const field=name=>page.getByLabel(name,{exact:true});
+  const proposal=page.getByRole('region',{name:'Подбор запчасти'});
+  const send=page.getByRole('button',{name:'Предложить замену клиенту'});
+  const confirmation=page.getByRole('checkbox');
+  await change('M','performer','draft-order');await count(20);await answer(19,allowed);await open();
+  await field('Производитель').fill('Fixture');await field('Артикул').fill('DRAFT-42');
+  await field('Название детали').fill('Деталь для проверки');await field('Количество').fill('2');
+  await field('Причина замены').fill('Подтверждён дефект установленной детали');
+  await confirmation.check();assert.equal(await send.isEnabled(),true);
+  await emit({type:'part_recommendations_changed'});await count(21);await proposal.waitFor({state:'detached'});
+  await answer(20,null,true);await retry();await count(22);await answer(21,allowed);
+  await proposal.waitFor();assert.equal(await field('Артикул').inputValue(),'DRAFT-42');
+  assert.equal(await field('Количество').inputValue(),'2');
+  assert.equal(await confirmation.isChecked(),false);assert.equal(await send.isEnabled(),false);
+  await confirmation.check();await send.click();await page.waitForFunction(()=>window.__p.writes.length===2);
+  await emit({type:'connection_restored'});await count(23);await proposal.waitFor({state:'detached'});await answer(22,allowed);
+  await proposal.waitFor();assert.equal(await send.isEnabled(),false);
+  assert.equal(await field('Артикул').isEnabled(),false);
+  await page.evaluate(()=>window.__p.writes[1].resolve({ok:true}));await count(24);await answer(23,allowed);
+  await proposal.waitFor();assert.equal(await field('Артикул').inputValue(),'');
+  assert.equal(await page.evaluate(()=>window.__p.writes.length),2);
+  await field('Артикул').fill('REVOKED-DRAFT');
+  await emit({type:'part_recommendations_changed'});await count(25);await answer(24,null,403);
+  await retry();await count(26);await answer(25,allowed);await open();
+  assert.equal(await field('Артикул').inputValue(),'');
+  await field('Артикул').fill('OTHER-ORDER');
+  await change('M','performer','draft-other');await count(27);await answer(26,allowed);await open();
+  assert.equal(await field('Артикул').inputValue(),'');
+  await field('Артикул').fill('OLD-SESSION');
+  await change('M','performer','draft-other','rotated');await count(28);await answer(27,allowed);await open();
+  assert.equal(await field('Артикул').inputValue(),'');
+  await change('S','workshop','draft-booking');await count(29);await answer(28,allowed);await open();
+  await field('Артикул').fill('BOOKING-DRAFT');
+  await emit({type:'part_recommendations_changed'});await count(30);await proposal.waitFor({state:'detached'});
+  await answer(29,allowed);await proposal.waitFor();assert.equal(await field('Артикул').inputValue(),'BOOKING-DRAFT');
+  await emit({type:'part_recommendations_changed'});await count(31);await answer(30,{...allowed,canSuggest:false});
+  await proposal.waitFor({state:'detached'});
+  await emit({type:'part_recommendations_changed'});await count(32);await answer(31,allowed);await open();
+  assert.equal(await field('Артикул').inputValue(),'');
   assert.deepEqual(errors,[]);await page.close();
  }
  console.log('PASS recommendation private reads, errors, source and page isolation, admin selection and session rotation');
