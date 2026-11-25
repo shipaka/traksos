@@ -4,7 +4,6 @@ import { put, rub } from '../api.ts';
 import { useAction, useMe, RubInput } from '../ui.tsx';
 import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
 import {parseAdminSetting} from '../adminSettingsValidation20261124.ts';
-import { InsuranceAccessAdmin } from './insuranceAccessAdmin.tsx';
 
 type Kind = 'rub' | 'pct' | 'num' | 'text' | 'bool' | 'share';
 type Row = [section: string, key: string, label: string, kind: Kind, hint?: string];
@@ -122,10 +121,6 @@ export function AdminSettings() {
       {error&&<div className="banner warn" role="alert">{error}</div>}
       <button type="button" className="btn ghost small" disabled={busy}
         onClick={()=>{setEdit(null);setVal(null);setError('');s.reload();}}>Сверить параметры с сервером</button>
-      <button type="button" className="linkrow" aria-expanded={activeGroup === 'insurance'} onClick={() => { setActiveGroup(activeGroup === 'insurance' ? null : 'insurance'); setEdit(null); }}>
-        <span><b>Страховые агенты</b><small>Доступы и подключение страховых партнёров</small></span><span aria-hidden="true">{activeGroup === 'insurance' ? '−' : '›'}</span>
-      </button>
-      {activeGroup === 'insurance' && <InsuranceAccessAdmin />}
       {GROUPS.map(([g, rows]) => (
         <div key={g} className="stack">
           <button type="button" className="linkrow" aria-expanded={activeGroup === g} onClick={() => { setActiveGroup(activeGroup === g ? null : g); setEdit(null); }}>
