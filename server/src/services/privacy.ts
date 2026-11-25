@@ -16,10 +16,22 @@ export class PrivacyService {
     return { deleteRequestedAt: at, deleteAt: at ? new Date(new Date(at).getTime() + GRACE_DAYS * 86400_000) : null, graceDays: GRACE_DAYS };
   }
 
-  /** Всё, что TrakSOS хранит о человеке, одним файлом */
+  /** Account-scoped export; bounded sections explicitly describe their coverage. */
   async export(user: AuthUser) {
     const id = user.id;
     const q = (sql: string) => this.db.query(sql, [id]);
+    // Counts and rows come from the same statement, including deterministic
+    // ordering when several records have identical timestamps.
+    const notifications = await this.db.query<{ title: string; body: string; created_at: Date; total: number }>(
+      'select title, body, created_at, (count(*) over ())::int as total from notifications where user_id=$1 order by created_at desc, id desc limit 500', [id]);
+    const air = await this.db.query<{ body: string; created_at: Date; hidden: boolean; total: number }>(
+      `select body, created_at, hidden_at is not null as hidden, (count(*) over ())::int as total
+         from driver_air_messages where user_id=$1 and origin='human'
+         order by created_at desc, id desc limit 500`, [id]);
+    const scope = (rows: {total: number}[]) => ({
+      total: rows[0]?.total ?? 0, included: rows.length, limit: 500,
+      truncated: (rows[0]?.total ?? 0) > rows.length,
+    });
     return {
       exportedAt: this.now(),
       account: await this.db.one(`select id, phone, name, roles, status, company_name, company_inn, edo_operator, edo_id, created_at from users where id=$1`, [id]),
@@ -52,7 +64,14 @@ export class PrivacyService {
            from shop_courier_deliveries where courier_id=$1 order by created_at`),
       courierPresence: await this.db.one(`select online, updated_at from shop_courier_presence
            where courier_id=$1`, [id]),
-      notifications: await q('select title, body, created_at from notifications where user_id=$1 order by created_at desc limit 500'),
+      // Only the account's own stored, already-filtered human messages.
+      // Never include other authors, bot replies or the moderator's identity.
+      driverAirMessages: air.map(({ total: _total, ...row }) => row),
+      notifications: notifications.map(({ total: _total, ...row }) => row),
+      exportLimits: {
+        notifications: scope(notifications),
+        driverAirMessages: scope(air),
+      },
     };
   }
 
