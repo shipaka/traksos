@@ -101,6 +101,7 @@ function OrderForSession({id,initialTab,userId}:{
               completedAt={d.completedAt} isAdmin={false} />
         : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
+      {d.status === 'searching' && d.you === 'client' && <a className="search-workspace-desk-link" href={'#/?order='+encodeURIComponent(id)}>Открыть поиск на рабочем столе →</a>}
       {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} collapsed={searchCollapsed} onCollapsedChange={setSearchCollapsed} />}
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
