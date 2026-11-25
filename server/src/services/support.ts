@@ -1,5 +1,6 @@
 // Поддержка: обращения по заявке или без неё. Пишут пользователь и сотрудники; закрыть может любой из них.
 
+import { createHash } from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
@@ -17,13 +18,13 @@ export class SupportService {
 
   // Moderators own the first response. Admin receives intake only when no
   // moderator exists; otherwise admin is alerted once the SLA is breached.
-  private intakeStaffIds = async (q: Queryable = this.db) => {
+  private intakeStaffIds = async (q: Queryable = this.db, requestedRole?: 'admin' | 'moderator' | null) => {
     const moderators = await q.query<{ id: string }>(
-      `select id from users where status='active' and roles && '{moderator}'::text[] order by id for share`);
-    if (moderators.length) return moderators.map(r => r.id);
+      `select id from users where status='active' and deleted_at is null and roles && '{moderator}'::text[] order by id for share`);
+    if (requestedRole !== 'admin' && moderators.length) return moderators.map(r => r.id);
     const admins = await q.query<{ id: string }>(
-      `select id from users where status='active' and roles && '{admin}'::text[] order by id for share`);
-    return admins.map(r => r.id);
+      `select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[] order by id for share`);
+    return admins.length ? admins.map(r => r.id) : moderators.map(r => r.id);
   };
 
   /**
@@ -74,9 +75,55 @@ export class SupportService {
   }
 
 
-  async open(user: AuthUser, p: { topic: string; text: string; orderId?: string; ledgerEntryId?: number }) {
+  // Standalone intake has no linked order or ledger side effects. Persist
+  // the initial message and staff inbox in the same transaction as its ticket.
+  private async openStandalone(user: AuthUser, p: {
+    topic: string; text: string; requestKey?: string; requestedRole?: 'admin' | 'moderator';
+  }, text: string) {
+    const safeText = maskPhones(text).text;
+    const fingerprint = createHash('sha256').update(JSON.stringify([p.topic, text, p.requestedRole ?? null])).digest('hex');
+    const result = await this.db.tx(async q => {
+      const actor = await q.one<{id:string;name:string|null;phone:string}>(
+        "select id,name,phone from users where id=$1 and status='active' and deleted_at is null for share", [user.id]);
+      if (!actor) throw forbidden();
+      if (p.requestKey) {
+        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:standalone:' + user.id + ':' + p.requestKey]);
+        const prior = await q.one<{id:string;client_request_hash:string}>(
+          'select id,client_request_hash from support_tickets where user_id=$1 and client_request_key=$2',
+          [user.id,p.requestKey]);
+        if (prior) {
+          if (prior.client_request_hash !== fingerprint)
+            throw conflict('support_request_changed','Этот запрос уже использован с другим текстом. Проверьте историю обращений.');
+          return { id:prior.id, delivery:null };
+        }
+      }
+      const ticket = await q.one<{id:string;number:number}>(
+        `insert into support_tickets(user_id,topic,sla_deadline_at,client_request_key,client_request_hash,requested_staff_role)
+         values($1,$2,$3,$4,$5,$6) returning id,number`,
+        [user.id,p.topic.slice(0,80),new Date(this.now().getTime()+3_600_000),
+          p.requestKey??null,p.requestKey?fingerprint:null,p.requestedRole??null]);
+      if (!ticket) throw Error('Support ticket insert failed');
+      await q.query('insert into support_messages(ticket_id,sender_id,body) values($1,$2,$3)',
+        [ticket.id,user.id,safeText]);
+      const ids = await this.intakeStaffIds(q,p.requestedRole);
+      const msg = { kind:'normal' as const, title:maskPhones(`Обращение №${ticket.number}: ${p.topic}`).text,
+        body:maskPhones(`${actor.name??actor.phone}: ${safeText.slice(0,100)}`).text, data:{ticketId:ticket.id} };
+      for(const id of ids) await q.query(
+        "insert into notifications(user_id,kind,title,body,data) values($1,'support',$2,$3,$4)",
+        [id,msg.title,msg.body,msg.data]);
+      return {id:ticket.id,delivery:{ids,msg}};
+    });
+    if(result.delivery) await this.notifier.deliverStored(result.delivery.ids,
+      {type:'support',ticketId:result.id},result.delivery.msg).catch(()=>{});
+    return this.thread(user,result.id);
+  }
+
+  async open(user: AuthUser, p: { topic: string; text: string; orderId?: string; ledgerEntryId?: number;
+    requestKey?: string; requestedRole?: 'admin' | 'moderator' }) {
     const text = p.text.trim();
     if (text.length < 3) throw bad('empty', 'Опишите, что случилось');
+    if (!p.orderId && !p.ledgerEntryId) return this.openStandalone(user,p,text);
+    if (p.requestKey || p.requestedRole) throw bad('support_context','Этот способ доступен только для личного обращения без привязки к заявке.');
     // The stored body and notification preview share one redacted version.
     const safeText = maskPhones(text).text;
     let number: number | null = null;
@@ -172,8 +219,8 @@ export class SupportService {
     if (!text) throw bad('empty', 'Пустое сообщение');
     const safeText = maskPhones(text).text;
     const delivery = await this.db.tx(async q => {
-      const locked = await q.one<{ status: string; user_id: string; number: number; assignee_id: string | null }>(
-        'select status, user_id, number, assignee_id from support_tickets where id=$1 for update', [ticketId]);
+      const locked = await q.one<{ status: string; user_id: string; number: number; assignee_id: string | null; requested_staff_role: 'admin'|'moderator'|null }>(
+        'select status, user_id, number, assignee_id, requested_staff_role from support_tickets where id=$1 for update', [ticketId]);
       if (!locked) throw notFound('Обращение не найдено');
       if (locked.status === 'closed')
         throw conflict('closed', 'Обращение закрыто — создайте новое');
@@ -197,7 +244,7 @@ export class SupportService {
                else first_staff_reply_at end where id=$1`,
         [ticketId, postedAt, assignee?.id ?? (staff ? user.id : null), staff]);
       const ids = staff ? [locked.user_id] :
-        assignee ? [assignee.id] : await this.intakeStaffIds(q);
+        assignee ? [assignee.id] : await this.intakeStaffIds(q,locked.requested_staff_role);
       const title = staff ? `Поддержка ответила · №${locked.number}` : `Новое сообщение · №${locked.number}`;
       const msg = { kind: 'normal' as const, title, body: safeText.slice(0, 120), data: { ticketId } };
       // Persist the message, first-response timestamp and inbox in one commit.
@@ -283,7 +330,7 @@ export class SupportService {
       `select l.id::int as id, l.kind, l.amount, l.note, l.account, l.created_at, o.number as order_number
          from ledger_entries l left join orders o on o.id=l.order_id where l.id=$1`, [t.ledger_entry_id]) : null;
     return { id: t.id, number: t.number, topic: t.topic, status: t.status,
-      createdAt: t.created_at, slaDeadlineAt: t.sla_deadline_at,
+      createdAt: t.created_at, requestedRole: t.requested_staff_role ?? null, slaDeadlineAt: t.sla_deadline_at,
       firstStaffReplyAt: t.first_staff_reply_at, slaOverdueAt: t.sla_overdue_at,
       order, author, messages, entry };
   }
