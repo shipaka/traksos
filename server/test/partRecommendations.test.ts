@@ -76,6 +76,27 @@ test('repair recommendation is private, owner controlled, exact and idempotent t
   assert.equal((await t.db.query('select id from shop_orders where part_recommendation_id=$1',[mid])).length,0);
   assert.equal((await t.db.one<any>('select stock from shop_products where id=$1',[exact.id]))?.stock,2);
   assert.equal(ok(await t.api('GET','/api/shop/part-recommendations/'+mid+'/checkout',undefined,owner.token)).product.id,exact.id);
+  // Direct service calls retain the previously authenticated role snapshot.
+  const ownerSnapshot=await t.app.auth.authenticate(owner.token),adminSnapshot=await t.app.auth.authenticate(admin.token);
+  assert.ok(ownerSnapshot&&adminSnapshot);
+  const svc=new PartRecommendations(t.db,t.app.settings,t.app.notifier);
+  await t.db.query("update users set roles='{driver}'::text[] where id=$1",[owner.id]);
+  await assert.rejects(svc.history(ownerSnapshot,null,0),{status:403});
+  await assert.rejects(svc.checkout(ownerSnapshot,rid),{status:403});
+  await assert.rejects(svc.requestSourcing(ownerSnapshot,mid),{status:403});
+  await t.db.query("update users set roles='{client}'::text[],deleted_at=now() where id=$1",[owner.id]);
+  await assert.rejects(svc.history(ownerSnapshot,null,0),{status:403});
+  await t.db.query("update users set deleted_at=null where id=$1",[owner.id]);
+  assert.equal((await svc.checkout(ownerSnapshot,rid)).order.id,purchased.id);
+  await t.db.query("update users set roles='{moderator}'::text[] where id=$1",[admin.id]);
+  await assert.rejects(svc.sourcingQueue(adminSnapshot,0,'resolved'),{status:403});
+  await assert.rejects(svc.sourcingCandidates(adminSnapshot,mid),{status:403});
+  await assert.rejects(svc.resolveSourcing(adminSnapshot,mid,{status:'resolved',productId:exact.id}),{status:403});
+  await t.db.query("update users set roles='{admin}'::text[],deleted_at=now() where id=$1",[admin.id]);
+  await assert.rejects(svc.sourcingQueue(adminSnapshot,0,'resolved'),{status:403});
+  await t.db.query("update users set deleted_at=null where id=$1",[admin.id]);
+  assert.ok((await svc.sourcingQueue(adminSnapshot,0,'resolved')).items.some((x:any)=>x.id===mid));
+
  }finally{await t.close();}
 });
 
@@ -113,6 +134,17 @@ test('approved workshop shares recommendation history and sourcing without alter
   assert.equal((await t.api('POST',path,{...proposal,article:'STO-43'},workshop.token)).status,403);
   assert.equal((await t.api('GET',path,undefined,workshop.token)).status,403);
   assert.equal(ok(await t.api('GET',path,undefined,owner.token)).items[0].id,rid);
+  // Keep own historical records after a synthetic transfer; never initiate
+  // sourcing or checkout on the transferred truck or read it by garage filter.
+  const newOwner=await t.login('+79997808104');
+  await t.db.query('update vehicles set owner_id=$2 where id=$1',[vehicle.id,newOwner.id]);
+  assert.ok(ok(await t.api('GET','/api/shop/part-recommendations',undefined,owner.token)).items.some((x:any)=>x.id===rid));
+  assert.equal((await t.api('GET','/api/shop/part-recommendations?vehicleId='+vehicle.id,undefined,owner.token)).status,403);
+  assert.equal((await t.api('POST',request,{},owner.token)).status,403);
+  assert.equal((await t.api('GET','/api/shop/part-recommendations/'+rid+'/checkout',undefined,owner.token)).status,403);
+  assert.equal((await t.api('POST',request,{},newOwner.token)).status,404);
+  assert.equal(ok(await t.api('GET','/api/shop/part-recommendations?vehicleId='+vehicle.id,undefined,newOwner.token)).items.length,0);
+
  }finally{await t.close();}
 });
 
