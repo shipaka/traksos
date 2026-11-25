@@ -23,6 +23,7 @@ function NotificationPage({before,pageNumber,older,newer,newest}:{
   const alive=useRef(false);
   const revision=useRef(0);
   const readLock=useRef(false);
+  const loadingRef=useRef(true);
   const navigationLock=useRef(false);
   const [data,setData]=useState<NoticePage|null>(null);
   const [loading,setLoading]=useState(true);
@@ -33,7 +34,7 @@ function NotificationPage({before,pageNumber,older,newer,newest}:{
   const reload=async()=>{
     if(!alive.current)return;
     const request=++revision.current;
-    setLoading(true);setError(null);
+    loadingRef.current=true;setLoading(true);setError(null);
     try{
       const result=await get<NoticePage>(endpoint+(before===null?'':'?before='+before));
       if(!alive.current||request!==revision.current)return;
@@ -42,27 +43,42 @@ function NotificationPage({before,pageNumber,older,newer,newest}:{
       if(!alive.current||request!==revision.current)return;
       setData(null);setError(e instanceof Error?e.message:String(e));
     }finally{
-      if(alive.current&&request===revision.current)setLoading(false);
+      if(alive.current&&request===revision.current){loadingRef.current=false;setLoading(false);}
     }
   };
   useEffect(()=>{
     alive.current=true;
     void reload();
-    const off=onEvent(e=>{
-      if(e.type==='connection_restored'||e.type==='notification')void reload();
-    });
-    return ()=>{alive.current=false;revision.current++;off();};
+    // Notifier uses the original business event type (support, announcement,
+    // order status, etc.). Coalesce a burst without dropping its final refresh.
+    let timer:number|undefined;
+    const schedule=()=>{
+      if(timer!==undefined)return;
+      timer=window.setTimeout(()=>{
+        timer=undefined;
+        void reload();
+      },250);
+    };
+    const off=onEvent(schedule);
+    window.addEventListener('online',schedule);
+    window.addEventListener('focus',schedule);
+    return ()=>{
+      alive.current=false;revision.current++;off();
+      if(timer!==undefined)window.clearTimeout(timer);
+      window.removeEventListener('online',schedule);
+      window.removeEventListener('focus',schedule);
+    };
   },[before]);
   const busy=loading||markingAll||openingId!==null;
   const nextBefore=data?.nextBefore;
   const canOlder=typeof nextBefore==='number'&&Number.isSafeInteger(nextBefore)&&nextBefore>0
     &&(before===null||nextBefore<before);
   const move=(fn:()=>void)=>{
-    if(readLock.current||navigationLock.current||busy)return;
+    if(readLock.current||navigationLock.current||loadingRef.current||busy)return;
     navigationLock.current=true;fn();
   };
   const open=async(n:Notice)=>{
-    if(readLock.current||navigationLock.current||busy||error)return;
+    if(readLock.current||navigationLock.current||loadingRef.current||busy||error)return;
     readLock.current=true;setOpeningId(n.id);setReadError('');
     try{
       if(!n.read_at){
@@ -87,7 +103,7 @@ function NotificationPage({before,pageNumber,older,newer,newest}:{
     }
   };
   const markAll=async()=>{
-    if(readLock.current||navigationLock.current||busy||error||!data?.unread)return;
+    if(readLock.current||navigationLock.current||loadingRef.current||busy||error||!data?.unread)return;
     readLock.current=true;setMarkingAll(true);setReadError('');
     try{
       await post(endpoint+'/read');
