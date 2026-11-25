@@ -37,7 +37,14 @@ const POP: Record<string, string> = { top: 'Обращаются чаще все
 
 const query = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
 const mskDay = (shift = 0) => new Date(Date.now() + 3 * 3600_000 + shift * 86400_000).toISOString().slice(0, 10);
-const fmtDay = (d: string) => { const [y, m, dd] = d.slice(0, 10).split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }); };
+const fmtDay = (d?: string | null) => {
+  const day = typeof d === 'string' ? d.slice(0, 10) : '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return 'Дата уточняется';
+  const [y, m, dd] = day.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, dd));
+  if (date.toISOString().slice(0, 10) !== day) return 'Дата уточняется';
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+};
 const carName = (v: any) => [v?.brand, v?.model, v?.year].filter(Boolean).join(' ') || 'Машина';
 const toggle = (list: string[], x: string) => (list.includes(x) ? list.filter((y) => y !== x) : [...list, x]);
 const isBookingEvent = (e: any) => e.type === 'booking';
@@ -169,7 +176,7 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
       </div>
     </main>
   );
-  const cars = [...groups.expected, ...groups.repair, ...groups.ready];
+  const cars = [...groups.repair, ...groups.ready];
   const focus = groups.repair[0] ?? groups.ready[0] ?? groups.expected[0] ?? null;
   return (
     <main className="base-workspace">
@@ -184,17 +191,10 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
         <span className="base-command-eyebrow">TRAKSOS · КАБИНЕТ СЕРВИСНОГО ПАРТНЁРА</span>
         <h1>Рембаза «{center.name}»</h1>
         <p>{center.address} · {center.hours}</p>
-        <div className="base-command-actions">
-          <button className="btn" onClick={()=>setTab('req')}>Входящие · {groups.requests.length}</button>
-          <button className="btn ghost" onClick={()=>setTab('cars')}>В ремонте · {groups.repair.length}</button>
-          <button className="btn ghost" onClick={()=>setTab('expected')}>Записи · {groups.expected.length}</button>
-          <button className="btn ghost" onClick={()=>setTab('ready')}>К выдаче · {groups.ready.length}</button>
-        </div>
       </section>
       <div className="row" style={{ gap: 6 }}>
         <span className="pill">{center.rating ? `★ ${center.rating.toFixed(1)} · ${center.reviews} отзывов` : 'отзывов пока нет'}</span>
         <VerifiedBadge verified={center.verification === 'approved'} kind="service" compact />
-        <span className="pill">сейчас машин: {groups.repair.length} · ожидаем: {groups.expected.length}</span>
       </div>
       {center.verification !== 'approved' && (
         <div className="banner warn col">
@@ -215,11 +215,6 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
           </div>
         </div>
       )}
-      <div className="grid3">
-        <div className="card tile"><span className="label">Входящие</span><span className="tile-value">{groups.requests.length}</span></div>
-        <div className="card tile"><span className="label">В ремонте</span><span className="tile-value">{groups.repair.length}</span></div>
-        <div className="card tile"><span className="label">К выдаче</span><span className="tile-value">{groups.ready.length}</span></div>
-      </div>
       {focus&&<section className="and20-sto-focus" aria-label="Текущий ремонт или ближайшая запись">
         <div className="and20-sto-focus-heading">
           <strong>{groups.repair.length?'Текущий ремонт':focus.status==='ready'?'Готово к выдаче':'Ближайшая запись'}</strong>
@@ -239,14 +234,14 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
         </div>
         <small>Расчёт и согласование работ — в карточке этого ремонта.</small>
       </section>}
-      <div className="scroll-x" role="tablist">
+      <div className="scroll-x" role="group" aria-label="Разделы заявок рембазы">
         {([['req', `Входящие · ${groups.requests.length}`], ['cars', `Машины у вас · ${cars.length}`], ['expected', `Записи · ${groups.expected.length}`], ['ready', `К выдаче · ${groups.ready.length}`], ['done', 'История']] as const).map(([k, n]) => (
-          <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>
+          <button key={k} className="chip" type="button" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>
         ))}
       </div>
       {tab === 'req' && (groups.requests.length
         ? groups.requests.map((b: any) => <RequestCard key={b.id} b={b} onDone={cab.reload} />)
-        : <div className="empty">Новых запросов нет. Они приходят уведомлением — со звуком, даже когда приложение закрыто.</div>)}
+        : <div className="empty">Новых запросов пока нет.</div>)}
       {tab === 'expected' && (groups.expected.length ? <div className="rows">
         {groups.expected.map((b:any)=><a key={b.id} className="list-item"
           href={baseRouteHref(`base/car/${b.id}`)}>
@@ -273,7 +268,7 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
           ))}
           <span className="note">Нажмите на машину — откроется её карточка: статус, заметки, компания, история.</span>
         </div>
-      ) : <div className="empty">Машин у вас пока нет. После «Готовы принять» машина появится здесь в «Ожидаем».</div>)}
+      ) : <div className="empty">Машин у вас пока нет. Принятые записи до приезда доступны в разделе «Записи».</div>)}
       {tab === 'ready' && (groups.ready.length ? (
         <div className="rows">
           {groups.ready.map((b: any) => (
