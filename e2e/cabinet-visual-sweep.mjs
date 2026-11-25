@@ -2,6 +2,7 @@
  // Captures both phone and desktop, then verifies a role-specific inner page.
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
+import { assertDesktopMenu, assertRoleMenu, desktopPersonalPaths } from './role-click-contract.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:8080';
 if (!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))
@@ -52,7 +53,8 @@ try {
           body:document.body.scrollWidth,
           missing:document.querySelector('main')?.textContent?.includes('Такой страницы нет'),
           failed:document.body.textContent?.includes('Не удалось открыть раздел'),
-          nav:document.querySelectorAll('.account-menu nav a[href^="#/"]').length,
+          right:[...document.querySelectorAll('.account-menu nav a[href^="#/"]')].map(a=>a.getAttribute('href')),
+          left:[...document.querySelectorAll('.desktop-sidebar .desktop-nav a[href^="#/"]')].map(a=>a.getAttribute('href')),
           sidebar: {total:document.querySelectorAll('.desktop-sidebar .desktop-nav-link').length,
             vector:document.querySelectorAll('.desktop-sidebar .desktop-nav-link>span:first-child>svg').length},
           legacy:[...document.querySelectorAll('.desktop-hero,.desktop-quick-links,.service-preview-admin-bar,.sandbox-role-card,#operator-demo-code')]
@@ -64,10 +66,17 @@ try {
         }));
         if(report.scroll>report.width+3 || report.body>report.width+3)
           throw Error(entry.name+' '+width+'px '+where+': horizontal overflow '+JSON.stringify(report));
-        if(report.missing||report.failed||report.nav<5||report.legacy.length||
+        if(report.missing||report.failed||report.legacy.length||
            (width>=900 && (report.sidebar.total===0||report.sidebar.total!==report.sidebar.vector))||
            !report.logo.present||report.logo.src!=='/traksos-brand-logo-approved-618.png'||!report.logo.loaded)
           throw Error(entry.name+' '+width+'px '+where+': old interface, missing approved logo or broken navigation '+JSON.stringify(report));
+        if(width>=900){
+          const role=entry.name==='master_service'?'hybrid-service':entry.name;
+          assertDesktopMenu(entry.mode,role,report.left,report.right,entry.home);
+        }else{
+          if(report.right.length<5)throw Error(entry.name+': incomplete mobile menu');
+          assertRoleMenu(entry.mode,report.right);
+        }
         if(jsErrors.length)throw Error(entry.name+' '+width+'px '+where+': '+jsErrors.join('; '));
       }
       await page.goto(BASE+'/'+entry.home,{waitUntil:'domcontentloaded'});
@@ -102,12 +111,18 @@ try {
         await empty.waitFor();
       }
       await page.screenshot({path:'e2e/shots/cabinet-ux/'+entry.name+'-home-'+width+'.png',fullPage:true});
-      // Simulate a real user opening the cabinet menu and following a safe inner page.
-      await page.locator('.account-menu > summary').click();
-      const links=await page.locator('.account-menu nav a[href^="#/"]').count();
-      if(links<5)throw Error(entry.name+' '+width+'px: account menu contains too few links');
-      const inner = page.locator('.account-menu nav a[href="'+entry.inner+'"]');
-      if(await inner.count() !== 1)throw Error(entry.name+' '+width+'px: missing or duplicate working link '+entry.inner);
+      // Click the actual approved navigation surface, not a hidden duplicate.
+      const personal=width<900 || desktopPersonalPaths.includes(entry.inner);
+      const surface=page.locator(personal?'.account-menu nav':'.desktop-sidebar .desktop-nav');
+      if(personal)await page.locator('.account-menu > summary').click();
+      const inner=surface.locator('a[href="'+entry.inner+'"]');
+      if(await inner.count()!==1)throw Error(entry.name+' '+width+'px: missing or duplicate working link '+entry.inner);
+      if(!personal){
+        const disclosure=inner.locator('xpath=ancestor::details[1]');
+        if(await disclosure.count() && !(await disclosure.evaluate(el=>el.open)))
+          await disclosure.locator('summary').click();
+      }
+      await inner.waitFor({state:'visible'});
       await inner.click();
       await page.waitForURL(url => url.hash === entry.inner);
       await verify('inner');
