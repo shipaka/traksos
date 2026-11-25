@@ -63,6 +63,7 @@ const caseRow=(id,brand)=>({id,brand,model:'CI',plate:'CI-000',
   status:'sent_to_partner',insurance_stage:'received',created_at:'2026-01-01'});
 const visit=(id,plate)=>({id,kind:'inspection',status:'sent_to_partner',
   brand:'DAF',model:'XF',plate,year:2022,created_at:'2026-01-01'});
+const inspectionPage=(items=[],active=items.length,history=0,page=1)=>({items,active,history,page,pageSize:30});
 const finance=amount=>({entries:[],totals:[
   {kind:'insurance',accrued:amount,paid:'0',balance:amount},
   {kind:'inspection',accrued:'0',paid:'0',balance:'0'}]});
@@ -72,7 +73,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
   await page.addScriptTag({content:bundle.outputFiles[0].text});
-  const Q='/api/insurer/requests',V='/api/insurer/inspections',F='/api/insurer/finance';
+  const Q='/api/insurer/requests',V='/api/insurer/inspections/page?view=active&page=1',D='/api/insurer/inspections/same-case',F='/api/insurer/finance';
   const n=(path,method='GET')=>page.evaluate(({path,method})=>
     window.__partnerMock.pending.filter(x=>x.path===path&&x.method===method).length,{path,method});
   const wait=(path,count,method='GET')=>page.waitForFunction(({path,count,method})=>
@@ -100,7 +101,7 @@ try{
   await page.evaluate(()=>window.__partnerSetView('cabinet'));
   await wait(Q,q+1);await wait(V,v+1);await wait(F,f+1);
   await finish(Q,q,'resolve',[caseRow('two','INSURER-B')]);
-  await finish(V,v,'resolve',[visit('inspect-B','B-PLATE')]);
+  await finish(V,v,'resolve',inspectionPage([visit('inspect-B','B-PLATE')]));
   await finish(F,f,'resolve',finance('123456'));
   await page.getByRole('button',{name:'Финансы'}).click();
   await page.getByText(/1\s*234,56\s*₽/).first().waitFor();
@@ -116,7 +117,7 @@ try{
   await finish(F,f1+1,'resolve',finance('2500'));
   await page.getByText(/25,00\s*₽/).first().waitFor();
   await finish(Q,q1,'resolve',[caseRow('three','INSURER-C')]);
-  await finish(V,v1,'resolve',[]);
+  await finish(V,v1,'resolve',inspectionPage());
 
   const oldV=await n(V),oldF=await n(F);
   await page.evaluate(()=>{
@@ -125,8 +126,10 @@ try{
     window.__partnerSetRoute(['inspections','same-case']);
     window.__partnerSetView('inspection');
   });
-  await wait(V,oldV+1);await wait(F,oldF+1);
-  await finish(V,oldV,'resolve',[visit('same-case','SECRET-INSPECT-A')]);
+  await wait(V,oldV+1);await wait(F,oldF+1);await wait(D,1);
+  await finish(V,oldV,'resolve',inspectionPage());
+  // The direct link must work even when the case is absent from the queue page.
+  await finish(D,0,'resolve',visit('same-case','SECRET-INSPECT-A'));
   await finish(F,oldF,'resolve',finance('0'));
   await page.getByRole('heading',{name:'Техосмотр №same-case'}).waitFor();
   const complete=page.getByRole('button',{name:'Внести результат техосмотра'});
@@ -139,10 +142,11 @@ try{
 
   const oldV2=await n(V);
   await page.evaluate(()=>window.__partnerSetMe({id:'inspector-B',roles:['inspection_operator']}));
-  await wait(V,oldV2+1);
+  await wait(V,oldV2+1);await wait(D,2);
   assertion(await page.getByText('SECRET-INSPECT-A').count()===0,
     'Other inspector details visible after account switch');
-  await finish(V,oldV2,'resolve',[visit('same-case','INSPECT-B')]);
+  await finish(V,oldV2,'resolve',inspectionPage());
+  await finish(D,1,'resolve',visit('same-case','INSPECT-B'));
   await page.getByRole('heading',{name:'Техосмотр №same-case'}).waitFor();
   assertion(await complete.isDisabled(),'Old inspector ticks authorised a new account');
   await page.getByRole('textbox',{name:'Комментарий / результат осмотра'})
@@ -157,8 +161,9 @@ try{
   assertion(body?.status==='completed'&&body.note.includes('оператором B'),
     'Unexpected inspection decision or previous user comment');
   await finish(patch,0,'resolve',{status:'completed'},'PATCH');
-  await wait(V,oldV2+2);
-  await finish(V,oldV2+1,'resolve',[{...visit('same-case','INSPECT-B'),status:'completed'}]);
+  await wait(V,oldV2+2);await wait(D,3);
+  await finish(V,oldV2+1,'resolve',inspectionPage([],0,1));
+  await finish(D,2,'resolve',{...visit('same-case','INSPECT-B'),status:'completed'});
   await page.getByText('Заявка завершена').waitFor();
   assertion(errors.length===0,'React exceptions: '+errors.join('; '));
   console.log('PASS: insurer finance/queues/chat isolation and actual inspector checklist');

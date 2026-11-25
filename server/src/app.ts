@@ -1195,6 +1195,13 @@ export function createApp(d: Deps) {
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
   r.get('/api/admin/inspection-partners', ['admin','moderator'], (c: AuthedCtx) => vehicleRequests.inspectionPartners(c.user));
   r.get('/api/insurer/inspections', ['insurer','inspection_operator'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
+  r.get('/api/insurer/inspections/page', ['insurer','inspection_operator'], (c: AuthedCtx) => {
+    const b=parse(z.object({view:z.enum(['active','history']).default('active'),page:z.coerce.number().int().min(1).max(1000000).default(1)}),
+      {view:c.query.get('view')??undefined,page:c.query.get('page')??undefined});
+    return vehicleRequests.inspectionPage(c.user,b.view,b.page);
+  });
+  r.get('/api/insurer/inspections/:id', ['insurer','inspection_operator'], (c: AuthedCtx) =>
+    vehicleRequests.inspectionDetail(c.user,parse(z.string().uuid(),c.params.id)));
   r.get('/api/insurer/finance', ['insurer','inspection_operator'], (c: AuthedCtx) => partnerFinance.mine(c.user));
   r.post('/api/admin/partner-finance/accruals', ['admin'], (c: AuthedCtx) => {
     const b=parse(z.object({requestId:z.string().uuid(),amountKopecks:z.number().int().positive().safe(),note:z.string().trim().min(3).max(1000)}),c.body);
