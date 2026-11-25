@@ -24,7 +24,7 @@ async function setup(options){
   const ctx=await browser.newContext(options);
   const page=await ctx.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.setContent('<!doctype html><html lang="ru"><body><button id="outside" style="position:absolute;left:10px;top:300px">Вне меню</button><div id="root" style="position:absolute;right:28px;top:28px"></div></body></html>');
+  await page.setContent('<!doctype html><html lang="ru"><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><button id="outside" style="position:absolute;left:10px;top:300px">Вне меню</button><div id="root" style="position:absolute;right:28px;top:28px"></div></body></html>');
   await page.addStyleTag({path:'web/src/styles.css'});
   await page.addScriptTag({content:bundle.outputFiles[0].text});
   const menu=page.locator('.account-menu');
