@@ -318,9 +318,17 @@ await a.goto(BASE + '/#/admin/section/payments');
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
-// Admin's "client" shortcut must go to the REAL isolated sandbox selector,
-// never turn the production/staff account into a pretend client role.
-await clickCabinetLink(a, 'Тестовый кабинет клиента');
+// The admin's explicit workspace entry opens the isolated test center.
+// The ordinary account menu must not contain a direct sandbox role shortcut.
+if (await a.locator('.account-menu nav a[href*="/admin/test-center"], .desktop-nav a[href*="/admin/test-center/client"]').count())
+  throw new Error('Duplicate sandbox shortcut remains in ordinary navigation');
+await a.goto(BASE + '/#/admin');
+const adminDesk = a.locator((await a.evaluate(() => window.innerWidth)) < 900
+  ? 'main.admin-workspace' : 'main.approved-pc-admin');
+await adminDesk.getByRole('link', { name: /Тестирование кабинетов ролей|Открыть тест-центр/ }).click();
+await a.waitForURL(/#\/admin\/test-center$/);
+await a.getByRole('heading', { name: 'Тестирование кабинетов' }).waitFor();
+await a.locator('main.sandbox-root a.sandbox-role-card[href="#/admin/test-center/client"]').click();
 await a.waitForURL(/#\/admin\/test-center\/client$/);
 await a.getByRole('heading', { name: 'Клиент', exact: true }).waitFor();
 if (await a.evaluate(() => localStorage.getItem('traksos.mode')) !== 'admin')
