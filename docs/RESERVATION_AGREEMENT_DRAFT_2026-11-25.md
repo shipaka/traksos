@@ -29,3 +29,16 @@ only the pending move, and cancelling the appointment clears pending metadata.
 The audit retains both intervals and versions. Moves require original and new
 start times in the future; handling late appointments is a separate workflow.
 Still no HTTP routes, live notification delivery, linked order lifecycle or UI.
+
+## Durable notifications (internal draft)
+
+Every actual negotiation event atomically enqueues an intent for the other
+participant, not the actor or unrelated accounts. A bounded concurrent worker
+persists an inbox alert and acknowledges the intent in one transaction; retries
+cannot duplicate the inbox. Superseded versions, expired pending proposals and
+revoked recipient roles are marked obsolete. Push/realtime is best effort after
+commit and only requests a refresh; it never includes personal details or an
+unverified future time. The worker is NOT attached to the production scheduler
+or public endpoints, because the planned-order lifecycle and fleet ACL are not
+ready. Handling overdue confirmed records, escalation and delivery acceptance on
+real Android devices remain separate work.

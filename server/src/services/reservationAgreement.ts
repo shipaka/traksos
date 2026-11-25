@@ -64,9 +64,15 @@ export class ReservationAgreement {
     if(blocked)throw forbidden('Исполнитель недоступен для этой записи');
   }
   private async event(q:Queryable,row:Row,actor:string,type:string,before:string|null,details:unknown={}){
-    await q.query(`insert into performer_time_reservation_events
+    const event=await q.one<{id:string}>(`insert into performer_time_reservation_events
       (reservation_id,actor_id,event_type,before_status,after_status,details)
-      values($1,$2,$3,$4,$5,$6::jsonb)`,[row.id,actor,type,before,row.status,JSON.stringify(details)]);
+      values($1,$2,$3,$4,$5,$6::jsonb) returning id::text as id`,[row.id,actor,type,before,row.status,JSON.stringify(details)]);
+    if(!event)throw new Error('Reservation event was not persisted');
+    // Only the other participant needs a notification. Retries that return
+    // the existing version never enqueue another event.
+    const recipient=actor===row.client_id?row.performer_id:row.client_id;
+    await q.query(`insert into performer_reservation_alerts(event_id,reservation_id,user_id,agreement_version)
+      values($1::bigint,$2,$3,$4)`,[event.id,row.id,recipient,row.agreement_version]);
   }
   private async locked<T>(id:string,actor:Actor,side:'client'|'performer'|'either',work:(q:Queryable,row:Row)=>Promise<T>):Promise<T>{
     identifier(id);identifier(actor.id);
