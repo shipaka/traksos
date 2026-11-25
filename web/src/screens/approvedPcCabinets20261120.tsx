@@ -277,7 +277,7 @@ function CustomerDesk({owner}:{owner:boolean}){
 }
 
 /** One selected real order; status buttons never get ahead of the server state. */
-function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
+function SelectedPerformerCase({order,tow,queueUnavailable=false}:{order:any;tow:boolean;queueUnavailable?:boolean}){
   const detail=useLoad(()=>get<any>('/api/orders/'+order.id),[order.id],e=>e.type==='order'&&String(e.orderId)===String(order.id));
   const {busy,run}=useAction();
   const lock=useRef(false);
@@ -293,7 +293,7 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
   const steps:[string,string][]=[['accepted','Принято'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
   const index=steps.findIndex(([id])=>id===d.status);
   const takeStep=async()=>{
-    if(!step || busy || lock.current || !detail.data || detail.error || submittedStatus===d.status)return;
+    if(!step || busy || lock.current || queueUnavailable || !detail.data || detail.error || submittedStatus===d.status)return;
     // "At location" is a manual declaration, not proof of GPS coordinates.
     if(step.action==='arrive'&&!window.confirm('Подтвердить фактическое прибытие к клиенту? После отметки может начаться расчёт времени.'))return;
     lock.current=true;setRefreshing(true);
@@ -333,8 +333,9 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
           <div className="approved-pc-stage-steps">
             {steps.map(([id,label],i)=><span key={id} className={d.status===id?'current':index>i?'done':''}>{label}</span>)}
           </div>
+          {queueUnavailable&&<p className="approved-pc-caveat" role="status">Список заявок не обновлён. Обновите его перед изменением этапа.</p>}
           {step&&<button className="approved-pc-primary approved-pc-next-step" type="button"
-            disabled={busy||refreshing||!detail.data||!!detail.error||submittedStatus===d.status} onClick={takeStep}>{busy||refreshing?'Обновляем этап…':step.label}</button>}
+            disabled={busy||refreshing||queueUnavailable||!detail.data||!!detail.error||submittedStatus===d.status} onClick={takeStep}>{busy||refreshing?'Обновляем этап…':step.label}</button>}
           {!detail.data&&!detail.error&&<p className="approved-pc-caveat">Проверяем возможность следующего действия…</p>}
           {detail.error&&<button type="button" className="approved-pc-small-link" onClick={()=>{void detail.reload();}}>Повторить загрузку статуса</button>}
           {submittedStatus===d.status&&!refreshing&&<p className="approved-pc-caveat" role="status">Проверьте текущий этап в карточке заказа. Повторная отправка с рабочего стола заблокирована до изменения статуса.</p>}
@@ -391,7 +392,9 @@ function PerformDesk({tow}:{tow:boolean}){
   const [chosen,setChosen]=useState('');
   const jobRows=jobs.error?null:jobs.data;
   const auctionRows=auctions.error?null:auctions.data;
-  const all=jobRows||[];
+  // Keep an already selected job mounted during a failed list refresh, so an
+  // ambiguous status write cannot lose its local no-resend guard.
+  const all=jobs.data||[];
   const current=all.filter((o:any)=>activeStates.has(o.status) && (!orderDate(o)||orderDate(o)<=todayISO()));
   const planned=all.filter((o:any)=>activeStates.has(o.status)&&orderDate(o)>todayISO());
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
@@ -400,6 +403,7 @@ function PerformDesk({tow}:{tow:boolean}){
     <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
     <Tabs items={[[ 'work','Текущая работа · '+(jobRows?current.length:'—')+'  |  Запланировано · '+(jobRows?planned.length:'—'),null ],
       ['offers','Новые предложения',auctionRows?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
+    {jobs.error&&jobRows===null&&all.length>0&&<LoadingBlock error={jobs.error} retry={jobs.reload}/>}
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
       <p><b>Статус:</b> {text(me?.performer?.line_status,'Проверьте профиль')}</p>
       <p>Предложения отобраны сервером по доступным специализациям и зоне работы.</p>
@@ -416,18 +420,18 @@ function PerformDesk({tow}:{tow:boolean}){
             </div>
           </article>):<Empty>Новых подходящих предложений пока нет.</Empty>}
       </Pane>}
-      right={<><Calendar items={planned} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
+      right={<><Calendar items={jobRows?planned:[]} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
       :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobRows?current.length:'—')}>
         {!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
         <RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description,statusName(o))} v={transport(o)}
           badge={statusName(o)} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
         :<Empty>На сегодня принятых работ нет.</Empty>}
       </Pane><Pane title={'Запланировано · '+(jobRows?planned.length:'—')}>
-        {planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
+        {jobRows&&planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
           active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
         {jobRows&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
-      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
+      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow} queueUnavailable={!!jobs.error}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
         {!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
           <div className="approved-pc-shift-empty-body" data-orders="0">
             <div className="approved-pc-shift-empty-copy">
@@ -439,7 +443,7 @@ function PerformDesk({tow}:{tow:boolean}){
             <ApprovedEmptyScene kind="shift"/>
           </div>}
       </Pane>}
-      right={<><Calendar items={all} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
+      right={<><Calendar items={jobRows||[]} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
   </main>;
