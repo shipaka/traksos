@@ -12,7 +12,8 @@ const clean=(s:string)=>maskPhones(s.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'
 const productCols='id,name,brand,article,price,stock,lead_days,photo_mime,updated_at';
 const safeRow=(r:any)=>({id:r.id,source_order_id:r.source_order_id,vehicle_id:r.vehicle_id,
  brand:r.brand,article:r.article,name:r.name,qty:r.qty,reason:r.reason,status:r.status,
- product_id:r.product_id,created_at:r.created_at,decided_at:r.decided_at});
+ product_id:r.product_id,created_at:r.created_at,decided_at:r.decided_at,
+ sourcing_status:r.sourcing_status,sourcing_requested_at:r.sourcing_requested_at,sourcing_updated_at:r.sourcing_updated_at,sourcing_note:r.sourcing_note});
 const productView=(p:any)=>({id:p.id,name:p.name,brand:p.brand,article:p.article,price:p.price,stock:p.stock,leadDays:p.lead_days,inStock:p.stock!=null&&p.stock>0,hasPhoto:!!p.photo_mime,photoVersion:p.updated_at?new Date(p.updated_at).getTime():0});
 export class PartRecommendations {
  constructor(private db:Db,private settings:SettingsService,private notifier:Notifier){}
@@ -97,6 +98,74 @@ export class PartRecommendations {
    return updated;
   });
   return safeRow(result);
+ }
+ private requireShopAdmin(user:AuthUser){
+  this.active(user);
+  if(!user.roles.includes('admin'))throw forbidden('Подбором магазина управляет администратор');
+ }
+ // The owner's request is a separate, non-billable action, even with the shop closed.
+ async requestSourcing(user:AuthUser,id:string){
+  this.active(user);
+  if(user.owner_id||!user.roles.includes('client'))throw forbidden('Запрос оформляет владелец');
+  const result=await this.db.tx(async q=>{
+   const row=await q.one<any>('select * from part_recommendations where id=$1 and client_id=$2 for update',[id,user.id]);
+   if(!row)throw notFound();
+   if(row.status!=='accepted'||row.product_id)throw conflict('sourcing_not_needed','Сначала согласуйте замену; для уже подобранного товара используйте магазин');
+   if(row.sourcing_status==='requested')return {row,changed:false};
+   if(!['not_requested','unavailable','resolved'].includes(row.sourcing_status))throw conflict('sourcing_status','Запрос недоступен');
+   const updated=await q.one<any>(`update part_recommendations set sourcing_status='requested',sourcing_requested_at=now(),
+    sourcing_updated_at=now(),sourcing_updated_by=$2,sourcing_note=null where id=$1 returning *`,[id,user.id]);
+   await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_requested',id,{sourceOrderId:row.source_order_id}]);
+   return {row:updated,changed:true};
+  });
+  if(result.changed){
+   const admins=await this.db.query<{id:string}>("select id from users where status='active' and roles && '{admin}'::text[]");
+   await this.notifier.notify(admins.map(a=>a.id),{type:'part_sourcing',recommendationId:id},
+    {kind:'normal',title:'Новый запрос подбора запчасти',body:'В магазине появился запрос на точный артикул.',data:{recommendationId:id}}).catch(()=>{});
+  }
+  return {item:safeRow(result.row),changed:result.changed};
+ }
+ async sourcingQueue(user:AuthUser,page:number,status:'requested'|'resolved'|'unavailable'){
+  this.requireShopAdmin(user);
+  const rows=await this.db.query<any>(`select * from part_recommendations where sourcing_status=$1
+    order by sourcing_requested_at asc,id limit 21 offset $2`,[status,page*20]);
+  return {items:rows.slice(0,20).map(safeRow),hasMore:rows.length>20,shopEnabled:(await this.settings.get('shop')).enabled};
+ }
+ async sourcingCandidates(user:AuthUser,id:string){
+  this.requireShopAdmin(user);
+  const row=await this.db.one<any>("select brand,article from part_recommendations where id=$1 and sourcing_status='requested'",[id]);
+  if(!row)throw notFound('Активный запрос не найден');
+  // Internal catalogue lookup is permitted while the public storefront is closed.
+  const matches=await this.db.query<any>('select '+productCols+' from shop_products where active and lower(trim(brand))=lower(trim($1)) and lower(trim(article))=lower(trim($2)) order by id limit 21',[row.brand,row.article]);
+  return {products:matches.slice(0,20).map(productView),hasMore:matches.length>20};
+ }
+ async resolveSourcing(user:AuthUser,id:string,input:{status:'resolved'|'unavailable';productId?:string;note?:string}){
+  this.requireShopAdmin(user);
+  const note=input.note?clean(input.note):null;
+  if(input.status==='resolved'&&!input.productId)throw bad('product_required','Выберите точный товар');
+  if(input.status==='unavailable'&&(!note||note.length<8||input.productId))throw bad('sourcing_note','Укажите причину отсутствия детали');
+  const result=await this.db.tx(async q=>{
+   const row=await q.one<any>('select * from part_recommendations where id=$1 for update',[id]);
+   if(!row)throw notFound();
+   if(row.sourcing_status===input.status&&((input.status==='resolved'&&row.product_id===input.productId)||input.status==='unavailable'))
+    return {row,changed:false};
+   if(row.status!=='accepted'||row.sourcing_status!=='requested'||row.product_id)throw conflict('sourcing_not_open','Запрос уже обработан или изменился');
+   let product:any=null;
+   if(input.status==='resolved'){
+    product=await q.one<any>('select '+productCols+' from shop_products where id=$1 and active for update',[input.productId]);
+    if(!product||!product.brand||!product.article||!samePart(product,row))throw conflict('part_mismatch','Разрешён только точный производитель и артикул, не аналог');
+   }
+   const updated=await q.one<any>(`update part_recommendations set sourcing_status=$2,product_id=$3,
+    sourcing_note=$4,sourcing_updated_at=now(),sourcing_updated_by=$5 where id=$1 returning *`,
+    [id,input.status,product?.id??null,note,user.id]);
+   await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_'+input.status,id,{productId:product?.id??null}]);
+   return {row:updated,changed:true};
+  });
+  if(result.changed)await this.notifier.notify([result.row.client_id],{type:'part_sourcing',recommendationId:id,orderId:result.row.source_order_id},
+    {kind:'normal',title:input.status==='resolved'?'Запчасть подобрана':'Результат подбора запчасти',
+     body:input.status==='resolved'?'Точный товар привязан к рекомендации. Проверьте актуальную цену в магазине. Заказ не создан.':'Пока не удалось подобрать точную деталь. Подробности в истории рекомендаций.',
+     data:{orderId:result.row.source_order_id,recommendationId:id}}).catch(()=>{});
+  return {item:safeRow(result.row),changed:result.changed};
  }
  async checkout(user:AuthUser,id:string){
   this.active(user);

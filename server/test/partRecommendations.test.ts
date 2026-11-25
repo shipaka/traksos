@@ -53,5 +53,27 @@ test('repair recommendation is private, owner controlled, exact and idempotent t
   assert.equal(purchased.partRecommendationId,rid);
   assert.equal(ok(await t.api('POST','/api/shop/orders',cart,owner.token)).id,purchased.id);
   assert.equal((await t.db.one<any>('select stock from shop_products where id=$1',[product.id]))?.stock,2);
+
+  // Independent missing article in the same assigned repair.
+  const missing=ok(await t.api('POST',path,{...proposal,brand:'Fixture',article:'MISSING-42',name:'Тестовая деталь',productId:null,cardId:null},master.token)).item;
+  const mid=missing.id, request='/api/shop/part-recommendations/'+mid+'/sourcing', queue='/api/admin/shop/part-sourcing', resolve=queue+'/'+mid+'/resolve';
+  assert.equal((await t.api('POST',request,{},owner.token)).status,409);
+  ok(await t.api('POST',path+'/'+mid+'/decision',{accept:true},owner.token));
+  assert.equal((await t.api('POST',request,{},other.token)).status,404);
+  assert.equal((await t.api('GET',queue,undefined,master.token)).status,403);
+  assert.equal(ok(await t.api('POST',request,{},owner.token)).changed,true);
+  assert.equal(ok(await t.api('POST',request,{},owner.token)).changed,false);
+  assert.ok(ok(await t.api('GET',queue,undefined,admin.token)).items.some((x:any)=>x.id===mid));
+  assert.equal(ok(await t.api('GET',queue+'/'+mid+'/candidates',undefined,admin.token)).products.length,0);
+  assert.equal((await t.api('POST',resolve,{status:'resolved',productId:product.id},admin.token)).status,409);
+  assert.equal(ok(await t.api('POST',resolve,{status:'unavailable',note:'Пока нет точного артикула'},admin.token)).item.sourcing_status,'unavailable');
+  assert.equal(ok(await t.api('POST',request,{},owner.token)).changed,true);
+  const exact=ok(await t.api('POST','/api/admin/shop/products',{name:'Точная тестовая деталь',category:'air',brand:'Fixture',article:'MISSING-42',price:22000,stock:2},admin.token));
+  assert.deepEqual(ok(await t.api('GET',queue+'/'+mid+'/candidates',undefined,admin.token)).products.map((p:any)=>p.id),[exact.id]);
+  assert.equal(ok(await t.api('POST',resolve,{status:'resolved',productId:exact.id},admin.token)).item.product_id,exact.id);
+  assert.equal(ok(await t.api('POST',resolve,{status:'resolved',productId:exact.id},admin.token)).changed,false);
+  assert.equal((await t.db.query('select id from shop_orders where part_recommendation_id=$1',[mid])).length,0);
+  assert.equal((await t.db.one<any>('select stock from shop_products where id=$1',[exact.id]))?.stock,2);
+  assert.equal(ok(await t.api('GET','/api/shop/part-recommendations/'+mid+'/checkout',undefined,owner.token)).product.id,exact.id);
  }finally{await t.close();}
 });

@@ -4,7 +4,7 @@ import {useAction,useLoad,useMe} from '../ui.tsx';
 
 type Ref={brand:string;article:string;name:string;source:string;sourcePage:number};
 type Product={id:string;brand:string;article:string;name:string;price:number;stock:number|null;leadDays:number};
-type Rec={id:string;source_order_id:string;vehicle_id:string|null;product_id:string|null;brand:string;article:string;name:string;qty:number;reason:string;status:string;created_at:string};
+type Rec={id:string;source_order_id:string;vehicle_id:string|null;product_id:string|null;brand:string;article:string;name:string;qty:number;reason:string;status:string;created_at:string;sourcing_status?:'not_requested'|'requested'|'resolved'|'unavailable';sourcing_note?:string|null;sourcing_requested_at?:string|null};
 const labels:Record<string,string>={pending:'Ожидает решения',accepted:'Замена согласована',declined:'Отказано'};
 export function PartProposal({orderId,cardId,onSent}:{orderId?:string;cardId?:string;onSent?:()=>void}){
  const refs=useLoad<{refs:Ref[]}>(()=>cardId?get('/api/techbase/parts/'+encodeURIComponent(cardId)):Promise.resolve({refs:[]}),[cardId]);
@@ -44,12 +44,17 @@ function RecRows({rows,canDecide,reload}:{rows:Rec[];canDecide:boolean;reload:()
   <div className="between"><b>{r.name}</b><span className="pill">{labels[r.status]??r.status}</span></div>
   <span>{r.brand} · {r.article} × {r.qty}</span><p>{r.reason}</p><small className="note">{fmtTime(r.created_at)} · Заказ не оформлен автоматически.</small>
   {canDecide&&r.status==='pending'&&<div className="row">{[true,false].map(accept=><button key={String(accept)} className="btn ghost small" disabled={busy} onClick={async()=>{if(await run(()=>post('/api/orders/'+r.source_order_id+'/part-recommendations/'+r.id+'/decision',{accept}),accept?'Замена согласована':'Рекомендация отклонена'))reload();}}>{accept?'Согласовать замену':'Отказаться'}</button>)}</div>}
-  {canDecide&&r.status==='accepted'&&<a className="btn ghost small" href={r.product_id?'#/shop/cart?partRecommendationId='+encodeURIComponent(r.id):'#/shop?q='+encodeURIComponent(r.article)+(r.vehicle_id?'&vehicleId='+encodeURIComponent(r.vehicle_id):'')}>{r.product_id?'Открыть точную деталь и оформить заказ':'Проверить наличие детали в магазине'}</a>}
+  {r.sourcing_status==='requested'&&<span className="note">Магазин подбирает точную деталь. Заказа пока нет.</span>}
+  {r.sourcing_status==='unavailable'&&<span className="note">Деталь пока не найдена. {r.sourcing_note}</span>}
+  {r.sourcing_status==='resolved'&&r.product_id&&<span className="note">Магазин подобрал точный товар. {r.sourcing_note}</span>}
+  {canDecide&&r.status==='accepted'&&(r.product_id
+   ?<a className="btn ghost small" href={'#/shop/cart?partRecommendationId='+encodeURIComponent(r.id)}>Проверить цену и оформить заказ</a>
+   :r.sourcing_status!=='requested'&&<button className="btn ghost small" disabled={busy} onClick={async()=>{if(await run(()=>post('/api/shop/part-recommendations/'+r.id+'/sourcing',{}),'Запрос на подбор отправлен; заказ не создан'))reload();}}>{r.sourcing_status==='unavailable'?'Повторить запрос подбора':'Запросить подбор детали в магазине'}</button>)} 
   <a href={'#/order/'+r.source_order_id}>Исходная заявка</a>
  </div>)}</>;
 }
 export function OrderPartRecommendations({order:o}:{order:any}){
- const list=useLoad<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/orders/'+o.id+'/part-recommendations'),[o.id],e=>e.type==='order'&&e.orderId===o.id);
+ const list=useLoad<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/orders/'+o.id+'/part-recommendations'),[o.id],e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
  const [open,setOpen]=useState(false);
  if(o.you!=='client'&&o.you!=='performer')return null;
  return <section className="card stack"><b>Рекомендации по запчастям</b>
@@ -62,11 +67,52 @@ export function PartRecommendationHistory({vehicleId}:{vehicleId?:string}){
  const {me}=useMe();
  const [page,setPage]=useState(0);
  const owner=!!me?.roles?.includes('client')&&!me?.owner_id;
- const history=useLoad<{items:Rec[];hasMore:boolean}>(()=>owner?get('/api/shop/part-recommendations?page='+page+(vehicleId?'&vehicleId='+encodeURIComponent(vehicleId):'')):Promise.resolve({items:[],hasMore:false}),[owner,page,vehicleId,me?.id]);
+ const history=useLoad<{items:Rec[];hasMore:boolean}>(()=>owner?get('/api/shop/part-recommendations?page='+page+(vehicleId?'&vehicleId='+encodeURIComponent(vehicleId):'')):Promise.resolve({items:[],hasMore:false}),[owner,page,vehicleId,me?.id],e=>e.type==='part_sourcing'||e.type==='order');
  if(!owner)return null;
  return <section className="card stack"><b>История рекомендаций мастеров</b>{history.error&&<span className="note">История рекомендаций недоступна</span>}
   {history.data?.items.length===0&&<span className="note">Рекомендаций пока нет</span>}
   {history.data&&<RecRows rows={history.data.items} canDecide={true} reload={history.reload}/>}
   {(page>0||history.data?.hasMore)&&<div className="row"><button className="btn ghost small" disabled={!page} onClick={()=>setPage(p=>p-1)}>Назад</button><button className="btn ghost small" disabled={!history.data?.hasMore} onClick={()=>setPage(p=>p+1)}>Далее</button></div>}
  </section>;
+}
+
+export function AdminPartSourcing(){
+ const [status,setStatus]=useState<'requested'|'resolved'|'unavailable'>('requested');
+ const [page,setPage]=useState(0);
+ const [selected,setSelected]=useState('');
+ const queue=useLoad<{items:Rec[];hasMore:boolean;shopEnabled:boolean}>(()=>get('/api/admin/shop/part-sourcing?status='+status+'&page='+page),[status,page],e=>e.type==='part_sourcing');
+ return <section className="card stack"><h2>Подбор запчастей по рекомендациям</h2>
+  <p className="note">Только подтверждённый производитель и артикул. Привязка товара не создаёт заказ, оплату или резерв. Клиент сам проверяет цену и оформляет покупку.</p>
+  {queue.data&&!queue.data.shopEnabled&&<p className="note">Витрина закрыта. Можно готовить предложения, оформление покупки недоступно до открытия.</p>}
+  <div className="row">{([['requested','На подборе'],['resolved','Подобраны'],['unavailable','Не найдены']] as const).map(([key,label])=><button type="button" className="chip" aria-pressed={status===key} key={key} onClick={()=>{setStatus(key);setPage(0);setSelected('');}}>{label}</button>)}</div>
+  <button className="btn ghost small" onClick={queue.reload}>Обновить очередь</button>
+  {!queue.data&&<p role="status">{queue.error??'Загрузка…'}</p>}
+  {queue.data?.items.length===0&&<p className="note">В этом разделе нет запросов</p>}
+  {queue.data?.items.map(r=><article className="card flat stack" key={r.id}>
+   <b>{r.brand} · {r.article} × {r.qty}</b><span>{r.name}</span><p>{r.reason}</p>
+   <span className="note">{r.sourcing_requested_at?fmtTime(r.sourcing_requested_at):fmtTime(r.created_at)}</span>
+   {r.sourcing_note&&<p>{r.sourcing_note}</p>}
+   {status==='requested'&&<><button className="btn ghost small" onClick={()=>setSelected(v=>v===r.id?'':r.id)}>{selected===r.id?'Свернуть':'Подобрать точный товар'}</button>
+    {selected===r.id&&<SourcingEditor key={r.id} rec={r} onDone={()=>{setSelected('');queue.reload();}}/>}</>}
+  </article>)}
+  {(page>0||queue.data?.hasMore)&&<div className="row"><button className="btn ghost small" disabled={!page} onClick={()=>{setSelected('');setPage(p=>p-1);}}>Назад</button><button className="btn ghost small" disabled={!queue.data?.hasMore} onClick={()=>{setSelected('');setPage(p=>p+1);}}>Далее</button></div>}
+ </section>;
+}
+function SourcingEditor({rec,onDone}:{rec:Rec;onDone:()=>void}){
+ const candidates=useLoad<{products:Product[];hasMore:boolean}>(()=>get('/api/admin/shop/part-sourcing/'+rec.id+'/candidates'),[rec.id]);
+ const [product,setProduct]=useState(''),[note,setNote]=useState('');
+ const {busy,run}=useAction();
+ async function resolve(status:'resolved'|'unavailable'){
+  if(await run(()=>post('/api/admin/shop/part-sourcing/'+rec.id+'/resolve',{status,...(status==='resolved'?{productId:product}:{}),note}),status==='resolved'?'Точный товар предложен клиенту':'Результат подбора сохранён'))onDone();
+ }
+ return <div className="stack">
+  {!candidates.data&&<p>{candidates.error??'Ищем точные совпадения…'}</p>}
+  {candidates.data?.products.length===0&&<p className="note">Товар не найден. Добавьте проверенную позицию в разделе «Товары», затем вернитесь к запросу.</p>}
+  {candidates.data?.hasMore&&<p className="note">Найдено более 20 совпадений. Уточните каталог перед привязкой.</p>}
+  {candidates.data?.products.map(p=><button key={p.id} type="button" className="btn ghost small" aria-pressed={product===p.id} onClick={()=>setProduct(p.id)}>{p.name} · {p.brand} {p.article} · {rub(p.price)} · {p.stock==null?'Под заказ':'Остаток '+p.stock}</button>)}
+  <button className="btn ghost small" onClick={()=>{setProduct('');candidates.reload();}}>Обновить совпадения</button>
+  <label>Комментарий клиенту<textarea className="field" maxLength={500} rows={2} value={note} onChange={e=>setNote(e.target.value)}/></label>
+  <button className="btn small" disabled={busy||!product||!!candidates.data?.hasMore} onClick={()=>resolve('resolved')}>Предложить выбранную деталь</button>
+  <button className="btn ghost small" disabled={busy||note.trim().length<8} onClick={()=>resolve('unavailable')}>Пока не удалось подобрать</button>
+ </div>;
 }

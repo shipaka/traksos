@@ -916,6 +916,13 @@ export function createApp(d: Deps) {
   }),c.body)));
   r.post('/api/orders/:id/part-recommendations/:recommendationId/decision',true,(c:AuthedCtx)=>partRecommendations.decide(c.user,
     parse(z.string().uuid(),c.params.id),parse(z.string().uuid(),c.params.recommendationId),parse(z.object({accept:z.boolean()}),c.body).accept));
+  r.post('/api/shop/part-recommendations/:id/sourcing',true,(c:AuthedCtx)=>partRecommendations.requestSourcing(c.user,parse(z.string().uuid(),c.params.id)));
+  r.get('/api/admin/shop/part-sourcing',['admin'],(c:AuthedCtx)=>partRecommendations.sourcingQueue(c.user,
+    parse(z.coerce.number().int().min(0).max(10000),c.query.get('page')??'0'),
+    parse(z.enum(['requested','resolved','unavailable']),c.query.get('status')??'requested')));
+  r.get('/api/admin/shop/part-sourcing/:id/candidates',['admin'],(c:AuthedCtx)=>partRecommendations.sourcingCandidates(c.user,parse(z.string().uuid(),c.params.id)));
+  r.post('/api/admin/shop/part-sourcing/:id/resolve',['admin'],(c:AuthedCtx)=>partRecommendations.resolveSourcing(c.user,
+    parse(z.string().uuid(),c.params.id),parse(z.object({status:z.enum(['resolved','unavailable']),productId:z.string().uuid().optional(),note:z.string().trim().max(500).optional()}),c.body)));
   r.get('/api/shop/part-recommendations/:id/checkout',true,(c:AuthedCtx)=>partRecommendations.checkout(c.user,parse(z.string().uuid(),c.params.id)));
   r.get('/api/shop/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.history(c.user,
     parse(z.string().uuid().nullable(),c.query.get('vehicleId')),Number(c.query.get('page')??'0')));

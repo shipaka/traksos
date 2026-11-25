@@ -5,7 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '.
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
-import { PartRecommendationHistory } from './partRecommendations.tsx';
+import { PartRecommendationHistory, AdminPartSourcing } from './partRecommendations.tsx';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -449,16 +449,17 @@ async function resizeImage(file: File): Promise<string> {
 }
 
 export function AdminShop() {
-  const [tab, setTab] = useState<'orders' | 'products' | 'catalog' | 'settings'>('orders');
+  const [tab, setTab] = useState<'orders' | 'products' | 'catalog' | 'sourcing' | 'settings'>('orders');
   return (
     <div className="stack">
       <ShopSwitch />
       <div className="scroll-x" role="tablist">
-        {([['orders', 'Заказы'], ['products', 'Товары'], ['catalog', 'Справочник'], ['settings', 'Получение и тексты']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
+        {([['orders', 'Заказы'], ['products', 'Товары'], ['catalog', 'Справочник'], ['sourcing','Подбор запчастей'], ['settings', 'Получение и тексты']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
       </div>
       {tab === 'orders' && <AdminShopOrders />}
       {tab === 'products' && <AdminProducts />}
       {tab === 'catalog' && <AdminShopCatalog />}
+      {tab === 'sourcing' && <AdminPartSourcing />}
       {tab === 'settings' && <ShopSettings />}
     </div>
   );
