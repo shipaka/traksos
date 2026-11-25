@@ -44,6 +44,16 @@ export function registerVehicleReferenceRoutes(
     return publicRecoveryGallery();
   });
 
+  r.get('/api/vehicle-reference/vehicles/:id/match',true,async(c:AuthedCtx)=>{
+    const id=parse(z.string().uuid(),c.params.id);
+    const ownerId=c.user.owner_id??c.user.id;
+    const car=await db.one<{brand:string;model:string|null}>(
+      'select brand,model from vehicles where id=$1 and owner_id=$2 and ($3::uuid is null or driver_id=$3)',
+      [id,ownerId,c.user.owner_id?c.user.id:null]);
+    if(!car)throw notFound('Машина не найдена в вашем гараже');
+    return dir.exactGarageMatch(c.user,car.brand,car.model??'');
+  });
+
   r.get('/api/vehicle-reference/public-card',true,async(c:AuthedCtx)=>{
     const cat=parse(category,c.query.get('category'));
     const brandKey=parse(z.string().min(2).max(64),c.query.get('brandKey'));
