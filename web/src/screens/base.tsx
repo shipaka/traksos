@@ -4,6 +4,7 @@ import { get, post, put, rub, fmtTime } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
+import { BookingPartRecommendations } from './partRecommendations.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { VerifiedBadge } from '../verifiedBadge.tsx';
@@ -330,6 +331,7 @@ export function BaseCar({ id }: { id: string }) {
           <a className="btn ghost small" href={'#/shop?bookingId=' + encodeURIComponent(id)}>Подобрать запчасти ›</a>
         </div>
       )}
+      <BookingPartRecommendations key={id} bookingId={id}/>
       {d.handoff && <div className="card stack">
         <b>Техническое заключение предыдущего исполнителя</b>
         <span className="note">Из заявки №{d.handoff.sourceNumber} · {d.handoff.suggestedBy}</span>
@@ -880,6 +882,7 @@ export function BookingPage({ id }: { id: string }) {
         )}
         {d.status === 'declined' && <span className="note">Сервис не может: {d.declineReason}. <a href="#/services">Другие сервисы рядом →</a></span>}
       </div>
+      <BookingPartRecommendations key={id} bookingId={id}/>
       {d.status === 'clarify' && (
         <div className="card">
           <b>Сервис уточняет: «{d.clarifyQ}»</b>

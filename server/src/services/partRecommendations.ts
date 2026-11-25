@@ -7,10 +7,14 @@ import { TECHBASE_ILLUSTRATED } from '../domain/techbaseIllustrated.ts';
 import { partRefsForCard, samePart } from '../domain/techbasePartRefs.ts';
 import { requireProfessionalTechAccess, verifiedRepairPerformer } from '../domain/techbaseAccess.ts';
 
+type Origin='order'|'booking';
+const sourceColumn=(origin:Origin)=>origin==='booking'?'source_booking_id':'source_order_id';
+const repairStatuses=['arrived','diagnostics','in_work','waiting_part','agreeing','ready'];
+const orderStatuses=['arrived','working','awaiting_confirmation','completed'];
 type Proposal={brand:string;article:string;name:string;qty:number;reason:string;productId?:string|null;cardId?:string|null;fitmentConfirmed:boolean};
 const clean=(s:string)=>maskPhones(s.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')).text.trim();
 const productCols='id,name,brand,article,price,stock,lead_days,photo_mime,updated_at';
-const safeRow=(r:any)=>({id:r.id,source_order_id:r.source_order_id,vehicle_id:r.vehicle_id,
+const safeRow=(r:any)=>({id:r.id,source_order_id:r.source_order_id,source_booking_id:r.source_booking_id,vehicle_id:r.vehicle_id,
  brand:r.brand,article:r.article,name:r.name,qty:r.qty,reason:r.reason,status:r.status,
  product_id:r.product_id,created_at:r.created_at,decided_at:r.decided_at,
  sourcing_status:r.sourcing_status,sourcing_requested_at:r.sourcing_requested_at,sourcing_updated_at:r.sourcing_updated_at,sourcing_note:r.sourcing_note});
@@ -24,9 +28,11 @@ export class PartRecommendations {
  private async professional(user:AuthUser){
   await requireProfessionalTechAccess(this.db,user);
  }
- private async context(user:AuthUser,id:string,q:Queryable=this.db,lock=false){
+ private async context(user:AuthUser,id:string,q:Queryable=this.db,lock=false,origin:Origin='order'){
   this.active(user);
-  const o=await q.one<any>('select id,client_id,created_by,performer_id,vehicle_id,service,status,number from orders where id=$1'+(lock?' for update':''),[id]);
+  const o=origin==='booking'
+   ?await q.one<any>('select b.id,b.client_id,b.created_by,b.vehicle_id,b.status,b.number,c.owner_id as performer_id,c.verification as center_verification from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1'+(lock?' for update of b,c':''),[id])
+   :await q.one<any>('select id,client_id,created_by,performer_id,vehicle_id,service,status,number from orders where id=$1'+(lock?' for update':''),[id]);
   if(!o)throw notFound('Заявка не найдена');
   const owner=o.client_id===user.id&&!user.owner_id&&user.roles.includes('client');
   const performer=o.performer_id===user.id;
@@ -34,6 +40,18 @@ export class PartRecommendations {
   const staff=user.roles.some(x=>x==='admin'||x==='moderator');
   if(!owner&&!performer&&!driver&&!staff)throw forbidden('Нет доступа к заявке');
   return {o,owner,performer};
+ }
+ private async canSuggest(user:AuthUser,c:{o:any;performer:boolean},q:Queryable,origin:Origin){
+  if(!c.performer)return false;
+  if(origin==='booking')return user.roles.includes('service')&&c.o.center_verification==='approved'&&repairStatuses.includes(c.o.status);
+  return c.o.service!=='tow'&&orderStatuses.includes(c.o.status)&&await verifiedRepairPerformer(q,user);
+ }
+ private async recordEvent(q:Queryable,origin:Origin,id:string,userId:string,event:string,data:Record<string,unknown>){
+  if(origin==='booking'){
+   await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[userId,'booking.'+event,id,data]);
+  }else{
+   await q.query('insert into order_events(order_id,actor_id,type,data) values($1,$2,$3,$4)',[id,userId,event,data]);
+  }
  }
  async refs(user:AuthUser,cardId:string){
   await this.professional(user);
@@ -47,56 +65,64 @@ export class PartRecommendations {
   const rows=await this.db.query<any>('select '+productCols+' from shop_products where active and lower(trim(brand))=lower(trim($1)) and lower(trim(article))=lower(trim($2)) order by id limit 21',[brand,article]);
   return {enabled:true,products:rows.slice(0,20).map(productView),ambiguous:rows.length>1};
  }
- async list(user:AuthUser,id:string){
-  const c=await this.context(user,id);
-  const rows=await this.db.query<any>('select * from part_recommendations where source_order_id=$1 order by created_at desc,id',[id]);
-  return {canSuggest:c.performer&&await verifiedRepairPerformer(this.db,user)&&c.o.service!=='tow'&&['arrived','working','awaiting_confirmation','completed'].includes(c.o.status),canDecide:c.owner,items:rows.map(safeRow)};
+ async list(user:AuthUser,id:string,origin:Origin='order'){
+  const c=await this.context(user,id,this.db,false,origin);
+  const rows=await this.db.query<any>('select * from part_recommendations where '+sourceColumn(origin)+'=$1 order by created_at desc,id',[id]);
+  return {canSuggest:await this.canSuggest(user,c,this.db,origin),canDecide:c.owner,items:rows.map(safeRow)};
  }
- async propose(user:AuthUser,id:string,p:Proposal){
+ async propose(user:AuthUser,id:string,p:Proposal,origin:Origin='order'){
   const brand=p.brand.trim(),article=p.article.trim(),reason=clean(p.reason),name=clean(p.name);
   if(!p.fitmentConfirmed)throw bad('fitment_required','Сначала подтвердите применимость к машине по маркировке и документации');
   if(!brand||!article||name.length<2||reason.length<12)throw bad('missing_part','Укажите производителя, артикул, название и причину замены');
   if(p.cardId&&!TECHBASE_ILLUSTRATED.some(x=>x.id===p.cardId))throw notFound('Карточка не найдена');
   if(p.cardId&&partRefsForCard(p.cardId).length&&!partRefsForCard(p.cardId).some(ref=>samePart(ref,{brand,article})))throw bad('part_mismatch','Выберите артикул из карточки или предложите деталь отдельно из заявки');
   const result=await this.db.tx(async q=>{
-   const {o,performer}=await this.context(user,id,q,true);
-   if(!performer||o.service==='tow')throw forbidden('Предложение отправляет назначенный специалист');
-   await this.approved(user,q);
-   if(!['arrived','working','awaiting_confirmation','completed'].includes(o.status))throw conflict('too_early','Сначала проведите диагностику');
+   const c=await this.context(user,id,q,true,origin),{o,performer}=c;
+   if(!performer)throw forbidden('Предложение отправляет назначенный специалист или обслуживающее СТО');
+   if(origin==='order'){
+    if(o.service==='tow')throw forbidden();
+    await this.approved(user,q);
+    if(!orderStatuses.includes(o.status))throw conflict('too_early','Сначала проведите диагностику');
+   }else{
+    if(!user.roles.includes('service')||o.center_verification!=='approved')throw forbidden('Требуется подтверждённое СТО');
+    if(!repairStatuses.includes(o.status))throw conflict('too_early','Сначала примите автомобиль в ремонт');
+   }
    let product:any=null;
    if(p.productId){
     if(!(await this.settings.get('shop')).enabled)throw conflict('shop_closed','Магазин закрыт; сохраните рекомендацию без товара');
     product=await q.one<any>('select '+productCols+' from shop_products where id=$1 and active for update',[p.productId]);
     if(!product||!product.brand||!product.article||!samePart(product,{brand,article}))throw conflict('part_mismatch','Товар или артикул изменился. Повторите точный поиск');
    }
-   const inserted=await q.query<any>(`insert into part_recommendations(source_order_id,client_id,suggested_by,vehicle_id,tech_card_id,product_id,brand,article,name,qty,reason)
+   const inserted=await q.query<any>(`insert into part_recommendations(${sourceColumn(origin)},client_id,suggested_by,vehicle_id,tech_card_id,product_id,brand,article,name,qty,reason)
      values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) on conflict do nothing returning *`,
      [id,o.client_id,user.id,o.vehicle_id,p.cardId??null,product?.id??null,brand,article,product?.name??name,p.qty,reason]);
    if(!inserted.length){
-    const prior=await q.one<any>('select * from part_recommendations where source_order_id=$1 and lower(trim(brand))=lower(trim($2)) and lower(trim(article))=lower(trim($3))',[id,brand,article]);
+    const prior=await q.one<any>('select * from part_recommendations where '+sourceColumn(origin)+'=$1 and lower(trim(brand))=lower(trim($2)) and lower(trim(article))=lower(trim($3))',[id,brand,article]);
     if(!prior)throw conflict('retry','Повторите запрос');
     return {row:prior,created:false,o};
    }
-   await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'part_recommended',$3)",[id,user.id,{recommendationId:inserted[0].id}]);
+   await this.recordEvent(q,origin,id,user.id,'part_recommended',{recommendationId:inserted[0].id});
    return {row:inserted[0],created:true,o};
   });
-  if(result.created)await this.notifier.notify([result.o.client_id],{type:'order',orderId:id,status:result.o.status},
-   {kind:'normal',title:'Мастер предложил замену детали',body:'Рекомендация в заявке. Заказ и оплата не оформлены.',data:{orderId:id}}).catch(()=>{});
+  if(result.created){const context=origin==='booking'?{bookingId:id}:{orderId:id};
+   await this.notifier.notify([result.o.client_id],{type:origin,...context,status:result.o.status},
+   {kind:'normal',title:origin==='booking'?'СТО предложило замену детали':'Мастер предложил замену детали',body:'Рекомендация в заявке. Заказ и оплата не оформлены.',data:context}).catch(()=>{});}
   return {created:result.created,item:safeRow(result.row)};
  }
- async decide(user:AuthUser,id:string,recId:string,accept:boolean){
+ async decide(user:AuthUser,id:string,recId:string,accept:boolean,origin:Origin='order'){
   const status=accept?'accepted':'declined';
   const result=await this.db.tx(async q=>{
-   const {owner}=await this.context(user,id,q,true);
+   const {owner}=await this.context(user,id,q,true,origin);
    if(!owner)throw forbidden('Решение принимает владелец');
-   const row=await q.one<any>('select * from part_recommendations where id=$1 and source_order_id=$2 for update',[recId,id]);
+   const row=await q.one<any>('select * from part_recommendations where id=$1 and '+sourceColumn(origin)+'=$2 for update',[recId,id]);
    if(!row)throw notFound();
    if(row.status===status)return row;
    if(row.status!=='pending')throw conflict('already_decided','Решение уже принято');
    const updated=await q.one<any>('update part_recommendations set status=$2,decided_by=$3,decided_at=now() where id=$1 returning *',[recId,status,user.id]);
-   await q.query("insert into order_events(order_id,actor_id,type,data) values($1,$2,'part_recommendation_decided',$3)",[id,user.id,{recommendationId:recId,status}]);
+   await this.recordEvent(q,origin,id,user.id,'part_recommendation_decided',{recommendationId:recId,status});
    return updated;
   });
+  if(result.suggested_by)this.notifier.live([result.suggested_by],{type:origin,...(origin==='booking'?{bookingId:id}:{orderId:id}),recommendationId:recId});
   return safeRow(result);
  }
  private requireShopAdmin(user:AuthUser){
@@ -115,7 +141,7 @@ export class PartRecommendations {
    if(!['not_requested','unavailable','resolved'].includes(row.sourcing_status))throw conflict('sourcing_status','Запрос недоступен');
    const updated=await q.one<any>(`update part_recommendations set sourcing_status='requested',sourcing_requested_at=now(),
     sourcing_updated_at=now(),sourcing_updated_by=$2,sourcing_note=null where id=$1 returning *`,[id,user.id]);
-   await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_requested',id,{sourceOrderId:row.source_order_id}]);
+   await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_requested',id,{sourceOrderId:row.source_order_id,sourceBookingId:row.source_booking_id}]);
    return {row:updated,changed:true};
   });
   if(result.changed){
@@ -161,10 +187,10 @@ export class PartRecommendations {
    await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_'+input.status,id,{productId:product?.id??null}]);
    return {row:updated,changed:true};
   });
-  if(result.changed)await this.notifier.notify([result.row.client_id],{type:'part_sourcing',recommendationId:id,orderId:result.row.source_order_id},
+  if(result.changed)await this.notifier.notify([result.row.client_id],{type:'part_sourcing',recommendationId:id,orderId:result.row.source_order_id,bookingId:result.row.source_booking_id},
     {kind:'normal',title:input.status==='resolved'?'Запчасть подобрана':'Результат подбора запчасти',
      body:input.status==='resolved'?'Точный товар привязан к рекомендации. Проверьте актуальную цену в магазине. Заказ не создан.':'Пока не удалось подобрать точную деталь. Подробности в истории рекомендаций.',
-     data:{orderId:result.row.source_order_id,recommendationId:id}}).catch(()=>{});
+     data:{...(result.row.source_booking_id?{bookingId:result.row.source_booking_id}:{orderId:result.row.source_order_id}),recommendationId:id}}).catch(()=>{});
   return {item:safeRow(result.row),changed:result.changed};
  }
  async checkout(user:AuthUser,id:string){

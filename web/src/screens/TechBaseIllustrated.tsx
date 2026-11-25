@@ -38,7 +38,9 @@ export function TechBaseIllustrated({data,specialties=[]}:{data:IllustratedPaylo
  const [q,setQ]=useState('');
  const [zoom,setZoom]=useState<string|null>(null);
  const [partCard,setPartCard]=useState<string|null>(null);
- const orderId=new URLSearchParams(location.hash.split('?')[1]??'').get('orderId')??undefined;
+ const contextParams=new URLSearchParams(location.hash.split('?')[1]??'');
+ const orderId=contextParams.get('orderId')??undefined;
+ const bookingId=contextParams.get('bookingId')??undefined;
  const family=data.families.find(([m])=>m===make);
  const bindings=(c:SummaryCard):readonly Binding[]=>c.bindings??[];
  const compatible=(c:SummaryCard)=>{
@@ -84,7 +86,7 @@ export function TechBaseIllustrated({data,specialties=[]}:{data:IllustratedPaylo
     {c.pins.length>0&&<details><summary>Текстовая таблица контактов ({c.pins.length})</summary><div style={{overflowX:'auto'}}><table><thead><tr><th>№</th><th>Назначение</th><th>Цвет</th><th>мм²</th></tr></thead><tbody>{c.pins.map(p=><tr key={p[0]}>{p.map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table></div></details>}
     {c.relatedCards.some(compatible)&&<div className="stack"><b>Связанные узлы</b>{c.relatedCards.filter(compatible).map(x=><button key={x.id} type="button" className="btn ghost small" onClick={()=>{setFocus(x.id);setZoom(null);setPartCard(null);}}>{x.category} → {x.title}</button>)}</div>}
     <button type="button" className="btn ghost small" aria-expanded={partCard===c.id} onClick={()=>setPartCard(v=>v===c.id?null:c.id)}>Артикулы и подбор запчасти</button>
-    {partCard===c.id&&<PartProposal key={c.id} cardId={c.id} orderId={orderId}/>}
+    {partCard===c.id&&<PartProposal key={c.id} cardId={c.id} orderId={orderId} bookingId={bookingId}/>}
     <div className="note">Авторская иллюстрация TrakSOS · источник проверен {c.sourceCheckedOn} · техническая проверка ожидается. <a href={c.url} target="_blank" rel="noopener noreferrer">{c.source} ↗</a></div>
 
     </article>}

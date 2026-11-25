@@ -77,3 +77,38 @@ test('repair recommendation is private, owner controlled, exact and idempotent t
   assert.equal(ok(await t.api('GET','/api/shop/part-recommendations/'+mid+'/checkout',undefined,owner.token)).product.id,exact.id);
  }finally{await t.close();}
 });
+
+test('approved workshop shares recommendation history and sourcing without altering repair invoice',async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79997808101'),workshop=await t.login('+79997808102','service'),other=await t.login('+79997808103','service'),admin=await t.login('+79990000001');
+  const vehicle=ok(await t.api('POST','/api/vehicles',{brand:'Scania',model:'R',year:2014,plate:'А401АА178'},owner.token));
+  const center=ok(await t.api('PUT','/api/base',{name:'СТО для теста',address:'Санкт-Петербург, Московское шоссе, 20',staff:{air:'own'},accepts:['quick','long']},workshop.token)).center;
+  ok(await t.api('POST','/api/admin/services/'+center.id+'/verify',{decision:'approved'},admin.token));
+  const booking=ok(await t.api('POST','/api/services/'+center.id+'/book',{vehicleId:vehicle.id,need:'air',day:'2026-12-02',arrival:'self'},owner.token));
+  const path='/api/bookings/'+booking.id+'/part-recommendations';
+  const proposal={brand:'Fixture',article:'STO-42',name:'Тестовый клапан СТО',qty:1,reason:'Диагностика подтвердила неисправность клапана',productId:null,cardId:null,fitmentConfirmed:true};
+  assert.equal((await t.api('POST',path,proposal,workshop.token)).status,409);
+  assert.equal((await t.api('GET',path,undefined,other.token)).status,403);
+  ok(await t.api('POST','/api/base/bookings/'+booking.id+'/respond',{action:'accept'},workshop.token));
+  ok(await t.api('POST','/api/base/bookings/'+booking.id+'/status',{status:'diagnostics'},workshop.token));
+  const initial=await t.db.one<any>('select amount,status from service_bookings where id=$1',[booking.id]);
+  assert.equal(ok(await t.api('GET',path,undefined,workshop.token)).canSuggest,true);
+  assert.equal(ok(await t.api('GET','/api/techbase?audience=master',undefined,workshop.token)).audiences.includes('master'),true);
+  const first=ok(await t.api('POST',path,proposal,workshop.token));
+  const rid=first.item.id;
+  assert.equal(first.item.source_booking_id,booking.id);
+  assert.equal(first.item.source_order_id,null);
+  assert.equal(ok(await t.api('POST',path,proposal,workshop.token)).created,false);
+  assert.equal((await t.api('POST',path+'/'+rid+'/decision',{accept:true},workshop.token)).status,403);
+  ok(await t.api('POST',path+'/'+rid+'/decision',{accept:true},owner.token));
+  const request='/api/shop/part-recommendations/'+rid+'/sourcing';
+  assert.equal(ok(await t.api('POST',request,{},owner.token)).item.sourcing_status,'requested');
+  assert.ok(ok(await t.api('GET','/api/shop/part-recommendations?vehicleId='+vehicle.id,undefined,owner.token)).items.some((x:any)=>x.id===rid&&x.source_booking_id===booking.id));
+  const after=await t.db.one<any>('select amount,status from service_bookings where id=$1',[booking.id]);
+  assert.deepEqual(after,initial);
+  assert.equal((await t.db.query('select id from shop_orders where part_recommendation_id=$1',[rid])).length,0);
+  await t.db.query("update service_centers set verification='rejected' where id=$1",[center.id]);
+  assert.equal((await t.api('POST',path,{...proposal,article:'STO-43'},workshop.token)).status,403);
+ }finally{await t.close();}
+});

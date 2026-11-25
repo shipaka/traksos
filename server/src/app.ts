@@ -916,6 +916,13 @@ export function createApp(d: Deps) {
   }),c.body)));
   r.post('/api/orders/:id/part-recommendations/:recommendationId/decision',true,(c:AuthedCtx)=>partRecommendations.decide(c.user,
     parse(z.string().uuid(),c.params.id),parse(z.string().uuid(),c.params.recommendationId),parse(z.object({accept:z.boolean()}),c.body).accept));
+  r.get('/api/bookings/:id/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.list(c.user,parse(z.string().uuid(),c.params.id),'booking'));
+  r.post('/api/bookings/:id/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.propose(c.user,parse(z.string().uuid(),c.params.id),parse(partIdentitySchema.extend({
+    name:z.string().trim().min(2).max(160),qty:z.number().int().min(1).max(99),reason:z.string().trim().min(12).max(1000),
+    productId:z.string().uuid().nullable().optional(),cardId:z.string().max(100).nullable().optional(),fitmentConfirmed:z.literal(true)
+  }),c.body),'booking'));
+  r.post('/api/bookings/:id/part-recommendations/:recommendationId/decision',true,(c:AuthedCtx)=>partRecommendations.decide(c.user,
+    parse(z.string().uuid(),c.params.id),parse(z.string().uuid(),c.params.recommendationId),parse(z.object({accept:z.boolean()}),c.body).accept,'booking'));
   r.post('/api/shop/part-recommendations/:id/sourcing',true,(c:AuthedCtx)=>partRecommendations.requestSourcing(c.user,parse(z.string().uuid(),c.params.id)));
   r.get('/api/admin/shop/part-sourcing',['admin'],(c:AuthedCtx)=>partRecommendations.sourcingQueue(c.user,
     parse(z.coerce.number().int().min(0).max(10000),c.query.get('page')??'0'),
