@@ -1134,13 +1134,9 @@ function WarrantyPanel({id,you}:{id:string;you:string}){
   const {me}=useMe();
   const scope=(me?.id??'guest')+':warranty:'+id;
   const claim=usePrivateRead<any>(async()=>{
-    const list=await get<any[]>('/api/warranty-claims');
-    if(!Array.isArray(list))throw new Error('Не удалось подтвердить список претензий');
-    const entry=list.find(c=>c.orderId===id);
-    if(!entry)return {claim:null};
-    const detail=await get('/api/warranty-claims/'+entry.id);
-    if(detail?.orderId!==id)throw new Error('Не удалось подтвердить претензию');
-    return {claim:detail};
+    const result=await get('/api/orders/'+id+'/warranty-claims');
+    if(!result||!Object.hasOwn(result,'claim')||(result.claim!==null&&result.claim?.orderId!==id))throw new Error('Не удалось подтвердить претензию');
+    return result;
   },scope,e=>e.type==='connection_restored'||(e.type==='warranty'&&(!e.orderId||e.orderId===id)));
   const {busy,run}=useAction();
   const [open,setOpen]=useState(false);
