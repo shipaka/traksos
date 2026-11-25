@@ -1412,25 +1412,34 @@ html.traksos-native .guest-app .tr-native-welcome-service-list{
 }
 html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{
   box-sizing:border-box;position:relative;display:flex!important;
-  align-items:center;justify-content:flex-start;flex-direction:row!important;
-  gap:8px;min-height:59px!important;min-width:0;
+  align-items:center!important;justify-content:flex-start!important;flex-direction:row!important;
+  gap:8px!important;min-height:59px!important;height:auto!important;min-width:0;
   border:1px solid #456474!important;border-radius:11px!important;
   padding:8px!important;text-align:left!important;
   background:#142f3e!important;color:#f6f8f9!important;
   text-decoration:none;touch-action:manipulation;
 }
+/* The native drawer is a compact touch list, not a browser photo card.
+   Earlier generic public-landing rules use !important, so explicitly keep
+   their photo overlays and bottom alignment out of this isolated surface. */
+html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile::before,
+html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile::after{
+  content:none!important;display:none!important;background:none!important;pointer-events:none!important;
+}
 html.traksos-native .guest-app .tr-native-welcome-service-list .public-service-icon{
-  display:grid;place-items:center;flex:0 0 25px;
-  width:25px;height:25px;color:#e8ad51
+  position:relative!important;inset:auto!important;
+  display:grid!important;place-items:center;flex:0 0 25px!important;
+  width:25px!important;height:25px!important;margin:0!important;color:#e8ad51
 }
 html.traksos-native .guest-app .tr-native-welcome-service-list .public-service-icon svg{
   width:24px;height:24px
 }
 html.traksos-native .guest-app .tr-native-welcome-service-list strong{
-  min-width:0;flex:1;font-size:12px;line-height:1.25;overflow-wrap:anywhere
+  min-width:0;flex:1 1 0;font-size:12px;line-height:1.25;overflow-wrap:break-word;
+  position:relative;z-index:2;white-space:normal;
 }
 html.traksos-native .guest-app .tr-native-welcome-service-list>a>span:last-child{
-  color:#e8ad51;font-size:18px
+  color:#e8ad51;font-size:18px;flex:0 0 auto;position:relative;z-index:2
 }
 html.traksos-native .guest-app .tr-native-welcome-partner{
   display:flex;align-items:center;justify-content:space-between;
@@ -1460,7 +1469,7 @@ html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
   html.traksos-native .guest-app .tr-native-welcome{padding:9px!important;gap:9px!important}
   html.traksos-native .guest-app .tr-native-welcome-stage{padding:12px!important}
   html.traksos-native .guest-app .tr-native-welcome-photo{height:130px}
-  html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{gap:5px;padding:6px!important}
+  html.traksos-native .guest-app .tr-native-welcome-service-list>a.public-service-tile{gap:5px!important;padding:6px!important}
 }
 @media(prefers-reduced-motion:reduce){
   html.traksos-native .guest-app .auth-desktop-layout:not(.tr-auth-panel){
