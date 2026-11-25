@@ -873,11 +873,17 @@ expect(pcSource.includes('function SelectedServiceCase(') &&
 expect(pcSource.includes('approved-pc-active-order-nav') &&
   pcSource.includes('active.map((o:any)=>[String(o.id)') &&
   !pcSource.includes('onChange={()=>{}}') &&
-  pcSource.includes('approved-pc-order-table') &&
-  pcSource.includes('approved-pc-fleet-vehicle-row') &&
+  pcSource.includes("get<any[]>('/api/orders')") &&
+  pcSource.includes("get<any>('/api/fleet')") &&
+  pcSource.includes('active.map((o:any)=><RowItem') &&
+  pcSource.includes('cars.slice(0,5).map((c:any)=><RowItem') &&
+  pcSource.includes("href={'#/garage/'+c.id}") &&
+  pcE2E.includes("['#/fleet','#/orders','#/sos']") &&
+  pcE2E.includes('Repeated fleet/order table returned') &&
+  pcE2E.includes('Fleet vehicle must have one history entry') &&
   pcSource.includes('function Calendar(') &&
   pcSource.includes('appointments.map((item:any)'),
-  'owner active multi-order tabs, repair table, real fleet, and clickable calendar entries');
+  'owner active multi-order tabs, consolidated real fleet and history, no duplicate workdesk destinations, and clickable calendar entries');
 expect(pcE2E.includes('SYNTHETIC local API data') &&
   pcE2E.includes("['localhost','127.0.0.1']") &&
   pcE2E.includes("serviceWorkers:'block'") &&
