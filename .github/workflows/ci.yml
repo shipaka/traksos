@@ -76,6 +76,7 @@ jobs:
       - name: Сквозной сценарий в браузере и контроль интерактивности
         run: |
           npx playwright install --with-deps chromium
+          node e2e/techbase-trailer-fitment.mjs
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
           TRAKSOS_LEGACY_CASH_FIXTURES=1 TRAKSOS_SHOP_FIXTURES=1 TRAKSOS_PAYMENT_FIXTURES=1 DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start &
           until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
