@@ -61,8 +61,26 @@ test('admin registry filters the full case set before paging and includes legacy
     assert.equal(detail.bookings.filter((x:any)=>x.id===booking.id).length,1);
     assert.equal(detail.multi,true);
     const number=detail.bookings[0].number;
-    const searched=await get('?limit=100&q='+number);
-    assert.ok(searched.items.some((x:any)=>x.id===legacy.id));
+    // Numeric substring search may legitimately match many newer orders.
+    // Walk every matching page rather than assuming a linked booking ranks first.
+    const searchQuery='?limit=100&q='+encodeURIComponent(String(number));
+    let searched=await get(searchQuery);
+    const matchingIds=new Set<string>();
+    for(let pageNo=0;;pageNo++){
+      assert.ok(pageNo<10,'bounded fixture must terminate');
+      for(const item of searched.items){
+        assert.ok(!matchingIds.has(item.id),'no duplicate search result across pages');
+        matchingIds.add(item.id);
+      }
+      if(!searched.hasMore){assert.equal(searched.nextBefore,null);break;}
+      assert.equal(searched.nextBefore,searched.items.at(-1).id);
+      searched=await get(searchQuery+'&before='+encodeURIComponent(searched.nextBefore));
+    }
+    assert.ok(matchingIds.has(legacy.id),'linked booking is searchable across the full registry');
+    // The active scope isolates the original linked case from newer closed
+    // orders without relying on its rank among unrelated numeric matches.
+    const activeSearch=await get(searchQuery+'&scope=active');
+    assert.ok(activeSearch.items.some((x:any)=>x.id===legacy.id&&x.workshop_count===1));
     const csv=await get('/'+legacy.id+'/export');
     assert.match(csv.csv,/СТО \(свод, не первичный документ\)/);
     const first=await get('?scope=closed&limit=100');
