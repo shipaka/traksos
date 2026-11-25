@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
@@ -146,19 +147,22 @@ export class ChatService {
     });
   }
 
-  async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text') {
+  async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text', requestId?:string) {
     // This initial check preserves the existing useful "not found/forbidden"
     // contract for outsiders and invited performers. The real write authority
     // is re-evaluated under the order row lock below.
     await this.orders.mustSee(user, orderId);
     const text = body.trim().slice(0, 2000);
     if (!text) throw bad('empty', 'Пустое сообщение');
+    if(requestId!==undefined&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId))
+      throw bad('bad_request_id','Некорректный идентификатор отправки');
+    const fingerprint=requestId===undefined?null:createHash('sha256').update(JSON.stringify([kind,text])).digest('hex');
     const { text: safe, masked } = maskPhones(text);
     const words = (await this.settings.get('chat')).suspiciousWords;
     const lower = safe.toLowerCase();
     const flagged = masked || words.some((w) => lower.includes(w));
 
-    const { message, number } = await this.db.tx(async q => {
+    const { message, number, created } = await this.db.tx(async q => {
       // Status, performer and customer authority are checked in one snapshot.
       // A previous owner/driver/performer check in another pooled connection
       // is not sufficient while reassignments and closures are concurrent.
@@ -171,6 +175,20 @@ export class ChatService {
       if (!o) throw forbidden('Заявка недоступна');
       const actor = await this.liveActor(q,user,o);
       if (!actor) throw forbidden('Переписка доступна только участникам заявки');
+      // The order row lock serializes duplicate attempts; authorization is
+      // checked first even for replay. A committed message can be acknowledged
+      // after closure, but a new message can never be added to an archive.
+      if(requestId!==undefined){
+        const prior=await q.one<{id:number;order_id:string;sender_id:string;kind:string;body:string;masked:boolean;created_at:string;client_request_fingerprint:string}>(
+          `select id::int as id,order_id,sender_id,kind,body,masked,created_at,client_request_fingerprint
+            from chat_messages where order_id=$1 and sender_id=$2 and client_request_id=$3`,[orderId,user.id,requestId]);
+        if(prior){
+          if(prior.client_request_fingerprint!==fingerprint)
+            throw conflict('request_id_conflict','Этот идентификатор уже использован для другого сообщения');
+          const {client_request_fingerprint:_,...message}=prior;
+          return {message,number:o.number,created:false};
+        }
+      }
       if (['completed', 'cancelled', 'no_performer'].includes(o.status))
         throw conflict('chat_closed', 'Диалог завершён. История доступна для просмотра, новое сообщение отправить нельзя');
       // A quick reply is not a stale action: its eligibility is checked against
@@ -180,14 +198,15 @@ export class ChatService {
       const m = await q.one<{
         id: number; order_id: string; sender_id: string;
         kind: string; body: string; masked: boolean; created_at: string;
-      }>(`insert into chat_messages(order_id, sender_id, kind, body, masked, flagged)
-          values ($1,$2,$3,$4,$5,$6)
+      }>(`insert into chat_messages(order_id, sender_id, kind, body, masked, flagged, client_request_id, client_request_fingerprint)
+          values ($1,$2,$3,$4,$5,$6,$7,$8)
           returning id::int as id,order_id,sender_id,kind,body,masked,created_at`,
-        [orderId, user.id, kind, safe, masked, flagged]);
-      return { message: m!, number: o.number };
+        [orderId, user.id, kind, safe, masked, flagged, requestId??null,fingerprint]);
+      return { message: m!, number: o.number, created:true };
     });
 
     const rendered = { ...message, sender_name: user.name };
+    if(!created)return rendered;
     // Never notify a former fleet driver merely because created_by was once
     // associated with an order. The recipients helper checks the CURRENT link.
     try {
