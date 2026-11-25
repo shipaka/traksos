@@ -76,7 +76,8 @@ try{
         const profile=await response.json();
         await route.fulfill({response,json:{...profile,roles:profile.roles.filter(r=>r!=='service')}});
       });
-      await page.goto(BASE+'/#/as/service',{waitUntil:'domcontentloaded'});
+      // A changed document URL forces a fresh /api/me before the role intent is resolved.
+      await page.goto(BASE+'/?hybrid-revocation=1#/as/service',{waitUntil:'domcontentloaded'});
       await checkMode('performer','#/work',false);
       assert(await choice.count()===0,kind+': withdrawn role selector remains');
       assert(writes.length===0,kind+': switch unexpectedly submitted a mutation '+writes.join(','));
