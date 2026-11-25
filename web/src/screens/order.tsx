@@ -33,7 +33,14 @@ function OrderForSession({id,initialTab,userId}:{
 }) {
   const o=usePrivateRead<any>(()=>get(`/api/orders/${id}`),
     'order:'+userId+':'+id,
-    (e:any)=>e.orderId===id&&(e.type==='order'||e.type==='payment'));
+    (e:any)=>e.type==='connection_restored'||(e.orderId===id&&(e.type==='order'||e.type==='payment')));
+  useEffect(()=>{
+    const reload=()=>{void o.reload();};
+    const visible=()=>{if(document.visibilityState==='visible')reload();};
+    window.addEventListener('online',reload);
+    document.addEventListener('visibilitychange',visible);
+    return ()=>{window.removeEventListener('online',reload);document.removeEventListener('visibilitychange',visible);};
+  },[o.reload]);
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
   useEffect(() => {
     setPerfPos(null); // Never display another order's last GPS position after switching the route.
