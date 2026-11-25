@@ -280,7 +280,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
 function InsuranceThreadForAccount({requestId}:{requestId:string}){
   const {me}=useMe();const {busy,run}=useAction();
   const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
-    [requestId],e=>e.type==='vehicle_service'&&e.requestId===requestId);
+    [requestId],e=>e.type==='connection_restored'||(e.type==='vehicle_service'&&e.requestId===requestId));
   const [message,setMessage]=useState('');
   const [chatExpanded,setChatExpanded]=useState(false);
   const [drafts,setDrafts]=useState([{company:'',product:'',price:'',description:'',coverage:''}]);
@@ -302,7 +302,22 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
     setChoice('');setExpiresOn('');setPdf(null);setActionError(null);
     if(policyFileRef.current)policyFileRef.current.value='';
   },[requestId]);
-  const d=source.data?.request?.id===requestId?source.data:null,r=d?.request;
+  const d=!source.error&&source.data?.request?.id===requestId&&Array.isArray(source.data.proposals)&&Array.isArray(source.data.messages)?source.data:null,r=d?.request;
+  const alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  const [pendingReview,setPendingReview]=useState(false);
+  const mutationLock=useRef(false);
+  const mutate=async(fn:()=>Promise<any>,label:string)=>{
+    if(mutationLock.current||pendingReview||busy)return;
+    mutationLock.current=true;const token=getToken();
+    try{
+      const result=await run(fn,label);
+      if(!alive.current||getToken()!==token)return;
+      if(!result)setPendingReview(true);
+      await source.reload();
+      return result;
+    }finally{mutationLock.current=false;}
+  };
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
   const isAgent=!!d?.isPartner;
@@ -316,11 +331,10 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
   const backLabel=isStaffViewer?'К страховым обращениям':isAgent?'К списку страховых заявок':'Мой гараж';
   const status=insurancePresentation(stage,r?.status,isAgent?'partner':'client');
   const activeIndex=insuranceStepIndex(stage);
-  const notify=()=>source.reload();
   const send=async()=>{
     const m=message.trim();if(!m||!canSendMessage)return;
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
-    if(v){setMessage('');notify();}
+    const v=await mutate(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
+    if(v)setMessage(current=>current.trim()===m?'':current);
   };
   const publish=async()=>{
     const data=drafts.map(o=>({company:o.company.trim(),product:o.product.trim(),
@@ -335,8 +349,7 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
       return;
     }
     setActionError(null);
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
-    if(v)notify();
+    await mutate(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
   };
   const upload=async()=>{
     const file=pdf;
@@ -354,7 +367,8 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
       return;
     }
     setActionError(null);
-    const v=await run(async()=>{
+    const token=getToken();
+    const v=await mutate(async()=>{
       // A FileReader failure must pass through useAction's error handling.
       // The selected file remains in place for a manual retry.
       const fileDataUrl=await new Promise<string>((resolve,reject)=>{
@@ -370,18 +384,21 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
       if(!/^data:[^;,]*;base64,/.test(fileDataUrl))
         throw new Error('Не удалось прочитать PDF');
       const dataUrl=fileDataUrl.replace(/^data:[^;,]*;base64,/,'data:application/pdf;base64,');
+      if(!alive.current||getToken()!==token)throw new Error('Сессия изменилась');
       return post('/api/insurance/requests/'+requestId+'/policy',{
         dataUrl,fileName:file.name,expiresOn});
     },'Готовый PDF отправлен клиенту');
-    if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';notify();}
+    if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';}
   };
   const download=async()=>{
     setActionError(null);
     try{
       // Guarded private-blob transport checks sandbox origin and account
       // continuity both before and after reading PDF bytes.
+      const token=getToken();
       const url=await authedImage('/api/insurance/requests/'+requestId+'/policy',{
         allowedMimeTypes:['application/pdf']});
+      if(!alive.current||getToken()!==token){URL.revokeObjectURL(url);return;}
       const link=document.createElement('a');
       link.href=url;link.download='insurance-policy.pdf';
       document.body.append(link);link.click();link.remove();
@@ -395,7 +412,8 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
   return <main ref={threadRef} className="insurance-workflow stack">
     <a className="insurance-back" href={backHref}>← {backLabel}</a>
-    {!d?<Loading error={source.error}/>:
+    {pendingReview&&<div className="banner warn" role="alert">Ответ на действие не подтверждён. Сверьте этап и переписку перед повтором. <button type="button" className="btn ghost small" onClick={source.reload}>Обновить дело</button> <button type="button" className="btn ghost small" disabled={!d} onClick={()=>setPendingReview(false)}>Состояние проверено</button></div>}
+    {!d?<div className="stack"><Loading error={source.error}/>{source.error&&<button type="button" className="btn ghost small" onClick={source.reload}>Повторить загрузку страхового дела</button>}</div>:
     <>
       <section className="insurance-workflow-hero">
         <span>TRAKSOS · СТРАХОВАЯ ПЕРЕПИСКА</span>
@@ -446,9 +464,9 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
               </div>)}
             </div>
             {d.isClient&&stage==='offers_sent'&&
-              <button className="btn" disabled={busy||!choice} type="button"
-                onClick={async()=>{const v=await run(()=>post('/api/insurance/requests/'+requestId+'/choose',
-                  {proposalId:choice}),'Выбор отправлен страховому агенту');if(v)notify();}}>Оформить выбранный вариант</button>}
+              <button className="btn" disabled={busy||pendingReview||!d.proposals.some(p=>p.id===choice)} type="button"
+                onClick={async()=>{await mutate(()=>post('/api/insurance/requests/'+requestId+'/choose',
+                  {proposalId:choice}),'Выбор отправлен страховому агенту');}}>Оформить выбранный вариант</button>}
           </div>}
           {d.hasPolicy&&<div className="insurance-policy">
             <b>✓ Готовый страховой полис</b>
@@ -475,7 +493,7 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
               <textarea className="field" maxLength={2000} rows={3} value={message}
                 onChange={e=>setMessage(e.target.value)}
                 placeholder="Уточнить сведения, запросить документы или ответить…" /></label>
-            <button type="button" className="btn small" disabled={busy||!message.trim()}
+            <button type="button" className="btn small" disabled={busy||pendingReview||!message.trim()}
               onClick={send}>Отправить сообщение</button>
           </div>:<div className="note" role="status">
             {isStaffViewer?'Только просмотр: отправлять сообщения могут заявитель и назначенный страховой агент.'
@@ -508,9 +526,9 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
             <b>Следующий шаг</b>
             <p className="note">{stage==='received'?'Вы получили заявку. Примите её для подготовки предложений.':
               'Клиент выбрал вариант. Примите его в работу и оформите полис у страховой компании.'}</p>
-            <button className="btn" type="button" disabled={busy}
-              onClick={async()=>{const v=await run(()=>post('/api/insurance/requests/'+requestId+'/accept'),
-                'Принято в работу');if(v)notify();}}>Принято в работу</button>
+            <button className="btn" type="button" disabled={busy||pendingReview}
+              onClick={async()=>{await mutate(()=>post('/api/insurance/requests/'+requestId+'/accept'),
+                'Принято в работу');}}>Принято в работу</button>
           </section>}
           {isAgent&&stage==='preparing'&&<section className="card stack">
             <b>Предложения от страховых компаний</b>
@@ -533,7 +551,7 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
             </div>)}
             {drafts.length<20&&<button className="btn ghost" type="button" onClick={()=>
               setDrafts(old=>[...old,{company:'',product:'',price:'',description:'',coverage:''}])}>+ Ещё предложение</button>}
-            <button className="btn" disabled={busy} type="button" onClick={publish}>Отправить {drafts.length} предложений клиенту</button>
+            <button className="btn" disabled={busy||pendingReview} type="button" onClick={publish}>Отправить {drafts.length} предложений клиенту</button>
           </section>}
           {isAgent&&stage==='processing'&&<section className="card stack">
             <b>Отправить готовый полис</b>
@@ -542,7 +560,7 @@ function InsuranceThreadForAccount({requestId}:{requestId:string}){
               data-insurance-policy-field="date" aria-invalid={actionError?.scope==='policy'&&!futurePolicyExpiry(expiresOn)||undefined} onChange={e=>{setExpiresOn(e.target.value);setActionError(null);}}/></label>
             <label>Файл PDF<input ref={policyFileRef} type="file" accept="application/pdf,.pdf" className="field"
               data-insurance-policy-field="file" onChange={e=>{setPdf(e.target.files?.[0]??null);setActionError(null);}}/></label>
-            <button className="btn" type="button" disabled={busy} onClick={upload}>
+            <button className="btn" type="button" disabled={busy||pendingReview} onClick={upload}>
               Отправить готовый полис клиенту</button>
             {actionError?.scope==='policy'&&
               <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
