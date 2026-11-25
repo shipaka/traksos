@@ -5,6 +5,7 @@ import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
+import {currentChatPeople,redactChatSystemBody} from '../domain/chatVisibility.ts';
 
 // Text-only shortcuts. «Я на месте» changes the order status; it must never be
 // offered as a chat message (especially after completion).
@@ -69,26 +70,6 @@ export class ChatService {
     return assignment ? 'client' : null;
   }
 
-  // Same live role/link predicate for the participant roster and new human
-  // chat delivery. Historical sender labels in stored messages remain intact.
-  private async currentPeople(q:Queryable,orderId:string) {
-    return q.query<{id:string;name:string|null;who:string}>(`
-      select distinct u.id,u.name,x.who from orders o
-      cross join lateral (values (o.client_id,'owner'),
-        (case when o.created_by<>o.client_id then o.created_by end,'driver'),
-        (o.performer_id,'performer')) x(id,who)
-      join users u on u.id=x.id
-      where o.id=$1 and u.status='active' and u.deleted_at is null and (
-        (x.who='owner' and 'client'=any(u.roles) and u.owner_id is null)
-        or (x.who='performer' and u.roles && array['master','tow','service']::text[])
-        or (x.who='driver' and 'driver'=any(u.roles) and u.owner_id=o.client_id
-          and exists(select 1 from users owner where owner.id=o.client_id
-            and owner.status='active' and owner.deleted_at is null
-            and 'client'=any(owner.roles) and owner.owner_id is null)
-          and exists(select 1 from vehicles v where v.owner_id=o.client_id and v.driver_id=u.id
-            and (o.vehicle_id is null or v.id=o.vehicle_id)))
-      ) order by x.who,u.id`,[orderId]);
-  }
 
   async list(user: AuthUser, orderId: string, afterId = 0, window?: ChatWindow) {
     if (!Number.isSafeInteger(afterId) || afterId < 0) throw bad('bad_cursor', 'Некорректная позиция переписки');
@@ -129,13 +110,10 @@ export class ChatService {
       // Never return those amounts to a performer/candidate, including old archived messages.
       const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
         if (m.sender_role !== 'system') return m;
-        const body = String(m.body ?? '');
-        if (body.startsWith('Исполнитель закрыл выезд:') || /^Сумма\s+[\d\s,.]+\s*₽/.test(body))
-          return { ...m, body: 'Клиенту доступен подробный расчёт. Свои удержания и выплаты смотрите в разделе «Финансы».' };
-        return m;
+        return {...m,body:redactChatSystemBody(String(m.body??''))};
       }) : msgs;
       // Кто в чате: владелец, водитель (если заказывал он), исполнитель, поддержка — если подключалась
-      const people = await this.currentPeople(q,orderId);
+      const people = await currentChatPeople(q,orderId);
       const support = await q.one<{ n: number }>(
         `select count(*)::int as n from chat_messages m join orders o on o.id=m.order_id
           where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
@@ -210,7 +188,7 @@ export class ChatService {
     // Never notify a former fleet driver merely because created_by was once
     // associated with an order. The recipients helper checks the CURRENT link.
     try {
-      const ids = [...new Set((await this.currentPeople(this.db,orderId)).map(p=>p.id))];
+      const ids = [...new Set((await currentChatPeople(this.db,orderId)).map(p=>p.id))];
       this.notifier.live(ids, { type: 'chat', message: rendered });
       const others = ids.filter(id => id !== user.id);
       await this.notifier.notify(others, { type: 'chat_push', orderId }, {
