@@ -183,7 +183,9 @@ const performerEmptySource=await read('web/src/screens/approvedPcCabinets2026112
 const performerEmptyStyle=await read('web/src/approvedPcCabinets20261120.css');
 expect(performerEmptySource.includes('<ApprovedEmptyScene kind="shift"/>') &&
   performerEmptySource.includes('data-orders="0"') &&
-  performerEmptySource.includes('!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>') &&
+  performerEmptySource.includes('!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>') &&
+  performerEmptySource.includes("const jobRows=jobs.error?null:jobs.data") &&
+  performerEmptySource.includes("onClick={()=>setMode('offers')}") &&
   performerEmptyStyle.includes('.approved-pc-performer .approved-pc-shift-empty-body'),
   'performer/tow empty shift preserves API loading, real offer CTA and cinematic illustration without fake work');
 const unifiedPerformerEntry=await read('web/src/screens/performer.tsx');
@@ -700,19 +702,21 @@ expect(appTour.includes('.tabbar a[href="#/menu"]') &&
   'Android navigation, tutorials and contextual help describe the same actual bottom Menu and real sections');
 
 // Original 618.png is an acceptance CONTRACT, not a source for invented data.
-// Client: exactly 5 fixed bottom slots, no obsolete shop tile, four working
-// services, real route/time/vehicle, and an uncluttered speaking-truck bot.
+// Client: six fixed bottom slots after the later approved shop addition,
+// no obsolete extra dashboard shop tile, four working services and one bot.
 const liveAndroidNav = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
-const ownerNav818 = liveAndroidNav.match(/\[\['\/', '⌂', 'Главная'\], \['\/orders', 'clipboard', 'Заявки'\], \['\/air', '◌', 'Эфир'\], \['\/garage', 'truck', 'Техника'\], \['\/menu', 'menu', 'Меню'\]\]/g) ?? [];
+const ownerNav818 = liveAndroidNav.match(/\[\['\/', '⌂', 'Главная'\], \['\/orders', 'clipboard', 'Заявки'\], \['\/air', '◌', 'Эфир'\], \['\/garage', 'truck', 'Техника'\], \['\/shop', '🛍', 'Магазин'\], \['\/menu', 'menu', 'Меню'\]\]/g) ?? [];
 const approvedNavCSS = await read('web/src/approvedBottomNavigation20261120.css');
 const appPerformer = await read('web/src/screens/performer.tsx');
 expect(ownerNav818.length === 1 &&
-  approvedNavCSS.includes('grid-template-columns:repeat(5,minmax(0,1fr));') &&
+  approvedNavCSS.includes('grid-template-columns:repeat(6,minmax(0,1fr));') &&
+  approvedNavCSS.includes('min-height:48px;') &&
+  liveAndroidNav.includes("['/courier/chat','chat','Связь']") &&
   !unifiedMobile.includes('className="and19-equipment and19-parts-shortcut"') &&
   unifiedMobile.includes('Новая заявка на сервис') &&
   shell.includes('!native.isApp && !isAuthEntry') &&
   shell.includes("['/work/chats', 'chat', 'Чат']"),
-  '618.png client exactly five bottom tabs, four original services, separate shop in Menu, no floating native bot');
+  '618 plus approved shop addition: six client tabs, Air retained, courier communication, four original services, no floating native bot');
 
 expect(unifiedMobile.includes('function MobileTimeline({ order }') &&
   unifiedMobile.includes('order.accepted_at') &&
@@ -834,7 +838,9 @@ expect(pcSource.includes("get<any[]>('/api/orders')") &&
   'desktop cards, bids, inspections, moderation, map and canonical animated bot use real API/approved assets');
 expect(pcSource.includes("href={'#/order/'+o.id+'?chat=1'}") &&
   pcSource.includes('owner?get<any>(\'/api/fleet\')') &&
-  pcSource.includes('fleet.data?.cars') &&
+  pcSource.includes('const fleetSnapshot=fleet.error?null:fleet.data') &&
+  pcSource.includes('fleetSnapshot?.cars') &&
+  pcSource.includes('!fleetSnapshot&&<LoadingBlock') &&
   pcSource.includes('dateIso(new Date') &&
   pcSource.includes("get<any>('/api/orders/'+o.id)") &&
   pcSource.includes('Math.abs(event.lat)<=90'),
