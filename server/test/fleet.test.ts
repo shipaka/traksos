@@ -109,3 +109,49 @@ test('расходы водителя ограничены текущим пар
   const stored = await t.db.one<{ client_id: string }>('select client_id from orders where id=$1', [oldOrder.id]);
   assert.equal(stored?.client_id, owner.id, 'история старого парка не переносится');
 });
+
+test('параллельные заявки резервируют лимит атомарно; повтор ключа и SOS сохраняются', async () => {
+  const fleetOwner = await t.login('+79993334488');
+  const fleetDriver = await t.login('+79993334499');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  const amount = (await t.app.settings.all()).pricing.consult?.price ?? 70000;
+  ok(await t.api('PUT', '/api/fleet', { mode: 'limit', perMonth: amount }, fleetOwner.token));
+
+  // Keep the real HTTP/ACL/DB/create path, but freeze dispatch and payment
+  // after commit: a no-performer outcome would legitimately release budget.
+  const originalLaunch = t.app.orders.launch;
+  t.app.orders.launch = async (actor, order) => ({
+    order: await t.app.orders.view(actor, order.id), confirmationUrl: null,
+  });
+  const send = async (key: string, description: string, isSos = false) => {
+    const res = await fetch(t.base + '/api/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + fleetDriver.token, 'idempotency-key': key },
+      body: JSON.stringify({ service: 'consult', vehicleId: car, description, isSos }),
+    });
+    return ok({ status: res.status, body: await res.json() }).order;
+  };
+  try {
+    const [a, b, repeat] = await Promise.all([
+      send('fleet-limit-a-20261125', 'A'),
+      send('fleet-limit-b-20261125', 'B'),
+      send('fleet-limit-a-20261125', 'A'),
+    ]);
+    assert.equal(a.id, repeat.id);
+    assert.notEqual(a.id, b.id);
+    assert.deepEqual([a.status, b.status].sort(), ['awaiting_owner', 'searching']);
+    assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, fleetDriver.token)).monthSpent, amount);
+    const replay = await send('fleet-limit-a-20261125', 'A');
+    assert.equal(replay.id, a.id);
+    const sos = await send('fleet-limit-sos-20261125', 'SOS', true);
+    assert.equal(sos.status, 'searching');
+    const rows = await t.db.query('select status from orders where client_id=$1 and created_by=$2', [fleetOwner.id, fleetDriver.id]);
+    assert.equal(rows.length, 3);
+    assert.equal(rows.filter(r => r.status === 'awaiting_owner').length, 1);
+    assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, fleetDriver.token)).monthSpent, 2 * amount);
+  } finally {
+    t.app.orders.launch = originalLaunch;
+  }
+});
