@@ -224,6 +224,49 @@ try{
  assert(!await searchCase.locator('.search-workspace-content').isVisible(),'Search did not collapse on dashboard');
  await searchCase.getByRole('button',{name:'Раскрыть поиск'}).click();
  await op.screenshot({path:output+'/owner-search-1647.png',fullPage:false,animations:'disabled'});
+ // Use the actual center pane width, not monitor width, for the search layout.
+ async function checkSearchGeometry(p,label){
+   const root=p.locator('.approved-pc-search-case .search-workspace');
+   await root.locator('.offer').first().waitFor();
+   const g=await root.evaluate(el=>{
+     const panel=el.querySelector('.search-workspace-content');
+     const radar=el.querySelector('.search-workspace-radar');
+     const box=el.getBoundingClientRect(),r=radar.getBoundingClientRect();
+     const columns=getComputedStyle(panel).gridTemplateColumns.trim().split(/\s+/).length;
+     const outside=[...el.querySelectorAll('.offer,.offer button,.search-workspace-toggle,.search-workspace-radar')].some(n=>{
+       const b=n.getBoundingClientRect();
+       return b.left<box.left-2||b.right>box.right+2;
+     });
+     return {width:box.width,columns,outside,radarWidth:r.width,radarHeight:r.height,
+       dpr:devicePixelRatio,documentWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth};
+   });
+   assert(g.columns===(g.width>=680?2:1),label+' wrong pane-based columns '+JSON.stringify(g));
+   assert(!g.outside&&g.scrollWidth<=g.documentWidth+3,label+' search overflow '+JSON.stringify(g));
+   assert(g.radarWidth>0&&Math.abs(g.radarWidth-g.radarHeight)<2,label+' radar distorted '+JSON.stringify(g));
+   return g;
+ }
+ for(const width of [1280,1440,1920,2560]){
+   await op.setViewportSize({width,height:width>=1920?1080:900});
+   await checkSearchGeometry(op,String(width));
+   await op.screenshot({path:output+'/owner-search-'+width+'.png',fullPage:false,animations:'disabled'});
+ }
+ await op.setViewportSize({width:1647,height:927});
+ const hidpi=await browser.newContext({viewport:{width:1920,height:1080},deviceScaleFactor:2,locale:'ru-RU',serviceWorkers:'block'});
+ try{
+   const hp=await hidpi.newPage();
+   await hp.route(url=>url.pathname==='/api/orders',route=>route.fulfill(json([secondOrder()])));
+   await hp.route(url=>url.pathname==='/api/orders/'+searchId,route=>route.fulfill(json(secondOrder())));
+   await hp.route(url=>url.pathname==='/api/orders/'+searchId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[
+     {id:'bid-1',name:'Первый мастер CI',price:100000,diffPct:0,eta_minutes:10},
+     {id:'bid-2',name:'Второй мастер CI',price:120000,diffPct:0,eta_minutes:15}
+   ]})));
+   await hp.route(url=>url.pathname==='/api/fleet',route=>route.fulfill(json({cars:[truck],pending:[]})));
+   await open(hp,owner.token,owner.mode,'#/?order='+searchId);
+   const g=await checkSearchGeometry(hp,'1920 HiDPI');
+   assert(g.dpr===2,'HiDPI fixture not configured');
+   await hp.screenshot({path:output+'/owner-search-1920-hidpi.png',scale:'device',fullPage:false,animations:'disabled'});
+ }finally{await hidpi.close();}
+
  await op.evaluate(()=>{
    const original=Element.prototype.animate;
    window.__caseReveals=[];
