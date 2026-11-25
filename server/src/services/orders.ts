@@ -399,7 +399,8 @@ export class OrdersService {
     const r = await q.one<{ s: string }>(
       `select coalesce(sum(coalesce(call_out_amount::bigint, (estimate->>'callOut')::bigint, 0) + coalesce(work_amount::bigint, 0)), 0)::text as s from orders
         where created_by=$1 and client_id=$2 and status not in ('cancelled','no_performer','awaiting_owner')
-          and created_at >= date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow'`, [driverId, ownerId]);
+          and created_at >= (date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow')
+          and created_at < ((date_trunc('month', now() at time zone 'Europe/Moscow') + interval '1 month') at time zone 'Europe/Moscow')`, [driverId, ownerId]);
     const spent = Number(r?.s ?? '0');
     if (!Number.isSafeInteger(spent)) throw new RangeError('Fleet monthly spend exceeds safe integer range');
     return spent;
