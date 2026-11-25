@@ -74,4 +74,16 @@ test('prospective dispatch evidence survives retries, excludes queued rows, and 
   } finally {
     await t.db.query("update users set status='active' where id=$1",[masterId]);
   }
+  // Simulate the final anonymization update (the same deleted_at transition
+  // as PrivacyService.processDeletions), not an actual account erasure.
+  await t.db.query("update users set deleted_at=$2,status='blocked' where id=$1",[masterId,clock]);
+  const surviving=await evidence();
+  assert.deepEqual(surviving.map(r=>r.performer_id),[otherId]);
+  await t.db.query(
+    "update order_dispatch set sent_at=$3 where order_id=$1 and performer_id=$2",
+    [orderId,masterId,new Date(clock.getTime()+1000)]);
+  assert.deepEqual((await evidence()).map(r=>r.performer_id),[otherId],
+    'deleted account evidence must not be recreated on a late retry');
+  assert.ok(await t.db.one('select id from orders where id=$1',[orderId]));
+  await assert.rejects(privatePartnerDispatchReport(t.db,actor(masterId,['master']),clock),{status:403});
 });
