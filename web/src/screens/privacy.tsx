@@ -80,6 +80,7 @@ function PrivacyAccount({token,owner,isDriver}:{token:string;owner:string;isDriv
         <a className="note" href="#/offer/privacy">Политика обработки персональных данных →</a>
       </div>
       <button className="btn ghost" disabled={busy} onClick={download}>Скачать мои данные</button>
+      <span className="note">В файл входят до 500 последних уведомлений и до 500 собственных сообщений Эфира. В разделе exportLimits файла указано общее число, число включённых записей и признак неполной выгрузки.</span>
       <button className="btn ghost" onClick={() => { location.hash = '#/profile'; }}>Исправить данные — в профиле</button>
       <div className="card">
         <b>Удалить аккаунт и данные</b>
