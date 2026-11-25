@@ -15,6 +15,7 @@ import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx'
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 import { usePrivateRead } from './privateRead20261124.ts';
+import { ClientCalendar } from './clientCalendar.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -600,7 +601,7 @@ function NewOrderForAccount({service}:{service:string}) {
   }, [methods?.online, methods?.invoice, methods?.cash, method]);
 
   async function submit() {
-    if (busy||missing.length||!methods?.[method]) return;
+    if (busy||missing.length||!methods?.[method]||plannedTime) return;
     const token=getToken();
     const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
@@ -634,6 +635,7 @@ function NewOrderForAccount({service}:{service:string}) {
   }
 
   const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
+  const plannedTime = !isConsult && !isTow && (site.when === 'today' || site.when === 'tomorrow' || !!site.time?.trim());
   const [savedDraft,setSavedDraft]=useState<SavedNewOrderDraft|null>(null);
   useEffect(()=>{
     let active=true;
@@ -672,6 +674,7 @@ function NewOrderForAccount({service}:{service:string}) {
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
+    plannedTime && { id: 'f-site', name: 'выберите «Сейчас»: запись на время пока недоступна' },
     !isConsult && !regionId && { id: 'f-where', name: 'регион' },
     !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
     !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
@@ -874,9 +877,10 @@ function NewOrderForAccount({service}:{service:string}) {
           {site.state && site.state !== 'free' && <span className="note">Мастеру придётся работать параллельно — это может стоить дороже, он скажет сумму до начала.</span>}
           <span className="label">Когда</span>
           <div className="grid3">{([['now', 'Сейчас'], ['today', 'Сегодня'], ['tomorrow', 'Завтра']] as const).map(([k, n]) => (
-            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => setSite({ ...site, when: k })}>{n}</button>
+            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => { setSite({ ...site, when: k, time: k === 'now' ? undefined : site.time }); setAgree(false); }}>{n}</button>
           ))}</div>
-          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => setSite({ ...site, time: e.target.value })} />}
+          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => { setSite({ ...site, time: e.target.value }); setAgree(false); }} />}
+          {plannedTime && <div role="alert" className="banner warn">Запись на время пока недоступна. Заявка не будет отправлена и оплата не начнётся. Для помощи сейчас выберите «Сейчас»; для будущей записи можно сохранить черновик на устройстве.</div>}
         </Step>
       )}
 
@@ -975,8 +979,10 @@ function NewOrderForAccount({service}:{service:string}) {
 
 // Мои заявки ----------------------------------------------------------------
 
-export function Orders({as}:{as:'client'|'performer'}) {
+export function Orders({as,calendarDate,calendarPeriod}:{as:'client'|'performer';calendarDate?:string;calendarPeriod?:'day'|'week'}) {
   const {me}=useMe();
+  if(calendarDate!==undefined)
+    return <ClientCalendar key={(me?.id??'guest')+':'+as} userId={me?.id??'guest'} date={calendarDate} as={as} period={calendarPeriod}/>;
   return <OrdersForAccount key={(me?.id??'guest')+':'+as} as={as} userId={me?.id??'guest'}/>;
 }
 function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
@@ -995,12 +1001,13 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
   return (
     <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
-      {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
+      {as === 'performer' && <><HistoryTabs tab={tab} setTab={setTab} /><a className="btn ghost small" href="#/work/jobs/calendar">Календарь выездов</a></>}
       {as === 'client' && (
         <div className="scroll-x" role="tablist">
           {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
             <button key={k} className="chip" role="tab" aria-pressed={ctab === k} onClick={() => setCtab(k)}>{n}</button>
           ))}
+          <button type="button" className="chip" role="tab" aria-pressed={false} onClick={()=>go('orders/calendar')}>Календарь</button>
         </div>
       )}
       {list.error&&<section className="card stack" role="alert">

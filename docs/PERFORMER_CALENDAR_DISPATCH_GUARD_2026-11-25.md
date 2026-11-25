@@ -1,0 +1,60 @@
+# #170: immediate dispatch reservation guard (draft)
+
+Current jobs do not have a verified upper duration bound. Until scheduled dispatch and a reliable duration/buffer policy exist, an unbounded immediate job is not assigned to a performer with any non-expired confirmed reservation. This deliberately conservative intermediate rule is NOT the final calendar policy; it may reduce availability even when a reservation is far away. It must not be interpreted as actual current work or advertised to customers as a guarantee. Proposals, cancelled/completed and expired reservations do not block.
+
+Candidate discovery, preferred invitations, queued calls, enlistment, direct acceptance, auction offers and selection (including auto-selection) check the reservation. Final write paths repeat the check under the performer profile row lock. A future reservation confirmation/transfer writer MUST acquire that same lock and check active orders. The current public API has no reservation writer and this change does not create one; direct fixture inserts are test-only.
+
+No change to approved design, payment rules or actual presence. No merge/deploy until tests, two-party confirmation, scheduled dispatch, duration policy, lifecycle and manual acceptance are complete.
+
+## Preview consistency
+
+Customer nearby counters and cards, and the performer closer-colleague counter,
+exclude the same non-expired confirmed intervals as immediate dispatch. Presence
+(online) stays distinct from eligibility for another immediate job. Proposed,
+cancelled, completed and expired intervals do not alone exclude a worker. No
+future time guarantee, public calendar detail, or claim of physical work is
+introduced by this change. The preview remains advisory; final assignment still
+uses its transactional checks.
+
+## Explicit order termination
+
+A database trigger handles future explicit transitions of a linked order to
+cancelled/completed in the same transaction as the order. Cancellation closes
+only that order's open reservations; actual completion marks only the confirmed
+appointment of the assigned performer completed, and closes unaccepted
+alternatives as cancelled. The corresponding audit event is atomic. A rollback
+restores both the order and reservation. No backfill of old rows, automatic
+release after failed search, or reassignment-based cancellation is performed.
+Existing order notifications and financial hooks remain authoritative. Linked
+reservation notification delivery and review of historical inconsistent rows
+remain open until the full planned-order workflow is integrated.
+
+## CI regression correction
+
+Full CI on 0b0c72c: 724/726 server tests passed, including reservation concurrency,
+reschedule, notification outbox, deadline handling, and performer calendar.
+The two failures were customer calendar fixture assumptions: immediate checkout
+without an online performer reaches no_performer, which is intentionally hidden
+from the live calendar. Fixtures now explicitly seed a live linked order,
+assert exclusion in no_performer, and use a separate order for overnight tests.
+This does not relax the production query or claim the new run passed.
+
+## CI clock consistency correction
+
+Full server CI on ae21d4d returned 731 passed / 732 total. The one failure was
+standingGeoAvailability: preview read the injected clock twice, once for the
+SQL reservation cutoff and again for shift eligibility. Both preview paths
+now capture a single instant and use it consistently in SQL and shift logic;
+the regression test also asserts the exact SQL cutoff. The new commit requires
+another complete CI run. Android, real screenshots, load and inter-role sandbox
+passed on ae21d4d only.
+
+## Browser harness correction
+
+CI ddc6014: 738/738 server tests passed, web build and the four separate
+workflows passed. The remaining main workflow failed in esbuild because the
+isolated client-account-switch test stub for base.tsx lacked the NEEDS export
+now imported by the real calendar. Added the missing fixture export and
+extended that existing browser test to check real calendar account switching
+with a late response from the old account. No production code or design
+changed in this correction. A new full run is required.

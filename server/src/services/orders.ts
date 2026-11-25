@@ -103,6 +103,11 @@ export class OrdersService {
 
   async create(user: AuthUser, i: CreateOrderInput, idempotencyKey?: string) {
     if (!SERVICES.includes(i.service)) throw bad('bad_service', 'Неизвестная услуга');
+    // The existing checkout is immediate dispatch, not a deferred order.
+    // Fail closed before INSERT, fleet approval, payment or dispatch, even
+    // for a direct API client or restored draft. Consult ignores site data.
+    if (i.service !== 'consult' && (i.site?.when === 'today' || i.site?.when === 'tomorrow' || !!i.site?.time?.trim()))
+      throw conflict('planned_order_not_ready', 'Запись на время пока недоступна. Для немедленного вызова выберите «Сейчас» и очистите желаемое время.');
     // The old auction-based 'ecu' type had a roadside tariff. ECU workshops
     // cannot be assigned/charged using that contract; use free handoffs.
     if(i.service==='ecu')throw bad('ecu_station_only',
@@ -414,11 +419,13 @@ export class OrdersService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2 and p.is_priority
+          and not exists (select 1 from performer_time_reservations r where r.performer_id=p.user_id
+            and r.status='confirmed' and r.ends_at>$3)
           and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
                    x.service='consult' or exists (
                      select 1 from order_unilateral_closures uc
                        where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`,
-      [kind, order.client_id],
+      [kind, order.client_id, this.now()],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
     const stage=this.auction.stages(order,all.dispatch)?.[0]??null;
@@ -458,11 +465,12 @@ export class OrdersService {
       " (select coalesce(-sum(amount),0)::int from ledger_entries l" +
       " where l.performer_id=p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt" +
       " from performer_profiles p join users u on u.id=p.user_id" +
-      " where p.user_id=$1 and p.kind=$2 and not exists" +
+      " where p.user_id=$1 and p.kind=$2" +
+      " and not exists (select 1 from performer_time_reservations r where r.performer_id=p.user_id and r.status='confirmed' and r.ends_at>$3) and not exists" +
       " (select 1 from orders x where x.performer_id=p.user_id and" +
       " x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')" +
       " and not (x.service='consult' and x.status='awaiting_confirmation'))",
-      [performerId,performerKindFor(order.service)]);
+      [performerId,performerKindFor(order.service),this.now()]);
     const policy = this.auction.stages(order, all.dispatch);
     const stage = policy?.[Number(order.sos_dispatch_stage??0)]??null;
     const ranked = rankCandidates(order as any,list,{
@@ -482,6 +490,7 @@ export class OrdersService {
     await this.db.query(
       "update orders set dispatch_started_at=coalesce(dispatch_started_at,$2)" +
       " where id=$1 and status='searching'",[order.id,this.now()]);
+    if (!inserted) return false;
     await this.event(this.db,order.id,null,'preferred_invited',{performerId});
     await this.ringNext(order.id);
     return true;
@@ -501,6 +510,8 @@ export class OrdersService {
     const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
       `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
         where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
+                       and not exists (select 1 from performer_time_reservations r where r.performer_id=d.performer_id
+                         and r.status='confirmed' and r.ends_at>$3)
                        and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
                    x.service='consult' or exists (
                      select 1 from order_unilateral_closures uc
@@ -578,6 +589,8 @@ export class OrdersService {
       if(!profile||profile.paused||profile.user_status!=='active'||profile.extras?.vacation||!['online','on_call'].includes(profile.line_status))throw conflict('performer_unavailable','Вы больше не на линии');
       const policy=await q.one<{verified_only:boolean}>('select verified_only from orders where id=$1',[orderId]);
       if(policy?.verified_only&&profile.verification!=='approved')throw conflict('performer_unavailable','Для заявки нужен проверенный исполнитель');
+      if (await this.hasUpcomingReservation(q, user.id))
+        throw conflict('performer_reserved', 'У вас есть подтверждённая запись. Новый выезд пока нельзя принять.');
       const d = await q.one(
         `update order_dispatch set status='accepted', responded_at=$3
           where order_id=$1 and performer_id=$2 and status='ringing' and ring_until >= $3 returning *`,
@@ -1284,7 +1297,7 @@ export class OrdersService {
       const p = await q.one<{ line_status: string; paused: boolean }>(
         'select line_status, paused from performer_profiles where user_id=$1 for update', [performerId]);
       if (!p || p.paused || p.line_status === 'offline' || p.line_status === 'on_job') return false;
-      if (await this.busyWith(q, performerId, null)) return false;
+      if (await this.busyWith(q, performerId, null) || await this.hasUpcomingReservation(q, performerId)) return false;
       const rows=await q.query(sql, params);
       return !requireInserted || rows.length>0;
     });
@@ -1323,6 +1336,21 @@ export class OrdersService {
       on conflict (client_id, performer_id) do update set pref=excluded.pref, created_at=now()`, [clientId, performerId, pref]);
     else await this.db.query('delete from client_prefs where client_id=$1 and performer_id=$2', [clientId, performerId]);
     return { pref };
+  }
+
+  /**
+   * Immediate jobs have no trustworthy upper bound on duration yet.
+   * Until the scheduled dispatch path exists, do not assign an unbounded
+   * job to a performer with any non-expired confirmed reservation.
+   * Proposals and cancelled/completed intervals never block. Do not use
+   * this as a presence state or as evidence of actual physical work.
+   * Future reservation writers MUST take the same profile row lock and
+   * check active jobs before confirmation.
+   */
+  async hasUpcomingReservation(q: Queryable, performerId: string) {
+    return !!(await q.one(
+      "select 1 from performer_time_reservations where performer_id=$1 and status='confirmed' and ends_at>$2 limit 1",
+      [performerId, this.now()]));
   }
 
   /** Есть ли у исполнителя другая заявка в работе */

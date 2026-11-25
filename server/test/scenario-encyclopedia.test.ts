@@ -156,3 +156,20 @@ test('training explains settlement separately from confirming the quote',()=>{
   assert.match(closing.explanation,/после подтверждённой оплаты/);
   assert.match(closing.explanation,/финансовых начислений здесь нет/);
 });
+
+
+test('calendar training separates pending proposals, reservations and actual availability by role',()=>{
+  for(const role of ['owner','driver','master','tow'] as const){
+    const item=allowedScenario(role,'calendar-reservation-conflict');
+    assert.ok(item);
+    assert.equal(item.steps.length,3);
+    const text=item.steps.map(step=>step.situation+' '+step.why+' '+step.choices.map(c=>c.feedback).join(' ')).join(' ');
+    assert.match(text,/желаемое время не обещает/);
+    assert.match(text,/блокирует отправку и оплату/);
+    assert.match(text,/неистёкший подтверждённый резерв/);
+    assert.match(text,/пустой календарь не гарантирует/);
+    assert.equal(item.link,'/help','course must not link a performer to a customer-only calendar');
+  }
+  for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
+    assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
+});
