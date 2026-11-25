@@ -341,7 +341,14 @@ export class SupportService {
 
   async thread(user: AuthUser, ticketId: string) {
     return this.db.tx(async q => {
-    const t = await q.one('select * from support_tickets where id=$1 for share',[ticketId]);
+    const t = await q.one<{
+      id: string; user_id: string; number: number; topic: string; status: string;
+      order_id: string | null; ledger_entry_id: number | string | null;
+      created_at: Date; requested_staff_role: 'admin' | 'moderator' | null;
+      sla_deadline_at: Date | null; first_staff_reply_at: Date | null; sla_overdue_at: Date | null;
+    }>(`select id,user_id,number,topic,status,order_id,ledger_entry_id,created_at,
+              requested_staff_role,sla_deadline_at,first_staff_reply_at,sla_overdue_at
+         from support_tickets where id=$1 for share`,[ticketId]);
     if (!t) throw notFound('Обращение не найдено');
     const actor = await this.authorizeTicket(q,user,t);
     const messages = await q.query(
