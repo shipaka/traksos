@@ -198,6 +198,21 @@ try{
       if(await menu.evaluate(el=>el.open))throw Error('Escape did not close desktop menu');
       const clickDesktop=async href=>{
         const link=sidebar.locator('a[href="'+href+'"]');
+        // Admin finance and test routes live in native disclosure groups.
+        // Open a closed group through its actual keyboard-operable summary;
+        // never force a click on a hidden route or bypass the route assertion.
+        const disclosure=link.locator('xpath=ancestor::details[1]');
+        if(await disclosure.count()){
+          const summary=disclosure.locator('summary');
+          await summary.waitFor({state:'visible'});
+          if(!(await disclosure.evaluate(el=>el.open))){
+            await summary.focus();
+            await summary.press('Enter');
+            if(!(await disclosure.evaluate(el=>el.open)))
+              throw Error('Desktop disclosure did not open via keyboard: '+href);
+          }
+          await link.waitFor({state:'visible'});
+        }
         await clickWorkingAction(link,async()=>{
           await visibleRoute(page,href,assertClean);
           await page.waitForFunction(target=>{
