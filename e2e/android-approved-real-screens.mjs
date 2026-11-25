@@ -174,10 +174,9 @@ try{
       // Capture the real fully-painted menu, not the first 0%-opacity frame
       // of the approved 180ms opening animation. Only screenshot timing changes.
       await page.screenshot({path:output+'/'+role+'-menu-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
-      // The approved Account section is now a fourth, collapsed <details>.
-      // Locate Help by its accessible title, never by the fragile last() index.
+      // Help and Documents are independent collapsed sections; the existing Account section remains.
       const helpDetails=page.locator('details.tr-mobile-menu-section').filter({
-        has:page.locator('summary[aria-label="Помощь и документы"]')
+        has:page.locator('summary[aria-label="Помощь"]')
       });
       if(await helpDetails.count()!==1||await helpDetails.getAttribute('open')!==null)
         throw Error(role+': help and documents must exist and be collapsed until requested');
@@ -186,6 +185,23 @@ try{
         throw Error(role+': help menu failed to expand to the real section');
       await assertClean(role+' Android help menu');
       await page.screenshot({path:output+'/'+role+'-menu-help-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
+      const docs=menu.locator('details.tr-mobile-menu-section').filter({
+        has:page.locator('summary[aria-label="Документы"]')
+      });
+      if(await docs.count()!==1||await docs.getAttribute('open')!==null)
+        throw Error(role+': Documents must be separate and collapsed until requested');
+      if(await helpDetails.locator('a[href^="#/offer/"],a[href="#/rules"],a[href="#/work/docs"]').count())
+        throw Error(role+': legal documents remain mixed with Help');
+      await docs.locator('summary').click();
+      if(!await docs.locator('a[href="#/offer/privacy"]').isVisible()||
+         !await docs.locator('a[href="#/rules"]').isVisible())
+        throw Error(role+': Documents did not reveal policy and rules');
+      if(role==='master'&&!await docs.locator('a[href="#/work/docs"]').isVisible())
+        throw Error(role+': master lost verification documents');
+      if(new Set(info.realLinks).size!==info.realLinks.length)
+        throw Error(role+': duplicate destinations in mobile Menu');
+      await assertClean(role+' Android documents menu');
+      await page.screenshot({path:output+'/'+role+'-menu-documents-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
       const accountDetails=page.locator('details.tr-mobile-menu-account');
       if(await accountDetails.count()!==1||await accountDetails.getAttribute('open')!==null)
         throw Error(role+': approved Account section must start collapsed');
