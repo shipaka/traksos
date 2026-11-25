@@ -19,7 +19,7 @@ before(async () => {
   client = await t.login('+79991112233');
   base = await t.login('+79995556677', 'service');
   master = await t.login('+79992223344', 'master');
-  ok(await t.api('PUT', '/api/performer/profile', { kind: 'master', name: 'Иван', specialties: ['electric'], taxStatus: 'self_employed', inn: '780000000001' }, master.token));
+  ok(await t.api('PUT', '/api/performer/profile', { kind: 'master', name: 'Иван', specialties: ['electric'], taxStatus: 'self_employed', inn: '780000000000' }, master.token));
   ok(await t.api('POST', `/api/admin/performers/${master.id}/verify`, { decision: 'approved' }, admin.token));
   ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, master.token));
   vehicleId = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF', year: 2016, plate: 'а482км178' }, client.token)).id;
