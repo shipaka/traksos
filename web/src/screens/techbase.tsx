@@ -11,7 +11,7 @@ type TechDoc = {
   warning:string; reviewedOn:string;
 };
 type Payload = { audiences: Audience[]; documents: TechDoc[] };
-type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null };
+type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null; catalog_category?:string|null };
 const KIND_LABELS = { all:'Все типы', truck:'Грузовики', trailer:'Прицепы', component:'Узлы и агрегаты' };
 const TYPE_LABELS: Record<string,string> = { operation:'Эксплуатация',maintenance:'ТО',diagnostics:'Диагностика',wiring:'Схемы',parts:'Запчасти',service:'Ремонт' };
 const normalize = (s:string) => s.normalize('NFKC').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,'');
@@ -20,15 +20,13 @@ const makeKey=(s:string)=>{
   const aliases:Record<string,string>={рено:'renault',renaulttrucks:'renault',скания:'scania',вольво:'volvo',volvotrucks:'volvo',даф:'daf',ман:'man',ивеко:'iveco',мерседес:'mercedesbenz',мерседесбенц:'mercedesbenz',mercedes:'mercedesbenz',mercedesbenztrucks:'mercedesbenz',кроне:'krone'};
   return aliases[key]??key;
 };
+// Only an explicitly listed normalized model is an exact model filter match.
 const modelMatches=(value:string,reference:string)=>{
   const actual=normalize(value),expected=normalize(reference);
-  if(!actual||!expected)return false;
-  if(actual===expected)return true;
-  // One-letter series (Renault T/C/K/D) must be a distinct model prefix,
-  // never a substring of an unrelated model name.
-  if(expected.length===1)return new RegExp('^'+expected+'(?:[0-9]|[ ]|$)','i').test(value.trim());
-  return actual.startsWith(expected);
+  return !!actual&&!!expected&&actual===expected;
 };
+const vehicleKind=(v:GarageVehicle):'truck'|'trailer' =>
+  v.catalog_category==='trailer'?'trailer':'truck';
 
 export function TechBase({ audience, initialVehicleId = '' }: { audience:Audience; initialVehicleId?:string }) {
   const { me } = useMe();
@@ -40,7 +38,7 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
   const [payload,setPayload] = useState<Payload|null>(null);
   const [vehicles,setVehicles] = useState<GarageVehicle[]>([]);
   const [vehicleId,setVehicleId] = useState(isMaster?'':initialVehicleId);
-  const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>(initialVehicleId&&!isMaster?'truck':'all');
+  const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>('all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
   const [documentType,setDocumentType] = useState('');
@@ -90,18 +88,23 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
     return () => {active=false;};
   }, [isMaster, me?.id, vehiclesRetry]);
   const chosen = vehicles.find(v => v.id === vehicleId);
+  const effectiveKind=chosen?vehicleKind(chosen):kind;
   const selectedMake = (chosen?.brand || make).trim();
   const selectedModel = chosen?.model?.trim() || '';
   const selectedYear = chosen?.year || null;
   const docs = useMemo(() => (payload?.documents ?? []).filter(d => {
     if(vehicleId&&!chosen)return false;
-    if (kind !== 'all' && d.kind !== kind) return false;
+    if (effectiveKind !== 'all' && d.kind !== effectiveKind) return false;
     if (system && d.system !== system) return false;
     if (documentType && d.type !== documentType) return false;
     // Never treat a component reference as validated for the selected truck.
     if (selectedMake && d.kind !== 'component' && makeKey(d.vehicleMake || '') !== makeKey(selectedMake)) return false;
-    if (selectedModel && d.kind !== 'component' && d.models.length &&
-        !d.models.some(m => modelMatches(selectedModel,m))) return false;
+    if (chosen && d.kind !== 'component') {
+      if ((d.applicability==='model'||d.models.length>0) &&
+          (!selectedModel||!d.models.some(m=>modelMatches(selectedModel,m)))) return false;
+      if ((d.modelYearFrom!=null||d.modelYearTo!=null) &&
+          (!Number.isInteger(selectedYear)||!selectedYear)) return false;
+    }
     if (selectedYear && d.modelYearFrom && selectedYear < d.modelYearFrom) return false;
     if (selectedYear && d.modelYearTo && selectedYear > d.modelYearTo) return false;
     if (query) {
@@ -109,7 +112,7 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
       if (!words.includes(query.trim().toLowerCase())) return false;
     }
     return true;
-  }),[payload,kind,system,documentType,query,selectedMake,selectedModel,selectedYear,vehicleId,chosen]);
+  }),[payload,effectiveKind,system,documentType,query,selectedMake,selectedModel,selectedYear,vehicleId,chosen]);
   const systems = [...new Set((payload?.documents ?? []).map(d=>d.system))].sort();
   const groups = [...new Set(docs.map(d=>d.system))].sort().map(name => ({name,entries:docs.filter(d=>d.system===name)}));
   const canSeeMaster = !!payload?.audiences.includes('master');
@@ -133,14 +136,14 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
       {!isMaster&&vehicleId&&!chosen&&<div className="banner" role="status">{garageLoaded?'Выбранный автомобиль не найден в вашем гараже.':'Ожидаем данные выбранного автомобиля.'} <button type="button" className="btn ghost small" onClick={()=>{setVehicleId('');setKind('all');}}>Перейти к ручному поиску</button></div>}
       {!isMaster && vehicles.length>0 && <label className="stack">
         <b>Машина из моего гаража</b>
-        <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind(e.target.value?'truck':'all');}}>
+        <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind('all');}}>
           <option value="">Все машины / ручной поиск</option>
           {vehicles.map(v=><option key={v.id} value={v.id}>{v.brand} {v.model||''} {v.year||''} {v.plate?'· '+v.plate:''}</option>)}
         </select>
       </label>}
       <div className="grid2">
         <label className="stack"><b>Раздел техники</b>
-          <select className="field" value={kind} onChange={e=>setKind(e.target.value as typeof kind)}>
+          <select className="field" value={effectiveKind} disabled={!!chosen} onChange={e=>setKind(e.target.value as typeof kind)}>
             {Object.entries(KIND_LABELS).map(([v,n])=><option key={v} value={v}>{n}</option>)}
           </select>
         </label>
