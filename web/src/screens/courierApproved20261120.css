@@ -113,3 +113,10 @@
  .courier-overview small{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){.courier-android *{transition:none!important}}
+
+/* The same explicit presence menu in PC and native/narrow browser headers. */
+.courier-availability-menu{display:flex;flex-direction:column;gap:6px;min-width:0;max-width:100%}
+.courier-role:has(.courier-availability-menu){flex-wrap:wrap}
+.courier-availability-menu button{min-height:44px;max-width:100%;white-space:normal}
+.courier-availability-options{min-width:0;text-align:left}
+.courier-availability-options small,.courier-availability-menu>small{white-space:normal;overflow-wrap:anywhere}
