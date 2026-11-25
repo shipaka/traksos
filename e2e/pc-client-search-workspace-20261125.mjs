@@ -18,12 +18,19 @@ const stubs={
 };
 const bundle=await build({
   stdin:{sourcefile:'pc-search-fixture.tsx',resolveDir:process.cwd(),loader:'tsx',contents:`
-    import React from 'react';
+    import React,{useState} from 'react';
     import {createRoot} from 'react-dom/client';
     import {Search} from './web/src/screens/search.tsx';
     window.__searchMock={response:{offers:[],autoPick:false},chosen:[],complete:0};
-    createRoot(document.getElementById('root')).render(<Search d={{id:'test',service:'electric',search:{candidates:4}}}
-      onChosen={()=>window.__searchMock.complete++}/>);
+    function App(){
+      const [collapsed,setCollapsed]=useState(false);
+      const [revision,setRevision]=useState(0);
+      window.__searchMock.revalidate=()=>setRevision(x=>x+1);
+      return <Search key={revision} d={{id:'test',service:'electric',search:{candidates:4}}}
+        collapsed={collapsed} onCollapsedChange={setCollapsed}
+        onChosen={()=>window.__searchMock.complete++}/>;
+    }
+    createRoot(document.getElementById('root')).render(<App/>);
   `},
   bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',outdir:'./e2e/.tmp-pc-search',
   plugins:[{name:'synthetic-search-transport',setup(b){
@@ -40,7 +47,7 @@ try{
   await page.addStyleTag({content:bundle.outputFiles.find(f=>f.path.endsWith('.css')).text});
   await page.addScriptTag({content:bundle.outputFiles.find(f=>f.path.endsWith('.js')).text});
   const panel=page.locator('.search-workspace-content');
-  await page.locator('.search-title').getByText('Ищем исполнителя',{exact:true}).waitFor();
+  await page.locator('.search-title').filter({hasText:'Ищем исполнителя'}).waitFor();
   if(await page.locator('.radar .blip').count())throw Error('Unanswered candidates must not become offer markers');
   const sweep=page.locator('.search-workspace-radar .sweep');
   const animation=await sweep.evaluate(el=>{const s=getComputedStyle(el);return [s.animationDuration,s.animationTimingFunction,s.animationIterationCount];});
@@ -55,6 +62,9 @@ try{
     window.__searchMock.listener({type:'order',orderId:'test'});
   });
   await page.getByRole('status').filter({hasText:'2 отклика'}).first().waitFor();
+  await page.evaluate(()=>window.__searchMock.revalidate());
+  await page.getByRole('status').filter({hasText:'2 отклика'}).first().waitFor();
+  if(await panel.isVisible())throw Error('Same-order revalidation expanded a collapsed search');
   await page.getByRole('button',{name:'Раскрыть поиск'}).click();
   if(await page.locator('.radar .blip.on').count()!==2)throw Error('Offer markers not synchronized');
   await page.getByText(/Время выбора:/).waitFor();
