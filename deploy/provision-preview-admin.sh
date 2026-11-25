@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
-# Local-only first administrator preview. Never enable an HTTP bypass or echo a fixed SMS code.
+# Archived one-evening owner preview: never issue a new code or access Docker/DB.
 set -Eeuo pipefail
-cd "$(dirname "$0")"
-docker compose config --quiet
-echo 'Creating a temporary 10-digit preview code for the preconfigured ADMIN_PHONES only.'
-echo 'Requires an EMPTY user database. It does not change SMS.ru, payments, or shop settings.'
-echo 'Do NOT share a screenshot containing the password.'
-docker compose exec -T -e STAFF_PREVIEW_BOOTSTRAP_CONFIRM=YES app \
-  node --import tsx server/src/ops/provisionPreviewAdmin.ts
+printf '%s\n' 'ARCHIVED: temporary administrator preview expired on 2026-11-13 at 21:00 UTC.' \
+  'Use an existing administrator account via the normal login. This script cannot recover an account.' \
+  'See deploy/ADMIN-PREVIEW-ACCESS.md for the current supported path.' >&2
+exit 1
