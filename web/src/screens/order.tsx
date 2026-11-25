@@ -31,11 +31,20 @@ export function Order({id,initialTab='order'}:{id:string;initialTab?:PerformerOr
 function OrderForSession({id,initialTab,userId}:{
   id:string;initialTab:PerformerOrderTab;userId:string;
 }) {
+  // Retain only a boolean for the last confirmed search state, never order
+  // contents. Foreground recovery must not newly unmount unrelated chat or
+  // performer forms: their draft/reconnect lifecycle is handled separately.
+  const wasSearching=useRef(false);
   const o=usePrivateRead<any>(()=>get(`/api/orders/${id}`),
     'order:'+userId+':'+id,
-    (e:any)=>e.type==='connection_restored'||(e.orderId===id&&(e.type==='order'||e.type==='payment')));
+    (e:any)=>(e.type==='connection_restored'&&wasSearching.current)||
+      (e.orderId===id&&(e.type==='order'||e.type==='payment')));
   useEffect(()=>{
-    const reload=()=>{void o.reload();};
+    if(o.data)wasSearching.current=o.data.status==='searching'&&
+      (o.data.you==='client'||o.data.you==='admin');
+  },[o.data]);
+  useEffect(()=>{
+    const reload=()=>{if(wasSearching.current)void o.reload();};
     const visible=()=>{if(document.visibilityState==='visible')reload();};
     window.addEventListener('online',reload);
     document.addEventListener('visibilitychange',visible);
