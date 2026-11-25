@@ -49,6 +49,10 @@ function futurePolicyExpiry(value:string):boolean {
 
 export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const {me}=useMe();
+  return <InsuranceApplicationForAccount key={(me?.id??'guest')+':'+vehicleId} vehicleId={vehicleId}/>;
+}
+function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
+  const {me}=useMe();
   const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
@@ -71,6 +75,8 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const [comment,setComment]=useState('');
   const [consent,setConsent]=useState(false);
   const {busy,run}=useAction();
+  const submission=useRef(false);
+  const [submitError,setSubmitError]=useState(false);
   useEffect(()=>{
     if(!me?.name)return;
     const words=me.name.trim().split(/\s+/);
@@ -125,15 +131,21 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
+    if(submission.current)return;
     for(const index of [0,1,2,3]){
       if(!validateStep(index))return;
     }
     setValidationError(null);
+    setSubmitError(false);
+    submission.current=true;
+    try{
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
       kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
     if(result)go('insurance/request/'+result.id);
+    else setSubmitError(true);
+    }finally{submission.current=false;}
   };
   return <main className="insurance-workflow stack">
     <a className="insurance-back" href="#/garage">← Мой гараж</a>
@@ -153,7 +165,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
         {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
           type="button" key={label} className={'btn ghost'+(step===index?' active':'')}
-          aria-current={step===index?'step':undefined} disabled={index>step}
+          aria-current={step===index?'step':undefined} disabled={busy||index>step}
           onClick={()=>{setValidationError(null);setStep(index);}}>{index+1}. {label}</button>)}
       </nav>
       {validationError&&validationError.step===step&&
@@ -229,14 +241,16 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
           aria-describedby={validationError?.key==='consent'?'insurance-form-error':undefined}
           onChange={e=>{setConsent(e.target.checked);setValidationError(null);}}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
         <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length}>
-          Отправить заявку страховому агенту
+          {busy?'Отправляем заявку…':'Отправить заявку страховому агенту'}
         </button>
+        {busy&&<p role="status" className="note">Ожидаем подтверждение сервера. Не отправляйте заявку повторно.</p>}
+        {submitError&&<div role="alert" className="insurance-validation-alert">Не получено подтверждение отправки. Введённые данные сохранены на этом экране. Перед повтором проверьте, не появилась ли заявка в гараже, чтобы не создать дубликат.</div>}
       </section>}
       {step<3&&<div className="insurance-wizard-actions">
         {step>0&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(v=>v-1);}}>Назад</button>}
         <button type="button" className="btn insurance-main-action" onClick={nextStep}>Продолжить</button>
       </div>}
-      {step===3&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(2);}}>Вернуться к автомобилю</button>}
+      {step===3&&<button type="button" className="btn ghost" disabled={busy} onClick={()=>{setValidationError(null);setStep(2);}}>Вернуться к автомобилю</button>}
     </form>}
   </main>;
 }
@@ -253,6 +267,10 @@ function InsuranceStageTimeline({ stage, activeIndex }: { stage: string; activeI
 }
 
 export function InsuranceThread({requestId}:{requestId:string}){
+  const {me}=useMe();
+  return <InsuranceThreadForAccount key={(me?.id??'guest')+':'+requestId} requestId={requestId}/>;
+}
+function InsuranceThreadForAccount({requestId}:{requestId:string}){
   const {me}=useMe();const {busy,run}=useAction();
   const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
     [requestId],e=>e.type==='vehicle_service'&&e.requestId===requestId);
