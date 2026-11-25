@@ -25,9 +25,11 @@ const bundle=await build({
     function App(){
       const [collapsed,setCollapsed]=useState(false);
       const [revision,setRevision]=useState(0);
+      const [motionEpoch]=useState(()=>performance.now()-2500);
+      window.__searchMock.epoch=motionEpoch;
       window.__searchMock.revalidate=()=>setRevision(x=>x+1);
       return <Search key={revision} d={{id:'test',service:'electric',search:{candidates:4}}}
-        collapsed={collapsed} onCollapsedChange={setCollapsed}
+        collapsed={collapsed} onCollapsedChange={setCollapsed} motionEpoch={motionEpoch}
         onChosen={()=>window.__searchMock.complete++}/>;
     }
     createRoot(document.getElementById('root')).render(<App/>);
@@ -52,6 +54,18 @@ try{
   const sweep=page.locator('.search-workspace-radar .sweep');
   const animation=await sweep.evaluate(el=>{const s=getComputedStyle(el);return [s.animationDuration,s.animationTimingFunction,s.animationIterationCount];});
   if(animation.join('|')!=='8s|linear|infinite')throw Error('Desktop radar is not continuous: '+animation);
+  const checkPhase=async()=>{
+    const phase=await sweep.evaluate(el=>{
+      const actual=-parseFloat(getComputedStyle(el).animationDelay)*1000;
+      const expected=(performance.now()-window.__searchMock.epoch)%8000;
+      return {actual,expected,difference:Math.min(Math.abs(actual-expected),8000-Math.abs(actual-expected))};
+    });
+    if(!Number.isFinite(phase.actual)||phase.difference>700)throw Error('Rotor restarted instead of restoring phase: '+JSON.stringify(phase));
+  };
+  await checkPhase();
+  const originalDelay=await sweep.evaluate(el=>getComputedStyle(el).animationDelay);
+  await page.evaluate(()=>window.__searchMock.listener({type:'order',orderId:'test'}));
+  if(await sweep.evaluate(el=>getComputedStyle(el).animationDelay)!==originalDelay)throw Error('Normal offer refresh changed running animation delay');
   await page.getByRole('button',{name:'Свернуть поиск'}).click();
   if(await panel.isVisible())throw Error('Collapsed search remained visible');
   await page.evaluate(()=>{
@@ -66,6 +80,7 @@ try{
   await page.getByRole('status').filter({hasText:'2 отклика'}).first().waitFor();
   if(await panel.isVisible())throw Error('Same-order revalidation expanded a collapsed search');
   await page.getByRole('button',{name:'Раскрыть поиск'}).click();
+  await checkPhase();
   if(await page.locator('.radar .blip.on').count()!==2)throw Error('Offer markers not synchronized');
   await page.getByText(/Время выбора:/).waitFor();
   const second=page.locator('.offer').filter({hasText:'Второй мастер'});
