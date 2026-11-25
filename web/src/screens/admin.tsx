@@ -54,7 +54,7 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
     { id: 'stats', name: 'Статистика', description: 'Реальные показатели сервиса', symbol: '15' },
     { id: 'flagged', name: 'Подозрительное', description: 'Сигналы и проверки безопасности', symbol: '16' },
     { id: 'diagnostics', name: 'Журнал ошибок', description: 'Сбои, фильтры и выгрузка CSV', symbol: '18' },
-    { id: 'settings', name: 'Настройки', description: 'Параметры платформы и доступы', symbol: '17' },
+    { id: 'settings', name: 'Настройки', description: 'Параметры системы, расчётов и реквизиты', symbol: '17' },
   ] },
 ];
 const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items.map(item => item.id));
@@ -127,11 +127,6 @@ function AdminForAccount({initialSection}:{initialSection?:string}){
             </button>)}
           </section>)}
           {groups.length === 0 && <p className="admin-nav-no-results">Ничего не найдено. Попробуйте другое слово.</p>}
-          <a className="admin-nav-preview" href="#/admin/test-center">
-            <span className="admin-nav-preview-icon" aria-hidden="true">▣</span>
-            <span><b>Проверить кабинеты ролей</b><small>Отдельная безопасная тестовая среда</small></span>
-            <span aria-hidden="true">›</span>
-          </a>
         </nav>
         <section className="admin-stage" aria-label={'Рабочий раздел: ' + selected.name}>
           <header className="admin-stage-head">
@@ -152,7 +147,7 @@ function AdminForAccount({initialSection}:{initialSection?:string}){
             {tab === 'queue' && <ModQueue />}
             {tab === 'summary' && <AdminSummary />}
             {tab === 'vehicleServices' && <>
-              <a className="btn ghost small" href="#/admin/section/settings">Управлять регистрацией страховых агентов</a>
+              <a className="btn ghost small" href="#/admin/section/access">Управлять регистрацией страховых агентов</a>
               <VehicleServicesQueue />
             </>}
             {tab === 'settings' && <AdminSettings />}
