@@ -51,6 +51,8 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
   );
   const groups=groupCabinetMenu(account,help,[...quick.map(([href])=>href),'/profile']);
   const workEntries=uniqueEntries(groups.work,new Set());
+  const financeEntries=uniqueEntries(groups.finance,new Set());
+  const settingEntries=uniqueEntries(groups.settings,new Set());
   const helpEntries=uniqueEntries(groups.guidance,new Set());
   const documentEntries=uniqueEntries(groups.documents,new Set());
   const roleTitle:{[key:string]:string}={
@@ -68,17 +70,21 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
       <NavGlyph glyph="▦"/>
     </div>
     <MenuSection title="Быстрый доступ" caption="Основные рабочие действия" entries={quickEntries} icon="⌂" initiallyOpen/>
-    <MenuSection title="Разделы кабинета" caption="Заявки, техника, финансы и настройки по вашей роли" entries={workEntries} icon="▣"/>
+    <MenuSection title="Разделы кабинета" caption="Заявки, техника и рабочие инструменты" entries={workEntries} icon="▣"/>
+    <MenuSection title="Финансы" caption="Начисления, выплаты и налоговый статус" entries={financeEntries} icon="₽"/>
     <MenuSection title="Помощь" caption="Обучение, подсказки и связь с поддержкой" entries={helpEntries} icon="?"/>
     <MenuSection title="Документы" caption="Договоры, оферты и правила" entries={documentEntries} icon="▤"/>
     <details className="tr-mobile-menu-section tr-mobile-menu-account">
       <summary className="tr-mobile-menu-section-head" aria-label="Аккаунт и настройки">
         <span className="tr-mobile-menu-section-icon"><NavGlyph glyph="◉"/></span>
-        <span className="tr-mobile-menu-section-copy"><strong>Аккаунт</strong><small>Настройки и безопасный выход</small></span>
+        <span className="tr-mobile-menu-section-copy"><strong>Настройки</strong><small>Аккаунт, рабочие условия и безопасный выход</small></span>
         <span className="tr-mobile-menu-disclosure" aria-hidden="true">⌄</span>
       </summary>
       <div className="tr-mobile-menu-links">
         <a href="#/profile"><span>Профиль и настройки</span><span className="tr-mobile-menu-chevron" aria-hidden="true">›</span></a>
+        {settingEntries.map(item=><a key={item.href} href={item.href}>
+          <span>{item.label}</span><span className="tr-mobile-menu-chevron" aria-hidden="true">›</span>
+        </a>)}
         <button type="button" className="tr-mobile-menu-logout" onClick={onLogout}>Выйти из аккаунта</button>
       </div>
     </details>
