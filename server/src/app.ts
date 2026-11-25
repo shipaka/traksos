@@ -53,6 +53,7 @@ import { PrivacyService } from './services/privacy.ts';
 import { StandingService } from './services/standing.ts';
 import { registerVehicleReferenceRoutes } from './http/vehicleReferenceRoutes.ts';
 import { ShopService } from './services/shop.ts';
+import { PartRecommendations } from './services/partRecommendations.ts';
 import { ShopCourierDeliveries } from './services/shopCourierDeliveries.ts';
 import { ShopCatalogService } from './services/shopCatalog.ts';
 import { ModerationService } from './services/moderation.ts';
@@ -147,6 +148,7 @@ export function createApp(d: Deps) {
   const privacy = new PrivacyService(d.db, notifier, now);
   const standing = new StandingService(d.db, now, settings);
   const shop = new ShopService(d.db, notifier, settings);
+  const partRecommendations = new PartRecommendations(d.db, settings, notifier);
   const deliveries = new ShopCourierDeliveries(d.db, notifier);
   const partCatalog = new ShopCatalogService(d.db, settings);
   const moderation = new ModerationService(d.db, notifier, reviews, now, d.sms);
@@ -890,6 +892,22 @@ export function createApp(d: Deps) {
   r.get('/api/legal', false, () => settings.get('legal'));
   // The legacy full catalog endpoint remains for older APK versions. New clients
   // request light configuration then load only one page of products at a time.
+  // Exact catalogue identity and non-billable repair recommendations.
+  const partIdentitySchema=z.object({brand:z.string().trim().min(1).max(80),article:z.string().trim().min(1).max(100)});
+  r.get('/api/techbase/parts/:cardId',true,(c:AuthedCtx)=>partRecommendations.refs(c.user,c.params.cardId));
+  r.get('/api/shop/exact-part',true,(c:AuthedCtx)=>{
+    const b=parse(partIdentitySchema,{brand:c.query.get('brand'),article:c.query.get('article')});
+    return partRecommendations.lookup(c.user,b.brand,b.article);
+  });
+  r.get('/api/orders/:id/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.list(c.user,parse(z.string().uuid(),c.params.id)));
+  r.post('/api/orders/:id/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.propose(c.user,parse(z.string().uuid(),c.params.id),parse(partIdentitySchema.extend({
+    name:z.string().trim().min(2).max(160),qty:z.number().int().min(1).max(99),reason:z.string().trim().min(12).max(1000),
+    productId:z.string().uuid().nullable().optional(),cardId:z.string().max(100).nullable().optional(),fitmentConfirmed:z.literal(true)
+  }),c.body)));
+  r.post('/api/orders/:id/part-recommendations/:recommendationId/decision',true,(c:AuthedCtx)=>partRecommendations.decide(c.user,
+    parse(z.string().uuid(),c.params.id),parse(z.string().uuid(),c.params.recommendationId),parse(z.object({accept:z.boolean()}),c.body).accept));
+  r.get('/api/shop/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.history(c.user,
+    parse(z.string().uuid().nullable(),c.query.get('vehicleId')),Number(c.query.get('page')??'0')));
   r.get('/api/shop', true, (c: AuthedCtx) => shop.catalog(c.query.get('light') === '1'));
   r.get('/api/shop/search', true, (c: AuthedCtx) => shop.search(
     c.query.get('q') ?? '', c.query.get('category') ?? '',

@@ -12,6 +12,7 @@ import { RoadsideMap } from './roadsideMap.tsx';
 import { AdminRouteMap } from './AdminRouteMap.tsx';
 import { EcuOrderPanel } from './ecuHandoffs.tsx';
 import { OrderContinuations } from './continuations.tsx';
+import { OrderPartRecommendations } from './partRecommendations.tsx';
 import { OrderTimeline } from './OrderTimeline.tsx';
 import { LocationSharing } from './performer.tsx';
 import { RefundForm, payStatus } from './adminUser.tsx';
@@ -125,6 +126,7 @@ export function Order({ id, initialTab = 'order' }: { id: string; initialTab?: P
           <a className="btn ghost small" href={`#/new/tow?parallel=${d.id}`}>Согласовать отдельный выезд эвакуатора</a>
         </div>)}
       <OrderContinuations order={d} />
+      <OrderPartRecommendations order={d} />
       <EcuOrderPanel order={d} />
       <OrderPhotoGallery orderId={id}/>
       {d.status === 'completed' && <Review id={id} you={d.you} />}
@@ -445,11 +447,11 @@ function Money({ d }: { d: any }) {
 
 /** Offer professional reference only during a real master's arrived/working order.
  * The API is the authoritative source of role access and available documents. */
-function MasterTechbaseShortcut() {
+function MasterTechbaseShortcut({orderId}:{orderId:string}) {
   const catalog = useLoad<{audiences:string[];documents:{id:string}[]}>(() =>
     get('/api/techbase?audience=master'), []);
   if (!catalog.data?.audiences?.includes('master') || !catalog.data.documents?.length) return null;
-  return <a className="master-techbase-shortcut" href="#/techbase/master"
+  return <a className="master-techbase-shortcut" href={'#/techbase/master?orderId='+encodeURIComponent(orderId)}
     aria-label="ТехБаза мастера — схемы, диагностика и инструкции"
     title="Открыть профессиональную ТехБазу">
     <svg viewBox="0 0 24 24" width="19" height="19" fill="none"
@@ -499,9 +501,9 @@ function PerformerActions({ d, onDone }: { d: any; onDone: () => void }) {
       </div>}
       {d.status === 'arrived' && <div className="master-arrival-tools">
         <button className="btn" disabled={busy} onClick={() => step('start_work', 'Работа началась')}>Начать работу</button>
-        {techbaseEligible && <MasterTechbaseShortcut />}
+        {techbaseEligible && <MasterTechbaseShortcut orderId={d.id} />}
       </div>}
-      {d.status === 'working' && techbaseEligible && <div className="master-working-techbase"><MasterTechbaseShortcut /></div>}
+      {d.status === 'working' && techbaseEligible && <div className="master-working-techbase"><MasterTechbaseShortcut orderId={d.id} /></div>}
 
       {['working', 'awaiting_confirmation'].includes(d.status) && (
         <div className="card">

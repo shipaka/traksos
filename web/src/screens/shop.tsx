@@ -5,6 +5,7 @@ import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '.
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
 import { syncOfflineReferences, searchOfflineReferences } from '../shopReferenceOffline.ts';
 import { AdminShopCatalog } from './shopCatalogAdmin.tsx';
+import { PartRecommendationHistory } from './partRecommendations.tsx';
 
 const CART_KEY = 'traksos.cart';
 type Cart = Record<string, number>;
@@ -56,7 +57,7 @@ export function Shop() {
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
-  const [term, setTerm] = useState('');
+  const [term, setTerm] = useState(()=>params.get('q')?.slice(0,100)??'');
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [page, setPage] = useState(0);
   const [offlineVersion, setOfflineVersion] = useState(0);
@@ -315,6 +316,7 @@ export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
   return <main>
     <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
     <h1>История покупок</h1>
+    <PartRecommendationHistory vehicleId={vehicleId}/>
     {!history.data ? <Loading error={history.error} /> : <>
       {history.data.items.length === 0 ? <div className="empty">Покупок пока нет</div> :
         <MyShopOrders orders={history.data.items} reload={history.reload} canOrder={!!c.data?.enabled} />}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PartProposal } from './partRecommendations.tsx';
 export type IllustratedCard = {id:string;title:string;system:string;kind:string;make:string|null;models:readonly string[];scope:string;body:string;source:string;url:string;sourceCheckedOn:string;rights:string;fitment:string;reviewStatus:string;image:string;details?:{capability:string;location:string;route:string;conditions:string;connectors:string;wiring:string;diagnostics:string};category:string;related:readonly string[];pins:readonly (readonly string[])[]};
 export type IllustratedPayload = {version:string;families:readonly (readonly [string,readonly string[]])[];categories:readonly string[];cards:IllustratedCard[]};
 const categoryFor=(s:string)=>({air:'Пневматика',electric:'Электрика и ЭБУ',diag:'Электрика и ЭБУ',ecu:'Электрика и ЭБУ',autonomy:'Автономное оборудование',tyre:'Шиномонтаж',hydraulics:'Ходовая и механика'} as Record<string,string>)[s];
@@ -11,6 +12,8 @@ export function TechBaseIllustrated({data,specialties=[]}:{data:IllustratedPaylo
  const [system,setSystem]=useState('');
  const [q,setQ]=useState('');
  const [zoom,setZoom]=useState<string|null>(null);
+ const [partCard,setPartCard]=useState<string|null>(null);
+ const orderId=new URLSearchParams(location.hash.split('?')[1]??'').get('orderId')??undefined;
  const family=data.families.find(([m])=>m===make);
  const compatible=(c:IllustratedCard)=>(!make||!c.make||c.make===make)&&(!model||!c.make||c.models.includes(model));
  const cards=data.cards.filter(c=> (!focus||c.id===focus)&&(!category||c.category===category)&&(!make||!c.make||c.make===make)&&(!model||!c.make||c.models.includes(model))&&(!system||c.system===system)&&(!q.trim()||[c.title,c.system,c.body,c.scope,c.make??'',...c.models,...c.pins.flat()].join(' ').toLowerCase().includes(q.trim().toLowerCase())));
@@ -38,6 +41,8 @@ export function TechBaseIllustrated({data,specialties=[]}:{data:IllustratedPaylo
     </section>
     {c.pins.length>0&&<details><summary>Текстовая таблица контактов ({c.pins.length})</summary><div style={{overflowX:'auto'}}><table><thead><tr><th>№</th><th>Назначение</th><th>Цвет</th><th>мм²</th></tr></thead><tbody>{c.pins.map(p=><tr key={p[0]}>{p.map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table></div></details>}
     {c.related.some(id=>data.cards.some(x=>x.id===id&&compatible(x)))&&<div className="stack"><b>Связанные узлы</b>{c.related.map(id=>data.cards.find(x=>x.id===id)).filter((x):x is IllustratedCard=>!!x&&compatible(x)).map(x=><button key={x.id} type="button" className="btn ghost small" onClick={()=>{setCategory(x.category);setSystem('');setQ('');setFocus(x.id);setZoom(null);}}>{x.category} → {x.title}</button>)}</div>}
+    <button type="button" className="btn ghost small" aria-expanded={partCard===c.id} onClick={()=>setPartCard(v=>v===c.id?null:c.id)}>Артикулы и подбор запчасти</button>
+    {partCard===c.id&&<PartProposal key={c.id} cardId={c.id} orderId={orderId}/>}
     <div className="note">Авторская иллюстрация TrakSOS · источник проверен {c.sourceCheckedOn} · техническая проверка ожидается. <a href={c.url} target="_blank" rel="noopener noreferrer">{c.source} ↗</a></div>
   </article>)}
   {!cards.length&&<p>Нет подходящих иллюстраций. Заводские схемы не подменяются похожими.</p>}
