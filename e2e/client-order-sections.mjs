@@ -82,6 +82,85 @@ try{
         device+': current-only STO section must not appear in History');
       await page.screenshot({path:`${OUT}/client-orders-history-${device}.png`});
 
+      // Restore the complete case chain from the actual API contract, with
+      // controlled read failures and deliberately different final/raw prices.
+      const root='archive-consult';
+      const archived=(id,number,service,day,total,extra={})=>({
+        id,number,service,status:'completed',case_root_id:root,
+        created_at:'2026-11-'+day+'T12:00:00Z',description:'Синтетическая задача',
+        call_out_amount:100000,work_amount:100000,money:{total},...extra
+      });
+      const historyOrders=[
+        archived(root,701,'consult','20',10000),
+        archived('archive-master',702,'electric','21',125000),
+        archived('archive-tow',703,'tow','22',225000),
+        archived('archive-cancelled',704,'electric','23',990000,{status:'cancelled'}),
+        archived('archive-unassigned',705,'electric','24',990000,{status:'no_performer'})
+      ];
+      const booking=(id,extra={})=>({id,status:'closed',statusName:'Завершена',
+        center:{name:'Синтетическая СТО'},needName:'Ремонт',
+        whenDay:'2026-11-24',vehicle:{brand:'DAF',model:'XF'},toPay:50000,...extra});
+      const historyBookings=[
+        booking('archive-linked',{caseRootId:root}),
+        booking('archive-legacy',{fromOrderId:'archive-master',toPay:15000}),
+        booking('archive-independent',{toPay:80000}),
+        booking('archive-open',{status:'requested',statusName:'Ожидает',toPay:null})
+      ];
+      let bookingRequests=0, releaseFirst;
+      const firstRead=new Promise(resolve=>{releaseFirst=resolve;});
+      let bookingMode='fail';
+      const orderMock=route=>route.fulfill({json:historyOrders});
+      const bookingMock=async route=>{
+        bookingRequests++;
+        if(bookingRequests===1)await firstRead;
+        if(bookingMode==='fail')
+          return route.fulfill({status:503,json:{message:'Синтетический отказ загрузки'}});
+        return route.fulfill({json:bookingMode==='empty'?[]:historyBookings});
+      };
+      await page.route('**/api/orders?as=client',orderMock);
+      await page.route('**/api/bookings',bookingMock);
+      await page.reload({waitUntil:'domcontentloaded'});
+      await sto.getByRole('heading',{name:'Записи на СТО',exact:true}).waitFor();
+      assert.equal(await sto.getByRole('heading',{name:'Записи на СТО · 0',exact:true}).count(),0);
+      await page.getByRole('tab',{name:'История',exact:true}).click();
+      await page.getByText('Загружаются записи на СТО. Итоги задач пока не подтверждены.').waitFor();
+      await page.locator('a[href="#/order/archive-tow"]').waitFor();
+      assert.equal(await bookingRequests,1,'History must reuse the same in-flight private read');
+      releaseFirst();
+      await page.getByText('Не удалось загрузить историю записей на СТО. Состав задач и суммы могут быть неполными.').waitFor();
+      assert.ok(await page.getByText('Сумма уточняется',{exact:true}).count()>0);
+      bookingMode='success';
+      await page.getByRole('button',{name:'Повторить загрузку записей'}).click();
+      await page.locator('a[href="#/booking/archive-linked"]').waitFor();
+      const grouped=page.locator('main.client-orders-page .card').filter({
+        has:page.locator('a[href="#/order/archive-tow"]')
+      });
+      assert.equal(await grouped.count(),1,'One canonical case group expected');
+      for(const id of historyOrders.map(x=>x.id)){
+        assert.equal(await grouped.locator('a[href="#/order/'+id+'"]').count(),1,id);
+      }
+      for(const id of ['archive-linked','archive-legacy']){
+        assert.equal(await grouped.locator('a[href="#/booking/'+id+'"]').count(),1,id);
+        assert.equal(await page.locator('a[href="#/booking/'+id+'"]').count(),1,id+' duplicated');
+      }
+      assert.equal(await grouped.locator('a[href="#/booking/archive-independent"]').count(),0);
+      assert.equal(await page.locator('a[href="#/booking/archive-independent"]').count(),1);
+      assert.equal(await page.locator('a[href="#/booking/archive-open"]').count(),0);
+      assert.match(await grouped.locator('.between > .pill').textContent(),/^4\s?250\s*₽$/,
+        'Total must be server final prices, excluding cancelled/no-performer orders');
+      assert.equal(bookingRequests,2,'Archive must not issue another booking GET for loose rows');
+      await page.getByRole('tab',{name:/^Сейчас/}).click();
+      await sto.getByRole('heading',{name:'Записи на СТО · 1',exact:true}).waitFor();
+      assert.equal(await sto.locator('a[href="#/booking/archive-open"]').count(),1);
+      bookingMode='empty';
+      await page.reload({waitUntil:'domcontentloaded'});
+      await sto.getByRole('heading',{name:'Записи на СТО · 0',exact:true}).waitFor();
+      await page.getByRole('tab',{name:'История',exact:true}).click();
+      await page.locator('a[href="#/order/archive-tow"]').waitFor();
+      assert.equal(await page.locator('a[href^="#/booking/archive-"]').count(),0);
+      await page.unroute('**/api/bookings',bookingMock);
+      await page.unroute('**/api/orders?as=client',orderMock);
+
       // Real calendar API on the same authenticated customer; fixture only
       // for deterministic UI states and failed/late network responses below.
       const real=await get('/api/client/calendar?from=2026-12-02&to=2026-12-08');
