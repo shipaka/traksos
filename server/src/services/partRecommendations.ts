@@ -1,7 +1,8 @@
 import type { Db, Queryable } from '../db/index.ts';
-import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
+import { bad, conflict, forbidden, notFound, HttpError, type AuthUser } from '../http/router.ts';
 import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
+import type { PushMessage } from '../providers/push.ts';
 import { maskPhones } from '../util.ts';
 import { TECHBASE_ILLUSTRATED } from '../domain/techbaseIllustrated.ts';
 import { partRefsForCard, samePart } from '../domain/techbasePartRefs.ts';
@@ -64,6 +65,38 @@ export class PartRecommendations {
  private canSuggest(c:{o:any;performer:boolean},origin:Origin){
   return c.performer&&(origin==='booking'?repairStatuses:orderStatuses).includes(c.o.status);
  }
+ // Persist only a generic notice, not source identifiers or private article
+ // details. External delivery follows commit and is never a second insert.
+ private async storeNotice(q:Queryable,ids:string[],type:string,msg:PushMessage){
+  for(const id of ids)await q.query('insert into notifications(user_id,kind,title,body,data) values($1,$2,$3,$4,$5)',[id,type,msg.title,msg.body,msg.data]);
+ }
+ private async currentRecipients(ids:string[],role:'client'|'admin'|'performer',source?:{id:string;origin:Origin}){
+  if(!ids.length)return [];
+  return this.db.tx(async q=>{
+   const allowed:string[]=[];
+   for(const id of [...new Set(ids)].sort()){
+    const actor=await q.one<AuthUser>('select id,phone,name,roles,status,owner_id from users where id=$1 and status=\'active\' and deleted_at is null',[id]);
+    if(!actor)continue;
+    try{
+     if(source){
+      const c=await this.context(actor,source.id,q,false,source.origin);
+      if(role==='client'?!c.owner:!c.performer)continue;
+     }else{
+      if(role==='performer')continue;
+      await requirePartActor(q,actor,role);
+     }
+     allowed.push(id);
+    }catch(e){if(!(e instanceof HttpError)||![403,404].includes(e.status))throw e;}
+   }
+   return allowed;
+  });
+ }
+ private async deliverNotice(ids:string[],role:'client'|'admin',event:Record<string,unknown>,msg:PushMessage,source?:{id:string;origin:Origin}){
+  try{
+   const allowed=await this.currentRecipients(ids,role,source);
+   await this.notifier.deliverStored(allowed,event,msg);
+  }catch{/* durable inbox remains available; do not retry a committed transition */}
+ }
  private async recordEvent(q:Queryable,origin:Origin,id:string,userId:string,event:string,data:Record<string,unknown>){
   if(origin==='booking'){
    await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[userId,'booking.'+event,id,data]);
@@ -96,6 +129,7 @@ export class PartRecommendations {
   if(!brand||!article||name.length<2||reason.length<12)throw bad('missing_part','Укажите производителя, артикул, название и причину замены');
   if(p.cardId&&!TECHBASE_ILLUSTRATED.some(x=>x.id===p.cardId))throw notFound('Карточка не найдена');
   if(p.cardId&&partRefsForCard(p.cardId).length&&!partRefsForCard(p.cardId).some(ref=>samePart(ref,{brand,article})))throw bad('part_mismatch','Выберите артикул из карточки или предложите деталь отдельно из заявки');
+  const msg:PushMessage={kind:'normal',title:'Обновление в рекомендациях',body:'Откройте TrakSOS, чтобы проверить доступные рекомендации.',data:{}};
   const result=await this.db.tx(async q=>{
    const c=await this.context(user,id,q,true,origin),{o,performer}=c;
    if(!performer)throw forbidden('Предложение отправляет назначенный специалист или обслуживающее СТО');
@@ -120,11 +154,11 @@ export class PartRecommendations {
     return {row:prior,created:false,o};
    }
    await this.recordEvent(q,origin,id,user.id,'part_recommended',{recommendationId:inserted[0].id});
+   await this.storeNotice(q,[o.client_id],origin,msg);
    return {row:inserted[0],created:true,o};
   });
   if(result.created){const context:Record<string,string>=origin==='booking'?{bookingId:id}:{orderId:id};
-   await this.notifier.notify([result.o.client_id],{type:origin,...context,status:result.o.status},
-   {kind:'normal',title:origin==='booking'?'СТО предложило замену детали':'Мастер предложил замену детали',body:'Рекомендация в заявке. Заказ и оплата не оформлены.',data:context}).catch(()=>{});}
+   await this.deliverNotice([result.o.client_id],'client',{type:origin,...context},msg,{id,origin});}
   return {created:result.created,item:safeRow(result.row)};
  }
  async decide(user:AuthUser,id:string,recId:string,accept:boolean,origin:Origin='order'){
@@ -134,35 +168,40 @@ export class PartRecommendations {
    if(!owner)throw forbidden('Решение принимает владелец');
    const row=await q.one<any>('select * from part_recommendations where id=$1 and '+sourceColumn(origin)+'=$2 for update',[recId,id]);
    if(!row)throw notFound();
-   if(row.status===status)return row;
+   if(row.status===status)return {row,changed:false};
    if(row.status!=='pending')throw conflict('already_decided','Решение уже принято');
    const updated=await q.one<any>('update part_recommendations set status=$2,decided_by=$3,decided_at=now() where id=$1 returning *',[recId,status,user.id]);
    await this.recordEvent(q,origin,id,user.id,'part_recommendation_decided',{recommendationId:recId,status});
-   return updated;
+   return {row:updated,changed:true};
   });
-  if(result.suggested_by)this.notifier.live([result.suggested_by],{type:origin,...(origin==='booking'?{bookingId:id}:{orderId:id}),recommendationId:recId});
-  return safeRow(result);
+  if(result.changed&&result.row.suggested_by){
+   try{
+    const ids=await this.currentRecipients([result.row.suggested_by],'performer',{id,origin});
+    this.notifier.live(ids,{type:origin,...(origin==='booking'?{bookingId:id}:{orderId:id})});
+   }catch{/* committed decision remains authoritative */}
+  }
+  return safeRow(result.row);
  }
  // The owner's request is a separate, non-billable action, even with the shop closed.
  async requestSourcing(user:AuthUser,id:string){
+  const msg:PushMessage={kind:'normal',title:'Обновление очереди подбора',body:'Откройте кабинет TrakSOS, чтобы проверить очередь.',data:{}};
   const result=await this.db.tx(async q=>{
    await requirePartActor(q,user,'client');
    const row=await q.one<any>('select * from part_recommendations where id=$1 and client_id=$2 for update',[id,user.id]);
    if(!row)throw notFound();
    await requirePartVehicle(q,user.id,row.vehicle_id);
    if(row.status!=='accepted'||row.product_id)throw conflict('sourcing_not_needed','Сначала согласуйте замену; для уже подобранного товара используйте магазин');
-   if(row.sourcing_status==='requested')return {row,changed:false};
+   if(row.sourcing_status==='requested')return {row,changed:false,ids:[] as string[]};
    if(!['not_requested','unavailable','resolved'].includes(row.sourcing_status))throw conflict('sourcing_status','Запрос недоступен');
    const updated=await q.one<any>(`update part_recommendations set sourcing_status='requested',sourcing_requested_at=now(),
     sourcing_updated_at=now(),sourcing_updated_by=$2,sourcing_note=null where id=$1 returning *`,[id,user.id]);
    await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_requested',id,{sourceOrderId:row.source_order_id,sourceBookingId:row.source_booking_id}]);
-   return {row:updated,changed:true};
+   const admins=await q.query<{id:string}>("select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[] order by id for share");
+   const ids=admins.map(a=>a.id);
+   await this.storeNotice(q,ids,'part_sourcing',msg);
+   return {row:updated,changed:true,ids};
   });
-  if(result.changed){
-   const admins=await this.db.query<{id:string}>("select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[]");
-   await this.notifier.notify(admins.map(a=>a.id),{type:'part_sourcing',recommendationId:id},
-    {kind:'normal',title:'Новый запрос подбора запчасти',body:'В магазине появился запрос на точный артикул.',data:{recommendationId:id}}).catch(()=>{});
-  }
+  if(result.changed)await this.deliverNotice(result.ids,'admin',{type:'part_sourcing'},msg);
   return {item:safeRow(result.row),changed:result.changed};
  }
  async sourcingQueue(user:AuthUser,page:number,status:'requested'|'resolved'|'unavailable'){
@@ -185,6 +224,7 @@ export class PartRecommendations {
   });
  }
  async resolveSourcing(user:AuthUser,id:string,input:{status:'resolved'|'unavailable';productId?:string;note?:string}){
+  const msg:PushMessage={kind:'normal',title:'Обновление в рекомендациях',body:'Откройте TrakSOS, чтобы проверить доступные рекомендации.',data:{}};
   const note=input.note?clean(input.note):null;
   if(input.status==='resolved'&&!input.productId)throw bad('product_required','Выберите точный товар');
   if(input.status==='unavailable'&&(!note||note.length<8||input.productId))throw bad('sourcing_note','Укажите причину отсутствия детали');
@@ -193,7 +233,7 @@ export class PartRecommendations {
    const row=await q.one<any>('select * from part_recommendations where id=$1 for update',[id]);
    if(!row)throw notFound();
    if(row.sourcing_status===input.status&&((input.status==='resolved'&&row.product_id===input.productId)||input.status==='unavailable'))
-    return {row,changed:false};
+    return {row,changed:false,ids:[] as string[]};
    if(row.status!=='accepted'||row.sourcing_status!=='requested'||row.product_id)throw conflict('sourcing_not_open','Запрос уже обработан или изменился');
    let product:any=null;
    if(input.status==='resolved'){
@@ -204,12 +244,12 @@ export class PartRecommendations {
     sourcing_note=$4,sourcing_updated_at=now(),sourcing_updated_by=$5 where id=$1 returning *`,
     [id,input.status,product?.id??null,note,user.id]);
    await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',[user.id,'part.sourcing_'+input.status,id,{productId:product?.id??null}]);
-   return {row:updated,changed:true};
+   const owner=await q.one<{id:string}>("select id from users where id=$1 and status='active' and deleted_at is null and owner_id is null and 'client'=any(roles) for share",[row.client_id]);
+   const ids=owner?[owner.id]:[];
+   await this.storeNotice(q,ids,'part_sourcing',msg);
+   return {row:updated,changed:true,ids};
   });
-  if(result.changed)await this.notifier.notify([result.row.client_id],{type:'part_sourcing',recommendationId:id,orderId:result.row.source_order_id,bookingId:result.row.source_booking_id},
-    {kind:'normal',title:input.status==='resolved'?'Запчасть подобрана':'Результат подбора запчасти',
-     body:input.status==='resolved'?'Точный товар привязан к рекомендации. Проверьте актуальную цену в магазине. Заказ не создан.':'Пока не удалось подобрать точную деталь. Подробности в истории рекомендаций.',
-     data:{...(result.row.source_booking_id?{bookingId:result.row.source_booking_id}:{orderId:result.row.source_order_id}),recommendationId:id}}).catch(()=>{});
+  if(result.changed)await this.deliverNotice(result.ids,'client',{type:'part_sourcing',orderId:result.row.source_order_id,bookingId:result.row.source_booking_id},msg);
   return {item:safeRow(result.row),changed:result.changed};
  }
  async checkout(user:AuthUser,id:string){
