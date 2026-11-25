@@ -1487,6 +1487,8 @@ export function createApp(d: Deps) {
     return chat.list(c.user, c.params.id, 0, {mode, limit:Number(limitText),
       ...(cursorText === null ? {} : {cursor:Number(cursorText)})});
   });
+  r.get('/api/orders/:id/messages/request/:requestId', true, (c: AuthedCtx) =>
+    chat.requestStatus(c.user,c.params.id,c.params.requestId));
   r.post('/api/orders/:id/messages', true, (c: AuthedCtx) => {
     const b = parse(z.object({ body: z.string().min(1).max(2000), kind: z.enum(['text', 'quick']).default('text'), requestId:z.string().uuid().optional() }), c.body);
     return chat.post(c.user, c.params.id, b.body, b.kind, b.requestId);
