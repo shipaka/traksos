@@ -4,6 +4,7 @@ import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
+import { validInn } from '../domain/inn.ts';
 import { assertRoleExtension, validateRoles } from '../domain/roles.ts';
 
 export interface PerformerInput {
@@ -41,13 +42,20 @@ export class ProfilesService {
   }
 
   async updateMe(userId: string, p: { name?: string; companyName?: string | null; companyInn?: string | null; edoOperator?: string | null; edoId?: string | null }) {
-    if (p.companyInn && !/^\d{10}(\d{2})?$/.test(p.companyInn)) throw bad('bad_inn', 'ИНН — 10 или 12 цифр');
-    await this.db.query(
-      `update users set name = coalesce($2, name), company_name = coalesce($3, company_name),
-         company_inn = coalesce($4, company_inn), edo_operator = coalesce($5, edo_operator), edo_id = coalesce($6, edo_id)
-       where id=$1`,
-      [userId, p.name ?? null, p.companyName ?? null, p.companyInn ?? null, p.edoOperator ?? null, p.edoId ?? null],
-    );
+    await this.db.tx(async q=>{
+      if(p.companyInn!=null){
+        const current=await q.one<{company_inn:string|null}>('select company_inn from users where id=$1 for update',[userId]);
+        if(!current)throw notFound();
+        if(p.companyInn!==current.company_inn&&!validInn(p.companyInn))
+          throw bad('bad_inn','ИНН организации — 10 цифр, физлица или ИП — 12. Проверьте контрольные цифры.');
+      }
+      await q.query(
+        `update users set name = coalesce($2, name), company_name = coalesce($3, company_name),
+           company_inn = coalesce($4, company_inn), edo_operator = coalesce($5, edo_operator), edo_id = coalesce($6, edo_id)
+         where id=$1`,
+        [userId, p.name ?? null, p.companyName ?? null, p.companyInn ?? null, p.edoOperator ?? null, p.edoId ?? null],
+      );
+    });
   }
 
   async performer(userId: string) {
@@ -65,7 +73,7 @@ export class ProfilesService {
     };
     inRange(p.callOutPrice, corridor.callOutMin, corridor.callOutMax, 'Выезд');
     inRange(p.hourPrice, corridor.hourMin, corridor.hourMax, 'Час работы');
-    if (p.inn && !/^\d{12}$/.test(p.inn)) throw bad('bad_inn', 'ИНН физлица или ИП — 12 цифр');
+
     if (p.cars && p.cars.length > 3) throw bad('too_many_cars', 'Не больше трёх машин');
     // An ECU shop is stationary: never require or publish a dispatch vehicle.
     if (p.kind==='ecu' && (p.car || p.cars?.length || p.callOutPrice != null
@@ -88,6 +96,14 @@ export class ProfilesService {
         `update users set roles = (select array(select distinct unnest(roles || $2::text[]))), name = coalesce($3, name) where id=$1`,
         [user.id, [role], p.name ?? null],
       );
+      // The user row was locked by the role/name update above. Lock the
+      // profile before comparing so a concurrent edit cannot reintroduce
+      // an invalid legacy value after a corrected identifier was saved.
+      if(p.inn!=null){
+        const current=await q.one<{inn:string|null}>('select inn from performer_profiles where user_id=$1 for update',[user.id]);
+        if(p.inn!==current?.inn&&!validInn(p.inn,true))
+          throw bad('bad_inn','ИНН физлица или ИП — 12 цифр. Проверьте контрольные цифры.');
+      }
       await q.query(
         `insert into performer_profiles(user_id, kind, specialties, brands, tier, call_out_price, hour_price, km_rate,
             prep_minutes, accepts_group, tax_status, inn, car, cars)
