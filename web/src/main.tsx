@@ -72,6 +72,7 @@ import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
+import { groupCabinetMenu } from './cabinetMenuGroups.ts';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
@@ -695,6 +696,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
+  const accountMenuGroups = groupCabinetMenu(accountLinks,helpLinks);
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
   const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
@@ -843,10 +845,12 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                 }
               }}>
               <span className="account-menu-heading">Мой кабинет</span>
-              {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
-              <span className="account-menu-heading">Помощь и документы</span>
+              {accountMenuGroups.work.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              <span className="account-menu-heading">Помощь</span>
               {<button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
-              {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              {accountMenuGroups.guidance.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              <span className="account-menu-heading">Документы</span>
+              {accountMenuGroups.documents.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               {<button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
