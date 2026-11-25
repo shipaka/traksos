@@ -51,6 +51,25 @@ try {
       publicGlyphs[key]=await page.locator(selector).first().evaluate(el=>el.innerHTML);
     }
 
+    // The public app information is a real page, not an invented store link
+    // or a sign-in for an unrelated service. Navigate there and back.
+    const appInfo=desktop?'.owner20-bottom-app':'.public-app-card .public-rustore-soon';
+    await page.evaluate(()=>sessionStorage.setItem('traksos.pendingLandingAction','tow'));
+    await page.locator(appInfo).click();
+    await page.waitForURL('**/#/app-info');
+    await page.getByRole('heading',{name:'Мобильное приложение TrakSOS',exact:true}).waitFor();
+    const info=page.locator('main.guest-info-page');
+    check(await info.getByText('Ссылка на скачивание в RuStore появится после подтверждённой публикации.',{exact:false}).isVisible(),
+      'App information misrepresents publication status');
+    check(await info.locator('a[href*="rustore"],a[href$=".apk"]').count()===0,
+      'App information advertises an unconfirmed download');
+    check(await info.locator('a[href="#/login"]').count()===1 &&
+      await info.locator('a[href="#/register"]').count()===1,'App information lacks real auth actions');
+    await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
+    await info.locator('.guest-info-top a[href="#/"]').click();
+    await page.waitForURL('**/#/');
+    await page.locator(landing).waitFor({state:'visible'});
+
     if(desktop){
       check(await page.locator('.owner20-quick>a').count()===5,
         'PC must retain five quick service tiles');
@@ -140,6 +159,23 @@ try {
         'Closing coverage map did not restore keyboard focus to footer trigger');
       check(await top.locator(':scope > a[href="#/join"]').count()===0,
         'Partner action must be inside submenu, not a second top-level link');
+      // Narrow PC keeps the same service destinations and a scrollable menu.
+      await page.setViewportSize({width:1024,height:640});
+      const compact=page.locator('.owner20-compact-menu');
+      await compact.locator('summary').waitFor({state:'visible'});
+      await compact.locator('summary').press('Enter');
+      const compactNav=compact.locator('nav');
+      await compactNav.waitFor({state:'visible'});
+      for(const key of ['van','tow','sto','consult','tech','ecu','parts','insurance','inspection']){
+        check(await compactNav.locator('a[href="'+target(key)+'"]').count()===1,
+          'Compact PC menu missing or duplicates '+key);
+      }
+      check(await compactNav.locator('a[href="#/trakbot"]').count()===1,'Compact PC menu missing TrakBot');
+      check(await compactNav.evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight+1 &&
+        getComputedStyle(el).overflowY==='auto'),'Compact PC menu extends below viewport');
+      await compact.locator('summary').press('Escape');
+      await page.setViewportSize({width,height});
+      await page.locator('.owner20-topnav details').nth(3).locator('summary').waitFor({state:'visible'});
       await page.locator('.owner20-topnav details').nth(3).locator('summary').click();
       check(await page.locator('.owner20-topnav details').nth(3).locator('a[href="#/join"]').count()===1,
         'Partner CTA does not lead to partner signup');
@@ -160,7 +196,7 @@ try {
       }
       for(const [key,selector] of [
         ['parts','.public-track-parts'],['inspection','.public-track-inspection'],
-        ['tech','.public-track-techbase']
+        ['tech','.public-track-techbase'],['insurance','.public-track-insurance']
       ]) {
         await guestAuth(page,key,selector,landing);
       }
