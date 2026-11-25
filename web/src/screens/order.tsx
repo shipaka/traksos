@@ -1389,16 +1389,18 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         return;
       }
     }
+    const request=attempt;
+    if(!request)return;
     sendingRef.current=true;
     setSending(true);setSendError('');
     try {
-      const m = await post(`/api/orders/${id}/messages`, attempt);
+      const m = await post(`/api/orders/${id}/messages`, request);
       if(!currentSession())return;
       if(!Number.isSafeInteger(m?.id)||m.id<=0)throw new Error('Сервер не подтвердил отправку сообщения');
       remember(null);
       refreshRef.current();
       // An edited/new draft is never overwritten by completion of an old send.
-      if(attempt.kind==='text')setText(current=>current===attempt.body?'':current);
+      if(request.kind==='text')setText(current=>current===request.body?'':current);
     } catch (e) {
       if(!currentSession())return;
       const error=e as {code?:string;status?:number;message?:string};
