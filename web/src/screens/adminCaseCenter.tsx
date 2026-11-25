@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMe } from '../ui.tsx';
 import { get, post, fmtTime, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
@@ -26,6 +26,56 @@ const action = (name:string) => ({
   resolved_cancel:'Администратор отменил заказ'
 } as Record<string,string>)[name]||name.replaceAll('_',' ');
 const status = (s?:string) => (s&&STATUS[s]?.name)||s||'—';
+
+// Mounted separately for each account, selected case, history kind and refresh.
+function CaseHistoryPages({caseId,rootId,kind,renderItem}:{caseId:string;rootId:string;kind:'events'|'chat';renderItem:(item:any)=>ReactNode}){
+  const [cursors,setCursors]=useState<(string|null)[]>([null]);
+  const [retry,setRetry]=useState(0);
+  const before=cursors[cursors.length-1];
+  const key=JSON.stringify([before,retry]);
+  const [page,setPage]=useState<{key:string;items:any[];hasMore:boolean;nextBefore:string|null}|null>(null);
+  const [failure,setFailure]=useState<{key:string;message:string}|null>(null);
+  const current=page?.key===key?page:null;
+  const error=failure?.key===key?failure.message:'';
+  useEffect(()=>{
+    let alive=true;
+    const query=new URLSearchParams({kind,limit:'100'});
+    if(before!==null)query.set('before',before);
+    void get<any>('/api/admin/cases/'+encodeURIComponent(caseId)+'/history?'+query)
+      .then(value=>{
+        if(!alive)return;
+        if(value?.rootId!==rootId||value?.kind!==kind||!Array.isArray(value.items)||
+          value.items.length>100||value.items.some((item:any)=>!item||typeof item.id!=='string')||
+          typeof value.hasMore!=='boolean'||(value.hasMore&&
+          (typeof value.nextBefore!=='string'||!value.nextBefore||value.nextBefore===before||
+          !value.items.length||value.items[0].id!==value.nextBefore))||
+          (!value.hasMore&&value.nextBefore!==null))
+          throw new Error('Сервер вернул некорректную страницу истории');
+        setPage({key,items:value.items,hasMore:value.hasMore,nextBefore:value.nextBefore});
+        setFailure(null);
+      }).catch(reason=>{
+        if(alive)setFailure({key,message:reason instanceof Error?reason.message:'Не удалось загрузить историю'});
+      });
+    return ()=>{alive=false;};
+  },[caseId,rootId,kind,before,key]);
+  return <>
+    <div className="case-detail-between">
+      <small>Страница {cursors.length} · от новых записей к более ранним</small>
+      <button type="button" className="btn ghost small" onClick={()=>{setCursors([null]);setRetry(n=>n+1);}}>К последним записям</button>
+    </div>
+    {error?<div role="alert" className="case-reg-error">{error}
+      <button type="button" className="btn ghost small" onClick={()=>setRetry(n=>n+1)}>Повторить загрузку истории</button>
+    </div>:!current?<p className="note" role="status">Загрузка истории…</p>:
+      current.items.length?current.items.map(renderItem):
+      <p className="note">{before!==null?'На этой странице записей нет.':kind==='events'?'Событий пока нет.':'Сообщений по этим заказам пока нет.'}</p>}
+    <div className="case-detail-between">
+      <button type="button" className="btn ghost small" disabled={cursors.length===1}
+        onClick={()=>setCursors(old=>old.length>1?old.slice(0,-1):old)}>Более новые</button>
+      <button type="button" className="btn ghost small" disabled={!current?.hasMore||!!error}
+        onClick={()=>{const cursor=current?.nextBefore;if(cursor)setCursors(old=>old.includes(cursor)?old:[...old,cursor]);}}>Более ранние</button>
+    </div>
+  </>;
+}
 
 export function AdminCaseCenter() {
   const { me } = useMe();
@@ -419,28 +469,26 @@ export function AdminCaseCenter() {
           </>}
           {detail&&!focused&&tab==='timeline'&&<>
             <h4>Хронология этапов · подтверждённые события</h4>
-            {detail.history_windows?.events?.hasOlder&&<p className="note" role="status">Показаны последние 600 событий. Более ранние записи существуют; полный архив здесь пока недоступен.</p>}
-            {!detail.events?.length?<p className="note">Событий пока нет.</p>
-              :detail.events.map((e:any,i:number)=><div key={i} className="case-detail-event">
+            <CaseHistoryPages key={detailKey+':events'} caseId={selected!} rootId={detail.root_id} kind="events"
+              renderItem={(e:any)=><div key={e.id} className="case-detail-event">
                 <time>{date(e.created_at)}</time>
                 <div><b>{action(e.type)}</b>
                   {stages.some((s:any)=>s.id===e.order_id)
                     ?<button type="button" className="case-inspect-text-link" onClick={()=>drill('order',e.order_id)}>
                       Заказ №{stages.find((s:any)=>s.id===e.order_id)?.number} ↗</button>
                     :<small>Заказ не определён</small>}</div>
-              </div>)}
+              </div>}/>
             <p className="note">Временные отметки берутся из журнала; пропущенные события не восстанавливаются предположительно.</p>
           </>}
           {detail&&!focused&&tab==='chat'&&<>
             <h4>Переписка по заявкам</h4>
-            {detail.history_windows?.chat?.hasOlder&&<p className="note" role="status">Показаны последние 500 сообщений. Более ранняя переписка существует; полный архив здесь пока недоступен.</p>}
-            {!detail.chat?.length?<p className="note">Сообщений по этим заказам пока нет.</p>
-              :detail.chat.map((m:any)=><div className="case-detail-message" key={m.id}>
+            <CaseHistoryPages key={detailKey+':chat'} caseId={selected!} rootId={detail.root_id} kind="chat"
+              renderItem={(m:any)=><div className="case-detail-message" key={m.id}>
                 <div className="case-detail-between"><b>{m.sender_name}</b><small>{date(m.created_at)}</small></div>
                 <p>{m.body}</p>
                 <button type="button" className="case-inspect-text-link" onClick={()=>drill('order',m.order_id)}>
                   Заказ №{stages.find((s:any)=>s.id===m.order_id)?.number||'—'} ↗</button>
-              </div>)}
+              </div>}/>
             <p className="note">Ответ клиенту направляется через соответствующий защищённый чат заявки с сохранением прав доступа.</p>
           </>}
           {detail&&!focused&&tab==='finance'&&<>
