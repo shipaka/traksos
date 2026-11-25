@@ -7,6 +7,7 @@ import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { CatalogVehicleFields, type CatalogVehicleValue } from '../CatalogVehicleFields.tsx';
 import { VehicleOwnerGuide } from './VehicleOwnerGuide.tsx';
+import { PartRecommendationHistory } from './partRecommendations.tsx';
 import { native } from '../native.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
@@ -16,6 +17,8 @@ import { ApprovedEmptyScene } from '../approvedEmptyScene.tsx';
 import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx';
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
+import { ClientCalendar } from './clientCalendar.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -42,14 +45,24 @@ function FleetShortcut({href,locked,className,children}:{
 }
 
 export function Home() {
-  const { me } = useMe();
+  const {me}=useMe();
+  return <ClientHomeForAccount key={me?.id??'guest'}/>;
+}
+function ClientHomeForAccount() {
+  const {me}=useMe();
   const mobileWorkspace = useMobileWorkspace();
-  const fleetRules = useLoad(() => me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null),[me?.owner_id]);
+  const fleetRules = usePrivateRead<any>(()=>me?.owner_id?get('/api/fleet/rules'):Promise.resolve(null),
+    'fleet-rules:'+(me?.id??'guest')+':'+(me?.owner_id??''));
   const restricted = (permission:'repair'|'tow'|'service'|'consult'|'insurance'|'inspection'|'shop') =>
     !!me?.owner_id && (!fleetRules.data || fleetRules.data.allow?.[permission] === false);
-  const active = useLoad(() => get('/api/orders'), [], (e) => e.type === 'order');
-  const services = useLoad(() => get<any[]>('/api/vehicle-service-requests'), [],
-    e => e.type === 'vehicle_service' || e.type === 'connection_restored');
+  const restrictionCopy=fleetRules.error?'Не удалось проверить права — повторите запрос'
+    :fleetRules.loading?'Проверяем разрешения автопарка…'
+      :'Ограниченный доступ · разрешает владелец';
+  const active = usePrivateRead<any[]>(()=>get('/api/orders'),
+    'home-orders:'+(me?.id??'guest'),e=>e.type==='order');
+  const services = usePrivateRead<any[]>(()=>get('/api/vehicle-service-requests'),
+    'home-services:'+(me?.id??'guest'),
+    e=>e.type==='vehicle_service'||e.type==='connection_restored');
   const insuranceInProgress = (services.data ?? []).filter(r =>
     r.kind === 'insurance' && isOpenInsuranceRequest(r.status));
   const live = (active.data ?? []).filter((o: any) => !['completed', 'cancelled'].includes(o.status));
@@ -58,6 +71,16 @@ export function Home() {
   // silently fell through to the obsolete desktop hero and widgets.
   // Keep fleet permissions and real order data identical across both.
   if (mobileWorkspace) return <main className="client-home client-dashboard">
+    {fleetRules.error&&<section className="card stack" role="alert">
+      <b>Не удалось проверить разрешения автопарка</b>
+      <button type="button" className="btn ghost small"
+        onClick={()=>{void fleetRules.reload();}}>Повторить проверку доступа</button>
+    </section>}
+    {services.error&&<section className="card stack" role="alert">
+      <b>Не удалось проверить активные страховые обращения</b>
+      <button type="button" className="btn ghost small"
+        onClick={()=>{void services.reload();}}>Повторить загрузку обращений</button>
+    </section>}
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
       disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
@@ -95,11 +118,22 @@ export function Home() {
           </a>
         </section>;
       })()}
+      {fleetRules.error&&<section className="card stack" role="alert">
+        <b>Не удалось проверить разрешения автопарка</b>
+        <span className="note">Пока нет ответа сервера, действия с ограничениями недоступны. Это не означает блокировку владельцем.</span>
+        <button type="button" className="btn ghost small"
+          onClick={()=>{void fleetRules.reload();}}>Повторить проверку доступа</button>
+      </section>}
+      {services.error&&<section className="card stack" role="alert">
+        <b>Не удалось проверить активные страховые обращения</b>
+        <button type="button" className="btn ghost small"
+          onClick={()=>{void services.reload();}}>Повторить загрузку обращений</button>
+      </section>}
       <section className="desktop-quick-links" aria-label="Выберите помощь">
         <FleetShortcut href="#/sos" locked={false} className="desktop-quick-card"><span className="desktop-quick-icon">⚡</span><span><b>Выездной мастер</b><small>Электрика, диагностика, пневматика, шиномонтаж</small></span><ApprovedServiceIllustration kind="repair" /><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>{restricted("tow") ? "Ограниченный доступ · разрешает владелец" : "Тягач, полуприцеп или сцепка"}</small></span><ApprovedServiceIllustration kind="tow" /><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>{restricted("service") ? "Ограниченный доступ · разрешает владелец" : "Выбор сервиса и запись на ремонт"}</small></span><ApprovedServiceIllustration kind="service" /><span aria-hidden="true">↗</span></FleetShortcut>
-        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>{restricted("consult") ? "Ограниченный доступ · разрешает владелец" : "Обсудить проблему со специалистом"}</small></span><ApprovedServiceIllustration kind="consult" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/tow" locked={restricted("tow")} className="desktop-quick-card"><span className="desktop-quick-icon">↗</span><span><b>Эвакуатор</b><small>{restricted("tow") ? restrictionCopy : "Тягач, полуприцеп или сцепка"}</small></span><ApprovedServiceIllustration kind="tow" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/services" locked={restricted("service")} className="desktop-quick-card"><span className="desktop-quick-icon">▤</span><span><b>СТО грузовых автомобилей</b><small>{restricted("service") ? restrictionCopy : "Выбор сервиса и запись на ремонт"}</small></span><ApprovedServiceIllustration kind="service" /><span aria-hidden="true">↗</span></FleetShortcut>
+        <FleetShortcut href="#/new/consult" locked={restricted("consult")} className="desktop-quick-card"><span className="desktop-quick-icon">☎</span><span><b>Консультация по телефону</b><small>{restricted("consult") ? restrictionCopy : "Обсудить проблему со специалистом"}</small></span><ApprovedServiceIllustration kind="consult" /><span aria-hidden="true">↗</span></FleetShortcut>
       </section>
 
       <div className="desktop-home-columns">
@@ -110,12 +144,14 @@ export function Home() {
           </div>
           <div className="desktop-section-heading"><h2>Мои активные заявки</h2><a href="#/orders">Все заявки →</a></div>
           <div className="desktop-active-orders">
-            {active.error ? <div className="desktop-empty-orders">Не удалось загрузить заявки. <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders tr-approved-empty-card">
+            {active.error ? <div className="desktop-empty-orders" role="alert">Не удалось загрузить заявки. 
+                <button type="button" className="btn ghost small" onClick={()=>{void active.reload();}}>Повторить загрузку заявок</button>
+                <a href="#/orders">Открыть раздел</a></div> : !active.data ? <div className="desktop-empty-orders">Загружаем заявки…</div> : live.length === 0 ? <div className="desktop-empty-orders tr-approved-empty-card">
                <ApprovedEmptyScene kind="orders" />
                <strong>Активных заявок пока нет</strong>
                <span>Выберите помощь — здесь появится ход реальной заявки, связь с исполнителем и статусы.</span>
                <a className="tr-approved-empty-action" href="#/sos">Создать заявку на помощь →</a>
-               <small>Иллюстрация маршрута — пример, не выполняемая заявка. Страховые заявки отображаются отдельно.</small>
+               <small>Нет действующей заявки или маршрута. Страховые заявки отображаются отдельно.</small>
              </div> : null}
             {live.map((o: any) => (
               <a key={o.id} href={`#/order/${o.id}`} className="card hi" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -157,8 +193,8 @@ export function Home() {
           </section>}
           <div className="desktop-section-heading"><h2>Сервисы TrakSOS</h2></div>
           <section className="client-dashboard-hubs" aria-label="Разделы кабинета">
-            <FleetShortcut href="#/garage" locked={restricted("insurance") && restricted("inspection")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>{restricted("insurance") && restricted("inspection") ? "Ограниченный доступ · разрешает владелец" : "Документы и оформление для вашей техники"}</small><em>К автомобилям →</em></FleetShortcut>
-            <FleetShortcut href="#/shop" locked={restricted("shop")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>{restricted("shop") ? "Ограниченный доступ · разрешает владелец" : "Поиск, аналоги и история покупок. Магазин пока закрыт"}</small><em>Открыть раздел →</em></FleetShortcut>
+            <FleetShortcut href="#/garage" locked={restricted("insurance") && restricted("inspection")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">◇</span><b>Страхование и техосмотр</b><small>{restricted("insurance") && restricted("inspection") ? restrictionCopy : "Документы и оформление для вашей техники"}</small><em>К автомобилям →</em></FleetShortcut>
+            <FleetShortcut href="#/shop" locked={restricted("shop")} className="client-dashboard-hub"><span className="client-dashboard-hub-icon">▧</span><b>Грузовые запчасти</b><small>{restricted("shop") ? restrictionCopy : "Поиск, аналоги и история покупок. Магазин пока закрыт"}</small><em>Открыть раздел →</em></FleetShortcut>
             <a href="#/garage"><span className="client-dashboard-hub-icon">▤</span><b>Мой транспорт</b><small>Грузовики, прицепы и история обслуживания</small><em>Мой гараж →</em></a>
             <a href="#/support"><span className="client-dashboard-hub-icon">☏</span><b>Поддержка</b><small>Обращения и помощь по вашим заявкам</small><em>Написать →</em></a>
           </section>
@@ -286,12 +322,17 @@ function MyPlace() {
 // Консультация по телефону — отдельная услуга: фиксированная цена, без выезда ----
 
 export function Consult() {
+  const {me}=useMe();
+  return <ConsultForAccount key={(me?.id??'guest')+':'+location.hash}/>;
+}
+function ConsultForAccount() {
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sym = SYMPTOMS.find((p) => p.id === params.get('p'));
   const { busy, run } = useAction();
   const { me } = useMe();
-  const { pricing } = usePrices();
-  const vehicles = useLoad(() => get('/api/vehicles'), []);
+  const pricingRead=usePrivateRead<any>(()=>get('/api/pricing'),'consult-price:'+(me?.id??'guest'));
+  const pricing=pricingRead.data;
+  const vehicles=usePrivateRead<any[]>(()=>get('/api/vehicles'),'consult-vehicles:'+(me?.id??'guest'));
   const [vehicleId, setVehicleId] = useState('');
   const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name + '. ' : '');
@@ -306,7 +347,10 @@ export function Consult() {
     !agree && { id: 'f-agree', name: 'согласие' },
     !consultMethod && { id: 'f-pay', name: 'безналичный способ оплаты' },
   ].filter(Boolean) as { id: string; name: string }[];
-  if (!pricing) return <main><Loading /></main>;
+  if (!pricing) return <main className="stack"><Loading error={pricingRead.error}/>
+    {pricingRead.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void pricingRead.reload();}}>Повторить проверку тарифа</button>}
+  </main>;
   const c = pricing.consult ?? { price: 70_000, backDiscount: 20_000, backHours: 48 };
 
   async function submit() {
@@ -416,7 +460,12 @@ function SelfOrderWarning({ me }: { me: any }) {
 
 // Новая заявка --------------------------------------------------------------
 
-export function NewOrder({ service }: { service: string }) {
+export function NewOrder({service}:{service:string}) {
+  const {me}=useMe();
+  return <NewOrderForAccount key={(me?.id??'guest')+':'+service+':'+location.hash}
+    service={service}/>;
+}
+function NewOrderForAccount({service}:{service:string}) {
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
@@ -427,12 +476,19 @@ export function NewOrder({ service }: { service: string }) {
   const preferredPerformerId = params.get('preferred') ?? '';
   const { me } = useMe();
   const { busy, run } = useAction();
-  const pricing = useLoad(() => get('/api/pricing'), []);
-  const vehicles = useLoad(() => get('/api/vehicles'), []);
-  const pastPerformers = useLoad(() => preferredPerformerId ? get('/api/my-performers') : Promise.resolve([]), [preferredPerformerId]);
-  const selectedPerformer = (pastPerformers.data ?? []).find((p:any) => p.id === preferredPerformerId);
-  const consult = useLoad(() => (fromConsult ? get(`/api/orders/${fromConsult}`) : Promise.resolve(null)), [fromConsult]);
-  const parallelSource = useLoad(() => ((parallelWith||continueFrom) ? get(`/api/orders/${parallelWith||continueFrom}`) : Promise.resolve(null)), [parallelWith,continueFrom]);
+  const scope=(me?.id??'guest')+':'+service;
+  const pricing=usePrivateRead<any>(()=>get('/api/pricing'),'order-price:'+scope);
+  const vehicles=usePrivateRead<any[]>(()=>get('/api/vehicles'),'order-vehicles:'+scope);
+  const pastPerformers=usePrivateRead<any[]>(()=>preferredPerformerId
+    ?get('/api/my-performers'):Promise.resolve([]),
+    'order-performers:'+scope+':'+preferredPerformerId);
+  const selectedPerformer=(pastPerformers.data??[]).find((p:any)=>p.id===preferredPerformerId);
+  const consult=usePrivateRead<any>(()=>fromConsult
+    ?get(`/api/orders/${fromConsult}`):Promise.resolve(null),
+    'order-consult:'+scope+':'+(fromConsult??''));
+  const parallelSource=usePrivateRead<any>(()=>(parallelWith||continueFrom)
+    ?get(`/api/orders/${parallelWith||continueFrom}`):Promise.resolve(null),
+    'order-parallel:'+scope+':'+(parallelWith||continueFrom||''));
   const [parallelAgree,setParallelAgree] = useState(false);
   const [agree, setAgree] = useState(false);
 
@@ -444,6 +500,7 @@ export function NewOrder({ service }: { service: string }) {
   const [tier, setTier] = useState<'eco' | 'comfort' | 'pro'>(service === 'diag' ? 'pro' : 'eco');
   const [night, setNight] = useState<boolean | null>(null);
   const [group, setGroup] = useState(false);
+  const [verifiedOnly,setVerifiedOnly]=useState(false);
   const [vehicleId, setVehicleId] = useState<string>('');
   const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name : '');
@@ -537,7 +594,7 @@ export function NewOrder({ service }: { service: string }) {
   }, [methods?.online, methods?.invoice, methods?.cash, method]);
 
   async function submit() {
-    if (!methods?.[method]) return;
+    if (!methods?.[method] || plannedTime) return;
     const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -548,6 +605,7 @@ export function NewOrder({ service }: { service: string }) {
       continueFrom: continueFrom || undefined,
       recommendationId: recommendationId || undefined,
       preferredPerformerId: preferredPerformerId || undefined,
+      verifiedOnly,
       parallelWith: parallelWith || undefined,
       parallelConsent: parallelWith ? parallelAgree : undefined,
       parallelCallOut: parallelWith ? est?.callOut : undefined,
@@ -568,6 +626,7 @@ export function NewOrder({ service }: { service: string }) {
   }
 
   const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});
+  const plannedTime = !isConsult && !isTow && (site.when === 'today' || site.when === 'tomorrow' || !!site.time?.trim());
   const [savedDraft,setSavedDraft]=useState<SavedNewOrderDraft|null>(null);
   useEffect(()=>{
     let active=true;
@@ -606,6 +665,7 @@ export function NewOrder({ service }: { service: string }) {
     tow: !isTow || destination.trim().length >= 3,
   };
   const missing = [
+    plannedTime && { id: 'f-site', name: 'выберите «Сейчас»: запись на время пока недоступна' },
     !isConsult && !regionId && { id: 'f-where', name: 'регион' },
     !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
     !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
@@ -623,6 +683,8 @@ export function NewOrder({ service }: { service: string }) {
   if (!pricing.data) return <main>
     <Back to="" />
     <div className="banner warn">{pricing.error ?? 'Проверяем тарифы и тарифные зоны. Без связи отправка новой заявки недоступна.'}</div>
+    {pricing.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void pricing.reload();}}>Повторить проверку тарифа</button>}
     {savedDraft && <div className="card stack">
       <b>Ваш локальный черновик сохранён</b>
       <span className="note">Сохранён {fmtTime(new Date(savedDraft.savedAt).toISOString())}. Описание: {savedDraft.data.description.slice(0,180)||'не указано'}</span>
@@ -806,9 +868,10 @@ export function NewOrder({ service }: { service: string }) {
           {site.state && site.state !== 'free' && <span className="note">Мастеру придётся работать параллельно — это может стоить дороже, он скажет сумму до начала.</span>}
           <span className="label">Когда</span>
           <div className="grid3">{([['now', 'Сейчас'], ['today', 'Сегодня'], ['tomorrow', 'Завтра']] as const).map(([k, n]) => (
-            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => setSite({ ...site, when: k })}>{n}</button>
+            <button key={k} type="button" className="seg" aria-pressed={(site.when ?? 'now') === k} onClick={() => { setSite({ ...site, when: k, time: k === 'now' ? undefined : site.time }); setAgree(false); }}>{n}</button>
           ))}</div>
-          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => setSite({ ...site, time: e.target.value })} />}
+          {site.when && site.when !== 'now' && <input className="field" placeholder="Примерно к … (например, 14:00)" value={site.time ?? ''} onChange={(e) => { setSite({ ...site, time: e.target.value }); setAgree(false); }} />}
+          {plannedTime && <div role="alert" className="banner warn">Запись на время пока недоступна. Заявка не будет отправлена и оплата не начнётся. Для помощи сейчас выберите «Сейчас»; для будущей записи можно сохранить черновик на устройстве.</div>}
         </Step>
       )}
 
@@ -822,7 +885,19 @@ export function NewOrder({ service }: { service: string }) {
           </div>
         </details>
       )}
-      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} />}
+      <div className="card stack" style={{gap:6}}>
+        <label className="row" style={{alignItems:'center',gap:10,cursor:'pointer'}}>
+          <input type="checkbox" checked={verifiedOnly}
+            onChange={e=>setVerifiedOnly(e.target.checked)}
+            aria-label="Только проверенные"/>
+          <b>Только проверенные</b>
+        </label>
+        <small className="note">
+          {verifiedOnly?'Заявка будет направляться исключительно исполнителям с подтверждённой проверкой TrakSOS. Если таких нет, поиск может занять больше времени.':
+            'Проверенные получают преимущество в поиске. Непроверенные тоже могут работать, но без значка подтверждения.'}
+        </small>
+      </div>
+      {!isTow && regionId !== 'other' && <MastersNearby service={service} geo={geo} brand={vehicles.data?.find((v: any) => v.id === vehicleId)?.brand ?? car.brand} verifiedOnly={verifiedOnly} />}
 
       {isTow ? (
         <Step n={4} id="f-tow" title="Куда и что везём" req done={need.tow} missing={tried && !need.tow}>
@@ -895,10 +970,17 @@ export function NewOrder({ service }: { service: string }) {
 
 // Мои заявки ----------------------------------------------------------------
 
-export function Orders({ as }: { as: 'client' | 'performer' }) {
-  const list = useLoad(() => get(`/api/orders?as=${as}`), [as], (e) => e.type === 'order');
-  const bookings = useLoad<any[]>(() => as === 'client' ? get('/api/bookings') : Promise.resolve([]),
-    [as], (e) => e.type === 'booking');
+export function Orders({as,calendarDate,calendarPeriod}:{as:'client'|'performer';calendarDate?:string;calendarPeriod?:'day'|'week'}) {
+  const {me}=useMe();
+  if(calendarDate!==undefined)
+    return <ClientCalendar key={(me?.id??'guest')+':'+as} userId={me?.id??'guest'} date={calendarDate} as={as} period={calendarPeriod}/>;
+  return <OrdersForAccount key={(me?.id??'guest')+':'+as} as={as} userId={me?.id??'guest'}/>;
+}
+function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
+  const list=usePrivateRead<any[]>(()=>get(`/api/orders?as=${as}`),
+    'orders:'+userId+':'+as,e=>e.type==='order');
+  const bookings=usePrivateRead<any[]>(()=>as==='client'?get('/api/bookings'):Promise.resolve([]),
+    'bookings:'+userId+':'+as,e=>e.type==='booking');
   const [tab, setTab] = useState<'list' | 'black' | 'cars'>('list');
   const [ctab, setCtab] = useState<'now' | 'my' | 'hist' | 'black'>('now');
   if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
@@ -910,15 +992,22 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
   return (
     <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
-      {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
+      {as === 'performer' && <><HistoryTabs tab={tab} setTab={setTab} /><a className="btn ghost small" href="#/work/jobs/calendar">Календарь выездов</a></>}
       {as === 'client' && (
         <div className="scroll-x" role="tablist">
           {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
             <button key={k} className="chip" role="tab" aria-pressed={ctab === k} onClick={() => setCtab(k)}>{n}</button>
           ))}
+          <button type="button" className="chip" role="tab" aria-pressed={false} onClick={()=>go('orders/calendar')}>Календарь</button>
         </div>
       )}
-      {showingNow && <h2>Текущие обращения и заявки на подтверждении · {(list.data ?? []).filter(live).length}</h2>}
+      {list.error&&<section className="card stack" role="alert">
+        <b>Не удалось загрузить заявки</b>
+        <button type="button" className="btn ghost small" onClick={()=>{void list.reload();}}>
+          Повторить загрузку заявок
+        </button>
+      </section>}
+      {showingNow&&list.data&&<h2>Текущие обращения и заявки на подтверждении · {list.data.filter(live).length}</h2>}
       {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
       as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
@@ -939,7 +1028,11 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
       )}
       {showingNow && <section className="stack" aria-label="Активные записи на СТО">
         <h2>Записи на СТО · {activeBookings.length}</h2>
-        {bookings.error ? <div className="note">Не удалось загрузить записи на СТО: {bookings.error}</div>
+        {bookings.error ? <div className="card stack" role="alert">
+          <span className="note">Не удалось загрузить записи на СТО: {bookings.error}</span>
+          <button type="button" className="btn ghost small"
+            onClick={()=>{void bookings.reload();}}>Повторить загрузку записей</button>
+        </div>
           : !bookings.data ? <Loading />
             : activeBookings.length > 0 ? <BookingList rows={activeBookings} />
               : <span className="note">Открытых записей на СТО сейчас нет. Завершённые — в истории.</span>}
@@ -950,9 +1043,13 @@ export function Orders({ as }: { as: 'client' | 'performer' }) {
 
 /** «Мои мастера»: кто уже был у вас — в избранное (предлагаем первым), «не предлагать», вызвать снова */
 function MyPerformers({ black }: { black: boolean }) {
-  const list = useLoad(() => get('/api/my-performers'), []);
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get('/api/my-performers'),
+    'my-performers:'+(me?.id??'guest'));
   const { busy, run } = useAction();
-  if (!list.data) return <Loading error={list.error} />;
+  if(!list.data)return <div className="stack"><Loading error={list.error}/>
+    {list.error&&<button className="btn ghost small" type="button"
+      onClick={()=>{void list.reload();}}>Повторить загрузку мастеров</button>}</div>;
   const rows = list.data.filter((p: any) => black ? p.pref === 'hide' : p.pref !== 'hide');
   const set = async (id: string, pref: string | null, msg: string) => { if (await run(() => put(`/api/my-performers/${id}`, { pref }), msg)) list.reload(); };
   if (!rows.length) return <div className="empty">{black ? 'Список пуст. «Не предлагать» — в карточке мастера во вкладке «Мои мастера».' : 'Здесь появятся мастера и эвакуаторщики, которые у вас уже были.'}</div>;
@@ -991,9 +1088,13 @@ function HistoryTabs({ tab, setTab }: { tab: string; setTab: (t: any) => void })
 }
 
 function PerformerBlacklist() {
-  const list = useLoad(() => get('/api/performer/blacklist'), []);
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get('/api/performer/blacklist'),
+    'performer-blacklist:'+(me?.id??'guest'));
   const { busy, run } = useAction();
-  if (!list.data) return <Loading error={list.error} />;
+  if(!list.data)return <div className="stack"><Loading error={list.error}/>
+    {list.error&&<button type="button" className="btn ghost small"
+      onClick={()=>{void list.reload();}}>Повторить загрузку чёрного списка</button>}</div>;
   return (
     <div className="stack">
       {!list.data.length ? <div className="empty">Список пуст</div> : list.data.map((b: any) => (
@@ -1011,8 +1112,15 @@ function PerformerBlacklist() {
 // Гараж ---------------------------------------------------------------------
 
 export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
-  const { me } = useMe();
-  const list = useLoad(() => get('/api/vehicles'), []);
+  const {me}=useMe();
+  return <GarageForAccount key={me?.id??'guest'} focusVehicleId={focusVehicleId}
+    userId={me?.id??'guest'}/>;
+}
+function GarageForAccount({focusVehicleId,userId}:{
+  focusVehicleId?:string;userId:string;
+}) {
+  const {me}=useMe();
+  const list=usePrivateRead<any[]>(()=>get('/api/vehicles'),'garage:'+userId);
   const { busy, run } = useAction();
   const [form, setForm] = useState<CatalogVehicleValue & {plate:string;trailerPlate:string}>({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
@@ -1027,6 +1135,7 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
   }, []);
 
   async function add() {
+    if(busy||isDriver||!form.catalogCategory||!form.catalogBrandKey||!form.catalogModelKey)return;
     const r = await run(() => post('/api/vehicle-reference/vehicles', {
       category:form.catalogCategory, brandKey:form.catalogBrandKey, modelKey:form.catalogModelKey,
       year:form.year ? Number(form.year):undefined,
@@ -1059,7 +1168,10 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           })
         }>Добавить машину <span aria-hidden="true">↗</span></button>}
       </section>}
-      {!list.data ? <Loading error={list.error} /> : list.data.map((v: any) => (
+      {!list.data ? <div className="stack"><Loading error={list.error} />
+        {list.error&&<button type="button" className="btn ghost small"
+          onClick={()=>{void list.reload();}}>Повторить загрузку транспорта</button>}</div>
+        : list.data.map((v: any) => (
         <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
           <VehiclePhotoLink brand={v.brand} model={v.model} year={v.year} plate={v.plate} href={`#/garage/${v.id}`}/>
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.catalog_category==='trailer'?'Прицеп / полуприцеп · ':''}{v.plate ?? 'без номера'}</span></div>
@@ -1076,6 +1188,7 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
           <VehicleServiceApplication vehicleId={v.id} onCreated={() => setServiceHistoryVersion(v => v + 1)} />
           <VehicleServiceHistory id={v.id} isDriver={isDriver} refreshVersion={serviceHistoryVersion} />
           <VehicleHistory id={v.id} initialOpen={focusVehicleId===v.id} />
+          {!isDriver&&me?.roles?.includes('client')&&<GaragePartHistory key={v.id} vehicleId={v.id}/>}
 
           {!isDriver && (driverFor === v.id ? (
             <div className="stack">
@@ -1107,11 +1220,22 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
             {form.catalogCategory!=='trailer' && <input className="field" placeholder="Номер связанного прицепа (необязательно)" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />}
           </div>
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
-          <button className="btn" disabled={busy || !form.catalogBrandKey || !form.catalogModelKey}>Сохранить</button>
+          <button className="btn" disabled={busy || !form.catalogCategory || !form.catalogBrandKey || !form.catalogModelKey}>Сохранить</button>
         </form>
       )}
     </main>
   );
+}
+
+/** Lazy owner-only recommendation history; the service still checks vehicle ownership. */
+function GaragePartHistory({vehicleId}:{vehicleId:string}){
+  const [open,setOpen]=useState(false);
+  return <div className="stack">
+    <button type="button" className="linkrow" aria-expanded={open} onClick={()=>setOpen(v=>!v)}>
+      <span><b>Рекомендации по запчастям</b><small>Согласованные и предложенные детали по этой машине</small></span><span aria-hidden="true">{open?'˄':'˅'}</span>
+    </button>
+    {open&&<PartRecommendationHistory vehicleId={vehicleId}/>}
+  </div>;
 }
 
 /** More accurate spare-parts matching without making SOS registration onerous. */
@@ -1172,6 +1296,7 @@ function VehicleExtendedDetails({vehicle:v,isDriver,onSaved}:{
 
 /** История машины: что и когда делали, комментарий мастера. Свёрнута, раскрывается по нажатию. */
 function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boolean }) {
+  const {me}=useMe();
   const [open, setOpen] = useState(initialOpen);
   useEffect(()=>{
     if(!initialOpen)return;
@@ -1179,9 +1304,15 @@ function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boo
     const el=document.getElementById('garage-vehicle-'+id);
     el?.scrollIntoView({block:'start',behavior:'auto'});
   },[initialOpen,id]);
-  const h = useLoad(() => get(`/api/vehicles/${id}/history`), [id], (e) => e.type === 'order');
-  const d = h.data;
-  if (!d) return null;
+  const h=usePrivateRead<any>(()=>get(`/api/vehicles/${id}/history`),
+    'vehicle-history:'+(me?.id??'guest')+':'+id,e=>e.type==='order');
+  const d=h.data;
+  if(!d)return h.error?<div className="card stack" role="alert">
+    <span>Не удалось загрузить историю машины.</span>
+    <button type="button" className="btn ghost small" onClick={()=>{void h.reload();}}>
+      Повторить загрузку истории
+    </button>
+  </div>:null;
   if (!d.items.length) return <span className="note">История пока пустая — здесь будут все вызовы по этой машине и что делали мастера.</span>;
   const last = d.summary.lastAt ? fmtTime(d.summary.lastAt) : '';
   return (
@@ -1230,6 +1361,10 @@ function confirmDelete() {
 // Профиль -------------------------------------------------------------------
 
 export function Profile() {
+  const {me}=useMe();
+  return <ProfileForAccount key={me?.id??'guest'}/>;
+}
+function ProfileForAccount() {
   const { me, reload, mode } = useMe();
   const { busy, run } = useAction();
   const [name, setName] = useState(me?.name ?? '');
@@ -1397,39 +1532,82 @@ export async function logout() {
   location.reload();
 }
 
-const PRIO: [string, string][] = [['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
+const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
-function MastersNearby({ service, geo, brand }: { service: string; geo: { lat: number; lng: number } | null; brand?: string }) {
-  const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'near'; } catch { return 'near'; } });
-  const q = new URLSearchParams({ service, ...(geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}), ...(brand ? { brand } : {}) });
-  const l = useLoad(() => get(`/api/masters-nearby?${q}`), [service, geo?.lat, brand]);
+function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
+  const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'recommended'; } });
+  const hasGeo = !!geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lng)
+    && Math.abs(geo.lat) <= 90 && Math.abs(geo.lng) <= 180;
+  // A saved near/ETA preference is not meaningful without the truck's real GPS point.
+  // Never request or mark a sorting mode which the server cannot calculate.
+  const effectivePrio = (!PRIO.some(([key]) => key === prio)
+    || (!hasGeo && (prio === 'near' || prio === 'fast'))
+    || (!brand && prio === 'brand')) ? 'recommended' : prio;
+  useEffect(() => {
+    if (prio === effectivePrio) return;
+    setPrio(effectivePrio);
+    try { localStorage.setItem('traksos.prio', effectivePrio); } catch { /* */ }
+  }, [prio, effectivePrio]);
+  const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', sort:effectivePrio,
+    ...(hasGeo && geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}),
+    ...(brand ? { brand } : {}) });
+  const l = useLoad(() => get(`/api/masters-nearby?${q}`),
+    [service, geo?.lat, geo?.lng, brand, verifiedOnly, effectivePrio]);
   if (!l.data) return null;
   const d = l.data;
-  const choose = (k: string) => { setPrio(k); try { localStorage.setItem('traksos.prio', k); } catch { /* */ } };
-  const items = [...d.items].sort((a: any, b: any) => prio === 'cheap' ? (a.callOut ?? 1e12) - (b.callOut ?? 1e12)
-    : prio === 'brand' ? (b.brandStars ?? 0) - (a.brandStars ?? 0) || (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9)
-    : prio === 'fast' ? (a.etaMin ?? 1e9) - (b.etaMin ?? 1e9) : (a.distanceKm ?? 1e9) - (b.distanceKm ?? 1e9));
+  const choose = (k: string) => {
+    if (!PRIO.some(([key]) => key === k) || (!hasGeo && (k === 'near' || k === 'fast'))) return;
+    setPrio(k);
+    try { localStorage.setItem('traksos.prio', k); } catch { /* */ }
+  };
+  // Server sorts the FULL eligible pool before slicing eight displayed results.
+  const items = d.items;
   return (
     <div className="card">
-      <div className="between"><b>Поиск рядом с вами</b>{!geo && <span className="note">без GPS — по всему городу</span>}</div>
+      <div className="between">
+        <b>{d.scope==='nearby'?'Поиск по указанной точке':'Исполнители в сети TrakSOS'}</b>
+        {d.scope==='nearby'?<span className="note">до {d.radiusKm} км от указанной точки</span>:
+          <span className="note">География не определена</span>}
+      </div>
+      {d.scope!=='nearby'&&<p className="note">
+        Координаты машины не указаны. Показатели ниже относятся ко всей сети TrakSOS, а не к ближайшему городу.
+        Для поиска мастеров рядом укажите точку машины или воспользуйтесь добровольной геолокацией.
+      </p>}
       <div className="grid3">
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.online}</b><span className="note">на линии</span></div>
-        <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.free}</b><span className="note">свободны</span></div>
+        <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22 }}>{d.free}</b><span className="note" title="Не заняты, не на паузе, не в отпуске и доступны по рабочему графику для этого вида помощи">свободны</span></div>
         <div className="stack" style={{ gap: 0, alignItems: 'center' }}><b style={{ fontSize: 22, color: 'var(--accent)' }}>{d.match}</b><span className="note">подходят вам</span></div>
       </div>
       <div className="row" style={{ gap: 6 }}>
-        {PRIO.filter(([k]) => k !== 'brand' || brand).map(([k, n]) => <button key={k} type="button" className="chip" aria-pressed={prio === k} onClick={() => choose(k)}>{k === 'brand' && brand ? `Знает ${brand}` : n}</button>)}
+        {PRIO.filter(([k]) => k !== 'brand' || brand).map(([k, n]) => {
+          const needsGeo = k === 'near' || k === 'fast';
+          const disabled = needsGeo && !hasGeo;
+          return <button key={k} type="button" className="chip" aria-pressed={effectivePrio === k}
+            disabled={disabled} aria-describedby={disabled ? 'masters-nearby-geo-help' : undefined}
+            title={disabled ? 'Укажите GPS-точку машины для сортировки по близости и времени' : undefined}
+            onClick={() => choose(k)}>{k === 'brand' && brand ? `Знает ${brand}` : n}</button>;
+        })}
       </div>
+      {!hasGeo && <span className="note" id="masters-nearby-geo-help">
+        Для сортировки по близости и времени укажите GPS-точку машины. «Рекомендуем» и «Дешевле» работают без неё.
+      </span>}
       {items.length ? items.slice(0, 3).map((m: any, i: number) => (
         <div key={i} className="between">
           <span className="stack" style={{ gap: 0 }}>
-            <b>{i + 1} · Мастер {m.name} · {TIERS[m.tier as keyof typeof TIERS]?.name ?? ''} ✓</b>
+            <b>{i + 1} · Мастер {m.name} · {TIERS[m.tier as keyof typeof TIERS]?.name ?? ''} {m.verification==='approved'&&<span aria-label="Проверен TrakSOS" title="Проверен TrakSOS" className="pill good">✓ Проверен</span>}</b>
             <small className="note">{m.distanceKm != null ? `${String(m.distanceKm).replace('.', ',')} км · ~${m.etaMin} мин` : 'расстояние уточним'}{m.brandStars ? ` · ${brand} ${'★'.repeat(m.brandStars)}` : ''}{m.rating ? ` · ★ ${m.rating.toFixed(1)}` : ''}</small>
           </span>
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
-      )) : <span className="note">Свободных рядом сейчас нет — заявка уйдёт в торги, мастера откликнутся, когда освободятся.</span>}
-      <span className="note">✓ — прошёл проверку TrakSOS. Порядок — по вашему приоритету; он же будет первым в списке откликов.</span>
+      )) : <span className="note">{d.scope==='nearby'
+        ?verifiedOnly
+          ?'В указанном радиусе сейчас нет свободных проверенных мастеров. Можно снять галочку «Только проверенные», чтобы расширить поиск, либо сохранить ограничение.'
+          :'В указанном радиусе пока нет свободных подходящих мастеров. Новые кандидаты могут появиться позже.'
+        :verifiedOnly
+          ?'По всей сети сейчас нет свободных подходящих проверенных мастеров. Без координат нельзя определить местную доступность; укажите расположение автомобиля.'
+          :'В общесетевой выдаче пока нет свободных подходящих мастеров. Это не подтверждает отсутствие исполнителей рядом с автомобилем — укажите его расположение.'}</span>}
+      <span className="note">{d.scope==='nearby'?'Счётчики и список относятся к подтверждённому радиусу поиска. ':'Без координат нельзя утверждать, что исполнитель находится рядом. '}
+        Значок «Проверен» показывается только подтверждённым исполнителям. В режиме «Рекомендуем» они получают преимущество; в выбранной сортировке по цене, расстоянию или времени главный критерий — именно выбранный. Непроверенные остаются доступными, если фильтр выключен.</span>
     </div>
   );
 }
