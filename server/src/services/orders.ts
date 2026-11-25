@@ -407,24 +407,58 @@ export class OrdersService {
 
   /** Владелец: подтвердить заказ водителя или отказать */
   async ownerDecision(owner: AuthUser, orderId: string, approve: boolean, reason?: string) {
-    const o = await this.db.one('select * from orders where id=$1 and client_id=$2', [orderId, owner.id]);
-    if (!o) throw notFound('Заявка не найдена');
-    if (o.status !== 'awaiting_owner') throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
-    if (!approve) {
-      const why = reason?.trim() || 'Владелец отклонил заказ';
-      await this.db.query(`update orders set status='cancelled', cancel_reason=$2, cancelled_at=now() where id=$1 and status='awaiting_owner'`, [orderId, why]);
-      await this.event(this.db, orderId, owner.id, 'owner_rejected', { reason: why });
-      await this.systemMessage(orderId, `Владелец отклонил заказ: ${why}`);
-      await this.notifier.notify((await this.customerRecipients(o)).filter(id=>id===o.created_by), { type: 'order', orderId, status: 'cancelled' },
-        { kind: 'normal', title: 'Владелец отклонил заказ', body: why, data: { orderId } });
-      return this.view(owner, orderId);
-    }
-    const upd = await this.db.one(`update orders set status='searching' where id=$1 and status='awaiting_owner' returning *`, [orderId]);
-    if (!upd) throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
-    await this.event(this.db, orderId, owner.id, 'owner_approved', {});
-    await this.notifier.notify((await this.customerRecipients(o)).filter(id=>id===o.created_by), { type: 'order', orderId, status: 'searching' },
-      { kind: 'normal', title: 'Владелец подтвердил заказ', body: 'Ищем исполнителя', data: { orderId } });
-    await this.launch(owner, upd);
+    const why = reason?.trim() || 'Владелец отклонил заказ';
+    const type = approve ? 'owner_approved' : 'owner_rejected';
+    const status = approve ? 'searching' : 'cancelled';
+    const msg = { kind: 'normal' as const,
+      title: approve ? 'Владелец подтвердил заказ' : 'Владелец отклонил заказ',
+      body: approve ? 'Ищем исполнителя' : why, data: { orderId } };
+
+    const result = await this.db.tx(async q => {
+      // Share the budget lock with driver creation: an approved order
+      // becomes part of monthSpent before a subsequent gate can run.
+      const account = await q.one('select id from users where id=$1 for no key update', [owner.id]);
+      const o = await q.one('select * from orders where id=$1 and client_id=$2 for update', [orderId, owner.id]);
+      if (!account || !o) throw notFound('Заявка не найдена');
+      if (o.status !== 'awaiting_owner') {
+        const decisions = await q.query<{ type: string; data: any }>(
+          "select type,data from order_events where order_id=$1 and actor_id=$2 and type in ('owner_approved','owner_rejected')",
+          [orderId, owner.id]);
+        // Only an unambiguous identical decision is a replay. Never
+        // reinterpret a normal cancellation or contradictory legacy events.
+        if (decisions.length === 1 && decisions[0].type === type &&
+            (approve || decisions[0].data?.reason === why))
+          return { order: o, replay: true, message: null, ids: [] as string[] };
+        throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
+      }
+      const upd = approve
+        ? await q.one("update orders set status='searching' where id=$1 and status='awaiting_owner' returning *", [orderId])
+        : await q.one("update orders set status='cancelled', cancel_reason=$2, cancelled_at=now() where id=$1 and status='awaiting_owner' returning *", [orderId, why]);
+      if (!upd) throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
+      await this.event(q, orderId, owner.id, type, approve ? {} : { reason: why });
+      const message = approve ? null : await q.one(
+        "insert into chat_messages(order_id,sender_id,kind,body) values ($1,null,'system',$2) returning id,order_id,sender_id,kind,body,created_at",
+        [orderId, `Владелец отклонил заказ: ${why}`]);
+      // The original driver must still be assigned; an owner may decide
+      // after detachment, without notifying that former driver.
+      const recipient = o.created_by === o.client_id ? o.created_by : (await q.one<{ id: string }>(
+        `select u.id from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and ($3::uuid is null or v.id=$3) limit 1 for share of v,u`,
+        [o.created_by, o.client_id, o.vehicle_id]))?.id;
+      const ids: string[] = recipient ? [recipient] : [];
+      for (const id of ids)
+        await q.query('insert into notifications(user_id,kind,title,body,data) values ($1,$2,$3,$4,$5)',
+          [id, 'order', msg.title, msg.body, msg.data]);
+      return { order: upd, replay: false, message, ids };
+    });
+    if (result.replay) return this.view(owner, orderId);
+    if (result.message) this.notifier.live(await this.participants(orderId), { type: 'chat', message: result.message });
+    const current = await this.customerRecipients(result.order);
+    await this.notifier.deliverStored(result.ids.filter(id => current.includes(id)), { type: 'order', orderId, status }, msg);
+    // Network/payment/dispatch are outside the transaction. Only the
+    // winning decision may launch; durable launch recovery is separate.
+    if (approve) await this.launch(owner, result.order);
     return this.view(owner, orderId);
   }
 
