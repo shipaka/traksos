@@ -1196,6 +1196,12 @@ function Cancel({ id, status, consult, onDone }: { id: string; status: string; c
   const { busy, run } = useAction();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [uncertain,setUncertain]=useState(false);
+  const {me}=useMe();
+  const pricing=usePrivateRead<any>(()=>open&&!consult?get('/api/pricing'):Promise.resolve(null),(me?.id??'guest')+':cancel:'+id+':'+open+':'+!!consult);
+  const scale=pricing.data?.cancelScale;
+  const verifiedScale=['accepted','en_route_first_half','en_route_second_half'].every(k=>typeof scale?.[k]==='number'&&Number.isFinite(scale[k])&&scale[k]>=0&&scale[k]<=1);
+  const percent=(k:string)=>Math.round(scale[k]*100)+'%';
   const reasons = consult ? ['Разобрался сам', 'Мастер не отвечает', 'Долго ждать', 'Ошибся с заявкой'] : ['Завелась сама', 'Нашёл другого мастера', 'Долго ждать', 'Ошибся с заявкой'];
   if (!open) return <button className="btn ghost" onClick={() => setOpen(true)}>Отменить заявку</button>;
   return (
@@ -1203,13 +1209,14 @@ function Cancel({ id, status, consult, onDone }: { id: string; status: string; c
       <b>Отменить заявку?</b>
       {!consult && <div className="stack">
         <b>Условия отмены выезда</b>
-        <span className="note">До назначения исполнителя — 0% стоимости выезда. Принял заявку, но не выехал — 25%. Выехал, но не достиг половины маршрута — 50%. Проехал половину маршрута или прибыл — 100%.</span>
+        <span className="note">{verifiedScale?`До назначения исполнителя — 0% стоимости выезда. Принял заявку, но не выехал — ${percent('accepted')}. Выехал, но не достиг половины маршрута — ${percent('en_route_first_half')}. Проехал половину маршрута или прибыл — ${percent('en_route_second_half')}.`:'Актуальные условия отмены не подтверждены. Окончательный расчёт зависит от этапа заявки.'}</span>{pricing.error&&<button type="button" className="btn ghost small" onClick={pricing.reload}>Повторить загрузку условий</button>}
         <span className="note">Процент применяется к согласованной стоимости выезда. Сервисный сбор и возврат предоплаты рассчитываются отдельно по условиям заявки. Если GPS не позволяет достоверно определить этап, расчёт может потребовать проверки.</span>
         <span className="note">Это правила, а не окончательная сумма списания. Итог зависит от подтверждённого этапа на момент отмены; сведения о платеже и возврате будут доступны в заявке.</span>
       </div>}
-      {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь — отменяйте, деньги не спишутся.</span>}
+      {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь, укажите причину отмены. Фактическое списание или возврат будет отражён в расчёте заявки.</span>}
       <div className="scroll-x">{reasons.map((r) => <button key={r} className="chip" aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>)}</div>
-      <button className="btn bad" disabled={busy || !reason} onClick={() => run(() => post(`/api/orders/${id}/cancel`, { reason }), 'Заявка отменена').then((r) => r && onDone())}>Отменить</button>
+      {uncertain&&<div className="note" role="alert">Отмена не подтверждена. Обновите заявку и проверьте её состояние перед повтором. <button type="button" className="btn ghost small" onClick={onDone}>Обновить заявку</button><button type="button" className="btn ghost small" onClick={()=>setUncertain(false)}>Состояние проверено</button></div>}
+      <button className="btn bad" disabled={busy || uncertain || !reason} onClick={async()=>{const r=await run(()=>post(`/api/orders/${id}/cancel`,{reason}),'Заявка отменена');if(!r)setUncertain(true);onDone();}}>Отменить</button>
       <button className="btn ghost" onClick={() => setOpen(false)}>Не отменять</button>
     </div>
   );
@@ -1226,6 +1233,7 @@ function Review({ id, you }: { id: string; you: string }) {
   const [contest, setContest] = useState(false);
   const [why, setWhy] = useState('');
   if (you === 'admin' || you === 'candidate') return null;
+  if(!rv.data||rv.error)return <div className="card stack"><Loading error={rv.error}/>{rv.error&&<button type="button" className="btn ghost small" onClick={rv.reload}>Повторить загрузку отзывов</button>}</div>;
   const all: string[] = pricing.data?.reviewTags?.[you === 'performer' ? 'aboutClient' : 'aboutPerformer'] ?? [];
   const w = (x: number) => String(Math.round(x * 100) / 100).replace('.', ',');
   if (rv.data?.mine) return (
@@ -1239,7 +1247,7 @@ function Review({ id, you }: { id: string; you: string }) {
           {rv.data.aboutMe.disputed ? <span className="note">Оспорен — до решения модератора в рейтинг не идёт.</span> : contest ? (
             <div className="stack">
               <textarea className="field" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Почему отзыв несправедлив" />
-              <button className="btn small" disabled={busy || why.trim().length < 5} onClick={async () => { if (await run(() => post(`/api/reviews/${rv.data.aboutMe.id}/contest`, { text: why }), 'Отправлено модератору')) { setContest(false); rv.reload(); } }}>Отправить модератору</button>
+              <button className="btn small" disabled={busy || why.trim().length < 5} onClick={async () => { if (await run(() => post(`/api/reviews/${rv.data.aboutMe.id}/contest`, { text: why.trim() }), 'Отправлено модератору')) setContest(false); await rv.reload(); }}>Отправить модератору</button>
             </div>
           ) : <button className="btn ghost small" onClick={() => setContest(true)}>Оспорить отзыв</button>}
         </div>
@@ -1260,7 +1268,7 @@ function Review({ id, you }: { id: string; you: string }) {
       {you !== 'performer' && <WorksCheck id={id} />}
       <button className="btn" disabled={busy || !stars} onClick={async () => {
         const r = await run(() => post(`/api/orders/${id}/review`, { stars, tags, text: text || undefined }), 'Спасибо за отзыв');
-        if (r) setSent(true);
+        if (r) setSent(true);else await rv.reload();
       }}>Оставить отзыв</button>
     </div>
   );
