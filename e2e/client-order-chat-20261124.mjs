@@ -97,7 +97,8 @@ const browser=await chromium.launch();
 try{
   const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
+  await page.route('http://localhost:41731/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html lang="ru"><body><div id="root"></div></body></html>'}));
+  await page.goto('http://localhost:41731/');
   await page.addScriptTag({content:js.text});
   const wait=(path,n)=>page.waitForFunction(([path,n])=>
     window.__orderMock.gets.filter(x=>x.path===path).length>=n,[path,n]);
@@ -185,6 +186,7 @@ try{
   if((await message.inputValue())!=='')throw Error('A chat draft leaked into B');
 
   await message.fill('B first message');
+  await page.waitForFunction(()=>!document.querySelector('form.compose button')?.disabled);
   // DOM-double click in a single task probes the ref lock before setState.
   await page.evaluate(()=>{
     const button=Array.from(document.querySelectorAll('form.compose button'))
@@ -228,14 +230,42 @@ try{
   await page.waitForFunction(()=>window.__orderMock.posts.length===3);
   const third=await page.evaluate(()=>window.__orderMock.posts[2].body);
   if(third.requestId===original.requestId||third.body!=='B second draft')throw Error('New send reused prior identity');
+  const saved=await page.evaluate(()=>Object.entries(localStorage).filter(([k])=>k.startsWith('traksos.chatPending.v1:')));
+  if(saved.length!==1||!saved[0][1].includes(third.requestId)||saved[0][1].includes('B second draft')||saved[0][0].includes('U1'))
+    throw Error('Recovery storage missing or contains private text/session token');
+  // Leave while the response is outstanding; reopen the same authorized order.
+  await navigate('C');
+  await wait('/api/orders/C',1);
+  await navigate('B');
+  await wait('/api/orders/B',2);
+  await settle('/api/orders/B',1,order('B',202));
+  await wait(latest('B'),4);
+  await settle(latest('B'),3,windowPage([msg(808,'B first message','U1')]));
+  await page.getByRole('button',{name:/Чат по заявке/}).click();
+  await page.getByRole('button',{name:'Проверить статус отправки'}).click();
+  const statusPath='/api/orders/B/messages/request/'+third.requestId;
+  await wait(statusPath,1);
+  await settle(statusPath,0,{state:'not_observed',messageId:null,kind:null});
+  await page.getByPlaceholder('Точный прежний текст').fill('wrong text');
+  await page.getByRole('button',{name:'Повторить сохранённую отправку'}).click();
+  await page.getByText('Текст отличается от прежней отправки. Повтор не выполнен.').waitFor();
+  if(await page.evaluate(()=>window.__orderMock.posts.length)!==3)throw Error('Mismatched recovered text sent');
+  await page.getByRole('button',{name:'Проверить статус отправки'}).click();
+  await wait(statusPath,2);
+  await settle(statusPath,1,{state:'committed',messageId:809,kind:'text'});
+  await wait(latest('B'),5);
+  await settle(latest('B'),4,windowPage([msg(808,'B first message','U1'),msg(809,'B second draft','U1')]));
+  await page.getByText('Предыдущая отправка подтверждена сервером.').waitFor();
+  if(await page.evaluate(()=>Object.keys(localStorage).some(k=>k.startsWith('traksos.chatPending.v1:'))))throw Error('Confirmed recovery metadata not cleared');
+  if(await page.evaluate(()=>window.__orderMock.posts.length)!==3)throw Error('Status recovery sent another POST');
   // Same order ID but another authenticated account is a fresh private GET.
   await navigate('B','U2');
-  await wait('/api/orders/B',2);
+  await wait('/api/orders/B',3);
   if(await page.getByText('B first message').count()||
      await page.getByText('B second draft').count())
     throw Error('Former account message shown before fresh ACL GET');
   await page.evaluate(()=>window.__orderMock.posts[2].resolve({id:809,kind:'text',sender_id:'U1',body:'B second draft'}));
-  await settle('/api/orders/B',1,'forbidden',true);
+  await settle('/api/orders/B',2,'forbidden',true);
   await page.getByRole('button',{name:'Повторить загрузку заявки'}).waitFor();
   if(await page.getByText('№202 · Электрик').count())
     throw Error('Unauthorized account saw old order after 403');
