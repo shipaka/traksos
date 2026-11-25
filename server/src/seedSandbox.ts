@@ -47,28 +47,39 @@ export async function seedSandbox(db: Db) {
     db.one<{id:string}>('select id from users where phone=$1',[SANDBOX_USER_PHONE.admin]),
   ]);
   if(!buyer||!dispatcher)throw new Error('Sandbox synthetic courier buyer/admin are missing');
-  const marker='TRAKSOS_SANDBOX_COURIER_SAMPLE_20261120';
-  let sample=await db.one<{id:string}>('select id from shop_orders where comment=$1',[marker]);
-  if(!sample){
-    const product=await db.one<{id:string}>(`insert into shop_products
-      (category,name,spec,price,stock,lead_days,active)
-      values ('brakes','Учебный комплект тормозных колодок','Тестовый товар — не продаётся',0,0,0,false)
-      returning id`);
-    if(!product)throw new Error('Sandbox courier product seed missing');
-    sample=await db.one<{id:string}>(`insert into shop_orders
-      (client_id,created_by,status,items,goods_total,delivery,delivery_price,total,
-       address,payment,comment)
-      values ($1,$1,'ready',$2::jsonb,0,'delivery',0,0,$3,'on_receipt',$4)
-      returning id`,[buyer.id,JSON.stringify([{productId:product.id,
-        name:'Учебный комплект тормозных колодок',qty:1,price:0,inStock:false}]),
-        'Санкт-Петербург, учебный адрес доставки, дом 1',marker]);
-  }
-  if(!sample)throw new Error('Sandbox courier order seed missing');
-  await db.query(`insert into shop_courier_deliveries
-    (shop_order_id,courier_id,assigned_by) values ($1,$2,$3)
-    on conflict(shop_order_id) do nothing`,[sample.id,courierId,dispatcher.id]);
-  await db.query(`insert into shop_courier_presence(courier_id,online)
-    values ($1,true) on conflict(courier_id) do nothing`,[courierId]);
+  await seedSandboxCourierSample(db, buyer.id, courierId, dispatcher.id);
+}
+
+// Called only by the sandbox seed entry point; the focused regression uses a disposable DB.
+// Lock the fixed buyer before reading the marker, so concurrent seed invocations
+// cannot both observe an absent sample. Never reset an existing delivery or presence.
+export async function seedSandboxCourierSample(db: Db, buyerId: string, courierId: string, dispatcherId: string) {
+  await db.tx(async q => {
+    const buyer = await q.one<{id:string}>('select id from users where id=$1 for update', [buyerId]);
+    if (!buyer) throw new Error('Sandbox synthetic courier buyer missing');
+    const marker='TRAKSOS_SANDBOX_COURIER_SAMPLE_20261120';
+    let sample=await q.one<{id:string}>('select id from shop_orders where comment=$1 and client_id=$2 order by id limit 1',[marker,buyerId]);
+    if(!sample){
+      const product=await q.one<{id:string}>(`insert into shop_products
+        (category,name,spec,price,stock,lead_days,active)
+        values ('brakes','Учебный комплект тормозных колодок','Тестовый товар — не продаётся',0,0,0,false)
+        returning id`);
+      if(!product)throw new Error('Sandbox courier product seed missing');
+      sample=await q.one<{id:string}>(`insert into shop_orders
+        (client_id,created_by,status,items,goods_total,delivery,delivery_price,total,
+         address,payment,comment)
+        values ($1,$1,'ready',$2::jsonb,0,'delivery',0,0,$3,'on_receipt',$4)
+        returning id`,[buyerId,JSON.stringify([{productId:product.id,
+          name:'Учебный комплект тормозных колодок',qty:1,price:0,inStock:false}]),
+          'Санкт-Петербург, учебный адрес доставки, дом 1',marker]);
+    }
+    if(!sample)throw new Error('Sandbox courier order seed missing');
+    await q.query(`insert into shop_courier_deliveries
+      (shop_order_id,courier_id,assigned_by) values ($1,$2,$3)
+      on conflict(shop_order_id) do nothing`,[sample.id,courierId,dispatcherId]);
+    await q.query(`insert into shop_courier_presence(courier_id,online)
+      values ($1,true) on conflict(courier_id) do nothing`,[courierId]);
+  });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
