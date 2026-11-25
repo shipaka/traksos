@@ -18,6 +18,8 @@ test('catalogue metadata and pages never embed illustration bodies; stable pagin
 });
 
 import {setup,ok} from './helpers.ts';
+import {professionalTechAccess,effectiveTechRoles} from '../src/domain/techbaseAccess.ts';
+import type {AuthUser} from '../src/http/router.ts';
 test('each page and direct image request enforces current professional role',async()=>{
  const t=await setup();
  try{
@@ -39,6 +41,25 @@ test('each page and direct image request enforces current professional role',asy
    assert.equal((await t.api('GET',path,undefined,owner.token)).status,403);
    assert.equal((await t.api('GET',path)).status,401);
   }
+  // Hold an old authentication snapshot while changing persisted rights.
+  const snapshot=await t.db.one<AuthUser>('select id,phone,name,roles,status,owner_id from users where id=$1',[master.id]);
+  assert.ok(snapshot);
+  assert.equal(await professionalTechAccess(t.db,snapshot),true);
+  await t.db.query("update users set roles='{service}'::text[] where id=$1",[master.id]);
+  assert.equal(await professionalTechAccess(t.db,snapshot),false);
+  assert.deepEqual(await effectiveTechRoles(t.db,snapshot),[]);
+  for(const path of [list,detail])assert.equal((await t.api('GET',path,undefined,master.token)).status,403);
+  await t.db.query("update users set roles=$2::text[] where id=$1",[master.id,snapshot.roles]);
+  await t.db.query("update performer_profiles set kind='tow' where user_id=$1",[master.id]);
+  assert.equal(await professionalTechAccess(t.db,snapshot),false);
+  await t.db.query("update performer_profiles set kind='master' where user_id=$1",[master.id]);
+  assert.equal(await professionalTechAccess(t.db,snapshot),true);
+  await t.db.query("update users set status='blocked' where id=$1",[master.id]);
+  assert.equal(await professionalTechAccess(t.db,snapshot),false);
+  await t.db.query("update users set status='active',deleted_at=now() where id=$1",[master.id]);
+  assert.equal(await professionalTechAccess(t.db,snapshot),false);
+  await t.db.query("update users set deleted_at=null where id=$1",[master.id]);
+  assert.equal(await professionalTechAccess(t.db,snapshot),true);
   await t.db.query("update performer_profiles set verification='pending' where user_id=$1",[master.id]);
   for(const path of [list,detail])assert.equal((await t.api('GET',path,undefined,master.token)).status,403);
   assert.equal((await t.api('GET','/api/techbase/illustrations?limit=51',undefined,admin.token)).status,400);
