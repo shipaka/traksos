@@ -29,15 +29,21 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
       select 'service' as kind, b.id, b.number, b.status, b.need as service,
         b.vehicle_id, b.vehicle->>'brand' as brand, b.vehicle->>'model' as model,
         to_char(b.when_day, 'YYYY-MM-DD') as day, b.when_time as requested_time,
-        case when b.status='expected' then b.accept_time else null end as confirmed_time,
+        case when b.status in ('expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed','closed')
+          then b.accept_time else null end as confirmed_time,
         null::timestamptz as starts_at, null::timestamptz as ends_at,
         case when b.status='expected' then 'confirmed'
+             when b.status in ('arrived','diagnostics','in_work','waiting_part','agreeing') then 'in_progress'
+             when b.status='ready' then 'ready'
+             when b.status='invoiced' then 'invoiced'
+             when b.status='disputed' then 'disputed'
+             when b.status='closed' then 'completed'
              when b.status in ('cancelled','declined') then b.status
              else 'pending' end as confirmation,
         null::uuid as order_id, null::text as order_status
       from service_bookings b
       where b.when_day between $2::date and $3::date
-        and b.status in ('new','clarify','expected','cancelled','declined')
+        and b.status in ('new','clarify','expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed','closed','cancelled','declined')
         and (b.client_id=$1 or (b.created_by=$1 and exists (
           select 1 from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
           where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=b.client_id and v.id=b.vehicle_id
