@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useLayoutEffect,useRef,useState} from 'react';
 import {get,getToken,post,rub,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 
@@ -9,8 +9,11 @@ const labels:Record<string,string>={pending:'Ожидает решения',acce
 type ProposalProps={orderId?:string;bookingId?:string;cardId?:string;onSent?:()=>void};
 export function PartProposal(props:ProposalProps){
  const {me}=useMe();
- if(!me)return null;
- return <PartProposalForm key={JSON.stringify([me.id,props.orderId,props.bookingId,props.cardId])} {...props}/>;
+ const token=getToken();
+ const scope=useRef({token,revision:0});
+ if(scope.current.token!==token)scope.current={token,revision:scope.current.revision+1};
+ if(!me||!token)return null;
+ return <PartProposalForm key={JSON.stringify([me.id,scope.current.revision,props.orderId,props.bookingId,props.cardId])} {...props}/>;
 }
 function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
  const source=bookingId?'/api/bookings/'+encodeURIComponent(bookingId):orderId?'/api/orders/'+encodeURIComponent(orderId):null;
@@ -22,12 +25,12 @@ function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
  const generation=useRef(0),submitLock=useRef(false);
  const [lookupPending,setLookupPending]=useState(false),[lookupError,setLookupError]=useState(false);
  const token=getToken();
- useEffect(()=>()=>{generation.current++;},[token]);
+ useLayoutEffect(()=>()=>{generation.current++;},[token]);
  const change=(fn:()=>void)=>{if(submitLock.current)return;generation.current++;fn();setMatch(null);setProduct('');setLookupError(false);setLookupPending(false);setConfirmed(false);};
  const materialChange=(fn:()=>void)=>{if(submitLock.current)return;fn();setConfirmed(false);};
  async function lookup(){
-  if(submitLock.current)return;
-  const id=++generation.current,session=getToken();
+  if(submitLock.current||getToken()!==token)return;
+  const id=++generation.current,session=token;
   setMatch(null);setProduct('');setConfirmed(false);setLookupError(false);setLookupPending(true);
   const current=()=>generation.current===id&&getToken()===session;
   try{
@@ -49,7 +52,7 @@ function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
  return <section className="card flat stack" aria-label="Подбор запчасти">
   <b>Артикул и подбор запчасти</b>
   {cardId&&!refs.data&&<span className="note">{refs.error?'Не удалось получить подтверждённые артикулы':'Загрузка артикулов'}</span>}
-  {refs.data?.refs.map(r=><div key={r.brand+r.article} className="stack"><button className="btn ghost small" type="button" onClick={()=>change(()=>{setBrand(r.brand);setArticle(r.article);setName(r.name);})}>{r.brand} {r.article} — {r.name}</button><a href={r.source} target="_blank" rel="noopener noreferrer">Источник артикула · стр. {r.sourcePage}</a></div>)}
+  {refs.data?.refs.map(r=><div key={r.brand+r.article} className="stack"><button className="btn ghost small" type="button" disabled={busy} onClick={()=>change(()=>{setBrand(r.brand);setArticle(r.article);setName(r.name);})}>{r.brand} {r.article} — {r.name}</button><a href={r.source} target="_blank" rel="noopener noreferrer">Источник артикула · стр. {r.sourcePage}</a></div>)}
   {cardId&&refs.data?.refs.length===0&&<span className="note">Артикул в этой карточке ещё не подтверждён. Укажите номер с маркировки установленной детали.</span>}
   <label>Производитель<input className="field" value={brand} maxLength={80} disabled={busy} readOnly={refOnly} onChange={e=>change(()=>setBrand(e.target.value))}/></label>
   <label>Артикул<input className="field" value={article} maxLength={100} disabled={busy} readOnly={refOnly} onChange={e=>change(()=>setArticle(e.target.value))}/></label>
