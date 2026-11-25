@@ -217,7 +217,7 @@ try {
       const menu=page.locator('.guest-mobile-catalog');
       await menu.locator('summary').click();
       const links=menu.getByRole('navigation',{name:'Возможности TrakSOS'});
-      for(const key of ['van','tow','sto','ecu','consult','parts','insurance'])
+      for(const key of ['van','tow','sto','ecu','consult','parts','insurance','tech','inspection'])
         check(await links.locator('a[href="'+target(key)+'"]').count()===1,
           'Mobile catalogue missing '+key);
       check(await links.locator('a[href="#/company"]').count()===1,
@@ -226,6 +226,18 @@ try {
         'Mobile partner registration missing');
       check(await links.locator('a[href="#/login"]').count()===1,
         'Mobile support must lead to login');
+      // The secondary menu must open the same contextual sign-in as its tiles.
+      for(const key of ['tech','inspection']){
+        const catalogue=page.locator('.guest-mobile-catalog');
+        if(!await catalogue.evaluate(el=>el.open)) await catalogue.locator('summary').click();
+        await catalogue.locator('a[href="'+target(key)+'"]').click();
+        await page.waitForURL('**/'+target(key));
+        const auth=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+        await auth.getByText('Вы выбрали:',{exact:false}).waitFor({state:'visible'});
+        await page.goto(BASE+'/#/');
+        await page.locator(landing).waitFor({state:'visible'});
+      }
+      await page.locator('.guest-mobile-catalog > summary').click();
       await links.locator('a[href="#/join"]').click();
     }
 
