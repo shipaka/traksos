@@ -176,7 +176,7 @@ export function Shop() {
   const [offlineNote, setOfflineNote] = useState('');
   const [offline,setOffline]=useState(()=>!navigator.onLine);
   useEffect(()=>{
-    const update=()=>setOffline(!navigator.onLine);
+    const update=()=>{setOffline(!navigator.onLine);if(navigator.onLine)c.reload();};
     window.addEventListener('online',update);window.addEventListener('offline',update);
     return ()=>{window.removeEventListener('online',update);window.removeEventListener('offline',update);};
   },[]);
@@ -199,7 +199,7 @@ export function Shop() {
       : Promise.resolve({ enabled: false, items: [], total: 0 }),
     [c.data?.enabled, debouncedTerm, cat]);
   const d = c.data;
-  if (!d && offline && getToken()) return <main className="track-shop-home">
+  if (offline && d?.enabled!==false && getToken()) return <main className="track-shop-home">
     <h1>Сохранённый справочник запчастей</h1>
     <p className="note" role="status">Нет подключения. Доступны только сохранённые названия и артикулы. Цена, наличие и возможность заказа не подтверждены.</p>
     <input className="field" type="search" aria-label="Поиск запчастей по названию или артикулу" value={term} onChange={e=>setTerm(e.target.value)} placeholder="Название, артикул или производитель"/>
@@ -507,10 +507,11 @@ export function ShopCart() {
   const vehicles = useShopPrivateLoad<any[]>(() => c.data?.enabled && selectedIds
     ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, selectedIds]);
   const [vehicleId, setVehicleId] = useState('');
+  const [vehicleOverride,setVehicleOverride]=useState(false);
   useEffect(() => {
-    if (selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
+    if (!vehicleOverride&&selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
       setVehicleId(selectedVehicleFromLink);
-  }, [selectedVehicleFromLink, vehicles.data]);
+  }, [selectedVehicleFromLink, vehicles.data,vehicleOverride]);
   const { busy, run } = useAction();
   const [delivery, setDelivery] = useState<'pickup' | 'delivery' | 'master' | ''>('');
   const [address, setAddress] = useState('');
@@ -524,7 +525,7 @@ export function ShopCart() {
   useEffect(()=>{
     // Form selections and free-text belong to one account and may not
     // leak into the next fleet owner's checkout in the same SPA session.
-    setVehicleId('');setOrderId('');setDelivery('');
+    setVehicleId('');setVehicleOverride(false);setOrderId('');setDelivery('');
     setAddress('');setComment('');setPayment('on_receipt');
     setOutcomeUnknown(false);
   },[me?.id]);
@@ -562,8 +563,9 @@ export function ShopCart() {
   };
   const orderValid=delivery==='master'?!!live.data&&open.some((o:any)=>o.id===orderId):
     delivery==='pickup'?!!dl.pickup:delivery==='delivery'?!!dl.delivery&&!!address.trim():false;
-  const selectedVehicleValid=!vehicleId||
-    (!!vehicles.data&&vehicles.data.some((v:any)=>v.id===vehicleId));
+  const linkedVehicleUnresolved=!!selectedVehicleFromLink&&!vehicleOverride&&vehicleId!==selectedVehicleFromLink;
+  const selectedVehicleValid=!linkedVehicleUnresolved&&(!vehicleId||
+    (!!vehicles.data&&vehicles.data.some((v:any)=>v.id===vehicleId)));
   const maySubmit=fullyVerified&&orderValid&&selectedVehicleValid&&
     !busy&&!submitLock.current&&!outcomeUnknown;
   async function submit(){
@@ -644,12 +646,13 @@ export function ShopCart() {
         </div>
         <div className="card">
           <Field label="Для какой машины / прицепа (необязательно)">
-            <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+            <select className="field" value={vehicleId} disabled={busy||!!vehicles.error||!vehicles.data} onChange={(e) => {setVehicleOverride(true);setVehicleId(e.target.value);}}>
               <option value="">Без привязки к машине</option>
               {((vehicles.data ?? []) as any[]).map((v: any) =>
                 <option key={v.id} value={v.id}>{[v.brand, v.model, v.plate || v.trailer_plate].filter(Boolean).join(' ')}</option>)}
             </select>
           </Field>
+          {linkedVehicleUnresolved&&<div role="alert" className="note">Не подтверждена машина из предыдущей покупки или ссылки. Выберите доступную технику либо явно снимите привязку. <button type="button" className="btn ghost small" disabled={busy} onClick={()=>{setVehicleOverride(true);setVehicleId('');}}>Продолжить без привязки</button></div>}
           <span className="note">Покупка появится в истории выбранной техники. Для проверки совместимости могут потребоваться VIN и данные агрегата.</span>
         </div>
         <div className="card">
