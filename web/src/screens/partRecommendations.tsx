@@ -13,6 +13,7 @@ function useProposalDraft(){
  const [fields,setFields]=useState<DraftFields>(emptyDraft);
  const [pending,setPending]=useState(false),[uncertain,setUncertain]=useState(false);
  const lock=useRef(false),epoch=useRef(0);
+ useLayoutEffect(()=>()=>{epoch.current++;},[]);
  const clear=()=>{epoch.current++;setFields(emptyDraft());setUncertain(false);};
  return {fields,setFields,pending,setPending,uncertain,setUncertain,lock,epoch,clear};
 }
@@ -24,7 +25,7 @@ export function PartProposal(props:ProposalProps){
  const scope=useRef({token,revision:0});
  if(scope.current.token!==token)scope.current={token,revision:scope.current.revision+1};
  if(!me||!token)return null;
- return <PartProposalForm key={JSON.stringify([me.id,scope.current.revision,props.orderId,props.bookingId,props.cardId])} {...props}/>;
+ return <PartProposalForm key={JSON.stringify([me.id,me.owner_id,me.roles,scope.current.revision,props.orderId,props.bookingId,props.cardId])} {...props}/>;
 }
 function PartProposalForm({orderId,bookingId,cardId,onSent,draft:sharedDraft}:ProposalProps){
  const source=bookingId?'/api/bookings/'+encodeURIComponent(bookingId):orderId?'/api/orders/'+encodeURIComponent(orderId):null;
@@ -167,7 +168,7 @@ function useInlineProposal(list:{data:{canSuggest:boolean}|null;error:string|nul
  return {draft,open,setOpen};
 }
 function OrderPartList({order:o}:{order:any}){
- const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]} >(()=>readProposalSource('/api/orders/'+o.id+'/part-recommendations'),o.id,e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
+ const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>readProposalSource('/api/orders/'+o.id+'/part-recommendations'),o.id,e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
  const {draft,open,setOpen}=useInlineProposal(list);
  if(o.you!=='client'&&o.you!=='performer')return null;
  return <section className="card stack"><b>Рекомендации по запчастям</b>
