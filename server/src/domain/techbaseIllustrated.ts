@@ -861,9 +861,129 @@ export const TECHBASE_ILLUSTRATED = [
       "iso-7638-1",
       "ebs-functional"
     ]
+  },
+  {
+    "id": "man-tipmatic",
+    "title": "MAN TGX/TGS: управление TipMatic",
+    "category": "КПП и ретардер",
+    "system": "Коробка передач",
+    "kind": "Функциональная иллюстрация",
+    "make": "MAN",
+    "models": [
+      "TGX",
+      "TGS"
+    ],
+    "scope": "Справочная иллюстрация, не точная схема монтажа и не подтверждение применимости по VIN. Сверять модификацию и документацию.",
+    "body": "В зависимости от программы TipMatic координирует переключения и работу сцепления; MAN также описывает использование моторного тормоза. Не переносить на более ранние поколения или механическую КПП.",
+    "source": "MAN, TipMatic",
+    "url": "https://www.man.eu/mea/en/about-us/innovations/assistance-systems/automated-gearbox-functions/tipmatic.html",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "amt-control",
+      "ebs-functional"
+    ]
+  },
+  {
+    "id": "daf-mx-brake",
+    "title": "DAF XF/XG/XG+: MX Engine Brake",
+    "category": "КПП и ретардер",
+    "system": "Вспомогательное торможение",
+    "kind": "Функциональная иллюстрация",
+    "make": "DAF",
+    "models": [
+      "XF",
+      "XG",
+      "XG+"
+    ],
+    "scope": "Справочная иллюстрация, не точная схема монтажа и не подтверждение применимости по VIN. Сверять модификацию и документацию.",
+    "body": "В новом поколении DAF производитель описывает сочетание MX Engine Brake и прогнозного контроля скорости на спуске. Конкретный набор оборудования определяется комплектацией, схема проводов не показана.",
+    "source": "DAF, The power of efficiency",
+    "url": "https://startthefuture.daf.com/en-gb/efficiency",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "amt-control",
+      "ebs-functional"
+    ]
+  },
+  {
+    "id": "renault-de13r",
+    "title": "Renault T/C/K: DE13 R и Optibrake+",
+    "category": "Двигатель",
+    "system": "Вспомогательное торможение",
+    "kind": "Функциональная иллюстрация",
+    "make": "Renault",
+    "models": [
+      "T",
+      "C",
+      "K"
+    ],
+    "scope": "Справочная иллюстрация, не точная схема монтажа и не подтверждение применимости по VIN. Сверять модификацию и документацию.",
+    "body": "Для нового силового агрегата DE13 R производитель указывает Optibrake+ и новое поколение Optidriver. Это материал про описанное исполнение 2026 года, не про Renault Premium.",
+    "source": "Renault Trucks, New powertrain",
+    "url": "https://www.renault-trucks.com/en/newsroom/press-releases/new-powertrain",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "amt-control",
+      "ebs-functional"
+    ]
+  },
+  {
+    "id": "axle-functional",
+    "title": "Ведущий мост: передача крутящего момента",
+    "category": "Ходовая и механика",
+    "system": "Мосты и оси",
+    "kind": "Функциональная иллюстрация",
+    "make": null,
+    "models": [],
+    "scope": "Справочная иллюстрация, не точная схема монтажа и не подтверждение применимости по VIN. Сверять модификацию и документацию.",
+    "body": "Общий принцип обычного ведущего моста. Конструкция дифференциала, передаточное число, регулировка и моменты затяжки зависят от исполнения.",
+    "source": "ZF, Chassis",
+    "url": "https://www.zf.com/products/en/cv/productfinder/chassis.html",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "wheel-speed",
+      "tpms-functional"
+    ]
+  },
+  {
+    "id": "steering-functional",
+    "title": "Рулевое управление: передача усилия",
+    "category": "Ходовая и механика",
+    "system": "Рулевое управление",
+    "kind": "Функциональная иллюстрация",
+    "make": null,
+    "models": [],
+    "scope": "Справочная иллюстрация, не точная схема монтажа и не подтверждение применимости по VIN. Сверять модификацию и документацию.",
+    "body": "Функциональная карта обычного рулевого управления; конкретный усилитель, рулевые тяги и кинематика отличаются. Не описывает регулировку или демонтаж.",
+    "source": "ZF, Chassis",
+    "url": "https://www.zf.com/products/en/cv/productfinder/chassis.html",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "axle-functional"
+    ]
   }
 ] as const;
 export async function readTechBaseIllustrations(){
  const cards=await Promise.all(TECHBASE_ILLUSTRATED.map(async card=>({...card,image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')})));
- return {version:'2026-11-25-b',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
+ return {version:'2026-11-25-b2',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
 }
