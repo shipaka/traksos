@@ -130,8 +130,12 @@ try{
       if(path.startsWith('/api/shop/history?')){
         return {items:[{id:'B-order',number:'B',status:'new',statusName:'Новый',
           total:12000,delivery:'pickup',createdAt:'2026-11-24',
+          vehicleId:'ci-vehicle-B',items:[{productId:idB,name:'Деталь Б',qty:1}]},
+          {id:'B-order-second',number:'B2',status:'done',statusName:'Завершён',
+          total:12000,delivery:'pickup',createdAt:'2026-11-23',vehicleId:'ci-vehicle-other',
           items:[{productId:idB,name:'Деталь Б',qty:1}]}],hasMore:false};
       }
+      if(path.endsWith('/analogs'))return {enabled:true,items:[{id:'ci-analog',name:'Проверенный аналог CI',price:15000,inStock:true,leadDays:0}]};
       throw Error('Unexpected GET '+path);
     };
     window.__ciPost=async(path,payload)=>{
@@ -202,7 +206,14 @@ try{
     window.dispatchEvent(new Event('ci-screen-change'));
   });
   await page.getByRole('heading',{name:'История покупок'}).waitFor();
-  await page.getByText(/Заказ №B/).waitFor();
+  await page.getByText(/Заказ №B ·/).waitFor();
+  const analogButtons=page.getByRole('button',{name:'Найти аналоги'});
+  await analogButtons.first().click();
+  await page.getByText('Проверенный аналог CI').waitFor();
+  assert.equal(await page.getByText('Проверенный аналог CI').count(),1,'Analog duplicated across purchase lines');
+  assert.equal(await analogButtons.nth(1).getAttribute('aria-expanded'),'false');
+  await page.getByRole('button',{name:'Повторить',exact:true}).first().click();
+  await page.waitForFunction(()=>location.hash==='#/shop/cart?vehicleId=ci-vehicle-B');
   assert.deepEqual(pageErrors,[],'Unhandled React errors in cart/history');
   console.log('PASS: real ShopCart/ShopHistory React, account A→B, stale selection, failed POST no auto-repeat');
 }catch(error){
