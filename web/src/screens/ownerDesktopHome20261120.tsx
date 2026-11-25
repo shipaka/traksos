@@ -124,7 +124,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
         <h1 id="owner20-heading">Помощь в дороге.<br/>Сервис и поддержка<br/><em>для грузового транспорта</em></h1>
         <p>Единая платформа для водителей, владельцев<br/>и автопарков по всей России</p>
         <div className="owner20-hero-links">
-          <a href="#/explore/van" onClick={() => rememberGuestService('van')} className="owner20-alert"><span aria-hidden="true"><OwnerIcon kind="warning"/></span><span><strong>SOS</strong><small>Экстренная помощь</small></span></a>
+          <a href="#/explore/sos" onClick={() => rememberGuestAction('sos')} className="owner20-alert"><span aria-hidden="true"><OwnerIcon kind="warning"/></span><span><strong>SOS</strong><small>Экстренная помощь</small></span></a>
           <a href="#/explore/air" className="owner20-broadcast"><span aria-hidden="true"><OwnerIcon kind="air"/></span><span><strong>Эфир</strong><small>Связь, опыт, помощь коллег</small></span></a>
         </div>
       </div>
