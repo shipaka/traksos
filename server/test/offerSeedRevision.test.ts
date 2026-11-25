@@ -99,3 +99,31 @@ test('seed never replaces a separate operator-published privacy document', async
     await t.close();
   }
 });
+
+test('commercial seed never supersedes an operator revision or fills a future-only audience', async () => {
+  const t = await setup();
+  try {
+    assert.equal(t.db.driver,'pg');
+    const at = new Date(Math.max(Date.now(),t.clock.now().getTime())+600_000);
+    t.clock.set(at.toISOString());
+    const client = await t.db.one<{id:string}>(
+      "insert into offers(audience,version,body,summary,effective_at) values ('client','operator-client-v1',$1,$2,$3) returning id",
+      ['# Local operator commercial fixture','Local current fixture',new Date(at.getTime()-86_400_000)]);
+    const performer = await t.db.one<{id:string}>(
+      "insert into offers(audience,version,body,summary,effective_at) values ('performer','operator-performer-v1',$1,$2,$3) returning id",
+      ['# Local future operator fixture','Local future fixture',new Date(at.getTime()+86_400_000)]);
+    assert.ok(client && performer);
+    const before = await t.db.query("select * from offers where audience in ('client','performer') order by audience,version");
+    await seed(t.db);
+    await seed(t.db);
+    assert.deepEqual(await t.db.query("select * from offers where audience in ('client','performer') order by audience,version"),before);
+    assert.equal(ok(await t.api('GET','/api/offers/current/client')).id,client.id);
+    assert.equal(ok(await t.api('GET','/api/offers/current/performer')),null);
+    assert.equal(ok(await t.api('GET','/api/offers/'+performer.id)).version,'operator-performer-v1');
+    assert.equal(ok(await t.api('GET','/api/offers/current/privacy')).version,'0.3-черновик');
+    t.clock.advance(86_401);
+    assert.equal(ok(await t.api('GET','/api/offers/current/performer')).id,performer.id);
+  } finally {
+    await t.close();
+  }
+});

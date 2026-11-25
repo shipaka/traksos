@@ -109,29 +109,42 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
                     where not exists (select 1 from shop_products where name=$2)`, [cat, name, spec, price, stock, kit]);
   }
 
-  for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей и рембаз']]) {
-    // Новая редакция черновика — новой версией: на стенде её надо принять заново
-    await db.query(`insert into offers(audience, version, body, summary, effective_at) select $1, '0.2-черновик', $2, 'Время работы — по таймеру с «на месте», сверху только расходники', now()
-                    where not exists (select 1 from offers where audience=$1 and version='0.2-черновик')`, [audience, DRAFT(title)]);
-  }
-  // Insert a separate test revision. Existing acceptances refer to the old ID.
-  // A document published by an operator takes precedence over test fixtures.
-  const privacyDraft = `# Согласие на обработку персональных данных
+  // Never supersede an existing commercial document with a demo fixture,
+  // including a future-dated edition. Share the publication service's
+  // audience lock so seeding and publication cannot race on PostgreSQL.
+  await db.tx(async q => {
+    const lock = async (audience: string) => {
+      if (db.driver === 'pg')
+        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['traksos-offers:'+audience]);
+    };
+    for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей и рембаз']]) {
+      await lock(audience);
+      await q.query(
+        `insert into offers(audience, version, body, summary, effective_at)
+         select $1, '0.2-черновик', $2, 'Время работы — по таймеру с «на месте», сверху только расходники', now()
+         where not exists (select 1 from offers where audience=$1)
+         on conflict (audience, version) do nothing`, [audience, DRAFT(title)]);
+    }
+    await lock('privacy');
+    // Insert a separate test revision. Existing acceptances refer to the old ID.
+    // A document published by an operator takes precedence over test fixtures.
+    const privacyDraft = `# Согласие на обработку персональных данных
 
 Тестовый образец для проверки интерфейса. Здесь используются вымышленные данные учётной записи и заявки. В тестовом кабинете можно отдельно открыть эту редакцию и проверить отметку о её принятии.
 
 Для публикации на действующем сервисе требуется отдельный текст, согласованный юристом.`;
-  await db.query(
-    `insert into offers(audience, version, body, summary, effective_at)
-     select 'privacy', '0.3-черновик', $1, $2, now()
-     where not exists (
-       select 1 from offers where audience='privacy'
-       and (version <> '0.2-черновик' or body is distinct from $3)
-     )
-     on conflict (audience, version) do nothing`,
-    [privacyDraft, 'Отдельный тестовый образец для проверки согласия на обработку данных.',
-      DRAFT('Согласие на обработку персональных данных')]
-  );
+    await q.query(
+      `insert into offers(audience, version, body, summary, effective_at)
+       select 'privacy', '0.3-черновик', $1, $2, now()
+       where not exists (
+         select 1 from offers where audience='privacy'
+         and (version <> '0.2-черновик' or body is distinct from $3)
+       )
+       on conflict (audience, version) do nothing`,
+      [privacyDraft, 'Отдельный тестовый образец для проверки согласия на обработку данных.',
+        DRAFT('Согласие на обработку персональных данных')]
+    );
+  });
 
 }
 
