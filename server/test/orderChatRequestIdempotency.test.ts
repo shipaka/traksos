@@ -29,12 +29,12 @@ test('chat request keys replay committed messages without repeated durable write
   // A failure in durable fan-out must roll back the message and its key.
   // This trigger is confined to the disposable PostgreSQL test schema.
   await t.db.exec(`
-    create function fail_chat_inbox_for_test() returns trigger language plpgsql as $
+    create function fail_chat_inbox_for_test() returns trigger language plpgsql as $chat_inbox$
     begin
       if NEW.kind='chat_push' then raise exception 'injected chat inbox failure'; end if;
       return NEW;
     end;
-    $;
+    $chat_inbox$;
     create trigger fail_chat_inbox_for_test before insert on notifications
       for each row execute function fail_chat_inbox_for_test();
   `);
