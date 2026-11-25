@@ -626,9 +626,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/support','?','Поддержка'], ['/menu','menu','Меню']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/courier/chat','chat','Связь'], ['/menu','menu','Меню']]
     : mode === 'client'
-    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
+    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'service'
@@ -657,7 +657,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
-    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/courier/chat','Связь по доставкам'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
     : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
