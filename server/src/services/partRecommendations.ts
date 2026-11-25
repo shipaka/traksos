@@ -104,7 +104,7 @@ export class PartRecommendations {
    await this.recordEvent(q,origin,id,user.id,'part_recommended',{recommendationId:inserted[0].id});
    return {row:inserted[0],created:true,o};
   });
-  if(result.created){const context=origin==='booking'?{bookingId:id}:{orderId:id};
+  if(result.created){const context:Record<string,string>=origin==='booking'?{bookingId:id}:{orderId:id};
    await this.notifier.notify([result.o.client_id],{type:origin,...context,status:result.o.status},
    {kind:'normal',title:origin==='booking'?'СТО предложило замену детали':'Мастер предложил замену детали',body:'Рекомендация в заявке. Заказ и оплата не оформлены.',data:context}).catch(()=>{});}
   return {created:result.created,item:safeRow(result.row)};

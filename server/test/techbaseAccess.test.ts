@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Queryable } from '../src/db/index.ts';
 import type { AuthUser } from '../src/http/router.ts';
-import { professionalTechAccess,effectiveTechRoles,verifiedRepairPerformer,requireProfessionalTechAccess } from '../src/domain/techbaseAccess.ts';
+import { professionalTechAccess,effectiveTechRoles,verifiedRepairPerformer,verifiedWorkshop,requireProfessionalTechAccess } from '../src/domain/techbaseAccess.ts';
 import {bindingsForCard,discoverCard,bindingEvidenceComplete,type TechBinding} from '../src/domain/techbaseApplicability.ts';
 const actor=(roles:string[],status='active'):AuthUser=>({id:'x',phone:'',name:null,roles,status,owner_id:null});
 function db(verification:string){return {one:async()=>({verification}),query:async()=>[]} as unknown as Queryable}
@@ -37,4 +37,14 @@ test('one canonical image is discoverable through multiple independently evidenc
  assert.equal(discoverCard(c,[],{make:'Fixture C'},true),true);
  assert.equal(discoverCard(c,[],{make:'Fixture C'},false),false);
  assert.equal(bindingEvidenceComplete({...a,revision:undefined}),false);
+});
+
+test('verified workshop can read without a mobile performer profile, but a pending or blocked center cannot',async()=>{
+ const fixture=(status:string)=>({one:async(sql:string)=>sql.includes('service_centers')?{verification:status}:null}) as unknown as Queryable;
+ assert.equal(await verifiedRepairPerformer(fixture('approved'),actor(['service'])),false);
+ assert.equal(await verifiedWorkshop(fixture('approved'),actor(['service'])),true);
+ assert.equal(await professionalTechAccess(fixture('approved'),actor(['service'])),true);
+ assert.equal(await professionalTechAccess(fixture('pending'),actor(['service'])),false);
+ assert.equal(await professionalTechAccess(fixture('approved'),actor(['service'],'blocked')),false);
+ assert.equal(await professionalTechAccess(fixture('approved'),actor(['client'])),false);
 });
