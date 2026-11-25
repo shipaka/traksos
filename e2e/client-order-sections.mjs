@@ -208,6 +208,80 @@ try{
       await calendar.getByRole('button',{name:'Неделя',exact:true}).click();
       await page.waitForURL('**/#/orders/calendar/2026-12-10');
 
+      // A continuation/referral may not silently substitute the first truck.
+      // All booking mutations in this scenario are intercepted.
+      const centerId='fixture-sto',sourceId='fixture-source';
+      const garage=[{id:'fixture-first',brand:'DAF',model:'XF',plate:'А111АА78'},
+        {id:'fixture-second',brand:'Scania',model:'R450',plate:'А222АА78'}];
+      const sourceData={id:sourceId,number:723,service:'electric',status:'completed',
+        brand:'Scania',model:'R450',vehicleId:garage[1].id,recommendedCenter:{id:centerId}};
+      let sourceMode='delayed',releaseSource,sourceRequests=0;
+      let posted=[];
+      const sourceGate=new Promise(resolve=>{releaseSource=resolve;});
+      await page.route('**/api/vehicles',route=>route.fulfill({json:garage}));
+      await page.route('**/api/services/'+centerId,route=>route.fulfill({json:{
+        id:centerId,name:'Учебная СТО',address:'Учебный адрес',staff:{electric:'own'},closedToday:false
+      }}));
+      await page.route('**/api/orders/'+sourceId,async route=>{
+        sourceRequests++;
+        if(sourceMode==='delayed'){await sourceGate;return route.fulfill({status:403,json:{message:'Учебный отказ'}});}
+        return route.fulfill({json:sourceMode==='snapshot'?{...sourceData,vehicleId:null}:sourceData});
+      });
+      await page.route('**/api/services/'+centerId+'/book',async route=>{
+        assert.equal(route.request().method(),'POST');
+        posted.push(route.request().postDataJSON());
+        return route.fulfill({json:{id:'fixture-booked'}});
+      });
+      await page.route('**/api/bookings/fixture-booked',route=>route.fulfill({status:404,json:{message:'Учебная запись'}}));
+      const bookUrl=BASE+'/#/services/'+centerId+'/book';
+      const submit=page.getByRole('button',{name:'Отправить запрос',exact:true});
+      const fixed=page.locator('[aria-label="Машина исходной заявки"]');
+      await page.goto(bookUrl+'?case='+sourceId+'&need=electric');
+      await page.getByText('Загружаем исходную заявку…').waitFor();
+      assert.equal(await submit.isDisabled(),true);
+      assert.equal(await page.getByRole('button',{name:/DAF XF|Scania R450/}).count(),0);
+      releaseSource();
+      await page.getByText('Не удалось подтвердить исходную заявку',{exact:true}).waitFor();
+      assert.equal(await submit.isDisabled(),true);
+      assert.equal(posted.length,0);
+      sourceMode='ok';
+      await page.getByRole('button',{name:'Повторить загрузку заявки'}).click();
+      await fixed.getByText('Scania R450',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:/DAF XF|Scania R450/}).count(),0);
+      await submit.click();
+      await page.waitForURL('**/#/booking/fixture-booked');
+      assert.equal(posted[0].vehicleId,garage[1].id);
+      assert.equal(posted[0].caseOrderId,sourceId);
+      assert.equal(posted[0].fromOrderId,null);
+
+      await page.goto(bookUrl+'?from='+sourceId+'&need=electric');
+      await fixed.getByText('Scania R450',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:/DAF XF|Scania R450/}).count(),0);
+      await submit.click();
+      await page.waitForURL('**/#/booking/fixture-booked');
+      assert.equal(posted[1].vehicleId,garage[1].id);
+      assert.equal(posted[1].fromOrderId,sourceId);
+
+      sourceMode='snapshot';
+      await page.goto(bookUrl+'?case='+sourceId+'&need=electric');
+      await fixed.getByText('Scania R450',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:/DAF XF|Scania R450/}).count(),0);
+      await submit.click();
+      await page.waitForURL('**/#/booking/fixture-booked');
+      assert.equal(posted[2].vehicleId,null,'No garage ID must not substitute another vehicle');
+
+      await page.goto(bookUrl+'?need=electric');
+      const firstTruck=page.getByRole('button',{name:/DAF XF/});
+      const secondTruck=page.getByRole('button',{name:/Scania R450/});
+      await firstTruck.waitFor();
+      await secondTruck.click();
+      assert.equal(await secondTruck.getAttribute('aria-pressed'),'true');
+      await submit.click();
+      await page.waitForURL('**/#/booking/fixture-booked');
+      assert.equal(posted[3].vehicleId,garage[1].id);
+      assert.equal(posted[3].caseOrderId,null);
+      assert.equal(posted[3].fromOrderId,null);
+      assert.ok(sourceRequests>=4);
     }finally{await ctx.close()}
 
     // Independent real worker session. Mock calendar content only to exercise
