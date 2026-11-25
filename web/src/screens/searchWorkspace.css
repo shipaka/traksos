@@ -47,3 +47,6 @@
 }
 html.traksos-reduced-motion .search-workspace .radar *,
 html.traksos-reduced-motion .search-workspace .offer.fresh { animation:none!important; }
+
+.search-workspace-desk-link {display:none;}
+@media(min-width:900px){html.traksos-browser .search-workspace-desk-link{display:inline-block;color:#e8ad51;margin:8px 0;}}
