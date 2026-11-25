@@ -41,6 +41,25 @@ test('isolated agency services enforce live ACL, preserve document bytes and rej
     assert.equal(rows.matched,0);
     assert.equal(rows.unmatched,1);
     await assert.rejects(bank.statementRows(client,imported.id),/администратор/);
+    assert.equal(rows.unclassified,1);
+    assert.equal(rows.rows[0].activity,'unmatched');
+    const rowId=rows.rows[0].id;
+    const first={activity:'ip_primary' as const,note:'Основная деятельность, тестовое основание',requestKey:'activity-test-01'};
+    await assert.rejects(bank.classify(client,rowId,first),/администратор/);
+    const classification=await bank.classify(admin,rowId,first);
+    assert.equal(classification.revision,1);
+    assert.equal((await bank.classify(admin,rowId,first)).duplicate,true);
+    await assert.rejects(bank.classify(admin,rowId,{...first,activity:'traksos_shop'}),/другим данным/);
+    assert.equal((await bank.statementRows(admin,imported.id)).unclassified,0);
+    const next=await bank.classify(admin,rowId,{activity:'traksos_shop',note:'Уточнение по первичному документу',requestKey:'activity-test-02'});
+    assert.equal(next.revision,2);
+    assert.equal((await bank.statementRows(admin,imported.id)).unmatched,1);
+    const history=await bank.classificationHistory(admin,rowId);
+    assert.deepEqual(history.revisions.map(x=>x.activity),['ip_primary','traksos_shop']);
+    await assert.rejects(t.db.query('update shop_agency_bank_classifications set activity=$1 where id=$2',['other',classification.id]),/immutable/);
+    const unclassified=await bank.classify(admin,rowId,{activity:'unmatched',note:'Документы ещё не подтверждены',requestKey:'activity-test-03'});
+    assert.equal(unclassified.revision,3);
+    assert.equal((await bank.statementRows(admin,imported.id)).unclassified,1);
     // On the disposable fixture only: revoke the live role without changing the
     // actor object. A stale administrator claim must not expose original bytes.
     await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);

@@ -13,6 +13,8 @@ export { parseNormalizedBankCsv } from '../domain/shopAgencyBankCsv.ts';
 export type { BankRow } from '../domain/shopAgencyBankCsv.ts';
 
 type BankDirection = 'in' | 'out';
+export const BANK_ACTIVITIES=['unmatched','traksos_service','traksos_shop','ip_primary','other'] as const;
+export type BankActivity=typeof BANK_ACTIVITIES[number];
 type ImportInput = {bankName:string;accountRef:string;filename:string;base64:string};
 const directions:Record<string,BankDirection> = {
   customer_receipt:'in', supplier_refund:'in', supplier_payment_reversal:'in',
@@ -107,15 +109,53 @@ export class ShopAgencyBankReconciliation {
     if(!parent)throw notFound('Импорт банковских операций не найден');
     const rows=await this.db.query<any>(
       'select r.id,r.line_no,r.transaction_ref,r.occurred_at,r.direction,'+
-      'r.amount,r.note,m.id as match_id,m.event_id,m.case_id '+
-      'from shop_agency_bank_rows r left join shop_agency_bank_matches m '+
+      'r.amount,r.note,coalesce(c.activity,\'unmatched\') as activity,c.id as classification_id,m.id as match_id,m.event_id,m.case_id '+
+      'from shop_agency_bank_rows r left join lateral (select id,activity from shop_agency_bank_classifications where row_id=r.id order by revision desc limit 1) c on true '+
+      'left join shop_agency_bank_matches m '+
       'on m.row_id=r.id and not exists ('+
       'select 1 from shop_agency_bank_match_retractions t where t.match_id=m.id) '+
       'where r.statement_id=$1 order by r.line_no',[id]);
     await this.audit(actor,'shop.agency.bank_statement_read',id,{rows:rows.length});
     return {statement:parent,rows,matched:rows.filter(x=>x.match_id).length,
       unmatched:rows.filter(x=>!x.match_id).length,
+      unclassified:rows.filter(x=>x.activity==='unmatched').length,
       disclaimer:'Ручной CSV не является независимым банковским подтверждением; сверка не создаёт и не проводит платежи.'};
+  }
+  /** Explicit, append-only classification. Never infer an activity from the
+   * amount or a free-text description. Classification is not bank verification. */
+  async classify(actor:AuthUser,rowId:string,b:{activity:BankActivity;note:string;requestKey:string}){
+    await requireAgencyAdmin(this.db,actor);
+    const explanation=validateNote(b.note);
+    const key=b.requestKey?.trim();
+    if(!BANK_ACTIVITIES.includes(b.activity)||!key||key.length<8||key.length>120)
+      throw bad('bank_activity_invalid','Укажите вид деятельности и уникальный ключ изменения');
+    return this.db.tx(async q=>{
+      await requireAgencyAdmin(q,actor,true);
+      const row=await q.one<{id:string}>('select id from shop_agency_bank_rows where id=$1 for update',[rowId]);
+      if(!row)throw notFound('Банковская строка не найдена');
+      const saved=await q.one<any>('select id,activity,note,revision from shop_agency_bank_classifications where row_id=$1 and request_key=$2',[rowId,key]);
+      if(saved){
+        if(saved.activity!==b.activity||saved.note!==explanation)
+          throw conflict('bank_classification_key_conflict','Ключ изменения уже относится к другим данным');
+        return {id:saved.id,activity:saved.activity,revision:Number(saved.revision),duplicate:true};
+      }
+      const active=await q.one('select m.id from shop_agency_bank_matches m where m.row_id=$1 and not exists (select 1 from shop_agency_bank_match_retractions t where t.match_id=m.id)',[rowId]);
+      if(active)throw conflict('bank_classification_matched','Сначала отмените действующую сверку с указанием причины');
+      const previous=await q.one<any>('select activity,revision from shop_agency_bank_classifications where row_id=$1 order by revision desc limit 1',[rowId]);
+      const [created]=await q.query<any>(
+        'insert into shop_agency_bank_classifications(row_id,activity,note,request_key,revision,created_by) values($1,$2,$3,$4,$5,$6) returning id,activity,revision',
+        [rowId,b.activity,explanation,key,Number(previous?.revision??0)+1,actor.id]);
+      await this.audit(actor,'shop.agency.bank_classify',created.id,{rowId,from:previous?.activity??'unmatched',to:b.activity,revision:created.revision},q);
+      return {id:created.id,activity:created.activity,revision:Number(created.revision),duplicate:false};
+    });
+  }
+  async classificationHistory(actor:AuthUser,rowId:string){
+    await requireAgencyAdmin(this.db,actor);
+    const row=await this.db.one('select id from shop_agency_bank_rows where id=$1',[rowId]);
+    if(!row)throw notFound('Банковская строка не найдена');
+    const revisions=await this.db.query<any>('select id,activity,note,revision,created_by,created_at from shop_agency_bank_classifications where row_id=$1 order by revision',[rowId]);
+    await this.audit(actor,'shop.agency.bank_classification_read',rowId,{count:revisions.length});
+    return {rowId,activity:revisions.at(-1)?.activity??'unmatched',revisions};
   }
   async caseMatches(actor:AuthUser,caseId:string){
     await requireAgencyAdmin(this.db,actor);
@@ -164,6 +204,9 @@ export class ShopAgencyBankReconciliation {
           return {id:active.id,duplicate:true,caseId:event.case_id};
         throw conflict('bank_match_conflict','Банковская строка или платёж уже сопоставлены с другим событием');
       }
+      const classification=await q.one<{activity:BankActivity}>('select activity from shop_agency_bank_classifications where row_id=$1 order by revision desc limit 1',[rowId]);
+      if(classification?.activity!=='traksos_shop')
+        throw conflict('bank_activity_mismatch','Для сверки агентской закупки явно отнесите операцию к магазину TrakSOS');
       const direction=directions[event.kind];
       if(!direction)throw bad('bank_not_cash_event','Нельзя сопоставлять неденежное событие');
       if(row.direction!==direction)throw conflict('bank_direction_mismatch','Выплата и поступление перепутаны');

@@ -15,3 +15,7 @@ Ported historical reconciliation and bank parser as domain modules with six stan
 ## Stage 3 — isolated evidence services
 
 Ported both historical classes to current calendar main 0e552f70db03939d8cb363aa8b90634bf71213c9, reuse the stage 2 domain modules rather than duplicate their logic. Added live administrator checks and row locking on write transactions; direct disposable service test covers private files, identical import, rejected changed metadata and a revoked administrator role. No registered HTTP API or UI, no real payment action. Source snapshots, mandate-at-creation checks, bank activity classification, transactional read consistency, retention policy and original HTTP tests remain outstanding; this is not full production authorization or a release. Exact combined CI required.
+
+## Stage 4 — bank activity classification
+
+Manual append-only classification: unmatched (default), TrakSOS service, TrakSOS shop, main IP activity, other. Classification and matching are distinct. Each revision has administrator, reason and idempotency key; original records stay immutable. A shop match requires an explicit shop classification and a checked payment document; an active match must be retracted before changing classification. Existing matched records require review before release. No tax calculation, real money, HTTP or UI activation. Disposable regression covers history, duplicate key, ACL and immutability; matching-specific regression remains to be expanded. Exact combined CI required.
