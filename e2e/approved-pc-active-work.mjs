@@ -304,7 +304,16 @@ try{
  await op.locator('.approved-pc-search-case').getByText(/LOCAL-0004/).waitFor();
  assert(consultCreated,'Consultation form did not create order');
  assert(await op.locator('.approved-pc-search-case .offer').count()===0,'Empty search invented offers');
- await assertOwnerClean('owner new consultation search routing');
+ // The server assigns the consultation while the browser misses its order event.
+ // Reconnection must reread the order itself, not just the empty offer list.
+ consultOrder.status='accepted';
+ consultOrder.performer={id:'synthetic-auto-consult',name:'Назначен сервером CI'};
+ await op.evaluate(()=>window.dispatchEvent(new Event('online')));
+ const recoveredCase=op.locator('.approved-pc-case:not(.approved-pc-search-case)');
+ await recoveredCase.getByText('Назначен сервером CI',{exact:false}).waitFor();
+ assert(await recoveredCase.getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+consultId,'Recovered assignment changed selected order');
+ assert(await op.locator('.approved-pc-search-case').count()===0,'Missed assignment left search open');
+ await assertOwnerClean('owner new consultation search routing and missed assignment recovery');
  await op.unroute(consultPricingRoute);
  await op.unroute(consultVehiclesRoute);
  // Shared inner-screen banners must NOT overlay the old separate photo tile
