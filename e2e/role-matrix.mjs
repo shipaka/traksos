@@ -99,8 +99,11 @@ try {
       }
       // Recover actual TechBase from its old source branch, but never mix
       // public catalogue information with role-protected repair manuals.
-      const hasDriverBase = entry.name !== 'insurer';
-      const hasMasterBase = ['master','master_service','service'].includes(entry.name);
+      // These accounts were just self-registered; a claimed master/STO role
+      // is not verification. Never grant either legacy audience to an
+      // unverified specialist, even when navigating directly.
+      const hasDriverBase = ['owner','driver','tow'].includes(entry.name);
+      const hasMasterBase = false;
       for (const [audience,allowed] of [['driver',hasDriverBase],['master',hasMasterBase]]) {
         const response = await fetch(BASE + '/api/techbase?audience=' + audience, {
           headers: { authorization: 'Bearer ' + result.token }
@@ -118,7 +121,9 @@ try {
         await page.getByRole('heading',{name:hasMasterBase?'ТехБаза мастера':'ТехБаза водителя'}).waitFor();
       } else {
         await page.goto(BASE + '/#/techbase/master');
-        await page.getByText('Нет доступа к этому разделу ТехБазы').waitFor();
+        await page.getByText(/Нет доступа к этому разделу ТехБазы|Не удалось получить каталог\. Проверьте подключение и права доступа\./).waitFor();
+        if (await page.locator('.techbase-document').count())
+          throw new Error(entry.name + ' unverified account rendered protected documents');
       }
       if (entry.name === 'driver') {
         await page.goto(BASE + '/#/fleet', { waitUntil: 'domcontentloaded' });
