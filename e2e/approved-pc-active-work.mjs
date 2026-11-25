@@ -124,7 +124,7 @@ try{
  await assertFullBleedCabinetBanner(page,'master');
  const ownRating=page.getByRole('link',{name:'Мой рейтинг: ★ 4,8 · 12 оценок'});
  await ownRating.waitFor({state:'visible'});
- assert.equal(await ownRating.getAttribute('href'),'#/work/me/level');
+ assert(await ownRating.getAttribute('href')==='#/work/me/level','Own rating level link missing');
  assert(await page.locator('.approved-pc-performer-case').count()===1,'Active job not opened');
  assert(await page.getByRole('button',{name:'Выехал'}).count()===1,'Correct first status action missing');
  assert(await page.locator('.approved-pc-techbook').count()===1,'TechBase book not on vehicle photo');
