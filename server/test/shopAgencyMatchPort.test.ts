@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { AuthUser } from '../src/http/router.ts';
+import type { Db, Queryable, Row } from '../src/db/index.ts';
 import { setup, ok } from './helpers.ts';
 import { ShopAgencyLedger } from '../src/services/shopAgencyLedger.ts';
 import { reconcileCase } from '../src/domain/shopAgencyEvidence.ts';
@@ -135,5 +136,41 @@ test('agency bank: classification, checked proof, exact match, concurrent replay
     assert.equal(historical.status,'requires_reconciliation');
     assert.ok(historical.problems.some(p=>p.includes('Сторно предшествует')));
     assert.ok(!snapshot.problems.some((p:string)=>p.includes('Сторно предшествует')));
+
+    // Force an actual concurrent PostgreSQL commit between selecting cases
+    // and selecting their evidence. A report must not combine versions.
+    assert.equal(t.db.driver,'pg');
+    const from='2026-12-01',to='2026-12-01';
+    const before=await ledger.report(admin,from,to);
+    const old=before.records.find(r=>r.id===entry.id);
+    assert.ok(old);
+    let inserted:string|undefined;
+    const readDb:Db={...t.db,
+      tx:<T>(fn:(q:Queryable)=>Promise<T>)=>t.db.tx(q=>fn({
+        ...q,
+        query:async <R=Row>(sql:string,params?:unknown[]):Promise<R[]>=>{
+          const rows=await q.query<R>(sql,params);
+          if(!inserted&&sql.includes('select c.* from shop_agency_cases c')){
+            const next=await event('handover',0,'BANK-HANDOVER','BANK-HANDOVER-KEY');
+            inserted=next.id;
+          }
+          return rows;
+        }
+      }))
+    };
+    const concurrent=await new ShopAgencyLedger(readDb).report(admin,from,to);
+    assert.ok(inserted,'concurrent event must have committed before evidence reads');
+    const observed=concurrent.records.find(r=>r.id===entry.id);
+    assert.ok(observed);
+    assert.equal(observed.evidence_version,old.evidence_version);
+    assert.ok(!observed.events.some((e:any)=>e.id===inserted));
+    assert.equal(concurrent.manifestSha256,before.manifestSha256);
+    const after=await ledger.report(admin,from,to);
+    const updated=after.records.find(r=>r.id===entry.id);
+    assert.ok(updated);
+    assert.equal(Number(updated.evidence_version),Number(old.evidence_version)+1);
+    assert.ok(updated.events.some((e:any)=>e.id===inserted));
+    assert.notEqual(after.manifestSha256,before.manifestSha256);
+    assert.equal(after.summary.taxableRevenue,null);
   }finally{await t.close();}
 });

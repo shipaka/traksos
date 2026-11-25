@@ -238,14 +238,26 @@ export class ShopAgencyLedger {
     });
   }
 
-  private async loadEvidence(caseIds: string[]) {
+  /** A single PostgreSQL snapshot protects the evidence version and all
+   * associated rows from mixed reads while other administrators write.
+   * Authorization and audit are part of the same transaction. */
+  private async readSnapshot<T>(actor:AuthUser,fn:(q:Queryable)=>Promise<T>):Promise<T> {
+    return this.db.tx(async q=>{
+      if(this.db.driver!=='pg')throw conflict('agency_requires_postgresql','Реестр требует PostgreSQL');
+      await q.query('set transaction isolation level repeatable read');
+      await requireAgencyAdmin(q,actor,true);
+      return fn(q);
+    });
+  }
+
+  private async loadEvidence(q:Queryable,caseIds: string[]) {
     if (!caseIds.length) return {allocations:[] as any[],events:[] as any[],reviews:[] as any[]};
     const [allocations,events,reviews] = await Promise.all([
-      this.db.query<any>(`select a.*,d.kind,d.reference,d.issued_at,d.source,d.sha256,d.supplier_name
+      q.query<any>(`select a.*,d.kind,d.reference,d.issued_at,d.source,d.sha256,d.supplier_name
         from shop_agency_allocations a join shop_agency_documents d on d.id=a.document_id
         where a.case_id=any($1::uuid[]) order by d.issued_at,a.created_at`,[caseIds]),
-      this.db.query<any>('select * from shop_agency_events where case_id=any($1::uuid[]) order by occurred_at,created_at',[caseIds]),
-      this.db.query<any>('select * from shop_agency_reviews where case_id=any($1::uuid[]) order by created_at',[caseIds]),
+      q.query<any>('select * from shop_agency_events where case_id=any($1::uuid[]) order by occurred_at,created_at',[caseIds]),
+      q.query<any>('select * from shop_agency_reviews where case_id=any($1::uuid[]) order by created_at',[caseIds]),
     ]);
     return {allocations,events,reviews};
   }
@@ -259,12 +271,13 @@ export class ShopAgencyLedger {
   }
 
   async detail(actor: AuthUser,id: string) {
-    await requireAgencyAdmin(this.db,actor);
-    const c=await this.db.one<any>('select * from shop_agency_cases where id=$1',[id]);
-    if(!c) throw notFound('Операция не найдена');
-    const full=this.view(c,await this.loadEvidence([id]));
-    await this.audit(actor,'shop.agency.detail_read',id);
-    return full;
+    return this.readSnapshot(actor,async q=>{
+      const c=await q.one<any>('select * from shop_agency_cases where id=$1',[id]);
+      if(!c) throw notFound('Операция не найдена');
+      const full=this.view(c,await this.loadEvidence(q,[id]));
+      await this.audit(actor,'shop.agency.detail_read',id,{},q);
+      return full;
+    });
   }
 
   async reviewCase(actor:AuthUser,id:string,kind:'verified'|'accountant_approved',note:string) {
@@ -306,11 +319,11 @@ export class ShopAgencyLedger {
    * bank events use occurred_at. Current verification state is never misrepresented
    * as a historical as-of-period approval. */
   async report(actor:AuthUser,from:string,to:string) {
-    await requireAgencyAdmin(this.db,actor);
-    reportDay(from); reportDay(to);
-    if(from>to || (Date.parse(to)-Date.parse(from))/86400000>366)
-      throw bad('bad_period','Укажите период не больше 366 дней');
-    const cases=await this.db.query<any>(`select c.* from shop_agency_cases c
+    return this.readSnapshot(actor,async q=>{
+      reportDay(from); reportDay(to);
+      if(from>to || (Date.parse(to)-Date.parse(from))/86400000>366)
+        throw bad('bad_period','Укажите период не больше 366 дней');
+      const cases=await q.query<any>(`select c.* from shop_agency_cases c
       where (c.created_at at time zone 'Europe/Moscow')::date between $1::date and $2::date
         or exists(select 1 from shop_agency_events e where e.case_id=c.id and
           (e.occurred_at at time zone 'Europe/Moscow')::date between $1::date and $2::date)
@@ -321,7 +334,7 @@ export class ShopAgencyLedger {
       order by c.created_at,c.id limit 2001`,[from,to]);
     if(cases.length>2000) throw conflict('report_too_large',
       'Период содержит более 2000 операций. Уточните диапазон.');
-    const evidence=await this.loadEvidence(cases.map(c=>c.id));
+    const evidence=await this.loadEvidence(q,cases.map(c=>c.id));
     const records=cases.map(c=>{
       const v=this.view(c,evidence);
       const included=(date:string|Date)=>within(moscowDay(date),from,to);
@@ -398,12 +411,13 @@ export class ShopAgencyLedger {
       })),
     };
     const manifestSha256=createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
-    await this.audit(actor,'shop.agency.report_read',from+'_'+to,{cases:records.length,manifestSha256});
+    await this.audit(actor,'shop.agency.report_read',from+'_'+to,{cases:records.length,manifestSha256},q);
     return {from,to,timezone:'Europe/Moscow',summary,
       companies:[...companies.values()].sort((a,b)=>a.key.localeCompare(b.key)),
       suppliers:[...suppliers.values()].sort((a,b)=>a.name.localeCompare(b.name)),
       records,manifest,manifestSha256,verificationAsOf:'current',
       disclaimer:'Внутренний доказательный реестр, НЕ декларация, НЕ КУДиР и НЕ налоговая база. Подтверждение показано на дату просмотра, суммы по датам событий МСК. Для бухгалтерской отчётности требуется согласованная методика.'};
+    });
   }
 
   async csv(actor:AuthUser,from:string,to:string) {
