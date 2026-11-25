@@ -17,6 +17,7 @@ test('catalogue references are exact identities, not VIN matches',()=>{
 });
 
 import { setup,ok } from './helpers.ts';
+import { PartRecommendations } from '../src/services/partRecommendations.ts';
 test('repair recommendation is private, owner controlled, exact and idempotent through checkout',async()=>{
  const t=await setup();
  try{
@@ -110,5 +111,55 @@ test('approved workshop shares recommendation history and sourcing without alter
   assert.equal((await t.db.query('select id from shop_orders where part_recommendation_id=$1',[rid])).length,0);
   await t.db.query("update service_centers set verification='rejected' where id=$1",[center.id]);
   assert.equal((await t.api('POST',path,{...proposal,article:'STO-43'},workshop.token)).status,403);
+  assert.equal((await t.api('GET',path,undefined,workshop.token)).status,403);
+  assert.equal(ok(await t.api('GET',path,undefined,owner.token)).items[0].id,rid);
+ }finally{await t.close();}
+});
+
+test('source ACL rechecks live fleet assignments, worker approval and stale actor roles',async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79997808201'),driver=await t.login('+79997808202'),replacement=await t.login('+79997808203'),master=await t.login('+79997808204','master'),admin=await t.login('+79990000001');
+  const vehicle=ok(await t.api('POST','/api/vehicles',{brand:'Scania',model:'R',year:2014,plate:'А402АА178'},owner.token));
+  const qr=ok(await t.api('GET','/api/fleet',undefined,owner.token)).cars[0].qrCode;
+  ok(await t.api('POST','/api/qr/'+qr+'/join',{},driver.token));
+  await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[master.id]);
+  const o=ok(await t.api('POST','/api/orders',{service:'consult',vehicleId:vehicle.id,description:'Тестовый подбор детали'},driver.token)).order;
+  await t.db.query("update orders set performer_id=$2,status='awaiting_confirmation' where id=$1",[o.id,master.id]);
+  const svc=new PartRecommendations(t.db,t.app.settings,t.app.notifier);
+  const oldDriver=await t.app.auth.authenticate(driver.token),oldMaster=await t.app.auth.authenticate(master.token),oldOwner=await t.app.auth.authenticate(owner.token),oldAdmin=await t.app.auth.authenticate(admin.token);
+  assert.ok(oldDriver&&oldMaster&&oldOwner&&oldAdmin);
+  const path='/api/orders/'+o.id+'/part-recommendations';
+  const proposal={brand:'Fixture',article:'ACL-42',name:'Тестовый клапан',qty:1,reason:'Диагностика подтвердила неисправность детали',fitmentConfirmed:true};
+  const rec=ok(await t.api('POST',path,proposal,master.token)).item;
+  assert.equal((await svc.list(oldDriver,o.id)).items[0].id,rec.id);
+  assert.equal((await svc.list(oldDriver,o.id)).canDecide,false);
+  assert.equal((await svc.list(oldAdmin,o.id)).canSuggest,false);
+  assert.equal((await svc.list(oldAdmin,o.id)).canDecide,false);
+  await assert.rejects(svc.decide(oldAdmin,o.id,rec.id,true),{status:403});
+  ok(await t.api('POST','/api/qr/'+qr+'/join',{},replacement.token));
+  await assert.rejects(svc.list(oldDriver,o.id),{status:403});
+  assert.equal((await t.api('GET',path,undefined,driver.token)).status,403);
+  assert.equal((await t.api('GET',path,undefined,replacement.token)).status,403);
+  ok(await t.api('POST','/api/qr/'+qr+'/join',{},driver.token));
+  assert.equal((await svc.list(oldDriver,o.id)).items[0].id,rec.id);
+  await t.db.query("update users set roles='{service}'::text[] where id=$1",[master.id]);
+  await assert.rejects(svc.list(oldMaster,o.id),{status:403});
+  await assert.rejects(svc.propose(oldMaster,o.id,{...proposal,article:'REVOKED'}),{status:403});
+  await t.db.query("update users set roles='{master}'::text[] where id=$1",[master.id]);
+  await t.db.query("update performer_profiles set verification='rejected' where user_id=$1",[master.id]);
+  await assert.rejects(svc.list(oldMaster,o.id),{status:403});
+  await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[master.id]);
+  await t.db.query("update users set deleted_at=now() where id=$1",[master.id]);
+  await assert.rejects(svc.propose(oldMaster,o.id,{...proposal,article:'DELETED'}),{status:403});
+  await t.db.query("update users set deleted_at=null where id=$1",[master.id]);
+  await t.db.query("update users set status='blocked' where id=$1",[owner.id]);
+  await assert.rejects(svc.list(oldDriver,o.id),{status:403});
+  await assert.rejects(svc.list(oldMaster,o.id),{status:403});
+  await assert.rejects(svc.decide(oldOwner,o.id,rec.id,true),{status:403});
+  assert.equal((await svc.list(oldAdmin,o.id)).items[0].status,'pending');
+  await t.db.query("update users set status='active' where id=$1",[owner.id]);
+  assert.equal((await svc.decide(oldOwner,o.id,rec.id,true)).status,'accepted');
+  assert.equal((await t.db.query('select id from part_recommendations where source_order_id=$1',[o.id])).length,1);
  }finally{await t.close();}
 });
