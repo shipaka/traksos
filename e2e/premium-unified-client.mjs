@@ -76,7 +76,7 @@ try {
       if (width < 900) {
         // The signed-in mobile browser and Android APK intentionally mount
         // the SAME owner-approved phone dashboard (618.png). The old browser
-        // desktop hero and six-tab cards have been retired. Check the actual
+        // desktop hero and legacy dashboard cards have been retired. Check the actual
         // actions, role and route contracts rather than obsolete CSS names.
         if(await page.locator('.tr-context-help').count())
           throw Error('Legacy top help banner obscures approved 618 mobile browser');
@@ -104,11 +104,9 @@ try {
         if (await desk.locator('.and19-sos').getAttribute('href')!=='#/sos')
           throw Error('SOS service destination missing on approved mobile UI');
         const tabs=await page.locator('.tabbar a').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
-        const expectedTabs=['#/','#/orders','#/air','#/garage','#/menu'];
+        const expectedTabs=['#/','#/orders','#/air','#/garage','#/shop','#/menu'];
         if (JSON.stringify(tabs)!==JSON.stringify(expectedTabs))
-          throw Error('Approved phone tabs must be Main / Orders / Air / Vehicle / Menu: '+JSON.stringify(tabs));
-        if (tabs.includes('#/shop'))
-          throw Error('Parts shop must live in role menu, not old sixth bottom tab');
+          throw Error('Approved phone tabs must be Main / Orders / Air / Vehicle / Shop / Menu: '+JSON.stringify(tabs));
         // The desktop hero truck is not the phone's main image. Its absence is
         // deliberate; no test may reinsert the old 900px artwork to go green.
       } else {
