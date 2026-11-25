@@ -5,3 +5,13 @@ Current jobs do not have a verified upper duration bound. Until scheduled dispat
 Candidate discovery, preferred invitations, queued calls, enlistment, direct acceptance, auction offers and selection (including auto-selection) check the reservation. Final write paths repeat the check under the performer profile row lock. A future reservation confirmation/transfer writer MUST acquire that same lock and check active orders. The current public API has no reservation writer and this change does not create one; direct fixture inserts are test-only.
 
 No change to approved design, payment rules or actual presence. No merge/deploy until tests, two-party confirmation, scheduled dispatch, duration policy, lifecycle and manual acceptance are complete.
+
+## Preview consistency
+
+Customer nearby counters and cards, and the performer closer-colleague counter,
+exclude the same non-expired confirmed intervals as immediate dispatch. Presence
+(online) stays distinct from eligibility for another immediate job. Proposed,
+cancelled, completed and expired intervals do not alone exclude a worker. No
+future time guarantee, public calendar detail, or claim of physical work is
+introduced by this change. The preview remains advisory; final assignment still
+uses its transactional checks.
