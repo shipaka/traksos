@@ -185,6 +185,12 @@ try{
  assert(await op.getByText('Синтетический мастер').count()>0,'Selected performer missing');
  assert(await op.getByText('Текущее местоположение исполнителя не подтверждено.').count()===1,
   'Stale or missing GPS incorrectly displayed as live');
+ const ownerDesk=op.locator('main.approved-pc-client');
+ await ownerDesk.getByText('Тестовый водитель CI',{exact:false}).waitFor();
+ for(const href of ['#/fleet','#/orders','#/sos'])
+   assert(await ownerDesk.locator('a[href="'+href+'"]').count()===1,'Duplicate owner workdesk destination '+href);
+ assert(await ownerDesk.locator('.approved-pc-fleet-footer,.approved-pc-order-table').count()===0,'Repeated fleet/order table returned');
+ assert(await ownerDesk.locator('a[href="#/garage/synthetic-vehicle"]').count()===1,'Fleet vehicle must have one history entry');
  await op.screenshot({path:output+'/owner-active-1647.png',fullPage:false,animations:'disabled'});
  await assertOwnerClean('owner active order');
  // Shared inner-screen banners must NOT overlay the old separate photo tile
@@ -253,6 +259,8 @@ try{
  ordersUnavailable=false;
  await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить'}).click();
  await ep.locator('.approved-pc-center').getByText(/Активных заявок сейчас нет/).waitFor();
+ for(const href of ['#/fleet','#/orders','#/sos'])
+   assert(await ep.locator('main.approved-pc-client a[href="'+href+'"]').count()===1,'Duplicate empty owner workdesk destination '+href);
  await assertRetryClean('owner API retry');
  report.push({role:'owner API error/retry',status:'PASS',
    scenarios:['no false empty orders','no false empty fleet','retry on genuine empty response']});

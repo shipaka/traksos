@@ -158,7 +158,7 @@ function Calendar({items=[],kind='orders',loading=false,error=null,retry}:{
 function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:ReactNode}){
   return <div className="approved-pc-three"><aside className="approved-pc-left">{left}</aside><div className="approved-pc-center">{center}</div><aside className="approved-pc-right">{right}</aside></div>;
 }
-function RealCase({o,owner=false}:{o:any;owner?:boolean}){
+function RealCase({o}:{o:any}){
   const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.orderId===o.id&&e.type==='order');
   const [gps,setGps]=useState<{lat:number;lng:number;at:number}|null>(null);
   useEffect(()=>{
@@ -206,7 +206,6 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
       <a className="approved-pc-primary" href={'#/order/'+o.id}>Открыть заявку и следующий шаг</a>
       <a href={'#/order/'+o.id+'?chat=1'}>Чат и связь по заявке</a>
       {d.vehicleId&&<a href={'#/garage/'+d.vehicleId}>История автомобиля</a>}
-      {owner&&<a href="#/fleet">Управление автопарком</a>}
     </div>
     {detail.error&&<p className="approved-pc-caveat">Дополнительные сведения недоступны: {String(detail.error?.message||detail.error)}. Откройте карточку заявки.</p>}
     <p className="approved-pc-caveat">Информация о заказе, изменениях и исполнителе поступает с сервера. Личные телефоны не раскрываются; общение только через предоставленные платформой способы связи.</p>
@@ -245,70 +244,33 @@ function CustomerDesk({owner}:{owner:boolean}){
         {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?
           active.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description, statusName(o))}
             active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)} v={transport(o)}/>)
-          :<Empty>Нет активных заявок. Создать новую можно через меню.</Empty>}
+          :<Empty>Нет активных заявок.</Empty>}
+        <a className="approved-pc-small-link" href="#/orders">Заявки и история →</a>
       </Pane>
-      {owner&&<Pane title="Техника автопарка">
+      {owner&&<Pane title="Мой автопарк">
         {!fleet.data&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
+        {fleet.data&&<><p>Машин: <strong>{cars.length}</strong></p>
+          <p>Ждут решения владельца: <strong>{fleet.data.pending?.length||0}</strong></p></>}
         {cars.slice(0,5).map((c:any)=><RowItem key={c.id} href={'#/garage/'+c.id} label={vehicleLabel(c)}
           info={c.driver?.name?'Водитель: '+c.driver.name:'Водитель не закреплён'} v={c}/>)}
         {fleet.data&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
-        <a className="approved-pc-small-link" href="#/fleet">Весь автопарк →</a>
+        <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
       </Pane>}
-    </>} center={selected?<RealCase key={String(selected.id)} o={selected} owner={owner}/>:<Pane title="Рабочий стол">
+    </>} center={selected?<RealCase key={String(selected.id)} o={selected}/>:<Pane title="Рабочий стол">
         {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
-        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a>
-          <a href="#/orders">Заявки и история</a></div></>}
+        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a></div></>}
       </Pane>}
-      right={<><Pane title={owner?'Сводка автопарка':'Быстрые переходы'}>
-        {owner?<><p>Машин в автопарке: <strong>{fleet.data?cars.length:'—'}</strong></p>
-          <p>Ждут решения владельца: <strong>{fleet.data?fleet.data.pending?.length||0:'—'}</strong></p>
-          <a className="approved-pc-small-link" href="#/fleet">Открыть контроль доступа →</a></>
-          :<a className="approved-pc-small-link" href="#/garage">Моя техника →</a>}
+      right={<><Pane title="Помощь на дороге">
+        {!owner&&<a className="approved-pc-small-link" href="#/garage">Моя техника →</a>}
         <nav aria-label="Услуги помощи" className="approved-pc-customer-services">
-          <a className="approved-pc-small-link" href="#/sos">Помощь на дороге · SOS →</a>
+          {(!orders.data||selected)&&<a className="approved-pc-small-link" href="#/sos">Вызвать специалиста · SOS →</a>}
           {me?.owner_id&&rules.error&&<LoadingBlock error={rules.error} retry={rules.reload}/>}
           {assistance.map(([permission,href,label])=>restricted(permission)
             ?<span key={permission} className="approved-pc-small-link" aria-disabled="true">{label} · {rules.loading?'Проверяем доступ…':rules.error?'Доступ не подтверждён':'Требуется разрешение владельца'}</span>
             :<a key={permission} className="approved-pc-small-link" href={href}>{label} →</a>)}
-          <a className="approved-pc-small-link" href="#/orders">Заявки и история →</a>
         </nav>
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
-    {owner&&<div className="approved-pc-fleet-footer">
-      <Pane title={'Все активные заявки автопарка · '+(orders.data?active.length:'—')}>
-        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?<div className="approved-pc-table-wrap"><table className="approved-pc-order-table">
-          <thead><tr><th>Заявка</th><th>Транспорт</th><th>Водитель / клиент</th><th>Неисправность</th><th>Статус</th><th>Действие</th></tr></thead>
-          <tbody>{active.map((o:any)=><tr key={o.id} className={selected?.id===o.id?'selected':''}>
-            <td>№{text(o.number||o.id)}</td><td>{vehicleLabel(transport(o))}</td>
-            <td>{text(o.driver_name||o.driver?.name||o.client?.name,'—')}</td>
-            <td>{text(o.description||o.problem,'В заявке')}</td><td>{statusName(o)}</td>
-            <td><button type="button" onClick={()=>setChosen(String(o.id))}>Открыть ›</button></td>
-          </tr>)}</tbody>
-        </table></div>:<Empty>Активных ремонтов сейчас нет. Здесь появятся заявки по автопарку после их создания.</Empty>}
-      </Pane>
-      <div className="approved-pc-fleet-footer-grid">
-        <Pane title={'Мои машины · '+(fleet.data?cars.length:'—')}>
-          <div className="approved-pc-fleet-vehicle-row">{cars.slice(0,4).map((c:any)=>
-            <a key={c.id} href={'#/garage/'+c.id} className="approved-pc-fleet-vehicle">
-              <Photo v={c}/><strong>{vehicleLabel(c)}</strong>
-              <small>{c.driver?.name?'Водитель: '+c.driver.name:'Водитель не назначен'}</small>
-              <span>История и документы ›</span>
-            </a>)}
-            {fleet.data&&!cars.length&&<Empty>Машины ещё не добавлены в автопарк.</Empty>}
-          </div>
-          <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
-        </Pane>
-        <Pane title="Плановое ТО и документы">
-          <p>История обслуживания и документы хранятся в карточке соответствующего транспортного средства.</p>
-          <a className="approved-pc-small-link" href="#/garage">Открыть технику и документы →</a>
-          <p className="approved-pc-caveat">Даты будущего ТО показываются только после появления подтверждённых данных.</p>
-        </Pane>
-        <Pane title="Расходы на ремонт">
-          <p>Завершённые заявки, счета и подтверждённые суммы доступны в истории заказов.</p>
-          <a className="approved-pc-small-link" href="#/orders">История затрат и заказов →</a>
-          <p className="approved-pc-caveat">Без неподтверждённых начислений и сумм из демонстрационного макета.</p>
-        </Pane>
-      </div>
-    </div>}
+
   </main>;
 }
 
