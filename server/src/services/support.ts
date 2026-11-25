@@ -148,8 +148,8 @@ export class SupportService {
     if (text.length < 3) throw bad('empty', 'Опишите, что случилось');
     if (!p.orderId && !p.ledgerEntryId) return this.openStandalone(user,p,text);
     if (p.requestedRole) throw bad('support_context','Выбор адресата доступен только для личного обращения без привязки к заявке.');
-    if (p.orderId && p.ledgerEntryId) throw bad('support_context','Укажите только один источник обращения.');
-    const fingerprint = createHash('sha256').update(JSON.stringify([p.orderId??null,p.ledgerEntryId??null,p.topic,text])).digest('hex');
+    // Preserve existing ledger precedence when legacy callers send both IDs.
+    const fingerprint = createHash('sha256').update(JSON.stringify([p.ledgerEntryId?null:p.orderId??null,p.ledgerEntryId??null,p.topic,text])).digest('hex');
     // Only the stored thread contains the redacted text, never notice previews.
     const safeText = maskPhones(text).text;
     // Ledger intake validates the source and persists the staff inbox in the
@@ -195,11 +195,12 @@ export class SupportService {
     // remain separate post-commit effects, not part of this guarantee.
     const result = await this.db.tx(async q => {
       const actor=await this.liveActor(q,user);
+      if (!this.orders.actorOf(actor,o)) throw forbidden('Позвать поддержку могут участники заявки');
       const replay=await this.findLinkedRequest(q,actor.id,p.requestKey,fingerprint);
       if(replay)return {id:replay,number:0,delivery:null,created:false};
       await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:order:' + user.id + ':' + p.orderId]);
       const existing = await q.one<LockedTicket & {id:string}>(
-        'select id,status,user_id,number,assignee_id,requested_staff_role from support_tickets where user_id=$1 and order_id=$2 and status=$3 and ledger_entry_id is null for update',
+        'select id,status,user_id,number,assignee_id,requested_staff_role from support_tickets where user_id=$1 and order_id=$2 and status=$3 for update',
         [user.id, p.orderId, 'open']);
       if (existing) {
         const delivery=await this.appendReply(q,actor,existing,existing.id,text,safeText);
