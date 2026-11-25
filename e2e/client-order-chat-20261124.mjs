@@ -155,14 +155,47 @@ try{
     throw Error('Reconnect lost or reordered durable history');
   if(await page.getByPlaceholder('Сообщение').inputValue()!=='PRIVATE A DRAFT')
     throw Error('Reconnect lost mounted draft');
-  // A socket payload is only invalidation: no unconfirmed body may appear.
-  await emit({type:'chat',message:{order_id:'A',id:99,body:'UNCONFIRMED SOCKET BODY'}});
+  // A large offline backlog must not turn one event into an unbounded read.
+  const rows=(start)=>Array.from({length:100},(_,i)=>msg(start+i,'HISTORY '+(start+i)));
+  await emit({type:'connection_restored'});
   await wait(chatA,4);
+  await settle(chatA,3,windowPage(rows(1101),'latest',true));
+  for(let cursor=1101;cursor>=301;cursor-=100){
+    const path=earlier('A',cursor);
+    await wait(path,1);
+    await settle(path,0,windowPage(rows(cursor-100),'before',true));
+  }
+  await page.getByText('Показана свежая часть переписки.',{exact:false}).waitFor();
+  if(await page.locator('.msgs .b').count()!==1000)throw Error('Automatic history window not bounded at 1000');
+  if(await page.evaluate(()=>window.__orderMock.gets.some(x=>x.path.endsWith('cursor=201'))))
+    throw Error('Automatic refresh exceeded ten pages');
+  if(await page.getByText('OLDER A CHAT').count())throw Error('Stale cached message retained across bounded refresh');
+  if(await page.getByPlaceholder('Сообщение').inputValue()!=='PRIVATE A DRAFT')throw Error('Bounded refresh lost draft');
+  // Manual earlier pagination is still available.
+  await page.getByRole('button',{name:'Загрузить более ранние сообщения'}).click();
+  await wait(earlier('A',201),1);
+  await settle(earlier('A',201),0,windowPage(rows(101),'before',true));
+  await page.getByText('HISTORY 101',{exact:true}).waitFor();
+  if(await page.locator('.msgs .b').count()!==1100)throw Error('Older page inaccessible after bounded refresh');
+  // A burst during one in-flight request produces just one trailing refresh.
+  await page.evaluate(()=>{
+    for(let i=0;i<40;i++)window.__orderMock.listeners.slice().forEach(fn=>fn({
+      type:'chat',message:{order_id:'A',id:1201+i,body:'UNCONFIRMED SOCKET BODY'}
+    }));
+  });
+  await wait(chatA,5);
   if(await page.getByText('UNCONFIRMED SOCKET BODY').count())throw Error('Unconfirmed socket body rendered');
-  await settle(chatA,3,'access revoked',true);
+  if(await page.evaluate(p=>window.__orderMock.gets.filter(x=>x.path===p).length,chatA)!==5)
+    throw Error('Concurrent refreshes started for event burst');
+  await settle(chatA,4,'access revoked',true);
+  await wait(chatA,6);
+  await settle(chatA,5,'access revoked',true);
   await page.getByRole('button',{name:'Повторить загрузку переписки'}).waitFor();
-  if(await page.getByText('PRIVATE A CHAT').count()||await page.getByText('OLDER A CHAT').count())
+  if(await page.locator('.msgs .b').count()||await page.getByText('OLDER A CHAT').count())
     throw Error('Denied refresh retained chat history');
+  await page.waitForTimeout(350);
+  if(await page.evaluate(p=>window.__orderMock.gets.filter(x=>x.path===p).length,chatA)!==6)
+    throw Error('Event burst triggered more than one trailing refresh');
 
   // A different order has a blank chat and a separate GET; old A is never shown.
   await navigate('B');
