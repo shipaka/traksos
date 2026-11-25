@@ -14,7 +14,21 @@ type Payload = { audiences: Audience[]; documents: TechDoc[] };
 type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null };
 const KIND_LABELS = { all:'Все типы', truck:'Грузовики', trailer:'Прицепы', component:'Узлы и агрегаты' };
 const TYPE_LABELS: Record<string,string> = { operation:'Эксплуатация',maintenance:'ТО',diagnostics:'Диагностика',wiring:'Схемы',parts:'Запчасти',service:'Ремонт' };
-const normalize = (s:string) => s.toLowerCase().replace(/[^a-zа-яё0-9]+/gi,'').replace('мерседесбенц','mercedesbenz');
+const normalize = (s:string) => s.normalize('NFKC').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,'');
+const makeKey=(s:string)=>{
+  const key=normalize(s);
+  const aliases:Record<string,string>={рено:'renault',renaulttrucks:'renault',скания:'scania',вольво:'volvo',volvotrucks:'volvo',даф:'daf',ман:'man',ивеко:'iveco',мерседес:'mercedesbenz',мерседесбенц:'mercedesbenz',mercedes:'mercedesbenz',mercedesbenztrucks:'mercedesbenz',кроне:'krone'};
+  return aliases[key]??key;
+};
+const modelMatches=(value:string,reference:string)=>{
+  const actual=normalize(value),expected=normalize(reference);
+  if(!actual||!expected)return false;
+  if(actual===expected)return true;
+  // One-letter series (Renault T/C/K/D) must be a distinct model prefix,
+  // never a substring of an unrelated model name.
+  if(expected.length===1)return new RegExp('^'+expected+'(?:[0-9]|[ ]|$)','i').test(value.trim());
+  return actual.startsWith(expected);
+};
 
 export function TechBase({ audience, initialVehicleId = '' }: { audience:Audience; initialVehicleId?:string }) {
   const { me } = useMe();
@@ -25,7 +39,7 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
   const isMaster = audience === 'master';
   const [payload,setPayload] = useState<Payload|null>(null);
   const [vehicles,setVehicles] = useState<GarageVehicle[]>([]);
-  const [vehicleId,setVehicleId] = useState(initialVehicleId);
+  const [vehicleId,setVehicleId] = useState(isMaster?'':initialVehicleId);
   const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>(initialVehicleId&&!isMaster?'truck':'all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
@@ -54,9 +68,9 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
     // Garage vehicle names and plates belong to the current account. Clear
     // the old user's options before a new authenticated GET can complete.
     setVehicles([]);
-    setVehicleId(initialVehicleId);
+    setVehicleId(isMaster?'':initialVehicleId);
     setVehicleError('');
-  }, [me?.id, initialVehicleId]);
+  }, [me?.id, initialVehicleId, isMaster]);
   useEffect(() => {
     if (isMaster) return;
     let active = true;
@@ -85,9 +99,9 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
     if (system && d.system !== system) return false;
     if (documentType && d.type !== documentType) return false;
     // Never treat a component reference as validated for the selected truck.
-    if (selectedMake && d.kind !== 'component' && normalize(d.vehicleMake || '') !== normalize(selectedMake)) return false;
-    if (selectedModel && d.kind === 'truck' && d.models.length &&
-        !d.models.some(m => normalize(selectedModel).includes(normalize(m)) || normalize(m).includes(normalize(selectedModel)))) return false;
+    if (selectedMake && d.kind !== 'component' && makeKey(d.vehicleMake || '') !== makeKey(selectedMake)) return false;
+    if (selectedModel && d.kind !== 'component' && d.models.length &&
+        !d.models.some(m => modelMatches(selectedModel,m))) return false;
     if (selectedYear && d.modelYearFrom && selectedYear < d.modelYearFrom) return false;
     if (selectedYear && d.modelYearTo && selectedYear > d.modelYearTo) return false;
     if (query) {
