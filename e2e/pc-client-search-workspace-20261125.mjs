@@ -22,7 +22,7 @@ const bundle=await build({
     import React,{useState} from 'react';
     import {createRoot} from 'react-dom/client';
     import {Search} from './web/src/screens/search.tsx';
-    window.__searchMock={response:{offers:[],autoPick:false},chosen:[],complete:0,token:'session-a',toasts:[]};
+    window.__searchMock={response:{offers:[],autoPick:false},chosen:[],complete:0,token:'session-a',toasts:[],parentDeadline:new Date(Date.now()+600000).toISOString()};
     function App(){
       const [collapsed,setCollapsed]=useState(false);
       const [revision,setRevision]=useState(0);
@@ -31,7 +31,7 @@ const bundle=await build({
       const [motionEpoch]=useState(()=>performance.now()-2500);
       window.__searchMock.epoch=motionEpoch;
       window.__searchMock.revalidate=()=>setRevision(x=>x+1);
-      return <Search key={revision} d={{id,service:'electric',search:{candidates:4}}}
+      return <Search key={revision} d={{id,service:'electric',search:{candidates:4},autoPick:true,auctionUntil:window.__searchMock.parentDeadline}}}
         collapsed={collapsed} onCollapsedChange={setCollapsed} motionEpoch={motionEpoch}
         onChosen={()=>window.__searchMock.complete++}/>;
     }
@@ -85,6 +85,15 @@ try{
   await page.getByRole('button',{name:'Раскрыть поиск'}).click();
   await checkPhase();
   if(await page.locator('.radar .blip.on').count()!==2)throw Error('Offer markers not synchronized');
+  // The current server deadline overrides the stale ten-minute parent value.
+  await page.getByText(/Время выбора: (?:01:|02:00)/).waitFor();
+  await page.evaluate(()=>{const m=window.__searchMock;m.response.until=new Date(Date.now()-1000).toISOString();m.listener({type:'order',orderId:'test'});});
+  await page.getByText(/Время выбора истекло/).waitFor();
+  if(await page.evaluate(()=>window.__searchMock.chosen.length||window.__searchMock.complete))throw Error('Timer expiry performed a client-side assignment');
+  await page.evaluate(()=>{const m=window.__searchMock;m.response.until=null;m.listener({type:'order',orderId:'test'});});
+  await page.getByText('Выберите подходящего исполнителя',{exact:true}).waitFor();
+  if(await page.getByText(/Время выбора:/).count())throw Error('Cleared server deadline resurrected stale parent timer');
+  await page.evaluate(()=>{const m=window.__searchMock;m.response.until=new Date(Date.now()+120000).toISOString();m.listener({type:'order',orderId:'test'});});
   await page.getByText(/Время выбора:/).waitFor();
   const second=page.locator('.offer').filter({hasText:'Второй мастер'});
   await second.getByRole('button',{name:'Выбрать за 5500 ₽'}).click();
