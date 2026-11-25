@@ -125,6 +125,26 @@ export class ChatService {
     });
   }
 
+  // Recover an ambiguous send after the app was closed without storing the
+  // original private message body on the device. Absence is not a promise
+  // that an earlier in-flight request cannot commit later.
+  async requestStatus(user:AuthUser,orderId:string,requestId:string) {
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId))
+      throw bad('bad_request_id','Некорректный идентификатор отправки');
+    return this.db.tx(async q=>{
+      const order=await q.one<{
+        client_id:string;created_by:string;performer_id:string|null;vehicle_id:string|null;
+      }>('select client_id,created_by,performer_id,vehicle_id from orders where id=$1 for share',[orderId]);
+      if(!order)throw notFound('Заявка не найдена');
+      if(!await this.liveActor(q,user,order))throw forbidden('Переписка доступна только участникам заявки');
+      const prior=await q.one<{id:number;kind:string}>(
+        'select id::int as id,kind from chat_messages where order_id=$1 and sender_id=$2 and client_request_id=$3',
+        [orderId,user.id,requestId]);
+      return prior?{state:'committed' as const,messageId:prior.id,kind:prior.kind}:
+        {state:'not_observed' as const,messageId:null,kind:null};
+    });
+  }
+
   async post(user: AuthUser, orderId: string, body: string, kind: 'text' | 'quick' = 'text', requestId?:string) {
     // This initial check preserves the existing useful "not found/forbidden"
     // contract for outsiders and invited performers. The real write authority
