@@ -253,15 +253,18 @@ try{
    route=>route.fulfill(ordersUnavailable?unavailable:json([])));
  await ep.route(url=>url.pathname==='/api/fleet',route=>route.fulfill(unavailable));
  await open(ep,owner.token,owner.mode,'#/');
- await ep.locator('.approved-pc-center').getByText(/Ошибка загрузки данных/).waitFor();
+ const myOrders=ep.locator('.approved-pc-pane').filter({has:ep.getByRole('heading',{name:'Мои заявки',exact:true})});
+ await ep.locator('.approved-pc-center').getByRole('status').filter({hasText:'Сведения о заявках недоступны'}).waitFor();
+ await myOrders.getByText(/Ошибка загрузки данных/).waitFor();
+ assert(await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить',exact:true}).count()===0,'Duplicate center retry on owner workdesk');
  const failedOwnerText=await ep.locator('main.approved-pc-client').innerText();
  assert(!failedOwnerText.includes('Активных заявок сейчас нет.'),
    'Client desktop falsely claims no orders while API is unavailable');
- assert(!failedOwnerText.includes('Машины ещё не добавлены в автопарк.'),
+ assert(!failedOwnerText.includes('Машины ещё не добавлены в автопарк.')&&!failedOwnerText.includes('Информация о технике появится после добавления в автопарк.'),
    'Fleet desktop falsely claims there are no vehicles while API failed');
  await assertRetryClean('owner API unavailable');
  ordersUnavailable=false;
- await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить'}).click();
+ await myOrders.getByRole('button',{name:'Обновить',exact:true}).click();
  await ep.locator('.approved-pc-center').getByText(/Активных заявок сейчас нет/).waitFor();
  for(const href of ['#/fleet','#/orders','#/sos'])
    assert(await ep.locator('main.approved-pc-client a[href="'+href+'"]').count()===1,'Duplicate empty owner workdesk destination '+href);
