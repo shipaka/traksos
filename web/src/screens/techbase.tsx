@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { get } from '../api.ts';
+import { ApiError, get } from '../api.ts';
 import { useMe } from '../ui.tsx';
 
 type Audience = 'driver' | 'master';
@@ -18,11 +18,15 @@ const normalize = (s:string) => s.toLowerCase().replace(/[^a-zа-яё0-9]+/gi,''
 
 export function TechBase({ audience, initialVehicleId = '' }: { audience:Audience; initialVehicleId?:string }) {
   const { me } = useMe();
+  return <TechBaseForAccount key={(me?.id??'guest')+':'+audience+':'+initialVehicleId} audience={audience} initialVehicleId={initialVehicleId}/>;
+}
+function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initialVehicleId:string}){
+  const {me}=useMe();
   const isMaster = audience === 'master';
   const [payload,setPayload] = useState<Payload|null>(null);
   const [vehicles,setVehicles] = useState<GarageVehicle[]>([]);
   const [vehicleId,setVehicleId] = useState(initialVehicleId);
-  const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>('all');
+  const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>(initialVehicleId&&!isMaster?'truck':'all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
   const [documentType,setDocumentType] = useState('');
@@ -31,6 +35,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const [vehicleError,setVehicleError] = useState('');
   const [catalogRetry,setCatalogRetry] = useState(0);
   const [vehiclesRetry,setVehiclesRetry] = useState(0);
+  const [garageLoaded,setGarageLoaded]=useState(false);
   useEffect(() => {
     let active = true;
     setPayload(null); setError('');
@@ -38,11 +43,11 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       .then((data:Payload) => { if(active) {
         // An HTTP 200 with a malformed response must not look like an empty,
         // verified manufacturer catalog.
-        if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences))
+        if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences) || !data.audiences.includes(audience) || data.documents.some(d=>!d||d.audience!==audience||!Array.isArray(d.models)||d.models.some(m=>typeof m!=='string')||typeof d.title!=='string'||typeof d.system!=='string'||typeof d.source!=='string'||typeof d.url!=='string'||!/^https:\/\//i.test(d.url)))
           throw new Error('invalid_techbase');
         setPayload(data);
       }})
-      .catch(() => { if(active) setError('Не удалось получить каталог. Проверьте подключение и права доступа.'); });
+      .catch((e:unknown) => { if(active) setError(e instanceof ApiError&&e.status===403?'Нет доступа к этому разделу ТехБазы. Проверьте роль и статус верификации.':'Не удалось получить каталог. Проверьте подключение и права доступа.'); });
     return () => { active = false; };
   }, [audience, me?.id, catalogRetry]);
   useEffect(() => {
@@ -55,11 +60,12 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   useEffect(() => {
     if (isMaster) return;
     let active = true;
-    setVehicleError('');
+    setVehicleError('');setGarageLoaded(false);
     get('/api/vehicles').then((data:GarageVehicle[]) => {
       if (active) {
         if(!Array.isArray(data))throw new Error('invalid_garage');
         setVehicles(data);
+        setGarageLoaded(true);
       }
     }).catch(() => {
       if(active) {
@@ -74,6 +80,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const selectedModel = chosen?.model?.trim() || '';
   const selectedYear = chosen?.year || null;
   const docs = useMemo(() => (payload?.documents ?? []).filter(d => {
+    if(vehicleId&&!chosen)return false;
     if (kind !== 'all' && d.kind !== kind) return false;
     if (system && d.system !== system) return false;
     if (documentType && d.type !== documentType) return false;
@@ -88,7 +95,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       if (!words.includes(query.trim().toLowerCase())) return false;
     }
     return true;
-  }),[payload,kind,system,documentType,query,selectedMake,selectedModel,selectedYear]);
+  }),[payload,kind,system,documentType,query,selectedMake,selectedModel,selectedYear,vehicleId,chosen]);
   const systems = [...new Set((payload?.documents ?? []).map(d=>d.system))].sort();
   const groups = [...new Set(docs.map(d=>d.system))].sort().map(name => ({name,entries:docs.filter(d=>d.system===name)}));
   const canSeeMaster = !!payload?.audiences.includes('master');
@@ -109,6 +116,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
           Повторить загрузку гаража
         </button>
       </div>}
+      {!isMaster&&vehicleId&&!chosen&&<div className="banner" role="status">{garageLoaded?'Выбранный автомобиль не найден в вашем гараже.':'Ожидаем данные выбранного автомобиля.'} <button type="button" className="btn ghost small" onClick={()=>{setVehicleId('');setKind('all');}}>Перейти к ручному поиску</button></div>}
       {!isMaster && vehicles.length>0 && <label className="stack">
         <b>Машина из моего гаража</b>
         <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind(e.target.value?'truck':'all');}}>
@@ -154,7 +162,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     {!payload && !error && <div className="card" role="status">Загружаем каталог производителя…</div>}
     {payload && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>
-      {docs.length===0 && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
+      {docs.length===0 && (!vehicleId||chosen) && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
       {groups.map(group => <section className="stack" key={group.name}>
         <h3 className="techbase-system-title">{group.name} <span className="note">({group.entries.length})</span></h3>
         <div className="techbase-grid">
