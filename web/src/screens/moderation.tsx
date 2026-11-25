@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Back } from '../ui.tsx';
+import {usePrivateRead} from './privateRead20261124.ts';
 
 const KINDS: [string, string][] = [['dispute', 'Споры'], ['appeal', 'Обжалования'], ['review', 'Отзывы и отметки']];
 const PRI: Record<number, [string, string]> = { 1: ['Срочно', 'bad'], 2: ['Обычно', 'warn'], 3: ['Не горит', ''] };
@@ -13,6 +14,7 @@ export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}=
 }
 function ModQueueForAccount({initialKind}:{initialKind:'dispute'|'log'}){
   const [kind, setKind] = useState<string>(initialKind);
+  const [qualityOpen,setQualityOpen]=useState(false);
   const log = kind === 'log';
   const q = useLoad(async()=>({kind,payload:await get(`/api/mod/cases?${log ? 'status=resolved' : `kind=${kind}`}`)}), [kind], (e) => e.type === 'mod_case'||e.type==='connection_restored');
   const data=!q.error&&q.data?.kind===kind?q.data.payload:null;
@@ -26,6 +28,8 @@ function ModQueueForAccount({initialKind}:{initialKind:'dispute'|'log'}){
         <div className="card tile"><span className="label">Срочно</span><span className="tile-value" style={{ color: urgent ? 'var(--bad)' : undefined }}>{urgent ?? '—'}</span><span className="note">в этой вкладке</span></div>
       </div>
       <span className="note">Срочные — сверху. Проверка исполнителей и подозрительное — в соседних разделах кабинета.</span>
+      <button type="button" className="btn ghost small" aria-expanded={qualityOpen} onClick={()=>setQualityOpen(v=>!v)}>{qualityOpen?'Скрыть претензии к качеству':'Претензии к качеству ремонта'}</button>
+      {qualityOpen&&<WarrantyQueue/>}
       <div className="scroll-x" role="group" aria-label="Типы обращений">
         {KINDS.map(([k, n]) => <button type="button" key={k} className="chip" aria-pressed={kind === k} onClick={() => setKind(k)}>{n}{counts[k] ? ` · ${counts[k]}` : ''}</button>)}
         <button type="button" className="chip" aria-pressed={log} onClick={() => setKind('log')}>Журнал решений</button>
@@ -45,6 +49,51 @@ function ModQueueForAccount({initialKind}:{initialKind:'dispute'|'log'}){
       )}
     </div>
   );
+}
+
+const QUALITY_DECISIONS=[['not_fault','Недостаток не связан с работой'],['repair_by_original','Устранение первоначальным исполнителем'],['repair_by_alternative','Устранение другим исполнителем'],['partial_refund','Частичный возврат'],['full_refund','Полный возврат'],['needs_external_review','Нужна независимая оценка']] as const;
+function WarrantyQueue(){
+  const {me}=useMe();
+  const scope=(me?.id??'guest')+':quality';
+  const [filter,setFilter]=useState('');
+  const [selected,setSelected]=useState('');
+  const list=usePrivateRead<any[]>(()=>get('/api/admin/warranty-claims'+(filter?'?status='+encodeURIComponent(filter):'')),scope+':'+filter,e=>e.type==='warranty'||e.type==='connection_restored');
+  return <section className="card stack" aria-label="Претензии к качеству ремонта">
+    <b>Претензии к качеству ремонта</b><span className="note">Решение — отдельный этап. Оно не выполняет возврат или удержание автоматически.</span>
+    <select className="field" aria-label="Статус претензии" value={filter} onChange={e=>{setFilter(e.target.value);setSelected('');}}>
+      <option value="">Все статусы</option><option value="submitted">Получены</option><option value="reviewing">На проверке</option><option value="appealed">Апелляции</option><option value="decision_recorded">Решения</option>
+    </select>
+    {!list.data?<><Loading error={list.error}/>{list.error&&<button className="btn ghost small" onClick={list.reload}>Повторить загрузку претензий</button>}</>:list.data.length===0?<span className="note">По выбранному статусу претензий нет.</span>:list.data.map(row=><button key={row.id} type="button" className="linkrow" aria-pressed={selected===row.id} onClick={()=>setSelected(row.id)}><span><b>Претензия №{row.number} · заказ №{row.order_number}</b><small>{row.defect_description}</small></span><span>›</span></button>)}
+    {selected&&<WarrantyReview key={scope+':'+selected} id={selected} refresh={list.reload}/>}
+  </section>;
+}
+function WarrantyReview({id,refresh}:{id:string;refresh:()=>void}){
+  const {me}=useMe();
+  const detail=usePrivateRead<any>(()=>get('/api/warranty-claims/'+id),(me?.id??'guest')+':quality-detail:'+id,e=>e.type==='warranty'||e.type==='connection_restored');
+  const {busy,run}=useAction();
+  const [decision,setDecision]=useState('');
+  const [note,setNote]=useState('');
+  const [uncertain,setUncertain]=useState(false);
+  const d=detail.data;
+  const act=async(path:string,body:unknown,label:string)=>{
+    if(busy||uncertain||!d)return;
+    const r=await run(()=>post('/api/admin/warranty-claims/'+id+'/'+path,body),label);
+    if(!r?.id)setUncertain(true);else{setNote('');setDecision('');}
+    await detail.reload();refresh();
+  };
+  if(!d)return <div className="stack"><Loading error={detail.error}/>{detail.error&&<button className="btn ghost small" onClick={detail.reload}>Повторить загрузку дела</button>}</div>;
+  return <div className="card stack">
+    <b>Претензия №{d.number}</b><span>Недостаток: {d.defect}</span>{d.evidence&&<p>Доказательства: {d.evidence}</p>}{d.performerExplanation&&<p>Ответ исполнителя: {d.performerExplanation}</p>}
+    {d.decisionNote&&<p>Предыдущее решение: {d.decisionNote}</p>}
+    <details><summary>Журнал рассмотрения</summary>{Array.isArray(d.events)&&d.events.map((e:any,i:number)=><div className="note" key={i}>{fmtTime(e.createdAt)} · {e.data?.note??e.data?.reason??e.event}</div>)}</details>
+    {uncertain&&<div role="alert" className="note">Действие не подтверждено. Сверьте журнал. <button type="button" className="btn ghost small" onClick={()=>setUncertain(false)}>Состояние проверено</button></div>}
+    {['submitted','appealed'].includes(d.status)&&<button className="btn ghost" disabled={busy||uncertain} onClick={()=>void act('review',{},'Проверка начата')}>Взять на проверку</button>}
+    {['submitted','reviewing','appealed'].includes(d.status)&&<>
+      <label className="stack">Решение<select className="field" value={decision} onChange={e=>setDecision(e.target.value)}><option value="">Выберите решение</option>{QUALITY_DECISIONS.map(([k,label])=><option key={k} value={k}>{label}</option>)}</select></label>
+      <label className="stack">Факты и мотивировка<textarea className="field" maxLength={3000} value={note} onChange={e=>setNote(e.target.value)}/></label>
+      <button className="btn" disabled={busy||uncertain||!decision||note.trim().length<20} onClick={()=>void act('decide',{decision,note},'Решение зафиксировано')}>Зафиксировать решение</button>
+    </>}
+  </div>;
 }
 
 export function ModCase({id}:{id:string}){
