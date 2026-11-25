@@ -38,6 +38,8 @@ export const CONSULT_QUICK_REPLIES = [
   'Спасибо, помогло',
 ];
 
+export type ChatWindow = {mode:'latest'|'before'|'after';limit:number;cursor?:number};
+
 export class ChatService {
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService) {}
 
@@ -61,8 +63,13 @@ export class ChatService {
     return assignment ? 'client' : null;
   }
 
-  async list(user: AuthUser, orderId: string, afterId = 0) {
+  async list(user: AuthUser, orderId: string, afterId = 0, window?: ChatWindow) {
     if (!Number.isSafeInteger(afterId) || afterId < 0) throw bad('bad_cursor', 'Некорректная позиция переписки');
+    if (window && (!['latest','before','after'].includes(window.mode) ||
+      !Number.isSafeInteger(window.limit) || window.limit < 1 || window.limit > 500 ||
+      (window.mode === 'latest' ? window.cursor !== undefined :
+        !Number.isSafeInteger(window.cursor) || window.cursor! < (window.mode === 'before' ? 1 : 0))))
+      throw bad('bad_cursor', 'Некорректное окно переписки');
     return this.db.tx(async q => {
       const order = await q.one<{
         client_id:string; created_by:string; performer_id:string|null; vehicle_id:string|null;
@@ -72,16 +79,25 @@ export class ChatService {
       // Invitation grants a redacted order preview, never private history.
       const role = await this.liveActor(q,user,order);
       if (!role) throw forbidden('Переписка доступна только участникам заявки');
-      const msgs = await q.query(
+      const descending = !!window && window.mode !== 'after';
+      const filter = window?.mode === 'latest' ? '' : window?.mode === 'before' ? 'and m.id < $2' : 'and m.id > $2';
+      const params = window?.mode === 'latest' ? [orderId, window.limit+1] : [orderId, window?.cursor ?? afterId, window ? window.limit+1 : 500];
+      const fetched = await q.query<{id:number;[key:string]:any}>(
         `select m.id::int as id, m.sender_id, u.name as sender_name, m.kind, m.body, m.masked, m.created_at,
                 case when m.sender_id is null then 'system'
                      when m.sender_id = o.performer_id then 'performer'
                      when m.sender_id in (o.client_id, o.created_by) then 'client'
                      else 'support' end as sender_role
            from chat_messages m join orders o on o.id = m.order_id left join users u on u.id = m.sender_id
-          where m.order_id=$1 and m.id > $2 order by m.id limit 500`,
-        [orderId, afterId],
+          where m.order_id=$1 ${filter} order by m.id ${descending ? 'desc' : 'asc'} limit ${window?.mode === 'latest' ? '$2' : '$3'}`,
+        params,
       );
+      const hasMore = !!window && fetched.length > window.limit;
+      const msgs = window ? fetched.slice(0,window.limit) : fetched;
+      if (descending) msgs.reverse();
+      const page = window ? { mode:window.mode, hasMore, oldestId:msgs[0]?.id ?? null,
+        newestId:msgs[msgs.length-1]?.id ?? null,
+        nextCursor:hasMore ? (descending ? msgs[0].id : msgs[msgs.length-1].id) : null } : undefined;
       // Legacy shared system messages sometimes contained the customer's surcharge and final bill.
       // Never return those amounts to a performer/candidate, including old archived messages.
       const visibleMessages = role === 'performer' || role === null ? (msgs as any[]).map(m => {
@@ -113,7 +129,7 @@ export class ChatService {
       const participants = people.filter(p => activePeople.has(p.id))
         .map(p => ({ who: p.who, name: p.name, you: p.id === user.id }));
       if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
-      return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role) };
+      return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role), ...(page ? {page} : {}) };
     });
   }
 
