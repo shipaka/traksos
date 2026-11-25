@@ -165,3 +165,14 @@ test('calendar training separates pending proposals, reservations and actual ava
   for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
     assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
 });
+
+test('repeat invitation training preserves old financial state and requires acceptance',()=>{
+  const item=allowedScenario('master','repeat-after-emergency-release');
+  assert.ok(item);
+  const teaching=item.steps.map(s=>[s.situation,s.why,...s.choices.map(c=>c.feedback)].join(' ')).join(' ');
+  assert.match(teaching,/не означает поступления денег/);
+  assert.match(teaching,/не означает автоматического назначения/);
+  assert.match(teaching,/Обычные ограничения доступности и резерва сохраняются/);
+  assert.match(teaching,/не меняет финансовый статус старого заказа/);
+  assert.equal(allowedScenario('driver',item.id),null);
+});
