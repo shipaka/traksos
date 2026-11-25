@@ -1,10 +1,11 @@
 /* Real courier role: approved 20 Nov twin Android screens. Never fake stops,
  * codes, locations, contact numbers, payments or customer receipt.
  */
-import {useState} from 'react';
+import {useRef,useState} from 'react';
 import {get,put,post} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './courierApproved20261120.css';
+import {usePrivateRead} from './privateRead20261124.ts';
 
 type CourierStatus='assigned'|'picked_up'|'en_route'|'arrived'|'code_verified'|'received'|'cancelled';
 type PackageItem={productId:string;name:string;qty:number;article?:string|null};
@@ -148,18 +149,28 @@ export function CourierDelivery({id}:{id:string}){
   return <CourierDeliveryForJob key={(me?.id??'guest')+':'+id} id={id}/>;
 }
 function CourierDeliveryForJob({id}:{id:string}){
-  const d=useLoad<CourierJob>(()=>get('/api/courier/jobs/'+encodeURIComponent(id)),[id],e=>e.type==='shop');
+  const {me}=useMe();
+  const d=usePrivateRead<CourierJob>(()=>get('/api/courier/jobs/'+encodeURIComponent(id)),
+    'courier:'+me?.id+':'+id,e=>e.type==='shop'||e.type==='connection_restored');
   const {busy,run}=useAction();
   const [code,setCode]=useState('');
-  const job=d.error?null:d.data;
+  const actionLock=useRef(false);
+  const [reconciling,setReconciling]=useState(false);
+  const job=d.error||reconciling?null:d.data;
   const next=job&&NEXT[job.status];
   const nav=job&&directions(job.deliveryAddress);
-  const advance=async(status:CourierStatus)=>{
-    if(!job)return;
-    const result=await run(()=>post('/api/courier/jobs/'+encodeURIComponent(id)+'/stage',{status}),
-      'Этап доставки обновлён');
-    if(result)d.reload();
+  const mutate=async(path:string,payload:unknown,message:string)=>{
+    if(!job||actionLock.current)return;
+    actionLock.current=true;setReconciling(true);
+    try {await run(()=>post('/api/courier/jobs/'+encodeURIComponent(id)+path,payload),message);}
+    finally {
+      // A rejected code consumes a server-side attempt; a lost response may
+      // have committed. Never guess the counter or replay the write.
+      setCode('');
+      try {await d.reload();}finally{actionLock.current=false;setReconciling(false);}
+    }
   };
+  const advance=(status:CourierStatus)=>mutate('/stage',{status},'Этап доставки обновлён');
   return <main className="courier-android courier-detail" aria-label="Карточка курьерской доставки">
     <a className="courier-back" href="#/courier/jobs">← К моим доставкам</a>
     {!job?<section className="courier-trip" role={d.error?'alert':'status'}>
@@ -191,10 +202,8 @@ function CourierDeliveryForJob({id}:{id:string}){
           placeholder="• • • • • •" value={code}
           onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))}/>
         <button className="courier-primary courier-wide" type="button" disabled={busy||code.length!==6||job.codeAttemptsRemaining===0}
-          onClick={async()=>{
-            const result=await run(()=>post('/api/courier/jobs/'+encodeURIComponent(id)+'/verify',{code}),
-              'Код проверен — ожидаем подтверждение получателя');
-            setCode('');if(result)d.reload();
+          onClick={()=>{if(code.length===6&&job.codeAttemptsRemaining>0)
+            void mutate('/verify',{code},'Код проверен — ожидаем подтверждение получателя');
           }}>Проверить код вручения</button>
         <small>Осталось попыток: {job.codeAttemptsRemaining}. Код не закрывает заказ автоматически.</small>
       </section>}
