@@ -65,7 +65,7 @@ export async function api<T = any>(method: string, path: string, body?: unknown,
   // The deadline includes both headers AND the complete response body.
   // A peer can send headers promptly and then stop transmitting JSON.
   const timeout = new AbortController();
-  const timer = setTimeout(() => timeout.abort(), method === 'GET' ? 12_000 : 30_000);
+  const timer = setTimeout(() => timeout.abort(), path === '/api/auth/logout' ? 5_000 : method === 'GET' ? 12_000 : 30_000);
   try {
     r = await fetch(API_URL + path, {
       method,
