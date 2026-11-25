@@ -68,14 +68,19 @@ export class AuctionService {
     const ms=stage?stage.waitSeconds*1000:
       order.is_sos?all.dispatch.sosAuctionSeconds*1000:all.dispatch.auctionMinutes*60_000;
     const until=new Date(this.now().getTime()+ms);
-    const claimed=await this.db.query<any>(
-      `update orders set auction_until=$3,auto_pick=$4,dispatch_started_at=coalesce(dispatch_started_at,$5)
-        where id=$1 and status='searching' and sos_dispatch_stage=$2 and auction_until is null
-          and not exists(select 1 from order_dispatch d where d.order_id=$1 and d.status='ringing')
-        returning *`,
-      [orderId,stageIndex,until,!!order.is_sos,this.now()]);
-    if(!claimed.length)return;
-    order=claimed[0];
+    const claimed=await this.db.tx(async q=>{
+      // Read the capacity after taking the same order lock as ringNext.
+      // A single UPDATE subquery can otherwise observe pre-lock rows.
+      const current=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!current||current.status!=='searching'||current.auction_until||
+         Number(current.sos_dispatch_stage??0)!==stageIndex)return null;
+      if(await q.one("select 1 from order_dispatch where order_id=$1 and status='ringing' limit 1",[orderId]))return null;
+      return q.one<any>(
+        "update orders set auction_until=$2,auto_pick=$3,dispatch_started_at=coalesce(dispatch_started_at,$4) where id=$1 returning *",
+        [orderId,until,!!order.is_sos,this.now()]);
+    });
+    if(!claimed)return;
+    order=claimed;
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, false as is_priority, p.paused, p.line_status, p.verification,
