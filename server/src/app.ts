@@ -569,6 +569,7 @@ export function createApp(d: Deps) {
   r.get('/api/support', true, (c: AuthedCtx) => support.mine(c.user));
   r.post('/api/support', true, (c: AuthedCtx) => support.open(c.user, parse(z.object({
     topic: z.string().min(2).max(80), text: z.string().min(1).max(2000), orderId: z.string().uuid().optional(), ledgerEntryId: z.number().int().positive().optional(),
+    requestKey: z.string().uuid().optional(), requestedRole: z.enum(['admin','moderator']).optional(),
   }), c.body)));
   r.get('/api/support/:id', true, (c: AuthedCtx) => support.thread(c.user, c.params.id));
   r.post('/api/support/:id/messages', true, (c: AuthedCtx) => support.post(c.user, c.params.id, parse(z.object({ body: z.string().min(1).max(2000) }), c.body).body));
