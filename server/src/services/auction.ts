@@ -178,7 +178,8 @@ export class AuctionService {
         throw conflict('busy', 'Вы заняты или не на линии');
       }
       const still = await q.one(`select 1 from order_dispatch d join orders o on o.id=d.order_id
-          where d.order_id=$1 and d.performer_id=$2 and d.status='bidding' and o.status='searching'`, [orderId, user.id]);
+          where d.order_id=$1 and d.performer_id=$2 and d.status='bidding' and o.status='searching'
+          and (not o.auto_pick or o.auction_until is null or o.auction_until >= $3)`, [orderId, user.id,this.now()]);
       if (!still) throw conflict('too_late', 'Клиент уже выбрал исполнителя');
       return q.one(
         `insert into bids(order_id, performer_id, price, hour_price, eta_minutes) values ($1,$2,$3,$4,$5)
@@ -194,8 +195,11 @@ export class AuctionService {
   }
 
   async withdraw(user: AuthUser, orderId: string) {
-    await this.db.query(`update bids set status='withdrawn', updated_at=now() where order_id=$1 and performer_id=$2 and status='active'`, [orderId, user.id]);
-    await this.db.query(`update order_dispatch set status='declined', responded_at=$3 where order_id=$1 and performer_id=$2 and status='bidding'`, [orderId, user.id, this.now()]);
+    await this.db.tx(async q=>{
+      await q.one('select user_id from performer_profiles where user_id=$1 for update',[user.id]);
+      await q.query(`update bids set status='withdrawn', updated_at=now() where order_id=$1 and performer_id=$2 and status='active'`, [orderId, user.id]);
+      await q.query(`update order_dispatch set status='declined', responded_at=$3 where order_id=$1 and performer_id=$2 and status='bidding'`, [orderId, user.id, this.now()]);
+    });
     const o = await this.db.one('select client_id, created_by from orders where id=$1', [orderId]);
     if (o) this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true });
     return { ok: true };
@@ -263,7 +267,10 @@ export class AuctionService {
       }
       // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
       // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
+      const profile=await q.one<{line_status:string;paused:boolean;verification:string;user_status:string;extras:any}>(`select p.line_status,p.paused,p.verification,p.extras,u.status as user_status from performer_profiles p join users u on u.id=p.user_id where p.user_id=$1 for update of p`,[pre.performer_id]);
+      if(!profile||profile.paused||profile.user_status!=='active'||profile.extras?.vacation||!['online','on_call'].includes(profile.line_status))throw conflict('performer_unavailable','Исполнитель больше не на линии — выберите другого');
+      const orderPolicy=await q.one<{verified_only:boolean}>('select verified_only from orders where id=$1',[orderId]);
+      if(orderPolicy?.verified_only&&profile.verification!=='approved')throw conflict('performer_unavailable','Исполнитель больше не соответствует условию проверки');
       const f0 = await q.one(`select * from bids where id=$1 and order_id=$2 and status='active'`, [offerId, orderId]);
       if (!f0) throw conflict('offer_gone', 'Этот отклик уже недоступен');
       const upd = await q.one(
