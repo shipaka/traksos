@@ -5,7 +5,7 @@ import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
-import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
+import { rankCandidates, performerKindFor, type Candidate, type DispatchOrder } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, cappedPct, commissionPct } from '../domain/money.ts';
 import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
@@ -505,7 +505,7 @@ export class OrdersService {
     // Do not acquire profile locks in this transaction: accept uses the
     // performer lock first, then order, then dispatch row.
     const claimed=await this.db.tx(async q=>{
-      const order=await q.one('select * from orders where id=$1 for update',[orderId]);
+      const order=await q.one<DispatchOrder & {status:string;auction_until:Date|null;is_sos:boolean;client_id:string;created_by:string;estimate:any;number:number;problem:string|null;address:string|null;site:any;description:string|null}>('select * from orders where id=$1 for update',[orderId]);
       if(!order||order.status!=='searching'||order.auction_until)return null;
       const parallel=order.is_sos?all.dispatch.parallelSos:all.dispatch.parallel;
       const ringing=await q.one<{c:number}>(
