@@ -407,13 +407,14 @@ function WorkerNoticesScoped({userId,mode,specialties}:{
   const [clock,setClock]=useState(()=>Date.now());
   const [online,setOnline]=useState(()=>navigator.onLine);
   useEffect(()=>{
-    let lastRefresh=0;
+    let lastRefresh=-Infinity;
     const tick=()=>setClock(Date.now());
     const refresh=()=>{
       tick();setOnline(navigator.onLine);
       if(document.visibilityState==='hidden'||!navigator.onLine)return;
-      const now=Date.now();
-      // Focus and visibility can arrive together. Avoid duplicate GETs.
+      const now=performance.now();
+      // Focus and visibility can arrive together. Avoid duplicate GETs,
+      // including after a user changes the device clock.
       if(now-lastRefresh<1000)return;
       lastRefresh=now;
       void list.reload();void promos.reload();
