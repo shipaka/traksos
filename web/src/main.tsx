@@ -72,6 +72,8 @@ import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
+import { CABINET_LANDINGS, canOpenCabinetMode, fallbackCabinetMode, hybridCabinetChoices, type CabinetMode } from './cabinetMode.ts';
+import { HybridCabinetSwitch } from './hybridCabinetSwitch.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
@@ -157,7 +159,7 @@ function UnavailableRole({label}:{label:string}) {
     <a href="#/" className="btn">Вернуться в свой рабочий кабинет</a>
   </main>;
 }
-type Mode = 'client' | 'performer' | 'admin' | 'moderator' | 'service' | 'insurer' | 'inspection' | 'courier';
+type Mode = CabinetMode;
 const PERFORMER_ROLES = ['master', 'tow', 'service'];
 
 
@@ -324,10 +326,13 @@ function App() {
   // #/as/client, #/as/performer, #/as/admin — переключить кабинет и открыть его главную
   useEffect(() => {
     const [x, m] = route;
-    if (x !== 'as') return;
-    if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
-    location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
-  }, [route.join('/')]); // eslint-disable-line
+    if (x !== 'as' || !ready) return;
+    if (!me) { location.replace('#/login'); return; }
+    const target = canOpenCabinetMode(me.roles, m) ? m
+      : canOpenCabinetMode(me.roles, mode) ? mode : fallbackCabinetMode(me.roles);
+    setMode(target);
+    location.replace('#/' + CABINET_LANDINGS[target]);
+  }, [route.join('/'), ready, me?.id, me?.roles.join(','), mode]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
@@ -409,12 +414,8 @@ function App() {
   const isInspection = me.roles.includes('inspection_operator');
   const isCourier = me.roles.includes('courier');
   // A saved/forced mode must never expose navigation for a role the account lacks.
-  const fallback: Mode = isCourier ? 'courier' : isInsurer ? 'insurer' : isInspection ? 'inspection'
-    : isCustomer ? 'client' : isPerformer ? 'performer'
-    : isService ? 'service' : isAdmin ? 'admin' : isModerator ? 'moderator' : 'client';
-  const permitted = mode === 'courier' ? isCourier : mode === 'insurer' ? isInsurer : mode === 'inspection' ? isInspection : mode === 'admin' ? isAdmin : mode === 'moderator' ? isModerator
-    : mode === 'performer' ? isPerformer : mode === 'service' ? isService
-    : isCustomer;
+  const fallback: Mode = fallbackCabinetMode(me.roles);
+  const permitted = canOpenCabinetMode(me.roles,mode);
   const allowedMode: Mode = permitted ? mode : fallback;
   const effMode: Mode = a === 'work' && isPerformer ? 'performer'
     : a === 'admin' && isAdmin ? 'admin' : a === 'moderation' && isModerator ? 'moderator'
@@ -582,6 +583,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     </div>
   );
   const here = '/'+route.join('/');
+  const hasHybridSwitch = !!me && hybridCabinetChoices(me.roles,me.performer?.kind).some(choice=>choice.mode===mode);
   const shellHref=(href:string)=>'#'+href;
   // На телефоне оставляем только рабочие действия. Все прежние маршруты
   // сохраняются через меню; компьютерная боковая навигация остаётся полной.
@@ -789,12 +791,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           {me && <SandboxModeBadge />}
           {!me && native.isPreviewBuild && <a href="#/android-review/client" className="and19-review-entry" style={{color:'#ffad70',fontSize:12}}>Посмотреть кабинеты APK</a>}
           {!me && !isAuthEntry && !(native.isApp && route.length === 0) && <div className="guest-header-actions"><a href="#/login">Войти</a><a href="#/register" className="register">Зарегистрироваться</a></div>}
-          {me && mode === 'performer' && <span className="pill accent">исполнитель</span>}
-          {me && mode === 'admin' && <span className="pill accent">админ</span>}
-          {me && mode === 'moderator' && <span className="pill accent">модерация</span>}
-          {me && mode === 'insurer' && <span className="pill accent">страхование</span>}
-          {me && mode === 'service' && <span className="pill accent">рембаза</span>}
-          {me && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
+          {me && !hasHybridSwitch && mode === 'performer' && <span className="pill accent">исполнитель</span>}
+          {me && !hasHybridSwitch && mode === 'admin' && <span className="pill accent">админ</span>}
+          {me && !hasHybridSwitch && mode === 'moderator' && <span className="pill accent">модерация</span>}
+          {me && !hasHybridSwitch && mode === 'insurer' && <span className="pill accent">страхование</span>}
+          {me && !hasHybridSwitch && mode === 'service' && <span className="pill accent">рембаза</span>}
+          {me && hasHybridSwitch && <HybridCabinetSwitch roles={me.roles} mode={mode} performerKind={me.performer?.kind}
+            onChoose={next=>{location.hash='#/as/'+next;}} />}
+          {me && !hasHybridSwitch && me.roles.includes('insurer') && me.roles.includes('inspection_operator') &&
             (mode === 'insurer' || mode === 'inspection') &&
             <nav className="cabinet-role-switch" aria-label="Рабочее направление партнёра">
               <a href="#/as/insurer" aria-label="Кабинет страхования"
@@ -802,7 +806,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a href="#/as/inspection" aria-label="Кабинет техосмотра"
                 aria-current={mode === 'inspection' ? 'page' : undefined}>Техосмотр</a>
             </nav>}
-          {me && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
+          {me && !hasHybridSwitch && me.roles.some(r => r === 'master' || r === 'tow') && me.roles.some(r => r === 'admin' || r === 'moderator') &&
             <nav className="cabinet-role-switch" aria-label="Режим кабинета">
               <a href="#/as/performer" aria-label="Выездной мастер" aria-current={mode === 'performer' ? 'page' : undefined}>Мастер</a>
               {me.roles.includes('admin')
