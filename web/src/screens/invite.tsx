@@ -5,7 +5,7 @@ import { useToast, Loading, useMe } from '../ui.tsx';
 import { usePrivateRead } from './privateRead20261124.ts';
 import { qrSvg } from '../qr.ts';
 
-const pts = (k: number) => Math.round(k / 100).toLocaleString('ru-RU');
+const pts = (k: number) => Number.isSafeInteger(k)?(k/100).toLocaleString('ru-RU',{maximumFractionDigits:2}):'—';
 const KIND: Record<string, string> = {
   welcome: 'Подарок за вход по приглашению', ref_client: 'За приглашённого клиента', ref_performer: 'За приглашённого исполнителя',
   ref_service: 'За приглашённую рембазу', spend: 'Погашено баллами', expire: 'Сгорело', admin: 'От TrakSOS',
@@ -21,7 +21,7 @@ export function Invite() {
 }
 
 function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string}) {
-  const d = usePrivateRead<any>(() => get('/api/me/referral'), scope, (e) => e.type === 'points' || e.type === 'order');
+  const d = usePrivateRead<any>(() => get('/api/me/referral'), scope, (e) => e.type === 'points' || e.type === 'order' || e.type==='connection_restored');
   const active=useRef(true);
   useLayoutEffect(()=>{active.current=true;return ()=>{active.current=false;};},[]);
   const current=()=>active.current && getToken()===token;
@@ -111,8 +111,8 @@ function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string
         </div>
       </details>
 
-      <span className="label">История</span>
-      {!d.data.entries.length ? <div className="empty">Начислений пока нет</div> : (
+      <div className="between"><span className="label">Последние операции · до 50</span><button type="button" className="btn ghost small" onClick={()=>void d.reload()}>Обновить</button></div>
+      {!d.data.entries.length ? <div className="empty">Операций с баллами пока нет</div> : (
         <div className="stack">
           {d.data.entries.map((e: any) => (
             <div key={e.id} className="card" style={{ gap: 4 }}>
