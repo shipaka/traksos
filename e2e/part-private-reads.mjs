@@ -59,7 +59,7 @@ try{
   const retry=()=>page.getByRole('button',{name:'Повторить загрузку'}).click();
   const path=async(i,expected)=>assert.equal(await page.evaluate(i=>window.__p.reads[i].path,i),expected);
   await count(1);await answer(0,list('r1','A-ORDER'));await visible('A-ORDER');
-  await emit({type:'connection_restored'});await count(2);await hidden('A-ORDER');
+  await emit({type:'part_recommendations_changed'});await count(2);await hidden('A-ORDER');
   await change('B','order','one');await count(3);
   await answer(1,list('old','A-LATE'));await answer(2,list('b','B-ORDER'));await visible('B-ORDER');await hidden('A-LATE');
   await emit({type:'connection_restored'});await count(4);await answer(3,null,true);await hidden('B-ORDER');
@@ -88,6 +88,21 @@ try{
   await answer(12,{products:[{id:'old',name:'OLD-CANDIDATE'}],hasMore:false});
   await answer(13,{items:[],hasMore:false,shopEnabled:false});await visible('В этом разделе нет запросов');
   assert.equal(await page.getByRole('button',{name:/OLD-CANDIDATE/}).count(),0);
+  await emit({type:'part_recommendations_changed'});await count(15);
+  await path(14,'/api/admin/shop/part-sourcing?status=requested&page=0');
+  await hidden('В этом разделе нет запросов');
+  await answer(14,{items:[row('new','QUEUE-REFRESH')],hasMore:false,shopEnabled:false});await visible('QUEUE-REFRESH');
+  await change('B','booking','only-current');await count(16);
+  await answer(15,list('booking','BOOKING-CURRENT'));await visible('BOOKING-CURRENT');
+  await emit({type:'part_recommendations_changed'});await count(17);
+  await path(16,'/api/bookings/only-current/part-recommendations');await hidden('BOOKING-CURRENT');
+  await answer(16,null,true);await page.getByRole('alert').waitFor();
+  await change('B','history','truck3');await count(18);
+  await answer(17,{items:[row('history','HISTORY-CURRENT')],hasMore:false});await visible('HISTORY-CURRENT');
+  await emit({type:'part_recommendations_changed'});await count(19);
+  await path(18,'/api/shop/part-recommendations?page=0&vehicleId=truck3');await hidden('HISTORY-CURRENT');
+  await answer(18,{items:[],hasMore:false});await visible('Рекомендаций пока нет');
+
   assert.deepEqual(errors,[]);await page.close();
  }
  console.log('PASS recommendation private reads, errors, source and page isolation, admin selection and session rotation');
