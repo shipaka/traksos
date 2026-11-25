@@ -1,5 +1,5 @@
 import {useRef, useState} from 'react';
-import {post} from '../api.ts';
+import {post, put} from '../api.ts';
 import {useAction, useMe} from '../ui.tsx';
 import {LINE} from '../dict.ts';
 import {native} from '../native.ts';
@@ -19,23 +19,27 @@ export function PcPerformerAvailability({onChanged,mobile=false}:{onChanged:()=>
   const known=Object.prototype.hasOwnProperty.call(LINE,p.line_status);
   const onJob=p.line_status==='on_job';
   const locked=busy||saving||onJob||!known;
-  const label=p.line_status==='online'?'На линии':known?LINE[p.line_status]:'Статус уточняется';
+  const vacation=p.extras?.vacation===true;
+  const lineLabel=p.line_status==='online'?'На линии':known?LINE[p.line_status]:'Статус уточняется';
+  const label=onJob?lineLabel:vacation?'В отпуске':p.paused===true?'Приём заявок на паузе':lineLabel;
   const until=p.line_status==='busy' && p.busy_until ? new Date(p.busy_until) : null;
-  async function choose(lineStatus:string,minutes?:number) {
+  async function save(action:()=>Promise<unknown>,goingOnline=false) {
     if (pending.current||locked) return;
     pending.current=true;
     setSaving(true);
     try {
-      const result=await run(()=>post('/api/performer/line',{
-        lineStatus,...(minutes?{busyUntil:new Date(Date.now()+minutes*60000).toISOString()}:{}),
-      }));
-      if(result && lineStatus==='online' && native.isApp) native.performerOnline();
+      const result=await run(action);
+      if(result && goingOnline && native.isApp) native.performerOnline();
       // Even if the response was lost, re-read the authoritative state.
       await reload();
       onChanged();
       if(result){setOpen(false);setBreakOpen(false);}
     } finally {pending.current=false;setSaving(false);}
   }
+  const choose=(lineStatus:string,minutes?:number)=>save(()=>post('/api/performer/line',{
+    lineStatus,...(minutes?{busyUntil:new Date(Date.now()+minutes*60000).toISOString()}:{}),
+  }),lineStatus==='online');
+  const toggleVacation=()=>save(()=>put('/api/performer/extras',{vacation:!vacation}));
   return <div className={mobile?"stack performer-mobile-availability":"stack"} aria-label="Доступность исполнителя">
     <button className="opt" type="button" aria-expanded={open&&!onJob} disabled={locked}
       onClick={()=>{setOpen(v=>!v);setBreakOpen(false);}}>
@@ -44,7 +48,8 @@ export function PcPerformerAvailability({onChanged,mobile=false}:{onChanged:()=>
     </button>
     {until && Number.isFinite(until.getTime()) && <p className="note">Перерыв до {until.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p>}
     {p.paused===true&&<p className="note">Приём новых заявок приостановлен.</p>}
-    {p.extras?.vacation===true&&<p className="note">В отпуске — новые заявки не приходят.</p>}
+    {vacation&&<p className="note">Новые заявки не приходят до выхода из отпуска.</p>}
+    {!onJob&&(vacation||p.paused===true)&&<p className="note">Статус смены: {lineLabel}</p>}
     {open&&!onJob&&known&&<div className="stack" aria-label="Выбор доступности">
       {statuses.map(([id,title])=><button key={id} className="opt" type="button" disabled={busy||saving}
         aria-pressed={p.line_status===id} onClick={()=>void choose(id)}>{title}</button>)}
@@ -52,7 +57,10 @@ export function PcPerformerAvailability({onChanged,mobile=false}:{onChanged:()=>
         onClick={()=>setBreakOpen(v=>!v)}>Перерыв · выбрать время</button>
       {breakOpen&&<div className="grid2">{breaks.map(([minutes,title])=><button key={minutes} className="seg"
         type="button" disabled={busy||saving} onClick={()=>void choose('busy',minutes)}>{title}</button>)}</div>}
+      <button className="opt" type="button" disabled={busy||saving} aria-pressed={vacation}
+        onClick={()=>void toggleVacation()}>{vacation?'Выйти из отпуска':'В отпуск'}</button>
+      <a className={mobile?"note":"approved-pc-small-link"} href="#/work/me/schedule">Настройки графика →</a>
     </div>}
-    <a className={mobile?"note":"approved-pc-small-link"} href="#/work/me/schedule">График и отпуск →</a>
+    {(!open||onJob||!known)&&<a className={mobile?"note":"approved-pc-small-link"} href="#/work/me/schedule">Настройки графика →</a>}
   </div>;
 }
