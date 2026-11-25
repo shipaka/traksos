@@ -147,6 +147,7 @@ export class OrdersService {
       const current = await this.db.one<{ok:number}>(`select 1 as ok from users u
         join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
         where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+          and u.status='active' and u.deleted_at is null
         limit 1`, [user.id, clientId]);
       if (!current) throw forbidden('Водитель больше не закреплён за автопарком');
     }
@@ -278,13 +279,15 @@ export class OrdersService {
     // Lock assignment before the driver row, matching QR's lock order.
     const { order, gate, reused } = await this.db.tx(async (q) => {
       if (user.owner_id) {
-        const owner = await q.one('select id from users where id=$1 for no key update', [clientId]);
+        const owner = await q.one(`select id from users where id=$1 and status='active' and deleted_at is null
+          and owner_id is null and 'client'=any(roles) and not ('driver'=any(roles)) for no key update`, [clientId]);
         if (!owner) throw forbidden('Автопарк больше недоступен');
         const vehicle = await q.one(`select id from vehicles where owner_id=$1 and driver_id=$2
           and ($3::uuid is null or id=$3) order by id limit 1 for share`, [clientId, user.id, i.vehicleId ?? null]);
         const driver = await q.one(`select id from users where id=$1 and owner_id=$2
-          and 'driver'=any(roles) for share`, [user.id, clientId]);
-        if (!vehicle || !driver) throw forbidden('Вы больше не закреплены за машиной этого автопарка');
+          and 'driver'=any(roles) and status='active' and deleted_at is null for share`, [user.id, clientId]);
+        if (!vehicle || !driver || !user.roles.includes('driver'))
+          throw forbidden('Вы больше не закреплены за машиной этого автопарка');
         // A same-key replay waiting behind another fleet creation must
         // not be rejected by a newly exhausted limit or changed settings.
         if (requestKey) {
@@ -399,7 +402,8 @@ export class OrdersService {
     const r = await q.one<{ s: string }>(
       `select coalesce(sum(coalesce(call_out_amount::bigint, (estimate->>'callOut')::bigint, 0) + coalesce(work_amount::bigint, 0)), 0)::text as s from orders
         where created_by=$1 and client_id=$2 and status not in ('cancelled','no_performer','awaiting_owner')
-          and created_at >= date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow'`, [driverId, ownerId]);
+          and created_at >= (date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow')
+          and created_at < ((date_trunc('month', now() at time zone 'Europe/Moscow') + interval '1 month') at time zone 'Europe/Moscow')`, [driverId, ownerId]);
     const spent = Number(r?.s ?? '0');
     if (!Number.isSafeInteger(spent)) throw new RangeError('Fleet monthly spend exceeds safe integer range');
     return spent;

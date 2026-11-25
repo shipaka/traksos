@@ -378,3 +378,75 @@ test('решение владельца проверяет действующи�
   assert.equal((await reject()).status, 'cancelled');
   assert.equal((await events()).length, 1);
 });
+
+test('месячный лимит учитывает только текущий календарный месяц по Москве', async () => {
+  const fleetOwner = await t.login('+79993334520');
+  const fleetDriver = await t.login('+79993334521');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  const order = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: car }, fleetDriver.token)).order;
+  assert.equal(order.status, 'awaiting_owner');
+  // Synthetic accounting fixture in the disposable database; no provider call.
+  // All four checks use one transaction and the same PostgreSQL clock.
+  await t.db.tx(async q => {
+    const amount = 12345;
+    const offsets = [
+      { offset: '-1 microsecond', expected: 0 },
+      { offset: '0 seconds', expected: amount },
+      { offset: '1 month -1 microsecond', expected: amount },
+      { offset: '1 month', expected: 0 },
+    ];
+    for (const { offset, expected } of offsets) {
+      await q.query(`update orders set status='completed', call_out_amount=$2, work_amount=0,
+        created_at=((date_trunc('month', now() at time zone 'Europe/Moscow') + $3::interval) at time zone 'Europe/Moscow')
+        where id=$1`, [order.id, amount, offset]);
+      assert.equal(await t.app.orders.monthSpent(fleetDriver.id, fleetOwner.id, q), expected, offset);
+    }
+    // Restore the date so later diagnostics are not polluted by a future row.
+    await q.query('update orders set created_at=now() where id=$1', [order.id]);
+  });
+});
+
+test('новая заявка автопарка требует действующих владельца и водителя даже для SOS', async () => {
+  const fleetOwner = await t.login('+79993334522');
+  const fleetDriver = await t.login('+79993334523');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  // Simulate authorization already captured by an in-flight request.
+  const actor = { id: fleetDriver.id, phone: '+79993334523', name: null,
+    roles: ['driver'], status: 'active', owner_id: fleetOwner.id };
+  const create = (isSos: boolean) => t.app.orders.create(actor, { service: 'consult', vehicleId: car, isSos });
+  const denied = (error: unknown) => !!error && typeof error === 'object' &&
+    'status' in error && error.status === 403;
+  const rows = () => t.db.query('select id from orders where client_id=$1 and created_by=$2', [fleetOwner.id, fleetDriver.id]);
+  const originalLaunch = t.app.orders.launch;
+  let launches = 0;
+  t.app.orders.launch = async (user, order) => {
+    launches++;
+    return { order: await t.app.orders.view(user, order.id), confirmationUrl: null };
+  };
+  try {
+    for (const id of [fleetOwner.id, fleetDriver.id]) {
+      try {
+        await t.db.query('update users set deleted_at=now() where id=$1', [id]);
+        await assert.rejects(() => create(false), denied);
+        await assert.rejects(() => create(true), denied);
+        assert.equal((await rows()).length, 0);
+        assert.equal(launches, 0);
+      } finally {
+        await t.db.query('update users set deleted_at=null where id=$1', [id]);
+      }
+    }
+    // A valid driver keeps the existing emergency bypass and normal approval.
+    assert.equal((await create(false)).order.status, 'awaiting_owner');
+    assert.equal((await create(true)).order.status, 'searching');
+    assert.equal((await rows()).length, 2);
+    assert.equal(launches, 1);
+  } finally {
+    t.app.orders.launch = originalLaunch;
+  }
+});
