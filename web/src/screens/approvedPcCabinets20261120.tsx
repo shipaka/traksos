@@ -21,6 +21,7 @@ import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
 import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
+import {ownRatingLabel} from '../ownRating.ts';
 
 export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
 const activeStates = new Set(['searching','accepted','en_route','arrived','working','awaiting_confirmation','pending_client','disputed']);
@@ -392,7 +393,9 @@ function PerformDesk({tow}:{tow:boolean}){
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
   const offers=auctions.data||[];
   return <main className="approved-pc approved-pc-performer">
-    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
+    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}>
+      <a className="approved-pc-small-link" href="#/work/me/level" aria-label={'Мой рейтинг: '+ownRatingLabel(me)}>{ownRatingLabel(me)}</a>
+    </Heading>
     <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
       ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
