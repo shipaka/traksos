@@ -585,9 +585,37 @@ export class OrdersService {
   }
 
 
+  /** Recheck live eligibility immediately before a performer commits to an
+   * invitation or a bid is chosen. Existing invitation distance/ETA is not
+   * recomputed; this check does not change rank or price. Lock user first,
+   * then profile, matching the profile save transaction. */
+  async lockEligiblePerformer(q:Queryable, performerId:string, orderId:string, cashDebtLimit:number) {
+    const actor=await q.one<{roles:string[];status:string;deleted_at:Date|null}>(
+      'select roles,status,deleted_at from users where id=$1 for share',[performerId]);
+    if(!actor||actor.status!=='active'||actor.deleted_at)return false;
+    const profile=await q.one<Candidate>(
+      `select p.*,u.rating,u.status as user_status,
+         (select coalesce(-sum(amount),0)::int from ledger_entries l
+          where l.performer_id=p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
+        from performer_profiles p join users u on u.id=p.user_id
+        where p.user_id=$1 for update of p`,[performerId]);
+    const order=await q.one<any>('select * from orders where id=$1',[orderId]);
+    if(!profile||!order||order.status!=='searching')return false;
+    const role=profile.kind==='ecu'?'master':profile.kind;
+    if(!actor.roles.includes(role)||profile.kind!==performerKindFor(order.service))return false;
+    const excluded=await q.one<{blocked:boolean}>(
+      `select exists(select 1 from performer_blocks where performer_id=$1 and client_id=$2
+        union all select 1 from client_prefs where performer_id=$1 and client_id=$2 and pref='hide') as blocked`,
+      [performerId,order.client_id]);
+    if(excluded?.blocked||performerId===order.client_id||performerId===order.created_by)return false;
+    return rankCandidates(order,[profile],{radiusKm:Infinity,maxCandidates:1,cashDebtLimit,now:this.now()}).length===1;
+  }
+
   async accept(user: AuthUser, orderId: string) {
+    const all=await this.settings.all();
     const res = await this.db.tx(async (q) => {
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [user.id]);
+      if(!await this.lockEligiblePerformer(q,user.id,orderId,all.fees.cashDebtLimit))
+        throw conflict('performer_ineligible','Предложение больше недоступно — обновите список');
       if (await this.hasUpcomingReservation(q, user.id))
         throw conflict('performer_reserved', 'У вас есть подтверждённая запись. Новый выезд пока нельзя принять.');
       const d = await q.one(
