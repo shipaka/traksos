@@ -136,8 +136,8 @@ test('STO calendar retains the appointment through repair, invoice, dispute and 
   const center = await t.db.one<any>("select id from service_centers where owner_id=$1", [station.id]);
   assert.ok(center);
   const item = await t.db.one<any>(`insert into service_bookings
-    (center_id,client_id,vehicle_id,vehicle,need,when_day,when_time,accept_time,status)
-    values($1,$2,$3,'{"brand":"DAF","model":"XF"}','electric','2026-12-15','11:00','12:00','expected') returning id`,
+    (center_id,client_id,created_by,vehicle_id,vehicle,need,when_day,when_time,accept_time,status)
+    values($1,$2,$2,$3,'{"brand":"DAF","model":"XF"}','electric','2026-12-15','11:00','12:00','expected') returning id`,
     [center.id,owner.id,vehicle]);
   const calendarPath = '/api/client/calendar?from=2026-12-15&to=2026-12-15';
   const lifecycle = [
