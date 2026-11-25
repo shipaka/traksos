@@ -45,6 +45,8 @@ export function registerVehicleReferenceRoutes(
   });
 
   r.get('/api/vehicle-reference/vehicles/:id/match',true,async(c:AuthedCtx)=>{
+    if(c.user.status!=='active'||!c.user.roles.some(role=>role==='client'||role==='driver'))
+      throw forbidden('Гараж доступен действующим клиентам и водителям');
     const id=parse(z.string().uuid(),c.params.id);
     const ownerId=c.user.owner_id??c.user.id;
     const car=await db.one<{brand:string;model:string|null}>(
@@ -65,7 +67,7 @@ export function registerVehicleReferenceRoutes(
   // Strict new vehicle creation path: the backend, never an editable text field,
   // resolves exact model/make from the pinned, licensed dataset.
   r.post('/api/vehicle-reference/vehicles',true,async(c:AuthedCtx)=>{
-    if(c.user.owner_id||!c.user.roles.includes('client')||c.user.roles.includes('driver'))
+    if(c.user.status!=='active'||c.user.owner_id||!c.user.roles.includes('client')||c.user.roles.includes('driver'))
       throw forbidden('Машины добавляет владелец автопарка');
     const data=parse(z.object({
       category: z.enum(['truck','trailer','van','bus']),
@@ -77,6 +79,12 @@ export function registerVehicleReferenceRoutes(
     }),c.body);
     const record=await dir.resolve(data.category,data.brandKey,data.modelKey);
     return db.tx(async q=>{
+      // Membership can change while the request waits. Lock the same account
+      // row used by fleet assignment before writing a vehicle or catalog key.
+      const actor=await q.one<{status:string;owner_id:string|null;roles:string[]}>(
+        'select status,owner_id,roles from users where id=$1 for update',[c.user.id]);
+      if(!actor||actor.status!=='active'||actor.owner_id||!actor.roles.includes('client')||actor.roles.includes('driver'))
+        throw forbidden('Требуется действующий аккаунт владельца автопарка');
       const row=await q.one<any>(
         'insert into vehicles(owner_id,brand,model,year,plate,trailer_plate,' +
         'catalog_category,catalog_brand_key,catalog_model_key,catalog_source_version) ' +
@@ -104,6 +112,12 @@ export function registerVehicleReferenceRoutes(
       modelKey:z.string().min(2).max(64),
     }).strict(),c.body);
     return db.tx(async q=>{
+      // Membership can change while the request waits. Lock the same account
+      // row used by fleet assignment before writing a vehicle or catalog key.
+      const actor=await q.one<{status:string;owner_id:string|null;roles:string[]}>(
+        'select status,owner_id,roles from users where id=$1 for update',[c.user.id]);
+      if(!actor||actor.status!=='active'||actor.owner_id||!actor.roles.includes('client')||actor.roles.includes('driver'))
+        throw forbidden('Требуется действующий аккаунт владельца автопарка');
       const car=await q.one<any>(
         'select * from vehicles where id=$1 and owner_id=$2 for update',[id,c.user.id]);
       if(!car)throw notFound('Машина не найдена в вашем гараже');
