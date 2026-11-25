@@ -116,39 +116,41 @@ function RowItem({label,info,active,href,onClick,badge,v}:{label:string;info?:st
   return href?<a className={'approved-pc-row'+(active?' current':'')} href={href}>{body}</a>
     :<button type="button" className={'approved-pc-row'+(active?' current':'')} onClick={onClick}>{body}</button>;
 }
-function Calendar({items=[],kind='orders'}:{
-  items?:any[];kind?:'orders'|'service'|'insurance'|'inspection'
+function Calendar({items=[],kind='orders',loading=false,error=null,retry}:{
+  items?:any[];kind?:'orders'|'service'|'insurance'|'inspection';loading?:boolean;error?:string|null;retry?:()=>void
 }) {
   const [shift,setShift]=useState(0);
   const [chosen,setChosen]=useState('');
   const ref=new Date();const month=new Date(ref.getFullYear(),ref.getMonth()+shift,1);
   const monthDays=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
   const pad=(month.getDay()+6)%7;
+  const unique=Array.from(new Map(items.filter(item=>item?.id!=null).map(item=>[String(item.id),item])).values());
   const counts:Record<string,number>={};
-  items.forEach(item=>{const d=orderDate(item);if(d)counts[d]=(counts[d]||0)+1});
+  unique.forEach(item=>{const d=orderDate(item);if(d)counts[d]=(counts[d]||0)+1});
   const days=Array.from({length:pad},()=>null as number|null).concat(Array.from({length:monthDays},(_,i)=>i+1));
   const monthName=month.toLocaleString('ru-RU',{month:'long',year:'numeric'});
-  const appointments=chosen?items.filter(item=>orderDate(item)===chosen):[];
+  const appointments=chosen?unique.filter(item=>orderDate(item)===chosen):[];
   const href=(item:any)=>kind==='service'?'#/base/car/'+item.id
     :kind==='insurance'?'#/insurance/request/'+item.id
-    :kind==='inspection'?'#/inspections/processing'
+    :kind==='inspection'?'#/inspections/'+encodeURIComponent(String(item.id))
     :'#/order/'+item.id;
   return <Pane title="Календарь">
-    <div className="approved-pc-cal-head"><button onClick={()=>setShift(v=>v-1)} aria-label="Предыдущий месяц">‹</button><b>{monthName}</b><button onClick={()=>setShift(v=>v+1)} aria-label="Следующий месяц">›</button></div>
+    {(loading||error)&&<LoadingBlock error={error} retry={retry}/>}
+    <div className="approved-pc-cal-head"><button type="button" onClick={()=>{setShift(v=>v-1);setChosen('');}} aria-label="Предыдущий месяц">‹</button><b>{monthName}</b><button type="button" onClick={()=>{setShift(v=>v+1);setChosen('');}} aria-label="Следующий месяц">›</button></div>
     <div className="approved-pc-calendar">
       {['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=><small key={d}>{d}</small>)}
       {days.map((day,i)=>day===null?<span key={'blank'+i}/>:(()=>{
         const date=dateIso(new Date(month.getFullYear(),month.getMonth(),day));
         return <button type="button" key={date} onClick={()=>setChosen(date)} className={(chosen===date?'chosen ':'')+(date===todayISO()?'today':'')}
-          aria-label={date+', записей: '+(counts[date]||0)}>{day}{counts[date]>0&&<i aria-hidden="true"/>}</button>;
+          aria-label={date+(loading||error?', число записей не подтверждено':', записей: '+(counts[date]||0))} aria-pressed={chosen===date}>{day}{counts[date]>0&&<i aria-hidden="true"/>}</button>;
       })())}
     </div>
     {chosen&&<div className="approved-pc-cal-results" role="region" aria-label={'Записи на '+chosen}>
-      <p className="approved-pc-cal-selection">{chosen.split('-').reverse().join('.')}: {appointments.length} записей</p>
+      <p className="approved-pc-cal-selection">{chosen.split('-').reverse().join('.')}: {loading||error?'число записей не подтверждено':appointments.length+' записей'}</p>
       {appointments.length?appointments.map((item:any)=><a key={item.id} href={href(item)} className="approved-pc-cal-entry">
         <strong>№{text(item.number||item.id)}</strong>
         <small>{vehicleLabel(transport(item))} · {text(item.needName||item.description||item.statusName,'Открыть запись')}</small>
-      </a>):<p className="approved-pc-caveat">На выбранную дату подтверждённых записей нет.</p>}
+      </a>):!loading&&!error?<p className="approved-pc-caveat">На выбранную дату подтверждённых записей нет.</p>:null}
     </div>}
   </Pane>;
 }
@@ -429,7 +431,7 @@ function PerformDesk({tow}:{tow:boolean}){
             </div>
           </article>):<Empty>Новых подходящих предложений пока нет.</Empty>}
       </Pane>}
-      right={<><Calendar items={planned}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
+      right={<><Calendar items={planned} loading={!jobs.data&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
       :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobs.data?current.length:'—')}>
         {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
         <RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description,statusName(o))} v={transport(o)}
@@ -453,7 +455,7 @@ function PerformDesk({tow}:{tow:boolean}){
             <ApprovedEmptyScene kind="shift"/>
           </div>}
       </Pane>}
-      right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
+      right={<><Calendar items={all} loading={!jobs.data&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
   </main>;
@@ -559,7 +561,7 @@ function ServiceDesk(){
           <RequestCard key={selected.id} b={selected} onDone={data.reload}/></section>
        :<SelectedServiceCase key={selected.id} booking={selected}/>):<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
         <a href="#/base/inbox" className="approved-pc-primary">Входящие заявки</a></Pane>}
-      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
+      right={<><Calendar kind="service" items={[...expected,...buckets.repair]} error={data.error} retry={data.reload}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
   </main>;
 }
@@ -633,7 +635,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       className={source.data ? 'approved-pc-insurance-empty-visual' : ''}>
       {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
     </Pane>}
-    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
+    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all} loading={!source.data&&!source.error} error={source.error} retry={source.reload}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
       {inspection&&<p className="approved-pc-caveat">Официальные карты/ЕАИСТО пока не подключены.</p>}
       </Pane><Bot message={inspection?'Помогу с порядком осмотра и документами.':'Помогу со страховым делом и документами.'}/></>}/>
   </main>;
