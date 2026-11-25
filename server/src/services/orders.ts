@@ -469,7 +469,9 @@ export class OrdersService {
       " and not exists (select 1 from performer_time_reservations r where r.performer_id=p.user_id and r.status='confirmed' and r.ends_at>$3) and not exists" +
       " (select 1 from orders x where x.performer_id=p.user_id and" +
       " x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')" +
-      " and not (x.service='consult' and x.status='awaiting_confirmation'))",
+      " and not (x.status='awaiting_confirmation' and (x.service='consult' or exists (" +
+      " select 1 from order_unilateral_closures uc where uc.order_id=x.id" +
+      " and uc.status in ('pending_client','disputed')))))",
       [performerId,performerKindFor(order.service),this.now()]);
     const policy = this.auction.stages(order, all.dispatch);
     const stage = policy?.[Number(order.sos_dispatch_stage??0)]??null;
