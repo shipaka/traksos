@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Back, useMe } from '../ui.tsx';
 import { TrainingPractice } from './trainingPractice.tsx';
 
@@ -127,8 +127,12 @@ export function PlatformIntro() {
 
 function RolePlatformIntro({userId,role}:{userId:string|null;role:Role}) {
   const course=courses[role];
-  const [index,setIndex]=useState(0);
+  const positionKey=userId?key(userId,role)+'.step':'';
+  const [index,setIndex]=useState(()=>{try{const n=Number(positionKey?sessionStorage.getItem(positionKey)??0:0);return Number.isInteger(n)&&n>=0&&n<course.lessons.length?n:0;}catch{return 0;}});
   const [modeView,setModeView]=useState<'lessons'|'practice'>('lessons');
+  const [practiceStarted,setPracticeStarted]=useState(false);
+  const startPractice=()=>{setPracticeStarted(true);setModeView('practice');};
+  useEffect(()=>{if(positionKey)try{sessionStorage.setItem(positionKey,String(index));}catch{}},[positionKey,index]);
   const lesson=course.lessons[index];
   const finish=()=>{
     if(userId)mark(key(userId,role));
@@ -142,9 +146,10 @@ function RolePlatformIntro({userId,role}:{userId:string|null;role:Role}) {
       <button type="button" className={modeView==='lessons'?'active':''}
         aria-current={modeView==='lessons'?'step':undefined} onClick={()=>setModeView('lessons')}>1. Знакомство с кабинетом</button>
       <button type="button" className={modeView==='practice'?'active':''}
-        aria-current={modeView==='practice'?'step':undefined} onClick={()=>setModeView('practice')}>2. Учебная заявка</button>
+        aria-current={modeView==='practice'?'step':undefined} onClick={startPractice}>2. Учебная заявка</button>
     </nav>
-    {modeView==='practice' ? <TrainingPractice role={role} onBack={()=>setModeView('lessons')} /> : <div className="card stack">
+    {practiceStarted&&<div hidden={modeView!=='practice'} style={modeView!=='practice'?{display:'none'}:undefined}><TrainingPractice role={role} onBack={()=>setModeView('lessons')} /></div>}
+    {modeView==='lessons' && <div className="card stack">
       <div className="between"><b>Шаг {index+1} из {course.lessons.length}</b><span className="note">Можно пропустить</span></div>
       <div role="progressbar" aria-label="Прогресс знакомства" aria-valuemin={0} aria-valuemax={course.lessons.length} aria-valuenow={index+1}
         style={{height:6,borderRadius:10,overflow:'hidden',background:'var(--line, #d5dce5)'}}>
@@ -157,7 +162,7 @@ function RolePlatformIntro({userId,role}:{userId:string|null;role:Role}) {
       <div className="row" style={{justifyContent:'space-between',flexWrap:'wrap'}}>
         <button className="btn ghost" disabled={index===0} type="button" onClick={()=>setIndex(i=>Math.max(0,i-1))}>Назад</button>
         {index+1===course.lessons.length
-          ? <button className="btn" type="button" onClick={()=>setModeView('practice')}>К учебной заявке →</button>
+          ? <button className="btn" type="button" onClick={startPractice}>К учебной заявке →</button>
           : <button className="btn" type="button" onClick={()=>setIndex(i=>Math.min(course.lessons.length-1,i+1))}>Дальше</button>}
       </div>
     </div>}
