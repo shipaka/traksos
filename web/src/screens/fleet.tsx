@@ -1,6 +1,6 @@
 // «Мой парк» владельца и вход водителя по QR-наклейке в кабине.
-import { useEffect, useState } from 'react';
-import { get, post, put, patch, rub, fmtTime, API_URL } from '../api.ts';
+import { useEffect, useRef, useState } from 'react';
+import { get, getToken, post, put, patch, rub, fmtTime, API_URL } from '../api.ts';
 import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
@@ -258,22 +258,33 @@ function Sticker({ car }: { car: any }) {
 }
 
 /** QR-страница: пароль для существующего аккаунта или SMS при регистрации; привязка — только после явного подтверждения. */
-export function QrJoin({ code }: { code: string }) {
+export function QrJoin({code}:{code:string}){
+  const {me}=useMe();
+  return <QrJoinForAccount key={(me?.id??'guest')+':'+code} code={code}/>;
+}
+function QrJoinForAccount({code}:{code:string}){
   const { me, reload } = useMe();
   const info = useLoad(() => get(`/api/qr/${code}`), [code]);
   const { busy, run } = useAction();
+  const alive=useRef(true);
+  const lock=useRef(false);
+  const [joinError,setJoinError]=useState(false);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
   useEffect(() => { try { sessionStorage.setItem('traksos.qr', code); } catch { /* */ } }, [code]);
-  if (!info.data) return <main><Loading error={info.error} /></main>;
+  if (!info.data||info.error) return <main><Loading error={info.error} />{info.error&&<button type="button" className="btn ghost small" onClick={info.reload}>Повторить проверку наклейки</button>}</main>;
   const v = info.data;
   const join = async () => {
-    const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины');
+    if(!me||busy||lock.current||joinError)return;
+    lock.current=true;const token=getToken();
+    const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины').finally(()=>{lock.current=false;});
+    if(!alive.current||getToken()!==token)return;
     // A failed join must keep the QR intent for retry after a transient error.
     // Never clear it before the server confirms that vehicle access was granted.
     if (r) {
       try { sessionStorage.removeItem('traksos.qr'); } catch { /* private browsing */ }
       await reload();
-      go('');
-    }
+      if(alive.current&&getToken()===token)go('');
+    }else{setJoinError(true);void reload();}
   };
   return (
     <main>
@@ -285,7 +296,8 @@ export function QrJoin({ code }: { code: string }) {
         <div className="card">
           <b>Вы вошли как {me.name ?? me.phone}</b>
           <span className="note">Прежний водитель этой машины потеряет доступ. Все ваши заказы и чаты по ней видит владелец.</span>
-          <button className="btn" disabled={busy} onClick={join}>Я водитель этой машины</button>
+          {joinError&&<div className="note" role="alert">Привязка не подтверждена. Проверьте назначенную машину в гараже. <a href="#/garage">Открыть гараж</a> <button type="button" className="btn ghost small" onClick={()=>{setJoinError(false);void info.reload();}}>Проверил — разрешить повтор</button></div>}
+          <button className="btn" disabled={busy||joinError} onClick={join}>Я водитель этой машины</button>
         </div>
       ) : <Login driver />}
     </main>
