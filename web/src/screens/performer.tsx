@@ -32,9 +32,9 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
   }, []);
-  const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order');
-  const jobs = useLoad(() => get('/api/orders?as=performer'), [], (e) => e.type === 'order');
-  const auctions = useLoad(() => get('/api/performer/auctions'), [], (e) => e.type === 'auction' || e.type === 'order');
+  const balance = useLoad(() => get('/api/performer/balance'), [], (e) => e.type === 'balance' || e.type === 'order' || e.type==='connection_restored');
+  const jobs = useLoad(() => get('/api/orders?as=performer'), [], (e) => e.type === 'order' || e.type==='connection_restored');
+  const auctions = useLoad(() => get('/api/performer/auctions'), [], (e) => e.type === 'auction' || e.type === 'order' || e.type==='connection_restored');
   useEffect(() => onEvent((e) => { if (e.type === 'line_status') reload(); }), [reload]);
   const p = me?.performer;
   if (p?.kind === 'ecu') return <EcuStationWorkspace />;
@@ -66,15 +66,19 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
     <WorkerNotices />
     <AndroidPerformerWorkspace performer={p} active={active} auctions={auctions.data ?? []} online={online}
       busy={busy} setLine={setLine} balance={balance.data} reloadAuctions={auctions.reload}
-      reloadJobs={jobs.reload} todayCount={todayCount} pendingReview={toReview.length}/>
+      reloadJobs={jobs.reload} todayCount={jobs.data&&!jobs.error?todayCount:null} pendingReview={toReview.length}
+      jobsLoading={!jobs.data&&!jobs.error} jobsError={jobs.error} auctionsError={auctions.error}/>
     <LiveStrip who={p.kind === 'tow' ? 'tow' : 'master'} />
     {online && <LocationSharing />}
   </main>;
 
-  if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
+  if (compact && !background) return <>
+    {jobs.error&&<section className="card stack" role="alert"><b>Не удалось обновить заявки</b><button type="button" className="btn ghost" onClick={()=>{void jobs.reload();}}>Повторить загрузку</button></section>}
+    {auctions.error&&<section className="card stack" role="alert"><b>Не удалось обновить предложения</b><button type="button" className="btn ghost" onClick={()=>{void auctions.reload();}}>Повторить загрузку</button></section>}
+    <MobilePerformerWork p={p} personName={me?.name ?? undefined}
     active={active} awaiting={toReview} jobs={jobs.data ?? []} incoming={auctions.data ?? []}
     onOfferDone={auctions.reload} balance={balance.data} online={online}
-    busy={busy} setLine={setLine} />;
+    busy={busy} setLine={setLine} /></>;
 
   return (
     <main className="work-live-dashboard">
