@@ -1,5 +1,5 @@
 // Магазин: витрина, корзина, заказ; админ — выключатель, товары, заказы.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { get, post, put, del, rub, fmtTime, API_URL, getToken, onEvent } from '../api.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { syncOfflineParts, searchOfflineParts } from '../shopOffline.ts';
@@ -491,7 +491,7 @@ function RecommendationCheckout({id}:{id:string}){
   const job=jobs.data?.find(o=>o.id===item?.source_order_id&&['accepted','en_route','arrived','working'].includes(o.status));
   const refresh=()=>{setConfirmed(false);quote.reload();config.reload();vehicles.reload();jobs.reload();};
   // A new quote (even at the same price) requires explicit user confirmation.
-  useEffect(()=>{setConfirmed(false);},[q,config.data,vehicles.data,jobs.data,delivery,address,payment,comment]);
+  useLayoutEffect(()=>{setConfirmed(false);},[q,config.data,vehicles.data,jobs.data,delivery,address,payment,comment]);
   const eligible=!!q&&!!p&&!!item&&item.id===id&&!!config.data?.enabled&&!!dl&&
     (!item.vehicle_id||!!vehicle)&&
     (delivery==='pickup'?!!dl.pickup:delivery==='delivery'?!!dl.delivery&&!!address.trim():delivery==='master'?!!dl.withMaster&&!!job:false)&&
