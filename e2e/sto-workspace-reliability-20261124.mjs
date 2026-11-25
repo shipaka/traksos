@@ -12,6 +12,9 @@ export function getToken(){
   return window.__sto.me?.id ? 'synthetic-session:'+window.__sto.me.id : null;
 }
 export function get(path) {
+  // Availability is a separate read; keep it independent of the queued
+  // station snapshot responses exercised below.
+  if(path==='/api/base/availability')return Promise.resolve({paused:false,verification:'approved',hours:'08:00–20:00'});
   return new Promise((resolve,reject)=>{
     window.__sto.pending.push({method:'GET',path,resolve,reject});
   });
@@ -148,6 +151,11 @@ try{
   await page.addScriptTag({content:bundled.outputFiles[0].text});
   const waitGet=(path,count=1)=>page.waitForFunction(({path,count})=>
     window.__sto.pending.filter(x=>x.method==='GET' && x.path===path).length>=count,{path,count});
+  const baseIndex=async(occurrence)=>page.evaluate(n=>{
+    const matches=window.__sto.pending.map((x,index)=>({x,index})).filter(({x})=>x.method==='GET'&&x.path==='/api/base');
+    if(!matches[n-1])throw Error('Missing station GET occurrence '+n);
+    return matches[n-1].index;
+  },occurrence);
   const answer=async(index,data)=>page.evaluate(({index,data})=>window.__sto.pending[index].resolve(data),{index,data});
   const reject=async(index,err)=>page.evaluate(({index,err})=>window.__sto.pending[index].reject(Error(err)),{index,err});
   const change=async(view,user)=>page.evaluate(({view,user})=>{
@@ -155,21 +163,22 @@ try{
     if(view)window.__sto.changeView(view);
   },{view,user});
   await waitGet('/api/base');
-  await answer(0,center('СТО A'));
+  await answer(await baseIndex(1),center('СТО A'));
   await page.getByRole('heading',{name:'Рембаза «СТО A»'}).waitFor();
+  await page.getByRole('button',{name:/Статус · Приём разрешён/}).waitFor();
   // A WebSocket refresh invalidates the old private snapshot immediately.
   await page.evaluate(()=>window.__sto.listeners.forEach(fn=>fn({type:'booking'})));
   await waitGet('/api/base',2);
   await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor({timeout:2000});
   assert(await page.getByText('Рембаза «СТО A»').count()===0,
     'Old station still visible while refreshed data is unverified');
-  await reject(1,'Эфирная сеть отключена');
+  await reject(await baseIndex(2),'Эфирная сеть отключена');
   await page.getByRole('alert').getByRole('button',{name:'Повторить загрузку'}).waitFor();
   assert(await page.getByText('Рембаза «СТО A»').count()===0,
     'Prior station data visible after a failed GET');
   await page.getByRole('button',{name:'Повторить загрузку'}).click();
   await waitGet('/api/base',3);
-  await answer(2,center('СТО A актуальная'));
+  await answer(await baseIndex(3),center('СТО A актуальная'));
   await page.getByRole('heading',{name:'Рембаза «СТО A актуальная»'}).waitFor();
 
   // Old A request returns after A->B login; it cannot render an A company,
@@ -181,13 +190,13 @@ try{
   await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor({timeout:2000});
   assert(await page.getByText('Рембаза «СТО A актуальная»').count()===0,
     'Account swap retained private old station data');
-  await answer(4,center('СТО B'));
+  await answer(await baseIndex(5),center('СТО B'));
   await page.getByRole('heading',{name:'Рембаза «СТО B»'}).waitFor();
   await page.screenshot({path:'e2e/shots/sto-reliability/sto-cabinet-390.png',fullPage:true});
   await page.setViewportSize({width:1440,height:900});
   await page.screenshot({path:'e2e/shots/sto-reliability/sto-cabinet-1440.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
-  await answer(3,center('Старое A НЕ показывать'));
+  await answer(await baseIndex(4),center('Старое A НЕ показывать'));
   await page.waitForTimeout(70);
   assert(await page.getByText('Старое A НЕ показывать').count()===0,
     'Late A response displaced the new B cabinet');
