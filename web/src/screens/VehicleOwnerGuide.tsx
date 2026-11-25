@@ -31,24 +31,14 @@ export function VehicleOwnerGuide({vehicle,canLink=false,onLinked}:{vehicle:{
     if(!open)return;
     let alive=true;
     setCard(null);setError('');setMissingImage(false);setMatching(true);setUnmatched(false);setCandidate(null);setLinkError('');
-    const clean=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/\s+/g,' ').trim();
     const run=async()=>{
       let selected=category&&makeKey&&modelKey?{category,brandKey:makeKey,modelKey}:null;
-      // Historical vehicles had no catalog keys. Match an EXACT make/model
-      // pair from the licensed directory, never guess a generation or VIN.
+      // Resolve from the saved record on the server, not from truncated search
+      // lists or loosely normalized display names supplied by the browser.
       if(!selected&&vehicle.model?.trim()){
-        const brands=await get<{items:{key:string;name:string;category:string}[]}>(
-          '/api/vehicle-reference/makes?purpose=garage&q='+encodeURIComponent(vehicle.brand));
-        const candidates=brands.items.filter(b=>clean(b.name)===clean(vehicle.brand));
-        const exact:{category:string;brandKey:string;modelKey:string}[]=[];
-        for(const b of candidates){
-          const models=await get<{items:{key:string;name:string}[]}>(
-            '/api/vehicle-reference/models?purpose=garage&category='+encodeURIComponent(b.category)+
-            '&brandKey='+encodeURIComponent(b.key)+'&q='+encodeURIComponent(vehicle.model));
-          for(const m of models.items)if(clean(m.name)===clean(vehicle.model))
-            exact.push({category:b.category,brandKey:b.key,modelKey:m.key});
-        }
-        if(exact.length===1)selected=exact[0];
+        const match=await get<{status:'exact'|'ambiguous'|'unmatched';selection:Selection|null}>(
+          '/api/vehicle-reference/vehicles/'+encodeURIComponent(vehicle.id)+'/match');
+        if(match.status==='exact')selected=match.selection;
       }
       if(!selected){if(alive)setUnmatched(true);return;}
       const url='/api/vehicle-reference/public-card?category='+encodeURIComponent(selected.category)+
