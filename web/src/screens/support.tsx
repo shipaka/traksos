@@ -235,20 +235,20 @@ function SupportQueueResults({ status }: { status: 'open' | 'closed' }) {
 
 export function useUnread() {
   const { me } = useMe();
-  const [n, setN] = useState(0);
+  const [count,setCount]=useState<{actor:string|null;n:number}>({actor:null,n:0});
   useEffect(() => {
     // The header remains mounted through role switches. A previous account's
     // unread badge (or a late GET for it) must never appear on the next login.
     let active = true;
     let generation = 0;
-    setN(0);
+    setCount({actor:me?.id??null,n:0});
     if (!me?.id) return () => { active = false; };
     const load = () => {
       const current = ++generation;
       void get('/api/me/notifications')
         .then((result: { unread: number }) => {
           if (active && current === generation && Number.isSafeInteger(result.unread))
-            setN(Math.max(0,result.unread));
+            setCount({actor:me.id,n:Math.max(0,result.unread)});
         }).catch(() => { /* Keep last confirmed count; never fake zero on outage. */ });
     };
     load();
@@ -260,7 +260,7 @@ export function useUnread() {
       window.removeEventListener('traksos:notifications-read',load);
     };
   }, [me?.id]); // eslint-disable-line
-  return n;
+  return count.actor===me?.id?count.n:0;
 }
 
 export function Notifications() {
@@ -271,12 +271,14 @@ export function Notifications() {
 function NotificationsSession() {
   const alive = useSupportSessionAlive();
   const { me } = useMe();
-  const list = useLoad(() => get('/api/me/notifications'), [me?.id]);
+  const list = useLoad(() => get('/api/me/notifications'), [me?.id],e=>e.type==='connection_restored'||e.type==='notification');
   const [readError,setReadError]=useState('');
   const [markingAll,setMarkingAll]=useState(false);
   const [openingId,setOpeningId]=useState<number|null>(null);
+  const readLock=useRef(false);
   const open = async (n: any) => {
-    if (openingId !== null || markingAll) return;
+    if (readLock.current||openingId !== null || markingAll||list.error) return;
+    readLock.current=true;
     setOpeningId(n.id);
     setReadError('');
     if (!n.read_at) {
@@ -299,14 +301,16 @@ function NotificationsSession() {
     else if (n.kind === 'verification') go('work/docs');
     else if (n.kind === 'balance') go('work');
     else if (n.kind === 'pricing') go('profile');
+    readLock.current=false;
     if (alive.current) setOpeningId(null);
   };
   return (
     <main>
       <Back to="" />
       <div className="between notifications-header"><h1>Уведомления</h1>
-        <button type="button" className="btn ghost small" disabled={markingAll || openingId !== null || !list.data?.unread} onClick={async()=>{
-          setMarkingAll(true);setReadError('');
+        <button type="button" className="btn ghost small" disabled={markingAll || openingId !== null || !!list.error||!list.data?.unread} onClick={async()=>{
+          if(readLock.current)return;
+          readLock.current=true;setMarkingAll(true);setReadError('');
           try{
             await post('/api/me/notifications/read');
             if (!alive.current) return;
@@ -315,12 +319,13 @@ function NotificationsSession() {
           }catch{
             if (alive.current) setReadError('Не удалось отметить уведомления: соединение недоступно');
           }finally{
+            readLock.current=false;
             if (alive.current) setMarkingAll(false);
           }
         }}>Прочитать все</button>
       </div>
       {readError && <p className="err" role="alert">{readError}</p>}
-      {!list.data ? <div className="stack">
+      {!list.data||list.error ? <div className="stack">
         <Loading error={list.error} />
         {list.error && <button type="button" className="btn ghost small" onClick={() => void list.reload()}>Повторить загрузку уведомлений</button>}
       </div> : !list.data.items.length ? <div className="empty">Пока ничего</div> : (
