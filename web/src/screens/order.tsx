@@ -56,6 +56,8 @@ function OrderForSession({id,initialTab,userId}:{
   // Private data and drafts still unmount while authorization is rechecked.
   // OrderForSession is keyed by account and order, so this cannot cross either.
   const [chatOpen, setChatOpen] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
+  // Preserve only presentation preference when the same order revalidates.
+  const [searchCollapsed, setSearchCollapsed] = useState(false);
   useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main className="stack"><Back to={backTo} />
@@ -99,7 +101,7 @@ function OrderForSession({id,initialTab,userId}:{
               completedAt={d.completedAt} isAdmin={false} />
         : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
-      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
+      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} collapsed={searchCollapsed} onCollapsedChange={setSearchCollapsed} />}
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
