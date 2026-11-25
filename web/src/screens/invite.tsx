@@ -29,7 +29,7 @@ function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string
   const current=()=>active.current && getToken()===token;
   const toast = useToast();
   const linkInput = useRef<HTMLInputElement>(null);
-  if (d.error) return <main><div className="card stack" role="alert"><span>Не удалось загрузить актуальные баллы и приглашения.</span><button type="button" className="btn small" onClick={()=>void d.reload()}>Повторить загрузку</button></div></main>;
+  if (d.error) return <main><div className="card stack" role="alert"><span>Не удалось загрузить актуальные баллы и приглашения.</span><button type="button" className="btn small" onClick={()=>void d.reload()}>Повторить загрузку</button>{invitedPage>0&&<button type="button" className="btn ghost small" onClick={()=>setInvitedPage(n=>Math.max(0,n-1))}>К предыдущей странице</button>}</div></main>;
   if (!d.data) return <main><Loading /></main>;
   const r = d.data.rules;
   const total = Number.isSafeInteger(d.data.invitedTotal) && d.data.invitedTotal >= 0 ? d.data.invitedTotal : null;
