@@ -1364,7 +1364,12 @@ export function createApp(d: Deps) {
     centers.markPaidOut(c.user, c.params.id, parse(z.object({
       reference:z.string().trim().min(4).max(200).optional(),
     }).strict(),c.body).reference));
-  r.get('/api/base/money', ['service'], (c: AuthedCtx) => centers.money(c.user));
+  r.get('/api/base/money', ['service'], (c: AuthedCtx) => {
+    const before=c.query.get('before');
+    if(before!==null && !z.string().uuid().safeParse(before).success)
+      throw bad('invalid_cursor','Некорректная страница счетов');
+    return centers.money(c.user,before);
+  });
   r.get('/api/admin/summary', ['admin'], () => stats.summary());
   r.get('/api/admin/live', ['admin'], () => stats.liveOrders());
   r.post('/api/admin/services/:id/verify', staff, (c: AuthedCtx) => centers.verify(c.user, c.params.id, parse(z.object({ decision: z.enum(['approved', 'rejected']) }), c.body).decision));
