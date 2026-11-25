@@ -14,7 +14,7 @@ const SORTS = [
   { id: 'distance', name: 'Ближе' },
 ] as const;
 
-export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
+export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapsedChange }: { d: any; onChosen: () => void; collapsed?: boolean; onCollapsedChange?: (value: boolean) => void }) {
   const toast = useToast();
   const { busy, run } = useAction();
   // Приоритет из формы вызова: «Ближе / Дешевле / Быстрее» — сразу сортирует отклики
@@ -29,7 +29,11 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
   const [requestError, setRequestError] = useState<{key: string; message: string} | null>(null);
   const panelId = useId();
   const [collapsedOrder, setCollapsedOrder] = useState<string | null>(null);
-  const collapsed = collapsedOrder === d.id;
+  const collapsed = controlledCollapsed ?? collapsedOrder === d.id;
+  const setCollapsed = (value: boolean) => {
+    if (onCollapsedChange) onCollapsedChange(value);
+    else setCollapsedOrder(value ? d.id : null);
+  };
   const choosingRef = useRef(false);
   const refreshRef = useRef<() => void>(() => {});
   const data = response?.key === key ? response.value : null;
@@ -73,7 +77,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
   const isTow = d.service === 'tow';
   const phrase = isTow ? 'Ищем эвакуатор' : d.service === 'consult' ? 'Ищем мастера для консультации' : 'Ищем исполнителя';
   const autoPick = data?.autoPick ?? d.autoPick;
-  const deadline = autoPick ? (data?.until ?? d.auctionUntil ?? null) : null;
+  const deadline = autoPick ? (data ? data.until ?? null : d.auctionUntil ?? null) : null;
   const left = useLeft(deadline);
   const offerCount = offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : null;
   const statusText = loadError ? 'Не удалось обновить поиск' : offerCount ?? (!data ? 'Загружаем предложения…' : phrase);
@@ -98,7 +102,7 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
         </div>
         <button type="button" className="btn ghost small search-workspace-toggle"
           aria-expanded={!collapsed} aria-controls={panelId}
-          onClick={() => setCollapsedOrder(collapsed ? null : d.id)}>
+          onClick={() => setCollapsed(!collapsed)}>
           {collapsed ? 'Раскрыть поиск' : 'Свернуть поиск'}
         </button>
       </div>
@@ -119,14 +123,13 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
               : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Ожидаем доступные предложения'}
           </span>
         </div>
-        <span className="note and19-radar-note">Радар — схема поиска, не географические координаты. Светящиеся точки соответствуют полученным предложениям.</span>
+        <span className="note and19-radar-note">Радар — схема поиска, не географические координаты. Светящиеся точки — полученные предложения (до 8 точек).</span>
         {d.searchStage && !loadError && <div className="note" role="status">
           Ищем исполнителей: этап {d.searchStage.wave} из {d.searchStage.waves}.
           Приглашаем только тех, для кого дорожное время подачи подтверждено маршрутизатором
           и не превышает {d.searchStage.maxRoadEtaMinutes} минут с учётом сборов.
           Дальний выезд без отдельного согласия не назначается.
         </div>}
-        {autoPick && left != null && deadline && <Progress until={deadline} />}
         {lim && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>{d.service === 'consult' ? 'Стоимость консультации' : `Обычная цена ${isTow ? 'перевозки' : 'выезда'}`}</span><b>{rub(lim.usual)}</b></div>}
       </div>
       </div>
@@ -193,32 +196,16 @@ function Radar({ hits }: { hits: number }) {
   );
 }
 
-function Progress({ until }: { until: string }) {
-  const [pct, setPct] = useState(100);
+function useLeft(until: string | null) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const end = new Date(until).getTime();
-    const total = Math.max(1, end - Date.now());
-    const update = () => setPct(Math.max(0, Math.min(100,
-      Number.isFinite(end) ? ((end - Date.now()) / total) * 100 : 0)));
-    update();
-    const t = setInterval(update, 250);
+    if (!until) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(t);
   }, [until]);
-  return <div className="progress"><span style={{ width: `${pct}%` }} /></div>;
-}
-
-function useLeft(until: string | null) {
-  const calc = () => {
-    const end = until ? new Date(until).getTime() : NaN;
-    return Number.isFinite(end) ? Math.max(0, Math.ceil((end - Date.now()) / 1000)) : null;
-  };
-  const [left, setLeft] = useState(calc);
-  useEffect(() => {
-    setLeft(calc());
-    const t = setInterval(() => setLeft(calc()), 500);
-    return () => clearInterval(t);
-  }, [until]); // eslint-disable-line
-  return left;
+  const end = until ? new Date(until).getTime() : NaN;
+  return Number.isFinite(end) ? Math.max(0, Math.ceil((end - now) / 1000)) : null;
 }
 
 export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
