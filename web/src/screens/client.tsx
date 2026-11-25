@@ -1106,20 +1106,21 @@ function PerformerBlacklist() {
 
 export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
   const {me}=useMe();
-  return <GarageForAccount key={me?.id??'guest'} focusVehicleId={focusVehicleId}
+  return <GarageForAccount key={(me?.id??'guest')+':'+(me?.owner_id??'')+':'+(me?.roles??[]).join(',')} focusVehicleId={focusVehicleId}
     userId={me?.id??'guest'}/>;
 }
 function GarageForAccount({focusVehicleId,userId}:{
   focusVehicleId?:string;userId:string;
 }) {
   const {me}=useMe();
-  const list=usePrivateRead<any[]>(()=>get('/api/vehicles'),'garage:'+userId);
+  const list=usePrivateRead<any[]>(()=>get('/api/vehicles'),'garage:'+userId+':'+(me?.owner_id??''),e=>e.type==='fleet'||e.type==='vehicle'||e.type==='connection_restored');
   const { busy, run } = useAction();
   const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
-  const isDriver = !!me?.owner_id;
+  const isDriver = !!me?.owner_id||!!me?.roles.includes('driver');
   const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
+  const [addUnconfirmed,setAddUnconfirmed]=useState(false);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible' && navigator.onLine) setServiceHistoryVersion(v => v + 1); };
     document.addEventListener('visibilitychange', refresh);
@@ -1128,11 +1129,13 @@ function GarageForAccount({focusVehicleId,userId}:{
   }, []);
 
   async function add() {
+    if(busy||addUnconfirmed||isDriver||!form.brand.trim())return;
     const r = await run(() => post('/api/vehicles', {
       brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
       plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
     }), 'Машина добавлена');
     if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
+    else {setAddUnconfirmed(true);void list.reload();}
   }
 
   return (
@@ -1146,6 +1149,7 @@ function GarageForAccount({focusVehicleId,userId}:{
           <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
         </button>
       )}
+      {focusVehicleId&&list.data&&!list.data.some(v=>v.id===focusVehicleId)&&<p className="note" role="alert">Выбранная машина недоступна в вашем гараже.</p>}
       {list.data?.length===0 && <section className="tr-approved-garage-compact" aria-label="Транспорт пока не добавлен" role="status">
         <span className="tr-approved-garage-compact-symbol" aria-hidden="true">▤</span>
         <div className="tr-approved-garage-compact-copy">
@@ -1182,7 +1186,7 @@ function GarageForAccount({focusVehicleId,userId}:{
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
               <div className="grid2">
                 <button className="btn small" disabled={busy} onClick={async () => {
-                  if (await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: driverPhone }), 'Водитель закреплён. Он входит по своему номеру.')) { setDriverFor(null); list.reload(); }
+                  if (await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: driverPhone }), 'Водитель закреплён. Он входит по своему номеру.')) setDriverFor(null); await list.reload();
                 }}>Закрепить</button>
                 <button className="btn ghost small" onClick={() => setDriverFor(null)}>Отмена</button>
               </div>
@@ -1190,9 +1194,9 @@ function GarageForAccount({focusVehicleId,userId}:{
             </div>
           ) : (
             <div className="row">
-              <button className="btn ghost small" onClick={() => setDriverFor(v.id)}>{v.driver_id ? 'Сменить водителя' : 'Назначить водителя'}</button>
-              {v.driver_id && <button className="btn ghost small" onClick={async () => { if (await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: null }), 'Доступ водителя закрыт')) list.reload(); }}>Убрать водителя</button>}
-              <button className="btn bad small" onClick={async () => { if (confirmDelete() && await run(() => del(`/api/vehicles/${v.id}`))) list.reload(); }}>Удалить</button>
+              <button className="btn ghost small" disabled={busy} onClick={() => {setDriverPhone('+7 ');setDriverFor(v.id);}}>{v.driver_id ? 'Сменить водителя' : 'Назначить водителя'}</button>
+              {v.driver_id && <button className="btn ghost small" disabled={busy} onClick={async () => { if(!window.confirm('Снять водителя с этой машины?'))return; await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: null }), 'Доступ водителя закрыт'); await list.reload(); }}>Убрать водителя</button>}
+              <button className="btn bad small" disabled={busy} onClick={async () => { if (!confirmDelete())return; await run(() => del(`/api/vehicles/${v.id}`)); await list.reload(); }}>Удалить</button>
             </div>
           ))}
         </div>
@@ -1207,7 +1211,8 @@ function GarageForAccount({focusVehicleId,userId}:{
             <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
           </div>
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
-          <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
+          {addUnconfirmed&&<div role="alert" className="note">Добавление не подтверждено. Проверьте список машин перед повтором. <button type="button" className="btn ghost small" onClick={list.reload}>Обновить гараж</button> <button type="button" className="btn ghost small" disabled={!list.data} onClick={()=>setAddUnconfirmed(false)}>Список проверен</button></div>}
+          <button className="btn" disabled={busy || addUnconfirmed || !form.brand}>Сохранить</button>
         </form>
       )}
     </main>
@@ -1281,7 +1286,7 @@ function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boo
     el?.scrollIntoView({block:'start',behavior:'auto'});
   },[initialOpen,id]);
   const h=usePrivateRead<any>(()=>get(`/api/vehicles/${id}/history`),
-    'vehicle-history:'+(me?.id??'guest')+':'+id,e=>e.type==='order');
+    'vehicle-history:'+(me?.id??'guest')+':'+(me?.owner_id??'')+':'+id,e=>e.type==='order'||e.type==='fleet'||e.type==='connection_restored');
   const d=h.data;
   if(!d)return h.error?<div className="card stack" role="alert">
     <span>Не удалось загрузить историю машины.</span>
