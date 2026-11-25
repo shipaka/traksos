@@ -391,3 +391,24 @@
     background:linear-gradient(100deg,#122b37,#091a23)!important;
   }
 }
+
+
+/* Owner-approved compact admin groups: native keyboard and touch disclosure. */
+@media (min-width: 900px) {
+  .app.role-admin .desktop-nav-disclosure > summary {
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    list-style: none;
+  }
+  .app.role-admin .desktop-nav-disclosure > summary::-webkit-details-marker { display: none; }
+  .app.role-admin .desktop-nav-disclosure > summary::after { content: '▸'; }
+  .app.role-admin .desktop-nav-disclosure[open] > summary::after { content: '▾'; }
+  .app.role-admin .desktop-nav-disclosure > summary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+  }
+}
