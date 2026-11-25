@@ -10,6 +10,8 @@ export type CatalogVehicleValue = {
 };
 type DirectoryMake={key:string;name:string;category:'truck'|'trailer'|'van'|'bus'|'passenger'};
 type DirectoryModel={key:string;name:string};
+type MissingRequest={id:string;make:string;model:string;year:number|null;category:string;status:'new'|'reviewing'|'accepted'|'rejected';reviewer_note:string|null};
+const missingStatus:Record<MissingRequest['status'],string>={new:'На модерации',reviewing:'Проверяется',accepted:'Принято к обработке (ещё не в каталоге)',rejected:'Отклонено'};
 type TruckEvidence={
   production:{yearFrom:number;yearTo:number|null;status:string|null}|null;
   registrationEvidence:{firstRegistrationObserved:number;lastRegistrationObserved:number|null;notProductionYears:true}|null;
@@ -34,6 +36,11 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
   const [missingMake,setMissingMake]=useState('');
   const [missingModel,setMissingModel]=useState('');
   const [missingNote,setMissingNote]=useState('');
+  const [missingYear,setMissingYear]=useState('');
+  const [showRequests,setShowRequests]=useState(false);
+  const [requests,setRequests]=useState<MissingRequest[]>([]);
+  const [requestsState,setRequestsState]=useState<'idle'|'loading'|'ready'|'error'>('idle');
+  const [requestsRevision,setRequestsRevision]=useState(0);
   const [sent,setSent]=useState('');
   const [sending,setSending]=useState(false);
   const selectedMake=value.catalogCategory===category?value.catalogBrandKey??'':'';
@@ -73,6 +80,15 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
       .catch(()=>{if(alive)setTruckEvidence(null)});
     return ()=>{alive=false};
   },[category,selectedMake,selectedModel,purpose]);
+  useEffect(()=>{
+    if(!missing||!showRequests)return;
+    let alive=true;
+    setRequests([]);setRequestsState('loading');
+    get('/api/vehicle-reference/missing/mine').then((rows:MissingRequest[])=>{
+      if(alive){setRequests(rows);setRequestsState('ready')}
+    }).catch(()=>{if(alive)setRequestsState('error')});
+    return ()=>{alive=false};
+  },[missing,showRequests,requestsRevision]);
   const chooseMake=(key:string)=>{
     const choice=makes.find(x=>x.key===key);
     setModelQuery('');
@@ -90,9 +106,10 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
     try {
       const r:any=await post('/api/vehicle-reference/missing',{
         category,purpose,make:missingMake.trim(),model:missingModel.trim(),
-        year:value.year?Number(value.year):undefined,note:missingNote.trim()});
+        year:missingYear?Number(missingYear):undefined,note:missingNote.trim()});
       setSent(r.message||'Заявка направлена на модерацию');
-      setMissing(false);setMissingMake('');setMissingModel('');setMissingNote('');
+      setMissingMake('');setMissingModel('');setMissingNote('');setMissingYear('');
+      setShowRequests(true);setRequestsRevision(n=>n+1);
     }catch(e:any){setSent(e.message??'Не удалось отправить запрос')}
     finally{missingLock.current=false;setSending(false)}
   };
@@ -165,10 +182,28 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
         value={missingMake} onChange={e=>setMissingMake(e.target.value)} maxLength={100}/>
       <input className="field" aria-label="Новая модель для модерации" placeholder="Модель или серия"
         value={missingModel} onChange={e=>setMissingModel(e.target.value)} maxLength={120}/>
+      <select className="field" aria-label="Год отсутствующей модели" value={missingYear} onChange={e=>setMissingYear(e.target.value)}>
+        <option value="">Год отсутствующей модели (необязательно)</option>
+        {YEARS.map(y=><option key={y} value={String(y)}>{y}</option>)}
+      </select>
       <textarea className="field" rows={2} aria-label="Основание запроса" placeholder="Год, регион, документы (без личных данных)"
         value={missingNote} onChange={e=>setMissingNote(e.target.value)} maxLength={1200}/>
       <button className="btn" type="button" disabled={sending||missingMake.trim().length<2||missingModel.trim().length<2}
         onClick={()=>void submitMissing()}>{sending?'Отправляю…':'Отправить на модерацию'}</button>
+      <button className="btn ghost small" type="button" aria-expanded={showRequests} onClick={()=>setShowRequests(v=>!v)}>Мои предложения в каталог</button>
+      {showRequests&&<div className="stack" aria-label="Мои предложения в каталог">
+        {requestsState==='loading'&&<span className="note" role="status">Загружаю предложения…</span>}
+        {requestsState==='error'&&<div className="stack" role="alert"><span className="note">Не удалось загрузить предложения.</span><button className="btn ghost small" type="button" onClick={()=>setRequestsRevision(n=>n+1)}>Повторить</button></div>}
+        {requestsState==='ready'&&<>
+          {requests.length===0&&<span className="note">Предложений пока нет.</span>}
+          {requests.map(r=><article key={r.id} className="card stack">
+            <b>{r.make} {r.model}{r.year?' · '+r.year:''}</b>
+            <span className="note">{missingStatus[r.status]}</span>
+            {r.reviewer_note&&<span className="note">{r.reviewer_note}</span>}
+          </article>)}
+          <button className="btn ghost small" type="button" onClick={()=>setRequestsRevision(n=>n+1)}>Обновить список</button>
+        </>}
+      </div>}
     </section>}
     {sent&&<span className="note" role="status">{sent}</span>}
     <small className="note">Данные: <a href="https://vehiclesdb.com" target="_blank" rel="noopener noreferrer">Vehicle data by VehiclesDB</a> · CC BY 4.0 · <a href="/api/vehicle-reference/attribution" target="_blank" rel="noopener noreferrer">источники и лицензии</a>.</small>
