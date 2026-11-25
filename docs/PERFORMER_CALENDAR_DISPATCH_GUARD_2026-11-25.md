@@ -48,3 +48,13 @@ now capture a single instant and use it consistently in SQL and shift logic;
 the regression test also asserts the exact SQL cutoff. The new commit requires
 another complete CI run. Android, real screenshots, load and inter-role sandbox
 passed on ae21d4d only.
+
+## Browser harness correction
+
+CI ddc6014: 738/738 server tests passed, web build and the four separate
+workflows passed. The remaining main workflow failed in esbuild because the
+isolated client-account-switch test stub for base.tsx lacked the NEEDS export
+now imported by the real calendar. Added the missing fixture export and
+extended that existing browser test to check real calendar account switching
+with a late response from the old account. No production code or design
+changed in this correction. A new full run is required.
