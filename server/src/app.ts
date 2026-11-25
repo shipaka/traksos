@@ -1692,7 +1692,7 @@ export function createApp(d: Deps) {
   });
   r.get('/api/admin/cases/:id/history', ['admin'], (c: AuthedCtx) => {
     const input=parse(z.object({
-      kind:z.enum(['events','chat']),
+      kind:z.enum(['events','chat','vehicle_orders','vehicle_bookings']),
       before:z.string().min(1).max(80).optional(),
       limit:z.coerce.number().int().min(1).max(100).default(100),
     }),Object.fromEntries(c.query.entries()));
