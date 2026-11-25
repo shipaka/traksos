@@ -296,7 +296,7 @@ try{
  await op.route(consultPricingRoute,route=>route.fulfill(json({payments:{invoice:true},consult:{price:70000,backDiscount:20000,backHours:48}})));
  await op.route(consultVehiclesRoute,route=>route.fulfill(json([truck])));
  await op.goto(BASE+'/#/new/consult',{waitUntil:'domcontentloaded'});
- await op.locator('#f-car select.field').waitFor();
+ try{await op.locator('#f-car select.field').waitFor();}catch(error){await assertOwnerClean('consultation form timeout');throw error;}
  await op.locator('#f-car select.field').selectOption(truck.id);
  await op.locator('#f-agree input').check();
  await op.getByRole('button',{name:/Заказать консультацию/}).click();
@@ -317,7 +317,8 @@ try{
  // Independent full order route: recovery is a read, never a client selection.
  const fullRecoveryId='synthetic-full-order-recovery';
  const fullRecoveryOrder={...consultOrder,id:fullRecoveryId,number:'LOCAL-RECOVERY',status:'searching',
-   performer:null,actions:[],events:[],createdAt:new Date().toISOString()};
+   performer:null,actions:[],events:[],createdAt:new Date().toISOString(),
+   paymentMethod:'invoice',money:{callOut:70000,work:0,amount:70000,clientFee:0,discount:0,total:70000}};
  let fullRecoveryChoices=0,fullRecoveryReads=0;
  await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId,route=>{fullRecoveryReads++;return route.fulfill(json(fullRecoveryOrder));});
  await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[]})));
@@ -325,12 +326,14 @@ try{
    fullRecoveryChoices++;return route.fulfill({status:409,contentType:'application/json',body:'{}'});
  });
  await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/chat',route=>route.fulfill(json({messages:[],quick:[],participants:[]})));
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/payments',route=>route.fulfill(json([])));
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/photos',route=>route.fulfill(json([])));
  await op.goto(BASE+'/#/order/'+fullRecoveryId,{waitUntil:'domcontentloaded'});
  await op.locator('.search-workspace .search-title').filter({hasText:'Ищем мастера для консультации'}).waitFor();
  fullRecoveryOrder.status='accepted';
  fullRecoveryOrder.performer={id:'synthetic-full-recovered-master',name:'Мастер отдельной заявки CI'};
  await op.evaluate(()=>window.dispatchEvent(new Event('online')));
- await op.locator('.roadside-performer-card').getByText('Мастер отдельной заявки CI',{exact:true}).waitFor();
+ try{await op.locator('.roadside-performer-card').getByText('Мастер отдельной заявки CI',{exact:true}).waitFor();}catch(error){await assertOwnerClean('full order recovery timeout');throw error;}
  assert(await op.locator('h1').filter({hasText:'LOCAL-RECOVERY'}).count()===1,'Recovered full detail changed order');
  assert(await op.locator('.search-workspace').count()===0&&fullRecoveryChoices===0,'Recovery must not leave search open or choose automatically');
  // Once searching ends, the new recovery handler must not remount unrelated
