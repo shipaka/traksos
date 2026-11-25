@@ -314,6 +314,27 @@ try{
  assert(await recoveredCase.getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+consultId,'Recovered assignment changed selected order');
  assert(await op.locator('.approved-pc-search-case').count()===0,'Missed assignment left search open');
  await assertOwnerClean('owner new consultation search routing and missed assignment recovery');
+ // Independent full order route: recovery is a read, never a client selection.
+ const fullRecoveryId='synthetic-full-order-recovery';
+ const fullRecoveryOrder={...consultOrder,id:fullRecoveryId,number:'LOCAL-RECOVERY',status:'searching',
+   performer:null,actions:[],events:[],createdAt:new Date().toISOString()};
+ let fullRecoveryChoices=0;
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId,route=>route.fulfill(json(fullRecoveryOrder)));
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[]})));
+ await op.route(url=>url.pathname.startsWith('/api/orders/'+fullRecoveryId+'/offers/')&&url.pathname.endsWith('/choose'),route=>{
+   fullRecoveryChoices++;return route.fulfill({status:409,contentType:'application/json',body:'{}'});
+ });
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/chat',route=>route.fulfill(json({messages:[],quick:[],participants:[]})));
+ await op.goto(BASE+'/#/order/'+fullRecoveryId,{waitUntil:'domcontentloaded'});
+ await op.locator('.search-workspace .search-title').filter({hasText:'Ищем мастера для консультации'}).waitFor();
+ fullRecoveryOrder.status='accepted';
+ fullRecoveryOrder.performer={id:'synthetic-full-recovered-master',name:'Мастер отдельной заявки CI'};
+ await op.evaluate(()=>window.dispatchEvent(new Event('online')));
+ await op.locator('.roadside-performer-card').getByText('Мастер отдельной заявки CI',{exact:true}).waitFor();
+ assert(await op.locator('h1').filter({hasText:'LOCAL-RECOVERY'}).count()===1,'Recovered full detail changed order');
+ assert(await op.locator('.search-workspace').count()===0&&fullRecoveryChoices===0,'Recovery must not leave search open or choose automatically');
+ await assertOwnerClean('full order missed assignment recovery');
+
  await op.unroute(consultPricingRoute);
  await op.unroute(consultVehiclesRoute);
  // Shared inner-screen banners must NOT overlay the old separate photo tile
