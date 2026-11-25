@@ -94,9 +94,10 @@ function CourierJobLink({job,focus=false}:{job:CourierJob;focus?:boolean}){
   </article>;
 }
 export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={}){
-  const tasks=useLoad<CourierJob[]>(()=>get('/api/courier/jobs'),[],e=>e.type==='shop');
+  const tasks=useLoad<CourierJob[]>(()=>get('/api/courier/jobs'),[],e=>e.type==='shop'||e.type==='connection_restored');
   // A failed refresh must not present previous delivery addresses as current.
-  const list=tasks.error?[]:(tasks.data??[]);
+  const ready=!tasks.error&&Array.isArray(tasks.data);
+  const list=ready?(tasks.data??[]):[];
   const active=list.filter(j=>CURRENT.has(j.status));
   const current=active[0];
   const packages=active.reduce((n,j)=>n+j.items.reduce((s,i)=>s+(i.qty||0),0),0);
@@ -106,15 +107,20 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
     {section==='chat'?<>
       <p className="courier-muted">Сообщения с получателем пока не подключены. Вопросы по доставке решает поддержка TrakSOS — без раскрытия личных телефонов.</p>
       <a href="#/support" className="courier-primary">Открыть обращения в поддержку</a>
+      {!ready&&<section className="courier-trip" role={tasks.error?'alert':'status'}>
+        <b>{tasks.error?'Не удалось обновить доставки':'Загружаем доставки…'}</b>
+        {tasks.error&&<button type="button" className="courier-primary" onClick={tasks.reload}>Повторить</button>}
+      </section>}
+      {ready&&!active.length&&<p className="courier-muted">Активных доставок нет.</p>}
       {active.map(j=><a className="courier-list-row" href={'#/courier/jobs/'+encodeURIComponent(j.id)} key={j.id}>
         Доставка №{j.orderNumber} · {STATUS[j.status]} <span aria-hidden="true">›</span></a>)}
     </>:<>
       {section==='home'&&<div className="courier-overview">
-        <a href="#/courier/jobs"><small>Мои доставки</small><strong>{active.length}</strong></a>
-        <a href="#/courier/jobs"><small>Посылки</small><strong>{packages}</strong></a>
-        <a href="#/courier/jobs"><small>Остановки</small><strong>{active.length}</strong></a>
+        <a href="#/courier/jobs"><small>Мои доставки</small><strong>{ready?active.length:'—'}</strong></a>
+        <a href="#/courier/jobs"><small>Посылки</small><strong>{ready?packages:'—'}</strong></a>
+        <a href="#/courier/jobs"><small>Остановки</small><strong>{ready?active.length:'—'}</strong></a>
       </div>}
-      {(!tasks.data||tasks.error)?<section className="courier-trip" role={tasks.error?'alert':undefined}>
+      {!ready?<section className="courier-trip" role={tasks.error?'alert':undefined}>
         <b>{tasks.error?'Не удалось загрузить доставки':'Загружаем текущие доставки…'}</b>
         {tasks.error&&<button className="courier-primary" type="button" onClick={tasks.reload}>Повторить</button>}
       </section>:
