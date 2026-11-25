@@ -1525,6 +1525,7 @@ export async function logout() {
 const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
 function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
+  const {me}=useMe();
   const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'recommended'; } });
   const hasGeo = !!geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lng)
     && Math.abs(geo.lat) <= 90 && Math.abs(geo.lng) <= 180;
@@ -1541,10 +1542,9 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
   const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', sort:effectivePrio,
     ...(hasGeo && geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}),
     ...(brand ? { brand } : {}) });
-  const l = useLoad(() => get(`/api/masters-nearby?${q}`),
-    [service, geo?.lat, geo?.lng, brand, verifiedOnly, effectivePrio]);
-  if (!l.data) return null;
-  const d = l.data;
+  const l=usePrivateRead<any>(async()=>{const result=await get(`/api/masters-nearby?${q}`);if(!result||!Array.isArray(result.items))throw new Error('Некорректный ответ поиска');return result;},(me?.id??'guest')+':nearby:'+q.toString(),e=>e.type==='connection_restored');
+  if (!l.data) return <div className="card stack"><b>Поиск исполнителей</b><span className="note" role={l.error?'alert':'status'}>{l.error?'Не удалось проверить доступность исполнителей.':'Проверяем доступность исполнителей…'}</span>{l.error&&<button type="button" className="btn ghost small" onClick={l.reload}>Повторить поиск</button>}</div>;
+  const d=l.data;
   const choose = (k: string) => {
     if (!PRIO.some(([key]) => key === k) || (!hasGeo && (k === 'near' || k === 'fast'))) return;
     setPrio(k);
@@ -1585,7 +1585,7 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
         <div key={i} className="between">
           <span className="stack" style={{ gap: 0 }}>
             <b>{i + 1} · Мастер {m.name} · {TIERS[m.tier as keyof typeof TIERS]?.name ?? ''} {m.verification==='approved'&&<span aria-label="Проверен TrakSOS" title="Проверен TrakSOS" className="pill good">✓ Проверен</span>}</b>
-            <small className="note">{m.distanceKm != null ? `${String(m.distanceKm).replace('.', ',')} км · ~${m.etaMin} мин` : 'расстояние уточним'}{m.brandStars ? ` · ${brand} ${'★'.repeat(m.brandStars)}` : ''}{m.rating ? ` · ★ ${m.rating.toFixed(1)}` : ''}</small>
+            <small className="note">{m.distanceKm != null ? `${String(m.distanceKm).replace('.', ',')} км${Number.isFinite(m.etaMin)?` · оценка ~${m.etaMin} мин`:''}` : 'расстояние уточним'}{m.brandStars ? ` · ${brand} ${'★'.repeat(m.brandStars)}` : ''}{m.rating ? ` · ★ ${m.rating.toFixed(1)}` : ''}</small>
           </span>
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
