@@ -5,6 +5,9 @@ import { build } from 'esbuild';
 import { chromium } from 'playwright';
 
 const stubs = {
+  // The isolated functional harness has no CSS output target; actual bundled
+  // styles are asserted separately in offer-gate-role-ui.mjs.
+  './offerGateApproved.css': '',
   '../api.ts': `
     export class ApiError extends Error {}
     export function onEvent() { return () => {}; }
