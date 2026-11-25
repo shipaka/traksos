@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { get, post } from '../api.ts';
+import { get, post, getToken } from '../api.ts';
+import { staffRecipient } from '../../../server/src/domain/airIntent.ts';
+import { stageAirDraft } from '../airSupportDraft.ts';
 import { Back, useMe } from '../ui.tsx';
 
 type Message = { id:string; author:string; body:string; isBot:boolean; createdAt:string };
@@ -14,10 +16,10 @@ export function DriverAir() {
     <p>Писать в общем эфире могут только водители и владельцы автопарков. Сотрудникам доступна модерация.</p></main>;
   // A→B can preserve the same permission boolean. A keyed room unmounts every
   // previous draft, moderator permission, support hint and in-flight response.
-  return <AirRoom key={me!.id+':'+[...me!.roles].sort().join(',')} />;
+  return <AirRoom key={me!.id+':'+[...me!.roles].sort().join(',')+':'+(getToken()??'')} owner={me!.id} token={getToken()} />;
 }
 
-function AirRoom() {
+function AirRoom({owner,token}:{owner:string;token:string|null}) {
   const [air,setAir] = useState<Air|null>(null);
   const [loading,setLoading] = useState(true);
   const [text,setText] = useState('');
@@ -116,8 +118,15 @@ function AirRoom() {
     setAir(null);setLoading(true);setRefresh(n=>n+1);
     inFlight.current=false;setPosting(false);
   };
+  const openPrivate=()=>{
+    if(inFlight.current||!token||getToken()!==token)return;
+    stageAirDraft(owner,token,text,staffRecipient(text));
+    location.hash='#/support/new';
+  };
+  const target=staffRecipient(text);
   const send = async()=>{
-    if(!air?.canPost||inFlight.current||!text.trim())return;
+    if(!air?.canPost||inFlight.current||!text.trim()||getToken()!==token)return;
+    if(target){openPrivate();return;}
     inFlight.current=true;setPosting(true);setActionError('');setSupportHint(false);
     try {
       const answer=await post<{supportSuggested:boolean}>('/api/air/messages',{body:text.trim()});
@@ -147,7 +156,7 @@ function AirRoom() {
     <Back to="" />
     <div className="between" style={{gap:12,flexWrap:'wrap'}}>
       <div><h1>Эфир TrakSOS</h1><p className="sub">Общий текстовый чат водителей и владельцев автопарков. Маршруты, жизнь в рейсе, полезный опыт и общение.</p></div>
-      <a className="btn ghost small" href="#/support/new">Личное обращение</a>
+      <button type="button" className="btn ghost small" disabled={posting} onClick={openPrivate}>Личное обращение</button>
     </div>
     <div className="card flat">
       <p className="note">Это публичная переписка для зарегистрированных участников. Не отправляй в эфир телефоны, VIN, номера документов, личные данные и подробности заявок. Для жалоб и обращений к сотрудникам используй личную поддержку.</p>
@@ -155,7 +164,7 @@ function AirRoom() {
         <input type="checkbox" checked={air.botEnabled} disabled={posting} onChange={()=>void switchBot()} />
         Разрешить редкие дружелюбные реплики TrakBot в эфире
       </label>}
-      {air && !air.botEnabled && <span className="note">Самостоятельные сообщения TrakBot сейчас выключены. При вызове модератора или админа он подскажет, как оформить обращение приватно.</span>}
+      {air && !air.botEnabled && <span className="note">Самостоятельные сообщения TrakBot сейчас выключены. Для обращения к модератору или администратору используйте личную поддержку.</span>}
     </div>
     <section className="card" aria-label="Общий эфир водителей">
       <div ref={logRef} role="log" aria-label="Сообщения эфира" aria-live="polite"
@@ -195,9 +204,10 @@ function AirRoom() {
         <input className="field" value={text} maxLength={400} disabled={posting}
           onChange={e=>setText(e.target.value)} aria-label="Сообщение в эфир"
           placeholder="Напиши водителям… или @TrakBot, расскажи шутку" />
-        <button className="btn" type="submit" disabled={posting||!text.trim()}>Отправить</button>
+        <button className="btn" type="submit" disabled={posting||!text.trim()}>{target ? "Перейти в личную поддержку" : "Отправить"}</button>
       </form> : air ? <p className="note">Режим наблюдения: писать в эфир могут только водители и владельцы автопарков. Модераторы и администраторы могут скрывать нарушения.</p> : null}
-      {air?.canPost && <p className="note">Для вызова помощи напиши @модератор или @админ. TrakBot уточнит, как оформить вопрос без раскрытия деталей в публичном чате.</p>}
+      {air?.canPost && <p className="note">Для личного обращения напиши @модератор или @админ — текст перейдёт в приватную форму, не публикуясь в эфире.</p>}
+      {target && air?.canPost && <p className="note" role="status">Личное обращение: {target==="admin"?"администратору":"модератору"}. Ничего не будет отправлено без подтверждения в поддержке.</p>}
     </section>
   </main>;
 }
