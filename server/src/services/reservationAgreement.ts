@@ -129,6 +129,7 @@ export class ReservationAgreement {
       if(row.status==='selected'&&row.agreement_version===expected+1&&same(row.starts_at,start)&&same(row.ends_at,end))return row;
       this.changed(row,expected);
       if(!['proposed','selected'].includes(row.status))throw conflict('reservation_state','Запись уже изменилась');
+      this.future(new Date(row.starts_at));
       this.future(start);
       const next=(await q.one<Row>(`update performer_time_reservations set status='selected',
         starts_at=$2,ends_at=$3,selected_by=$4,selected_at=$5,updated_at=$5,
@@ -143,7 +144,12 @@ export class ReservationAgreement {
     try{
       return await this.locked(id,actor,'client',async(q,row)=>{
         await this.parties(q,row.client_id,row.performer_id);
-        if(row.status==='confirmed'&&row.agreement_version===expected+1&&row.decided_by===actor.id)return row;
+        if(row.status==='confirmed'&&row.agreement_version===expected+1&&row.decided_by===actor.id){
+          const prior=await q.one(`select 1 from performer_time_reservation_events
+            where reservation_id=$1 and actor_id=$2 and event_type='client_confirmed'
+            and details->>'version'=$3 limit 1`,[id,actor.id,String(expected+1)]);
+          if(prior)return row;
+        }
         this.changed(row,expected);
         if(row.status!=='selected'||row.selected_by!==row.performer_id)throw conflict('reservation_state','Мастер ещё не согласовал время');
         this.future(new Date(row.starts_at));
@@ -152,7 +158,7 @@ export class ReservationAgreement {
         const next=(await q.one<Row>(`update performer_time_reservations set status='confirmed',
           decided_by=$2,decision_at=$3,updated_at=$3,agreement_version=agreement_version+1 where id=$1 returning *`,
           [id,actor.id,this.now()]))!;
-        await this.event(q,next,actor.id,'client_confirmed',row.status);
+        await this.event(q,next,actor.id,'client_confirmed',row.status,{version:next.agreement_version});
         return next;
       });
     }catch(e){

@@ -42,3 +42,18 @@ unverified future time. The worker is NOT attached to the production scheduler
 or public endpoints, because the planned-order lifecycle and fleet ACL are not
 ready. Handling overdue confirmed records, escalation and delivery acceptance on
 real Android devices remain separate work.
+
+## Deadline sweep (internal draft)
+
+At the requested/selected interval start, an unconfirmed proposal expires with
+an explicit system cancellation reason and audit event. A pending move expires
+when either the original or proposed start arrives; the confirmed original is
+not silently cancelled. At the confirmed interval end, mark review_required_at
+once, clear any now-unconfirmable move and notify both participants. No clock
+transition marks work performed, paid or cancelled. System events and their two
+notification intents commit with the row update; concurrent bounded workers
+cannot emit duplicate expiry/review events. Only managed unlinked rows are swept.
+No production scheduler or public route is enabled, and actual delayed arrival,
+resolution of a past confirmed appointment, linked-order dispatch and payments
+still require a separately agreed workflow. The existing immediate-dispatch
+policy uses the reservation end time; a review marker is not proof of active work.

@@ -10,6 +10,9 @@ const messages:Record<string,string>={
   move_confirmed:'Новое время согласовано обеими сторонами.',
   move_withdrawn:'Предложение переноса отозвано. Исходная запись сохранена.',
   cancelled:'Запись отменена.',
+  proposal_expired:'Время неподтверждённого предложения истекло. Новая запись требует согласования.',
+  move_expired:'Предложение переноса истекло. Исходная запись не отменена.',
+  review_required:'Согласованный интервал закончился. Проверьте фактическое состояние записи; выполнение не подтверждено.',
 };
 type Alert={
   eventId:string;reservationId:string;userId:string;version:number;
@@ -34,9 +37,11 @@ export class ReservationAlerts {
         a.event_id::text as "eventId",a.reservation_id as "reservationId",a.user_id as "userId",
         a.agreement_version as version,r.agreement_version as "currentVersion",
         e.event_type as "eventType",
-        (e.reservation_id=r.id and e.actor_id is not null and
+        (e.reservation_id=r.id and (
          ((e.actor_id=r.client_id and a.user_id=r.performer_id) or
-          (e.actor_id=r.performer_id and a.user_id=r.client_id))) as "eventMatches",
+          (e.actor_id=r.performer_id and a.user_id=r.client_id))
+         or (e.actor_id is null and e.event_type in ('proposal_expired','move_expired','review_required')
+          and a.user_id in (r.client_id,r.performer_id)))) as "eventMatches",
         (r.order_id is null and u.status='active' and u.deleted_at is null and
           ((a.user_id=r.client_id and 'client'=any(u.roles) and u.owner_id is null
              and not ('driver'=any(u.roles)))
