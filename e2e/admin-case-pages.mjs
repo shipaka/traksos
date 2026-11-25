@@ -76,8 +76,12 @@ try{
   await wait(second);
   assert.equal(await row(701).count(),0,'Previous registry page leaked during loading');
   await settle(second,'Ошибка страницы реестра',true);
-  await page.getByText('Ошибка страницы реестра',{exact:true}).waitFor();
-  await btn('Повторить загрузку реестра').click();
+  const registryAlert=page.getByRole('alert').filter({hasText:'Ошибка страницы реестра'});
+  await registryAlert.waitFor({state:'visible'});
+  assert.equal(await row(701).count(),0,'Failed page must not expose previous registry rows');
+  assert.equal(await btn('Следующая страница').isDisabled(),true);
+  assert.equal(await btn('Предыдущая страница').isEnabled(),true);
+  await btn('Повторить загрузку реестра',registryAlert).click();
   await settle(second,listPage([listRow('case-B',702)]));
   await row(702).waitFor();
   assert.equal(await btn('Следующая страница').isDisabled(),true);
@@ -120,9 +124,11 @@ try{
   await btn('Более ранние',dialog).click();
   const earlier=historyUrl('case-A','events','event-1');
   await settle(earlier,'Ошибка чтения событий',true);
-  await dialog.getByText('Ошибка чтения событий',{exact:true}).waitFor();
+  const historyAlert=dialog.getByRole('alert').filter({hasText:'Ошибка чтения событий'});
+  await historyAlert.waitFor({state:'visible'});
+  assert.equal(await btn('Более ранние',dialog).isDisabled(),true);
   assert.equal(await dialog.getByText('Заявка создана',{exact:true}).count(),0);
-  await btn('Повторить загрузку истории',dialog).click();
+  await btn('Повторить загрузку истории',historyAlert).click();
   await settle(earlier,history('case-A','events',[event('event-2','accepted')]));
   await dialog.getByText('Исполнитель принял',{exact:true}).waitFor();
   assert.equal(await btn('Более ранние',dialog).isDisabled(),true);
