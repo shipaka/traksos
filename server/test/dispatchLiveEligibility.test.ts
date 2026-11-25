@@ -41,6 +41,18 @@ test('live dispatch eligibility is rechecked at call acceptance, bid submission 
     await t.db.query("update performer_profiles set specialties='{electric}' where user_id=$1",[a.id]);
     ok(await offer(manual,a));ok(await offer(manual,b));
     const chosen=await bid(manual,a);
+    await t.db.query("update performer_profiles set verification='pending' where user_id=$1",[a.id]);
+    assert.equal((await t.api('POST','/api/orders/'+manual+'/offers/'+chosen.id+'/choose',{},client.token)).status,409);
+    assert.equal((await bid(manual,a)).status,'withdrawn');
+    await unchanged(manual);
+    await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[a.id]);
+    ok(await offer(manual,a));
+    await t.db.query("insert into client_prefs(client_id,performer_id,pref) values($1,$2,'hide')",[client.id,a.id]);
+    assert.equal((await t.api('POST','/api/orders/'+manual+'/offers/'+chosen.id+'/choose',{},client.token)).status,409);
+    assert.equal((await bid(manual,a)).status,'withdrawn');
+    await unchanged(manual);
+    await t.db.query('delete from client_prefs where client_id=$1 and performer_id=$2',[client.id,a.id]);
+    ok(await offer(manual,a));
     await t.db.query("update users set roles='{client}' where id=$1",[a.id]);
     assert.equal((await t.api('POST','/api/orders/'+manual+'/offers/'+chosen.id+'/choose',{},client.token)).status,409);
     assert.equal((await bid(manual,a)).status,'withdrawn');
