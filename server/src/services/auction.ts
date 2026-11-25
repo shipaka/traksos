@@ -351,9 +351,16 @@ export class AuctionService {
         continue;
       }
       if (o.auto_pick) {
-        const best = sortOffers(active, 'recommended', this.limits(o, all.dispatch), all.dispatch.weights)[0];
-        await this.choose(null, o.id, best.id).catch(() => {});
-        n++;
+        const ranked=sortOffers(active,'recommended',this.limits(o,all.dispatch),all.dispatch.weights);
+        for(const candidate of ranked){
+          try{await this.choose(null,o.id,candidate.id);n++;break;}
+          catch(error){
+            const code=(error as {code?:string})?.code;
+            if(!['performer_unavailable','performer_busy','offer_gone'].includes(code??''))break;
+            // Do not keep retrying an unavailable winning offer forever.
+            await this.db.query("update bids set status='withdrawn',updated_at=now() where id=$1 and status='active'",[candidate.id]);
+          }
+        }
       }
     }
     return n;
