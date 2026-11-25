@@ -1342,7 +1342,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     }
     async function refresh(){
       if(!alive||!currentSession())return;
-      if(busy||followup!==null){queued=true;return;}
+      if(busy||followup!==null){queued=true;setLoading(true);setPeople([]);setQuick([]);return;}
       queued=false;busy=true;
       const old=targetOldest.current;
       const node=box.current;
@@ -1558,7 +1558,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         <button type="button" className="btn ghost small" onClick={()=>{void send('','text',true);}}>Повторить прежнюю отправку</button>
         <span className="note">Сначала подтвердите прежнюю отправку. Новый черновик сохраняется. При выходе из заявки проверьте историю перед повторной отправкой.</span>
       </div>}
-      {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
+      {!loading&&!loadError&&people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       {!loading&&!loadError&&historyTrimmed&&<span className="note" role="status">Показана свежая часть переписки. Более ранние сообщения доступны по кнопке ниже.</span>}
       {!loading&&!loadError&&older!==null&&<button type="button" className="btn ghost small" disabled={paging} onClick={()=>olderRef.current()}>{paging?'Загружаем…':'Загрузить более ранние сообщения'}</button>}
       <div className="msgs" ref={box}>
