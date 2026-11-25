@@ -72,6 +72,11 @@ try {
       check(await page.locator('.trakbot-dock-panel').count()===0,
         'TrakBot did not close');
 
+      // The large red SOS action must preserve the generic emergency choice,
+      // not silently narrow the customer to a mobile mechanic.
+      await guestAuth(page,'sos','.owner20-alert',landing);
+      check(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))==='sos',
+        'Desktop SOS lost emergency intent');
       for(const key of ['van','tow','sto','consult']){
         await guestAuth(page,key,'.owner20-quick>a[href="'+target(key)+'"]',landing);
       }
