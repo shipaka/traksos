@@ -177,7 +177,7 @@ try{
   await finish(workerNotices,0,'offline worker news',true);
   await finish(workerCampaigns,0,[{
     id:'test-discount',service:'electric',commission_pct:0,reason:'Учебный ноль',
-    ends_at:'2099-11-24T20:00:00Z'
+    starts_at:'2020-01-01T00:00:00Z',ends_at:'2099-11-24T20:00:00Z'
   }]);
   await page.getByText('Не удалось проверить объявления и действующие акции').waitFor();
   assert(await page.getByText('Учебный ноль').count()===0,
@@ -191,10 +191,32 @@ try{
   await waitFor(workerNotices,3);await waitFor(workerCampaigns,2);
   assert(await page.getByText('Учебный ноль').count()===0,
     'Old worker discount leaked into another account');
-  await finish(workerNotices,2,[]);
-  await finish(workerCampaigns,1,[]);
+  // Independent clock expiry must remove real cards without a new server event.
+  const current=await page.evaluate(()=>Date.now());
+  const starts_at=new Date(current-60000).toISOString();
+  const ends_at=new Date(current+30000).toISOString();
+  await finish(workerNotices,2,[{id:'notice-expiring',title:'Срочное объявление',body:'Скоро истекает',
+    service:'electric',published:true,starts_at,ends_at}]);
+  await finish(workerCampaigns,1,[{id:'campaign-expiring',service:'electric',
+    commission_pct:1,reason:'Истекающая акция',starts_at,ends_at}]);
+  await page.getByText('Срочное объявление').waitFor();
+  await page.getByText('Истекающая акция').waitFor();
   assert(await page.getByText('Учебный ноль').count()===0,
     'Another worker saw a previous worker rate');
+  await page.evaluate(ms=>{Date.now=()=>ms;},current+31000);
+  await page.getByText('Срочное объявление').waitFor({state:'detached'});
+  await page.getByText('Истекающая акция').waitFor({state:'detached'});
+  // A foreground refresh must replace the expired snapshot, not reuse it.
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await waitFor(workerNotices,4);await waitFor(workerCampaigns,3);
+  await finish(workerNotices,3,[{id:'future-notice',title:'Будущее объявление',body:'Не наступило',
+    service:'electric',published:true,starts_at:new Date(current+120000).toISOString(),
+    ends_at:new Date(current+180000).toISOString()}]);
+  await finish(workerCampaigns,2,[]);
+  assert(await page.getByText('Будущее объявление').count()===0,
+    'A future announcement was displayed as active');
+  // Restore the system clock before testing other roles.
+  await page.evaluate(()=>{Date.now=()=>new Date().getTime();});
 
   // Station partners must not be shown temporary dispatch worker discounts.
   // Their commission/contract is separate from roadside master/tow actions.
@@ -204,7 +226,7 @@ try{
   await finish(stationNotices,0,[]);
   const campaignReads=await page.evaluate(()=>
     window.__opsMock.requests.filter(x=>x.path==='/api/worker/commission-campaigns').length);
-  assert(campaignReads===2,
+  assert(campaignReads===3,
     'Station fetched and could display commission campaigns meant for dispatch workers');
   assert(await page.getByText('Учебный ноль').count()===0,
     'Station saw a roadside master campaign');
