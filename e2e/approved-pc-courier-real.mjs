@@ -126,6 +126,61 @@ try{
    await page.getByRole('button',{name:'Написать',exact:true}).waitFor();
    await assertClean('courier '+width+' support');
    report.checks.push('courier support shortcut opens real messages and new ticket '+width);
+
+   // Actual courier detail, controlled server state: no real shipment or code.
+   const jobId='synthetic-handoff',jobPath='/api/courier/jobs/'+jobId;
+   let remaining=5,status='arrived',failRead=false,loseReply=false,writes=0,reads=0;
+   await page.route('**'+jobPath,async route=>{
+    reads++;
+    if(failRead)return route.fulfill({status:503,json:{message:'Synthetic read failure'}});
+    return route.fulfill({json:{id:jobId,shopOrderId:'synthetic-order',
+      orderNumber:9001,status,items:[{productId:'synthetic-item',name:'Учебная деталь',qty:1}],
+      deliveryAddress:null,codeVerified:status==='code_verified',receivedAt:null,
+      updatedAt:'2026-11-25T12:00:00Z',codeAttemptsRemaining:remaining}});
+   });
+   await page.route('**'+jobPath+'/verify',async route=>{
+    writes++;
+    if(route.request().method()!=='POST')throw Error('Unexpected verification method');
+    if(loseReply){status='code_verified';return route.abort('failed');}
+    remaining=Math.max(0,remaining-1);
+    return route.fulfill({status:400,json:{error:'bad_receipt_code',message:'Учебный неверный код'}});
+   });
+   await page.goto(BASE+'/#/courier/jobs/'+jobId);
+   const code=page.getByRole('textbox',{name:'Шестизначный код вручения'});
+   const verify=page.getByRole('button',{name:'Проверить код вручения'});
+   await page.getByText('Осталось попыток: 5.',{exact:false}).waitFor();
+   for(let left=4;left>=0;left--){
+    await code.fill('111111');
+    const before=writes;
+    await verify.evaluate(el=>{el.click();el.click();});
+    await page.getByText('Осталось попыток: '+left+'.',{exact:false}).waitFor();
+    if(writes!==before+1)throw Error('Duplicate verification POST');
+   }
+   await code.fill('111111');
+   if(!await verify.isDisabled())throw Error('Exhausted server attempts still permit verification');
+   if(writes!==5)throw Error('Wrong code was silently replayed');
+   // Simulate server-side reset, reopen the job; never reset a real code.
+   remaining=5;
+   await page.reload();
+   await page.getByText('Осталось попыток: 5.',{exact:false}).waitFor();
+   await code.fill('111111');
+   failRead=true;
+   await verify.click();
+   await page.getByText('Не удалось обновить назначенную доставку',{exact:true}).waitFor();
+   if(await verify.count())throw Error('Failed reread exposed stale attempt counter');
+   if(await page.getByText('Осталось попыток:',{exact:false}).count())throw Error('Failed reread exposed old count');
+   failRead=false;
+   await page.getByRole('button',{name:'Повторить загрузку',exact:true}).click();
+   await page.getByText('Осталось попыток: 4.',{exact:false}).waitFor();
+   if(writes!==6)throw Error('Read retry repeated the verification write');
+   loseReply=true;
+   await code.fill('111111');
+   await verify.click();
+   await page.getByText('Ожидаем отдельное подтверждение фактического получения от покупателя.',{exact:false}).waitFor();
+   if(await verify.count()||writes!==7||reads<9)throw Error('Lost response did not reconcile exactly once');
+   if(await page.getByText('Вручение подтверждено покупателем',{exact:true}).count())throw Error('Courier verification falsely completed purchase');
+   await assertClean('courier '+width+' receipt reconciliation');
+   report.checks.push('courier attempts, failed reread, reset and ambiguous receipt reconciliation '+width);
   }finally{await ctx.close();}
  }
 }finally{await browser.close();}
