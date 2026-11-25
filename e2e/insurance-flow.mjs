@@ -130,8 +130,8 @@ try{
     if(item.name==='admin') {
       await page.locator('.admin-stage-head h2').getByText('Страхование и ТО',{exact:true}).waitFor();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
-      await page.getByRole('button',{name:/Страховые агенты/}).click();
-       await page.getByText('Страховые партнёры',{exact:true}).waitFor();
+      await page.waitForURL(/#\/admin\/section\/access$/);
+      await page.getByRole('region',{name:'Допуск страховых агентов'}).getByText('Страховые партнёры',{exact:true}).waitFor();
       await page.getByRole('button',{name:/Регистрация новых партнёров закрыта/}).waitFor();
     }
     if(item.name==='owner')await page.getByText('Страхование и техосмотр',{exact:false}).first().click();
