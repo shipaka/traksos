@@ -160,7 +160,7 @@ export class ChatService {
     const lower = safe.toLowerCase();
     const flagged = masked || words.some((w) => lower.includes(w));
 
-    const { message, number, created } = await this.db.tx(async q => {
+    const { message, number, created, notified } = await this.db.tx(async q => {
       // Status, performer and customer authority are checked in one snapshot.
       // A previous owner/driver/performer check in another pooled connection
       // is not sufficient while reassignments and closures are concurrent.
@@ -184,7 +184,7 @@ export class ChatService {
           if(prior.client_request_fingerprint!==fingerprint)
             throw conflict('request_id_conflict','Этот идентификатор уже использован для другого сообщения');
           const {client_request_fingerprint:_,...message}=prior;
-          return {message,number:o.number,created:false};
+          return {message,number:o.number,created:false,notified:[] as string[]};
         }
       }
       if (['completed', 'cancelled', 'no_performer'].includes(o.status))
@@ -200,7 +200,15 @@ export class ChatService {
           values ($1,$2,$3,$4,$5,$6,$7,$8)
           returning id::int as id,order_id,sender_id,kind,body,masked,created_at`,
         [orderId, user.id, kind, safe, masked, flagged, requestId??null,fingerprint]);
-      return { message: m!, number: o.number, created:true };
+      // An inbox entry is durable evidence of the committed message. If any
+      // recipient insert fails, roll back the message and all inbox entries.
+      const notified=[...new Set((await currentChatPeople(q,orderId)).map(p=>p.id))].filter(id=>id!==user.id);
+      for(const id of notified){
+        await q.query('insert into notifications(user_id,kind,title,body,data) values ($1,$2,$3,$4,$5)',[
+          id,'chat_push',`Заявка №${o.number}`,'Новое сообщение. Откройте переписку в заявке.',{orderId},
+        ]);
+      }
+      return { message: m!, number: o.number, created:true, notified };
     });
 
     const rendered = { ...message, sender_name: user.name };
@@ -210,8 +218,8 @@ export class ChatService {
     try {
       const ids = [...new Set((await currentChatPeople(this.db,orderId)).map(p=>p.id))];
       this.notifier.live(ids, { type: 'chat', message: rendered });
-      const others = ids.filter(id => id !== user.id);
-      await this.notifier.notify(others, { type: 'chat_push', orderId }, {
+      const others = ids.filter(id => notified.includes(id));
+      await this.notifier.deliverStored(others, { type: 'chat_push', orderId }, {
         kind: 'normal', title: `Заявка №${number}`, body: 'Новое сообщение. Откройте переписку в заявке.', data: { orderId },
       });
     } catch (error) {
