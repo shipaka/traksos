@@ -3,7 +3,7 @@
  * a training click must never create an order, trigger payment or notify staff.
  */
 export type PracticeKind = 'customer' | 'performer' | 'service' | 'insurance' | 'inspection' | 'courier' | 'staff';
-export type PracticeInput = { vehicle: string; problem: string; service: string };
+export type PracticeInput = { vehicle: string; problem: string; service: string; chosenOffer?: string };
 export type PracticeStage = {
   title: string;
   explanation: string;
@@ -25,7 +25,7 @@ export function practiceKindFor(role: string): PracticeKind {
 
 export const practiceStages: Record<PracticeKind, readonly PracticeStage[]> = {
   customer: [
-    { title: '1. Выбираем помощь', explanation: 'Сначала выберите, кто нужен грузовику: мастер, эвакуатор, СТО или консультация.', where: 'Кабинет → Помощь SOS', why: 'Так заявка попадёт нужной категории исполнителей.', button: 'Выбрать транспорт и описать проблему', status: 'Начало' },
+    { title: '1. Выбираем помощь', explanation: 'Сначала выберите, кто нужен грузовику: мастер, эвакуатор, СТО, консультация или страхование.', where: 'Кабинет → Помощь SOS', why: 'Так заявка попадёт нужной категории исполнителей.', button: 'Выбрать транспорт и описать проблему', status: 'Начало' },
     { title: '2. Описываем поломку', explanation: 'Выберите учебный грузовик и напишите, что произошло. Чем понятнее проблема, тем проще исполнителю оценить работу.', where: 'SOS → Новая заявка → Описание', why: 'Исполнитель заранее узнаёт симптомы и местоположение; личные данные в общий эфир не отправляются.', button: 'Проверить учебную заявку', status: 'Черновик' },
     { title: '3. Проверяем перед отправкой', explanation: 'Здесь можно перепроверить услугу, автомобиль и симптомы. В настоящей заявке дополнительно покажем адрес, итоговую цену и условия.', where: 'SOS → Проверка и подтверждение', why: 'Важно видеть стоимость и согласованные условия до реального заказа.', button: 'Создать только учебную заявку', status: 'Проверка' },
     { title: '4. Заявка ожидает отклика', explanation: 'Учебная заявка создана только на этом экране. В реальном кабинете на этом этапе вы видите поиск исполнителя.', where: 'Мои заявки → Активные → Карточка заявки', why: 'Карточка объединяет статусы, сообщения и историю.', button: 'Показать принятие исполнителем', status: 'Получено' },
@@ -88,6 +88,20 @@ export const practiceStages: Record<PracticeKind, readonly PracticeStage[]> = {
 export function customerStageFor(service: string, index: number): PracticeStage {
   const base=practiceStages.customer[index];
   if(!base) return practiceStages.customer[0];
+  if(service==='Страхование') {
+    const extra: Record<number, Partial<PracticeStage>>={
+      0:{title:'1. Выбираем страхование',explanation:'В тренажёре покажем путь клиента от выбора страхового агента до получения полиса. Это не оформление страховки.',where:'Мой гараж → Страхование',button:'Выбрать учебный автомобиль'},
+      1:{title:'2. Проверяем учебные сведения',explanation:'Выберите вымышленный автомобиль и укажите, какой вид страхования нужен. Не вводите реальные документы или персональные данные.',where:'Страхование → Страхователь и автомобиль',button:'Проверить учебную анкету'},
+      2:{title:'3. Проверяем заявку',explanation:'В реальной анкете выбирают агента и подтверждают передачу данных. В тренажёре ничего не передаётся.',where:'Страхование → Отправка',button:'Отправить только учебную заявку',status:'Проверка'},
+      3:{title:'4. Агент получил запрос',explanation:'Учебный агент получил условную анкету. В реальности агент проверяет сведения и уточняет детали в переписке.',where:'Страховая заявка → Переписка',button:'Показать принятие в работу',status:'Получено'},
+      4:{title:'5. Агент готовит предложения',explanation:'В настоящем кабинете агент готовит варианты. В примере имитируется работа агента, клиент не переключается в чужой кабинет.',where:'Страховая заявка → Статус',button:'Показать учебные предложения',status:'Принято в работу'},
+      5:{title:'6. Выбираем предложение',explanation:'Сравните два условных варианта. Они не являются реальными котировками и не содержат цены или названия страховой компании.',where:'Страховая заявка → Предложения',button:'Подтвердить учебный выбор',status:'Предложения отправлены'},
+      6:{title:'7. Агент оформляет полис',explanation:'После выбора агент оформляет полис. Настоящие платежи и документы не создаются в тренажёре.',where:'Страховая заявка → Оформление',button:'Показать получение учебного полиса',status:'Оформление'},
+      7:{title:'8. Полис отправлен',explanation:'В реальной заявке проверьте документ и данные автомобиля. Здесь нет настоящего PDF или действующего страхового полиса.',where:'Страховая заявка → Документы',button:'Завершить учебное обращение',status:'Полис отправлен · демо'},
+      8:{title:'9. История страхования',explanation:'Учебное обращение завершено. Настоящие страховые документы доступны в гараже и истории обращений.',where:'Мой гараж → Страхование',status:'Демо завершено'},
+    };
+    return {...base,...(extra[index]??{})};
+  }
   if(service==='СТО') {
     const extra: Record<number, Partial<PracticeStage>>={
       3:{title:'4. Запрос направлен в СТО',status:'Получено',explanation:'Учебная запись ожидает подтверждения станции. Это не вызов выездного мастера.',where:'Мои заявки → Запись в СТО',button:'Показать подтверждение записи'},
@@ -119,5 +133,7 @@ export function nextPracticeStage(kind: PracticeKind, index: number, input: Prac
   if (index === stages.length - 1) return 0;
   if (kind === 'customer' && index === 1 &&
     (!input.vehicle.trim() || input.problem.trim().length < 5)) return index;
+  if (kind === 'customer' && input.service === 'Страхование' && index === 5 &&
+    !['demo-a','demo-b'].includes(input.chosenOffer ?? '')) return index;
   return index + 1;
 }
