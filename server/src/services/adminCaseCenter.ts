@@ -211,20 +211,23 @@ export class AdminCaseCenter {
     };
   }
 
-  async historyPage(admin:AuthUser,anyOrderId:string,kind:'events'|'chat',limit=100,before:string|null=null) {
-    if(kind!=='events'&&kind!=='chat')throw bad('bad_history','Неизвестный раздел истории');
+  async historyPage(admin:AuthUser,anyOrderId:string,kind:'events'|'chat'|'vehicle_orders'|'vehicle_bookings',limit=100,before:string|null=null) {
+    if(!['events','chat','vehicle_orders','vehicle_bookings'].includes(kind))throw bad('bad_history','Неизвестный раздел истории');
     if(!Number.isSafeInteger(limit)||limit<1||limit>100)throw bad('bad_limit','Размер страницы от 1 до 100');
     const row=await this.db.one<{id:string;case_root_id:string|null}>(
       'select id,case_root_id from orders where id=$1',[anyOrderId]);
     if(!row)throw notFound('Заявка не найдена');
     const rootId=row.case_root_id??row.id;
     // Table and columns are selected exclusively from a closed enum.
-    const table=kind==='events'?'order_events':'chat_messages';
-    const select=kind==='events'
-      ?'h.id::text as id,h.order_id,h.actor_id,h.type,h.data,h.created_at'
-      :"h.id::text as id,h.order_id,h.sender_id,h.kind,h.body,h.created_at,coalesce(u.name,'Система') as sender_name";
-    const join=kind==='events'?'':' left join users u on u.id=h.sender_id';
-    const scoped='h.order_id in (select s.id from orders s where s.id=$1 or s.case_root_id=$1)';
+    const caseOrders='select s.id from orders s where s.id=$1 or s.case_root_id=$1';
+    const vehicleScope='h.vehicle_id=(select s.vehicle_id from orders s where (s.id=$1 or s.case_root_id=$1) and s.vehicle_id is not null order by s.created_at,s.number limit 1)';
+    const config={
+      events:{table:'order_events',select:'h.id::text as id,h.order_id,h.actor_id,h.type,h.data,h.created_at',join:'',scoped:'h.order_id in ('+caseOrders+')'},
+      chat:{table:'chat_messages',select:"h.id::text as id,h.order_id,h.sender_id,h.kind,h.body,h.created_at,coalesce(u.name,'Система') as sender_name",join:' left join users u on u.id=h.sender_id',scoped:'h.order_id in ('+caseOrders+')'},
+      vehicle_orders:{table:'orders',select:'h.id::text as id,h.number,h.service,h.status,h.problem,h.result_note,h.created_at,h.completed_at',join:'',scoped:vehicleScope+' and h.id not in ('+caseOrders+')'},
+      vehicle_bookings:{table:'service_bookings',select:'h.id::text as id,h.number,h.status,h.need,h.works,h.created_at,h.closed_at,c.name as center_name',join:' join service_centers c on c.id=h.center_id',scoped:vehicleScope+' and not exists(select 1 from service_bookings b where b.id=h.id and '+bookingInCase('$1')+')'},
+    }[kind];
+    const {table,select,join,scoped}=config;
     if(before!==null){
       // Resolve the original DB tuple instead of serializing a timestamp
       // through JavaScript (which would lose microseconds).
