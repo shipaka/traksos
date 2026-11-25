@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { get, post } from './api.ts';
 import { YEARS } from './dict.ts';
 
@@ -25,7 +25,10 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
   const [models,setModels]=useState<DirectoryModel[]>([]);
   const [makeLoading,setMakeLoading]=useState(false);
   const [modelLoading,setModelLoading]=useState(false);
-  const [loadError,setLoadError]=useState('');
+  const [makeError,setMakeError]=useState('');
+  const [modelError,setModelError]=useState('');
+  const [retry,setRetry]=useState(0);
+  const missingLock=useRef(false);
   const [truckEvidence,setTruckEvidence]=useState<TruckEvidence|null>(null);
   const [missing,setMissing]=useState(false);
   const [missingMake,setMissingMake]=useState('');
@@ -37,31 +40,32 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
   const selectedModel=value.catalogCategory===category?value.catalogModelKey??'':'';
   useEffect(()=>{
     let alive=true;
+    setMakes([]);setMakeLoading(true);setMakeError('');
     const timer=setTimeout(()=>{
-      setMakeLoading(true);
       get('/api/vehicle-reference/makes?purpose='+purpose+'&category='+category+'&includeHeavy='+(purpose==='master')+'&q='+encodeURIComponent(makeQuery)).then((data:any)=>{
         if(alive){setMakes((data.items??[]).filter((x:DirectoryMake)=>x.category===category));
-          setLoadError('');}
-      }).catch((e:Error)=>{if(alive){setMakes([]);setLoadError(e.message)}})
+          setMakeError('');}
+      }).catch((e:Error)=>{if(alive){setMakes([]);setMakeError(e.message)}})
         .finally(()=>{if(alive)setMakeLoading(false)});
     },180);
     return ()=>{alive=false;clearTimeout(timer)};
-  },[category,makeQuery,purpose]);
+  },[category,makeQuery,purpose,retry]);
   useEffect(()=>{
-    if(!selectedMake){setModels([]);return;}
-    let alive=true;
+    setModels([]);setModelError('');
+    if(!selectedMake){setModelLoading(false);return;}
+    let alive=true;setModelLoading(true);
     const timer=setTimeout(()=>{
-      setModelLoading(true);
       const url='/api/vehicle-reference/models?purpose='+purpose+
         '&category='+category+'&brandKey='+encodeURIComponent(selectedMake)+'&includeHeavy='+(purpose==='master')+'&q='+encodeURIComponent(modelQuery);
-      get(url).then((data:any)=>{if(alive){setModels(data.items??[]);setLoadError('')}})
-        .catch((e:Error)=>{if(alive){setModels([]);setLoadError(e.message)}})
+      get(url).then((data:any)=>{if(alive){setModels(data.items??[]);setModelError('')}})
+        .catch((e:Error)=>{if(alive){setModels([]);setModelError(e.message)}})
         .finally(()=>{if(alive)setModelLoading(false)});
     },180);
     return ()=>{alive=false;clearTimeout(timer)};
-  },[category,selectedMake,modelQuery,purpose]);
+  },[category,selectedMake,modelQuery,purpose,retry]);
   useEffect(()=>{
-    if(category!=='truck'||!selectedMake||!selectedModel){setTruckEvidence(null);return;}
+    setTruckEvidence(null);
+    if(category!=='truck'||!selectedMake||!selectedModel)return;
     let alive=true;
     get('/api/vehicle-reference/truck-evidence?purpose='+purpose+
       '&brandKey='+encodeURIComponent(selectedMake)+'&modelKey='+encodeURIComponent(selectedModel))
@@ -74,14 +78,15 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
     setModelQuery('');
     setModels([]);
     onChange({...value,brand:choice?.name??'',model:'',
-      catalogCategory:choice?.category??category,catalogBrandKey:key||undefined,catalogModelKey:undefined});
+      year:'',catalogCategory:choice?.category??category,catalogBrandKey:choice?.key,catalogModelKey:undefined});
   };
   const chooseModel=(key:string)=>{
     const choice=models.find(x=>x.key===key);
-    onChange({...value,model:choice?.name??'',catalogModelKey:key||undefined});
+    onChange({...value,model:choice?.name??'',year:'',catalogModelKey:choice?.key});
   };
   const submitMissing=async()=>{
-    setSending(true);setSent('');
+    if(missingLock.current||missingMake.trim().length<2||missingModel.trim().length<2)return;
+    missingLock.current=true;setSending(true);setSent('');
     try {
       const r:any=await post('/api/vehicle-reference/missing',{
         category,purpose,make:missingMake.trim(),model:missingModel.trim(),
@@ -89,14 +94,14 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
       setSent(r.message||'Заявка направлена на модерацию');
       setMissing(false);setMissingMake('');setMissingModel('');setMissingNote('');
     }catch(e:any){setSent(e.message??'Не удалось отправить запрос')}
-    finally{setSending(false)}
+    finally{missingLock.current=false;setSending(false)}
   };
   return <div className="stack" style={{gap:8}}>
     <label className="label">Категория транспорта</label>
     <select className="field" aria-label="Категория транспорта" value={category}
       onChange={(e)=>{
-        const c=e.target.value as typeof category;setCategory(c);setMakeQuery('');setModelQuery('');
-        onChange({...value,brand:'',model:'',catalogCategory:c,
+        const c=e.target.value as typeof category;setCategory(c);setMakeQuery('');setModelQuery('');setMakes([]);setModels([]);setTruckEvidence(null);
+        onChange({...value,brand:'',model:'',year:'',catalogCategory:c,
           catalogBrandKey:undefined,catalogModelKey:undefined});
       }}>
       {(purpose==='tow' ? [
@@ -112,7 +117,7 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
     <input className="field" value={makeQuery} onChange={e=>setMakeQuery(e.target.value)}
       aria-label="Поиск марки" placeholder="Поиск марки в каталоге" maxLength={80}/>
     <select className="field" aria-label="Марка" value={selectedMake}
-      onChange={e=>chooseMake(e.target.value)}>
+      onChange={e=>chooseMake(e.target.value)} disabled={makeLoading||!!makeError}>
       <option value="">{makeLoading?'Поиск марок…':'Выберите марку'}</option>
       {makes.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
       {selectedMake&&!makes.some(x=>x.key===selectedMake)&&<option value={selectedMake}>{value.brand}</option>}
@@ -121,7 +126,7 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
       <input className="field" aria-label="Поиск модели" placeholder="Поиск модели или серии"
         value={modelQuery} onChange={e=>setModelQuery(e.target.value)} maxLength={80}/>
       <select className="field" aria-label="Модель" value={selectedModel}
-        onChange={e=>chooseModel(e.target.value)}>
+        onChange={e=>chooseModel(e.target.value)} disabled={modelLoading||!!modelError}>
         <option value="">{modelLoading?'Поиск моделей…':'Выберите модель'}</option>
         {models.map(x=><option key={x.key} value={x.key}>{x.name}</option>)}
         {selectedModel&&!models.some(x=>x.key===selectedModel)&&<option value={selectedModel}>{value.model}</option>}
@@ -132,7 +137,7 @@ export function CatalogVehicleFields({value,onChange,purpose='garage'}:{
       <option value="">Год выпуска (при наличии)</option>
       {YEARS.map(y=><option key={y} value={String(y)}>{y}</option>)}
     </select>
-    {loadError&&<span className="note" role="alert">Каталог временно недоступен: {loadError}. Свободный ввод не включается.</span>}
+    {(makeError||modelError)&&<div className="stack" role="alert"><span className="note">Каталог временно недоступен: {makeError||modelError}. Свободный ввод не включается.</span><button className="btn ghost small" type="button" onClick={()=>setRetry(n=>n+1)}>Повторить загрузку каталога</button></div>}
     <span className="note">
       Марка и модель выбираются из справочника. Год и комплектацию
       необходимо уточнять по документам автомобиля.
