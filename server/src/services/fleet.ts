@@ -27,7 +27,7 @@ export class FleetService {
          from vehicles v left join users d on d.id=v.driver_id where v.owner_id=$1 order by v.created_at`, [owner.id]);
     const drivers = [...new Set(cars.map((c: any) => c.driver_id).filter(Boolean))] as string[];
     const spent: Record<string, number> = {};
-    for (const d of drivers) spent[d] = await this.orders.monthSpent(d);
+    for (const d of drivers) spent[d] = await this.orders.monthSpent(d, owner.id);
     const pending = await this.db.query(
       `select o.id, o.number, o.service, o.description, o.owner_note, o.created_at, (o.estimate->>'callOut')::int as amount,
               v.brand, v.model, v.plate, d.name as driver_name
@@ -99,7 +99,7 @@ export class FleetService {
     const f = o?.fleet ?? {};
     return {
       owner: o?.owner ?? 'Владелец', mode: f.mode ?? 'limit', perOrder: f.perOrder ?? null, perMonth: f.perMonth ?? null,
-      allow: { repair: true, tow: true, consult: true, service: true, shop: true, insurance: false, inspection: false, ...(f.allow ?? {}) }, monthSpent: await this.orders.monthSpent(user.id),
+      allow: { repair: true, tow: true, consult: true, service: true, shop: true, insurance: false, inspection: false, ...(f.allow ?? {}) }, monthSpent: await this.orders.monthSpent(user.id, user.owner_id),
     };
   }
 
