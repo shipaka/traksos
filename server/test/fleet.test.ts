@@ -93,3 +93,152 @@ test('владелец не может назначить себя водите�
   assert.equal((await t.api('GET',`/api/vehicles/${vehicleId}/history`,undefined,driver.token)).status,404);
   assert.equal(ok(await t.api('GET','/api/vehicles',undefined,driver.token)).length,0);
 });
+
+test('расходы водителя ограничены текущим парком и не переполняют int32', async () => {
+  // The preceding history ACL regression deliberately detached this driver.
+  // Re-establish the initial assignment through the actual QR flow.
+  const oldQr = ok(await t.api('GET', '/api/fleet', undefined, owner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${oldQr}/join`, {}, driver.token));
+  // Existing SOS exception permits creating an order despite approval mode.
+  const oldOrder = ok(await t.api('POST', '/api/orders', {
+    service: 'consult', vehicleId, isSos: true, description: 'Тест старого автопарка',
+  }, driver.token)).order;
+  // Synthetic stored amounts only; no payment provider calls to create these amounts.
+  await t.db.query(`update orders set status='completed', call_out_amount=1500000000,
+    work_amount=1000000000, created_at=now() where id=$1`, [oldOrder.id]);
+  const beforeMove = ok(await t.api('GET', '/api/fleet', undefined, owner.token));
+  assert.equal(beforeMove.cars[0].driver.monthSpent, 2500000000);
+  assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, driver.token)).monthSpent, 2500000000);
+
+  const nextOwner = await t.login('+79993334477');
+  const nextVehicle = ok(await t.api('POST', '/api/vehicles', {
+    brand: 'DAF', model: 'XF', plate: 'а483км178',
+  }, nextOwner.token)).id;
+  const nextQr = ok(await t.api('GET', '/api/fleet', undefined, nextOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/fleet/vehicles/${vehicleId}/new-qr`, {}, owner.token));
+  ok(await t.api('POST', `/api/qr/${nextQr}/join`, {}, driver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'limit', perMonth: 100000 }, nextOwner.token));
+  const nextFleet = ok(await t.api('GET', '/api/fleet', undefined, nextOwner.token));
+  assert.equal(nextFleet.cars[0].driver.monthSpent, 0);
+  assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, driver.token)).monthSpent, 0);
+  const nextOrder = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: nextVehicle }, driver.token)).order;
+  assert.notEqual(nextOrder.status, 'awaiting_owner', 'старые расходы не расходуют лимит нового владельца');
+  const stored = await t.db.one<{ client_id: string }>('select client_id from orders where id=$1', [oldOrder.id]);
+  assert.equal(stored?.client_id, owner.id, 'история старого парка не переносится');
+});
+
+test('параллельные заявки резервируют лимит атомарно; повтор ключа и SOS сохраняются', async () => {
+  const fleetOwner = await t.login('+79993334488');
+  const fleetDriver = await t.login('+79993334499');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  const amount = (await t.app.settings.all()).pricing.consult?.price ?? 70000;
+  ok(await t.api('PUT', '/api/fleet', { mode: 'limit', perMonth: amount }, fleetOwner.token));
+
+  // Keep the real HTTP/ACL/DB/create path, but freeze dispatch and payment
+  // after commit: a no-performer outcome would legitimately release budget.
+  const originalLaunch = t.app.orders.launch;
+  t.app.orders.launch = async (actor, order) => ({
+    order: await t.app.orders.view(actor, order.id), confirmationUrl: null,
+  });
+  const send = async (key: string, description: string, isSos = false) => {
+    const res = await fetch(t.base + '/api/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + fleetDriver.token, 'idempotency-key': key },
+      body: JSON.stringify({ service: 'consult', vehicleId: car, description, isSos }),
+    });
+    return ok({ status: res.status, body: await res.json() }).order;
+  };
+  try {
+    const [a, b, repeat] = await Promise.all([
+      send('fleet-limit-a-20261125', 'A'),
+      send('fleet-limit-b-20261125', 'B'),
+      send('fleet-limit-a-20261125', 'A'),
+    ]);
+    assert.equal(a.id, repeat.id);
+    assert.notEqual(a.id, b.id);
+    assert.deepEqual([a.status, b.status].sort(), ['awaiting_owner', 'searching']);
+    assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, fleetDriver.token)).monthSpent, amount);
+    const replay = await send('fleet-limit-a-20261125', 'A');
+    assert.equal(replay.id, a.id);
+    const sos = await send('fleet-limit-sos-20261125', 'SOS', true);
+    assert.equal(sos.status, 'searching');
+    const rows = await t.db.query('select status from orders where client_id=$1 and created_by=$2', [fleetOwner.id, fleetDriver.id]);
+    assert.equal(rows.length, 3);
+    assert.equal(rows.filter(r => r.status === 'awaiting_owner').length, 1);
+    assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, fleetDriver.token)).monthSpent, 2 * amount);
+  } finally {
+    t.app.orders.launch = originalLaunch;
+  }
+});
+
+test('конкурирующие решения владельца, повторы и откат события', async () => {
+  const fleetOwner = await t.login('+79993334501');
+  const fleetDriver = await t.login('+79993334502');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  const create = async () => ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: car }, fleetDriver.token)).order;
+  const decide = (id: string, approve: boolean, reason?: string) => t.api('POST', `/api/orders/${id}/owner-decision`, { approve, reason }, fleetOwner.token);
+  const decisions = (id: string) => t.db.query("select type,data from order_events where order_id=$1 and type in ('owner_approved','owner_rejected')", [id]);
+  const notices = (id: string) => t.db.query("select title from notifications where user_id=$1 and data->>'orderId'=$2 and title in ('Владелец подтвердил заказ','Владелец отклонил заказ')", [fleetDriver.id,id]);
+  const chat = (id: string) => t.db.query("select body from chat_messages where order_id=$1 and kind='system' and body like 'Владелец отклонил заказ:%'", [id]);
+  const originalLaunch = t.app.orders.launch;
+  const originalEvent = t.app.orders.event;
+  const launched: string[] = [];
+  t.app.orders.launch = async (actor, order) => {
+    launched.push(order.id);
+    return { order: await t.app.orders.view(actor, order.id), confirmationUrl: null };
+  };
+  try {
+    const a = await create();
+    const [yes, no] = await Promise.all([decide(a.id,true),decide(a.id,false,'Отказ')]);
+    assert.deepEqual([yes.status,no.status].sort(), [200,409]);
+    const approved = yes.status === 200;
+    const event = await decisions(a.id);
+    assert.equal(event.length,1);
+    assert.equal(event[0].type,approved ? 'owner_approved' : 'owner_rejected');
+    assert.equal((await notices(a.id)).length,1);
+    assert.equal((await chat(a.id)).length,approved ? 0 : 1);
+    assert.equal(launched.filter(id=>id===a.id).length,approved ? 1 : 0);
+    assert.equal((await decide(a.id,approved,approved ? undefined : 'Отказ')).status,200);
+    assert.equal((await decide(a.id,!approved,'Отказ')).status,409);
+    assert.equal((await decisions(a.id)).length,1);
+    assert.equal((await notices(a.id)).length,1);
+    assert.equal(launched.filter(id=>id===a.id).length,approved ? 1 : 0);
+
+    const b = await create();
+    const rejections = await Promise.all([decide(b.id,false,'Не сейчас'),decide(b.id,false,'Не сейчас')]);
+    assert.deepEqual(rejections.map(r=>r.status),[200,200]);
+    assert.equal((await decisions(b.id)).length,1);
+    assert.equal((await notices(b.id)).length,1);
+    assert.equal((await chat(b.id)).length,1);
+    assert.equal((await decide(b.id,false,'Другая причина')).status,409);
+
+    const c = await create();
+    t.app.orders.event = async (...args) => {
+      if (args[1]===c.id && args[3]==='owner_rejected') throw new Error('synthetic decision event failure');
+      return originalEvent.apply(t.app.orders,args);
+    };
+    assert.equal((await decide(c.id,false,'Откат')).status,500);
+    t.app.orders.event = originalEvent;
+    assert.equal((await t.db.one('select status from orders where id=$1',[c.id]))?.status,'awaiting_owner');
+    assert.equal((await decisions(c.id)).length,0);
+    assert.equal((await notices(c.id)).length,0);
+    assert.equal((await chat(c.id)).length,0);
+    assert.equal((await decide(c.id,false,'Откат')).status,200);
+    assert.equal((await decisions(c.id)).length,1);
+
+    const d = await create();
+    ok(await t.api('POST', `/api/fleet/vehicles/${car}/new-qr`, {}, fleetOwner.token));
+    assert.equal((await decide(d.id,false,'Водитель снят')).status,200);
+    assert.equal((await decisions(d.id)).length,1);
+    assert.equal((await notices(d.id)).length,0);
+    assert.equal((await chat(d.id)).length,1);
+  } finally {
+    t.app.orders.launch = originalLaunch;
+    t.app.orders.event = originalEvent;
+  }
+});
