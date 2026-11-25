@@ -39,6 +39,25 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal(initial.readyToValidate,true);
     assert.equal(initial.allValidated,false);
     assert.equal(initial.startBilling,false);
+    // A stale or fabricated admin claim must not authorize the audit or DDL.
+    const validation={snapshotDigest:initial.snapshotDigest,acknowledge:true as const};
+    const forged={...w,roles:['admin']};
+    await assert.rejects(integrityService.preview(forged),(e:any)=>e.status===403);
+    await assert.rejects(integrityService.validate(forged,validation),(e:any)=>e.status===403);
+    const live=await t.db.one<any>('select roles,admin_preview_until from users where id=$1',[admin.id]);
+    assert.ok(live);
+    try {
+      await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);
+      await assert.rejects(integrityService.preview(a),(e:any)=>e.status===403);
+      await assert.rejects(integrityService.validate(a,validation),(e:any)=>e.status===403);
+      await t.db.query("update users set roles=$2::text[],admin_preview_until=now()+interval '1 hour' where id=$1",[admin.id,live.roles]);
+      await assert.rejects(integrityService.preview(a),(e:any)=>e.status===403);
+      await assert.rejects(integrityService.validate(a,validation),(e:any)=>e.status===403);
+    } finally {
+      await t.db.query('update users set roles=$2::text[],admin_preview_until=$3 where id=$1',
+        [admin.id,live.roles,live.admin_preview_until]);
+    }
+    assert.equal((await integrityService.preview(a)).snapshotDigest,initial.snapshotDigest);
     // Legacy route ingestion must keep working, without consent or evidence.
     const legacy=await t.db.one<any>(
       'insert into performer_route_samples(order_id,performer_id,lat,lng) values($1,$2,59.93,30.33) returning *',
@@ -331,6 +350,19 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
       'select id from checkpoint_gps_purge_batches')).length,2);
     assert.equal((await t.db.query(
       'select id from audit_log where action=$1',['checkpoint.gps_retention_purged'])).length,2);
+    // Validate the actual disposable PostgreSQL constraints after all evidence
+    // checks, not merely a mocked count. Replaying a stale digest is rejected.
+    const ready=await integrityService.preview(a);
+    assert.equal(ready.readyToValidate,true);
+    const validated=await integrityService.validate(a,{snapshotDigest:ready.snapshotDigest,acknowledge:true});
+    assert.equal(validated.allValidated,true);
+    assert.equal(validated.validatedNow,ready.checks.filter(x=>!x.validated).length);
+    assert.equal(validated.startBilling,false);
+    await assert.rejects(integrityService.validate(a,{snapshotDigest:ready.snapshotDigest,acknowledge:true}),
+      (e:any)=>e.status===409);
+    const replay=await integrityService.validate(a,{snapshotDigest:validated.snapshotDigest,acknowledge:true});
+    assert.equal(replay.validatedNow,0);
+    assert.equal(replay.snapshotDigest,validated.snapshotDigest);
   } finally {await t.close();}
 });
 

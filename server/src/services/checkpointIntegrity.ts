@@ -92,6 +92,17 @@ export class CheckpointIntegrityService {
     }
   }
 
+  private async requireLiveAdmin(q: Queryable, actor: AuthUser) {
+    // Lock the actual account against concurrent role revocation until the
+    // audited operation commits. Preview accounts are not real administrators.
+    const live=await q.one<{id:string}>(
+      "select id from users where id=$1 and status='active' and deleted_at is null " +
+      "and admin_preview_until is null and 'admin'=any(roles) for share",
+      [actor.id],
+    );
+    if(!live)throw forbidden('Права администратора больше не действуют');
+  }
+
   private async read(q: Queryable): Promise<CheckpointIntegrityReport> {
     const rows = await q.query<{ conname: string; convalidated: boolean; table_name: string }>(
       'select conname,convalidated,conrelid::regclass::text as table_name ' +
@@ -126,7 +137,9 @@ export class CheckpointIntegrityService {
   async preview(actor: AuthUser): Promise<CheckpointIntegrityReport> {
     this.requireAdmin(actor);
     return this.db.tx(async (q) => {
+      await q.query('set transaction isolation level repeatable read');
       await q.query("select set_config('statement_timeout','15000',true)");
+      await this.requireLiveAdmin(q,actor);
       const report = await this.read(q);
       await q.query(
         'insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4)',
@@ -156,8 +169,9 @@ export class CheckpointIntegrityService {
       throw bad('checkpoint_integrity_digest', 'Требуется SHA-256 отчёта предварительного аудита');
     }
     return this.db.tx(async (q) => {
-      await q.query('select pg_advisory_xact_lock(712024,1)');
       await q.query("select set_config('statement_timeout','30000',true)");
+      await this.requireLiveAdmin(q,actor);
+      await q.query('select pg_advisory_xact_lock(712024,1)');
       const before = await this.read(q);
       if (before.snapshotDigest !== input.snapshotDigest) {
         throw conflict('checkpoint_integrity_stale',
