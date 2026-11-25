@@ -32,6 +32,7 @@ const uiStub=`
   }
 `;
 const apiStub=`
+  export function getToken(){return 'synthetic-support-token';}
   function call(method,path,body) {
     const m=window.__supportMock;
     const rec={method,path,body};
