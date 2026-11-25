@@ -236,32 +236,43 @@ function SupportQueueResults({ status }: { status: 'open' | 'closed' }) {
 
 export function useUnread() {
   const { me } = useMe();
-  const [n, setN] = useState(0);
+  const actor=me?.id??null;
+  const [count,setCount]=useState<{actor:string|null;n:number}>({actor:null,n:0});
   useEffect(() => {
-    // The header remains mounted through role switches. A previous account's
-    // unread badge (or a late GET for it) must never appear on the next login.
-    let active = true;
-    let generation = 0;
-    setN(0);
-    if (!me?.id) return () => { active = false; };
-    const load = () => {
-      const current = ++generation;
-      void get('/api/me/notifications')
-        .then((result: { unread: number }) => {
-          if (active && current === generation && Number.isSafeInteger(result.unread))
-            setN(Math.max(0,result.unread));
-        }).catch(() => { /* Keep last confirmed count; never fake zero on outage. */ });
+    let active=true;
+    let generation=0;
+    let timer:number|undefined;
+    setCount({actor,n:0});
+    if(!actor)return ()=>{active=false;};
+    const load=()=>{
+      if(!active)return;
+      const current=++generation;
+      // Only the global unread count is needed by the header. Older
+      // servers ignore limit; the cursor API returns at most one row.
+      void get('/api/me/notifications?limit=1')
+        .then((result:{unread:number})=>{
+          if(active&&current===generation&&Number.isSafeInteger(result.unread))
+            setCount({actor,n:Math.max(0,result.unread)});
+        }).catch(()=>{/* Keep the last confirmed count for this account. */});
+    };
+    const schedule=()=>{
+      if(!active||timer!==undefined)return;
+      timer=window.setTimeout(()=>{timer=undefined;load();},250);
     };
     load();
-    const stop = onEvent(() => load());
-    window.addEventListener('traksos:notifications-read',load);
-    return () => {
-      active = false;
-      stop();
-      window.removeEventListener('traksos:notifications-read',load);
+    const stop=onEvent(schedule);
+    window.addEventListener('traksos:notifications-read',schedule);
+    window.addEventListener('online',schedule);
+    window.addEventListener('focus',schedule);
+    return ()=>{
+      active=false;stop();
+      if(timer!==undefined)window.clearTimeout(timer);
+      window.removeEventListener('traksos:notifications-read',schedule);
+      window.removeEventListener('online',schedule);
+      window.removeEventListener('focus',schedule);
     };
-  }, [me?.id]); // eslint-disable-line
-  return n;
+  },[actor]);
+  return count.actor===actor?count.n:0;
 }
 
 export function Notifications() {
