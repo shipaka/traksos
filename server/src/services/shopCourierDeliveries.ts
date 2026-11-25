@@ -180,6 +180,44 @@ export class ShopCourierDeliveries {
           d.updated_at desc limit 100`,[courier.id]);
     return rows.map(d=>this.view(d));
   }
+  /** Opt-in paged reader, leaving the installed-client array contract intact.
+   * Counts are independent of the current page and share its SQL snapshot.
+   * A cursor is the previous last job, constrained to the same courier/scope.
+   * If it changes scope or disappears, restart rather than crossing scopes. */
+  async listPage(courier:AuthUser,scope:'active'|'history',limit:number,before:string|null){
+    const result=await this.db.one<any>(`
+      with actor as (
+        select id from users where id=$1 and status='active' and deleted_at is null
+          and 'courier'=any(roles)
+      ), owned as (
+        select d.*,o.number as order_number,o.items,o.address,o.vehicle_snapshot
+        from shop_courier_deliveries d join actor a on a.id=d.courier_id
+        join shop_orders o on o.id=d.shop_order_id
+      ), scoped as (
+        select * from owned where (status in ('received','cancelled'))=($2='history')
+      ), anchor as (
+        select updated_at,id from scoped where id=$4::uuid
+      ), page as (
+        select s.* from scoped s
+        where $4::uuid is null or (s.updated_at,s.id)<(select updated_at,id from anchor)
+        order by s.updated_at desc,s.id desc limit $3
+      )
+      select exists(select 1 from actor) as allowed,
+        ($4::uuid is null or exists(select 1 from anchor)) as cursor_valid,
+        (select count(*)::int from owned where status not in ('received','cancelled')) as active_count,
+        (select count(*)::int from owned where status in ('received','cancelled')) as history_count,
+        (select coalesce(sum((item->>'qty')::int),0)::int
+           from owned cross join lateral jsonb_array_elements(items::jsonb) item
+           where status not in ('received','cancelled')) as active_packages,
+        (select coalesce(jsonb_agg(to_jsonb(p) order by p.updated_at desc,p.id desc),'[]'::jsonb) from page p) as rows
+      `,[courier.id,scope,limit+1,before]);
+    if(!result?.allowed||!courier.roles.includes('courier'))throw forbidden('Доступ курьера отозван');
+    if(!result.cursor_valid)throw bad('invalid_cursor','Страница изменилась. Откройте список сначала.');
+    const rows=result.rows.slice(0,limit);
+    return {items:rows.map((d:any)=>this.view(d)),scope,
+      activeCount:result.active_count,historyCount:result.history_count,activePackages:result.active_packages,
+      nextBefore:result.rows.length>limit?rows[rows.length-1].id:null};
+  }
   async one(courier:AuthUser,id:string){
     const d=await this.db.one<any>(
       `select d.*,o.number as order_number,o.items,o.address,o.vehicle_snapshot
