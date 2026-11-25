@@ -43,6 +43,8 @@ test('emergency recipient selection waits for concurrent vehicle detachment',asy
       // held row. Do not rely on an arbitrary sleep as evidence of concurrency.
       const deadline=Date.now()+10000;
       while(Date.now()<deadline){
+        // PostgreSQL caches statistics snapshots within a transaction.
+        await q.query('select pg_stat_clear_snapshot()');
         const waiting=await q.one("select pid from pg_stat_activity where pid<>pg_backend_pid() and wait_event_type='Lock' and query like $1 limit 1",
           ['%limit 1 for share of u,v%']);
         if(waiting){observedLock=true;break;}
