@@ -208,10 +208,19 @@ function RealCase({o,owner=false,reveal=false}:{o:any;owner?:boolean;reveal?:boo
 }
 /** Keep final approved case unchanged; search is a separate state of the
  * same server-authorized order. No previous private response survives a failed read. */
+function useDeskForegroundRefresh(reload:()=>void){
+  useEffect(()=>{
+    const visible=()=>{if(document.visibilityState==='visible')void reload();};
+    window.addEventListener('online',reload);
+    document.addEventListener('visibilitychange',visible);
+    return ()=>{window.removeEventListener('online',reload);document.removeEventListener('visibilitychange',visible);};
+  },[reload]);
+}
 function CustomerDeskCase({id,accountId,owner,refreshOrders}:{id:string;accountId:string;owner:boolean;refreshOrders:()=>void}){
   const detail=usePrivateRead<any>(()=>get('/api/orders/'+encodeURIComponent(id)),
     'pc-client-case:'+accountId+':'+id,
-    e=>String(e.orderId)===id&&e.type==='order');
+    e=>e.type==='connection_restored'||(String(e.orderId)===id&&(e.type==='order'||e.type==='payment')));
+  useDeskForegroundRefresh(detail.reload);
   const [collapsed,setCollapsed]=useState(false);
   const [motionEpoch]=useState(()=>performance.now());
   const previousConfirmedStatus=useRef<string|null>(null);
@@ -246,8 +255,10 @@ function CustomerDesk({owner}:{owner:boolean}){
   return <CustomerDeskForAccount key={String(me?.id??'guest')+':'+(owner?'owner':'driver')} owner={owner} accountId={String(me?.id??'guest')}/>;
 }
 function CustomerDeskForAccount({owner,accountId}:{owner:boolean;accountId:string}){
-  const orders=usePrivateRead<any[]>(()=>get('/api/orders'),'pc-client-orders:'+accountId,e=>e.type==='order');
-  const fleet=usePrivateRead<any>(()=>owner?get('/api/fleet'):Promise.resolve(null),'pc-client-fleet:'+accountId+':'+owner,e=>e.type==='fleet'||e.type==='order');
+  const orders=usePrivateRead<any[]>(()=>get('/api/orders'),'pc-client-orders:'+accountId,e=>e.type==='order'||e.type==='payment'||e.type==='connection_restored');
+  useDeskForegroundRefresh(orders.reload);
+  const fleet=usePrivateRead<any>(()=>owner?get('/api/fleet'):Promise.resolve(null),'pc-client-fleet:'+accountId+':'+owner,e=>e.type==='fleet'||e.type==='order'||e.type==='connection_restored');
+  useDeskForegroundRefresh(fleet.reload);
   const active=(orders.data||[]).filter((o:any)=>activeStates.has(o.status));
   const [chosen,setChosenState]=useState(requestedDeskOrder);
   const setChosen=(id:string)=>{
