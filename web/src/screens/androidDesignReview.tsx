@@ -86,7 +86,7 @@ export function AndroidDesignReview({ role }: { role?: string }) {
               commissionPct:5, payout:950000
             }}]} auctions={[]} online={true} busy={false}
             todayCount={3} reviewOnly reloadJobs={() => {}}
-            setLine={() => {}} balance={{ to_pay: 950000 }} reloadAuctions={() => {}} />
+            accountRating={{rating:4.9,rating_count:312}} balance={{ to_pay: 950000 }} reloadAuctions={() => {}} />
         : <AndroidClientWorkspace
             orders={[sampleOrder]} loading={false} error={null}
             me={{ roles: selected === 'driver' ? ['driver'] : ['client'],

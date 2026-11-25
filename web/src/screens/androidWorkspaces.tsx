@@ -274,7 +274,13 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
       <span className="and19-role-caption"><NavGlyph glyph="⚙" />{tow ? 'Эвакуаторщик' : 'Выездной мастер'}</span>
-      <PcPerformerAvailability mobile onChanged={reloadAuctions}/>
+      {reviewOnly ? <div className="stack performer-mobile-availability" aria-label="Доступность исполнителя">
+        <button className="opt" type="button" aria-expanded={false}>
+          <b><span className="dot on" aria-hidden="true"/> Статус · На линии</b>
+          <small>Изменить доступность ⌄</small>
+        </button>
+        <a className="note" href="#/work/me/schedule">Настройки графика →</a>
+      </div> : <PcPerformerAvailability mobile onChanged={reloadAuctions}/>}
     </div>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
