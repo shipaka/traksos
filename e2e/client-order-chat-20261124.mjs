@@ -170,6 +170,17 @@ try{
   if(await message.inputValue()!=='B second draft')
     throw Error('Pending response erased the subsequent chat draft');
 
+  // After reconnect, load the missing server messages and preserve a draft.
+  await page.evaluate(()=>window.__orderMock.listeners.forEach(fn=>fn({type:'connection_restored'})));
+  await wait('/api/orders/B/messages',2);
+  await settle('/api/orders/B/messages',1,{messages:[
+    {id:'B1',kind:'text',sender_id:'U1',body:'B first message'},
+    {id:'B2',kind:'text',sender_id:'other',body:'B recovered message'}
+  ],quickReplies:[],participants:[]});
+  await page.getByText('B recovered message').waitFor();
+  if(await page.getByText('B first message').count()!==1)throw Error('Reconnect duplicated a message');
+  if(await message.inputValue()!=='B second draft')throw Error('Reconnect lost the current draft');
+
   // Same order ID but another authenticated account is a fresh private GET.
   await navigate('B','U2');
   await wait('/api/orders/B',2);
