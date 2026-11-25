@@ -25,8 +25,10 @@ test('выгрузка Эфира и уведомлений ограничена
   const other = await t.login('+79993334455');
   const moderator = await t.login('+79990000001');
   const stamp = t.clock.now();
+  const beforeOwn = ok(await t.api('GET','/api/me/export',undefined,u.token));
+  const beforeOther = ok(await t.api('GET','/api/me/export',undefined,other.token));
   await t.db.query(`insert into notifications(user_id,kind,title,body,created_at)
-    select $1,'test','Уведомление '||n,'Своё', $2 from generate_series(1,503) n`, [u.id, stamp]);
+    select $1,'test','Уведомление '||n,'Своё', $2 from generate_series(1,503) n order by n`, [u.id, stamp]);
   await t.db.query(`insert into notifications(user_id,kind,title,body,created_at)
     values($1,'test','FOREIGN_NOTIFICATION','Чужое',$2)`, [other.id,stamp]);
   await t.db.query(`insert into driver_air_messages(user_id,author_label,body,origin,created_at)
@@ -36,7 +38,7 @@ test('выгрузка Эфира и уведомлений ограничена
   await t.db.query(`insert into driver_air_messages(user_id,author_label,body,origin,created_at,hidden_at,hidden_by)
     values($1,'Учебный автор','Своё скрытое','human',$2,$2,$3)`, [u.id,stamp,moderator.id]);
   const e = ok(await t.api('GET','/api/me/export',undefined,u.token));
-  assert.deepEqual(e.exportLimits.notifications,{total:503,included:500,limit:500,truncated:true});
+  assert.deepEqual(e.exportLimits.notifications,{total:beforeOwn.exportLimits.notifications.total+503,included:500,limit:500,truncated:true});
   assert.equal(e.notifications.length,500);
   assert.equal(e.notifications[0].title,'Уведомление 503');
   assert.equal(e.notifications.at(-1).title,'Уведомление 4');
@@ -47,7 +49,8 @@ test('выгрузка Эфира и уведомлений ограничена
   ]);
   assert.ok(e.driverAirMessages.every((m:any)=>!('hidden_by' in m) && !('user_id' in m)));
   const foreign = ok(await t.api('GET','/api/me/export',undefined,other.token));
-  assert.deepEqual(foreign.exportLimits.notifications,{total:1,included:1,limit:500,truncated:false});
+  const otherTotal = beforeOther.exportLimits.notifications.total+1;
+  assert.deepEqual(foreign.exportLimits.notifications,{total:otherTotal,included:Math.min(500,otherTotal),limit:500,truncated:otherTotal>500});
   assert.deepEqual(foreign.driverAirMessages.map((m:any)=>m.body),['FOREIGN_AIR']);
   const staff = ok(await t.api('GET','/api/me/export',undefined,moderator.token));
   assert.deepEqual(staff.exportLimits.driverAirMessages,{total:0,included:0,limit:500,truncated:false});
