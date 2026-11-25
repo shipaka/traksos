@@ -5,6 +5,7 @@ import {chromium} from 'playwright';
 
 const stubs={
   '../api.ts':`
+    export class ApiError extends Error {constructor(status,code,message){super(message);this.status=status;this.code=code;}}
     export function get(path){
       const m=window.__techMock;
       m.calls.push({method:'GET',path});
@@ -139,6 +140,26 @@ try{
   await page.getByRole('option',{name:/В222ВВ/}).waitFor({state:'attached'});
   await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('vehicle-B');
   ensure(await page.getByRole('combobox',{name:'Машина из моего гаража'}).inputValue()==='vehicle-B','Garage vehicle B cannot be selected');
+
+  // A malformed or wrong-audience payload must not render a single document.
+  await page.evaluate(()=>window.__setTechMe({id:'owner-C',roles:['client'],performer:null}));
+  await pending('GET',catalog,5);await pending('GET',garage,5);
+  await settle('GET',catalog,4,'resolve',{audiences:['driver'],documents:[{...doc('Wrong audience','Renault'),audience:'master'}]});
+  await settle('GET',garage,4,'resolve',[{id:'vehicle-C',brand:'Рено',model:'Premium',year:2010}]);
+  await page.getByRole('button',{name:'Повторить загрузку каталога'}).waitFor();
+  ensure(await page.locator('.techbase-document').count()===0,'Wrong-audience catalog rendered');
+  await page.getByRole('button',{name:'Повторить загрузку каталога'}).click();
+  await pending('GET',catalog,6);
+  await settle('GET',catalog,5,'resolve',{audiences:['driver'],documents:[
+    {...doc('Premium manual','Renault'),models:['Premium']},
+    {...doc('Renault C manual','Renault'),models:['C']},
+    {...doc('Renault D manual','Renault'),models:['D']},
+  ]});
+  await page.getByRole('heading',{name:'Premium manual'}).waitFor();
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('vehicle-C');
+  await page.waitForFunction(()=>document.querySelectorAll('.techbase-document').length===1);
+  ensure(await page.getByRole('heading',{name:'Premium manual'}).count()===1,'Canonical Renault alias failed');
+  ensure(await page.getByRole('heading',{name:'Renault C manual'}).count()===0,'Unrelated one-letter series rendered');
 
   // Real repair-cases component: two overlapping searches must not let an
   // older response replace the later explicitly requested search results.
