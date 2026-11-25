@@ -1,0 +1,4 @@
+.app:not(.guest-app) .hybrid-cabinet-switch{min-width:0;max-width:100%;padding:2px;border-color:#70513b;background:#182b35}
+.app:not(.guest-app) .hybrid-cabinet-switch select{width:auto;max-width:100%;min-height:40px;padding:6px 8px;border:0;border-radius:9px;background:#182b35;color:#fff;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.app:not(.guest-app) .hybrid-cabinet-switch select:focus-visible{outline:2px solid #ff9a4f;outline-offset:2px}
+@media(max-width:520px){.app:not(.guest-app) .hybrid-cabinet-switch select{min-height:44px;max-width:156px;font-size:12px;padding:4px}}
