@@ -75,7 +75,7 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
   if (compact && !background) return <MobilePerformerWork p={p} personName={me?.name ?? undefined}
     active={active} awaiting={toReview} jobs={jobs.data ?? []} incoming={auctions.data ?? []}
     onOfferDone={auctions.reload} balance={balance.data} online={online}
-    busy={busy} />;
+    />;
 
   return (
     <main className="work-live-dashboard">
@@ -242,9 +242,9 @@ function MobileWorkSearch({jobs,incoming,onOfferDone,intent}:{
  * responses as the desktop. No fake progress, no offline status mutations.
  */
 function MobilePerformerWork({p, personName, active, awaiting, jobs, incoming, onOfferDone,
-  balance, online, busy}: {
+  balance, online}: {
   p:any; personName?:string; active:any[]; awaiting:any[]; jobs:any[]; incoming:any[];
-  onOfferDone:()=>void; balance:any; online:boolean; busy:boolean;
+  onOfferDone:()=>void; balance:any; online:boolean;
 }) {
   const first = active[0];
   const [searchIntent,setSearchIntent] = useState<{scope:'incoming'|'mine'|'archive';count:number}>({scope:'mine',count:0});
