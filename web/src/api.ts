@@ -227,22 +227,24 @@ export function connectWs() {
     const socket=new WebSocket(url);
     ws=socket;
     socket.onopen=()=>{
-      if(closedByUs || generation!==wsGeneration || token!==sessionToken){
+      if(closedByUs || generation!==wsGeneration || token!==sessionToken || ws!==socket || !navigator.onLine){
         socket.close();return;
       }
       retry=0;
       if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
       // Do not wait 12 seconds to reconcile an offline Air backlog.
-      listeners.forEach(l=>l({type:'connection_restored'}));
+      listeners.forEach(l=>{try{l({type:'connection_restored'});}catch(error){console.error('[TrakSOS] Realtime recovery listener failed',error);}});
     };
     socket.onmessage=(m)=>{
-      if(generation!==wsGeneration || token!==sessionToken)return;
+      if(closedByUs || generation!==wsGeneration || token!==sessionToken || ws!==socket)return;
       let e:any;
       try{e=JSON.parse(m.data);}catch{return;}
-      listeners.forEach(l=>l(e));
+      if(!e||typeof e!=='object'||typeof e.type!=='string')return;
+      listeners.forEach(l=>{try{l(e);}catch(error){console.error('[TrakSOS] Realtime listener failed',error);}});
     };
     socket.onclose=()=>{
-      if(ws===socket)ws=null;
+      if(ws!==socket)return;
+      ws=null;
       if(generation!==wsGeneration)return;
       scheduleWsRetry();
     };
@@ -267,9 +269,7 @@ window.addEventListener('online',()=>{
 });
 window.addEventListener('offline',()=>{
   // Prevent cellular battery use and reconnect storms while disconnected.
-  ws?.close();
-  ws=null;
-  if(wsRetryTimer!==null){clearTimeout(wsRetryTimer);wsRetryTimer=null;}
+  disconnectWs();
 });
 
 
