@@ -18,7 +18,7 @@ import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
-import {BaseHome, RequestCard} from './base.tsx';
+import {BaseHome, RequestCard, StationAvailability} from './base.tsx';
 import {native} from '../native.ts';
 import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
 
@@ -511,7 +511,7 @@ function SelectedServiceCase({booking}:{booking:any}){
 }
 
 function ServiceDesk(){
-  const data=useLoad(()=>get<any>('/api/base'),[],e=>e.type==='booking');
+  const data=useLoad(()=>get<any>('/api/base'),[],e=>e.type==='booking'||e.type==='service_availability_changed'||e.type==='connection_restored');
   const [mode,setMode]=useState<'req'|'repair'|'ready'|'done'>('repair');
   const [chosen,setChosen]=useState('');
   const g=data.data?.groups;
@@ -542,7 +542,7 @@ function ServiceDesk(){
           <RequestCard key={selected.id} b={selected} onDone={data.reload}/></section>
        :<SelectedServiceCase key={selected.id} booking={selected}/>):<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
         <a href="#/base/inbox" className="approved-pc-primary">Входящие заявки</a></Pane>}
-      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
+      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><StationAvailability onChanged={data.reload}/>
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
   </main>;
 }
