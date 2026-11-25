@@ -18,7 +18,7 @@
   }
   .app:not(.guest-app) .search-workspace .search-workspace-radar,
   .search-workspace .search-workspace-radar {
-    width:clamp(190px,23vw,310px);height:auto;aspect-ratio:1;
+    width:clamp(190px,23vw,310px);max-width:100%;height:auto;aspect-ratio:1;
     background:repeating-radial-gradient(circle,transparent 0 calc(16.66% - 1px),#a77b444d calc(16.66% - 1px) 16.66%),
       radial-gradient(circle,#e998231a 0%,#0c232c 66%,#0a1a23 100%);
     border:1px solid #e4a04a60;
