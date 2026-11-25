@@ -62,3 +62,30 @@ test('arbitrary user cannot target an unrelated performer or bypass proof of pas
     {...orderRequest,preferredPerformerId:favorite.id},other.token);
   assert.equal(stranger.status,403);
 });
+
+test('repeat hire respects physical release while the older emergency invoice stays unresolved',async()=>{
+  const previous=await t.db.one<{id:string}>(
+    "insert into orders(client_id,created_by,performer_id,service,zone_id,status,work_amount,amount_proposed_at)"+
+    " values($1,$1,$2,'electric','spb','awaiting_confirmation',50000,$3) returning id",
+    [other.id,favorite.id,t.clock.now()]);
+  const old=previous!.id;
+  await t.db.query(
+    "insert into order_unilateral_closures(order_id,performer_id,request_key,reason,note,work_amount,quote_total,quote_at,created_at)"+
+    " values($1,$2,'preferred-release-test-1','client_offline','Физически работа завершена, расчёт не подтверждён',50000,50000,$3,$3)",
+    [old,favorite.id,t.clock.now()]);
+  const result=ok(await t.api('POST','/api/orders',
+    {...orderRequest,preferredPerformerId:favorite.id},client.token));
+  const sent=await t.db.query<{performer_id:string;status:string}>(
+    'select performer_id,status from order_dispatch where order_id=$1',[result.order.id]);
+  assert.deepEqual(sent,[{performer_id:favorite.id,status:'ringing'}]);
+  assert.equal(result.order.status,'searching','still requires acceptance');
+  const unresolved=await t.db.one<any>(
+    'select o.status,o.work_amount,uc.status as closure_status from orders o join order_unilateral_closures uc on uc.order_id=o.id where o.id=$1',[old]);
+  assert.deepEqual(unresolved,{status:'awaiting_confirmation',work_amount:50000,closure_status:'pending_client'});
+  // A normal unconfirmed job without physical-release evidence must still
+  // exclude this performer from a subsequent invitation.
+  await t.db.query('delete from order_unilateral_closures where order_id=$1',[old]);
+  const blocked=ok(await t.api('POST','/api/orders',
+    {...orderRequest,preferredPerformerId:favorite.id},client.token));
+  assert.equal(await t.db.one('select id from order_dispatch where order_id=$1 and performer_id=$2',[blocked.order.id,favorite.id]),null);
+});
