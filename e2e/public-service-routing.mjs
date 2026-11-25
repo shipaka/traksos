@@ -59,8 +59,10 @@ try {
     await page.waitForURL('**/#/app-info');
     await page.getByRole('heading',{name:'Мобильное приложение TrakSOS',exact:true}).waitFor();
     const info=page.locator('main.guest-info-page');
-    check(await info.getByText('Ссылка на скачивание в RuStore появится после подтверждённой публикации.',{exact:false}).isVisible(),
-      'App information misrepresents publication status');
+    const releaseStatus=info.locator('.guest-app-release-status');
+    await releaseStatus.waitFor({state:'visible'});
+    check(/Ссылка на скачивание в RuStore появится после подтвержд[её]нной публикации\./u.test((await releaseStatus.innerText()).trim()),
+      'App information misrepresents publication status: '+await releaseStatus.innerText());
     check(await info.locator('a[href*="rustore"],a[href$=".apk"]').count()===0,
       'App information advertises an unconfirmed download');
     check(await info.locator('a[href="#/login"]').count()===1 &&
