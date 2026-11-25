@@ -1,5 +1,5 @@
-import {useEffect,useState} from 'react';
-import {get} from '../api.ts';
+import {useEffect,useRef,useState} from 'react';
+import {get,patch} from '../api.ts';
 import '../vehicleOwnerGuide.css';
 
 type Card = {
@@ -9,22 +9,29 @@ type Card = {
   manuals:{title:string;url:string;requiresVin:boolean;note:string;origin:string}[];
   sections:{key:string;title:string;text:string}[];
 };
-export function VehicleOwnerGuide({vehicle}:{vehicle:{
+type Selection={category:string;brandKey:string;modelKey:string};
+const categoryLabels:Record<string,string>={truck:'грузовик',trailer:'прицеп / полуприцеп',van:'фургон',bus:'автобус'};
+export function VehicleOwnerGuide({vehicle,canLink=false,onLinked}:{vehicle:{
   id:string;brand:string;model?:string|null;year?:number|null;
   catalog_category?:string|null;catalog_brand_key?:string|null;catalog_model_key?:string|null;
-}}){
+};canLink?:boolean;onLinked?:()=>void}){
   const [open,setOpen]=useState(false);
   const [card,setCard]=useState<Card|null>(null);
   const [error,setError]=useState('');
   const [missingImage,setMissingImage]=useState(false);
   const [matching,setMatching]=useState(false);
   const [unmatched,setUnmatched]=useState(false);
+  const [candidate,setCandidate]=useState<Selection|null>(null);
+  const [linking,setLinking]=useState(false);
+  const [linkError,setLinkError]=useState('');
+  const [retry,setRetry]=useState(0);
+  const lock=useRef(false);
   const category=vehicle.catalog_category,makeKey=vehicle.catalog_brand_key,modelKey=vehicle.catalog_model_key;
   useEffect(()=>{
     if(!open)return;
     let alive=true;
-    setCard(null);setError('');setMissingImage(false);setMatching(true);setUnmatched(false);
-    const clean=(s:string)=>s.normalize('NFKC').trim().toLowerCase().replace(/[^a-zа-яё0-9]+/gi,'');
+    setCard(null);setError('');setMissingImage(false);setMatching(true);setUnmatched(false);setCandidate(null);setLinkError('');
+    const clean=(s:string)=>s.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/\s+/g,' ').trim();
     const run=async()=>{
       let selected=category&&makeKey&&modelKey?{category,brandKey:makeKey,modelKey}:null;
       // Historical vehicles had no catalog keys. Match an EXACT make/model
@@ -47,12 +54,21 @@ export function VehicleOwnerGuide({vehicle}:{vehicle:{
       const url='/api/vehicle-reference/public-card?category='+encodeURIComponent(selected.category)+
         '&brandKey='+encodeURIComponent(selected.brandKey)+'&modelKey='+encodeURIComponent(selected.modelKey);
       const data=await get<Card>(url);
-      if(alive)setCard(data);
+      if(alive){setCard(data);if(!category&&!makeKey&&!modelKey)setCandidate(selected);}
     };
     void run().catch((e:Error)=>{if(alive)setError(e.message||'Источник недоступен')})
       .finally(()=>{if(alive)setMatching(false)});
     return()=>{alive=false;};
-  },[open,category,makeKey,modelKey,vehicle.brand,vehicle.model]);
+  },[open,category,makeKey,modelKey,vehicle.id,vehicle.brand,vehicle.model,retry]);
+  async function confirmLink(){
+    if(!canLink||!candidate||lock.current)return;
+    lock.current=true;setLinking(true);setLinkError('');
+    try{
+      await patch('/api/vehicle-reference/vehicles/'+encodeURIComponent(vehicle.id)+'/catalog',candidate);
+      setCandidate(null);onLinked?.();
+    }catch(e){setLinkError(e instanceof Error?e.message:'Не удалось подтвердить каталог');}
+    finally{lock.current=false;setLinking(false);}
+  }
   return <section className="vehicle-owner-guide">
     <button type="button" className="vehicle-owner-guide-toggle" aria-expanded={open}
       onClick={()=>setOpen(v=>!v)} aria-controls={'vehicle-guide-'+vehicle.id}>
@@ -61,10 +77,16 @@ export function VehicleOwnerGuide({vehicle}:{vehicle:{
       <span aria-hidden="true">{open?'−':'+'}</span>
     </button>
     {open&&<div id={'vehicle-guide-'+vehicle.id} className="vehicle-owner-guide-content">
-      {error?<p role="alert" className="note">Не удалось открыть книжку: {error}</p>
+      {error?<div role="alert" className="stack"><p className="note">Не удалось открыть книжку: {error}</p><button type="button" className="btn ghost small" onClick={()=>setRetry(n=>n+1)}>Повторить</button></div>
         : matching?<p className="note" role="status">Проверяю точное совпадение марки и модели с лицензированным справочником…</p>
         : unmatched?<p className="note">Эту машину добавили до подключения каталога. Надёжное точное совпадение не найдено: укажите подтверждённые марку и модель — другую машину или инструкцию мы не подставляем.</p>
         : card?<>
+          {candidate&&<div className="card stack">
+            <b>Найдено точное совпадение · {categoryLabels[candidate.category]??candidate.category}</b>
+            <span className="note">Пока это справочное совпадение. VIN, год выпуска и история не меняются.</span>
+            {canLink?<button type="button" className="btn small" disabled={linking} onClick={()=>void confirmLink()}>{linking?'Подтверждаю…':'Подтвердить связь с каталогом'}</button>:<span className="note">Подтвердить связь может владелец автопарка.</span>}
+            {linkError&&<span role="alert" className="note">{linkError}</span>}
+          </div>}
           <div className="vehicle-owner-guide-grid">
             <div className="vehicle-owner-guide-media">
               {card.photo&&!missingImage
