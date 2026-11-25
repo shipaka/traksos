@@ -37,11 +37,13 @@ export function VehicleServicesQueue() {
   const [reversalAmounts,setReversalAmounts]=useState<Record<string,string>>({});
   const [reversalReasons,setReversalReasons]=useState<Record<string,string>>({});
   const [actionError,setActionError]=useState('');
+  const ledgerLock=useRef(false);
+  const [ledgerUnconfirmed,setLedgerUnconfirmed]=useState(false);
   useEffect(()=>{
     setDraftScope(scope);setSelectedInsurers({});setNotes({});setExpiry({});
     setAccrualAmounts({});setAccrualReasons({});setPayoutAmounts({});
     setPayoutReferences({});setReversalAmounts({});setReversalReasons({});
-    setActionError('');setDirection('insurance');
+    setActionError('');setDirection('insurance');setLedgerUnconfirmed(false);
   },[scope]);
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
@@ -78,7 +80,7 @@ export function VehicleServicesQueue() {
     }else setActionError('Изменение статуса не подтверждено. Сверьте очередь перед повтором.');
   }
   async function saveLedger(id:string,action:'accrual'|'payout'|'reversal') {
-    if(busy||!admin||!currentDraft)return;
+    if(busy||!admin||!currentDraft||!rows||ledgerLock.current||ledgerUnconfirmed)return;
     const startedAs=scope;
     const raw=action==='accrual'?accrualAmounts[id]:action==='payout'?payoutAmounts[id]:reversalAmounts[id];
     const detail=(action==='accrual'?accrualReasons[id]:
@@ -100,9 +102,10 @@ export function VehicleServicesQueue() {
       action==='payout'?{requestId:id,amountKopecks,reference:detail}:
       {requestId:id,amountKopecks,reason:detail};
     setActionError('');
+    ledgerLock.current=true;
     const result=await run(()=>post(path,payload),
       action==='accrual'?'Начисление зарегистрировано':
-        action==='payout'?'Выплата учтена':'Корректировка учтена');
+        action==='payout'?'Выплата учтена':'Корректировка учтена').finally(()=>{ledgerLock.current=false;});
     if(scopeRef.current!==startedAs)return;
     if(result){
       if(action==='accrual'){
@@ -113,7 +116,7 @@ export function VehicleServicesQueue() {
         setReversalAmounts(old=>({...old,[id]:''}));setReversalReasons(old=>({...old,[id]:''}));
       }
       list.reload();
-    }else setActionError('Финансовая запись не подтверждена. Перед повтором проверьте журнал и остаток по заявке.');
+    }else {setLedgerUnconfirmed(true);setActionError('Финансовая запись не подтверждена. Перед повтором проверьте журнал и остаток по заявке.');}
   }
   if(!admin)return <div className="card stack">
     <h2>Страховые заявки и техосмотры</h2>
@@ -126,6 +129,7 @@ export function VehicleServicesQueue() {
       <button type="button" className={'btn ghost'+(direction==='inspection'?' active':'')} aria-pressed={direction==='inspection'} onClick={()=>setDirection('inspection')}>Техосмотры</button>
     </nav>
     {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+    {ledgerUnconfirmed&&<div className="banner warn"><p>Повторная финансовая запись заблокирована до сверки.</p><button type="button" className="btn ghost small" onClick={list.reload}>Обновить реестр для сверки</button><button type="button" className="btn ghost small" disabled={!rows||list.loading} onClick={()=>setLedgerUnconfirmed(false)}>Журнал и остаток проверены</button></div>}
     {!rows ? <div className="card stack" role={list.error?'alert':'status'}>
       {list.error?'Не удалось загрузить заявки: '+list.error:
         list.data?'Получены некорректные данные. Обновите реестр.':'Загружаем заявки…'}
@@ -220,7 +224,7 @@ export function VehicleServicesQueue() {
               onChange={e=>setAccrualReasons(v=>({...v,[r.id]:e.target.value}))}
               placeholder="Номер акта, подтверждённый расчёт комиссии или другое основание"/>
           </label>
-          <button type="button" className="btn small" disabled={busy||!currentDraft}
+          <button type="button" className="btn small" disabled={busy||!currentDraft||ledgerUnconfirmed}
             onClick={()=>void saveLedger(r.id,'accrual')}>Зарегистрировать начисление</button>
         </details>)}
         {r.status==='completed'&&r.assigned_to&&r.has_partner_accrual&&<details className="stack">
@@ -234,7 +238,7 @@ export function VehicleServicesQueue() {
             <input className="field" maxLength={1000} value={currentDraft?(payoutReferences[r.id]??''):''}
               onChange={e=>setPayoutReferences(v=>({...v,[r.id]:e.target.value}))}/>
           </label>
-          <button type="button" className="btn small" disabled={busy||!currentDraft} onClick={()=>void saveLedger(r.id,'payout')}>Зафиксировать выплаченную сумму</button>
+          <button type="button" className="btn small" disabled={busy||!currentDraft||ledgerUnconfirmed} onClick={()=>void saveLedger(r.id,'payout')}>Зафиксировать выплаченную сумму</button>
         </details>}
         {r.status==='completed'&&r.assigned_to&&r.has_partner_accrual&&<details className="stack">
           <summary><b>Корректировка начисления</b></summary>
@@ -247,7 +251,7 @@ export function VehicleServicesQueue() {
             <textarea className="field" maxLength={1000} value={currentDraft?(reversalReasons[r.id]??''):''}
               onChange={e=>setReversalReasons(v=>({...v,[r.id]:e.target.value}))}/>
           </label>
-          <button type="button" className="btn ghost small" disabled={busy||!currentDraft} onClick={()=>void saveLedger(r.id,'reversal')}>Подтвердить корректировку</button>
+          <button type="button" className="btn ghost small" disabled={busy||!currentDraft||ledgerUnconfirmed} onClick={()=>void saveLedger(r.id,'reversal')}>Подтвердить корректировку</button>
         </details>}
         {(next[r.status]?.length ?? 0) > 0 && <>
           <textarea className="field" aria-label="Комментарий сотрудника" placeholder="Комментарий для клиента" value={currentDraft?(notes[r.id]??''):''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} maxLength={2000} />
