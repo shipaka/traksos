@@ -4,7 +4,7 @@ import type { OrdersService } from './orders.ts';
 
 type Span={startsAt:string;endsAt:string};
 type Row={
-  id:string;client_id:string;performer_id:string;order_id:string|null;
+  id:string;client_id:string;performer_id:string;order_id:string|null;planned_intent_id:string|null;
   starts_at:Date|string;ends_at:Date|string;
   requested_starts_at:Date|string|null;requested_ends_at:Date|string|null;
   agreement_version:number;status:string;request_key:string|null;
@@ -56,8 +56,8 @@ export class ReservationAgreement {
   private async parties(q:Queryable,clientId:string,performerId:string){
     // The profile lock is also taken by immediate accept/choose. Read
     // current roles and active status, not stale role claims from a token.
-    const c=await q.one("select 1 from users where id=$1 and status='active' and 'client'=any(roles) and owner_id is null and not ('driver'=any(roles)) for share",[clientId]);
-    const p=await q.one("select 1 from users where id=$1 and status='active' and (('master'=any(roles)) or ('tow'=any(roles))) for share",[performerId]);
+    const c=await q.one("select 1 from users where id=$1 and status='active' and deleted_at is null and 'client'=any(roles) and owner_id is null and not ('driver'=any(roles)) for share",[clientId]);
+    const p=await q.one("select 1 from users where id=$1 and status='active' and deleted_at is null and (('master'=any(roles)) or ('tow'=any(roles))) for share",[performerId]);
     if(!c||!p||clientId===performerId)throw forbidden('Участники записи недоступны');
     const blocked=await q.one(`select 1 from performer_blocks where client_id=$1 and performer_id=$2
       union all select 1 from client_prefs where client_id=$1 and performer_id=$2 and pref='hide' limit 1`,[clientId,performerId]);
@@ -91,6 +91,70 @@ export class ReservationAgreement {
   private changed(row:Row,expected:number){
     if(row.agreement_version!==expected)throw conflict('reservation_changed','Время или статус изменились — обновите запись');
   }
+  /** Recheck a permitted intent under current vehicle and user locks.
+   * This is not final financial consent. Only a matching mobile profile
+   * may negotiate. The original requested interval is immutable.
+   */
+  private async intentFor(q:Queryable,intentId:string,ownerId:string,performerId:string,write=false){
+    const i=await q.one<{id:string;owner_id:string;created_by:string;vehicle_id:string;service:string;
+      starts_at:Date|string;ends_at:Date|string;status:string;decided_by:string|null}>(
+      'select * from planned_order_intents where id=$1 and owner_id=$2'+(write?' for update':' for share'),[intentId,ownerId]);
+    if(!i)throw notFound('Обращение не найдено');
+    if(i.status!=='owner_allowed'||i.decided_by!==ownerId)
+      throw conflict('planned_permission_required','Сначала согласуйте обращение с владельцем');
+    const v=await q.one<{owner_id:string;driver_id:string|null}>(
+      'select owner_id,driver_id from vehicles where id=$1 for share',[i.vehicle_id]);
+    if(!v||v.owner_id!==ownerId)throw forbidden('Машина больше не принадлежит владельцу');
+    const owner=await q.one<{fleet:any}>("select fleet from users where id=$1 and status='active' and deleted_at is null and owner_id is null and 'client'=any(roles) and not ('driver'=any(roles)) for share",[ownerId]);
+    if(!owner)throw forbidden();
+    if(i.created_by!==ownerId){
+      const driver=await q.one("select 1 from users where id=$1 and owner_id=$2 and status='active' and deleted_at is null and 'driver'=any(roles) for share",[i.created_by,ownerId]);
+      if(!driver||v.driver_id!==i.created_by||owner.fleet?.allow?.[i.service==='tow'?'tow':'repair']===false)
+        throw forbidden('Права водителя или разрешённые работы изменились');
+    }
+    const p=await q.one(`select 1 from performer_profiles p join users u on u.id=p.user_id
+      where p.user_id=$1 and u.status='active' and u.deleted_at is null
+      and p.kind=$2 and p.kind=any(u.roles)
+      and ($2='tow' or $3=any(p.specialties))`,
+      [performerId,i.service==='tow'?'tow':'master',i.service]);
+    if(!p)throw forbidden('Исполнитель не подходит для этой услуги');
+    return i;
+  }
+  async requestForIntent(actor:Actor,intentId:string,performerId:string,key:string){
+    identifier(actor.id);identifier(intentId);identifier(performerId);
+    if(typeof key!=='string'||! /^[A-Za-z0-9_-]{16,100}$/.test(key))
+      throw bad('bad_reservation_key','Нужен ключ повторного запроса');
+    return this.db.tx(async q=>{
+      await this.lockProfile(q,performerId);
+      await this.parties(q,actor.id,performerId);
+      // Serialize even different performer choices for the same intent.
+      const i=await this.intentFor(q,intentId,actor.id,performerId,true);
+      const old=await q.one<Row>('select * from performer_time_reservations where planned_intent_id=$1',[intentId]);
+      if(old){
+        if(old.client_id!==actor.id||old.performer_id!==performerId||old.request_key!==key)
+          throw conflict('planned_reservation_exists','Для этого обращения уже создано предложение времени');
+        return old;
+      }
+      const start=new Date(i.starts_at),end=new Date(i.ends_at);
+      this.future(start);
+      return this.insertProposal(q,actor.id,performerId,start,end,key,intentId);
+    });
+  }
+  private async insertProposal(q:Queryable,clientId:string,performerId:string,start:Date,end:Date,key:string,intentId:string|null){
+    const matches=(r:Row)=>r.agreement_version>0&&r.order_id===null&&r.planned_intent_id===intentId&&r.performer_id===performerId&&same(r.requested_starts_at,start)&&same(r.requested_ends_at,end);
+    const row=await q.one<Row>(`insert into performer_time_reservations
+      (performer_id,client_id,starts_at,ends_at,requested_starts_at,requested_ends_at,request_key,agreement_version,planned_intent_id)
+      values($1,$2,$3,$4,$3,$4,$5,1,$6)
+      on conflict (client_id,request_key) where request_key is not null do nothing returning *`,
+      [performerId,clientId,start,end,key,intentId]);
+    if(!row){
+      const existing=await q.one<Row>('select * from performer_time_reservations where client_id=$1 and request_key=$2',[clientId,key]);
+      if(!existing||!matches(existing))throw conflict('reservation_key_reused','Ключ уже использован для другой записи');
+      return existing;
+    }
+    await this.event(q,row,clientId,'requested',null,{startsAt:start,endsAt:end});
+    return row;
+  }
   async request(actor:Actor,performerId:string,input:Span,key:string){
     identifier(actor.id);identifier(performerId);
     if(typeof key!=='string'||! /^[A-Za-z0-9_-]{16,100}$/.test(key))
@@ -100,24 +164,13 @@ export class ReservationAgreement {
       await this.lockProfile(q,performerId);
       await this.parties(q,actor.id,performerId);
       const old=await q.one<Row>('select * from performer_time_reservations where client_id=$1 and request_key=$2',[actor.id,key]);
-      const matches=(r:Row)=>r.agreement_version>0&&r.order_id===null&&r.performer_id===performerId&&same(r.requested_starts_at,start)&&same(r.requested_ends_at,end);
+      const matches=(r:Row)=>r.agreement_version>0&&r.order_id===null&&r.planned_intent_id===null&&r.performer_id===performerId&&same(r.requested_starts_at,start)&&same(r.requested_ends_at,end);
       if(old){
         if(!matches(old))throw conflict('reservation_key_reused','Ключ уже использован для другой записи');
         return old;
       }
       this.future(start);
-      const row=await q.one<Row>(`insert into performer_time_reservations
-        (performer_id,client_id,starts_at,ends_at,requested_starts_at,requested_ends_at,request_key,agreement_version)
-        values($1,$2,$3,$4,$3,$4,$5,1)
-        on conflict (client_id,request_key) where request_key is not null do nothing returning *`,
-        [performerId,actor.id,start,end,key]);
-      if(!row){
-        const existing=await q.one<Row>('select * from performer_time_reservations where client_id=$1 and request_key=$2',[actor.id,key]);
-        if(!existing||!matches(existing))throw conflict('reservation_key_reused','Ключ уже использован для другой записи');
-        return existing;
-      }
-      await this.event(q,row,actor.id,'requested',null,{startsAt:start,endsAt:end});
-      return row;
+      return this.insertProposal(q,actor.id,performerId,start,end,key,null);
     });
   }
   // Master's explicit acceptance of the offered interval or counteroffer.
@@ -126,6 +179,7 @@ export class ReservationAgreement {
     version(expected);const [start,end]=span(input);
     return this.locked(id,actor,'performer',async(q,row)=>{
       await this.parties(q,row.client_id,row.performer_id);
+      if(row.planned_intent_id)await this.intentFor(q,row.planned_intent_id,row.client_id,row.performer_id);
       if(row.status==='selected'&&row.agreement_version===expected+1&&same(row.starts_at,start)&&same(row.ends_at,end))return row;
       this.changed(row,expected);
       if(!['proposed','selected'].includes(row.status))throw conflict('reservation_state','Запись уже изменилась');
@@ -144,6 +198,10 @@ export class ReservationAgreement {
     try{
       return await this.locked(id,actor,'client',async(q,row)=>{
         await this.parties(q,row.client_id,row.performer_id);
+        if(row.planned_intent_id){
+          await this.intentFor(q,row.planned_intent_id,row.client_id,row.performer_id);
+          throw conflict('planned_checkout_required','Подтверждение записи требует отдельного согласования стоимости и создания заказа');
+        }
         if(row.status==='confirmed'&&row.agreement_version===expected+1&&row.decided_by===actor.id){
           const prior=await q.one(`select 1 from performer_time_reservation_events
             where reservation_id=$1 and actor_id=$2 and event_type='client_confirmed'

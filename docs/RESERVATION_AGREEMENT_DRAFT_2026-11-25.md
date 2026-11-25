@@ -77,3 +77,17 @@ reservation, order, payment, notifications or dispatch are created. Before
 exposure, implement owner-visible pending list, reservation linkage, full
 pricing/limits/current-offer validation at conversion, and final acceptance.
 No production route or scheduler is enabled.
+
+## Linking intent to tentative time negotiation
+
+Only the owner of an explicitly permitted intent can initiate one tentative
+proposal for that intent. The original vehicle, live driver assignment, allowed
+service and matching performer role/specialty are rechecked at request and time
+selection. A unique index and composite foreign key protect ownership and
+prevent competing proposals for one intent. The existing unlinked API cannot
+reuse the linked proposal key. The final confirm method deliberately rejects
+intent-linked rows until a separately reviewed atomic checkout creates a real
+order; the database also rejects a confirmed/completed linked intent without
+an order. No public route, production scheduler, price or payment is enabled.
+A replacement performer after cancellation requires a future explicit retry
+workflow; no automatic reassignment is introduced.
