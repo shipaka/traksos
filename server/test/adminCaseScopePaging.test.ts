@@ -14,7 +14,11 @@ test('admin registry filters the full case set before paging and includes legacy
     const legacy=ok(await t.api('POST','/api/orders',{
       service:'electric',zoneId:'spb',description:'Старая связанная запись'
     },client.token)).order;
-    await t.db.query("update orders set created_at='2026-01-01T00:00:00Z' where id=$1",[root.id]);
+    // The dispatch fixture has no workers; an ordinary fresh order can become
+    // no_performer immediately. Establish an explicit ongoing owner-approval
+    // state before testing the administrative read model, not dispatch.
+    await t.db.query("update orders set status='awaiting_owner',created_at='2026-01-01T00:00:00Z' where id=$1",[root.id]);
+    assert.equal((await t.db.one<{status:string}>('select status from orders where id=$1',[root.id]))?.status,'awaiting_owner');
     await t.db.query("update orders set status='completed',created_at='2026-01-02T00:00:00Z' where id=$1",[legacy.id]);
     const center=ok(await t.api('PUT','/api/base',{
       name:'Тестовая станция',address:'Санкт-Петербург, Тестовая улица, 1',
