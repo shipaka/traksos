@@ -173,6 +173,7 @@ jobs:
           node e2e/roadside-map-gps-consent-20261124.mjs
           node e2e/admin-master-switch.mjs
           node e2e/hybrid-cabinet-switch-20261125.mjs
+          node e2e/hybrid-cabinet-live-shell-20261125.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
           node e2e/account-menu-pointer-20261125.mjs
