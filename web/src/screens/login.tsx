@@ -127,15 +127,26 @@ export function Login({ driver, entry, serviceContext }: {
     if (!serviceContext || !Object.prototype.hasOwnProperty.call(GUEST_SERVICE_NAMES, serviceContext)) return;
     rememberGuestAction(serviceContext as GuestAction);
   }, [serviceContext]);
-  const [phone, setPhone] = useState(() => {
+  const [registrationDraft] = useState(() => {
     try {
-      if (entry !== 'register' || sessionStorage.getItem('traksos.authTransition') !== 'register') return '+7 ';
-      const draft = sessionStorage.getItem('traksos.authPhoneDraft') || '+7 ';
+      if (entry !== 'register' || sessionStorage.getItem('traksos.authTransition') !== 'register') return null;
+      const pending = sessionStorage.getItem('traksos.pendingLandingAction');
+      return { phone: sessionStorage.getItem('traksos.authPhoneDraft') || '+7 ',
+        service: guestCustomerDestination(pending) ? pending : null };
+    } catch { return null; }
+  });
+  // Do not consume the draft inside a state initializer: React development
+  // StrictMode may invoke it twice before committing the form.
+  useEffect(() => {
+    if (!registrationDraft) return;
+    try {
       sessionStorage.removeItem('traksos.authTransition');
       sessionStorage.removeItem('traksos.authPhoneDraft');
-      return draft;
-    } catch { return '+7 '; }
-  });
+    } catch { /* restricted browser */ }
+  }, [registrationDraft]);
+  const selectedService = guestCustomerDestination(serviceContext) ? serviceContext
+    : registrationDraft?.service;
+  const [phone, setPhone] = useState(registrationDraft?.phone || '+7 ');
   const startClientRegistration = () => {
     authGeneration.current += 1;
     cancelPendingLogin();
@@ -427,7 +438,7 @@ export function Login({ driver, entry, serviceContext }: {
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
       const customer = roles.includes('client') || roles.includes('driver');
-      const selectedDestination = customer ? guestCustomerDestination(pending) : null;
+      const selectedDestination = customer ? guestCustomerDestination(selectedService ?? pending) : null;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
@@ -522,14 +533,14 @@ export function Login({ driver, entry, serviceContext }: {
 
 
 
-        {!(window as any).TrakSOSNative && <aside className="public-app-card">
+        {!native.isApp && <a href="#/app-info" className="public-app-card" aria-label="Информация о мобильном приложении TrakSOS" style={{color:'inherit',textDecoration:'none'}}>
           <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <TrakAppPhone className="public-app-phone"/>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
-          <a className="public-rustore-soon" href="#/app-info" aria-label="Информация о мобильном приложении TrakSOS">Скоро в RuStore</a>
+          <span className="public-rustore-soon">Скоро в RuStore</span>
           <small>Ссылка на скачивание появится после публикации приложения.</small>
-        </aside>}
+        </a>}
       </div>
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
@@ -657,8 +668,8 @@ export function Login({ driver, entry, serviceContext }: {
         <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
       </nav>}
       <div>
-        {serviceContext && GUEST_SERVICE_NAMES[serviceContext] &&
-          <span className="label" style={{display:'block',color:'var(--accent)',marginBottom:8}}>Вы выбрали: {GUEST_SERVICE_NAMES[serviceContext]}</span>}
+        {selectedService && GUEST_SERVICE_NAMES[selectedService] &&
+          <span className="label" style={{display:'block',color:'var(--accent)',marginBottom:8}}>Вы выбрали: {GUEST_SERVICE_NAMES[selectedService]}</span>}
         <h1 id="tr-auth-title">{title}</h1>
         <div className="sub">{sub}</div>
       </div>
