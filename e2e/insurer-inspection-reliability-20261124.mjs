@@ -160,11 +160,29 @@ try{
     x.method==='PATCH'&&x.path===path)?.body,patch);
   assertion(body?.status==='completed'&&body.note.includes('оператором B'),
     'Unexpected inspection decision or previous user comment');
-  await finish(patch,0,'resolve',{status:'completed'},'PATCH');
-  await wait(V,oldV2+2);await wait(D,3);
+  // The server may have accepted the mutation even though its response was lost.
+  await finish(patch,0,'reject','lost acknowledgement','PATCH');
+  const acknowledge=page.getByRole('button',{name:'Состояние проверено'});
+  const refresh=page.getByRole('button',{name:'Обновить очередь для сверки'});
+  await acknowledge.waitFor();
+  assertion(await acknowledge.isDisabled(),'Stale detail allowed acknowledgement');
+  assertion(await complete.isDisabled(),'Lost response allowed duplicate completion');
+  await refresh.click();
+  await wait(D,3);
+  assertion(await acknowledge.isDisabled(),'Pending read allowed acknowledgement');
+  await finish(D,2,'reject','offline during review');
+  await page.getByText(/Не удалось сверить заявку/).waitFor();
+  assertion(await acknowledge.isDisabled(),'Failed read allowed acknowledgement');
+  await refresh.click();await wait(D,4);
+  await finish(D,3,'resolve',{...visit('same-case','INSPECT-B'),status:'completed'});
+  await page.getByText('Текущий статус: Завершена').waitFor();
+  assertion(!await acknowledge.isDisabled(),'Fresh exact case status cannot be acknowledged');
+  await acknowledge.click();
+  await wait(V,oldV2+2);await wait(D,5);
   await finish(V,oldV2+1,'resolve',inspectionPage([],0,1));
-  await finish(D,2,'resolve',{...visit('same-case','INSPECT-B'),status:'completed'});
+  await finish(D,4,'resolve',{...visit('same-case','INSPECT-B'),status:'completed'});
   await page.getByText('Заявка завершена').waitFor();
+  assertion(await n(patch,'PATCH')===1,'Review automatically resent the mutation');
   assertion(errors.length===0,'React exceptions: '+errors.join('; '));
   console.log('PASS: insurer finance/queues/chat isolation and actual inspector checklist');
 }finally{await browser.close();}

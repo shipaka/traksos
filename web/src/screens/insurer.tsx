@@ -8,7 +8,7 @@ const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
 
-type PartnerResource<T>={scope:string;data:T|null;error:string;loading:boolean};
+type PartnerResource<T>={scope:string;version:number;data:T|null;error:string;loading:boolean};
 type InspectionPage={items:any[];active:number;history:number;page:number;pageSize:number};
 
 /** Partner documents and finance must never survive an account/role switch.
@@ -17,7 +17,7 @@ type InspectionPage={items:any[];active:number;history:number;page:number;pageSi
 function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false) {
   const [version,setVersion]=useState(0);
   const [state,setState]=useState<PartnerResource<T>>({
-    scope:'',data:null,error:'',loading:true,
+    scope:'',version:-1,data:null,error:'',loading:true,
   });
   const serial=useRef(0);
   const scopeRef=useRef(scope);
@@ -26,7 +26,7 @@ function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false)
   useEffect(()=>{
     const request=++serial.current;
     const currentScope=scope;
-    setState({scope:currentScope,data:null,error:'',loading:enabled});
+    setState({scope:currentScope,version,data:null,error:'',loading:enabled});
     if(!enabled)return ()=>{serial.current++;};
     get<T>(path).then(data=>{
       if(serial.current!==request||scopeRef.current!==currentScope)return;
@@ -40,10 +40,10 @@ function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false)
               ? !((data as any).kind==='inspection'&&String((data as any).id)===decodeURIComponent(path.split('/').at(-1)??''))
               : !Array.isArray(data)))
         throw new Error('Некорректный ответ от сервера');
-      setState({scope:currentScope,data,error:'',loading:false});
+      setState({scope:currentScope,version,data,error:'',loading:false});
     }).catch(e=>{
       if(serial.current!==request||scopeRef.current!==currentScope)return;
-      setState({scope:currentScope,data:null,
+      setState({scope:currentScope,version,data:null,
         error:e instanceof Error?e.message:'Не удалось получить сведения',loading:false});
     });
     return ()=>{serial.current++;};
@@ -54,7 +54,7 @@ function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false)
       if(e.type==='vehicle_service'||e.type==='connection_restored')reload();
     });
   },[live,enabled,scope]);
-  const current=state.scope===scope?state:null;
+  const current=state.scope===scope&&state.version===version?state:null;
   return {data:enabled?current?.data??null:null,error:enabled?current?.error??'':'',
     loading:enabled?current?.loading??true:false,reload};
 }
@@ -136,14 +136,48 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
   const [search, setSearch] = useState('');
   const [actionError,setActionError]=useState('');
   const decisionLock=useRef(false);
-  const [unconfirmed,setUnconfirmed]=useState(false);
+  const [reviewTarget,setReviewTarget]=useState<{scope:string;kind:'insurance'|'inspection';id:string}|null>(null);
+  const [reviewRequested,setReviewRequested]=useState(false);
+  const target=reviewTarget?.scope===accessScope?reviewTarget:null;
+  const unconfirmed=!!target;
+  // Verify the exact uncertain decision, not an unrelated list/page. A read is
+  // explicitly requested after the failed acknowledgement; never auto-resend.
+  const review=usePartnerResource<any>(
+    target?.kind==='inspection'?'/api/insurer/inspections/'+encodeURIComponent(target.id):'/api/insurer/requests',
+    accessScope+':decision-review:'+target?.kind+':'+target?.id,
+    !!target&&reviewRequested,false);
+  const reviewedCase=target?.kind==='inspection'
+    ? (review.data?.id===target.id?review.data:null)
+    : (Array.isArray(review.data)?review.data.find(r=>r.id===target?.id):null);
+  const canAcknowledge=!!target&&reviewRequested&&!review.loading&&!review.error&&!!reviewedCase?.status;
+  const reviewControls=target&&<div className="banner warn stack" role="group" aria-label="Сверка неподтверждённого решения">
+    <b>Решение по заявке не подтверждено.</b>
+    <span>Сначала получите актуальное состояние именно этой заявки. Повторная отправка заблокирована.</span>
+    {reviewRequested&&(review.loading?<span role="status">Проверяем состояние…</span>:
+      review.error?<span role="alert">Не удалось сверить заявку: {review.error}</span>:
+      reviewedCase?<span role="status">Текущий статус: {reviewedCase.status==='completed'?'Завершена':
+        reviewedCase.status==='rejected'?'Отклонена':reviewedCase.status==='cancelled'?'Отменена':
+        reviewedCase.status==='sent_to_partner'?'Ожидает решения':reviewedCase.status}</span>:
+      <span role="alert">Заявка отсутствует в доступной очереди. Обратитесь в поддержку; не отправляйте решение повторно.</span>)}
+    <div className="row">
+      <button type="button" className="btn ghost small" disabled={reviewRequested&&review.loading}
+        onClick={()=>{setReviewRequested(true);review.reload();}}>Обновить очередь для сверки</button>
+      <button type="button" className="btn ghost small" disabled={!canAcknowledge}
+        onClick={()=>{
+          if(!canAcknowledge)return;
+          if(target.kind==='inspection'){inspections.reload();if(inspectionId)inspectionDetail.reload();}
+          else requests.reload();
+          setReviewTarget(null);setReviewRequested(false);setActionError('');
+        }}>Состояние проверено</button>
+    </div>
+  </div>;
   const [draftScope,setDraftScope]=useState('');
   const currentDraft=draftScope===accessScope;
   useEffect(()=>{
     // This may be the same mounted component with a different login or a
     // switched insurer/inspection workspace. Reset all case-specific input.
     setDraftScope(accessScope);setCheckedSteps({});setNotes({});
-    setInspectionNotes({});setExpires({});setActionError('');setUnconfirmed(false);
+    setInspectionNotes({});setExpires({});setActionError('');setReviewTarget(null);setReviewRequested(false);
     setSearch('');setInspectionView('active');setInspectionPageNumber(1);
     setWorkspace(inspectionOnly?'inspection':'insurance');
     setFilter(route[1]==='requests'?'all':'action');
@@ -173,7 +207,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       setNotes(old=>{const value={...old};delete value[id];return value;});
       setExpires(old=>{const value={...old};delete value[id];return value;});
       requests.reload();
-    }else {setUnconfirmed(true);setActionError('Изменение заявки не подтверждено. Обновите очередь перед повторной отправкой.');}
+    }else {setReviewRequested(false);setReviewTarget({scope:startedAs,kind:'insurance',id});}
   }
   async function decideInspection(id:string,status:'completed'|'rejected') {
     const assignedCase=inspectionId
@@ -197,7 +231,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       setInspectionNotes(old=>{const values={...old};delete values[id];return values;});
       inspections.reload();
       if(inspectionId)inspectionDetail.reload();
-    }else {setUnconfirmed(true);setActionError('Решение по техосмотру не подтверждено. Обновите очередь перед повторной отправкой.');}
+    }else {setReviewRequested(false);setReviewTarget({scope:startedAs,kind:'inspection',id});}
   }
   const rows: any[] | undefined = Array.isArray(requests.data)?requests.data:undefined;
   const inspectionRows=inspections.data?.items??null;
@@ -213,6 +247,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     const item = inspectionDetail.data;
     if(!item) return <main className="cabinet-page and20-inspection-detail">
       <a href="#/inspections" className="and20-return">← К техосмотрам</a>
+      {reviewControls}
       <div className="card" role={inspectionDetail.error?'alert':'status'}>{inspectionDetail.error
         ? <>Не удалось загрузить техосмотр: {inspectionDetail.error}
           <button type="button" className="btn ghost small" onClick={inspectionDetail.reload}>Повторить загрузку</button></>
@@ -239,6 +274,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
         {['Получено','Назначено','Осмотр','Завершено'].map((step,index)=>
           <span key={step} className={item.status==='completed'?'passed':index===1?'current':''}>{step}</span>)}
       </div>
+      {reviewControls}
       {canRecord ? <section className="card and20-inspection-checks">
         <h2>Этапы работы</h2>
         <p className="note">Отметьте только реально выполненные действия. TrakSOS не выдаёт диагностическую карту.</p>
@@ -257,7 +293,6 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             onChange={e=>setInspectionNotes(old=>({...old,[inspectionId]:e.target.value}))}/>
         </label>
         {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
-        {unconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={inspectionDetail.reload}>Обновить очередь для сверки</button><button type="button" className="btn ghost small" disabled={inspectionDetail.loading||!!inspectionDetail.error||!inspectionDetail.data} onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
         <button type="button" className="btn" disabled={busy||unconfirmed||!verified||note.length<5}
           onClick={()=>decideInspection(inspectionId,'completed')}>Внести результат техосмотра</button>
         <button type="button" className="btn ghost" disabled={busy||unconfirmed||note.length<5}
@@ -283,6 +318,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           .map(([key,label])=><button type="button" key={key} className={'btn ghost'+(workspace===key?' active':'')}
             aria-pressed={workspace===key} onClick={()=>setWorkspace(key)}>{label}</button>)}
       </nav>
+      {reviewControls}
       {workspace==='insurance'&&!inspectionOnly&&<section className="and20-insurer-overview"
         aria-label="Оперативный страховой кабинет">
         <div className="and20-role-header">
@@ -319,7 +355,6 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
         </div>
         {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
-        {unconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={()=>{requests.reload();inspections.reload();}}>Обновить очередь для сверки</button><button type="button" className="btn ghost small" disabled={requests.loading||inspections.loading||!!requests.error||!!inspections.error} onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
         {!inspectionRows?<div className="empty" role={inspections.error?'alert':'status'}>{inspections.error?
             <>Не удалось загрузить техосмотры: {inspections.error}
               <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку техосмотров</button></>
@@ -418,7 +453,6 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             </label>
           </div>
           {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
-        {unconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={()=>{requests.reload();inspections.reload();}}>Обновить очередь для сверки</button><button type="button" className="btn ghost small" disabled={requests.loading||inspections.loading||!!requests.error||!!inspections.error} onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
           <span className="label">Показано заявок: {visible.length}</span>
           {!visible.length && <div className="empty">{filter==='action'?'Нет заявок, требующих действий. Новые обращения появятся здесь.':filter==='active'?'Нет заявок в работе.':'По выбранным фильтрам заявок нет.'}</div>}
           <div className="web-insurance-grid">
