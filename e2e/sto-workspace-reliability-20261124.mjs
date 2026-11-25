@@ -8,6 +8,9 @@ import { mkdir } from 'node:fs/promises';
 
 const apiStub=`
 export const requests=()=>window.__sto.pending;
+export function getToken(){
+  return window.__sto.me?.id ? 'synthetic-session:'+window.__sto.me.id : null;
+}
 export function get(path) {
   return new Promise((resolve,reject)=>{
     window.__sto.pending.push({method:'GET',path,resolve,reject});
