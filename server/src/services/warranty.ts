@@ -106,6 +106,16 @@ export class WarrantyClaimsService {
     return this.view(user,result.id);
   }
 
+  /** Direct order lookup avoids treating a claim outside the 100-row list as absent. */
+  async forOrder(user:AuthUser,orderId:string){
+    const o=await this.db.one<any>('select id,client_id,created_by,performer_id from orders where id=$1',[orderId]);
+    if(!o)throw notFound('Заказ не найден');
+    const participant={...o,order_id:o.id,filed_by:o.created_by};
+    if(!await this.canSee(user,participant))throw forbidden();
+    const claim=await this.db.one<{id:string}>('select id from warranty_claims where order_id=$1',[orderId]);
+    return {claim:claim?await this.view(user,claim.id):null};
+  }
+
   async mine(user: AuthUser) {
     const rows=await this.db.query<any>(
       `select c.id,c.number,c.order_id,c.case_root_id,c.requested_remedy,c.status,
@@ -173,6 +183,9 @@ export class WarrantyClaimsService {
       const c=await q.one<any>('select * from warranty_claims where id=$1 for update',[id]);
       if (!c) throw notFound('Претензия не найдена');
       if (!await this.canSee(user,c,q,true)) throw forbidden();
+      const previous=await q.one<{event:string;actor_id:string;data:{note?:string}}>(
+        'select event,actor_id,data from warranty_claim_events where claim_id=$1 order by id desc limit 1',[id]);
+      if(previous?.event==='evidence_added'&&previous.actor_id===user.id&&previous.data?.note===note)return;
       await this.record(q,id,user.id,'evidence_added',{note});
       await q.query('update warranty_claims set updated_at=$2 where id=$1',[id,this.now()]);
     });
@@ -190,6 +203,7 @@ export class WarrantyClaimsService {
       if (c.performer_id!==user.id) throw forbidden('Отвечает только фактический исполнитель');
       if (c.status==='decision_recorded')
         throw conflict('warranty_decided','Решение уже зафиксировано; можно подать апелляцию');
+      if(c.performer_position===position&&c.performer_explanation===explanation)return;
       await q.query(
         `update warranty_claims set performer_position=$2,performer_explanation=$3,
           performer_responded_at=$4,updated_at=$4 where id=$1`,
