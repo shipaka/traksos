@@ -403,14 +403,14 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
           <div className="between"><b>Заказ №{o.number} · {rub(o.total)}</b><span className={`pill ${STATUS_TONE[o.status]}`}>{o.statusName}</span></div>
           <span className="note">{fmtTime(o.createdAt)} · {DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}</span>
           {o.vehicle && <span className="note">Для: {[o.vehicle.brand, o.vehicle.model, o.vehicle.plate].filter(Boolean).join(' ')}</span>}
-          {o.items.map((i: any) => <div key={i.productId} className="stack" style={{ gap: 6 }}>
+          {o.items.map((i: any) => {const lineKey=o.id+':'+i.productId;const suffix=o.vehicleId?'?vehicleId='+encodeURIComponent(o.vehicleId):'';return <div key={lineKey} className="stack" style={{ gap: 6 }}>
             <span className="note">{i.name}{i.article ? ` · ${i.article}` : ''} × {i.qty}</span>
             {canOrder && o.status !== 'cancelled' && <div className="row" style={{ gap: 6 }}>
-              <button className="btn ghost small" onClick={() => { addItem(i.productId, i.qty); go('shop/cart'); }}>Повторить</button>
-              <button className="btn ghost small" aria-expanded={openAnalog === i.productId} onClick={() => setOpenAnalog(openAnalog === i.productId ? null : i.productId)}>Найти аналоги</button>
+              <button className="btn ghost small" onClick={() => { addItem(i.productId, i.qty); go('shop/cart'+suffix); }}>Повторить</button>
+              <button className="btn ghost small" aria-expanded={openAnalog === lineKey} onClick={() => setOpenAnalog(openAnalog === lineKey ? null : lineKey)}>Найти аналоги</button>
             </div>}
-            {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
-          </div>)}
+            {canOrder&&openAnalog === lineKey && <HistoryAnalogs productId={i.productId} add={id=>{addItem(id);go('shop/cart'+suffix);}} />}
+          </div>})}
           {o.adminNote && <span>{o.adminNote}</span>}
           {o.delivery==='delivery' && o.canConfirmCourierReceipt &&
             ['arrived','code_verified'].includes(o.courierStatus) && o.status==='shipped' &&
@@ -440,7 +440,7 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
     {a.data.items.map((p: any) => <div key={p.id} className="card" style={{ padding: 10 }}>
       <b>{p.name}</b>
       <span className="note">{[p.brand, p.article, p.analogSource].filter(Boolean).join(' · ')}</span>
-      <div className="between"><b>{rub(p.price)}</b><button className="btn small" onClick={() => add(p.id)}>В корзину</button></div>
+      <div className="between"><b>{rub(p.price)}</b><span className="note">{p.inStock?'В наличии':Number.isFinite(p.leadDays)?'Под заказ · от '+p.leadDays+' дн.':'Срок уточняется'}</span><button className="btn small" onClick={() => add(p.id)}>В корзину</button></div>
     </div>)}
   </div>;
 }
@@ -448,20 +448,24 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
 /** Purchase history is loaded only when the customer opens this page, never for all fleet vehicles. */
 export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
   const {me}=useMe();
+  return <ShopHistoryForAccount key={(me?.id??'guest')+':'+(vehicleId??'all')} vehicleId={vehicleId}/>;
+}
+function ShopHistoryForAccount({vehicleId}:{vehicleId?:string}){
   const [page, setPage] = useState(0);
   const c = useShopPrivateLoad(() => get('/api/shop?light=1'), []);
   const history = useShopPrivateLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
     [page, vehicleId], (e) => e.type === 'shop');
-  useEffect(()=>setPage(0),[vehicleId,me?.id]);
   return <main>
     <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
     <h1>История покупок</h1>
+    {vehicleId&&<a className="btn ghost small" href={'#/shop?vehicleId='+encodeURIComponent(vehicleId)}>Подобрать детали для этой техники</a>}
+    {c.error&&<p className="note" role="alert">Не удалось проверить доступность магазина. <button type="button" className="btn ghost small" onClick={c.reload}>Повторить проверку</button></p>}
     {!history.data ? <div className="stack">
       <Loading error={history.error} />
       {history.error && <button className="btn ghost small" onClick={history.reload}>
         Повторить загрузку истории</button>}
     </div> : <>
-      {history.data.items.length === 0 ? <div className="empty">Покупок пока нет</div> :
+      {history.data.items.length === 0 ? <div className="empty">{page>0?'На этой странице покупок нет':'Покупок пока нет'}</div> :
         <MyShopOrders orders={history.data.items} reload={history.reload} canOrder={!!c.data?.enabled} />}
       {(page > 0 || history.data.hasMore) && <div className="between">
         <button className="btn ghost small" disabled={page === 0} onClick={() => setPage((n) => Math.max(0, n - 1))}>Назад</button>
