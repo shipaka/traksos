@@ -134,6 +134,7 @@ jobs:
           node e2e/client-private-read-20261124.mjs
           node e2e/client-account-switch-20261124.mjs
           node e2e/client-order-chat-20261124.mjs
+          node e2e/pc-client-search-workspace-20261125.mjs
           node e2e/performer-request-settings.mjs e2e/shots
           # Real performer React profile: same-route account isolation, schedule/finance and form contracts.
           node e2e/performer-profile-20261124.mjs
