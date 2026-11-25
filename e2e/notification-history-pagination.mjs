@@ -87,8 +87,12 @@ try{
  await settle('gets',oldPath,3,{unread:0,items:[notice(99,'Старое','2026-11-25')],nextBefore:null});
  await button('Более новые').click();
  await wait('gets',endpoint,2);
- await page.evaluate(()=>window.mock.listeners.forEach(fn=>fn({type:'notification'})));
+ await page.evaluate(()=>{
+   for(const type of ['announcement','support','order_status','announcement'])
+     window.mock.listeners.forEach(fn=>fn({type}));
+ });
  await wait('gets',endpoint,3);
+ assert.equal(await page.evaluate(path=>window.mock.gets.filter(x=>x.path===path).length,endpoint),3);
  await settle('gets',endpoint,2,{unread:1,items:[notice(104,'Свежий ответ')],nextBefore:null});
  await button(/Уведомление: Свежий ответ/).waitFor();
  await settle('gets',endpoint,1,{unread:0,items:[notice(100,'Устаревший ответ')],nextBefore:null});
