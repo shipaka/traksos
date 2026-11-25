@@ -133,8 +133,15 @@ try {
           chat:[{id:'msg-one',order_id:root,kind:'text',body:'Проверка связи',
           sender_name:'Учебный клиент',created_at:'2026-11-18T11:03:00Z'}],
           payments:[],payouts:[],moderation:[],notes:[],document_status:'Демо без реального чека'};
-        await page.route('**/api/admin/cases?**',route=>route.fulfill({status:200,json:[caseRow]}));
+        await page.route('**/api/admin/cases?**',route=>route.fulfill({status:200,json:{items:[{...caseRow,is_multi:true}],hasMore:false,nextBefore:null}}));
         await page.route('**/api/admin/cases/'+root,route=>route.fulfill({status:200,json:caseDetail}));
+        await page.route('**/api/admin/cases/'+root+'/history?**',route=>{
+          const kind=new URL(route.request().url()).searchParams.get('kind');
+          const items=kind==='events'?caseDetail.events.map((e,i)=>({...e,id:'event-'+i})):
+            kind==='chat'?caseDetail.chat:kind==='vehicle_orders'?caseDetail.vehicle_history:kind==='vehicle_bookings'?caseDetail.vehicle_history_bookings:null;
+          if(!items)throw Error('Unexpected history kind '+kind);
+          return route.fulfill({status:200,json:{rootId:root,kind,items,hasMore:false,nextBefore:null}});
+        });
         await page.reload({waitUntil:'domcontentloaded'});
         await page.getByRole('button',{name:'Открыть М-000011'}).click();
         const modal=page.getByRole('dialog',{name:'Подробности заявки'});

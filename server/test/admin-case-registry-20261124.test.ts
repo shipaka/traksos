@@ -91,7 +91,9 @@ test('UI isolation gates: no stale record, note, export or external GPS on accou
   const cases=read('adminCaseCenter.tsx');
   const registry=read('adminRegistry.tsx');
   const map=read('AdminRouteMap.tsx');
-  assert.match(cases,/\[me\?\.id,q,scope,listKey\]/);
+  assert.match(cases,/\[me\?\.id,q,scope,listKey,listBefore\]/);
+  assert.match(cases,/const listKey=JSON\.stringify\(\[me\?\.id\?\?null,q,scope,refresh,listBefore\]\)/);
+  assert.match(cases,/setListCursors\(\[null\]\);setListState\(null\);setListFailure\(null\)/);
   assert.match(cases,/listState\?\.key===listKey/);
   assert.match(cases,/detailState\?\.key===detailKey/);
   assert.match(cases,/setListState\(null\);setListFailure\(null\)/);

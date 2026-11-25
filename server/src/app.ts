@@ -1679,8 +1679,25 @@ export function createApp(d: Deps) {
   r.get('/api/admin/users/:id', ['admin'], (c: AuthedCtx) => admin.userCard(c.params.id));
   r.get('/api/admin/search', ['admin'], (c: AuthedCtx) => admin.search(c.query.get('q') ?? ''));
   // Case centre: always admin-only. Order IDs from linked stages resolve to one root.
-  r.get('/api/admin/cases', ['admin'], (c: AuthedCtx) =>
-    adminCases.list(c.query.get('q') ?? '', c.query.get('scope') ?? 'all'));
+  r.get('/api/admin/cases', ['admin'], (c: AuthedCtx) => {
+    const q=c.query.get('q')??'', scope=c.query.get('scope')??'all';
+    if(!['all','active','closed','moderated'].includes(scope))
+      throw bad('bad_scope','Неизвестный раздел реестра');
+    if(!c.query.has('limit')&&!c.query.has('before'))return adminCases.list(q,scope);
+    const limit=c.query.has('limit')?Number(c.query.get('limit')):100;
+    const before=c.query.get('before');
+    if(before!==null&&!z.string().uuid().safeParse(before).success)
+      throw bad('bad_cursor','Некорректный курсор реестра');
+    return adminCases.listPage(q,scope,limit,before);
+  });
+  r.get('/api/admin/cases/:id/history', ['admin'], (c: AuthedCtx) => {
+    const input=parse(z.object({
+      kind:z.enum(['events','chat','vehicle_orders','vehicle_bookings']),
+      before:z.string().min(1).max(80).optional(),
+      limit:z.coerce.number().int().min(1).max(100).default(100),
+    }),Object.fromEntries(c.query.entries()));
+    return adminCases.historyPage(c.user,c.params.id,input.kind,input.limit,input.before??null);
+  });
   r.get('/api/admin/cases/:id/export', ['admin'], (c: AuthedCtx) =>
     adminCases.exportOperationalCsv(c.user, c.params.id));
   r.get('/api/admin/cases/:id', ['admin'], (c: AuthedCtx) =>
