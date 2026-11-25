@@ -278,6 +278,7 @@ export function AdminCaseCenter() {
               </div>
               <h4>История обращений этого ТС</h4>
               {!detail.vehicle_history?.length&&!detail.vehicle_history_bookings?.length?<p className="note">Других зарегистрированных обращений по этому ТС нет.</p>:null}
+              {(detail.history_windows?.vehicle_history?.hasOlder||detail.history_windows?.vehicle_history_bookings?.hasOlder)&&<p className="note" role="status">Показаны последние 100 записей каждого типа; есть более ранние обращения.</p>}
               {detail.vehicle_history?.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
                 <span>Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)}</span><b>Открыть ›</b>
               </a>)}
@@ -408,8 +409,9 @@ export function AdminCaseCenter() {
                 </div>
               </article>)}
             <h4>Предыдущие обращения по автомобилю</h4>
-            {!detail.vehicle_history?.length?<p className="note">Другие записи по указанному автомобилю не найдены.</p>
-              :detail.vehicle_history.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
+            {(detail.history_windows?.vehicle_history?.hasOlder||detail.history_windows?.vehicle_history_bookings?.hasOlder)&&<p className="note" role="status">История ограничена последними 100 записями каждого типа. Есть более ранние обращения.</p>}
+            {!detail.vehicle_history?.length&&!detail.vehicle_history_bookings?.length?<p className="note">Другие записи по указанному автомобилю не найдены.</p>
+              :detail.vehicle_history?.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
                   Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)} <span>›</span></a>)}
             {detail.vehicle_history_bookings?.map((b:any)=><a key={'history-booking-'+b.id} className="case-inspect-target" href={'#/booking/'+b.id}>
               СТО №{b.number} · {b.center_name||'Сервис'} · {date(b.created_at)} <span>›</span>
@@ -417,6 +419,7 @@ export function AdminCaseCenter() {
           </>}
           {detail&&!focused&&tab==='timeline'&&<>
             <h4>Хронология этапов · подтверждённые события</h4>
+            {detail.history_windows?.events?.hasOlder&&<p className="note" role="status">Показаны последние 600 событий. Более ранние записи существуют; полный архив здесь пока недоступен.</p>}
             {!detail.events?.length?<p className="note">Событий пока нет.</p>
               :detail.events.map((e:any,i:number)=><div key={i} className="case-detail-event">
                 <time>{date(e.created_at)}</time>
@@ -430,6 +433,7 @@ export function AdminCaseCenter() {
           </>}
           {detail&&!focused&&tab==='chat'&&<>
             <h4>Переписка по заявкам</h4>
+            {detail.history_windows?.chat?.hasOlder&&<p className="note" role="status">Показаны последние 500 сообщений. Более ранняя переписка существует; полный архив здесь пока недоступен.</p>}
             {!detail.chat?.length?<p className="note">Сообщений по этим заказам пока нет.</p>
               :detail.chat.map((m:any)=><div className="case-detail-message" key={m.id}>
                 <div className="case-detail-between"><b>{m.sender_name}</b><small>{date(m.created_at)}</small></div>
