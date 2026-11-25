@@ -53,6 +53,49 @@ test('admin evidence windows keep recent history and independent latest stage it
     assert.equal(aged.events.length,600);
     assert.ok(aged.events.every((e:any)=>e.type!=='amount_proposed'));
     checkBill(aged);
+    // Two tied timestamps verify the DB-native tuple ordering and no duplicates.
+    await t.db.query(`insert into chat_messages(order_id,sender_id,kind,body,created_at)
+      values($1,null,'system','Tie A','2026-12-02T05:00:00.000001Z'),
+            ($1,null,'system','Tie B','2026-12-02T05:00:00.000001Z')`,[order.id]);
+    const page=async(kind:string,before:string|null=null)=>ok(await t.api('GET',
+      endpoint+'/history?'+new URLSearchParams({kind,limit:'100',...(before?{before}:{})}),undefined,admin.token));
+    for(const kind of ['events','chat']){
+      const seen=new Set<string>();
+      let cursor:string|null=null, count=0;
+      do{
+        const result=await page(kind,cursor);
+        assert.equal(result.rootId,order.id);
+        assert.equal(result.kind,kind);
+        assert.ok(result.items.length<=100);
+        for(const item of result.items){
+          assert.equal(item.order_id,order.id);
+          assert.ok(!seen.has(item.id),'history must not duplicate rows');
+          seen.add(item.id);
+        }
+        count+=result.items.length;
+        assert.equal(result.hasMore,typeof result.nextBefore==='string');
+        if(result.hasMore)assert.equal(result.nextBefore,result.items[0].id);
+        cursor=result.nextBefore;
+        assert.ok(count<2000,'cursor loop');
+      }while(cursor);
+      const table=kind==='events'?'order_events':'chat_messages';
+      const total=await t.db.one<{n:number}>('select count(*)::int n from '+table+' where order_id=$1',[order.id]);
+      assert.equal(count,total?.n);
+    }
+    const chatPage=await page('chat');
+    assert.ok(chatPage.items.some((m:any)=>m.body==='Tie A'));
+    assert.ok(chatPage.items.some((m:any)=>m.body==='Tie B'));
+    const other=ok(await t.api('POST','/api/orders',{
+      service:'electric',zoneId:'spb',description:'Другое синтетическое обращение'
+    },client.token)).order;
+    assert.equal((await t.api('GET','/api/admin/cases/'+other.id+'/history?kind=chat&before='+chatPage.nextBefore,undefined,admin.token)).status,400);
+    assert.equal((await t.api('GET',endpoint+'/history?kind=chat&before=invalid',undefined,admin.token)).status,400);
+    assert.equal((await t.api('GET',endpoint+'/history?kind=events&limit=101',undefined,admin.token)).status,400);
+    assert.equal((await t.api('GET',endpoint+'/history?kind=wrong',undefined,admin.token)).status,400);
+    assert.equal((await t.api('GET',endpoint+'/history?kind=chat',undefined,client.token)).status,403);
+    const historyAudit=await t.db.one<{n:number}>(
+      "select count(*)::int n from audit_log where action='admin.case_history_view' and target=$1",[order.id]);
+    assert.ok((historyAudit?.n??0)>1);
     const exported=ok(await t.api('GET',endpoint+'/export',undefined,admin.token));
     assert.ok(exported.csv.includes("'  =unsafe()"));
     assert.ok(exported.csv.includes('40000'));
