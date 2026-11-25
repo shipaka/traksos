@@ -391,6 +391,7 @@ export function createApp(d: Deps) {
   // Warranty is separate from a price dispute. No payment, replacement
   // order or performer penalty is triggered by filing or by a staff finding.
   r.get('/api/warranty-claims', true, (c: AuthedCtx) => warranty.mine(c.user));
+  r.get('/api/orders/:id/warranty-claims', true, (c: AuthedCtx) => warranty.forOrder(c.user,c.params.id));
   r.post('/api/orders/:id/warranty-claims', true, (c: AuthedCtx) => {
     const p=parse(z.object({
       defect:z.string().trim().min(10).max(2000),
