@@ -756,18 +756,23 @@ try{
     const guestContext=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU'});
     let centerId='',serviceToken='';
     try{
-      const servicePage=await serviceContext.newPage();
-      await servicePage.goto(base+'/#/sandbox-enter?ticket='+
-        encodeURIComponent(issueSandboxTicket('service',secret,Date.now())),{waitUntil:'domcontentloaded'});
-      await servicePage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
-        null,{timeout:20000});
-      serviceToken=await servicePage.evaluate(()=>localStorage.getItem('traksos.token'));
-      const adminPage=await adminContext.newPage();
-      await adminPage.goto(base+'/#/sandbox-enter?ticket='+
-        encodeURIComponent(issueSandboxTicket('admin',secret,Date.now())),{waitUntil:'domcontentloaded'});
-      await adminPage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
-        null,{timeout:20000});
-      const adminToken=await adminPage.evaluate(()=>localStorage.getItem('traksos.token'));
+      // The one-time ticket first stores the token, then navigates to the
+      // real role desk. Token presence alone is not proof that navigation
+      // finished: the old execution context can disappear between reads.
+      const enterRole=async(context,role)=>{
+        const page=await context.newPage();
+        await page.goto(base+'/#/sandbox-enter?ticket='+
+          encodeURIComponent(issueSandboxTicket(role,secret,Date.now())),{waitUntil:'domcontentloaded'});
+        await page.locator('header.top .sandbox-test-badge').filter({hasText:'Тест'}).first()
+          .waitFor({state:'visible',timeout:25000});
+        await page.waitForFunction(expected=>location.hash===expected&&
+          (localStorage.getItem('traksos.token')?.length??0)>30,SANDBOX_LANDING[role],{timeout:20000});
+        const token=await page.evaluate(()=>localStorage.getItem('traksos.token'));
+        if(!token||token.length<=30)throw Error('Sandbox '+role+' session missing after role navigation');
+        return token;
+      };
+      serviceToken=await enterRole(serviceContext,'service');
+      const adminToken=await enterRole(adminContext,'admin');
       const station=await serviceContext.request.get(base+'/api/base',{
         headers:{authorization:'Bearer '+serviceToken}});
       if(!station.ok())throw Error('Sandbox service station GET failed: '+station.status());
