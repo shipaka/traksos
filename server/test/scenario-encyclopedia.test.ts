@@ -173,3 +173,19 @@ test('calendar training separates pending proposals, reservations and actual ava
   for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
     assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
 });
+
+test('fleet course distinguishes scoped estimated budget, SOS and ambiguous owner decisions',()=>{
+  for(const role of ['owner','driver'] as const){
+    const item=allowedScenario(role,'driver-limit');
+    assert.ok(item);
+    const text=item.steps.map(x=>x.situation+' '+x.why+' '+x.choices.map(c=>c.label+' '+c.feedback).join(' ')).join(' ');
+    assert.match(text,/расходы текущего автопарка/);
+    assert.match(text,/предварительную стоимость вызова/);
+    assert.match(text,/не гарантирует потолок итогового счёта/);
+    assert.match(text,/SOS остаётся доступен при действующей привязке/);
+    assert.match(text,/проверить фактический статус/);
+    const last=item.steps.at(-1)!;
+    assert.match(last.choices.find(c=>c.recommended)!.label,/проверить фактический статус/);
+  }
+  assert.equal(allowedScenario('master','driver-limit'),null);
+});
