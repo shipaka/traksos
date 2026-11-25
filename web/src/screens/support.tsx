@@ -109,13 +109,14 @@ function SupportNewSession({ orderId,owner,token }: { orderId?: string;owner:str
         if (!token || getToken()!==token) return;
         sendingRef.current = true;
         try {
-          if(!orderId && !requestKey.current) requestKey.current=supportRequestKey();
+          if(!requestKey.current) requestKey.current=supportRequestKey();
           const r = await run(() => post('/api/support', {
             topic, text: text.trim(), orderId,
-            ...(!orderId ? {requestKey:requestKey.current,requestedRole:recipient??undefined} : {})
+            requestKey:requestKey.current,
+            ...(!orderId ? {requestedRole:recipient??undefined} : {})
           }), 'Обращение зарегистрировано');
           if (r && alive.current && getToken()===token) location.replace(`#/support/${r.id}`);
-          else if(!orderId && alive.current && getToken()===token) setUncertain(true);
+          else if(alive.current && getToken()===token) setUncertain(true);
         } finally { sendingRef.current = false; }
       }}>{uncertain?'Повторить отправку':'Отправить'}</button>
     </main>
