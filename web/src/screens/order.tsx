@@ -58,6 +58,7 @@ function OrderForSession({id,initialTab,userId}:{
   const [chatOpen, setChatOpen] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
   // Preserve only presentation preference when the same order revalidates.
   const [searchCollapsed, setSearchCollapsed] = useState(false);
+  const [searchMotionEpoch] = useState(() => performance.now());
   useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main className="stack"><Back to={backTo} />
@@ -102,7 +103,7 @@ function OrderForSession({id,initialTab,userId}:{
         : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
       {d.status === 'searching' && d.you === 'client' && <a className="search-workspace-desk-link" href={'#/?order='+encodeURIComponent(id)}>Открыть поиск на рабочем столе →</a>}
-      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} collapsed={searchCollapsed} onCollapsedChange={setSearchCollapsed} />}
+      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} collapsed={searchCollapsed} onCollapsedChange={setSearchCollapsed} motionEpoch={searchMotionEpoch} />}
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 
