@@ -89,7 +89,7 @@ function usePartRead<T>(fetchCurrent:()=>Promise<T>,key:string,refreshOn?:(e:any
   const data=await fetchCurrent();
   if(!current())throw Error('Сессия изменилась');
   return data;
- },key,e=>e.type==='connection_restored'||!!refreshOn?.(e));
+ },key,e=>e.type==='connection_restored'||e.type==='part_recommendations_changed'||!!refreshOn?.(e));
  return {...result,reload:()=>{if(current())return result.reload();}};
 }
 function PartReadStatus({read}:{read:{loading:boolean;error:string|null;reload:()=>void}}){
