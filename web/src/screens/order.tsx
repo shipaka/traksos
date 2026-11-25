@@ -1230,8 +1230,8 @@ function WorksCheck({ id }: { id: string }) {
 
 type ChatPanelProps = {id:string;status:string;open:boolean;setOpen:(open:boolean)=>void};
 function Chat({id,status,open,setOpen}:ChatPanelProps) {
-  const {me}=useMe();
-  return <AccountOrderChat key={(me?.id??'guest')+':'+id}
+  const {me,mode}=useMe();
+  return <AccountOrderChat key={(me?.id??'guest')+':'+mode+':'+id}
     id={id} status={status} open={open} setOpen={setOpen}/>;
 }
 function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
@@ -1249,56 +1249,135 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const [retryVersion,setRetryVersion]=useState(0);
   const [sending,setSending]=useState(false);
   const sendingRef=useRef(false);
+  const [sendError,setSendError]=useState('');
   const archiveLabel=archived||serverClosed;
   const readOnly = archiveLabel || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let alive = true;
-    // A failed GET cannot claim "Сообщений пока нет"; hide any previous
-    // content and expose manual retry without navigating away from the order.
-    setLoading(true);setLoadError(null);
-    setMsgs([]);setQuick([]);setPeople([]);
-    get(`/api/orders/${id}/messages`).then((r) => {
+  const [older,setOlder]=useState<number|null>(null);
+  const [paging,setPaging]=useState(false);
+  const loaded=useRef<any[]>([]);
+  const targetOldest=useRef<number|null>(null);
+  const scrollDistance=useRef<number|null>(null);
+  const refreshRef=useRef<()=>void>(()=>{});
+  const olderRef=useRef<()=>void>(()=>{});
+  useEffect(()=>{
+    let alive=true,busy=false,queued=false;
+    let cursor:number|null=null;
+    const endpoint=`/api/orders/${id}/messages`;
+    const readPage=async(mode:'latest'|'before',before?:number)=>{
+      const r=await get(endpoint+'?window='+mode+'&limit=100'+(before===undefined?'':'&cursor='+before));
+      if(!r||!Array.isArray(r.messages)||r.page?.mode!==mode||typeof r.page.hasMore!=='boolean')
+        throw new Error('Сервер не подтвердил страницу переписки');
+      const rows=r.messages as any[];
+      if(rows.some((m,i)=>!Number.isSafeInteger(m.id)||m.id<=0||(i>0&&m.id<=rows[i-1].id)||
+        (before!==undefined&&m.id>=before))||
+        (r.page.hasMore&&(!rows.length||r.page.nextCursor!==rows[0].id))||
+        (!r.page.hasMore&&r.page.nextCursor!==null))
+        throw new Error('Сервер вернул некорректную страницу переписки');
+      return r;
+    };
+    const publish=(rows:any[],r:any,next:number|null)=>{
       if(!alive)return;
-      const received=Array.isArray(r.messages)?r.messages:[];
-      setMsgs(current=>[...received,...current.filter(
-        (m:any)=>!received.some((item:any)=>item.id===m.id))]);
+      loaded.current=rows;
+      targetOldest.current=rows[0]?.id??null;
+      cursor=next;setOlder(next);
+      setMsgs(rows);
       setQuick(Array.isArray(r.quickReplies)?r.quickReplies:[]);
       setPeople(Array.isArray(r.participants)?r.participants:[]);
-      setLoading(false);
-    }).catch((error) => {
+      setLoadError(null);
+    };
+    const fail=(error:unknown)=>{
       if(!alive)return;
+      loaded.current=[];cursor=null;setOlder(null);
       setMsgs([]);setQuick([]);setPeople([]);
       setLoadError(error instanceof Error?error.message:'Ошибка загрузки переписки');
-      setLoading(false);
+    };
+    async function refresh(){
+      if(!alive)return;
+      if(busy){queued=true;return;}
+      busy=true;
+      const old=targetOldest.current;
+      const node=box.current;
+      if(node&&node.scrollHeight-node.scrollTop-node.clientHeight>48)
+        scrollDistance.current=node.scrollHeight-node.scrollTop;
+      else scrollDistance.current=null;
+      setLoading(true);setLoadError(null);
+      setQuick([]);setPeople([]);
+      try{
+        const latest=await readPage('latest');
+        if(!alive)return;
+        let rows=latest.messages as any[],next:number|null=latest.page.nextCursor;
+        // Revalidate all previously loaded history as well as every missed page.
+        // Do not reuse private bodies after reconnect or infer contiguous global IDs.
+        while(old!==null&&next!==null&&rows[0].id>old){
+          const earlier=await readPage('before',next);
+          if(!alive)return;
+          rows=[...earlier.messages,...rows];next=earlier.page.nextCursor;
+        }
+        publish(rows,latest,next);
+      }catch(error){fail(error);}
+      finally{
+        busy=false;
+        if(alive){setLoading(false);if(queued){queued=false;void refresh();}}
+      }
+    }
+    async function loadEarlier(){
+      if(!alive||busy||cursor===null)return;
+      busy=true;setPaging(true);
+      const node=box.current;
+      scrollDistance.current=node?node.scrollHeight-node.scrollTop:null;
+      try{
+        const r=await readPage('before',cursor);
+        if(!alive)return;
+        publish([...r.messages,...loaded.current],r,r.page.nextCursor);
+      }catch(error){fail(error);}
+      finally{
+        busy=false;
+        if(alive){setPaging(false);if(queued){queued=false;void refresh();}}
+      }
+    }
+    refreshRef.current=()=>{void refresh();};
+    olderRef.current=()=>{void loadEarlier();};
+    const off=onEvent(e=>{
+      if(e.type==='connection_restored'||(e.type==='chat'&&String(e.message?.order_id)===String(id)))
+        void refresh();
     });
-    const off=onEvent((e) => {
-      if(alive && e.type==='chat' && e.message?.order_id===id)
-        setMsgs((m)=>(m.some((x)=>x.id===e.message.id)?m:[...m,e.message]));
-    });
-    return () => { alive = false; off(); };
-  }, [id, status, retryVersion]);
-  useEffect(() => {
-    setServerClosed(false);
-    setMsgs([]); setQuick([]); setPeople([]); setSeen(0);
-  }, [id]);
-  useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
-  useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
+    const foreground=()=>{if(document.visibilityState==='visible')void refresh();};
+    window.addEventListener('online',foreground);
+    document.addEventListener('visibilitychange',foreground);
+    void refresh();
+    return ()=>{alive=false;off();window.removeEventListener('online',foreground);
+      document.removeEventListener('visibilitychange',foreground);
+      refreshRef.current=()=>{};olderRef.current=()=>{};};
+  },[id,status,retryVersion]);
+  useEffect(()=>{
+    if(loading||loadError||!open)return;
+    const node=box.current;
+    if(node)node.scrollTo(0,scrollDistance.current===null?node.scrollHeight:
+      Math.max(0,node.scrollHeight-scrollDistance.current));
+    scrollDistance.current=null;
+  },[msgs,open,loading,loadError]);
+  useEffect(()=>{
+    if(open&&!loading&&!loadError)setSeen(previous=>Math.max(previous,msgs[msgs.length-1]?.id??0));
+  },[open,msgs,loading,loadError]);
 
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
     if(!body.trim()||readOnly||sendingRef.current)return;
     sendingRef.current=true;
-    setSending(true);
+    setSending(true);setSendError('');
     try {
       const m = await post(`/api/orders/${id}/messages`, { body, kind });
-      setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
+      if(!m?.id)throw new Error('Сервер не подтвердил отправку сообщения');
+      refreshRef.current();
       // Do not erase a new draft typed while the previous message was posting.
       setText(current=>current===body?'':current);
     } catch (e) {
       // Concurrent completion can beat the browser event. Fail closed immediately
       // even before the parent order status refreshes.
       if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
+      setSendError('Не получили подтверждение отправки. Проверьте переписку перед повтором. Текст сохранён.');
+      setRetryVersion(v=>v+1);
       toast((e as Error).message);
     }finally{
       sendingRef.current=false;
@@ -1307,7 +1386,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   }
 
   // Свёрнут, пока не нажали: лента заявки не переполнена. Новые сообщения видно по счётчику.
-  const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
+  const fresh = loading||loadError?0:msgs.filter((m) => m.id>seen && m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
       <b>{archiveLabel ? 'Архив переписки' : '💬 Чат по заявке'}</b>
@@ -1315,13 +1394,13 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
         <span className="note">{loadError?'ошибка загрузки · открыть для повтора':
           loading?'загружаем переписку':readOnly?'только чтение':
-          msgs.length?`${msgs.length} сообщ.`:'открыть'} ▾</span>
+          msgs.length?`${msgs.length} загружено`:'открыть'} ▾</span>
       </span>
     </button>
   );
   return (
     <div className="card" aria-label={archiveLabel ? 'Архив переписки по заявке' : 'Чат по заявке'}>
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">свернуть ▴</span></button>
       {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
       {loadError&&<div className="stack" role="alert">
         <span className="note">Не удалось загрузить переписку: {loadError}</span>
@@ -1330,7 +1409,9 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         </button>
       </div>}
       {loading&&<span className="note" role="status">Загружаем переписку…</span>}
+      {sendError&&<span className="note" role="alert">{sendError}</span>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
+      {!loading&&!loadError&&older!==null&&<button type="button" className="btn ghost small" disabled={paging} onClick={()=>olderRef.current()}>{paging?'Загружаем…':'Загрузить более ранние сообщения'}</button>}
       <div className="msgs" ref={box}>
         {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}
         {!loading&&!loadError&&msgs.map((m) => {
