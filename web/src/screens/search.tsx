@@ -1,7 +1,7 @@
 // Живой поиск исполнителя: радар, счётчики, отклики появляются по одному.
 // Один список — разные сортировки: «Рекомендуем / Дешевле / Быстрее / Ближе».
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { get, post, rub, onEvent } from '../api.ts';
 import { useAction, useToast } from '../ui.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
@@ -14,7 +14,7 @@ const SORTS = [
   { id: 'distance', name: 'Ближе' },
 ] as const;
 
-export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapsedChange }: { d: any; onChosen: () => void; collapsed?: boolean; onCollapsedChange?: (value: boolean) => void }) {
+export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapsedChange, motionEpoch }: { d: any; onChosen: () => void; collapsed?: boolean; onCollapsedChange?: (value: boolean) => void; motionEpoch?: number }) {
   const toast = useToast();
   const { busy, run } = useAction();
   // Приоритет из формы вызова: «Ближе / Дешевле / Быстрее» — сразу сортирует отклики
@@ -28,6 +28,7 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
   const [response, setResponse] = useState<{key: string; value: any} | null>(null);
   const [requestError, setRequestError] = useState<{key: string; message: string} | null>(null);
   const panelId = useId();
+  const [localMotionEpoch] = useState(() => performance.now());
   const [collapsedOrder, setCollapsedOrder] = useState<string | null>(null);
   const collapsed = controlledCollapsed ?? collapsedOrder === d.id;
   const setCollapsed = (value: boolean) => {
@@ -112,7 +113,7 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
         point={Number.isFinite(d.lat)&&Number.isFinite(d.lng)?{lat:d.lat,lng:d.lng}:null}
         address={d.address} synthetic={String(d.id).startsWith('demo-')} />}
       <div className="card search-card">
-        <Radar hits={offers.length} />
+        <Radar hits={offers.length} epoch={motionEpoch ?? localMotionEpoch} collapsed={collapsed} />
         {loadError && <div className="and19-search-error" role="alert">Не удалось получить свежие отклики. <button type="button" onClick={() => refreshRef.current()}>Повторить</button><small>{loadError}</small></div>}
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
           <b className="search-title">{statusText}</b>
@@ -181,7 +182,15 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
 }
 
 /** Abstract indicators of actual returned offers, never GPS positions. */
-function Radar({ hits }: { hits: number }) {
+function Radar({ hits, epoch, collapsed }: { hits: number; epoch: number; collapsed: boolean }) {
+  const sweep = useRef<HTMLSpanElement>(null);
+  // Restore the clock phase only on mount/reopen, never on a poll/render.
+  // The epoch contains no private data and survives same-order revalidation.
+  useLayoutEffect(() => {
+    if (collapsed || !sweep.current) return;
+    const phase = Math.max(0, performance.now() - epoch) % 8000;
+    sweep.current.style.setProperty('--search-sweep-delay', (-phase / 1000) + 's');
+  }, [epoch, collapsed]);
   const pts = Array.from({ length: Math.min(hits, 8) }, (_, i) => {
     const a = (i * 137.5 * Math.PI) / 180;
     const r = 28 + ((i * 23) % 44);
@@ -189,7 +198,7 @@ function Radar({ hits }: { hits: number }) {
   });
   return (
     <div className="radar search-workspace-radar" aria-hidden="true">
-      <span className="sweep" />
+      <span ref={sweep} className="sweep" />
       {pts.map((p, i) => <span key={i} className="blip on" style={{ left: `${p.x}%`, top: `${p.y}%` }} />)}
       <span className="core">🚛</span>
     </div>
