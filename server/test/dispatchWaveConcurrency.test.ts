@@ -7,7 +7,7 @@ test('concurrent dispatch ticks claim capacity and one auction wave; cancellatio
   try{
     const admin=await t.login('+79990000001');
     const client=await t.login('+79995773301');
-    const workers=[];
+    const workers:{id:string;token:string}[]=[];
     for(let i=2;i<=5;i++){
       const worker=await t.login('+7999577330'+i,'master');
       workers.push(worker);
