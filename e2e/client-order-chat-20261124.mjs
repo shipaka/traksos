@@ -4,6 +4,7 @@ import {build} from 'esbuild';
 import {chromium} from 'playwright';
 
 const api=`
+  export function getToken(){return window.__orderMock.user?.id??null;}
   export function get(path) {
     return new Promise((resolve,reject)=>window.__orderMock.gets.push({path,resolve,reject}));
   }
@@ -195,20 +196,45 @@ try{
   if((await page.evaluate(()=>window.__orderMock.posts.length))!==1)
     throw Error('Double submit produced two POST requests');
   await message.fill('B second draft');
-  await page.evaluate(()=>window.__orderMock.posts[0].resolve({
-    id:808,kind:'text',sender_id:'U1',body:'B first message'}));
+  const original=await page.evaluate(()=>window.__orderMock.posts[0].body);
+  if(!/^[0-9a-f-]{36}$/.test(original.requestId))throw Error('Missing request UUID');
+  // The server may have committed; only the transport confirmation was lost.
+  await page.evaluate(()=>window.__orderMock.posts[0].reject(Object.assign(Error('offline'),{status:0,code:'network'})));
   await wait(latest('B'),2);
   await settle(latest('B'),1,windowPage([msg(808,'B first message','U1')]));
+  const retry=page.getByRole('button',{name:'Повторить прежнюю отправку'});
+  await retry.waitFor();
+  if(await message.inputValue()!=='B second draft')throw Error('Retry erased new draft');
+  if(!(await page.locator('form.compose button').isDisabled()))throw Error('New send enabled before unresolved prior attempt');
+  if(await page.evaluate(()=>window.__orderMock.posts.length)!==1)throw Error('Automatic POST replay');
+  await page.evaluate(()=>{
+    const button=Array.from(document.querySelectorAll('button')).find(x=>x.textContent==='Повторить прежнюю отправку');
+    if(!button)throw Error('Missing explicit retry');
+    button.click();button.click();
+  });
+  await page.waitForFunction(()=>window.__orderMock.posts.length===2);
+  const repeated=await page.evaluate(()=>window.__orderMock.posts[1].body);
+  if(JSON.stringify(repeated)!==JSON.stringify(original))throw Error('Retry altered payload or key');
+  await page.evaluate(()=>window.__orderMock.posts[1].resolve({
+    id:808,kind:'text',sender_id:'U1',body:'B first message'}));
+  await wait(latest('B'),3);
+  await settle(latest('B'),2,windowPage([msg(808,'B first message','U1')]));
   await page.getByText('B first message').waitFor();
   if(await message.inputValue()!=='B second draft')
     throw Error('Pending response erased the subsequent chat draft');
 
+  // The next intentional message gets a distinct key.
+  await page.locator('form.compose button').click();
+  await page.waitForFunction(()=>window.__orderMock.posts.length===3);
+  const third=await page.evaluate(()=>window.__orderMock.posts[2].body);
+  if(third.requestId===original.requestId||third.body!=='B second draft')throw Error('New send reused prior identity');
   // Same order ID but another authenticated account is a fresh private GET.
   await navigate('B','U2');
   await wait('/api/orders/B',2);
   if(await page.getByText('B first message').count()||
      await page.getByText('B second draft').count())
     throw Error('Former account message shown before fresh ACL GET');
+  await page.evaluate(()=>window.__orderMock.posts[2].resolve({id:809,kind:'text',sender_id:'U1',body:'B second draft'}));
   await settle('/api/orders/B',1,'forbidden',true);
   await page.getByRole('button',{name:'Повторить загрузку заявки'}).waitFor();
   if(await page.getByText('№202 · Электрик').count())
