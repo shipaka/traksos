@@ -242,3 +242,6 @@ try{
   if(errors.length)throw Error('Chromium runtime errors: '+errors.join('; '));
   console.log('PASS DriverAir: out-of-order polls, offline+retry, no automatic POST replay, A/B identity isolation, staff permissions and uncertain-write reconciliation');
 } finally { await browser.close(); }
+
+// Run foreground and bounded-tail coverage in the existing CI entrypoint.
+await import('./air-foreground-regression.mjs');
