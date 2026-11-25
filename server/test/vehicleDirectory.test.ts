@@ -210,6 +210,14 @@ test('legacy catalog link preserves identity and access, audits once, and clears
     assert.equal((await t.api('POST','/api/qr/'+qr+'/join',{},driver.token)).status,200);
     const matchUrl='/api/vehicle-reference/vehicles/'+id+'/match';
     assert.equal((await t.api('GET',matchUrl,undefined,other.token)).status,404);
+    const specialist=await t.login('+79990002044','master');
+    assert.equal((await t.api('GET',matchUrl,undefined,specialist.token)).status,403);
+    const unassigned=await t.login('+79990002045','client');
+    await t.db.query("update users set owner_id=$2,roles='{driver}'::text[] where id=$1",[unassigned.id,owner.id]);
+    assert.equal((await t.api('GET',matchUrl,undefined,unassigned.token)).status,404);
+    assert.equal((await t.api('POST','/api/vehicle-reference/vehicles',{
+      category:'truck',brandKey:'renault',modelKey:'premium',year:2010
+    },unassigned.token)).status,403);
     for(const actor of [owner,driver]){
       const match=await t.api('GET',matchUrl,undefined,actor.token);
       assert.equal(match.status,200);
