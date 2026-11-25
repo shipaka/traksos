@@ -1,6 +1,7 @@
 import {useLayoutEffect,useRef,useState} from 'react';
 import {get,getToken,post,rub,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
+import {usePrivateRead} from './privateRead20261124.ts';
 
 type Ref={brand:string;article:string;name:string;source:string;sourcePage:number};
 type Product={id:string;brand:string;article:string;name:string;price:number;stock:number|null;leadDays:number};
@@ -72,8 +73,42 @@ function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
   </>:<span className="note">Для отправки рекомендации откройте ТехБазу из назначенной заявки или ремонта СТО.</span>}
  </section>;
 }
-function RecRows({rows,canDecide,reload}:{rows:Rec[];canDecide:boolean;reload:()=>void}){
+// Keys are local React identity only; never put bearer tokens into routes or DOM.
+function usePartScope(){
+ const {me}=useMe();const token=getToken();
+ const session=useRef({token,revision:0});
+ if(session.current.token!==token)session.current={token,revision:session.current.revision+1};
+ return {me,scope:me&&token?JSON.stringify([me.id,session.current.revision,me.owner_id,me.roles]):null};
+}
+function usePartRead<T>(fetchCurrent:()=>Promise<T>,key:string,refreshOn?:(e:any)=>boolean){
+ const session=getToken(),active=useRef(false);
+ useLayoutEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
+ const current=()=>active.current&&!!session&&getToken()===session;
+ const result=usePrivateRead<T>(async()=>{
+  if(!current())throw Error('Сессия изменилась');
+  const data=await fetchCurrent();
+  if(!current())throw Error('Сессия изменилась');
+  return data;
+ },key,e=>e.type==='connection_restored'||!!refreshOn?.(e));
+ return {...result,reload:()=>{if(current())return result.reload();}};
+}
+function PartReadStatus({read}:{read:{loading:boolean;error:string|null;reload:()=>void}}){
+ return read.error?<div role="alert" className="note">Не удалось обновить данные. <button type="button" className="btn ghost small" onClick={read.reload}>Повторить загрузку</button></div>:read.loading?<span role="status" className="note">Загрузка…</span>:null;
+}
+function usePartAction(){
+ const session=getToken(),active=useRef(false),lock=useRef(false);
+ useLayoutEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
  const {busy,run}=useAction();
+ const current=()=>active.current&&!!session&&getToken()===session;
+ return {busy,run:async<T,>(fn:()=>Promise<T>,message:string)=>{
+  if(!current()||lock.current)return undefined;
+  lock.current=true;
+  try{const result=await run(fn,message);return current()?result:undefined;}
+  finally{lock.current=false;}
+ }};
+}
+function RecRows({rows,canDecide,reload}:{rows:Rec[];canDecide:boolean;reload:()=>void}){
+ const {busy,run}=usePartAction();
  return <>{rows.map(r=><div className="card flat stack" key={r.id}>
   <div className="between"><b>{r.name}</b><span className="pill">{labels[r.status]??r.status}</span></div>
   <span>{r.brand} · {r.article} × {r.qty}</span><p>{r.reason}</p><small className="note">{fmtTime(r.created_at)} · Заказ не оформлен автоматически.</small>
@@ -88,50 +123,66 @@ function RecRows({rows,canDecide,reload}:{rows:Rec[];canDecide:boolean;reload:()
  </div>)}</>;
 }
 export function OrderPartRecommendations({order:o}:{order:any}){
- const list=useLoad<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/orders/'+o.id+'/part-recommendations'),[o.id],e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
+ const {scope}=usePartScope();
+ if(!scope||!['client','performer'].includes(o.you))return null;
+ return <OrderPartList key={JSON.stringify([scope,o.id,o.you])} order={o}/>;
+}
+function OrderPartList({order:o}:{order:any}){
+ const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/orders/'+o.id+'/part-recommendations'),o.id,e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
  const [open,setOpen]=useState(false);
  if(o.you!=='client'&&o.you!=='performer')return null;
  return <section className="card stack"><b>Рекомендации по запчастям</b>
-  {list.error&&<span className="note">Рекомендации сейчас недоступны</span>}
+  <PartReadStatus read={list}/>
   {list.data?.canSuggest&&<><a className="btn ghost small" href={'#/techbase/master?orderId='+encodeURIComponent(o.id)}>Подобрать деталь в ТехБазе</a><button type="button" className="btn ghost small" onClick={()=>setOpen(v=>!v)}>{open?'Свернуть':'Предложить по маркировке детали'}</button>{open&&<PartProposal orderId={o.id} onSent={list.reload}/>}</>}
   {list.data&&<RecRows rows={list.data.items} canDecide={list.data.canDecide} reload={list.reload}/>}
  </section>;
 }
 export function BookingPartRecommendations({bookingId}:{bookingId:string}){
- const list=useLoad<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/bookings/'+encodeURIComponent(bookingId)+'/part-recommendations'),[bookingId],e=>(e.type==='booking'||e.type==='part_sourcing')&&e.bookingId===bookingId);
+ const {scope}=usePartScope();
+ return scope?<BookingPartList key={JSON.stringify([scope,bookingId])} bookingId={bookingId}/>:null;
+}
+function BookingPartList({bookingId}:{bookingId:string}){
+ const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/bookings/'+encodeURIComponent(bookingId)+'/part-recommendations'),bookingId,e=>(e.type==='booking'||e.type==='part_sourcing')&&e.bookingId===bookingId);
  const [open,setOpen]=useState(false);
  return <section className="card stack"><b>Рекомендации по запчастям</b>
   <span className="note">Рекомендация и заказ магазина не изменяют счёт СТО автоматически.</span>
-  {list.error&&<span className="note">Рекомендации недоступны</span>}
+  <PartReadStatus read={list}/>
   {list.data?.canSuggest&&<><a className="btn ghost small" href={'#/techbase/master?bookingId='+encodeURIComponent(bookingId)}>Подобрать деталь в ТехБазе</a><button className="btn ghost small" type="button" onClick={()=>setOpen(v=>!v)}>{open?'Свернуть':'Предложить по маркировке детали'}</button>{open&&<PartProposal bookingId={bookingId} onSent={list.reload}/>}</>}
   {list.data&&<RecRows rows={list.data.items} canDecide={list.data.canDecide} reload={list.reload}/>}
   {list.data?.items.length===0&&!list.data.canSuggest&&<span className="note">Рекомендаций пока нет</span>}
  </section>;
 }
 export function PartRecommendationHistory({vehicleId}:{vehicleId?:string}){
- const {me}=useMe();
+ const {me,scope}=usePartScope();
+ if(!scope||!me?.roles?.includes('client')||me.owner_id)return null;
+ return <PartHistory key={JSON.stringify([scope,vehicleId])} vehicleId={vehicleId}/>;
+}
+function PartHistory({vehicleId}:{vehicleId?:string}){
  const [page,setPage]=useState(0);
- const owner=!!me?.roles?.includes('client')&&!me?.owner_id;
- const history=useLoad<{items:Rec[];hasMore:boolean}>(()=>owner?get('/api/shop/part-recommendations?page='+page+(vehicleId?'&vehicleId='+encodeURIComponent(vehicleId):'')):Promise.resolve({items:[],hasMore:false}),[owner,page,vehicleId,me?.id],e=>e.type==='part_sourcing'||e.type==='order'||e.type==='booking');
- if(!owner)return null;
- return <section className="card stack"><b>История рекомендаций мастеров</b>{history.error&&<span className="note">История рекомендаций недоступна</span>}
+ const history=usePartRead<{items:Rec[];hasMore:boolean}>(()=>get('/api/shop/part-recommendations?page='+page+(vehicleId?'&vehicleId='+encodeURIComponent(vehicleId):'')),String(page),e=>e.type==='part_sourcing'||e.type==='order'||e.type==='booking');
+ return <section className="card stack"><b>История рекомендаций мастеров</b><PartReadStatus read={history}/>
   {history.data?.items.length===0&&<span className="note">Рекомендаций пока нет</span>}
   {history.data&&<RecRows rows={history.data.items} canDecide={true} reload={history.reload}/>}
-  {(page>0||history.data?.hasMore)&&<div className="row"><button className="btn ghost small" disabled={!page} onClick={()=>setPage(p=>p-1)}>Назад</button><button className="btn ghost small" disabled={!history.data?.hasMore} onClick={()=>setPage(p=>p+1)}>Далее</button></div>}
+  {(page>0||history.data?.hasMore)&&<div className="row"><button className="btn ghost small" disabled={!page||history.loading} onClick={()=>setPage(p=>p-1)}>Назад</button><button className="btn ghost small" disabled={!history.data?.hasMore} onClick={()=>setPage(p=>p+1)}>Далее</button></div>}
  </section>;
 }
 
 export function AdminPartSourcing(){
+ const {scope}=usePartScope();
+ return scope?<AdminPartQueue key={scope}/>:null;
+}
+function AdminPartQueue(){
  const [status,setStatus]=useState<'requested'|'resolved'|'unavailable'>('requested');
  const [page,setPage]=useState(0);
  const [selected,setSelected]=useState('');
- const queue=useLoad<{items:Rec[];hasMore:boolean;shopEnabled:boolean}>(()=>get('/api/admin/shop/part-sourcing?status='+status+'&page='+page),[status,page],e=>e.type==='part_sourcing');
+ const queue=usePartRead<{items:Rec[];hasMore:boolean;shopEnabled:boolean}>(()=>get('/api/admin/shop/part-sourcing?status='+status+'&page='+page),JSON.stringify([status,page]),e=>e.type==='part_sourcing');
+ useLayoutEffect(()=>{if(!queue.data)setSelected('');},[queue.data]);
  return <section className="card stack"><h2>Подбор запчастей по рекомендациям</h2>
   <p className="note">Только подтверждённый производитель и артикул. Привязка товара не создаёт заказ, оплату или резерв. Клиент сам проверяет цену и оформляет покупку.</p>
   {queue.data&&!queue.data.shopEnabled&&<p className="note">Витрина закрыта. Можно готовить предложения, оформление покупки недоступно до открытия.</p>}
   <div className="row">{([['requested','На подборе'],['resolved','Подобраны'],['unavailable','Не найдены']] as const).map(([key,label])=><button type="button" className="chip" aria-pressed={status===key} key={key} onClick={()=>{setStatus(key);setPage(0);setSelected('');}}>{label}</button>)}</div>
   <button className="btn ghost small" onClick={queue.reload}>Обновить очередь</button>
-  {!queue.data&&<p role="status">{queue.error??'Загрузка…'}</p>}
+  <PartReadStatus read={queue}/>
   {queue.data?.items.length===0&&<p className="note">В этом разделе нет запросов</p>}
   {queue.data?.items.map(r=><article className="card flat stack" key={r.id}>
    <b>{r.brand} · {r.article} × {r.qty}</b><span>{r.name}</span><p>{r.reason}</p>
@@ -140,24 +191,27 @@ export function AdminPartSourcing(){
    {status==='requested'&&<><button className="btn ghost small" onClick={()=>setSelected(v=>v===r.id?'':r.id)}>{selected===r.id?'Свернуть':'Подобрать точный товар'}</button>
     {selected===r.id&&<SourcingEditor key={r.id} rec={r} onDone={()=>{setSelected('');queue.reload();}}/>}</>}
   </article>)}
-  {(page>0||queue.data?.hasMore)&&<div className="row"><button className="btn ghost small" disabled={!page} onClick={()=>{setSelected('');setPage(p=>p-1);}}>Назад</button><button className="btn ghost small" disabled={!queue.data?.hasMore} onClick={()=>{setSelected('');setPage(p=>p+1);}}>Далее</button></div>}
+  {(page>0||queue.data?.hasMore)&&<div className="row"><button className="btn ghost small" disabled={!page||queue.loading} onClick={()=>{setSelected('');setPage(p=>p-1);}}>Назад</button><button className="btn ghost small" disabled={!queue.data?.hasMore} onClick={()=>{setSelected('');setPage(p=>p+1);}}>Далее</button></div>}
  </section>;
 }
 function SourcingEditor({rec,onDone}:{rec:Rec;onDone:()=>void}){
- const candidates=useLoad<{products:Product[];hasMore:boolean}>(()=>get('/api/admin/shop/part-sourcing/'+rec.id+'/candidates'),[rec.id]);
+ const candidates=usePartRead<{products:Product[];hasMore:boolean}>(()=>get('/api/admin/shop/part-sourcing/'+rec.id+'/candidates'),rec.id);
  const [product,setProduct]=useState(''),[note,setNote]=useState('');
- const {busy,run}=useAction();
+ const {busy,run}=usePartAction();
+ useLayoutEffect(()=>{if(!candidates.data)setProduct('');},[candidates.data]);
+ const selectedValid=!!candidates.data&&!candidates.data.hasMore&&candidates.data.products.some(p=>p.id===product);
  async function resolve(status:'resolved'|'unavailable'){
+  if(!candidates.data||(status==='resolved'&&!selectedValid))return;
   if(await run(()=>post('/api/admin/shop/part-sourcing/'+rec.id+'/resolve',{status,...(status==='resolved'?{productId:product}:{}),note}),status==='resolved'?'Точный товар предложен клиенту':'Результат подбора сохранён'))onDone();
  }
  return <div className="stack">
-  {!candidates.data&&<p>{candidates.error??'Ищем точные совпадения…'}</p>}
+  <PartReadStatus read={candidates}/>
   {candidates.data?.products.length===0&&<p className="note">Товар не найден. Добавьте проверенную позицию в разделе «Товары», затем вернитесь к запросу.</p>}
   {candidates.data?.hasMore&&<p className="note">Найдено более 20 совпадений. Уточните каталог перед привязкой.</p>}
   {candidates.data?.products.map(p=><button key={p.id} type="button" className="btn ghost small" aria-pressed={product===p.id} onClick={()=>setProduct(p.id)}>{p.name} · {p.brand} {p.article} · {rub(p.price)} · {p.stock==null?'Под заказ':'Остаток '+p.stock}</button>)}
   <button className="btn ghost small" onClick={()=>{setProduct('');candidates.reload();}}>Обновить совпадения</button>
   <label>Комментарий клиенту<textarea className="field" maxLength={500} rows={2} value={note} onChange={e=>setNote(e.target.value)}/></label>
-  <button className="btn small" disabled={busy||!product||!!candidates.data?.hasMore} onClick={()=>resolve('resolved')}>Предложить выбранную деталь</button>
-  <button className="btn ghost small" disabled={busy||note.trim().length<8} onClick={()=>resolve('unavailable')}>Пока не удалось подобрать</button>
+  <button className="btn small" disabled={busy||!selectedValid} onClick={()=>resolve('resolved')}>Предложить выбранную деталь</button>
+  <button className="btn ghost small" disabled={busy||!candidates.data||note.trim().length<8} onClick={()=>resolve('unavailable')}>Пока не удалось подобрать</button>
  </div>;
 }
