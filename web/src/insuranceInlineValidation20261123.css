@@ -1,0 +1,16 @@
+/* TrakSOS inline insurance validation, available on Android and desktop. */
+.insurance-workflow .insurance-validation-alert {
+  border:1px solid rgba(255,157,77,.7);border-left:4px solid #ffad54;
+  background:#2e211b;color:#ffe4c5;padding:12px 14px;border-radius:12px;
+  font-size:13px;line-height:1.5;font-weight:650;
+}
+.insurance-workflow .insurance-field-inline-error {display:block;color:#ffbd80;font-size:11px;line-height:1.4;margin-top:5px;}
+.insurance-workflow .field[aria-invalid="true"] {border-color:#ffad54!important;box-shadow:0 0 0 1px rgba(255,173,84,.4);}
+.insurance-workflow .field:focus-visible {outline:2px solid #ffb777;outline-offset:2px;}
+
+.insurance-workflow input[data-insurance-offer-field][aria-invalid="true"] {
+  border-color:#ffad54!important;outline:1px solid rgba(255,173,84,.5);
+}
+.insurance-workflow .insurance-validation-alert:focus-visible {
+  outline:2px solid #ffb777;outline-offset:2px;
+}

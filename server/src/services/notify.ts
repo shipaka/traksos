@@ -15,11 +15,16 @@ export class Notifier {
     const ids = [...new Set(userIds.filter(Boolean) as string[])];
     if (!ids.length) return;
     if (msg.kind !== 'call') {
-      for (const id of ids) {
-        await this.db.query('insert into notifications(user_id, kind, title, body, data) values ($1,$2,$3,$4,$5)', [
-          id, String(event.type), msg.title, msg.body, msg.data,
-        ]);
-      }
+      // The inbox is the durable part of the notification. A failure writing
+      // recipient N must roll back the entire fan-out, not leave half of the
+      // recipient list with an unread message and the rest without one.
+      await this.db.tx(async q => {
+        for (const id of ids) {
+          await q.query('insert into notifications(user_id, kind, title, body, data) values ($1,$2,$3,$4,$5)', [
+            id, String(event.type), msg.title, msg.body, msg.data,
+          ]);
+        }
+      });
     }
     await this.deliverStored(ids, event, msg);
   }
@@ -29,14 +34,22 @@ export class Notifier {
     const ids = [...new Set(userIds.filter(Boolean) as string[])];
     if (!ids.length) return;
     this.hub.send(ids, event);
-    const tokens = await this.db.query<{ provider: string; token: string }>(
-      `select distinct p.provider, p.token from push_tokens p
-         left join sessions s on s.token_hash=p.session_token_hash and s.expires_at > now()
-         where p.user_id = any($1::uuid[])
-           and (p.session_token_hash is null or s.token_hash is not null)`, [ids],
-    );
-    if (tokens.length) {
-      await this.push.send(tokens, msg).catch((e) => console.warn('[push]', e.message));
+    // Browser/WebSocket delivery and the persisted inbox are already usable.
+    // Failure to read device tokens or reach an optional push provider must
+    // not turn a successful business operation into an HTTP error that invites
+    // a duplicate retry. It is still logged for operational investigation.
+    try {
+      const tokens = await this.db.query<{ provider: string; token: string }>(
+        `select distinct p.provider, p.token from push_tokens p
+           join sessions s on s.token_hash=p.session_token_hash
+             and s.user_id=p.user_id and s.expires_at > now()
+           join users u on u.id=p.user_id and u.status='active' and u.deleted_at is null
+             and (u.admin_preview_until is null or u.admin_preview_until>now())
+           where p.user_id = any($1::uuid[])`, [ids],
+      );
+      if (tokens.length) await this.push.send(tokens, msg);
+    } catch (error) {
+      console.warn('[push]', error instanceof Error ? error.message : String(error));
     }
   }
 }

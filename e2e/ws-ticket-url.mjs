@@ -36,7 +36,10 @@ try{
     assert.equal(socket.searchParams.has('ticket'),true,'one-use ticket must authorize new WS');
     assert.match(socket.searchParams.get('ticket'),/^[A-Za-z0-9_-]{43}$/);
     assert.ok(opened.every(u=>!u.searchParams.has('token')),'no bearer-token URL in browser connections');
-    await page.getByRole('heading',{name:'Заявки'}).waitFor({timeout:12000});
+    // 617 inner hero replaces the old page title, but the real WebSocket
+    // security assertions above still validate the one-time URL ticket.
+    await page.locator('.tr-inner-hero[data-traksos-inner-ui="approved-617-618"]')
+      .getByRole('heading',{name:'Заявки и история'}).waitFor({timeout:12000});
     console.log('PASS: browser WebSocket connected using an expiring ticket, without the login token in its URL');
   }finally{await context.close()}
 }finally{await browser.close()}

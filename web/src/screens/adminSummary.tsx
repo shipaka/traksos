@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { get, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
-import { useLoad, Loading } from '../ui.tsx';
+import { useLoad, useMe, Loading } from '../ui.tsx';
 
 const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`);
 const EVENT: Record<string, string> = {
@@ -24,13 +24,21 @@ function Tile({ label, value, hint, tone }: { label: string; value: string | num
 }
 
 export function AdminSummary() {
-  const s = useLoad(() => get('/api/admin/summary'), [], (e) => e.type === 'order' || e.type === 'mod_case');
+  const { me } = useMe();
+  const s = useLoad(async () => ({ownerId:me?.id,payload:await get('/api/admin/summary')}),
+    [me?.id], (e) => e.type === 'order' || e.type === 'mod_case');
   const [tab, setTab] = useState<'money' | 'work' | 'quality'>('money');
-  const d = s.data;
-  if (!d) return <Loading error={s.error} />;
+  // useLoad keeps the previous payload on GET failure; this is financial and
+  // role-sensitive data, not a reusable estimate from a previous session.
+  const d = !s.error && !!me?.id && s.data && s.data.ownerId === me.id ? s.data.payload : null;
+  if (!d) return <div className="stack">
+    <Loading error={s.error} />
+    {s.error && <button type="button" className="btn ghost small"
+      onClick={() => void s.reload()}>Повторить загрузку сводки</button>}
+  </div>;
   return (
     <div className="stack">
-      <span className="label">Сегодня · СПб и Ленобласть</span>
+      <span className="label">Сегодня · данные платформы</span>
       <div className="grid3">
         <Tile label="Заявок сегодня" value={d.today.orders} />
         <Tile label="На линии" value={d.today.mastersOnline + d.today.towOnline} hint={`эвакуаторов: ${d.today.towOnline}`} />
@@ -53,8 +61,8 @@ export function AdminSummary() {
         </div>
         <span className="note">Высота столбцов — относительная величина по трём показателям. Платежи здесь не отображаются.</span>
       </div>
-      <div className="scroll-x" role="tablist">
-        {([['money', 'Деньги'], ['work', 'Работа'], ['quality', 'Качество']] as const).map(([k, n]) => <button key={k} className="chip" role="tab" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
+      <div className="scroll-x" role="group" aria-label="Раздел сводки">
+        {([['money', 'Деньги'], ['work', 'Работа'], ['quality', 'Качество']] as const).map(([k, n]) => <button type="button" key={k} className="chip" aria-pressed={tab === k} onClick={() => setTab(k)}>{n}</button>)}
       </div>
       {tab === 'money' && (
         <div className="tiles">
@@ -88,14 +96,21 @@ export function AdminSummary() {
 }
 
 function LiveOrders() {
-  const l = useLoad(() => get('/api/admin/live'), [], (e) => e.type === 'order');
-  if (!l.data) return <Loading error={l.error} />;
+  const { me } = useMe();
+  const l = useLoad(async () => ({ownerId:me?.id,rows:await get('/api/admin/live')}),
+    [me?.id], (e) => e.type === 'order');
+  const rows = !l.error && !!me?.id && l.data && l.data.ownerId === me.id ? l.data.rows : null;
+  if (!rows) return <div className="stack">
+    <Loading error={l.error} />
+    {l.error && <button type="button" className="btn ghost small"
+      onClick={() => void l.reload()}>Повторить загрузку живых заявок</button>}
+  </div>;
   return (
     <div className="stack">
-      <span className="label">Живые заявки · {l.data.length}</span>
-      {!l.data.length ? <div className="empty">Сейчас открытых заявок нет</div> : (
+      <span className="label">Живые заявки · {rows.length}</span>
+      {!rows.length ? <div className="empty">Сейчас открытых заявок нет</div> : (
         <div className="rows">
-          {l.data.map((o: any) => (
+          {rows.map((o: any) => (
             <a key={o.id} href={`#/order/${o.id}`} className="list-item">
               <div className="stack" style={{ gap: 2 }}>
                 <b>№{o.number} · {SERVICES[o.service]?.name ?? o.service}{o.is_sos ? ' · SOS' : ''}</b>

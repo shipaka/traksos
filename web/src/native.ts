@@ -5,6 +5,8 @@ type CallAction = (orderId: string, action: 'accept' | 'decline', handled: boole
 
 const bridge = (window as any).TrakSOSNative as undefined | {
   isApp(): boolean;
+  isPreviewBuild?(): boolean;
+  designReviewReady?(role: string): void;
   setSession(apiUrl: string, token: string | null): void;
   pushToken(): string;
   performerOnline(): void;
@@ -20,6 +22,8 @@ const on = (name: string, fn: (d: any) => void) => (listeners[name] ??= []).push
 
 export const native = {
   isApp: !!bridge,
+  // Debug APK only: a read-only showcase with synthetic data; never a login.
+  isPreviewBuild: (() => { try { return bridge?.isPreviewBuild?.() === true; } catch { return false; } })(),
 
   /** Получить токен RuStore Push и отправить на сервер (приложение отправит и само, но так надёжнее) */
   async registerPush(send: (token: string) => Promise<unknown>) {

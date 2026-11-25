@@ -1,0 +1,27 @@
+{
+  "approval": "Owner approved 2026-11-23: option 1 of the latest three images. Replaces previously approved option 3.",
+  "title": "No-performer card: symbolic network expansion over Russia",
+  "master": {
+    "libraryPath": "/TrakSOS/Утверждённые изображения/PR274_no-performer_network-Russia_approved-01.png",
+    "name": "TrakSOS_PR274_approved_no_performer_network_russia_v1.png",
+    "sha256": "553696405c58b3170f0755ca2aa0a88b7bb64c451a1f99be87e445d3339b87ad",
+    "width": 2172,
+    "height": 724,
+    "format": "PNG"
+  },
+  "delivery": {
+    "path": "/feature-art/traksos-no-performer-network-russia-approved-v1.webp",
+    "sha256": "95f4e06d414a77d6a3f3058fd7674e39d7b26e04415de0d7a161f84a90537d3d",
+    "width": 2172,
+    "height": 724,
+    "format": "WEBP",
+    "generation": "Pillow WebP quality=65 method=6; no changes to image composition"
+  },
+  "restrictions": [
+    "Symbolic drawn map: never claim its painted points are real connected businesses",
+    "Copy and 3 actions must remain DOM, not raster",
+    "Desktop displays full-bleed scene with text on dark left side",
+    "Mobile crops only blank dark left from original right-aligned image",
+    "No redesign of approved 617 PC or 618 mobile homepage"
+  ]
+}

@@ -48,7 +48,7 @@ test('master plus service is automatic, client and insurance are exclusive', asy
     delivery: 'pickup',
   }, insured.token)).status, 403, 'страховой аккаунт не может оформлять обычные покупки');
   const insurerOffers = ok(await t.api('GET', '/api/me/offers', undefined, insured.token));
-  assert.deepEqual(insurerOffers.map((entry: any) => entry.audience), ['privacy']);
+  assert.deepEqual(insurerOffers.map((entry: any) => entry.audience), ['insurer','privacy']);
   const hybridOffers = ok(await t.api('GET', '/api/me/offers', undefined, hybrid.token));
   assert.deepEqual(hybridOffers.map((entry: any) => entry.audience), ['performer', 'privacy']);
   assert.ok([400,403].includes((await t.api('PUT', '/api/base', { name: 'СТО', address: 'Шоссе, 1' }, insured.token)).status));

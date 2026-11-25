@@ -1,0 +1,177 @@
+/* 20 Nov 2026: owner-approved Android 618 logo is now the only logo for
+   Web, Android WebView and the PC cabinet. Keep original graphic untouched. */
+.app .top .tr-approved-brand-logo {
+  display:inline-flex;
+  align-items:center;
+  min-width:0;
+  max-width:220px;
+  flex:0 1 auto;
+  padding:0;
+  line-height:1;
+}
+.app .top .tr-approved-brand-logo img,
+.app .top .guest-approved-mark img {
+  display:block;
+  width:clamp(145px,16vw,220px);
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+}
+@media(max-width:389px){
+  .app .top .tr-approved-brand-logo img,
+  .app .top .guest-approved-mark img {width:142px;}
+}
+@media(min-width:900px){
+  /* The public PC hero layout remains 617.png. Its wordmark is harmonized
+     to the exactly same lettering used in approved Android 618.png. */
+  .guest-app.guest-home .owner20-mark {
+    background:none!important;
+    display:flex!important;
+    align-items:center!important;
+    width:235px!important;
+    flex:0 0 235px!important;
+  }
+  .guest-app.guest-home .owner20-mark img {
+    display:block!important;
+    width:235px!important;
+    height:auto!important;
+    max-width:100%!important;
+    object-fit:contain;
+    opacity:1!important;
+  }
+  .app.role-client .client-dashboard .tr-approved-empty-card {
+    background:linear-gradient(145deg,#112a35,#091a24)!important;
+    border-color:#345463!important;
+  }
+}
+.tr-approved-empty-card {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-width:0;
+  padding:14px;
+  color:#eaf3f7;
+  border-radius:16px;
+  border:1px solid #385866;
+  background:linear-gradient(145deg,#112b37,#091b24);
+}
+.tr-approved-empty-card .tr-approved-empty-scene {
+  flex:none;
+}
+.tr-approved-empty-card strong {
+  font-size:clamp(15px,1.4vw,19px);
+  font-weight:750;
+  color:#fff;
+}
+.tr-approved-empty-card p,
+.tr-approved-empty-card span,
+.tr-approved-empty-card small{
+  color:#cedce5;
+}
+.tr-approved-empty-card p {margin:0;line-height:1.5;}
+.tr-approved-empty-card small {font-size:11px;line-height:1.45;}
+.tr-approved-empty-action {
+  display:inline-flex;
+  align-self:flex-start;
+  align-items:center;
+  min-height:42px;
+  border-radius:12px;
+  border:1px solid #ffac6c;
+  padding:9px 16px;
+  background:linear-gradient(120deg,#ed5c19,#fa832c);
+  color:white!important;
+  text-decoration:none;
+  font-weight:750;
+}
+.tr-approved-empty-action:hover {filter:brightness(1.08);}
+.tr-approved-garage-empty {margin:10px 0 16px;}
+.and19-empty .tr-approved-empty-scene {
+  margin:6px 0 4px;
+  border-radius:11px;
+}
+/* Preserve the whole orders photograph on phones, including both road edges. */
+@media (max-width:599px) {
+  .and19-empty .tr-approved-empty-scene--orders {
+    height:auto;
+  }
+  .and19-empty .tr-approved-empty-scene--orders img {
+    position:static;
+    display:block;
+    height:auto;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .tr-approved-empty-action {transition:none;}
+}
+
+
+/* Public brand mark in the approved 618 crop has opaque dark pixels.
+   On our dark public shell, screen compositing makes those pixels visually
+   inherit the actual page surface instead of exposing a black rectangle.
+   Keep the owner's exact logo geometry, lettering and approved asset. */
+.guest-app .top .guest-approved-mark img,
+.guest-app .site-footer .tr-approved-brand-logo img,
+.guest-app.guest-home .owner20-mark img {
+  mix-blend-mode: screen;
+}
+
+/* TrakSOS COMPACT EMPTY GEO CONTRACT · 22 Nov 2026.
+   No fictional truck or route if the registered garage is empty. */
+.tr-approved-garage-compact{
+  box-sizing:border-box;display:flex;align-items:center;gap:14px;
+  min-height:76px;padding:14px clamp(14px,2vw,22px);
+  margin:10px 0 16px;
+  border:1px solid #345565;border-radius:14px;
+  background:linear-gradient(120deg,#112b36,#0a202a);
+  color:#eef5f8;
+  animation:tr-garage-empty-reveal .35s ease-out both;
+}
+.tr-approved-garage-compact-symbol{
+  display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;
+  font-size:20px;line-height:1;background:#173c46;color:#ffae70;
+  border:1px solid #366571;border-radius:11px;
+}
+.tr-approved-garage-compact-copy{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}
+.tr-approved-garage-compact-copy strong{font-size:15px;font-weight:750;color:#f7fafc}
+.tr-approved-garage-compact-copy p{font-size:12px;line-height:1.5;margin:0;color:#b8ced7}
+.tr-approved-garage-compact-link{
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  flex:0 0 auto;min-height:42px;padding:9px 14px;border:1px solid #d9854b;
+  border-radius:10px;background:#3e2b22;color:#ffb57d;font-size:12px;font-weight:760;
+  cursor:pointer;transition:background .2s ease,transform .2s ease;
+}
+.tr-approved-garage-compact-link:hover{background:#563624;transform:translateY(-1px)}
+.client-garage-page > .card[id^="garage-vehicle-"]{
+  animation:tr-garage-empty-reveal .34s ease-out both;
+}
+@keyframes tr-garage-empty-reveal{
+  from{opacity:0;transform:translateY(7px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:640px){
+ .tr-approved-garage-compact{
+   display:grid;grid-template-columns:34px minmax(0,1fr);
+   grid-template-rows:auto auto;align-items:start;
+   gap:10px 12px;min-height:0;padding:13px;
+ }
+ .tr-approved-garage-compact-symbol{
+   grid-column:1;grid-row:1;flex-basis:auto;
+   width:34px;height:34px;
+ }
+ .tr-approved-garage-compact-copy{
+   grid-column:2;grid-row:1;width:100%;min-width:0;
+ }
+ .tr-approved-garage-compact-copy strong{overflow-wrap:normal}
+ .tr-approved-garage-compact-link{
+   grid-column:2;grid-row:2;justify-self:start;
+   max-width:100%;min-height:40px;margin:0;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .tr-approved-garage-compact,
+ .client-garage-page > .card[id^="garage-vehicle-"]{
+  animation:none!important
+ }
+ .tr-approved-garage-compact-link{transition:none!important;transform:none!important}
+}
+

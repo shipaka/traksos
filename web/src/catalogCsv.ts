@@ -47,6 +47,8 @@ function parseRows(text: string, separator: string): string[][] {
   if (quoted) throw new Error('Некорректные кавычки в CSV: проверьте файл.');
   cells.push(cell.trim());
   if (cells.some(Boolean)) result.push(cells);
+  if (result.length > 10_001)
+    throw new Error('В файле больше 10 000 строк. Разделите его на несколько файлов.');
   return result;
 }
 
@@ -58,6 +60,17 @@ const aliases: Record<string, string[]> = {
   searchTerms: ['searchterms', 'synonyms', 'aliases', 'синонимы', 'ключевыеслова'],
 };
 const normalized = (s: string) => s.replace(/^\uFEFF/, '').trim().toLocaleLowerCase('ru-RU').replace(/[\s._-]+/g, '');
+const CSV_LIMITS = { brand: 80, article: 100, name: 120, category: 30, searchTerms: 400 } as const;
+function validateRecord(row: CatalogCsvRow, line: number): void {
+  for(const [field, max] of Object.entries(CSV_LIMITS) as [keyof CatalogCsvRow,number][]) {
+    const value=row[field] ?? '';
+    if(value.length > max)
+      throw new Error(`Строка ${line}: поле «${field}» длиннее ${max} символов. Исправьте файл до загрузки.`);
+    if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value))
+      throw new Error(`Строка ${line}: запрещённые управляющие символы в поле «${field}».`);
+  }
+}
+
 
 export function parseCatalogCsv(text: string, categories: Record<string, string>): CatalogCsvRow[] {
   if (text.length > 2_000_000) throw new Error('Файл слишком большой. Максимум 2 МБ текста.');
@@ -88,6 +101,7 @@ export function parseCatalogCsv(text: string, categories: Record<string, string>
     };
     if (!item.brand || item.article.length < 2 || item.name.length < 2)
       throw new Error(`Строка ${i + 2}: укажите бренд, артикул и название.`);
+    validateRecord(item, i + 2);
     const identity = JSON.stringify([item.brand.toLocaleUpperCase('ru-RU').replace(/\s+/g, ' '),
       item.article.toLocaleUpperCase('ru-RU').replace(/\s+/g, ' ')]);
     if (keys.has(identity)) throw new Error(`Строка ${i + 2}: артикул повторяется в файле.`);

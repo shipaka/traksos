@@ -1,5 +1,5 @@
-import {useEffect,useMemo,useState} from 'react';
-import {API_URL,fmtTime,get,getToken,post,rub} from '../api.ts';
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {authedImage,fmtTime,get,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
 import { INSURANCE_STAGES, insurancePresentation, insuranceStepIndex } from '../insurancePresentation.ts';
 
@@ -29,12 +29,41 @@ const stepLabels:Record<string,string>={
 const insuranceStatus=(key:string|null|undefined)=>stepLabels[key||'']??'На рассмотрении';
 const emptyVehicle=()=>Object.fromEntries(VEHICLE_FIELDS.map(([name])=>[name,''])) as Record<VehicleKey,string>;
 
+// The server accepts integer kopecks, between 1 and 1_000_000_000.
+// Reject scientific notation and extra decimals rather than silently rounding.
+function quoteKopecks(input:string):number {
+  const normalized=input.replace(/[\s\u00a0\u202f]/g,'').replace(',','.');
+  if(!/^\d+(?:\.\d{1,2})?$/.test(normalized))return Number.NaN;
+  const [whole,fraction='']=normalized.split('.');
+  const result=Number(whole)*100+Number(fraction.padEnd(2,'0'));
+  return Number.isSafeInteger(result)&&result>0&&result<=1_000_000_000?result:Number.NaN;
+}
+
+// Match the backend's UTC date contract: real calendar day strictly after today.
+function futurePolicyExpiry(value:string):boolean {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const parsed=new Date(value+'T00:00:00Z');
+  return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===value
+    &&value>new Date().toISOString().slice(0,10);
+}
+
 export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const {me}=useMe();
   const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
   const [step,setStep]=useState(0);
+  const formRef=useRef<HTMLFormElement>(null);
+  const [validationError,setValidationError]=useState<{step:number;key:string;message:string}|null>(null);
+  const reportError=(errorStep:number,key:string,message:string)=>{
+    setStep(errorStep);
+    setValidationError({step:errorStep,key,message});
+  };
+  // Step transitions can remount the target field. Focus after React paints it.
+  useEffect(()=>{
+    if(!validationError||validationError.step!==step)return;
+    formRef.current?.querySelector<HTMLElement>('[data-insurance-field="'+validationError.key+'"]')?.focus();
+  },[validationError,step]);
   const [selectedVehicleId,setSelectedVehicleId]=useState(vehicleId);
   const [showVehicleDetails,setShowVehicleDetails]=useState(false);
   const [applicant,setApplicant]=useState({lastName:'',firstName:'',middleName:''});
@@ -58,25 +87,48 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       trailerPlate:String(vehicle.trailer_plate??'')});
   },[vehicle?.id]);
   const fill=(key:VehicleKey,value:string)=>setTruck(prev=>({...prev,[key]:value}));
+  const missingVehicleField=():VehicleKey|null=>{
+    for(const key of ['brand','model','year','plate','vin'] as const) {
+      const value=truck[key].trim();
+      if(!value||(key==='year'&&!/^\d{4}$/.test(value))||
+        (key==='vin'&&value.length<11))return key;
+    }
+    return null;
+  };
+  const validateStep=(index:number)=>{
+    if(index===0&&!agentId){
+      reportError(0,'agent','Выберите страхового агента.');return false;
+    }
+    if(index===1&&(!applicant.lastName.trim()||!applicant.firstName.trim())){
+      const key=!applicant.lastName.trim()?'lastName':'firstName';
+      reportError(1,key,key==='lastName'?'Укажите фамилию страхователя.':'Укажите имя страхователя.');
+      return false;
+    }
+    if(index===2){
+      const missing=missingVehicleField();
+      if(missing){
+        const label=VEHICLE_FIELDS.find(([key])=>key===missing)?.[1]?.replace(' *','')??'поле';
+        reportError(2,missing,'Проверьте поле «'+label+'» и заполните его корректно.');
+        return false;
+      }
+    }
+    if(index===3&&!consent){
+      reportError(3,'consent','Подтвердите согласие на передачу данных страховому партнёру.');
+      return false;
+    }
+    return true;
+  };
   const nextStep=()=>{
-    if(step===0&&!agentId){window.alert('Выберите страхового агента');return;}
-    if(step===1&&(!applicant.firstName.trim()||!applicant.lastName.trim())){
-      window.alert('Укажите имя и фамилию страхователя');return;
-    }
-    if(step===2&&(!truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
-      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11)){
-      window.alert('Заполните марку, модель, год, номер и VIN автомобиля');return;
-    }
+    if(!validateStep(step))return;
+    setValidationError(null);
     setStep(v=>Math.min(3,v+1));
   };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(!agentId||!applicant.lastName.trim()||!applicant.firstName.trim()||
-      !truck.brand.trim()||!truck.model.trim()||!truck.plate.trim()||
-      !/^\d{4}$/.test(truck.year)||truck.vin.trim().length<11||!consent){
-      window.alert('Выберите агента и заполните все обязательные данные страхователя и грузовика.');
-      return;
+    for(const index of [0,1,2,3]){
+      if(!validateStep(index))return;
     }
+    setValidationError(null);
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
       kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
@@ -90,21 +142,35 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       <p>Выберите агента, проверьте свои данные и сведения о технике. Предложения и готовый полис придут в переписку по этой заявке.</p>
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
-    {(!vehicles.data||!agents.data)?<Loading error={vehicles.error||agents.error}/>:
-    <form className="stack" onSubmit={submit} noValidate>
+    {(!vehicles.data||!agents.data)?<section className="card stack" role="status">
+      <Loading error={vehicles.error||agents.error}/>
+      {(vehicles.error||agents.error)&&<button className="btn ghost" type="button"
+        onClick={()=>{if(!vehicles.data)void vehicles.reload();if(!agents.data)void agents.reload();}}>
+        Повторить загрузку данных
+      </button>}
+    </section>:
+    <form ref={formRef} className="stack" onSubmit={submit} noValidate>
       <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
         {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
           type="button" key={label} className={'btn ghost'+(step===index?' active':'')}
           aria-current={step===index?'step':undefined} disabled={index>step}
-          onClick={()=>setStep(index)}>{index+1}. {label}</button>)}
+          onClick={()=>{setValidationError(null);setStep(index);}}>{index+1}. {label}</button>)}
       </nav>
+      {validationError&&validationError.step===step&&
+        <div className="insurance-validation-alert" id="insurance-form-error" role="alert">
+          {validationError.message}
+        </div>}
       {step===0&&<section className="card stack">
         <span className="insurance-step-title">01 · Кому отправить</span><h2>Страховой агент</h2>
         <label>Выберите партнёра
-          <select className="field" value={agentId} onChange={e=>setAgentId(e.target.value)} required>
+          <select className="field" value={agentId} data-insurance-field="agent"
+            aria-invalid={validationError?.key==='agent'||undefined}
+            aria-describedby={validationError?.key==='agent'?'insurance-form-error':undefined}
+            onChange={e=>{setAgentId(e.target.value);setValidationError(null);}} required>
             <option value="">Выберите страхового агента</option>
             {agents.data.map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
+          {validationError?.key==='agent'&&<small className="insurance-field-inline-error">{validationError.message}</small>}
         </label>
         {agents.data.length===0&&<span className="note">Пока нет доступных страховых агентов. Администратор должен подключить партнёра.</span>}
       </section>}
@@ -114,8 +180,12 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <div className="insurance-field-grid">
           {([['lastName','Фамилия'],['firstName','Имя'],['middleName','Отчество (при наличии)']] as const).map(([key,label])=>
             <label key={key}>{label}<input className="field" maxLength={90}
-              required={key!=='middleName'} value={applicant[key]}
-              onChange={e=>setApplicant(a=>({...a,[key]:e.target.value}))}/></label>)}
+              required={key!=='middleName'} value={applicant[key]} data-insurance-field={key}
+              aria-invalid={validationError?.key===key||undefined}
+              aria-describedby={validationError?.key===key?'insurance-form-error':undefined}
+              onChange={e=>{setApplicant(a=>({...a,[key]:e.target.value}));setValidationError(null);}}/>
+              {validationError?.key===key&&<small className="insurance-field-inline-error">{validationError.message}</small>}
+            </label>)}
         </div>
       </section>}
       {step===2&&<section className="card stack">
@@ -133,7 +203,11 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
         <div className="insurance-field-grid">
           {VEHICLE_FIELDS.filter(([,label])=>label.endsWith('*')).map(([key,label])=><label key={key}>{label}
             <input className="field" value={truck[key]} maxLength={120} required={label.endsWith('*')}
-              inputMode={key==='year'?'numeric':'text'} onChange={e=>fill(key,e.target.value)} />
+              inputMode={key==='year'?'numeric':'text'} data-insurance-field={key}
+              aria-invalid={validationError?.key===key||undefined}
+              aria-describedby={validationError?.key===key?'insurance-form-error':undefined}
+              onChange={e=>{fill(key,e.target.value);setValidationError(null);}} />
+            {validationError?.key===key&&<small className="insurance-field-inline-error">{validationError.message}</small>}
           </label>)}
         </div>
         <button className="btn ghost" type="button" aria-expanded={showVehicleDetails} onClick={()=>setShowVehicleDetails(v=>!v)}>
@@ -151,16 +225,18 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
           <textarea className="field" value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)}
             placeholder="Тип полиса, особенности эксплуатации, вопросы для агента"/></label>
         <label className="agree"><input type="checkbox" required checked={consent}
-          onChange={e=>setConsent(e.target.checked)}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
-        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length||!consent}>
+          data-insurance-field="consent" aria-invalid={validationError?.key==='consent'||undefined}
+          aria-describedby={validationError?.key==='consent'?'insurance-form-error':undefined}
+          onChange={e=>{setConsent(e.target.checked);setValidationError(null);}}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
+        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length}>
           Отправить заявку страховому агенту
         </button>
       </section>}
       {step<3&&<div className="insurance-wizard-actions">
-        {step>0&&<button type="button" className="btn ghost" onClick={()=>setStep(v=>v-1)}>Назад</button>}
+        {step>0&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(v=>v-1);}}>Назад</button>}
         <button type="button" className="btn insurance-main-action" onClick={nextStep}>Продолжить</button>
       </div>}
-      {step===3&&<button type="button" className="btn ghost" onClick={()=>setStep(2)}>Вернуться к автомобилю</button>}
+      {step===3&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(2);}}>Вернуться к автомобилю</button>}
     </form>}
   </main>;
 }
@@ -186,54 +262,114 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const [choice,setChoice]=useState('');
   const [expiresOn,setExpiresOn]=useState('');
   const [pdf,setPdf]=useState<File|null>(null);
-  const d=source.data,r=d?.request;
+  const threadRef=useRef<HTMLElement>(null);
+  const policyFileRef=useRef<HTMLInputElement>(null);
+  const [actionError,setActionError]=useState<{scope:'offers'|'policy'|'download';message:string}|null>(null);
+  const reportActionError=(scope:'offers'|'policy'|'download',message:string,selector?:string)=>{
+    setActionError({scope,message});
+    if(selector)threadRef.current?.querySelector<HTMLElement>(selector)?.focus();
+  };
+  // Router may reuse this component for another case: never carry private
+  // message, offer selection or PDF from the previous request.
+  useEffect(()=>{
+    setMessage('');setChatExpanded(false);
+    setDrafts([{company:'',product:'',price:'',description:'',coverage:''}]);
+    setChoice('');setExpiresOn('');setPdf(null);setActionError(null);
+    if(policyFileRef.current)policyFileRef.current.value='';
+  },[requestId]);
+  const d=source.data?.request?.id===requestId?source.data:null,r=d?.request;
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
   const isAgent=!!d?.isPartner;
+  // The backend deliberately lets staff READ a dossier, but only the applicant
+  // and assigned partner may SEND messages. Keep UI actions consistent with ACL.
+  const isStaffViewer=!!d&&!d.isClient&&!d.isPartner;
+  const isClosed=['cancelled','rejected'].includes(r?.status??'');
+  const canSendMessage=!!d&&(d.isClient||d.isPartner)&&!isClosed;
+  const backHref=isStaffViewer?(me?.roles.includes('admin')?'#/admin/section/vehicleServices':'#/moderation')
+    :isAgent?'#/insurance':'#/garage';
+  const backLabel=isStaffViewer?'К страховым обращениям':isAgent?'К списку страховых заявок':'Мой гараж';
   const status=insurancePresentation(stage,r?.status,isAgent?'partner':'client');
   const activeIndex=insuranceStepIndex(stage);
   const notify=()=>source.reload();
   const send=async()=>{
-    const m=message.trim();if(!m)return;
+    const m=message.trim();if(!m||!canSendMessage)return;
     const v=await run(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
     if(v){setMessage('');notify();}
   };
   const publish=async()=>{
     const data=drafts.map(o=>({company:o.company.trim(),product:o.product.trim(),
-      premiumKopecks:Math.round(Number(o.price.replace(',','.'))*100),
+      premiumKopecks:quoteKopecks(o.price),
       description:o.description.trim(),coverage:o.coverage.trim()}));
-    if(data.some(o=>!o.company||!o.product||!o.premiumKopecks||o.premiumKopecks<=0)){
-      window.alert('Для каждого предложения заполните компанию, продукт и стоимость.');
+    const invalid=data.findIndex(o=>!o.company||!o.product||!Number.isInteger(o.premiumKopecks)||o.premiumKopecks<=0);
+    if(invalid!==-1){
+      const offer=data[invalid];
+      const key=!offer.company?'company':!offer.product?'product':'price';
+      reportActionError('offers','Предложение '+(invalid+1)+': укажите компанию, продукт и стоимость от 0,01 до 10 000 000 ₽ (не более двух знаков после запятой).',
+        '[data-insurance-offer-field="'+invalid+'-'+key+'"]');
       return;
     }
+    setActionError(null);
     const v=await run(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
     if(v)notify();
   };
   const upload=async()=>{
-    if(!pdf||pdf.type!=='application/pdf'||pdf.size>4*1024*1024||pdf.size<100||!expiresOn){
-      window.alert('Прикрепите PDF до 4 МБ и укажите дату окончания полиса.');return;
+    const file=pdf;
+    if(!futurePolicyExpiry(expiresOn)){
+      reportActionError('policy','Укажите корректную будущую дату окончания полиса.',
+        '[data-insurance-policy-field="date"]');
+      return;
     }
-    const dataUrl=await new Promise<string>((resolve,reject)=>{
-      const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);
-      reader.readAsDataURL(pdf);
-    });
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/policy',{
-      dataUrl,fileName:pdf.name,expiresOn}),'Готовый PDF отправлен клиенту');
-    if(v){setPdf(null);notify();}
+    // Android document pickers may return a PDF with an empty MIME type.
+    // The backend verifies the actual %PDF- header; do not accept a known bad MIME.
+    if(!file||!(file.type==='application/pdf'||(!file.type&&/\.pdf$/i.test(file.name)))||
+      file.size>4*1024*1024||file.size<100){
+      reportActionError('policy','Прикрепите действительный PDF размером от 100 байт до 4 МБ.',
+        '[data-insurance-policy-field="file"]');
+      return;
+    }
+    setActionError(null);
+    const v=await run(async()=>{
+      // A FileReader failure must pass through useAction's error handling.
+      // The selected file remains in place for a manual retry.
+      const fileDataUrl=await new Promise<string>((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result));
+        reader.onerror=()=>reject(reader.error??new Error('Ошибка чтения PDF'));
+        reader.onabort=()=>reject(new Error('Чтение PDF отменено'));
+        reader.readAsDataURL(file);
+      });
+      // FileReader may emit data:application/octet-stream;base64,... for an
+      // Android-picked PDF with empty MIME. Server expects an exact PDF
+      // Data URL and independently validates the real %PDF- bytes.
+      if(!/^data:[^;,]*;base64,/.test(fileDataUrl))
+        throw new Error('Не удалось прочитать PDF');
+      const dataUrl=fileDataUrl.replace(/^data:[^;,]*;base64,/,'data:application/pdf;base64,');
+      return post('/api/insurance/requests/'+requestId+'/policy',{
+        dataUrl,fileName:file.name,expiresOn});
+    },'Готовый PDF отправлен клиенту');
+    if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';notify();}
   };
   const download=async()=>{
+    setActionError(null);
     try{
-      const response=await fetch(API_URL+'/api/insurance/requests/'+requestId+'/policy',{
-        headers:{authorization:'Bearer '+(getToken()??'')},cache:'no-store'});
-      if(!response.ok)throw new Error('Не удалось получить документ');
-      const url=URL.createObjectURL(await response.blob());
-      const link=document.createElement('a');link.href=url;link.download='insurance-policy.pdf';link.click();
+      // Guarded private-blob transport checks sandbox origin and account
+      // continuity both before and after reading PDF bytes.
+      const url=await authedImage('/api/insurance/requests/'+requestId+'/policy',{
+        allowedMimeTypes:['application/pdf']});
+      const link=document.createElement('a');
+      link.href=url;link.download='insurance-policy.pdf';
+      document.body.append(link);link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),30000);
-    }catch{window.alert('Не удалось скачать PDF. Проверьте интернет и повторите.');}
+    }catch(e){
+      reportActionError('download',e instanceof Error&&e.message.includes('Сессия изменилась')
+        ?'Сессия изменилась. Войдите заново и откройте полис.'
+        :'Не удалось скачать PDF. Проверьте интернет и повторите.');
+    }
   };
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
-  return <main className="insurance-workflow stack">
-    <a className="insurance-back" href={isAgent?'#/insurance':'#/garage'}>← {isAgent?'К списку страховых заявок':'Мой гараж'}</a>
+  return <main ref={threadRef} className="insurance-workflow stack">
+    <a className="insurance-back" href={backHref}>← {backLabel}</a>
     {!d?<Loading error={source.error}/>:
     <>
       <section className="insurance-workflow-hero">
@@ -242,10 +378,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
         <div className={'insurance-live-status tone-'+status.tone} aria-live="polite">
           <span className="insurance-live-orb" aria-hidden="true">{status.tone==='done'?'✓':status.tone==='action'?'!':'◉'}</span>
           <div className="insurance-live-copy">
-            <span className="insurance-live-kicker">ТЕКУЩИЙ ЭТАП · {isAgent?'КАБИНЕТ СТРАХОВЩИКА':'МОЯ СТРАХОВКА'}</span>
+            <span className="insurance-live-kicker">ТЕКУЩИЙ ЭТАП · {isStaffViewer?'ПРОСМОТР СОТРУДНИКА':isAgent?'КАБИНЕТ СТРАХОВЩИКА':'МОЯ СТРАХОВКА'}</span>
             <strong>{status.label}</strong>
             <p>{status.detail}</p>
-            <span className="insurance-live-next">{status.next}</span>
+            {!isStaffViewer&&<span className="insurance-live-next">{status.next}</span>}
           </div>
         </div>
         <p className="insurance-hero-footnote">Страховой агент: {r?.agent_name||'назначенный партнёр'} · Все предложения, уточнения и полис находятся в этом деле. Расчёт и выпуск полиса пока выполняются вручную.</p>
@@ -293,6 +429,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <b>✓ Готовый страховой полис</b>
             <span>Агент прикрепил итоговый PDF. Документ доступен в этой переписке.</span>
             <button type="button" className="btn" onClick={download}>Скачать PDF-полис</button>
+            {actionError?.scope==='download'&&
+              <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
           </div>}
           <section className="insurance-chat-panel stack" aria-label="Уточнения по заявке">
             <button type="button" className="btn ghost" aria-expanded={chatExpanded}
@@ -307,14 +445,17 @@ export function InsuranceThread({requestId}:{requestId:string}){
               </div>)}
             </>}
           </section>
-          <div className="insurance-chat-editor">
+          {canSendMessage?<div className="insurance-chat-editor">
             <label>Сообщение агенту / клиенту
               <textarea className="field" maxLength={2000} rows={3} value={message}
                 onChange={e=>setMessage(e.target.value)}
                 placeholder="Уточнить сведения, запросить документы или ответить…" /></label>
-            <button type="button" className="btn small" disabled={busy||!message.trim()||r?.status==='rejected'}
+            <button type="button" className="btn small" disabled={busy||!message.trim()}
               onClick={send}>Отправить сообщение</button>
-          </div>
+          </div>:<div className="note" role="status">
+            {isStaffViewer?'Только просмотр: отправлять сообщения могут заявитель и назначенный страховой агент.'
+              :'Заявка закрыта. История переписки доступна только для чтения.'}
+          </div>}
         </section>
         <aside className="insurance-conversation-tools stack">
           <section className="card stack insurance-desktop-stage-map">
@@ -349,13 +490,19 @@ export function InsuranceThread({requestId}:{requestId:string}){
           {isAgent&&stage==='preparing'&&<section className="card stack">
             <b>Предложения от страховых компаний</b>
             <p className="note">Можно отправить от 1 до 20 вариантов. Расчёт проводится агентом вне TrakSOS.</p>
+            {actionError?.scope==='offers'&&
+              <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
             {drafts.map((o,i)=><div className="insurance-quote-editor stack" key={i}>
               <b>Предложение {i+1}</b>
               {([['company','Страховая компания'],['product','Название полиса'],['price','Стоимость, ₽'],
                 ['coverage','Покрытие / условия'],['description','Примечание']] as const).map(([key,label])=>
                 <label key={key}>{label}<input className="field" value={o[key]}
                   inputMode={key==='price'?'decimal':'text'} maxLength={key==='price'?16:240}
-                  onChange={e=>updateDraft(i,key,e.target.value)}/></label>)}
+                  data-insurance-offer-field={i+'-'+key}
+                  aria-invalid={actionError?.scope==='offers'&&
+                    ((!o.company.trim()&&key==='company')||(!o.product.trim()&&key==='product')||
+                    (key==='price'&&!Number.isFinite(quoteKopecks(o.price))))||undefined}
+                  onChange={e=>{updateDraft(i,key,e.target.value);setActionError(null);}}/></label>)}
               {drafts.length>1&&<button type="button" className="btn ghost small"
                 onClick={()=>setDrafts(old=>old.filter((_,n)=>n!==i))}>Удалить вариант</button>}
             </div>)}
@@ -367,11 +514,13 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <b>Отправить готовый полис</b>
             <p className="note">Оформите полис у страховой компании и прикрепите полученный PDF. Файл до 4 МБ хранится в защищённом виде.</p>
             <label>Дата окончания действия<input type="date" className="field" value={expiresOn}
-              onChange={e=>setExpiresOn(e.target.value)}/></label>
-            <label>Файл PDF<input type="file" accept="application/pdf,.pdf" className="field"
-              onChange={e=>setPdf(e.target.files?.[0]??null)}/></label>
-            <button className="btn" type="button" disabled={busy||!pdf||!expiresOn} onClick={upload}>
+              data-insurance-policy-field="date" aria-invalid={actionError?.scope==='policy'&&!futurePolicyExpiry(expiresOn)||undefined} onChange={e=>{setExpiresOn(e.target.value);setActionError(null);}}/></label>
+            <label>Файл PDF<input ref={policyFileRef} type="file" accept="application/pdf,.pdf" className="field"
+              data-insurance-policy-field="file" onChange={e=>{setPdf(e.target.files?.[0]??null);setActionError(null);}}/></label>
+            <button className="btn" type="button" disabled={busy} onClick={upload}>
               Отправить готовый полис клиенту</button>
+            {actionError?.scope==='policy'&&
+              <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}
           </section>}
         </aside>
       </div>

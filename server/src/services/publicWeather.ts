@@ -27,10 +27,12 @@ export function normalizeYandexCondition(value: unknown): Pick<PublicWeather, 'c
   if (value === 'partly-cloudy' || value === 'cloudy' || value === 'overcast') {
     return { condition: 'cloudy', description: value === 'overcast' ? 'Пасмурно' : 'Облачно' };
   }
-  if (value === 'thunderstorm' || value.startsWith('thunderstorm-with-')) {
+  if (value === 'thunderstorm' || value === 'thunderstorm-with-rain' ||
+      value === 'thunderstorm-with-hail') {
     return { condition: 'storm', description: 'Гроза' };
   }
-  if (value === 'wet-snow' || value.includes('snow')) {
+  if (value === 'wet-snow' || value === 'light-snow' ||
+      value === 'snow' || value === 'snow-showers') {
     return { condition: 'snow', description: value === 'wet-snow' ? 'Мокрый снег' : 'Снег' };
   }
   if (value === 'light-rain' || value === 'rain' || value === 'moderate-rain' ||
@@ -47,9 +49,12 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
   if (!fact || typeof fact !== 'object') return null;
   const result = normalizeYandexCondition(fact.condition);
   if (!result || typeof fact.temp !== 'number' || !Number.isFinite(fact.temp) ||
-      fact.temp < -80 || fact.temp > 65 || typeof fact.obs_time !== 'number') return null;
+      fact.temp < -80 || fact.temp > 65 ||
+      !Number.isFinite(fetchedMs) || fetchedMs < 0 || fetchedMs > 8.64e15 ||
+      typeof fact.obs_time !== 'number' || !Number.isSafeInteger(fact.obs_time) ||
+      fact.obs_time < 0) return null;
   const observationMs = fact.obs_time * 1000;
-  if (!Number.isFinite(observationMs) || observationMs > fetchedMs + 60_000 ||
+  if (!Number.isFinite(observationMs) || observationMs > 8.64e15 || observationMs > fetchedMs + 60_000 ||
       fetchedMs - observationMs > OBSERVATION_MAX_AGE_MS) return null;
   return {
     source: 'yandex',
@@ -64,6 +69,38 @@ export function parseYandexWeather(data: unknown, fetchedMs: number): PublicWeat
   };
 }
 
+// The weather vendor endpoint is fixed, but malformed/unbounded upstream JSON
+// must not force the public app server to allocate an unlimited response.
+async function boundedWeatherJson(response: Response): Promise<unknown | null> {
+  const maxBytes = 65_536;
+  const declared = response.headers.get('content-length');
+  if (declared !== null && /^\d+$/.test(declared) && Number(declared)>maxBytes) {
+    await response.body?.cancel().catch(() => {});
+    return null;
+  }
+  if (!response.body) return null;
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const {done,value} = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const out = new Uint8Array(size);
+  let offset = 0;
+  for (const bytes of chunks) { out.set(bytes,offset); offset += bytes.byteLength; }
+  try { return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(out)); }
+  catch { return null; }
+}
+
 export class PublicWeatherService {
   private cache: { expiresAt: number; value: PublicWeather | null } | null = null;
   private pending: Promise<PublicWeather | null> | null = null;
@@ -74,17 +111,29 @@ export class PublicWeatherService {
   ) {}
 
   async current(): Promise<PublicWeather | null> {
-    if (!this.apiKey) return null;
+    const apiKey = this.apiKey?.trim();
+    if (!apiKey) return null;
     const at = this.clock();
-    if (this.cache && this.cache.expiresAt > at) return this.cache.value;
+    if (this.cache && this.cache.expiresAt > at) {
+      const value = this.cache.value;
+      // Keep the vendor call budget, but never display an observation that
+      // aged past the accepted window while it was in the local cache.
+      if (value && (at - value.observedEpochSeconds * 1000 > OBSERVATION_MAX_AGE_MS ||
+          value.observedEpochSeconds * 1000 > at + 60_000)) return null;
+      return value;
+    }
     if (this.pending) return this.pending;
-    this.pending = this.requester(SERVICE_URL, {
-      headers: { 'X-Yandex-Weather-Key': this.apiKey },
+    this.pending = Promise.resolve().then(() => this.requester(SERVICE_URL, {
+      headers: { 'X-Yandex-Weather-Key': apiKey },
+      redirect: 'error',
       signal: AbortSignal.timeout(2500)
-    })
+    }))
       .then(async r => {
-        if (!r.ok) return null;
-        const parsed = await r.json();
+        if (!r.ok) {
+          await r.body?.cancel().catch(() => {});
+          return null;
+        }
+        const parsed = await boundedWeatherJson(r);
         return parseYandexWeather(parsed, this.clock());
       })
       .catch(() => null)

@@ -49,7 +49,8 @@ before(async () => {
       name: i < 2 ? ['Дима', 'Отец'][i] : `Мастер ${i}`, kind: 'master', specialties: pick([['electric'], ['electric', 'diag'], ['electric', 'air']]),
       brands, tier: 'eco', acceptsGroup: chance(0.7),
     }, u.token));
-    // один не прошёл проверку — заявок получать не должен
+    // Один мастер не проходил добровольную фото-проверку. При выходе на линию
+    // он тоже может получать заказы, но не получает бейдж «Проверен».
     if (i !== 9) ok(await t.api('POST', `/api/admin/performers/${u.id}/verify`, { decision: 'approved' }, admin.token));
     if (i !== 9) ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token));
     ok(await t.api('POST', '/api/performer/location', { lat: place.lat + (rand() - 0.5) * 0.05, lng: place.lng + (rand() - 0.5) * 0.05 }, u.token));
@@ -207,15 +208,20 @@ async function checkInvariants(step: number) {
   assert.deepEqual(await q(`select d.order_id from order_dispatch d join performer_profiles p on p.user_id=d.performer_id
       where d.status in ('ringing','queued') and not p.is_priority`), [], `приоритетный звонок не приоритетному ${at}`);
 
-  // 6. Подбор: эвакуатор — только эвакуаторщикам, ремонт — только мастерам нужной специальности; «не берусь» и непроверенные не приглашаются
+  // 6. Подбор: нужная специализация и марка обязательны; фото-проверка добровольна.
+  // Непроверенный, но допущенный и находящийся на линии мастер может получить заказ.
   assert.deepEqual(await q(`select d.order_id from order_dispatch d join orders o on o.id=d.order_id join performer_profiles p on p.user_id=d.performer_id
       where (o.service='tow') <> (p.kind='tow')`), [], `не тот тип исполнителя ${at}`);
   assert.deepEqual(await q(`select d.order_id from order_dispatch d join orders o on o.id=d.order_id join performer_profiles p on p.user_id=d.performer_id
       where p.kind='master' and not (o.service = any(p.specialties))`), [], `мастер не той специальности ${at}`);
   assert.deepEqual(await q(`select d.order_id from order_dispatch d join orders o on o.id=d.order_id join performer_profiles p on p.user_id=d.performer_id
       where o.brand is not null and p.brands->>o.brand = 'refuse'`), [], `приглашён мастер с «не берусь» по марке ${at}`);
-  assert.deepEqual(await q(`select d.order_id from order_dispatch d join performer_profiles p on p.user_id=d.performer_id where p.verification <> 'approved'`), [],
-    `приглашён непроверенный ${at}`);
+  // Статус аккаунта по-прежнему обязан быть действующим. Нельзя заменять это
+  // старым запретом на добровольную проверку фотографий.
+  assert.deepEqual(await q(`select d.order_id from order_dispatch d
+      join users u on u.id=d.performer_id join orders o on o.id=d.order_id
+      where o.status='searching' and d.status in ('ringing','bidding','queued')
+        and u.status <> 'active'`), [], `приглашён заблокированный пользователь ${at}`);
 
   // 7. Назначение через торги — ровно один выбранный отклик, цена выезда = цена отклика, в коридоре
   const chosen = await q(`select o.id, o.call_out_amount, o.estimate, count(b.*)::int n, max(b.price) price

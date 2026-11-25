@@ -109,11 +109,30 @@ export async function seed(db: Awaited<ReturnType<typeof createDb>>) {
                     where not exists (select 1 from shop_products where name=$2)`, [cat, name, spec, price, stock, kit]);
   }
 
-  for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей и рембаз'], ['privacy', 'Согласие на обработку персональных данных']]) {
+  for (const [audience, title] of [['client', 'Оферта для клиентов'], ['performer', 'Агентский договор для исполнителей и рембаз']]) {
     // Новая редакция черновика — новой версией: на стенде её надо принять заново
     await db.query(`insert into offers(audience, version, body, summary, effective_at) select $1, '0.2-черновик', $2, 'Время работы — по таймеру с «на месте», сверху только расходники', now()
                     where not exists (select 1 from offers where audience=$1 and version='0.2-черновик')`, [audience, DRAFT(title)]);
   }
+  // Insert a separate test revision. Existing acceptances refer to the old ID.
+  // A document published by an operator takes precedence over test fixtures.
+  const privacyDraft = `# Согласие на обработку персональных данных
+
+Тестовый образец для проверки интерфейса. Здесь используются вымышленные данные учётной записи и заявки. В тестовом кабинете можно отдельно открыть эту редакцию и проверить отметку о её принятии.
+
+Для публикации на действующем сервисе требуется отдельный текст, согласованный юристом.`;
+  await db.query(
+    `insert into offers(audience, version, body, summary, effective_at)
+     select 'privacy', '0.3-черновик', $1, $2, now()
+     where not exists (
+       select 1 from offers where audience='privacy'
+       and (version <> '0.2-черновик' or body is distinct from $3)
+     )
+     on conflict (audience, version) do nothing`,
+    [privacyDraft, 'Отдельный тестовый образец для проверки согласия на обработку данных.',
+      DRAFT('Согласие на обработку персональных данных')]
+  );
+
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -28,18 +28,34 @@ const cssAudit=async(page,selector,width)=>page.evaluate(({selector,width})=>{
    }
    const layer=getComputedStyle(card,'::after').backgroundImage;
    const icon=layer&&layer!=='none'?layer:getComputedStyle(card).backgroundImage;
-   const expected=(selector.includes('public-landing')
-     ? ['tracksos-photo-tow','tracksos-photo-master','tracksos-photo-sto','traksos-final-insurance','traksos-final-parts','tracksos-photo-consult']
-     : ['tracksos-photo-master','tracksos-photo-tow','tracksos-photo-sto','tracksos-photo-consult'])[i];
-   if(!icon||icon==='none')issues.push('missing illustration '+i);
-   if(expected&&!icon.includes(expected))
-     issues.push('reference photo mismatch '+i+': expected '+expected+', found '+icon);
+   // The latest six 19 Nov service cards use real SVG pictograms on new
+   // gradients, not any of the physically deleted 14–16 Nov photo tiles.
+   if(!icon||icon==='none')issues.push('missing current card surface '+i);
+   if(/tracksos-photo-|traksos-final-|tracksos-partner-.*approved/.test(icon))
+     issues.push('retired pre-17 Nov artwork returned in card '+i+': '+icon);
+   if(selector.includes('public-landing') && card.querySelectorAll('.public-service-icon svg').length!==1)
+     issues.push('missing approved service pictogram '+i);
+   if(!selector.includes('public-landing') && !icon.includes('gradient'))
+     issues.push('signed-in card lost its current gradient '+i);
  }
  const doc=document.documentElement;
  if(doc.scrollWidth>doc.clientWidth+3)
    issues.push('horizontal scroll '+doc.scrollWidth+'/'+doc.clientWidth);
  return{count:cards.length,issues};
 },{selector,width});
+async function checkDesktopGeometry(page,targets){
+ await targets.first().waitFor({state:'visible'});
+ const issues=await targets.evaluateAll(elements=>elements.flatMap(el=>{
+   const b=el.getBoundingClientRect();
+   return [el,...el.querySelectorAll('b,small,h1,p')].filter(child=>{
+     const r=child.getBoundingClientRect();
+     return r.width<=0 || r.height<=0 || r.left<b.left-2 || r.right>b.right+2 ||
+       r.top<b.top-2 || r.bottom>b.bottom+2 || r.right>document.documentElement.clientWidth+2;
+   }).map(child=>child.textContent);
+ }));
+ assert(!issues.length,'Desktop text geometry: '+JSON.stringify(issues));
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+3),'Desktop horizontal overflow');
+}
 try{
  const login=await fetch(BASE+'/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},
    body:JSON.stringify({phone:'+79990000141',password:'Test-Role-Only-2026!'})});
@@ -49,18 +65,40 @@ try{
    const guest=await browser.newContext({viewport:{width,height:900},locale:'ru-RU'});
    const publicPage=await guest.newPage();
    await publicPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-   await publicPage.locator('.public-service-tile').first().waitFor();
-   const pub=await cssAudit(publicPage,'.public-landing .public-service-tile',width);
-   assert(pub.count===6&&pub.issues.length===0,width+'px public layout: '+JSON.stringify(pub));
+   if(width<900){
+     await publicPage.locator('.public-service-tile').first().waitFor();
+     const pub=await cssAudit(publicPage,'.public-landing .public-service-tile',width);
+     assert(pub.count===6&&pub.issues.length===0,width+'px public layout: '+JSON.stringify(pub));
+   }else{
+     const quick=publicPage.locator('.owner20-home .owner20-quick>a');
+     await quick.first().waitFor();
+     assert(await quick.count()===5,'Expected five approved desktop shortcuts');
+     await checkDesktopGeometry(publicPage,quick);
+   }
    await publicPage.screenshot({path:out+'/public-'+width+'.png',fullPage:true});
    await guest.close();
    const ctx=await browser.newContext({viewport:{width,height:900},locale:'ru-RU'});
    const page=await ctx.newPage();
    await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client');},token);
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
-   await page.locator('.client-dashboard .desktop-quick-card').first().waitFor();
-   const client=await cssAudit(page,'.client-dashboard .desktop-quick-card',width);
-   assert(client.count===4&&client.issues.length===0,width+'px client layout: '+JSON.stringify(client));
+   if(width<900){
+     await page.locator('.and19-client .and19-services>a').first().waitFor();
+     const client=await page.evaluate(()=>{
+       const items=[...document.querySelectorAll('.and19-client .and19-services>a')];
+       const vw=document.documentElement.clientWidth;
+       return {count:items.length,
+         overflow:document.documentElement.scrollWidth>vw+3,
+         tiny:items.map((e,i)=>({i,w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}))
+           .filter(x=>x.w<60||x.h<72)};
+     });
+     assert(client.count===4&&!client.overflow&&!client.tiny.length,
+       width+'px approved Android 4 service hit-targets: '+JSON.stringify(client));
+   }else{
+     const desk=page.locator('main.approved-pc-client');
+     await desk.waitFor();
+     await checkDesktopGeometry(page,desk.locator('.approved-pc-heading'));
+     assert(await page.locator('.desktop-quick-card').count()===0,'Retired desktop service cards mounted');
+   }
    await page.screenshot({path:out+'/client-'+width+'.png',fullPage:true});
    await ctx.close();
    console.log('OK illustrated labels and no horizontal spill at '+width+'px');

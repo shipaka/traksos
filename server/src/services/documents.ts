@@ -1,7 +1,7 @@
 // Проверка исполнителей: фото документов и машины, очередь модератора.
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -55,10 +55,18 @@ function asBuf(v: unknown): Buffer {
 export class DocumentsService {
   constructor(private db: Db, private notifier: Notifier, private settings: SettingsService, private now: () => Date) {}
 
+  private async currentActor(q:Queryable,user:AuthUser,requireStaff=false) {
+    const actor=await q.one<{roles:string[]}>(
+      "select roles from users where id=$1 and status='active' and deleted_at is null"+
+      " and (admin_preview_until is null or admin_preview_until>now()) for share",[user.id]);
+    if(!actor)throw forbidden();
+    const staff=user.roles.some(role=>(role==='admin'||role==='moderator')&&actor.roles.includes(role));
+    if(requireStaff&&!staff)throw forbidden();
+    return {staff};
+  }
+
   async upload(user: AuthUser, p: { kind: string; dataUrl: string; takenAt?: string }) {
-    if (!DOC_KINDS[p.kind]) throw bad('bad_kind', 'Неизвестный тип документа');
-    const prof = await this.db.one('select verification from performer_profiles where user_id=$1', [user.id]);
-    if (!prof) throw bad('no_profile', 'Сначала заполните профиль исполнителя');
+    if (!Object.hasOwn(DOC_KINDS,p.kind)) throw bad('bad_kind', 'Неизвестный тип документа');
     const m = /^data:([\w/+.-]+);base64,(.+)$/s.exec(p.dataUrl);
     if (!m || !MIMES.includes(m[1])) throw bad('bad_image', 'Нужна фотография JPEG, PNG или WEBP');
     const buf = Buffer.from(m[2], 'base64');
@@ -66,50 +74,110 @@ export class DocumentsService {
     if (buf.length < 5_000) throw bad('too_small', 'Фото слишком маленькое — снимите ещё раз');
     const sha = createHash('sha256').update(buf).digest('hex');
     const enc = encrypt(buf);
-    // Новое фото того же типа заменяет прежнее, ещё не одобренное
-    await this.db.query(`delete from documents where user_id=$1 and kind=$2 and status <> 'approved'`, [user.id, p.kind]);
-    const row = await this.db.one(
-      `insert into documents(user_id, kind, mime, size, sha256, iv, tag, data, taken_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id, kind, status, created_at`,
-      [user.id, p.kind, m[1], buf.length, sha, '\\x' + enc.iv.toString('hex'), '\\x' + enc.tag.toString('hex'), '\\x' + enc.data.toString('hex'),
-        p.takenAt ? new Date(p.takenAt) : null]);
-    // Повторная проверка нужна после смены машины или документов
-    if (prof.verification === 'approved' && !['equipment'].includes(p.kind)) {
-      await this.db.query(`update performer_profiles set verification='pending', submitted_at=$2 where user_id=$1`, [user.id, this.now()]);
-    }
-    return row;
+    // The performer profile is the per-user serialization point for upload,
+    // submit and staff decisions. Losing an insert cannot erase the old photo.
+    return this.db.tx(async q => {
+      await this.currentActor(q,user);
+      const prof = await q.one<{ verification: string }>(
+        'select verification from performer_profiles where user_id=$1 for update', [user.id]);
+      if (!prof) throw bad('no_profile', 'Сначала заполните профиль исполнителя');
+      // Retain a previously approved image for verification history; replace
+      // all pending/rejected copies of the same kind atomically with new data.
+      await q.query(`delete from documents
+        where user_id=$1 and kind=$2 and status <> 'approved'`, [user.id,p.kind]);
+      const row = await q.one(
+        `insert into documents(user_id, kind, mime, size, sha256, iv, tag, data, taken_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id, kind, status, created_at`,
+        [user.id, p.kind, m[1], buf.length, sha,
+         '\\x' + enc.iv.toString('hex'), '\\x' + enc.tag.toString('hex'),
+         '\\x' + enc.data.toString('hex'),
+         p.takenAt ? new Date(p.takenAt) : null]);
+      // Replaced photo must be resubmitted and approved; an older approved
+      // document never substitutes for the latest submitted image.
+      await q.query(`update performer_profiles
+        set verification='pending', submitted_at=null, verification_note=null
+        where user_id=$1`, [user.id]);
+      return row;
+    });
   }
 
   async mine(user: AuthUser) {
-    const prof = await this.db.one('select kind, specialties, tier, verification, submitted_at, verification_note from performer_profiles where user_id=$1', [user.id]);
+    return this.db.tx(async q=>{
+    await this.currentActor(q,user);
+    const prof = await q.one(
+      'select kind, specialties, tier, verification, submitted_at, verification_note from performer_profiles where user_id=$1 for share', [user.id]);
     if (!prof) throw notFound('Сначала заполните профиль исполнителя');
-    const docs = await this.db.query(
-      `select id, kind, status, note, created_at from documents where user_id=$1 order by created_at`, [user.id]);
+    // A new photo may coexist with the last approved copy. Only the latest
+    // image of each kind can satisfy a new verification request.
+    const docs = await q.query(
+      `select id, kind, status, note, created_at from documents
+        where user_id=$1 order by created_at desc, id desc`, [user.id]);
     const required = requiredKinds(prof);
     return {
-      verification: prof.verification, submittedAt: prof.submitted_at, note: prof.verification_note,
-      required: required.map((k) => ({ kind: k, ...DOC_KINDS[k], doc: docs.find((d: any) => d.kind === k) ?? null })),
-      complete: required.every((k) => docs.some((d: any) => d.kind === k && d.status !== 'rejected')),
+      verification: prof.verification, submittedAt: prof.submitted_at,
+      note: prof.verification_note,
+      required: required.map(k => ({ kind:k, ...DOC_KINDS[k],
+        doc:docs.find((d:any)=>d.kind===k)??null })),
+      complete: required.every(k => {
+        const newest=docs.find((d:any)=>d.kind===k);
+        return !!newest && newest.status!=='rejected';
+      }),
     };
+    });
   }
 
   async submit(user: AuthUser) {
-    const st = await this.mine(user);
-    if (!st.complete) throw bad('incomplete', 'Загрузите все фото из списка');
-    await this.db.query(`update performer_profiles set submitted_at=$2, verification='pending', verification_note=null where user_id=$1`, [user.id, this.now()]);
-    const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin,moderator}'::text[]`)).map((r) => r.id);
-    await this.notifier.notify(staff, { type: 'verification_queue', userId: user.id },
-      { kind: 'normal', title: 'Новый исполнитель на проверке', body: `${user.name ?? user.phone} отправил документы`, data: { userId: user.id } });
+    const result = await this.db.tx(async q => {
+      await this.currentActor(q,user);
+      const prof = await q.one<any>(
+        'select kind, specialties, tier, verification, submitted_at from performer_profiles where user_id=$1 for update',
+        [user.id]);
+      if (!prof) throw notFound('Сначала заполните профиль исполнителя');
+      const docs = await q.query<{kind:string;status:string}>(
+        `select distinct on (kind) kind,status from documents
+          where user_id=$1 order by kind,created_at desc,id desc`, [user.id]);
+      if (!requiredKinds(prof).every(k => docs.some(d => d.kind===k && d.status!=='rejected')))
+        throw bad('incomplete', 'Загрузите все фото из списка');
+      if (prof.verification==='pending' && prof.submitted_at) return null;
+      await q.query(`update performer_profiles
+        set submitted_at=$2,verification='pending',verification_note=null
+        where user_id=$1`, [user.id,this.now()]);
+      // The inbox entry is in the same transaction as submission. If a DB
+      // write fails, neither the queue status nor partial staff alerts persist.
+      const staff=(await q.query<{id:string}>(
+        `select id from users where roles && '{admin,moderator}'::text[] and status='active'
+          and deleted_at is null and (admin_preview_until is null or admin_preview_until>now()) for share`)).map(r=>r.id);
+      const title='Новый исполнитель на проверке';
+      const body=`${user.name ?? user.phone} отправил документы`;
+      for(const id of staff) {
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'verification_queue',$2,$3,$4)`,
+          [id,title,body,{userId:user.id}]);
+      }
+      return {staff,title,body};
+    });
+    if(result)try{
+      const current=await this.db.query<{id:string}>(
+        "select id from users where id=any($1::uuid[]) and roles && '{admin,moderator}'::text[]"+
+        " and status='active' and deleted_at is null and (admin_preview_until is null or admin_preview_until>now())",
+        [result.staff]);
+      await this.notifier.deliverStored(current.map(x=>x.id),
+        {type:'verification_queue',userId:user.id},
+        {kind:'normal',title:result.title,body:result.body,data:{userId:user.id}});
+    }catch{};
     return this.mine(user);
   }
 
   /** Voluntary verification: remove all confidential images and revoke verification. */
   async deleteConfidential(user: AuthUser) {
     await this.db.tx(async (q) => {
+      await this.currentActor(q,user);
+      // Use the same per-performer lock as upload/submit/review. A slow
+      // concurrent upload must not restore a photo after this delete commits.
+      await q.one('select user_id from performer_profiles where user_id=$1 for update', [user.id]);
       await q.query('delete from documents where user_id=$1', [user.id]);
       await q.query(`update performer_profiles
-        set verification='pending', verification_note=null, verified_at=null, submitted_at=null,
-            line_status=case when line_status='on_job' then line_status else 'offline' end
+        set verification='pending', verification_note=null, verified_at=null, submitted_at=null
         where user_id=$1`, [user.id]);
       await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
         [user.id, 'privacy.confidential_documents_deleted', user.id, {}]);
@@ -119,15 +187,21 @@ export class DocumentsService {
 
   /** Файл: владельцу — всегда, модератору — с записью в журнал */
   async file(user: AuthUser, id: string) {
-    const row = await this.db.one('select * from documents where id=$1', [id]);
-    if (!row) throw notFound();
-    const staff = user.roles.includes('admin') || user.roles.includes('moderator');
-    if (row.user_id !== user.id && !staff) throw forbidden();
-    if (row.user_id !== user.id) {
-      await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
-        [user.id, 'document.view', id, { owner: row.user_id, kind: row.kind }]);
-    }
-    return { mime: row.mime as string, body: decrypt({ iv: asBuf(row.iv), tag: asBuf(row.tag), data: asBuf(row.data) }) };
+    const row = await this.db.tx(async q => {
+      // Reading + access + staff audit is one snapshot; no private document
+      // may be fetched successfully after a concurrent committed deletion.
+      const file=await q.one<any>('select * from documents where id=$1 for share', [id]);
+      if(!file)throw notFound();
+      const {staff}=await this.currentActor(q,user);
+      if(file.user_id!==user.id&&!staff)throw forbidden();
+      if(file.user_id!==user.id){
+        await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+          [user.id,'document.view',id,{owner:file.user_id,kind:file.kind}]);
+      }
+      return file;
+    });
+    return {mime:row.mime as string,
+      body:decrypt({iv:asBuf(row.iv),tag:asBuf(row.tag),data:asBuf(row.data)})};
   }
 
   /** Очередь модератора: кто отправил на проверку, с автоотметками */
@@ -139,9 +213,10 @@ export class DocumentsService {
     const out = [];
     for (const u of people) {
       const docs = await this.db.query(
-        `select d.id, d.kind, d.status, d.note, d.taken_at, d.created_at, d.size,
+        `select distinct on (d.kind) d.id, d.kind, d.status, d.note, d.taken_at, d.created_at, d.size,
                 (select count(*)::int from documents x where x.sha256=d.sha256 and x.user_id<>d.user_id) as duplicates
-           from documents d where d.user_id=$1 order by d.created_at`, [u.id]);
+           from documents d where d.user_id=$1
+          order by d.kind, d.created_at desc, d.id desc`, [u.id]);
       const flags: string[] = [];
       for (const d of docs) {
         if (d.duplicates > 0) flags.push(`${DOC_KINDS[d.kind]?.name}: такое же фото есть в другом профиле`);
@@ -157,38 +232,87 @@ export class DocumentsService {
   }
 
   async review(admin: AuthUser, id: string, p: { status: 'approved' | 'rejected'; note?: string }) {
-    if (p.status === 'rejected' && !p.note) throw bad('note_required', 'Напишите, что переснять');
-    const d = await this.db.one(
-      `update documents set status=$2, note=$3, reviewed_by=$4, reviewed_at=$5 where id=$1 returning user_id, kind`,
-      [id, p.status, p.note ?? null, admin.id, this.now()]);
-    if (!d) throw notFound();
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [admin.id, 'document.review', id, p]);
-    if (p.status === 'rejected') {
-      await this.notifier.notify([d.user_id], { type: 'verification', decision: 'retake' }, {
-        kind: 'normal', title: 'Переснимите фото', body: `${DOC_KINDS[d.kind]?.name}: ${p.note}`, data: {},
-      });
+    if (p.status==='rejected' && !p.note?.trim())
+      throw bad('note_required', 'Напишите, что переснять');
+    const result = await this.db.tx(async q => {
+      await this.currentActor(q,admin,true);
+      const candidate=await q.one<{user_id:string;kind:string}>(
+        'select user_id,kind from documents where id=$1', [id]);
+      if (!candidate) throw notFound();
+      await q.one('select user_id from performer_profiles where user_id=$1 for update',
+        [candidate.user_id]);
+      const changed=await q.one<{user_id:string;kind:string}>(
+        `update documents set status=$2,note=$3,reviewed_by=$4,reviewed_at=$5
+         where id=$1 and status='pending'
+           and not exists(
+             select 1 from documents newer
+              where newer.user_id=documents.user_id and newer.kind=documents.kind
+                and (newer.created_at,newer.id)>(documents.created_at,documents.id))
+         returning user_id,kind`,
+        [id,p.status,p.note?.trim()||null,admin.id,this.now()]);
+      if (!changed) throw conflict('document_outdated', 'Фото уже рассмотрено или заменено новым');
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [admin.id,'document.review',id,p]);
+      if (p.status==='rejected') {
+        await q.query(`insert into notifications(user_id,kind,title,body,data)
+          values ($1,'verification',$2,$3,$4)`,
+          [changed.user_id,'Переснимите фото',
+           `${DOC_KINDS[changed.kind]?.name}: ${p.note}`,{}]);
+      }
+      return changed;
+    });
+    if(p.status==='rejected'){
+      await this.notifier.deliverStored([result.user_id],
+        {type:'verification',decision:'retake'},
+        {kind:'normal',title:'Переснимите фото',
+         body:`${DOC_KINDS[result.kind]?.name}: ${p.note}`,data:{}});
     }
-    return { ok: true };
+    return {ok:true};
   }
 
-  /** Одобрить исполнителя целиком: все обязательные фото должны быть приняты (если в настройках не выключено) */
+  /** Approve/reject the performer without disabling their voluntary work line. */
   async decide(admin: AuthUser, userId: string, decision: 'approved' | 'rejected' | 'pending', note?: string) {
-    const prof = await this.db.one('select kind, specialties, tier from performer_profiles where user_id=$1', [userId]);
-    if (!prof) throw notFound();
-    if (decision === 'approved' && (await this.settings.get('verification')).requireDocs) {
-      const ok = await this.db.query<{ kind: string }>(`select kind from documents where user_id=$1 and status='approved'`, [userId]);
-      const missing = requiredKinds(prof).filter((k) => !ok.some((x) => x.kind === k));
-      if (missing.length) throw conflict('docs_missing', `Сначала примите фото: ${missing.map((k) => DOC_KINDS[k].name).join(', ')}`);
-    }
-    if (decision === 'rejected' && !note) throw bad('note_required', 'Напишите причину — исполнитель увидит её');
-    await this.db.query(`update performer_profiles set verification=$2, verification_note=$3, verified_at = case when $2='approved' then $4::timestamptz else verified_at end
-                          where user_id=$1`, [userId, decision, note ?? null, this.now()]);
-    if (decision !== 'approved') await this.db.query(`update performer_profiles set line_status='offline' where user_id=$1 and line_status <> 'on_job'`, [userId]);
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [admin.id, 'performer.verify', userId, { decision, note }]);
-    await this.notifier.notify([userId], { type: 'verification', decision }, {
-      kind: 'normal', title: decision === 'approved' ? 'Проверка пройдена' : 'Проверка не пройдена',
-      body: decision === 'approved' ? 'Выходите на линию — заявки начнут приходить.' : note ?? 'Подробности в профиле', data: {},
+    if (decision==='rejected' && !note?.trim())
+      throw bad('note_required', 'Напишите причину — исполнитель увидит её');
+    const requireDocs = decision==='approved' &&
+      (await this.settings.get('verification')).requireDocs;
+    const changed = await this.db.tx(async q => {
+      await this.currentActor(q,admin,true);
+      const prof=await q.one<any>(
+        'select kind,specialties,tier,verification,verification_note from performer_profiles where user_id=$1 for update',
+        [userId]);
+      if (!prof) throw notFound();
+      if (requireDocs) {
+        const docs=await q.query<{kind:string;status:string}>(
+          `select distinct on (kind) kind,status from documents
+            where user_id=$1 order by kind,created_at desc,id desc`,[userId]);
+        const missing=requiredKinds(prof).filter(k=>!docs.some(d=>d.kind===k&&d.status==='approved'));
+        if(missing.length)throw conflict('docs_missing',
+          `Сначала примите фото: ${missing.map(k=>DOC_KINDS[k].name).join(', ')}`);
+      }
+      if (prof.verification===decision &&
+          (prof.verification_note??null)===(note?.trim()||null)) return false;
+      await q.query(`update performer_profiles
+        set verification=$2,verification_note=$3,
+            verified_at=case when $2='approved' then $4::timestamptz else null end
+        where user_id=$1`,[userId,decision,note?.trim()||null,this.now()]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [admin.id,'performer.verify',userId,{decision,note}]);
+      await q.query(`insert into notifications(user_id,kind,title,body,data)
+        values ($1,'verification',$2,$3,$4)`,
+        [userId,decision==='approved'?'Проверка пройдена':'Проверка не пройдена',
+         decision==='approved'?'Проверка документов завершена — работа на линии доступна.':
+           note??'Подробности в профиле',{}]);
+      return true;
     });
-    return { ok: true };
+    if(changed){
+      await this.notifier.deliverStored([userId],{type:'verification',decision},
+        {kind:'normal',
+         title:decision==='approved'?'Проверка пройдена':'Проверка не пройдена',
+         body:decision==='approved'?'Проверка документов завершена — работа на линии доступна.':
+           note??'Подробности в профиле', data:{}});
+    }
+    return {ok:true};
   }
+
 }

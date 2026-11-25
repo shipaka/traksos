@@ -1,0 +1,52 @@
+/* Vehicle photo in live orders. Exact brand/model/year or explicitly generic. */
+.tr-approved-order-truck {
+  position:relative;
+  isolation:isolate;
+  display:block;
+  flex:none;
+  width:clamp(140px,20vw,230px);
+  height:clamp(100px,10vw,140px);
+  overflow:hidden;
+  border-radius:13px;
+  border:1px solid #456577;
+  background:linear-gradient(130deg,#152d39,#071723);
+}
+.tr-approved-order-truck img {
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  object-position:center;
+  filter:saturate(.9);
+}
+.tr-approved-order-truck.is-illustration img {
+  object-fit:contain;
+  background:linear-gradient(110deg,#081924,#132e3a);
+}
+.tr-approved-order-truck>small {
+  position:absolute;
+  left:6px;
+  bottom:6px;
+  padding:3px 6px;
+  border-radius:6px;
+  color:#e9f8fb;
+  background:#061722d9;
+  font-size:10px;
+  font-weight:600;
+}
+.app.role-client .desktop-active-orders .card .tr-approved-order-truck {
+  width:min(100%,220px);
+  max-height:140px;
+  margin:2px 0;
+}
+.and19-main-order .tr-approved-order-truck {
+  width:min(100%,190px);
+  height:114px;
+  margin:8px 0 6px;
+}
+@media(max-width:389px){
+  .and19-main-order .tr-approved-order-truck {
+    width:min(100%,172px);
+    height:104px;
+  }
+}

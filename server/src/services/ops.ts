@@ -5,7 +5,7 @@ import type { AuthUser } from '../http/router.ts';
 import type { Notifier } from './notify.ts';
 import { bad, notFound } from '../http/router.ts';
 
-const SERVICES = ['electric','diag','air','autonomy','tyre','tow','consult','ecu'] as const;
+const SERVICES = ['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu'] as const;
 const AUDIENCES = ['master','tow','service','all_workers'] as const;
 export type Audience = typeof AUDIENCES[number];
 
@@ -14,7 +14,7 @@ export class OpsService {
 
   async demand(days = 7, waitMinutes = 15) {
     const since = new Date(this.now().getTime() - Math.min(365, Math.max(1, days)) * 86_400_000);
-    const [summary, hourly, byService, incidents] = await Promise.all([
+    const [summary, hourly, byService, byServiceZone, incidents] = await Promise.all([
       this.db.one<any>(`select count(*)::int as total,
           count(*) filter (where status='completed')::int as completed,
           count(*) filter (where status='no_performer' or exists
@@ -46,6 +46,19 @@ export class OpsService {
           count(*) filter (where accepted_at > created_at + $3::int * interval '1 minute')::int as accepted_late
         from orders where created_at >= $1 group by service order by unfilled desc, total desc`,
         [since, this.now(), waitMinutes]),
+      // Aggregate only original requests in the administrator-only endpoint.
+      // A zone ID is a coarse demand grouping, not a precise GPS coordinate;
+      // names, driver contacts and route samples are never in this dataset.
+      this.db.query<any>(`select o.service,
+          coalesce(nullif(o.zone_id,''),'unknown') as zone_id,
+          count(*)::int as total,
+          count(*) filter (where o.status='no_performer' or exists
+            (select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer'))::int as unfilled
+        from orders o where o.created_at >= $1
+        group by o.service,coalesce(nullif(o.zone_id,''),'unknown')
+        having count(*) filter (where o.status='no_performer' or exists
+          (select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer')) > 0
+        order by unfilled desc,total desc,o.service,zone_id limit 100`,[since]),
       this.db.query<any>(`select o.id, o.number, o.service, o.status, o.is_sos, o.zone_id,
           o.address, o.created_at, o.accepted_at, o.cancelled_at, o.cancel_reason,
           exists(select 1 from order_events ev where ev.order_id=o.id and ev.type='no_performer') as had_no_performer,
@@ -62,7 +75,7 @@ export class OpsService {
           o.is_sos desc, o.created_at desc limit 250`,
         [since, this.now(), waitMinutes]),
     ]);
-    return { days, waitMinutes, timezone: 'Europe/Moscow', summary, hourly, byService, incidents };
+    return { days, waitMinutes, timezone: 'Europe/Moscow', summary, hourly, byService, byServiceZone, incidents };
   }
 
   async review(actor: AuthUser, orderId: string, state: 'open' | 'investigating' | 'resolved', note: string) {
@@ -100,6 +113,7 @@ export class OpsService {
     const start = new Date(p.startsAt), end = new Date(p.endsAt);
     if (!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start) throw bad('bad_dates','Проверьте даты');
     if (end.getTime()-start.getTime()>90*86_400_000) throw bad('too_long','Объявление не длиннее 90 дней');
+    if (p.published && end <= this.now()) throw bad('expired','Истёкшее объявление нельзя опубликовать');
     return this.db.tx(async q => {
       const row=await q.one<any>(`insert into worker_announcements(audience,service,title,body,starts_at,ends_at,published,created_by)
         values ($1,$2,$3,$4,$5,$6,$7,$8) returning id,audience,service,title,body,starts_at,ends_at,published`,
@@ -112,9 +126,15 @@ export class OpsService {
 
   async setAnnouncementPublished(actor:AuthUser,id:string,published:boolean) {
     return this.db.tx(async q=>{
+      // Lock and validate the real saved interval in the same transaction;
+      // an old draft must never become a misleading "published" notice.
+      const current=await q.one<{id:string;ends_at:Date}>(
+        'select id,ends_at from worker_announcements where id=$1 for update',[id]);
+      if(!current)throw notFound('Объявление не найдено');
+      if(published && new Date(current.ends_at) <= this.now())
+        throw bad('expired','Истёкшее объявление нельзя опубликовать');
       const row=await q.one<any>(`update worker_announcements set published=$2,updated_at=now()
         where id=$1 returning id,published,title`,[id,published]);
-      if(!row)throw notFound('Объявление не найдено');
       await q.query(`insert into audit_log(actor_id,action,target,data) values ($1,'ops.announcement.status',$2,$3)`,
         [actor.id,id,{published}]);
       return row;
@@ -163,25 +183,45 @@ export class OpsService {
       const users=await q.query<{id:string}>(`select u.id from users u
         left join performer_profiles p on p.user_id=u.id
         where u.status='active' and (
-          ($1 in ('master','all_workers') and u.roles @> '{master}'::text[] and
-             ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))))
-          or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[] and
-             ($2::text is null or $2='tow'))
-          or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[])
+          ($1 in ('master','all_workers') and u.roles @> '{master}'::text[]
+             and p.verification='approved' and
+             ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))
+                or ($2='ecu' and 'electric'=any(coalesce(p.specialties,'{}'::text[])))))
+          or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[]
+             and p.verification='approved'
+             and ($2::text is null or $2='tow'))
+          or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[]
+              and exists(select 1 from service_centers center
+                where center.owner_id=u.id and center.verification='approved'))
         ) limit 501`,[row.audience,row.service]);
+      if(users.length===0)throw bad('no_recipients',
+        'Пока нет подходящих получателей. Объявление сохранено — можно повторить рассылку после подключения партнёров');
       if(users.length>500)throw bad('too_many_recipients','Для массовой рассылки более 500 исполнителям обратитесь к администратору сервера');
+      // Persist each recipient's in-app notice BEFORE claiming this announcement
+      // sent. If the transaction fails, both the claim and notifications roll
+      // back together, so the operator may safely retry without losing news.
+      // Push delivery happens only after commit and is best-effort.
+      await q.query(`insert into notifications(user_id,kind,title,body,data)
+        select recipients.user_id,'announcement',$2,$3,$4::jsonb
+        from unnest($1::uuid[]) as recipients(user_id)`,
+        [users.map(u=>u.id),row.title,row.body,JSON.stringify({announcementId:id})]);
       await q.query(`update worker_announcements set notified_at=$2,notified_count=$3 where id=$1`,
         [id,this.now(),users.length]);
       await q.query(`insert into audit_log(actor_id,action,target,data) values($1,'ops.announcement.notify',$2,$3)`,
         [actor.id,id,{audience:row.audience,service:row.service,count:users.length}]);
       return {title:row.title,body:row.body,ids:users.map(u=>u.id)};
     });
-    // The durable in-app notice exists regardless of push delivery / disabled device.
-    // If notification provider fails, its in-app message still exists in the cabinet.
+    // In-app notices were inserted atomically with notified_at. Do NOT call
+    // notify() here (which would insert duplicates outside the transaction).
+    // A transient push/live failure cannot make a committed send look retryable.
     for(let i=0;i<recipients.ids.length;i+=50){
-      await notifier.notify(recipients.ids.slice(i,i+50),
-        {type:'announcement',announcementId:id},
-        {kind:'normal',title:recipients.title,body:recipients.body,data:{announcementId:id}});
+      try{
+        await notifier.deliverStored(recipients.ids.slice(i,i+50),
+          {type:'announcement',announcementId:id},
+          {kind:'normal',title:recipients.title,body:recipients.body,data:{announcementId:id}});
+      }catch(error){
+        console.warn('[ops.announcement.delivery]',error);
+      }
     }
     return {ok:true,recipients:recipients.ids.length};
   }
@@ -195,6 +235,14 @@ export class OpsService {
     service?:string|null;commissionPct:number;startsAt:string;endsAt:string;enabled:boolean;reason:string;
   }) {
     if(p.service&&!SERVICES.includes(p.service as any)) throw bad('bad_service','Неизвестная услуга');
+    // ECU handoffs have no roadside auction; telephone consultation is
+    // billed separately. Neither can ever apply a worker commission campaign.
+    if(p.service==='ecu'||p.service==='consult')
+      throw bad('no_dispatch_commission','Для выбранной услуги нет комиссии выездного исполнителя');
+    // The approved worker fee is 5%; a shortage campaign is a discount,
+    // not authority to raise commission above the agreed baseline.
+    if(!Number.isFinite(p.commissionPct)||p.commissionPct<0||p.commissionPct>5)
+      throw bad('bad_commission_pct','Временная комиссия допускается только от 0 до 5%');
     const start=new Date(p.startsAt),end=new Date(p.endsAt);
     if(!Number.isFinite(+start)||!Number.isFinite(+end)||end<=start) throw bad('bad_dates','Проверьте даты');
     if(end.getTime()-start.getTime()>31*86_400_000) throw bad('too_long','Акция не длиннее 31 дня');
@@ -217,9 +265,9 @@ export class OpsService {
     });
   }
 
-  /** Called at order creation. Only dispatch work; consultations have their own fee. */
+  /** Called at order creation. Only dispatch work has a worker fee. */
   async commissionFor(service:string, at:Date) {
-    if(service==='consult')return null;
+    if(service==='consult'||service==='ecu')return null;
     return this.db.one<{id:string;commission_pct:number}>(`select id,commission_pct::float as commission_pct
       from commission_campaigns where enabled and starts_at <= $1 and ends_at > $1
       and (service=$2 or service is null)

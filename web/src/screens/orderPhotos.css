@@ -1,0 +1,70 @@
+/* Private photos from real orders — same graphite/blue-orange vocabulary as 618. */
+.tr-order-photo-gallery{
+  display:flex;flex-direction:column;gap:11px;
+  width:100%;min-width:0;box-sizing:border-box;
+  border:1px solid #446f87;border-radius:15px;
+  padding:14px;background:linear-gradient(150deg,#193b51,#0e2435 78%);
+  box-shadow:0 7px 20px #07142045;color:#eefaff;
+}
+.tr-order-photo-gallery h2{margin:0;font-size:17px;color:#fff}
+.tr-order-photo-gallery>.between{align-items:center}
+.tr-order-photo-gallery>small{font-size:11px;color:#bdd8e5;line-height:1.4}
+.tr-order-photo-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;min-width:0;
+}
+.tr-order-photo{
+  display:flex;flex-direction:column;align-items:stretch;gap:5px;
+  box-sizing:border-box;min-width:0;
+  padding:6px;border-radius:11px;
+  border:1px solid #5a7e91;background:#102d40;
+  color:#eaf8ff;cursor:pointer;text-align:left;
+}
+.tr-order-photo img{
+  display:block;width:100%;aspect-ratio:4/3;
+  border-radius:7px;object-fit:cover;
+}
+.tr-order-photo small{
+  display:block;font-size:10px;color:#b9d7e7;
+  line-height:1.25;overflow-wrap:anywhere;
+}
+.tr-order-photo-loading{
+  display:grid;place-items:center;aspect-ratio:4/3;
+  font-size:11px;color:#b0d1dd;
+}
+.tr-order-photo:focus-visible{
+  outline:2px solid #72e3ee;outline-offset:2px;
+}
+.tr-order-photo:disabled{cursor:wait;opacity:.65}
+.tr-order-photo-backdrop{
+  position:fixed;z-index:500;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:15px;box-sizing:border-box;
+  background:rgba(2,11,22,.88);
+  backdrop-filter:blur(6px);
+}
+.tr-order-photo-modal{
+  position:relative;display:flex;align-items:center;
+  justify-content:center;flex-direction:column;gap:12px;
+  width:100%;max-width:920px;max-height:95dvh;
+  padding:12px;box-sizing:border-box;
+  border-radius:15px;border:1px solid #7a9aa9;
+  background:#091b2a;box-shadow:0 16px 60px #0008;
+}
+.tr-order-photo-modal>button{
+  display:block;align-self:flex-end;
+  min-height:44px;min-width:112px;
+  border-radius:10px;border:1px solid #f09a52;
+  background:#bf5318;color:#fff;font-weight:800;
+}
+.tr-order-photo-modal img{
+  display:block;max-width:100%;max-height:75dvh;
+  width:auto;height:auto;object-fit:contain;
+}
+@media(max-width:359px){
+  .tr-order-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tr-order-photo-gallery{padding:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tr-order-photo-backdrop{backdrop-filter:none}
+}

@@ -19,7 +19,7 @@ services:
       retries: 10
 
   app:
-    image: ghcr.io/shipaka/traksos:${TRAKSOS_RELEASE_REV:-latest}
+    image: ghcr.io/shipaka/traksos:${TRAKSOS_RELEASE_REV:?set the vetted 40-character Git release SHA; never use latest}
     build:
       context: ..
       args:

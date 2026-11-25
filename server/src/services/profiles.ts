@@ -4,7 +4,7 @@ import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { slot, endOfMoscowDay, validSchedule, type Schedule } from '../domain/schedule.ts';
 import { normalizePhone } from '../util.ts';
 import { plausibleGpsStep } from '../domain/geo.ts';
-import { assertRoleExtension } from '../domain/roles.ts';
+import { assertRoleExtension, validateRoles } from '../domain/roles.ts';
 
 export interface PerformerInput {
   kind: 'master' | 'tow' | 'service' | 'ecu';
@@ -67,6 +67,10 @@ export class ProfilesService {
     inRange(p.hourPrice, corridor.hourMin, corridor.hourMax, 'Час работы');
     if (p.inn && !/^\d{12}$/.test(p.inn)) throw bad('bad_inn', 'ИНН физлица или ИП — 12 цифр');
     if (p.cars && p.cars.length > 3) throw bad('too_many_cars', 'Не больше трёх машин');
+    // An ECU shop is stationary: never require or publish a dispatch vehicle.
+    if (p.kind==='ecu' && (p.car || p.cars?.length || p.callOutPrice != null
+      || p.hourPrice != null || p.kmRate != null))
+      throw bad('ecu_stationary','Для специалиста ЭБУ нужна стационарная точка, а не цена выезда или машина');
     if (p.car && p.cars && !p.cars.some((c) => c.plate === p.car!.plate)) throw bad('bad_car', 'Выберите машину из своего списка');
 
     if (extras !== undefined) {
@@ -94,19 +98,24 @@ export class ProfilesService {
            specialties=coalesce($3::text[], performer_profiles.specialties),
            brands=coalesce($4::jsonb, performer_profiles.brands),
            tier=coalesce($5::text, performer_profiles.tier),
-           call_out_price=coalesce($6::int, performer_profiles.call_out_price),
-           hour_price=coalesce($7::int, performer_profiles.hour_price),
-           km_rate=coalesce($8::int, performer_profiles.km_rate),
+           call_out_price=case when excluded.kind='ecu' then null when $15::boolean then $6::int else performer_profiles.call_out_price end,
+           hour_price=case when excluded.kind='ecu' then null when $16::boolean then $7::int else performer_profiles.hour_price end,
+           km_rate=case when excluded.kind='ecu' then null when $17::boolean then $8::int else performer_profiles.km_rate end,
            prep_minutes=coalesce($9::int, performer_profiles.prep_minutes),
            accepts_group=coalesce($10::boolean, performer_profiles.accepts_group),
            tax_status=coalesce($11::text, performer_profiles.tax_status),
            inn=coalesce($12::text, performer_profiles.inn),
-           car=coalesce($13::jsonb, performer_profiles.car),
-           cars=coalesce($14::jsonb, performer_profiles.cars),
+           car=case when excluded.kind='ecu' then null else coalesce($13::jsonb,performer_profiles.car) end,
+           cars=case when excluded.kind='ecu' then '[]'::jsonb else coalesce($14::jsonb,performer_profiles.cars) end,
            updated_at=now()`,
         [user.id, p.kind, p.specialties ?? null, p.brands ?? null, p.tier ?? null, p.callOutPrice ?? null, p.hourPrice ?? null,
           p.kmRate ?? null, p.prepMinutes ?? null, p.acceptsGroup ?? null, p.taxStatus ?? null, p.inn ?? null,
-          p.car ?? (p.cars?.length ? p.cars[0] : null), p.cars ? JSON.stringify(p.cars) : null],
+          p.car ?? (p.cars?.length ? p.cars[0] : null), p.cars ? JSON.stringify(p.cars) : null,
+          // SQL NULL is meaningful (reset to platform tier default); an omitted
+          // field must still keep its old value during partial profile saves.
+          Object.prototype.hasOwnProperty.call(p, 'callOutPrice'),
+          Object.prototype.hasOwnProperty.call(p, 'hourPrice'),
+          Object.prototype.hasOwnProperty.call(p, 'kmRate')],
       );
       if (extras !== undefined) {
         await q.query(
@@ -121,7 +130,14 @@ export class ProfilesService {
   /** Все движения денег исполнителя: за что начислили, что списали, выплаты — с номером заявки */
   async ledger(userId: string) {
     return this.db.query(
-      `select l.id::int as id, l.kind, l.amount, l.note, l.created_at, o.id as order_id, o.number as order_number, o.service,
+      `select l.id::int as id, l.kind, l.amount,
+              case
+                when l.kind='cash_commission' then 'Наличный заказ: общая сумма к перечислению площадке'
+                when l.kind='cash_commission_paid' then 'Погашение обязательства перед TrakSOS'
+                when l.kind='adjustment' and l.note ilike 'Скидка клиенту%' then 'Корректировка взаиморасчётов с TrakSOS'
+                else l.note
+              end as note,
+              l.created_at, o.id as order_id, o.number as order_number, o.service,
               (select t.id from support_tickets t where t.ledger_entry_id = l.id and t.user_id = $1 order by t.created_at desc limit 1) as ticket_id
          from ledger_entries l left join orders o on o.id = l.order_id
         where l.account = 'performer' and l.performer_id = $1 order by l.id desc limit 300`, [userId]);
@@ -130,9 +146,8 @@ export class ProfilesService {
   async setLine(userId: string, s: { lineStatus?: 'online' | 'on_call' | 'busy' | 'offline'; busyUntil?: string | null; paused?: boolean }) {
     const p = await this.performer(userId);
     if (!p) throw notFound('Сначала заполните профиль исполнителя');
-    if (s.lineStatus === 'online' && p.verification !== 'approved') {
-      throw bad('not_verified', 'Заявки начнут приходить после проверки профиля');
-    }
+    // Verification photos are voluntary. The route separately enforces
+    // accepted terms; missing profiles and blocked users remain restricted.
     if (s.lineStatus && p.line_status === 'on_job' && s.lineStatus !== 'offline') {
       throw bad('on_job', 'Вы на выезде — статус сменится сам, когда клиент подтвердит сумму');
     }
@@ -223,6 +238,27 @@ export class ProfilesService {
     );
   }
 
+  /** Nonblocking optional vehicle details. Owner-only and scoped to own fleet. */
+  async updateVehicleDetails(user: AuthUser, vehicleId: string,
+    changes: { vin?: string|null; engine?: string|null; configurationNotes?: string|null }) {
+    if (user.owner_id || !user.roles.includes('client') || user.roles.includes('driver'))
+      throw forbidden('Характеристики машины меняет только владелец');
+    if (!Object.keys(changes).length) throw bad('empty_vehicle_details','Укажите изменённое поле');
+    const normal=(v:string|null|undefined)=>v == null?null:v.trim() || null;
+    const found=await this.db.one(
+      'update vehicles set ' +
+      ' vin=case when $3::boolean then $4::text else vin end,' +
+      ' engine=case when $5::boolean then $6::text else engine end,' +
+      ' configuration_notes=case when $7::boolean then $8::text else configuration_notes end' +
+      ' where id=$1 and owner_id=$2 returning *',
+      [vehicleId,user.id,
+        changes.vin !== undefined,normal(changes.vin),
+        changes.engine !== undefined,normal(changes.engine),
+        changes.configurationNotes !== undefined,normal(changes.configurationNotes)]);
+    if (!found) throw notFound('Машина не найдена в вашем гараже');
+    return found;
+  }
+
   /**
    * История машины: всё, что по ней делали, — услуга, кто, итог и комментарий мастера, подсказка по телефону.
    * Владелец видит суммы, водитель — только свои заявки и без сумм.
@@ -294,43 +330,73 @@ export class ProfilesService {
   }
 
   async removeVehicle(user: AuthUser, id: string) {
-    const r = await this.db.query('delete from vehicles where id=$1 and owner_id=$2 returning id', [id, user.id]);
-    if (!r.length) throw notFound();
+    if (user.owner_id || !user.roles.includes('client') || user.roles.includes('driver'))
+      throw forbidden('Машины удаляет только владелец автопарка');
+    await this.db.tx(async q => {
+      const car = await q.one<{ driver_id: string | null }>(
+        'select driver_id from vehicles where id=$1 and owner_id=$2 for update', [id, user.id]);
+      if (!car) throw notFound();
+      await q.query('delete from vehicles where id=$1 and owner_id=$2', [id, user.id]);
+      if (car.driver_id) {
+        await q.query(`update users set owner_id=null where id=$1 and owner_id=$2
+          and not exists (select 1 from vehicles where driver_id=$1)`, [car.driver_id, user.id]);
+      }
+    });
   }
 
-  /** «Сменить водителя»: новый водитель входит по своему номеру и видит только эту машину */
+  /** Manual assignment uses the same vehicle lock and lifecycle as QR onboarding. */
   async assignDriver(owner: AuthUser, vehicleId: string, rawPhone: string | null) {
-    if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver')) throw forbidden('Водителей назначает только владелец автопарка');
-    const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [vehicleId, owner.id]);
-    if (!v) throw notFound('Машина не найдена');
-    if (!rawPhone) {
-      await this.db.query('update vehicles set driver_id=null where id=$1', [vehicleId]);
-      return { driverId: null };
-    }
-    const phone = normalizePhone(rawPhone);
-    if (!phone) throw bad('bad_phone', 'Неверный номер');
-    // Owner invitation explicitly converts a standalone client to a driver.
-    // Never append {driver} to {client}: it would create conflicting identities.
-    const driver = await this.db.tx(async (q) => {
-      await q.query('select pg_advisory_xact_lock(hashtext($1))', [phone]);
-      const current = await q.one<{ id: string; owner_id: string | null; roles: string[] }>(
-        'select id, owner_id, roles from users where phone=$1 for update', [phone]);
-      if (current?.owner_id && current.owner_id !== owner.id) throw bad('driver_taken', 'Этот номер уже водитель другого владельца');
-      if (current) {
-        if (current.roles.some((r) => ['master','tow','service','insurer'].includes(r)))
-          throw bad('incompatible_roles', 'Этот номер принадлежит исполнителю или страховщику');
-        const ownCars = await q.one<{ n: number }>('select count(*)::int as n from vehicles where owner_id=$1', [current.id]);
-        if ((ownCars?.n ?? 0) > 0) throw bad('has_garage', 'Владелец своего транспорта не может стать водителем чужого парка');
-        await q.query("update users set roles=array_remove(roles, 'client') || '{driver}'::text[], owner_id=$2, registration_kind='driver' where id=$1",
-          [current.id, owner.id]);
-        return current.id;
+    if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver'))
+      throw forbidden('Водителей назначает только владелец автопарка');
+    const phone = rawPhone === null ? null : normalizePhone(rawPhone);
+    if (rawPhone !== null && !phone) throw bad('bad_phone', 'Неверный номер');
+    const driver = await this.db.tx(async q => {
+      const vehicle = await q.one<{ id: string; driver_id: string | null }>(
+        'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner.id]);
+      if (!vehicle) throw notFound('Машина не найдена');
+      let nextDriver: string | null = null;
+      if (phone) {
+        // Keep the original phone lock for two simultaneous new-account invites.
+        await q.query('select pg_advisory_xact_lock(hashtext($1))', [phone]);
+        const current = await q.one<{ id: string; owner_id: string | null; roles: string[] }>(
+          'select id, owner_id, roles from users where phone=$1 for update', [phone]);
+        if (current) {
+          if (current.roles.some(r => ['admin','moderator','master','tow','service','insurer',
+            'inspection_operator','courier'].includes(r)) ||
+            !current.roles.some(r => r === 'client' || r === 'driver'))
+            throw forbidden('Назначить водителем можно только клиента или водителя');
+          validateRoles(current.roles.filter(r => r !== 'client'), ['driver']);
+          const ownCars = await q.one<{ n: number }>(
+            'select count(*)::int as n from vehicles where owner_id=$1', [current.id]);
+          if ((ownCars?.n ?? 0) > 0)
+            throw bad('has_garage', 'Владелец своего транспорта не может стать водителем чужого парка');
+          if (current.owner_id && current.owner_id !== owner.id) {
+            const assigned = await q.one<{ n: number }>(
+              'select count(*)::int as n from vehicles where driver_id=$1', [current.id]);
+            if ((assigned?.n ?? 0) > 0)
+              throw bad('driver_taken', 'Этот номер уже водитель другого владельца');
+          }
+          await q.query(`update users set roles=array(select distinct unnest(array_remove(roles, 'client') || '{driver}'::text[])),
+            owner_id=$2, registration_kind='driver' where id=$1`, [current.id, owner.id]);
+          nextDriver = current.id;
+          await q.query('update vehicles set driver_id=null, driver_since=null where driver_id=$1 and id<>$2',
+            [current.id, vehicleId]);
+        } else {
+          const created = await q.one<{ id: string }>(
+            "insert into users(phone,roles,owner_id,registration_kind) values ($1,'{driver}',$2,'driver') returning id",
+            [phone, owner.id]);
+          nextDriver = created!.id;
+        }
       }
-      const created = await q.one<{ id: string }>(
-        "insert into users(phone,roles,owner_id,registration_kind) values ($1,'{driver}',$2,'driver') returning id",
-        [phone, owner.id]);
-      return created!.id;
+      await q.query('update vehicles set driver_id=$2, driver_since=case when $2::uuid is null then null else now() end where id=$1',
+        [vehicleId, nextDriver]);
+      if (vehicle.driver_id && vehicle.driver_id !== nextDriver) {
+        await q.query(`update users set owner_id=null where id=$1 and owner_id=$2
+          and not exists (select 1 from vehicles where driver_id=$1)`,
+          [vehicle.driver_id, owner.id]);
+      }
+      return nextDriver;
     });
-    await this.db.query('update vehicles set driver_id=$2, driver_since=now() where id=$1', [vehicleId, driver]);
     return { driverId: driver };
   }
 }

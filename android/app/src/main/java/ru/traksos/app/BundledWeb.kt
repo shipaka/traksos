@@ -10,14 +10,20 @@ import java.io.IOException
  * The live /api/ endpoints are NEVER bundled, intercepted, or cached.
  */
 class BundledWeb(private val context: Context) : WebViewAssetLoader.PathHandler {
-    private val safeFile = Regex("^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
+    // Nested manufacturer/model photos are shipped at www/vehicles/models/*.webp.
+    // Reject traversal and ambiguous paths rather than falling through to the server.
+    private val safeSegment = Regex("^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
 
     override fun handle(path: String): WebResourceResponse? {
         val relative = path.trimStart('/')
         if (relative == "api" || relative.startsWith("api/") ||
             relative == "ws" || relative.startsWith("ws/")) return null
         val file = if (relative.isEmpty()) "index.html" else relative
-        if (!safeFile.matches(file)) return null
+        val segments = file.split('/')
+        if (segments.any { it.isEmpty() || it == "." || it == ".." || !safeSegment.matches(it) }) {
+            return WebResourceResponse("text/plain", "UTF-8",
+                java.io.ByteArrayInputStream(byteArrayOf()))
+        }
         val mime = when {
             file.endsWith(".html") -> "text/html"
             file.endsWith(".js") -> "text/javascript"

@@ -1,0 +1,68 @@
+name: VPS — безопасная проверка без изменений
+
+on:
+  workflow_dispatch:
+  # The first vetted merge to main automatically tests the bridge once.
+  # Later ordinary code deploys do not automatically open a VPS connection.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vps-readonly-status.yml'
+      - 'deploy/automation/github-vps-readonly-gate.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  readonly-vps-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate private SSH configuration
+        env:
+          VPS_HOST: ${{ secrets.TRAKSOS_VPS_HOST }}
+          VPS_KEY: ${{ secrets.TRAKSOS_VPS_READONLY_KEY }}
+          VPS_HOST_KEY: ${{ secrets.TRAKSOS_VPS_HOST_KEY }}
+        run: |
+          test -n "$VPS_HOST" || { echo 'Missing TRAKSOS_VPS_HOST secret'; exit 1; }
+          test -n "$VPS_KEY" || { echo 'Missing TRAKSOS_VPS_READONLY_KEY secret'; exit 1; }
+          test -n "$VPS_HOST_KEY" || { echo 'Missing TRAKSOS_VPS_HOST_KEY secret'; exit 1; }
+      - name: Read health, running containers and checked-out revision
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.TRAKSOS_VPS_HOST }}
+          VPS_KEY: ${{ secrets.TRAKSOS_VPS_READONLY_KEY }}
+          VPS_HOST_KEY: ${{ secrets.TRAKSOS_VPS_HOST_KEY }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          key_file="$(mktemp)"
+          known_hosts_file="$(mktemp)"
+          trap 'rm -f "$key_file" "$known_hosts_file"' EXIT
+          printf '%s\n' "$VPS_KEY" > "$key_file"
+          # Accept both a complete known_hosts line ("host ssh-ed25519 key")
+          # and a bare SSH public host key ("ssh-ed25519 key"). Regardless
+          # of format, PIN the saved Ed25519 public key to the configured
+          # host; never trust a freshly scanned unauthenticated host key.
+          pinned_key="$(printf '%s\n' "$VPS_HOST_KEY" | tr -d '\r' | awk '
+            $1 == "ssh-ed25519" { print $2; exit }
+            $2 == "ssh-ed25519" { print $3; exit }
+          ')"
+          if [[ ! "$pinned_key" =~ ^[A-Za-z0-9+/=]{40,}$ ]]; then
+            echo 'Invalid TRAKSOS_VPS_HOST_KEY format; paste server Ed25519 public key or known_hosts line.'
+            exit 64
+          fi
+          printf '%s ssh-ed25519 %s\n' "$VPS_HOST" "$pinned_key" > "$known_hosts_file"
+          chmod 600 "$key_file" "$known_hosts_file"
+          # Show only the PUBLIC fingerprint derived from the configured
+          # private key. No private material, public key body, or tokens.
+          echo "GitHub SSH identity fingerprint:"
+          ssh-keygen -y -f "$key_file" | ssh-keygen -lf -
+          # No blanket StrictHostKeyChecking=no and no root shell: the
+          # server's authorized_keys forced command only allows status.
+          ssh -T -i "$key_file" -p 22 \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$known_hosts_file" \
+            "root@$VPS_HOST" status

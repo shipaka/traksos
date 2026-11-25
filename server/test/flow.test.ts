@@ -49,8 +49,9 @@ test('исполнители: профиль, проверка, выход на 
       taxStatus: 'self_employed', inn: '780000000001', car: { brand: 'Lada Largus', color: 'белый', plate: 'А123ВС78' },
     }, u.token));
     assert.equal(p.verification, 'pending');
-    const early = await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token);
-    assert.equal(early.body.error, 'not_verified');
+    const early = ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token));
+    assert.equal(early.line_status, 'online');
+    assert.equal(early.verification, 'pending');
     ok(await t.api('POST', `/api/admin/performers/${u.id}/verify`, { decision: 'approved' }, admin.token));
     ok(await t.api('POST', '/api/performer/line', { lineStatus: 'online' }, u.token));
     ok(await t.api('POST', '/api/performer/location', { lat, lng: 30.9 }, u.token));
@@ -120,7 +121,15 @@ test('полный путь: SOS → приоритетный отказался
   assert.equal(prop.status, 'awaiting_confirmation');
   // Работа — по таймеру: начатый час = полный час (1 500 ₽), сверху расходники 2 100 ₽.
   // 5 200 + 1 500 + 2 100 = 8 800 ₽ + сбор 5% 440 ₽ = 9 240 ₽
-  assert.deepEqual(prop.money, { callOut: 520_000, work: 360_000, amount: 880_000, clientFee: 44_000, discount: 0, total: 924_000 });
+  assert.equal(prop.money.callOut, 520_000);
+  assert.equal(prop.money.work, 360_000);
+  assert.equal(prop.money.amount, 880_000);
+  assert.equal(prop.money.total, 880_000, 'исполнитель видит свои 8 800 ₽ без клиентской надбавки');
+  assert.equal(prop.money.clientFee, undefined, 'сбор клиента не входит в API мастера');
+  assert.equal(prop.money.payout, prop.money.amount - prop.money.commission + prop.money.pointsCommission);
+  const clientQuote = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
+  assert.equal(clientQuote.money.clientFee, 44_000);
+  assert.equal(clientQuote.money.total, 924_000, 'клиент видит 8 800 ₽ + 5%');
   assert.equal(prop.bill.units, 1);
   assert.equal(prop.bill.time, 150_000);
   assert.deepEqual(prop.bill.extras, [{ name: 'Расходники', amount: 210_000 }]);
@@ -133,7 +142,8 @@ test('полный путь: SOS → приоритетный отказался
   const again = ok(await t.api('POST', `/api/orders/${id}/amount`, { extras: [{ name: 'Расходники', amount: 150_000 }], result: 'solved' }, master.token));
   assert.equal(again.bill.units, 1);
   // 5 200 + 1 500 + 1 500 = 8 200 ₽ + сбор 410 ₽ = 8 610 ₽
-  assert.equal(again.money.total, 861_000);
+  assert.equal(again.money.total, 820_000, 'мастер видит цену ремонта без клиентского сбора');
+  assert.equal(ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token)).money.total, 861_000);
   assert.equal((await t.api('POST', `/api/orders/${id}/confirm`, { total: 924_000 }, client.token)).body.error, 'amount_changed');
   const done = ok(await t.api('POST', `/api/orders/${id}/confirm`, { total: 861_000 }, client.token));
   assert.equal(done.status, 'completed');
@@ -174,6 +184,13 @@ test('пропущенные вызовы: 30 секунд, следующий, 
     assert.equal(await t.app.orders.tick(), 1);
     const v = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, client.token));
     assert.equal(v.status, 'no_performer');
+    assert.equal(v.absenceReason, 'no_response',
+      'a real ring invitation must never be described as no connected partners');
+    const staffView = ok(await t.api('GET', `/api/orders/${o.id}`, undefined, admin.token));
+    assert.equal(staffView.absenceReason, undefined,
+      'customer-only no-performer explanation must not leak into staff contract');
+    const retryByMaster = await t.api('POST', `/api/orders/${o.id}/retry`, undefined, father.token);
+    assert.equal(retryByMaster.status, 403, 'workers cannot retry someone else\'s search');
   }
   const p = ok(await t.api('GET', '/api/performer/profile', undefined, father.token));
   assert.equal(p.line_status, 'offline');

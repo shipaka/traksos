@@ -73,15 +73,17 @@ test('консультация → выезд: подсказка у масте�
   assert.equal(c.followUps.length, 2);
   // чужую консультацию не подставить
   const stranger = await t.login('+79994445566');
-  assert.equal((await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', fromConsult: id }, stranger.token)).body.error, 'bad_consult');
+  assert.equal((await t.api('POST', '/api/orders', { service: 'electric', zoneId: 'spb', fromConsult: id }, stranger.token)).body.error, 'forbidden');
 });
 
-test('консультация закрывается сама через сутки', async () => {
+test('консультация не закрывается без согласия клиента даже через сутки', async () => {
   const id = await takeConsult();
   ok(await t.api('POST', `/api/orders/${id}/consult-finish`, { hints: ['АКБ'], confidence: 'guess' }, master.token));
   t.clock.advance(25 * 3600);
   await t.app.orders.tick();
-  const o = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
+  const waiting = ok(await t.api('GET', `/api/orders/${id}`, undefined, client.token));
+  assert.equal(waiting.status, 'awaiting_confirmation');
+  const o = ok(await t.api('POST', `/api/orders/${id}/confirm`, {}, client.token));
   assert.equal(o.status, 'completed');
 });
 

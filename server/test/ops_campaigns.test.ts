@@ -13,6 +13,14 @@ before(async()=>{
   admin=await t.login('+79990000001');
   customer=await t.login('+79992221101');
   master=await t.login('+79992221102','master');
+  // Registration alone need not create a performer profile. Create and
+  // approve a real test profile through the same HTTP flow as a partner.
+  ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Тестовый мастер',specialties:['electric'],
+    taxStatus:'self_employed',inn:'780000000555',
+  },master.token));
+  ok(await t.api('POST',`/api/admin/performers/${master.id}/verify`,
+    {decision:'approved'},admin.token));
 });
 after(()=>t.close());
 
@@ -127,4 +135,38 @@ test('zero-commission campaign is saved only for NEW matching orders, immutable 
   const next=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb'},customer.token));
   const normal=await t.db.one<any>('select commission_pct_override from orders where id=$1',[next.order.id]);
   assert.equal(normal.commission_pct_override,null,'new order after expiry has normal commission');
+});
+
+test('general free-until period freezes zero commission on order creation, even after admin changes dates', async () => {
+  const original = await t.app.settings.get('fees');
+  const deadline = new Date(t.clock.now().getTime() + 3 * 86_400_000)
+    .toISOString().slice(0, 10);
+  try {
+    await t.app.settings.set('fees', { freeUntil: deadline }, admin.id);
+    const freeOrder = ok(await t.api('POST', '/api/orders',
+      { service: 'air', zoneId: 'spb' }, customer.token));
+    const whenFree = await t.db.one<any>(
+      'select commission_pct_override, commission_campaign_id from orders where id=$1',
+      [freeOrder.order.id]);
+    assert.equal(Number(whenFree?.commission_pct_override), 0,
+      'free period must be frozen in the new order');
+    assert.equal(whenFree?.commission_campaign_id, null,
+      'general free-until must not invent a service campaign');
+
+    await t.app.settings.set('fees', { freeUntil: null }, admin.id);
+    const sameOrder = await t.db.one<any>(
+      'select commission_pct_override from orders where id=$1',
+      [freeOrder.order.id]);
+    assert.equal(Number(sameOrder?.commission_pct_override), 0,
+      'admin ending the period cannot retroactively charge a created order');
+    const laterOrder = ok(await t.api('POST', '/api/orders',
+      { service: 'air', zoneId: 'spb' }, customer.token));
+    const nowNormal = await t.db.one<any>(
+      'select commission_pct_override from orders where id=$1',
+      [laterOrder.order.id]);
+    assert.equal(nowNormal?.commission_pct_override, null,
+      'new order after disabling the period uses the normal tariff');
+  } finally {
+    await t.app.settings.set('fees', { freeUntil: original.freeUntil }, admin.id);
+  }
 });

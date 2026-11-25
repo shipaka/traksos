@@ -19,6 +19,7 @@ export const defaultSchedule: Schedule = {
   from: '09:00', to: '18:00', phoneTo: '20:00',
 };
 
+const validTime = (t: unknown): t is string => typeof t==='string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(t);
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); };
 
 /** День недели и минуты от полуночи по Москве */
@@ -30,11 +31,18 @@ export function moscowNow(now: Date) {
 }
 
 export function slot(s: Schedule | null | undefined, now: Date, offScheduleUntil?: Date | string | null): Slot {
-  if (!s || !s.on) return 'work';
+  if (!Number.isFinite(now.getTime())) return 'off';
+  if (!s || s.on===false) return 'work';
+  if (s.on!==true) return 'off';
   if (offScheduleUntil && new Date(offScheduleUntil) > now) return 'work';
+  // Historical or malformed JSON must not crash dispatch for everyone.
+  // Preserve the legacy missing phoneTo fallback but reject invalid hours.
+  const phoneEnd=s.phoneTo ?? s.to;
+  if (!s.days || !validTime(s.from) || !validTime(s.to) || !validTime(phoneEnd) ||
+      toMin(s.from)>=toMin(s.to) || toMin(phoneEnd)<toMin(s.to)) return 'off';
   const { day, minutes } = moscowNow(now);
-  if (!s.days[day]) return 'off';
-  const from = toMin(s.from), to = toMin(s.to), phoneTo = Math.max(toMin(s.phoneTo || s.to), to);
+  if (s.days[day]!==true) return 'off';
+  const from = toMin(s.from), to = toMin(s.to), phoneTo = toMin(phoneEnd);
   if (minutes >= from && minutes < to) return 'work';
   if (minutes >= to && minutes < phoneTo) return 'phone';
   return 'off';
@@ -43,7 +51,7 @@ export function slot(s: Schedule | null | undefined, now: Date, offScheduleUntil
 /** Конец текущих суток по Москве — до этого момента действует ручной выход на линию вне графика */
 export function endOfMoscowDay(now: Date) {
   const { minutes } = moscowNow(now);
-  return new Date(now.getTime() + (24 * 60 - minutes) * 60_000 - now.getSeconds() * 1000);
+  return new Date(now.getTime() + (24 * 60 - minutes) * 60_000 - now.getUTCSeconds() * 1000 - now.getUTCMilliseconds());
 }
 
 export function validSchedule(s: Schedule) {

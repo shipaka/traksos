@@ -89,6 +89,9 @@ try {
   assert.ok((await reopened.locator('.msg').count())>0,'archived messages must remain readable');
 
   const masterPage=await pageFor(performer.token,1440,900,id);
+  // Approved master order uses tabs. The archived chat lives under the Chat tab,
+  // while client chat keeps its original inline behavior.
+  await masterPage.getByRole('tab',{name:'Чат',exact:true}).click();
   await openArchive(masterPage,'performer desktop');
   await masterPage.screenshot({path:OUT+'/closed-chat-performer-desktop.png'});
 

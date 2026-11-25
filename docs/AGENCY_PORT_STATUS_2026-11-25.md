@@ -1,0 +1,9 @@
+# Agency evidence ledger — staged integration, not a release
+
+Existing PR #139 is the canonical model, not alternative #138. Historical source a8773e7f294276042a31600a13847f8a7bfbeb55 is preserved as an ancestor. Current integration base fa7d533ebfe84958e6d336c9a96d16cd8f62170e. All historical files are recoverable at the historical commit.
+
+Stage 1: four original migrations 119–122 and schema-only tests on the disposable PostgreSQL fixture. The complete migration names do not collide with main; migrations are tracked by full filename. No service, HTTP route, screen, bank connection, payment action, tax calculation, shop enablement or checkout change is registered. Existing shop orders and users are references only.
+
+Still to port/review: server/src/services/shopAgencyLedger.ts, server/src/services/shopAgencyBankReconciliation.ts, server/test/shopAgencyLedger.test.ts, server/test/shopAgencyBank.test.ts, server/src/app.ts, web/src/screens/admin.tsx, web/src/screens/adminAgencyLedger.tsx, e2e/admin-navigation-ux.mjs, scripts/load-mixed-1000.mjs, .github/workflows/load-1000.yml, docs/AGENCY_BANK_RECONCILIATION.md, docs/AGENCY_LEDGER_FINAL_HANDOFF.md, docs/AGENCY_LEDGER_IMPLEMENTATION.md, docs/AGENCY_LEDGER_PHASE2_OPERATIONS.md. No historical API or UI is deployed by this stage.
+
+Before release: verify actual PostgreSQL on fresh and migrated schema; migrate services with current authorization, order snapshot, pre-procurement mandate, append-only activity classification, bank unmatched state, privacy/retention, and correction review. Do not infer a tax base or allocate real funds from an imported CSV. Review accounting/legal rules and validate all required CI on the integrated head. Until then PR stays draft; no main merge or VPS deployment. See #270 and #278 for coordination.

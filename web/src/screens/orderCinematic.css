@@ -8,3 +8,23 @@
 @media(prefers-reduced-motion:reduce){.cinematic-status-glow,.is-current .cinematic-status-node{animation:none}.cinematic-status-meter>span,.cinematic-status-steps li{transition:none}}
 
 .cinematic-status-stage-time{font-size:11px;letter-spacing:.025em;font-variant-numeric:tabular-nums;color:#8bdaf3;opacity:.92}.cinematic-status-stop{padding:11px 13px;border:1px solid rgba(255,183,103,.35);border-radius:12px;background:rgba(255,166,74,.07);color:#ffd5a5;font-size:12px;line-height:1.5;margin:20px 0 0}
+
+/* Approved master order: compact optional technical reference link, only after
+   server-confirmed arrival. The main workflow button retains visual priority. */
+.master-arrival-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.master-arrival-tools>.btn{flex:1 1 180px}
+.master-techbase-shortcut{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-height:43px;padding:8px 13px;box-sizing:border-box;
+ border-radius:11px;border:1px solid #4596af;
+ background:linear-gradient(145deg,#183f50,#0d2738);color:#dcfaff;
+ font-size:13px;font-weight:750;text-decoration:none;
+ box-shadow:inset 0 1px #9de8fb21
+}
+.master-techbase-shortcut svg{flex:none;color:#79e6ef}
+.master-techbase-shortcut:focus-visible{outline:2px solid #ff9439;outline-offset:3px}
+.master-working-techbase{display:flex;align-items:center;justify-content:flex-start}
+@media(max-width:399px){
+ .master-arrival-tools>.btn{flex:1 1 150px}
+ .master-techbase-shortcut{min-height:44px;padding:8px 10px}
+}

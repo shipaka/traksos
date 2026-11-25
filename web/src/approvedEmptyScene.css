@@ -1,0 +1,40 @@
+/* One illustrative scene across desktop cabinets, mobile browser and Android.
+   Inactive data is never filled by demo orders or fictitious vehicles. */
+.tr-approved-empty-scene {
+  position:relative;
+  display:block;
+  isolation:isolate;
+  width:100%;
+  height:clamp(118px,13vw,170px);
+  min-width:0;
+  overflow:hidden;
+  border-radius:15px;
+  border:1px solid #35576a;
+  background:radial-gradient(ellipse at 72% 70%,#193949 0%,transparent 58%),
+             linear-gradient(112deg,#0a1b27,#142e3a 60%,#091922);
+  box-shadow:inset 0 1px #ffffff14;
+}
+.tr-approved-empty-scene::after {
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,#071a26cb 0%,transparent 52%),
+             linear-gradient(0deg,#07151b90,transparent 45%);
+  pointer-events:none;
+  z-index:1;
+}
+.tr-approved-empty-scene img {
+  position:absolute;
+  width:100%;height:100%;
+  inset:0;
+  object-fit:contain;
+  object-position:right center;
+  filter:drop-shadow(0 9px 13px #0008);
+  opacity:.92;
+  z-index:0;
+}
+@media(max-width:899px) {
+  .tr-approved-empty-scene {
+    height:116px;
+    border-radius:12px;
+  }
+}

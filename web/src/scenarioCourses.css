@@ -1,0 +1,52 @@
+/* Additive scenario-course design: inherited TrakSOS palette, no dashboard restyling. */
+.scenario-encyclopedia { margin-top:18px; }
+.scenario-heading { display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px; }
+.scenario-heading h2 { margin:7px 0;font-size:clamp(1.18rem,2.1vw,1.55rem);line-height:1.3; }
+.scenario-heading p { margin:4px 0;line-height:1.55;max-width:720px; }
+.scenario-progress-chip { display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:88px;min-height:74px;padding:10px 16px;border:1px solid var(--line,#d5dce5);background:var(--panel,transparent);border-radius:14px; }
+.scenario-progress-chip b { font-size:1.2rem; }
+.scenario-progress-chip small { color:var(--muted,#667381); }
+.scenario-catalog-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr));gap:12px; }
+.scenario-course-card { display:flex;min-width:0;flex-direction:column;gap:12px;padding:17px;border:1px solid var(--line,#d5dce5);border-radius:16px;background:var(--card,var(--panel,transparent));color:inherit;text-decoration:none;transition:border-color .15s ease,transform .15s ease; }
+.scenario-course-card:hover,.scenario-course-card:focus-visible { border-color:var(--accent,#2f84df);transform:translateY(-1px); }
+.scenario-course-card>b { font-size:1.04rem;line-height:1.4; }
+.scenario-course-card p { flex:1;line-height:1.55;color:var(--muted,#667381);font-size:.9rem;margin:0; }
+.scenario-course-top,.scenario-course-bottom { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px; }
+.scenario-course-top { color:var(--muted,#667381);font-size:.78rem; }
+.scenario-course-bottom { border-top:1px solid var(--line,#d5dce5);padding-top:12px; }
+.scenario-course-bottom small { color:var(--muted,#667381); }
+.scenario-course-bottom strong { color:var(--accent,#2f84df);font-size:.87rem; }
+.scenario-difficulty,.scenario-completed { padding:4px 8px;border:1px solid var(--line,#d5dce5);border-radius:999px;line-height:1.3; }
+.scenario-completed { border-color:var(--accent,#2f84df); }
+.scenario-lesson-title h1 { line-height:1.28;margin:8px 0; }
+.scenario-lesson-title p { max-width:760px; }
+.scenario-decision-panel { min-width:0;padding:18px; }
+.scenario-decision-panel h2 { font-size:clamp(1.15rem,2.3vw,1.4rem);line-height:1.4; }
+.scenario-answer-list { display:flex;flex-direction:column;gap:10px; }
+.scenario-answer { width:100%;display:flex;align-items:flex-start;text-align:left;gap:12px;min-height:56px;padding:14px;border:1px solid var(--line,#d5dce5);background:var(--panel,transparent);border-radius:12px;color:inherit;font:inherit;line-height:1.45;cursor:pointer; }
+.scenario-answer:hover:not(:disabled),.scenario-answer:focus-visible { border-color:var(--accent,#2f84df); }
+.scenario-answer:disabled { cursor:default;opacity:.72; }
+.scenario-answer.selected { border-color:var(--accent,#2f84df);opacity:1;box-shadow:inset 0 0 0 1px var(--accent,#2f84df); }
+.scenario-answer-number { flex:0 0 28px;display:flex;align-items:center;justify-content:center;height:28px;border-radius:50%;border:1px solid var(--line,#d5dce5);font-weight:650; }
+.scenario-feedback { border:1px solid var(--line,#d5dce5);border-left:3px solid var(--accent,#2f84df);border-radius:10px;padding:12px 14px;line-height:1.5; }
+.scenario-feedback.caution { border-left-color:var(--muted,#667381); }
+.scenario-feedback p { margin:5px 0 0; }
+.scenario-next-controls { justify-content:space-between;align-items:center;margin-top:8px; }
+.scenario-next-controls button { min-height:44px; }
+.scenario-aside { min-width:0; }
+.scenario-aside .card { padding:14px; }
+.scenario-aside p { line-height:1.55; }
+.scenario-aside a { display:block;min-height:40px;padding:6px 0; }
+@media(max-width:740px) {
+  .scenario-lesson .training-demo-workspace { grid-template-columns:minmax(0,1fr); }
+  .scenario-course-card { padding:15px; }
+}
+@media(max-width:410px) {
+  .scenario-next-controls button { flex:1 1 150px; }
+  .scenario-heading { align-items:center; }
+  .scenario-progress-chip { min-width:73px;min-height:64px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .scenario-course-card { transition:none; }
+  .scenario-course-card:hover { transform:none; }
+}

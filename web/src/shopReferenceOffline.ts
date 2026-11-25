@@ -1,6 +1,7 @@
 // Approved reference-only part names and articles, stored separately in IndexedDB.
 // Never cache private history, VIN, stock, supplier credentials or prices.
 import { get } from './api.ts';
+import { assertDeltaPage, assertSnapshotPage, sameCheckpoint, validCheckpoint, validRevision } from './shopIndexCheckpoint.ts';
 
 import type { OfflinePart, SyncSummary } from './shopOffline.ts';
 
@@ -41,24 +42,35 @@ function readMeta(db: IDBDatabase): Promise<IndexMeta | null> {
 /** Save a batch and its position in one IDB transaction. Interruption can never
  * leave the cursor ahead of stored records or behind removed tombstones. */
 function storeBatch(db: IDBDatabase, rows: unknown[][], meta: IndexMeta,
-  reset: boolean, delta: boolean): Promise<number> {
+  expected: IndexMeta | null, reset: boolean, delta: boolean): Promise<number> {
   return new Promise((resolve, reject) => {
     let removed = 0;
+    // All page writes and their metadata check share ONE readwrite transaction.
+    // IndexedDB serialises concurrent readwrite transactions across browser tabs.
     const tx = db.transaction(['parts', 'meta'], 'readwrite');
     const parts = tx.objectStore('parts');
-    if (reset) parts.clear();
-    for (const line of rows) {
-      const record = delta ? line.slice(1) : line;
-      const [id, category, brand, article, name, aliases] = record;
-      if (typeof id !== 'string') continue;
-      if (delta && record.length === 1) { parts.delete(id); removed++; continue; }
-      if (typeof name !== 'string') continue;
-      parts.put({ id, category, brand, article, name, aliases } satisfies OfflinePart);
-    }
-    tx.objectStore('meta').put(meta);
+    const metadata = tx.objectStore('meta');
+    const current = metadata.get('index');
+    current.onsuccess = () => {
+      // The HTTP response may have arrived after another tab saved a newer
+      // cursor/revision. Refuse stale rows, deletes AND metadata atomically.
+      if (!sameCheckpoint(current.result, expected)) {
+        tx.abort();
+        reject(new Error('Справочник уже обновляется в другой вкладке. Повторите синхронизацию.'));
+        return;
+      }
+      if (reset) parts.clear();
+      for (const line of rows) {
+        const record = delta ? line.slice(1) : line;
+        const [id, category, brand, article, name, aliases] = record;
+        if (delta && record.length === 1) { parts.delete(id); removed++; continue; }
+        parts.put({ id, category, brand, article, name, aliases } satisfies OfflinePart);
+      }
+      metadata.put(meta);
+    };
     tx.oncomplete = () => resolve(removed);
     tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error ?? new Error('Изменение локального справочника отменено.'));
   });
 }
 
@@ -68,10 +80,13 @@ export async function syncOfflineReferences(): Promise<SyncSummary> {
   const manifest = await get<{ enabled: boolean; revision: string; count: number }>(
     '/api/shop/catalog/index/manifest');
   if (!manifest.enabled) throw new Error('Магазин пока в разработке');
+  if (!validRevision(manifest.revision) || !Number.isSafeInteger(manifest.count) ||
+      manifest.count < 0) throw new Error('Неверная версия локального справочника');
   const db = await open();
   try {
     const prev = await readMeta(db);
-    const valid = prev?.schema === 1 && /^\d+$/.test(prev.revision);
+    const valid = validCheckpoint(prev, 1);
+    let checkpoint: IndexMeta | null = prev;
     const continuingSnapshot = !!valid && !prev!.complete;
     // Initial bootstrap (or migration from the old timestamp scheme).
     if (!valid || continuingSnapshot) {
@@ -82,11 +97,15 @@ export async function syncOfflineReferences(): Promise<SyncSummary> {
         const response = await get<{ enabled: boolean; rows: unknown[][]; next: string | null }>(
           '/api/shop/catalog/index/page?limit=500' + (cursor ? '&after=' + encodeURIComponent(cursor) : ''));
         if (!response.enabled) throw new Error('Магазин пока закрыт');
-        const complete = !response.next;
-        await storeBatch(db, response.rows, {
+        assertSnapshotPage(response.rows, response.next, cursor);
+        const complete = response.next === null;
+        const updated: IndexMeta = {
           key: 'index', schema: 1, revision: initialRevision,
           cursor: response.next, complete, count: manifest.count,
-        }, !continuingSnapshot && page === 0, false);
+        };
+        await storeBatch(db, response.rows, updated, checkpoint,
+          !continuingSnapshot && page === 0, false);
+        checkpoint = updated;
         added += response.rows.length;
         cursor = response.next;
         if (complete) return { added, removed: 0, total: manifest.count, complete: true, unchanged: false, incremental: false };
@@ -106,12 +125,15 @@ export async function syncOfflineReferences(): Promise<SyncSummary> {
         enabled: boolean; rows: unknown[][]; next: string | null; revision: string;
       }>('/api/shop/catalog/index/changes?limit=500&after=' + encodeURIComponent(after));
       if (!response.enabled) throw new Error('Магазин пока закрыт');
+      assertDeltaPage(response.rows, response.next, response.revision, after);
       const complete = response.next === null;
       const rev = complete ? response.revision : response.next!;
-      removed += await storeBatch(db, response.rows, {
+      const updated: IndexMeta = {
         key: 'index', schema: 1, revision: rev, cursor: null,
         complete: true, count: manifest.count,
-      }, false, true);
+      };
+      removed += await storeBatch(db, response.rows, updated, checkpoint, false, true);
+      checkpoint = updated;
       added += response.rows.length;
       after = rev;
       if (complete) return { added, removed, total: manifest.count, complete: true, unchanged: false, incremental: true };

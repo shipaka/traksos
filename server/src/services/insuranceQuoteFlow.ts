@@ -24,23 +24,36 @@ export class InsuranceQuoteFlow {
          order by name, id limit 100`);
   }
 
-  private async case(q:Queryable,id:string):Promise<CaseRow> {
+  private async case(q:Queryable,id:string,lock:'update'|'share'|false=false):Promise<CaseRow> {
+    // All writes must serialize on the underlying insurance request before
+    // checking assignment, stage, proposal count or file uniqueness. Without
+    // a row lock, two HTTP requests may both pass the same pre-transition
+    // state and produce conflicting offers, selections, PDFs or messages.
     const r=await q.one<CaseRow>(
       `select id,owner_id,requested_by,vehicle_id,kind,assigned_to,status,insurance_stage,insurance_choice_id
-         from vehicle_service_requests where id=$1`,[id]);
+         from vehicle_service_requests where id=$1 ${lock?'for '+lock:''}`,[id]);
     if(!r||r.kind!=='insurance')throw notFound('Страховая заявка не найдена');
     return r;
   }
 
+  private async liveActor(q:Queryable,user:AuthUser):Promise<AuthUser> {
+    const current=await q.one<Pick<AuthUser,'roles'|'owner_id'>>(
+      "select roles,owner_id from users where id=$1 and status='active' for share",[user.id]);
+    if(!current)throw forbidden('Учётная запись больше не активна');
+    // Never grant a new privilege to an already authenticated request.
+    return {...user,owner_id:current.owner_id,roles:user.roles.filter(role=>current.roles.includes(role))};
+  }
+
   private async clientAccess(q:Queryable,user:AuthUser,r:CaseRow) {
     if(r.owner_id===user.id)return true;
-    if(r.requested_by!==user.id||user.owner_id!==r.owner_id)return false;
+    if(r.requested_by!==user.id||user.owner_id!==r.owner_id||!user.roles.includes('driver'))return false;
     const right=await q.one<{id:string}>(`select v.id from vehicles v join users o on o.id=v.owner_id
       where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
-        and (o.fleet->'allow'->>'insurance')::boolean is true`,[r.vehicle_id,r.owner_id,user.id]);
+        and (o.fleet->'allow'->>'insurance')::boolean is true for share of v,o`,[r.vehicle_id,r.owner_id,user.id]);
     return !!right;
   }
   private async access(q:Queryable,user:AuthUser,r:CaseRow) {
+    user=await this.liveActor(q,user);
     const isClient=await this.clientAccess(q,user,r);
     const isPartner=canAgent(user,r);
     if(!isClient&&!isPartner&&!isStaff(user))throw forbidden('Нет доступа к этой страховой заявке');
@@ -48,31 +61,36 @@ export class InsuranceQuoteFlow {
   }
 
   async detail(user:AuthUser,id:string) {
-    const r=await this.case(this.db,id);
-    const permissions=await this.access(this.db,user,r);
-    const request=await this.db.one(`select r.id,r.owner_id,r.requested_by,r.assigned_to,r.kind,r.status,r.insurance_stage,r.insurance_details,
+    return this.db.tx(async q => {
+    // Keep assignment/ACL stable for the complete sensitive read. The shared
+    // lock is compatible with other readers but blocks partner reassignment
+    // until this response has been assembled.
+    const r=await this.case(q,id,'share');
+    const permissions=await this.access(q,user,r);
+    const request=await q.one(`select r.id,r.owner_id,r.requested_by,r.assigned_to,r.kind,r.status,r.insurance_stage,r.insurance_details,
       r.insurance_choice_id,r.created_at,r.updated_at,r.policy_expires_on,r.comment,
       v.brand,v.model,v.year,v.plate,
       coalesce(nullif(agent.company_name,''),nullif(agent.name,''),'Страховой партнёр') as agent_name
       from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
       left join users agent on agent.id=r.assigned_to where r.id=$1`,[id]);
     if(!request)throw notFound('Страховая заявка не найдена');
-    const proposals=await this.db.query(`select id,company,product,premium_kopecks,description,coverage,created_at
+    const proposals=await q.query(`select id,company,product,premium_kopecks,description,coverage,created_at
       from insurance_proposals where request_id=$1 order by premium_kopecks asc,company,id`,[id]);
-    const messages=await this.db.query(`select m.id,m.kind,m.body,m.created_at,
+    const messages=await q.query(`select m.id,m.kind,m.body,m.created_at,
       case when m.sender_id=$2 then 'you' when m.sender_id=$3 then 'agent' else 'system' end as sender
       from insurance_thread_messages m
       join vehicle_service_requests r on r.id=m.request_id
       where m.request_id=$1 order by m.id`,[id,user.id,r.assigned_to]);
-    const hasPolicy=await this.db.one<{has:boolean}>(
+    const hasPolicy=await q.one<{has:boolean}>(
       `select exists(select 1 from insurance_policy_files where request_id=$1) as has`,[id]);
     return {request,proposals,messages,hasPolicy:hasPolicy?.has??false,...permissions};
+    });
   }
 
   async accept(user:AuthUser,id:string) {
     return this.db.tx(async q=>{
-      const r=await this.case(q,id);
-      if(!canAgent(user,r))throw forbidden('Только назначенный страховой агент может принять заявку');
+      const r=await this.case(q,id,'update');
+      if(!canAgent(await this.liveActor(q,user),r))throw forbidden('Только назначенный страховой агент может принять заявку');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       const target=r.insurance_stage==='received'?'preparing':r.insurance_stage==='selected'?'processing':null;
       if(!target)throw bad('invalid_stage','Заявка сейчас не ожидает принятия в работу');
@@ -92,8 +110,8 @@ export class InsuranceQuoteFlow {
         throw bad('invalid_offer','Укажите компанию, продукт и стоимость предложения');
     }
     return this.db.tx(async q=>{
-      const r=await this.case(q,id);
-      if(!canAgent(user,r))throw forbidden('Только назначенный агент может отправлять предложения');
+      const r=await this.case(q,id,'update');
+      if(!canAgent(await this.liveActor(q,user),r))throw forbidden('Только назначенный агент может отправлять предложения');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='preparing')throw bad('invalid_stage','Сначала примите заявку в работу');
       const count=await q.one<{n:number}>('select count(*)::int as n from insurance_proposals where request_id=$1',[id]);
@@ -111,8 +129,8 @@ export class InsuranceQuoteFlow {
 
   async choose(user:AuthUser,id:string,proposalId:string) {
     return this.db.tx(async q=>{
-      const r=await this.case(q,id);
-      if(!await this.clientAccess(q,user,r))throw forbidden('Выбирать страховой полис может только заявитель');
+      const r=await this.case(q,id,'update');
+      if(!await this.clientAccess(q,await this.liveActor(q,user),r))throw forbidden('Выбирать страховой полис может только заявитель');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='offers_sent')throw bad('invalid_stage','Предложения пока не готовы или выбор уже сделан');
       const choice=await q.one<{company:string;product:string}>(
@@ -130,7 +148,7 @@ export class InsuranceQuoteFlow {
     const message=text.trim();
     if(message.length<1||message.length>2000)throw bad('invalid_message','Сообщение должно быть от 1 до 2000 символов');
     return this.db.tx(async q=>{
-      const r=await this.case(q,id);
+      const r=await this.case(q,id,'update');
       const allowed=await this.access(q,user,r);
       if(!allowed.isClient&&!allowed.isPartner)throw forbidden('Сотрудник может наблюдать заявку, но не писать от имени агента или клиента');
       if(['cancelled','rejected'].includes(r.status))throw bad('closed','Заявка закрыта');
@@ -153,8 +171,8 @@ export class InsuranceQuoteFlow {
     const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key(),iv);
     const enc=Buffer.concat([cipher.update(bytes),cipher.final()]),tag=cipher.getAuthTag();
     return this.db.tx(async q=>{
-      const r=await this.case(q,id);
-      if(!canAgent(user,r))throw forbidden('Только назначенный агент может передать полис');
+      const r=await this.case(q,id,'update');
+      if(!canAgent(await this.liveActor(q,user),r))throw forbidden('Только назначенный агент может передать полис');
       if(r.status!=='sent_to_partner')throw bad('closed','Заявка закрыта');
       if(r.insurance_stage!=='processing')throw bad('invalid_stage','Сначала примите выбранный вариант в работу');
       const current=await q.one<{id:string}>(`select id from insurance_proposals where id=$1 and request_id=$2`,
@@ -172,11 +190,16 @@ export class InsuranceQuoteFlow {
   }
 
   async downloadPolicy(user:AuthUser,id:string) {
-    const r=await this.case(this.db,id);
-    await this.access(this.db,user,r);
-    const file=await this.db.one<any>(`select file_name,iv,tag,data from insurance_policy_files
-      where request_id=$1`,[id]);
-    if(!file)throw notFound('Полис ещё не загружен');
+    const file=await this.db.tx(async q=>{
+      // The old agent must not pass authorization and then obtain a PDF after
+      // admin reassigns the request. Authenticate + fetch under one row lock.
+      const r=await this.case(q,id,'share');
+      await this.access(q,user,r);
+      const found=await q.one<any>(`select file_name,iv,tag,data from insurance_policy_files
+        where request_id=$1`,[id]);
+      if(!found)throw notFound('Полис ещё не загружен');
+      return found;
+    });
     const decipher=createDecipheriv('aes-256-gcm',key(),asBuf(file.iv));
     decipher.setAuthTag(asBuf(file.tag));
     const body=Buffer.concat([decipher.update(asBuf(file.data)),decipher.final()]);

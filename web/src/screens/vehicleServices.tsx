@@ -1,7 +1,14 @@
-import { useState } from 'react';
-import { get, post, patch, fmtTime } from '../api.ts';
-import { useLoad, useAction, useMe } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, patch, fmtTime, onEvent } from '../api.ts';
+import { useAction, useMe } from '../ui.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
+
+const validFutureDate=(value:string):boolean=>{
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return false;
+  const date=new Date(value+'T00:00:00Z');
+  return Number.isFinite(date.getTime())&&date.toISOString().slice(0,10)===value
+    &&value>new Date().toISOString().slice(0,10);
+};
 
 /** Оформление заявки для владельца или водителя с разрешением владельца. */
 export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId: string; onCreated: () => void }) {
@@ -9,6 +16,13 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
   const [kind, setKind] = useState<'insurance' | 'inspection'>('insurance');
   const [comment, setComment] = useState('');
   const [open, setOpen] = useState(false);
+  const vehicleIdRef=useRef(vehicleId);
+  vehicleIdRef.current=vehicleId;
+  useEffect(()=>{
+    // The vehicle selection can change without unmounting this form.
+    // Never retain the previous truck's comment or open submit action.
+    setKind('insurance');setComment('');setOpen(false);
+  },[vehicleId]);
   return (
     <div className="stack">
       <button type="button" className="btn ghost small" onClick={() => setOpen(!open)}>
@@ -18,7 +32,9 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
         e.preventDefault();
         if (kind === 'insurance') return;
         const created = await run(() => post('/api/vehicle-service-requests', { vehicleId, kind, comment: comment || undefined }), 'Заявка отправлена');
-        if (created) { setOpen(false); setComment(''); onCreated(); }
+        if (created && vehicleIdRef.current===vehicleId) {
+          setOpen(false);setComment('');onCreated();
+        }
       }}>
         <select className="field" aria-label="Услуга" value={kind} onChange={(e) => setKind(e.target.value as 'insurance' | 'inspection')}>
           <option value="insurance">Страхование</option>
@@ -45,14 +61,55 @@ export function VehicleServiceApplication({ vehicleId, onCreated }: { vehicleId:
 export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: string; isDriver: boolean; refreshVersion: number }) {
   const { me } = useMe();
   const [open, setOpen] = useState(false);
-  const history = useLoad(() => get(`/api/vehicles/${id}/service-history`), [id, refreshVersion],
-    (event) => event.type === 'connection_restored' || (event.type === 'vehicle_service' && event.vehicleId === id));
-  const items = history.data as any[] | undefined;
+  const identity=(me?.id??'')+':'+id;
+  const identityRef=useRef(identity);
+  identityRef.current=identity;
+  const serialRef=useRef(0);
+  const [reloadVersion,setReloadVersion]=useState(0);
+  const [history,setHistory]=useState<{
+    identity:string;items:any[]|null;error:string;loading:boolean;
+  }>({identity:'',items:null,error:'',loading:true});
+  const [renewing,setRenewing]=useState<string|null>(null);
+  const [expiry,setExpiry]=useState('');
+  const [savingError,setSavingError]=useState('');
   const { busy, run } = useAction();
-  const activeInsurance = (items ?? []).filter(r => r.kind === 'insurance' && !['completed','cancelled','rejected'].includes(r.status));
-  const [renewing, setRenewing] = useState<string | null>(null);
-  const [expiry, setExpiry] = useState('');
-  if (!items) return history.error ? <div className="note">Не удалось загрузить историю услуг: {history.error}</div> : null;
+  const reloadHistory=()=>setReloadVersion(version=>version+1);
+  useEffect(()=>{
+    // Every GET belongs to exactly one account and vehicle; old requests
+    // can never publish old plates or histories into the next workspace.
+    const serial=++serialRef.current;
+    const requestedBy=identity;
+    setHistory({identity,items:null,error:'',loading:true});
+    get<any[]>(`/api/vehicles/${id}/service-history`).then(result=>{
+      if(serial!==serialRef.current||identityRef.current!==requestedBy)return;
+      if(!Array.isArray(result))throw new Error('Некорректный ответ истории');
+      setHistory({identity:requestedBy,items:result,error:'',loading:false});
+    }).catch(e=>{
+      if(serial!==serialRef.current||identityRef.current!==requestedBy)return;
+      setHistory({identity:requestedBy,items:null,
+        error:e instanceof Error?e.message:'Не удалось получить историю',loading:false});
+    });
+    return ()=>{serialRef.current++;};
+  },[identity,refreshVersion,reloadVersion,id]);
+  useEffect(()=>onEvent(event=>{
+    if(event.type==='connection_restored'||(event.type==='vehicle_service'&&event.vehicleId===id))
+      reloadHistory();
+  }),[id]);
+  useEffect(()=>{
+    setOpen(false);setRenewing(null);setExpiry('');setSavingError('');
+  },[identity]);
+  const current=history.identity===identity?history:null;
+  const items=current&&!current.error?current.items:null;
+  const activeInsurance=(items??[]).filter(r=>r.kind==='insurance'&&
+    !['completed','cancelled','rejected'].includes(r.status));
+  if (!items) return <div className="stack" role="status">
+    {current?.error ? <div className="banner warn" role="alert">
+      Не удалось загрузить историю услуг: {current.error}
+      <button type="button" className="btn ghost small" onClick={reloadHistory}>
+        Повторить загрузку истории
+      </button>
+    </div> : <div className="note">Загружаем историю страхования и техосмотра…</div>}
+  </div>;
   const labels: Record<string, string> = {
     submitted: 'Подана', in_review: 'На рассмотрении', need_documents: 'Нужны документы',
     sent_to_partner: 'Передана партнёру', completed: 'Завершена',
@@ -121,7 +178,7 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
                 onClick={async () => {
                   if (!window.confirm('Отменить заявку? После отмены её нельзя будет возобновить.')) return;
                   const result = await run(() => post(`/api/vehicle-service-requests/${r.id}/cancel`), 'Заявка отменена');
-                  if (result) history.reload();
+                  if (result && identityRef.current === identity) reloadHistory();
                 }}>
                 Отменить заявку
               </button>
@@ -146,17 +203,26 @@ export function VehicleServiceHistory({ id, isDriver, refreshVersion }: { id: st
                 {renewing === r.id ? (
                   <div className="stack">
                     <label>Новая дата окончания полиса
-                      <input type="date" value={expiry} min={new Date().toISOString().slice(0, 10)} onChange={(e) => setExpiry(e.target.value)} />
+                      <input type="date" value={expiry} min={new Date(Date.now()+86400000).toISOString().slice(0, 10)}
+                        aria-invalid={!!expiry&&!validFutureDate(expiry)||undefined}
+                        onChange={(e) => {setExpiry(e.target.value);setSavingError('');}} />
                     </label>
+                    {expiry&&!validFutureDate(expiry)&&
+                      <p className="note" role="alert">Новая дата должна быть корректной и позже сегодняшнего дня.</p>}
+                    {savingError&&<div className="banner warn" role="alert">{savingError}</div>}
                     <div className="row">
-                      <button className="btn small" disabled={busy || !expiry} onClick={async () => {
-                        const result = await run(() => patch(`/api/vehicle-service-requests/${r.id}/renewal`, { expiresOn: expiry }), 'Срок полиса обновлён');
-                        if (result) { setRenewing(null); history.reload(); }
+                      <button className="btn small" disabled={busy||!validFutureDate(expiry)} onClick={async () => {
+                        const result=await run(()=>patch(`/api/vehicle-service-requests/${r.id}/renewal`,
+                          {expiresOn:expiry}),'Срок полиса обновлён');
+                        if(identityRef.current!==identity)return;
+                        if(result){setRenewing(null);setSavingError('');reloadHistory();}
+                        else setSavingError('Срок не подтверждён. Проверьте историю заявки перед повторной отправкой.');
                       }}>Сохранить срок</button>
-                      <button className="btn ghost small" disabled={busy} onClick={() => setRenewing(null)}>Отмена</button>
+                      <button className="btn ghost small" disabled={busy}
+                        onClick={()=>{setRenewing(null);setSavingError('');}}>Отмена</button>
                     </div>
                   </div>
-                ) : <button className="btn ghost small" onClick={() => { setExpiry(r.policy_expires_on?.slice(0, 10) ?? ''); setRenewing(r.id); }}>Указать новый срок полиса</button>}
+                ) : <button className="btn ghost small" onClick={() => { setExpiry(r.policy_expires_on?.slice(0, 10) ?? '');setSavingError('');setRenewing(r.id); }}>Указать новый срок полиса</button>}
               </div>
             )}
           </div>

@@ -1,7 +1,9 @@
 // Настройки площадки по разделам: открыта только выбранная группа.
-import { useState } from 'react';
-import { get, put, rub } from '../api.ts';
-import { useLoad, useAction, Loading, RubInput } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { put, rub } from '../api.ts';
+import { useAction, useMe, RubInput } from '../ui.tsx';
+import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
+import {parseAdminSetting} from '../adminSettingsValidation20261124.ts';
 import { InsuranceAccessAdmin } from './insuranceAccessAdmin.tsx';
 
 type Kind = 'rub' | 'pct' | 'num' | 'text' | 'bool' | 'share';
@@ -66,24 +68,60 @@ function show(v: any, kind: Kind) {
 }
 
 export function AdminSettings() {
-  const s = useLoad(() => get('/api/admin/settings'), []);
-  const { busy, run } = useAction();
-  const [edit, setEdit] = useState<string | null>(null);
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  const [val, setVal] = useState<any>(null);
-  if (!s.data) return <Loading error={s.error} />;
-  async function save(section: string, key: string, kind: Kind) {
-    const [top, sub] = section.split('.');
-    let v = val;
-    if (kind === 'pct' || kind === 'num') v = Number(String(val).replace(',', '.'));
-    if (kind === 'share') v = Math.max(0, Math.min(100, Number(String(val).replace(',', '.')))) / 100;
-    if ((kind === 'pct' || kind === 'num' || kind === 'share') && !Number.isFinite(v)) return;
-    const body = sub ? { [sub]: { ...s.data[top][sub], [key]: v } } : { [key]: v };
-    if (await run(() => put(`/api/admin/settings/${top}`, body), 'Сохранено — действует для новых заявок')) { setEdit(null); s.reload(); }
+  const {me}=useMe();
+  const admin=!!me?.roles.includes('admin');
+  const scope=(me?.id??'signed-out')+':platform-settings';
+  const scopeRef=useRef(scope);
+  scopeRef.current=scope;
+  const s=useAdminScopedResource<any>('/api/admin/settings',scope,admin);
+  const {busy,run}=useAction();
+  const [edit,setEdit]=useState<string|null>(null);
+  const [activeGroup,setActiveGroup]=useState<string|null>(null);
+  const [val,setVal]=useState<any>(null);
+  const [error,setError]=useState('');
+  useEffect(()=>{
+    setEdit(null);setActiveGroup(null);setVal(null);setError('');
+  },[scope]);
+  async function save(section:string,key:string,kind:Kind,input:any=val) {
+    if(!admin||busy||!s.data)return;
+    const startedAs=scope;
+    const result=parseAdminSetting(kind,input);
+    if(!result.ok){setError(result.error);return;}
+    const [top,sub]=section.split('.');
+    if(sub&&(!s.data[top]||!s.data[top][sub]||
+      typeof s.data[top][sub]!=='object')){
+      setError('Нет подтверждённого вложенного раздела настройки. Обновите параметры и попробуйте снова.');
+      return;
+    }
+    // Nested sub-objects (consult, cancel scale) are merged with a fresh copy
+    // of the displayed snapshot, so no unrelated fields are overwritten by
+    // an accidental undefined key in the editor.
+    const body=sub ? {[sub]:{...s.data[top]?.[sub],[key]:result.value}} :
+      {[key]:result.value};
+    if(['fees','payments','referral','cancel'].includes(top)&&
+      !window.confirm('Изменить действующий параметр площадки «'+key+'»? Изменение влияет на будущие действия.'))
+      return;
+    setError('');
+    const updated=await run(()=>put(`/api/admin/settings/${top}`,body),
+      'Сохранено — действует для новых заявок');
+    if(scopeRef.current!==startedAs)return;
+    if(updated){setEdit(null);setVal(null);s.reload();}
+    else setError('Настройка не подтверждена сервером. Обновите параметры и проверьте значение перед повтором.');
   }
+  if(!admin)return <div className="card stack">
+    <h3>Настройки площадки</h3><p role="alert">Изменять параметры может только администратор.</p>
+  </div>;
+  if(!s.data)return <div className="card stack" role={s.error?'alert':'status'}>
+    <h3>Настройки площадки</h3>
+    <p>{s.error?'Не удалось загрузить параметры: '+s.error:'Загружаем актуальные настройки…'}</p>
+    <button type="button" className="btn ghost small" onClick={s.reload}>Повторить загрузку настроек</button>
+  </div>;
   return (
     <div className="stack">
       <span className="note">Выберите раздел. Остальные настройки останутся скрытыми. Новые условия применяются к новым заявкам.</span>
+      {error&&<div className="banner warn" role="alert">{error}</div>}
+      <button type="button" className="btn ghost small" disabled={busy}
+        onClick={()=>{setEdit(null);setVal(null);setError('');s.reload();}}>Сверить параметры с сервером</button>
       <button type="button" className="linkrow" aria-expanded={activeGroup === 'insurance'} onClick={() => { setActiveGroup(activeGroup === 'insurance' ? null : 'insurance'); setEdit(null); }}>
         <span><b>Страховые агенты</b><small>Доступы и подключение страховых партнёров</small></span><span aria-hidden="true">{activeGroup === 'insurance' ? '−' : '›'}</span>
       </button>
@@ -100,14 +138,24 @@ export function AdminSettings() {
               return (
                 <div key={id} className="list-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
                   <button className="between" style={{ background: 'none', border: 0, color: 'inherit', padding: 0, font: 'inherit', textAlign: 'left' }}
-                    onClick={() => { if (kind === 'bool') { setVal(!cur); void put(`/api/admin/settings/${section.split('.')[0]}`, section.includes('.') ? { [section.split('.')[1]]: { ...path(s.data, section), [key]: !cur } } : { [key]: !cur }).then(() => s.reload()); return; } setEdit(edit === id ? null : id); setVal(kind === 'share' ? Math.round((cur ?? 0) * 100) : cur ?? ''); }}>
+                    onClick={() => {
+                       if(busy)return;
+                       setError('');
+                       if(kind==='bool'){
+                         if(typeof cur!=='boolean'){setError('Переключатель недоступен: нет подтверждённого значения от сервера.');return;}
+                         void save(section,key,kind,!cur);
+                         return;
+                       }
+                       setEdit(edit===id?null:id);
+                       setVal(kind==='share'?(typeof cur==='number'?String(Number((cur*100).toFixed(2))): ''):cur??'');
+                     }}>
                     <span className="stack" style={{ gap: 0 }}><span>{label}</span>{hint && <small className="note">{hint}</small>}</span>
                     <b style={{ whiteSpace: 'nowrap' }}>{show(cur, kind)}</b>
                   </button>
                   {edit === id && (
                     <div className="row" style={{ flexWrap: 'nowrap' }}>
                       {kind === 'rub' ? <RubInput value={val} onChange={setVal} /> : <input className="field" value={val ?? ''} inputMode={kind === 'text' ? 'text' : 'decimal'} onChange={(e) => setVal(e.target.value)} placeholder={kind === 'share' || kind === 'pct' ? '%' : ''} />}
-                      <button className="btn small" disabled={busy} onClick={() => save(section, key, kind)}>OK</button>
+                      <button className="btn small" disabled={busy} onClick={() => void save(section,key,kind)}>Сохранить</button>
                     </div>
                   )}
                 </div>

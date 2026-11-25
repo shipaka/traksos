@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
-import { slot } from '../src/domain/schedule.ts';
+import { slot, endOfMoscowDay, type Schedule } from '../src/domain/schedule.ts';
 
 // Распорядок мастера: выходные, часы выездов, «на телефоне», перерыв; конец рабочего дня снимает с линии.
 
@@ -88,4 +88,27 @@ test('отпуск: заявки не приходят; наценки и «с �
   assert.equal(l.offers[0].extras.prepay, 'always');
   assert.equal((await t.api('PUT', '/api/performer/extras', { takes: ['чушь'] }, master.token)).status, 400);
   ok(await t.api('POST', `/api/orders/${b.order.id}/cancel`, { reason: 'тест' }, client.token));
+});
+
+
+test('malformed historical active schedules are unavailable without breaking other dispatch candidates',()=>{
+  const now=new Date('2026-12-01T07:00:00Z');
+  const good:Schedule={on:true,days,from:'09:00',to:'18:00',phoneTo:'20:00'};
+  for(const corrupt of [
+    {...good,days:null},{...good,from:null},{...good,to:'garbage'},
+    {...good,from:'18:00',to:'09:00'},{...good,phoneTo:'08:00'},
+    {...good,on:'false'},{...good,days:{...days,tue:'false'}},
+  ])assert.equal(slot(corrupt as unknown as Schedule,now),'off');
+  assert.equal(slot(good,now),'work');
+  assert.equal(slot(good,new Date(NaN)),'off');
+  assert.equal(slot({...good,phoneTo:undefined} as unknown as Schedule,new Date('2026-12-01T15:30:00Z')),'off');
+  assert.equal(slot(good,new Date('2026-12-01T20:00:00Z'),new Date('2026-12-01T21:00:00Z')),'work');
+});
+
+test('manual availability expires exactly at Moscow midnight even at fractional seconds',()=>{
+  const expiry=endOfMoscowDay(new Date('2026-12-01T20:59:59.987Z'));
+  assert.equal(expiry.toISOString(),'2026-12-01T21:00:00.000Z');
+  const schedule:Schedule={on:true,days,from:'09:00',to:'18:00',phoneTo:'20:00'};
+  assert.equal(slot(schedule,new Date('2026-12-01T20:59:59.999Z'),expiry),'work');
+  assert.equal(slot(schedule,expiry,expiry),'off');
 });
