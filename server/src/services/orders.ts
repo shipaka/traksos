@@ -453,9 +453,16 @@ export class OrdersService {
       return { order: upd, replay: false, message, ids };
     });
     if (result.replay) return this.view(owner, orderId);
-    if (result.message) this.notifier.live(await this.participants(orderId), { type: 'chat', message: result.message });
-    const current = await this.customerRecipients(result.order);
-    await this.notifier.deliverStored(result.ids.filter(id => current.includes(id)), { type: 'order', orderId, status }, msg);
+    // The decision and inbox are already durable. A post-commit delivery
+    // failure must not prevent the winning approval from reaching launch.
+    // Do not replay delivery or launch on an identical decision.
+    try {
+      if (result.message) this.notifier.live(await this.participants(orderId), { type: 'chat', message: result.message });
+      const current = await this.customerRecipients(result.order);
+      await this.notifier.deliverStored(result.ids.filter(id => current.includes(id)), { type: 'order', orderId, status }, msg);
+    } catch {
+      console.warn('[fleet] owner decision live delivery failed', orderId);
+    }
     // Network/payment/dispatch are outside the transaction. Only the
     // winning decision may launch; durable launch recovery is separate.
     if (approve) await this.launch(owner, result.order);
