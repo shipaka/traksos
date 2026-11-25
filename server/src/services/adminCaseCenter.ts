@@ -137,10 +137,10 @@ export class AdminCaseCenter {
       'select id,owner_id,driver_id,brand,model,year,plate,trailer_plate,created_at '+
       'from vehicles where id=$1',[vehicleId]) : null;
     const orderIds=stages.map(s=>s.id),bookingIds=bookings.map(b=>b.id);
-    const [events,payments,payouts,moderation,notes,chat,vehicleHistory,vehicleHistoryBookings,registry,ordinals]=await Promise.all([
+    const [eventWindow,payments,payouts,moderation,notes,chatWindow,vehicleHistoryWindow,vehicleHistoryBookingsWindow,registry,ordinals,latestProposals]=await Promise.all([
       this.db.query<any>(
         'select e.order_id,e.actor_id,e.type,e.data,e.created_at from order_events e '+
-        'where e.order_id=any($1::uuid[]) order by e.created_at,e.id limit 600',[orderIds]),
+        'where e.order_id=any($1::uuid[]) order by e.created_at desc,e.id desc limit 601',[orderIds]),
       this.db.query<any>(
         'select p.id,p.order_id,p.kind,p.method,p.amount,p.client_fee,p.total,p.status,'+
         'p.refunded_amount,p.created_at from payments p where p.order_id=any($1::uuid[]) '+
@@ -164,26 +164,36 @@ export class AdminCaseCenter {
         'select m.id,m.order_id,m.sender_id,m.kind,m.body,m.created_at, '+
         "coalesce(u.name,'Система') as sender_name "+
         'from chat_messages m left join users u on u.id=m.sender_id '+
-        'where m.order_id=any($1::uuid[]) order by m.created_at,m.id limit 500',
+        'where m.order_id=any($1::uuid[]) order by m.created_at desc,m.id desc limit 501',
         [orderIds]),
       vehicleId ? this.db.query<any>(
         'select o.id,o.number,o.service,o.status,o.problem,o.result_note,o.created_at,o.completed_at '+
         'from orders o where o.vehicle_id=$1 and o.id<>all($2::uuid[]) '+
-        'order by o.created_at desc limit 100',
+        'order by o.created_at desc,o.id desc limit 101',
         [vehicleId,orderIds]) : Promise.resolve([]),
       vehicleId ? this.db.query<any>(
         'select b.id,b.number,b.status,b.need,b.works,b.created_at,b.closed_at, '+
         'c.name as center_name from service_bookings b '+
         'join service_centers c on c.id=b.center_id '+
         'where b.vehicle_id=$1 and b.id<>all($2::uuid[]) '+
-        'order by b.created_at desc limit 100',
+        'order by b.created_at desc,b.id desc limit 101',
         [vehicleId,bookingIds]) : Promise.resolve([]),
       this.db.one<{multi_number:number}>(
         'select multi_number from case_registry where root_order_id=$1',[rootId]),
       this.db.query<any>(
         'select source_kind,source_id,ordinal from case_stage_index where root_order_id=$1 order by ordinal',
-        [rootId])
+        [rootId]),
+      // Itemization must not depend on which timeline page was returned.
+      this.db.query<any>(
+        'select distinct on (e.order_id) e.order_id,e.type,e.data,e.created_at from order_events e '+
+        "where e.order_id=any($1::uuid[]) and e.type='amount_proposed' "+
+        'order by e.order_id,e.created_at desc,e.id desc',[orderIds])
     ]);
+    const events=eventWindow.slice(0,600).reverse();
+    const chat=chatWindow.slice(0,500).reverse();
+    const vehicleHistory=vehicleHistoryWindow.slice(0,100);
+    const vehicleHistoryBookings=vehicleHistoryBookingsWindow.slice(0,100);
+    const history_windows={events:{limit:600,hasOlder:eventWindow.length>600},chat:{limit:500,hasOlder:chatWindow.length>500},vehicle_history:{limit:100,hasOlder:vehicleHistoryWindow.length>100},vehicle_history_bookings:{limit:100,hasOlder:vehicleHistoryBookingsWindow.length>100}};
     const stageNo=new Map<string,number>(ordinals.map((x:any)=>[x.source_kind+':'+x.source_id,Number(x.ordinal)]));
     const multi=stages.length+bookings.length+ecuReferrals.length>1;
     await this.db.query(
@@ -193,10 +203,10 @@ export class AdminCaseCenter {
       root_id:rootId,
       case_number:multi&&registry?'М-'+String(registry.multi_number).padStart(6,'0'):null,
       multi,
-      stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
+      stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,latestProposals)})),
       bookings:bookings.map(b=>({...b,stage_no:stageNo.get('booking:'+b.id)??null})),
       ecu_referrals:ecuReferrals.map((h:any,i:number)=>({...h,stage_no:stageNo.get('ecu:'+h.id)??stages.length+bookings.length+i+1})),
-      vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,vehicle_history_bookings:vehicleHistoryBookings,
+      vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,vehicle_history_bookings:vehicleHistoryBookings,history_windows,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
     };
   }
@@ -205,7 +215,7 @@ export class AdminCaseCenter {
     const detail=await this.detail(admin,anyOrderId);
     const quote=(v:unknown)=>{
       const value=String(v??'');
-      const secured=/^[=+@-]/.test(value)?"'"+value:value;
+      const secured=/^[\s\uFEFF]*[=+@\-\t\r]/u.test(value)?"'"+value:value;
       return '"'+secured.replace(/"/g,'""')+'"';
     };
     const table=[
