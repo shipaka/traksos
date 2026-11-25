@@ -118,9 +118,9 @@ function useShopPrivateLoad<T>(load:(isCurrent:()=>boolean)=>Promise<T>, deps:un
       window.removeEventListener('traksos-auth-expired',invalidate);
     };
   },[]);
-  useEffect(()=>eventFilter?onEvent((event:any)=>{
-    if(eventFilter(event))setRefresh(n=>n+1);
-  }):undefined,[actor,token,...deps]);
+  useEffect(()=>onEvent((event:any)=>{
+    if(event.type==='connection_restored'||eventFilter?.(event))setRefresh(n=>n+1);
+  }),[actor,token,...deps]);
   return {
     data:result.key===key?result.data:null,
     error:result.key===key?result.error:null,
@@ -161,7 +161,7 @@ export function Shop() {
       <b>{contextBookingId ? 'Подбор для ремонтной заявки СТО' : 'Подбор для моей техники'}</b>
       <span className="note">{contextualVehicle.error
         ? 'Не удалось проверить данные машины. Уточните автомобиль в заявке перед подбором.'
-        : !contextualVehicle.data ? 'Проверяем данные автомобиля…'
+        : !contextualVehicle.data ? 'Автомобиль не найден или данные ещё загружаются. Проверьте выбранную технику.'
         : vehicleLabel || 'Автомобиль из заявки'}</span>
       <span className="note">Поиск не подтверждает совместимость и не добавляет деталь автоматически в ремонт. Проверяйте применяемость по VIN и агрегату.</span>
     </section>
@@ -174,6 +174,12 @@ export function Shop() {
   const [page, setPage] = useState(0);
   const [offlineVersion, setOfflineVersion] = useState(0);
   const [offlineNote, setOfflineNote] = useState('');
+  const [offline,setOffline]=useState(()=>!navigator.onLine);
+  useEffect(()=>{
+    const update=()=>setOffline(!navigator.onLine);
+    window.addEventListener('online',update);window.addEventListener('offline',update);
+    return ()=>{window.removeEventListener('online',update);window.removeEventListener('offline',update);};
+  },[]);
   const { busy: syncing, run: runSync } = useAction();
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedTerm(term); setPage(0); }, 280);
@@ -193,6 +199,16 @@ export function Shop() {
       : Promise.resolve({ enabled: false, items: [], total: 0 }),
     [c.data?.enabled, debouncedTerm, cat]);
   const d = c.data;
+  if (!d && offline && getToken()) return <main className="track-shop-home">
+    <h1>Сохранённый справочник запчастей</h1>
+    <p className="note" role="status">Нет подключения. Доступны только сохранённые названия и артикулы. Цена, наличие и возможность заказа не подтверждены.</p>
+    <input className="field" type="search" aria-label="Поиск запчастей по названию или артикулу" value={term} onChange={e=>setTerm(e.target.value)} placeholder="Название, артикул или производитель"/>
+    {(local.error||localRefs.error)&&<p role="alert" className="note">Не удалось прочитать часть локального справочника.</p>}
+    {local.data&&localRefs.data&&!local.data.length&&!localRefs.data.length&&<p className="note">В сохранённом справочнике ничего не найдено. При подключении обновите каталог.</p>}
+    {[...(local.data??[]),...(localRefs.data??[])].map((p,i)=><div key={p.id+':'+i} className="card"><b>{p.name}</b><span className="note">{[p.brand,p.article].filter(Boolean).join(' · ')}</span></div>)}
+    <button className="btn ghost small" type="button" onClick={c.reload}>Повторить подключение</button>
+    <a href="#/shop/history">История покупок · требуется подключение</a>
+  </main>;
   if (!d) return <main><Loading error={c.error} />
     {c.error && <button className="btn ghost small" onClick={c.reload}>Повторить загрузку каталога</button>}
   </main>;
@@ -207,7 +223,7 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
-      <a className="linkrow" href="#/shop/history"><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>
+      <a className="linkrow" href={contextVehicleId?'#/shop/history/'+encodeURIComponent(contextVehicleId):'#/shop/history'}><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
   const kits = d.products.filter((p: any) => p.isKit);
@@ -228,13 +244,16 @@ export function Shop() {
       <span className="note">Поиск по названию и номеру детали. Можно выбрать категорию, не вводя артикул.</span>
       <div className="row" style={{ alignItems: 'center', gap: 8 }}>
         <button className="btn ghost small" disabled={syncing} onClick={async () => {
+          setOfflineNote('');
           const result = await runSync(async () => {
             const products = await syncOfflineParts();
             const references = await syncOfflineReferences();
             return { products, references };
           }, null);
+          // The first index may have committed pages before the second failed.
+          setOfflineVersion(n=>n+1);
+          if(!result)setOfflineNote('Обновление прервано. Уже сохранённые записи доступны; повторите синхронизацию при подключении.');
           if (result) {
-            setOfflineVersion((n) => n + 1);
             const { products, references } = result;
             setOfflineNote(products.unchanged && references.unchanged
               ? 'Локальный каталог уже актуален'
@@ -243,7 +262,9 @@ export function Shop() {
           }
         }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
       </div>
-      {offlineNote && <span className="note">{offlineNote}</span>}
+      {offlineNote && <span className="note" role="status">{offlineNote}</span>}
+      {search.error&&<button type="button" className="btn ghost small" onClick={search.reload}>Повторить поиск товаров</button>}
+      {references.error&&<div role="alert" className="note">Не удалось проверить справочные позиции. <button type="button" className="btn ghost small" onClick={references.reload}>Повторить поиск справочника</button></div>}
       {kits.map((p: any) => (
         <div key={p.id} className="card hi">
           <span className="label" style={{ color: 'var(--accent)' }}>Набор</span>
@@ -322,7 +343,7 @@ export function Shop() {
         </div>
       )}
       {count > 0 && <button className="btn" onClick={() => go('shop/cart' + contextSuffix)}>Корзина · {count} шт.</button>}
-      <a className="linkrow" href="#/shop/history"><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>
+      <a className="linkrow" href={contextVehicleId?'#/shop/history/'+encodeURIComponent(contextVehicleId):'#/shop/history'}><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
 }
