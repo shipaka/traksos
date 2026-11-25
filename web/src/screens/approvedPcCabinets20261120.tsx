@@ -226,44 +226,46 @@ function CustomerDesk({owner}:{owner:boolean}){
   ] as const;
   const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order');
   const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order');
-  const active=(orders.data||[]).filter((o:any)=>activeStates.has(o.status));
+  const orderRows=orders.error?null:orders.data;
+  const fleetSnapshot=fleet.error?null:fleet.data;
+  const active=(orderRows||[]).filter((o:any)=>activeStates.has(o.status));
   const [chosen,setChosen]=useState<string>('');
   const selected=active.find((o:any)=>String(o.id)===chosen)||active[0];
-  const cars=owner?(fleet.data?.cars||[]):[];
+  const cars=owner?(fleetSnapshot?.cars||[]):[];
   return <main className="approved-pc approved-pc-client">
     <Heading title={owner?'Владелец автопарка':'Водитель'} roleArt={owner?'owner':'driver'} description={owner?'Заявки, ремонт и состояние техники вашего автопарка':'Вся информация о помощи по выбранной заявке, без лишних сервисов'}/>
     <div className="approved-pc-active-order-nav">
       <div className="approved-pc-order-heading"><span>Активные заявки</span>
-        <strong>{orders.data?active.length:'—'}</strong></div>
+        <strong>{orderRows?active.length:'—'}</strong></div>
       {active.length>0&&<Tabs active={String(selected?.id||'')} onChange={setChosen}
         items={active.map((o:any)=>[String(o.id),'№'+text(o.number||o.id)+' · '+(SERVICES[o.service]?.name||text(o.service)),null])}/>}
     </div>
     {orders.error&&<LoadingBlock error={orders.error} retry={orders.reload}/>}
     <WorkLayout left={<>
       <Pane title="Мои заявки">
-        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?
+        {!orderRows?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?
           active.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description, statusName(o))}
             active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)} v={transport(o)}/>)
           :<Empty>Нет активных заявок.</Empty>}
         <a className="approved-pc-small-link" href="#/orders">Заявки и история →</a>
       </Pane>
       {owner&&<Pane title="Мой автопарк">
-        {!fleet.data&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
-        {fleet.data&&<><p>Машин: <strong>{cars.length}</strong></p>
-          <p>Ждут решения владельца: <strong>{fleet.data.pending?.length||0}</strong></p></>}
+        {!fleetSnapshot&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
+        {fleetSnapshot&&<><p>Машин: <strong>{cars.length}</strong></p>
+          <p>Ждут решения владельца: <strong>{fleetSnapshot.pending?.length||0}</strong></p></>}
         {cars.slice(0,5).map((c:any)=><RowItem key={c.id} href={'#/garage/'+c.id} label={vehicleLabel(c)}
           info={c.driver?.name?'Водитель: '+c.driver.name:'Водитель не закреплён'} v={c}/>)}
-        {fleet.data&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
+        {fleetSnapshot&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
         <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
       </Pane>}
     </>} center={selected?<RealCase key={String(selected.id)} o={selected}/>:<Pane title="Рабочий стол">
-        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
+        {!orderRows?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
         <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a></div></>}
       </Pane>}
       right={<><Pane title="Помощь на дороге">
         {!owner&&<a className="approved-pc-small-link" href="#/garage">Моя техника →</a>}
         <nav aria-label="Услуги помощи" className="approved-pc-customer-services">
-          {(!orders.data||selected)&&<a className="approved-pc-small-link" href="#/sos">Вызвать специалиста · SOS →</a>}
+          {(!orderRows||selected)&&<a className="approved-pc-small-link" href="#/sos">Вызвать специалиста · SOS →</a>}
           {me?.owner_id&&rules.error&&<LoadingBlock error={rules.error} retry={rules.reload}/>}
           {assistance.map(([permission,href,label])=>restricted(permission)
             ?<span key={permission} className="approved-pc-small-link" aria-disabled="true">{label} · {rules.loading?'Проверяем доступ…':rules.error?'Доступ не подтверждён':'Требуется разрешение владельца'}</span>
@@ -387,22 +389,23 @@ function PerformDesk({tow}:{tow:boolean}){
   const auctions=useLoad(()=>get<any[]>('/api/performer/auctions'),[],e=>e.type==='auction'||e.type==='order');
   const [mode,setMode]=useState<'work'|'offers'>('work');
   const [chosen,setChosen]=useState('');
-  const all=jobs.data||[];
+  const jobRows=jobs.error?null:jobs.data;
+  const auctionRows=auctions.error?null:auctions.data;
+  const all=jobRows||[];
   const current=all.filter((o:any)=>activeStates.has(o.status) && (!orderDate(o)||orderDate(o)<=todayISO()));
   const planned=all.filter((o:any)=>activeStates.has(o.status)&&orderDate(o)>todayISO());
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
-  const offers=auctions.data||[];
+  const offers=auctionRows||[];
   return <main className="approved-pc approved-pc-performer">
     <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
-    <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
-      ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
+    <Tabs items={[[ 'work','Текущая работа · '+(jobRows?current.length:'—')+'  |  Запланировано · '+(jobRows?planned.length:'—'),null ],
+      ['offers','Новые предложения',auctionRows?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
       <p><b>Статус:</b> {text(me?.performer?.line_status,'Проверьте профиль')}</p>
       <p>Предложения отобраны сервером по доступным специализациям и зоне работы.</p>
       <a className="approved-pc-small-link" href="#/work/me">Мои параметры →</a></Pane>}
-      center={<Pane title={'Новые предложения · '+(auctions.data?offers.length:'—')}>
-        {auctions.error&&auctions.data&&<LoadingBlock error={auctions.error} retry={auctions.reload}/>}
-        {!auctions.data?<LoadingBlock error={auctions.error} retry={auctions.reload}/>:offers.length?
+      center={<Pane title={'Новые предложения · '+(auctionRows?offers.length:'—')}>
+        {!auctionRows?<LoadingBlock error={auctions.error} retry={auctions.reload}/>:offers.length?
           offers.map((a:any)=><article key={a.order_id} className="approved-pc-offer">
             <Photo v={a}/><div><h3>Заявка №{text(a.number||a.order_id)}</h3>
               <p>{vehicleLabel(a)} · {text(a.description||a.needName,'Описание в заявке')}</p>
@@ -413,31 +416,30 @@ function PerformDesk({tow}:{tow:boolean}){
             </div>
           </article>):<Empty>Новых подходящих предложений пока нет.</Empty>}
       </Pane>}
-      right={<><Calendar items={planned} loading={!jobs.data&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
-      :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobs.data?current.length:'—')}>
-        {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
+      right={<><Calendar items={planned} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
+      :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobRows?current.length:'—')}>
+        {!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
         <RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description,statusName(o))} v={transport(o)}
           badge={statusName(o)} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
         :<Empty>На сегодня принятых работ нет.</Empty>}
-      </Pane><Pane title={'Запланировано · '+(jobs.data?planned.length:'—')}>
+      </Pane><Pane title={'Запланировано · '+(jobRows?planned.length:'—')}>
         {planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
           active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
-        {jobs.data&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
+        {jobRows&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
       center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
-        {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
+        {!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
           <div className="approved-pc-shift-empty-body" data-orders="0">
             <div className="approved-pc-shift-empty-copy">
               <strong>{tow?'Готовы к следующей эвакуации':'Готовы к следующему выезду'}</strong>
               <p>{tow?'Принятых эвакуаций сейчас нет. Проверьте новые предложения по доступной зоне и технике.':
                 'Принятых выездных заявок сейчас нет. Новые предложения появляются с учётом специализаций и зоны работы.'}</p>
               <button className="approved-pc-primary" type="button" onClick={()=>setMode('offers')}>Проверить предложения</button>
-              <a className="approved-pc-small-link" href="#/work/me/schedule">Мой график и доступность →</a>
             </div>
             <ApprovedEmptyScene kind="shift"/>
           </div>}
       </Pane>}
-      right={<><Calendar items={all} loading={!jobs.data&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
+      right={<><Calendar items={all} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
   </main>;
@@ -450,7 +452,7 @@ function SelectedServiceCase({booking}:{booking:any}){
   const v=d.vehicle||booking.vehicle;
   const statuses:[string,string][]=[
     ['expected','Ожидаем'],['arrived','Принято'],['diagnostics','Диагностика'],
-    ['agreeing','Согласование'],['in_work','В работе'],['ready','К выдаче']
+    ['agreeing','Согласование'],['in_work','В работе'],['waiting_part','Ожидаем запчасти'],['ready','К выдаче']
   ];
   const position=statuses.findIndex(([id])=>id===d.status);
   return <section className="approved-pc-case approved-pc-service-case">
@@ -482,9 +484,7 @@ function SelectedServiceCase({booking}:{booking:any}){
         </div>
         <p className="approved-pc-caveat">Следующий этап подтверждается в серверной карточке, после проверки прав и состояния ремонта.</p>
       </Pane>
-      <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/base/car/'+d.id}>Продолжить ремонт</a>
-        <a href={'#/base/car/'+d.id}>Документы и фото</a>
-        <a href={'#/base/car/'+d.id}>Согласовать работы</a>
+      <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/base/car/'+d.id}>{['completed','cancelled','rejected','issued','done','closed'].includes(d.status)?'Открыть историю ремонта':'Открыть карточку ремонта'}</a>
       </div>
     </>}
     {tab==='client'&&<div className="approved-pc-case-main approved-pc-sto-main">
@@ -515,17 +515,18 @@ function ServiceDesk(){
   const data=useLoad(()=>get<any>('/api/base'),[],e=>e.type==='booking');
   const [mode,setMode]=useState<'req'|'repair'|'ready'|'done'>('repair');
   const [chosen,setChosen]=useState('');
-  const g=data.data?.groups;
+  const snapshot=data.error?null:data.data;
+  const g=snapshot?.groups;
   const buckets={req:g?.requests||[],repair:g?.repair||[],ready:g?.ready||[],done:g?.done||[]};
   const list=buckets[mode];
   const selected=list.find((v:any)=>String(v.id)===chosen)||list[0];
   const expected=g?.expected||[];
   // A brand-new repair station must complete the real onboarding before its workdesk appears.
-  if(data.data && !data.data.center) return <BaseHome />;
+  if(snapshot && !snapshot.center) return <BaseHome />;
   const card=(b:any)=><RowItem key={b.id} label={vehicleLabel(b.vehicle)} info={text(b.needName,b.statusName)}
       badge={b.statusName} active={selected?.id===b.id} onClick={()=>setChosen(String(b.id))} v={b.vehicle}/>;
   return <main className="approved-pc approved-pc-service">
-    <Heading title="СТО / рембаза" roleArt="service" roleIcon="service" description={data.data?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
+    <Heading title="СТО / рембаза" roleArt="service" roleIcon="service" description={snapshot?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
     <Tabs active={mode} onChange={(id)=>{setMode(id as typeof mode);setChosen('')}} items={[
       ['req','Входящие',g?buckets.req.length:null],['repair','В ремонте',g?buckets.repair.length:null],
       ['ready','К выдаче',g?buckets.ready.length:null],['done','История',g?buckets.done.length:null]]}/>
@@ -552,11 +553,12 @@ function ServiceDesk(){
 function InsuranceProposals({requestId}:{requestId:string}){
   const caseData=useLoad(()=>get<any>('/api/insurance/requests/'+requestId),[requestId],
     e=>e.type==='vehicle_service'&&String(e.requestId)===String(requestId));
-  const entries=caseData.data?.proposals||[];
-  const stage=caseData.data?.request?.insurance_stage;
-  const chosenId=caseData.data?.request?.insurance_choice_id;
-  return <Pane title={'Предложения страховых компаний · '+(caseData.data?entries.length:'—')+' из 20'}>
-    {!caseData.data?<LoadingBlock error={caseData.error} retry={caseData.reload}/>:
+  const snapshot=caseData.error?null:caseData.data;
+  const entries=snapshot?.proposals||[];
+  const stage=snapshot?.request?.insurance_stage;
+  const chosenId=snapshot?.request?.insurance_choice_id;
+  return <Pane title={'Предложения страховых компаний · '+(snapshot?entries.length:'—')+' из 20'}>
+    {!snapshot?<LoadingBlock error={caseData.error} retry={caseData.reload}/>:
       entries.length?entries.slice(0,20).map((quote:any)=>
         <div key={quote.id} className="approved-pc-quote">
           <strong>{text(quote.company,'Страховая компания')} · {text(quote.product,'Полис')}</strong>
@@ -575,7 +577,8 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const source=useLoad(()=>get<any[]>(api),[api],e=>e.type==='vehicle_service');
   const [mode,setMode]=useState<InsuranceQueueGroup | 'all'>(inspection ? 'active' : 'action');
   const [chosen,setChosen]=useState('');
-  const all=source.data||[];
+  const snapshot=source.error?null:source.data;
+  const all=snapshot||[];
   const group = (o:any):InsuranceQueueGroup => inspection
     ? (['completed','rejected','cancelled'].includes(o.status) ? 'closed' : 'active')
     : insuranceQueueGroup(o.insurance_stage,o.status);
@@ -594,9 +597,9 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
     {both&&<div className="approved-pc-partner-switch"><a className={!inspection?'selected':''} href="#/as/insurer">Страхование</a>
       <a className={inspection?'selected':''} href="#/as/inspection">Техосмотр</a></div>}
-    <Tabs items={filters.map(([id,label])=>[id,label,source.data ? all.filter(o=>id==='all' || group(o)===id).length : null])} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
+    <Tabs items={filters.map(([id,label])=>[id,label,snapshot ? all.filter(o=>id==='all' || group(o)===id).length : null])} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
     <WorkLayout left={<Pane title={inspection?'Назначенные осмотры':'Страховые заявки'}>
-      {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?items.map((o:any)=>
+      {!snapshot?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?items.map((o:any)=>
         <RowItem key={o.id} label={(inspection?'ТО ':'Полис ')+vehicleLabel(o)} info={text(o.comment)}
           active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={inspection ? text(o.status) : stageLabel(o)} v={o}/>)
         :<Empty>{!inspection && mode==='active' ? 'Нет заявок в работе.' : 'Назначенных заявок в выбранном разделе нет.'}</Empty>}
@@ -614,10 +617,10 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       :<><InsuranceProposals key={String(selected.id)} requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}
-      className={source.data ? 'approved-pc-insurance-empty-visual' : ''}>
-      {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
+      className={snapshot ? 'approved-pc-insurance-empty-visual' : ''}>
+      {!snapshot?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
     </Pane>}
-    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all} loading={!source.data&&!source.error} error={source.error} retry={source.reload}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
+    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all} loading={!snapshot&&!source.error} error={source.error} retry={source.reload}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
       {inspection&&<p className="approved-pc-caveat">Официальные карты/ЕАИСТО пока не подключены.</p>}
       </Pane><Bot message={inspection?'Помогу с порядком осмотра и документами.':'Помогу со страховым делом и документами.'}/></>}/>
   </main>;
