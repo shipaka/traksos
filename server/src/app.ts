@@ -46,7 +46,9 @@ import { StatsService } from './services/stats.ts';
 import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
+import { PublicPartnerMap } from './services/publicPartnerMap.ts';
 import { FleetService } from './services/fleet.ts';
+import { clientCalendar, performerCalendar } from './services/clientCalendar.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
@@ -130,7 +132,7 @@ export function createApp(d: Deps) {
   const admin = new AdminService(d.db, notifier, orders, payments, profiles, settings, now);
   const adminCases = new AdminCaseCenter(d.db);
   const adminRegistry = new AdminRegistry(d.db);
-  const adminAccess = new AdminAccessService(d.db);
+  const adminAccess = new AdminAccessService(d.db, now);
   const developerReportDelivery = new DeveloperReportDelivery(d.db);
   const support = new SupportService(d.db, notifier, orders, now);
   const stats = new StatsService(d.db, now);
@@ -138,6 +140,7 @@ export function createApp(d: Deps) {
   const orderSla = new OrderSlaService(d.db, orders, notifier, now);
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
+  const publicPartnerMap = new PublicPartnerMap(d.db);
   const referral = new ReferralService(d.db, settings, notifier, now);
   referral.ledger = payments.ledger.bind(payments);
   orders.referral = referral;
@@ -167,6 +170,13 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Public network coverage is opt-in, stationary-only and actually verified.
+  // All existing entries default to private; no current mobile performer GPS.
+  r.get('/api/public/partner-map', false, () => publicPartnerMap.list());
+  r.put('/api/service/public-map', ['service'], (c: AuthedCtx) => {
+    const b = parse(z.object({ enabled:z.boolean() }), c.body);
+    return publicPartnerMap.visibility(c.user,b.enabled);
+  });
   // Source-backed vehicle directory, per-vehicle operator guides and verified specialist links.
   // Does not import proprietary images or enable the shop.
   registerVehicleReferenceRoutes(r, d.db, settings, now);
@@ -305,8 +315,8 @@ export function createApp(d: Deps) {
   });
   r.post('/api/auth/login', false, (c: Ctx) => {
     if (config.sandboxInstance) throw new HttpError(403, 'sandbox_auth_disabled', 'Тестовые пользователи входят только через администратора');
-    const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional() }), c.body);
-    return auth.loginPassword(b.phone, b.password, b.device, c.ip);
+    const b = parse(z.object({ phone: z.string(), password: z.string().min(1).max(128), device: z.string().max(200).optional(), newPassword: z.string().min(1).max(128).optional() }), c.body);
+    return auth.loginPassword(b.phone, b.password, b.device, c.ip, b.newPassword);
   });
   // Known-password rotation requires the active bearer and never contacts SMS.
   r.post('/api/auth/change-password', true, (c: AuthedCtx) => {
@@ -368,6 +378,15 @@ export function createApp(d: Deps) {
       // Same physical phone must never receive notifications for an old account.
       // Serialize token ownership even when an app switches accounts concurrently.
       await q.query('select pg_advisory_xact_lock(hashtext($1))', ['push:' + b.provider + ':' + b.token]);
+      // Authentication at HTTP entry is not enough: the session may have
+      // been revoked while this request waited for the device lock.
+      const activeSession = await q.one(
+        `select s.token_hash from sessions s join users u on u.id=s.user_id
+          where s.token_hash=$1 and s.user_id=$2 and s.expires_at>now()
+            and u.status='active' and u.deleted_at is null
+            and (u.admin_preview_until is null or u.admin_preview_until>now())
+          for share of s,u`, [sessionHash,c.user.id]);
+      if (!activeSession) throw forbidden('Сессия больше не действует');
       await q.query('delete from push_tokens where provider=$1 and token=$2', [b.provider, b.token]);
       await q.query(`insert into push_tokens(user_id, provider, token, session_token_hash)
                      values ($1,$2,$3,$4)`, [c.user.id, b.provider, b.token, sessionHash]);
@@ -596,9 +615,18 @@ export function createApp(d: Deps) {
   });
 
   // Operational demand analysis does not overwrite or hide any order.
+  // Do not pass NaN, Infinity or fractional query filters to a SQL time
+  // window: clients should receive a useful 400 rather than a Postgres 500.
+  const demandFilter = (raw: string | null, defaultValue: number, min: number, max: number) => {
+    if (raw === null) return defaultValue;
+    const n=Number(raw);
+    if (!raw.trim() || !Number.isSafeInteger(n))
+      throw bad('bad_demand_filter','Укажите целое число дней или минут');
+    return Math.min(max,Math.max(min,n));
+  };
   r.get('/api/admin/demand', ['admin'], (c: AuthedCtx) =>
-    ops.demand(Math.min(365,Math.max(1,Number(c.query.get('days') ?? 7))),
-      Math.min(240,Math.max(5,Number(c.query.get('wait') ?? 15)))));
+    ops.demand(demandFilter(c.query.get('days'),7,1,365),
+      demandFilter(c.query.get('wait'),15,5,240)));
   r.put('/api/admin/demand/:id/review', ['admin'], (c: AuthedCtx) => {
     const b=parse(z.object({state:z.enum(['open','investigating','resolved']),
       note:z.string().max(1200)}),c.body);
@@ -631,8 +659,12 @@ export function createApp(d: Deps) {
   });
   r.post('/api/admin/commission-campaigns', ['admin'], (c: AuthedCtx) =>
     ops.campaign(c.user,parse(z.object({
-      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu']).nullish(),
-      commissionPct:z.number().min(0).max(100),
+      // Only paid dispatch services: ECU is a stationary handoff and
+      // consultation has its own separate fee, not a worker campaign.
+      service:z.enum(['electric','diag','air','autonomy','tyre','hydraulics','tow']).nullish(),
+      // Promotions only reduce the approved 5% worker commission;
+      // 100% here could silently replace the ordinary fee on new orders.
+      commissionPct:z.number().min(0).max(5),
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),
       enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
     }),c.body)));
@@ -745,9 +777,12 @@ export function createApp(d: Deps) {
     const accepted = await profiles.setLocation(c.user.id, b.lat, b.lng);
     if (!accepted) return { ok: true, accepted: false };
     // Клиенту в заявке — только точка, прошедшая проверку скачков
-    const active = await d.db.query<{ id: string; client_id: string; created_by: string }>(
-      `select id, client_id, created_by from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
-    for (const o of active) hub.send([o.client_id, o.created_by], { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
+    const active = await d.db.query<{ id: string }>(
+      `select id from orders where performer_id=$1 and status in ('accepted','en_route')`, [c.user.id]);
+    for (const o of active) {
+      const recipients = await orders.customerRecipientsForOrder(o.id);
+      hub.send(recipients, { type: 'performer_location', orderId: o.id, lat: b.lat, lng: b.lng });
+    }
     return { ok: true };
   });
   // Проверка: фото документов и машины
@@ -867,6 +902,7 @@ export function createApp(d: Deps) {
      recommendationId: z.string().uuid().optional(),
     parallelConsent: z.boolean().optional(), parallelCallOut: money.optional(),
     preferredPerformerId: z.string().uuid().optional(),
+    verifiedOnly: z.boolean().optional(),
     site: z.object({
       place: z.enum(['parking', 'yard', 'plant', 'road']).optional(), pass: z.enum(['none', 'onsite', 'ahead']).optional(),
       meet: z.string().max(60).optional(), state: z.enum(['free', 'loading', 'other_work']).optional(),
@@ -885,7 +921,11 @@ export function createApp(d: Deps) {
     const q = c.query; const num = (x: string | null) => (x == null || x === '' || !Number.isFinite(Number(x)) ? undefined : Number(x));
     const service = q.get('service') ?? 'electric';
     if (!/^[a-z]{2,12}$/.test(service)) throw bad('bad_service', 'Нет такой услуги');
-    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined });
+    const sort=q.get('sort')??'recommended';
+    if(!['recommended','near','cheap','brand','fast'].includes(sort))
+      throw bad('bad_sort','Неизвестный порядок поиска мастеров');
+    return standing.mastersNearby(c.user, { service, lat: num(q.get('lat')), lng: num(q.get('lng')), brand: q.get('brand') ?? undefined,
+      verifiedOnly: q.get('verifiedOnly') === '1', sortBy:sort as 'recommended'|'near'|'cheap'|'brand'|'fast' });
   });
   r.post('/api/orders/:id/part', true, (c: AuthedCtx) => onsite.part(c.user, c.params.id, parse(z.object({ mode: z.enum(['wait', 'resume', 'return', 'tow']) }), c.body).mode));
 
@@ -995,8 +1035,17 @@ export function createApp(d: Deps) {
       Number(c.query.get('page') ?? '0')));
   r.post('/api/admin/shop/catalog/:id/review', ['admin'], (c: AuthedCtx) => {
     if (!z.string().uuid().safeParse(c.params.id).success) throw bad('bad_id', 'Неверный идентификатор');
-    const b = parse(z.object({ reviewed: z.boolean() }), c.body);
-    return partCatalog.review(c.user, c.params.id, b.reviewed);
+    const b = parse(z.object({
+      reviewed: z.boolean(),
+      expectedUpdatedAt: z.string().datetime().optional(),
+      expectedName: z.string().max(120).optional(),
+      expectedSourceNote: z.string().max(300).optional(),
+      expectedBrand: z.string().max(80).optional(),
+      expectedArticle: z.string().max(100).optional(),
+      expectedCategory: z.string().max(30).optional(),
+      expectedSearchTerms: z.string().max(400).nullable().optional(),
+    }), c.body);
+    return partCatalog.review(c.user, c.params.id, b.reviewed, b);
   });
   r.get('/api/shop/history', true, (c: AuthedCtx) => {
     const vehicleId = c.query.get('vehicleId');
@@ -1289,6 +1338,10 @@ export function createApp(d: Deps) {
     await d.db.query('update users set insurance_reminders_enabled=$2 where id=$1', [c.user.id, enabled]);
     return { enabled };
   });
+  r.get('/api/client/calendar', ['client', 'driver'], (c: AuthedCtx) =>
+    clientCalendar(d.db, c.user, c.query.get('from'), c.query.get('to')));
+  r.get('/api/performer/calendar', ['master','tow'], (c: AuthedCtx) =>
+    performerCalendar(d.db, c.user, c.query.get('from'), c.query.get('to')));
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
@@ -1376,6 +1429,14 @@ export function createApp(d: Deps) {
   r.get('/api/admin/summary', ['admin'], () => stats.summary());
   r.get('/api/admin/live', ['admin'], () => stats.liveOrders());
   r.post('/api/admin/services/:id/verify', staff, (c: AuthedCtx) => centers.verify(c.user, c.params.id, parse(z.object({ decision: z.enum(['approved', 'rejected']) }), c.body).decision));
+  // Explicit moderator attestation with a distinct documentary / visit record.
+  // The routine business "verify" button must NEVER publish self-reported GPS.
+  r.post('/api/admin/services/:id/verify-location', staff, (c: AuthedCtx) =>
+    centers.verifyPublicLocation(c.user,c.params.id,parse(z.object({
+      kind:z.enum(['official_registry','site_visit','verified_document']),
+      reference:z.string().trim().min(8).max(500),
+      confirmed:z.literal(true),
+    }).strict(),c.body)));
 
   r.get('/api/my-performers', true, (c: AuthedCtx) => orders.myPerformers(c.user));
   r.put('/api/my-performers/:id', true, (c: AuthedCtx) => orders.setPref(c.user, c.params.id, parse(z.object({ pref: z.enum(['fav', 'hide']).nullable() }), c.body).pref));
@@ -1623,6 +1684,11 @@ export function createApp(d: Deps) {
       roles: z.array(z.enum(MANUAL_ROLES)).min(1).max(3),
       reason: z.string().trim().min(10).max(500),
     }).strict(), c.body)));
+  r.post('/api/admin/users/primary-insurer-invite', ['admin'], (c: AuthedCtx) =>
+    adminAccess.invitePrimaryInsurer(c.user, parse(z.object({
+      phone: z.string().min(1).max(40), name: z.string().max(120).optional(),
+      reason: z.string().trim().min(10).max(500),
+    }).strict(), c.body)));
   // Внутренняя очередь: не отправлять персональные данные в публичный GitHub.
   r.post('/api/admin/developer-reports', ['admin'], (c: AuthedCtx) =>
     adminAccess.fileReport(c.user, parse(z.object({
@@ -1838,6 +1904,7 @@ export function createApp(d: Deps) {
     }
     if (req.method === 'OPTIONS') return send(res, 204, undefined, cors);
     const url = new URL(req.url ?? '/', 'http://x');
+    if (url.pathname === '/api/admin/users/primary-insurer-invite') cors['cache-control'] = 'no-store';
     try {
       const m = r.match(req.method ?? 'GET', url.pathname);
       if (!m) throw notFound('Нет такого адреса');
