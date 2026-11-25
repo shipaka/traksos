@@ -145,7 +145,7 @@ try{
          };
        });
        const expected=['#/sos','#/new/tow','#/services','#/new/consult'];
-       const tabs=['#/','#/orders','#/air','#/garage','#/menu'];
+       const tabs=['#/','#/orders','#/air','#/garage','#/shop','#/menu'];
        if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.logoLoaded||
           visual.logoWidth>274.5||visual.icons!==4||visual.oldCards!==0||
           JSON.stringify(visual.routes)!==JSON.stringify(expected)||
