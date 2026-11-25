@@ -24,12 +24,15 @@ test('private support rechecks live owner and staff authorization inside reads a
     const id=ticket.id;
     const denied=(e:any)=>e?.status===403;
     assert.equal((await support.thread(modActor,id)).id,id);
+    assert.ok((await support.queue(modActor)).some(row=>row.id===id));
+    await assert.rejects(()=>support.queue(otherActor),denied);
     await assert.rejects(()=>support.thread(otherActor,id),denied);
     await assert.rejects(()=>support.close(otherActor,id),denied);
     await support.post(modActor,id,'Синтетический ответ сотрудника');
     await t.db.query("update users set roles='{client}'::text[] where id=$1",[moderator.id]);
     const count=await t.db.one('select count(*)::int n from support_messages where ticket_id=$1',[id]);
     await assert.rejects(()=>support.thread(modActor,id),denied);
+    await assert.rejects(()=>support.queue(modActor),denied);
     await assert.rejects(()=>support.post(modActor,id,'Запрещённое сообщение'),denied);
     await assert.rejects(()=>support.close(modActor,id),denied);
     assert.deepEqual(await t.db.one('select count(*)::int n from support_messages where ticket_id=$1',[id]),count);
@@ -56,6 +59,7 @@ test('private support rechecks live owner and staff authorization inside reads a
     assert.equal(await inbox(owner.id),beforeOwnerNotices,'blocked recipient gets no new private notice');
     await t.db.query("update users set deleted_at=now() where id=$1",[admin.id]);
     await assert.rejects(()=>support.thread(adminActor,id),denied);
+    await assert.rejects(()=>support.queue(adminActor,'closed'),denied);
     await assert.rejects(()=>support.close(adminActor,id),denied);
     await t.db.query("update users set status='active' where id=$1",[owner.id]);
     assert.equal((await support.thread(ownerActor,id)).status,'closed','own complaint history remains accessible after restoration');
