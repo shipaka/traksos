@@ -4,7 +4,7 @@
  * opens an existing authorized server-backed workflow.
  * Desktop only; Android/mobile continues to use the already-approved routes.
  */
-import {useEffect, useState, type ReactNode} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState, type ReactNode} from 'react';
 import {get, onEvent, post} from '../api.ts';
 import {insurancePresentation, insuranceQueueGroup, type InsuranceQueueGroup} from '../insurancePresentation.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
@@ -147,7 +147,14 @@ function Calendar({items=[],kind='orders'}:{
 function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:ReactNode}){
   return <div className="approved-pc-three"><aside className="approved-pc-left">{left}</aside><div className="approved-pc-center">{center}</div><aside className="approved-pc-right">{right}</aside></div>;
 }
-function RealCase({o,owner=false}:{o:any;owner?:boolean}){
+function RealCase({o,owner=false,reveal=false}:{o:any;owner?:boolean;reveal?:boolean}){
+  const caseNode=useRef<HTMLElement>(null);
+  useLayoutEffect(()=>{
+    const node=caseNode.current;
+    if(!reveal||!node||typeof node.animate!=='function'||window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('traksos-reduced-motion'))return;
+    const animation=node.animate([{opacity:0.65,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:320,easing:'cubic-bezier(.2,.7,.3,1)'});
+    return ()=>animation.cancel();
+  },[]); // One entry per confirmed assignment mount, not every refresh.
   const [gps,setGps]=useState<{lat:number;lng:number;at:number}|null>(null);
   useEffect(()=>{
     setGps(null); // Previous application's location cannot leak into a different case.
@@ -167,7 +174,7 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
   const point=gps||prev;
   const milestones=[['searching','Поиск'],['accepted','Назначен'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
   const current=milestones.findIndex(([id])=>id===d.status);
-  return <section className="approved-pc-case">
+  return <section ref={caseNode} className="approved-pc-case">
     <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service,'Помощь на дороге')}</h2></div><span className="approved-pc-stage">{statusName(d)}</span></header>
     <div className="approved-pc-case-main">
       <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
@@ -206,6 +213,14 @@ function CustomerDeskCase({id,accountId,owner,refreshOrders}:{id:string;accountI
     'pc-client-case:'+accountId+':'+id,
     e=>String(e.orderId)===id&&e.type==='order');
   const [collapsed,setCollapsed]=useState(false);
+  const [motionEpoch]=useState(()=>performance.now());
+  const previousConfirmedStatus=useRef<string|null>(null);
+  const confirmed=detail.data&&String(detail.data.id)===id&&detail.data.you==='client';
+  const reveal=Boolean(confirmed&&previousConfirmedStatus.current==='searching'&&detail.data.status==='accepted');
+  useLayoutEffect(()=>{
+    if(confirmed)previousConfirmedStatus.current=detail.data.status;
+    else if(detail.error)previousConfirmedStatus.current=null;
+  },[confirmed,detail.data,detail.error]);
   if(!detail.data)return <Pane title="Выбранная заявка">
     <LoadingBlock error={detail.error} retry={detail.reload}/>
     <a className="approved-pc-small-link" href={'#/order/'+encodeURIComponent(id)}>Открыть заявку отдельно →</a>
@@ -214,14 +229,14 @@ function CustomerDeskCase({id,accountId,owner,refreshOrders}:{id:string;accountI
   if(String(d.id)!==id||d.you!=='client')return <Pane title="Выбранная заявка"><Empty>Доступ к клиентской заявке не подтверждён.</Empty></Pane>;
   if(d.status==='searching')return <section className="approved-pc-case approved-pc-search-case">
     <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service)}</h2></div><span className="approved-pc-stage">{statusName(d)}</span></header>
-    <Search d={d} collapsed={collapsed} onCollapsedChange={setCollapsed}
+    <Search d={d} collapsed={collapsed} onCollapsedChange={setCollapsed} motionEpoch={motionEpoch}
       onChosen={()=>{void detail.reload();refreshOrders();}}/>
     <div className="approved-pc-case-actions">
       <a href={'#/order/'+encodeURIComponent(id)}>Подробности и отмена заявки</a>
       {d.vehicleId&&<a href={'#/garage/'+encodeURIComponent(d.vehicleId)}>История автомобиля</a>}
     </div>
   </section>;
-  return <RealCase o={d} owner={owner}/>;
+  return <RealCase o={d} owner={owner} reveal={reveal}/>;
 }
 function requestedDeskOrder(){
   return new URLSearchParams(location.hash.split('?')[1]||'').get('order')||'';
