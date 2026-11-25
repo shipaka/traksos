@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { AuthUser } from '../src/http/router.ts';
 import { setup, ok } from './helpers.ts';
 import { ShopAgencyLedger } from '../src/services/shopAgencyLedger.ts';
+import { reconcileCase } from '../src/domain/shopAgencyEvidence.ts';
 import { ShopAgencyBankReconciliation } from '../src/services/shopAgencyBankReconciliation.ts';
 
 // Archived bank-match acceptance, adapted to the explicit activity gate.
@@ -108,6 +109,31 @@ test('agency bank: classification, checked proof, exact match, concurrent replay
     assert.equal(result.unmatched,2);
     await assert.rejects(t.db.query('delete from shop_agency_bank_matches where id=$1',[first.id]),/immutable/i);
     await assert.rejects(t.db.query('update shop_agency_bank_match_retractions set note=$2 where id=$1',[removed.id,'Подмена']),/immutable/i);
-    assert.equal((await t.db.one<{n:number}>('select count(*)::int as n from shop_agency_events where case_id=$1',[entry.id]))?.n,2);
+    const countEvents=async()=> (await t.db.one<{n:number}>('select count(*)::int as n from shop_agency_events where case_id=$1',[entry.id]))?.n;
+    assert.equal(await countEvents(),2);
+    const reversal={kind:'customer_receipt_reversal',amount:1000,sourceRef:'BANK-R1',
+      idempotencyKey:'BANK-REVERSAL-KEY',occurredAt:'2026-12-01T09:59:59Z',
+      reversesEventId:receipt.id,correctionReason:'Учебное исправление записи'};
+    await assert.rejects(ledger.addEvent(admin,entry.id,reversal),conflict('reversal_before_original'));
+    for(const amount of [0,-1,1.5,Number.MAX_SAFE_INTEGER+1])
+      await assert.rejects(ledger.addEvent(admin,entry.id,{...reversal,amount,occurredAt:'2026-12-01T10:00:00Z'}),
+        (e:any)=>e?.status===400&&e?.code==='event_amount');
+    await assert.rejects(ledger.addEvent(admin,entry.id,{...reversal,kind:'unknown'}),
+      (e:any)=>e?.status===400&&e?.code==='event_kind');
+    assert.equal(await countEvents(),2);
+    const valid={...reversal,occurredAt:'2026-12-01T10:00:00Z'};
+    const corrected=await ledger.addEvent(admin,entry.id,valid);
+    assert.equal(corrected.duplicate,false);
+    assert.equal((await ledger.addEvent(admin,entry.id,valid)).id,corrected.id);
+    assert.equal(await countEvents(),3);
+    // Reconcile a historical imported row which predates its original without
+    // altering the immutable database record or executing any payment.
+    const snapshot=await ledger.detail(admin,entry.id);
+    const invalid=snapshot.events.map((e:any)=>e.id===corrected.id?
+      {...e,occurred_at:reversal.occurredAt}:e);
+    const historical=reconcileCase(snapshot,snapshot.allocations,invalid,snapshot.reviews);
+    assert.equal(historical.status,'requires_reconciliation');
+    assert.ok(historical.problems.some(p=>p.includes('Сторно предшествует')));
+    assert.ok(!snapshot.problems.some((p:string)=>p.includes('Сторно предшествует')));
   }finally{await t.close();}
 });

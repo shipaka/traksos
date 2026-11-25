@@ -79,6 +79,22 @@ export function reconcileCase(c: any, allocations: any[], events: any[], reviews
       e.kind === 'supplier_payment' && Date.parse(e.occurred_at) < Date.parse(c.mandate_accepted_at))) {
     problems.push('Оплата поставщику предшествует поручению');
   }
+  // Historical rows are immutable. Do not approve evidence with an impossible
+  // chronology even if the financial totals happen to reconcile.
+  const originals = new Map(events.filter(e => e.id != null).map(e => [e.id, e]));
+  for (const event of events) {
+    if (event.kind !== 'customer_receipt_reversal' && event.kind !== 'supplier_payment_reversal') continue;
+    const original = event.reverses_event_id == null ? undefined : originals.get(event.reverses_event_id);
+    const expectedKind = event.kind === 'customer_receipt_reversal' ? 'customer_receipt' : 'supplier_payment';
+    if (!original || original.kind !== expectedKind) {
+      problems.push('Сторно не связано с исходным платежом нужного вида');
+      continue;
+    }
+    const correctionTime = new Date(event.occurred_at).getTime();
+    const originalTime = new Date(original.occurred_at).getTime();
+    if (!Number.isFinite(correctionTime) || !Number.isFinite(originalTime) || correctionTime < originalTime)
+      problems.push('Сторно предшествует исходному платежу или содержит неверную дату');
+  }
   if (cash.customerReceived < 0 || cash.supplierPaid < 0) problems.push('Возвраты превышают исходные платежи');
   if (cash.customerReceived > agreed) problems.push('Получено от клиента больше согласованной суммы');
   if (cash.supplierPaid > purchaseAmount) problems.push('Поставщику уплачено больше документально подтверждённого');

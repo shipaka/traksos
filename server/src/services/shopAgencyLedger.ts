@@ -180,6 +180,12 @@ export class ShopAgencyLedger {
       const c = await q.one<any>('select id from shop_agency_cases where id=$1 for update',[caseId]);
       if (!c) throw notFound('Операция не найдена');
       const occurredAt=signedDate(b.occurredAt);
+      const nonCash = b.kind === 'handover' || b.kind === 'agent_report';
+      if (!['customer_receipt','customer_receipt_reversal','supplier_payment',
+        'supplier_payment_reversal','customer_refund','supplier_refund','handover','agent_report'].includes(b.kind))
+        throw bad('event_kind','Неизвестный вид события');
+      if (!Number.isSafeInteger(b.amount) || (nonCash ? b.amount !== 0 : b.amount <= 0))
+        throw bad('event_amount','Денежное событие требует положительной суммы в целых копейках; передача и отчёт — нулевой');
       const sourceRef=b.sourceRef.trim();
       const correctionReason=b.correctionReason?.trim()||null;
       const reverseOf=b.reversesEventId||null;
@@ -206,11 +212,13 @@ export class ShopAgencyLedger {
         throw conflict('event_key_conflict','Ключ события уже относится к другим данным');
       }
       if(originalKind){
-        const original=await q.one<any>(`select id,case_id,kind,amount
+        const original=await q.one<any>(`select id,case_id,kind,amount,occurred_at
           from shop_agency_events where id=$1`,[reverseOf]);
         if(!original||original.case_id!==caseId||original.kind!==originalKind)
           throw conflict('reversal_original_invalid',
             'Сторно должно ссылаться на исходное положительное событие такого же вида в этой операции');
+        if (Date.parse(occurredAt) < new Date(original.occurred_at).getTime())
+          throw conflict('reversal_before_original','Сторно не может предшествовать исходному платежу');
         const used=await q.one<any>(`select coalesce(sum(amount),0)::text as sum
           from shop_agency_events where reverses_event_id=$1`,[reverseOf]);
         if(!Number.isSafeInteger(b.amount)||Number(used.sum)+b.amount>Number(original.amount))
