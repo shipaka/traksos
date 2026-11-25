@@ -747,7 +747,7 @@ function AdminDesk(){
     right={<><Pane title="Состояние платформы"><p>Реальный статус интеграций — в диагностике; зелёные индикаторы из макета не являются подтверждением работы.</p>
       <a className="approved-pc-small-link" href="#/admin/section/diagnostics">Открыть диагностику →</a></Pane>
       <Pane title="Тестовые кабинеты"><div className="approved-pc-role-grid">
-        {[['client','Клиент'],['owner','Владелец'],['driver','Водитель'],['master','Мастер'],
+        {[['owner','Владелец'],['driver','Водитель'],['master','Мастер'],
           ['tow','Эвакуатор'],['service','СТО'],['master_service','Мастер + СТО'],
           ['insurer','Страхование'],['inspection','Техосмотр'],['courier','Курьер'],
           ['moderator','Модератор'],['admin','Администратор']]
