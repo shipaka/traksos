@@ -46,6 +46,7 @@ import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { PublicPartnerMap } from './services/publicPartnerMap.ts';
 import { FleetService } from './services/fleet.ts';
+import { clientCalendar } from './services/clientCalendar.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
@@ -1276,6 +1277,8 @@ export function createApp(d: Deps) {
     await d.db.query('update users set insurance_reminders_enabled=$2 where id=$1', [c.user.id, enabled]);
     return { enabled };
   });
+  r.get('/api/client/calendar', ['client', 'driver'], (c: AuthedCtx) =>
+    clientCalendar(d.db, c.user, c.query.get('from'), c.query.get('to')));
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),
