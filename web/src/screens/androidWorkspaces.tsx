@@ -1,9 +1,9 @@
 /* Android workspaces approved 19.11.2026. Only real API-backed values. */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { native } from '../native.ts';
 import { get, post, rub } from '../api.ts';
 import { SERVICES, STATUS } from '../dict.ts';
-import { useLoad, useAction } from '../ui.tsx';
+import { useLoad, useAction, useMe } from '../ui.tsx';
 import { OfferForm } from './search.tsx';
 import { insurancePresentation } from '../insurancePresentation.ts';
 
@@ -141,9 +141,11 @@ function OrderRoute({order,role}:{order:any;role:'client'|'performer'}) {
   </div>;
 }
 
-export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress, disabledServices }: {
+export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress, disabledServices, garageVehicles, garageError }: {
   orders: any[]; loading: boolean; error: string | null; me: any; retry: () => void;
   insuranceInProgress: any[];
+  garageVehicles?: any[] | null;
+  garageError?: string | null;
   disabledServices?: {repair:boolean; tow:boolean; service:boolean; consult:boolean; shop:boolean};
 }) {
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
@@ -151,8 +153,11 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   const vehicleBrand = current?.vehicle?.brand || current?.v_brand || current?.brand;
   const vehicleModel = current?.vehicle?.model || current?.v_model || current?.model;
   const vehicleYear = current?.vehicle?.year || current?.v_year || current?.year;
-  const currentVehiclePhoto = current?.vehicle_id
-    ? vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear) : null;
+  const firstGarageVehicle=garageVehicles?.[0];
+  const currentVehiclePhoto = firstGarageVehicle
+    ? vehicleReferencePhoto(firstGarageVehicle.brand,firstGarageVehicle.model,firstGarageVehicle.year)
+    : garageVehicles===undefined && current?.vehicle_id
+      ? vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear) : null;
   const currentVehicleName = [vehicleBrand,vehicleModel,vehicleYear].filter(Boolean).join(' ');
   return <div className="and19-workspace and19-client" aria-label="Android рабочий стол клиента">
     <a className="and19-role and19-client-role" href="#/profile" aria-label="Открыть профиль и настройки кабинета">
@@ -233,12 +238,17 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
         <strong>{rub(current.money.total)}</strong>
       </div>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
-    <a href={current?.vehicle_id ? '#/garage/'+current.vehicle_id : '#/garage'} className="and19-equipment and19-equipment-vehicle">
+    <a href="#/garage" className="and19-equipment and19-equipment-vehicle">
       {currentVehiclePhoto ? <img className="and19-equipment-model" src={currentVehiclePhoto.src}
         alt={currentVehiclePhoto.description} loading="lazy" />
         : <span className="and19-equipment-icon" aria-hidden="true">▤</span>}
       <span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong>
-        {current?.vehicle_id && currentVehicleName && <small className="and19-equipment-title">{currentVehicleName}</small>}
+        {garageError ? <small>Не удалось обновить список техники · открыть гараж</small> :
+          garageVehicles ? <><small className="and19-equipment-title">{garageVehicles.length ? 'Транспорт: '+garageVehicles.length : 'Пока нет добавленной техники'}</small>
+          {garageVehicles.slice(0,3).map(v=><small key={v.id}>{[v.brand,v.model,v.year,v.plate].filter(Boolean).join(' ')||'Транспортное средство'}</small>)}
+          {garageVehicles.length>3&&<small>Остальная техника — в гараже</small>}</> :
+          garageVehicles===null ? <small>Загружаем список техники…</small> :
+          current?.vehicle_id && currentVehicleName ? <small className="and19-equipment-title">{currentVehicleName}</small> : null}
         <small>История обслуживания, заявки, документы</small></span>
       <span aria-hidden="true">›</span>
     </a>
@@ -248,15 +258,21 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
 }
 
 export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance,
-  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false }: {
+  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false, jobsLoading=false, jobsError=null, auctionsError=null }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
   setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
-  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean;
+  reloadJobs?: () => void | Promise<void>; todayCount?: number | null; pendingReview?: number; reviewOnly?:boolean;
+  jobsLoading?:boolean; jobsError?:string|null; auctionsError?:string|null;
 }) {
   const tow = performer.kind === 'tow';
   const inJob = performer.line_status === 'on_job';
   const current=active[0];
   const { busy: stageBusy, run: runStage } = useAction();
+  const stepLock=useRef(false);
+  const [reconciling,setReconciling]=useState(false);
+  const [uncertainStep,setUncertainStep]=useState('');
+  const stepKey=current ? String(current.id)+':'+current.status : '';
+  const needsRefresh=!!stepKey&&uncertainStep===stepKey;
   const stepForStatus: Record<string, {action:'depart'|'arrive'|'start_work';label:string}> = {
     accepted:{action:'depart',label:'Выехал'},
     en_route:{action:'arrive',label:'Я на месте'},
@@ -264,11 +280,17 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
   };
   const nextStep=current ? stepForStatus[current.status] : null;
   const confirmStep=async()=>{
-    if(!current || !nextStep || stageBusy || busy)return;
+    if(!current || !nextStep || stageBusy || busy || stepLock.current || jobsError || needsRefresh || reviewOnly)return;
     if(!window.confirm('Подтвердить этап «'+nextStep.label+'» по заявке №'+current.number+'?'))return;
-    const changed=await runStage(()=>post('/api/orders/'+current.id+'/step',
-      {action:nextStep.action}), 'Этап заявки обновлён');
-    if(changed)reloadJobs?.();
+    stepLock.current=true;setReconciling(true);
+    try{
+      await runStage(()=>post('/api/orders/'+current.id+'/step',
+        {action:nextStep.action}), 'Этап заявки обновлён');
+      // Even a timed-out write may have been accepted. Reconcile by reading;
+      // do not automatically send the same status mutation a second time.
+      setUncertainStep(stepKey);
+      await reloadJobs?.();
+    }finally{stepLock.current=false;setReconciling(false);}
   };
   return <div className="and19-workspace and19-performer" aria-label="Android рабочий стол исполнителя">
     <div className="and19-role and19-line">
@@ -282,11 +304,12 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     </div>
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
-      <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount} заяв.</strong></span></a>
+      <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount==null?'—':todayCount+' заяв.'}</strong></span></a>
       <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1).replace('.',',') : '—'}</strong></span></a>
       <a href="#/work/me/money"><NavGlyph glyph="coins"/><span><small>К выплате</small><strong>{balance?.to_pay != null ? rub(balance.to_pay) : '—'}</strong></span></a>
     </div>
-    {active.length ? <section className="and19-panel and19-main-order">
+    {jobsError&&<section className="and19-panel" role="alert"><strong>Не удалось обновить заявки</strong><p>{jobsError}</p><button className="and19-action" type="button" onClick={()=>{void reloadJobs?.();}}>Повторить загрузку</button></section>}
+    {jobsLoading&&!active.length?<MobileLoading label="Проверяем рабочие заявки"/>:jobsError&&!active.length?null:active.length ? <section className="and19-panel and19-main-order">
       <div className="and19-order-open">
         <a href={'#/order/'+current.id} className="and19-order-heading-link"
           aria-label={'Открыть заявку №'+current.number}><OrderTitle order={current}/></a>
@@ -307,28 +330,22 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       </div>
       <div className="and19-stage-actions">
         {nextStep ? <button type="button" className="and19-stage-primary"
-          disabled={stageBusy||busy} onClick={()=>{void confirmStep()}}>
+          disabled={stageBusy||busy||reconciling||!!jobsError||needsRefresh||reviewOnly} onClick={()=>{void confirmStep()}}>
           <NavGlyph glyph={current.status==='en_route'?'pin':'check'}/>
-          {nextStep.label}
+          {stageBusy||reconciling?'Обновляем этап…':nextStep.label}
         </button> : <a className="and19-stage-primary"
-          href={'#/order/'+current.id+'/finance'}>
-          {current.status==='working'?'Оформить результат':'Проверить заявку'}
+          href={'#/order/'+current.id+(current.status==='working'?'/finance':'')}>
+          {current.status==='working'?'Завершить работу и расчёт':'Открыть заявку'}
         </a>}
-        {current.status==='working'
-          ? <a href={'#/order/'+current.id+'/finance'} className="and19-stage-complete">
-              <NavGlyph glyph="check"/>Завершить
-            </a>
-          : <span className="and19-stage-complete is-disabled" aria-disabled="true">
-              <NavGlyph glyph="check"/>Завершить
-            </span>}
+        {nextStep&&<button type="button" className="and19-stage-complete is-disabled" disabled aria-label="Завершить работу — доступно после начала работы">Завершить</button>}
       </div>
+      {needsRefresh&&!reconciling&&<p className="note" role="status">Проверьте текущий статус в <a href={'#/order/'+current.id}>карточке заявки</a>. Повторная отправка с рабочего стола заблокирована до изменения этапа.</p>}
       {active.length>1 && <a className="and19-row-link" href="#/work/jobs">
         Другие активные заявки: {active.length-1} ›</a>}
     </section> : <section className="and19-panel and19-empty">
       <strong>{online ? 'Ожидаем подходящую заявку' : 'Вы не на линии'}</strong>
       <ApprovedEmptyScene kind="shift" />
       <p>{online ? 'Когда заявка поступит, вы получите входящий вызов. Приложение не нужно держать открытым.' : 'Включите статус «На линии», чтобы получать заявки. При необходимости настройте график.'}</p>
-      <a href="#/work/filter" className="and19-link">Настройки заявок ›</a>
     </section>}
     {current && current.money && Number.isFinite(current.money.amount) &&
       <a href={'#/order/'+current.id+'/finance'} className="and19-performer-finance"
@@ -343,7 +360,8 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
           <strong>{Number.isFinite(current.money.payout)?rub(current.money.payout):'—'}</strong></span>
       </a>}
     {pendingReview > 0 && <a className="and19-row-link" href="#/work/jobs">Работы завершены физически, ожидают решения клиента: {pendingReview} ›</a>}
-    {auctions.length > 0 && <section className="and19-auctions">
+    {auctionsError&&<section className="and19-panel" role="alert"><strong>Не удалось обновить предложения</strong><button className="and19-action" type="button" onClick={reloadAuctions}>Повторить</button></section>}
+    {!auctionsError && auctions.length > 0 && <section className="and19-auctions">
       <h2>Новые подходящие заявки ({auctions.length})</h2>
       {auctions.map((a: any) => <div className="and19-panel" key={a.order_id}>
         <strong>{a.is_sos ? 'SOS · ' : ''}{SERVICES[a.service]?.name || 'Заявка'} · {a.brand || 'Грузовой транспорт'}</strong>
@@ -369,14 +387,18 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
 }
 
 export function AndroidMasterChats() {
-  const l = useLoad<any[]>(() => get('/api/orders?as=performer'), []);
-  const rows = (l.data || []).filter(o => o && o.id && ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status));
+  const {me}=useMe();
+  return <AndroidMasterChatsForAccount key={me?.id??'guest'}/>;
+}
+function AndroidMasterChatsForAccount() {
+  const l = useLoad<any[]>(() => get('/api/orders?as=performer'), [],e=>e.type==='order'||e.type==='connection_restored');
+  const rows = (!l.error && Array.isArray(l.data) ? l.data : []).filter(o => o && o.id && ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status));
   return <main className="and19-chats and19-workspace">
     <h1>Чаты по заявкам</h1>
     <p>Переписка привязана к заказу. Откройте заявку, чтобы перейти к общению.</p>
     {!l.data && !l.error && <MobileLoading label="Загружаем ваши заявки" />}
     {l.error && <div className="and19-panel" role="alert"><p>{l.error}</p><button className="and19-action" onClick={l.reload}>Повторить</button></div>}
-    {l.data && !rows.length && <div className="and19-panel">Чатов по принятым заявкам пока нет.</div>}
+    {!l.error && Array.isArray(l.data) && !rows.length && <div className="and19-panel">Чатов по принятым заявкам пока нет.</div>}
     {rows.map(o => <a key={o.id} className="and19-row-link" href={'#/order/' + o.id + '/chat'}>
       <span>Заявка №{o.number} · {SERVICES[o.service]?.name || 'Работа'}</span><span>Открыть ›</span>
     </a>)}

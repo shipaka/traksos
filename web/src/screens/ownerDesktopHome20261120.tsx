@@ -102,7 +102,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <span className="owner20-tagline">Платформа помощи и сервисов<br/>для грузового транспорта</span>
       <nav className="owner20-topnav" aria-label="Основные разделы">
         <details onMouseLeave={dismissOnMouseLeave}><summary>О платформе</summary><div><a href="#/company">О нас</a></div></details>
-        <details onMouseLeave={dismissOnMouseLeave}><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen(event.currentTarget);}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}<a href="#/explore/parts" onClick={() => rememberAllowed("parts")}>Запчасти</a><a href="#/explore/insurance" onClick={() => rememberAllowed("insurance")}>Страхование</a><a href="#/explore/ecu" onClick={() => rememberAllowed("ecu")}>Специалисты ЭБУ</a></div></details>
+        <details onMouseLeave={dismissOnMouseLeave}><summary>Сервисы</summary><div>{primary.map(([title,,key])=>key==='trakbot' ? <a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen(event.currentTarget);}}>{title}</a> : <a href={route(key)} key={key} onClick={() => rememberAllowed(key)}>{title}</a>)}{features.map(([title,,key])=><a href={route(key)} key={key} onClick={()=>rememberAllowed(key)}>{title}</a>)}</div></details>
         <details onMouseLeave={dismissOnMouseLeave}><summary>Сообщество</summary><div><a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a></div></details>
         <details onMouseLeave={dismissOnMouseLeave}><summary>Партнёрам</summary><div><a href="#/join">Хотим работать</a></div></details>
         <a href="#/login">Поддержка</a>
@@ -110,7 +110,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <details className="owner20-compact-menu" onMouseLeave={dismissOnMouseLeave}>
         <summary>☰ Разделы</summary>
         <nav aria-label="Разделы сайта на небольшом экране ПК">
-          <a href="#/company">О платформе</a><a href="#/explore/van">Сервисы</a>
+          <a href="#/company">О платформе</a>{primary.map(([title,,key])=>key==='trakbot'?<a href="#/trakbot" key={key} onClick={event=>{event.preventDefault();requestTrakBotOpen(event.currentTarget);}}>{title}</a>:<a href={route(key)} key={key} onClick={()=>rememberAllowed(key)}>{title}</a>)}{features.map(([title,,key])=><a href={route(key)} key={key} onClick={()=>rememberAllowed(key)}>{title}</a>)}
           <a href="#/explore/air">Эфир</a><a href="#/explore/club">Клуб TrakSOS</a>
           <a href="#/join">Партнёрам</a><a href="#/login">Поддержка</a>
         </nav>
@@ -124,7 +124,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
         <h1 id="owner20-heading">Помощь в дороге.<br/>Сервис и поддержка<br/><em>для грузового транспорта</em></h1>
         <p>Единая платформа для водителей, владельцев<br/>и автопарков по всей России</p>
         <div className="owner20-hero-links">
-          <a href="#/explore/van" onClick={() => rememberGuestService('van')} className="owner20-alert"><span aria-hidden="true"><OwnerIcon kind="warning"/></span><span><strong>SOS</strong><small>Экстренная помощь</small></span></a>
+          <a href="#/explore/sos" onClick={() => rememberGuestAction('sos')} className="owner20-alert"><span aria-hidden="true"><OwnerIcon kind="warning"/></span><span><strong>SOS</strong><small>Экстренная помощь</small></span></a>
           <a href="#/explore/air" className="owner20-broadcast"><span aria-hidden="true"><OwnerIcon kind="air"/></span><span><strong>Эфир</strong><small>Связь, опыт, помощь коллег</small></span></a>
         </div>
       </div>
@@ -156,7 +156,7 @@ export function OwnerDesktopHome20261120({ overlayBackground = false }: { overla
       <a href="#/explore/air" className="owner20-bottom-card owner20-bottom-air"><b>◉　Эфир TrakSOS</b><p>Живое сообщество водителей и специалистов. Регионы, маршруты, опыт и помощь в пути.</p><span>Войти в Эфир　→</span></a>
       <a href="#/explore/club" className="owner20-bottom-card owner20-bottom-club"><b>♧　Клуб TrakSOS</b><p>Профессиональное сообщество. Обсуждения, советы, разборы, проекты.</p><span>О Клубе　→</span></a>
       <div className="owner20-bottom-card owner20-bottom-why"><b>Почему TrakSOS</b><ul><li>Реальная помощь в дороге</li><li>Проверенные исполнители</li><li>Профессиональное сообщество</li><li>Техническая база знаний</li><li>Развитие сервисов по регионам</li></ul></div>
-      <div className="owner20-bottom-card owner20-bottom-app"><b>Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Скоро в RuStore</span><TrakAppPhone/></div>
+      <a href="#/app-info" className="owner20-bottom-card owner20-bottom-app" aria-label="Информация о мобильном приложении TrakSOS"><b>Приложение TrakSOS</b><p>Все сервисы платформы в вашем телефоне</p><span className="owner20-store">Скоро в RuStore</span><TrakAppPhone/></a>
     </section>
     <p className="owner20-disclaimer">Демонстрационный режим. Наличие исполнителей, доступность регионов и услуг уточняется после входа.</p>
   </main>;

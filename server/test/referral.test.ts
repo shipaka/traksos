@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { setup, ok, type T } from './helpers.ts';
 import { pointsBalance } from '../src/services/referral.ts';
 
-// Реферальные баллы: ссылка, приветственные баллы, 0,5% пригласившему, гашение до 50% сбора/комиссии, сгорание.
+// Реферальные баллы: ссылка, приветственные баллы, 10% фактического сбора пригласившему, клиентский лимит 10% стоимости и исполнительский лимит 50% комиссии, сгорание.
 
 let t: T;
 let admin: { token: string; id: string };
@@ -108,4 +108,25 @@ test('баллы — по желанию: мастер выключил гаше
   ok(await t.api('POST', `/api/orders/${o.id}/confirm`, { total: totalClient }, c.token));
   assert.equal(ok(await t.api('GET', '/api/me/referral', undefined, master.token)).balance, b0);
   ok(await t.api('PUT', '/api/performer/extras', { pointsAuto: true }, master.token));
+});
+
+test('счёт: реферер получает баллы только после подтверждения оплаты, повтор не начисляет дважды', async () => {
+  await t.app.settings.set('payments',{invoice:true},null);
+  const me = ok(await t.api('GET','/api/me/referral',undefined,inviter.token));
+  const friend = await loginRef('+79993334466', me.code);
+  const o=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb',description:'Тест счёта',paymentMethod:'invoice'},friend.token)).order;
+  ok(await t.api('POST',`/api/orders/${o.id}/offers`,{},master.token));
+  const [offer]=ok(await t.api('GET',`/api/orders/${o.id}/offers`,undefined,friend.token)).offers;
+  ok(await t.api('POST',`/api/orders/${o.id}/offers/${offer.id}/choose`,{},friend.token));
+  ok(await t.api('POST',`/api/orders/${o.id}/step`,{action:'arrive'},master.token));
+  ok(await t.api('POST',`/api/orders/${o.id}/amount`,{result:'solved'},master.token));
+  const view=ok(await t.api('GET',`/api/orders/${o.id}`,undefined,friend.token));
+  await t.api('POST',`/api/orders/${o.id}/confirm`,{total:view.money.total},friend.token).then(ok);
+  const reward=()=>t.db.one<{n:number;amount:number}>("select count(*)::int n,coalesce(sum(amount),0)::int amount from points_entries where order_id=$1 and kind='ref_client'",[o.id]);
+  assert.equal((await reward())!.n,0,'Неоплаченный счёт не даёт реферальную награду');
+  const payment=(await t.db.one<{id:string}>("select id from payments where order_id=$1 and method='invoice'",[o.id]))!;
+  ok(await t.api('POST',`/api/admin/payments/${payment.id}/invoice-paid`,{},admin.token));
+  assert.deepEqual(await reward(),{n:1,amount:Math.round(view.money.clientFee*0.1)});
+  assert.notEqual((await t.api('POST',`/api/admin/payments/${payment.id}/invoice-paid`,{},admin.token)).status,200);
+  assert.equal((await reward())!.n,1);
 });

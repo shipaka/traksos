@@ -69,6 +69,14 @@ try {
       els=>els.map(el=>({href:el.getAttribute('href'),text:(el.textContent??'').trim()}))
     );
     if(links.length < 6)throw Error(kind+': almost empty cabinet menu');
+    const duplicates=links.filter((link,index)=>links.findIndex(x=>x.href===link.href)!==index);
+    if(duplicates.length)throw Error(kind+': repeated cabinet menu destinations '+JSON.stringify(duplicates));
+    for(const required of ['#/profile','#/support','#/offer/privacy']){
+      if(!links.some(x=>x.href===required))throw Error(kind+': required destination removed '+required);
+    }
+    if((kind==='master'||kind==='tow'||kind==='service'||kind==='master_service')&&links.some(x=>x.href==='#/air'))
+      throw Error(kind+': driver-only community exposed in partner menu');
+
     // Each account has its own direct economic explanation, not a generic
     // performer pricing page or unapproved commission in the customer menu.
     const financeMenu=links.find(l=>l.href==='#/economics');
@@ -76,6 +84,10 @@ try {
       throw Error(kind+': financial conditions and referral terms are missing from cabinet menu');
     await page.goto(BASE+'/#/economics',{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).waitFor();
+    const expectedMode={owner:'client',driver:'client',master:'performer',tow:'performer',
+      moderator_master:'moderator',service:'service',master_service:'service',
+      insurer:'insurer',admin:'admin'}[kind];
+    await page.locator('.app.role-'+expectedMode).waitFor({state:'visible',timeout:12000});
     const guide=page.locator('section.economics-guide');
     await guide.waitFor({timeout:12000});
     const financeText=(await guide.innerText()).replace(/\s+/g,' ');
@@ -112,6 +124,26 @@ try {
       if(!invitation.includes('Приветственные баллы новому клиенту начисляются при регистрации'))
         throw Error(kind+': welcome reward timing contradicts actual referral logic');
     }
+    // The phone keeps its complete menu; desktop must preserve all those
+    // destinations exactly once across its left and right navigation.
+    await page.setViewportSize({width:1440,height:900});
+    await page.locator('.account-menu > summary').click();
+    const left=await page.locator('.desktop-sidebar .desktop-nav a[href^="#/"]').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
+    const right=await page.locator('.account-menu nav a[href^="#/"]').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
+    const combined=[...left,...right];
+    if(new Set(combined).size!==combined.length)throw Error(kind+': duplicate desktop menu destination');
+    const missing=links.filter(link=>!combined.includes(link.href));
+    if(missing.length)throw Error(kind+': desktop menu lost mobile destinations '+JSON.stringify(missing));
+    const personal=new Set(['#/profile','#/privacy','#/work/me','#/work/me/about','#/work/me/phone','#/work/me/cars','#/work/me/tax','#/base/me']);
+    if(!right.includes('#/profile')||right.some(href=>!personal.has(href))||left.some(href=>personal.has(href)))
+      throw Error(kind+': desktop personal/work navigation not separated');
+    if(!left.includes('#/economics')||!left.includes('#/support')||!left.includes('#/learn'))
+      throw Error(kind+': desktop work/help destination missing');
+    if(!await page.locator('.desktop-sidebar .account-menu-tour').isVisible())
+      throw Error(kind+': desktop manual tour missing');
+    if(!await page.locator('.account-menu-logout').isVisible())throw Error(kind+': desktop logout missing');
+    await page.locator('.account-menu > summary').click();
+    await page.setViewportSize({width:390,height:844});
     const paths=[...new Set(links.map(l=>l.href))];
     if(kind!=='admin' && paths.some(path=>path.startsWith('#/admin/section')))
       throw Error(kind+': sees administrator menu routes');
@@ -134,7 +166,23 @@ try {
       if(state.overflow)throw Error(kind+': horizontal overflow on '+href);
       if(errors.length)throw Error(kind+': script error at '+href+': '+errors.join('; '));
     }
-    report.push({role:kind,visited:paths.length});
+    const invalidRoutes={
+      owner:['#/tech/retired-page'],
+      driver:['#/tech/retired-page'],
+      master:['#/work/me/retired-page','#/work/retired-page'],
+      tow:['#/work/me/retired-page'],
+      service:['#/base/retired-page'],
+      master_service:['#/base/retired-page'],
+      insurer:['#/insurance/retired-page'],
+    }[kind]??[];
+    for(const href of invalidRoutes){
+      await page.goto(BASE+'/'+href,{waitUntil:'domcontentloaded'});
+      await page.locator('main.tr-approved-route-unavailable').waitFor({state:'visible',timeout:12000});
+      if(await page.locator('main.approved-pc,main.performer-workspace,main.base-workspace').count())
+        throw Error(kind+': unrelated dashboard fallback on unknown route '+href);
+      if(errors.length)throw Error(kind+': script error on invalid route '+href+': '+errors.join('; '));
+    }
+    report.push({role:kind,visited:paths.length,unknownRoutesRejected:invalidRoutes.length});
     await ctx.close();
   }
 } finally {await browser.close();}

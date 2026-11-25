@@ -151,6 +151,7 @@ function OrderForSession({id,initialTab,userId}:{
       <EcuOrderPanel order={d} />
       <OrderPhotoGallery orderId={id}/>
       {d.status === 'completed' && <Review id={id} you={d.you} />}
+      {d.status==='completed'&&['client','performer'].includes(d.you)&&<WarrantyPanel key={id+':'+d.you} id={id} you={d.you}/>} 
 
       {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} /></section>}
       </>}
@@ -339,13 +340,33 @@ function PerformerCard({p,pos,consult,to,moving}:{
   p:any;pos:{lat:number;lng:number;at:number}|null;consult?:boolean;
   to?:{lat:number;lng:number}|null;moving?:boolean;
 }){
-  const previousPoint=Number.isFinite(p.lat)&&Number.isFinite(p.lng)?{lat:p.lat,lng:p.lng}:null;
-  const at=consult?null:pos??previousPoint;
-  const lastAt=pos?.at??(p.location_at?Date.parse(p.location_at):null);
+  const validPoint=(point:{lat:number;lng:number}|null|undefined):point is {lat:number;lng:number} =>
+    !!point&&Number.isFinite(point.lat)&&Number.isFinite(point.lng)&&
+    Math.abs(point.lat)<=90&&Math.abs(point.lng)<=180;
+  const livePoint=validPoint(pos)?pos:null;
+  const previousPoint=validPoint(p)?{lat:p.lat,lng:p.lng}:null;
+  const at=consult?null:livePoint??previousPoint;
+  const recordedAt=livePoint?.at??(p.location_at?Date.parse(p.location_at):null);
+  const lastAt=at&&recordedAt!=null&&Number.isFinite(recordedAt)?recordedAt:null;
+  // Keep freshness live even if no socket message or parent render arrives.
+  // Foreground refresh handles a suspended or throttled Android WebView.
+  const [,setClock]=useState(0);
+  useEffect(()=>{
+    if(lastAt==null)return;
+    const refresh=()=>setClock(n=>n+1);
+    const timer=window.setInterval(refresh,1000);
+    document.addEventListener('visibilitychange',refresh);
+    window.addEventListener('focus',refresh);
+    return ()=>{
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange',refresh);
+      window.removeEventListener('focus',refresh);
+    };
+  },[lastAt]);
   const ageMs=lastAt==null?null:Date.now()-lastAt;
-  const fresh=ageMs!=null && ageMs>=-30000 && ageMs<=120000;
+  const fresh=!!at&&ageMs!=null&&ageMs>=-30000&&ageMs<=120000;
   // An estimate is NOT a routing ETA; it is omitted for old/missing GPS.
-  const km=fresh&&at&&to?Math.hypot((at.lat-to.lat)*111,(at.lng-to.lng)*111*Math.cos(to.lat*Math.PI/180))*1.3:null;
+  const km=fresh&&at&&validPoint(to)?Math.hypot((at.lat-to.lat)*111,(at.lng-to.lng)*111*Math.cos(to.lat*Math.PI/180))*1.3:null;
   const min=km!=null?Math.max(5,Math.round(km/40*60)):null;
   return <div className="card roadside-performer-card">
     <div className="between">
@@ -632,7 +653,7 @@ function WorkInProgress({ d }: { d: any }) {
         <span className="note">Сейчас к оплате: выезд {rub(d.money.callOut)} + {hrs(b.units, b.step)} × {rub(b.hour)}{b.wait ? ` + ожидание ${rub(b.wait)}` : ''}. Эта сумма не меняется задним числом — мастер может добавить только расходники и запчасти, отдельными строками.</span>
         <span className="note">{billingRule(d.billingStep)}</span>
       </>}
-      <div className="banner good" style={{ textAlign: 'left' }}><span>Гарантия на работу — <b>14 дней</b>: та же поломка снова — повторный выезд бесплатно.</span></div>
+      <div className="banner good" style={{ textAlign: 'left' }}><span>Если недостаток проявится снова, после завершения работы можно подать претензию к качеству. Условия гарантии и решение зависят от обстоятельств и действующих условий.</span></div>
     </div>
   );
 }
@@ -1128,10 +1149,75 @@ function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: ()
   );
 }
 
+const WARRANTY_REMEDIES=[['assessment','Проверка качества'],['rework','Устранение недостатка'],['alternative','Другой исполнитель'],['partial_refund','Частичный возврат'],['full_refund','Полный возврат']] as const;
+function WarrantyPanel({id,you}:{id:string;you:string}){
+  const {me}=useMe();
+  const scope=(me?.id??'guest')+':warranty:'+id;
+  const claim=usePrivateRead<any>(async()=>{
+    const result=await get('/api/orders/'+id+'/warranty-claims');
+    if(!result||!Object.hasOwn(result,'claim')||(result.claim!==null&&result.claim?.orderId!==id))throw new Error('Не удалось подтвердить претензию');
+    return result;
+  },scope,e=>e.type==='connection_restored'||(e.type==='warranty'&&(!e.orderId||e.orderId===id)));
+  const {busy,run}=useAction();
+  const [open,setOpen]=useState(false);
+  const [defect,setDefect]=useState('');
+  const [evidence,setEvidence]=useState('');
+  const [remedy,setRemedy]=useState<string>('assessment');
+  const [position,setPosition]=useState('needs_evidence');
+  const [note,setNote]=useState('');
+  const [appeal,setAppeal]=useState('');
+  const [uncertain,setUncertain]=useState(false);
+  const act=async(fn:()=>Promise<any>,label:string,clear:()=>void)=>{
+    if(busy||uncertain||!claim.data)return;
+    const r=await run(fn,label);
+    if(r?.id)clear();else setUncertain(true);
+    await claim.reload();
+  };
+  const d=claim.data?.claim;
+  return <section className="card stack" aria-label="Претензия к качеству">
+    <b>Качество выполненной работы</b>
+    <span className="note">Претензия не создаёт новый платный выезд, не доказывает вину и не означает, что возврат уже выполнен.</span>
+    {!claim.data?<><Loading error={claim.error}/>{claim.error&&<button type="button" className="btn ghost small" onClick={claim.reload}>Повторить загрузку претензии</button>}</>:null}
+    {uncertain&&<div className="note" role="alert">Результат действия не подтверждён. Сверьте данные перед повтором. <button type="button" className="btn ghost small" onClick={claim.reload}>Обновить</button><button type="button" className="btn ghost small" disabled={!claim.data||busy} onClick={()=>setUncertain(false)}>Проверил состояние</button></div>}
+    {claim.data&&!d&&you==='client'&&(!open?<button type="button" className="btn ghost" onClick={()=>setOpen(true)}>Подать претензию к качеству</button>:<>
+      <label className="stack">Что повторилось или сделано некачественно?<textarea className="field" maxLength={2000} value={defect} onChange={e=>setDefect(e.target.value)}/></label>
+      <label className="stack">Какое решение вы просите?<select className="field" value={remedy} onChange={e=>setRemedy(e.target.value)}>{WARRANTY_REMEDIES.map(([k,label])=><option key={k} value={k}>{label}</option>)}</select></label>
+      <label className="stack">Описание доказательств (необязательно)<textarea className="field" maxLength={2000} value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
+      <button type="button" className="btn" disabled={busy||uncertain||defect.trim().length<10} onClick={()=>void act(()=>post('/api/orders/'+id+'/warranty-claims',{defect,requestedRemedy:remedy,evidence:evidence.trim()||undefined}),'Претензия зарегистрирована',()=>{setOpen(false);setDefect('');setEvidence('');})}>Отправить претензию</button>
+      <button type="button" className="btn ghost" disabled={busy} onClick={()=>setOpen(false)}>Закрыть форму</button>
+    </>)}
+    {claim.data&&!d&&you==='performer'&&<span className="note">По работе пока нет претензий.</span>}
+    {d&&<>
+      <b>Претензия №{d.number} · {({submitted:'Получена',reviewing:'На проверке',appealed:'Апелляция',decision_recorded:'Решение зафиксировано'} as Record<string,string>)[d.status]??d.status}</b>
+      <p>{d.defect}</p>{d.evidence&&<p className="note">{d.evidence}</p>}
+      {d.performerExplanation&&<p>Позиция исполнителя: {d.performerExplanation}</p>}
+      {d.decisionNote&&<p>Решение сотрудника: {d.decisionNote}</p>}
+      <details><summary>История рассмотрения</summary>{Array.isArray(d.events)&&d.events.map((event:any,index:number)=><p key={index} className="note">{fmtTime(event.createdAt)} · {event.data?.note??event.data?.reason??({opened:'Претензия подана',review_started:'Начата проверка',decision_recorded:'Зафиксировано решение',decision_appealed:'Подана апелляция'} as Record<string,string>)[event.event]??event.event}</p>)}</details>
+      <label className="stack">Дополнительные доказательства<textarea className="field" maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></label>
+      <button type="button" className="btn ghost" disabled={busy||uncertain||note.trim().length<5} onClick={()=>void act(()=>post('/api/warranty-claims/'+d.id+'/evidence',{note}),'Доказательство добавлено',()=>setNote(''))}>Добавить доказательство</button>
+      {you==='performer'&&d.status!=='decision_recorded'&&<>
+        <label className="stack">Позиция исполнителя<select className="field" value={position} onChange={e=>setPosition(e.target.value)}><option value="offer_rework">Предлагаю устранить недостаток</option><option value="contest_fault">Не согласен с претензией</option><option value="needs_evidence">Нужны доказательства</option><option value="unavailable">Не могу выполнить повторную работу</option></select></label>
+        <label className="stack">Пояснение<textarea className="field" maxLength={2000} value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
+        <button type="button" className="btn" disabled={busy||uncertain||evidence.trim().length<10} onClick={()=>void act(()=>post('/api/warranty-claims/'+d.id+'/respond',{position,note:evidence}),'Позиция сохранена',()=>setEvidence(''))}>Отправить позицию</button>
+      </>}
+      {d.status==='decision_recorded'&&d.appealCount===0&&<>
+        <label className="stack">Причина несогласия с решением<textarea className="field" maxLength={2000} value={appeal} onChange={e=>setAppeal(e.target.value)}/></label>
+        <button type="button" className="btn ghost" disabled={busy||uncertain||appeal.trim().length<20} onClick={()=>void act(()=>post('/api/warranty-claims/'+d.id+'/appeal',{reason:appeal}),'Апелляция зарегистрирована',()=>setAppeal(''))}>Подать апелляцию</button>
+      </>}
+    </>}
+  </section>;
+}
+
 function Cancel({ id, status, consult, onDone }: { id: string; status: string; consult?: boolean; onDone: () => void }) {
   const { busy, run } = useAction();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [uncertain,setUncertain]=useState(false);
+  const {me}=useMe();
+  const pricing=usePrivateRead<any>(()=>open&&!consult?get('/api/pricing'):Promise.resolve(null),(me?.id??'guest')+':cancel:'+id+':'+open+':'+!!consult);
+  const scale=pricing.data?.cancelScale;
+  const verifiedScale=['accepted','en_route_first_half','en_route_second_half'].every(k=>typeof scale?.[k]==='number'&&Number.isFinite(scale[k])&&scale[k]>=0&&scale[k]<=1);
+  const percent=(k:string)=>Math.round(scale[k]*100)+'%';
   const reasons = consult ? ['Разобрался сам', 'Мастер не отвечает', 'Долго ждать', 'Ошибся с заявкой'] : ['Завелась сама', 'Нашёл другого мастера', 'Долго ждать', 'Ошибся с заявкой'];
   if (!open) return <button className="btn ghost" onClick={() => setOpen(true)}>Отменить заявку</button>;
   return (
@@ -1139,13 +1225,14 @@ function Cancel({ id, status, consult, onDone }: { id: string; status: string; c
       <b>Отменить заявку?</b>
       {!consult && <div className="stack">
         <b>Условия отмены выезда</b>
-        <span className="note">До назначения исполнителя — 0% стоимости выезда. Принял заявку, но не выехал — 25%. Выехал, но не достиг половины маршрута — 50%. Проехал половину маршрута или прибыл — 100%.</span>
+        <span className="note">{verifiedScale?`До назначения исполнителя — 0% стоимости выезда. Принял заявку, но не выехал — ${percent('accepted')}. Выехал, но не достиг половины маршрута — ${percent('en_route_first_half')}. Проехал половину маршрута или прибыл — ${percent('en_route_second_half')}.`:'Актуальные условия отмены не подтверждены. Окончательный расчёт зависит от этапа заявки.'}</span>{pricing.error&&<button type="button" className="btn ghost small" onClick={pricing.reload}>Повторить загрузку условий</button>}
         <span className="note">Процент применяется к согласованной стоимости выезда. Сервисный сбор и возврат предоплаты рассчитываются отдельно по условиям заявки. Если GPS не позволяет достоверно определить этап, расчёт может потребовать проверки.</span>
         <span className="note">Это правила, а не окончательная сумма списания. Итог зависит от подтверждённого этапа на момент отмены; сведения о платеже и возврате будут доступны в заявке.</span>
       </div>}
-      {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь — отменяйте, деньги не спишутся.</span>}
+      {status !== 'searching' && consult && <span className="note">Если мастер не вышел на связь, укажите причину отмены. Фактическое списание или возврат будет отражён в расчёте заявки.</span>}
       <div className="scroll-x">{reasons.map((r) => <button key={r} className="chip" aria-pressed={reason === r} onClick={() => setReason(r)}>{r}</button>)}</div>
-      <button className="btn bad" disabled={busy || !reason} onClick={() => run(() => post(`/api/orders/${id}/cancel`, { reason }), 'Заявка отменена').then((r) => r && onDone())}>Отменить</button>
+      {uncertain&&<div className="note" role="alert">Отмена не подтверждена. Обновите заявку и проверьте её состояние перед повтором. <button type="button" className="btn ghost small" onClick={onDone}>Обновить заявку</button><button type="button" className="btn ghost small" onClick={()=>setUncertain(false)}>Состояние проверено</button></div>}
+      <button className="btn bad" disabled={busy || uncertain || !reason} onClick={async()=>{const r=await run(()=>post(`/api/orders/${id}/cancel`,{reason}),'Заявка отменена');if(!r)setUncertain(true);onDone();}}>Отменить</button>
       <button className="btn ghost" onClick={() => setOpen(false)}>Не отменять</button>
     </div>
   );
@@ -1162,6 +1249,7 @@ function Review({ id, you }: { id: string; you: string }) {
   const [contest, setContest] = useState(false);
   const [why, setWhy] = useState('');
   if (you === 'admin' || you === 'candidate') return null;
+  if(!rv.data||rv.error)return <div className="card stack"><Loading error={rv.error}/>{rv.error&&<button type="button" className="btn ghost small" onClick={rv.reload}>Повторить загрузку отзывов</button>}</div>;
   const all: string[] = pricing.data?.reviewTags?.[you === 'performer' ? 'aboutClient' : 'aboutPerformer'] ?? [];
   const w = (x: number) => String(Math.round(x * 100) / 100).replace('.', ',');
   if (rv.data?.mine) return (
@@ -1175,7 +1263,7 @@ function Review({ id, you }: { id: string; you: string }) {
           {rv.data.aboutMe.disputed ? <span className="note">Оспорен — до решения модератора в рейтинг не идёт.</span> : contest ? (
             <div className="stack">
               <textarea className="field" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Почему отзыв несправедлив" />
-              <button className="btn small" disabled={busy || why.trim().length < 5} onClick={async () => { if (await run(() => post(`/api/reviews/${rv.data.aboutMe.id}/contest`, { text: why }), 'Отправлено модератору')) { setContest(false); rv.reload(); } }}>Отправить модератору</button>
+              <button className="btn small" disabled={busy || why.trim().length < 5} onClick={async () => { if (await run(() => post(`/api/reviews/${rv.data.aboutMe.id}/contest`, { text: why.trim() }), 'Отправлено модератору')) setContest(false); await rv.reload(); }}>Отправить модератору</button>
             </div>
           ) : <button className="btn ghost small" onClick={() => setContest(true)}>Оспорить отзыв</button>}
         </div>
@@ -1196,7 +1284,7 @@ function Review({ id, you }: { id: string; you: string }) {
       {you !== 'performer' && <WorksCheck id={id} />}
       <button className="btn" disabled={busy || !stars} onClick={async () => {
         const r = await run(() => post(`/api/orders/${id}/review`, { stars, tags, text: text || undefined }), 'Спасибо за отзыв');
-        if (r) setSent(true);
+        if (r) setSent(true);else await rv.reload();
       }}>Оставить отзыв</button>
     </div>
   );
@@ -1249,6 +1337,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const [retryVersion,setRetryVersion]=useState(0);
   const [sending,setSending]=useState(false);
   const sendingRef=useRef(false);
+  const [sendError,setSendError]=useState('');
   const archiveLabel=archived||serverClosed;
   const readOnly = archiveLabel || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
@@ -1261,7 +1350,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     setMsgs([]);setQuick([]);setPeople([]);
     get(`/api/orders/${id}/messages`).then((r) => {
       if(!alive)return;
-      const received=Array.isArray(r.messages)?r.messages:[];
+      if(!r||!Array.isArray(r.messages))throw new Error('Сервер не подтвердил список сообщений');
+      const received=r.messages;
       setMsgs(current=>[...received,...current.filter(
         (m:any)=>!received.some((item:any)=>item.id===m.id))]);
       setQuick(Array.isArray(r.quickReplies)?r.quickReplies:[]);
@@ -1274,7 +1364,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       setLoading(false);
     });
     const off=onEvent((e) => {
-      if(alive && e.type==='chat' && e.message?.order_id===id)
+      if(alive&&e.type==='connection_restored'){setRetryVersion(v=>v+1);return;}
+      if(alive && e.type==='chat' && String(e.message?.order_id)===String(id))
         setMsgs((m)=>(m.some((x)=>x.id===e.message.id)?m:[...m,e.message]));
     });
     return () => { alive = false; off(); };
@@ -1289,9 +1380,10 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
     if(!body.trim()||readOnly||sendingRef.current)return;
     sendingRef.current=true;
-    setSending(true);
+    setSending(true);setSendError('');
     try {
       const m = await post(`/api/orders/${id}/messages`, { body, kind });
+      if(!m?.id)throw new Error('Сервер не подтвердил отправку сообщения');
       setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
       // Do not erase a new draft typed while the previous message was posting.
       setText(current=>current===body?'':current);
@@ -1299,6 +1391,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       // Concurrent completion can beat the browser event. Fail closed immediately
       // even before the parent order status refreshes.
       if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
+      setSendError('Не получили подтверждение отправки. Проверьте переписку перед повтором. Текст сохранён.');
+      setRetryVersion(v=>v+1);
       toast((e as Error).message);
     }finally{
       sendingRef.current=false;
@@ -1321,7 +1415,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   );
   return (
     <div className="card" aria-label={archiveLabel ? 'Архив переписки по заявке' : 'Чат по заявке'}>
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">свернуть ▴</span></button>
       {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
       {loadError&&<div className="stack" role="alert">
         <span className="note">Не удалось загрузить переписку: {loadError}</span>
@@ -1330,6 +1424,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         </button>
       </div>}
       {loading&&<span className="note" role="status">Загружаем переписку…</span>}
+      {sendError&&<span className="note" role="alert">{sendError}</span>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
         {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}

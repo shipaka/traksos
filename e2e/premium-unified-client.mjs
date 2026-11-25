@@ -76,7 +76,7 @@ try {
       if (width < 900) {
         // The signed-in mobile browser and Android APK intentionally mount
         // the SAME owner-approved phone dashboard (618.png). The old browser
-        // desktop hero and six-tab cards have been retired. Check the actual
+        // desktop hero and legacy dashboard cards have been retired. Check the actual
         // actions, role and route contracts rather than obsolete CSS names.
         if(await page.locator('.tr-context-help').count())
           throw Error('Legacy top help banner obscures approved 618 mobile browser');
@@ -104,11 +104,9 @@ try {
         if (await desk.locator('.and19-sos').getAttribute('href')!=='#/sos')
           throw Error('SOS service destination missing on approved mobile UI');
         const tabs=await page.locator('.tabbar a').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
-        const expectedTabs=['#/','#/orders','#/air','#/garage','#/menu'];
+        const expectedTabs=['#/','#/orders','#/air','#/garage','#/shop','#/menu'];
         if (JSON.stringify(tabs)!==JSON.stringify(expectedTabs))
-          throw Error('Approved phone tabs must be Main / Orders / Air / Vehicle / Menu: '+JSON.stringify(tabs));
-        if (tabs.includes('#/shop'))
-          throw Error('Parts shop must live in role menu, not old sixth bottom tab');
+          throw Error('Approved phone tabs must be Main / Orders / Air / Vehicle / Shop / Menu: '+JSON.stringify(tabs));
         // The desktop hero truck is not the phone's main image. Its absence is
         // deliberate; no test may reinsert the old 900px artwork to go green.
       } else {
@@ -128,10 +126,25 @@ try {
           throw Error('Approved PC workspace artwork missing: ' + JSON.stringify(truck));
         if (!await page.locator('.approved-pc-three').isVisible())
           throw Error('Approved PC three-column workspace missing');
-        for (const route of ['#/sos', '#/new/tow', '#/services', '#/orders']) {
-          if (!(await page.locator('.approved-pc-client a[href="' + route + '"]').count()))
-            throw Error('Approved PC workspace missing working destination ' + route);
+        const desk=page.locator('main.approved-pc-client');
+        const shortcuts=desk.getByRole('navigation',{name:'Услуги помощи',exact:true});
+        await shortcuts.waitFor({state:'visible'});
+        // The empty-state SOS action is in the centre; order history is in
+        // the left pane. The owner requested one action per destination.
+        await desk.getByText('Активных заявок сейчас нет.',{exact:false}).waitFor();
+        for (const route of ['#/sos', '#/new/tow', '#/services', '#/new/consult', '#/orders']) {
+          const link=desk.locator('a[href="' + route + '"]');
+          if (await link.count()!==1 || !await link.isVisible())
+            throw Error('Approved PC workspace missing or duplicates visible working destination ' + route);
         }
+        for(const route of ['#/new/tow','#/services','#/new/consult'])
+          if(await shortcuts.locator('a[href="'+route+'"]').count()!==1)
+            throw Error('Assistance navigation lost '+route);
+        await desk.locator('a[href="#/sos"]').click();
+        await page.waitForURL(/#\/sos$/);
+        await page.locator('.client-sos-choices').waitFor();
+        await page.goBack();
+        await desk.waitFor({state:'visible'});
       }
       // Older photographic service cards were physically retired at the owner's
       // request. Preserve only verified actual vehicle-model photos in the app.

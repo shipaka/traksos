@@ -112,22 +112,21 @@ export function TrainingInvite() {
   const { me, mode } = useMe();
   const role = trainingRole(mode, me?.roles ?? [], me?.owner_id);
   const key = me ? localFlag(me.id, role) : '';
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => { try { setHidden(!key || !!localStorage.getItem(key)); } catch { setHidden(!key); } }, [key]);
+  const [visibility,setVisibility]=useState<{key:string;hidden:boolean}>({key:'',hidden:false});
+  const hidden=visibility.key===key?visibility.hidden:(()=>{try{return !key||!!localStorage.getItem(key);}catch{return !key;}})();
   if (!me || hidden) return null;
   return <section className="tr-training-invite" aria-label="Знакомство с кабинетом">
     <div><strong>Впервые здесь?</strong><span>Покажем основные действия в вашем кабинете — без настоящих заказов и оплаты.</span></div>
     <div className="tr-training-invite-actions">
       <a href="#/training">Начать обучение</a>
       <button type="button" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать кнопки</button>
-      <button type="button" onClick={() => { try { localStorage.setItem(key, 'later'); } catch {} setHidden(true); }}>Позже</button>
+      <button type="button" onClick={() => { try { localStorage.setItem(key, 'later'); } catch {} setVisibility({key,hidden:true}); }}>Позже</button>
     </div>
   </section>;
 }
 
 export function Training({ chapter }: { chapter?: string }) {
   const { me, mode } = useMe();
-  const { pricing } = usePrices();
   const ownRole = trainingRole(mode, me?.roles ?? [], me?.owner_id);
   const admin = !!me?.roles.includes('admin');
   const allowed = admin ? Object.keys(names) as Role[]
@@ -135,14 +134,19 @@ export function Training({ chapter }: { chapter?: string }) {
     : [ownRole];
   const requested = chapter as Role;
   const role = allowed.includes(requested) ? requested : ownRole;
-  const [index, setIndex] = useState(0);
-  const [completed, setCompleted] = useState(false);
-  const key = me ? localFlag(me.id, role) : '';
-  useEffect(() => { setIndex(0); try { setCompleted(key ? localStorage.getItem(key) === 'done' : false); } catch { setCompleted(false); } }, [key]);
-  const items = lessons[role];
+  if(!me)return null;
+  return <TrainingForAccount key={me.id+':'+role} userId={me.id} role={role} allowed={allowed}/>;
+}
+function TrainingForAccount({userId,role,allowed}:{userId:string;role:Role;allowed:Role[]}){
+  const {pricing}=usePrices();
+  const key=localFlag(userId,role);
+  const items=lessons[role];
+  const [index,setIndex]=useState(()=>{try{const value=Number(sessionStorage.getItem(key+'.step')??0);return Number.isInteger(value)&&value>=0&&value<items.length?value:0;}catch{return 0;}});
+  const [completed,setCompleted]=useState(()=>{try{return localStorage.getItem(key)==='done';}catch{return false;}});
+  useEffect(()=>{try{sessionStorage.setItem(key+'.step',String(index));}catch{}},[key,index]);
   const lesson = items[Math.min(index, items.length - 1)];
   const finish = () => { if (key) { try { localStorage.setItem(key, 'done'); } catch {} } setCompleted(true); };
-  const next = () => { if (index === items.length - 1) finish(); else setIndex(v => v + 1); };
+  const next = () => { if (index === items.length - 1) finish(); else setIndex(v => Math.min(items.length-1,v+1)); };
   const amountNote = !pricing
     ? 'Актуальные ставки загрузятся из настроек площадки. Окончательную сумму смотрите в заявке до подтверждения.'
     : role === 'owner' || role === 'driver'

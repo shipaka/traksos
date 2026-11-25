@@ -75,7 +75,7 @@ import { MobileRoleMenu } from './mobileRoleMenu.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
-import { GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
+import { GuestAppInfo, GuestCompany, GuestOffers } from './screens/guestInfo.tsx';
 
 import { SiteQuickSearch } from './screens/siteQuickSearch.tsx';
 import { Invite } from './screens/invite.tsx';
@@ -328,6 +328,23 @@ function App() {
     if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
     location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
   }, [route.join('/')]); // eslint-disable-line
+  // Opening an authorized workspace also selects its cabinet for shared
+  // destinations (help, economics, profile). Merely overriding the current
+  // render leaves dual-role accounts in their previous cabinet on the next link.
+  useEffect(() => {
+    if (!ready || !me) return;
+    const roles = me.roles;
+    const root = route[0];
+    const selected: Mode | null =
+      root === 'work' && roles.some(r => r === 'master' || r === 'tow') ? 'performer'
+      : root === 'admin' && roles.includes('admin') ? 'admin'
+      : root === 'moderation' && roles.some(r => r === 'moderator' || r === 'admin') ? 'moderator'
+      : root === 'base' && roles.includes('service') ? 'service'
+      : root === 'insurance' && roles.includes('insurer') ? 'insurer'
+      : root === 'inspections' && roles.includes('inspection_operator') ? 'inspection'
+      : root === 'courier' && roles.includes('courier') ? 'courier' : null;
+    if (selected && selected !== mode) setMode(selected);
+  }, [ready, me, route[0], mode]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
@@ -392,7 +409,7 @@ function App() {
   if (!me) {
     return (
       <MeCtx.Provider value={{ me: null, reload, mode: 'client', setMode }}>
-        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'privacy' ? <OfferPage audience="privacy" /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Login key="guest-help-login" entry="login" /> : route[0] === 'explore' ? <Login key={route.join('/')} entry="login" serviceContext={route[1]} /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : route[0] && route[0] !== 'r' ? 'login' : undefined} /></>}</Shell>
+        <Shell mode="client" me={null}>{(route[0] === 'admin' && route[1] === 'test-center') || route[0] === 'preview' ? <DemoPreviewGate roleId={route[0]==='admin' ? route[2] : undefined} /> : route[0] === 'offer' ? <OfferPage audience={route[1] ?? 'client'} /> : route[0] === 'privacy' ? <OfferPage audience="privacy" /> : route[0] === 'qr' && route[1] ? <QrJoin code={route[1]} /> : route[0] === 'rules' ? <Rules /> : route[0] === 'help' ? <Login key="guest-help-login" entry="login" /> : route[0] === 'explore' ? <Login key={route.join('/')} entry="login" serviceContext={route[1]} /> : route[0] === 'app-info' ? <GuestAppInfo /> : route[0] === 'company' ? <GuestCompany /> : route[0] === 'offers' ? <GuestOffers /> : <>{route[0] === 'r' && <div className="banner good" style={{ margin: '12px 16px 0' }}><span>Вас пригласили в TrakSOS — после входа на счёт придут подарочные баллы.</span></div>}<Login key={route[0] ?? 'public'} entry={route[0] === 'login' ? 'login' : route[0] === 'register' ? 'register' : route[0] === 'join' ? 'join' : route[0] === 'reset' ? 'reset' : route[0] === 'activate' ? 'activate' : route[0] && route[0] !== 'r' ? 'login' : undefined} /></>}</Shell>
       </MeCtx.Provider>
     );
   }
@@ -444,6 +461,11 @@ function App() {
     case 'invite': screen = <Invite />; break;
     case 'r': screen = <Invite />; break;
     case 'work':
+      if (b && (!['profile','me','filter','jobs','chats','docs'].includes(b) ||
+          (b==='me' && route[2] && !['about','phone','schedule','cars','tax','money','level'].includes(route[2])))) {
+        screen=<UnavailableRole label="Раздел кабинета мастера не найден" />;
+        break;
+      }
       if (!isPerformer) {
         // A station owner may add the mobile-master workplace using the
         // existing real performer onboarding; no fake ninth UI shell.
@@ -452,12 +474,12 @@ function App() {
         break;
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
-        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
+        : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <UnavailableRole label="Раздел настроек мастера не найден" />
         : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" calendarDate={route[2]==='calendar' ? (route[3]??'') : undefined} calendarPeriod={route[4]==='day'?'day':'week'} /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)
-      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : <ApprovedPcDesk role="service" fallback={<BaseHome />} />; break;
+      : b === 'car' && route[2] ? <BaseCar id={route[2]} /> : b === 'me' ? <BaseSetup /> : b === 'money' ? <BaseMoney /> : b === 'inbox' ? <BaseHome key="inbox" initialTab="req" /> : b===undefined ? <ApprovedPcDesk role="service" fallback={<BaseHome />} /> : <UnavailableRole label="Раздел СТО не найден" />; break;
     case 'services': screen = b && route[2] === 'book' ? <BookForm id={b} /> : b ? <CenterPage id={b} /> : <ServicesList />; break;
     case 'booking': screen = <BookingPage id={b} />; break;
     case 'fleet': screen = isCustomer && !me.owner_id && !me.roles.includes('driver') ? <Fleet /> : <main><div className="empty">Парком управляет владелец</div></main>; break;
@@ -466,13 +488,13 @@ function App() {
       ? <main><div className="empty">Кабинет курьера доступен только назначенному курьеру.</div></main>
       : b === 'jobs' && route[2]
         ? <CourierDelivery id={route[2]} />
-        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : <ApprovedPcDesk role="courier" fallback={<CourierDesk />} />; break;
+        : b === 'jobs' ? <CourierDesk section="jobs" /> : b === 'chat' ? <CourierDesk section="chat" /> : b===undefined ? <ApprovedPcDesk role="courier" fallback={<CourierDesk />} /> : <UnavailableRole label="Раздел курьерского кабинета не найден" />; break;
     case 'insurance': screen = b === 'request'
       ? (route[2] === 'new' ? (isCustomer && effMode === 'client' ? <InsuranceApplication vehicleId={route[3]??''} /> : <UnavailableRole label="Оформление страховой заявки доступно только клиенту" />) : <InsuranceThread requestId={route[2]??''} />)
       : isInsurer
         ? b === 'chats' ? <InsurerChats />
           : b === 'requests' ? <InsurerCabinet />
-          : <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} />
+          : b===undefined ? <ApprovedPcDesk role="insurer" fallback={<InsurerCabinet />} /> : <UnavailableRole label="Раздел страхового кабинета не найден" />
         : <main><div className="empty">Нет доступа к кабинету страховщика</div></main>; break;
     case 'help': screen = b === 'case' && route[2] ? <ScenarioLesson id={route[2]} /> : <Help />; break;
     case 'economics': screen = <EconomicsPage />; break;
@@ -484,7 +506,7 @@ function App() {
       : me.roles.some(r => ['client','driver','master','tow','service','admin','moderator'].includes(r)))
       ? <TechBase key={b + ':' + (route[2] ?? '')} audience={b === 'master' ? 'master' : 'driver'} initialVehicleId={route[2]} />
       : <main><div className="empty">Нет доступа к этому разделу ТехБазы</div></main>; break;
-    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : <Help />; break;
+    case 'tech': screen = b === 'codes' ? <TechCodes /> : b === 'cases' ? <RepairCases /> : b === 'review' && isAdmin ? <TechnicalCasesReview /> : b===undefined ? <Help /> : <UnavailableRole label="Раздел технической базы недоступен или не найден" />; break;
     case 'training': screen = <Training chapter={b} />; break;
     case 'practice': screen = <TrainingPractice chapter={b} />; break;
     case 'pricing-lab': screen = isAdmin ? <PricingLaboratory /> : <main><div className="empty">Нет доступа</div></main>; break;
@@ -543,6 +565,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     {title:'Консультация', href:'#/explore/consult'},
     {title:'Запчасти', href:'#/explore/parts'},
     {title:'Страхование', href:'#/explore/insurance'},
+    {title:'ТехБаза', href:'#/explore/tech'},
+    {title:'Техосмотр', href:'#/explore/inspection'},
   ];
   const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
     { title: 'О платформе', links: [{ title: 'О нас', href: '#/company' }] },
@@ -602,9 +626,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       : [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь'], ['/shop', '⚙', 'Запчасти'], ['/profile', '◉', 'Профиль']];
   // Mobile tabs only contain real role-dependent routes; extra tools remain in the menu.
   const mobileTabs: [string, string, string][] = !me ? [] : mode === 'courier'
-    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/support','?','Поддержка'], ['/menu','menu','Меню']]
+    ? [['/courier','⌂','Главная'], ['/courier/jobs','clipboard','Доставки'], ['/courier/chat','chat','Связь'], ['/menu','menu','Меню']]
     : mode === 'client'
-    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/menu', 'menu', 'Меню']]
+    ? [['/', '⌂', 'Главная'], ['/orders', 'clipboard', 'Заявки'], ['/air', '◌', 'Эфир'], ['/garage', 'truck', 'Техника'], ['/shop', '🛍', 'Магазин'], ['/menu', 'menu', 'Меню']]
     : mode === 'performer'
       ? [['/work', '⌂', 'Главная'], ['/work/jobs', 'clipboard', 'Заявки'], ['/work/chats', 'chat', 'Чат'], ['/menu', 'menu', 'Меню']]
     : mode === 'service'
@@ -617,21 +641,26 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       ? [['/moderation', '⌂', 'Главная'], ['/support', '?', 'Обращения'], ['/menu', 'menu', 'Меню']]
     : [['/admin', '⌂', 'Главная'], ['/admin/section/orders', 'clipboard', 'Заявки'],
        ['/admin/section/people', '▤', 'Пользователи'], ['/menu', 'menu', 'Меню']];
-  // A nested route must highlight one real mobile tab, never both its parent
-  // and its child (for example /courier and /courier/jobs).
+  // An order detail belongs to its role's order list or chat, not to a
+  // different cabinet. Highlight the owning section without changing the URL.
+  const navigationPath = route[0] === 'order'
+    ? mode === 'performer' ? (route[2] === 'chat' ? '/work/chats' : '/work/jobs')
+      : mode === 'client' ? '/orders' : here
+    : mode === 'insurer' && route[0] === 'insurance' && route[1] === 'request'
+      ? '/insurance/requests' : here;
+  const matchesSection = (href:string) => navigationPath === href ||
+    (href !== '/' && navigationPath.startsWith(href + '/'));
+  // A nested route must highlight one real tab, never both parent and child.
   const activeMobileTabHref = mobileTabs
-    .filter(([href]) => here === href ||
-      (href !== '/' && here.startsWith(href + '/')))
+    .filter(([href]) => matchesSection(href))
     .sort((a,b) => b[0].length - a[0].length)[0]?.[0];
-  // Desktop primary navigation follows the same deepest-match rule.
   const isDesktopPrimaryActive = (href: string, links: readonly (readonly string[])[]) =>
-    (here === href || (href !== '/' && here.startsWith(href + '/'))) &&
-    !links.some(([other]) => other !== href && other.length > href.length &&
-      (here === other || here.startsWith(other + '/')));
+    matchesSection(href) &&
+    !links.some(([other]) => other !== href && other.length > href.length && matchesSection(other));
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
-    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/courier/chat','Связь по доставкам'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
     : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
@@ -679,7 +708,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/shop', 'Магазин запчастей'], ['/profile', 'Профиль и настройки']];
-  const helpLinks: [string, string][] = [
+  const rawHelpLinks: [string, string][] = [
     ...(me?.roles.some(r => ['master','service','admin','moderator'].includes(r))
       ? [['/techbase/master','ТехБаза специалиста'] as [string,string]] : []),
     ...(me?.roles.some(r => ['client','driver','tow'].includes(r))
@@ -692,9 +721,45 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/learn', 'Знакомство с TrakSOS'], ['/training', 'Обучение по шагам'], ['/practice', 'Учебный тренажёр'], ['/help', 'Помощь и подсказки'],
     ['/economics', 'Комиссии, баллы и рефералы'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
+    ...(mode==='admin'||mode==='moderator' ? [] : [['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта']] as [string,string][]),
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
+  // Keep the help/documents group unique, including routes already in the account group.
+  // A staff privacy offer is the same destination as the legal privacy policy.
+  const helpLinks = rawHelpLinks.filter(([href],index,links)=>
+    !accountLinks.some(([accountHref])=>accountHref===href) &&
+    links.findIndex(([other])=>other===href)===index);
+  // On PC, every destination belongs to exactly one navigation surface.
+  // Keep the existing complete phone/native account menu and tab bar.
+  const desktopSplit = !native.isApp && !mobileShell;
+  const personalPaths = new Set(['/profile','/privacy','/work/me','/work/me/about',
+    '/work/me/phone','/work/me/cars','/work/me/tax','/base/me']);
+  const personalLinks = [...accountLinks,...helpLinks].filter(([href])=>personalPaths.has(href));
+  const primaryDesktop: [string,string,string][] = mode === 'client'
+    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'],
+       ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'],
+       ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
+    : mode === 'performer'
+      ? [['/work','⌂','Рабочий стол'], ['/work/jobs','☷','Мои заявки и история'],
+         ['/work/me/schedule','▦','Календарь и график'], ['/work/filter','⚙','Настройки заявок']]
+      : tabs;
+  const allDesktopLinks: [string,string,string][] = [
+    ...primaryDesktop,
+    ...mobileTabs.filter(([href])=>href!=='/menu'),
+    ...accountLinks.map(([href,label]):[string,string,string]=>[href,'▣',label]),
+    ...helpLinks.map(([href,label]):[string,string,string]=>[href,'ⓘ',label])
+  ].filter(([href],index,links)=>!personalPaths.has(href) && links.findIndex(([other])=>other===href)===index);
+  const financePaths=new Set(['/economics','/invite','/work/me/money','/base/money',
+    '/admin/section/payments','/pricing-lab']);
+  const helpPaths=new Set([...helpLinks.map(([href])=>href).filter(href=>!financePaths.has(href)&&!href.startsWith('/techbase/')&&href!=='/air'),
+    '/support','/notifications','/work/docs']);
+  const testCenterPaths=new Set(['/admin/test-center','/admin/test-center/client']);
+  const desktopGroups: [string,[string,string,string][]][] = [
+    ['Рабочие разделы',allDesktopLinks.filter(([href])=>!financePaths.has(href)&&!helpPaths.has(href)&&!testCenterPaths.has(href))],
+    ['Финансы',allDesktopLinks.filter(([href])=>financePaths.has(href))],
+    ['Тестовые кабинеты',allDesktopLinks.filter(([href])=>testCenterPaths.has(href))],
+    ['Помощь и документы',allDesktopLinks.filter(([href])=>helpPaths.has(href))]
+  ];
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
   const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
@@ -760,7 +825,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
           {guestNavGroups.map(group => (
             <details key={group.title} className="guest-nav-group" open={openGuestGroup === group.title}
-              onMouseLeave={() => setOpenGuestGroup(null)}
+              onPointerLeave={event => {
+                if(event.pointerType==='mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                  setOpenGuestGroup(current=>current===group.title?null:current);
+              }}
               onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
               onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
               <summary aria-expanded={openGuestGroup === group.title}
@@ -842,11 +910,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   if(menu)menu.open=false;
                 }
               }}>
-              <span className="account-menu-heading">Мой кабинет</span>
-              {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
-              <span className="account-menu-heading">Помощь и документы</span>
-              {<button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
-              {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              <span className="account-menu-heading">{desktopSplit?'Профиль и настройки':'Мой кабинет'}</span>
+              {(desktopSplit?personalLinks:accountLinks).map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              {!desktopSplit&&<>
+                <span className="account-menu-heading">Помощь и документы</span>
+                <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>
+                {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              </>}
               {<button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
@@ -859,53 +929,29 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
-              {(mode === 'client'
-                ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
-                : mode === 'performer'
-                  ? []
-                  : mode === 'service'
-                    ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
-                    : mode === 'insurer' || mode === 'inspection'
-                      ? tabs
-                      : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/admin/test-center/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
-                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href, links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
-                  <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                </a>
-              ))}
-              {mode === 'performer' && <>
-                {([
-                  ['Рабочее место', [
-                    ['/work','⌂','Рабочий стол'], ['/work/jobs','☷','Мои заявки и история'],
-                    ['/work/me/schedule','▦','Календарь и график'], ['/work/filter','⚙','Настройки заявок']]],
-                  ['Финансы', [
-                    ['/work/me/money','₽','Начисления и выплаты']]],
-                  ['Сообщения и помощь', [
-                    ['/notifications','◉','Уведомления'], ['/support','?','Поддержка'],
-                    ['/work/docs','◇','Документы и проверки'], ['/help','ⓘ','Подсказки']]],
-                  ['Профиль и настройки', [
-                    ['/work/me','▣','Мой профиль'], ['/work/me/phone','⚿','Вход и безопасность'],
-                    ['/work/me/cars','⚙','Автомобили'], ['/work/me/tax','▤','Налоговый статус'],
-                    ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]
-                  ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
-                  <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
-                  {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
-                    className={`desktop-nav-link ${here===href?'active':''}`}>
+              {desktopGroups.map(([group,links])=>{
+                if(!links.length)return null;
+                const destinations=links.map(([href,ic,name])=>{
+                  const active=isDesktopPrimaryActive(href,allDesktopLinks);
+                  return <a key={href} href={shellHref(href)} aria-current={active?'page':undefined}
+                    className={`desktop-nav-link ${active?'active':''} ${href==='/sos'?'desktop-nav-sos':''}`}>
                     <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                  </a>)}
-                </div>)}
-                {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
-                  <span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Моя СТО</span>
-                </a>}
-              </>}
-              {mode === 'client' && <>
-                <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
-                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
-                  <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
-                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                  </a>
-                ))}
-              </>}
+                  </a>;
+                });
+                // Compact admin sections; the active section opens on entry.
+                // Native details retains keyboard/touch disclosure without changing route permissions.
+                if(mode==='admin'&&(group==='Финансы'||group==='Тестовые кабинеты')){
+                  const active=links.some(([href])=>isDesktopPrimaryActive(href,allDesktopLinks));
+                  return <details className="desktop-nav-disclosure" key={group+':'+active} open={active}>
+                    <summary className="desktop-sidebar-title desktop-nav-section">{group}</summary>
+                    {destinations}
+                  </details>;
+                }
+                return <div key={group}><div className="desktop-sidebar-title desktop-nav-section">{group}</div>{destinations}</div>;
+              })}
+              <button type="button" className="desktop-nav-link account-menu-tour" onClick={()=>window.dispatchEvent(new Event('traksos-tour-start'))}>
+                <span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Показать, где какие кнопки</span>
+              </button>
             </> : isAuthEntry ? <>
               <a className="desktop-nav-link" href="#/"><span aria-hidden="true"><NavGlyph glyph="⌂"/></span><span>Главная</span></a>
               <a className="desktop-nav-link" href="#/company"><span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Компания</span></a>
@@ -922,7 +968,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <a className="desktop-nav-link" href="#/offer/privacy"><span aria-hidden="true"><NavGlyph glyph="▣"/></span><span>Документы</span></a>
                         </>}
           </nav>
-          {!me && <aside className="track-sidebar-app" aria-label="Мобильное приложение TrakSOS">
+          {!me && <a href="#/app-info" className="track-sidebar-app" aria-label="Информация о мобильном приложении TrakSOS">
             <span className="track-sidebar-app-glow" aria-hidden="true" />
             <TrakAppPhone className="track-sidebar-app-phone"/>
             <span className="track-sidebar-app-copy">
@@ -930,7 +976,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               <small>Заявки и связь с мастером в одном месте</small>
               <span className="track-sidebar-app-soon">Скоро в RuStore</span>
             </span>
-          </aside>}
+          </a>}
           <div className="desktop-sidebar-bottom"><strong>TRAKSOS 24/7</strong><span>Помощь грузовикам</span><small>Вся Россия · доступность по регионам</small></div>
         </aside>
         <div className="desktop-content">
@@ -955,7 +1001,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
       {mobileTabs.length > 0 && (
         <nav className="tabbar">
           {mobileTabs.map(([href, ic, name]) => (
-            <a key={href} href={shellHref(href)} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
+            <a key={href} href={shellHref(href)} aria-current={activeMobileTabHref === href ? 'page' : undefined} className={`${activeMobileTabHref === href ? 'on' : ''} ${href === '/sos' ? 'sosTab' : ''}`}>
               {href === '/sos' ? <><span className="ic"><NavGlyph glyph="✚" /></span>{name}</> : <><span className="ic"><NavGlyph glyph={ic} /></span>{name}</>}
             </a>
           ))}

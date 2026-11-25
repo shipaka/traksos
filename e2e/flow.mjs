@@ -171,7 +171,7 @@ for (let i = 0; i < n; i++) {
 }
 await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
-await a.getByText('Очередь пуста').waitFor();
+await a.getByText('Нет ожидающих проверки документов', { exact: true }).waitFor();
 await m.goto(BASE + '/#/work');
 const availabilitySwitch = m.getByRole('switch', { name: 'Принимать новые заявки' });
 await availabilitySwitch.waitFor({ timeout: 10000 });

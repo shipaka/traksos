@@ -3,7 +3,7 @@
 // No order, payment, or delivery is submitted. Logout touches synthetic sessions only.
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
-import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,assertDesktopActions} from './role-click-contract.mjs';
+import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,desktopPersonalPaths,assertDesktopMenu} from './role-click-contract.mjs';
 import {watchPageErrors} from './visual-page-errors.mjs';
 import {clickWorkingAction} from './desktop-working-action.mjs';
 
@@ -108,6 +108,22 @@ async function clickRoute(page,locator,href,assertClean){
   await locator.click();
   await visibleRoute(page,href,assertClean);
 }
+async function checkPerformerHistory(page,surface,assertClean){
+  const group=page.locator('main.performer-orders-page .grid3[role="tablist"]');
+  await group.waitFor({state:'visible',timeout:15000});
+  for(const label of ['По машинам','Чёрный список','Все заявки']){
+    await group.getByRole('button',{name:label,exact:true}).click();
+    await page.waitForFunction(({label,browser})=>{
+      const group=document.querySelector('main.performer-orders-page .grid3[role="tablist"]');
+      const active=group?.querySelectorAll('.seg[aria-pressed="true"]');
+      if(active?.length!==1||active[0].textContent.trim()!==label)return false;
+      // Canonical browser rule from approvedInnerDepth20261121.css;
+      // native styling has a separate contract, not this browser gradient.
+      return !browser||getComputedStyle(active[0]).backgroundImage.includes('rgb(239, 130, 37)');
+    },{label,browser:!surface.native},{timeout:10000});
+    await assertClean('performer history '+label);
+  }
+}
 async function openHeaderMenu(page){
   const menu=page.locator('.account-menu');
   if(!(await menu.evaluate(el=>el.open)))await menu.locator('summary').click();
@@ -178,6 +194,10 @@ try{
         await clickRoute(page,page.locator('.tabbar a[href="'+href+'"]'),href,assertClean);
         await page.waitForFunction(target=>Array.from(document.querySelectorAll('.tabbar a.on')).map(x=>x.getAttribute('href')).join('|')===target,href);
         assertActiveTab(await linksOf(page.locator('.tabbar a.on')),href);
+        if(mode==='performer'&&href==='#/work/jobs'){
+          await checkPerformerHistory(page,surface,assertClean);
+          result.historyTabsVerified=true;
+        }
         result.clicked.push(href);
       }
       let menu=await openMobileMenu(page,assertClean);
@@ -192,9 +212,27 @@ try{
     }else{
       const sidebar=page.locator('.desktop-sidebar .desktop-nav');
       await sidebar.waitFor({state:'visible'});
-      assertDesktopActions(role,await linksOf(sidebar.locator('a[href^="#/"]')),home);
+      let menu=await openHeaderMenu(page);
+      assertDesktopMenu(mode,role,await linksOf(sidebar.locator('a[href^="#/"]')),await linksOf(menu.locator('nav a[href^="#/"]')),home);
+      await menu.locator('summary').press('Escape');
+      if(await menu.evaluate(el=>el.open))throw Error('Escape did not close desktop menu');
       const clickDesktop=async href=>{
         const link=sidebar.locator('a[href="'+href+'"]');
+        // Admin finance and test routes live in native disclosure groups.
+        // Open a closed group through its actual keyboard-operable summary;
+        // never force a click on a hidden route or bypass the route assertion.
+        const disclosure=link.locator('xpath=ancestor::details[1]');
+        if(await disclosure.count()){
+          const summary=disclosure.locator('summary');
+          await summary.waitFor({state:'visible'});
+          if(!(await disclosure.evaluate(el=>el.open))){
+            await summary.focus();
+            await summary.press('Enter');
+            if(!(await disclosure.evaluate(el=>el.open)))
+              throw Error('Desktop disclosure did not open via keyboard: '+href);
+          }
+          await link.waitFor({state:'visible'});
+        }
         await clickWorkingAction(link,async()=>{
           await visibleRoute(page,href,assertClean);
           await page.waitForFunction(target=>{
@@ -203,6 +241,10 @@ try{
             return active.length===1&&active[0].getAttribute('href')===target;
           },href,{timeout:10000});
         });
+        if(mode==='performer'&&href==='#/work/jobs'){
+          await checkPerformerHistory(page,surface,assertClean);
+          result.historyTabsVerified=true;
+        }
         result.clicked.push('desktop:'+href);
       };
       // Queue tabs are actual work actions, particularly for insurance and
@@ -234,12 +276,12 @@ try{
         result.clicked.push('workdesk:#/base/inbox');
         await clickDesktop(home);
       }
-      for(const href of desktopActions[role])await clickDesktop(href);
+      for(const href of new Set([...desktopActions[role].filter(href=>!desktopPersonalPaths.includes(href)),'#/support','#/help']))await clickDesktop(href);
       await clickDesktop(home);
       result.clicked.push('desktop:return-home');
-      let menu=await openHeaderMenu(page);
-      assertRoleMenu(mode,await linksOf(menu.locator('nav a[href^="#/"]')));
-      for(const href of ['#/profile','#/support','#/help']){
+      menu=await openHeaderMenu(page);
+      assertDesktopMenu(mode,role,await linksOf(sidebar.locator('a[href^="#/"]')),await linksOf(menu.locator('nav a[href^="#/"]')),home);
+      for(const href of new Set(['#/profile',...desktopActions[role].filter(href=>desktopPersonalPaths.includes(href))])){
         await clickRoute(page,menu.locator('nav a[href="'+href+'"]').first(),href,assertClean);
         if(await page.locator('.account-menu').evaluate(el=>el.open))throw Error('Header menu stayed open');
         result.clicked.push(href);
@@ -247,6 +289,23 @@ try{
       }
       await menu.locator('summary').press('Escape');
       if(await menu.evaluate(el=>el.open))throw Error('Escape did not close desktop menu');
+    }
+    // Direct link and an unrelated prior hash must both return to the
+    // declared SOS parent, not an arbitrary browser history entry.
+    if(role==='owner'){
+      const target='#/new/tow?sos=accident';
+      const back=page.locator('main a.note[href="#/sos"]').filter({hasText:'Назад'});
+      await page.goto(BASE+'/'+target,{waitUntil:'domcontentloaded'});
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await visibleRoute(page,'#/sos',assertClean);
+      await page.evaluate(()=>{location.hash='#/orders';});
+      await visibleRoute(page,'#/orders',assertClean);
+      await page.evaluate(hash=>{location.hash=hash;},target);
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await visibleRoute(page,'#/sos',assertClean);
+      result.explicitBackVerified=true;
     }
     if(!['client','performer','service'].includes(mode)){
       await page.goto(BASE+'/#/shop',{waitUntil:'domcontentloaded'});

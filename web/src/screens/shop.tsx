@@ -118,9 +118,9 @@ function useShopPrivateLoad<T>(load:(isCurrent:()=>boolean)=>Promise<T>, deps:un
       window.removeEventListener('traksos-auth-expired',invalidate);
     };
   },[]);
-  useEffect(()=>eventFilter?onEvent((event:any)=>{
-    if(eventFilter(event))setRefresh(n=>n+1);
-  }):undefined,[actor,token,...deps]);
+  useEffect(()=>onEvent((event:any)=>{
+    if(event.type==='connection_restored'||eventFilter?.(event))setRefresh(n=>n+1);
+  }),[actor,token,...deps]);
   return {
     data:result.key===key?result.data:null,
     error:result.key===key?result.error:null,
@@ -161,12 +161,21 @@ export function Shop() {
       <b>{contextBookingId ? 'Подбор для ремонтной заявки СТО' : 'Подбор для моей техники'}</b>
       <span className="note">{contextualVehicle.error
         ? 'Не удалось проверить данные машины. Уточните автомобиль в заявке перед подбором.'
-        : !contextualVehicle.data ? 'Проверяем данные автомобиля…'
+        : !contextualVehicle.data ? 'Автомобиль не найден или данные ещё загружаются. Проверьте выбранную технику.'
         : vehicleLabel || 'Автомобиль из заявки'}</span>
       <span className="note">Поиск не подтверждает совместимость и не добавляет деталь автоматически в ремонт. Проверяйте применяемость по VIN и агрегату.</span>
     </section>
   );
-  const c = useShopPrivateLoad<any>(() => get('/api/shop?light=1'), []);
+  const c = useShopPrivateLoad<any>(() => {
+    if(!navigator.onLine) return Promise.reject(new Error('Нет подключения к каталогу'));
+    return get('/api/shop?light=1');
+  }, []);
+  // A failed reconnect must not erase an explicitly observed server closure.
+  // This is only a display guard for the current mounted screen, not a grant
+  // of access or an offline promise that the server is still open.
+  const lastClosed=useRef<{enabled:false;closedTitle:string;closedText:string}|null>(null);
+  if(c.data?.enabled===false)lastClosed.current={enabled:false,closedTitle:c.data.closedTitle,closedText:c.data.closedText};
+  else if(c.data?.enabled===true)lastClosed.current=null;
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
   const [term, setTerm] = useState('');
@@ -174,25 +183,41 @@ export function Shop() {
   const [page, setPage] = useState(0);
   const [offlineVersion, setOfflineVersion] = useState(0);
   const [offlineNote, setOfflineNote] = useState('');
+  const [offline,setOffline]=useState(()=>!navigator.onLine);
+  useEffect(()=>{
+    const update=()=>{setOffline(!navigator.onLine);if(navigator.onLine)c.reload();};
+    window.addEventListener('online',update);window.addEventListener('offline',update);
+    return ()=>{window.removeEventListener('online',update);window.removeEventListener('offline',update);};
+  },[]);
   const { busy: syncing, run: runSync } = useAction();
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedTerm(term); setPage(0); }, 280);
     return () => clearTimeout(t);
   }, [term]);
-  const search = useShopPrivateLoad<any>(() => c.data?.enabled
+  const search = useShopPrivateLoad<any>(() => !offline && c.data?.enabled
     ? get(`/api/shop/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}&page=${page}`)
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
-    [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
+    [offline, c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
   const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   const localRefs = useLoad(() => searchOfflineReferences(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   // A separate small result set for reviewed reference entries without live pricing.
   // Do not fetch it before a search/category selection or while the shop is closed.
   const references = useShopPrivateLoad<any>(() =>
-    c.data?.enabled && (debouncedTerm.trim() || cat !== 'all')
+    !offline && c.data?.enabled && (debouncedTerm.trim() || cat !== 'all')
       ? get(`/api/shop/catalog/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}`)
       : Promise.resolve({ enabled: false, items: [], total: 0 }),
-    [c.data?.enabled, debouncedTerm, cat]);
-  const d = c.data;
+    [offline, c.data?.enabled, debouncedTerm, cat]);
+  const d = c.data??(offline?lastClosed.current:null);
+  if (offline && d?.enabled!==false && getToken()) return <main className="track-shop-home">
+    <h1>Сохранённый справочник запчастей</h1>
+    <p className="note" role="status">Нет подключения. Доступны только сохранённые названия и артикулы. Цена, наличие и возможность заказа не подтверждены.</p>
+    <input className="field" type="search" aria-label="Поиск запчастей по названию или артикулу" value={term} onChange={e=>setTerm(e.target.value)} placeholder="Название, артикул или производитель"/>
+    {(local.error||localRefs.error)&&<p role="alert" className="note">Не удалось прочитать часть локального справочника.</p>}
+    {local.data&&localRefs.data&&!local.data.length&&!localRefs.data.length&&<p className="note">В сохранённом справочнике ничего не найдено. При подключении обновите каталог.</p>}
+    {[...(local.data??[]),...(localRefs.data??[])].map((p,i)=><div key={p.id+':'+i} className="card"><b>{p.name}</b><span className="note">{[p.brand,p.article].filter(Boolean).join(' · ')}</span></div>)}
+    <button className="btn ghost small" type="button" onClick={c.reload}>Повторить подключение</button>
+    <a href="#/shop/history">История покупок · требуется подключение</a>
+  </main>;
   if (!d) return <main><Loading error={c.error} />
     {c.error && <button className="btn ghost small" onClick={c.reload}>Повторить загрузку каталога</button>}
   </main>;
@@ -207,7 +232,7 @@ export function Shop() {
         <b style={{ fontSize: 20 }}>{d.closedTitle}</b>
         <span className="note">{d.closedText}</span>
       </div>
-      <a className="linkrow" href="#/shop/history"><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>
+      <a className="linkrow" href={contextVehicleId?'#/shop/history/'+encodeURIComponent(contextVehicleId):'#/shop/history'}><span><b>История покупок</b><small>Просмотреть предыдущие заказы</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
   const kits = d.products.filter((p: any) => p.isKit);
@@ -228,13 +253,16 @@ export function Shop() {
       <span className="note">Поиск по названию и номеру детали. Можно выбрать категорию, не вводя артикул.</span>
       <div className="row" style={{ alignItems: 'center', gap: 8 }}>
         <button className="btn ghost small" disabled={syncing} onClick={async () => {
+          setOfflineNote('');
           const result = await runSync(async () => {
             const products = await syncOfflineParts();
             const references = await syncOfflineReferences();
             return { products, references };
           }, null);
+          // The first index may have committed pages before the second failed.
+          setOfflineVersion(n=>n+1);
+          if(!result)setOfflineNote('Обновление прервано. Уже сохранённые записи доступны; повторите синхронизацию при подключении.');
           if (result) {
-            setOfflineVersion((n) => n + 1);
             const { products, references } = result;
             setOfflineNote(products.unchanged && references.unchanged
               ? 'Локальный каталог уже актуален'
@@ -243,7 +271,9 @@ export function Shop() {
           }
         }}>{syncing ? 'Сохраняем…' : 'Сохранить справочник для слабого интернета'}</button>
       </div>
-      {offlineNote && <span className="note">{offlineNote}</span>}
+      {offlineNote && <span className="note" role="status">{offlineNote}</span>}
+      {search.error&&<button type="button" className="btn ghost small" onClick={search.reload}>Повторить поиск товаров</button>}
+      {references.error&&<div role="alert" className="note">Не удалось проверить справочные позиции. <button type="button" className="btn ghost small" onClick={references.reload}>Повторить поиск справочника</button></div>}
       {kits.map((p: any) => (
         <div key={p.id} className="card hi">
           <span className="label" style={{ color: 'var(--accent)' }}>Набор</span>
@@ -322,7 +352,7 @@ export function Shop() {
         </div>
       )}
       {count > 0 && <button className="btn" onClick={() => go('shop/cart' + contextSuffix)}>Корзина · {count} шт.</button>}
-      <a className="linkrow" href="#/shop/history"><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>
+      <a className="linkrow" href={contextVehicleId?'#/shop/history/'+encodeURIComponent(contextVehicleId):'#/shop/history'}><span><b>Мои покупки</b><small>Повторить заказ или подобрать аналоги</small></span><span aria-hidden="true">›</span></a>
     </main>
   );
 }
@@ -382,14 +412,14 @@ function MyShopOrders({ orders, reload, canOrder }: { orders: any[]; reload: () 
           <div className="between"><b>Заказ №{o.number} · {rub(o.total)}</b><span className={`pill ${STATUS_TONE[o.status]}`}>{o.statusName}</span></div>
           <span className="note">{fmtTime(o.createdAt)} · {DELIVERY[o.delivery]}{o.address ? `: ${o.address}` : ''}</span>
           {o.vehicle && <span className="note">Для: {[o.vehicle.brand, o.vehicle.model, o.vehicle.plate].filter(Boolean).join(' ')}</span>}
-          {o.items.map((i: any) => <div key={i.productId} className="stack" style={{ gap: 6 }}>
+          {o.items.map((i: any) => {const lineKey=o.id+':'+i.productId;const suffix=o.vehicleId?'?vehicleId='+encodeURIComponent(o.vehicleId):'';return <div key={lineKey} className="stack" style={{ gap: 6 }}>
             <span className="note">{i.name}{i.article ? ` · ${i.article}` : ''} × {i.qty}</span>
             {canOrder && o.status !== 'cancelled' && <div className="row" style={{ gap: 6 }}>
-              <button className="btn ghost small" onClick={() => { addItem(i.productId, i.qty); go('shop/cart'); }}>Повторить</button>
-              <button className="btn ghost small" aria-expanded={openAnalog === i.productId} onClick={() => setOpenAnalog(openAnalog === i.productId ? null : i.productId)}>Найти аналоги</button>
+              <button className="btn ghost small" onClick={() => { addItem(i.productId, i.qty); go('shop/cart'+suffix); }}>Повторить</button>
+              <button className="btn ghost small" aria-expanded={openAnalog === lineKey} onClick={() => setOpenAnalog(openAnalog === lineKey ? null : lineKey)}>Найти аналоги</button>
             </div>}
-            {openAnalog === i.productId && <HistoryAnalogs productId={i.productId} add={addItem} />}
-          </div>)}
+            {canOrder&&openAnalog === lineKey && <HistoryAnalogs productId={i.productId} add={id=>{addItem(id);go('shop/cart'+suffix);}} />}
+          </div>})}
           {o.adminNote && <span>{o.adminNote}</span>}
           {o.delivery==='delivery' && o.canConfirmCourierReceipt &&
             ['arrived','code_verified'].includes(o.courierStatus) && o.status==='shipped' &&
@@ -419,7 +449,7 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
     {a.data.items.map((p: any) => <div key={p.id} className="card" style={{ padding: 10 }}>
       <b>{p.name}</b>
       <span className="note">{[p.brand, p.article, p.analogSource].filter(Boolean).join(' · ')}</span>
-      <div className="between"><b>{rub(p.price)}</b><button className="btn small" onClick={() => add(p.id)}>В корзину</button></div>
+      <div className="between"><b>{rub(p.price)}</b><span className="note">{p.inStock?'В наличии':Number.isFinite(p.leadDays)?'Под заказ · от '+p.leadDays+' дн.':'Срок уточняется'}</span><button className="btn small" onClick={() => add(p.id)}>В корзину</button></div>
     </div>)}
   </div>;
 }
@@ -427,20 +457,24 @@ function HistoryAnalogs({ productId, add }: { productId: string; add: (id: strin
 /** Purchase history is loaded only when the customer opens this page, never for all fleet vehicles. */
 export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
   const {me}=useMe();
+  return <ShopHistoryForAccount key={(me?.id??'guest')+':'+(vehicleId??'all')} vehicleId={vehicleId}/>;
+}
+function ShopHistoryForAccount({vehicleId}:{vehicleId?:string}){
   const [page, setPage] = useState(0);
   const c = useShopPrivateLoad(() => get('/api/shop?light=1'), []);
   const history = useShopPrivateLoad(() => get(`/api/shop/history?page=${page}${vehicleId ? '&vehicleId=' + encodeURIComponent(vehicleId) : ''}`),
     [page, vehicleId], (e) => e.type === 'shop');
-  useEffect(()=>setPage(0),[vehicleId,me?.id]);
   return <main>
     <Back to={vehicleId ? 'garage' : 'shop'} label={vehicleId ? 'Мой гараж' : 'Магазин'} />
     <h1>История покупок</h1>
+    {vehicleId&&<a className="btn ghost small" href={'#/shop?vehicleId='+encodeURIComponent(vehicleId)}>Подобрать детали для этой техники</a>}
+    {c.error&&<p className="note" role="alert">Не удалось проверить доступность магазина. <button type="button" className="btn ghost small" onClick={c.reload}>Повторить проверку</button></p>}
     {!history.data ? <div className="stack">
       <Loading error={history.error} />
       {history.error && <button className="btn ghost small" onClick={history.reload}>
         Повторить загрузку истории</button>}
     </div> : <>
-      {history.data.items.length === 0 ? <div className="empty">Покупок пока нет</div> :
+      {history.data.items.length === 0 ? <div className="empty">{page>0?'На этой странице покупок нет':'Покупок пока нет'}</div> :
         <MyShopOrders orders={history.data.items} reload={history.reload} canOrder={!!c.data?.enabled} />}
       {(page > 0 || history.data.hasMore) && <div className="between">
         <button className="btn ghost small" disabled={page === 0} onClick={() => setPage((n) => Math.max(0, n - 1))}>Назад</button>
@@ -482,10 +516,11 @@ export function ShopCart() {
   const vehicles = useShopPrivateLoad<any[]>(() => c.data?.enabled && selectedIds
     ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, selectedIds]);
   const [vehicleId, setVehicleId] = useState('');
+  const [vehicleOverride,setVehicleOverride]=useState(false);
   useEffect(() => {
-    if (selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
+    if (!vehicleOverride&&selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
       setVehicleId(selectedVehicleFromLink);
-  }, [selectedVehicleFromLink, vehicles.data]);
+  }, [selectedVehicleFromLink, vehicles.data,vehicleOverride]);
   const { busy, run } = useAction();
   const [delivery, setDelivery] = useState<'pickup' | 'delivery' | 'master' | ''>('');
   const [address, setAddress] = useState('');
@@ -499,7 +534,7 @@ export function ShopCart() {
   useEffect(()=>{
     // Form selections and free-text belong to one account and may not
     // leak into the next fleet owner's checkout in the same SPA session.
-    setVehicleId('');setOrderId('');setDelivery('');
+    setVehicleId('');setVehicleOverride(false);setOrderId('');setDelivery('');
     setAddress('');setComment('');setPayment('on_receipt');
     setOutcomeUnknown(false);
   },[me?.id]);
@@ -537,8 +572,9 @@ export function ShopCart() {
   };
   const orderValid=delivery==='master'?!!live.data&&open.some((o:any)=>o.id===orderId):
     delivery==='pickup'?!!dl.pickup:delivery==='delivery'?!!dl.delivery&&!!address.trim():false;
-  const selectedVehicleValid=!vehicleId||
-    (!!vehicles.data&&vehicles.data.some((v:any)=>v.id===vehicleId));
+  const linkedVehicleUnresolved=!!selectedVehicleFromLink&&!vehicleOverride&&vehicleId!==selectedVehicleFromLink;
+  const selectedVehicleValid=!linkedVehicleUnresolved&&(!vehicleId||
+    (!!vehicles.data&&vehicles.data.some((v:any)=>v.id===vehicleId)));
   const maySubmit=fullyVerified&&orderValid&&selectedVehicleValid&&
     !busy&&!submitLock.current&&!outcomeUnknown;
   async function submit(){
@@ -619,12 +655,13 @@ export function ShopCart() {
         </div>
         <div className="card">
           <Field label="Для какой машины / прицепа (необязательно)">
-            <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+            <select className="field" value={vehicleId} disabled={busy||!!vehicles.error||!vehicles.data} onChange={(e) => {setVehicleOverride(true);setVehicleId(e.target.value);}}>
               <option value="">Без привязки к машине</option>
               {((vehicles.data ?? []) as any[]).map((v: any) =>
                 <option key={v.id} value={v.id}>{[v.brand, v.model, v.plate || v.trailer_plate].filter(Boolean).join(' ')}</option>)}
             </select>
           </Field>
+          {linkedVehicleUnresolved&&<div role="alert" className="note">Не подтверждена машина из предыдущей покупки или ссылки. Выберите доступную технику либо явно снимите привязку. <button type="button" className="btn ghost small" disabled={busy} onClick={()=>{setVehicleOverride(true);setVehicleId('');}}>Продолжить без привязки</button></div>}
           <span className="note">Покупка появится в истории выбранной техники. Для проверки совместимости могут потребоваться VIN и данные агрегата.</span>
         </div>
         <div className="card">

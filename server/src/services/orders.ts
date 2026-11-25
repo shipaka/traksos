@@ -585,7 +585,10 @@ export class OrdersService {
 
   async accept(user: AuthUser, orderId: string) {
     const res = await this.db.tx(async (q) => {
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [user.id]);
+      const profile=await q.one<{line_status:string;paused:boolean;verification:string;user_status:string;extras:any}>(`select p.line_status,p.paused,p.verification,p.extras,u.status as user_status from performer_profiles p join users u on u.id=p.user_id where p.user_id=$1 for update of p`,[user.id]);
+      if(!profile||profile.paused||profile.user_status!=='active'||profile.extras?.vacation||!['online','on_call'].includes(profile.line_status))throw conflict('performer_unavailable','Вы больше не на линии');
+      const policy=await q.one<{verified_only:boolean}>('select verified_only from orders where id=$1',[orderId]);
+      if(policy?.verified_only&&profile.verification!=='approved')throw conflict('performer_unavailable','Для заявки нужен проверенный исполнитель');
       if (await this.hasUpcomingReservation(q, user.id))
         throw conflict('performer_reserved', 'У вас есть подтверждённая запись. Новый выезд пока нельзя принять.');
       const d = await q.one(
@@ -634,7 +637,7 @@ export class OrdersService {
       `select d.order_id, d.ring_until, d.distance_km, o.number, o.service, o.is_sos, o.problem, o.description, o.address,
               o.brand, o.estimate, o.night, o.group_trip, o.site->'road' as road
          from order_dispatch d join orders o on o.id = d.order_id
-        where d.performer_id=$1 and d.status='ringing' and d.ring_until >= $2 order by d.sent_at`,
+        where d.performer_id=$1 and d.status='ringing' and d.ring_until >= $2 and o.status='searching' order by d.sent_at`,
       [user.id, this.now()],
     );
   }
@@ -803,16 +806,18 @@ export class OrdersService {
           Number(unilateral.quote_total)!==m.total)
           throw conflict('emergency_quote_changed','Проверьте окончательную сумму и подтвердите её явно');
       }
+      // Serialize bonus use and administrator adjustments across orders for the same customer.
+      await q.one('select id from users where id=$1 for update',[o.client_id]);
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
-      const use = Math.min(bonus?.b ?? 0, m.total);
+      const use = Math.max(0, Math.min(bonus?.b ?? 0, m.total));
       if (use > 0) {
         await q.query('update orders set discount_amount = discount_amount + $2, discount_reason = coalesce(discount_reason, $3) where id=$1', [orderId, use, 'Бонусы']);
         await q.query(`insert into bonus_entries(user_id, amount, kind, order_id, note) values ($1,$2,'use',$3,'Списано за заявку')`, [o.client_id, -use, orderId]);
       }
       used = use;
-      // Баллы — по выбору клиента: сколько вписал, но не больше половины сервисного сбора и остатка
-      const pts = this.referral ? await this.referral.spendClientFee(q, o, m.clientFee, points) : 0;
+      // Do not consume referral points for a portion already covered by other discounts.
+      const pts = this.referral ? await this.referral.spendClientFee(q, o, m.clientFee, Math.min(points,Math.max(0,m.total-use))) : 0;
       used += pts;
       // Подтверждаем ровно ту сумму, что видел клиент: если мастер успел её поменять — конфликт
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
@@ -834,7 +839,9 @@ export class OrdersService {
       }
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
-      await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
+      // Cash is a retired live method, retained for historical/test fixtures.
+      // For invoice/online, rewards are issued by verified payment settlement, not quote confirmation.
+      if(o.payment_method==='cash')await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
     });
     // The order and capture-intent transaction MUST commit before bank IO.
     // A transport failure leaves the durable intent for manual/provider reconciliation.

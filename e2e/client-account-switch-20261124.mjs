@@ -20,6 +20,8 @@ const api=`
  export function rub(v){return Math.round((v??0)/100)+' ₽';}
  export function fmtTime(v){return String(v??'');}
  export function fmtPhone(v){return String(v??'');}
+ // Match the account-scoped token contract used by real request guards.
+ export function getToken(){const id=window.__clientMock.user?.id;return id?'synthetic-client-token-'+id:null;}
  export function setToken(){}
  export function disconnectWs(){}
 `;
@@ -174,17 +176,27 @@ try {
  await page.waitForFunction(()=>document.body.textContent.includes('№302 · СТО: Электрика'));
  if(await page.getByText('№399 · СТО: Электрика').count()||await page.getByText('№301 · СТО: Электрика').count())
    throw Error('Previous account calendar leaked into account B');
- // Garage A's private truck must not be briefly exposed to account B.
- await nav('garage','A');await wait('/api/vehicles','A',1);
- await answer('/api/vehicles','A',0,[]);
- await page.getByText('Ваш автопарк пока пуст').waitFor();
- await nav('garage','B');await wait('/api/vehicles','B',1);
- await answer('/api/vehicles','B',0,'offline vehicles',true);
+ // Home also loads /api/vehicles. Record the request count BEFORE entering
+ // Garage so the test responds to the actual mounted Garage, not a stale Home read.
+ const vehiclePath='/api/vehicles';
+ const countVehicles=user=>page.evaluate(([path,user])=>window.__clientMock.calls
+   .filter(x=>x.path===path&&x.user===user).length,[vehiclePath,user]);
+ const garageA=await countVehicles('A');
+ await nav('garage','A');await wait(vehiclePath,'A',garageA+1);
+ await answer(vehiclePath,'A',garageA,[{id:'private-vehicle-A',brand:'DAF',model:'XF',year:2018,plate:'PRIVATE-TRUCK-A'}]);
+ await page.getByText('PRIVATE-TRUCK-A',{exact:true}).waitFor();
+ const garageB=await countVehicles('B');
+ await nav('garage','B');await wait(vehiclePath,'B',garageB+1);
+ if(await page.getByText('PRIVATE-TRUCK-A',{exact:true}).count())
+   throw Error('Previous account truck leaked into Garage B');
+ await answer(vehiclePath,'B',garageB,'offline vehicles',true);
  await page.getByRole('button',{name:'Повторить загрузку транспорта'}).waitFor();
  await page.getByRole('button',{name:'Повторить загрузку транспорта'}).click();
- await wait('/api/vehicles','B',2);
- await answer('/api/vehicles','B',1,[]);
+ await wait(vehiclePath,'B',garageB+2);
+ await answer(vehiclePath,'B',garageB+1,[]);
  await page.getByText('Ваш автопарк пока пуст').waitFor();
+ if(await page.getByText('PRIVATE-TRUCK-A',{exact:true}).count())
+   throw Error('Previous account truck leaked after Garage B retry');
 
  // Profile password fields are ephemeral, not shared across users.
  await nav('profile','A');

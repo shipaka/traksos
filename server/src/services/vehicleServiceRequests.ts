@@ -331,6 +331,8 @@ export class VehicleServiceRequests {
         throw bad('invalid_status','Техосмотр уже обработан или ещё не передан партнёру');
       if (status === 'rejected' && !note?.trim())
         throw bad('missing_status_reason','Укажите причину отказа');
+      if (status === 'completed' && (note?.trim().length ?? 0) < 5)
+        throw bad('inspection_result_required','Укажите фактический результат осмотра (не менее 5 символов)');
       const updated = await q.one<any>(
         `update vehicle_service_requests set status=$2, staff_note=$3, updated_at=now()
          where id=$1 and kind='inspection' and assigned_to=$4 returning *`,
@@ -350,6 +352,46 @@ export class VehicleServiceRequests {
        from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
        where r.kind='inspection' and r.assigned_to=$1
        order by r.created_at desc limit 100`, [user.id]);
+  }
+
+  /** The legacy array remains available; new clients paginate active and terminal
+   * records separately. Counts and page contents use the same SQL snapshot. */
+  async inspectionPage(user: AuthUser, view: 'active'|'history', page: number) {
+    if (!user.roles?.some(role=>['insurer','inspection_operator'].includes(role))) throw forbidden('Нет доступа');
+    if (!['active','history'].includes(view) || !Number.isSafeInteger(page) || page < 1 || page > 1_000_000)
+      throw bad('invalid_inspection_page','Некорректная страница техосмотров');
+    const pageSize=30;
+    const result=await this.db.one<{active:number;history:number;items:Row[]}>(`
+      with scoped as (
+        select r.id,r.status,r.created_at
+        from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id and v.owner_id=r.owner_id
+        where r.kind='inspection' and r.assigned_to=$1
+      ), selected as (
+        select id from scoped
+        where (status in ('completed','rejected','cancelled'))=$2::boolean
+        order by created_at desc,id desc limit 30 offset $3
+      )
+      select
+        (select count(*)::int from scoped where status not in ('completed','rejected','cancelled')) as active,
+        (select count(*)::int from scoped where status in ('completed','rejected','cancelled')) as history,
+        coalesce((select json_agg(p order by p.created_at desc,p.id desc) from (
+          select r.id,r.kind,r.status,r.comment,r.staff_note,r.created_at,r.updated_at,
+                 v.brand,v.model,v.plate
+          from selected s join vehicle_service_requests r on r.id=s.id
+          join vehicles v on v.id=r.vehicle_id and v.owner_id=r.owner_id
+        ) p),'[]'::json) as items`,[user.id,view==='history',(page-1)*pageSize]);
+    return {...result!,page,pageSize};
+  }
+
+  async inspectionDetail(user: AuthUser, requestId: string) {
+    if (!user.roles?.some(role=>['insurer','inspection_operator'].includes(role))) throw forbidden('Нет доступа');
+    const row=await this.db.one(`
+      select r.id,r.kind,r.status,r.comment,r.staff_note,r.created_at,r.updated_at,
+             v.brand,v.model,v.plate,v.year,v.vin
+      from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id and v.owner_id=r.owner_id
+      where r.kind='inspection' and r.assigned_to=$1 and r.id=$2`,[user.id,requestId]);
+    if(!row) throw notFound('Назначенный техосмотр не найден');
+    return row;
   }
 
   async queue(staff: AuthUser, kind?: VehicleServiceKind) {

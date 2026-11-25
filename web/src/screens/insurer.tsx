@@ -2,13 +2,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, patch, fmtTime, onEvent } from '../api.ts';
 import { useAction, useMe, useRoute } from '../ui.tsx';
-import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
+import { insurancePresentation, insuranceQueueGroup, insuranceOverviewCounts } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
 };
 
-type PartnerResource<T>={scope:string;data:T|null;error:string;loading:boolean};
+type PartnerResource<T>={scope:string;version:number;data:T|null;error:string;loading:boolean};
+type InspectionPage={items:any[];active:number;history:number;page:number;pageSize:number};
 
 /** Partner documents and finance must never survive an account/role switch.
  * A late HTTP response from the previous session is explicitly discarded.
@@ -16,7 +17,7 @@ type PartnerResource<T>={scope:string;data:T|null;error:string;loading:boolean};
 function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false) {
   const [version,setVersion]=useState(0);
   const [state,setState]=useState<PartnerResource<T>>({
-    scope:'',data:null,error:'',loading:true,
+    scope:'',version:-1,data:null,error:'',loading:true,
   });
   const serial=useRef(0);
   const scopeRef=useRef(scope);
@@ -25,18 +26,24 @@ function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false)
   useEffect(()=>{
     const request=++serial.current;
     const currentScope=scope;
-    setState({scope:currentScope,data:null,error:'',loading:enabled});
+    setState({scope:currentScope,version,data:null,error:'',loading:enabled});
     if(!enabled)return ()=>{serial.current++;};
     get<T>(path).then(data=>{
       if(serial.current!==request||scopeRef.current!==currentScope)return;
       if(data==null || (path==='/api/insurer/finance'
           ? !(Array.isArray((data as any).entries)&&Array.isArray((data as any).totals))
-          : !Array.isArray(data)))
+          : path.startsWith('/api/insurer/inspections/page?')
+            ? !(Array.isArray((data as any).items)&&['active','history','page','pageSize'].every(key=>
+                Number.isSafeInteger((data as any)[key])&&(data as any)[key]>=0)
+                &&(data as any).page>=1&&(data as any).pageSize>=1)
+            : path.startsWith('/api/insurer/inspections/')
+              ? !((data as any).kind==='inspection'&&String((data as any).id)===decodeURIComponent(path.split('/').at(-1)??''))
+              : !Array.isArray(data)))
         throw new Error('Некорректный ответ от сервера');
-      setState({scope:currentScope,data,error:'',loading:false});
+      setState({scope:currentScope,version,data,error:'',loading:false});
     }).catch(e=>{
       if(serial.current!==request||scopeRef.current!==currentScope)return;
-      setState({scope:currentScope,data:null,
+      setState({scope:currentScope,version,data:null,
         error:e instanceof Error?e.message:'Не удалось получить сведения',loading:false});
     });
     return ()=>{serial.current++;};
@@ -47,7 +54,7 @@ function usePartnerResource<T>(path:string,scope:string,enabled=true,live=false)
       if(e.type==='vehicle_service'||e.type==='connection_restored')reload();
     });
   },[live,enabled,scope]);
-  const current=state.scope===scope?state:null;
+  const current=state.scope===scope&&state.version===version?state:null;
   return {data:enabled?current?.data??null:null,error:enabled?current?.error??'':'',
     loading:enabled?current?.loading??true:false,reload};
 }
@@ -110,31 +117,73 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     const rubles=new Intl.NumberFormat('ru-RU').format(abs/100n);
     return (negative?'−':'')+rubles+','+String(abs%100n).padStart(2,'0')+' ₽';
   };
-  const inspections=usePartnerResource<any[]>('/api/insurer/inspections',
-    accessScope+':inspections',canInspect,true);
+  const [inspectionView,setInspectionView]=useState<'active'|'history'>('active');
+  const [inspectionPageNumber,setInspectionPageNumber]=useState(1);
+  const inspections=usePartnerResource<InspectionPage>(
+    '/api/insurer/inspections/page?view='+inspectionView+'&page='+inspectionPageNumber,
+    accessScope+':inspections:'+inspectionView+':'+inspectionPageNumber,canInspect,true);
+  const inspectionDetail=usePartnerResource<any>(
+    '/api/insurer/inspections/'+encodeURIComponent(inspectionId??''),
+    accessScope+':inspection-detail:'+inspectionId,canInspect&&!!inspectionId,true);
   const requests=usePartnerResource<any[]>('/api/insurer/requests',
     accessScope+':requests',!inspectionOnly&&canInsure,true);
   const { busy, run } = useAction();
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [inspectionNotes,setInspectionNotes]=useState<Record<string,string>>({});
-  const [inspectionView,setInspectionView]=useState<'active'|'history'>('active');
   const [expires, setExpires] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<'action' | 'active' | 'all' | 'closed'>(
     route[1]==='requests' ? 'all' : 'action');
   const [search, setSearch] = useState('');
   const [actionError,setActionError]=useState('');
+  const decisionLock=useRef(false);
+  const [reviewTarget,setReviewTarget]=useState<{scope:string;kind:'insurance'|'inspection';id:string}|null>(null);
+  const [reviewRequested,setReviewRequested]=useState(false);
+  const target=reviewTarget?.scope===accessScope?reviewTarget:null;
+  const unconfirmed=!!target;
+  // Verify the exact uncertain decision, not an unrelated list/page. A read is
+  // explicitly requested after the failed acknowledgement; never auto-resend.
+  const review=usePartnerResource<any>(
+    target?.kind==='inspection'?'/api/insurer/inspections/'+encodeURIComponent(target.id):'/api/insurer/requests',
+    accessScope+':decision-review:'+target?.kind+':'+target?.id,
+    !!target&&reviewRequested,false);
+  const reviewedCase=target?.kind==='inspection'
+    ? (review.data?.id===target.id?review.data:null)
+    : (Array.isArray(review.data)?review.data.find(r=>r.id===target?.id):null);
+  const canAcknowledge=!!target&&reviewRequested&&!review.loading&&!review.error&&!!reviewedCase?.status;
+  const reviewControls=target&&<div className="banner warn stack" role="group" aria-label="Сверка неподтверждённого решения">
+    <b>Решение по заявке не подтверждено.</b>
+    <span>Сначала получите актуальное состояние именно этой заявки. Повторная отправка заблокирована.</span>
+    {reviewRequested&&(review.loading?<span role="status">Проверяем состояние…</span>:
+      review.error?<span role="alert">Не удалось сверить заявку: {review.error}</span>:
+      reviewedCase?<span role="status">Текущий статус: {reviewedCase.status==='completed'?'Завершена':
+        reviewedCase.status==='rejected'?'Отклонена':reviewedCase.status==='cancelled'?'Отменена':
+        reviewedCase.status==='sent_to_partner'?'Ожидает решения':reviewedCase.status}</span>:
+      <span role="alert">Заявка отсутствует в доступной очереди. Обратитесь в поддержку; не отправляйте решение повторно.</span>)}
+    <div className="row">
+      <button type="button" className="btn ghost small" disabled={reviewRequested&&review.loading}
+        onClick={()=>{setReviewRequested(true);review.reload();}}>Обновить очередь для сверки</button>
+      <button type="button" className="btn ghost small" disabled={!canAcknowledge}
+        onClick={()=>{
+          if(!canAcknowledge)return;
+          if(target.kind==='inspection'){inspections.reload();if(inspectionId)inspectionDetail.reload();}
+          else requests.reload();
+          setReviewTarget(null);setReviewRequested(false);setActionError('');
+        }}>Состояние проверено</button>
+    </div>
+  </div>;
   const [draftScope,setDraftScope]=useState('');
   const currentDraft=draftScope===accessScope;
   useEffect(()=>{
     // This may be the same mounted component with a different login or a
     // switched insurer/inspection workspace. Reset all case-specific input.
     setDraftScope(accessScope);setCheckedSteps({});setNotes({});
-    setInspectionNotes({});setExpires({});setActionError('');
-    setSearch('');setInspectionView('active');
+    setInspectionNotes({});setExpires({});setActionError('');setReviewTarget(null);setReviewRequested(false);
+    setSearch('');setInspectionView('active');setInspectionPageNumber(1);
     setWorkspace(inspectionOnly?'inspection':'insurance');
     setFilter(route[1]==='requests'?'all':'action');
   },[accessScope]);
   async function update(id: string, status: 'completed' | 'rejected') {
+    if(decisionLock.current||busy||unconfirmed||!currentDraft||!canInsure||!requests.data)return;
     const startedAs=accessScope;
     const note = (currentDraft?(notes[id]??''):'').trim();
     const policyExpiresOn = currentDraft?expires[id]:undefined;
@@ -148,18 +197,24 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     }
     if(inspectionOnly)return;
     setActionError('');
+    decisionLock.current=true;
     const result = await run(() => patch(`/api/insurer/requests/${id}`, {
       status, note: note || undefined,
       policyExpiresOn: status === 'completed' ? policyExpiresOn : undefined,
-    }), 'Заявка обновлена');
+    }), 'Заявка обновлена').finally(()=>{decisionLock.current=false;});
     if(identityRef.current!==startedAs)return;
     if(result){
       setNotes(old=>{const value={...old};delete value[id];return value;});
       setExpires(old=>{const value={...old};delete value[id];return value;});
       requests.reload();
-    }else setActionError('Изменение заявки не подтверждено. Обновите очередь перед повторной отправкой.');
+    }else {setReviewRequested(false);setReviewTarget({scope:startedAs,kind:'insurance',id});}
   }
   async function decideInspection(id:string,status:'completed'|'rejected') {
+    const assignedCase=inspectionId
+      ? (inspectionDetail.data?.id===id?inspectionDetail.data:null)
+      : inspections.data?.items.find(r=>r.id===id);
+    if(decisionLock.current||busy||unconfirmed||!currentDraft||!canInspect||assignedCase?.status!=='sent_to_partner')return;
+    if(status==='completed'&&!['documents','vehicle','result'].every(k=>checkedSteps[id+':'+k]))return;
     const startedAs=accessScope;
     const note=(currentDraft?(inspectionNotes[id]??''):'').trim();
     if(status==='rejected'&&!note){setActionError('Укажите причину отказа.');return;}
@@ -167,36 +222,36 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       setActionError('Укажите фактический результат осмотра (не менее 5 символов).');return;
     }
     setActionError('');
+    decisionLock.current=true;
     const result=await run(()=>patch('/api/insurer/inspections/'+id,{status,note:note||undefined}),
-      status==='completed'?'Техосмотр отмечен выполненным':'Заявка отклонена');
+      status==='completed'?'Техосмотр отмечен выполненным':'Заявка отклонена').finally(()=>{decisionLock.current=false;});
     if(identityRef.current!==startedAs)return;
     if(result){
       setCheckedSteps(old=>Object.fromEntries(Object.entries(old).filter(([key])=>!key.startsWith(id+':'))));
       setInspectionNotes(old=>{const values={...old};delete values[id];return values;});
       inspections.reload();
-    }else setActionError('Решение по техосмотру не подтверждено. Обновите очередь перед повторной отправкой.');
+      if(inspectionId)inspectionDetail.reload();
+    }else {setReviewRequested(false);setReviewTarget({scope:startedAs,kind:'inspection',id});}
   }
   const rows: any[] | undefined = Array.isArray(requests.data)?requests.data:undefined;
-  const inspectionRows:any[]|null=Array.isArray(inspections.data)?inspections.data:null;
+  const inspectionRows=inspections.data?.items??null;
   const financeData=finance.data;
   const visible = (rows ?? []).filter((r) => {
     if (filter !== 'all' && insuranceQueueGroup(r.insurance_stage, r.status) !== filter) return false;
     return [r.brand, r.model, r.plate, r.comment].some((value) => String(value ?? '').toLocaleLowerCase('ru-RU').includes(search.trim().toLocaleLowerCase('ru-RU')));
   });
   // Separate approved inspection detail: available only to the assigned operator.
-  // The existing /api/insurer/inspections endpoint enforces tenant access.
+  // The detail endpoint independently authorizes the assigned operator, even
+  // when the request is not present on the currently visible queue page.
   if(inspectionId) {
-    const item = inspectionRows?.find(r=>String(r.id)===inspectionId);
-    if(!inspectionRows) return <main className="cabinet-page and20-inspection-detail">
-      <a href="#/inspections" className="and20-return">← К техосмотрам</a>
-      <div className="card" role={inspections.error?'alert':'status'}>{inspections.error
-        ? <>Не удалось загрузить техосмотр: {inspections.error}
-          <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку</button></>
-        : 'Загрузка назначенного техосмотра…'}</div>
-    </main>;
+    const item = inspectionDetail.data;
     if(!item) return <main className="cabinet-page and20-inspection-detail">
       <a href="#/inspections" className="and20-return">← К техосмотрам</a>
-      <div className="card">Техосмотр не найден среди назначенных вам заявок.</div>
+      {reviewControls}
+      <div className="card" role={inspectionDetail.error?'alert':'status'}>{inspectionDetail.error
+        ? <>Не удалось загрузить техосмотр: {inspectionDetail.error}
+          <button type="button" className="btn ghost small" onClick={inspectionDetail.reload}>Повторить загрузку</button></>
+        : 'Загрузка назначенного техосмотра…'}</div>
     </main>;
     const canRecord = item.status==='sent_to_partner';
     const verified = currentDraft&&['documents','vehicle','result'].every(k=>checkedSteps[inspectionId+':'+k]===true);
@@ -213,13 +268,13 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
         <strong>{[item.brand,item.model,item.year].filter(Boolean).join(' ') || 'Транспортное средство'}</strong>
         <span>{item.plate||'Госномер не указан'}</span>
         {item.vin&&<span>VIN: {item.vin}</span>}
-        {item.customer_name&&<span>Клиент: {item.customer_name}</span>}
         {item.comment&&<p>{item.comment}</p>}
       </section>
       <div className="and20-inspection-stages" aria-label="Ход техосмотра">
         {['Получено','Назначено','Осмотр','Завершено'].map((step,index)=>
           <span key={step} className={item.status==='completed'?'passed':index===1?'current':''}>{step}</span>)}
       </div>
+      {reviewControls}
       {canRecord ? <section className="card and20-inspection-checks">
         <h2>Этапы работы</h2>
         <p className="note">Отметьте только реально выполненные действия. TrakSOS не выдаёт диагностическую карту.</p>
@@ -238,9 +293,9 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             onChange={e=>setInspectionNotes(old=>({...old,[inspectionId]:e.target.value}))}/>
         </label>
         {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
-        <button type="button" className="btn" disabled={busy||!verified||note.length<5}
+        <button type="button" className="btn" disabled={busy||unconfirmed||!verified||note.length<5}
           onClick={()=>decideInspection(inspectionId,'completed')}>Внести результат техосмотра</button>
-        <button type="button" className="btn ghost" disabled={busy||note.length<5}
+        <button type="button" className="btn ghost" disabled={busy||unconfirmed||note.length<5}
           onClick={()=>decideInspection(inspectionId,'rejected')}>Отказать с указанием причины</button>
         <p className="note">Завершение заявки в TrakSOS не означает выдачу диагностической карты. Её оформляют отдельно в уполномоченной системе.</p>
       </section> : <section className="card">
@@ -249,6 +304,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </section>}
     </main>;
   }
+  const overview=rows?insuranceOverviewCounts(rows):null;
   const insurerPriority = (rows??[]).find(r=>insuranceQueueGroup(r.insurance_stage,r.status)==='action')
     ??(rows??[]).find(r=>insuranceQueueGroup(r.insurance_stage,r.status)==='active');
   return (
@@ -263,6 +319,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           .map(([key,label])=><button type="button" key={key} className={'btn ghost'+(workspace===key?' active':'')}
             aria-pressed={workspace===key} onClick={()=>setWorkspace(key)}>{label}</button>)}
       </nav>
+      {reviewControls}
       {workspace==='insurance'&&!inspectionOnly&&<section className="and20-insurer-overview"
         aria-label="Оперативный страховой кабинет">
         <div className="and20-role-header">
@@ -271,10 +328,10 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
         </div>
         <div className="and20-partner-stats">
           {([
-            ['Новые',rows?.filter(r=>r.insurance_stage==='received'||r.status==='sent_to_partner').length],
-            ['В расчёте',rows?.filter(r=>r.insurance_stage==='preparing').length],
-            ['Отправлены',rows?.filter(r=>r.insurance_stage==='offers_sent').length],
-            ['Оформлены',rows?.filter(r=>r.insurance_stage==='policy_sent'||r.status==='completed').length],
+            ['Новые',overview?.received],
+            ['В расчёте',overview?.preparing],
+            ['Отправлены',overview?.offers_sent],
+            ['Оформлены',overview?.policy_sent],
           ] as [string,number|undefined][]).map(([label,value])=><div key={label} className="and20-partner-stat">
             <small>{label}</small><strong>{value??'—'}</strong>
           </div>)}
@@ -289,13 +346,13 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       {workspace==='inspection'&&<section className="stack">
         <p className="sub">Здесь отображаются исключительно назначенные вам заявки на техосмотр. Страховые полисы и предложения в этом разделе не показываются.</p>
         <div className="cabinet-metrics">
-          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspectionRows?.length??'—'}</b></div>
-          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspectionRows?.filter(r=>!['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
-          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspectionRows?.filter(r=>['completed','rejected','cancelled'].includes(r.status)).length??'—'}</b></div>
+          <div className="card tile"><span className="label">Заявок на техосмотр</span><b className="tile-value">{inspections.data?inspections.data.active+inspections.data.history:'—'}</b></div>
+          <div className="card tile"><span className="label">В работе</span><b className="tile-value">{inspections.data?.active??'—'}</b></div>
+          <div className="card tile"><span className="label">История</span><b className="tile-value">{inspections.data?.history??'—'}</b></div>
         </div>
         <div className="row" role="group" aria-label="Показ техосмотров">
-          <button type="button" className="chip" aria-pressed={inspectionView==='active'} onClick={()=>setInspectionView('active')}>В работе</button>
-          <button type="button" className="chip" aria-pressed={inspectionView==='history'} onClick={()=>setInspectionView('history')}>История техосмотров</button>
+          <button type="button" className="chip" aria-pressed={inspectionView==='active'} onClick={()=>{setInspectionView('active');setInspectionPageNumber(1);}}>В работе</button>
+          <button type="button" className="chip" aria-pressed={inspectionView==='history'} onClick={()=>{setInspectionView('history');setInspectionPageNumber(1);}}>История техосмотров</button>
           <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
         </div>
         {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
@@ -303,12 +360,12 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             <>Не удалось загрузить техосмотры: {inspections.error}
               <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку техосмотров</button></>
             :'Загружаем техосмотры…'}</div>:
-          inspectionRows.length===0?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>:
-          inspectionRows.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).length===0 ?
-          <div className="empty">{inspectionView==='history'?'История техосмотров пока пуста':'Активных техосмотров сейчас нет'}</div> :
-          inspectionRows.filter(r=>inspectionView==='history' ? ['completed','rejected','cancelled'].includes(r.status) : !['completed','rejected','cancelled'].includes(r.status)).map(r=><article className="card stack" key={r.id}>
+          inspectionRows.length===0?(inspections.data!.active+inspections.data!.history===0
+            ?<div className="card stack"><h2>Техосмотров пока нет</h2><p>Здесь появятся назначенные заявки и история. Оформление диагностической карты будет добавлено отдельно.</p><button type="button" className="btn ghost" onClick={inspections.reload}>Обновить</button></div>
+            :<div className="empty">{inspectionPageNumber>1?'На этой странице заявок нет':inspectionView==='history'?'История техосмотров пока пуста':'Активных техосмотров сейчас нет'}</div>)
+          : inspectionRows.map(r=><article className="card stack" key={r.id}>
             <b>{r.brand} {r.model}</b><span>{r.plate||'Номер не указан'} · {fmtTime(r.created_at)}</span>
-            {inspectionOnly&&<a className="btn" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть техосмотр и этапы →</a>}
+            <a className="btn" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть техосмотр и этапы →</a>
             <span className="pill">{r.status==='completed'?'Завершён':r.status==='rejected'?'Отклонён':'В обработке'}</span>
             {r.comment&&<p>{r.comment}</p>}{r.staff_note&&<p className="note">{r.staff_note}</p>}
             {r.status==='sent_to_partner'&&<>
@@ -316,13 +373,20 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                 <textarea className="field" maxLength={2000} value={currentDraft?(inspectionNotes[r.id]??''):''}
                   onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
               <div className="row">
-                {!inspectionOnly&&<a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>}
-                <button type="button" className="btn ghost small" disabled={busy||!currentDraft}
+                <button type="button" className="btn ghost small" disabled={busy||unconfirmed||!currentDraft}
                   onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
               </div>
               <p className="note">Отметка выполнения не является выдачей диагностической карты.</p>
             </>}
           </article>)}
+        {inspections.data&&(inspectionPageNumber>1||inspections.data[inspectionView]>inspections.data.pageSize)&&
+          <div className="row" role="group" aria-label="Страницы техосмотров">
+            <button type="button" className="btn ghost small" disabled={inspectionPageNumber<=1||busy}
+              onClick={()=>setInspectionPageNumber(p=>Math.max(1,p-1))}>Предыдущая страница</button>
+            <span className="note">Страница {inspectionPageNumber} из {Math.max(inspectionPageNumber,Math.ceil(inspections.data[inspectionView]/inspections.data.pageSize))}</span>
+            <button type="button" className="btn ghost small" disabled={busy||inspectionPageNumber*inspections.data.pageSize>=inspections.data[inspectionView]}
+              onClick={()=>setInspectionPageNumber(p=>p+1)}>Следующая страница</button>
+          </div>}
         <p className="note">Назначение выполняет администратор. Выполнение заявки фиксируется отдельно от выдачи диагностической карты.</p>
       </section>}
       {workspace==='finance'&&<section className="stack">
@@ -428,8 +492,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                     placeholder="Комментарий или причина отказа"
                     value={currentDraft?(notes[r.id]??''):''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
                   <div className="grid2">
-                    <button type="button" className="btn small" disabled={busy||!currentDraft||!futureDate(expires[r.id]??'')} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
-                    <button type="button" className="btn ghost small" disabled={busy} onClick={() => update(r.id, 'rejected')}>Отказать</button>
+                    <button type="button" className="btn small" disabled={busy||unconfirmed||!currentDraft||!futureDate(expires[r.id]??'')} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
+                    <button type="button" className="btn ghost small" disabled={busy||unconfirmed} onClick={() => update(r.id, 'rejected')}>Отказать</button>
                   </div>
                 </>}
               </div>

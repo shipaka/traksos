@@ -630,3 +630,18 @@ html.traksos-reduced-motion .guest-app.guest-home .trakbot-dock-launcher .trakbo
    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.9) 13%,#000 27%)!important;
  }
 }
+/* Compact PC menu must remain usable on shorter laptop screens. Keep the
+   approved header and tile dimensions; scroll only inside its disclosure. */
+@media(min-width:900px) and (max-width:1150px){
+ .owner20-compact-menu nav{
+   max-height:calc(100vh - 90px);
+   overflow-y:auto;
+   overscroll-behavior:contain;
+ }
+ .owner20-compact-menu nav a{min-height:36px;display:flex;align-items:center}
+}
+@media(min-width:900px){
+ .owner20-home :is(.owner20-quick>a,.owner20-feature,.owner20-bottom-card):focus-visible{
+   outline-offset:-4px;
+ }
+}

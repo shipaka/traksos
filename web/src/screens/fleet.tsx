@@ -1,9 +1,10 @@
 // «Мой парк» владельца и вход водителя по QR-наклейке в кабине.
-import { useEffect, useState } from 'react';
-import { get, post, put, patch, rub, fmtTime, API_URL } from '../api.ts';
+import { useEffect, useRef, useState } from 'react';
+import { get, getToken, post, put, patch, rub, fmtTime, API_URL } from '../api.ts';
 import { SERVICES } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { qrSvg } from '../qr.ts';
+import {usePrivateRead} from './privateRead20261124.ts';
 import { Login } from './login.tsx';
 import { VehicleModelPhoto, vehicleReferencePhoto } from '../vehicleVisual.tsx';
 
@@ -38,7 +39,12 @@ function InsuranceReminderSettings() {
 }
 
 export function Fleet() {
-  const f = useLoad(() => get('/api/fleet'), [], (e) => e.type === 'order' || e.type === 'fleet');
+  const {me}=useMe();
+  if(!me||me.owner_id||!me.roles.includes('client')||me.roles.includes('driver'))return <main><div className="empty">Парком управляет владелец машины.</div></main>;
+  return <FleetForAccount key={me.id}/>;
+}
+function FleetForAccount(){
+  const f = useLoad(() => get('/api/fleet'), [], (e) => e.type === 'order' || e.type === 'fleet'||e.type==='connection_restored');
   const { me, reload } = useMe();
   const { busy, run } = useAction();
   const [s, setS] = useState<any>(null);
@@ -51,12 +57,12 @@ export function Fleet() {
     setEdo({ edoOperator: f.data.company.edoOperator ?? '', edoId: f.data.company.edoId ?? '' });
   }, [f.data]); // eslint-disable-line
   if (me?.owner_id) return <main><div className="empty">Парком управляет владелец машины.</div></main>;
-  if (!f.data || !s) return <main><Back to="garage" label="Гараж" /><Loading error={f.error} /></main>;
+  if (!f.data || !s||f.error) return <main><Back to="garage" label="Гараж" /><Loading error={f.error} />{f.error&&<button type="button" className="btn ghost small" onClick={f.reload}>Повторить загрузку автопарка</button>}</main>;
   const d = f.data;
-  const decide = async (id: string, approve: boolean) => { if (await run(() => post(`/api/orders/${id}/owner-decision`, { approve }), approve ? 'Подтверждено — ищем исполнителя' : 'Отклонено — водитель увидит в чате')) f.reload(); };
+  const decide = async (id: string, approve: boolean) => { await run(() => post(`/api/orders/${id}/owner-decision`, { approve }), approve ? 'Подтверждено — ищем исполнителя' : 'Отклонено — водитель увидит в чате'); await f.reload(); };
   async function save() {
     const r = await run(() => put('/api/fleet', { mode: s.mode, perOrder: s.perOrder ?? null, perMonth: s.perMonth ?? null, allow: s.allow, edoPdfOnly: d.company.pdfOnly }), 'Сохранено');
-    if (r) f.setData(r);
+    if (r){f.setData(r);setS(r.settings);}else await f.reload();
   }
 
   // One approved fleet-management component for PC, Android and mobile web.
@@ -113,7 +119,7 @@ export function Fleet() {
           {expandedCar===c.id?'Свернуть данные':'Характеристики, ремонты, запчасти'}
           <span aria-hidden="true">{expandedCar===c.id?'⌃':'›'}</span>
         </button>
-        {expandedCar===c.id&&<FleetVehicleDetails car={c}/>}
+        {expandedCar===c.id&&<FleetVehicleDetails key={c.id} car={c}/>}
         <div className="fleet-mobile-actions">
           <button className="btn ghost small" type="button"
             onClick={()=>setQrFor(qrFor===c.id?null:c.id)}>{qrFor===c.id?'Скрыть QR':'QR-наклейка'}</button>
@@ -121,7 +127,7 @@ export function Fleet() {
             if(!confirm('Выпустить новую наклейку? Старая перестанет пускать, текущий водитель потеряет доступ.'))return;
             const r=await run(()=>post(`/api/fleet/vehicles/${c.id}/new-qr`),
               'Новая наклейка: прежний водитель потерял доступ');
-            if(r)f.setData(r);
+            setQrFor(null);if(r)f.setData(r);else await f.reload();
           }}>Новая наклейка</button>
         </div>
         {qrFor===c.id&&<Sticker car={c}/>}
@@ -186,8 +192,9 @@ export function Fleet() {
 // client's garage. No invented repairs, prices or fictional model photos.
 function FleetVehicleDetails({ car }: { car:any }) {
   const [tab,setTab]=useState<'spec'|'history'|'parts'>('spec');
-  const history=useLoad(()=>get(`/api/vehicles/${car.id}/history`),[car.id],
-    e=>e.type==='order'||e.type==='fleet');
+  const {me}=useMe();
+  const history=usePrivateRead<any>(()=>get(`/api/vehicles/${car.id}/history`),(me?.id??'guest')+':fleet-history:'+car.id,
+    e=>e.type==='order'||e.type==='fleet'||e.type==='connection_restored');
   const tabs: Array<['spec'|'history'|'parts',string]>=[
     ['spec','Характеристики'],['history','История ремонтов'],['parts','Запчасти'],
   ];
@@ -207,7 +214,7 @@ function FleetVehicleDetails({ car }: { car:any }) {
       <a className="btn ghost small" href="#/garage">Мой гараж · изменить транспорт</a>
     </div>}
     {tab==='history'&&<div className="fleet-repair-history stack">
-      {!history.data?<Loading error={history.error}/>:history.data.items.length===0
+      {!history.data?<div className="stack"><Loading error={history.error}/>{history.error&&<button type="button" className="btn ghost small" onClick={history.reload}>Повторить загрузку истории</button>}</div>:history.data.items.length===0
         ?<div className="empty">По этой машине пока нет обращений.</div>
         :history.data.items.map((o:any)=><a key={o.id} className="fleet-history-entry" href={o.kind==='service'?`#/booking/${o.id}`:`#/order/${o.id}`}>
           <span className="fleet-history-date">{fmtTime(o.created_at)}</span>
@@ -251,22 +258,33 @@ function Sticker({ car }: { car: any }) {
 }
 
 /** QR-страница: пароль для существующего аккаунта или SMS при регистрации; привязка — только после явного подтверждения. */
-export function QrJoin({ code }: { code: string }) {
+export function QrJoin({code}:{code:string}){
+  const {me}=useMe();
+  return <QrJoinForAccount key={(me?.id??'guest')+':'+code} code={code}/>;
+}
+function QrJoinForAccount({code}:{code:string}){
   const { me, reload } = useMe();
   const info = useLoad(() => get(`/api/qr/${code}`), [code]);
   const { busy, run } = useAction();
+  const alive=useRef(true);
+  const lock=useRef(false);
+  const [joinError,setJoinError]=useState(false);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
   useEffect(() => { try { sessionStorage.setItem('traksos.qr', code); } catch { /* */ } }, [code]);
-  if (!info.data) return <main><Loading error={info.error} /></main>;
+  if (!info.data||info.error) return <main><Loading error={info.error} />{info.error&&<button type="button" className="btn ghost small" onClick={info.reload}>Повторить проверку наклейки</button>}</main>;
   const v = info.data;
   const join = async () => {
-    const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины');
+    if(!me||busy||lock.current||joinError)return;
+    lock.current=true;const token=getToken();
+    const r = await run(() => post(`/api/qr/${code}/join`), 'Готово — вы водитель этой машины').finally(()=>{lock.current=false;});
+    if(!alive.current||getToken()!==token)return;
     // A failed join must keep the QR intent for retry after a transient error.
     // Never clear it before the server confirms that vehicle access was granted.
     if (r) {
       try { sessionStorage.removeItem('traksos.qr'); } catch { /* private browsing */ }
       await reload();
-      go('');
-    }
+      if(alive.current&&getToken()===token)go('');
+    }else{setJoinError(true);void reload();}
   };
   return (
     <main>
@@ -278,7 +296,8 @@ export function QrJoin({ code }: { code: string }) {
         <div className="card">
           <b>Вы вошли как {me.name ?? me.phone}</b>
           <span className="note">Прежний водитель этой машины потеряет доступ. Все ваши заказы и чаты по ней видит владелец.</span>
-          <button className="btn" disabled={busy} onClick={join}>Я водитель этой машины</button>
+          {joinError&&<div className="note" role="alert">Привязка не подтверждена. Проверьте назначенную машину в гараже. <a href="#/garage">Открыть гараж</a> <button type="button" className="btn ghost small" onClick={()=>{setJoinError(false);void info.reload();}}>Проверил — разрешить повтор</button></div>}
+          <button className="btn" disabled={busy||joinError} onClick={join}>Я водитель этой машины</button>
         </div>
       ) : <Login driver />}
     </main>
@@ -288,8 +307,8 @@ export function QrJoin({ code }: { code: string }) {
 /** Водителю в форме заявки: что разрешено и до какой суммы */
 export function DriverRules() {
   const { me } = useMe();
-  const r = useLoad(() => (me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null)), [me?.owner_id]);
-  if (!r.data) return null;
+  const r = usePrivateRead<any>(() => (me?.owner_id ? get('/api/fleet/rules') : Promise.resolve(null)),(me?.id??'guest')+':rules:'+(me?.owner_id??''),e=>e.type==='fleet'||e.type==='connection_restored');
+  if (!r.data) return me?.owner_id?<div className="note" role={r.error?'alert':'status'}>{r.error?'Не удалось проверить разрешения владельца.':'Проверяем актуальные разрешения владельца.'}{r.error&&<button type="button" className="btn ghost small" onClick={r.reload}>Повторить загрузку</button>}</div>:null;
   const d = r.data;
   return (
     <div className="banner col">

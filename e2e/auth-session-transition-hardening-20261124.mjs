@@ -8,6 +8,7 @@ const stubs={
   '../api.ts':[
     'export class ApiError extends Error {}',
     'export function setToken(t){window.mock.tokens.push(t)}',
+    'export function getToken(){return window.mock.tokens.at(-1)??null}',
     'export function connectWs(){}',
     'export function post(path,body){return new Promise((resolve,reject)=>window.mock.requests.push({path,body,resolve,reject}))}'
   ].join('\n'),
@@ -65,6 +66,9 @@ try{
       await form.locator('input[type=checkbox]').check();
       await form.getByRole('button',{name:'Получить код'}).click();
       await page.waitForFunction(()=>window.mock.requests.length===1);
+      await form.evaluate(el=>el.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+      await settle();
+      if(await page.evaluate(()=>window.mock.requests.length)!==1)throw Error('Duplicate SMS request while pending');
       await form.locator('input[type=tel]').fill('+79996660022');
       await resolve(0,{sent:true,devCode:'1234'});
       await settle();
@@ -78,6 +82,9 @@ try{
       await page.locator('input[autocomplete="new-password"]').fill('Password12345');
       await form.getByRole('button',{name:'Зарегистрироваться'}).click();
       await page.waitForFunction(()=>window.mock.requests.length===3);
+      await form.evaluate(el=>el.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+      await settle();
+      if(await page.evaluate(()=>window.mock.requests.length)!==3)throw Error('Duplicate verification request while pending');
       await form.getByRole('button',{name:'Другой номер'}).click();
       await resolve(2,{token:'STALE_REGISTER',user:{roles:['client']}});
       await settle();

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,assertDesktopActions} from './role-click-contract.mjs';
+import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,assertDesktopActions,desktopPersonalPaths,assertDesktopMenu} from './role-click-contract.mjs';
 for(const [mode,tabs] of Object.entries(expectedTabs)){
   assertRoleTabs(mode,tabs);
   assert.throws(()=>assertRoleTabs(mode,tabs.slice(1)),/unexpected role tabs/);
@@ -23,6 +23,14 @@ for(const [role,actions] of Object.entries(desktopActions)){
     inspection:'#/inspections',courier:'#/courier',moderator:'#/moderation',admin:'#/admin'})[role];
   const links=[home,...actions];
   assertDesktopActions(role,links,home);
+  const mode=role==='owner'||role==='driver'?'client':role==='master'||role==='tow'||role==='hybrid-master'?'performer':role==='hybrid-service'?'service':role;
+  const combined=[...new Set([...links,'#/profile','#/privacy','#/support','#/help','#/economics','#/learn',...(['client','performer','service'].includes(mode)?['#/shop']:[])])];
+  const left=combined.filter(x=>!desktopPersonalPaths.includes(x)),right=combined.filter(x=>desktopPersonalPaths.includes(x));
+  assertDesktopMenu(mode,role,left,right,home);
+  assert.throws(()=>assertDesktopMenu(mode,role,[...left,'#/profile'],right.filter(x=>x!=='#/profile'),home),/incorrect desktop menu placement/);
+  assert.throws(()=>assertDesktopMenu(mode,role,left.filter(x=>x!=='#/support'),[...right,'#/support'],home),/incorrect desktop menu placement/);
+  assert.throws(()=>assertDesktopMenu(mode,role,left,[...right,'#/profile'],home),/duplicate desktop/);
+  assert.throws(()=>assertDesktopMenu(mode,role,left.filter(x=>x!=='#/learn'),right,home),/missing work\/help destination/);
   for(const href of links)assert.throws(()=>assertDesktopActions(role,links.filter(x=>x!==href),home),/missing or duplicate desktop action/);
   assert.throws(()=>assertDesktopActions(role,[...links,actions[0]],home),/missing or duplicate desktop action/);
 }

@@ -128,6 +128,9 @@ try{
   await page.getByRole('alert').filter({hasText:'Финансовая запись не подтверждена'}).waitFor();
   expect(await amount.inputValue()==='23 456,78',
     'Ambiguous failed ledger POST erased user evidence');
+  expect(await page.getByRole('button',{name:'Зарегистрировать начисление'}).isDisabled(),
+    'Unconfirmed financial write must block immediate duplicate');
+  await page.getByRole('button',{name:'Журнал и остаток проверены'}).click();
   await page.getByRole('button',{name:'Зарегистрировать начисление'}).click();
   await wait('POST',ledger,2);
   await finish('POST',ledger,1,'resolve',{id:'ledger-ci'});

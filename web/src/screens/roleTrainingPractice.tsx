@@ -1,6 +1,6 @@
 // Isolated practice simulator: absolutely no API calls, messages, billing or persisted orders.
 // Scenarios are illustrative examples, not legal terms or an operational promise.
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useMe } from '../ui.tsx';
 import { trainingRole } from './training.tsx';
 
@@ -84,14 +84,17 @@ export function TrainingPractice({ chapter }: { chapter?: string }) {
   const { me, mode } = useMe();
   const ownRole = trainingRole(mode, me?.roles ?? [], me?.owner_id);
   const isAdmin = !!me?.roles.includes('admin');
-  const role = (isAdmin || (ownRole === 'master' && chapter === 'consultant')) && chapter && scenarios[chapter] ? chapter : ownRole;
+  const role = (isAdmin || (ownRole === 'master' && chapter === 'consultant')) && chapter && Object.hasOwn(scenarios,chapter) ? chapter : ownRole;
+  if(!me)return null;
+  return <PracticeForAccount key={me.id+':'+role} role={role}/>;
+}
+function PracticeForAccount({role}:{role:string}){
   const scene = scenarios[role];
   const [current, setCurrent] = useState(0);
   const [done, setDone] = useState(false);
-  useEffect(() => { setCurrent(0); setDone(false); }, [role]);
   const step = scene.steps[Math.min(current, scene.steps.length - 1)];
   const progress = done ? scene.steps.length : current;
-  const advance = () => { if (current === scene.steps.length - 1) setDone(true); else setCurrent(n => n + 1); };
+  const advance = () => { if (current === scene.steps.length - 1) setDone(true); else setCurrent(n => Math.min(scene.steps.length-1,n+1)); };
   return <main className="tr-training-page tr-training-practice">
     <a className="note" href={'#/training/' + role}>← Назад к обучению</a>
     <section className="tr-training-hero"><span className="label">TRAKSOS · ТРЕНИРОВКА</span>
@@ -109,7 +112,7 @@ export function TrainingPractice({ chapter }: { chapter?: string }) {
           <p className="tr-training-purpose">{step.explanation}</p>
           {step.warning && <p className="tr-training-caution">{step.warning}</p>}
           <div className="tr-training-instruction"><strong>Результат после действия</strong><p>{step.result}</p></div>
-          <button className="btn" type="button" onClick={advance}>{step.action}</button>
+          <div className="row"><button type="button" className="btn ghost" disabled={current===0} onClick={()=>setCurrent(n=>Math.max(0,n-1))}>Предыдущий шаг</button><button className="btn" type="button" onClick={advance}>{step.action}</button></div>
         </div>}
       <nav className="tr-training-step-links" aria-label="Маршрут практики">
         {scene.steps.map((s,i)=><span key={s.title} className={i===current&&!done?'active':''}>{i+1}. {s.title}</span>)}

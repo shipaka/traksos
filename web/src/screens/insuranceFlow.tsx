@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
-import {authedImage,fmtTime,get,post,rub} from '../api.ts';
+import {authedImage,fmtTime,get,getToken,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
 import { INSURANCE_STAGES, insurancePresentation, insuranceStepIndex } from '../insurancePresentation.ts';
 
@@ -49,6 +49,10 @@ function futurePolicyExpiry(value:string):boolean {
 
 export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const {me}=useMe();
+  return <InsuranceApplicationForAccount key={(me?.id??'guest')+':'+vehicleId} vehicleId={vehicleId}/>;
+}
+function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
+  const {me}=useMe();
   const agents=useLoad(()=>get<{id:string;name:string}[]>('/api/insurance/agents'),[]);
   const vehicles=useLoad(()=>get<any[]>('/api/vehicles'),[]);
   const [agentId,setAgentId]=useState('');
@@ -71,6 +75,10 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   const [comment,setComment]=useState('');
   const [consent,setConsent]=useState(false);
   const {busy,run}=useAction();
+  const submission=useRef(false);
+  const alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  const [submitError,setSubmitError]=useState(false);
   useEffect(()=>{
     if(!me?.name)return;
     const words=me.name.trim().split(/\s+/);
@@ -96,7 +104,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
     return null;
   };
   const validateStep=(index:number)=>{
-    if(index===0&&!agentId){
+    if(index===0&&(!agentId||!!agents.error||!agents.data?.some(a=>a.id===agentId))){
       reportError(0,'agent','Выберите страхового агента.');return false;
     }
     if(index===1&&(!applicant.lastName.trim()||!applicant.firstName.trim())){
@@ -105,6 +113,9 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       return false;
     }
     if(index===2){
+      if(vehicles.error||!vehicles.data||(selectedVehicleId&&!vehicle)){
+        reportError(2,'garageVehicle','Не удалось подтвердить выбранный автомобиль. Выберите машину из гаража или новый автомобиль.');return false;
+      }
       const missing=missingVehicleField();
       if(missing){
         const label=VEHICLE_FIELDS.find(([key])=>key===missing)?.[1]?.replace(' *','')??'поле';
@@ -125,15 +136,23 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
   };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
+    if(submission.current||submitError||busy)return;
     for(const index of [0,1,2,3]){
       if(!validateStep(index))return;
     }
     setValidationError(null);
+    setSubmitError(false);
+    submission.current=true;
+    const token=getToken();
+    try{
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
       kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
-    if(result)go('insurance/request/'+result.id);
+    if(!alive.current||getToken()!==token)return;
+    if(result?.id)go('insurance/request/'+result.id);
+    else setSubmitError(true);
+    }finally{submission.current=false;}
   };
   return <main className="insurance-workflow stack">
     <a className="insurance-back" href="#/garage">← Мой гараж</a>
@@ -142,10 +161,10 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       <p>Выберите агента, проверьте свои данные и сведения о технике. Предложения и готовый полис придут в переписку по этой заявке.</p>
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
-    {(!vehicles.data||!agents.data)?<section className="card stack" role="status">
+    {(!vehicles.data||!agents.data||vehicles.error||agents.error)?<section className="card stack" role="status">
       <Loading error={vehicles.error||agents.error}/>
       {(vehicles.error||agents.error)&&<button className="btn ghost" type="button"
-        onClick={()=>{if(!vehicles.data)void vehicles.reload();if(!agents.data)void agents.reload();}}>
+        onClick={()=>{if(!vehicles.data||vehicles.error)void vehicles.reload();if(!agents.data||agents.error)void agents.reload();}}>
         Повторить загрузку данных
       </button>}
     </section>:
@@ -153,7 +172,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       <nav className="insurance-step-navigation" aria-label="Этапы страховой заявки">
         {['Агент','Страхователь','Автомобиль','Отправка'].map((label,index)=><button
           type="button" key={label} className={'btn ghost'+(step===index?' active':'')}
-          aria-current={step===index?'step':undefined} disabled={index>step}
+          aria-current={step===index?'step':undefined} disabled={busy||index>step}
           onClick={()=>{setValidationError(null);setStep(index);}}>{index+1}. {label}</button>)}
       </nav>
       {validationError&&validationError.step===step&&
@@ -191,7 +210,7 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
       {step===2&&<section className="card stack">
         <span className="insurance-step-title">03 · Что страхуем</span><h2>Грузовой автомобиль</h2>
         <label>Автомобиль из гаража (необязательно)
-          <select className="field" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
+          <select className="field" data-insurance-field="garageVehicle" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
             <option value="">Новый автомобиль — заполню данные ниже</option>
             {vehicles.data.map(v=><option key={v.id} value={v.id}>
               {[v.brand,v.model,v.year,v.plate,v.vin ? 'VIN '+String(v.vin).slice(-6) : ''].filter(Boolean).join(' · ')}
@@ -228,15 +247,17 @@ export function InsuranceApplication({vehicleId}:{vehicleId:string}){
           data-insurance-field="consent" aria-invalid={validationError?.key==='consent'||undefined}
           aria-describedby={validationError?.key==='consent'?'insurance-form-error':undefined}
           onChange={e=>{setConsent(e.target.checked);setValidationError(null);}}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
-        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length}>
-          Отправить заявку страховому агенту
+        <button className="btn insurance-main-action" type="submit" disabled={busy||submitError||!agents.data.length}>
+          {busy?'Отправляем заявку…':'Отправить заявку страховому агенту'}
         </button>
+        {busy&&<p role="status" className="note">Ожидаем подтверждение сервера. Не отправляйте заявку повторно.</p>}
+        {submitError&&<div role="alert" className="insurance-validation-alert">Не получено подтверждение отправки. Введённые данные сохранены на этом экране. Перед повтором проверьте, не появилась ли заявка в гараже, чтобы не создать дубликат. <a href="#/garage">Открыть гараж</a> <button type="button" className="btn ghost small" onClick={()=>setSubmitError(false)}>Проверил историю — разрешить повтор</button></div>}
       </section>}
       {step<3&&<div className="insurance-wizard-actions">
         {step>0&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(v=>v-1);}}>Назад</button>}
         <button type="button" className="btn insurance-main-action" onClick={nextStep}>Продолжить</button>
       </div>}
-      {step===3&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(2);}}>Вернуться к автомобилю</button>}
+      {step===3&&<button type="button" className="btn ghost" disabled={busy} onClick={()=>{setValidationError(null);setStep(2);}}>Вернуться к автомобилю</button>}
     </form>}
   </main>;
 }
@@ -253,9 +274,13 @@ function InsuranceStageTimeline({ stage, activeIndex }: { stage: string; activeI
 }
 
 export function InsuranceThread({requestId}:{requestId:string}){
+  const {me}=useMe();
+  return <InsuranceThreadForAccount key={(me?.id??'guest')+':'+requestId} requestId={requestId}/>;
+}
+function InsuranceThreadForAccount({requestId}:{requestId:string}){
   const {me}=useMe();const {busy,run}=useAction();
   const source=useLoad(()=>get<CaseData>('/api/insurance/requests/'+requestId),
-    [requestId],e=>e.type==='vehicle_service'&&e.requestId===requestId);
+    [requestId],e=>e.type==='connection_restored'||(e.type==='vehicle_service'&&e.requestId===requestId));
   const [message,setMessage]=useState('');
   const [chatExpanded,setChatExpanded]=useState(false);
   const [drafts,setDrafts]=useState([{company:'',product:'',price:'',description:'',coverage:''}]);
@@ -277,7 +302,22 @@ export function InsuranceThread({requestId}:{requestId:string}){
     setChoice('');setExpiresOn('');setPdf(null);setActionError(null);
     if(policyFileRef.current)policyFileRef.current.value='';
   },[requestId]);
-  const d=source.data?.request?.id===requestId?source.data:null,r=d?.request;
+  const d=!source.error&&source.data?.request?.id===requestId&&Array.isArray(source.data.proposals)&&Array.isArray(source.data.messages)?source.data:null,r=d?.request;
+  const alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  const [pendingReview,setPendingReview]=useState(false);
+  const mutationLock=useRef(false);
+  const mutate=async(fn:()=>Promise<any>,label:string)=>{
+    if(mutationLock.current||pendingReview||busy)return;
+    mutationLock.current=true;const token=getToken();
+    try{
+      const result=await run(fn,label);
+      if(!alive.current||getToken()!==token)return;
+      if(!result)setPendingReview(true);
+      await source.reload();
+      return result;
+    }finally{mutationLock.current=false;}
+  };
   const stage=r?.insurance_stage||'';
   const selected=d?.proposals.find(p=>p.id===r?.insurance_choice_id);
   const isAgent=!!d?.isPartner;
@@ -291,11 +331,10 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const backLabel=isStaffViewer?'К страховым обращениям':isAgent?'К списку страховых заявок':'Мой гараж';
   const status=insurancePresentation(stage,r?.status,isAgent?'partner':'client');
   const activeIndex=insuranceStepIndex(stage);
-  const notify=()=>source.reload();
   const send=async()=>{
     const m=message.trim();if(!m||!canSendMessage)return;
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
-    if(v){setMessage('');notify();}
+    const v=await mutate(()=>post('/api/insurance/requests/'+requestId+'/messages',{message:m}),'Сообщение отправлено');
+    if(v)setMessage(current=>current.trim()===m?'':current);
   };
   const publish=async()=>{
     const data=drafts.map(o=>({company:o.company.trim(),product:o.product.trim(),
@@ -310,8 +349,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
       return;
     }
     setActionError(null);
-    const v=await run(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
-    if(v)notify();
+    await mutate(()=>post('/api/insurance/requests/'+requestId+'/offers',{offers:data}),'Предложения отправлены клиенту');
   };
   const upload=async()=>{
     const file=pdf;
@@ -329,7 +367,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
       return;
     }
     setActionError(null);
-    const v=await run(async()=>{
+    const token=getToken();
+    const v=await mutate(async()=>{
       // A FileReader failure must pass through useAction's error handling.
       // The selected file remains in place for a manual retry.
       const fileDataUrl=await new Promise<string>((resolve,reject)=>{
@@ -345,18 +384,21 @@ export function InsuranceThread({requestId}:{requestId:string}){
       if(!/^data:[^;,]*;base64,/.test(fileDataUrl))
         throw new Error('Не удалось прочитать PDF');
       const dataUrl=fileDataUrl.replace(/^data:[^;,]*;base64,/,'data:application/pdf;base64,');
+      if(!alive.current||getToken()!==token)throw new Error('Сессия изменилась');
       return post('/api/insurance/requests/'+requestId+'/policy',{
         dataUrl,fileName:file.name,expiresOn});
     },'Готовый PDF отправлен клиенту');
-    if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';notify();}
+    if(v){setPdf(null);if(policyFileRef.current)policyFileRef.current.value='';}
   };
   const download=async()=>{
     setActionError(null);
     try{
       // Guarded private-blob transport checks sandbox origin and account
       // continuity both before and after reading PDF bytes.
+      const token=getToken();
       const url=await authedImage('/api/insurance/requests/'+requestId+'/policy',{
         allowedMimeTypes:['application/pdf']});
+      if(!alive.current||getToken()!==token){URL.revokeObjectURL(url);return;}
       const link=document.createElement('a');
       link.href=url;link.download='insurance-policy.pdf';
       document.body.append(link);link.click();link.remove();
@@ -370,7 +412,8 @@ export function InsuranceThread({requestId}:{requestId:string}){
   const updateDraft=(i:number,key:string,value:string)=>setDrafts(prev=>prev.map((q,n)=>n===i?{...q,[key]:value}:q));
   return <main ref={threadRef} className="insurance-workflow stack">
     <a className="insurance-back" href={backHref}>← {backLabel}</a>
-    {!d?<Loading error={source.error}/>:
+    {pendingReview&&<div className="banner warn" role="alert">Ответ на действие не подтверждён. Сверьте этап и переписку перед повтором. <button type="button" className="btn ghost small" onClick={source.reload}>Обновить дело</button> <button type="button" className="btn ghost small" disabled={!d} onClick={()=>setPendingReview(false)}>Состояние проверено</button></div>}
+    {!d?<div className="stack"><Loading error={source.error}/>{source.error&&<button type="button" className="btn ghost small" onClick={source.reload}>Повторить загрузку страхового дела</button>}</div>:
     <>
       <section className="insurance-workflow-hero">
         <span>TRAKSOS · СТРАХОВАЯ ПЕРЕПИСКА</span>
@@ -421,9 +464,9 @@ export function InsuranceThread({requestId}:{requestId:string}){
               </div>)}
             </div>
             {d.isClient&&stage==='offers_sent'&&
-              <button className="btn" disabled={busy||!choice} type="button"
-                onClick={async()=>{const v=await run(()=>post('/api/insurance/requests/'+requestId+'/choose',
-                  {proposalId:choice}),'Выбор отправлен страховому агенту');if(v)notify();}}>Оформить выбранный вариант</button>}
+              <button className="btn" disabled={busy||pendingReview||!d.proposals.some(p=>p.id===choice)} type="button"
+                onClick={async()=>{await mutate(()=>post('/api/insurance/requests/'+requestId+'/choose',
+                  {proposalId:choice}),'Выбор отправлен страховому агенту');}}>Оформить выбранный вариант</button>}
           </div>}
           {d.hasPolicy&&<div className="insurance-policy">
             <b>✓ Готовый страховой полис</b>
@@ -450,7 +493,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
               <textarea className="field" maxLength={2000} rows={3} value={message}
                 onChange={e=>setMessage(e.target.value)}
                 placeholder="Уточнить сведения, запросить документы или ответить…" /></label>
-            <button type="button" className="btn small" disabled={busy||!message.trim()}
+            <button type="button" className="btn small" disabled={busy||pendingReview||!message.trim()}
               onClick={send}>Отправить сообщение</button>
           </div>:<div className="note" role="status">
             {isStaffViewer?'Только просмотр: отправлять сообщения могут заявитель и назначенный страховой агент.'
@@ -483,9 +526,9 @@ export function InsuranceThread({requestId}:{requestId:string}){
             <b>Следующий шаг</b>
             <p className="note">{stage==='received'?'Вы получили заявку. Примите её для подготовки предложений.':
               'Клиент выбрал вариант. Примите его в работу и оформите полис у страховой компании.'}</p>
-            <button className="btn" type="button" disabled={busy}
-              onClick={async()=>{const v=await run(()=>post('/api/insurance/requests/'+requestId+'/accept'),
-                'Принято в работу');if(v)notify();}}>Принято в работу</button>
+            <button className="btn" type="button" disabled={busy||pendingReview}
+              onClick={async()=>{await mutate(()=>post('/api/insurance/requests/'+requestId+'/accept'),
+                'Принято в работу');}}>Принято в работу</button>
           </section>}
           {isAgent&&stage==='preparing'&&<section className="card stack">
             <b>Предложения от страховых компаний</b>
@@ -508,7 +551,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
             </div>)}
             {drafts.length<20&&<button className="btn ghost" type="button" onClick={()=>
               setDrafts(old=>[...old,{company:'',product:'',price:'',description:'',coverage:''}])}>+ Ещё предложение</button>}
-            <button className="btn" disabled={busy} type="button" onClick={publish}>Отправить {drafts.length} предложений клиенту</button>
+            <button className="btn" disabled={busy||pendingReview} type="button" onClick={publish}>Отправить {drafts.length} предложений клиенту</button>
           </section>}
           {isAgent&&stage==='processing'&&<section className="card stack">
             <b>Отправить готовый полис</b>
@@ -517,7 +560,7 @@ export function InsuranceThread({requestId}:{requestId:string}){
               data-insurance-policy-field="date" aria-invalid={actionError?.scope==='policy'&&!futurePolicyExpiry(expiresOn)||undefined} onChange={e=>{setExpiresOn(e.target.value);setActionError(null);}}/></label>
             <label>Файл PDF<input ref={policyFileRef} type="file" accept="application/pdf,.pdf" className="field"
               data-insurance-policy-field="file" onChange={e=>{setPdf(e.target.files?.[0]??null);setActionError(null);}}/></label>
-            <button className="btn" type="button" disabled={busy} onClick={upload}>
+            <button className="btn" type="button" disabled={busy||pendingReview} onClick={upload}>
               Отправить готовый полис клиенту</button>
             {actionError?.scope==='policy'&&
               <div className="insurance-validation-alert" role="alert">{actionError.message}</div>}

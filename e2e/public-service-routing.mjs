@@ -51,6 +51,50 @@ try {
       publicGlyphs[key]=await page.locator(selector).first().evaluate(el=>el.innerHTML);
     }
 
+    // The public app information is a real page, not an invented store link
+    // or a sign-in for an unrelated service. Navigate there and back.
+    const appInfo=desktop?'.owner20-bottom-app b':'.public-app-card h2';
+    await page.evaluate(()=>sessionStorage.setItem('traksos.pendingLandingAction','tow'));
+    await page.locator(appInfo).click();
+    await page.waitForURL('**/#/app-info');
+    await page.getByRole('heading',{name:'Мобильное приложение TrakSOS',exact:true}).waitFor();
+    const info=page.locator('main.guest-info-page');
+    const releaseStatus=info.locator('.guest-app-release-status');
+    await releaseStatus.waitFor({state:'visible'});
+    check(/Ссылка на скачивание в RuStore появится после подтвержд[её]нной публикации\./u.test((await releaseStatus.innerText()).trim()),
+      'App information misrepresents publication status: '+await releaseStatus.innerText());
+    check(await info.locator('a[href*="rustore"],a[href$=".apk"]').count()===0,
+      'App information advertises an unconfirmed download');
+    check(await info.locator('a[href="#/login"]').count()===1 &&
+      await info.locator('a[href="#/register"]').count()===1,'App information lacks real auth actions');
+    await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
+    await info.locator('.guest-info-top a[href="#/"]').click();
+    await page.waitForURL('**/#/');
+    await page.locator(landing).waitFor({state:'visible'});
+
+    // The selected service and typed phone must survive an explicit switch
+    // to customer registration. Cancelling must not affect the next sign-in.
+    await guestAuth(page,'insurance',desktop?'.owner20-feature-insurance':'.public-service-insurance',landing);
+    const contextualLogin=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await contextualLogin.locator('input[type=tel]').fill('+7 900 123 45 67');
+    await contextualLogin.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
+    await page.waitForURL('**/#/register');
+    const registration=page.getByRole('dialog',{name:'Регистрация в TrakSOS'});
+    await registration.getByText('Вы выбрали: Страхование',{exact:true}).waitFor({state:'visible'});
+    check(await registration.locator('input[type=tel]').inputValue()==='+7 900 123 45 67',
+      'Registration discarded the entered phone');
+    await page.keyboard.press('Escape');
+    await page.waitForURL('**/#/');
+    await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
+    await page.goto(BASE+'/#/login');
+    const freshLogin=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await freshLogin.waitFor();
+    check(await freshLogin.getByText('Вы выбрали:',{exact:false}).count()===0,
+      'Unrelated login inherited a cancelled service');
+    await page.keyboard.press('Escape');
+    await page.waitForURL('**/#/');
+    await page.locator(landing).waitFor({state:'visible'});
+
     if(desktop){
       check(await page.locator('.owner20-quick>a').count()===5,
         'PC must retain five quick service tiles');
@@ -72,6 +116,11 @@ try {
       check(await page.locator('.trakbot-dock-panel').count()===0,
         'TrakBot did not close');
 
+      // The large red SOS action must preserve the generic emergency choice,
+      // not silently narrow the customer to a mobile mechanic.
+      await guestAuth(page,'sos','.owner20-alert',landing);
+      check(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))==='sos',
+        'Desktop SOS lost emergency intent');
       for(const key of ['van','tow','sto','consult']){
         await guestAuth(page,key,'.owner20-quick>a[href="'+target(key)+'"]',landing);
       }
@@ -135,6 +184,23 @@ try {
         'Closing coverage map did not restore keyboard focus to footer trigger');
       check(await top.locator(':scope > a[href="#/join"]').count()===0,
         'Partner action must be inside submenu, not a second top-level link');
+      // Narrow PC keeps the same service destinations and a scrollable menu.
+      await page.setViewportSize({width:1024,height:640});
+      const compact=page.locator('.owner20-compact-menu');
+      await compact.locator('summary').waitFor({state:'visible'});
+      await compact.locator('summary').press('Enter');
+      const compactNav=compact.locator('nav');
+      await compactNav.waitFor({state:'visible'});
+      for(const key of ['van','tow','sto','consult','tech','ecu','parts','insurance','inspection']){
+        check(await compactNav.locator('a[href="'+target(key)+'"]').count()===1,
+          'Compact PC menu missing or duplicates '+key);
+      }
+      check(await compactNav.locator('a[href="#/trakbot"]').count()===1,'Compact PC menu missing TrakBot');
+      check(await compactNav.evaluate(el=>el.getBoundingClientRect().bottom<=innerHeight+1 &&
+        getComputedStyle(el).overflowY==='auto'),'Compact PC menu extends below viewport');
+      await compact.locator('summary').press('Escape');
+      await page.setViewportSize({width,height});
+      await page.locator('.owner20-topnav details').nth(3).locator('summary').waitFor({state:'visible'});
       await page.locator('.owner20-topnav details').nth(3).locator('summary').click();
       check(await page.locator('.owner20-topnav details').nth(3).locator('a[href="#/join"]').count()===1,
         'Partner CTA does not lead to partner signup');
@@ -155,7 +221,7 @@ try {
       }
       for(const [key,selector] of [
         ['parts','.public-track-parts'],['inspection','.public-track-inspection'],
-        ['tech','.public-track-techbase']
+        ['tech','.public-track-techbase'],['insurance','.public-track-insurance']
       ]) {
         await guestAuth(page,key,selector,landing);
       }
@@ -174,7 +240,7 @@ try {
       const menu=page.locator('.guest-mobile-catalog');
       await menu.locator('summary').click();
       const links=menu.getByRole('navigation',{name:'Возможности TrakSOS'});
-      for(const key of ['van','tow','sto','ecu','consult','parts','insurance'])
+      for(const key of ['van','tow','sto','ecu','consult','parts','insurance','tech','inspection'])
         check(await links.locator('a[href="'+target(key)+'"]').count()===1,
           'Mobile catalogue missing '+key);
       check(await links.locator('a[href="#/company"]').count()===1,
@@ -183,6 +249,18 @@ try {
         'Mobile partner registration missing');
       check(await links.locator('a[href="#/login"]').count()===1,
         'Mobile support must lead to login');
+      // The secondary menu must open the same contextual sign-in as its tiles.
+      for(const key of ['tech','inspection']){
+        const catalogue=page.locator('.guest-mobile-catalog');
+        if(!await catalogue.evaluate(el=>el.open)) await catalogue.locator('summary').click();
+        await catalogue.locator('a[href="'+target(key)+'"]').click();
+        await page.waitForURL('**/'+target(key));
+        const auth=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+        await auth.getByText('Вы выбрали:',{exact:false}).waitFor({state:'visible'});
+        await page.goto(BASE+'/#/');
+        await page.locator(landing).waitFor({state:'visible'});
+      }
+      await page.locator('.guest-mobile-catalog > summary').click();
       await links.locator('a[href="#/join"]').click();
     }
 

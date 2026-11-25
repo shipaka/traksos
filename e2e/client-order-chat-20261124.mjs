@@ -47,7 +47,6 @@ const stubs={
   './base.tsx':'export function RecommendService(){return null;}',
   './DestinationCard.tsx':'export function DestinationCard(){return null;}',
   './search.tsx':'export function Search(){return null;} export function OfferForm(){return null;}',
-  './roadsideMap.tsx':'export function RoadsideMap(){return null;}',
   './AdminRouteMap.tsx':'export function AdminRouteMap(){return null;}',
   './ecuHandoffs.tsx':'export function EcuOrderPanel(){return null;}',
   './continuations.tsx':'export function OrderContinuations(){return null;}',
@@ -170,6 +169,17 @@ try{
   if(await message.inputValue()!=='B second draft')
     throw Error('Pending response erased the subsequent chat draft');
 
+  // After reconnect, load the missing server messages and preserve a draft.
+  await page.evaluate(()=>window.__orderMock.listeners.forEach(fn=>fn({type:'connection_restored'})));
+  await wait('/api/orders/B/messages',2);
+  await settle('/api/orders/B/messages',1,{messages:[
+    {id:'B1',kind:'text',sender_id:'U1',body:'B first message'},
+    {id:'B2',kind:'text',sender_id:'other',body:'B recovered message'}
+  ],quickReplies:[],participants:[]});
+  await page.getByText('B recovered message').waitFor();
+  if(await page.getByText('B first message').count()!==1)throw Error('Reconnect duplicated a message');
+  if(await message.inputValue()!=='B second draft')throw Error('Reconnect lost the current draft');
+
   // Same order ID but another authenticated account is a fresh private GET.
   await navigate('B','U2');
   await wait('/api/orders/B',2);
@@ -180,6 +190,32 @@ try{
   await page.getByRole('button',{name:'Повторить загрузку заявки'}).waitFor();
   if(await page.getByText('№202 · Электрик').count())
     throw Error('Unauthorized account saw old order after 403');
+  // A real order detail must age its GPS and ETA even when the socket is silent.
+  await navigate('GPS','U2');
+  await wait('/api/orders/GPS',1);
+  const now=await page.evaluate(()=>Date.now());
+  await settle('/api/orders/GPS',0,{
+    ...order('GPS',303),lat:59.91,lng:30.31,
+    performer:{id:'master-gps',name:'Учебный мастер',lat:59.95,lng:30.35,location_at:new Date(now).toISOString()}
+  });
+  await page.getByText('GPS исполнителя обновлялся недавно',{exact:true}).waitFor();
+  await page.locator('.roadside-eta').waitFor();
+  const map=page.locator('.roadside-map[aria-label="Карта исполнителя"]');
+  await map.getByText('Координаты получены от устройства',{exact:true}).waitFor();
+  await page.evaluate(()=>{const clock=Date.now.bind(Date);window.__restoreClock=()=>{Date.now=clock;};Date.now=()=>clock()+121000;});
+  await page.getByText('Последняя GPS-точка устарела',{exact:true}).waitFor({timeout:5000});
+  await map.getByText('Последняя точка может быть устаревшей',{exact:true}).waitFor();
+  if(await page.locator('.roadside-eta').count())throw Error('Expired GPS still has an ETA');
+  if(await page.locator('.roadside-map iframe').count())throw Error('Map opened without consent');
+  await page.evaluate(()=>window.__restoreClock());
+  await navigate('BAD-GPS','U2');
+  await wait('/api/orders/BAD-GPS',1);
+  await settle('/api/orders/BAD-GPS',0,{
+    ...order('BAD-GPS',304),lat:59.91,lng:30.31,
+    performer:{id:'master-gps',name:'Учебный мастер',lat:999,lng:30.35,location_at:new Date(now).toISOString()}
+  });
+  await page.getByText('Ждём геолокацию исполнителя',{exact:true}).waitFor();
+  if(await page.locator('.roadside-eta').count())throw Error('Invalid GPS produced ETA');
   if(errors.length)throw Error('Browser runtime error: '+errors.join('; '));
   console.log('PASS: real order/chat offline retry, A->B privacy, deduplicated sends and account switch');
 }finally{await browser.close();}

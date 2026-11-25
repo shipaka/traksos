@@ -5,6 +5,7 @@ import {chromium} from 'playwright';
 
 const stubs={
   '../api.ts':`
+    export class ApiError extends Error {constructor(status,code,message){super(message);this.status=status;this.code=code;}}
     export function get(path){
       const m=window.__techMock;
       m.calls.push({method:'GET',path});
@@ -40,10 +41,11 @@ const bundle=await build({
       window.__techMock={calls:[],pending:[]};
       function App(){
         const [view,setView]=useState('techbase');
+        const [initial,setInitial]=useState('');window.__setTechInitial=setInitial;
         const [me,setMe]=useState({id:'owner-A',roles:['client'],performer:null});
         window.__setTechView=setView;window.__setTechMe=setMe;
         return <TestContext.Provider value={{me}}>
-          {view==='techbase'?<TechBase audience="driver"/>:
+          {view==='techbase'?<TechBase audience="driver" initialVehicleId={initial}/>:
             view==='repair'?<RepairCases/>:<TechnicalCasesReview/>}
         </TestContext.Provider>;
       }
@@ -139,6 +141,59 @@ try{
   await page.getByRole('option',{name:/В222ВВ/}).waitFor({state:'attached'});
   await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('vehicle-B');
   ensure(await page.getByRole('combobox',{name:'Машина из моего гаража'}).inputValue()==='vehicle-B','Garage vehicle B cannot be selected');
+
+  // A malformed or wrong-audience payload must not render a single document.
+  await page.evaluate(()=>window.__setTechMe({id:'owner-C',roles:['client'],performer:null}));
+  await pending('GET',catalog,5);await pending('GET',garage,5);
+  await settle('GET',catalog,4,'resolve',{audiences:['driver'],documents:[{...doc('Wrong audience','Renault'),audience:'master'}]});
+  await settle('GET',garage,4,'resolve',[{id:'vehicle-C',brand:'Рено',model:'Premium',year:2010}]);
+  await page.getByRole('button',{name:'Повторить загрузку каталога'}).waitFor();
+  ensure(await page.locator('.techbase-document').count()===0,'Wrong-audience catalog rendered');
+  await page.getByRole('button',{name:'Повторить загрузку каталога'}).click();
+  await pending('GET',catalog,6);
+  await settle('GET',catalog,5,'resolve',{audiences:['driver'],documents:[
+    {...doc('Premium manual','Renault'),models:['Premium']},
+    {...doc('Renault C manual','Renault'),models:['C']},
+    {...doc('Renault D manual','Renault'),models:['D']},
+  ]});
+  await page.getByRole('heading',{name:'Premium manual'}).waitFor();
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('vehicle-C');
+  await page.waitForFunction(()=>document.querySelectorAll('.techbase-document').length===1);
+  ensure(await page.getByRole('heading',{name:'Premium manual'}).count()===1,'Canonical Renault alias failed');
+  ensure(await page.getByRole('heading',{name:'Renault C manual'}).count()===0,'Unrelated one-letter series rendered');
+
+  // Real trailer deep link and manual selection must have identical filtering.
+  await page.evaluate(()=>{window.__setTechMe({id:'owner-trailer',roles:['client'],performer:null});window.__setTechInitial('cool');});
+  await pending('GET',catalog,7);await pending('GET',garage,6);
+  const kroneDocs=[
+    {...doc('KRONE general','KRONE'),kind:'trailer'},
+    {...doc('Load Carrier manual','KRONE'),kind:'trailer',models:['Load Carrier'],applicability:'model'},
+    {...doc('Load Carrier year limited','KRONE'),kind:'trailer',models:['Load Carrier'],applicability:'model',modelYearFrom:2020},
+    {...doc('Same brand truck','KRONE'),kind:'truck'},
+  ];
+  await settle('GET',catalog,6,'resolve',{audiences:['driver'],documents:kroneDocs});
+  await settle('GET',garage,5,'resolve',[
+    {id:'cool',brand:'Кроне',model:'Cool Liner',year:2021,catalog_category:'trailer'},
+    {id:'load',brand:'KRONE',model:'Load Carrier',year:null,catalog_category:'trailer'},
+    {id:'prefix',brand:'KRONE',model:'Load Carrier X',year:2021,catalog_category:'trailer'}
+  ]);
+  await page.getByRole('heading',{name:'KRONE general'}).waitFor();
+  ensure(await page.getByRole('combobox',{name:'Раздел техники'}).inputValue()==='trailer','Trailer deep link must select trailer category');
+  ensure(await page.getByRole('heading',{name:'Load Carrier manual'}).count()===0,'Different trailer received model-specific document');
+  ensure(await page.getByRole('heading',{name:'Same brand truck'}).count()===0,'Truck document leaked into trailer selection');
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('load');
+  await page.getByRole('heading',{name:'Load Carrier manual'}).waitFor();
+  ensure(await page.getByRole('heading',{name:'Load Carrier year limited'}).count()===0,'Unknown year passed restricted document');
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('prefix');
+  await page.getByRole('heading',{name:'Load Carrier manual'}).waitFor({state:'detached'});
+  await page.getByRole('combobox',{name:'Машина из моего гаража'}).selectOption('cool');
+  ensure(await page.locator('.techbase-document').count()===1,'Manual trailer selection differs from deep link');
+  await page.evaluate(()=>window.__setTechInitial('foreign'));
+  await pending('GET',catalog,8);await pending('GET',garage,7);
+  await settle('GET',catalog,7,'resolve',{audiences:['driver'],documents:kroneDocs});
+  await settle('GET',garage,6,'resolve',[]);
+  await page.getByText('Выбранный автомобиль не найден в вашем гараже.',{exact:false}).waitFor();
+  ensure(await page.locator('.techbase-document').count()===0,'Foreign vehicle ID exposed unfiltered documents');
 
   // Real repair-cases component: two overlapping searches must not let an
   // older response replace the later explicitly requested search results.

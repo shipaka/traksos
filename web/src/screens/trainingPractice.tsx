@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { customerStageFor, nextPracticeStage, practiceKindFor, practiceStages, type PracticeInput } from './trainingDemoModel.ts';
 
-const services = ['Выездной мастер', 'Эвакуатор', 'СТО', 'Консультация по телефону'] as const;
+const services = ['Выездной мастер', 'Эвакуатор', 'СТО', 'Консультация по телефону', 'Страхование'] as const;
 
 /**
  * A miniature training order. Its complete state stays in React memory.
@@ -19,6 +19,7 @@ function RoleTrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
   const [vehicle,setVehicle]=useState('Scania R520 · учебный автомобиль');
   const [service,setService]=useState<string>('Выездной мастер');
   const [problem,setProblem]=useState('');
+  const [chosenOffer,setChosenOffer]=useState('');
   const [error,setError]=useState('');
   const [chatOpen,setChatOpen]=useState(false);
   const [helpOpen,setHelpOpen]=useState(true);
@@ -27,18 +28,19 @@ function RoleTrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
   const isPerformer=kind==='performer';
   const isCourier=kind==='courier';
   const orderExample=isCustomer||isPerformer||kind==='service'||isCourier;
-  const input:PracticeInput={vehicle,problem,service};
+  const isInsuranceCustomer=isCustomer&&service==='Страхование';
+  const input:PracticeInput={vehicle,problem,service,chosenOffer};
   const advance=()=>{
     const next=nextPracticeStage(kind,index,input);
     if(next===index) {
-      setError('Для учебной заявки укажите автомобиль и опишите проблему хотя бы в пяти символах.');
+      setError(isInsuranceCustomer&&index===5?'Выберите один из учебных вариантов.':isInsuranceCustomer?'Выберите автомобиль и укажите вид страхования.':'Для учебной заявки укажите автомобиль и опишите проблему хотя бы в пяти символах.');
       return;
     }
     setIndex(next);
     setError('');
     setChatOpen(false);
     if(next===0) {
-      setProblem('');setService('Выездной мастер');setVehicle('Scania R520 · учебный автомобиль');
+      setProblem('');setChosenOffer('');setService('Выездной мастер');setVehicle('Scania R520 · учебный автомобиль');
     }
   };
   const caseTitle=kind==='staff'?'Вопрос о сроке ответа':
@@ -80,7 +82,7 @@ function RoleTrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
           <legend>Кого будем вызывать?</legend>
           <div className="training-demo-options">
             {services.map(value=><label key={value} className={'training-demo-option'+(value===service?' selected':'')}>
-              <input type="radio" name="demo-service" checked={value===service} onChange={()=>setService(value)} />
+              <input type="radio" name="demo-service" checked={value===service} onChange={()=>{setService(value);setProblem('');setChosenOffer('');setError('');}} />
               <span>{value}</span>
             </label>)}
           </div>
@@ -93,9 +95,9 @@ function RoleTrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
               <option value="Volvo FH · учебный автомобиль">Volvo FH · учебный</option>
             </select>
           </label>
-          <label className="stack" htmlFor="demo-problem"><b>Что случилось?</b>
+          <label className="stack" htmlFor="demo-problem"><b>{isInsuranceCustomer?'Какое страхование нужно?':'Что случилось?'}</b>
             <textarea id="demo-problem" className="field" rows={3} maxLength={220}
-              placeholder="Например: не запускается двигатель, нужен выездной мастер"
+              placeholder={isInsuranceCustomer?'Например: оформить ОСАГО для учебного грузовика':'Например: не запускается двигатель, нужен выездной мастер'}
               value={problem} onChange={e=>{setProblem(e.target.value);setError('');}} />
           </label>
           <p className="note">Это тренировочный ввод. Не пишите здесь свои номера телефонов, адреса или настоящие данные транспорта.</p>
@@ -107,18 +109,28 @@ function RoleTrainingPractice({role,onBack}:{role:string;onBack:()=>void}) {
           </div>
           <div className="training-demo-details">
             <div><span>Услуга</span><b>{isCustomer?service:isCourier?'Доставка запчастей':isPerformer&&role==='tow'?'Эвакуатор':kind==='service'?'Ремонт в СТО':'Выездной мастер'}</b></div>
-            <div><span>Проблема</span><b>{isCustomer?(problem.trim()||'Только демонстрация'):caseTitle}</b></div>
+            <div><span>{isInsuranceCustomer?'Вид страхования':'Проблема'}</span><b>{isCustomer?(problem.trim()||'Только демонстрация'):caseTitle}</b></div>
             <div><span>Место</span><b>{isCourier?'Учебная точка доставки · адрес не передаётся':'Учебная стоянка · адрес не передаётся'}</b></div>
             <div><span>Стоимость</span><b>Не рассчитывается в тренажёре</b></div>
           </div>
+          {isInsuranceCustomer && index===5 && <fieldset className="training-demo-fieldset">
+            <legend>Учебные предложения · без реальных цен</legend>
+            <div className="training-demo-options">
+              {['demo-a','demo-b'].map((id,i)=><label key={id} className={'training-demo-option'+(chosenOffer===id?' selected':'')}>
+                <input type="radio" name="demo-insurance-offer" checked={chosenOffer===id} onChange={()=>{setChosenOffer(id);setError('');}} />
+                <span>Условный вариант {i+1}</span>
+              </label>)}
+            </div>
+          </fieldset>}
+          {isInsuranceCustomer&&index>=6&&<p className="note">Выбран условный вариант {chosenOffer==='demo-a'?'1':'2'}. Платёж не проводится, полис не создаётся.</p>}
           {isCustomer && index>=4 && index<=7 && <div className="training-demo-chat">
             <button className="btn ghost small" type="button" aria-expanded={chatOpen}
               onClick={()=>setChatOpen(v=>!v)}>
               {chatOpen?'Скрыть':'Показать'} пример чата заявки
             </button>
             {chatOpen && <div className="training-demo-chat-bubble">
-              <b>Исполнитель · учебное сообщение</b>
-              <p>{service==='Консультация по телефону'
+              <b>{isInsuranceCustomer?'Страховой агент':'Исполнитель'} · учебное сообщение</b>
+              <p>{isInsuranceCustomer?'Здравствуйте! Учебная анкета получена. Проверьте сведения и сравните условные варианты.':service==='Консультация по телефону'
                 ? 'Здравствуйте! Расскажите, что проверяли до обращения, и есть ли диагностический код.'
                 : service==='СТО'
                 ? 'Запись вижу. Уточните, пожалуйста, удобно ли подъехать к станции в назначенное время.'

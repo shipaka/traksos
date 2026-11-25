@@ -28,11 +28,14 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
   const [amount,setAmount]=useState('');
   const [reference,setReference]=useState('');
   const [error,setError]=useState('');
+  const [uncertain,setUncertain]=useState(false);
+  const lock=useRef(false);
   useEffect(()=>{
-    setKind('receipt');setMethod('invoice');setAmount('');setReference('');setError('');
+    setKind('receipt');setMethod('invoice');setAmount('');setReference('');setError('');setUncertain(false);
   },[scope]);
   const kopecks=parseAdminRubles(amount);
   async function save() {
+    if(lock.current||uncertain||!d.data||d.error)return;
     if(busy||!admin||kopecks===null||reference.trim().length<4){
       setError('Укажите точную сумму до копейки и номер подтверждающего банковского документа.');
       return;
@@ -41,13 +44,14 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
     setError('');
     // This screen only records a completed bank/receipt operation. It is
     // deliberately not a bank/payment gateway or an automatic retry.
+    lock.current=true;
     const result=await run(()=>post('/api/admin/bookings/'+id+'/payment-events',
       {kind,method,amount:kopecks,reference:reference.trim()}),
-      kind==='receipt'?'Поступление записано':'Возврат учтён');
+      kind==='receipt'?'Поступление записано':'Возврат учтён').finally(()=>{lock.current=false;});
     if(scopeRef.current!==startedAs)return;
     if(result){
       setAmount('');setReference('');d.reload();reload();
-    }else setError('Операция не подтверждена. Сверьте банковский журнал перед повторной записью.');
+    }else {setUncertain(true);setError('Операция не подтверждена. Сверьте банковский журнал перед повторной записью.');}
   }
   const inv=d.data?.invoice;
   const events=Array.isArray(d.data?.events)?d.data.events:null;
@@ -94,9 +98,10 @@ function BankMovements({id,close,reload}:{id:string;close:()=>void;reload:()=>vo
           </label>
         </div>
         {error&&<div className="banner warn" role="alert">{error}</div>}
+        {uncertain&&<div className="row"><button type="button" className="btn ghost small" onClick={d.reload}>Обновить банковский журнал</button><button type="button" className="btn ghost small" disabled={d.loading||!valid} onClick={()=>setUncertain(false)}>Банковский журнал проверен</button></div>}
         {amount&&kopecks===null&&<p className="note" role="alert">Введите сумму в рублях с точностью до копейки, без экспонент и округления.</p>}
         <button className="btn" type="button"
-          disabled={busy||!admin||reference.trim().length<4||kopecks===null}
+          disabled={busy||uncertain||!admin||reference.trim().length<4||kopecks===null}
           onClick={()=>void save()}>Записать {kind==='receipt'?'поступление':'исполненный возврат'}</button>
       </>}
       {!inv.paymentRequired && <span className="note">Исторический счёт не пересчитывается: новая схема платежей для него не применяется.</span>}
@@ -121,8 +126,10 @@ export function AdminServiceFinance() {
   const [payoutRefs,setPayoutRefs]=useState<Record<string,string>>({});
   const [filter,setFilter]=useState<'all'|'awaiting'|'ready'|'disputed'|'recovery'>('all');
   const [actionError,setActionError]=useState('');
+  const payoutLock=useRef(false);
+  const [payoutUnconfirmed,setPayoutUnconfirmed]=useState(false);
   useEffect(()=>{
-    setSelected(null);setPayoutRefs({});setFilter('all');setActionError('');
+    setSelected(null);setPayoutRefs({});setFilter('all');setActionError('');setPayoutUnconfirmed(false);
   },[scope]);
   const items:any[]=Array.isArray(d.data)?d.data:[];
   const shown=items.filter(x=>
@@ -130,7 +137,7 @@ export function AdminServiceFinance() {
     (filter==='ready'&&x.payoutReady)||(filter==='disputed'&&x.status==='disputed')||
     (filter==='recovery'&&x.recoveryNeeded));
   async function markPayout(id:string) {
-    if(!admin||busy)return;
+    if(!admin||busy||payoutLock.current||payoutUnconfirmed||!d.data||d.error)return;
     const ref=payoutRefs[id]?.trim()??'';
     const invoice=items.find(item=>String(item.id)===id);
     if(!invoice?.payoutReady)return;
@@ -141,12 +148,13 @@ export function AdminServiceFinance() {
     if(!window.confirm('Фактический банковский перевод СТО уже выполнен? Записать подтверждение в журнал?'))return;
     const startedAs=scope;
     setActionError('');
+    payoutLock.current=true;
     const out=await run(()=>post('/api/admin/bookings/'+id+'/paid',
-      invoice.payment_required?{reference:ref}:{}),'Фактическая выплата отмечена по банковскому документу');
+      invoice.payment_required?{reference:ref}:{}),'Фактическая выплата отмечена по банковскому документу').finally(()=>{payoutLock.current=false;});
     if(scopeRef.current!==startedAs)return;
     if(out){
       setPayoutRefs(old=>({...old,[id]:''}));d.reload();
-    }else setActionError('Подтверждение выплаты не получено. Проверьте историю счёта перед повтором.');
+    }else {setPayoutUnconfirmed(true);setActionError('Подтверждение выплаты не получено. Проверьте историю счёта перед повтором.');}
   }
   if(!admin)return <div className="card stack">
     <h3>Сверка оплаты и выплат СТО</h3>
@@ -163,6 +171,7 @@ export function AdminServiceFinance() {
       <button type="button" className="btn ghost small" onClick={()=>d.reload()}>Обновить</button>
     </div>
     {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+    {payoutUnconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={d.reload}>Обновить реестр выплат</button><button type="button" className="btn ghost small" disabled={d.loading||!Array.isArray(d.data)} onClick={()=>setPayoutUnconfirmed(false)}>История выплаты проверена</button></div>}
     {!Array.isArray(d.data) ? <div className="card stack" role={d.error||d.data?'alert':'status'}>
       {d.error?'Не удалось загрузить финансовый реестр: '+d.error:
         d.data?'Сервер вернул некорректные данные финансов.':'Загружаем финансовый реестр…'}
@@ -198,7 +207,7 @@ export function AdminServiceFinance() {
                 onChange={e=>setPayoutRefs(old=>({...old,[x.id]:e.target.value}))}
                 placeholder="Номер платёжного поручения / транзакции" />
             </label>}
-            <button type="button" className="btn small" disabled={busy||(x.payment_required&&(payoutRefs[x.id]??'').trim().length<4)}
+            <button type="button" className="btn small" disabled={busy||payoutUnconfirmed||(x.payment_required&&(payoutRefs[x.id]??'').trim().length<4)}
               onClick={()=>markPayout(x.id)}>Отметить фактическую выплату СТО</button>
           </>}
         </div>

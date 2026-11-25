@@ -134,6 +134,18 @@ try{
   await page.getByText('offline admin demand').waitFor();
   assert(await page.locator('.tile-value').count()===0,
     'Stale totals visible after administrative GET failed');
+  const slaThirty='/api/admin/order-sla?days=30';
+  await waitFor(slaThirty,3);
+  await page.getByRole('button',{name:'Повторить загрузку проблемных заявок'}).click();
+  await waitFor(thirty,4);
+  await finish(thirty,3,demand(10));
+  await page.waitForFunction(()=>document.querySelector('.tile-value')?.textContent?.trim()==='10');
+  await finish(slaThirty,2,'offline SLA',true);
+  await page.getByRole('button',{name:'Повторить загрузку нарушений этапов'}).click();
+  await waitFor(slaThirty,4);
+  await finish(slaThirty,3,{incidents:[],repeat:[]});
+  await page.getByText('Зависших этапов за период нет.').waitFor();
+
 
   // Changing admin identity must not inherit A's report or unsent form.
   await switchTo('dashboard','admin-B',['admin']);

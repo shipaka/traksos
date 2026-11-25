@@ -145,7 +145,7 @@ try{
          };
        });
        const expected=['#/sos','#/new/tow','#/services','#/new/consult'];
-       const tabs=['#/','#/orders','#/air','#/garage','#/menu'];
+       const tabs=['#/','#/orders','#/air','#/garage','#/shop','#/menu'];
        if(visual.logo!=='/traksos-brand-logo-approved-618.png'||!visual.logoLoaded||
           visual.logoWidth>274.5||visual.icons!==4||visual.oldCards!==0||
           JSON.stringify(visual.routes)!==JSON.stringify(expected)||
@@ -409,12 +409,23 @@ try{
        // A fictitious assigned case is served ONLY to this local Chromium page.
        // It exercises the exact detail link that was broken on the approved PC.
        const assignedId='00000000-0000-4000-8000-000000000999';
-       const assignedInspection={id:assignedId,number:'LOCAL-TO-999',status:'sent_to_partner',
+       const assignedInspection={id:assignedId,number:'LOCAL-TO-999',kind:'inspection',status:'sent_to_partner',
          brand:'Scania',model:'R440',year:2014,plate:'ТЕСТ',client_name:'Локальный клиент CI',
          comment:'Учебный осмотр — никаких реальных документов',created_at:new Date().toISOString()};
        await page.route(url=>url.pathname==='/api/insurer/inspections',
          route=>route.fulfill({status:200,contentType:'application/json',
            body:JSON.stringify([assignedInspection])}));
+       await page.route(url=>url.pathname==='/api/insurer/inspections/page',route=>{
+         const history=new URL(route.request().url()).searchParams.get('view')==='history';
+         return route.fulfill({status:200,contentType:'application/json',
+           body:JSON.stringify({items:history?[]:[assignedInspection],active:1,history:0,page:1,pageSize:30})});
+       });
+       await page.route(url=>url.pathname.startsWith('/api/insurer/inspections/')&&
+           url.pathname!=='/api/insurer/inspections/page',route=>{
+         const isAssigned=new URL(route.request().url()).pathname.endsWith('/'+assignedId);
+         return route.fulfill({status:isAssigned?200:404,contentType:'application/json',
+           body:JSON.stringify(isAssigned?assignedInspection:{error:'not_found',message:'Назначенный техосмотр не найден'})});
+       });
        await page.goto(BASE+'/#/inspections',{waitUntil:'domcontentloaded'});
        await page.locator('.account-menu > summary').waitFor({timeout:14000});
        if(await page.getByText('Нет прав оператора техосмотра').count())
@@ -437,12 +448,14 @@ try{
        // than the general approved dashboard or a fake missing inspection.
        await page.goto(BASE+'/#/inspections/processing',{waitUntil:'domcontentloaded'});
        await page.locator('.partner-workspaces').waitFor({state:'visible',timeout:14000});
-       if(await page.getByText('Техосмотр не найден среди назначенных вам заявок.').count())
+       if(await page.locator('.and20-inspection-detail').count())
          throw Error('Inspection processing list was parsed as an inspection ID');
        await assertClean(c.id+' '+width+' inspection processing');
        const unknownId='00000000-0000-4000-8000-000000000001';
        await page.goto(BASE+'/#/inspections/'+unknownId,{waitUntil:'domcontentloaded'});
-       await page.getByText('Техосмотр не найден среди назначенных вам заявок.').waitFor({timeout:14000});
+       await page.locator('.and20-inspection-detail [role="alert"]').getByText(/Назначенный техосмотр не найден/).waitFor({timeout:14000});
+       if(await page.getByRole('button',{name:'Внести результат техосмотра'}).count())
+         throw Error('An unassigned inspection exposed completion controls');
        if(await page.locator('.approved-pc').count())
          throw Error('A direct inspection detail route incorrectly showed the generic desktop dashboard');
      }

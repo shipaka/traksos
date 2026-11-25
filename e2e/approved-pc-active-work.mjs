@@ -91,7 +91,7 @@ try{
  const ctx=await browser.newContext({viewport:{width:1647,height:927},locale:'ru-RU',serviceWorkers:'block'});
  const page=await ctx.newPage();
  const assertMasterClean=watchPageErrors(page);
- let stepStatus='accepted';
+ let stepStatus='accepted',stepCalls=0,failNextStep=false;
  await page.route(url=>url.pathname==='/api/orders'&&url.searchParams.get('as')==='performer',
    route=>route.fulfill(json([order])));
  await page.route(url=>url.pathname==='/api/orders/'+id,
@@ -102,6 +102,8 @@ try{
    async route=>{
      if(route.request().method()!=='POST')return route.continue();
      const {action}=route.request().postDataJSON();
+     stepCalls++;
+     if(failNextStep){failNextStep=false;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Ответ не подтверждён'})});}
      const changes={depart:'en_route',arrive:'arrived',start_work:'working'};
      assert((action==='depart'&&stepStatus==='accepted')||
        (action==='arrive'&&stepStatus==='en_route')||
@@ -123,6 +125,7 @@ try{
  await page.getByRole('button',{name:'Выехал'}).click();
  await page.getByRole('button',{name:'Подтвердить прибытие'}).waitFor();
  assert(stepStatus==='en_route','Server-controlled status was not changed');
+ assert(stepCalls===1,'More than one departure mutation');
  await page.screenshot({path:output+'/master-en-route-1647.png',fullPage:false,animations:'disabled'});
  await assertMasterClean('master en route');
  // Internal case tabs must not create duplicate order selectors.
@@ -136,6 +139,14 @@ try{
  await page.getByRole('tab',{name:/Текущая работа/}).click();
  assert(await page.locator('.approved-pc-performer-case').count()===1,'Work mode not restored');
  await assertMasterClean('master order tabs and proposals');
+ // An ambiguous POST must never trigger an automatic resend of the same stage.
+ failNextStep=true;
+ page.once('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Подтвердить прибытие'}).click();
+ await page.getByText(/Повторная отправка с рабочего стола заблокирована/).waitFor();
+ assert(await page.getByRole('button',{name:'Подтвердить прибытие'}).isDisabled(),'Unconfirmed step can be sent again');
+ assert(stepCalls===2&&stepStatus==='en_route','Unexpected retry or fabricated status');
+ await assertMasterClean('master ambiguous step');
  report.push({role:'master',status:'PASS',scenarios:['selected work','status sequence','TechBase','case tabs','offers mode'],
    screenshots:['master-active-1647.png','master-en-route-1647.png','master-new-proposals-1647.png']});
  await ctx.close();
@@ -162,18 +173,28 @@ try{
    'Unapproved automatic training banner pushes the actual PC workplace down');
  assert(await op.locator('.desktop-content section[aria-label="Знакомство с TrakSOS"]').count()===0,
    'Duplicate desktop introduction card must be available from Help, not shown by default');
- // Both courses and the manual guided tour remain reachable inside the top-right menu.
+ // Desktop learning belongs to the left help group, not the personal menu.
+ assert(await op.locator('.desktop-sidebar .desktop-nav a[href="#/learn"]').count()===1,
+   'Platform introduction is missing from the left help menu');
+ assert(await op.locator('.desktop-sidebar .desktop-nav a[href="#/training"]').count()===1,
+   'Step-by-step training is missing from the left help menu');
+ assert(await op.locator('.desktop-sidebar .account-menu-tour').count()===1,
+   'Manual button tour is missing from the left help menu');
  await op.locator('.account-menu > summary').click();
- assert(await op.locator('.account-menu nav a[href="#/learn"]').count()===1,
-   'Platform introduction is missing from the help menu');
- assert(await op.locator('.account-menu nav a[href="#/training"]').count()===1,
-   'Step-by-step training is missing from the help menu');
- assert(await op.locator('.account-menu nav .account-menu-tour').count()===1,
-   'Manual button tour is missing from the help menu');
+ assert(await op.locator('.account-menu nav a[href="#/learn"]').count()===0,
+   'Learning is duplicated inside the personal menu');
+ assert(await op.locator('.account-menu nav a[href="#/profile"]').count()===1,
+   'Personal profile is missing from the right menu');
  await op.locator('.account-menu > summary').click();
  assert(await op.getByText('Синтетический мастер').count()>0,'Selected performer missing');
  assert(await op.getByText('Текущее местоположение исполнителя не подтверждено.').count()===1,
   'Stale or missing GPS incorrectly displayed as live');
+ const ownerDesk=op.locator('main.approved-pc-client');
+ await ownerDesk.getByText('Тестовый водитель CI',{exact:false}).waitFor();
+ for(const href of ['#/fleet','#/orders','#/sos'])
+   assert(await ownerDesk.locator('a[href="'+href+'"]').count()===1,'Duplicate owner workdesk destination '+href);
+ assert(await ownerDesk.locator('.approved-pc-fleet-footer,.approved-pc-order-table').count()===0,'Repeated fleet/order table returned');
+ assert(await ownerDesk.locator('a[href="#/garage/synthetic-vehicle"]').count()===1,'Fleet vehicle must have one history entry');
  await op.screenshot({path:output+'/owner-active-1647.png',fullPage:false,animations:'disabled'});
  await assertOwnerClean('owner active order');
  // Shared inner-screen banners must NOT overlay the old separate photo tile
@@ -232,16 +253,21 @@ try{
    route=>route.fulfill(ordersUnavailable?unavailable:json([])));
  await ep.route(url=>url.pathname==='/api/fleet',route=>route.fulfill(unavailable));
  await open(ep,owner.token,owner.mode,'#/');
- await ep.locator('.approved-pc-center').getByText(/Ошибка загрузки данных/).waitFor();
+ const myOrders=ep.locator('.approved-pc-pane').filter({has:ep.getByRole('heading',{name:'Мои заявки',exact:true})});
+ await ep.locator('.approved-pc-center').getByRole('status').filter({hasText:'Сведения о заявках недоступны'}).waitFor();
+ await myOrders.getByText(/Ошибка загрузки данных/).waitFor();
+ assert(await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить',exact:true}).count()===0,'Duplicate center retry on owner workdesk');
  const failedOwnerText=await ep.locator('main.approved-pc-client').innerText();
  assert(!failedOwnerText.includes('Активных заявок сейчас нет.'),
    'Client desktop falsely claims no orders while API is unavailable');
- assert(!failedOwnerText.includes('Машины ещё не добавлены в автопарк.'),
+ assert(!failedOwnerText.includes('Машины ещё не добавлены в автопарк.')&&!failedOwnerText.includes('Информация о технике появится после добавления в автопарк.'),
    'Fleet desktop falsely claims there are no vehicles while API failed');
  await assertRetryClean('owner API unavailable');
  ordersUnavailable=false;
- await ep.locator('.approved-pc-center').getByRole('button',{name:'Обновить'}).click();
+ await myOrders.getByRole('button',{name:'Обновить',exact:true}).click();
  await ep.locator('.approved-pc-center').getByText(/Активных заявок сейчас нет/).waitFor();
+ for(const href of ['#/fleet','#/orders','#/sos'])
+   assert(await ep.locator('main.approved-pc-client a[href="'+href+'"]').count()===1,'Duplicate empty owner workdesk destination '+href);
  await assertRetryClean('owner API retry');
  report.push({role:'owner API error/retry',status:'PASS',
    scenarios:['no false empty orders','no false empty fleet','retry on genuine empty response']});

@@ -145,3 +145,13 @@ test('insurer and inspection partner contracts use different financial explanati
     assert.doesNotMatch(contract.body,/10 500.*сервисный сбор/);
   }
 });
+
+test('finance explanations distinguish paid orders from quote confirmation',()=>{
+  const client=financeGuide(defaultSettings,'owner');
+  assert.match(client.paragraphs.find(x=>x.title==='Приглашения')!.text,/по оплаченным заказам/);
+  for(const role of ['master','tow'] as const){
+    const guide=financeGuide(defaultSettings,role);
+    assert.match(guide.paragraphs.find(x=>x.title==='Баллы и вознаграждения')!.text,/завершённых оплаченных заявок/);
+  }
+  assert.match(contractEconomyAnnex(defaultSettings,'client'),/по оплаченным заказам/);
+});

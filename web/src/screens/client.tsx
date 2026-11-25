@@ -1,8 +1,8 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { get, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { get, getToken, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
-import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
+import { BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
@@ -57,6 +57,8 @@ function ClientHomeForAccount() {
       :'Ограниченный доступ · разрешает владелец';
   const active = usePrivateRead<any[]>(()=>get('/api/orders'),
     'home-orders:'+(me?.id??'guest'),e=>e.type==='order');
+  const garage = usePrivateRead<any[]>(()=>get('/api/vehicles'),
+    'home-vehicles:'+(me?.id??'guest'),e=>e.type==='vehicle'||e.type==='fleet'||e.type==='connection_restored');
   const services = usePrivateRead<any[]>(()=>get('/api/vehicle-service-requests'),
     'home-services:'+(me?.id??'guest'),
     e=>e.type==='vehicle_service'||e.type==='connection_restored');
@@ -80,6 +82,7 @@ function ClientHomeForAccount() {
     </section>}
     <AndroidClientWorkspace orders={live} loading={!active.data && !active.error} error={active.error}
       retry={active.reload} me={me} insuranceInProgress={insuranceInProgress}
+      garageVehicles={garage.data} garageError={garage.error}
       disabledServices={{repair:restricted('repair'),tow:restricted('tow'),service:restricted('service'),consult:restricted('consult'),shop:restricted('shop')}} />
   </main>;
   return (
@@ -510,6 +513,10 @@ function NewOrderForAccount({service}:{service:string}) {
   const [roadSide, setRoadSide] = useState<'right'|'left'|'unknown'>('unknown');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
+  const geoRevision=useRef(0);
+  const alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;geoRevision.current++;};},[]);
+  const clearGeo=()=>{geoRevision.current++;setGeo(null);setGeoState('idle');};
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('online');
   const [est, setEst] = useState<any>(null);
   const [destination, setDestination] = useState(prefill.destination ?? '');
@@ -566,12 +573,15 @@ function NewOrderForAccount({service}:{service:string}) {
   }, [service, tier, regionId, zoneId, night, group, address, geo?.lat, geo?.lng]);
 
   function locate() {
+    const revision=++geoRevision.current;
+    setGeo(null);setAgree(false);
     if (!navigator.geolocation) return setGeoState('fail');
     setGeoState('wait');
+    const current=()=>alive.current&&geoRevision.current===revision;
     navigator.geolocation.getCurrentPosition(
-      (p) => { setGeo({ lat: p.coords.latitude, lng: p.coords.longitude }); setGeoState('ok'); },
-      () => setGeoState('fail'),
-      { enableHighAccuracy: true, timeout: 15_000 },
+      (p) => {if(!current())return;const {latitude:lat,longitude:lng}=p.coords;if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){setGeoState('fail');return;}setGeo({lat,lng});setGeoState('ok');},
+      () => {if(current())setGeoState('fail');},
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge:0 },
     );
   }
   // Location sharing is optional and user-initiated: an automatically
@@ -591,7 +601,8 @@ function NewOrderForAccount({service}:{service:string}) {
   }, [methods?.online, methods?.invoice, methods?.cash, method]);
 
   async function submit() {
-    if (!methods?.[method] || plannedTime) return;
+    if (busy||missing.length||!methods?.[method]||plannedTime) return;
+    const token=getToken();
     const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -616,7 +627,8 @@ function NewOrderForAccount({service}:{service:string}) {
         } } : {}),
       } : undefined,
     }));
-    if (!r) return;
+    if (!r||!alive.current||getToken()!==token)return;
+    if(!r.order?.id)return;
     clearNewOrderDraft();
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
@@ -650,13 +662,13 @@ function NewOrderForAccount({service}:{service:string}) {
     setDriverOnSite(d.driverOnSite);setMethod(d.method);setSite(d.site??{});
     setRoadside(d.roadside);setRoadName(d.roadName);setRoadKm(d.roadKm);
     setRoadDirection(d.roadDirection);setRoadSide(d.roadSide);
-    setGeo(null);setGeoState('idle'); // Never treat old GPS as a current fix.
+    clearGeo(); // Never treat old GPS as a current fix.
     setAgree(false);setEst(null);setTried(false);
   }
 
   const [tried, setTried] = useState(false);
   const need = {
-    car: !!vehicleId || car.brand.trim().length >= 2,
+    car: vehicleId?!!vehicles.data?.some(v=>v.id===vehicleId):!me?.roles.includes('driver')&&car.brand.trim().length>=2,
     what: description.trim().length >= MIN_WHAT,
     where: geoState === 'ok' || address.trim().length >= 3,
     tow: !isTow || destination.trim().length >= 3,
@@ -667,7 +679,7 @@ function NewOrderForAccount({service}:{service:string}) {
     !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
     !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
     !est && { id: 'f-where', name: 'проверенная предварительная смета' },
-    !need.car && { id: 'f-car', name: 'марка машины' },
+    !need.car && { id: 'f-car', name: vehicleId?'доступный автомобиль из гаража':'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
@@ -768,13 +780,13 @@ function NewOrderForAccount({service}:{service:string}) {
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
-        <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => {setAddress(e.target.value);clearGeo();setAgree(false);}} />
         <div className="row">
           <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
             {geoState === 'wait' ? 'Определяем GPS…' : 'Использовать мою GPS-точку'}
           </button>
           {geo && <button type="button" className="chip" onClick={() => {
-            setGeo(null); setGeoState('idle');
+            clearGeo();setAgree(false);
           }}>Использовать только адрес</button>}
         </div>
         <span className="note">
@@ -980,8 +992,8 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
     'bookings:'+userId+':'+as,e=>e.type==='booking');
   const [tab, setTab] = useState<'list' | 'black' | 'cars'>('list');
   const [ctab, setCtab] = useState<'now' | 'my' | 'hist' | 'black'>('now');
-  if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
-  if (as === 'performer' && tab === 'cars') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} />{list.data ? <JobsByCar orders={list.data} /> : <Loading error={list.error} />}</main>;
+  if (as === 'performer' && tab === 'black') return <main className="performer-orders-page"><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
+  if (as === 'performer' && tab === 'cars') return <main className="performer-orders-page"><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} />{list.data ? <JobsByCar orders={list.data} /> : <Loading error={list.error} />}</main>;
   const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
   const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
   const activeBookings = (bookings.data ?? []).filter(isOpenBooking);
@@ -1005,9 +1017,9 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
         </button>
       </section>}
       {showingNow&&list.data&&<h2>Текущие обращения и заявки на подтверждении · {list.data.filter(live).length}</h2>}
-      {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} />}
+      {as === 'client' && ctab === 'hist' && list.data && <TaskArchive orders={list.data.filter((o: any) => !live(o))} bookingRead={bookings} />}
       {as === 'client' && (ctab === 'my' || ctab === 'black') ? <MyPerformers black={ctab === 'black'} /> :
-      as === 'client' && ctab === 'hist' ? null : !list.data ? <Loading error={list.error} /> : !shown!.length ?
+      as === 'client' && ctab === 'hist' ? (!list.data && !list.error ? <Loading /> : null) : !list.data ? <Loading error={list.error} /> : !shown!.length ?
         showingNow && (!bookings.data || activeBookings.length > 0)
           ? <span className="note">Активных выездов и консультаций сейчас нет.</span>
           : <div className="empty">{showingNow ? 'Активных выездов и записей на СТО сейчас нет' : 'Выездов пока нет'}</div> : (
@@ -1024,7 +1036,7 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
         </div>
       )}
       {showingNow && <section className="stack" aria-label="Активные записи на СТО">
-        <h2>Записи на СТО · {activeBookings.length}</h2>
+        <h2>Записи на СТО{bookings.data ? ` · ${activeBookings.length}` : ''}</h2>
         {bookings.error ? <div className="card stack" role="alert">
           <span className="note">Не удалось загрузить записи на СТО: {bookings.error}</span>
           <button type="button" className="btn ghost small"
@@ -1110,20 +1122,21 @@ function PerformerBlacklist() {
 
 export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
   const {me}=useMe();
-  return <GarageForAccount key={me?.id??'guest'} focusVehicleId={focusVehicleId}
+  return <GarageForAccount key={(me?.id??'guest')+':'+(me?.owner_id??'')+':'+(me?.roles??[]).join(',')} focusVehicleId={focusVehicleId}
     userId={me?.id??'guest'}/>;
 }
 function GarageForAccount({focusVehicleId,userId}:{
   focusVehicleId?:string;userId:string;
 }) {
   const {me}=useMe();
-  const list=usePrivateRead<any[]>(()=>get('/api/vehicles'),'garage:'+userId);
+  const list=usePrivateRead<any[]>(()=>get('/api/vehicles'),'garage:'+userId+':'+(me?.owner_id??''),e=>e.type==='fleet'||e.type==='vehicle'||e.type==='connection_restored');
   const { busy, run } = useAction();
   const [form, setForm] = useState({ brand: '', model: '', year: '', plate: '', trailerPlate: '' });
   const [driverFor, setDriverFor] = useState<string | null>(null);
   const [driverPhone, setDriverPhone] = useState('+7 ');
-  const isDriver = !!me?.owner_id;
+  const isDriver = !!me?.owner_id||!!me?.roles.includes('driver');
   const [serviceHistoryVersion, setServiceHistoryVersion] = useState(0);
+  const [addUnconfirmed,setAddUnconfirmed]=useState(false);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible' && navigator.onLine) setServiceHistoryVersion(v => v + 1); };
     document.addEventListener('visibilitychange', refresh);
@@ -1132,11 +1145,13 @@ function GarageForAccount({focusVehicleId,userId}:{
   }, []);
 
   async function add() {
+    if(busy||addUnconfirmed||isDriver||!form.brand.trim())return;
     const r = await run(() => post('/api/vehicles', {
       brand: form.brand, model: form.model || undefined, year: form.year ? Number(form.year) : undefined,
       plate: form.plate || undefined, trailerPlate: form.trailerPlate || undefined,
     }), 'Машина добавлена');
     if (r) { setForm({ brand: '', model: '', year: '', plate: '', trailerPlate: '' }); list.reload(); }
+    else {setAddUnconfirmed(true);void list.reload();}
   }
 
   return (
@@ -1150,6 +1165,7 @@ function GarageForAccount({focusVehicleId,userId}:{
           <span><b>Мой парк</b><small>водители и лимиты, QR-наклейки, подтверждение заказов, ЭДО</small></span><span aria-hidden="true">›</span>
         </button>
       )}
+      {focusVehicleId&&list.data&&!list.data.some(v=>v.id===focusVehicleId)&&<p className="note" role="alert">Выбранная машина недоступна в вашем гараже.</p>}
       {list.data?.length===0 && <section className="tr-approved-garage-compact" aria-label="Транспорт пока не добавлен" role="status">
         <span className="tr-approved-garage-compact-symbol" aria-hidden="true">▤</span>
         <div className="tr-approved-garage-compact-copy">
@@ -1186,7 +1202,7 @@ function GarageForAccount({focusVehicleId,userId}:{
               <input className="field" type="tel" value={driverPhone} onChange={(e) => setDriverPhone(e.target.value)} />
               <div className="grid2">
                 <button className="btn small" disabled={busy} onClick={async () => {
-                  if (await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: driverPhone }), 'Водитель закреплён. Он входит по своему номеру.')) { setDriverFor(null); list.reload(); }
+                  if (await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: driverPhone }), 'Водитель закреплён. Он входит по своему номеру.')) setDriverFor(null); await list.reload();
                 }}>Закрепить</button>
                 <button className="btn ghost small" onClick={() => setDriverFor(null)}>Отмена</button>
               </div>
@@ -1194,9 +1210,9 @@ function GarageForAccount({focusVehicleId,userId}:{
             </div>
           ) : (
             <div className="row">
-              <button className="btn ghost small" onClick={() => setDriverFor(v.id)}>{v.driver_id ? 'Сменить водителя' : 'Назначить водителя'}</button>
-              {v.driver_id && <button className="btn ghost small" onClick={async () => { if (await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: null }), 'Доступ водителя закрыт')) list.reload(); }}>Убрать водителя</button>}
-              <button className="btn bad small" onClick={async () => { if (confirmDelete() && await run(() => del(`/api/vehicles/${v.id}`))) list.reload(); }}>Удалить</button>
+              <button className="btn ghost small" disabled={busy} onClick={() => {setDriverPhone('+7 ');setDriverFor(v.id);}}>{v.driver_id ? 'Сменить водителя' : 'Назначить водителя'}</button>
+              {v.driver_id && <button className="btn ghost small" disabled={busy} onClick={async () => { if(!window.confirm('Снять водителя с этой машины?'))return; await run(() => post(`/api/vehicles/${v.id}/driver`, { phone: null }), 'Доступ водителя закрыт'); await list.reload(); }}>Убрать водителя</button>}
+              <button className="btn bad small" disabled={busy} onClick={async () => { if (!confirmDelete())return; await run(() => del(`/api/vehicles/${v.id}`)); await list.reload(); }}>Удалить</button>
             </div>
           ))}
         </div>
@@ -1211,7 +1227,8 @@ function GarageForAccount({focusVehicleId,userId}:{
             <input className="field" placeholder="Прицеп" value={form.trailerPlate} onChange={(e) => setForm({ ...form, trailerPlate: e.target.value })} />
           </div>
           <span className="note">Год влияет на подбор мастера: у разных поколений своя электрика.</span>
-          <button className="btn" disabled={busy || !form.brand}>Сохранить</button>
+          {addUnconfirmed&&<div role="alert" className="note">Добавление не подтверждено. Проверьте список машин перед повтором. <button type="button" className="btn ghost small" onClick={list.reload}>Обновить гараж</button> <button type="button" className="btn ghost small" disabled={!list.data} onClick={()=>setAddUnconfirmed(false)}>Список проверен</button></div>}
+          <button className="btn" disabled={busy || addUnconfirmed || !form.brand}>Сохранить</button>
         </form>
       )}
     </main>
@@ -1285,7 +1302,7 @@ function VehicleHistory({ id,initialOpen=false }: { id: string; initialOpen?:boo
     el?.scrollIntoView({block:'start',behavior:'auto'});
   },[initialOpen,id]);
   const h=usePrivateRead<any>(()=>get(`/api/vehicles/${id}/history`),
-    'vehicle-history:'+(me?.id??'guest')+':'+id,e=>e.type==='order');
+    'vehicle-history:'+(me?.id??'guest')+':'+(me?.owner_id??'')+':'+id,e=>e.type==='order'||e.type==='fleet'||e.type==='connection_restored');
   const d=h.data;
   if(!d)return h.error?<div className="card stack" role="alert">
     <span>Не удалось загрузить историю машины.</span>
@@ -1515,6 +1532,7 @@ export async function logout() {
 const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
 function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string; geo: { lat: number; lng: number } | null; brand?: string; verifiedOnly: boolean }) {
+  const {me}=useMe();
   const [prio, setPrio] = useState<string>(() => { try { return localStorage.getItem('traksos.prio') ?? 'recommended'; } catch { return 'recommended'; } });
   const hasGeo = !!geo && Number.isFinite(geo.lat) && Number.isFinite(geo.lng)
     && Math.abs(geo.lat) <= 90 && Math.abs(geo.lng) <= 180;
@@ -1531,10 +1549,9 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
   const q = new URLSearchParams({ service, verifiedOnly: verifiedOnly?'1':'0', sort:effectivePrio,
     ...(hasGeo && geo ? { lat: String(geo.lat), lng: String(geo.lng) } : {}),
     ...(brand ? { brand } : {}) });
-  const l = useLoad(() => get(`/api/masters-nearby?${q}`),
-    [service, geo?.lat, geo?.lng, brand, verifiedOnly, effectivePrio]);
-  if (!l.data) return null;
-  const d = l.data;
+  const l=usePrivateRead<any>(async()=>{const result=await get(`/api/masters-nearby?${q}`);if(!result||!Array.isArray(result.items))throw new Error('Некорректный ответ поиска');return result;},(me?.id??'guest')+':nearby:'+q.toString(),e=>e.type==='connection_restored');
+  if (!l.data) return <div className="card stack"><b>Поиск исполнителей</b><span className="note" role={l.error?'alert':'status'}>{l.error?'Не удалось проверить доступность исполнителей.':'Проверяем доступность исполнителей…'}</span>{l.error&&<button type="button" className="btn ghost small" onClick={l.reload}>Повторить поиск</button>}</div>;
+  const d=l.data;
   const choose = (k: string) => {
     if (!PRIO.some(([key]) => key === k) || (!hasGeo && (k === 'near' || k === 'fast'))) return;
     setPrio(k);
@@ -1575,7 +1592,7 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
         <div key={i} className="between">
           <span className="stack" style={{ gap: 0 }}>
             <b>{i + 1} · Мастер {m.name} · {TIERS[m.tier as keyof typeof TIERS]?.name ?? ''} {m.verification==='approved'&&<span aria-label="Проверен TrakSOS" title="Проверен TrakSOS" className="pill good">✓ Проверен</span>}</b>
-            <small className="note">{m.distanceKm != null ? `${String(m.distanceKm).replace('.', ',')} км · ~${m.etaMin} мин` : 'расстояние уточним'}{m.brandStars ? ` · ${brand} ${'★'.repeat(m.brandStars)}` : ''}{m.rating ? ` · ★ ${m.rating.toFixed(1)}` : ''}</small>
+            <small className="note">{m.distanceKm != null ? `${String(m.distanceKm).replace('.', ',')} км${Number.isFinite(m.etaMin)?` · оценка ~${m.etaMin} мин`:''}` : 'расстояние уточним'}{m.brandStars ? ` · ${brand} ${'★'.repeat(m.brandStars)}` : ''}{m.rating ? ` · ★ ${m.rating.toFixed(1)}` : ''}</small>
           </span>
           {m.callOut != null && <span className="pill">{rub(m.callOut)}</span>}
         </div>
@@ -1593,10 +1610,9 @@ function MastersNearby({ service, geo, brand, verifiedOnly }: { service: string;
 }
 
 /** Архив задач: одна поломка — одна задача. Консультация, выезды по ней и ремонт в сервисе по совету мастера — вместе. */
-function TaskArchive({ orders }: { orders: any[] }) {
-  const b = useLoad(() => get('/api/bookings'), []);
-  const bookings = ((b.data ?? []) as any[]).filter((x) => !isOpenBooking(x));
-  const root = (o: any) => o.consult_of ?? o.id;
+function TaskArchive({ orders, bookingRead }: { orders: any[]; bookingRead: {data: any[] | null; error: string | null; reload: () => Promise<void>} }) {
+  const bookings = (bookingRead.data ?? []).filter((x) => !isOpenBooking(x));
+  const root = (o: any) => o.case_root_id ?? o.consult_of ?? o.id;
   const groups = new Map<string, { orders: any[]; bookings: any[] }>();
   for (const o of [...orders].sort((x, y) => +new Date(x.created_at) - +new Date(y.created_at))) {
     const k = root(o);
@@ -1606,43 +1622,53 @@ function TaskArchive({ orders }: { orders: any[] }) {
   const loose: any[] = [];
   for (const bk of bookings) {
     const o = bk.fromOrderId && orders.find((x) => x.id === bk.fromOrderId);
-    if (o && groups.has(root(o))) groups.get(root(o))!.bookings.push(bk); else loose.push(bk);
+    const key = bk.caseRootId ?? (o ? root(o) : null);
+    if (key && groups.has(key)) groups.get(key)!.bookings.push(bk); else loose.push(bk);
   }
   const list = [...groups.values()].sort((x, y) => +new Date(y.orders[y.orders.length - 1].created_at) - +new Date(x.orders[x.orders.length - 1].created_at));
-  if (!list.length && !loose.length) return <div className="empty">Здесь появятся прошлые задачи: консультация, выезды и ремонт по одной поломке — вместе.</div>;
-  const sum = (o: any) => o.status === 'completed' ? (o.call_out_amount ?? 0) + (o.work_amount ?? 0) : 0;
+  if (bookingRead.data && !list.length && !loose.length) return <div className="empty">Здесь появятся прошлые задачи: консультация, выезды и ремонт по одной поломке — вместе.</div>;
+  // Only authoritative server totals, never reconstruct fees/discounts from raw work amounts.
+  const validAmount = (value: unknown): number | null => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
+  const sum = (o: any) => o.status === 'completed' ? validAmount(o.money?.total) : 0;
+  const bookingSum = (x: any) => x.status === 'closed' ? validAmount(x.toPay) : 0;
   return (
     <div className="stack">
       <span className="note">Одна поломка — одна задача: консультация, выезды, эвакуатор и сервис по ней собраны вместе.</span>
+      {bookingRead.error ? <div className="card stack" role="alert">
+        <span className="note">Не удалось загрузить историю записей на СТО. Состав задач и суммы могут быть неполными.</span>
+        <button type="button" className="btn ghost small" onClick={()=>{void bookingRead.reload();}}>Повторить загрузку записей</button>
+      </div> : !bookingRead.data ? <div role="status" className="note">Загружаются записи на СТО. Итоги задач пока не подтверждены.</div> : null}
       {list.map((g) => {
         const first = g.orders[0];
-        const total = g.orders.reduce((a, o) => a + sum(o), 0) + g.bookings.reduce((a, x) => a + (x.status === 'closed' ? x.toPay ?? 0 : 0), 0);
+        const amounts = [...g.orders.map(sum), ...g.bookings.map(bookingSum)];
+        const total = bookingRead.data && amounts.every((amount): amount is number => amount !== null)
+          ? amounts.reduce((a, amount) => a + amount, 0) : null;
         const steps = g.orders.length + g.bookings.length;
         const title = first.problem ? (SYMPTOMS.find((p) => p.id === first.problem)?.name ?? first.description) : first.description || SERVICES[first.service]?.name;
         if (steps === 1) return (
           <a key={first.id} href={`#/order/${first.id}`} className="list-item">
-            <div className="stack" style={{ gap: 2 }}><b>{title || `№${first.number}`}</b><span className="note">№{first.number} · {SERVICES[first.service]?.name} · {fmtTime(first.created_at)}{total ? ` · ${rub(total)}` : ''}</span></div>
+            <div className="stack" style={{ gap: 2 }}><b>{title || `№${first.number}`}</b><span className="note">№{first.number} · {SERVICES[first.service]?.name} · {fmtTime(first.created_at)}{total === null ? ' · Сумма уточняется' : total > 0 ? ` · ${rub(total)}` : ''}</span></div>
             <span className={`pill ${STATUS[first.status]?.tone}`}>{STATUS[first.status]?.name}</span>
           </a>
         );
         return (
           <div key={first.id} className="card">
-            <div className="between"><b>{title || 'Задача'}</b>{total > 0 && <span className="pill">{rub(total)}</span>}</div>
+            <div className="between"><b>{title || 'Задача'}</b>{total === null ? <span className="note">Сумма уточняется</span> : total > 0 && <span className="pill">{rub(total)}</span>}</div>
             <span className="note">{fmtTime(first.created_at)} · {steps} шага</span>
             <ol className="tl">
               {g.orders.map((o) => (
                 <li key={o.id}><i className={o.status === 'completed' ? 'ok' : 'off'} /><a href={`#/order/${o.id}`}><b>{SERVICES[o.service]?.name ?? o.service}</b></a>
-                  <small>№{o.number} · {STATUS[o.status]?.name}{sum(o) ? ` · ${rub(sum(o))}` : ''}</small></li>
+                  <small>№{o.number} · {STATUS[o.status]?.name}{sum(o) === null ? ' · Сумма уточняется' : sum(o) ? ` · ${rub(sum(o))}` : ''}</small></li>
               ))}
               {g.bookings.map((x) => (
                 <li key={x.id}><i className={x.status === 'closed' ? 'ok' : 'off'} /><a href={`#/booking/${x.id}`}><b>Ремонт на рембазе «{x.center.name}»</b></a>
-                  <small>{x.statusName}{x.toPay ? ` · ${rub(x.toPay)}` : ''}</small></li>
+                  <small>{x.statusName}{bookingSum(x) === null ? ' · Сумма уточняется' : bookingSum(x) ? ` · ${rub(bookingSum(x))}` : ''}</small></li>
               ))}
             </ol>
           </div>
         );
       })}
-      {loose.length > 0 && <BookingRows live={false} />}
+      {loose.length > 0 && <BookingList rows={loose} />}
     </div>
   );
 }

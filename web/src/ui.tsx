@@ -53,15 +53,28 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[], reloadOn?: (e:
   const [error, setError] = useState<string | null>(null);
   const fnRef = useRef(fn);
   fnRef.current = fn;
+  const revision = useRef(0);
+  const mounted = useRef(false);
   const reload = useCallback(async () => {
+    if (!mounted.current) return;
+    const request = ++revision.current;
     try {
-      setData(await fnRef.current());
+      const result = await fnRef.current();
+      if (!mounted.current || request !== revision.current) return;
+      setData(result);
       setError(null);
     } catch (e) {
-      setError((e as Error).message);
+      if (!mounted.current || request !== revision.current) return;
+      setError(e instanceof Error ? e.message : String(e));
     }
   }, []);
-  useEffect(() => { setData(null); reload(); }, deps); // eslint-disable-line
+  useEffect(() => {
+    mounted.current = true;
+    setData(null);
+    setError(null);
+    void reload();
+    return () => { mounted.current = false; revision.current++; };
+  }, deps); // eslint-disable-line
   useEffect(() => (reloadOn ? onEvent((e) => reloadOn(e) && reload()) : undefined), deps); // eslint-disable-line
   return { data, error, reload, setData };
 }
@@ -70,7 +83,12 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[], reloadOn?: (e:
 export function useAction() {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  // React may not paint disabled/busy until after a second tap or Enter.
+  // Lock synchronously before executing the callback; never retry a write here.
+  const inFlight = useRef(false);
   const run = useCallback(async <T,>(fn: () => Promise<T>, okText: string | null = 'Готово'): Promise<T | undefined> => {
+    if (inFlight.current) return undefined;
+    inFlight.current = true;
     setBusy(true);
     try {
       const r = await fn();
@@ -81,6 +99,7 @@ export function useAction() {
       toast(e instanceof ApiError ? e.message : 'Что-то пошло не так — попробуйте ещё раз');
       return undefined;
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }, [toast]);
@@ -91,13 +110,10 @@ export function Loading({ error }: { error?: string | null }) {
   return <div className="empty">{error ?? 'Загружаю…'}</div>;
 }
 
-/** Сколько переходов сделано внутри приложения: есть куда вернуться — «Назад» ведёт туда, откуда пришли */
-let inAppSteps = 0;
-if (typeof window !== 'undefined') window.addEventListener('hashchange', () => { inAppSteps++; });
-
+/** Return to the caller's explicit in-app parent, never an unrelated
+ * browser entry (including replaced auth routes or another account). */
 export function Back({ to, label = 'Назад' }: { to: string; label?: string }) {
-  // Назад — туда, откуда пришли (уведомления, оферта и т. п. открываются из разных мест); зашли по ссылке — на `to`
-  return <a href={'#/' + to} className="note" style={{ textDecoration: 'none' }} onClick={(e) => { if (inAppSteps > 0) { e.preventDefault(); inAppSteps -= 2; history.back(); } }}>← {label}</a>;
+  return <a href={'#/' + to.replace(/^\//, '')} className="note" style={{ textDecoration: 'none' }}>← {label}</a>;
 }
 
 export function Chips<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { id: T; name: string }[] }) {

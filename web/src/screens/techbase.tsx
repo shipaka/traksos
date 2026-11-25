@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { get } from '../api.ts';
+import { ApiError, get } from '../api.ts';
 import { useMe } from '../ui.tsx';
 
 type Audience = 'driver' | 'master';
@@ -11,17 +11,33 @@ type TechDoc = {
   warning:string; reviewedOn:string;
 };
 type Payload = { audiences: Audience[]; documents: TechDoc[] };
-type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null };
+type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null; catalog_category?:string|null };
 const KIND_LABELS = { all:'Все типы', truck:'Грузовики', trailer:'Прицепы', component:'Узлы и агрегаты' };
 const TYPE_LABELS: Record<string,string> = { operation:'Эксплуатация',maintenance:'ТО',diagnostics:'Диагностика',wiring:'Схемы',parts:'Запчасти',service:'Ремонт' };
-const normalize = (s:string) => s.toLowerCase().replace(/[^a-zа-яё0-9]+/gi,'').replace('мерседесбенц','mercedesbenz');
+const normalize = (s:string) => s.normalize('NFKC').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/gi,'');
+const makeKey=(s:string)=>{
+  const key=normalize(s);
+  const aliases:Record<string,string>={рено:'renault',renaulttrucks:'renault',скания:'scania',вольво:'volvo',volvotrucks:'volvo',даф:'daf',ман:'man',ивеко:'iveco',мерседес:'mercedesbenz',мерседесбенц:'mercedesbenz',mercedes:'mercedesbenz',mercedesbenztrucks:'mercedesbenz',кроне:'krone'};
+  return aliases[key]??key;
+};
+// Only an explicitly listed normalized model is an exact model filter match.
+const modelMatches=(value:string,reference:string)=>{
+  const actual=normalize(value),expected=normalize(reference);
+  return !!actual&&!!expected&&actual===expected;
+};
+const vehicleKind=(v:GarageVehicle):'truck'|'trailer' =>
+  v.catalog_category==='trailer'?'trailer':'truck';
 
 export function TechBase({ audience, initialVehicleId = '' }: { audience:Audience; initialVehicleId?:string }) {
   const { me } = useMe();
+  return <TechBaseForAccount key={(me?.id??'guest')+':'+audience+':'+initialVehicleId} audience={audience} initialVehicleId={initialVehicleId}/>;
+}
+function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initialVehicleId:string}){
+  const {me}=useMe();
   const isMaster = audience === 'master';
   const [payload,setPayload] = useState<Payload|null>(null);
   const [vehicles,setVehicles] = useState<GarageVehicle[]>([]);
-  const [vehicleId,setVehicleId] = useState(initialVehicleId);
+  const [vehicleId,setVehicleId] = useState(isMaster?'':initialVehicleId);
   const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>('all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
@@ -31,6 +47,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
   const [vehicleError,setVehicleError] = useState('');
   const [catalogRetry,setCatalogRetry] = useState(0);
   const [vehiclesRetry,setVehiclesRetry] = useState(0);
+  const [garageLoaded,setGarageLoaded]=useState(false);
   useEffect(() => {
     let active = true;
     setPayload(null); setError('');
@@ -38,28 +55,29 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       .then((data:Payload) => { if(active) {
         // An HTTP 200 with a malformed response must not look like an empty,
         // verified manufacturer catalog.
-        if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences))
+        if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences) || !data.audiences.includes(audience) || data.documents.some(d=>!d||d.audience!==audience||!Array.isArray(d.models)||d.models.some(m=>typeof m!=='string')||typeof d.title!=='string'||typeof d.system!=='string'||typeof d.source!=='string'||typeof d.url!=='string'||!/^https:\/\//i.test(d.url)))
           throw new Error('invalid_techbase');
         setPayload(data);
       }})
-      .catch(() => { if(active) setError('Не удалось получить каталог. Проверьте подключение и права доступа.'); });
+      .catch((e:unknown) => { if(active) setError(e instanceof ApiError&&e.status===403?'Нет доступа к этому разделу ТехБазы. Проверьте роль и статус верификации.':'Не удалось получить каталог. Проверьте подключение и права доступа.'); });
     return () => { active = false; };
   }, [audience, me?.id, catalogRetry]);
   useEffect(() => {
     // Garage vehicle names and plates belong to the current account. Clear
     // the old user's options before a new authenticated GET can complete.
     setVehicles([]);
-    setVehicleId(initialVehicleId);
+    setVehicleId(isMaster?'':initialVehicleId);
     setVehicleError('');
-  }, [me?.id, initialVehicleId]);
+  }, [me?.id, initialVehicleId, isMaster]);
   useEffect(() => {
     if (isMaster) return;
     let active = true;
-    setVehicleError('');
+    setVehicleError('');setGarageLoaded(false);
     get('/api/vehicles').then((data:GarageVehicle[]) => {
       if (active) {
         if(!Array.isArray(data))throw new Error('invalid_garage');
         setVehicles(data);
+        setGarageLoaded(true);
       }
     }).catch(() => {
       if(active) {
@@ -70,17 +88,23 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     return () => {active=false;};
   }, [isMaster, me?.id, vehiclesRetry]);
   const chosen = vehicles.find(v => v.id === vehicleId);
+  const effectiveKind=chosen?vehicleKind(chosen):kind;
   const selectedMake = (chosen?.brand || make).trim();
   const selectedModel = chosen?.model?.trim() || '';
   const selectedYear = chosen?.year || null;
   const docs = useMemo(() => (payload?.documents ?? []).filter(d => {
-    if (kind !== 'all' && d.kind !== kind) return false;
+    if(vehicleId&&!chosen)return false;
+    if (effectiveKind !== 'all' && d.kind !== effectiveKind) return false;
     if (system && d.system !== system) return false;
     if (documentType && d.type !== documentType) return false;
     // Never treat a component reference as validated for the selected truck.
-    if (selectedMake && d.kind !== 'component' && normalize(d.vehicleMake || '') !== normalize(selectedMake)) return false;
-    if (selectedModel && d.kind === 'truck' && d.models.length &&
-        !d.models.some(m => normalize(selectedModel).includes(normalize(m)) || normalize(m).includes(normalize(selectedModel)))) return false;
+    if (selectedMake && d.kind !== 'component' && makeKey(d.vehicleMake || '') !== makeKey(selectedMake)) return false;
+    if (chosen && d.kind !== 'component') {
+      if ((d.applicability==='model'||d.models.length>0) &&
+          (!selectedModel||!d.models.some(m=>modelMatches(selectedModel,m)))) return false;
+      if ((d.modelYearFrom!=null||d.modelYearTo!=null) &&
+          (!Number.isInteger(selectedYear)||!selectedYear)) return false;
+    }
     if (selectedYear && d.modelYearFrom && selectedYear < d.modelYearFrom) return false;
     if (selectedYear && d.modelYearTo && selectedYear > d.modelYearTo) return false;
     if (query) {
@@ -88,7 +112,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       if (!words.includes(query.trim().toLowerCase())) return false;
     }
     return true;
-  }),[payload,kind,system,documentType,query,selectedMake,selectedModel,selectedYear]);
+  }),[payload,effectiveKind,system,documentType,query,selectedMake,selectedModel,selectedYear,vehicleId,chosen]);
   const systems = [...new Set((payload?.documents ?? []).map(d=>d.system))].sort();
   const groups = [...new Set(docs.map(d=>d.system))].sort().map(name => ({name,entries:docs.filter(d=>d.system===name)}));
   const canSeeMaster = !!payload?.audiences.includes('master');
@@ -109,16 +133,17 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
           Повторить загрузку гаража
         </button>
       </div>}
+      {!isMaster&&vehicleId&&!chosen&&<div className="banner" role="status">{garageLoaded?'Выбранный автомобиль не найден в вашем гараже.':'Ожидаем данные выбранного автомобиля.'} <button type="button" className="btn ghost small" onClick={()=>{setVehicleId('');setKind('all');}}>Перейти к ручному поиску</button></div>}
       {!isMaster && vehicles.length>0 && <label className="stack">
         <b>Машина из моего гаража</b>
-        <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind(e.target.value?'truck':'all');}}>
+        <select className="field" value={vehicleId} onChange={e=>{setVehicleId(e.target.value);setMake('');setKind('all');}}>
           <option value="">Все машины / ручной поиск</option>
           {vehicles.map(v=><option key={v.id} value={v.id}>{v.brand} {v.model||''} {v.year||''} {v.plate?'· '+v.plate:''}</option>)}
         </select>
       </label>}
       <div className="grid2">
         <label className="stack"><b>Раздел техники</b>
-          <select className="field" value={kind} onChange={e=>setKind(e.target.value as typeof kind)}>
+          <select className="field" value={effectiveKind} disabled={!!chosen} onChange={e=>setKind(e.target.value as typeof kind)}>
             {Object.entries(KIND_LABELS).map(([v,n])=><option key={v} value={v}>{n}</option>)}
           </select>
         </label>
@@ -154,7 +179,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     {!payload && !error && <div className="card" role="status">Загружаем каталог производителя…</div>}
     {payload && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>
-      {docs.length===0 && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
+      {docs.length===0 && (!vehicleId||chosen) && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
       {groups.map(group => <section className="stack" key={group.name}>
         <h3 className="techbase-system-title">{group.name} <span className="note">({group.entries.length})</span></h3>
         <div className="techbase-grid">

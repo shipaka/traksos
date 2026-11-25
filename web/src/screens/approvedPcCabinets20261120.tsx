@@ -4,11 +4,12 @@
  * opens an existing authorized server-backed workflow.
  * Desktop only; Android/mobile continues to use the already-approved routes.
  */
-import {useEffect, useState, type ReactNode} from 'react';
+import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {get, onEvent, post} from '../api.ts';
 import {insurancePresentation, insuranceQueueGroup, type InsuranceQueueGroup} from '../insurancePresentation.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
+import {usePrivateRead} from './privateRead20261124.ts';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import {FeatureArtwork, type FeatureArtworkKey} from '../featureArtwork20261122.tsx';
@@ -30,7 +31,14 @@ const vehicleLabel = (v:any) => [v?.brand, v?.model, v?.year].filter(Boolean).jo
 const fmtDate = (value:any) => value ? new Date(value).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
 const statusName = (o:any) => STATUS[o?.status]?.name || o?.statusName || text(o?.status, 'Статус уточняется');
 const transport = (o:any) => o?.vehicle || o || {};
-const orderDate = (o:any):string => (o?.whenDay || o?.when_day || o?.scheduled_date || o?.scheduledAt || o?.scheduled_at || '').slice(0,10);
+const orderDate = (o:any):string => {
+  const value=o?.whenDay||o?.when_day||o?.scheduled_date||o?.scheduledAt||o?.scheduled_at;
+  if(typeof value!=='string')return '';
+  const date=value.slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return '';
+  const parsed=new Date(date+'T00:00:00Z');
+  return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===date?date:'';
+};
 const dateIso = (value:Date) => [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
 const todayISO = () => dateIso(new Date());
 
@@ -54,14 +62,16 @@ function useDesktopSize(){
 /** One breakpoint: phone/tablet <900, approved PC >=900. Never mount both. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
+  const {me}=useMe();
+  const scope=(me?.id??'guest')+':'+role;
   if (!wide) return <>{fallback}</>; // Mobile Chrome and Android share the approved 618 workspace, including admin.
-  if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
-  if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
-  if(role==='service') return <ServiceDesk/>;
-  if(role==='insurer'||role==='inspection') return <InsuranceDesk key={role} inspection={role==='inspection'}/>;
-  if(role==='courier') return <ApprovedPcCourier/>;
-  if(role==='moderator') return <ModeratorDesk/>;
-  return <AdminDesk/>;
+  if(role==='owner'||role==='driver') return <CustomerDesk key={scope} owner={role==='owner'}/>;
+  if(role==='master'||role==='tow') return <PerformDesk key={scope} tow={role==='tow'}/>;
+  if(role==='service') return <ServiceDesk key={scope}/>;
+  if(role==='insurer'||role==='inspection') return <InsuranceDesk key={scope} inspection={role==='inspection'}/>;
+  if(role==='courier') return <ApprovedPcCourier key={scope}/>;
+  if(role==='moderator') return <ModeratorDesk key={scope}/>;
+  return <AdminDesk key={scope}/>;
 }
 
 function Heading({title,description,children,artKey,roleIcon,roleArt}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind;roleArt?:ApprovedPCRole}){
@@ -107,47 +117,49 @@ function RowItem({label,info,active,href,onClick,badge,v}:{label:string;info?:st
   return href?<a className={'approved-pc-row'+(active?' current':'')} href={href}>{body}</a>
     :<button type="button" className={'approved-pc-row'+(active?' current':'')} onClick={onClick}>{body}</button>;
 }
-function Calendar({items=[],kind='orders'}:{
-  items?:any[];kind?:'orders'|'service'|'insurance'|'inspection'
+function Calendar({items=[],kind='orders',loading=false,error=null,retry}:{
+  items?:any[];kind?:'orders'|'service'|'insurance'|'inspection';loading?:boolean;error?:string|null;retry?:()=>void
 }) {
   const [shift,setShift]=useState(0);
   const [chosen,setChosen]=useState('');
   const ref=new Date();const month=new Date(ref.getFullYear(),ref.getMonth()+shift,1);
   const monthDays=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
   const pad=(month.getDay()+6)%7;
+  const unique=Array.from(new Map(items.filter(item=>item?.id!=null).map(item=>[String(item.id),item])).values());
   const counts:Record<string,number>={};
-  items.forEach(item=>{const d=orderDate(item);if(d)counts[d]=(counts[d]||0)+1});
+  unique.forEach(item=>{const d=orderDate(item);if(d)counts[d]=(counts[d]||0)+1});
   const days=Array.from({length:pad},()=>null as number|null).concat(Array.from({length:monthDays},(_,i)=>i+1));
   const monthName=month.toLocaleString('ru-RU',{month:'long',year:'numeric'});
-  const appointments=chosen?items.filter(item=>orderDate(item)===chosen):[];
+  const appointments=chosen?unique.filter(item=>orderDate(item)===chosen):[];
   const href=(item:any)=>kind==='service'?'#/base/car/'+item.id
     :kind==='insurance'?'#/insurance/request/'+item.id
-    :kind==='inspection'?'#/inspections/processing'
+    :kind==='inspection'?'#/inspections/'+encodeURIComponent(String(item.id))
     :'#/order/'+item.id;
   return <Pane title="Календарь">
-    <div className="approved-pc-cal-head"><button onClick={()=>setShift(v=>v-1)} aria-label="Предыдущий месяц">‹</button><b>{monthName}</b><button onClick={()=>setShift(v=>v+1)} aria-label="Следующий месяц">›</button></div>
+    {(loading||error)&&<LoadingBlock error={error} retry={retry}/>}
+    <div className="approved-pc-cal-head"><button type="button" onClick={()=>{setShift(v=>v-1);setChosen('');}} aria-label="Предыдущий месяц">‹</button><b>{monthName}</b><button type="button" onClick={()=>{setShift(v=>v+1);setChosen('');}} aria-label="Следующий месяц">›</button></div>
     <div className="approved-pc-calendar">
       {['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=><small key={d}>{d}</small>)}
       {days.map((day,i)=>day===null?<span key={'blank'+i}/>:(()=>{
         const date=dateIso(new Date(month.getFullYear(),month.getMonth(),day));
         return <button type="button" key={date} onClick={()=>setChosen(date)} className={(chosen===date?'chosen ':'')+(date===todayISO()?'today':'')}
-          aria-label={date+', записей: '+(counts[date]||0)}>{day}{counts[date]>0&&<i aria-hidden="true"/>}</button>;
+          aria-label={date+(loading||error?', число записей не подтверждено':', записей: '+(counts[date]||0))} aria-pressed={chosen===date}>{day}{counts[date]>0&&<i aria-hidden="true"/>}</button>;
       })())}
     </div>
     {chosen&&<div className="approved-pc-cal-results" role="region" aria-label={'Записи на '+chosen}>
-      <p className="approved-pc-cal-selection">{chosen.split('-').reverse().join('.')}: {appointments.length} записей</p>
+      <p className="approved-pc-cal-selection">{chosen.split('-').reverse().join('.')}: {loading||error?'число записей не подтверждено':appointments.length+' записей'}</p>
       {appointments.length?appointments.map((item:any)=><a key={item.id} href={href(item)} className="approved-pc-cal-entry">
         <strong>№{text(item.number||item.id)}</strong>
         <small>{vehicleLabel(transport(item))} · {text(item.needName||item.description||item.statusName,'Открыть запись')}</small>
-      </a>):<p className="approved-pc-caveat">На выбранную дату подтверждённых записей нет.</p>}
+      </a>):!loading&&!error?<p className="approved-pc-caveat">На выбранную дату подтверждённых записей нет.</p>:null}
     </div>}
   </Pane>;
 }
 function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:ReactNode}){
   return <div className="approved-pc-three"><aside className="approved-pc-left">{left}</aside><div className="approved-pc-center">{center}</div><aside className="approved-pc-right">{right}</aside></div>;
 }
-function RealCase({o,owner=false}:{o:any;owner?:boolean}){
-  const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.orderId===o.id&&e.type==='order');
+function RealCase({o}:{o:any}){
+  const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.type==='connection_restored'||(e.type==='order'&&String(e.orderId)===String(o.id)));
   const [gps,setGps]=useState<{lat:number;lng:number;at:number}|null>(null);
   useEffect(()=>{
     setGps(null); // Previous application's location cannot leak into a different case.
@@ -161,16 +173,28 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
   const d=detail.data||o;
   const v=transport(d);
   const p=d.performer;
-  const prev=Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)?{lat:p.lat,lng:p.lng}:null;
-  const lastAt=gps?.at||(p?.location_at?Date.parse(p.location_at):null);
-  const fresh=lastAt!=null&&Date.now()-lastAt<=120000&&Date.now()-lastAt>=-30000;
+  const prev=Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180?{lat:p.lat,lng:p.lng}:null;
+  const serverAt=prev&&p?.location_at?Date.parse(p.location_at):null;
+  const lastAt=gps?.at||(Number.isFinite(serverAt)?serverAt:null);
   const point=gps||prev;
+  const [,setClockRevision]=useState(0);
+  // Expire the live indicator even when no more WebSocket events arrive.
+  useEffect(()=>{
+    if(lastAt==null)return;
+    const age=Date.now()-lastAt;
+    if(age>120000||age < -30000)return;
+    const timer=window.setTimeout(()=>setClockRevision(n=>n+1),Math.max(1,120001-age));
+    return ()=>window.clearTimeout(timer);
+  },[lastAt]);
+  const fresh=!!point&&lastAt!=null&&Date.now()-lastAt<=120000&&Date.now()-lastAt>=-30000;
+  const vehicleId=d.vehicleId??d.vehicle_id??o.vehicleId??o.vehicle_id;
+  const vehicleHref=vehicleId?'#/garage/'+encodeURIComponent(String(vehicleId)):undefined;
   const milestones=[['searching','Поиск'],['accepted','Назначен'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
   const current=milestones.findIndex(([id])=>id===d.status);
   return <section className="approved-pc-case">
     <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service,'Помощь на дороге')}</h2></div><span className="approved-pc-stage">{statusName(d)}</span></header>
     <div className="approved-pc-case-main">
-      <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
+      <Photo v={v} href={vehicleHref}/>
       <div className="approved-pc-facts">
         <h3>{vehicleLabel(v)}</h3>
         <p><b>Неисправность:</b> {text(d.description||d.problem,'Описание в заявке')}</p>
@@ -193,8 +217,7 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
     <div className="approved-pc-case-actions">
       <a className="approved-pc-primary" href={'#/order/'+o.id}>Открыть заявку и следующий шаг</a>
       <a href={'#/order/'+o.id+'?chat=1'}>Чат и связь по заявке</a>
-      {d.vehicleId&&<a href={'#/garage/'+d.vehicleId}>История автомобиля</a>}
-      {owner&&<a href="#/fleet">Управление автопарком</a>}
+      {vehicleHref&&<a href={vehicleHref}>История автомобиля</a>}
     </div>
     {detail.error&&<p className="approved-pc-caveat">Дополнительные сведения недоступны: {String(detail.error?.message||detail.error)}. Откройте карточку заявки.</p>}
     <p className="approved-pc-caveat">Информация о заказе, изменениях и исполнителе поступает с сервера. Личные телефоны не раскрываются; общение только через предоставленные платформой способы связи.</p>
@@ -202,89 +225,75 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
 }
 function CustomerDesk({owner}:{owner:boolean}){
   const {me}=useMe();
-  const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order');
-  const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order');
-  const active=(orders.data||[]).filter((o:any)=>activeStates.has(o.status));
+  const rules=usePrivateRead<{allow?:Record<string,boolean>}|null>(
+    ()=>me?.owner_id?get('/api/fleet/rules'):Promise.resolve(null),
+    'pc-fleet-rules:'+(me?.id??'guest')+':'+(me?.owner_id??''),
+    e=>e.type==='fleet'||e.type==='connection_restored');
+  const restricted=(permission:string)=>!!me?.owner_id&&
+    (rules.loading||!!rules.error||!rules.data||rules.data.allow?.[permission]===false);
+  const assistance=[
+    ['tow','#/new/tow','Эвакуатор'],
+    ['service','#/services','Грузовые СТО'],
+    ['consult','#/new/consult','Консультация по телефону'],
+  ] as const;
+  const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order'||e.type==='connection_restored');
+  const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order'||e.type==='connection_restored');
+  const orderRows=orders.error?null:orders.data;
+  const fleetSnapshot=fleet.error?null:fleet.data;
+  const active=(orderRows||[]).filter((o:any)=>activeStates.has(o.status));
   const [chosen,setChosen]=useState<string>('');
   const selected=active.find((o:any)=>String(o.id)===chosen)||active[0];
-  const cars=owner?(fleet.data?.cars||[]):[];
+  const cars=owner?(fleetSnapshot?.cars||[]):[];
   return <main className="approved-pc approved-pc-client">
     <Heading title={owner?'Владелец автопарка':'Водитель'} roleArt={owner?'owner':'driver'} description={owner?'Заявки, ремонт и состояние техники вашего автопарка':'Вся информация о помощи по выбранной заявке, без лишних сервисов'}/>
     <div className="approved-pc-active-order-nav">
       <div className="approved-pc-order-heading"><span>Активные заявки</span>
-        <strong>{orders.data?active.length:'—'}</strong></div>
+        <strong>{orderRows?active.length:'—'}</strong></div>
       {active.length>0&&<Tabs active={String(selected?.id||'')} onChange={setChosen}
         items={active.map((o:any)=>[String(o.id),'№'+text(o.number||o.id)+' · '+(SERVICES[o.service]?.name||text(o.service)),null])}/>}
     </div>
-    {orders.error&&<LoadingBlock error={orders.error} retry={orders.reload}/>}
     <WorkLayout left={<>
       <Pane title="Мои заявки">
-        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?
+        {!orderRows?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?
           active.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description, statusName(o))}
             active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)} v={transport(o)}/>)
-          :<Empty>Нет активных заявок. Создать новую можно через меню.</Empty>}
+          :<Empty>Нет активных заявок.</Empty>}
+        <a className="approved-pc-small-link" href="#/orders">Заявки и история →</a>
       </Pane>
-      {owner&&<Pane title="Техника автопарка">
-        {!fleet.data&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
+      {owner&&<Pane title="Мой автопарк">
+        {!fleetSnapshot&&<LoadingBlock error={fleet.error} retry={fleet.reload}/>}
+        {fleetSnapshot&&<><p>Машин: <strong>{cars.length}</strong></p>
+          <p>Ждут решения владельца: <strong>{fleetSnapshot.pending?.length||0}</strong></p></>}
         {cars.slice(0,5).map((c:any)=><RowItem key={c.id} href={'#/garage/'+c.id} label={vehicleLabel(c)}
           info={c.driver?.name?'Водитель: '+c.driver.name:'Водитель не закреплён'} v={c}/>)}
-        {fleet.data&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
-        <a className="approved-pc-small-link" href="#/fleet">Весь автопарк →</a>
+        {fleetSnapshot&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
+        <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
       </Pane>}
-    </>} center={selected?<RealCase o={selected} owner={owner}/>:<Pane title="Рабочий стол">
-        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
-        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a>
-          <a href="#/new/tow">Эвакуатор</a><a href="#/services">СТО</a><a href="#/orders">История заявок</a></div></>}
+    </>} center={selected?<RealCase key={String(selected.id)} o={selected}/>:<Pane title="Рабочий стол">
+        {!orderRows?<p role="status">{orders.error?'Сведения о заявках недоступны. Повторите загрузку в разделе «Мои заявки».':'Проверяем активные заявки…'}</p>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
+        <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a></div></>}
       </Pane>}
-      right={<><Pane title={owner?'Сводка автопарка':'Быстрые переходы'}>
-        {owner?<><p>Машин в автопарке: <strong>{fleet.data?cars.length:'—'}</strong></p>
-          <p>Ждут решения владельца: <strong>{fleet.data?fleet.data.pending?.length||0:'—'}</strong></p>
-          <a className="approved-pc-small-link" href="#/fleet">Открыть контроль доступа →</a></>
-          :<><a className="approved-pc-small-link" href="#/orders">Заявки и история →</a><a className="approved-pc-small-link" href="#/garage">Моя техника →</a></>}
+      right={<><Pane title="Помощь на дороге">
+        {!owner&&<a className="approved-pc-small-link" href="#/garage">Моя техника →</a>}
+        <nav aria-label="Услуги помощи" className="approved-pc-customer-services">
+          {(!orderRows||selected)&&<a className="approved-pc-small-link" href="#/sos">Вызвать специалиста · SOS →</a>}
+          {me?.owner_id&&rules.error&&<LoadingBlock error={rules.error} retry={rules.reload}/>}
+          {assistance.map(([permission,href,label])=>restricted(permission)
+            ?<span key={permission} className="approved-pc-small-link" aria-disabled="true">{label} · {rules.loading?'Проверяем доступ…':rules.error?'Доступ не подтверждён':'Требуется разрешение владельца'}</span>
+            :<a key={permission} className="approved-pc-small-link" href={href}>{label} →</a>)}
+        </nav>
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
-    {owner&&<div className="approved-pc-fleet-footer">
-      <Pane title={'Все активные заявки автопарка · '+(orders.data?active.length:'—')}>
-        {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?<div className="approved-pc-table-wrap"><table className="approved-pc-order-table">
-          <thead><tr><th>Заявка</th><th>Транспорт</th><th>Водитель / клиент</th><th>Неисправность</th><th>Статус</th><th>Действие</th></tr></thead>
-          <tbody>{active.map((o:any)=><tr key={o.id} className={selected?.id===o.id?'selected':''}>
-            <td>№{text(o.number||o.id)}</td><td>{vehicleLabel(transport(o))}</td>
-            <td>{text(o.driver_name||o.driver?.name||o.client?.name,'—')}</td>
-            <td>{text(o.description||o.problem,'В заявке')}</td><td>{statusName(o)}</td>
-            <td><button type="button" onClick={()=>setChosen(String(o.id))}>Открыть ›</button></td>
-          </tr>)}</tbody>
-        </table></div>:<Empty>Активных ремонтов сейчас нет. Здесь появятся заявки по автопарку после их создания.</Empty>}
-      </Pane>
-      <div className="approved-pc-fleet-footer-grid">
-        <Pane title={'Мои машины · '+(fleet.data?cars.length:'—')}>
-          <div className="approved-pc-fleet-vehicle-row">{cars.slice(0,4).map((c:any)=>
-            <a key={c.id} href={'#/garage/'+c.id} className="approved-pc-fleet-vehicle">
-              <Photo v={c}/><strong>{vehicleLabel(c)}</strong>
-              <small>{c.driver?.name?'Водитель: '+c.driver.name:'Водитель не назначен'}</small>
-              <span>История и документы ›</span>
-            </a>)}
-            {fleet.data&&!cars.length&&<Empty>Машины ещё не добавлены в автопарк.</Empty>}
-          </div>
-          <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
-        </Pane>
-        <Pane title="Плановое ТО и документы">
-          <p>История обслуживания и документы хранятся в карточке соответствующего транспортного средства.</p>
-          <a className="approved-pc-small-link" href="#/garage">Открыть технику и документы →</a>
-          <p className="approved-pc-caveat">Даты будущего ТО показываются только после появления подтверждённых данных.</p>
-        </Pane>
-        <Pane title="Расходы на ремонт">
-          <p>Завершённые заявки, счета и подтверждённые суммы доступны в истории заказов.</p>
-          <a className="approved-pc-small-link" href="#/orders">История затрат и заказов →</a>
-          <p className="approved-pc-caveat">Без неподтверждённых начислений и сумм из демонстрационного макета.</p>
-        </Pane>
-      </div>
-    </div>}
+
   </main>;
 }
 
 /** One selected real order; status buttons never get ahead of the server state. */
-function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
+function SelectedPerformerCase({order,tow,queueUnavailable=false}:{order:any;tow:boolean;queueUnavailable?:boolean}){
   const detail=useLoad(()=>get<any>('/api/orders/'+order.id),[order.id],e=>e.type==='order'&&String(e.orderId)===String(order.id));
   const {busy,run}=useAction();
+  const lock=useRef(false);
+  const [refreshing,setRefreshing]=useState(false);
+  const [submittedStatus,setSubmittedStatus]=useState('');
   const [view,setView]=useState<'work'|'vehicle'|'bill'|'chat'|'history'>('work');
   const d=detail.data||order;
   const v=transport(d);
@@ -295,12 +304,16 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
   const steps:[string,string][]=[['accepted','Принято'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
   const index=steps.findIndex(([id])=>id===d.status);
   const takeStep=async()=>{
-    if(!step || busy)return;
+    if(!step || busy || lock.current || queueUnavailable || !detail.data || detail.error || submittedStatus===d.status)return;
     // "At location" is a manual declaration, not proof of GPS coordinates.
     if(step.action==='arrive'&&!window.confirm('Подтвердить фактическое прибытие к клиенту? После отметки может начаться расчёт времени.'))return;
-    const ok=await run(()=>post('/api/orders/'+encodeURIComponent(String(order.id))+'/step',{action:step.action}),
-      step.action==='depart'?'Клиент увидит, что вы выехали':step.action==='arrive'?'Клиент получил отметку о прибытии':'Начало работы зафиксировано');
-    if(ok)detail.reload();
+    lock.current=true;setRefreshing(true);
+    try{
+      await run(()=>post('/api/orders/'+encodeURIComponent(String(order.id))+'/step',{action:step.action}),
+        step.action==='depart'?'Клиент увидит, что вы выехали':step.action==='arrive'?'Клиент получил отметку о прибытии':'Начало работы зафиксировано');
+      setSubmittedStatus(d.status);
+      await detail.reload();
+    }finally{lock.current=false;setRefreshing(false);}
   };
   return <section className="approved-pc-case approved-pc-performer-case">
     <header><div><small>{tow?'ЭВАКУАЦИЯ':'ВЫЕЗДНОЙ РЕМОНТ'} · ВЫБРАННАЯ ЗАЯВКА</small>
@@ -331,9 +344,12 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
           <div className="approved-pc-stage-steps">
             {steps.map(([id,label],i)=><span key={id} className={d.status===id?'current':index>i?'done':''}>{label}</span>)}
           </div>
+          {queueUnavailable&&<p className="approved-pc-caveat" role="status">Список заявок не обновлён. Обновите его перед изменением этапа.</p>}
           {step&&<button className="approved-pc-primary approved-pc-next-step" type="button"
-            disabled={busy||!detail.data} onClick={takeStep}>{busy?'Отправляем…':step.label}</button>}
+            disabled={busy||refreshing||queueUnavailable||!detail.data||!!detail.error||submittedStatus===d.status} onClick={takeStep}>{busy||refreshing?'Обновляем этап…':step.label}</button>}
           {!detail.data&&!detail.error&&<p className="approved-pc-caveat">Проверяем возможность следующего действия…</p>}
+          {detail.error&&<button type="button" className="approved-pc-small-link" onClick={()=>{void detail.reload();}}>Повторить загрузку статуса</button>}
+          {submittedStatus===d.status&&!refreshing&&<p className="approved-pc-caveat" role="status">Проверьте текущий этап в карточке заказа. Повторная отправка с рабочего стола заблокирована до изменения статуса.</p>}
           {d.status==='en_route'&&<p className="approved-pc-caveat">Отметку «На месте» ставьте только после фактического прибытия; это не GPS-подтверждение.</p>}
           {d.status==='working'&&<a className="approved-pc-primary approved-pc-next-step"
             href={'#/order/'+d.id}>Оформить выполненную работу и расчёт</a>}
@@ -342,7 +358,6 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
           <div className="approved-pc-case-actions">
             <a href={'#/order/'+d.id+'/chat'}>Чат по заявке</a>
             <a href={'#/order/'+d.id}>Все действия и история</a>
-            {!tow&&<a href="#/techbase/master">ТехБаза</a>}
           </div>
         </Pane>
         <Pane title={tow?'Погрузка и передача':'Отчёт по работе'}>
@@ -386,22 +401,26 @@ function PerformDesk({tow}:{tow:boolean}){
   const auctions=useLoad(()=>get<any[]>('/api/performer/auctions'),[],e=>e.type==='auction'||e.type==='order');
   const [mode,setMode]=useState<'work'|'offers'>('work');
   const [chosen,setChosen]=useState('');
+  const jobRows=jobs.error?null:jobs.data;
+  const auctionRows=auctions.error?null:auctions.data;
+  // Keep an already selected job mounted during a failed list refresh, so an
+  // ambiguous status write cannot lose its local no-resend guard.
   const all=jobs.data||[];
   const current=all.filter((o:any)=>activeStates.has(o.status) && (!orderDate(o)||orderDate(o)<=todayISO()));
   const planned=all.filter((o:any)=>activeStates.has(o.status)&&orderDate(o)>todayISO());
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
-  const offers=auctions.data||[];
+  const offers=auctionRows||[];
   return <main className="approved-pc approved-pc-performer">
     <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}/>
-    <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
-      ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
+    <Tabs items={[[ 'work','Текущая работа · '+(jobRows?current.length:'—')+'  |  Запланировано · '+(jobRows?planned.length:'—'),null ],
+      ['offers','Новые предложения',auctionRows?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
+    {jobs.error&&jobRows===null&&all.length>0&&<LoadingBlock error={jobs.error} retry={jobs.reload}/>}
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
       <p><b>Статус:</b> {text(me?.performer?.line_status,'Проверьте профиль')}</p>
       <p>Предложения отобраны сервером по доступным специализациям и зоне работы.</p>
       <a className="approved-pc-small-link" href="#/work/me">Мои параметры →</a></Pane>}
-      center={<Pane title={'Новые предложения · '+(auctions.data?offers.length:'—')}>
-        {auctions.error&&<LoadingBlock error={auctions.error} retry={auctions.reload}/>}
-        {!auctions.data?<LoadingBlock error={auctions.error} retry={auctions.reload}/>:offers.length?
+      center={<Pane title={'Новые предложения · '+(auctionRows?offers.length:'—')}>
+        {!auctionRows?<LoadingBlock error={auctions.error} retry={auctions.reload}/>:offers.length?
           offers.map((a:any)=><article key={a.order_id} className="approved-pc-offer">
             <Photo v={a}/><div><h3>Заявка №{text(a.number||a.order_id)}</h3>
               <p>{vehicleLabel(a)} · {text(a.description||a.needName,'Описание в заявке')}</p>
@@ -412,31 +431,30 @@ function PerformDesk({tow}:{tow:boolean}){
             </div>
           </article>):<Empty>Новых подходящих предложений пока нет.</Empty>}
       </Pane>}
-      right={<><Calendar items={planned}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
-      :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobs.data?current.length:'—')}>
-        {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
+      right={<><Calendar items={jobRows?planned:[]} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Bot message={tow?'Помогу с заказом и документами эвакуации.':'Помогу с заявкой и ТехБазой.'}/></>}/>
+      :<WorkLayout left={<><Pane title={'В работе сегодня · '+(jobRows?current.length:'—')}>
+        {!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:current.length?current.map((o:any)=>
         <RowItem key={o.id} label={'№'+text(o.number||o.id)} info={text(o.address||o.description,statusName(o))} v={transport(o)}
           badge={statusName(o)} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
         :<Empty>На сегодня принятых работ нет.</Empty>}
-      </Pane><Pane title={'Запланировано · '+(jobs.data?planned.length:'—')}>
-        {planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
-          onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
-        {jobs.data&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
+      </Pane><Pane title={'Запланировано · '+(jobRows?planned.length:'—')}>
+        {jobRows&&planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
+          active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
+        {jobRows&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
-      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
-        {!jobs.data?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
+      center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow} queueUnavailable={!!jobs.error}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
+        {!jobRows?<LoadingBlock error={jobs.error} retry={jobs.reload}/>:
           <div className="approved-pc-shift-empty-body" data-orders="0">
             <div className="approved-pc-shift-empty-copy">
               <strong>{tow?'Готовы к следующей эвакуации':'Готовы к следующему выезду'}</strong>
               <p>{tow?'Принятых эвакуаций сейчас нет. Проверьте новые предложения по доступной зоне и технике.':
                 'Принятых выездных заявок сейчас нет. Новые предложения появляются с учётом специализаций и зоны работы.'}</p>
               <button className="approved-pc-primary" type="button" onClick={()=>setMode('offers')}>Проверить предложения</button>
-              <a className="approved-pc-small-link" href="#/work/me/schedule">Мой график и доступность →</a>
             </div>
             <ApprovedEmptyScene kind="shift"/>
           </div>}
       </Pane>}
-      right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
+      right={<><Calendar items={jobRows||[]} loading={!jobRows&&!jobs.error} error={jobs.error} retry={jobs.reload}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
         <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
   </main>;
@@ -449,7 +467,7 @@ function SelectedServiceCase({booking}:{booking:any}){
   const v=d.vehicle||booking.vehicle;
   const statuses:[string,string][]=[
     ['expected','Ожидаем'],['arrived','Принято'],['diagnostics','Диагностика'],
-    ['agreeing','Согласование'],['in_work','В работе'],['ready','К выдаче']
+    ['agreeing','Согласование'],['in_work','В работе'],['waiting_part','Ожидаем запчасти'],['ready','К выдаче']
   ];
   const position=statuses.findIndex(([id])=>id===d.status);
   return <section className="approved-pc-case approved-pc-service-case">
@@ -481,9 +499,7 @@ function SelectedServiceCase({booking}:{booking:any}){
         </div>
         <p className="approved-pc-caveat">Следующий этап подтверждается в серверной карточке, после проверки прав и состояния ремонта.</p>
       </Pane>
-      <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/base/car/'+d.id}>Продолжить ремонт</a>
-        <a href={'#/base/car/'+d.id}>Документы и фото</a>
-        <a href={'#/base/car/'+d.id}>Согласовать работы</a>
+      <div className="approved-pc-case-actions"><a className="approved-pc-primary" href={'#/base/car/'+d.id}>{['completed','cancelled','rejected','issued','done','closed'].includes(d.status)?'Открыть историю ремонта':'Открыть карточку ремонта'}</a>
       </div>
     </>}
     {tab==='client'&&<div className="approved-pc-case-main approved-pc-sto-main">
@@ -514,17 +530,18 @@ function ServiceDesk(){
   const data=useLoad(()=>get<any>('/api/base'),[],e=>e.type==='booking');
   const [mode,setMode]=useState<'req'|'repair'|'ready'|'done'>('repair');
   const [chosen,setChosen]=useState('');
-  const g=data.data?.groups;
+  const snapshot=data.error?null:data.data;
+  const g=snapshot?.groups;
   const buckets={req:g?.requests||[],repair:g?.repair||[],ready:g?.ready||[],done:g?.done||[]};
   const list=buckets[mode];
   const selected=list.find((v:any)=>String(v.id)===chosen)||list[0];
   const expected=g?.expected||[];
   // A brand-new repair station must complete the real onboarding before its workdesk appears.
-  if(data.data && !data.data.center) return <BaseHome />;
+  if(snapshot && !snapshot.center) return <BaseHome />;
   const card=(b:any)=><RowItem key={b.id} label={vehicleLabel(b.vehicle)} info={text(b.needName,b.statusName)}
       badge={b.statusName} active={selected?.id===b.id} onClick={()=>setChosen(String(b.id))} v={b.vehicle}/>;
   return <main className="approved-pc approved-pc-service">
-    <Heading title="СТО / рембаза" roleArt="service" roleIcon="service" description={data.data?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
+    <Heading title="СТО / рембаза" roleArt="service" roleIcon="service" description={snapshot?.center?.name||'Входящие обращения, ремонт, ожидание и выдача транспорта'}/>
     <Tabs active={mode} onChange={(id)=>{setMode(id as typeof mode);setChosen('')}} items={[
       ['req','Входящие',g?buckets.req.length:null],['repair','В ремонте',g?buckets.repair.length:null],
       ['ready','К выдаче',g?buckets.ready.length:null],['done','История',g?buckets.done.length:null]]}/>
@@ -542,7 +559,7 @@ function ServiceDesk(){
           <RequestCard key={selected.id} b={selected} onDone={data.reload}/></section>
        :<SelectedServiceCase key={selected.id} booking={selected}/>):<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
         <a href="#/base/inbox" className="approved-pc-primary">Входящие заявки</a></Pane>}
-      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
+      right={<><Calendar kind="service" items={[...expected,...buckets.repair]} error={data.error} retry={data.reload}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
   </main>;
 }
@@ -551,21 +568,21 @@ function ServiceDesk(){
 function InsuranceProposals({requestId}:{requestId:string}){
   const caseData=useLoad(()=>get<any>('/api/insurance/requests/'+requestId),[requestId],
     e=>e.type==='vehicle_service'&&String(e.requestId)===String(requestId));
-  const entries=caseData.data?.proposals||[];
-  const stage=caseData.data?.request?.insurance_stage;
-  const chosenId=caseData.data?.request?.insurance_choice_id;
-  return <Pane title={'Предложения страховых компаний · '+(caseData.data?entries.length:'—')+' из 20'}>
-    {!caseData.data?<LoadingBlock error={caseData.error} retry={caseData.reload}/>:
+  const snapshot=caseData.error?null:caseData.data;
+  const entries=snapshot?.proposals||[];
+  const stage=snapshot?.request?.insurance_stage;
+  const chosenId=snapshot?.request?.insurance_choice_id;
+  return <Pane title={'Предложения страховых компаний · '+(snapshot?entries.length:'—')+' из 20'}>
+    {!snapshot?<LoadingBlock error={caseData.error} retry={caseData.reload}/>:
       entries.length?entries.slice(0,20).map((quote:any)=>
-        <a key={quote.id} href={'#/insurance/request/'+requestId} className="approved-pc-quote">
+        <div key={quote.id} className="approved-pc-quote">
           <strong>{text(quote.company,'Страховая компания')} · {text(quote.product,'Полис')}</strong>
           <span>{Number.isFinite(Number(quote.premium_kopecks))?
             new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(quote.premium_kopecks)/100):'Стоимость уточняется'}</span>
           {chosenId===quote.id&&<em>Выбран клиентом</em>}
-        </a>)
+        </div>)
       :<Empty>Предложения ещё подготавливаются. Данные появятся после сохранения в страховом деле.</Empty>}
     {stage==='offers_sent'&&<p className="approved-pc-caveat">Варианты отправлены. Ожидаем решения клиента.</p>}
-    <a className="approved-pc-small-link" href={'#/insurance/request/'+requestId}>Открыть все варианты, документы и переписку →</a>
   </Pane>;
 }
 
@@ -575,7 +592,8 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
   const source=useLoad(()=>get<any[]>(api),[api],e=>e.type==='vehicle_service');
   const [mode,setMode]=useState<InsuranceQueueGroup | 'all'>(inspection ? 'active' : 'action');
   const [chosen,setChosen]=useState('');
-  const all=source.data||[];
+  const snapshot=source.error?null:source.data;
+  const all=snapshot||[];
   const group = (o:any):InsuranceQueueGroup => inspection
     ? (['completed','rejected','cancelled'].includes(o.status) ? 'closed' : 'active')
     : insuranceQueueGroup(o.insurance_stage,o.status);
@@ -594,9 +612,9 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       description={inspection?'Назначенные проверки, результаты осмотра и документы':'Назначенные страховые дела, варианты полисов и документы'}/>
     {both&&<div className="approved-pc-partner-switch"><a className={!inspection?'selected':''} href="#/as/insurer">Страхование</a>
       <a className={inspection?'selected':''} href="#/as/inspection">Техосмотр</a></div>}
-    <Tabs items={filters.map(([id,label])=>[id,label,source.data ? all.filter(o=>id==='all' || group(o)===id).length : null])} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
+    <Tabs items={filters.map(([id,label])=>[id,label,snapshot ? all.filter(o=>id==='all' || group(o)===id).length : null])} active={mode} onChange={id=>{setMode(id as typeof mode);setChosen('')}}/>
     <WorkLayout left={<Pane title={inspection?'Назначенные осмотры':'Страховые заявки'}>
-      {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?items.map((o:any)=>
+      {!snapshot?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?items.map((o:any)=>
         <RowItem key={o.id} label={(inspection?'ТО ':'Полис ')+vehicleLabel(o)} info={text(o.comment)}
           active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={inspection ? text(o.status) : stageLabel(o)} v={o}/>)
         :<Empty>{!inspection && mode==='active' ? 'Нет заявок в работе.' : 'Назначенных заявок в выбранном разделе нет.'}</Empty>}
@@ -611,14 +629,13 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       {inspection?<><Pane title="Этапы осмотра"><p>Заявка → Назначение → Проверка → Фиксация результата</p>
         <p>Отметка о выполнении не является выдачей диагностической карты и не направляет её в ЕАИСТО.</p></Pane>
         <a className="approved-pc-primary" href={"#/inspections/"+encodeURIComponent(String(selected.id))}>Открыть рабочую обработку осмотра</a></>
-      :<><InsuranceProposals requestId={String(selected.id)}/>
+      :<><InsuranceProposals key={String(selected.id)} requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}
-      className={source.data ? 'approved-pc-insurance-empty-visual' : ''}>
-      {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
+      className={snapshot ? 'approved-pc-insurance-empty-visual' : ''}>
+      {!snapshot?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
     </Pane>}
-    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
-      {selected&&!inspection&&<a className="approved-pc-small-link" href={'#/insurance/request/'+selected.id}>Документы и предложения →</a>}
+    right={<><Calendar kind={inspection?'inspection':'insurance'} items={all} loading={!snapshot&&!source.error} error={source.error} retry={source.reload}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
       {inspection&&<p className="approved-pc-caveat">Официальные карты/ЕАИСТО пока не подключены.</p>}
       </Pane><Bot message={inspection?'Помогу с порядком осмотра и документами.':'Помогу со страховым делом и документами.'}/></>}/>
   </main>;
@@ -626,7 +643,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
 
 function ModeratorSelectedCase({id}:{id:string}){
   const detail=useLoad(()=>get<any>('/api/mod/cases/'+id),[id],e=>e.type==='mod_case');
-  const c=detail.data;
+  const c=detail.error?null:detail.data;
   return <section className="approved-pc-case">
     <header><div><small>ПРОВЕРЯЕМОЕ ДЕЛО</small><h2>Дело №{text(c?.number||id)}</h2></div>
       {c&&<span className="approved-pc-stage">{text(c.kindName,'Разбирательство')}</span>}
@@ -653,7 +670,7 @@ function ModeratorSelectedCase({id}:{id:string}){
       {Array.isArray(c.log)&&c.log.length>0&&<p className="approved-pc-caveat">Записей в журнале: {c.log.length}. Полный журнал — в деле.</p>}
       {c.status!=='open'&&<p className="approved-pc-caveat">Уже принятое решение: {text(c.decisionName)}.</p>}
       <div className="approved-pc-case-actions">
-        <a className="approved-pc-primary" href={'#/admin/case/'+id}>Открыть проверку и принять решение</a>
+        <a className="approved-pc-primary" href={'#/admin/case/'+id}>{c.status==='open'?'Открыть проверку и принять решение':'Открыть решение и журнал'}</a>
       </div>
       <p className="approved-pc-caveat">Решения доступны только при разрешённом доступе и сохраняются с записью в журнале. Здесь нет неподтверждённых блокировок или финансовых операций.</p>
     </>}
@@ -662,9 +679,10 @@ function ModeratorSelectedCase({id}:{id:string}){
 
 function ModeratorDesk(){
   const [kind,setKind]=useState<'dispute'|'appeal'|'review'>('dispute');
-  const source=useLoad(()=>get<any>('/api/mod/cases?kind='+kind),[kind],e=>e.type==='mod_case');
+  const source=useLoad(async()=>({kind,payload:await get<any>('/api/mod/cases?kind='+kind)}),[kind],e=>e.type==='mod_case'||e.type==='connection_restored');
+  const queue=!source.error&&source.data?.kind===kind?source.data.payload:null;
   const [chosen,setChosen]=useState('');
-  const items=source.data?.items||[];
+  const items=queue?.items||[];
   const selected=items.find((o:any)=>String(o.id)===chosen)||items[0];
   return <main className="approved-pc approved-pc-moderator">
     <Heading title="Модератор" roleArt="moderator" description="Споры, обращения, проверка партнёров и журнал решений"/>
@@ -672,22 +690,21 @@ function ModeratorDesk(){
       ['dispute','Споры и жалобы',null],['appeal','Обжалования',null],['review','Отзывы и отметки',null]]}/>
     <div className="approved-pc-subnav"><a href="#/moderation/support">Обращения</a><a href="#/moderation/verify">Проверка партнёров</a>
       <a href="#/moderation/flagged">Подозрительные сообщения</a><a href="#/moderation/cases">Журнал решений</a></div>
-    <WorkLayout left={<Pane title="Очередь обращений">{!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?
+    <WorkLayout left={<Pane title="Очередь обращений">{!queue?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?
       items.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number)} info={text(o.title)}
         badge={o.priority===1?'Срочно':'На проверке'} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
       :<Empty>Открытых дел в очереди нет.</Empty>}</Pane>}
-      center={selected?<ModeratorSelectedCase id={String(selected.id)}/>:<Pane title="Модерация">
-        {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Выберите обращение слева.</Empty>}
+      center={selected?<ModeratorSelectedCase key={String(selected.id)} id={String(selected.id)}/>:<Pane title="Модерация">
+        {!queue?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Выберите обращение слева.</Empty>}
       </Pane>}
       right={<><Pane title="Что проверить"><p>✓ Связанная заявка и статус</p><p>✓ Доказательства обеих сторон</p><p>✓ Переписка и правила площадки</p><p>✓ Основание и журнал решения</p></Pane>
-        <Pane title="Рабочие инструменты"><a className="approved-pc-small-link" href="#/moderation/support">Очередь поддержки →</a>
-          <a className="approved-pc-small-link" href="#/moderation/verify">Проверка партнёров →</a></Pane></>}/>
+</>}/>
   </main>;
 }
 function AdminDesk(){
-  const summary=useLoad(()=>get<any>('/api/admin/summary'),[],e=>['order','mod_case','service','partner','registry'].includes(e.type));
-  const live=useLoad(()=>get<any[]>('/api/admin/live'),[],e=>e.type==='order');
-  const d=summary.data;
+  const summary=useLoad(()=>get<any>('/api/admin/summary'),[],e=>['order','mod_case','service','partner','registry','connection_restored'].includes(e.type));
+  const live=useLoad(()=>get<any[]>('/api/admin/live'),[],e=>e.type==='order'||e.type==='connection_restored');
+  const d=summary.error?null:summary.data;
   const [geoChoice,setGeoChoice]=useState('');
   const geoCenters = (Array.isArray(d?.coverage?.centers)?d.coverage.centers:[])
     .filter((c:any)=>Number.isFinite(c?.lat)&&Number.isFinite(c?.lng)
@@ -695,13 +712,13 @@ function AdminDesk(){
   const geoSelected = geoCenters.find((c:any)=>c.id===geoChoice)||geoCenters[0];
   const alertItems=(live.data||[]).filter((o:any)=>o.unilateral_status==='disputed'||o.status==='no_performer'||o.is_sos).slice(0,5);
   const tiles:[string,string,string][]=[['Заявок сегодня',d?number(d.today?.orders):'—','#/admin/section/cases'],
-    ['На линии',d?number((d.today?.mastersOnline||0)+(d.today?.towOnline||0)):'—','#/admin/section/dispatch'],
+    ['На линии',d&&typeof d.today?.mastersOnline==='number'&&typeof d.today?.towOnline==='number'?number(d.today.mastersOnline+d.today.towOnline):'—','#/admin/section/dispatch'],
     ['Открытые споры',d?number(d.today?.disputesOpen):'—','#/admin/section/queue'],
     ['В очереди модерации',d?number(d.today?.modOpen):'—','#/admin/section/queue']];
   return <main className="approved-pc approved-pc-admin">
     <Heading title="Центр управления TrakSOS" roleArt="admin" description="Операции · Партнёры · Заявки · Проверки · Безопасность"/>
     <div className="approved-pc-metrics">{tiles.map(([label,value,href])=><a href={href} key={label}><small>{label}</small><strong>{value}</strong></a>)}</div>
-    <WorkLayout left={<><Pane title="Требуют внимания">{!live.data?<LoadingBlock error={live.error} retry={live.reload}/>:alertItems.length?
+    <WorkLayout left={<><Pane title="Требуют внимания">{!live.data||live.error?<LoadingBlock error={live.error} retry={live.reload}/>:alertItems.length?
       alertItems.map((o:any)=><RowItem href={'#/order/'+o.id} key={o.id} label={'№'+text(o.number)} info={text(o.address,statusName(o))}
         badge={statusName(o)}/>):<Empty>Срочных заявок в текущей выборке нет.</Empty>}
     </Pane><Pane title="Управление"><a className="approved-pc-small-link" href="#/admin/section/registry">Единая база компаний и партнёров →</a>

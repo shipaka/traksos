@@ -175,6 +175,35 @@ async function verifyMobileBrowserHome(page,suffix,width,mobile){
   check(JSON.stringify(labels) === JSON.stringify([
     'SOS', 'Эфир', 'СТО', 'ЭБУ', 'Запчасти', 'Страхование'
   ]), suffix + ': service card order changed: ' + JSON.stringify(labels));
+  const serviceGeometry=await services.evaluateAll(tiles=>tiles.map(tile=>{
+    const box=tile.getBoundingClientRect();
+    const glyphs=selector=>{
+      const el=tile.querySelector(selector);
+      if(!el||getComputedStyle(el).display==='none')return [];
+      const range=document.createRange();range.selectNodeContents(el);
+      return [...range.getClientRects()].filter(r=>r.width>0&&r.height>0);
+    };
+    const groups=[glyphs('b'),glyphs('small'),glyphs('.public-service-arrow')];
+    const inside=r=>r.left>=box.left-2&&r.right<=box.right+2&&r.top>=box.top-2&&r.bottom<=box.bottom+2;
+    const intersects=(a,b)=>a.left<b.right-2&&a.right>b.left+2&&a.top<b.bottom-2&&a.bottom>b.top+2;
+    const [title,copy,cta]=groups;
+    const arrow=tile.querySelector('.public-service-arrow');
+    // Approved mobile tiles are themselves the links. currentApproved20261119.css
+    // intentionally hides the redundant "Далее" text; do not require hidden
+    // glyphs or change approved art just to satisfy a geometry assertion.
+    // If an arrow is rendered, its glyphs must still be inside and not overlap.
+    const arrowHidden=!!arrow&&getComputedStyle(arrow).display==='none';
+    return {href:tile.getAttribute('href'),width:box.width,height:box.height,
+      titleGlyphs:title.length,copyGlyphs:copy.length,arrowHidden,arrowGlyphs:cta.length,
+      inside:groups.flat().every(inside),
+      labels:!!title.length&&!!copy.length&&!!arrow&&(arrowHidden||!!cta.length),
+      overlap:title.some(a=>copy.some(b=>intersects(a,b)))||
+        [...title,...copy].some(a=>cta.some(b=>intersects(a,b)))};
+  }));
+  const expected=['sos','air','sto','ecu','parts','insurance'].map(x=>'#/explore/'+x);
+  check(serviceGeometry.every((x,i)=>x.href===expected[i]&&x.width>=90&&x.height>=44&&
+    x.inside&&x.labels&&!x.overlap),
+    suffix+': public service card text clipped or overlapping: '+JSON.stringify(serviceGeometry));
 }
 
 async function run(width, height, mobile, nativePreview = false) {

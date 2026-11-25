@@ -120,12 +120,21 @@ try {
       if(!await services.evaluate(e=>e.open) ||
         !await services.getByRole('navigation',{name:'Услуги TrakSOS'}).isVisible())
         throw Error(width+'px native service drawer did not open');
-      const touch=await services.locator('a.public-service-tile').first().evaluate(el=>{
-        const r=el.getBoundingClientRect();
-        return {w:r.width,h:r.height};
-      });
-      if(touch.h<48||touch.w<100)
-        throw Error(width+'px services not touchable '+JSON.stringify(touch));
+      const touch=await services.locator('a.public-service-tile').evaluateAll(tiles=>tiles.map(el=>{
+        const r=el.getBoundingClientRect(),title=el.querySelector('strong'),icon=el.querySelector('.public-service-icon');
+        const range=document.createRange();if(title)range.selectNodeContents(title);
+        const lines=[...range.getClientRects()].filter(x=>x.width>0&&x.height>0);
+        const ir=icon?.getBoundingClientRect(),arrow=el.lastElementChild?.getBoundingClientRect();
+        const style=getComputedStyle(el);
+        return {href:el.getAttribute('href'),w:r.width,h:r.height,alignment:style.alignItems,
+          photoOverlay:['::before','::after'].some(p=>getComputedStyle(el,p).display!=='none'&&getComputedStyle(el,p).content!=='none'),
+          textInside:!!ir&&!!arrow&&lines.length>0&&lines.every(x=>x.left>=ir.right-2&&
+            x.right<=arrow.left+2&&x.top>=r.top-2&&x.bottom<=r.bottom+2)};
+      }));
+      const expected=['sos','air','sto','ecu','parts','insurance'].map(x=>'#/explore/'+x);
+      if(touch.length!==6||touch.some((x,i)=>x.href!==expected[i]||x.h<48||x.w<100||
+         x.alignment!=='center'||x.photoOverlay||!x.textInside))
+        throw Error(width+'px services not readable or touchable '+JSON.stringify(touch));
       await page.screenshot({path:'e2e/shots/android-guest/native-'+width+'-full.png',fullPage:true});
       await assertClean(width+'px native service drawer');
       await services.locator('a[href="#/explore/air"]').click();

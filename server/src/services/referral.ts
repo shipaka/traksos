@@ -173,7 +173,7 @@ export class ReferralService {
   async clientAvailable(userId: string, orderAmount: number, clientFee: number, q: Queryable = this.db) {
     const r = await this.settings.get('referral');
     const { balance } = await this.balance(userId, q);
-    const cap = Math.max(0, Math.min(clientFee, pct(orderAmount, r.clientSpendCapPct)));
+    const cap = Math.max(0, Math.min(clientFee, Math.floor(orderAmount * r.clientSpendCapPct / 100)));
     return { balance, cap, max: Math.min(balance, cap) };
   }
 
@@ -237,7 +237,7 @@ export class ReferralService {
     // 3. Мастер пригласил мастера — разово, когда новичок выполнит performerJobs заявок
     if (order.performer_id) {
       const p = await q.one<{ referred_by: string | null; n: number }>(
-        `select u.referred_by, (select count(*)::int from orders o where o.performer_id=u.id and o.status='completed') as n from users u where u.id=$1`, [order.performer_id]);
+        `select u.referred_by, (select count(*)::int from orders o where o.performer_id=u.id and o.status='completed' and (o.payment_method='cash' or exists (select 1 from ledger_entries le where le.order_id=o.id and le.kind='earning' and le.account='performer'))) as n from users u where u.id=$1`, [order.performer_id]);
       if (p?.referred_by && p.n >= r.performerJobs) {
         // Unique ref_user_id for this kind protects concurrent milestones.
         await this.grant(q, { userId: p.referred_by, amount: r.performerReward,
@@ -284,12 +284,12 @@ export class ReferralService {
     const code = await this.code(user.id);
     const b = await this.balance(user.id);
     const entries = await this.db.query(
-      `select id::int as id, amount, kind, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc limit 50`, [user.id]);
+      `select id::int as id, amount, kind, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc, id desc limit 50`, [user.id]);
     const invited = await this.db.query(
       `select coalesce(nullif(u.company_name,''), nullif(u.name,''), 'Без имени') as name, u.referred_at as at,
               case when u.roles && '{master,tow}'::text[] then 'performer' when 'service' = any(u.roles) then 'service' else 'client' end as who,
               coalesce((select sum(p.amount) from points_entries p where p.user_id=$1 and p.ref_user_id=u.id and p.amount > 0), 0)::int as earned
-         from users u where u.referred_by=$1 order by u.referred_at desc limit 100`, [user.id]);
+         from users u where u.referred_by=$1 order by u.referred_at desc, u.id desc limit 100`, [user.id]);
     return { code, ...b, entries, invited, rules: await this.settings.get('referral') };
   }
 }

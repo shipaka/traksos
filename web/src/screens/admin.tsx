@@ -17,9 +17,9 @@ import { SupportQueue } from './support.tsx';
 import { Stats } from './stats.tsx';
 import { OpsDashboard, WorkerCommunications } from './ops.tsx';
 import { VehicleServicesQueue } from './vehicleServicesAdmin.tsx';
-import { get, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
+import { get, getToken, post, put, rub, fmtPhone, fmtTime, authedImage } from '../api.ts';
 import { STATUS, SERVICES, LINE } from '../dict.ts';
-import { useLoad, useAction, Loading } from '../ui.tsx';
+import { useLoad, useAction, useMe, Loading } from '../ui.tsx';
 import { TRAKBOT_TERMS, type TrakBotOfferAudience } from '../trakbotTerms.ts';
 
 type AdminSection = 'ecu' | 'cases' | 'stats' | 'search' | 'support' | 'verify' | 'people' | 'access' | 'orders' | 'dispatch' | 'payments' | 'offers' | 'flagged' | 'bases' | 'queue' | 'summary' | 'settings' | 'demand' | 'announcements' | 'vehicleServices' | 'diagnostics' | 'serviceFinance' | 'registry';
@@ -60,6 +60,10 @@ const ADMIN_GROUPS: { name: string; items: AdminNavItem[] }[] = [
 const ADMIN_SECTIONS: AdminSection[] = ADMIN_GROUPS.flatMap(group => group.items.map(item => item.id));
 
 export function Admin({ initialSection }: { initialSection?: string }) {
+  const {me}=useMe();
+  return <AdminForAccount key={me?.id??'guest'} initialSection={initialSection}/>;
+}
+function AdminForAccount({initialSection}:{initialSection?:string}){
   const [tab, setTab] = useState<AdminSection>(() =>
     ADMIN_SECTIONS.includes(initialSection as AdminSection) ? initialSection as AdminSection : 'summary');
   const [navOpen, setNavOpen] = useState(false);
@@ -309,8 +313,12 @@ function Payments() {
 }
 
 export function Flagged() {
-  const list = useLoad(() => get('/api/admin/chat/flagged'), []);
-  if (!list.data) return <Loading error={list.error} />;
+  const {me}=useMe();
+  return <FlaggedForAccount key={me?.id??'guest'}/>;
+}
+function FlaggedForAccount(){
+  const list = useLoad(() => get('/api/admin/chat/flagged'), [],e=>e.type==='connection_restored');
+  if (!list.data||list.error) return <div className="stack"><Loading error={list.error}/>{list.error&&<button type="button" className="btn ghost small" onClick={list.reload}>Повторить загрузку сообщений</button>}</div>;
   if (!list.data.length) return <div className="empty">Ничего подозрительного</div>;
   return (
     <div className="rows">
@@ -371,9 +379,13 @@ function Dispatch() {
 // Проверка исполнителей -------------------------------------------------------
 
 export function Verify() {
-  const q = useLoad(() => get('/api/admin/verification'), [], (e) => e.type === 'verification_queue');
-  if (!q.data) return <Loading error={q.error} />;
-  if (!q.data.length) return <div className="empty">Очередь пуста — все проверены</div>;
+  const {me}=useMe();
+  return <VerifyForAccount key={me?.id??'guest'}/>;
+}
+function VerifyForAccount(){
+  const q = useLoad(() => get('/api/admin/verification'), [], (e) => e.type === 'verification_queue'||e.type==='connection_restored');
+  if (!q.data||q.error) return <div className="stack"><Loading error={q.error}/>{q.error&&<button type="button" className="btn ghost small" onClick={q.reload}>Повторить загрузку очереди проверки</button>}</div>;
+  if (!q.data.length) return <div className="empty">Нет ожидающих проверки документов</div>;
   return <div className="stack">{q.data.map((u: any) => <VerifyCard key={u.id} u={u} onDone={q.reload} />)}</div>;
 }
 
@@ -396,10 +408,10 @@ function VerifyCard({ u, onDone }: { u: any; onDone: () => void }) {
       {u.flags.map((f: string) => <span key={f} className="pill bad" style={{ alignSelf: 'flex-start' }}>⚠ {f}</span>)}
       {u.missing.length > 0 && <span className="err">Нет фото: {u.missing.join(', ')}</span>}
       {u.docs.map((d: any) => <DocReview key={d.id} d={d} onDone={onDone} />)}
-      <input className="field" placeholder="Причина отказа — исполнитель её увидит" value={reason} onChange={(e) => setReason(e.target.value)} />
+      <input className="field" placeholder="Причина отказа — исполнитель её увидит" maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} />
       <div className="grid2">
-        <button className="btn bad" disabled={busy || reason.length < 3} onClick={() =>
-          run(() => post(`/api/admin/performers/${u.id}/verify`, { decision: 'rejected', note: reason }), 'Отказано').then((r) => r && onDone())}>Отказать</button>
+        <button className="btn bad" disabled={busy || reason.trim().length < 3} onClick={() =>
+          run(() => post(`/api/admin/performers/${u.id}/verify`, { decision: 'rejected', note: reason.trim() }), 'Отказано').then((r) => r && onDone())}>Отказать</button>
         <button className="btn good" disabled={busy || !allOk} onClick={() =>
           run(() => post(`/api/admin/performers/${u.id}/verify`, { decision: 'approved' }), 'Одобрен — может выходить на линию').then((r) => r && onDone())}>Одобрить</button>
       </div>
@@ -414,11 +426,17 @@ function DocReview({ d, onDone }: { d: any; onDone: () => void }) {
   const [big, setBig] = useState(false);
   const [note, setNote] = useState('');
   const [retake, setRetake] = useState(false);
+  const [photoError,setPhotoError]=useState(false);
+  const [photoRetry,setPhotoRetry]=useState(0);
   useEffect(() => {
-    let url: string | null = null;
-    authedImage(`/api/documents/${d.id}/file`).then((x) => { url = x; setSrc(x); }).catch(() => {});
-    return () => { if (url) URL.revokeObjectURL(url); };
-  }, [d.id]);
+    let active=true;let url: string | null = null;const token=getToken();
+    setSrc(null);setPhotoError(false);setBig(false);
+    authedImage(`/api/documents/${d.id}/file`).then(x=>{
+      if(!active||getToken()!==token){URL.revokeObjectURL(x);return;}
+      url=x;setSrc(x);
+    }).catch(()=>{if(active&&getToken()===token)setPhotoError(true);});
+    return () => {active=false;if(url)URL.revokeObjectURL(url);};
+  }, [d.id,photoRetry]);
   const review = (status: 'approved' | 'rejected') =>
     run(() => post(`/api/admin/documents/${d.id}`, status === 'rejected' ? { status, note } : { status }), status === 'approved' ? 'Принято' : 'Попросили переснять').then((r) => r && onDone());
   return (
@@ -429,16 +447,17 @@ function DocReview({ d, onDone }: { d: any; onDone: () => void }) {
           {d.status === 'approved' ? 'Принято' : d.status === 'rejected' ? 'Переснять' : 'Новое'}
         </span>
       </div>
-      {src && <img src={src} alt={d.name} onClick={() => setBig(!big)} style={{ width: '100%', maxHeight: big ? 'none' : 180, objectFit: big ? 'contain' : 'cover', borderRadius: 10, cursor: 'zoom-in' }} />}
+      {photoError&&<div className="note" role="alert">Документ не загрузился. <button type="button" className="btn ghost small" onClick={()=>setPhotoRetry(n=>n+1)}>Повторить загрузку фото</button></div>}
+      {src && <img src={src} onError={()=>{setSrc(null);setPhotoError(true);}} alt={d.name} onClick={() => setBig(!big)} style={{ width: '100%', maxHeight: big ? 'none' : 180, objectFit: big ? 'contain' : 'cover', borderRadius: 10, cursor: 'zoom-in' }} />}
       {d.status !== 'approved' && (retake ? (
         <div className="compose">
-          <input className="field" placeholder="Что переснять: номер не читается…" value={note} onChange={(e) => setNote(e.target.value)} />
-          <button className="btn small" disabled={busy || note.length < 3} onClick={() => review('rejected')}>Отправить</button>
+          <input className="field" placeholder="Что переснять: номер не читается…" maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} />
+          <button className="btn small" disabled={busy || note.trim().length < 3} onClick={() => review('rejected')}>Отправить</button>
         </div>
       ) : (
         <div className="grid2">
           <button className="btn ghost small" onClick={() => setRetake(true)}>Переснять</button>
-          <button className="btn small" disabled={busy} onClick={() => review('approved')}>Принять</button>
+          <button className="btn small" disabled={busy||!src||photoError} onClick={() => review('approved')}>Принять</button>
         </div>
       ))}
     </div>

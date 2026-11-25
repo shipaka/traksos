@@ -398,11 +398,16 @@ export class AdminService {
   /** Бонусы клиенту: + начислить, − списать. Списываются сами при подтверждении суммы следующей заявки. */
   async bonus(admin: AuthUser, userId: string, amount: number, reason: string) {
     if (!Number.isInteger(amount) || amount === 0) throw bad('bad_amount', 'Сумма не может быть нулевой');
-    const bal = await this.bonusBalance(userId);
-    if (bal + amount < 0) throw bad('bad_amount', `Нельзя списать больше остатка: ${rub(bal)}`);
-    await this.db.query(`insert into bonus_entries(user_id, amount, kind, note, actor_id) values ($1,$2,$3,$4,$5)`,
-      [userId, amount, amount > 0 ? 'grant' : 'revoke', reason, admin.id]);
-    await this.audit(this.db, admin, 'client.bonus', userId, { amount, reason });
+    const bal=await this.db.tx(async q=>{
+      const user=await q.one('select id from users where id=$1 for update',[userId]);
+      if(!user)throw notFound('Пользователь не найден');
+      const current=(await q.one<{b:number}>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1',[userId]))!.b;
+      if(current+amount<0)throw bad('bad_amount',`Нельзя списать больше остатка: ${rub(current)}`);
+      await q.query(`insert into bonus_entries(user_id, amount, kind, note, actor_id) values ($1,$2,$3,$4,$5)`,
+        [userId,amount,amount>0?'grant':'revoke',reason,admin.id]);
+      await this.audit(q,admin,'client.bonus',userId,{amount,reason});
+      return current;
+    });
     await this.notifier.notify([userId], { type: 'pricing' }, {
       kind: 'normal', title: amount > 0 ? 'Вам начислены бонусы' : 'Бонусы списаны',
       body: `${amount > 0 ? '+' : '−'}${rub(Math.abs(amount))}: ${reason}. Спишутся сами со следующей заявки.`, data: {},

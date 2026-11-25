@@ -63,6 +63,7 @@ const caseRow=(id,brand)=>({id,brand,model:'CI',plate:'CI-000',
   status:'sent_to_partner',insurance_stage:'received',created_at:'2026-01-01'});
 const visit=(id,plate)=>({id,kind:'inspection',status:'sent_to_partner',
   brand:'DAF',model:'XF',plate,year:2022,created_at:'2026-01-01'});
+const inspectionPage=(items=[],active=items.length,history=0,page=1)=>({items,active,history,page,pageSize:30});
 const finance=amount=>({entries:[],totals:[
   {kind:'insurance',accrued:amount,paid:'0',balance:amount},
   {kind:'inspection',accrued:'0',paid:'0',balance:'0'}]});
@@ -72,7 +73,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
   await page.addScriptTag({content:bundle.outputFiles[0].text});
-  const Q='/api/insurer/requests',V='/api/insurer/inspections',F='/api/insurer/finance';
+  const Q='/api/insurer/requests',V='/api/insurer/inspections/page?view=active&page=1',D='/api/insurer/inspections/same-case',F='/api/insurer/finance';
   const n=(path,method='GET')=>page.evaluate(({path,method})=>
     window.__partnerMock.pending.filter(x=>x.path===path&&x.method===method).length,{path,method});
   const wait=(path,count,method='GET')=>page.waitForFunction(({path,count,method})=>
@@ -100,8 +101,76 @@ try{
   await page.evaluate(()=>window.__partnerSetView('cabinet'));
   await wait(Q,q+1);await wait(V,v+1);await wait(F,f+1);
   await finish(Q,q,'resolve',[caseRow('two','INSURER-B')]);
-  await finish(V,v,'resolve',[visit('inspect-B','B-PLATE')]);
+  await finish(V,v,'resolve',inspectionPage([visit('inspect-B','B-PLATE')]));
   await finish(F,f,'resolve',finance('123456'));
+  // Keep the four approved milestone cards, but never count an accepted
+  // request as new merely because its coarse service status is unchanged.
+  const overview=page.locator('.and20-partner-stats .and20-partner-stat strong');
+  const assertOverview=async(expected)=>{
+    await page.waitForFunction(values=>JSON.stringify(
+      [...document.querySelectorAll('.and20-partner-stats .and20-partner-stat strong')]
+        .map(x=>x.textContent?.trim()))===JSON.stringify(values),expected);
+    assertion(JSON.stringify(await overview.allTextContents())===JSON.stringify(expected),
+      'Incorrect insurer milestone counters: '+expected.join(','));
+  };
+  const assertQueue=async(expected)=>{
+    await page.waitForFunction(values=>JSON.stringify(
+      [...document.querySelectorAll('.insurer-insurance-metrics .tile-value')]
+        .map(x=>x.textContent?.trim()))===JSON.stringify(values),expected);
+  };
+  const refreshInsurance=async()=>{
+    const qi=await n(Q),vi=await n(V),fi=await n(F);
+    await page.evaluate(()=>window.__partnerMock.subscribers.forEach(fn=>fn({type:'vehicle_service'})));
+    await wait(Q,qi+1);await wait(V,vi+1);await wait(F,fi+1);
+    await finish(V,vi,'resolve',inspectionPage([visit('inspect-B','B-PLATE')]));
+    await finish(F,fi,'resolve',finance('123456'));
+    return qi;
+  };
+  await assertOverview(['1','0','0','0']);
+  await assertQueue(['1','1','0','0']);
+  for(const [stage,status,counters,queue] of [
+    ['preparing','sent_to_partner',['0','1','0','0'],['1','0','1','0']],
+    ['offers_sent','sent_to_partner',['0','0','1','0'],['1','0','1','0']],
+    ['selected','sent_to_partner',['0','0','0','0'],['1','1','0','0']],
+    ['processing','sent_to_partner',['0','0','0','0'],['1','0','1','0']],
+    ['policy_sent','completed',['0','0','0','1'],['1','0','0','1']],
+  ]){
+    const next=await refreshInsurance();
+    await finish(Q,next,'resolve',[{...caseRow('two','INSURER-B'),insurance_stage:stage,status}]);
+    await assertOverview(counters);
+    await assertQueue(queue);
+  }
+  // Legacy cases and stale terminal stages must not double count.
+  const mixed=[
+    {...caseRow('legacy-new','LEGACY'),insurance_stage:null},
+    {...caseRow('legacy-done','LEGACY-DONE'),insurance_stage:null,status:'completed'},
+    {...caseRow('rejected','REJECTED'),insurance_stage:'received',status:'rejected'},
+    {...caseRow('cancelled','CANCELLED'),insurance_stage:'policy_sent',status:'cancelled'},
+    {...caseRow('preparing','PREPARING'),insurance_stage:'preparing'},
+    {...caseRow('sent','SENT'),insurance_stage:'offers_sent'},
+    {...caseRow('selected','SELECTED'),insurance_stage:'selected'},
+    {...caseRow('processing','PROCESSING'),insurance_stage:'processing'},
+  ];
+  await page.setViewportSize({width:1440,height:900});
+  let next=await refreshInsurance();
+  await finish(Q,next,'resolve',mixed);
+  await assertOverview(['1','1','1','1']);
+  await assertQueue(['8','2','3','3']);
+  // An unreadable queue is unknown, not a confirmed empty queue.
+  next=await refreshInsurance();
+  await assertOverview(['—','—','—','—']);
+  await finish(Q,next,'reject','offline insurance');
+  await page.getByRole('button',{name:'Повторить загрузку заявок'}).waitFor();
+  await assertOverview(['—','—','—','—']);
+  await page.getByRole('button',{name:'Повторить загрузку заявок'}).click();
+  await wait(Q,next+2);
+  await finish(Q,next+1,'resolve',[]);
+  await assertOverview(['0','0','0','0']);
+  await page.setViewportSize({width:390,height:844});
+  next=await refreshInsurance();
+  await finish(Q,next,'resolve',[caseRow('two','INSURER-B')]);
+  await assertOverview(['1','0','0','0']);
+
   await page.getByRole('button',{name:'Финансы'}).click();
   await page.getByText(/1\s*234,56\s*₽/).first().waitFor();
   const q1=await n(Q),v1=await n(V),f1=await n(F);
@@ -116,7 +185,7 @@ try{
   await finish(F,f1+1,'resolve',finance('2500'));
   await page.getByText(/25,00\s*₽/).first().waitFor();
   await finish(Q,q1,'resolve',[caseRow('three','INSURER-C')]);
-  await finish(V,v1,'resolve',[]);
+  await finish(V,v1,'resolve',inspectionPage());
 
   const oldV=await n(V),oldF=await n(F);
   await page.evaluate(()=>{
@@ -125,8 +194,10 @@ try{
     window.__partnerSetRoute(['inspections','same-case']);
     window.__partnerSetView('inspection');
   });
-  await wait(V,oldV+1);await wait(F,oldF+1);
-  await finish(V,oldV,'resolve',[visit('same-case','SECRET-INSPECT-A')]);
+  await wait(V,oldV+1);await wait(F,oldF+1);await wait(D,1);
+  await finish(V,oldV,'resolve',inspectionPage());
+  // The direct link must work even when the case is absent from the queue page.
+  await finish(D,0,'resolve',visit('same-case','SECRET-INSPECT-A'));
   await finish(F,oldF,'resolve',finance('0'));
   await page.getByRole('heading',{name:'Техосмотр №same-case'}).waitFor();
   const complete=page.getByRole('button',{name:'Внести результат техосмотра'});
@@ -139,10 +210,11 @@ try{
 
   const oldV2=await n(V);
   await page.evaluate(()=>window.__partnerSetMe({id:'inspector-B',roles:['inspection_operator']}));
-  await wait(V,oldV2+1);
+  await wait(V,oldV2+1);await wait(D,2);
   assertion(await page.getByText('SECRET-INSPECT-A').count()===0,
     'Other inspector details visible after account switch');
-  await finish(V,oldV2,'resolve',[visit('same-case','INSPECT-B')]);
+  await finish(V,oldV2,'resolve',inspectionPage());
+  await finish(D,1,'resolve',visit('same-case','INSPECT-B'));
   await page.getByRole('heading',{name:'Техосмотр №same-case'}).waitFor();
   assertion(await complete.isDisabled(),'Old inspector ticks authorised a new account');
   await page.getByRole('textbox',{name:'Комментарий / результат осмотра'})
@@ -156,10 +228,29 @@ try{
     x.method==='PATCH'&&x.path===path)?.body,patch);
   assertion(body?.status==='completed'&&body.note.includes('оператором B'),
     'Unexpected inspection decision or previous user comment');
-  await finish(patch,0,'resolve',{status:'completed'},'PATCH');
-  await wait(V,oldV2+2);
-  await finish(V,oldV2+1,'resolve',[{...visit('same-case','INSPECT-B'),status:'completed'}]);
+  // The server may have accepted the mutation even though its response was lost.
+  await finish(patch,0,'reject','lost acknowledgement','PATCH');
+  const acknowledge=page.getByRole('button',{name:'Состояние проверено'});
+  const refresh=page.getByRole('button',{name:'Обновить очередь для сверки'});
+  await acknowledge.waitFor();
+  assertion(await acknowledge.isDisabled(),'Stale detail allowed acknowledgement');
+  assertion(await complete.isDisabled(),'Lost response allowed duplicate completion');
+  await refresh.click();
+  await wait(D,3);
+  assertion(await acknowledge.isDisabled(),'Pending read allowed acknowledgement');
+  await finish(D,2,'reject','offline during review');
+  await page.getByText(/Не удалось сверить заявку/).waitFor();
+  assertion(await acknowledge.isDisabled(),'Failed read allowed acknowledgement');
+  await refresh.click();await wait(D,4);
+  await finish(D,3,'resolve',{...visit('same-case','INSPECT-B'),status:'completed'});
+  await page.getByText('Текущий статус: Завершена').waitFor();
+  assertion(!await acknowledge.isDisabled(),'Fresh exact case status cannot be acknowledged');
+  await acknowledge.click();
+  await wait(V,oldV2+2);await wait(D,5);
+  await finish(V,oldV2+1,'resolve',inspectionPage([],0,1));
+  await finish(D,4,'resolve',{...visit('same-case','INSPECT-B'),status:'completed'});
   await page.getByText('Заявка завершена').waitFor();
+  assertion(await n(patch,'PATCH')===1,'Review automatically resent the mutation');
   assertion(errors.length===0,'React exceptions: '+errors.join('; '));
   console.log('PASS: insurer finance/queues/chat isolation and actual inspector checklist');
 }finally{await browser.close();}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { get, post } from '../api.ts';
+import { get, getToken, post } from '../api.ts';
+import { useMe } from '../ui.tsx';
 import { NavGlyph } from '../navGlyph.tsx';
 import { checkedSandboxEntryUrl } from './adminSandboxEntry20261124.ts';
 
@@ -30,21 +31,27 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
   const [failed,setFailed]=useState(false);
   useEffect(()=>{
     let active=true;
+    const token=getToken();
+    const current=()=>active&&!!token&&getToken()===token;
+    const invalidate=()=>{active=false;setFailed(true);setMessage('Сессия администратора изменилась. Вернитесь в тест-центр.');};
+    window.addEventListener('traksos-auth-external-change',invalidate);
+    window.addEventListener('traksos-auth-expired',invalidate);
     setFailed(false);
     setMessage('Проверяем доступ к изолированной тестовой базе…');
     void get<{enabled:boolean;reason?:string}>('/api/admin/sandbox/status')
       .then(status=>{
+        if(!current())throw new Error('Сессия изменилась');
         if(!status.enabled)
           throw new Error((status as any).reason||'Полноценный тестовый сервер ещё не подключён.');
         return post<{entryUrl:string;role:string}>('/api/admin/sandbox/ticket',{role:role.id});
       })
       .then(result=>{
-        if(!active)return;
+        if(!current())return;
         const entry=checkedSandboxEntryUrl(result?.entryUrl,role.id,result?.role,location.origin);
         location.assign(entry);
       })
-      .catch(e=>{if(active){setFailed(true);setMessage(e instanceof Error?e.message:'Ошибка доступа к тестовому серверу');}});
-    return ()=>{active=false;};
+      .catch(e=>{if(current()){setFailed(true);setMessage(e instanceof Error?e.message:'Ошибка доступа к тестовому серверу');}});
+    return ()=>{active=false;window.removeEventListener('traksos-auth-external-change',invalidate);window.removeEventListener('traksos-auth-expired',invalidate);};
   },[role.id,retry]);
   return <main className="sandbox-root stack" style={{maxWidth:720,margin:'28px auto'}}>
     <span className="pill accent">НАСТОЯЩИЙ КАБИНЕТ · ТЕСТОВАЯ ВЕРСИЯ</span>
@@ -58,9 +65,10 @@ function FullFidelityRoleLauncher({role}:{role:RoleInfo}) {
 }
 export function AdminTestCenter({roleId}:{roleId?:string;fullFidelity?:boolean}) {
   // Deliberately ignore callers' options. No code path offers the old trainer.
-  const fullFidelity = true;
+  const {me}=useMe();
+  if(!me?.roles.includes('admin'))return <main className="sandbox-root"><p role="alert">Тестовые кабинеты доступны только администратору.</p></main>;
   const role=DEMO_ROLES.find(r=>r.id===roleId);
-  if(role && fullFidelity)return <FullFidelityRoleLauncher role={role}/>;
+  if(role)return <FullFidelityRoleLauncher key={me.id+':'+role.id} role={role}/>;
   return <main className="sandbox-root stack" aria-label="Тестовый центр администратора">
     <section className="sandbox-intro">
       <span className="sandbox-eyebrow">TRAKSOS · ЗАКРЫТЫЙ ДЕМОНСТРАЦИОННЫЙ РЕЖИМ</span>
