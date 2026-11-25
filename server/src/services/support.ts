@@ -16,6 +16,30 @@ export class SupportService {
   onDispute: ((p: { userId: string; orderId: string | null; ticketId: string; text: string; topic: string }) => Promise<unknown>) | null = null;
   constructor(private db: Db, private notifier: Notifier, private orders: OrdersService, private now: () => Date) {}
 
+  // Never authorize private support from a cached role snapshot alone.
+  private async liveActor(q: Queryable, user: AuthUser): Promise<AuthUser> {
+    const current = await q.one<AuthUser>(
+      "select id,phone,name,roles,status,owner_id from users where id=$1 and status='active' and deleted_at is null for share",
+      [user.id]);
+    if (!current) throw forbidden();
+    const roles = current.roles.filter(role => user.roles.includes(role));
+    if (!roles.length) throw forbidden();
+    return { ...current, roles };
+  }
+
+  private async authorizeTicket(q: Queryable, user: AuthUser, ticket: {user_id: string}) {
+    const actor = await this.liveActor(q,user);
+    if (ticket.user_id !== actor.id && !isStaff(actor)) throw forbidden();
+    return actor;
+  }
+
+  private async activeRecipient(q: Queryable, id: string): Promise<string[]> {
+    const row = await q.one<{id:string}>(
+      "select id from users where id=$1 and status='active' and deleted_at is null for share",[id]);
+    return row ? [row.id] : [];
+  }
+
+
   // Moderators own the first response. Admin receives intake only when no
   // moderator exists; otherwise admin is alerted once the SLA is breached.
   private intakeStaffIds = async (q: Queryable = this.db, requestedRole?: 'admin' | 'moderator' | null) => {
@@ -43,7 +67,7 @@ export class SupportService {
           order by sla_deadline_at limit 100 for update skip locked`, [now]);
       if (!overdue.length) return { overdue, adminIds: [] as string[] };
       const admins = await q.query<{ id: string }>(
-        `select id from users where roles && '{admin}'::text[]`);
+        `select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[] order by id for share`);
       for (const ticket of overdue) {
         await q.query(`update support_tickets set sla_overdue_at=$2 where id=$1`, [ticket.id, now]);
         await q.query(
@@ -83,9 +107,7 @@ export class SupportService {
     const safeText = maskPhones(text).text;
     const fingerprint = createHash('sha256').update(JSON.stringify([p.topic, text, p.requestedRole ?? null])).digest('hex');
     const result = await this.db.tx(async q => {
-      const actor = await q.one<{id:string;name:string|null;phone:string}>(
-        "select id,name,phone from users where id=$1 and status='active' and deleted_at is null for share", [user.id]);
-      if (!actor) throw forbidden();
+      const actor = await this.liveActor(q,user);
       if (p.requestKey) {
         await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:standalone:' + user.id + ':' + p.requestKey]);
         const prior = await q.one<{id:string;client_request_hash:string}>(
@@ -214,7 +236,6 @@ export class SupportService {
   }
 
   async post(user: AuthUser, ticketId: string, body: string) {
-    await this.mustSee(user, ticketId);
     const text = body.trim();
     if (!text) throw bad('empty', 'Пустое сообщение');
     const safeText = maskPhones(text).text;
@@ -222,18 +243,13 @@ export class SupportService {
       const locked = await q.one<{ status: string; user_id: string; number: number; assignee_id: string | null; requested_staff_role: 'admin'|'moderator'|null }>(
         'select status, user_id, number, assignee_id, requested_staff_role from support_tickets where id=$1 for update', [ticketId]);
       if (!locked) throw notFound('Обращение не найдено');
+      const actor = await this.authorizeTicket(q,user,locked);
       if (locked.status === 'closed')
         throw conflict('closed', 'Обращение закрыто — создайте новое');
-      const staff = locked.user_id !== user.id;
-      if (staff) {
-        const currentStaff = await q.one<{ id: string }>(
-          "select id from users where id=$1 and status='active' and roles && '{admin,moderator}'::text[] for share",
-          [user.id]);
-        if (!currentStaff || !isStaff(user)) throw forbidden();
-      }
+      const staff = locked.user_id !== actor.id;
       // A former or blocked employee must not receive a new private reply.
       const assignee = locked.assignee_id ? await q.one<{ id: string }>(
-        "select id from users where id=$1 and status='active' and roles && '{admin,moderator}'::text[] for share",
+        "select id from users where id=$1 and status='active' and deleted_at is null and roles && '{admin,moderator}'::text[] for share",
         [locked.assignee_id]) : null;
       const postedAt = this.now();
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body)
@@ -243,10 +259,10 @@ export class SupportService {
             first_staff_reply_at=case when $4::boolean then coalesce(first_staff_reply_at,$2::timestamptz)
                else first_staff_reply_at end where id=$1`,
         [ticketId, postedAt, assignee?.id ?? (staff ? user.id : null), staff]);
-      const ids = staff ? [locked.user_id] :
+      const ids = staff ? await this.activeRecipient(q,locked.user_id) :
         assignee ? [assignee.id] : await this.intakeStaffIds(q,locked.requested_staff_role);
       const title = staff ? `Поддержка ответила · №${locked.number}` : `Новое сообщение · №${locked.number}`;
-      const msg = { kind: 'normal' as const, title, body: safeText.slice(0, 120), data: { ticketId } };
+      const msg = { kind: 'normal' as const, title, body: 'Откройте личное обращение, чтобы прочитать сообщение.', data: { ticketId } };
       // Persist the message, first-response timestamp and inbox in one commit.
       for (const id of ids) {
         await q.query(`insert into notifications(user_id,kind,title,body,data)
@@ -261,46 +277,41 @@ export class SupportService {
   }
 
   async close(user: AuthUser, ticketId: string) {
-    const t = await this.mustSee(user, ticketId);
-    // post() takes the same row lock. Concurrent close/close and close/post
-    // therefore serialize, with exactly one closure event on success.
-    const closedNow = await this.db.tx(async q => {
-      const locked = await q.one<{ status: string }>(
-        'select status from support_tickets where id=$1 for update', [ticketId]);
+    // The same lock as post() serializes closure and reply. Check live
+    // authorization before even returning the idempotent closed state.
+    const delivery = await this.db.tx(async q => {
+      const locked = await q.one<{ status: string; user_id: string; number: number }>(
+        'select status,user_id,number from support_tickets where id=$1 for update', [ticketId]);
       if (!locked) throw notFound('Обращение не найдено');
-      if (locked.status === 'closed') return false;
+      const actor = await this.authorizeTicket(q,user,locked);
+      if (locked.status === 'closed') return null;
       const at = this.now();
       await q.query(`update support_tickets set status='closed', closed_at=$2, closed_by=$3, updated_at=$2 where id=$1`,
-        [ticketId, at, user.id]);
+        [ticketId, at, actor.id]);
+      const staff = locked.user_id !== actor.id;
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body) values ($1,null,false,$2)`,
-        [ticketId, isStaff(user) && t.user_id !== user.id
+        [ticketId, staff
           ? 'Поддержка закрыла обращение. Если вопрос остался — напишите новое.' : 'Обращение закрыто.']);
-      if (t.user_id !== user.id) {
-        // Durable inbox belongs to the same commit as the terminal state and
-        // its system message. A second close cannot create a second alert.
-        await q.query(`insert into notifications(user_id,kind,title,body,data)
-          values ($1,'support',$2,$3,$4)`,
-          [t.user_id, `Обращение №${t.number} закрыто`,
-            'Если вопрос остался — напишите новое', { ticketId }]);
-      }
-      return true;
+      const ids = staff ? await this.activeRecipient(q,locked.user_id) : [];
+      const msg = {kind:'normal' as const,title:`Обращение №${locked.number} закрыто`,
+        body:'Если вопрос остался — напишите новое',data:{ticketId}};
+      for (const id of ids) await q.query(
+        `insert into notifications(user_id,kind,title,body,data) values ($1,'support',$2,$3,$4)`,
+        [id,msg.title,msg.body,msg.data]);
+      return {ids,msg};
     });
-    if (closedNow && t.user_id !== user.id) {
-      // Alert already exists in the user's inbox. Optional push failure
-      // must never turn the successful closure into a duplicate retry.
-      await this.notifier.deliverStored([t.user_id], { type: 'support', ticketId }, {
-        kind: 'normal', title: `Обращение №${t.number} закрыто`,
-        body: 'Если вопрос остался — напишите новое', data: { ticketId },
-      });
-    }
-    return this.thread(user, ticketId);
+    if (delivery) await this.notifier.deliverStored(delivery.ids,{type:'support',ticketId},delivery.msg).catch(()=>{});
+    return this.thread(user,ticketId);
   }
 
   async mine(user: AuthUser) {
-    return this.db.query(
+    return this.db.tx(async q => {
+      const actor = await this.liveActor(q,user);
+      return q.query(
       `select t.id, t.number, t.topic, t.status, t.order_id, o.number as order_number, t.created_at, t.updated_at,
               (select body from support_messages m where m.ticket_id=t.id order by m.id desc limit 1) as last
-         from support_tickets t left join orders o on o.id=t.order_id where t.user_id=$1 order by t.updated_at desc limit 50`, [user.id]);
+         from support_tickets t left join orders o on o.id=t.order_id where t.user_id=$1 order by t.updated_at desc limit 50`, [actor.id]);
+    });
   }
 
   /** Очередь: сначала открытые, где последнее слово за пользователем */
@@ -316,29 +327,27 @@ export class SupportService {
   }
 
   async thread(user: AuthUser, ticketId: string) {
-    const t = await this.mustSee(user, ticketId);
-    const messages = await this.db.query(
+    return this.db.tx(async q => {
+    const t = await q.one('select * from support_tickets where id=$1 for share',[ticketId]);
+    if (!t) throw notFound('Обращение не найдено');
+    const actor = await this.authorizeTicket(q,user,t);
+    const messages = await q.query(
       `select m.id::int as id, m.body, m.from_staff, m.created_at, m.sender_id, u.name as sender_name
          from support_messages m left join users u on u.id=m.sender_id where m.ticket_id=$1 order by m.id`, [ticketId]);
-    const order = t.order_id ? await this.db.one('select id, number, status, service from orders where id=$1', [t.order_id]) : null;
-    const author = isStaff(user) ? await this.db.one('select id, name, phone from users where id=$1', [t.user_id]) : null;
+    const order = t.order_id ? await q.one('select id, number, status, service from orders where id=$1', [t.order_id]) : null;
+    const author = isStaff(actor) ? await q.one('select id, name, phone from users where id=$1', [t.user_id]) : null;
     // A moderator may answer a user's ticket but must not receive that user's
     // private ledger entry. The ticket owner and an administrator retain their
     // existing right to inspect the linked operation.
-    const canReadLedger = t.user_id === user.id || user.roles.includes('admin');
-    const entry = canReadLedger && t.ledger_entry_id ? await this.db.one(
+    const canReadLedger = t.user_id === actor.id || actor.roles.includes('admin');
+    const entry = canReadLedger && t.ledger_entry_id ? await q.one(
       `select l.id::int as id, l.kind, l.amount, l.note, l.account, l.created_at, o.number as order_number
          from ledger_entries l left join orders o on o.id=l.order_id where l.id=$1`, [t.ledger_entry_id]) : null;
     return { id: t.id, number: t.number, topic: t.topic, status: t.status,
       createdAt: t.created_at, requestedRole: t.requested_staff_role ?? null, slaDeadlineAt: t.sla_deadline_at,
       firstStaffReplyAt: t.first_staff_reply_at, slaOverdueAt: t.sla_overdue_at,
       order, author, messages, entry };
+    });
   }
 
-  private async mustSee(user: AuthUser, ticketId: string) {
-    const t = await this.db.one('select * from support_tickets where id=$1', [ticketId]);
-    if (!t) throw notFound('Обращение не найдено');
-    if (t.user_id !== user.id && !isStaff(user)) throw forbidden();
-    return t;
-  }
 }
