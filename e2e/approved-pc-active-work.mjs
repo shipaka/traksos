@@ -173,14 +173,18 @@ try{
    'Unapproved automatic training banner pushes the actual PC workplace down');
  assert(await op.locator('.desktop-content section[aria-label="Знакомство с TrakSOS"]').count()===0,
    'Duplicate desktop introduction card must be available from Help, not shown by default');
- // Both courses and the manual guided tour remain reachable inside the top-right menu.
+ // Desktop learning belongs to the left help group, not the personal menu.
+ assert(await op.locator('.desktop-sidebar .desktop-nav a[href="#/learn"]').count()===1,
+   'Platform introduction is missing from the left help menu');
+ assert(await op.locator('.desktop-sidebar .desktop-nav a[href="#/training"]').count()===1,
+   'Step-by-step training is missing from the left help menu');
+ assert(await op.locator('.desktop-sidebar .account-menu-tour').count()===1,
+   'Manual button tour is missing from the left help menu');
  await op.locator('.account-menu > summary').click();
- assert(await op.locator('.account-menu nav a[href="#/learn"]').count()===1,
-   'Platform introduction is missing from the help menu');
- assert(await op.locator('.account-menu nav a[href="#/training"]').count()===1,
-   'Step-by-step training is missing from the help menu');
- assert(await op.locator('.account-menu nav .account-menu-tour').count()===1,
-   'Manual button tour is missing from the help menu');
+ assert(await op.locator('.account-menu nav a[href="#/learn"]').count()===0,
+   'Learning is duplicated inside the personal menu');
+ assert(await op.locator('.account-menu nav a[href="#/profile"]').count()===1,
+   'Personal profile is missing from the right menu');
  await op.locator('.account-menu > summary').click();
  assert(await op.getByText('Синтетический мастер').count()>0,'Selected performer missing');
  assert(await op.getByText('Текущее местоположение исполнителя не подтверждено.').count()===1,

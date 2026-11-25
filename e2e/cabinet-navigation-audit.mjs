@@ -120,6 +120,25 @@ try {
       if(!invitation.includes('Приветственные баллы новому клиенту начисляются при регистрации'))
         throw Error(kind+': welcome reward timing contradicts actual referral logic');
     }
+    // The phone keeps its complete menu; desktop must preserve all those
+    // destinations exactly once across its left and right navigation.
+    await page.setViewportSize({width:1440,height:900});
+    await page.locator('.account-menu > summary').click();
+    const left=await page.locator('.desktop-sidebar .desktop-nav a[href^="#/"]').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
+    const right=await page.locator('.account-menu nav a[href^="#/"]').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
+    const combined=[...left,...right];
+    if(new Set(combined).size!==combined.length)throw Error(kind+': duplicate desktop menu destination');
+    if(links.some(link=>!combined.includes(link.href)))throw Error(kind+': desktop menu lost a mobile destination');
+    const personal=new Set(['#/profile','#/privacy','#/work/me','#/work/me/about','#/work/me/phone','#/work/me/cars','#/work/me/tax','#/base/me']);
+    if(!right.includes('#/profile')||right.some(href=>!personal.has(href))||left.some(href=>personal.has(href)))
+      throw Error(kind+': desktop personal/work navigation not separated');
+    if(!left.includes('#/economics')||!left.includes('#/support')||!left.includes('#/learn'))
+      throw Error(kind+': desktop work/help destination missing');
+    if(!await page.locator('.desktop-sidebar .account-menu-tour').isVisible())
+      throw Error(kind+': desktop manual tour missing');
+    if(!await page.locator('.account-menu-logout').isVisible())throw Error(kind+': desktop logout missing');
+    await page.locator('.account-menu > summary').click();
+    await page.setViewportSize({width:390,height:844});
     const paths=[...new Set(links.map(l=>l.href))];
     if(kind!=='admin' && paths.some(path=>path.startsWith('#/admin/section')))
       throw Error(kind+': sees administrator menu routes');

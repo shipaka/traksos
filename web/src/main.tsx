@@ -707,6 +707,37 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   const helpLinks = rawHelpLinks.filter(([href],index,links)=>
     !accountLinks.some(([accountHref])=>accountHref===href) &&
     links.findIndex(([other])=>other===href)===index);
+  // On PC, every destination belongs to exactly one navigation surface.
+  // Keep the existing complete phone/native account menu and tab bar.
+  const desktopSplit = !native.isApp && !mobileShell;
+  const personalPaths = new Set(['/profile','/privacy','/work/me','/work/me/about',
+    '/work/me/phone','/work/me/cars','/work/me/tax','/base/me']);
+  const personalLinks = [...accountLinks,...helpLinks].filter(([href])=>personalPaths.has(href));
+  const primaryDesktop: [string,string,string][] = mode === 'client'
+    ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'],
+       ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'],
+       ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
+    : mode === 'performer'
+      ? [['/work','⌂','Рабочий стол'], ['/work/jobs','☷','Мои заявки и история'],
+         ['/work/me/schedule','▦','Календарь и график'], ['/work/filter','⚙','Настройки заявок']]
+      : tabs;
+  const allDesktopLinks: [string,string,string][] = [
+    ...primaryDesktop,
+    ...mobileTabs.filter(([href])=>href!=='/menu'),
+    ...accountLinks.map(([href,label]):[string,string,string]=>[href,'▣',label]),
+    ...helpLinks.map(([href,label]):[string,string,string]=>[href,'ⓘ',label])
+  ].filter(([href],index,links)=>!personalPaths.has(href) && links.findIndex(([other])=>other===href)===index);
+  const financePaths=new Set(['/economics','/invite','/work/me/money','/base/money',
+    '/admin/section/payments','/pricing-lab']);
+  const helpPaths=new Set([...helpLinks.map(([href])=>href).filter(href=>!financePaths.has(href)&&!href.startsWith('/techbase/')&&href!=='/air'),
+    '/support','/notifications','/work/docs']);
+  const testCenterPaths=new Set(['/admin/test-center','/admin/test-center/client']);
+  const desktopGroups: [string,[string,string,string][]][] = [
+    ['Рабочие разделы',allDesktopLinks.filter(([href])=>!financePaths.has(href)&&!helpPaths.has(href)&&!testCenterPaths.has(href))],
+    ['Финансы',allDesktopLinks.filter(([href])=>financePaths.has(href))],
+    ['Тестовые кабинеты',allDesktopLinks.filter(([href])=>testCenterPaths.has(href))],
+    ['Помощь и документы',allDesktopLinks.filter(([href])=>helpPaths.has(href))]
+  ];
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
   const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
@@ -854,11 +885,13 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                   if(menu)menu.open=false;
                 }
               }}>
-              <span className="account-menu-heading">Мой кабинет</span>
-              {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
-              <span className="account-menu-heading">Помощь и документы</span>
-              {<button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
-              {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              <span className="account-menu-heading">{desktopSplit?'Профиль и настройки':'Мой кабинет'}</span>
+              {(desktopSplit?personalLinks:accountLinks).map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              {!desktopSplit&&<>
+                <span className="account-menu-heading">Помощь и документы</span>
+                <button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>
+                {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              </>}
               {<button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
           </details>}
@@ -871,53 +904,16 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
-              {(mode === 'client'
-                ? [['/', '⌂', 'Главная'], ['/orders', '☷', 'Заявки'], ['/sos', '✚', 'Помощь в дороге'], ['/shop', '⚙', 'Запчасти'], ['/garage', '▣', 'Мой транспорт'], ['/insurance/request/new', '◇', 'Страхование'], ['/services', '▤', 'Грузовые СТО']]
-                : mode === 'performer'
-                  ? []
-                  : mode === 'service'
-                    ? [...tabs, ['/base/money', '₽', 'Финансы'], ['/base/me', '⚙', 'Карточка'], ...(me.roles.some(r => r === 'master' || r === 'tow') ? [['/work', '⚡', 'Выездной мастер']] : []), ['/profile', '◉', 'Аккаунт']]
-                    : mode === 'insurer' || mode === 'inspection'
-                      ? tabs
-                      : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/admin/test-center/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
-                <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href, links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
+              {desktopGroups.map(([group,links])=>links.length>0&&<div key={group}>
+                <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
+                {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
+                  className={`desktop-nav-link ${isDesktopPrimaryActive(href,allDesktopLinks)?'active':''} ${href==='/sos'?'desktop-nav-sos':''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                </a>
-              ))}
-              {mode === 'performer' && <>
-                {([
-                  ['Рабочее место', [
-                    ['/work','⌂','Рабочий стол'], ['/work/jobs','☷','Мои заявки и история'],
-                    ['/work/me/schedule','▦','Календарь и график'], ['/work/filter','⚙','Настройки заявок']]],
-                  ['Финансы', [
-                    ['/work/me/money','₽','Начисления и выплаты']]],
-                  ['Сообщения и помощь', [
-                    ['/notifications','◉','Уведомления'], ['/support','?','Поддержка'],
-                    ['/work/docs','◇','Документы и проверки'], ['/help','ⓘ','Подсказки']]],
-                  ['Профиль и настройки', [
-                    ['/work/me','▣','Мой профиль'], ['/work/me/phone','⚿','Вход и безопасность'],
-                    ['/work/me/cars','⚙','Автомобили'], ['/work/me/tax','▤','Налоговый статус'],
-                    ['/offer/performer','☷','Оферта'], ['/shop','▦','Запчасти']]]
-                  ] as [string,[string,string,string][]][]).map(([group, links])=><div key={group}>
-                  <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
-                  {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
-                    className={`desktop-nav-link ${here===href?'active':''}`}>
-                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                  </a>)}
-                </div>)}
-                {me.roles.includes('service') && <a className="desktop-nav-link" href="#/base">
-                  <span aria-hidden="true"><NavGlyph glyph="▤"/></span><span>Моя СТО</span>
-                </a>}
-              </>}
-              {mode === 'client' && <>
-                <div className="desktop-sidebar-title desktop-nav-section">Мой кабинет</div>
-                {([...(me && !me.owner_id && !me.roles.includes('driver') ? [['/fleet','▣','Мой парк']] as [string,string,string][] : []),['/air','☷','Эфир'],['/support','?','Поддержка'],['/profile','◉','Профиль']] as [string,string,string][]).map(([href, ic, name]) => (
-                  <a key={href} href={shellHref(href)} className={`desktop-nav-link ${here === href || here.startsWith(href + '/') ? 'active' : ''}`}>
-                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                  </a>
-                ))}
-              </>}
+                </a>)}
+              </div>)}
+              <button type="button" className="desktop-nav-link account-menu-tour" onClick={()=>window.dispatchEvent(new Event('traksos-tour-start'))}>
+                <span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Показать, где какие кнопки</span>
+              </button>
             </> : isAuthEntry ? <>
               <a className="desktop-nav-link" href="#/"><span aria-hidden="true"><NavGlyph glyph="⌂"/></span><span>Главная</span></a>
               <a className="desktop-nav-link" href="#/company"><span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Компания</span></a>
