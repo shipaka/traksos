@@ -54,14 +54,16 @@ function useDesktopSize(){
 /** One breakpoint: phone/tablet <900, approved PC >=900. Never mount both. */
 export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:ReactNode}) {
   const wide=useDesktopSize();
+  const {me}=useMe();
+  const scope=(me?.id??'guest')+':'+role;
   if (!wide) return <>{fallback}</>; // Mobile Chrome and Android share the approved 618 workspace, including admin.
-  if(role==='owner'||role==='driver') return <CustomerDesk owner={role==='owner'}/>;
-  if(role==='master'||role==='tow') return <PerformDesk tow={role==='tow'}/>;
-  if(role==='service') return <ServiceDesk/>;
-  if(role==='insurer'||role==='inspection') return <InsuranceDesk key={role} inspection={role==='inspection'}/>;
-  if(role==='courier') return <ApprovedPcCourier/>;
-  if(role==='moderator') return <ModeratorDesk/>;
-  return <AdminDesk/>;
+  if(role==='owner'||role==='driver') return <CustomerDesk key={scope} owner={role==='owner'}/>;
+  if(role==='master'||role==='tow') return <PerformDesk key={scope} tow={role==='tow'}/>;
+  if(role==='service') return <ServiceDesk key={scope}/>;
+  if(role==='insurer'||role==='inspection') return <InsuranceDesk key={scope} inspection={role==='inspection'}/>;
+  if(role==='courier') return <ApprovedPcCourier key={scope}/>;
+  if(role==='moderator') return <ModeratorDesk key={scope}/>;
+  return <AdminDesk key={scope}/>;
 }
 
 function Heading({title,description,children,artKey,roleIcon,roleArt}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind;roleArt?:ApprovedPCRole}){
@@ -231,16 +233,16 @@ function CustomerDesk({owner}:{owner:boolean}){
         {fleet.data&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
         <a className="approved-pc-small-link" href="#/fleet">Весь автопарк →</a>
       </Pane>}
-    </>} center={selected?<RealCase o={selected} owner={owner}/>:<Pane title="Рабочий стол">
+    </>} center={selected?<RealCase key={String(selected.id)} o={selected} owner={owner}/>:<Pane title="Рабочий стол">
         {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
         <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a>
-          <a href="#/new/tow">Эвакуатор</a><a href="#/services">СТО</a><a href="#/orders">История заявок</a></div></>}
+          <a href="#/orders">Заявки и история</a></div></>}
       </Pane>}
       right={<><Pane title={owner?'Сводка автопарка':'Быстрые переходы'}>
         {owner?<><p>Машин в автопарке: <strong>{fleet.data?cars.length:'—'}</strong></p>
           <p>Ждут решения владельца: <strong>{fleet.data?fleet.data.pending?.length||0:'—'}</strong></p>
           <a className="approved-pc-small-link" href="#/fleet">Открыть контроль доступа →</a></>
-          :<><a className="approved-pc-small-link" href="#/orders">Заявки и история →</a><a className="approved-pc-small-link" href="#/garage">Моя техника →</a></>}
+          :<a className="approved-pc-small-link" href="#/garage">Моя техника →</a>}
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
     {owner&&<div className="approved-pc-fleet-footer">
       <Pane title={'Все активные заявки автопарка · '+(orders.data?active.length:'—')}>
@@ -557,15 +559,14 @@ function InsuranceProposals({requestId}:{requestId:string}){
   return <Pane title={'Предложения страховых компаний · '+(caseData.data?entries.length:'—')+' из 20'}>
     {!caseData.data?<LoadingBlock error={caseData.error} retry={caseData.reload}/>:
       entries.length?entries.slice(0,20).map((quote:any)=>
-        <a key={quote.id} href={'#/insurance/request/'+requestId} className="approved-pc-quote">
+        <div key={quote.id} className="approved-pc-quote">
           <strong>{text(quote.company,'Страховая компания')} · {text(quote.product,'Полис')}</strong>
           <span>{Number.isFinite(Number(quote.premium_kopecks))?
             new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB'}).format(Number(quote.premium_kopecks)/100):'Стоимость уточняется'}</span>
           {chosenId===quote.id&&<em>Выбран клиентом</em>}
-        </a>)
+        </div>)
       :<Empty>Предложения ещё подготавливаются. Данные появятся после сохранения в страховом деле.</Empty>}
     {stage==='offers_sent'&&<p className="approved-pc-caveat">Варианты отправлены. Ожидаем решения клиента.</p>}
-    <a className="approved-pc-small-link" href={'#/insurance/request/'+requestId}>Открыть все варианты, документы и переписку →</a>
   </Pane>;
 }
 
@@ -611,14 +612,13 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
       {inspection?<><Pane title="Этапы осмотра"><p>Заявка → Назначение → Проверка → Фиксация результата</p>
         <p>Отметка о выполнении не является выдачей диагностической карты и не направляет её в ЕАИСТО.</p></Pane>
         <a className="approved-pc-primary" href={"#/inspections/"+encodeURIComponent(String(selected.id))}>Открыть рабочую обработку осмотра</a></>
-      :<><InsuranceProposals requestId={String(selected.id)}/>
+      :<><InsuranceProposals key={String(selected.id)} requestId={String(selected.id)}/>
         <a className="approved-pc-primary" href={'#/insurance/request/'+selected.id}>Открыть дело, варианты и переписку</a></>}
     </section>:<Pane title={inspection?'Техосмотры':'Страхование'}
       className={source.data ? 'approved-pc-insurance-empty-visual' : ''}>
       {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Пока нет открытого дела. Новые назначенные заявки появятся здесь.</Empty>}
     </Pane>}
     right={<><Calendar kind={inspection?'inspection':'insurance'} items={all}/><Pane title="Документы и следующее действие"><p>Проверяйте полноту документов в карточке выбранного дела.</p>
-      {selected&&!inspection&&<a className="approved-pc-small-link" href={'#/insurance/request/'+selected.id}>Документы и предложения →</a>}
       {inspection&&<p className="approved-pc-caveat">Официальные карты/ЕАИСТО пока не подключены.</p>}
       </Pane><Bot message={inspection?'Помогу с порядком осмотра и документами.':'Помогу со страховым делом и документами.'}/></>}/>
   </main>;
