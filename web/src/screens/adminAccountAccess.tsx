@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { post, fmtPhone } from '../api.ts';
 import { useAction, useMe, useToast } from '../ui.tsx';
 import {useAdminScopedResource} from '../adminScopedResource20261124.ts';
+import { InsuranceAccessAdmin } from './insuranceAccessAdmin.tsx';
 
 // Only non-staff accounts are manually provisioned here. Staff privileges
 // remain controlled by the dedicated server-side phone allowlists.
@@ -178,6 +179,8 @@ export function AdminAccountAccess() {
         <span className="note">Для первого входа отправьте человеку адрес вашего сайта с разделом <strong>#/activate</strong>. Он вводит свой номер, получает SMS-код и создаёт собственный пароль.</span>
       </div>}
     </div>
+
+    <InsuranceAccessAdmin />
 
     <div className="card stack">
       <h3>Передать проблему разработчику</h3>
