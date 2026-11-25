@@ -1011,8 +1011,13 @@ export function createApp(d: Deps) {
       reason:z.string().trim().min(10).max(500)
     }).strict(),c.body).reason));
   r.get('/api/courier/presence', ['courier'], (c:AuthedCtx) => deliveries.presence(c.user));
-  r.put('/api/courier/presence', ['courier'], (c:AuthedCtx) =>
-    deliveries.setPresence(c.user,parse(z.object({online:z.boolean()}),c.body).online));
+  r.put('/api/courier/presence', ['courier'], async (c:AuthedCtx) => {
+    const result=await deliveries.setPresence(c.user,parse(z.object({online:z.boolean()}),c.body).online);
+    // Only after commit: other devices of this account reread authenticated presence.
+    // No delivery IDs, addresses, availability values or push notification payload.
+    notifier.live([c.user.id],{type:'courier_presence_changed'});
+    return result;
+  });
   r.get('/api/courier/jobs', ['courier'], (c:AuthedCtx) => deliveries.list(c.user));
   r.get('/api/courier/jobs/:id', ['courier'], (c:AuthedCtx) => deliveries.one(c.user,c.params.id));
   r.post('/api/courier/jobs/:id/stage', ['courier'], (c:AuthedCtx) =>
