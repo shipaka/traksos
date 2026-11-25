@@ -117,6 +117,26 @@ export class ServiceCenters {
     return this.cabinet(user);
   }
 
+  /** Only the existing station's admission flag, not the master line or hours. */
+  async availability(user: AuthUser, paused?: boolean) {
+    const result = await this.db.tx(async q => {
+      const actor = await q.one<{id:string}>(`select id from users where id=$1
+        and status='active' and deleted_at is null and 'service'=any(roles) for share`, [user.id]);
+      if (!actor || !user.roles.includes('service')) throw forbidden('Доступ к СТО отозван');
+      const center = await q.one<{id:string;paused:boolean;verification:string;hours:string}>(
+        'select id,paused,verification,hours from service_centers where owner_id=$1 for update', [user.id]);
+      if (!center) throw notFound('Сначала заполните карточку сервиса');
+      if (paused !== undefined && paused !== center.paused) {
+        await q.query('update service_centers set paused=$2 where id=$1', [center.id,paused]);
+        await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+          [user.id,'service.availability',center.id,{paused}]);
+      }
+      return {paused:paused??center.paused,verification:center.verification,hours:center.hours};
+    });
+    if (paused !== undefined) this.notifier.live([user.id], {type:'service_availability_changed'});
+    return result;
+  }
+
   /** Раз в неделю: «приём всё так же?» — одна кнопка */
   async confirmAccepts(user: AuthUser) {
     await this.mustMine(user);
