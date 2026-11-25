@@ -6,6 +6,7 @@ import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import {logoutSession} from '../sessionLogout.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
@@ -1485,7 +1486,7 @@ function ProfileForAccount() {
         <button className="btn bad" onClick={() => {
           if (me.roles.some((r) => ['master','tow'].includes(r)) &&
               !window.confirm('При выходе из аккаунта статус «На линии» отключится. Просто сверните приложение, если хотите продолжать получать заявки. Выйти?')) return;
-          void logout();
+          void logoutSession();
         }}>Выйти</button>
       </div>
     </main>
@@ -1497,20 +1498,7 @@ async function patchMe(body: unknown) {
   return patch('/api/me', body);
 }
 
-export async function logout() {
-  const { post, setToken, disconnectWs } = await import('../api.ts');
-  try {
-    await post('/api/auth/logout');
-  } catch (e) {
-    // Do not silently sign a worker out while the server still marks them on a job.
-    window.alert((e as Error).message || 'Не удалось завершить выход. Проверьте подключение.');
-    return;
-  }
-  setToken(null);
-  disconnectWs();
-  location.hash = '#/login';
-  location.reload();
-}
+export { logoutSession as logout } from '../sessionLogout.ts';
 
 const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
 /** До вызова: кто сейчас на линии рядом — без контактов; приоритет запоминается и сортирует отклики */
