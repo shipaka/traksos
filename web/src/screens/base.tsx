@@ -1,3 +1,4 @@
+import {InnInput,validInnLength} from '../innInput.tsx';
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { get, post, put, rub, fmtTime, onEvent } from '../api.ts';
@@ -547,8 +548,12 @@ function BaseSetupPanel() {
   if (!f) return <main><StationLoading error={cab.error} reload={cab.reload} /></main>;
   const first = !cab.data?.center;
   const set = (k: string, v: any) => setF({ ...f, [k]: v });
+  const originalInn=cab.data?.center?.inn??'';
+  const innChanged=f.inn!==originalInn;
+  const innInvalid=innChanged&&!!f.inn&&!validInnLength(f.inn,false);
   async function save() {
-    const body = { ...f, inn: f.inn || null, closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
+    if(innInvalid)return;
+    const body = { ...f, inn: innChanged&&f.inn?f.inn:undefined, closedDays: f.closedDays.filter((d: string) => d >= mskDay()) };
     if (await run(() => basePut('/api/base', body), first ? 'Карточка сохранена — осталось пройти проверку' : 'Карточка сервиса сохранена')) { await reload(); go(baseRoutePath('base')); }
   }
   function locate() {
@@ -607,7 +612,7 @@ function BaseSetupPanel() {
           address={f.address} synthetic={false}/>
         <div className="grid2">
           <Field label="Часы работы"><input className="field" value={f.hours} onChange={(e) => set('hours', e.target.value)} /></Field>
-          <Field label="ИНН компании"><input className="field" inputMode="numeric" value={f.inn} onChange={(e) => set('inn', e.target.value.replace(/\D/g, '').slice(0, 12))} /></Field>
+          <Field label="ИНН компании" hint="Организация — 10 цифр, ИП — 12. Если оставить поле пустым, сохранённый ИНН не изменится."><InnInput value={f.inn} onChange={v=>set('inn',v)} /></Field>
         </div>
       </div>
       <div className="card">
@@ -692,7 +697,7 @@ function BaseSetupPanel() {
             ? 'Отозвать разрешение и скрыть точку'
             : 'Разрешить показать нашу СТО на карте'}</button>
       </section>}
-      <button className="btn" disabled={busy || f.name.trim().length < 2 || f.address.trim().length < 3} onClick={save}>{first ? 'Сохранить и пройти проверку' : 'Сохранить'}</button>
+      <button className="btn" disabled={busy || innInvalid || f.name.trim().length < 2 || f.address.trim().length < 3} onClick={save}>{first ? 'Сохранить и пройти проверку' : 'Сохранить'}</button>
     </main>
   );
 }
