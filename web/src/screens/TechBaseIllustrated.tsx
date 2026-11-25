@@ -15,7 +15,8 @@ function useProtectedRequest<T>(path:string|null,delay=0){
  const [retry,setRetry]=useState(0);
  const [state,setState]=useState<{path:string;token:string|null;retry:number;data?:T;error?:string}|null>(null);
  useEffect(()=>{
-  if(!path)return;
+  setState(null);
+  if(!path||!token)return;
   let alive=true;
   const handle=setTimeout(()=>{get<T>(path).then(data=>{
    if(alive&&getToken()===token)setState({path,token,retry,data});
