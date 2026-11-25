@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { get, patch, fmtTime, onEvent } from '../api.ts';
 import { useAction, useMe, useRoute } from '../ui.tsx';
-import { insurancePresentation, insuranceQueueGroup } from '../insurancePresentation.ts';
+import { insurancePresentation, insuranceQueueGroup, insuranceOverviewCounts } from '../insurancePresentation.ts';
 
 const labels: Record<string, string> = {
   sent_to_partner: 'Ждёт оформления', completed: 'Полис оформлен', rejected: 'Отказ',
@@ -304,6 +304,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       </section>}
     </main>;
   }
+  const overview=rows?insuranceOverviewCounts(rows):null;
   const insurerPriority = (rows??[]).find(r=>insuranceQueueGroup(r.insurance_stage,r.status)==='action')
     ??(rows??[]).find(r=>insuranceQueueGroup(r.insurance_stage,r.status)==='active');
   return (
@@ -327,10 +328,10 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
         </div>
         <div className="and20-partner-stats">
           {([
-            ['Новые',rows?.filter(r=>r.insurance_stage==='received'||r.status==='sent_to_partner').length],
-            ['В расчёте',rows?.filter(r=>r.insurance_stage==='preparing').length],
-            ['Отправлены',rows?.filter(r=>r.insurance_stage==='offers_sent').length],
-            ['Оформлены',rows?.filter(r=>r.insurance_stage==='policy_sent'||r.status==='completed').length],
+            ['Новые',overview?.received],
+            ['В расчёте',overview?.preparing],
+            ['Отправлены',overview?.offers_sent],
+            ['Оформлены',overview?.policy_sent],
           ] as [string,number|undefined][]).map(([label,value])=><div key={label} className="and20-partner-stat">
             <small>{label}</small><strong>{value??'—'}</strong>
           </div>)}
