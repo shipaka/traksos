@@ -88,10 +88,13 @@ export function vehicleReferencePhoto(
   if(!b||!m)return null;
   const match=records.find(x=>x.brand===b&&x.modelPattern.test(m));
   if(!match)return null;
-  const y=(typeof year==='number'||typeof year==='string')?Number(year):NaN;
-  if(Number.isFinite(y)&&y>=1900&&y<=2100){
-    if(y<match.yearMin||y>match.yearMax)return null;
-  }else if(match.yearRequired)return null; // ambiguous truck generations: do not guess!
+  const missingYear=year==null||(typeof year==='string'&&!year.trim());
+  if(missingYear){
+    if(match.yearRequired)return null;
+  }else{
+    const y=typeof year==='number'?year:/^\d{4}$/.test(year.trim())?Number(year):NaN;
+    if(!Number.isInteger(y)||y<1900||y>2100||y<match.yearMin||y>match.yearMax)return null;
+  }
   return {src:match.src,description:match.description,author:match.author,
     license:match.license,sourcePage:match.sourcePage,generation:match.generation};
 }
