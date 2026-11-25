@@ -1249,6 +1249,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const [retryVersion,setRetryVersion]=useState(0);
   const [sending,setSending]=useState(false);
   const sendingRef=useRef(false);
+  const [sendError,setSendError]=useState('');
   const archiveLabel=archived||serverClosed;
   const readOnly = archiveLabel || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
@@ -1261,7 +1262,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     setMsgs([]);setQuick([]);setPeople([]);
     get(`/api/orders/${id}/messages`).then((r) => {
       if(!alive)return;
-      const received=Array.isArray(r.messages)?r.messages:[];
+      if(!r||!Array.isArray(r.messages))throw new Error('Сервер не подтвердил список сообщений');
+      const received=r.messages;
       setMsgs(current=>[...received,...current.filter(
         (m:any)=>!received.some((item:any)=>item.id===m.id))]);
       setQuick(Array.isArray(r.quickReplies)?r.quickReplies:[]);
@@ -1274,7 +1276,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       setLoading(false);
     });
     const off=onEvent((e) => {
-      if(alive && e.type==='chat' && e.message?.order_id===id)
+      if(alive&&e.type==='connection_restored'){setRetryVersion(v=>v+1);return;}
+      if(alive && e.type==='chat' && String(e.message?.order_id)===String(id))
         setMsgs((m)=>(m.some((x)=>x.id===e.message.id)?m:[...m,e.message]));
     });
     return () => { alive = false; off(); };
@@ -1289,9 +1292,10 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   async function send(body: string, kind: 'text' | 'quick' = 'text') {
     if(!body.trim()||readOnly||sendingRef.current)return;
     sendingRef.current=true;
-    setSending(true);
+    setSending(true);setSendError('');
     try {
       const m = await post(`/api/orders/${id}/messages`, { body, kind });
+      if(!m?.id)throw new Error('Сервер не подтвердил отправку сообщения');
       setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
       // Do not erase a new draft typed while the previous message was posting.
       setText(current=>current===body?'':current);
@@ -1299,6 +1303,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       // Concurrent completion can beat the browser event. Fail closed immediately
       // even before the parent order status refreshes.
       if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
+      setSendError('Не получили подтверждение отправки. Проверьте переписку перед повтором. Текст сохранён.');
+      setRetryVersion(v=>v+1);
       toast((e as Error).message);
     }finally{
       sendingRef.current=false;
@@ -1321,7 +1327,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   );
   return (
     <div className="card" aria-label={archiveLabel ? 'Архив переписки по заявке' : 'Чат по заявке'}>
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">свернуть ▴</span></button>
       {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
       {loadError&&<div className="stack" role="alert">
         <span className="note">Не удалось загрузить переписку: {loadError}</span>
@@ -1330,6 +1336,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         </button>
       </div>}
       {loading&&<span className="note" role="status">Загружаем переписку…</span>}
+      {sendError&&<span className="note" role="alert">{sendError}</span>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       <div className="msgs" ref={box}>
         {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}
