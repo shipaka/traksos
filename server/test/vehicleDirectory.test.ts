@@ -44,12 +44,12 @@ test('real pinned CC-BY directory has truck, van, bus and passenger models',asyn
 });
 
 test('technical OEM links are verified master/service only; ordinary users see safe reminders',async()=>{
-  const db:any={one:async()=>({verification:'approved'}),query:async()=>[]};
+  const db:any={one:async()=>({roles:['client','master','admin'],repair_approved:true,workshop_approved:false}),query:async()=>[]};
   const library=new VehicleTechnicalLibrary(db);
   const tips=await library.tips(client);
   assert.ok(tips.items.length>=5);
   assert.ok(tips.items.every((t)=>!('url'in t)&&!('rights'in t)));
-  await assert.rejects(library.professional(client),/только мастерам и СТО/);
+  await assert.rejects(library.professional(client),/подтверждённым мастерам/);
   await assert.rejects(library.professional(master,{category:'passenger'}),/только грузового транспорта/);
   const resource=await library.professional(master,{make:'volvo'});
   assert.ok(resource.links.some((r)=>r.url.startsWith('https://www.volvotrucks')));
@@ -68,9 +68,9 @@ test('technical OEM links are verified master/service only; ordinary users see s
   assert.ok(!admin.links.some((r)=>r.id==='commons-diesel-scr'));
   assert.ok(admin.links.some((r)=>r.kind==='educational_diagram'&&r.author&&r.licenseUrl));
   const blocked=new VehicleTechnicalLibrary({
-    one:async()=>({verification:'pending'}),query:async()=>[],
+    one:async()=>({roles:['master'],repair_approved:false,workshop_approved:false}),query:async()=>[],
   } as any);
-  await assert.rejects(blocked.professional(master),/подтверждённый профиль/);
+  await assert.rejects(blocked.professional(master),/подтверждённым мастерам/);
 });
 
 test('no local GPS or offline/old/busy performer means no advertising a nearby specialist',async()=>{
