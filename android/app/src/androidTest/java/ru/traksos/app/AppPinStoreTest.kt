@@ -62,28 +62,45 @@ class AppPinStoreTest {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         assertTrue(AppPinStore.enabled(ctx))
         assertEquals("account-A", AppPinStore.owner(ctx))
-        assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "4321"))
-        assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "4321", "account-A"))
+        assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "0123", "account-A"))
+    }
+
+    @Test fun verifierCannotUnlockOrConsumeAttemptsForAnotherSessionAccount() {
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+        assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "9999", "account-A"))
+        assertEquals(1, p.getInt("failures", 0))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-B"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "9999", "account-B"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", ""))
+        assertEquals(1, p.getInt("failures", 0))
+        assertEquals("account-A", AppPinStore.owner(ctx))
+        assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "0123", "account-A"))
+        assertEquals(0, p.getInt("failures", 0))
+        assertTrue(AppPinStore.create(ctx, "6543", "account-B"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
+        assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "6543", "account-B"))
     }
 
     @Test fun wrongAttemptsPersistAndForceReauthentication() {
         assertTrue(AppPinStore.create(ctx, "9341", "account-B"))
         for (tryNumber in 1..4)
-            assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "0000"))
-        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0000"))
+            assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "0000", "account-B"))
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0000", "account-B"))
         assertTrue(AppPinStore.waitSeconds(ctx) > 0)
-        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "9341"))
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "9341", "account-B"))
 
         // Test-only clock simulation: clear lockout expiration, not the failed count.
         // The 15-attempt limit must survive restarts/cooldown resets.
         val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
         for (tryNumber in 6..15) {
             assertTrue(p.edit().putLong("blockedUntilElapsed", android.os.SystemClock.elapsedRealtime() - 1L).commit())
-            val result = AppPinStore.verify(ctx, "0000")
+            val result = AppPinStore.verify(ctx, "0000", "account-B")
             if (tryNumber < 15) assertEquals(AppPinStore.Check.COOLDOWN, result)
             else assertEquals(AppPinStore.Check.RELOGIN, result)
         }
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "9341"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "9341", "account-B"))
     }
 
     @Test fun clearingPinAlsoInvalidatesOldKeystoreVerifier() {
@@ -91,31 +108,31 @@ class AppPinStoreTest {
         AppPinStore.clear(ctx)
         assertFalse(AppPinStore.enabled(ctx))
         assertNull(AppPinStore.owner(ctx))
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "1234"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "1234", "account-A"))
         assertTrue(AppPinStore.create(ctx, "6543", "account-C"))
         assertEquals("account-C", AppPinStore.owner(ctx))
-        assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "1234"))
-        assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "6543"))
+        assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "1234", "account-C"))
+        assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "6543", "account-C"))
     }
     @Test fun changingAccountMetadataCannotUnlockWithOriginalPin() {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
         assertTrue(p.edit().putString("ownerId", "account-B").commit())
-        assertNotEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "0123"))
+        assertNotEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "0123", "account-B"))
     }
 
     @Test fun oldUnboundVerifierRequiresAccountRecovery() {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
         assertTrue(p.edit().remove("version").commit())
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
     }
 
     @Test fun malformedVerifierFailsClosed() {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
         assertTrue(p.edit().putString("salt", "AAAA").commit())
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
     }
 
     @Test fun concurrentWrongAttemptsCannotLoseRetryCounts() {
@@ -126,7 +143,7 @@ class AppPinStoreTest {
             val results = (1..5).map {
                 pool.submit<AppPinStore.Check> {
                     start.await()
-                    AppPinStore.verify(ctx, "9999")
+                    AppPinStore.verify(ctx, "9999", "account-A")
                 }
             }
             start.countDown()
@@ -135,7 +152,7 @@ class AppPinStoreTest {
             assertEquals(1, checks.count { it == AppPinStore.Check.COOLDOWN })
             val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
             assertEquals(5, p.getInt("failures", 0))
-            assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123"))
+            assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123", "account-A"))
         } finally {
             pool.shutdownNow()
         }
@@ -143,19 +160,19 @@ class AppPinStoreTest {
 
     @Test fun malformedInputConsumesAnAttempt() {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
-        repeat(4) { assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "bad")) }
-        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "bad"))
-        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123"))
+        repeat(4) { assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "bad", "account-A")) }
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "bad", "account-A"))
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123", "account-A"))
     }
 
     @Test fun corruptedRetryMetadataRequiresFullLoginInsteadOfCrashing() {
         val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         assertTrue(p.edit().putString("failures", "broken").commit())
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         assertTrue(p.edit().putInt("failures", -1).commit())
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
     }
 
     @Test fun damagedDeadlineAndAccountMetadataDoNotUnlock() {
@@ -163,20 +180,20 @@ class AppPinStoreTest {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         assertTrue(p.edit().putString("blockedUntil", "broken").commit())
         assertEquals(0L, AppPinStore.waitSeconds(ctx))
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
         assertTrue(p.edit().putInt("ownerId", 123).commit())
         assertNull(AppPinStore.owner(ctx))
-        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123", "account-A"))
     }
 
     @Test fun legacyOrRebootedDeadlineRearmsInsteadOfUnlocking() {
         assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
-        repeat(4) { assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "9999")) }
-        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "9999"))
+        repeat(4) { assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "9999", "account-A")) }
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "9999", "account-A"))
         val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
         assertTrue(p.edit().putInt("blockedBootCount", -1).putLong("blockedUntilElapsed", 0L).commit())
-        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123"))
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123", "account-A"))
         assertTrue(AppPinStore.waitSeconds(ctx) > 0L)
         assertEquals(5, p.getInt("failures", 0))
     }

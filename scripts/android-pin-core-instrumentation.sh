@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run against the same isolated unsigned debug APK after existing runtime checks.
 set -Eeuo pipefail
-expected=12
+expected=13
 test -s apk-test/app-debug-androidTest.apk
 adb install -r apk-test/app-debug-androidTest.apk
 adb shell am instrument -w -r -e class ru.traksos.app.AppPinStoreTest \

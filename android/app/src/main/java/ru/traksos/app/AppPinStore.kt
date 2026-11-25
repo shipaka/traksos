@@ -80,10 +80,11 @@ object AppPinStore {
         } catch (_: Exception) { storageFailed = true; false }
     }
 
-    /** Wrong attempts are persisted across process restarts. */
+    /** Wrong attempts persist across process restarts. The caller MUST supply
+     * the current authenticated account, never the owner read from this store. */
     @Synchronized
-    fun verify(ctx: Context, pin: String): Check = try {
-        verifyStored(ctx, pin)
+    fun verify(ctx: Context, pin: String, expectedAccountId: String): Check = try {
+        verifyStored(ctx, pin, expectedAccountId)
     } catch (_: Exception) {
         // A malformed preference type or inaccessible store is never an unlock.
         storageFailed = true
@@ -126,7 +127,7 @@ object AppPinStore {
         return (deadline - now).coerceAtLeast(0L)
     }
 
-    private fun verifyStored(ctx: Context, pin: String): Check {
+    private fun verifyStored(ctx: Context, pin: String, expectedAccountId: String): Check {
         val p = prefs(ctx)
         val failuresBefore = p.getInt("failures", 0)
         if (storageFailed || !enabled(ctx) || failuresBefore !in 0..14) return Check.RELOGIN
@@ -134,6 +135,9 @@ object AppPinStore {
         // not a silent upgrade that could legitimise modified account metadata.
         if (p.getInt("version", 0) != VERIFIER_VERSION) return Check.RELOGIN
         val accountId = owner(ctx)?.takeIf { it.isNotBlank() } ?: return Check.RELOGIN
+        // A retained verifier from another account cannot unlock this session
+        // or consume/reset its owner's persistent retry budget.
+        if (expectedAccountId.isBlank() || accountId != expectedAccountId) return Check.RELOGIN
         if (remainingDelay(ctx, failuresBefore, rearm = true) > 0L) return Check.COOLDOWN
         val match = pinFormat.matches(pin) && try {
             val salt = Base64.decode(p.getString("salt", "") ?: "", Base64.NO_WRAP)
