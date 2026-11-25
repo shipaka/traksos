@@ -1,6 +1,8 @@
 package ru.traksos.app
 
 import android.content.Context
+import android.os.SystemClock
+import android.provider.Settings
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -26,6 +28,8 @@ object AppPinStore {
     // A failed persistent write must not permit further attempts in this process.
     private var storageFailed = false
     private val pinFormat = Regex("^[0-9]{4}$")
+    private const val ELAPSED_DEADLINE = "blockedUntilElapsed"
+    private const val BOOT_COUNT = "blockedBootCount"
 
     enum class Check { OK, WRONG, COOLDOWN, RELOGIN }
 
@@ -68,6 +72,8 @@ object AppPinStore {
                 .putString("ownerId", accountId)
                 .putInt("failures", 0)
                 .remove("blockedUntil")
+                .remove(ELAPSED_DEADLINE)
+                .remove(BOOT_COUNT)
                 .commit()
             storageFailed = !saved
             saved
@@ -84,6 +90,42 @@ object AppPinStore {
         Check.RELOGIN
     }
 
+    private fun delayMillis(failures: Int): Long = when {
+        failures in 10..14 -> 300_000L
+        failures in 5..9 -> 30_000L
+        else -> 0L
+    }
+
+    private fun bootCount(ctx: Context): Int =
+        Settings.Global.getInt(ctx.contentResolver, Settings.Global.BOOT_COUNT, -1)
+
+    // elapsedRealtime includes deep sleep and is unaffected by wall clock changes.
+    // On reboot, or when upgrading a legacy wall-clock deadline, conservatively
+    // start a fresh full delay. Never compare elapsed timestamps across boots.
+    private fun remainingDelay(ctx: Context, failures: Int, rearm: Boolean): Long {
+        val p = prefs(ctx)
+        val legacy = p.getLong("blockedUntil", 0L) // validate old metadata type
+        val delay = delayMillis(failures)
+        val deadline = p.getLong(ELAPSED_DEADLINE, -1L)
+        val savedBoot = p.getInt(BOOT_COUNT, -1)
+        if (legacy < 0L || deadline < -1L || savedBoot < -1)
+            error("Invalid cooldown metadata")
+        if (delay == 0L) return 0L
+        val boot = bootCount(ctx)
+        if (boot < 0) error("Boot count unavailable; full account login required")
+        val now = SystemClock.elapsedRealtime()
+        if (savedBoot != boot || deadline == -1L) {
+            if (rearm && !p.edit().putLong(ELAPSED_DEADLINE, now + delay)
+                    .putInt(BOOT_COUNT, boot).remove("blockedUntil").commit()) {
+                storageFailed = true
+                error("Cooldown write failed")
+            }
+            return delay
+        }
+        if (deadline > now + delay) error("Invalid monotonic cooldown deadline")
+        return (deadline - now).coerceAtLeast(0L)
+    }
+
     private fun verifyStored(ctx: Context, pin: String): Check {
         val p = prefs(ctx)
         val failuresBefore = p.getInt("failures", 0)
@@ -92,7 +134,7 @@ object AppPinStore {
         // not a silent upgrade that could legitimise modified account metadata.
         if (p.getInt("version", 0) != VERIFIER_VERSION) return Check.RELOGIN
         val accountId = owner(ctx)?.takeIf { it.isNotBlank() } ?: return Check.RELOGIN
-        if (System.currentTimeMillis() < p.getLong("blockedUntil", 0L)) return Check.COOLDOWN
+        if (remainingDelay(ctx, failuresBefore, rearm = true) > 0L) return Check.COOLDOWN
         val match = pinFormat.matches(pin) && try {
             val salt = Base64.decode(p.getString("salt", "") ?: "", Base64.NO_WRAP)
             val target = Base64.decode(p.getString("mac", "") ?: "", Base64.NO_WRAP)
@@ -101,32 +143,36 @@ object AppPinStore {
             MessageDigest.isEqual(target, computed)
         } catch (_: Exception) { return Check.RELOGIN }
         if (match) {
-            if (!p.edit().putInt("failures", 0).remove("blockedUntil").commit()) {
+            if (!p.edit().putInt("failures", 0).remove("blockedUntil")
+                    .remove(ELAPSED_DEADLINE).remove(BOOT_COUNT).commit()) {
                 storageFailed = true
                 return Check.RELOGIN
             }
             return Check.OK
         }
-        val failures = p.getInt("failures", 0) + 1
-        val wait = when {
-            failures >= 15 -> 0L // Require full password/SMS recovery.
-            failures >= 10 -> 5 * 60_000L
-            failures >= 5 -> 30_000L
-            else -> 0L
-        }
-        if (!p.edit().putInt("failures", failures)
-                .putLong("blockedUntil", System.currentTimeMillis() + wait).commit()) {
+        val failures = failuresBefore + 1
+        val wait = delayMillis(failures)
+        val edit = p.edit().putInt("failures", failures).remove("blockedUntil")
+        if (wait > 0L) {
+            val boot = bootCount(ctx)
+            if (boot < 0) {
+                // Cannot establish a trustworthy cooldown: persist a hard stop.
+                if (!edit.putInt("failures", 15).commit()) storageFailed = true
+                return Check.RELOGIN
+            }
+            edit.putLong(ELAPSED_DEADLINE, SystemClock.elapsedRealtime() + wait)
+                .putInt(BOOT_COUNT, boot)
+        } else edit.remove(ELAPSED_DEADLINE).remove(BOOT_COUNT)
+        if (!edit.commit()) {
             storageFailed = true
             return Check.RELOGIN
         }
         return if (failures >= 15) Check.RELOGIN else if (wait > 0) Check.COOLDOWN else Check.WRONG
     }
 
+    @Synchronized
     fun waitSeconds(ctx: Context): Long = try {
-        val deadline = prefs(ctx).getLong("blockedUntil", 0L)
-        val now = System.currentTimeMillis()
-        if (deadline <= now) 0L
-        else ((deadline - now).coerceAtMost(300_000L) + 999L) / 1000L
+        (remainingDelay(ctx, prefs(ctx).getInt("failures", 0), rearm = false) + 999L) / 1000L
     } catch (_: Exception) { 0L }
 
     @Synchronized
