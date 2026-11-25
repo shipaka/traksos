@@ -49,4 +49,18 @@ for(const service of ['СТО','Консультация по телефону']
   assert.ok(!/Выехал/.test(customerStageFor(service,5).status),
     'Non-road customer service must not simulate departure');
 }
+const insuranceInput={vehicle:'Учебный грузовик',problem:'Учебное ОСАГО',service:'Страхование'};
+assert.equal(nextPracticeStage('customer',5,insuranceInput),5,'Insurance selection must be explicit');
+assert.equal(nextPracticeStage('customer',5,{...insuranceInput,chosenOffer:'real-id'}),5);
+for(const chosenOffer of ['demo-a','demo-b']){
+  for(let index=0;index<practiceStages.customer.length;index++){
+    assert.equal(nextPracticeStage('customer',index,{...insuranceInput,chosenOffer}),index===8?0:index+1);
+    const stage=customerStageFor('Страхование',index);
+    assert.ok(stage.title&&stage.explanation&&stage.button&&stage.status);
+    assert.ok(!/^(Выехал|На месте)$/.test(stage.status),'Insurance must not simulate a road call');
+  }
+}
+assert.match(customerStageFor('Страхование',5).status,/Предложения/);
+assert.match(customerStageFor('Страхование',7).status,/Полис отправлен/);
+assert.match(customerStageFor('Страхование',8).status,/Демо завершено/);
 console.log('PASS training-demo-kinds: all role state machines, courier hand-off, inspection, no external actions');
