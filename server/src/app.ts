@@ -19,6 +19,7 @@ import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sa
 import { ReferralService } from './services/referral.ts';
 import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
 import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
+import { readTechBaseIllustrations } from './domain/techbaseIllustrated.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { OrderPhotosService } from './services/orderPhotos.ts';
@@ -185,7 +186,10 @@ export function createApp(d: Deps) {
       throw bad('audience', 'Неизвестный раздел ТехБазы');
     if (requested && !allowed.includes(requested as 'driver' | 'master'))
       throw forbidden('Профессиональная ТехБаза требует подтверждённого мастера или СТО');
-    return { audiences: allowed, documents: techBaseForRoles(effectiveRoles, requested ?? undefined) };
+    // Only explicit authorized professional requests receive the local image corpus.
+    const illustrated = requested === 'master' && allowed.includes('master') && c.user.status === 'active'
+      ? await readTechBaseIllustrations() : undefined;
+    return { audiences: allowed, documents: techBaseForRoles(effectiveRoles, requested ?? undefined), ...(illustrated ? { illustrated } : {}) };
   });
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];

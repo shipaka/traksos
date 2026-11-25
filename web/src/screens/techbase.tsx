@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { get } from '../api.ts';
 import { useMe } from '../ui.tsx';
 import { VehicleTechnicalSources } from './VehicleTechnicalSources.tsx';
+import { TechBaseIllustrated, type IllustratedPayload } from './TechBaseIllustrated.tsx';
 
 type Audience = 'driver' | 'master';
 type TechDoc = {
@@ -11,7 +12,7 @@ type TechDoc = {
   access:'open'|'portal'; applicability:'brand'|'model'|'component'|'vin';
   warning:string; reviewedOn:string;
 };
-type Payload = { audiences: Audience[]; documents: TechDoc[] };
+type Payload = { audiences: Audience[]; documents: TechDoc[]; illustrated?:IllustratedPayload };
 type GarageVehicle = { id:string; brand:string; model?:string|null; year?:number|null; plate?:string|null; catalog_category?:string|null; catalog_brand_key?:string|null; };
 const KIND_LABELS = { all:'Все типы', truck:'Грузовики', trailer:'Прицепы', component:'Узлы и агрегаты' };
 const TYPE_LABELS: Record<string,string> = { operation:'Эксплуатация',maintenance:'ТО',diagnostics:'Диагностика',wiring:'Схемы',parts:'Запчасти',service:'Ремонт' };
@@ -118,6 +119,7 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
     </section>
     {error && <div className="banner warn" role="alert">{error}</div>}
     {!payload && !error && <div className="card" role="status">Загружаем каталог производителя…</div>}
+    {isMaster && payload?.audiences.includes('master') && payload.illustrated && <TechBaseIllustrated key={me?.id} data={payload.illustrated}/>}
     {payload && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>
       {docs.length===0 && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
@@ -138,6 +140,6 @@ export function TechBase({ audience, initialVehicleId = '' }: { audience:Audienc
       makeKey={chosen?.catalog_brand_key??selectedMake.toLowerCase()}
       category={chosen?.catalog_category==='trailer'||kind==='trailer'?'trailer':'truck'}
       query={query} vehicleId={!isMaster?chosen?.id:undefined}/>
-    <div className="techbase-footer-note">TrakSOS показывает ссылки на публикации производителей, не хранит копии без разрешения и не подтверждает применимость автоматически. Инструкции по критически важным тормозным и электрическим системам предназначены для квалифицированных специалистов.</div>
+    <div className="techbase-footer-note">TrakSOS показывает оригинальные справочные иллюстрации и ссылки на публикации производителей, не хранит копии OEM без разрешения и не подтверждает применимость автоматически. Инструкции по критически важным тормозным и электрическим системам предназначены для квалифицированных специалистов.</div>
   </main>;
 }
