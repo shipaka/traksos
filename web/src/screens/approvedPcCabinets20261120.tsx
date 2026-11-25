@@ -9,6 +9,7 @@ import {get, onEvent, post} from '../api.ts';
 import {insurancePresentation, insuranceQueueGroup, type InsuranceQueueGroup} from '../insurancePresentation.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
 import {useAction, useLoad, useMe} from '../ui.tsx';
+import {usePrivateRead} from './privateRead20261124.ts';
 import {STATUS, SERVICES} from '../dict.ts';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import {FeatureArtwork, type FeatureArtworkKey} from '../featureArtwork20261122.tsx';
@@ -213,6 +214,17 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
 }
 function CustomerDesk({owner}:{owner:boolean}){
   const {me}=useMe();
+  const rules=usePrivateRead<{allow?:Record<string,boolean>}|null>(
+    ()=>me?.owner_id?get('/api/fleet/rules'):Promise.resolve(null),
+    'pc-fleet-rules:'+(me?.id??'guest')+':'+(me?.owner_id??''),
+    e=>e.type==='fleet'||e.type==='connection_restored');
+  const restricted=(permission:string)=>!!me?.owner_id&&
+    (rules.loading||!!rules.error||!rules.data||rules.data.allow?.[permission]===false);
+  const assistance=[
+    ['tow','#/new/tow','Эвакуатор'],
+    ['service','#/services','Грузовые СТО'],
+    ['consult','#/new/consult','Консультация по телефону'],
+  ] as const;
   const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order');
   const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order');
   const active=(orders.data||[]).filter((o:any)=>activeStates.has(o.status));
@@ -252,6 +264,14 @@ function CustomerDesk({owner}:{owner:boolean}){
           <p>Ждут решения владельца: <strong>{fleet.data?fleet.data.pending?.length||0:'—'}</strong></p>
           <a className="approved-pc-small-link" href="#/fleet">Открыть контроль доступа →</a></>
           :<a className="approved-pc-small-link" href="#/garage">Моя техника →</a>}
+        <nav aria-label="Услуги помощи" className="approved-pc-customer-services">
+          <a className="approved-pc-small-link" href="#/sos">Помощь на дороге · SOS →</a>
+          {me?.owner_id&&rules.error&&<LoadingBlock error={rules.error} retry={rules.reload}/>}
+          {assistance.map(([permission,href,label])=>restricted(permission)
+            ?<span key={permission} className="approved-pc-small-link" aria-disabled="true">{label} · {rules.loading?'Проверяем доступ…':rules.error?'Доступ не подтверждён':'Требуется разрешение владельца'}</span>
+            :<a key={permission} className="approved-pc-small-link" href={href}>{label} →</a>)}
+          <a className="approved-pc-small-link" href="#/orders">Заявки и история →</a>
+        </nav>
       </Pane><Bot message={owner?'Помогу с историей техники и заявками.':'Помогу с неисправностью или заявкой.'}/></>}/>
     {owner&&<div className="approved-pc-fleet-footer">
       <Pane title={'Все активные заявки автопарка · '+(orders.data?active.length:'—')}>
