@@ -110,13 +110,10 @@ export function Loading({ error }: { error?: string | null }) {
   return <div className="empty">{error ?? 'Загружаю…'}</div>;
 }
 
-/** Сколько переходов сделано внутри приложения: есть куда вернуться — «Назад» ведёт туда, откуда пришли */
-let inAppSteps = 0;
-if (typeof window !== 'undefined') window.addEventListener('hashchange', () => { inAppSteps++; });
-
+/** Return to the caller's explicit in-app parent, never an unrelated
+ * browser entry (including replaced auth routes or another account). */
 export function Back({ to, label = 'Назад' }: { to: string; label?: string }) {
-  // Назад — туда, откуда пришли (уведомления, оферта и т. п. открываются из разных мест); зашли по ссылке — на `to`
-  return <a href={'#/' + to} className="note" style={{ textDecoration: 'none' }} onClick={(e) => { if (inAppSteps > 0) { e.preventDefault(); inAppSteps -= 2; history.back(); } }}>← {label}</a>;
+  return <a href={'#/' + to.replace(/^\//, '')} className="note" style={{ textDecoration: 'none' }}>← {label}</a>;
 }
 
 export function Chips<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { id: T; name: string }[] }) {
