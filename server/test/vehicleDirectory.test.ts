@@ -188,3 +188,61 @@ test('parallel missing-model submissions respect the per-account daily quota',as
     assert.ok(!own.body.some((r:any)=>r.id===independent.body.id));
   }finally{await t.close();}
 });
+
+test('legacy catalog link preserves identity and access, audits once, and clears stale keys',async()=>{
+  const t=await setup();
+  try{
+    const owner=await t.login('+79990002041','client');
+    const other=await t.login('+79990002042','client');
+    const driver=await t.login('+79990002043','client');
+    const legacy=await t.api('POST','/api/vehicles',{
+      brand:'Renault',model:'Premium',year:2010,plate:'А123АА178',
+    },owner.token);
+    assert.equal(legacy.status,200,JSON.stringify(legacy.body));
+    const id=legacy.body.id;
+    await t.db.query('update vehicles set vin=$2 where id=$1',[id,'VF611111111111111']);
+    const qr=legacy.body.qr_code;
+    assert.ok(qr);
+    assert.equal((await t.api('POST','/api/qr/'+qr+'/join',{},driver.token)).status,200);
+    const url='/api/vehicle-reference/vehicles/'+id+'/catalog';
+    const choice={category:'truck',brandKey:'renault',modelKey:'premium'};
+    assert.equal((await t.api('PATCH',url,choice,other.token)).status,404);
+    assert.equal((await t.api('PATCH',url,choice,driver.token)).status,403);
+    assert.equal((await t.api('PATCH',url,{category:'truck',brandKey:'man',modelKey:'tgx'},owner.token)).status,409);
+    assert.equal((await t.api('PATCH',url,{...choice,modelKey:'not-a-real-model'},owner.token)).status,400);
+    const concurrent=await Promise.all(Array.from({length:4},()=>t.api('PATCH',url,choice,owner.token)));
+    for(const r of concurrent){
+      assert.equal(r.status,200,JSON.stringify(r.body));
+      assert.equal(r.body.id,id);
+      assert.equal(r.body.brand,'Renault');
+      assert.equal(r.body.model,'Premium');
+      assert.equal(r.body.year,2010);
+      assert.equal(r.body.plate,'А123АА178');
+      assert.equal(r.body.vin,'VF611111111111111');
+      assert.equal(r.body.driver_id,driver.id);
+      assert.equal(r.body.qr_code,qr);
+      assert.equal(r.body.catalog_model_key,'premium');
+    }
+    const audit=await t.db.one<{count:number}>(
+      "select count(*)::int as count from audit_log where action='vehicle.catalog_linked' and target=$1",[id]);
+    assert.equal(audit?.count,1);
+    const driverList=await t.api('GET','/api/vehicles',undefined,driver.token);
+    assert.equal(driverList.body[0].catalog_model_key,'premium');
+    // An unrelated update must not detach the confirmed catalog.
+    await t.db.query('update vehicles set year=2011 where id=$1',[id]);
+    assert.equal((await t.db.one<any>('select catalog_model_key from vehicles where id=$1',[id]))?.catalog_model_key,'premium');
+    // A legacy on-site identity correction must never leave a wrong manual/photo.
+    await t.db.query("update vehicles set brand='MAN',model='TGX' where id=$1",[id]);
+    const corrected=await t.db.one<any>('select * from vehicles where id=$1',[id]);
+    assert.equal(corrected.catalog_category,null);
+    assert.equal(corrected.catalog_brand_key,null);
+    assert.equal(corrected.catalog_model_key,null);
+    assert.equal(corrected.catalog_source_version,null);
+    assert.equal(corrected.vin,'VF611111111111111');
+    assert.equal(corrected.driver_id,driver.id);
+    assert.equal((await t.api('PATCH',url,choice,owner.token)).status,409);
+    const relink=await t.api('PATCH',url,{category:'truck',brandKey:'man',modelKey:'tgx'},owner.token);
+    assert.equal(relink.status,200,JSON.stringify(relink.body));
+    assert.equal(relink.body.catalog_model_key,'tgx');
+  }finally{await t.close();}
+});
