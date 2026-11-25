@@ -91,3 +91,16 @@ order; the database also rejects a confirmed/completed linked intent without
 an order. No public route, production scheduler, price or payment is enabled.
 A replacement performer after cancellation requires a future explicit retry
 workflow; no automatic reassignment is introduced.
+
+## Preliminary cost acknowledgment
+
+The selected reservation revision can receive an internal preliminary tariff
+snapshot using the existing regional coverage guard, scheduled start's Moscow
+night tariff and capped client fee (including the existing personal override).
+It excludes labor duration, parts, waiting and any negotiated performer price.
+Only the owner can acknowledge the exact current snapshot; a new version or
+changed tariff requires a new preview. Acknowledgment is idempotent and is NOT
+financial consent, booking confirmation or payment. Production payment remains
+closed by the existing payment policy. Final checkout still requires current
+offers, accepted actual price, fleet limits and atomic order/reservation linkage.
+No HTTP routes or UI are enabled by this stage.

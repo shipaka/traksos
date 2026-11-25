@@ -1,6 +1,8 @@
 import type { Db, Queryable } from '../db/index.ts';
 import { bad, conflict, forbidden, notFound } from '../http/router.ts';
 import type { OrdersService } from './orders.ts';
+import type { SettingsService } from './settings.ts';
+import { plannedEstimate, type PlannedEstimateSite, type PlannedEstimateSnapshot } from '../domain/plannedEstimate.ts';
 
 type Span={startsAt:string;endsAt:string};
 type Row={
@@ -190,6 +192,51 @@ export class ReservationAgreement {
         agreement_version=agreement_version+1 where id=$1 returning *`,[id,start,end,actor.id,this.now()]))!;
       await this.event(q,next,actor.id,'performer_selected',row.status,{startsAt:start,endsAt:end});
       return next;
+    });
+  }
+  /** Preliminary tariff acknowledgment only. It never authorizes a payment,
+   * confirms capacity, creates an order or substitutes for current offers.
+   * Recompute using the exact selected time and the current tariff on every
+   * acknowledgment; future checkout must independently recheck all terms.
+   */
+  private async estimateContext(q:Queryable,row:Row,expected:number,site:PlannedEstimateSite,settings:Pick<SettingsService,'all'>){
+    this.changed(row,expected);
+    if(!row.planned_intent_id||row.status!=='selected'||row.selected_by!==row.performer_id)
+      throw conflict('planned_estimate_unavailable','Сначала мастер должен предложить время планового выезда');
+    this.future(new Date(row.starts_at));
+    await this.parties(q,row.client_id,row.performer_id);
+    const intent=await this.intentFor(q,row.planned_intent_id,row.client_id,row.performer_id);
+    const fee=await q.one<{fee_pct_override:string|null}>('select fee_pct_override from users where id=$1 for share',[row.client_id]);
+    const all=await settings.all();
+    return plannedEstimate(all,intent.service,new Date(row.starts_at),site,fee?.fee_pct_override==null?null:Number(fee.fee_pct_override));
+  }
+  async quotePlanned(actor:Actor,id:string,expected:number,site:PlannedEstimateSite,settings:Pick<SettingsService,'all'>){
+    version(expected);
+    return this.locked(id,actor,'client',async(q,row)=>{
+      const snapshot=await this.estimateContext(q,row,expected,site,settings);
+      const quote=await q.one<{id:string;snapshot:PlannedEstimateSnapshot;reservation_version:number}>(
+        `insert into planned_reservation_estimates(reservation_id,reservation_version,owner_id,snapshot)
+          values($1,$2,$3,$4::jsonb) returning id,snapshot,reservation_version`,
+        [row.id,expected,actor.id,JSON.stringify(snapshot)]);
+      if(!quote)throw new Error('Estimate snapshot missing');
+      return quote;
+    });
+  }
+  async acknowledgePlannedEstimate(actor:Actor,id:string,expected:number,quoteId:string,settings:Pick<SettingsService,'all'>){
+    version(expected);identifier(quoteId);
+    return this.locked(id,actor,'client',async(q,row)=>{
+      const quote=await q.one<{id:string;snapshot:PlannedEstimateSnapshot;acknowledged_at:Date|null}>(
+        'select id,snapshot,acknowledged_at from planned_reservation_estimates where id=$1 and reservation_id=$2 and reservation_version=$3 and owner_id=$4 for update',
+        [quoteId,row.id,expected,actor.id]);
+      if(!quote)throw notFound('Расчёт не найден');
+      const current=await this.estimateContext(q,row,expected,quote.snapshot.site,settings);
+      // JSONB key order is not stable. Compare structurally in PostgreSQL.
+      const same=await q.one<{same:boolean}>('select $1::jsonb=$2::jsonb as same',[JSON.stringify(current),JSON.stringify(quote.snapshot)]);
+      if(!same?.same)throw conflict('planned_estimate_changed','Тариф изменился — проверьте новый расчёт');
+      if(!quote.acknowledged_at){
+        await q.query('update planned_reservation_estimates set acknowledged_at=$2 where id=$1',[quoteId,this.now()]);
+      }
+      return {id:quoteId,snapshot:current,acknowledged:true,financialConsent:false,orderCreated:false};
     });
   }
   // Final client confirmation of EXACTLY the version selected by the master.
