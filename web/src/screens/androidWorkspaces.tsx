@@ -337,6 +337,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
           href={'#/order/'+current.id+(current.status==='working'?'/finance':'')}>
           {current.status==='working'?'Завершить работу и расчёт':'Открыть заявку'}
         </a>}
+        {nextStep&&<button type="button" className="and19-stage-complete is-disabled" disabled aria-label="Завершить работу — доступно после начала работы">Завершить</button>}
       </div>
       {needsRefresh&&!reconciling&&<p className="note" role="status">Проверьте текущий статус в <a href={'#/order/'+current.id}>карточке заявки</a>. Повторная отправка с рабочего стола заблокирована до изменения этапа.</p>}
       {active.length>1 && <a className="and19-row-link" href="#/work/jobs">
