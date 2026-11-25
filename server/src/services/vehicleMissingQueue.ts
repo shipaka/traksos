@@ -32,6 +32,10 @@ export class VehicleMissingQueue {
       throw bad('missing_vehicle_year', 'Неверный год');
     const note = (input.note ?? '').trim().slice(0, 1200);
     return this.db.tx(async (q) => {
+      // Serialize quota checks per account: concurrent submissions must not all
+      // observe the same count before inserting. No global queue lock.
+      const account = await q.one<{status:string}>('select status from users where id=$1 for update', [user.id]);
+      if (!account || account.status !== 'active') throw forbidden('Требуется действующий аккаунт');
       const quota = await q.one<{ count: number }>(
         "select count(*)::int as count from vehicle_catalog_missing_requests " +
         "where requested_by=$1 and created_at >= now() - interval '1 day'", [user.id]);
@@ -59,7 +63,7 @@ export class VehicleMissingQueue {
   }
 
   async queue(admin: AuthUser, status: Status | 'all' = 'new') {
-    if (!admin.roles?.includes('admin')) throw forbidden('Очередь каталога видит только администратор');
+    if (admin.status !== 'active' || !admin.roles?.includes('admin')) throw forbidden('Очередь каталога видит только администратор');
     return this.db.query<any>(
       'select r.id,r.category,r.purpose,r.proposed_make as make,r.proposed_model as model,' +
       'r.proposed_year as year,r.note,r.status,r.created_at,u.name as author ' +
@@ -68,7 +72,7 @@ export class VehicleMissingQueue {
   }
 
   async review(admin: AuthUser, id: string, status: Exclude<Status, 'new'>, note: string) {
-    if (!admin.roles?.includes('admin')) throw forbidden('Решение принимает администратор');
+    if (admin.status !== 'active' || !admin.roles?.includes('admin')) throw forbidden('Решение принимает администратор');
     const reason = checkText(note, 10, 1200);
     return this.db.tx(async (q) => {
       const request = await q.one<{ id:string;status:Status }>(
