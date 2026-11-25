@@ -333,3 +333,46 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
       'select id from audit_log where action=$1',['checkpoint.gps_retention_purged'])).length,2);
   } finally {await t.close();}
 });
+
+
+test('real HTTP: explicit checkpoint opt-in cannot expose routes outside the isolated sandbox', {timeout:90000}, async () => {
+  const previous=process.env.CHECKPOINT_EVIDENCE_API_ENABLED;
+  process.env.CHECKPOINT_EVIDENCE_API_ENABLED='true';
+  let t: Awaited<ReturnType<typeof setup>>;
+  try {
+    t=await setup();
+  } finally {
+    if(previous===undefined) delete process.env.CHECKPOINT_EVIDENCE_API_ENABLED;
+    else process.env.CHECKPOINT_EVIDENCE_API_ENABLED=previous;
+  }
+  try {
+    const health=ok(await t.api('GET','/api/health'));
+    assert.equal(health.sandbox,false);
+    const admin=await t.login('+79990000001');
+    const client=await t.login('+79998886671');
+    const worker=await t.login('+79998886672','master');
+    const id='00000000-0000-4000-8000-000000000001';
+    const routes=[
+      ['PUT','/api/orders/'+id+'/checkpoint-plan'],
+      ['GET','/api/orders/'+id+'/checkpoint'],
+      ['GET','/api/me/checkpoint-privacy'],
+      ['POST','/api/orders/'+id+'/checkpoint/gps-consent'],
+      ['POST','/api/orders/'+id+'/checkpoint/arrival'],
+      ['POST','/api/checkpoint-attempts/'+id+'/decision'],
+      ['POST','/api/admin/checkpoint-plans/'+id+'/pass-review'],
+      ['GET','/api/admin/checkpoint-attempts/'+id+'/gps'],
+      ['GET','/api/admin/checkpoint-gps/retention'],
+      ['POST','/api/admin/checkpoint-gps/retention'],
+      ['GET','/api/admin/checkpoint-gps/integrity'],
+      ['POST','/api/admin/checkpoint-gps/integrity/validate'],
+    ];
+    for(const [method,path] of routes){
+      for(const token of [undefined,client.token,worker.token,admin.token]){
+        const result=await t.api(method,path,method==='GET'?undefined:{},token);
+        assert.equal(result.status,404,method+' '+path+' must be unregistered regardless of role');
+      }
+    }
+  } finally {
+    await t.close();
+  }
+});
