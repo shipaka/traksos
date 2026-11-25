@@ -36,3 +36,24 @@ export function GuestOffers() {
     <p className="guest-info-note">Если документ ещё не опубликован, страница документа сообщит об этом. Отсутствующие юридические тексты не подменяются примерными.</p>
   </main>;
 }
+
+/** Information only: never manufacture an APK or a RuStore listing. */
+export function GuestAppInfo() {
+  return <main className="guest-info-page">
+    <div className="guest-info-top"><a href="#/">← Главная</a><span>МОБИЛЬНОЕ ПРИЛОЖЕНИЕ</span></div>
+    <section className="guest-info-hero">
+      <span className="guest-info-overline">TRAKSOS · В ТЕЛЕФОНЕ</span>
+      <h1>Мобильное приложение TrakSOS</h1>
+      <p>Заявки, связь с исполнителями, транспорт и история обращений — в личном кабинете.</p>
+      <p>Ссылка на скачивание в RuStore появится после подтверждённой публикации. Пока можно пользоваться мобильной версией сайта.</p>
+      <div className="guest-info-actions">
+        <a href="#/login">Войти</a><a href="#/register">Зарегистрироваться</a>
+      </div>
+    </section>
+    <section className="guest-info-section">
+      <h2>Доступ к сервисам</h2>
+      <p>Для оформления заявки используйте свой клиентский аккаунт. Мастера, СТО и другие исполнители подключаются отдельно.</p>
+      <a href="#/join">Хотим работать с TrakSOS →</a>
+    </section>
+  </main>;
+}
