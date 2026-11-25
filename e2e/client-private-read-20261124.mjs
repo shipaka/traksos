@@ -66,3 +66,51 @@ try{
   if(errors.length)throw Error(errors.join('; '));
   console.log('PASS client-private-read: refresh error, retry, late A->B, live event');
 }finally{await browser.close();}
+
+/** Exercise the shared production hooks, not copies of their implementations. */
+const shared=await build({
+  stdin:{sourcefile:'shared-request-hooks-entry.tsx',resolveDir:process.cwd(),loader:'tsx',contents:`
+    import React,{useState} from 'react';
+    import {createRoot} from 'react-dom/client';
+    import {useLoad,useAction,ToastProvider} from './web/src/ui.tsx';
+    window.__hooks={reads:[],writes:[]};
+    function App(){
+      const [scope,setScope]=useState('A'); window.__scope=setScope;
+      const read=useLoad(()=>new Promise((resolve,reject)=>window.__hooks.reads.push({scope,resolve,reject})),[scope]);
+      const action=useAction();
+      const submit=()=>action.run(()=>new Promise((resolve,reject)=>window.__hooks.writes.push({resolve,reject})),null);
+      window.__reload=read.reload;window.__submit=submit;
+      return <div><span id="data">{read.data??''}</span><span id="err">{read.error??''}</span><span id="busy">{String(action.busy)}</span></div>;
+    }
+    createRoot(document.getElementById('root')).render(<ToastProvider><App/></ToastProvider>);
+  `},write:false,bundle:true,platform:'browser',format:'iife',jsx:'automatic',
+  plugins:[{name:'shared-hook-transport-stub',setup(b){
+    b.onResolve({filter:/^\.\/api\.ts$/},a=>({path:a.path,namespace:'hook-mock'}));
+    b.onResolve({filter:/^\.\/screens\/offers\.tsx$/},a=>({path:a.path,namespace:'hook-mock'}));
+    b.onLoad({filter:/./,namespace:'hook-mock'},a=>({loader:'js',contents:a.path.includes('offers')?
+      'export function reportApiError(){}':'export class ApiError extends Error{};export function onEvent(){return ()=>{}}'}));
+  }}]
+});
+const sharedBrowser=await chromium.launch();
+try{
+  const p=await sharedBrowser.newPage(),errors=[];
+  p.on('pageerror',e=>errors.push(e.message));
+  await p.setContent('<div id="root"></div>');await p.addScriptTag({content:shared.outputFiles[0].text});
+  const count=(kind,n)=>p.waitForFunction(([k,n])=>window.__hooks[k].length===n,[kind,n]);
+  const value=(selector,expected)=>p.waitForFunction(([s,v])=>document.querySelector(s)?.textContent===v,[selector,expected]);
+  await count('reads',1);
+  await p.evaluate(()=>{void window.__reload();});await count('reads',2);
+  await p.evaluate(()=>window.__hooks.reads[1].resolve('latest'));await value('#data','latest');
+  await p.evaluate(()=>window.__hooks.reads[0].reject(Error('obsolete error')));
+  await value('#err','');await value('#data','latest');
+  await p.evaluate(()=>{void window.__reload();});await count('reads',3);
+  await p.evaluate(()=>window.__scope('B'));await count('reads',4);
+  await p.evaluate(()=>window.__hooks.reads[3].resolve('B'));await value('#data','B');
+  await p.evaluate(()=>window.__hooks.reads[2].resolve('old A'));await value('#data','B');
+  await p.evaluate(()=>{void window.__submit();void window.__submit();});await count('writes',1);await value('#busy','true');
+  await p.evaluate(()=>window.__hooks.writes[0].reject(Error('network')));await value('#busy','false');
+  await p.evaluate(()=>{void window.__submit();void window.__submit();});await count('writes',2);
+  await p.evaluate(()=>window.__hooks.writes[1].resolve('ok'));await value('#busy','false');
+  if(errors.length)throw Error(errors.join('; '));
+  console.log('PASS shared request hooks: stale success/error, scope change, double-submit, explicit retry');
+}finally{await sharedBrowser.close();}
