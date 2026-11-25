@@ -150,6 +150,16 @@ try{
   await page.waitForTimeout(30);
   assert(await compose.inputValue()==='Message from B','Failed POST discarded user draft');
   assert(await counts('POST',postPath)===1,'Failed POST was silently retried');
+  const originalReply=await page.evaluate(()=>window.__supportMock.calls.find(x=>x.method==='POST'&&x.path==='/api/support/ticket-1/messages').body);
+  assert(typeof originalReply.requestKey==='string'&&originalReply.requestKey.length===36,'Reply must carry a UUID');
+  assert(await compose.isDisabled(),'Unconfirmed reply must retain its original payload');
+  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await wait('POST',postPath,2);
+  const repeatedReply=await page.evaluate(()=>window.__supportMock.calls.filter(x=>x.method==='POST'&&x.path==='/api/support/ticket-1/messages')[1].body);
+  assert(JSON.stringify(repeatedReply)===JSON.stringify(originalReply),'Explicit retry changed the original payload');
+  await finish('POST',postPath,1,'reject','still offline');
+  await page.getByRole('button',{name:'Повторить',exact:true}).waitFor();
+
 
   await page.evaluate(()=>window.__setSupportMe({id:'account-C',roles:['client']}));
   await wait('GET',thread,5);
