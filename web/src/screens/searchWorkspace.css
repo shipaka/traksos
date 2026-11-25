@@ -28,6 +28,7 @@
   .search-workspace .radar .sweep {
     background:conic-gradient(from 0deg,transparent 0deg,transparent 284deg,#f0ad3830 345deg,#ffb643a0 359deg,transparent 360deg);
     animation:traksos-search-sweep 8s linear infinite;
+    animation-delay:var(--search-sweep-delay,0s);
     transform-origin:center;
   }
   .app:not(.guest-app) .search-workspace .radar .core,
