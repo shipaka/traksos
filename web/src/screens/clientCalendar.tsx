@@ -10,7 +10,7 @@ type CalendarItem={
   day:string; brand:string|null; model:string|null;
   requested_time:string|null; confirmed_time:string|null;
   starts_at:string|null; ends_at:string|null; order_id:string|null;
-  confirmation:'pending'|'confirmed'|'cancelled'|'declined'|'completed';
+  confirmation:'pending'|'confirmed'|'in_progress'|'ready'|'invoiced'|'disputed'|'cancelled'|'declined'|'completed';
 };
 type CalendarResponse={timezone:string;from:string;to:string;items:CalendarItem[];truncated:boolean};
 const TZ='Europe/Moscow';
@@ -36,15 +36,15 @@ function intervalLabel(instant:string|null){
   return Number.isFinite(d.getTime())?intervalFormatter.format(d):'';
 }
 const stateNames:Record<CalendarItem['confirmation'],string>={
-  pending:'Ожидает подтверждения',confirmed:'Подтверждено',cancelled:'Отменено',declined:'Отклонено',completed:'Завершено',
+  pending:'Ожидает подтверждения',confirmed:'Подтверждено',in_progress:'Машина в СТО',ready:'Работы завершены',invoiced:'Счёт выставлен',disputed:'Спор по счёту',cancelled:'Отменено',declined:'Отклонено',completed:'Завершено',
 };
 function timeLabel(item:CalendarItem){
   if(item.kind==='roadside'){
     const from=intervalLabel(item.starts_at),to=intervalLabel(item.ends_at);
     return from&&to?(item.confirmation==='confirmed'?'Резерв: ':'Интервал: ')+from+' — '+to:'Время не указано';
   }
-  if(item.confirmation==='confirmed')
-    return item.confirmed_time?'Подтверждённое время: '+item.confirmed_time:'Дата подтверждена, время не указано';
+  if(['confirmed','in_progress','ready','invoiced','disputed','completed'].includes(item.confirmation))
+    return item.confirmed_time?'Согласованное время записи: '+item.confirmed_time:'Дата записи, согласованное время не указано';
   return item.requested_time?'Желаемое время: '+item.requested_time:'Время не указано';
 }
 
