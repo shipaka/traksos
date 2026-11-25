@@ -644,7 +644,7 @@ export function createApp(d: Deps) {
       enabled:z.boolean(),reason:z.string().trim().min(3).max(500),
     }),c.body)));
 
-  r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
+  r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.user, c.query.get('status') === 'closed' ? 'closed' : 'open'));
   r.get('/api/me/referral', true, (c: AuthedCtx) => referral.mine(c.user));
   // Only the actor's own financial conditions: never expose an executor's fee
   // through the client-facing pricing API or the economics explanation.
