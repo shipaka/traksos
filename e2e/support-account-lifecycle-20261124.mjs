@@ -205,6 +205,23 @@ try{
     'Late previous-account ticket creation redirected the new user');
   await finish('GET','/api/support/topics',2,'resolve',['Другое']);
 
+  // A lost standalone reply must keep its original UUID and immutable draft.
+  await page.getByRole('button',{name:'Другое'}).click();
+  await page.getByRole('textbox',{name:'Описание проблемы'}).fill('Синтетическое обращение с потерянным ответом');
+  await page.getByRole('button',{name:'Отправить'}).click();
+  await wait('POST','/api/support',2);
+  const request=await page.evaluate(()=>window.__supportMock.calls.filter(x=>x.method==='POST'&&x.path==='/api/support')[1].body);
+  assert(typeof request.requestKey==='string'&&request.requestKey.length===36,'Missing standalone request UUID');
+  await finish('POST','/api/support',1,'reject',Error('lost reply').message);
+  await page.getByRole('button',{name:'Повторить отправку'}).waitFor();
+  assert(await page.getByRole('textbox',{name:'Описание проблемы'}).isDisabled(),'Uncertain payload remained editable');
+  await page.getByRole('button',{name:'Повторить отправку'}).click();
+  await wait('POST','/api/support',3);
+  const retry=await page.evaluate(()=>window.__supportMock.calls.filter(x=>x.method==='POST'&&x.path==='/api/support')[2].body);
+  assert(JSON.stringify(retry)===JSON.stringify(request),'Retry must reuse the same request and payload');
+  await finish('POST','/api/support',2,'resolve',{id:'confirmed-ticket'});
+  await page.waitForFunction(()=>location.hash==='#/support/confirmed-ticket');
+
   // The notifications screen must forget A's cached private inbox.
   await page.evaluate(()=>{
     window.__setSupportMe({id:'account-A',roles:['client']});
