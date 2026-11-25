@@ -3,9 +3,10 @@ import {build} from 'esbuild';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 const bundle=await build({stdin:{contents:`
-  import {logoutSession} from './web/src/sessionLogout.ts';
-  import {setToken,getToken} from './web/src/api.ts';
-  window.testLogout=logoutSession;window.setSessionToken=setToken;window.getSessionToken=getToken;
+  import {setToken,getToken,logoutSession} from './web/src/api.ts';
+  import {native} from './web/src/native.ts';
+  window.testLogout=()=>logoutSession(origin=>{void native.setSession(origin,null).catch(()=>{});});
+  window.setSessionToken=setToken;window.getSessionToken=getToken;
 `,resolveDir:process.cwd(),loader:'ts'},bundle:true,write:false,platform:'browser',format:'iife',define:{__API_URL__:'""'}});
 const browser=await chromium.launch();
 try{
@@ -41,6 +42,16 @@ try{
     const state=()=>page.evaluate(()=>({token:window.getSessionToken(),stored:localStorage.getItem('traksos.token'),
       identity:localStorage.getItem('traksos.offlineIdentity'),draft:localStorage.getItem('traksos.savedOrderDraft.v1'),
       pending:sessionStorage.getItem('traksos.pendingOrder'),expired:window.expired,native:window.nativeCalls,hash:location.hash}));
+    // First explicit logout, before any successful logout has warmed an
+    // additional module. It must be possible even with a failed network.
+    scenario='offline';await seed('first-offline');
+    await page.evaluate(()=>window.testLogout());
+    let firstOffline=await state();
+    assert.equal(firstOffline.token,null);assert.equal(firstOffline.stored,null);
+    assert.equal(firstOffline.hash,'#/login');assert.deepEqual(firstOffline.native,[null]);
+    assert.match(await page.evaluate(()=>window.confirmCalls.at(-1)),/Сессия на сервере/);
+    requests=0;scenario='ok';
+    await page.evaluate(()=>{window.expired=0;window.nativeCalls=[];});
     await seed('admin-A');
     await page.evaluate(()=>Promise.all([window.testLogout(),window.testLogout()]));
     let s=await state();
