@@ -417,9 +417,13 @@ export class OrdersService {
     const result = await this.db.tx(async q => {
       // Share the budget lock with driver creation: an approved order
       // becomes part of monthSpent before a subsequent gate can run.
-      const account = await q.one('select id from users where id=$1 for no key update', [owner.id]);
+      const account = await q.one(`select id from users where id=$1 and status='active' and deleted_at is null
+        and owner_id is null and 'client'=any(roles) and not ('driver'=any(roles))
+        for no key update`, [owner.id]);
+      if (!account || !owner.roles.includes('client') || owner.roles.includes('driver') || owner.owner_id)
+        throw notFound('Заявка не найдена');
       const o = await q.one('select * from orders where id=$1 and client_id=$2 for update', [orderId, owner.id]);
-      if (!account || !o) throw notFound('Заявка не найдена');
+      if (!o) throw notFound('Заявка не найдена');
       if (o.status !== 'awaiting_owner') {
         const decisions = await q.query<{ type: string; data: any }>(
           "select type,data from order_events where order_id=$1 and actor_id=$2 and type in ('owner_approved','owner_rejected')",
@@ -444,6 +448,7 @@ export class OrdersService {
       const recipient = o.created_by === o.client_id ? o.created_by : (await q.one<{ id: string }>(
         `select u.id from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
           where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and u.status='active' and u.deleted_at is null
             and ($3::uuid is null or v.id=$3) limit 1 for share of v,u`,
         [o.created_by, o.client_id, o.vehicle_id]))?.id;
       const ids: string[] = recipient ? [recipient] : [];
