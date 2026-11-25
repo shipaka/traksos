@@ -145,21 +145,38 @@ export class TrakBotService {
   }
 
   async clearHistory(user: AuthUser) {
-    // Explicit user's own data only. Does not affect order chats, support, cases or DTC records.
-    await this.db.query('delete from trakbot_messages where user_id=$1', [user.id]);
+    // Serialize with the final commit of concurrent replies. A deleted thread
+    // must not retain half of a user/bot pair after another request commits.
+    await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['trakbot:' + user.id]);
+      await q.query(`insert into trakbot_history_generation(user_id,generation) values($1,1)
+        on conflict(user_id) do update set generation=trakbot_history_generation.generation+1`, [user.id]);
+      await q.query('delete from trakbot_messages where user_id=$1', [user.id]);
+    });
     return { cleared: true };
   }
 
   async reply(user: AuthUser, input: string, context: VehicleContext, allowAiProcessing = false) {
     const message = maskPhones(input).text.replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, '[VIN скрыт]').trim();
     if (!message || message.length > 700) throw bad('invalid_message', 'Сообщение должно быть от 1 до 700 символов');
-    // Bounded automated traffic to avoid unlimited text-generation or DB usage.
-    const limit = await this.db.one<{ minute: number; day: number }>(
-      "select count(*) filter (where created_at > now() - interval '1 minute')::int as minute, count(*)::int as day from trakbot_messages where user_id=$1 and role='user' and created_at > now() - interval '1 day'",
-      [user.id],
-    );
-    if ((limit?.minute ?? 0) >= 10 || (limit?.day ?? 0) >= 150)
-      throw bad('trakbot_rate_limit', 'Слишком много сообщений. Попробуйте позже или обратитесь к специалисту.');
+    // Reserve a quota slot before any expensive external call. The timestamp
+    // ledger is deliberately independent of the user's deletable chat history.
+    // Hold the per-account lock only for local SQL, never for provider I/O.
+    const generation = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['trakbot:' + user.id]);
+      await q.query("delete from trakbot_request_attempts where user_id=$1 and requested_at <= clock_timestamp() - interval '1 day'", [user.id]);
+      const limit = await q.one<{ minute: number; day: number }>(
+        "select count(*) filter (where requested_at > clock_timestamp() - interval '1 minute')::int as minute, count(*)::int as day from trakbot_request_attempts where user_id=$1",
+        [user.id]);
+      if ((limit?.minute ?? 0) >= 10 || (limit?.day ?? 0) >= 150)
+        throw bad('trakbot_rate_limit', 'Слишком много сообщений. Попробуйте позже или обратитесь к специалисту.');
+      await q.query('insert into trakbot_history_generation(user_id) values($1) on conflict(user_id) do nothing', [user.id]);
+      const current = await q.one<{ generation: string }>(
+        'select generation::text as generation from trakbot_history_generation where user_id=$1', [user.id]);
+      if (!current) throw bad('trakbot_history_changed', 'История изменилась. Отправьте сообщение заново.');
+      await q.query('insert into trakbot_request_attempts(user_id) values($1)', [user.id]);
+      return current.generation;
+    });
     const codes = extractDtcCodes(message);
     const found = codes.length
       ? await this.db.query<Dtc>(
@@ -176,7 +193,7 @@ export class TrakBotService {
     let guide = isNavigationSafe ? resolveGuideDestination(message, user.roles) : null;
     if (guide && ['/tech/codes','/techbase/master','/tech/cases'].includes(guide.destination.path) && !specialist) {
       guide = { text: 'Профессиональная ТехБаза доступна подтверждённым специалистам.',
-          destination: { path: user.roles.some(r=>r==='master'||r==='service')?'/work/docs':'/techbase/driver', label: 'Доступные материалы' } };
+        destination: { path: user.roles.some(r=>r==='master'||r==='service')?'/work/docs':'/techbase/driver', label: 'Доступные материалы' } };
     }
     const previousQuestions = prior.map((r) => r.body);
     const offlineReply = !guide && codes.length === 0
@@ -207,7 +224,7 @@ export class TrakBotService {
         !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message) &&
         context.make?.trim() && context.model?.trim() && context.ecu?.trim() &&
         context.year && Number.isInteger(context.year)) {
-      if (specialist) {
+      if (await professionalTechAccess(this.db,user)) {
         const matches = await this.db.query<{
           make: string; model: string; ecu: string; code: string;
           symptoms: string; checks_performed: string; verified_fix: string;
@@ -217,8 +234,16 @@ export class TrakBotService {
         );
         if (matches.length) {
           caseNotes = '\n\nИз проверенных кейсов коллег для похожей комплектации (не заводская инструкция):\n' +
-            matches.map((x) => x.code + ' · признаки: ' + x.symptoms +
-              '; проверяли: ' + x.checks_performed + '; в том случае помогло: ' + x.verified_fix).join('\n') +
+            matches.map((x) => {
+              // Approved legacy field cases may still contain names, VINs or
+              // telephone numbers. Publishing the case never authorizes sharing
+              // the former participant's contacts in another account's chat.
+              const safe = (value: string) => maskPhones(String(value ?? '')).text
+                .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi, '[VIN скрыт]').slice(0, 500);
+              return safe(x.code) + ' · признаки: ' + safe(x.symptoms) +
+                '; проверяли: ' + safe(x.checks_performed) +
+                '; в том случае помогло: ' + safe(x.verified_fix);
+            }).join('\n') +
             '\nСравни конфигурацию и измерения до любых ремонтных действий.';
         }
       }
@@ -231,6 +256,16 @@ export class TrakBotService {
       : 'initial_triage';
     // Billing is deliberately disabled. No authorization or capture is made for an unverified answer.
     return this.db.tx(async (q) => {
+      // Clearing the thread while this response was being computed must
+      // prevent both messages from reappearing, even after a slow provider.
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['trakbot:' + user.id]);
+      const current = await q.one<{ generation: string }>(
+        'select generation::text as generation from trakbot_history_generation where user_id=$1', [user.id]);
+      if (current?.generation !== generation)
+        throw bad('trakbot_history_changed', 'История изменилась. Отправьте сообщение заново.');
+      // The model or catalogue read may have outlived the specialist's approval.
+      // Do not persist or return a reply prepared with revoked professional access.
+      if(specialist)await requireProfessionalTechAccess(q,user);
       const [userMessage] = await q.query<{ id: string; role: 'user'; body: string; created_at: string }>(
         "insert into trakbot_messages(user_id,role,body) values($1,'user',$2) returning id::text as id,role,body,created_at",
         [user.id, message],
@@ -246,15 +281,20 @@ export class TrakBotService {
   async expertLookup(user: AuthUser, query: string) {
     await requireProfessionalTechAccess(this.db,user);
     const q = query.trim().slice(0, 60);
-    if (q.length < 2) return { items: [] };
+    if (q.length < 2 || !/[\p{L}\p{N}]/u.test(q)) return { items: [] };
+    // Literal substring matching, not caller-supplied SQL LIKE wildcards:
+    // % / _ from a technician's query cannot enumerate an unrelated catalogue.
     const items = await this.db.query(
       `select protocol,make,ecu,code,title_en,title_ru,detail_en,detail_ru,
               causes,symptoms,source_url,source_license,review_state,updated_at
          from diagnostic_codes
-        where code ilike $1 or title_en ilike $2 or coalesce(title_ru,'') ilike $2
+        where left(upper(code),length($1))=upper($1)
+           or position(lower($2) in lower(title_en))>0
+           or position(lower($2) in lower(coalesce(title_ru,'')))>0
         order by case when code = upper($3) then 0 else 1 end, code limit 30`,
-      [q.toUpperCase() + '%', '%' + q.replace(/[%_\\]/g, '') + '%', q],
+      [q, q, q],
     );
+    await requireProfessionalTechAccess(this.db,user);
     return { items };
   }
 }
