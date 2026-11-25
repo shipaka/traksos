@@ -302,6 +302,64 @@ export class VehicleServiceRequests {
        order by r.created_at desc limit 100`, [user.id]);
   }
 
+  // The new queue contract leaves installed clients' legacy arrays intact.
+  // Counts and selected rows are derived from one SQL snapshot, before LIMIT.
+  async insurerPage(user:AuthUser,view:'active'|'history',page:number,search='') {
+    if(!user.roles?.includes('insurer'))throw forbidden('Нет доступа');
+    return this.serviceQueuePage(user,false,'insurance',view,page,search);
+  }
+
+  async adminPage(user:AuthUser,kind:VehicleServiceKind|null,view:'active'|'history',page:number,search='') {
+    if(!user.roles?.includes('admin'))throw forbidden('Нет доступа');
+    return this.serviceQueuePage(user,true,kind,view,page,search);
+  }
+
+  private async serviceQueuePage(user:AuthUser,staff:boolean,kind:VehicleServiceKind|null,
+      view:'active'|'history',page:number,rawSearch:string) {
+    if(!['active','history'].includes(view)||!Number.isSafeInteger(page)||page<1||page>1_000_000)
+      throw bad('invalid_queue_page','Некорректная страница заявок');
+    const pageSize=30;
+    const search=rawSearch.trim().slice(0,100).replace(/[%_\\]/g,'');
+    // Static projections: a partner never receives full staff/insurance details.
+    const projection=staff
+      ? `r.*,v.brand,v.model,v.plate,
+          exists(select 1 from partner_finance_entries p where p.request_id=r.id and p.entry_type='accrual') as has_partner_accrual`
+      : `r.id,r.kind,r.status,r.comment,r.staff_note,r.created_at,r.updated_at,
+          r.policy_expires_on,r.insurance_stage,v.brand,v.model,v.plate`;
+    const result=await this.db.one<{allowed:boolean;active:number;history:number;stages:Record<string,number>;items:Row[]}>(`
+      with actor as (
+        select id from users where id=$1 and status='active' and deleted_at is null
+          and (($2::boolean and 'admin'=any(roles)) or (not $2::boolean and 'insurer'=any(roles)))
+      ), scoped as (
+        select r.id,r.status,r.kind,r.insurance_stage,r.created_at
+          from vehicle_service_requests r join vehicles v on v.id=r.vehicle_id
+          where exists(select 1 from actor)
+            and ($2::boolean or (r.assigned_to=$1 and r.kind='insurance'))
+            and ($3::text is null or r.kind=$3)
+            and ($4::text='' or r.id::text ilike '%'||$4||'%'
+              or coalesce(v.plate,'') ilike '%'||$4||'%'
+              or coalesce(v.brand,'') ilike '%'||$4||'%'
+              or coalesce(v.model,'') ilike '%'||$4||'%')
+      ), selected as (
+        select id from scoped where (status in ('completed','rejected','cancelled'))=$5::boolean
+        order by created_at desc,id desc limit 30 offset $6
+      ), stage_counts as (
+        select coalesce(insurance_stage,'unclassified') as stage,count(*)::int as n from scoped
+        where kind='insurance' and status not in ('completed','rejected','cancelled') group by 1
+      )
+      select exists(select 1 from actor) as allowed,
+        (select count(*)::int from scoped where status not in ('completed','rejected','cancelled')) as active,
+        (select count(*)::int from scoped where status in ('completed','rejected','cancelled')) as history,
+        coalesce((select json_object_agg(stage,n) from stage_counts),'{}'::json) as stages,
+        coalesce((select json_agg(p order by p.created_at desc,p.id desc) from (
+          select ${projection} from selected s join vehicle_service_requests r on r.id=s.id
+            join vehicles v on v.id=r.vehicle_id
+        ) p),'[]'::json) as items`,
+      [user.id,staff,kind,search,view==='history',(page-1)*pageSize]);
+    if(!result?.allowed)throw forbidden('Нет доступа');
+    return {active:result.active,history:result.history,stages:result.stages,items:result.items,page,pageSize};
+  }
+
   async assignInspection(staff: AuthUser, requestId: string, partnerId: string) {
     if (!staff.roles?.some(role => ['admin','moderator'].includes(role))) throw forbidden('Нет доступа');
     return this.db.tx(async q => {
