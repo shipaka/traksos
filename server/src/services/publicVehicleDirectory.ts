@@ -128,8 +128,13 @@ export class PublicVehicleDirectory {
       : data.makes.some(r=>r[0]===makeKey&&r[2].includes(category))
         || shelf.rows.some(r=>r.makeKey===makeKey&&r.category===category);
     if (!knownMake) throw bad('catalog_make_unknown', 'Марка отсутствует в подтверждённом каталоге');
-    const matches = allModels.filter((m) => m[0] === category && m[1] === makeKey &&
-      (!term || normalizeAlias(m[3]).includes(term) || normalizeAlias(m[2]).includes(term)));
+    // Supplemental verified names take precedence over upstream entries with the
+    // same key, as in resolve(). Do not return duplicate select options/counts.
+    const byKey=new Map<string,ModelRow>();
+    for(const m of allModels)if(m[0]===category&&m[1]===makeKey)byKey.set(m[2],m);
+    const matches = [...byKey.values()].filter(m=>
+      !term || normalizeAlias(m[3]).includes(term) || normalizeAlias(m[2]).includes(term))
+      .sort((a,b)=>a[3].localeCompare(b[3],'ru')||a[2].localeCompare(b[2]));
     const knownDisplay=purpose==='tow'?shelf.recovery.find(r=>r.makeKey===makeKey)?.make:
       data.makes.find(r=>r[0]===makeKey)?.[1]??shelf.rows.find(r=>r.makeKey===makeKey)?.make;
     return { make: { key: makeKey, name: knownDisplay??makeKey, category },
