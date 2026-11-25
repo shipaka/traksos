@@ -111,6 +111,7 @@ test('баллы — по желанию: мастер выключил гаше
 });
 
 test('счёт: реферер получает баллы только после подтверждения оплаты, повтор не начисляет дважды', async () => {
+  await t.app.settings.set('payments',{invoice:true},null);
   const me = ok(await t.api('GET','/api/me/referral',undefined,inviter.token));
   const friend = await loginRef('+79993334466', me.code);
   const o=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb',description:'Тест счёта',paymentMethod:'invoice'},friend.token)).order;
