@@ -144,3 +144,24 @@ test('integrated strict garage / missing-model queue / admin review and data sep
     assert.equal(attribution.status,200);
   }finally{await t.close();}
 });
+
+test('legacy TechBase API requires verified specialist for both audiences',async()=>{
+  const t=await setup();
+  try{
+    const master=await t.login('+79990002021','master');
+    const service=await t.login('+79990002022','service');
+    for(const actor of [master,service]){
+      for(const audience of ['driver','master']){
+        const denied=await t.api('GET','/api/techbase?audience='+audience,undefined,actor.token);
+        assert.equal(denied.status,403,'fresh specialist must not read '+audience);
+      }
+      await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[actor.id]);
+      const profile=await t.db.one<any>('select verification from performer_profiles where user_id=$1',[actor.id]);
+      assert.equal(profile?.verification,'approved','test fixture must have a verified specialist profile');
+      const granted=await t.api('GET','/api/techbase?audience=master',undefined,actor.token);
+      assert.equal(granted.status,200,JSON.stringify(granted.body));
+      assert.ok(granted.body.documents?.length);
+      assert.ok(granted.body.documents.every((d:any)=>d.audience==='master'));
+    }
+  }finally{await t.close();}
+});
