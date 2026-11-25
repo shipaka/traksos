@@ -5,7 +5,7 @@ import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
 import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
-import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
+import { rankCandidates, performerKindFor, type Candidate, type DispatchOrder } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
 import { cancelStage, cancelSplit, cappedPct, commissionPct } from '../domain/money.ts';
 import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
@@ -469,7 +469,9 @@ export class OrdersService {
       " and not exists (select 1 from performer_time_reservations r where r.performer_id=p.user_id and r.status='confirmed' and r.ends_at>$3) and not exists" +
       " (select 1 from orders x where x.performer_id=p.user_id and" +
       " x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')" +
-      " and not (x.service='consult' and x.status='awaiting_confirmation'))",
+      " and not (x.status='awaiting_confirmation' and (x.service='consult' or exists (" +
+      " select 1 from order_unilateral_closures uc where uc.order_id=x.id" +
+      " and uc.status in ('pending_client','disputed')))))",
       [performerId,performerKindFor(order.service),this.now()]);
     const policy = this.auction.stages(order, all.dispatch);
     const stage = policy?.[Number(order.sos_dispatch_stage??0)]??null;
@@ -499,31 +501,55 @@ export class OrdersService {
   /** Звоним следующему приоритетному; очередь кончилась — общие торги */
   async ringNext(orderId: string) {
     const all = await this.settings.all();
-    const order = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!order || order.status !== 'searching') return;
-    if (order.auction_until) return; // уже на торгах — звонков приоритетным больше нет
-    const parallel = order.is_sos ? all.dispatch.parallelSos : all.dispatch.parallel;
-    const ringing = await this.db.one<{ c: number }>(`select count(*)::int c from order_dispatch where order_id=$1 and status='ringing'`, [orderId]);
-    const free = parallel - (ringing?.c ?? 0);
-    if (free <= 0) return;
-    const until = new Date(this.now().getTime() + all.dispatch.ringSeconds * 1000);
-    const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
-      `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
-        where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
-                       and not exists (select 1 from performer_time_reservations r where r.performer_id=d.performer_id
-                         and r.status='confirmed' and r.ends_at>$3)
-                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
-                   x.service='consult' or exists (
-                     select 1 from order_unilateral_closures uc
-                       where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))
-                     order by d.rank limit $4)
-        returning id, performer_id, distance_km`,
-      [orderId, until, this.now(), free],
-    );
-    if (!next.length && (ringing?.c ?? 0) === 0) return this.auction.start(orderId);
-    const est = order.estimate;
-    for (const n of next) {
-      await this.event(this.db, orderId, null, 'ringing', { performerId: n.performer_id });
+    // Serialize the capacity calculation and queue transition on the order.
+    // Do not acquire profile locks in this transaction: accept uses the
+    // performer lock first, then order, then dispatch row.
+    const claimed=await this.db.tx(async q=>{
+      const order=await q.one<DispatchOrder & {status:string;auction_until:Date|null;is_sos:boolean;client_id:string;created_by:string;estimate:any;number:number;problem:string|null;address:string|null;site:any;description:string|null}>('select * from orders where id=$1 for update',[orderId]);
+      if(!order||order.status!=='searching'||order.auction_until)return null;
+      const parallel=order.is_sos?all.dispatch.parallelSos:all.dispatch.parallel;
+      const ringing=await q.one<{c:number}>(
+        "select count(*)::int c from order_dispatch where order_id=$1 and status='ringing'",[orderId]);
+      const free=parallel-(ringing?.c??0);
+      if(free<=0)return null;
+      const now=this.now(),until=new Date(now.getTime()+all.dispatch.ringSeconds*1000);
+      const queued=await q.query<Candidate&{dispatch_id:string;distance_km:number|null;roles:string[];deleted_at:Date|null}>(
+        `select p.*,u.rating,u.status as user_status,u.roles,u.deleted_at,
+          d.id as dispatch_id,d.distance_km,
+          (select coalesce(-sum(amount),0)::int from ledger_entries l where l.performer_id=p.user_id
+           and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
+          from order_dispatch d join performer_profiles p on p.user_id=d.performer_id
+          join users u on u.id=p.user_id
+          where d.order_id=$1 and d.status='queued'
+           and not exists(select 1 from performer_time_reservations r where r.performer_id=d.performer_id
+             and r.status='confirmed' and r.ends_at>$2)
+           and not exists(select 1 from orders x where x.performer_id=d.performer_id
+             and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')
+             and not(x.status='awaiting_confirmation' and (x.service='consult' or exists(
+               select 1 from order_unilateral_closures uc where uc.order_id=x.id
+               and uc.status in ('pending_client','disputed')))))
+           and not exists(select 1 from performer_blocks b where b.performer_id=d.performer_id and b.client_id=$3)
+           and not exists(select 1 from client_prefs b where b.performer_id=d.performer_id and b.client_id=$3 and b.pref='hide')
+          order by d.rank,d.id`,[orderId,now,order.client_id]);
+      const ids=queued.filter(p=>!p.deleted_at&&p.roles.includes(p.kind==='ecu'?'master':p.kind)&&
+        p.user_id!==order.client_id&&p.user_id!==order.created_by&&
+        rankCandidates(order,[p],{radiusKm:Infinity,maxCandidates:1,cashDebtLimit:all.fees.cashDebtLimit,now}).length===1)
+        .slice(0,free).map(p=>p.dispatch_id);
+      const next=await q.query<{id:string;performer_id:string;distance_km:number|null}>(
+        "update order_dispatch set status='ringing',ring_until=$2,sent_at=$3 where id=any($1::uuid[]) and status='queued' returning id,performer_id,distance_km",
+        [ids,until,now]);
+      for(const n of next)await this.event(q,orderId,null,'ringing',{performerId:n.performer_id});
+      return {order,now,until,next,empty:!next.length&&(ringing?.c??0)===0};
+    });
+    if(!claimed)return;
+    if(claimed.empty)return this.auction.start(orderId);
+    const {order,now,until,next}=claimed;
+    const est=order.estimate;
+    for(const n of next){
+      // Best-effort delivery only while this exact call is still live.
+      if(!await this.db.one(
+        "select 1 from order_dispatch d join orders o on o.id=d.order_id where d.id=$1 and d.status='ringing' and d.sent_at=$2 and o.status='searching'",
+        [n.id,now]))continue;
       await this.notifier.notify([n.performer_id], {
         type: 'incoming_call', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
         address: order.address, road: order.site?.road ?? null, zone: est.zoneName, distanceKm: n.distance_km, brand: order.brand, callOut: est.callOut,
@@ -583,9 +609,37 @@ export class OrdersService {
   }
 
 
+  /** Recheck live eligibility immediately before a performer commits to an
+   * invitation or a bid is chosen. Existing invitation distance/ETA is not
+   * recomputed; this check does not change rank or price. Lock user first,
+   * then profile, matching the profile save transaction. */
+  async lockEligiblePerformer(q:Queryable, performerId:string, orderId:string, cashDebtLimit:number) {
+    const actor=await q.one<{roles:string[];status:string;deleted_at:Date|null}>(
+      'select roles,status,deleted_at from users where id=$1 for share',[performerId]);
+    if(!actor||actor.status!=='active'||actor.deleted_at)return false;
+    const profile=await q.one<Candidate>(
+      `select p.*,u.rating,u.status as user_status,
+         (select coalesce(-sum(amount),0)::int from ledger_entries l
+          where l.performer_id=p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
+        from performer_profiles p join users u on u.id=p.user_id
+        where p.user_id=$1 for update of p`,[performerId]);
+    const order=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+    if(!profile||!order||order.status!=='searching')return false;
+    const role=profile.kind==='ecu'?'master':profile.kind;
+    if(!actor.roles.includes(role)||profile.kind!==performerKindFor(order.service))return false;
+    const excluded=await q.one<{blocked:boolean}>(
+      `select exists(select 1 from performer_blocks where performer_id=$1 and client_id=$2
+        union all select 1 from client_prefs where performer_id=$1 and client_id=$2 and pref='hide') as blocked`,
+      [performerId,order.client_id]);
+    if(excluded?.blocked||performerId===order.client_id||performerId===order.created_by)return false;
+    return rankCandidates(order,[profile],{radiusKm:Infinity,maxCandidates:1,cashDebtLimit,now:this.now()}).length===1;
+  }
+
   async accept(user: AuthUser, orderId: string) {
+    const all=await this.settings.all();
     const res = await this.db.tx(async (q) => {
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [user.id]);
+      if(!await this.lockEligiblePerformer(q,user.id,orderId,all.fees.cashDebtLimit))
+        throw conflict('performer_ineligible','Предложение больше недоступно — обновите список');
       if (await this.hasUpcomingReservation(q, user.id))
         throw conflict('performer_reserved', 'У вас есть подтверждённая запись. Новый выезд пока нельзя принять.');
       const d = await q.one(

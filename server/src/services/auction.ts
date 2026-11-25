@@ -65,16 +65,22 @@ export class AuctionService {
     if (stages && !stage) return this.finishEmpty(order, all.dispatch);
     // Only one tick/HTTP worker claims a given wave. Cancellation wins if the
     // order has already left searching; a retry must clear auction_until first.
-    if (stage) {
-      const deadline=new Date(this.now().getTime()+stage.waitSeconds*1000);
-      const claimed=await this.db.query<any>(
-        `update orders set auction_until=$3,auto_pick=true,dispatch_started_at=coalesce(dispatch_started_at,$4)
-          where id=$1 and status='searching' and sos_dispatch_stage=$2
-            and auction_until is null returning *`,
-        [orderId,stageIndex,deadline,this.now()]);
-      if (!claimed.length) return;
-      order=claimed[0];
-    }
+    const ms=stage?stage.waitSeconds*1000:
+      order.is_sos?all.dispatch.sosAuctionSeconds*1000:all.dispatch.auctionMinutes*60_000;
+    const until=new Date(this.now().getTime()+ms);
+    const claimed=await this.db.tx(async q=>{
+      // Read the capacity after taking the same order lock as ringNext.
+      // A single UPDATE subquery can otherwise observe pre-lock rows.
+      const current=await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!current||current.status!=='searching'||current.auction_until||
+         Number(current.sos_dispatch_stage??0)!==stageIndex)return null;
+      if(await q.one("select 1 from order_dispatch where order_id=$1 and status='ringing' limit 1",[orderId]))return null;
+      return q.one<any>(
+        "update orders set auction_until=$2,auto_pick=$3,dispatch_started_at=coalesce(dispatch_started_at,$4) where id=$1 returning *",
+        [orderId,until,!!order.is_sos,this.now()]);
+    });
+    if(!claimed)return;
+    order=claimed;
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, false as is_priority, p.paused, p.line_status, p.verification,
@@ -97,42 +103,42 @@ export class AuctionService {
       exclude: new Set([order.created_by, ...exclude, ...already.map((a) => a.performer_id), ...(await this.orders.blockedBy(order.client_id))]),
     });
     const eligible=await this.stagedCandidates(order,list,ranked,stage);
-    const ms = stage ? stage.waitSeconds*1000 :
-      order.is_sos ? all.dispatch.sosAuctionSeconds * 1000 : all.dispatch.auctionMinutes * 60_000;
-    const until = stage ? new Date(order.auction_until) : new Date(this.now().getTime() + ms);
-    if (!stage) await this.db.query(
-      'update orders set auction_until=$2, auto_pick=$3, dispatch_started_at=coalesce(dispatch_started_at,$4) where id=$1 and status=\'searching\'',
-      [orderId,until,!!order.is_sos,this.now()]);
     const invited: typeof eligible = [];
-    for (const [i, r] of eligible.entries()) {
-      if (stage && !(await this.db.one(
-        "select 1 from orders where id=$1 and status='searching' and sos_dispatch_stage=$2",
-        [orderId,stageIndex]))) break;
-      const ok = await this.orders.enlist(r.user_id,
-        stage
-          ? `insert into order_dispatch(order_id,performer_id,rank,distance_km,status,ring_until,sent_at,road_eta_minutes)
-             select $1,$2,$3,$4,'bidding',$5,$6,$7
-              from orders where id=$1 and status='searching' and sos_dispatch_stage=$8
-             on conflict (order_id,performer_id) do nothing returning id`
-          : `insert into order_dispatch(order_id, performer_id, rank, distance_km, status, ring_until, sent_at)
-             values ($1,$2,$3,$4,'bidding',$5,$6)
-             on conflict (order_id, performer_id) do update set status='bidding', ring_until=excluded.ring_until, sent_at=excluded.sent_at`,
-        stage?[orderId,r.user_id,100+i,r.distanceKm,until,this.now(),r.roadEtaMinutes,stageIndex]:
-          [orderId,r.user_id,100+i,r.distanceKm,until,this.now()],!!stage);
-      if (ok) invited.push(r);
+    for (const [i,r] of eligible.entries()) {
+      // Lock the current wave before writing. A cancelled/retried order
+      // cannot acquire a late dispatch row from this earlier search.
+      const ok=await this.orders.enlist(r.user_id,
+        `with live_order as (
+          select id from orders where id=$1 and status='searching'
+            and sos_dispatch_stage=$8 and auction_until=$5 for update
+        )
+        insert into order_dispatch(order_id,performer_id,rank,distance_km,status,ring_until,sent_at,road_eta_minutes)
+        select id,$2,$3,$4,'bidding',$5,$6,$7 from live_order
+        on conflict(order_id,performer_id) ${stage?"do nothing":"do update set status='bidding',ring_until=excluded.ring_until,sent_at=excluded.sent_at where order_dispatch.status in ('queued','cancelled')"}
+        returning id`,
+        [orderId,r.user_id,100+i,r.distanceKm,until,this.now(),r.roadEtaMinutes,stageIndex],true);
+      if(ok)invited.push(r);
     }
-    await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos, wave: stage?stageIndex+1:null, waves: stages?.length??null });
-    this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', auction: true });
-    if (!invited.length) return stage ? undefined : this.finishEmpty(order, all.dispatch);
-
+    const current=await this.db.tx(async q=>{
+      const live=await q.one(
+        "select 1 from orders where id=$1 and status='searching' and sos_dispatch_stage=$2 and auction_until=$3 for update",
+        [orderId,stageIndex,until]);
+      if(!live)return false;
+      await this.orders.event(q,orderId,null,'auction_started',{candidates:invited.length,until,sos:!!order.is_sos,wave:stage?stageIndex+1:null,waves:stages?.length??null});
+      return true;
+    });
+    if(!current)return;
+    this.notifier.live(await this.orders.customerRecipientsForOrder(orderId),{type:'order',orderId,status:'searching',auction:true});
+    if(!invited.length)return stage?undefined:this.finishEmpty(order,all.dispatch);
+    
     const lim = this.limits(order, all.dispatch);
     const ring = new Date(this.now().getTime() + Math.min(ms, all.dispatch.ringSeconds * 1000)).toISOString();
     for (const r of invited) {
       // The customer may cancel while routes/push payloads are prepared.
       // Never send a new call for an already-cancelled or finished request.
       if (!(await this.db.one(
-        "select 1 from orders where id=$1 and status='searching'",
-        [orderId]))) break;
+        "select 1 from orders o join order_dispatch d on d.order_id=o.id where o.id=$1 and o.status='searching' and o.sos_dispatch_stage=$2 and o.auction_until=$3 and d.performer_id=$4 and d.status='bidding' and d.ring_until=$3",
+        [orderId,stageIndex,until,r.user_id]))) continue;
       await this.notifier.notify([r.user_id], {
         type: 'auction', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
         description: order.description, address: order.address, road: order.site?.road ?? null, destination: order.destination, cargo: order.cargo,
@@ -175,8 +181,9 @@ export class AuctionService {
     const hour = await this.hourFor(user.id, order);
     const o = await this.db.tx(async (q) => {
       // Та же блокировка, что при выборе: занятый или ушедший с линии в этот миг не откликнется
-      const pr = await q.one<{ line_status: string; paused: boolean }>('select line_status, paused from performer_profiles where user_id=$1 for update', [user.id]);
-      if (!pr || pr.paused || pr.line_status === 'offline' || pr.line_status === 'on_job' || await this.orders.busyWith(q, user.id, null)) {
+      if (!await this.orders.lockEligiblePerformer(q,user.id,orderId,all.fees.cashDebtLimit))
+        throw conflict('performer_ineligible','Предложение больше недоступно — обновите список');
+      if (await this.orders.busyWith(q, user.id, null)) {
         throw conflict('busy', 'Вы заняты или не на линии');
       }
       if (await this.orders.hasUpcomingReservation(q, user.id))
@@ -233,6 +240,7 @@ export class AuctionService {
 
   /** Клиент (или система для SOS) выбирает отклик — исполнитель назначен, цена выезда зафиксирована */
   async choose(user: AuthUser | null, orderId: string, offerId: string) {
+    const all=await this.settings.all();
     const pre = await this.db.one('select o.client_id, o.created_by, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
     if (!pre) throw notFound('Отклик не найден');
     if (user) {
@@ -269,7 +277,12 @@ export class AuctionService {
       }
       // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
       // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
+      if(!await this.orders.lockEligiblePerformer(q,pre.performer_id,orderId,all.fees.cashDebtLimit)){
+        // Commit withdrawal before returning the conflict. Otherwise auto-pick
+        // repeatedly tries the same invalid bid on each tick.
+        await q.query("update bids set status='withdrawn',updated_at=now() where id=$1 and status='active'",[offerId]);
+        return {eligible:false as const};
+      }
       if (await this.orders.hasUpcomingReservation(q, pre.performer_id))
         throw conflict('performer_reserved', 'У исполнителя есть подтверждённая запись — выберите другого');
       const f0 = await q.one(`select * from bids where id=$1 and order_id=$2 and status='active'`, [offerId, orderId]);
@@ -289,8 +302,12 @@ export class AuctionService {
       await this.orders.event(q, orderId, user?.id ?? null, user ? 'offer_chosen' : 'offer_autopicked', { offerId, price: f.price, eta: f.eta_minutes });
       const losers = await q.query<{ performer_id: string }>(`select performer_id from order_dispatch where order_id=$1 and status='lost'`, [orderId]);
       const released = await this.orders.release(q, f.performer_id, orderId);
-      return { o: upd, f, losers: losers.map((l) => l.performer_id), released };
+      return { eligible:true as const,o: upd, f, losers: losers.map((l) => l.performer_id), released };
     });
+    if(!res.eligible){
+      this.notifier.live(await this.orders.customerRecipientsForOrder(orderId),{type:'order',orderId,status:'searching',offers:true});
+      throw conflict('performer_ineligible','Исполнитель больше недоступен — выберите другого');
+    }
     await this.orders.afterRelease(res.released);
     await this.notifier.notify([res.f.performer_id], { type: 'order', orderId, status: 'accepted' },
       { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
@@ -435,7 +452,7 @@ export class AuctionService {
     // The requester can poll as soon as the status changes. Publish the status
     // and its immutable explanation in the same commit.
     const finished = await this.db.tx(async (q) => {
-      const r = await q.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
+      const r = await q.query(`update orders set status='no_performer' where id=$1 and status='searching' and auction_until is not distinct from $2 and sos_dispatch_stage=$3 returning id`, [order.id,order.auction_until??null,Number(order.sos_dispatch_stage??0)]);
       if (!r.length) return false;
       await q.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
       // Snapshot ONLY the current search attempt: after an accepted worker
