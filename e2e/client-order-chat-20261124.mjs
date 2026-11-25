@@ -116,7 +116,14 @@ try{
   await wait('/api/orders/A',1);
   await settle('/api/orders/A',0,order('A',101));
   await page.getByText('№101 · Электрик').waitFor();
-  const chatA='/api/orders/A/messages';
+  const latest=id=>'/api/orders/'+id+'/messages?window=latest&limit=100';
+  const earlier=(id,cursor)=>'/api/orders/'+id+'/messages?window=before&limit=100&cursor='+cursor;
+  const msg=(id,body,sender_id='other')=>({id,kind:'text',sender_id,body});
+  const windowPage=(messages,mode='latest',hasMore=false)=>({messages,quickReplies:[],participants:[],
+    page:{mode,hasMore,oldestId:messages[0]?.id??null,newestId:messages.at(-1)?.id??null,
+      nextCursor:hasMore?messages[0].id:null}});
+  const emit=event=>page.evaluate(e=>window.__orderMock.listeners.slice().forEach(fn=>fn(e)),event);
+  const chatA=latest('A');
   await wait(chatA,1);
   await settle(chatA,0,'offline conversation',true);
   await page.getByRole('button',{name:/Чат по заявке/}).click();
@@ -125,11 +132,35 @@ try{
     throw Error('Chat showed empty history when GET failed');
   await page.getByRole('button',{name:'Повторить загрузку переписки'}).click();
   await wait(chatA,2);
-  await settle(chatA,1,{
-    messages:[{id:'A1',kind:'text',sender_id:'other',body:'PRIVATE A CHAT'}],
-    quickReplies:[],participants:[]});
+  await settle(chatA,1,windowPage([msg(101,'PRIVATE A CHAT')],'latest',true));
+  await page.getByRole('button',{name:'Загрузить более ранние сообщения'}).click();
+  await wait(earlier('A',101),1);
+  await settle(earlier('A',101),0,windowPage([msg(7,'OLDER A CHAT')],'before'));
+  await page.getByText('OLDER A CHAT').waitFor();
   await page.getByText('PRIVATE A CHAT').waitFor();
   await page.getByPlaceholder('Сообщение').fill('PRIVATE A DRAFT');
+  // Reconnect returns a newer window with a gap. Every previously loaded
+  // page is re-read under the current authorization, not kept from memory.
+  await emit({type:'connection_restored'});
+  await wait(chatA,3);
+  await settle(chatA,2,windowPage([msg(507,'NEW A CHAT')],'latest',true));
+  await wait(earlier('A',507),1);
+  await settle(earlier('A',507),0,windowPage([msg(101,'PRIVATE A CHAT'),msg(305,'MISSED A CHAT')],'before',true));
+  await wait(earlier('A',101),2);
+  await settle(earlier('A',101),1,windowPage([msg(7,'OLDER A CHAT')],'before'));
+  await page.getByText('MISSED A CHAT').waitFor();
+  if((await page.locator('.msgs .b').allTextContents()).join('|')!=='OLDER A CHAT|PRIVATE A CHAT|MISSED A CHAT|NEW A CHAT')
+    throw Error('Reconnect lost or reordered durable history');
+  if(await page.getByPlaceholder('Сообщение').inputValue()!=='PRIVATE A DRAFT')
+    throw Error('Reconnect lost mounted draft');
+  // A socket payload is only invalidation: no unconfirmed body may appear.
+  await emit({type:'chat',message:{order_id:'A',id:99,body:'UNCONFIRMED SOCKET BODY'}});
+  await wait(chatA,4);
+  if(await page.getByText('UNCONFIRMED SOCKET BODY').count())throw Error('Unconfirmed socket body rendered');
+  await settle(chatA,3,'access revoked',true);
+  await page.getByRole('button',{name:'Повторить загрузку переписки'}).waitFor();
+  if(await page.getByText('PRIVATE A CHAT').count()||await page.getByText('OLDER A CHAT').count())
+    throw Error('Denied refresh retained chat history');
 
   // A different order has a blank chat and a separate GET; old A is never shown.
   await navigate('B');
@@ -137,8 +168,8 @@ try{
   if(await page.getByText('PRIVATE A CHAT').count()||await page.getByText('PRIVATE A DRAFT').count())
     throw Error('A chat remained during navigation to B');
   await settle('/api/orders/B',0,order('B',202));
-  await wait('/api/orders/B/messages',1);
-  await settle('/api/orders/B/messages',0,{messages:[],quickReplies:[],participants:[]});
+  await wait(latest('B'),1);
+  await settle(latest('B'),0,windowPage([]));
   // An unauthenticated/stale payment GET is not an empty ledger: show retry
   // and never fall back to another order's captured amount.
   const paymentPath='/api/orders/B/payments';
@@ -165,7 +196,9 @@ try{
     throw Error('Double submit produced two POST requests');
   await message.fill('B second draft');
   await page.evaluate(()=>window.__orderMock.posts[0].resolve({
-    id:'B1',kind:'text',sender_id:'U1',body:'B first message'}));
+    id:808,kind:'text',sender_id:'U1',body:'B first message'}));
+  await wait(latest('B'),2);
+  await settle(latest('B'),1,windowPage([msg(808,'B first message','U1')]));
   await page.getByText('B first message').waitFor();
   if(await message.inputValue()!=='B second draft')
     throw Error('Pending response erased the subsequent chat draft');
