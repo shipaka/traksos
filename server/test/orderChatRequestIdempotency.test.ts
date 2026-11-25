@@ -26,6 +26,28 @@ test('chat request keys replay committed messages without repeated durable write
   assert.equal((await status('invalid')).status,400);
   assert.equal((await status(payload.requestId,outsider.token)).status,403);
   assert.equal(await count(),before);
+  // A failure in durable fan-out must roll back the message and its key.
+  // This trigger is confined to the disposable PostgreSQL test schema.
+  await t.db.exec(`
+    create function fail_chat_inbox_for_test() returns trigger language plpgsql as $
+    begin
+      if NEW.kind='chat_push' then raise exception 'injected chat inbox failure'; end if;
+      return NEW;
+    end;
+    $;
+    create trigger fail_chat_inbox_for_test before insert on notifications
+      for each row execute function fail_chat_inbox_for_test();
+  `);
+  try{
+    const failed=await send(payload);
+    assert.equal(failed.status,500);
+    assert.equal(await count(),before);
+    assert.equal(await notices(),beforeNotices);
+    assert.deepEqual(ok(await status(payload.requestId)),absent);
+  }finally{
+    await t.db.exec('drop trigger fail_chat_inbox_for_test on notifications; drop function fail_chat_inbox_for_test();');
+  }
+  // The very same key remains usable after rollback.
   const responses=await Promise.all(Array.from({length:8},()=>send(payload)));
   const results=responses.map(ok);
   assert.ok(results.every(x=>x.id===results[0].id));
