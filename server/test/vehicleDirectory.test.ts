@@ -35,6 +35,10 @@ test('real pinned CC-BY directory has truck, van, bus and passenger models',asyn
   assert.ok(model.items.some((m)=>m.key==='premium'&&m.name==='Premium'));
   assert.equal((await dir.resolve('truck','renault','premium')).partsFitmentVerified,false);
   await assert.rejects(dir.resolve('truck','renault','not-a-real-model'),/подтверждённого каталога/);
+  assert.deepEqual(await dir.exactGarageMatch(client,'  RENAULT  ','premium'),{
+    status:'exact',selection:{category:'truck',brandKey:'renault',modelKey:'premium'}});
+  assert.deepEqual(await dir.exactGarageMatch(client,'Renault','premium-unknown'),{status:'unmatched',selection:null});
+  await assert.rejects(dir.exactGarageMatch(master,'Renault','Premium'),/Гараж/);
   await assert.rejects(dir.models(client,'garage','passenger','lada'),/Категория транспорта/);
   assert.ok(categoriesForActor(dual,'master',true).includes('truck'));
 });
@@ -204,6 +208,16 @@ test('legacy catalog link preserves identity and access, audits once, and clears
     const qr=legacy.body.qr_code;
     assert.ok(qr);
     assert.equal((await t.api('POST','/api/qr/'+qr+'/join',{},driver.token)).status,200);
+    const matchUrl='/api/vehicle-reference/vehicles/'+id+'/match';
+    assert.equal((await t.api('GET',matchUrl,undefined,other.token)).status,404);
+    for(const actor of [owner,driver]){
+      const match=await t.api('GET',matchUrl,undefined,actor.token);
+      assert.equal(match.status,200);
+      assert.equal(match.body.status,'exact');
+      assert.deepEqual(match.body.selection,{category:'truck',brandKey:'renault',modelKey:'premium'});
+      assert.ok(!('vin' in match.body));
+      assert.ok(!('plate' in match.body));
+    }
     const url='/api/vehicle-reference/vehicles/'+id+'/catalog';
     const choice={category:'truck',brandKey:'renault',modelKey:'premium'};
     assert.equal((await t.api('PATCH',url,choice,other.token)).status,404);
