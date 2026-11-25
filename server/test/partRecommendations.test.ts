@@ -36,17 +36,27 @@ test('repair recommendation is private, owner controlled, exact and idempotent t
   const path='/api/orders/'+o.id+'/part-recommendations';
   const proposal={brand:'Scania',article:'1912297',name:'Обратный клапан',qty:1,reason:'Подтверждена неисправность клапана',productId:product.id,cardId:'scania-r-check-valve',fitmentConfirmed:true};
   assert.equal((await t.api('POST',path,proposal,other.token)).status,403);
+  const noticeCount=async()=> (await t.db.query<any>("select data from notifications where user_id=$1 and title='Обновление в рекомендациях'",[owner.id]));
+  const beforeNotices=(await noticeCount()).length;
   const first=ok(await t.api('POST',path,proposal,master.token));
   assert.equal(first.created,true);
   assert.equal(ok(await t.api('POST',path,proposal,master.token)).created,false);
   const rid=first.item.id;
+  const notices=await noticeCount();
+  assert.equal(notices.length,beforeNotices+1);
+  assert.ok(notices.every(n=>JSON.stringify(n.data)==='{}'));
   assert.equal(Object.hasOwn(first.item,'tech_card_id'),false);
   assert.equal((await t.api('GET',path,undefined,other.token)).status,403);
   assert.equal((await t.api('POST',path+'/'+rid+'/decision',{accept:true},master.token)).status,403);
   assert.equal((await t.api('GET','/api/shop/part-recommendations/'+rid+'/checkout',undefined,owner.token)).status,403);
   const cart={items:[{productId:product.id,qty:1}],delivery:'pickup',partRecommendationId:rid,expectedPartPrice:120000};
   assert.equal((await t.api('POST','/api/shop/orders',cart,owner.token)).status,403);
+  const decisionHints=()=>t.app.hub.log.filter(x=>x.userId===master.id&&x.event.type==='order'&&x.event.orderId===o.id).length;
+  const beforeHints=decisionHints();
   ok(await t.api('POST',path+'/'+rid+'/decision',{accept:true},owner.token));
+  assert.equal(decisionHints(),beforeHints+1);
+  ok(await t.api('POST',path+'/'+rid+'/decision',{accept:true},owner.token));
+  assert.equal(decisionHints(),beforeHints+1);
   assert.equal((await t.db.query('select id from shop_orders where client_id=$1',[owner.id])).length,0);
   assert.equal(ok(await t.api('GET','/api/shop/part-recommendations',undefined,owner.token)).items[0].status,'accepted');
   assert.equal(ok(await t.api('GET','/api/shop/part-recommendations/'+rid+'/checkout',undefined,owner.token)).product.id,product.id);
@@ -210,5 +220,50 @@ test('source ACL rechecks live fleet assignments, worker approval and stale acto
   await t.db.query("update users set status='active' where id=$1",[owner.id]);
   assert.equal((await svc.decide(oldOwner,o.id,rec.id,true)).status,'accepted');
   assert.equal((await t.db.query('select id from part_recommendations where source_order_id=$1',[o.id])).length,1);
+ }finally{await t.close();}
+});
+
+test('recommendation notices are durable and delivery rechecks revoked recipients after commit',async()=>{
+ const t=await setup();
+ try{
+  const owner=await t.login('+79997808301'),master=await t.login('+79997808302','master'),admin=await t.login('+79990000001');
+  await t.db.query("update performer_profiles set verification='approved' where user_id=$1",[master.id]);
+  const o=ok(await t.api('POST','/api/orders',{service:'consult',zoneId:'phone',brand:'Scania',description:'Тест уведомления о детали'},owner.token)).order;
+  await t.db.query("update orders set performer_id=$2,status='awaiting_confirmation' where id=$1",[o.id,master.id]);
+  const ownerActor=await t.app.auth.authenticate(owner.token),masterActor=await t.app.auth.authenticate(master.token),adminActor=await t.app.auth.authenticate(admin.token);
+  assert.ok(ownerActor&&masterActor&&adminActor);
+  // One-shot hook executes strictly after the write transaction commits,
+  // but before the service can select recipients for external delivery.
+  let afterCommit:(()=>Promise<unknown>)|undefined;
+  const db={...t.db,tx:async<T,>(fn:(q:import('../src/db/index.ts').Queryable)=>Promise<T>)=>{
+   const result=await t.db.tx(fn);
+   const hook=afterCommit;afterCommit=undefined;
+   if(hook)await hook();
+   return result;
+  }};
+  const svc=new PartRecommendations(db,t.app.settings,t.app.notifier);
+  const proposal={brand:'Fixture',article:'NOTICE-42',name:'Тестовая деталь',qty:1,reason:'Диагностика подтвердила неисправность детали',fitmentConfirmed:true};
+  const noticeRows=()=>t.db.query<any>("select user_id,data from notifications where title in ('Обновление в рекомендациях','Обновление очереди подбора')");
+  t.app.hub.log.length=0;
+  afterCommit=()=>t.db.query("update users set status='blocked' where id=$1",[owner.id]);
+  const rec=(await svc.propose(masterActor,o.id,proposal)).item;
+  assert.equal(t.app.hub.log.some(x=>x.userId===owner.id&&x.event.orderId===o.id),false);
+  assert.equal((await noticeRows()).filter(x=>x.user_id===owner.id).length,1);
+  await t.db.query("update users set status='active' where id=$1",[owner.id]);
+  afterCommit=()=>t.db.query("update performer_profiles set verification='rejected' where user_id=$1",[master.id]);
+  await svc.decide(ownerActor,o.id,rec.id,true);
+  assert.equal(t.app.hub.log.some(x=>x.userId===master.id&&x.event.orderId===o.id),false);
+  afterCommit=()=>t.db.query("update users set roles='{moderator}'::text[] where id=$1",[admin.id]);
+  await svc.requestSourcing(ownerActor,rec.id);
+  assert.equal(t.app.hub.log.some(x=>x.userId===admin.id&&x.event.type==='part_sourcing'),false);
+  assert.equal((await noticeRows()).filter(x=>x.user_id===admin.id).length,1);
+  await t.db.query("update users set roles='{admin}'::text[] where id=$1",[admin.id]);
+  afterCommit=()=>t.db.query("update users set status='blocked' where id=$1",[owner.id]);
+  await svc.resolveSourcing(adminActor,rec.id,{status:'unavailable',note:'Нет точной детали в каталоге'});
+  assert.equal(t.app.hub.log.some(x=>x.userId===owner.id&&x.event.type==='part_sourcing'),false);
+  const notices=await noticeRows();
+  assert.equal(notices.filter(x=>x.user_id===owner.id).length,2);
+  assert.ok(notices.every(x=>JSON.stringify(x.data)==='{}'));
+  assert.equal((await t.db.one<any>('select sourcing_status from part_recommendations where id=$1',[rec.id]))?.sourcing_status,'unavailable');
  }finally{await t.close();}
 });
