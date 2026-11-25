@@ -18,6 +18,7 @@ test('catalogue references are exact identities, not VIN matches',()=>{
 
 import { setup,ok } from './helpers.ts';
 import { PartRecommendations } from '../src/services/partRecommendations.ts';
+import { ShopService } from '../src/services/shop.ts';
 test('repair recommendation is private, owner controlled, exact and idempotent through checkout',async()=>{
  const t=await setup();
  try{
@@ -84,6 +85,12 @@ test('repair recommendation is private, owner controlled, exact and idempotent t
   await assert.rejects(svc.history(ownerSnapshot,null,0),{status:403});
   await assert.rejects(svc.checkout(ownerSnapshot,rid),{status:403});
   await assert.rejects(svc.requestSourcing(ownerSnapshot,mid),{status:403});
+  const shop=new ShopService(t.db,t.app.notifier,t.app.settings);
+  await assert.rejects(shop.order(ownerSnapshot,{...cart,delivery:'pickup'}),{status:403});
+  await assert.rejects(shop.order(ownerSnapshot,{items:[{productId:exact.id,qty:1}],delivery:'pickup',partRecommendationId:mid,expectedPartPrice:22000}),{status:403});
+  assert.equal((await t.db.query('select id from shop_orders where part_recommendation_id=$1',[mid])).length,0);
+  assert.equal((await t.db.one<any>('select stock from shop_products where id=$1',[exact.id]))?.stock,2);
+
   await t.db.query("update users set roles='{client}'::text[],deleted_at=now() where id=$1",[owner.id]);
   await assert.rejects(svc.history(ownerSnapshot,null,0),{status:403});
   await t.db.query("update users set deleted_at=null where id=$1",[owner.id]);
