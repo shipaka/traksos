@@ -26,31 +26,48 @@ export function recordedStageLines(stage: any, events: any[]) {
   return {lines,workVerified,quoteOnly:stage.status!=='completed'};
 }
 
+// Canonical case association wins. A legacy referral with no explicit root
+// belongs to the root of its source order, never to a matching plate/name.
+const bookingInCase=(root:'r.id'|'$1')=>
+  `(b.case_root_id=${root} or (b.case_root_id is null and exists (
+    select 1 from orders linked where linked.id=b.from_order_id
+      and (linked.id=${root} or linked.case_root_id=${root}))))`;
+
 export class AdminCaseCenter {
   constructor(private db: Db) {}
 
   async list(rawSearch = '', rawScope = 'all') {
+    return (await this.listPage(rawSearch,rawScope,500,null)).items;
+  }
+
+  async listPage(rawSearch='',rawScope='all',limit=100,before:string|null=null) {
+    if(!Number.isSafeInteger(limit)||limit<1||limit>500)
+      throw bad('bad_limit','Размер страницы от 1 до 500');
+    if(before){
+      const root=await this.db.one('select id from orders where id=$1 and case_root_id is null',[before]);
+      if(!root)throw bad('bad_cursor','Страница устарела. Начните с первых обращений');
+    }
     const q = rawSearch.trim().slice(0, 80);
     const scope = ['all','active','closed','moderated'].includes(rawScope) ? rawScope : 'all';
     const multiMatch = /^(?:М|M)-?0*(\d+)$/i.exec(q);
     const multiNumber = multiMatch ? Number(multiMatch[1]) : null;
     const search = multiNumber != null ? '' : q.replace(/[%_\\]/g,'');
     const sql = [
-      'select r.id,r.number,r.client_id,r.vehicle_id,r.status as first_status,',
+      'with cases as (select r.id,r.number,r.client_id,r.vehicle_id,r.status as first_status,',
       'r.created_at as opened_at,r.completed_at as first_completed_at,cr.multi_number,',
       "coalesce(cl.company_name,cl.name,'Клиент') as client_name,",
       'v.plate as vehicle_plate,coalesce(v.brand,r.brand) as vehicle_brand,v.model as vehicle_model,',
       '(select count(*)::int from orders s where s.id=r.id or s.case_root_id=r.id) as order_count,',
-      '(select count(*)::int from service_bookings b where b.case_root_id=r.id) as workshop_count,',
+      `(select count(*)::int from service_bookings b where ${bookingInCase('r.id')}) as workshop_count,`,
       '(select count(*)::int from ecu_handoffs h where h.root_order_id=r.id) as ecu_count,',
       '(select max(s.created_at) from orders s where s.id=r.id or s.case_root_id=r.id) as last_opened_at,',
       '(select max(s.completed_at) from orders s where s.id=r.id or s.case_root_id=r.id) as last_completed_at,',
       "(exists(select 1 from orders s where (s.id=r.id or s.case_root_id=r.id) and s.status not in ('completed','cancelled','no_performer'))",
-      "or exists(select 1 from service_bookings b where b.case_root_id=r.id and b.status not in ('closed','cancelled','declined'))"+
+      `or exists(select 1 from service_bookings b where ${bookingInCase('r.id')} and b.status not in ('closed','cancelled','declined'))`+
       " or exists(select 1 from ecu_handoffs h where h.root_order_id=r.id and h.state<>'closed')) as has_active,",
       '(exists (select 1 from mod_cases mc where',
       'mc.order_id in (select s.id from orders s where s.id=r.id or s.case_root_id=r.id)',
-      'or mc.booking_id in (select b.id from service_bookings b where b.case_root_id=r.id))',
+      `or mc.booking_id in (select b.id from service_bookings b where ${bookingInCase('r.id')}))`,
       'or exists (select 1 from audit_log al where',
       'al.target in (select s.id::text from orders s where s.id=r.id or s.case_root_id=r.id)',
       "and al.action in ('order.resolve','order.discount'))) as moderated",
@@ -62,20 +79,27 @@ export class AdminCaseCenter {
       "and ($1::text='' or r.number::text like '%'||$1||'%'",
       "or exists(select 1 from orders s where s.case_root_id=r.id and s.number::text like '%'||$1||'%')",
       "or exists(select 1 from ecu_handoffs h where h.root_order_id=r.id and h.number::text like '%'||$1||'%')",
+      `or exists(select 1 from service_bookings b where ${bookingInCase('r.id')} and b.number::text like '%'||$1||'%')`,
       "or r.vehicle_id in (select id from vehicles where plate ilike '%'||$1||'%'))",
       'and ($2::bigint is null or cr.multi_number=$2)',
-      'order by r.created_at desc limit 500'
+      'and ($4::uuid is null or (r.created_at,r.id)<(select c.created_at,c.id from orders c where c.id=$4)))',
+      "select * from cases where ($3='all' or ($3='active' and has_active) or ($3='closed' and not has_active) or ($3='moderated' and moderated))",
+      'order by opened_at desc,id desc limit $5'
     ].join(' ');
-    const rows = await this.db.query<any>(sql,[search,multiNumber]);
-    return rows.filter(x =>
+    const rows = await this.db.query<any>(sql,[search,multiNumber,scope,before,limit+1]);
+    // The predicate is in SQL BEFORE LIMIT. The defensive filter also
+    // preserves the legacy service return contract for existing callers.
+    const eligible=rows.filter(x =>
       scope==='all' || (scope==='active'&&x.has_active) ||
       (scope==='closed'&&!x.has_active) || (scope==='moderated'&&x.moderated)
-    ).map(x=>({
+    );
+    const items=eligible.slice(0,limit).map(x=>({
       ...x,
       is_multi:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count??0)>1,
       case_number:Number(x.order_count)+Number(x.workshop_count)+Number(x.ecu_count??0)>1&&x.multi_number!=null
         ? 'М-'+String(x.multi_number).padStart(6,'0'):null,
     }));
+    return {items,hasMore:eligible.length>limit,nextBefore:eligible.length>limit?items[items.length-1].id:null};
   }
 
   async detail(admin: AuthUser, anyOrderId: string) {
@@ -99,7 +123,7 @@ export class AdminCaseCenter {
       'b.created_at,b.updated_at,b.arrived_at,b.ready_at,b.closed_at,',
       'b.amount,b.discount,b.commission,b.center_id,c.name as center_name',
       'from service_bookings b join service_centers c on c.id=b.center_id',
-      'where b.case_root_id=$1 order by b.created_at,b.number'
+      `where ${bookingInCase('$1')} order by b.created_at,b.number`
     ].join(' '),[rootId]);
     const ecuReferrals=await this.db.query<any>(
       'select h.id,h.number,h.source_order_id,h.state,h.summary,h.created_at,h.selected_at,'+
@@ -170,7 +194,7 @@ export class AdminCaseCenter {
       case_number:multi&&registry?'М-'+String(registry.multi_number).padStart(6,'0'):null,
       multi,
       stages:stages.map((s,i)=>({...s,stage_no:stageNo.get('order:'+s.id)??i+1,recorded_items:recordedStageLines(s,events)})),
-      bookings:bookings.map((b,i)=>({...b,stage_no:stageNo.get('booking:'+b.id)??stages.length+i+1})),
+      bookings:bookings.map(b=>({...b,stage_no:stageNo.get('booking:'+b.id)??null})),
       ecu_referrals:ecuReferrals.map((h:any,i:number)=>({...h,stage_no:stageNo.get('ecu:'+h.id)??stages.length+bookings.length+i+1})),
       vehicle,events,payments,payouts,moderation,notes,chat,vehicle_history:vehicleHistory,vehicle_history_bookings:vehicleHistoryBookings,
       document_status:'Итоговый счёт требует подтверждённых построчных позиций и первичных документов'
@@ -206,7 +230,7 @@ export class AdminCaseCenter {
         'Удержанная комиссия',String(payout.commission),'payouts.commission','Требуется бухгалтерская сверка']);
     }
     for(const b of detail.bookings){
-      table.push(['СТО (свод, не первичный документ)',detail.case_number||'',String(b.stage_no),
+      table.push(['СТО (свод, не первичный документ)',detail.case_number||'',b.stage_no==null?'':String(b.stage_no),
         String(b.number),b.status,'Работы СТО без деталей первички',
         b.amount==null?'':String(b.amount),'service_bookings.amount','Требует сверки']);
     }
