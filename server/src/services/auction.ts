@@ -175,8 +175,9 @@ export class AuctionService {
     const hour = await this.hourFor(user.id, order);
     const o = await this.db.tx(async (q) => {
       // Та же блокировка, что при выборе: занятый или ушедший с линии в этот миг не откликнется
-      const pr = await q.one<{ line_status: string; paused: boolean }>('select line_status, paused from performer_profiles where user_id=$1 for update', [user.id]);
-      if (!pr || pr.paused || pr.line_status === 'offline' || pr.line_status === 'on_job' || await this.orders.busyWith(q, user.id, null)) {
+      if (!await this.orders.lockEligiblePerformer(q,user.id,orderId,all.fees.cashDebtLimit))
+        throw conflict('performer_ineligible','Предложение больше недоступно — обновите список');
+      if (await this.orders.busyWith(q, user.id, null)) {
         throw conflict('busy', 'Вы заняты или не на линии');
       }
       if (await this.orders.hasUpcomingReservation(q, user.id))
@@ -233,6 +234,7 @@ export class AuctionService {
 
   /** Клиент (или система для SOS) выбирает отклик — исполнитель назначен, цена выезда зафиксирована */
   async choose(user: AuthUser | null, orderId: string, offerId: string) {
+    const all=await this.settings.all();
     const pre = await this.db.one('select o.client_id, o.created_by, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
     if (!pre) throw notFound('Отклик не найден');
     if (user) {
@@ -269,7 +271,12 @@ export class AuctionService {
       }
       // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
       // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
+      if(!await this.orders.lockEligiblePerformer(q,pre.performer_id,orderId,all.fees.cashDebtLimit)){
+        // Commit withdrawal before returning the conflict. Otherwise auto-pick
+        // repeatedly tries the same invalid bid on each tick.
+        await q.query("update bids set status='withdrawn',updated_at=now() where id=$1 and status='active'",[offerId]);
+        return {eligible:false as const};
+      }
       if (await this.orders.hasUpcomingReservation(q, pre.performer_id))
         throw conflict('performer_reserved', 'У исполнителя есть подтверждённая запись — выберите другого');
       const f0 = await q.one(`select * from bids where id=$1 and order_id=$2 and status='active'`, [offerId, orderId]);
@@ -289,8 +296,12 @@ export class AuctionService {
       await this.orders.event(q, orderId, user?.id ?? null, user ? 'offer_chosen' : 'offer_autopicked', { offerId, price: f.price, eta: f.eta_minutes });
       const losers = await q.query<{ performer_id: string }>(`select performer_id from order_dispatch where order_id=$1 and status='lost'`, [orderId]);
       const released = await this.orders.release(q, f.performer_id, orderId);
-      return { o: upd, f, losers: losers.map((l) => l.performer_id), released };
+      return { eligible:true as const,o: upd, f, losers: losers.map((l) => l.performer_id), released };
     });
+    if(!res.eligible){
+      this.notifier.live(await this.orders.customerRecipientsForOrder(orderId),{type:'order',orderId,status:'searching',offers:true});
+      throw conflict('performer_ineligible','Исполнитель больше недоступен — выберите другого');
+    }
     await this.orders.afterRelease(res.released);
     await this.notifier.notify([res.f.performer_id], { type: 'order', orderId, status: 'accepted' },
       { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
