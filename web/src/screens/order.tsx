@@ -4,7 +4,7 @@ import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
-import { get, post, rub, fmtTime } from '../api.ts';
+import { get, post, rub, fmtTime, getToken } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
 import { go } from '../ui.tsx';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, VehicleFields } from '../ui.tsx';
@@ -1231,7 +1231,7 @@ function WorksCheck({ id }: { id: string }) {
 type ChatPanelProps = {id:string;status:string;open:boolean;setOpen:(open:boolean)=>void};
 function Chat({id,status,open,setOpen}:ChatPanelProps) {
   const {me,mode}=useMe();
-  return <AccountOrderChat key={(me?.id??'guest')+':'+mode+':'+id}
+  return <AccountOrderChat key={(me?.id??'guest')+':'+mode+':'+id+':'+(getToken()??'')}
     id={id} status={status} open={open} setOpen={setOpen}/>;
 }
 function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
@@ -1250,6 +1250,14 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const [sending,setSending]=useState(false);
   const sendingRef=useRef(false);
   const [sendError,setSendError]=useState('');
+  type PendingChat = {body:string;kind:'text'|'quick';requestId:string};
+  const pendingRef=useRef<PendingChat|null>(null);
+  const [pending,setPending]=useState<PendingChat|null>(null);
+  const session=useRef(getToken());
+  const mounted=useRef(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;pendingRef.current=null;};},[]);
+  const currentSession=()=>mounted.current&&getToken()===session.current;
+  const remember=(p:PendingChat|null)=>{pendingRef.current=p;setPending(p);};
   const archiveLabel=archived||serverClosed;
   const readOnly = archiveLabel || loading || !!loadError;
   const box = useRef<HTMLDivElement>(null);
@@ -1362,26 +1370,53 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     if(open&&!loading&&!loadError)setSeen(previous=>Math.max(previous,msgs[msgs.length-1]?.id??0));
   },[open,msgs,loading,loadError]);
 
-  async function send(body: string, kind: 'text' | 'quick' = 'text') {
-    if(!body.trim()||readOnly||sendingRef.current)return;
+  async function send(body: string, kind: 'text' | 'quick' = 'text', retry=false) {
+    if(!currentSession()||sendingRef.current||loading||loadError)return;
+    let attempt=pendingRef.current;
+    if(retry){
+      if(!attempt)return;
+    }else{
+      if(!body.trim()||readOnly||attempt)return;
+      // getRandomValues also works in WebViews without crypto.randomUUID.
+      try{
+        const bytes=globalThis.crypto.getRandomValues(new Uint8Array(16));
+        bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+        const hex=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+        const requestId=[hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+        attempt={body,kind,requestId};remember(attempt);
+      }catch{
+        setSendError('Не удалось создать безопасный идентификатор отправки. Сообщение не отправлено.');
+        return;
+      }
+    }
     sendingRef.current=true;
     setSending(true);setSendError('');
     try {
-      const m = await post(`/api/orders/${id}/messages`, { body, kind });
-      if(!m?.id)throw new Error('Сервер не подтвердил отправку сообщения');
+      const m = await post(`/api/orders/${id}/messages`, attempt);
+      if(!currentSession())return;
+      if(!Number.isSafeInteger(m?.id)||m.id<=0)throw new Error('Сервер не подтвердил отправку сообщения');
+      remember(null);
       refreshRef.current();
-      // Do not erase a new draft typed while the previous message was posting.
-      setText(current=>current===body?'':current);
+      // An edited/new draft is never overwritten by completion of an old send.
+      if(attempt.kind==='text')setText(current=>current===attempt.body?'':current);
     } catch (e) {
-      // Concurrent completion can beat the browser event. Fail closed immediately
-      // even before the parent order status refreshes.
-      if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
-      setSendError('Не получили подтверждение отправки. Проверьте переписку перед повтором. Текст сохранён.');
-      setRetryVersion(v=>v+1);
-      toast((e as Error).message);
+      if(!currentSession())return;
+      const error=e as {code?:string;status?:number;message?:string};
+      if(error.code==='chat_closed'){setServerClosed(true);setQuick([]);}
+      // A definitive rejection is not an ambiguous transport failure. No
+      // automatic retries; uncertain attempts keep their exact payload and key.
+      if(error.status===400||error.status===403||error.code==='chat_closed'||error.code==='request_id_conflict'){
+        remember(null);
+        setSendError(error.message??'Сервер отклонил отправку.');
+      }else{
+        setSendError('Не получили подтверждение отправки. Повторите именно эту отправку — новое сообщение не будет создано дважды.');
+      }
+      refreshRef.current();
+      toast(error.message??'Ошибка отправки');
     }finally{
-      sendingRef.current=false;
-      setSending(false);
+      if(currentSession()){
+        sendingRef.current=false;setSending(false);
+      }
     }
   }
 
@@ -1410,6 +1445,11 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       </div>}
       {loading&&<span className="note" role="status">Загружаем переписку…</span>}
       {sendError&&<span className="note" role="alert">{sendError}</span>}
+      {pending&&!sending&&!loading&&!loadError&&<div className="stack">
+        <span className="note">Отправка без подтверждения: {pending.body}</span>
+        <button type="button" className="btn ghost small" onClick={()=>{void send('','text',true);}}>Повторить прежнюю отправку</button>
+        <span className="note">Сначала подтвердите прежнюю отправку. Новый черновик сохраняется. При выходе из заявки проверьте историю перед повторной отправкой.</span>
+      </div>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
       {!loading&&!loadError&&older!==null&&<button type="button" className="btn ghost small" disabled={paging} onClick={()=>olderRef.current()}>{paging?'Загружаем…':'Загрузить более ранние сообщения'}</button>}
       <div className="msgs" ref={box}>
@@ -1428,10 +1468,10 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       {!readOnly && (
         <>
           <div className="scroll-x">{quick.map((q) => <button key={q} type="button"
-            className="chip" disabled={sending} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
+            className="chip" disabled={sending||!!pending} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
           <form className="compose" onSubmit={(e) => { e.preventDefault();void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
-            <button className="btn small" disabled={!text.trim()||sending}>{sending?'…':'➤'}</button>
+            <button className="btn small" disabled={!text.trim()||sending||!!pending}>{sending?'…':'➤'}</button>
           </form>
         </>
       )}
