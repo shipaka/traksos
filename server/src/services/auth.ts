@@ -42,6 +42,24 @@ function verifyPassword(password: string, stored: string | null) {
 }
 
 
+// A pending invitation is deliberately NOT a normal scrypt password hash.
+const INVITE_PREFIX = 'insurer-invite:';
+export function createInsurerInvitation(now: Date) {
+  const temporaryPassword = randomBytes(24).toString('base64url');
+  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  return { temporaryPassword, expiresAt,
+    passwordHash: INVITE_PREFIX + expiresAt.getTime() + ':' + hashPassword(temporaryPassword) };
+}
+export function isInsurerInvitation(stored: string | null) {
+  return typeof stored === 'string' && stored.startsWith(INVITE_PREFIX);
+}
+function invitationPasswordHash(stored: string | null, now: Date): string | null {
+  const m = stored?.match(/^insurer-invite:(\d{13}):(scrypt:[0-9a-f]{32}:[0-9a-f]{128})$/);
+  return m && Number(m[1]) > now.getTime() ? m[2] : null;
+}
+function strongNewPassword(p: string) {
+  return passwordValid(p) && !/^(?:\d{10,14}|password1234?|qwerty12345|qwertyuiop|admin12345|пароль12345|traksos1234|tracksos1234)$/i.test(p.normalize('NFKC').replace(/\s+/g,''));
+}
 export { SELF_ROLES } from '../domain/roles.ts';
 
 /** Persistent limits: no SMS flood after deployment restart or on multi-instance hosting. */
@@ -243,7 +261,7 @@ export class AuthService {
 
   /** Normal login: never sends SMS and never changes roles. */
   /** Password-only login. Counters are shared by all processes and survive restart. */
-  async loginPassword(rawPhone: string, password: string, device?: string, ip = '') {
+  async loginPassword(rawPhone: string, password: string, device?: string, ip = '', newPassword?: string) {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
     if (password.length > 128) throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
@@ -270,6 +288,37 @@ export class AuthService {
     });
     const user = await this.db.one<AuthUser & { password_hash: string | null; admin_preview_until: Date | null }>(
       'select id, phone, name, roles, status, owner_id, password_hash, admin_preview_until from users where phone=$1', [phone]);
+    // No bearer is issued for an invitation. The first successful exchange
+    // replaces the pending hash atomically and only then creates a session.
+    if (user && isInsurerInvitation(user.password_hash)) {
+      const temporaryHash = invitationPasswordHash(user.password_hash, now);
+      if (user.status !== 'active' || phone !== config.insurerPrimaryPhone ||
+          user.roles.length !== 1 || user.roles[0] !== 'insurer' ||
+          user.admin_preview_until !== null || !temporaryHash || !verifyPassword(password, temporaryHash))
+        throw new HttpError(401, 'bad_credentials', 'Неверный номер, пароль или истёк срок приглашения');
+      if (newPassword === undefined)
+        throw new HttpError(409, 'insurer_password_change_required', 'Установите свой пароль для первого входа.');
+      if (!strongNewPassword(newPassword)) throw bad('weak_password', 'Новый пароль должен быть сложным и содержать 10–128 символов.');
+      if (verifyPassword(newPassword, temporaryHash)) throw bad('same_password', 'Новый пароль должен отличаться от временного.');
+      return this.db.tx(async q => {
+        const updated = await q.one<AuthUser>(
+          "update users set password_hash=$3,last_seen_at=now() where id=$1 and password_hash=$2 and phone=$4 and status='active' and roles=array['insurer']::text[] and admin_preview_until is null returning id,phone,name,roles,status,owner_id",
+          [user.id, user.password_hash, hashPassword(newPassword), phone]);
+        if (!updated || !invitationPasswordHash(user.password_hash, this.now()))
+          throw new HttpError(401, 'bad_credentials', 'Приглашение уже использовано или истекло.');
+        await q.query('delete from push_tokens where user_id=$1', [user.id]);
+        await q.query('delete from sessions where user_id=$1', [user.id]);
+        const token = newToken();
+        await q.query('insert into sessions(token_hash,user_id,expires_at,device) values ($1,$2,$3,$4)',
+          [sha256(token), user.id, new Date(now.getTime() + SESSION_DAYS * 86_400_000), device ?? null]);
+        await q.query("delete from auth_login_attempts where scope='phone' and identity=$1",[phone]);
+        await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+          [user.id,'insurer.invite_activated',user.id,{method:'one_time_password'}]);
+        return {token,user:updated};
+      });
+    }
+    if (newPassword !== undefined)
+      throw new HttpError(401, 'bad_credentials', 'Приглашение недействительно. Войдите с собственным паролем.');
     if (!user || user.status !== 'active' || !verifyPassword(password, user.password_hash) ||
         (user.admin_preview_until !== null && new Date(user.admin_preview_until) <= now)) {
       throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
