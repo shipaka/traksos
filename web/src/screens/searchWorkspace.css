@@ -2,16 +2,23 @@
 .search-workspace-head {
   display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:12px;
 }
-.search-workspace-toggle { flex:0 0 auto;width:auto; }
+.search-workspace-toggle { flex:0 1 auto;width:auto;max-width:100%;white-space:normal; }
+.search-workspace-head { flex-wrap:wrap; }
+.search-workspace-head > .stack { min-width:0;overflow-wrap:anywhere; }
+.search-workspace-results .offer { overflow-wrap:anywhere; }
+.search-workspace-results .offer > .between { flex-wrap:wrap; }
+.search-workspace-results .offer > .between > .stack { min-width:0; }
+.search-workspace-results .offer > .row { flex-wrap:wrap; }
+.search-workspace-results .offer .btn { white-space:normal; }
 .search-workspace-content { display:grid;gap:14px;min-width:0; }
 .search-workspace-content[hidden] { display:none!important; }
 .search-workspace-visual,.search-workspace-results { min-width:0; }
 .search-workspace-results:empty { display:none; }
 .search-workspace-radar { flex:none; }
 @media(min-width:900px) {
-  .search-workspace-content:has(.search-workspace-results:not(:empty)) {
-    grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;
-  }
+  /* The actual pane is often much narrower than the viewport. */
+  .search-workspace { container-type:inline-size;container-name:search-workspace;min-width:0; }
+  .search-workspace-content { grid-template-columns:minmax(0,1fr);align-items:start; }
   .search-workspace .search-card {
     background:linear-gradient(145deg,#142b34,#081921);
     border-color:#3e535d;color:#f3f6f7;
@@ -40,6 +47,10 @@
     background:#75d6a0;box-shadow:0 0 0 4px #75d6a027;
   }
   .search-workspace .offer.fresh { animation:traksos-search-offer-appear .5s ease-out both; }
+}
+@container search-workspace (min-width:680px) {
+  .search-workspace-content { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  .search-workspace-content:not(:has(.search-workspace-results:not(:empty))) { grid-template-columns:minmax(0,1fr); }
 }
 @keyframes traksos-search-sweep { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
 @keyframes traksos-search-offer-appear { from{opacity:0}to{opacity:1} }
