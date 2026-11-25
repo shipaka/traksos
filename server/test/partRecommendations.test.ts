@@ -153,7 +153,17 @@ test('source ACL rechecks live fleet assignments, worker approval and stale acto
   await t.db.query("update users set deleted_at=now() where id=$1",[master.id]);
   await assert.rejects(svc.propose(oldMaster,o.id,{...proposal,article:'DELETED'}),{status:403});
   await t.db.query("update users set deleted_at=null where id=$1",[master.id]);
-  await t.db.query("update users set status='blocked' where id=$1",[owner.id]);
+  // An owner status update holds the same row lock needed by source ACL.
+  // Start the stale-actor operation while the revocation is uncommitted;
+  // after commit it must see the blocked row, not the prior active snapshot.
+  let concurrentRead:Promise<unknown>|undefined;
+  await t.db.tx(async q=>{
+   await q.query("update users set status='blocked' where id=$1",[owner.id]);
+   concurrentRead=svc.list(oldDriver,o.id).then(value=>({value}),error=>({error}));
+  });
+  assert.ok(concurrentRead);
+  const concurrent=await concurrentRead as {value?:unknown;error?:{status:number}};
+  assert.equal(concurrent.error?.status,403);
   await assert.rejects(svc.list(oldDriver,o.id),{status:403});
   await assert.rejects(svc.list(oldMaster,o.id),{status:403});
   await assert.rejects(svc.decide(oldOwner,o.id,rec.id,true),{status:403});
