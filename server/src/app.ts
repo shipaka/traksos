@@ -1690,6 +1690,14 @@ export function createApp(d: Deps) {
       throw bad('bad_cursor','Некорректный курсор реестра');
     return adminCases.listPage(q,scope,limit,before);
   });
+  r.get('/api/admin/cases/:id/history', ['admin'], (c: AuthedCtx) => {
+    const input=parse(z.object({
+      kind:z.enum(['events','chat']),
+      before:z.string().min(1).max(80).optional(),
+      limit:z.coerce.number().int().min(1).max(100).default(100),
+    }),Object.fromEntries(c.query.entries()));
+    return adminCases.historyPage(c.user,c.params.id,input.kind,input.limit,input.before??null);
+  });
   r.get('/api/admin/cases/:id/export', ['admin'], (c: AuthedCtx) =>
     adminCases.exportOperationalCsv(c.user, c.params.id));
   r.get('/api/admin/cases/:id', ['admin'], (c: AuthedCtx) =>
