@@ -198,8 +198,11 @@ try{
         throw Error(role+': Documents did not reveal policy and rules');
       if(role==='master'&&!await docs.locator('a[href="#/work/docs"]').isVisible())
         throw Error(role+': master lost verification documents');
-      if(new Set(info.realLinks).size!==info.realLinks.length)
-        throw Error(role+': duplicate destinations in mobile Menu');
+      // The dedicated Back-to-workspace control intentionally repeats Home.
+      const sectionLinks=await menu.locator('.tr-mobile-menu-links a[href]').evaluateAll(
+        links=>links.map(link=>link.getAttribute('href')));
+      if(new Set(sectionLinks).size!==sectionLinks.length)
+        throw Error(role+': duplicate destinations in mobile Menu sections');
       await assertClean(role+' Android documents menu');
       await page.screenshot({path:output+'/'+role+'-menu-documents-android-390.png',fullPage:true,scale:'css',animations:'disabled'});
       const accountDetails=page.locator('details.tr-mobile-menu-account');
