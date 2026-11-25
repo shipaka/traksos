@@ -235,15 +235,28 @@ export class SupportService {
     return this.thread(user, t!.id);
   }
 
-  async post(user: AuthUser, ticketId: string, body: string) {
+  async post(user: AuthUser, ticketId: string, body: string, requestKey?: string) {
     const text = body.trim();
     if (!text) throw bad('empty', 'Пустое сообщение');
     const safeText = maskPhones(text).text;
+    const fingerprint = requestKey ? createHash('sha256').update(text).digest('hex') : null;
     const delivery = await this.db.tx(async q => {
       const locked = await q.one<{ status: string; user_id: string; number: number; assignee_id: string | null; requested_staff_role: 'admin'|'moderator'|null }>(
         'select status, user_id, number, assignee_id, requested_staff_role from support_tickets where id=$1 for update', [ticketId]);
       if (!locked) throw notFound('Обращение не найдено');
       const actor = await this.authorizeTicket(q,user,locked);
+      // Ticket lock serializes keyed replies with each other and with close.
+      // Replay is allowed only after current ACL, even if the ticket closed.
+      if (requestKey) {
+        const prior = await q.one<{client_request_hash:string}>(
+          'select client_request_hash from support_messages where ticket_id=$1 and sender_id=$2 and client_request_key=$3',
+          [ticketId,actor.id,requestKey]);
+        if (prior) {
+          if (prior.client_request_hash !== fingerprint)
+            throw conflict('support_reply_changed','Этот запрос уже использован с другим текстом.');
+          return null;
+        }
+      }
       if (locked.status === 'closed')
         throw conflict('closed', 'Обращение закрыто — создайте новое');
       const staff = locked.user_id !== actor.id;
@@ -252,8 +265,8 @@ export class SupportService {
         "select id from users where id=$1 and status='active' and deleted_at is null and roles && '{admin,moderator}'::text[] for share",
         [locked.assignee_id]) : null;
       const postedAt = this.now();
-      await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body)
-        values ($1,$2,$3,$4)`, [ticketId, user.id, staff, staff ? text : safeText]);
+      await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body, client_request_key, client_request_hash)
+        values ($1,$2,$3,$4,$5,$6)`, [ticketId, actor.id, staff, staff ? text : safeText, requestKey??null, fingerprint]);
       await q.query(`update support_tickets
         set updated_at=$2, assignee_id=$3,
             first_staff_reply_at=case when $4::boolean then coalesce(first_staff_reply_at,$2::timestamptz)
@@ -271,7 +284,7 @@ export class SupportService {
       return { ids, msg };
     });
     // The inbox is durable even when an optional live delivery fails.
-    await this.notifier.deliverStored(delivery.ids, { type: 'support', ticketId }, delivery.msg)
+    if (delivery) await this.notifier.deliverStored(delivery.ids, { type: 'support', ticketId }, delivery.msg)
       .catch(() => {});
     return this.thread(user, ticketId);
   }
