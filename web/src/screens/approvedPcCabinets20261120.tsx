@@ -16,7 +16,8 @@ import {TrakServiceIcon, type TrakServiceIconKind} from '../trakServiceIcon.tsx'
 import {TrakBotMascot} from '../trakbotMascot.tsx';
 import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
-import {OfferForm} from './search.tsx';
+import {OfferForm, Search} from './search.tsx';
+import {usePrivateRead} from './privateRead20261124.ts';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
@@ -147,7 +148,6 @@ function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:
   return <div className="approved-pc-three"><aside className="approved-pc-left">{left}</aside><div className="approved-pc-center">{center}</div><aside className="approved-pc-right">{right}</aside></div>;
 }
 function RealCase({o,owner=false}:{o:any;owner?:boolean}){
-  const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.orderId===o.id&&e.type==='order');
   const [gps,setGps]=useState<{lat:number;lng:number;at:number}|null>(null);
   useEffect(()=>{
     setGps(null); // Previous application's location cannot leak into a different case.
@@ -158,7 +158,7 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
         setGps({lat:event.lat,lng:event.lng,at:Date.now()});
     });
   },[o.id]);
-  const d=detail.data||o;
+  const d=o;
   const v=transport(d);
   const p=d.performer;
   const prev=Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)?{lat:p.lat,lng:p.lng}:null;
@@ -196,24 +196,73 @@ function RealCase({o,owner=false}:{o:any;owner?:boolean}){
       {d.vehicleId&&<a href={'#/garage/'+d.vehicleId}>История автомобиля</a>}
       {owner&&<a href="#/fleet">Управление автопарком</a>}
     </div>
-    {detail.error&&<p className="approved-pc-caveat">Дополнительные сведения недоступны: {String(detail.error?.message||detail.error)}. Откройте карточку заявки.</p>}
     <p className="approved-pc-caveat">Информация о заказе, изменениях и исполнителе поступает с сервера. Личные телефоны не раскрываются; общение только через предоставленные платформой способы связи.</p>
   </section>;
 }
+/** Keep final approved case unchanged; search is a separate state of the
+ * same server-authorized order. No previous private response survives a failed read. */
+function CustomerDeskCase({id,accountId,owner,refreshOrders}:{id:string;accountId:string;owner:boolean;refreshOrders:()=>void}){
+  const detail=usePrivateRead<any>(()=>get('/api/orders/'+encodeURIComponent(id)),
+    'pc-client-case:'+accountId+':'+id,
+    e=>String(e.orderId)===id&&e.type==='order');
+  const [collapsed,setCollapsed]=useState(false);
+  if(!detail.data)return <Pane title="Выбранная заявка">
+    <LoadingBlock error={detail.error} retry={detail.reload}/>
+    <a className="approved-pc-small-link" href={'#/order/'+encodeURIComponent(id)}>Открыть заявку отдельно →</a>
+  </Pane>;
+  const d=detail.data;
+  if(String(d.id)!==id||d.you!=='client')return <Pane title="Выбранная заявка"><Empty>Доступ к клиентской заявке не подтверждён.</Empty></Pane>;
+  if(d.status==='searching')return <section className="approved-pc-case approved-pc-search-case">
+    <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service)}</h2></div><span className="approved-pc-stage">{statusName(d)}</span></header>
+    <Search d={d} collapsed={collapsed} onCollapsedChange={setCollapsed}
+      onChosen={()=>{void detail.reload();refreshOrders();}}/>
+    <div className="approved-pc-case-actions">
+      <a href={'#/order/'+encodeURIComponent(id)}>Подробности и отмена заявки</a>
+      {d.vehicleId&&<a href={'#/garage/'+encodeURIComponent(d.vehicleId)}>История автомобиля</a>}
+    </div>
+  </section>;
+  return <RealCase o={d} owner={owner}/>;
+}
+function requestedDeskOrder(){
+  return new URLSearchParams(location.hash.split('?')[1]||'').get('order')||'';
+}
 function CustomerDesk({owner}:{owner:boolean}){
   const {me}=useMe();
-  const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order');
-  const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order');
+  return <CustomerDeskForAccount key={String(me?.id??'guest')+':'+(owner?'owner':'driver')} owner={owner} accountId={String(me?.id??'guest')}/>;
+}
+function CustomerDeskForAccount({owner,accountId}:{owner:boolean;accountId:string}){
+  const orders=usePrivateRead<any[]>(()=>get('/api/orders'),'pc-client-orders:'+accountId,e=>e.type==='order');
+  const fleet=usePrivateRead<any>(()=>owner?get('/api/fleet'):Promise.resolve(null),'pc-client-fleet:'+accountId+':'+owner,e=>e.type==='fleet'||e.type==='order');
   const active=(orders.data||[]).filter((o:any)=>activeStates.has(o.status));
-  const [chosen,setChosen]=useState<string>('');
-  const selected=active.find((o:any)=>String(o.id)===chosen)||active[0];
+  const [chosen,setChosenState]=useState(requestedDeskOrder);
+  const setChosen=(id:string)=>{
+    setChosenState(id);
+    // Keep the same explicit selection on Back/refresh without another history entry.
+    if(location.hash.split('?')[0]==='#/'||location.hash.split('?')[0]==='#'){
+      const query=new URLSearchParams(location.hash.split('?')[1]||'');
+      if(id)query.set('order',id);else query.delete('order');
+      history.replaceState(history.state,'','#/'+(query.size?'?'+query.toString():''));
+    }
+  };
+  useEffect(()=>{
+    const sync=()=>setChosenState(requestedDeskOrder());
+    window.addEventListener('hashchange',sync);
+    return ()=>window.removeEventListener('hashchange',sync);
+  },[]);
+  const selectedId=chosen||String(active[0]?.id||'');
+  useEffect(()=>{
+    if(!chosen&&selectedId)setChosen(selectedId);
+  },[chosen,selectedId]);
+  const selected=active.find((o:any)=>String(o.id)===selectedId);
   const cars=owner?(fleet.data?.cars||[]):[];
   return <main className="approved-pc approved-pc-client">
     <Heading title={owner?'Владелец автопарка':'Водитель'} roleArt={owner?'owner':'driver'} description={owner?'Заявки, ремонт и состояние техники вашего автопарка':'Вся информация о помощи по выбранной заявке, без лишних сервисов'}/>
     <div className="approved-pc-active-order-nav">
       <div className="approved-pc-order-heading"><span>Активные заявки</span>
         <strong>{orders.data?active.length:'—'}</strong></div>
-      {active.length>0&&<Tabs active={String(selected?.id||'')} onChange={setChosen}
+      <a className="approved-pc-primary" href="#/sos">+ Новая заявка</a>
+      {chosen&&orders.data&&!selected&&<button type="button" className="approved-pc-retry" onClick={()=>setChosen('')}>Закрыть выбранную заявку</button>}
+      {active.length>0&&<Tabs active={selectedId} onChange={setChosen}
         items={active.map((o:any)=>[String(o.id),'№'+text(o.number||o.id)+' · '+(SERVICES[o.service]?.name||text(o.service)),null])}/>}
     </div>
     {orders.error&&<LoadingBlock error={orders.error} retry={orders.reload}/>}
@@ -231,7 +280,7 @@ function CustomerDesk({owner}:{owner:boolean}){
         {fleet.data&&!cars.length&&<Empty>Информация о технике появится после добавления в автопарк.</Empty>}
         <a className="approved-pc-small-link" href="#/fleet">Весь автопарк →</a>
       </Pane>}
-    </>} center={selected?<RealCase o={selected} owner={owner}/>:<Pane title="Рабочий стол">
+    </>} center={selectedId?<CustomerDeskCase key={selectedId} id={selectedId} accountId={accountId} owner={owner} refreshOrders={orders.reload}/>:<Pane title="Рабочий стол">
         {!orders.data?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
         <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a>
           <a href="#/new/tow">Эвакуатор</a><a href="#/services">СТО</a><a href="#/orders">История заявок</a></div></>}
