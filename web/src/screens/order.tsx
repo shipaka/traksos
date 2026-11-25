@@ -151,6 +151,7 @@ function OrderForSession({id,initialTab,userId}:{
       <EcuOrderPanel order={d} />
       <OrderPhotoGallery orderId={id}/>
       {d.status === 'completed' && <Review id={id} you={d.you} />}
+      {d.status==='completed'&&['client','performer'].includes(d.you)&&<WarrantyPanel key={id+':'+d.you} id={id} you={d.you}/>} 
 
       {!isPerformer && d.status !== 'searching' && d.status !== 'no_performer' && <section id="order-chat"><Chat id={id} status={d.status} open={chatOpen} setOpen={setChatOpen} /></section>}
       </>}
@@ -632,7 +633,7 @@ function WorkInProgress({ d }: { d: any }) {
         <span className="note">Сейчас к оплате: выезд {rub(d.money.callOut)} + {hrs(b.units, b.step)} × {rub(b.hour)}{b.wait ? ` + ожидание ${rub(b.wait)}` : ''}. Эта сумма не меняется задним числом — мастер может добавить только расходники и запчасти, отдельными строками.</span>
         <span className="note">{billingRule(d.billingStep)}</span>
       </>}
-      <div className="banner good" style={{ textAlign: 'left' }}><span>Гарантия на работу — <b>14 дней</b>: та же поломка снова — повторный выезд бесплатно.</span></div>
+      <div className="banner good" style={{ textAlign: 'left' }}><span>Если недостаток проявится снова, после завершения работы можно подать претензию к качеству. Условия гарантии и решение зависят от обстоятельств и действующих условий.</span></div>
     </div>
   );
 }
@@ -1126,6 +1127,69 @@ function Retry({ id, reason, onDone }: { id: string; reason?: string; onDone: ()
       </div>
     </section>
   );
+}
+
+const WARRANTY_REMEDIES=[['assessment','Проверка качества'],['rework','Устранение недостатка'],['alternative','Другой исполнитель'],['partial_refund','Частичный возврат'],['full_refund','Полный возврат']] as const;
+function WarrantyPanel({id,you}:{id:string;you:string}){
+  const {me}=useMe();
+  const scope=(me?.id??'guest')+':warranty:'+id;
+  const claim=usePrivateRead<any>(async()=>{
+    const list=await get<any[]>('/api/warranty-claims');
+    if(!Array.isArray(list))throw new Error('Не удалось подтвердить список претензий');
+    const entry=list.find(c=>c.orderId===id);
+    if(!entry)return {claim:null};
+    const detail=await get('/api/warranty-claims/'+entry.id);
+    if(detail?.orderId!==id)throw new Error('Не удалось подтвердить претензию');
+    return {claim:detail};
+  },scope,e=>e.type==='connection_restored'||(e.type==='warranty'&&(!e.orderId||e.orderId===id)));
+  const {busy,run}=useAction();
+  const [open,setOpen]=useState(false);
+  const [defect,setDefect]=useState('');
+  const [evidence,setEvidence]=useState('');
+  const [remedy,setRemedy]=useState<string>('assessment');
+  const [position,setPosition]=useState('needs_evidence');
+  const [note,setNote]=useState('');
+  const [appeal,setAppeal]=useState('');
+  const [uncertain,setUncertain]=useState(false);
+  const act=async(fn:()=>Promise<any>,label:string,clear:()=>void)=>{
+    if(busy||uncertain||!claim.data)return;
+    const r=await run(fn,label);
+    if(r?.id)clear();else setUncertain(true);
+    await claim.reload();
+  };
+  const d=claim.data?.claim;
+  return <section className="card stack" aria-label="Претензия к качеству">
+    <b>Качество выполненной работы</b>
+    <span className="note">Претензия не создаёт новый платный выезд, не доказывает вину и не означает, что возврат уже выполнен.</span>
+    {!claim.data?<><Loading error={claim.error}/>{claim.error&&<button type="button" className="btn ghost small" onClick={claim.reload}>Повторить загрузку претензии</button>}</>:null}
+    {uncertain&&<div className="note" role="alert">Результат действия не подтверждён. Сверьте данные перед повтором. <button type="button" className="btn ghost small" onClick={claim.reload}>Обновить</button><button type="button" className="btn ghost small" disabled={!claim.data||busy} onClick={()=>setUncertain(false)}>Проверил состояние</button></div>}
+    {claim.data&&!d&&you==='client'&&(!open?<button type="button" className="btn ghost" onClick={()=>setOpen(true)}>Подать претензию к качеству</button>:<>
+      <label className="stack">Что повторилось или сделано некачественно?<textarea className="field" maxLength={2000} value={defect} onChange={e=>setDefect(e.target.value)}/></label>
+      <label className="stack">Какое решение вы просите?<select className="field" value={remedy} onChange={e=>setRemedy(e.target.value)}>{WARRANTY_REMEDIES.map(([k,label])=><option key={k} value={k}>{label}</option>)}</select></label>
+      <label className="stack">Описание доказательств (необязательно)<textarea className="field" maxLength={2000} value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
+      <button type="button" className="btn" disabled={busy||uncertain||defect.trim().length<10} onClick={()=>void act(()=>post('/api/orders/'+id+'/warranty-claims',{defect,requestedRemedy:remedy,evidence:evidence.trim()||undefined}),'Претензия зарегистрирована',()=>{setOpen(false);setDefect('');setEvidence('');})}>Отправить претензию</button>
+      <button type="button" className="btn ghost" disabled={busy} onClick={()=>setOpen(false)}>Закрыть форму</button>
+    </>)}
+    {claim.data&&!d&&you==='performer'&&<span className="note">По работе пока нет претензий.</span>}
+    {d&&<>
+      <b>Претензия №{d.number} · {({submitted:'Получена',reviewing:'На проверке',appealed:'Апелляция',decision_recorded:'Решение зафиксировано'} as Record<string,string>)[d.status]??d.status}</b>
+      <p>{d.defect}</p>{d.evidence&&<p className="note">{d.evidence}</p>}
+      {d.performerExplanation&&<p>Позиция исполнителя: {d.performerExplanation}</p>}
+      {d.decisionNote&&<p>Решение сотрудника: {d.decisionNote}</p>}
+      <details><summary>История рассмотрения</summary>{Array.isArray(d.events)&&d.events.map((event:any,index:number)=><p key={index} className="note">{fmtTime(event.createdAt)} · {event.data?.note??event.data?.reason??({opened:'Претензия подана',review_started:'Начата проверка',decision_recorded:'Зафиксировано решение',decision_appealed:'Подана апелляция'} as Record<string,string>)[event.event]??event.event}</p>)}</details>
+      <label className="stack">Дополнительные доказательства<textarea className="field" maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></label>
+      <button type="button" className="btn ghost" disabled={busy||uncertain||note.trim().length<5} onClick={()=>void act(()=>post('/api/warranty-claims/'+d.id+'/evidence',{note}),'Доказательство добавлено',()=>setNote(''))}>Добавить доказательство</button>
+      {you==='performer'&&d.status!=='decision_recorded'&&<>
+        <label className="stack">Позиция исполнителя<select className="field" value={position} onChange={e=>setPosition(e.target.value)}><option value="offer_rework">Предлагаю устранить недостаток</option><option value="contest_fault">Не согласен с претензией</option><option value="needs_evidence">Нужны доказательства</option><option value="unavailable">Не могу выполнить повторную работу</option></select></label>
+        <label className="stack">Пояснение<textarea className="field" maxLength={2000} value={evidence} onChange={e=>setEvidence(e.target.value)}/></label>
+        <button type="button" className="btn" disabled={busy||uncertain||evidence.trim().length<10} onClick={()=>void act(()=>post('/api/warranty-claims/'+d.id+'/respond',{position,note:evidence}),'Позиция сохранена',()=>setEvidence(''))}>Отправить позицию</button>
+      </>}
+      {d.status==='decision_recorded'&&d.appealCount===0&&<>
+        <label className="stack">Причина несогласия с решением<textarea className="field" maxLength={2000} value={appeal} onChange={e=>setAppeal(e.target.value)}/></label>
+        <button type="button" className="btn ghost" disabled={busy||uncertain||appeal.trim().length<20} onClick={()=>void act(()=>post('/api/warranty-claims/'+d.id+'/appeal',{reason:appeal}),'Апелляция зарегистрирована',()=>setAppeal(''))}>Подать апелляцию</button>
+      </>}
+    </>}
+  </section>;
 }
 
 function Cancel({ id, status, consult, onDone }: { id: string; status: string; consult?: boolean; onDone: () => void }) {
