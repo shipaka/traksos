@@ -84,6 +84,10 @@ try {
       throw Error(kind+': financial conditions and referral terms are missing from cabinet menu');
     await page.goto(BASE+'/#/economics',{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:'Комиссии, баллы и рефералы',exact:true}).waitFor();
+    const expectedMode={owner:'client',driver:'client',master:'performer',tow:'performer',
+      moderator_master:'moderator',service:'service',master_service:'service',
+      insurer:'insurer',admin:'admin'}[kind];
+    await page.locator('.app.role-'+expectedMode).waitFor({state:'visible',timeout:12000});
     const guide=page.locator('section.economics-guide');
     await guide.waitFor({timeout:12000});
     const financeText=(await guide.innerText()).replace(/\s+/g,' ');
@@ -128,7 +132,8 @@ try {
     const right=await page.locator('.account-menu nav a[href^="#/"]').evaluateAll(els=>els.map(el=>el.getAttribute('href')));
     const combined=[...left,...right];
     if(new Set(combined).size!==combined.length)throw Error(kind+': duplicate desktop menu destination');
-    if(links.some(link=>!combined.includes(link.href)))throw Error(kind+': desktop menu lost a mobile destination');
+    const missing=links.filter(link=>!combined.includes(link.href));
+    if(missing.length)throw Error(kind+': desktop menu lost mobile destinations '+JSON.stringify(missing));
     const personal=new Set(['#/profile','#/privacy','#/work/me','#/work/me/about','#/work/me/phone','#/work/me/cars','#/work/me/tax','#/base/me']);
     if(!right.includes('#/profile')||right.some(href=>!personal.has(href))||left.some(href=>personal.has(href)))
       throw Error(kind+': desktop personal/work navigation not separated');

@@ -328,6 +328,23 @@ function App() {
     if (m === 'client' || m === 'performer' || m === 'admin' || m === 'moderator' || m === 'service' || m === 'insurer' || m === 'inspection' || m === 'courier') setMode(m);
     location.replace('#/' + (m === 'performer' ? 'work' : m === 'admin' ? 'admin' : m === 'moderator' ? 'moderation' : m === 'service' ? 'base' : m === 'insurer' ? 'insurance' : m === 'inspection' ? 'inspections' : m === 'courier' ? 'courier' : ''));
   }, [route.join('/')]); // eslint-disable-line
+  // Opening an authorized workspace also selects its cabinet for shared
+  // destinations (help, economics, profile). Merely overriding the current
+  // render leaves dual-role accounts in their previous cabinet on the next link.
+  useEffect(() => {
+    if (!ready || !me) return;
+    const roles = me.roles;
+    const root = route[0];
+    const selected: Mode | null =
+      root === 'work' && roles.some(r => r === 'master' || r === 'tow') ? 'performer'
+      : root === 'admin' && roles.includes('admin') ? 'admin'
+      : root === 'moderation' && roles.some(r => r === 'moderator' || r === 'admin') ? 'moderator'
+      : root === 'base' && roles.includes('service') ? 'service'
+      : root === 'insurance' && roles.includes('insurer') ? 'insurer'
+      : root === 'inspections' && roles.includes('inspection_operator') ? 'inspection'
+      : root === 'courier' && roles.includes('courier') ? 'courier' : null;
+    if (selected && selected !== mode) setMode(selected);
+  }, [ready, me, route[0], mode]); // eslint-disable-line
   useEffect(() => {
     if (!ready) return; // Keep the native token until the initial auth check finishes.
     if (!me) {
