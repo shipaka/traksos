@@ -108,6 +108,22 @@ async function clickRoute(page,locator,href,assertClean){
   await locator.click();
   await visibleRoute(page,href,assertClean);
 }
+async function checkPerformerHistory(page,surface,assertClean){
+  const group=page.locator('main.performer-orders-page .grid3[role="tablist"]');
+  await group.waitFor({state:'visible',timeout:15000});
+  for(const label of ['По машинам','Чёрный список','Все заявки']){
+    await group.getByRole('button',{name:label,exact:true}).click();
+    await page.waitForFunction(({label,browser})=>{
+      const group=document.querySelector('main.performer-orders-page .grid3[role="tablist"]');
+      const active=group?.querySelectorAll('.seg[aria-pressed="true"]');
+      if(active?.length!==1||active[0].textContent.trim()!==label)return false;
+      // Canonical browser rule from approvedInnerDepth20261121.css;
+      // native styling has a separate contract, not this browser gradient.
+      return !browser||getComputedStyle(active[0]).backgroundImage.includes('rgb(239, 130, 37)');
+    },{label,browser:!surface.native},{timeout:10000});
+    await assertClean('performer history '+label);
+  }
+}
 async function openHeaderMenu(page){
   const menu=page.locator('.account-menu');
   if(!(await menu.evaluate(el=>el.open)))await menu.locator('summary').click();
@@ -178,6 +194,10 @@ try{
         await clickRoute(page,page.locator('.tabbar a[href="'+href+'"]'),href,assertClean);
         await page.waitForFunction(target=>Array.from(document.querySelectorAll('.tabbar a.on')).map(x=>x.getAttribute('href')).join('|')===target,href);
         assertActiveTab(await linksOf(page.locator('.tabbar a.on')),href);
+        if(mode==='performer'&&href==='#/work/jobs'){
+          await checkPerformerHistory(page,surface,assertClean);
+          result.historyTabsVerified=true;
+        }
         result.clicked.push(href);
       }
       let menu=await openMobileMenu(page,assertClean);
@@ -221,6 +241,10 @@ try{
             return active.length===1&&active[0].getAttribute('href')===target;
           },href,{timeout:10000});
         });
+        if(mode==='performer'&&href==='#/work/jobs'){
+          await checkPerformerHistory(page,surface,assertClean);
+          result.historyTabsVerified=true;
+        }
         result.clicked.push('desktop:'+href);
       };
       // Queue tabs are actual work actions, particularly for insurance and
