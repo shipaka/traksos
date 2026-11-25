@@ -165,6 +165,29 @@ export class PublicVehicleDirectory {
       note:'Первичная регистрация в реестре НЕ доказывает год производства или серию. Версию двигателя, EBS и электрику необходимо сверить по VIN на заводском портале.',
     };
   }
+  /** Exact historical display-name lookup, independent of capped search results.
+   * Ambiguous names are returned as ambiguous, never guessed from year or VIN. */
+  async exactGarageMatch(actor:AuthUser,brand:string,model:string) {
+    const allowed=categoriesForActor(actor,'garage');
+    const makeName=normalizeAlias(brand),modelName=normalizeAlias(model);
+    const [data,shelf]=await Promise.all([dataset(),vehicleOwnerShelf()]);
+    const candidates=new Map<string,{category:DirectoryCategory;brandKey:string;modelKey:string;brand:string;model:string}>();
+    const makeNames=new Map(data.makes.map(m=>[m[0],m[1]]));
+    for(const [category,brandKey,modelKey,name] of data.models){
+      if(!allowed.includes(category))continue;
+      const display=makeNames.get(brandKey);
+      if(!display)continue;
+      candidates.set(JSON.stringify([category,brandKey,modelKey]),{category,brandKey,modelKey,brand:display,model:name});
+    }
+    for(const row of shelf.rows){
+      if(!allowed.includes(row.category))continue;
+      candidates.set(JSON.stringify([row.category,row.makeKey,row.modelKey]),{
+        category:row.category,brandKey:row.makeKey,modelKey:row.modelKey,brand:row.make,model:row.model});
+    }
+    const matches=[...candidates.values()].filter(x=>normalizeAlias(x.brand)===makeName&&normalizeAlias(x.model)===modelName);
+    return {status:matches.length===1?'exact':matches.length?'ambiguous':'unmatched',
+      selection:matches.length===1?{category:matches[0].category,brandKey:matches[0].brandKey,modelKey:matches[0].modelKey}:null};
+  }
   async resolve(category: DirectoryCategory, makeKey: string, modelKey: string) {
     const [d,shelf] = await Promise.all([dataset(),vehicleOwnerShelf()]);
     const manual = shelf.rows.find(r=>r.category===category&&r.makeKey===makeKey&&r.modelKey===modelKey);
