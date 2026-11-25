@@ -147,7 +147,10 @@ export async function syncOfflineReferences(): Promise<SyncSummary> {
 export async function searchOfflineReferences(query: string, category = 'all', limit = 24): Promise<OfflinePart[]> {
   let db: IDBDatabase;
   try { db = await open(); } catch { return []; }
-  const terms = query.trim().toLocaleLowerCase('ru-RU').split(/\s+/).filter(Boolean);
+  const normalize=(text:string)=>text.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/ё/g,'е');
+  const compact=(text:string)=>normalize(text).replace(/[^a-zа-я0-9]/g,'');
+  const terms = normalize(query.trim()).split(/\s+/).filter(Boolean);
+  const articleQuery=compact(query);
   try {
     return await new Promise((resolve, reject) => {
       const found: OfflinePart[] = [];
@@ -157,10 +160,13 @@ export async function searchOfflineReferences(query: string, category = 'all', l
         const cursor = req.result;
         if (!cursor || found.length >= limit) { resolve(found); return; }
         const part = cursor.value as OfflinePart;
-        const searchable = [part.name, part.article, part.brand, part.aliases]
-          .filter(Boolean).join(' ').toLocaleLowerCase('ru-RU');
+        const searchable = normalize([part.name, part.article, part.brand, part.aliases]
+          .filter(Boolean).join(' '));
+        const articleMatch=articleQuery.length>=3&&[part.article,part.aliases]
+          .filter((value):value is string=>typeof value==='string')
+          .some(value=>compact(value).includes(articleQuery));
         if ((category === 'all' || part.category === category) &&
-            terms.every((term) => searchable.includes(term))) found.push(part);
+            (articleMatch||terms.every((term) => searchable.includes(term)))) found.push(part);
         cursor.continue();
       };
       req.onerror = () => reject(req.error);
