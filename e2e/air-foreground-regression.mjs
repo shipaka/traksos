@@ -6,6 +6,7 @@ import {chromium} from 'playwright';
 
 const stubs={
   '../api.ts':`
+    export function getToken(){return 'synthetic-driver-token';}
     export function get(path){
       return new Promise((resolve,reject)=>window.__airTest.requests.push({path,resolve,reject}));
     }
