@@ -224,10 +224,19 @@ try{
  assert(!await searchCase.locator('.search-workspace-content').isVisible(),'Search did not collapse on dashboard');
  await searchCase.getByRole('button',{name:'Раскрыть поиск'}).click();
  await op.screenshot({path:output+'/owner-search-1647.png',fullPage:false,animations:'disabled'});
+ await op.evaluate(()=>{
+   const original=Element.prototype.animate;
+   window.__caseReveals=[];
+   Element.prototype.animate=function(frames,options){
+     if(this.matches('.approved-pc-case:not(.approved-pc-search-case)'))window.__caseReveals.push(options?.duration);
+     return original.call(this,frames,options);
+   };
+ });
  await searchCase.locator('.offer').filter({hasText:'Второй мастер CI'}).getByRole('button',{name:'Выбрать за 1200 ₽'}).click();
  await op.locator('.approved-pc-case').getByText('Второй мастер CI',{exact:false}).first().waitFor();
  await searchCase.waitFor({state:'detached'});
  assert(chosenOffer==='bid-2','Dashboard chose wrong offer');
+ assert(await op.evaluate(()=>window.__caseReveals.filter(x=>x===320).length===1),'Confirmed assignment must reveal the existing card exactly once');
  assert(await op.locator('.approved-pc-case').getByRole('link',{name:'История автомобиля'}).count()===1,'Existing vehicle history lost after choice');
  assert(await op.locator('.approved-pc-case').getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+searchId,'Wrong case after assignment');
  await op.screenshot({path:output+'/owner-search-assigned-1647.png',fullPage:false,animations:'disabled'});
@@ -239,8 +248,10 @@ try{
  searchDenied=false;
  await assertOwnerClean('owner selected search lifecycle');
  // Real form submit, synthetic server response. Existing older cases must not win.
- await op.route(url=>url.pathname==='/api/pricing',route=>route.fulfill(json({payments:{invoice:true},consult:{price:70000,backDiscount:20000,backHours:48}})));
- await op.route(url=>url.pathname==='/api/vehicles',route=>route.fulfill(json([truck])));
+ const consultPricingRoute=url=>url.pathname==='/api/pricing';
+ const consultVehiclesRoute=url=>url.pathname==='/api/vehicles';
+ await op.route(consultPricingRoute,route=>route.fulfill(json({payments:{invoice:true},consult:{price:70000,backDiscount:20000,backHours:48}})));
+ await op.route(consultVehiclesRoute,route=>route.fulfill(json([truck])));
  await op.goto(BASE+'/#/new/consult',{waitUntil:'domcontentloaded'});
  await op.locator('#f-car select.field').waitFor();
  await op.locator('#f-car select.field').selectOption(truck.id);
@@ -251,8 +262,8 @@ try{
  assert(consultCreated,'Consultation form did not create order');
  assert(await op.locator('.approved-pc-search-case .offer').count()===0,'Empty search invented offers');
  await assertOwnerClean('owner new consultation search routing');
- await op.unroute(url=>url.pathname==='/api/pricing');
- await op.unroute(url=>url.pathname==='/api/vehicles');
+ await op.unroute(consultPricingRoute);
+ await op.unroute(consultVehiclesRoute);
  // Shared inner-screen banners must NOT overlay the old separate photo tile
  // on top of the approved full-card photograph, as caught in real screenshots.
  await op.goto(BASE+'/#/garage',{waitUntil:'domcontentloaded'});
