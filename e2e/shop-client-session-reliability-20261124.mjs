@@ -13,12 +13,12 @@ const rootDir=new URL('../',import.meta.url).pathname;
 const entry=[
   "import React,{useEffect,useState} from 'react';",
   "import {createRoot} from 'react-dom/client';",
-  "import {ShopCart,ShopHistory} from '../web/src/screens/shop.tsx';",
+  "import {Shop,ShopCart,ShopHistory} from '../web/src/screens/shop.tsx';",
   "function App(){const [screen,setScreen]=useState('cart');",
   " useEffect(()=>{const handler=()=>setScreen(window.__ciScreen);",
   " window.addEventListener('ci-screen-change',handler);",
   " return ()=>window.removeEventListener('ci-screen-change',handler)},[]);",
-  " return screen==='history'?React.createElement(ShopHistory):React.createElement(ShopCart);}",
+  " return screen==='home'?React.createElement(Shop):screen==='history'?React.createElement(ShopHistory):React.createElement(ShopCart);}",
   "createRoot(document.getElementById('root')).render(React.createElement(App));",
 ].join('\n');
 const mockApi=[
@@ -72,15 +72,9 @@ const compiled=await build({
     setup(b){
       b.onResolve({filter:/\/api\.ts$/},()=>({path:'api',namespace:'mock-shop'}));
       b.onResolve({filter:/\/ui\.tsx$/},()=>({path:'ui',namespace:'mock-shop'}));
-      b.onResolve({filter:/\/shopOffline\.ts$/},()=>({path:'offline',namespace:'mock-shop'}));
-      b.onResolve({filter:/\/shopReferenceOffline\.ts$/},()=>({path:'offlineRef',namespace:'mock-shop'}));
       b.onResolve({filter:/\/shopCatalogAdmin\.tsx$/},()=>({path:'adminCatalog',namespace:'mock-shop'}));
       b.onLoad({filter:/.*/,namespace:'mock-shop'},arg=>({
         contents:arg.path==='api'?mockApi:arg.path==='ui'?mockUI:
-          arg.path==='offline'?
-            'export const syncOfflineParts=async()=>({});export const searchOfflineParts=async()=>[];':
-          arg.path==='offlineRef'?
-            'export const syncOfflineReferences=async()=>({});export const searchOfflineReferences=async()=>[];':
             'export const AdminShopCatalog=()=>null;',
         loader:'js',resolveDir:rootDir,
       }));
@@ -214,8 +208,113 @@ try{
   assert.equal(await analogButtons.nth(1).getAttribute('aria-expanded'),'false');
   await page.getByRole('button',{name:'Повторить',exact:true}).first().click();
   await page.waitForFunction(()=>location.hash==='#/shop/cart?vehicleId=ci-vehicle-B');
-  assert.deepEqual(pageErrors,[],'Unhandled React errors in cart/history');
-  console.log('PASS: real ShopCart/ShopHistory React, account A→B, stale selection, failed POST no auto-repeat');
+  // Real ShopHome and both real IndexedDB indexes. Only the synthetic API
+  // is mocked; no catalog enablement, checkout or production mutation.
+  await page.evaluate(()=>{
+    window.__ciNetwork=true;
+    Object.defineProperty(navigator,'onLine',{configurable:true,get:()=>window.__ciNetwork});
+    window.__ciShopMode='open';window.__ciReferenceMode='fail';
+    window.__ciShopGets=[];
+    const product='00000000-0000-4000-8000-000000000021';
+    const reference='00000000-0000-4000-8000-000000000022';
+    window.__ciGet=async path=>{
+      window.__ciShopGets.push({path,online:window.__ciNetwork});
+      if(!window.__ciNetwork)throw Error('CI offline network read');
+      if(path==='/api/shop?light=1'){
+        if(window.__ciShopMode==='fail')throw Error('CI failed reconnect');
+        if(window.__ciShopMode==='closed')return {
+          enabled:false,closedTitle:'Учебный магазин закрыт',closedText:'Продажи недоступны'
+        };
+        return {enabled:true,products:[],categories:{engine:'Двигатель'},
+          categoryGroups:[],note:'Учебный каталог'};
+      }
+      if(path.startsWith('/api/shop/search?'))return {items:[],total:0,page:0,limit:24};
+      if(path.startsWith('/api/shop/catalog/search?'))return {enabled:true,items:[],total:0};
+      if(path==='/api/shop/index/manifest')return {enabled:true,revision:'1',count:1};
+      if(path.startsWith('/api/shop/index/page?'))return {enabled:true,
+        rows:[[product,'engine','Scania','P-321','Учебный насос',null]],next:null};
+      if(path==='/api/shop/catalog/index/manifest'){
+        if(window.__ciReferenceMode==='fail')throw Error('CI reference index unavailable');
+        const deleted=window.__ciReferenceMode==='deleted';
+        return {enabled:true,revision:deleted?'2':'1',count:deleted?0:1};
+      }
+      if(path.startsWith('/api/shop/catalog/index/page?'))return {enabled:true,
+        rows:[[reference,'engine','Scania','R-654','Учебный справочный артикул',null]],next:null};
+      if(path.startsWith('/api/shop/catalog/index/changes?'))return {
+        enabled:true,rows:[['2',reference]],next:null,revision:'2'
+      };
+      throw Error('Unexpected GET '+path);
+    };
+    location.hash='#/shop';
+    window.__ciScreen='home';window.dispatchEvent(new Event('ci-screen-change'));
+  });
+  const heading=page.getByRole('heading',{name:'Магазин',exact:true});
+  const save=page.getByRole('button',{name:'Сохранить справочник для слабого интернета'});
+  const offlineHeading=page.getByRole('heading',{name:'Сохранённый справочник запчастей'});
+  const query=page.getByRole('searchbox',{name:'Поиск запчастей по названию или артикулу'});
+  const setOnline=online=>page.evaluate(online=>{
+    window.__ciNetwork=online;window.dispatchEvent(new Event(online?'online':'offline'));
+  },online);
+  const screen=name=>page.evaluate(name=>{
+    window.__ciScreen=name;window.dispatchEvent(new Event('ci-screen-change'));
+  },name);
+  await heading.waitFor();
+  await save.click();
+  await page.getByText(/Обновление прервано/).waitFor();
+  await setOnline(false);
+  await offlineHeading.waitFor();
+  await query.fill('P321');
+  await page.getByText('Учебный насос',{exact:true}).waitFor();
+  assert.equal(await page.getByText('Учебный справочный артикул',{exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:/В корзину|Добавить:|Оформить заказ|Корзина/}).count(),0);
+  assert.equal(await page.getByText(/в наличии|под заказ ·/).count(),0);
+  // Cold navigation inside an already-loaded shell: unmount and remount Shop
+  // while offline, retaining only the actual public IDB reference index.
+  await screen('history');
+  await page.getByRole('heading',{name:'История покупок'}).waitFor();
+  await screen('home');
+  await offlineHeading.waitFor();
+  await query.fill('P321');
+  await page.getByText('Учебный насос',{exact:true}).waitFor();
+  await setOnline(true);
+  await heading.waitFor();
+  await page.evaluate(()=>{window.__ciReferenceMode='seed'});
+  await save.click();
+  await page.getByText(/справочные номера: 1/).waitFor();
+  await setOnline(false);
+  await offlineHeading.waitFor();
+  await query.fill('R654');
+  await page.getByText('Учебный справочный артикул',{exact:true}).waitFor();
+  await setOnline(true);
+  await heading.waitFor();
+  await page.evaluate(()=>{window.__ciReferenceMode='deleted'});
+  await save.click();
+  await page.getByText(/удалено устаревших: 1/).waitFor();
+  await setOnline(false);
+  await offlineHeading.waitFor();
+  await page.getByText('В сохранённом справочнике ничего не найдено. При подключении обновите каталог.').waitFor();
+  assert.equal(await page.getByText('Учебный справочный артикул',{exact:true}).count(),0,'Revoked reference survived IDB delta');
+  assert.equal(await page.getByRole('button',{name:/Добавить:|В корзину|Оформить заказ/}).count(),0);
+  // Explicit server closure stays closed even when the following reconnect
+  // fails, rather than reopening the saved-index screen by mistake.
+  await page.evaluate(()=>{window.__ciShopMode='closed'});
+  await setOnline(true);
+  await page.getByText('Учебный магазин закрыт',{exact:true}).waitFor();
+  await setOnline(false);
+  await page.getByText('Учебный магазин закрыт',{exact:true}).waitFor();
+  await page.evaluate(()=>{window.__ciShopMode='fail'});
+  await setOnline(true);
+  await page.getByText('CI failed reconnect',{exact:true}).waitFor();
+  await setOnline(false);
+  await page.getByText('Учебный магазин закрыт',{exact:true}).waitFor();
+  assert.equal(await offlineHeading.count(),0);
+  assert.equal(await page.getByRole('searchbox').count(),0);
+  const offlineReads=await page.evaluate(()=>window.__ciShopGets.filter(x=>!x.online&&
+    (x.path.startsWith('/api/shop/search?')||x.path.startsWith('/api/shop/catalog/search?')||x.path==='/api/shop?light=1')));
+  assert.deepEqual(offlineReads,[],'Shop must not issue live catalog queries while offline');
+  assert.equal(await page.evaluate(()=>window.__ciOrders.length),2,'Offline screen must not send checkout writes');
+  assert.deepEqual(pageErrors,[],'Unhandled React errors in shop/cart/history');
+  console.log('PASS: real Shop, ShopCart, ShopHistory, account isolation, offline IDB, partial sync, tombstone, closure and no auto-repeat');
 }catch(error){
   if(pageErrors.length)console.error('Browser runtime errors:',pageErrors.join('; '));
   throw error;
