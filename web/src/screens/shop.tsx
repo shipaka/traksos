@@ -166,7 +166,16 @@ export function Shop() {
       <span className="note">Поиск не подтверждает совместимость и не добавляет деталь автоматически в ремонт. Проверяйте применяемость по VIN и агрегату.</span>
     </section>
   );
-  const c = useShopPrivateLoad<any>(() => get('/api/shop?light=1'), []);
+  const c = useShopPrivateLoad<any>(() => {
+    if(!navigator.onLine) return Promise.reject(new Error('Нет подключения к каталогу'));
+    return get('/api/shop?light=1');
+  }, []);
+  // A failed reconnect must not erase an explicitly observed server closure.
+  // This is only a display guard for the current mounted screen, not a grant
+  // of access or an offline promise that the server is still open.
+  const lastClosed=useRef<{enabled:false;closedTitle:string;closedText:string}|null>(null);
+  if(c.data?.enabled===false)lastClosed.current={enabled:false,closedTitle:c.data.closedTitle,closedText:c.data.closedText};
+  else if(c.data?.enabled===true)lastClosed.current=null;
   const [cart, setCart] = useCart();
   const [cat, setCat] = useState('all');
   const [term, setTerm] = useState('');
@@ -185,20 +194,20 @@ export function Shop() {
     const t = setTimeout(() => { setDebouncedTerm(term); setPage(0); }, 280);
     return () => clearTimeout(t);
   }, [term]);
-  const search = useShopPrivateLoad<any>(() => c.data?.enabled
+  const search = useShopPrivateLoad<any>(() => !offline && c.data?.enabled
     ? get(`/api/shop/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}&page=${page}`)
     : Promise.resolve({ items: [], total: 0, page: 0, limit: 24 }),
-    [c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
+    [offline, c.data?.enabled, cat, debouncedTerm, page], (e) => e.type === 'shop');
   const local = useLoad(() => searchOfflineParts(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   const localRefs = useLoad(() => searchOfflineReferences(debouncedTerm, cat), [debouncedTerm, cat, offlineVersion]);
   // A separate small result set for reviewed reference entries without live pricing.
   // Do not fetch it before a search/category selection or while the shop is closed.
   const references = useShopPrivateLoad<any>(() =>
-    c.data?.enabled && (debouncedTerm.trim() || cat !== 'all')
+    !offline && c.data?.enabled && (debouncedTerm.trim() || cat !== 'all')
       ? get(`/api/shop/catalog/search?q=${encodeURIComponent(debouncedTerm)}&category=${encodeURIComponent(cat)}`)
       : Promise.resolve({ enabled: false, items: [], total: 0 }),
-    [c.data?.enabled, debouncedTerm, cat]);
-  const d = c.data;
+    [offline, c.data?.enabled, debouncedTerm, cat]);
+  const d = c.data??(offline?lastClosed.current:null);
   if (offline && d?.enabled!==false && getToken()) return <main className="track-shop-home">
     <h1>Сохранённый справочник запчастей</h1>
     <p className="note" role="status">Нет подключения. Доступны только сохранённые названия и артикулы. Цена, наличие и возможность заказа не подтверждены.</p>
