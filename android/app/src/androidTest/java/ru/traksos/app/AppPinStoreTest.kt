@@ -69,6 +69,57 @@ class AppPinStoreTest {
         assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "1234"))
         assertEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "6543"))
     }
+    @Test fun changingAccountMetadataCannotUnlockWithOriginalPin() {
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+        assertTrue(p.edit().putString("ownerId", "account-B").commit())
+        assertNotEquals(AppPinStore.Check.OK, AppPinStore.verify(ctx, "0123"))
+    }
+
+    @Test fun oldUnboundVerifierRequiresAccountRecovery() {
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+        assertTrue(p.edit().remove("version").commit())
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+    }
+
+    @Test fun malformedVerifierFailsClosed() {
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+        assertTrue(p.edit().putString("salt", "AAAA").commit())
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+    }
+
+    @Test fun concurrentWrongAttemptsCannotLoseRetryCounts() {
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        val pool = java.util.concurrent.Executors.newFixedThreadPool(5)
+        val start = java.util.concurrent.CountDownLatch(1)
+        try {
+            val results = (1..5).map {
+                pool.submit<AppPinStore.Check> {
+                    start.await()
+                    AppPinStore.verify(ctx, "9999")
+                }
+            }
+            start.countDown()
+            val checks = results.map { it.get(15, java.util.concurrent.TimeUnit.SECONDS) }
+            assertEquals(4, checks.count { it == AppPinStore.Check.WRONG })
+            assertEquals(1, checks.count { it == AppPinStore.Check.COOLDOWN })
+            val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+            assertEquals(5, p.getInt("failures", 0))
+            assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123"))
+        } finally {
+            pool.shutdownNow()
+        }
+    }
+
+    @Test fun malformedInputConsumesAnAttempt() {
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        repeat(4) { assertEquals(AppPinStore.Check.WRONG, AppPinStore.verify(ctx, "bad")) }
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "bad"))
+        assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123"))
+    }
+
     /** Even without biometrics or internet the native screen has a working keypad. */
     @Test fun cinematicKeypadAcceptsFourDigitsWithoutWebViewOrKeyboard() {
         val instrument = InstrumentationRegistry.getInstrumentation()
