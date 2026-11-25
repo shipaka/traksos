@@ -2725,9 +2725,647 @@ export const TECHBASE_ILLUSTRATED = [
       "scania-r-trailer-brake-request",
       "ebs-functional"
     ]
+  },
+  {
+    "id": "scania-r-est-steering",
+    "title": "Scania R — EST — гидравлическое управление поддерживающей осью",
+    "category": "Ходовая и механика",
+    "system": "Рулевое управление",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Гидравлический узел EST относится к управляемой поддерживающей оси; для него предусмотрены соединения шлангов. Сверить тип оси и гидроагрегата; не считать EST частью контура пневмоподвески.",
+    "source": "Scania Bodybuilder / Axle and suspension, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Axle_and_suspension.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-tag-axle-lift",
+      "steering-functional"
+    ]
+  },
+  {
+    "id": "scania-r-axle-wedge",
+    "title": "Scania R — Клин изменения наклона заднего моста",
+    "category": "Ходовая и механика",
+    "system": "Мосты и оси",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Клин относится к согласованию угла моста и рессорной подвески. Угол подбирается расчётом и по документации; не менять геометрию по этой картинке.",
+    "source": "Scania Bodybuilder / Axle and suspension, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Axle_and_suspension.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "axle-functional"
+    ]
+  },
+  {
+    "id": "scania-r-axle-stop",
+    "title": "Scania R — Ограничитель хода моста",
+    "category": "Ходовая и механика",
+    "system": "Подвеска",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Ограничители отличаются конструктивной высотой и ограничивают ход подвески. Сверить расстояние, номер детали и исполнение рамы.",
+    "source": "Scania Bodybuilder / Axle and suspension, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Axle_and_suspension.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "air-ecas",
+      "scania-r-axle-wedge"
+    ]
+  },
+  {
+    "id": "scania-r-tag-lift-hydraulic",
+    "title": "Scania R — Гидроцилиндр подъёма оси 6×2 на рессорах",
+    "category": "Ходовая и механика",
+    "system": "Подвеска",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для отдельного рессорного варианта 6×2 описан гидроцилиндр 2083400. Это не универсальный цилиндр всех R и не пневматический клапан.",
+    "source": "Scania Bodybuilder / Axle and suspension, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Axle_and_suspension.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-tag-axle-lift",
+      "scania-r-est-steering"
+    ]
+  },
+  {
+    "id": "scania-r-cab-suspension-crossmember",
+    "title": "Scania R — Поперечина задней подвески кабины",
+    "category": "Ходовая и механика",
+    "system": "Кабина",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Поперечина несёт элементы задней подвески кабины. Отличить от поперечин основной рамы; крепёж и монтаж только по исполнению.",
+    "source": "Scania Bodybuilder / Axle and suspension, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Axle_and_suspension.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-cab-tilt",
+      "scania-r-frame-crossmember"
+    ]
+  },
+  {
+    "id": "scania-r-cab-safety-prop",
+    "title": "Scania R — Механическая страховочная опора поднятой кабины",
+    "category": "Ходовая и механика",
+    "system": "Кабина",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Scania указывает страховочную опору 99431; в документе перечислены кабины P/G/R/S. Не заменять штатную опору подручными средствами; следовать заводской процедуре.",
+    "source": "Scania Bodybuilder / Cab interior and exterior, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-cab-tilt",
+      "scania-r-cab-tilt-control"
+    ]
+  },
+  {
+    "id": "scania-r-frame-bracket",
+    "title": "Scania R — Крепление надстройки к раме",
+    "category": "Ходовая и механика",
+    "system": "Рама",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "В каталоге различаются угловые и пластинчатые крепления. Тип крепления и разрешённые нагрузки зависят от рамы и надстройки.",
+    "source": "Scania Bodybuilder / Chassis frame and subframe",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Chassis_frame_and_subframe.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-frame-flex-mount",
+      "scania-r-frame-crossmember"
+    ]
+  },
+  {
+    "id": "scania-r-frame-flex-mount",
+    "title": "Scania R — Податливое крепление подрамника",
+    "category": "Ходовая и механика",
+    "system": "Рама",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Предусмотрены варианты крепления с пружинами и резиновыми элементами. Не превращать податливое крепление в жёсткое без согласованного расчёта.",
+    "source": "Scania Bodybuilder / Chassis frame and subframe",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Chassis_frame_and_subframe.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-frame-bracket"
+    ]
+  },
+  {
+    "id": "scania-r-frame-crossmember",
+    "title": "Scania R — Поперечина основной рамы",
+    "category": "Ходовая и механика",
+    "system": "Рама",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Поперечины подбираются по типу и ширине профиля рамы. Проверить обозначение рамы; универсальной детали для всех R нет.",
+    "source": "Scania Bodybuilder / Chassis frame and subframe",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Chassis_frame_and_subframe.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-frame-bracket",
+      "scania-r-frame-endbeam"
+    ]
+  },
+  {
+    "id": "scania-r-frame-endbeam",
+    "title": "Scania R — Концевая балка рамы",
+    "category": "Ходовая и механика",
+    "system": "Рама",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Концевые балки существуют с открытым и закрытым профилем. Допустимое оборудование зависит от конкретной балки и исполнения рамы.",
+    "source": "Scania Bodybuilder / Chassis frame and subframe",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Chassis_frame_and_subframe.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-frame-crossmember"
+    ]
+  },
+  {
+    "id": "scania-r-towing-eye",
+    "title": "Scania R — Передняя проушина и фиксирующий палец",
+    "category": "Ходовая и механика",
+    "system": "Рама",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Передний узел буксировочного оборудования включает проушину и фиксирующий палец. Не считать любую проушину точкой подъёма; допустимые нагрузки по руководству.",
+    "source": "Scania Bodybuilder / Chassis frame and subframe",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Chassis_frame_and_subframe.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-frame-crossmember"
+    ]
+  },
+  {
+    "id": "scania-r-cab-cooler",
+    "title": "Scania R — Крышный автономный охладитель кабины",
+    "category": "Автономное оборудование",
+    "system": "Климат",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Scania перечисляет несколько крышных моделей охладителя. Уточнить модель прибора, способ питания и наличие водяного контура.",
+    "source": "Scania Bodybuilder / Cab interior and exterior, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-aux-heater-switch"
+    ]
+  },
+  {
+    "id": "scania-r-cab-fridge-connector",
+    "title": "Scania R — Разъём холодильника кабины",
+    "category": "Автономное оборудование",
+    "system": "Оборудование кабины",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для холодильника и кофеварки указан двухконтактный корпус с круглыми контактами 813551. Это обозначение корпуса, не подтверждение полярности или напряжения.",
+    "source": "Scania Bodybuilder / Cab interior and exterior, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "connector-orientation"
+    ]
+  },
+  {
+    "id": "scania-r-cab-microwave-connector",
+    "title": "Scania R — Разъём микроволновой печи кабины",
+    "category": "Автономное оборудование",
+    "system": "Оборудование кабины",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для микроволновой печи указан двухконтактный корпус с плоскими контактами 1490906. Не путать с круглым корпусом холодильника; питание зависит от оборудования.",
+    "source": "Scania Bodybuilder / Cab interior and exterior, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-cab-fridge-connector"
+    ]
+  },
+  {
+    "id": "scania-r-cab-antenna",
+    "title": "Scania R — Антенный узел кабины: радио и GNSS",
+    "category": "Электрика и ЭБУ",
+    "system": "Связь",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Каталог описывает многофункциональные и отдельные антенные корпуса. Уточнить назначение кабеля, диапазон, тип антенны и разъёма.",
+    "source": "Scania Bodybuilder / Cab interior and exterior, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-camera-interface"
+    ]
+  },
+  {
+    "id": "scania-r-pto-hydraulic-pump",
+    "title": "Scania R — Гидравлический насос на КОМ двигателя",
+    "category": "КПП и ретардер",
+    "system": "КОМ и гидравлика",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для двигателя с ED предусмотрены варианты приводного комплекта и крепления насоса. Сверить КОМ, насос и допустимые нагрузки; не запускать непроверенное сочетание.",
+    "source": "Scania Bodybuilder / Power take-offs and hydraulic system, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Power_take-offs_and_hydraulic_system.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-ed-pto",
+      "scania-r-pto-heatshield"
+    ]
+  },
+  {
+    "id": "scania-r-pto-heatshield",
+    "title": "Scania R — Тепловой экран ED",
+    "category": "КПП и ретардер",
+    "system": "КОМ и гидравлика",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Тепловой экран предусмотрен рядом с КОМ ED. Проверить расположение горячих деталей и штатное исполнение защиты.",
+    "source": "Scania Bodybuilder / Power take-offs and hydraulic system, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Power_take-offs_and_hydraulic_system.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-pto-hydraulic-pump"
+    ]
+  },
+  {
+    "id": "scania-r-pto-flange",
+    "title": "Scania R — Выходные фланцы коробки отбора мощности",
+    "category": "КПП и ретардер",
+    "system": "КОМ и гидравлика",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "В перечне приведены разные типы присоединительных фланцев DIN и SAE. Подбор по размеру фланца без допуска по моменту и комплектации недостаточен.",
+    "source": "Scania Bodybuilder / Power take-offs and hydraulic system, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Power_take-offs_and_hydraulic_system.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-eg-pto",
+      "scania-r-pto-hydraulic-pump"
+    ]
+  },
+  {
+    "id": "scania-r-gear-oil-cooler",
+    "title": "Scania R — Дополнительный маслоохладитель КПП",
+    "category": "КПП и ретардер",
+    "system": "Охлаждение КПП",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для работы с КОМ описан дополнительный охладитель масла коробки. Отличить от охлаждения двигателя; определить тип КПП и комплект охладителя.",
+    "source": "Scania Bodybuilder / Power take-offs and hydraulic system, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Power_take-offs_and_hydraulic_system.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-gear-oil-control",
+      "scania-r-coolant-retarder"
+    ]
+  },
+  {
+    "id": "scania-r-gear-oil-control",
+    "title": "Scania R — Термовыключатель охладителя масла КПП",
+    "category": "Электрика и ЭБУ",
+    "system": "Охлаждение КПП",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Комплект охладителя содержит термовыключатель и отдельный жгут. Проверить номер выключателя и схему; пины, порог и напряжение не заданы.",
+    "source": "Scania Bodybuilder / Power take-offs and hydraulic system, p. 1",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Power_take-offs_and_hydraulic_system.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-gear-oil-cooler"
+    ]
+  },
+  {
+    "id": "scania-r-high-headlamp",
+    "title": "Scania R — Высоко расположенные фары C364/C365",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "В руководстве для дополнительных высоких фар указаны C364 и C365. Назначение контактов и наличие переключения фар сверяются по оборудованию.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-aux-light",
+      "connector-orientation"
+    ]
+  },
+  {
+    "id": "scania-r-roof-spotlamp",
+    "title": "Scania R — Дополнительные прожекторы кабины",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для прожекторов кабины указан пятиконтактный соединитель 199948. Количество контактов не определяет их электрическую функцию.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-high-headlamp",
+      "scania-r-aux-light"
+    ]
+  },
+  {
+    "id": "scania-r-roof-beacon",
+    "title": "Scania R — Проблесковый маяк и жгут крыши",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "В перечне есть светодиодный маяк и переходной кабель. Уточнить разрешённую конфигурацию сигнального оборудования и цепи питания.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-roof-spotlamp",
+      "scania-r-aux-light"
+    ]
+  },
+  {
+    "id": "scania-r-roof-sign",
+    "title": "Scania R — Подсветка вывески C376/C409",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Для подсветки на крыше упомянуты соединители C376 и C409. Не переносить их назначение на прожектор или маяк.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-roof-beacon",
+      "connector-orientation"
+    ]
+  },
+  {
+    "id": "scania-r-side-marker",
+    "title": "Scania R — Боковой габаритный фонарь C450",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Описан вариант подключения дополнительного бокового габарита через C450. Есть и другие варианты жгутов. Выбирать по конкретной схеме.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-tail-lamp",
+      "scania-r-roof-sign"
+    ]
+  },
+  {
+    "id": "scania-r-fifth-wheel-light",
+    "title": "Scania R — Фонарь освещения седельного устройства",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "В перечне рабочих фонарей отдельно указан светильник для седельного устройства. Сверить цвет исполнения, расположение и подключение по опции.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-aux-light",
+      "scania-r-side-marker"
+    ]
+  },
+  {
+    "id": "scania-r-tail-lamp",
+    "title": "Scania R — Задний фонарь: секционный и LED",
+    "category": "Электрика и ЭБУ",
+    "system": "Освещение",
+    "kind": "Карточка узла / функции",
+    "make": "Scania",
+    "models": [
+      "R"
+    ],
+    "scope": "Тематический материал по Scania R. Источник описывает оборудование или детали Scania для надстройки; установка на конкретном R не подтверждена. Номера контактов и монтажные размеры не показаны.",
+    "body": "Различаются секционные и LED исполнения задних фонарей, включая асимметрию функций. Сверить сторону, вариант подсветки номера и сигнал заднего хода.",
+    "source": "Scania Bodybuilder / Visibility",
+    "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Visibility.pdf",
+    "pins": [],
+    "sourceCheckedOn": "2026-11-25",
+    "rights": "original_illustration",
+    "fitment": "not_confirmed",
+    "reviewStatus": "source_checked_expert_pending",
+    "related": [
+      "scania-r-side-marker",
+      "scania-r-reverse-alarm"
+    ]
   }
 ] as const;
 export async function readTechBaseIllustrations(){
  const cards=await Promise.all(TECHBASE_ILLUSTRATED.map(async card=>({...card,image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')})));
- return {version:'2026-11-25-c',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
+ return {version:'2026-11-25-c2',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
 }
