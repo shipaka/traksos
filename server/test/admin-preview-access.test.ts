@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, scryptSync } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { setup, type T } from './helpers.ts';
 
 test('temporary admin preview expires for both password login and existing API sessions', async () => {
@@ -42,5 +47,33 @@ test('temporary admin preview expires for both password login and existing API s
     assert.equal((await t.api('POST', '/api/auth/login', { phone, password })).status, 200);
   } finally {
     await t.close();
+  }
+});
+
+test('archived administrator bootstrap refuses before Docker and documents the fixed expiry', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'traksos-preview-archive-'));
+  try {
+    const marker = join(dir, 'docker-called');
+    writeFileSync(join(dir, 'docker'), '#!/bin/bash\n: > "$PREVIEW_TEST_MARKER"\nexit 99\n', { mode: 0o700 });
+    const script = fileURLToPath(new URL('../../deploy/provision-preview-admin.sh', import.meta.url));
+    const result = spawnSync('bash', [script], {
+      cwd: dir,
+      env: { ...process.env, PATH: dir + ':' + (process.env.PATH ?? ''), PREVIEW_TEST_MARKER: marker },
+      encoding: 'utf8', timeout: 5000,
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, 1);
+    assert.equal(existsSync(marker), false);
+    assert.match(result.stderr, /ARCHIVED.*2026-11-13/);
+    assert.equal(result.stdout, '');
+    const doc = readFileSync(new URL('../../deploy/ADMIN-PREVIEW-ACCESS.md', import.meta.url), 'utf8');
+    const cross = readFileSync(new URL('../../deploy/TEMPORARY-DEMO-ACCESS.md', import.meta.url), 'utf8');
+    assert.match(doc, /АРХИВ/);
+    assert.match(doc, /14 ноября 2026 года/);
+    assert.match(doc, /12 ролей/);
+    assert.match(cross, /архивная первоначальная инициализация/);
+    assert.doesNotMatch(doc, /bash deploy\/provision-preview-admin\.sh/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
