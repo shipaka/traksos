@@ -4,8 +4,11 @@ import { readTechBaseIllustrations } from '../src/domain/techbaseIllustrated.ts'
 test('illustrated master corpus has local inert SVG, provenance and no exact-fit claims', async()=>{
  const {cards,families,categories}=await readTechBaseIllustrations();
  for(const cat of categories) assert.ok(cards.some(c=>c.category===cat),cat);
- assert.equal(cards.length,129); assert.equal(families.length,14);
+ assert.equal(cards.length,148); assert.equal(families.length,14);
  assert.equal(cards.filter(c=>c.id.startsWith('scania-r-')).length,100);
+ const volvoNew=cards.filter(c=>c.id.startsWith('volvo-fh-')&&'details' in c);
+ assert.equal(volvoNew.length,19);
+ for(const c of volvoNew) if('details' in c) for(const key of ['capability','location','route','conditions','connectors','wiring','diagnostics'] as const) assert.ok(c.details[key],c.id+' '+key);
  assert.ok(cards.filter(c=>c.id.startsWith('scania-r-')).every(c=>c.make==='Scania'&&(c.models as readonly string[]).includes('R')&&c.pins.length===0));
  assert.ok(families.some(([make,models])=>make==='МАЗ'&&(models as readonly string[]).includes('5440')));
  assert.ok(families.some(([make,models])=>make==='Mercedes-Benz'&&(models as readonly string[]).includes('Axor')));

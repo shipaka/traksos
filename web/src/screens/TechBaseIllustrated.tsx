@@ -1,5 +1,5 @@
 import { useState } from 'react';
-export type IllustratedCard = {id:string;title:string;system:string;kind:string;make:string|null;models:readonly string[];scope:string;body:string;source:string;url:string;sourceCheckedOn:string;rights:string;fitment:string;reviewStatus:string;image:string;category:string;related:readonly string[];pins:readonly (readonly string[])[]};
+export type IllustratedCard = {id:string;title:string;system:string;kind:string;make:string|null;models:readonly string[];scope:string;body:string;source:string;url:string;sourceCheckedOn:string;rights:string;fitment:string;reviewStatus:string;image:string;details?:{capability:string;location:string;route:string;conditions:string;connectors:string;wiring:string;diagnostics:string};category:string;related:readonly string[];pins:readonly (readonly string[])[]};
 export type IllustratedPayload = {version:string;families:readonly (readonly [string,readonly string[]])[];categories:readonly string[];cards:IllustratedCard[]};
 const categoryFor=(s:string)=>({air:'Пневматика',electric:'Электрика и ЭБУ',diag:'Электрика и ЭБУ',ecu:'Электрика и ЭБУ',autonomy:'Автономное оборудование',tyre:'Шиномонтаж',hydraulics:'Ходовая и механика'} as Record<string,string>)[s];
 export function TechBaseIllustrated({data,specialties=[]}:{data:IllustratedPayload;specialties?:string[]}){
@@ -29,9 +29,13 @@ export function TechBaseIllustrated({data,specialties=[]}:{data:IllustratedPaylo
   <p role="status">{cards.length} материалов. {make&& !cards.some(c=>c.make===make)?'Для выбранной марки модельных схем пока нет; ниже только общие материалы.':''}</p>
   {cards.map(c=><article key={c.id} className="card stack">
     <div className="between"><span className="pill">{c.kind}</span><span className="note">{c.make?c.make+' '+c.models.join(' / '):'Общий материал'}</span></div>
-    <h3>{c.title}</h3><span className="note">{c.category} · {c.system}</span><p>{c.body}</p><p className="techbase-warning">{c.scope}</p>
+    <h3>{c.title}</h3><span className="note">{c.category} · {c.system}</span><p className="techbase-warning">{c.scope}</p>
     <button className="btn ghost small" type="button" aria-expanded={zoom===c.id} onClick={()=>setZoom(v=>v===c.id?null:c.id)}>{zoom===c.id?'Уменьшить':'Увеличить иллюстрацию'}</button>
     <div style={{overflowX:'auto',maxWidth:'100%'}}><img src={'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(c.image)} alt={c.title+' — '+c.scope} loading="lazy" style={{display:'block',width:zoom===c.id?'960px':'100%',maxWidth:zoom===c.id?'none':'100%',height:'auto'}}/></div>
+    <section className="stack" aria-label="Техническое описание под иллюстрацией">
+    <b>Что нужно знать мастеру</b>
+    {c.details?<dl style={{margin:0,display:'grid',gap:8}}>{([['Назначение и возможности',c.details.capability],['Где находится',c.details.location],['Откуда → куда',c.details.route],['Когда работает',c.details.conditions],['Разъёмы / фишки',c.details.connectors],['Пины, цвета, провода',c.details.wiring],['Что проверять',c.details.diagnostics]] as const).map(([label,value])=><div key={label}><dt><b>{label}</b></dt><dd style={{margin:0}}>{value}</dd></div>)}</dl>:<><p>{c.body}</p>{c.pins.length===0&&<p className="note">Точная распиновка, цвета и маршрут проводки отдельно не подтверждены. Сверяйте обозначения и применимость по источнику.</p>}</>}
+    </section>
     {c.pins.length>0&&<details><summary>Текстовая таблица контактов ({c.pins.length})</summary><div style={{overflowX:'auto'}}><table><thead><tr><th>№</th><th>Назначение</th><th>Цвет</th><th>мм²</th></tr></thead><tbody>{c.pins.map(p=><tr key={p[0]}>{p.map((v,i)=><td key={i}>{v}</td>)}</tr>)}</tbody></table></div></details>}
     {c.related.some(id=>data.cards.some(x=>x.id===id&&compatible(x)))&&<div className="stack"><b>Связанные узлы</b>{c.related.map(id=>data.cards.find(x=>x.id===id)).filter((x):x is IllustratedCard=>!!x&&compatible(x)).map(x=><button key={x.id} type="button" className="btn ghost small" onClick={()=>{setCategory(x.category);setSystem('');setQ('');setFocus(x.id);setZoom(null);}}>{x.category} → {x.title}</button>)}</div>}
     <div className="note">Авторская иллюстрация TrakSOS · источник проверен {c.sourceCheckedOn} · техническая проверка ожидается. <a href={c.url} target="_blank" rel="noopener noreferrer">{c.source} ↗</a></div>
