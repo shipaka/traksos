@@ -705,14 +705,21 @@ html .guest-partner-roles .guest-partner-role.guest-partner-role-service::before
   content:""!important;position:absolute!important;inset:0!important;
   z-index:1!important;
   background:linear-gradient(90deg,
-    rgba(3,15,23,.98) 0%,
-    rgba(5,19,28,.96) 24%,
-    rgba(7,22,32,.81) 47%,
-    rgba(9,24,33,.20) 76%,
-    rgba(7,22,31,.05) 100%)!important;
+    rgba(3,15,23,.76) 0%,
+    rgba(5,19,28,.66) 24%,
+    rgba(7,22,32,.38) 47%,
+    rgba(9,24,33,.10) 76%,
+    rgba(7,22,31,0) 100%)!important;
   opacity:1!important;
   border:0!important;box-shadow:none!important;
   transform:none!important;pointer-events:none;
+}
+/* The dedicated scenes already have a dark left edge. Keep their subjects
+   visible rather than layering an almost opaque second mask over them. */
+.guest-app.guest-home .owner20-features .owner20-feature-title b,
+.guest-app.guest-home .owner20-features .owner20-feature p,
+.guest-app.guest-home .owner20-features .owner20-feature-cta {
+  text-shadow:0 1px 3px #031017,0 0 6px #031017;
 }
 .guest-app.guest-home .owner20-features .owner20-feature::after {
   display:none!important;content:none!important;
