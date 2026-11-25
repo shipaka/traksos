@@ -992,8 +992,8 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
     'bookings:'+userId+':'+as,e=>e.type==='booking');
   const [tab, setTab] = useState<'list' | 'black' | 'cars'>('list');
   const [ctab, setCtab] = useState<'now' | 'my' | 'hist' | 'black'>('now');
-  if (as === 'performer' && tab === 'black') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
-  if (as === 'performer' && tab === 'cars') return <main><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} />{list.data ? <JobsByCar orders={list.data} /> : <Loading error={list.error} />}</main>;
+  if (as === 'performer' && tab === 'black') return <main className="performer-orders-page"><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} /><PerformerBlacklist /></main>;
+  if (as === 'performer' && tab === 'cars') return <main className="performer-orders-page"><h1>История</h1><HistoryTabs tab={tab} setTab={setTab} />{list.data ? <JobsByCar orders={list.data} /> : <Loading error={list.error} />}</main>;
   const live = (o: any) => !['completed', 'cancelled', 'no_performer'].includes(o.status);
   const shown = as === 'performer' ? list.data : (list.data ?? []).filter((o: any) => ctab === 'now' ? live(o) : !live(o));
   const activeBookings = (bookings.data ?? []).filter(isOpenBooking);
