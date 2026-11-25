@@ -98,6 +98,8 @@ class MainActivity : AppCompatActivity() {
     private val allowedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or
         BiometricManager.Authenticators.DEVICE_CREDENTIAL
     private var activeAccountId: String? = null
+    private var recoveryInProgress = false
+    private var sessionRevision = 0L
 
     fun appPinEnabled(): Boolean = AppPinStore.enabled(this)
     private fun biometricAvailable() = BiometricManager.from(this)
@@ -265,6 +267,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmAccountRecovery() {
+        if (recoveryInProgress || isFinishing || isDestroyed) return
         AlertDialog.Builder(this)
             .setTitle("Восстановить доступ?")
             .setMessage("Чтобы сбросить PIN на этом устройстве, понадобится пароль TrakSOS. Если пароль забыт, его можно восстановить по SMS. Текущая сессия будет закрыта.")
@@ -277,8 +280,20 @@ class MainActivity : AppCompatActivity() {
         // Do not clear the local lock until the server confirms revocation.
         // A forgotten PIN is not a reason to remove a technician from the line.
         // If offline, keep the cover and retry after connectivity returns.
+        if (recoveryInProgress || isFinishing || isDestroyed) return
+        val requestedToken = Session.token(this) ?: return
+        val requestedServer = Session.server(this)
+        val requestedRevision = sessionRevision
+        recoveryInProgress = true
         Session.post(this, "/api/auth/recover-local-lock") { ok, code ->
             runOnUiThread {
+                recoveryInProgress = false
+                // A result belongs only to the session that requested recovery.
+                // Never clear a different account or a replacement session.
+                if (isFinishing || isDestroyed ||
+                    requestedRevision != sessionRevision ||
+                    requestedToken != Session.token(this) ||
+                    requestedServer != Session.server(this)) return@runOnUiThread
                 // 401 proves the old token is already invalid and safe to forget.
                 if (!ok && code != 401) {
                     android.widget.Toast.makeText(this,
@@ -288,7 +303,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 AppPinStore.clear(this)
                 appLockPrefs.edit().putBoolean("enabled", false).apply()
-                Session.save(this, Session.server(this), null)
+                Session.save(this, requestedServer, null)
+                sessionRevision++
                 activeAccountId = null
                 emit("appPinChanged", mapOf("enabled" to "false"))
                 web.evaluateJavascript(
@@ -303,7 +319,12 @@ class MainActivity : AppCompatActivity() {
     /** Persist only the account identity so one person's PIN cannot open another's session. */
     fun onWebSession(apiUrl: String, token: String?, accountId: String?) {
         val hadToken = Session.token(this)
+        val previousAccount = activeAccountId
         Session.save(this, apiUrl, token)
+        if (Session.token(this) != token) return
+        if (hadToken != token || (!accountId.isNullOrBlank() && previousAccount != accountId)) {
+            sessionRevision++
+        }
         if (token.isNullOrEmpty()) {
             activeAccountId = null
             return
