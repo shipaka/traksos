@@ -1,5 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
 import { setup, ok, type T } from './helpers.ts';
 
 let t: T;
@@ -87,4 +88,33 @@ test('linked support intake rolls back ticket and initial message if durable sta
   const later=ok(await t.api('POST','/api/support',{...payload,text:'Дополнительная информация'},owner.token));
   assert.equal(later.id,ticket.id);
   assert.equal(later.messages.length,2);
+});
+
+
+test('linked intake exact retries append once, replay after closure, and reject changed request',async()=>{
+  const owner=await t.login('+79997770004');
+  const order=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb'},owner.token)).order;
+  const first={topic:'Другое',text:'Учебное обращение по заявке',orderId:order.id,requestKey:randomUUID()};
+  const submit=(p:typeof first)=>t.api('POST','/api/support',p,owner.token);
+  const responses=await Promise.all(Array.from({length:6},()=>submit(first)));
+  const tickets=responses.map(ok);
+  const id=tickets[0].id;
+  assert.ok(tickets.every(x=>x.id===id&&x.messages.length===1));
+  const append={...first,text:'Новая информация по обращению',requestKey:randomUUID()};
+  const repeats=await Promise.all(Array.from({length:5},()=>submit(append)));
+  assert.ok(repeats.map(ok).every(x=>x.id===id&&x.messages.length===2));
+  assert.equal((await submit({...append,text:'Изменённый текст'})).status,409);
+  assert.equal((await t.db.query("select id from notifications where kind='support' and data->>'ticketId'=$1",[id])).length,2);
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='support_called'",[order.id])).length,1);
+  await t.api('POST','/api/support/'+id+'/close',{},owner.token);
+  const closed=ok(await submit(first));
+  assert.equal(closed.id,id);
+  assert.equal(closed.status,'closed');
+  assert.equal(ok(await submit(append)).id,id);
+  const rows=await t.db.query('select ticket_id from support_linked_requests where user_id=$1',[owner.id]);
+  assert.equal(rows.length,2);
+  assert.ok(rows.every(x=>x.ticket_id===id));
+  const fresh=ok(await submit({...first,requestKey:randomUUID()}));
+  assert.notEqual(fresh.id,id);
+  assert.equal(fresh.messages.length,1);
 });
