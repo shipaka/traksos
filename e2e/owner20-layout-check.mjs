@@ -108,6 +108,27 @@ try {
         scene.bodyRight>scene.frameLeft+scene.frameWidth*.8)
        throw Error(width+': clipped/overlapping/missing canonical service art '+JSON.stringify(scene));
    }
+   // Dedicated full-card artwork must remain visible and must not capture clicks.
+   // A source file alone is insufficient if an opaque pseudo-element hides it.
+   for(const key of expectedScenes){
+     const card=page.locator('.owner20-feature-'+key);
+     await card.scrollIntoViewIfNeeded();
+     const evidence=await card.evaluate(el=>{
+       const image=el.querySelector('.traksos-feature-art img');
+       const frame=el.getBoundingClientRect();
+       const imageRect=image?.getBoundingClientRect();
+       const overlay=getComputedStyle(el,'::before');
+       const alpha=[...overlay.backgroundImage.matchAll(/rgba\([^)]*,\s*([\d.]+)\)/g)].map(m=>Number(m[1]));
+       const hit=document.elementFromPoint(frame.left+frame.width*.82,frame.top+frame.height*.5);
+       return {covers:!!imageRect&&imageRect.width>=frame.width-4&&imageRect.height>=frame.height-4,
+         visible:!!image&&getComputedStyle(image).visibility==='visible'&&Number(getComputedStyle(image).opacity)>0,
+         maxAlpha:Math.max(0,...alpha),overlayInert:overlay.pointerEvents==='none',
+         clickThrough:!!hit&&hit.closest('a')===el};
+     });
+     if(!evidence.covers||!evidence.visible||evidence.maxAlpha>.8||!evidence.overlayInert||!evidence.clickThrough)
+       throw Error(width+': artwork hidden or not clickable '+key+' '+JSON.stringify(evidence));
+   }
+   await page.evaluate(()=>window.scrollTo(0,0));
    // Validate actual text glyph rectangles and the quick-service atlas mapping,
    // not just the element widths (overflow:hidden can hide the failure).
    const tileReading=await page.evaluate(async()=>{
