@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { get, post } from '../api.ts';
 import { Back, useMe } from '../ui.tsx';
 
@@ -94,8 +94,10 @@ function AirRoom() {
       window.removeEventListener('offline',offline);
     };
   },[refresh]);
-  useEffect(()=>{
-    if(!air)return;
+  useLayoutEffect(()=>{
+    // Hidden/offline/uncertain-write states remove the list DOM. Rehydrate
+    // the same tail as a fresh render, even when no message ID changed.
+    if(!air){lastTailId.current=null;return;}
     const tailId=air.messages[air.messages.length-1]?.id??null;
     if(tailId!==lastTailId.current) {
       lastTailId.current=tailId;
@@ -158,6 +160,7 @@ function AirRoom() {
     <section className="card" aria-label="Общий эфир водителей">
       <div ref={logRef} role="log" aria-label="Сообщения эфира" aria-live="polite"
         onScroll={event=>{
+          if(!air)return; // An empty placeholder is not a user scroll intent.
           const el=event.currentTarget;
           keepAtBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<96;
         }}
