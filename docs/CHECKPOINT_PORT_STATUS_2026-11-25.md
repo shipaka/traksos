@@ -16,18 +16,10 @@ PR #144. Исходный полный код: `c1a7c5b7a1a58db41f9ed580111f470e
 - `docs/CHECKPOINT_ARRIVAL_EVIDENCE_2026-11-17.md`
 - `e2e/checkpoint-sandbox-ui.mjs`
 - `scripts/load-mixed-1000.mjs`
-- `server/migrations/210_checkpoint_arrival_evidence.sql`
-- `server/migrations/211_checkpoint_gps_scoped_consent.sql`
-- `server/migrations/212_checkpoint_gps_purge_receipts.sql`
-- `server/migrations/213_checkpoint_evidence_scope_constraints.sql`
-- `server/migrations/214_checkpoint_route_order_scope.sql`
 - `server/src/app.ts`
 - `server/src/http/checkpointRoutes.ts`
-- `server/src/services/checkpointEvidence.ts`
-- `server/src/services/checkpointIntegrity.ts`
 - `server/src/services/profiles.ts`
 - `server/test/checkpointApi.test.ts`
-- `server/test/checkpointEvidence.test.ts`
 - `server/test/checkpointIntegrity.test.ts`
 - `web/src/screens/admin.tsx`
 - `web/src/screens/adminCheckpointSandbox.tsx`
@@ -35,3 +27,9 @@ PR #144. Исходный полный код: `c1a7c5b7a1a58db41f9ed580111f470e
 - `web/src/screens/order.tsx`
 
 Порядок: проверить миграции и актуальные схемы; перенести сервисы/ограничения согласия/удаления; подключить только изолированный sandbox; проверить полномочия, браузер, Android, нагрузку 200/1000. Никакого автоматического прибытия, тарифа ожидания или боевого сбора данных. PR остаётся draft до полного согласованного этапа и свежего CI.
+
+## Этап 2 — серверная модель в изолированном кандидате
+
+Перенесены исходные пять миграций 210–214 без переименования, сервисы checkpointEvidence и checkpointIntegrity. Текущие миграции 114/115 обеспечивают совместимую базовую таблицу GPS, конфликтов имён нет. Перенесён полный исходный тест репозитория без дублирования чистых тестов: согласие и отзыв, привязка к заявке, ручное решение, границы доступа, сроки и удаление. Назначение в тесте изолированно задаётся на синтетической базе; актуальный алгоритм торгов этим тестом не проверяется. Добавлены проверка прежних значений GPS по умолчанию, закрытого HTTP-маршрута и предварительного аудита ограничений.
+
+Это не подключённый API и не разрешение на сбор GPS. Старые проверки не подтверждают этот этап. Далее: ревизия сроков согласия и хранения, интеграция HTTP исключительно в тестовый контур, адаптация profiles.ts, проверки API/целостности и интерфейс. Боевой релиз и юридическая приёмка отдельно.
