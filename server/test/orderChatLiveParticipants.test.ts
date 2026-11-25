@@ -28,22 +28,45 @@ test('chat rechecks current roles, deleted accounts and fleet assignment for rea
    await assert.rejects(t.app.chat.post(actor,order.id,'Недоступное сообщение'),{status:403});
   };
   for(const actor of [o,d,m])assert.ok((await list(actor)).participants.some(p=>p.you));
+  t.app.hub.keepLog=true;
+  const system=async(body:string,expectedIds:string[])=>{
+   t.app.hub.log.length=0;
+   await t.app.orders.systemMessage(order.id,body);
+   const events=t.app.hub.log.filter(x=>x.event.type==='chat'&&x.event.message?.order_id===order.id);
+   assert.deepEqual(events.map(x=>x.userId).sort(),[...expectedIds].sort());
+   return events;
+  };
+  const financial='Сумма 987654 ₽';
+  const first=await system(financial,[owner.id,driver.id,master.id]);
+  assert.equal(first.find(x=>x.userId===owner.id)?.event.message.body,financial);
+  assert.equal(first.find(x=>x.userId===driver.id)?.event.message.body,financial);
+  const redacted=first.find(x=>x.userId===master.id)?.event.message.body;
+  assert.ok(redacted?.includes('Клиенту доступен подробный расчёт'));
+  assert.ok(!JSON.stringify(first.find(x=>x.userId===master.id)).includes('987654'));
+  assert.equal((await list(m)).messages.find(x=>x.id===Number(first[0].event.message.id))?.body,redacted);
+  assert.equal((await list(o)).messages.find(x=>x.id===Number(first[0].event.message.id))?.body,financial);
+  const ordinary=await system('Мастер выехал',[owner.id,driver.id,master.id]);
+  assert.ok(ordinary.every(x=>x.event.message.body==='Мастер выехал'));
+
   const sent=await t.app.chat.post(o,order.id,'Первое учебное сообщение');
   assert.ok(sent.id);
   await t.db.query("update users set roles='{client}'::text[] where id=$1",[master.id]);
   await denied(m);
   assert.ok(!(await list(o)).participants.some(p=>p.who==='performer'));
+  await system('После отзыва роли исполнителя',[owner.id,driver.id]);
   await t.db.query("update users set roles=$2::text[] where id=$1",[master.id,m.roles]);
   await t.db.query("update users set deleted_at=now() where id=$1",[master.id]);
   await denied(m);
   const count=async(id:string)=>Number((await t.db.one(
     "select count(*) as n from notifications where user_id=$1 and kind='chat_push'",[id]))?.n??0);
+  await system('После удаления исполнителя',[owner.id,driver.id]);
   const before=await count(master.id);
   await t.app.chat.post(o,order.id,'Сообщение после удаления исполнителя');
   assert.equal(await count(master.id),before);
   await t.db.query("update users set deleted_at=null where id=$1",[master.id]);
   await t.db.query("update users set status='blocked' where id=$1",[owner.id]);
   await denied(o);await denied(d);
+  await system('После блокировки владельца',[master.id]);
   // The currently assigned performer retains their historical case access.
   assert.ok((await list(m)).messages.some(x=>x.id===sent.id));
   await t.db.query("update users set status='active' where id=$1",[owner.id]);
@@ -51,6 +74,7 @@ test('chat rechecks current roles, deleted accounts and fleet assignment for rea
   await denied(d);
   await denied(await snap(replacement.id));
   assert.ok(!(await list(o)).participants.some(p=>p.who==='driver'));
+  await system('После замены водителя',[owner.id,master.id]);
   const driverBefore=await count(driver.id);
   await t.app.chat.post(o,order.id,'Сообщение после смены водителя');
   assert.equal(await count(driver.id),driverBefore);
