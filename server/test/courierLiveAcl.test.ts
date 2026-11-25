@@ -51,11 +51,23 @@ test('courier handoff enforces current courier, buyer and fleet access', {timeou
     await assert.rejects(service.presence(courierActor),{code:'forbidden'});
     await assert.rejects(service.setPresence(courierActor,true),{code:'forbidden'});
     await assert.rejects(service.progress(courierActor,d1,'picked_up'),{code:'forbidden'});
-    await assert.rejects(service.assign(adminActor,d1===d2?fleet:direct,courier.id),{code:'invalid_courier'});
+    await assert.rejects(service.assign(adminActor,direct,courier.id),{code:'invalid_courier'});
     assert.ok(!(await service.candidates()).some(x=>x.id===courier.id));
     await t.db.query('update users set deleted_at=null where id=$1',[courier.id]);
+    const notices=async(orderId:string)=>await t.db.query<{user_id:string}>(
+      "select user_id from notifications where data->>'shopOrderId'=$1 and title='Доставка запчастей: новый этап' order by id",[orderId]);
+    // Progress may still be recorded for dispatch/support, but revoked
+    // recipients must not receive new durable business notifications.
+    await t.db.query("update users set status='blocked' where id=$1",[owner.id]);
+    await service.progress(courierActor,d1,'picked_up');
+    assert.deepEqual(await notices(direct),[]);
+    await t.db.query("update users set status='active' where id=$1",[owner.id]);
+    await t.db.query('update vehicles set driver_id=null where id=$1',[vehicle]);
+    await service.progress(courierActor,d2,'picked_up');
+    assert.deepEqual((await notices(fleet)).map(x=>x.user_id),[owner.id]);
+    await t.db.query('update vehicles set driver_id=$2 where id=$1',[vehicle,driver.id]);
     for(const delivery of [d1,d2])
-      for(const stage of ['picked_up','en_route','arrived'] as const)
+      for(const stage of ['en_route','arrived'] as const)
         await service.progress(courierActor,delivery,stage);
     const directCode=await service.receiptCode(ownerActor,direct);
     const fleetCode=await service.receiptCode(driverActor,fleet);
