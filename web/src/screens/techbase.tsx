@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ApiError, get } from '../api.ts';
+import { useMemo, useRef, useState } from 'react';
+import { get, getToken } from '../api.ts';
+import { usePrivateRead } from './privateRead20261124.ts';
 import { useMe } from '../ui.tsx';
 import { VehicleTechnicalSources } from './VehicleTechnicalSources.tsx';
 import { TechBaseIllustrated, type IllustratedPayload } from './TechBaseIllustrated.tsx';
@@ -30,63 +31,50 @@ const modelMatches=(value:string,reference:string)=>{
 
 export function TechBase({ audience, initialVehicleId = '' }: { audience:Audience; initialVehicleId?:string }) {
   const { me } = useMe();
-  return <TechBaseForAccount key={(me?.id??'guest')+':'+audience+':'+initialVehicleId} audience={audience} initialVehicleId={initialVehicleId}/>;
+  const token=getToken();
+  const session=useRef({token,revision:0});
+  if(session.current.token!==token)session.current={token,revision:session.current.revision+1};
+  const params=new URLSearchParams(location.hash.split('?')[1]??'');
+  const orderId=audience==='master'?params.get('orderId')??'':'';
+  const bookingId=audience==='master'?params.get('bookingId')??'':'';
+  if(!me||!token)return null;
+  return <TechBaseForAccount key={JSON.stringify([me.id,me.owner_id,me.roles,session.current.revision,audience,initialVehicleId,orderId,bookingId])} audience={audience} initialVehicleId={initialVehicleId} orderId={orderId} bookingId={bookingId}/>;
 }
-function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initialVehicleId:string}){
+function TechBaseForAccount({audience,initialVehicleId,orderId,bookingId}:{audience:Audience;initialVehicleId:string;orderId:string;bookingId:string}){
   const {me}=useMe();
   const isMaster = audience === 'master';
-  const [payload,setPayload] = useState<Payload|null>(null);
-  const [vehicles,setVehicles] = useState<GarageVehicle[]>([]);
+
   const [vehicleId,setVehicleId] = useState(isMaster?'':initialVehicleId);
   const [kind,setKind] = useState<'all'|'truck'|'trailer'|'component'>('all');
   const [make,setMake] = useState('');
   const [system,setSystem] = useState('');
   const [documentType,setDocumentType] = useState('');
   const [query,setQuery] = useState('');
-  const [error,setError] = useState('');
-  const [vehicleError,setVehicleError] = useState('');
-  const [catalogRetry,setCatalogRetry] = useState(0);
-  const [vehiclesRetry,setVehiclesRetry] = useState(0);
-  const [garageLoaded,setGarageLoaded]=useState(false);
-  useEffect(() => {
-    let active = true;
-    setPayload(null); setError('');
-    get('/api/techbase?audience='+audience)
-      .then((data:Payload) => { if(active) {
-        // An HTTP 200 with a malformed response must not look like an empty,
-        // verified manufacturer catalog.
-        if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences) || !data.audiences.includes(audience) || data.documents.some(d=>!d||d.audience!==audience||!Array.isArray(d.models)||d.models.some(m=>typeof m!=='string')||typeof d.title!=='string'||typeof d.system!=='string'||typeof d.source!=='string'||typeof d.url!=='string'||!/^https:\/\//i.test(d.url)))
+  const token=getToken();
+  const checked=async<T,>(load:()=>Promise<T>)=>{
+    if(!token||getToken()!==token)throw Error('Сессия изменилась');
+    const result=await load();
+    if(getToken()!==token)throw Error('Сессия изменилась');
+    return result;
+  };
+  const relevant=(e:any)=>['connection_restored','profile','verification','account','fleet','vehicle','order','booking','part_recommendations_changed'].includes(e.type);
+  const catalog=usePrivateRead<Payload>(()=>checked(async()=>{
+    const data=await get<Payload>('/api/techbase?audience='+audience);
+    if(!data || !Array.isArray(data.documents) || !Array.isArray(data.audiences) || !data.audiences.includes(audience) || data.documents.some(d=>!d||d.audience!==audience||!Array.isArray(d.models)||d.models.some(m=>typeof m!=='string')||typeof d.title!=='string'||typeof d.system!=='string'||typeof d.source!=='string'||typeof d.url!=='string'||!/^https:\/\//i.test(d.url)))
           throw new Error('invalid_techbase');
-        setPayload(data);
-      }})
-      .catch((e:unknown) => { if(active) setError(e instanceof ApiError&&e.status===403?'Нет доступа к этому разделу ТехБазы. Проверьте роль и статус верификации.':'Не удалось получить каталог. Проверьте подключение и права доступа.'); });
-    return () => { active = false; };
-  }, [audience, me?.id, catalogRetry]);
-  useEffect(() => {
-    // Garage vehicle names and plates belong to the current account. Clear
-    // the old user's options before a new authenticated GET can complete.
-    setVehicles([]);
-    setVehicleId(isMaster?'':initialVehicleId);
-    setVehicleError('');
-  }, [me?.id, initialVehicleId, isMaster]);
-  useEffect(() => {
-    if (isMaster) return;
-    let active = true;
-    setVehicles([]);setVehicleError('');setGarageLoaded(false);
-    get('/api/vehicles').then((data:GarageVehicle[]) => {
-      if (active) {
-        if(!Array.isArray(data)||data.some(v=>!v||typeof v.id!=='string'||typeof v.brand!=='string'||(v.model!=null&&typeof v.model!=='string')))throw new Error('invalid_garage');
-        setVehicles(data);
-        setGarageLoaded(true);
-      }
-    }).catch(() => {
-      if(active) {
-        setVehicles([]);
-        setVehicleError('Не удалось загрузить машины из гаража. Можно искать вручную или повторить загрузку.');
-      }
-    });
-    return () => {active=false;};
-  }, [isMaster, me?.id, vehiclesRetry]);
+    return data;
+  }),audience,relevant);
+  const garage=usePrivateRead<GarageVehicle[]>(()=>checked(async()=>{
+    if(isMaster)return [];
+    const data=await get<GarageVehicle[]>('/api/vehicles');
+    if(!Array.isArray(data)||data.some(v=>!v||typeof v.id!=='string'||typeof v.brand!=='string'||(v.model!=null&&typeof v.model!=='string')))throw Error('invalid_garage');
+    return data;
+  }),audience,relevant);
+  const sourcePath=orderId&&!bookingId?'/api/orders/'+encodeURIComponent(orderId):bookingId&&!orderId?'/api/bookings/'+encodeURIComponent(bookingId):'';
+  const source=usePrivateRead<{canSuggest:boolean}|null>(()=>checked(()=>sourcePath?get(sourcePath+'/part-recommendations'):Promise.resolve(null)),sourcePath,relevant);
+  const payload=catalog.data,vehicles=garage.data??[],garageLoaded=!!garage.data;
+  const error=catalog.error?'Не удалось получить каталог. Проверьте подключение и права доступа.':'';
+  const vehicleError=garage.error?'Не удалось загрузить машины из гаража. Можно искать вручную или повторить загрузку.':'';
   const chosen = vehicles.find(v => v.id === vehicleId);
   const effectiveKind = chosen ? (chosen.catalog_category==='trailer'?'trailer':'truck') : kind;
   const selectedMake = (chosen?.brand || make).trim();
@@ -101,7 +89,7 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
     if (selectedMake && d.kind !== 'component' && makeKey(d.vehicleMake || '') !== makeKey(selectedMake)) return false;
     if (chosen && d.kind !== 'component' && (d.applicability==='model'||d.models.length>0) &&
         (!selectedModel || !d.models.some(m => modelMatches(selectedModel,m)))) return false;
-    if (chosen && (d.modelYearFrom!=null||d.modelYearTo!=null) && !selectedYear) return false;
+    if (chosen && d.kind !== 'component' && (d.modelYearFrom!=null||d.modelYearTo!=null) && (!Number.isInteger(selectedYear)||!selectedYear)) return false;
     if (selectedYear && d.modelYearFrom!=null && selectedYear < d.modelYearFrom) return false;
     if (selectedYear && d.modelYearTo!=null && selectedYear > d.modelYearTo) return false;
     if (query) {
@@ -126,7 +114,7 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
     <section className="card stack techbase-filter" aria-label="Поиск технических материалов">
       {!isMaster && vehicleError && <div className="banner warn" role="alert">
         {vehicleError}
-        <button type="button" className="btn ghost small" onClick={()=>setVehiclesRetry(n=>n+1)}>
+        <button type="button" className="btn ghost small" onClick={garage.reload}>
           Повторить загрузку гаража
         </button>
       </div>}
@@ -169,12 +157,13 @@ function TechBaseForAccount({audience,initialVehicleId}:{audience:Audience;initi
       {isMaster && <div className="techbase-context">Для электросхем и распиновок дополнительно проверьте номер блока, ревизию, двигатель и комплектацию. Без этого материалы являются справочными.</div>}
     </section>
     {error && <div className="banner warn" role="alert">{error}
-      <button type="button" className="btn ghost small" onClick={()=>setCatalogRetry(n=>n+1)}>
+      <button type="button" className="btn ghost small" onClick={catalog.reload}>
         Повторить загрузку каталога
       </button>
     </div>}
     {!payload && !error && <div className="card" role="status">Загружаем каталог производителя…</div>}
-    {isMaster && payload?.audiences.includes('master') && payload.illustrated && <TechBaseIllustrated key={me?.id} data={payload.illustrated} specialties={Array.isArray(me?.performer?.specialties)?me?.performer?.specialties:[]}/>}
+    {isMaster&&(orderId||bookingId)&&<div className="card stack"><span className="note">{source.data?.canSuggest?'Рекомендация будет привязана к текущему ремонту. Марку и комплектацию необходимо сверить.':'Отправка рекомендации недоступна до подтверждения полномочий по ремонту.'}</span>{sourcePath&&<a className="btn ghost small" href={orderId?'#/order/'+encodeURIComponent(orderId):'#/booking/'+encodeURIComponent(bookingId)}>Вернуться к ремонту</a>}{source.error&&<button className="btn ghost small" onClick={source.reload}>Перепроверить доступ к ремонту</button>}</div>}
+    {isMaster && payload?.audiences.includes('master') && payload.illustrated && <TechBaseIllustrated key={me?.id} data={payload.illustrated} specialties={Array.isArray(me?.performer?.specialties)?me?.performer?.specialties:[]} orderId={source.data?.canSuggest&&orderId?orderId:undefined} bookingId={source.data?.canSuggest&&bookingId?bookingId:undefined}/>}
     {payload && (!vehicleId||chosen) && <div className="stack">
       <div className="between"><h2>Материалы</h2><span className="pill">{docs.length} найдено</span></div>
       {docs.length===0 && (!vehicleId||chosen) && <div className="card">Для выбранной модели пока нет подтверждённых ссылок. Снимите фильтр или выберите другую систему. Мы не показываем схемы другой машины как подходящие.</div>}
