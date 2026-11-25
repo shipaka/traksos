@@ -159,7 +159,7 @@ function WorkLayout({left,center,right}:{left:ReactNode;center:ReactNode;right?:
   return <div className="approved-pc-three"><aside className="approved-pc-left">{left}</aside><div className="approved-pc-center">{center}</div><aside className="approved-pc-right">{right}</aside></div>;
 }
 function RealCase({o}:{o:any}){
-  const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.orderId===o.id&&e.type==='order');
+  const detail=useLoad(()=>get<any>('/api/orders/'+o.id),[o.id],e=>e.type==='connection_restored'||(e.type==='order'&&String(e.orderId)===String(o.id)));
   const [gps,setGps]=useState<{lat:number;lng:number;at:number}|null>(null);
   useEffect(()=>{
     setGps(null); // Previous application's location cannot leak into a different case.
@@ -173,16 +173,28 @@ function RealCase({o}:{o:any}){
   const d=detail.data||o;
   const v=transport(d);
   const p=d.performer;
-  const prev=Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)?{lat:p.lat,lng:p.lng}:null;
-  const lastAt=gps?.at||(p?.location_at?Date.parse(p.location_at):null);
-  const fresh=lastAt!=null&&Date.now()-lastAt<=120000&&Date.now()-lastAt>=-30000;
+  const prev=Number.isFinite(p?.lat)&&Number.isFinite(p?.lng)&&Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180?{lat:p.lat,lng:p.lng}:null;
+  const serverAt=prev&&p?.location_at?Date.parse(p.location_at):null;
+  const lastAt=gps?.at||(Number.isFinite(serverAt)?serverAt:null);
   const point=gps||prev;
+  const [,setClockRevision]=useState(0);
+  // Expire the live indicator even when no more WebSocket events arrive.
+  useEffect(()=>{
+    if(lastAt==null)return;
+    const age=Date.now()-lastAt;
+    if(age>120000||age < -30000)return;
+    const timer=window.setTimeout(()=>setClockRevision(n=>n+1),Math.max(1,120001-age));
+    return ()=>window.clearTimeout(timer);
+  },[lastAt]);
+  const fresh=!!point&&lastAt!=null&&Date.now()-lastAt<=120000&&Date.now()-lastAt>=-30000;
+  const vehicleId=d.vehicleId??d.vehicle_id??o.vehicleId??o.vehicle_id;
+  const vehicleHref=vehicleId?'#/garage/'+encodeURIComponent(String(vehicleId)):undefined;
   const milestones=[['searching','Поиск'],['accepted','Назначен'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
   const current=milestones.findIndex(([id])=>id===d.status);
   return <section className="approved-pc-case">
     <header><div><small>ВЫБРАННАЯ ЗАЯВКА</small><h2>№{text(d.number||d.id)} · {SERVICES[d.service]?.name||text(d.service,'Помощь на дороге')}</h2></div><span className="approved-pc-stage">{statusName(d)}</span></header>
     <div className="approved-pc-case-main">
-      <Photo v={v} href={d.vehicleId?'#/garage/'+d.vehicleId:undefined}/>
+      <Photo v={v} href={vehicleHref}/>
       <div className="approved-pc-facts">
         <h3>{vehicleLabel(v)}</h3>
         <p><b>Неисправность:</b> {text(d.description||d.problem,'Описание в заявке')}</p>
@@ -205,7 +217,7 @@ function RealCase({o}:{o:any}){
     <div className="approved-pc-case-actions">
       <a className="approved-pc-primary" href={'#/order/'+o.id}>Открыть заявку и следующий шаг</a>
       <a href={'#/order/'+o.id+'?chat=1'}>Чат и связь по заявке</a>
-      {d.vehicleId&&<a href={'#/garage/'+d.vehicleId}>История автомобиля</a>}
+      {vehicleHref&&<a href={vehicleHref}>История автомобиля</a>}
     </div>
     {detail.error&&<p className="approved-pc-caveat">Дополнительные сведения недоступны: {String(detail.error?.message||detail.error)}. Откройте карточку заявки.</p>}
     <p className="approved-pc-caveat">Информация о заказе, изменениях и исполнителе поступает с сервера. Личные телефоны не раскрываются; общение только через предоставленные платформой способы связи.</p>
@@ -224,8 +236,8 @@ function CustomerDesk({owner}:{owner:boolean}){
     ['service','#/services','Грузовые СТО'],
     ['consult','#/new/consult','Консультация по телефону'],
   ] as const;
-  const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order');
-  const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order');
+  const orders=useLoad(()=>get<any[]>('/api/orders'),[],e=>e.type==='order'||e.type==='connection_restored');
+  const fleet=useLoad(()=>owner?get<any>('/api/fleet'):Promise.resolve(null),[owner],e=>e.type==='fleet'||e.type==='order'||e.type==='connection_restored');
   const orderRows=orders.error?null:orders.data;
   const fleetSnapshot=fleet.error?null:fleet.data;
   const active=(orderRows||[]).filter((o:any)=>activeStates.has(o.status));
@@ -240,7 +252,6 @@ function CustomerDesk({owner}:{owner:boolean}){
       {active.length>0&&<Tabs active={String(selected?.id||'')} onChange={setChosen}
         items={active.map((o:any)=>[String(o.id),'№'+text(o.number||o.id)+' · '+(SERVICES[o.service]?.name||text(o.service)),null])}/>}
     </div>
-    {orders.error&&<LoadingBlock error={orders.error} retry={orders.reload}/>}
     <WorkLayout left={<>
       <Pane title="Мои заявки">
         {!orderRows?<LoadingBlock error={orders.error} retry={orders.reload}/>:active.length?
@@ -259,7 +270,7 @@ function CustomerDesk({owner}:{owner:boolean}){
         <a className="approved-pc-small-link" href="#/fleet">Управлять автопарком →</a>
       </Pane>}
     </>} center={selected?<RealCase key={String(selected.id)} o={selected}/>:<Pane title="Рабочий стол">
-        {!orderRows?<LoadingBlock error={orders.error} retry={orders.reload}/>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
+        {!orderRows?<p role="status">{orders.error?'Сведения о заявках недоступны. Повторите загрузку в разделе «Мои заявки».':'Проверяем активные заявки…'}</p>:<><h3>Помощь грузовому транспорту</h3><p>Активных заявок сейчас нет. Выберите необходимую услугу или откройте историю.</p>
         <div className="approved-pc-case-actions"><a className="approved-pc-primary" href="#/sos">Вызвать специалиста</a></div></>}
       </Pane>}
       right={<><Pane title="Помощь на дороге">
