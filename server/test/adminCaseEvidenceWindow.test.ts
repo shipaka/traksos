@@ -107,3 +107,62 @@ test('admin evidence windows keep recent history and independent latest stage it
     assert.ok(audits.some((x:any)=>x.action==='admin.case_view'));
   }finally{await t.close();}
 });
+
+test('vehicle history pages isolate the exact vehicle and exclude stages already in the case',{timeout:60000},async()=>{
+  const t=await setup();
+  try{
+    const admin=await t.login('+79990000001');
+    const owner=await t.login('+79997809541');
+    const station=await t.login('+79997809542','service');
+    const vehicleId=ok(await t.api('POST','/api/vehicles',{brand:'DAF',model:'XF',plate:'А456КМ178'},owner.token)).id;
+    const otherVehicle=ok(await t.api('POST','/api/vehicles',{brand:'DAF',model:'XF',plate:'А457КМ178'},owner.token)).id;
+    const makeOrder=async(vehicleId:string)=>ok(await t.api('POST','/api/orders',{
+      service:'electric',zoneId:'spb',vehicleId,description:'Синтетическая история ТС'
+    },owner.token)).order;
+    const root=await makeOrder(vehicleId);
+    const unrelated=await makeOrder(otherVehicle);
+    const center=ok(await t.api('PUT','/api/base',{
+      name:'Тестовая СТО',address:'Санкт-Петербург, Тестовая улица, 1',
+      staff:{electric:'own'},accepts:['quick','long']
+    },station.token)).center;
+    ok(await t.api('POST','/api/admin/services/'+center.id+'/verify',{decision:'approved'},admin.token));
+    const booking=ok(await t.api('POST','/api/services/'+center.id+'/book',{
+      vehicleId,need:'electric',day:'2026-12-02',arrival:'self'
+    },owner.token));
+    const foreignBooking=ok(await t.api('POST','/api/services/'+center.id+'/book',{
+      vehicleId:otherVehicle,need:'electric',day:'2026-12-02',arrival:'self'
+    },owner.token));
+    await t.db.query('update service_bookings set from_order_id=$2,case_root_id=null where id=$1',[booking.id,root.id]);
+    // Clone only essential non-financial fields from real API fixtures.
+    await t.db.query(`insert into orders(client_id,created_by,vehicle_id,service,is_sos,problem,description,address,lat,lng,
+      zone_id,night,group_trip,tier,brand,estimate,payment_method,client_fee_pct,destination,cargo,loaded,driver_on_site,
+      discount_amount,discount_reason,model,year,site,status,owner_note,
+      commission_pct_override,location_region,verified_only,created_at)
+      select client_id,created_by,vehicle_id,service,is_sos,problem,description,address,lat,lng,
+      zone_id,night,group_trip,tier,brand,estimate,payment_method,client_fee_pct,destination,cargo,loaded,driver_on_site,
+      discount_amount,discount_reason,model,year,site,'completed',owner_note,
+      commission_pct_override,location_region,verified_only,'2026-11-01T00:00:00Z'::timestamptz
+      from orders cross join generate_series(1,101) where id=$1`,[root.id]);
+    await t.db.query(`insert into service_bookings(center_id,client_id,created_by,vehicle_id,vehicle,need,when_day,when_time,arrival,comment,status,created_at)
+      select center_id,client_id,created_by,vehicle_id,vehicle,need,when_day,when_time,arrival,comment,'closed',
+      '2026-11-02T00:00:00Z'::timestamptz from service_bookings cross join generate_series(1,101) where id=$1`,[booking.id]);
+    const endpoint='/api/admin/cases/'+root.id;
+    const detail=ok(await t.api('GET',endpoint,undefined,admin.token));
+    assert.equal(detail.history_windows.vehicle_history.hasOlder,true);
+    assert.equal(detail.history_windows.vehicle_history_bookings.hasOlder,true);
+    const get=async(kind:string,before?:string)=>ok(await t.api('GET',endpoint+'/history?'+new URLSearchParams({kind,limit:'100',...(before?{before}:{})}),undefined,admin.token));
+    for(const [kind,excluded] of [['vehicle_orders',[root.id,unrelated.id]],['vehicle_bookings',[booking.id,foreignBooking.id]]] as const){
+      const first=await get(kind);
+      assert.equal(first.items.length,100);
+      assert.equal(first.hasMore,true);
+      const second=await get(kind,first.nextBefore);
+      assert.equal(second.items.length,1);
+      assert.equal(second.hasMore,false);
+      const ids=new Set([...first.items,...second.items].map((x:any)=>x.id));
+      assert.equal(ids.size,101);
+      for(const id of excluded)assert.ok(!ids.has(id));
+      for(const id of excluded)assert.equal((await t.api('GET',endpoint+'/history?'+new URLSearchParams({kind,before:id}),undefined,admin.token)).status,400);
+    }
+    assert.equal((await t.api('GET',endpoint+'/history?kind=vehicle_bookings',undefined,owner.token)).status,403);
+  }finally{await t.close();}
+});
