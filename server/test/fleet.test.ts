@@ -80,3 +80,32 @@ test('«всё через меня» и запреты: эвакуатор и з
   assert.equal(fs.settings.allow.repair, true);
   assert.equal((await t.api('GET', '/api/fleet', undefined, driver.token)).status, 400, 'парк видит только владелец');
 });
+
+test('расходы водителя ограничены текущим парком и не переполняют int32', async () => {
+  // Existing SOS exception permits creating an order despite approval mode.
+  const oldOrder = ok(await t.api('POST', '/api/orders', {
+    service: 'consult', vehicleId, isSos: true, description: 'Тест старого автопарка',
+  }, driver.token)).order;
+  // Synthetic stored amounts only; no payment provider calls to create these amounts.
+  await t.db.query(`update orders set status='completed', call_out_amount=1500000000,
+    work_amount=1000000000, created_at=now() where id=$1`, [oldOrder.id]);
+  const beforeMove = ok(await t.api('GET', '/api/fleet', undefined, owner.token));
+  assert.equal(beforeMove.cars[0].driver.monthSpent, 2500000000);
+  assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, driver.token)).monthSpent, 2500000000);
+
+  const nextOwner = await t.login('+79993334477');
+  const nextVehicle = ok(await t.api('POST', '/api/vehicles', {
+    brand: 'DAF', model: 'XF', plate: 'а483км178',
+  }, nextOwner.token)).id;
+  const nextQr = ok(await t.api('GET', '/api/fleet', undefined, nextOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/fleet/vehicles/${vehicleId}/new-qr`, {}, owner.token));
+  ok(await t.api('POST', `/api/qr/${nextQr}/join`, {}, driver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'limit', perMonth: 100000 }, nextOwner.token));
+  const nextFleet = ok(await t.api('GET', '/api/fleet', undefined, nextOwner.token));
+  assert.equal(nextFleet.cars[0].driver.monthSpent, 0);
+  assert.equal(ok(await t.api('GET', '/api/fleet/rules', undefined, driver.token)).monthSpent, 0);
+  const nextOrder = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: nextVehicle }, driver.token)).order;
+  assert.notEqual(nextOrder.status, 'awaiting_owner', 'старые расходы не расходуют лимит нового владельца');
+  const stored = await t.db.one<{ client_id: string }>('select client_id from orders where id=$1', [oldOrder.id]);
+  assert.equal(stored?.client_id, owner.id, 'история старого парка не переносится');
+});
