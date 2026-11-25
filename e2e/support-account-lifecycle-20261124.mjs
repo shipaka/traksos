@@ -54,8 +54,9 @@ const bundle=await build({
       import React,{useState} from 'react';
       import {createRoot} from 'react-dom/client';
       import {TestContext} from './web/src/ui.tsx';
-      import {SupportThread,SupportQueue,SupportList,SupportNew,Notifications} from './web/src/screens/support.tsx';
+      import {SupportThread,SupportQueue,SupportList,SupportNew,Notifications,useUnread} from './web/src/screens/support.tsx';
       window.__supportMock={calls:[],pending:[],listeners:[]};
+      function Badge(){const count=useUnread();return <output aria-label="Непрочитанные">{count}</output>;}
       function App(){
         const [me,setMe]=useState({id:'account-A',roles:['client']});
         const [mode,setMode]=useState('client');
@@ -68,7 +69,7 @@ const bundle=await build({
           {view==='thread'?<SupportThread id={ticket}/>:
           view==='queue'?<SupportQueue/>:
           view==='new'?<SupportNew/>:
-          view==='list'?<SupportList/>:<Notifications/>}
+          view==='list'?<SupportList/>:view==='badge'?<Badge/>:<Notifications/>}
         </TestContext.Provider>;
       }
       createRoot(document.getElementById('root')).render(<App/>);
@@ -240,6 +241,33 @@ try{
   assert(await page.evaluate(()=>location.hash)===notificationHash,
     'Late old-account notification navigated the new account to a private ticket');
   await finish('GET',notifications,3,'resolve',{unread:0,items:[]});
+  // The always-mounted header must not reuse an earlier actor's count.
+  const badgePath=notifications+'?limit=1';
+  await page.evaluate(()=>window.__setSupportView('badge'));
+  await wait('GET',badgePath,1);
+  await finish('GET',badgePath,0,'resolve',{unread:17,items:[]});
+  const badge=page.getByLabel('Непрочитанные');
+  await page.waitForFunction(()=>document.querySelector('output')?.textContent==='17');
+  await page.evaluate(()=>{
+    for(const type of ['announcement','support','order_status','support'])
+      window.__emitSupport({type});
+  });
+  await wait('GET',badgePath,2);
+  assert(await counts('GET',badgePath)===2,'A burst of events created duplicate badge GETs');
+  await page.evaluate(()=>window.__setSupportMe({id:'account-F',roles:['client']}));
+  await wait('GET',badgePath,3);
+  assert(await badge.innerText()==='0','Old account count exposed during new login');
+  await finish('GET',badgePath,1,'resolve',{unread:99,items:[]});
+  await finish('GET',badgePath,2,'resolve',{unread:2,items:[]});
+  await page.waitForFunction(()=>document.querySelector('output')?.textContent==='2');
+  await page.evaluate(()=>window.dispatchEvent(new Event('traksos:notifications-read')));
+  await wait('GET',badgePath,4);
+  await finish('GET',badgePath,3,'reject','offline badge');
+  assert(await badge.innerText()==='2','Failed refresh incorrectly cleared confirmed count');
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+  await wait('GET',badgePath,5);
+  await finish('GET',badgePath,4,'resolve',{unread:0,items:[]});
+  await page.waitForFunction(()=>document.querySelector('output')?.textContent==='0');
   assert(errors.length===0,'React runtime errors: '+errors.join('; '));
   console.log('PASS: support thread, drafts, status filter, notifications and double POST scoped to account');
 } finally {await browser.close();}
