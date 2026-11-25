@@ -31,7 +31,8 @@ object AppPinStore {
 
     private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun enabled(ctx: Context): Boolean = prefs(ctx).contains("mac")
-    fun owner(ctx: Context): String? = prefs(ctx).getString("ownerId", null)
+    fun owner(ctx: Context): String? = try { prefs(ctx).getString("ownerId", null) }
+        catch (_: Exception) { null }
 
     private fun key(create: Boolean): SecretKey? {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -75,9 +76,18 @@ object AppPinStore {
 
     /** Wrong attempts are persisted across process restarts. */
     @Synchronized
-    fun verify(ctx: Context, pin: String): Check {
+    fun verify(ctx: Context, pin: String): Check = try {
+        verifyStored(ctx, pin)
+    } catch (_: Exception) {
+        // A malformed preference type or inaccessible store is never an unlock.
+        storageFailed = true
+        Check.RELOGIN
+    }
+
+    private fun verifyStored(ctx: Context, pin: String): Check {
         val p = prefs(ctx)
-        if (storageFailed || !enabled(ctx) || p.getInt("failures", 0) >= 15) return Check.RELOGIN
+        val failuresBefore = p.getInt("failures", 0)
+        if (storageFailed || !enabled(ctx) || failuresBefore !in 0..14) return Check.RELOGIN
         // Preview v1 verifiers did not authenticate ownerId. Require account recovery,
         // not a silent upgrade that could legitimise modified account metadata.
         if (p.getInt("version", 0) != VERIFIER_VERSION) return Check.RELOGIN
@@ -112,9 +122,12 @@ object AppPinStore {
         return if (failures >= 15) Check.RELOGIN else if (wait > 0) Check.COOLDOWN else Check.WRONG
     }
 
-    fun waitSeconds(ctx: Context): Long =
-        ((prefs(ctx).getLong("blockedUntil", 0L) - System.currentTimeMillis())
-            .coerceAtLeast(0L) + 999L) / 1000L
+    fun waitSeconds(ctx: Context): Long = try {
+        val deadline = prefs(ctx).getLong("blockedUntil", 0L)
+        val now = System.currentTimeMillis()
+        if (deadline <= now) 0L
+        else ((deadline - now).coerceAtMost(300_000L) + 999L) / 1000L
+    } catch (_: Exception) { 0L }
 
     @Synchronized
     fun clear(ctx: Context) {
