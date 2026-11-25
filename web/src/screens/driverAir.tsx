@@ -30,7 +30,7 @@ function AirRoom() {
   const [refresh,setRefresh] = useState(0);
   const logRef = useRef<HTMLDivElement>(null);
   const keepAtBottom = useRef(true);
-  const lastCount = useRef(0);
+  const lastTailId = useRef<string|null>(null);
 
   useEffect(()=>{
     let live=true;
@@ -43,7 +43,7 @@ function AirRoom() {
     setLoading(true);
     setError('');
     const load=async()=>{
-      if(!current() || inFlight.current)return;
+      if(!current() || inFlight.current || document.visibilityState!=='visible' || !navigator.onLine)return;
       const request=++latestRequest;
       setLoading(true);
       try {
@@ -58,36 +58,53 @@ function AirRoom() {
         if(current() && request===latestRequest) setLoading(false);
       }
     };
-    void load();
     // Two overlapping polls can finish out of order on mobile networks:
     // only the newest response is allowed to replace the visible snapshot.
     const timer=setInterval(()=>{
       if(document.visibilityState==='visible' && navigator.onLine) void load();
     },12000);
     const online=()=>void load();
+    const visibility=()=>{
+      if(!current())return;
+      // A response started before suspension must not restore an old snapshot.
+      ++latestRequest;
+      if(document.visibilityState==='visible') {
+        if(navigator.onLine) void load();
+        else offline();
+      } else {
+        setAir(null);setLoading(false);
+      }
+    };
     const offline=()=>{
       if(!current())return;
       ++latestRequest;
       setAir(null);setLoading(false);
       setError('Нет связи с сервером. Проверь интернет и повтори загрузку.');
     };
+    document.addEventListener('visibilitychange',visibility);
     window.addEventListener('online',online);
     window.addEventListener('offline',offline);
+    if(!navigator.onLine) offline();
+    else if(document.visibilityState==='visible') void load();
+    else setLoading(false);
     return ()=>{
       live=false;clearInterval(timer);
+      document.removeEventListener('visibilitychange',visibility);
       window.removeEventListener('online',online);
       window.removeEventListener('offline',offline);
     };
   },[refresh]);
   useEffect(()=>{
-    if(air && air.messages.length!==lastCount.current) {
-      lastCount.current=air.messages.length;
+    if(!air)return;
+    const tailId=air.messages[air.messages.length-1]?.id??null;
+    if(tailId!==lastTailId.current) {
+      lastTailId.current=tailId;
       // Follow new messages only if the user is already reading near the end;
       // scrolling the whole page would interrupt someone reading old messages.
       if(keepAtBottom.current && logRef.current)
         logRef.current.scrollTop=logRef.current.scrollHeight;
     }
-  },[air?.messages.length]);
+  },[air]);
 
   // A lost write response may still mean the server committed the action.
   // Invalidate all pending polls before releasing the synchronous write lock;
