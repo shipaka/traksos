@@ -1,4 +1,5 @@
 import { NavGlyph } from './navGlyph.tsx';
+import { groupCabinetMenu } from './cabinetMenuGroups.ts';
 
 type MenuLink = [path: string, label: string];
 type MenuEntry = {href:string; label:string};
@@ -48,8 +49,10 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
     quick.filter(([href])=>href!=='/menu' && href!=='/profile').map(([href,,label])=>[href,label]),
     new Set<string>()
   );
-  const workEntries=uniqueEntries(account,new Set([...quick.map(([href])=>href),'/profile']));
-  const helpEntries=uniqueEntries(help,new Set([...quick.map(([href])=>href),...account.map(([href])=>href)]));
+  const groups=groupCabinetMenu(account,help,[...quick.map(([href])=>href),'/profile']);
+  const workEntries=uniqueEntries(groups.work,new Set());
+  const helpEntries=uniqueEntries(groups.guidance,new Set());
+  const documentEntries=uniqueEntries(groups.documents,new Set());
   const roleTitle:{[key:string]:string}={
     client:'Владелец / водитель',performer:'Выездной специалист',
     service:'СТО и рембаза',insurer:'Страховой партнёр',courier:'Курьер доставки',
@@ -66,7 +69,8 @@ export function MobileRoleMenu({mode,quick,account,help,onLogout}:{
     </div>
     <MenuSection title="Быстрый доступ" caption="Основные рабочие действия" entries={quickEntries} icon="⌂" initiallyOpen/>
     <MenuSection title="Разделы кабинета" caption="Заявки, техника, финансы и настройки по вашей роли" entries={workEntries} icon="▣"/>
-    <MenuSection title="Помощь и документы" caption="Обучение, связь с поддержкой и правила" entries={helpEntries} icon="?"/>
+    <MenuSection title="Помощь" caption="Обучение, подсказки и связь с поддержкой" entries={helpEntries} icon="?"/>
+    <MenuSection title="Документы" caption="Договоры, оферты и правила" entries={documentEntries} icon="▤"/>
     <details className="tr-mobile-menu-section tr-mobile-menu-account">
       <summary className="tr-mobile-menu-section-head" aria-label="Аккаунт и настройки">
         <span className="tr-mobile-menu-section-icon"><NavGlyph glyph="◉"/></span>
