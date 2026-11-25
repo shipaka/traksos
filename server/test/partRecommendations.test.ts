@@ -65,9 +65,24 @@ test('repair recommendation is private, owner controlled, exact and idempotent t
   assert.equal(ok(await t.api('GET','/api/shop/part-recommendations',undefined,owner.token)).items[0].status,'accepted');
   assert.equal(ok(await t.api('GET','/api/shop/part-recommendations/'+rid+'/checkout',undefined,owner.token)).product.id,product.id);
   assert.equal((await t.api('POST','/api/shop/orders',{...cart,expectedPartPrice:1},owner.token)).status,409);
-  const purchased=ok(await t.api('POST','/api/shop/orders',cart,owner.token));
+  // Concurrent owner confirmations must reserve only one item, even when
+  // delivery of the administrator notification fails after the commit.
+  const originalNotify=t.app.notifier.notify.bind(t.app.notifier);
+  let attempts=0;
+  t.app.notifier.notify=async(...args)=>{
+   if(args[1].type==='shop'){attempts++;throw Error('Synthetic notification failure after commit');}
+   return originalNotify(...args);
+  };
+  let purchased:any;
+  try{
+   const results=await Promise.all(Array.from({length:4},()=>t.api('POST','/api/shop/orders',cart,owner.token)));
+   purchased=ok(results[0]);
+   assert.ok(results.every(r=>ok(r).id===purchased.id));
+   assert.equal(attempts,1);
+  }finally{t.app.notifier.notify=originalNotify;}
   assert.equal(purchased.partRecommendationId,rid);
   assert.equal(ok(await t.api('POST','/api/shop/orders',cart,owner.token)).id,purchased.id);
+  assert.equal((await t.db.query('select id from shop_orders where part_recommendation_id=$1',[rid])).length,1);
   assert.equal((await t.db.one<any>('select stock from shop_products where id=$1',[product.id]))?.stock,2);
 
   // Independent missing article in the same assigned repair.
