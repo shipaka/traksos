@@ -631,7 +631,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // Все дополнительные функции доступны в шапке, даже когда они не в нижних вкладках.
   // Не показываем чужие роли и не создаём несуществующие страницы.
   const accountLinks: [string, string][] = mode === 'courier'
-    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
+    ? [['/courier','Рабочий стол курьера'], ['/courier/jobs','Мои доставки'], ['/invite','Пригласить в TrakSOS'], ['/support','Обращения в поддержку'], ['/profile','Профиль и настройки']]
     : mode === 'performer'
     ? [...(me?.roles.includes('service') ? [['/base', 'Моя СТО — стационарный ремонт']] as [string, string][] : []),
        ['/work/me', 'Профиль исполнителя'], ['/work/me/about', 'Личные сведения'],
@@ -647,11 +647,11 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/base/money', 'Финансы'], ['/shop', 'Магазин запчастей'], ['/profile', 'Аккаунт'],
          ['/invite', 'Пригласить партнёра']]
     : mode === 'inspection'
-      ? [['/inspections', 'Кабинет техосмотра'], ['/profile', 'Аккаунт']]
+      ? [['/inspections', 'Кабинет техосмотра'], ['/invite', 'Пригласить в TrakSOS'], ['/profile', 'Аккаунт']]
     : mode === 'insurer'
-      ? [['/insurance', 'Кабинет страхового партнёра'], ['/profile', 'Аккаунт']]
+      ? [['/insurance', 'Кабинет страхового партнёра'], ['/invite', 'Пригласить партнёра'], ['/profile', 'Аккаунт']]
     : mode === 'moderator'
-      ? [['/moderation', 'Очередь модерации'], ['/moderation/verify', 'Проверка мастеров'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
+      ? [['/moderation', 'Очередь модерации'], ['/moderation/verify', 'Проверка мастеров'], ['/invite', 'Пригласить в TrakSOS'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
       ? [['/admin/test-center', 'Тестирование всех кабинетов'],
          ['/admin/section/queue', 'Модерация — очередь'],
@@ -673,6 +673,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/pricing-lab', 'Калькулятор прибыльности · проект'],
+         ['/invite', 'Пригласить в TrakSOS'],
          ['/profile', 'Аккаунт'], ['/admin/test-center/client', 'Тестовый кабинет клиента']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),

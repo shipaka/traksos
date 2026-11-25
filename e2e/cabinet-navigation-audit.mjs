@@ -96,8 +96,11 @@ try {
 
     // Invite bonuses are calculated with different role-specific caps.
     // This check also guards the registration welcome gift against stale FAQ text.
-    if(links.some(link=>link.href==='#/invite')) {
-      await page.goto(BASE+'/#/invite',{waitUntil:'domcontentloaded'});
+    const inviteLinks=links.filter(link=>link.href==='#/invite');
+    if(inviteLinks.length!==1)throw Error(kind+': expected exactly one invitation menu link');
+    {
+      await page.locator('.account-menu > summary').click();
+      await page.locator('.account-menu nav a[href="#/invite"]').click();
       // The approved 617 hero renders before the referral API response.
       // Wait for the REAL points and share-link form, not the static hero title.
       await page.locator('.desktop-content > main input[readonly]').waitFor({state:'visible',timeout:12000});
