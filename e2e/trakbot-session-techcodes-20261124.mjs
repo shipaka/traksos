@@ -140,6 +140,11 @@ try {
   await page.getByText('CONFIRMED-ANSWER-B').waitFor();
   check(await messages.inputValue()==='Вопрос Б','Timeout erased the unsent draft');
   check(await count('POST',A)===2,'POST silently retried after uncertain timeout');
+  check(await page.getByRole('button',{name:'Отправить',exact:true}).isDisabled(),
+    'Uncertain answer can be submitted again without reviewing reconciled history');
+  await page.getByRole('button',{name:'Историю проверил — разрешить повтор'}).click();
+  check(!await page.getByRole('button',{name:'Отправить',exact:true}).isDisabled(),
+    'Explicit history review did not release the composer');
 
   // Deletion is also isolated: a late DELETE from B cannot clear account C.
   // aria-label overrides the visible caption in the accessible name.
