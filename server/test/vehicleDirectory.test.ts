@@ -165,3 +165,26 @@ test('legacy TechBase API requires verified specialist for both audiences',async
     }
   }finally{await t.close();}
 });
+
+test('parallel missing-model submissions respect the per-account daily quota',async()=>{
+  const t=await setup();
+  try{
+    const owner=await t.login('+79990002031','client');
+    const other=await t.login('+79990002032','client');
+    const propose=(token:string,i:number)=>t.api('POST','/api/vehicle-reference/missing',{
+      purpose:'garage',category:'truck',make:'Parallel Truck',model:'Series '+i,
+    },token);
+    const results=await Promise.all(Array.from({length:12},(_,i)=>propose(owner.token,i)));
+    assert.equal(results.filter(r=>r.status===200).length,5,JSON.stringify(results.map(r=>r.status)));
+    assert.equal(results.filter(r=>r.status===409).length,7);
+    const own=await t.api('GET','/api/vehicle-reference/missing/mine',undefined,owner.token);
+    assert.equal(own.status,200);
+    assert.equal(own.body.length,5);
+    const independent=await propose(other.token,0);
+    assert.equal(independent.status,200);
+    const otherRows=await t.api('GET','/api/vehicle-reference/missing/mine',undefined,other.token);
+    assert.equal(otherRows.status,200);
+    assert.equal(otherRows.body.length,1);
+    assert.ok(!own.body.some((r:any)=>r.id===independent.body.id));
+  }finally{await t.close();}
+});
