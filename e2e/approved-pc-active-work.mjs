@@ -6,12 +6,22 @@ import { watchPageErrors } from './visual-page-errors.mjs';
  * selected-order card without a real payment or external SMS.
  */
 import {chromium} from 'playwright';
+import {build} from 'esbuild';
 import {mkdir,writeFile} from 'node:fs/promises';
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8080';
 if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))throw Error('Local CI ONLY');
 const output='e2e/shots/pc-active-synthetic';
 await mkdir(output,{recursive:true});
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
+const routeBundle=await build({entryPoints:['web/src/clientOrderDestination.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {clientOrderDestination}=await import('data:text/javascript;base64,'+Buffer.from(routeBundle.outputFiles[0].text).toString('base64'));
+const created={order:{id:'new-case',status:'searching',you:'client'}};
+assert(clientOrderDestination(created,true)==='?order=new-case','PC client route');
+assert(clientOrderDestination(created,false)==='order/new-case','Mobile/native route');
+for(const status of ['awaiting_owner','awaiting_payment','accepted','no_performer','cancelled'])
+  assert(clientOrderDestination({order:{...created.order,status}},true)==='order/new-case','Full order route for '+status);
+assert(clientOrderDestination({...created,confirmationUrl:'https://payment.invalid'},true)==='order/new-case','Payment route must not open search');
+assert(clientOrderDestination({order:{...created.order,you:'admin'}},true)==='order/new-case','Nonclient actor must not open search');
 
 /** Real CSS contract on actual authenticated PC role screens.
  * Photograph fills the WHOLE banner; the same truck is on the right,
@@ -146,11 +156,22 @@ try{
  const assertOwnerClean=watchPageErrors(op);
  const searchId='synthetic-approved-pc-search';
  let searchStatus='searching',chosenOffer='',searchAvailable=false,searchDenied=false;
+ const consultId='synthetic-created-consult';
+ let consultCreated=false;
+ const consultOrder={...order,id:consultId,number:'LOCAL-0004',you:'client',service:'consult',status:'searching',vehicleId:truck.id};
  const secondOrder=()=>({...order,id:searchId,number:'LOCAL-0003',you:'client',status:searchStatus,vehicleId:truck.id,
    performer:searchStatus==='accepted'?{id:'synthetic-bid-master',name:'Второй мастер CI',rating:4.8}:null});
- await op.route(url=>url.pathname==='/api/orders',
-   route=>route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'},
-     ...(searchAvailable?[secondOrder()]:[])])));
+ await op.route(url=>url.pathname==='/api/orders',async route=>{
+   if(route.request().method()==='POST'){
+     assert(route.request().postDataJSON().service==='consult','Unexpected synthetic creation');
+     consultCreated=true;
+     return route.fulfill(json({order:consultOrder,confirmationUrl:null}));
+   }
+   return route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'},
+     ...(searchAvailable?[secondOrder()]:[]),...(consultCreated?[consultOrder]:[])]));
+ });
+ await op.route(url=>url.pathname==='/api/orders/'+consultId,route=>route.fulfill(json(consultOrder)));
+ await op.route(url=>url.pathname==='/api/orders/'+consultId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[]})));
  await op.route(url=>url.pathname==='/api/orders/'+searchId,route=>searchDenied
    ?route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({message:'Нет доступа'})})
    :route.fulfill(json(secondOrder())));
@@ -217,6 +238,21 @@ try{
  assert(await op.locator('.approved-pc-center').getByText('Синтетический мастер',{exact:false}).count()===0,'Selected-order denial exposed another case');
  searchDenied=false;
  await assertOwnerClean('owner selected search lifecycle');
+ // Real form submit, synthetic server response. Existing older cases must not win.
+ await op.route(url=>url.pathname==='/api/pricing',route=>route.fulfill(json({payments:{invoice:true},consult:{price:70000,backDiscount:20000,backHours:48}})));
+ await op.route(url=>url.pathname==='/api/vehicles',route=>route.fulfill(json([truck])));
+ await op.goto(BASE+'/#/new/consult',{waitUntil:'domcontentloaded'});
+ await op.locator('#f-car select.field').waitFor();
+ await op.locator('#f-car select.field').selectOption(truck.id);
+ await op.locator('#f-agree input').check();
+ await op.getByRole('button',{name:/Заказать консультацию/}).click();
+ await op.waitForURL(url=>url.hash==='#/?order='+consultId);
+ await op.locator('.approved-pc-search-case').getByText(/LOCAL-0004/).waitFor();
+ assert(consultCreated,'Consultation form did not create order');
+ assert(await op.locator('.approved-pc-search-case .offer').count()===0,'Empty search invented offers');
+ await assertOwnerClean('owner new consultation search routing');
+ await op.unroute(url=>url.pathname==='/api/pricing');
+ await op.unroute(url=>url.pathname==='/api/vehicles');
  // Shared inner-screen banners must NOT overlay the old separate photo tile
  // on top of the approved full-card photograph, as caught in real screenshots.
  await op.goto(BASE+'/#/garage',{waitUntil:'domcontentloaded'});
