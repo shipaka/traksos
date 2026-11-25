@@ -565,6 +565,8 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     {title:'Консультация', href:'#/explore/consult'},
     {title:'Запчасти', href:'#/explore/parts'},
     {title:'Страхование', href:'#/explore/insurance'},
+    {title:'ТехБаза', href:'#/explore/tech'},
+    {title:'Техосмотр', href:'#/explore/inspection'},
   ];
   const guestNavGroups: { title: string; links: { title: string; href: string }[] }[] = [
     { title: 'О платформе', links: [{ title: 'О нас', href: '#/company' }] },
@@ -820,7 +822,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
         {!me && <nav className="guest-site-nav" aria-label="Разделы TrakSOS">
           {guestNavGroups.map(group => (
             <details key={group.title} className="guest-nav-group" open={openGuestGroup === group.title}
-              onMouseLeave={() => setOpenGuestGroup(null)}
+              onPointerLeave={event => {
+                if(event.pointerType==='mouse' && window.matchMedia('(hover: hover) and (pointer: fine)').matches)
+                  setOpenGuestGroup(current=>current===group.title?null:current);
+              }}
               onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGuestGroup(null); }}
               onKeyDown={event => { if (event.key === 'Escape') { setOpenGuestGroup(null); (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus(); event.preventDefault(); } }}>
               <summary aria-expanded={openGuestGroup === group.title}
@@ -921,13 +926,26 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
           <div className="desktop-sidebar-title">{me ? 'Рабочий кабинет' : isAuthEntry ? 'TrakSOS · вход и документы' : 'TrakSOS · помощь в дороге'}</div>
           <nav className="desktop-nav">
             {me ? <>
-              {desktopGroups.map(([group,links])=>links.length>0&&<div key={group}>
-                <div className="desktop-sidebar-title desktop-nav-section">{group}</div>
-                {links.map(([href,ic,name])=><a key={href} href={shellHref(href)}
-                  className={`desktop-nav-link ${isDesktopPrimaryActive(href,allDesktopLinks)?'active':''} ${href==='/sos'?'desktop-nav-sos':''}`}>
-                  <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
-                </a>)}
-              </div>)}
+              {desktopGroups.map(([group,links])=>{
+                if(!links.length)return null;
+                const destinations=links.map(([href,ic,name])=>{
+                  const active=isDesktopPrimaryActive(href,allDesktopLinks);
+                  return <a key={href} href={shellHref(href)} aria-current={active?'page':undefined}
+                    className={`desktop-nav-link ${active?'active':''} ${href==='/sos'?'desktop-nav-sos':''}`}>
+                    <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
+                  </a>;
+                });
+                // Compact admin sections; the active section opens on entry.
+                // Native details retains keyboard/touch disclosure without changing route permissions.
+                if(mode==='admin'&&(group==='Финансы'||group==='Тестовые кабинеты')){
+                  const active=links.some(([href])=>isDesktopPrimaryActive(href,allDesktopLinks));
+                  return <details className="desktop-nav-disclosure" key={group+':'+active} open={active}>
+                    <summary className="desktop-sidebar-title desktop-nav-section">{group}</summary>
+                    {destinations}
+                  </details>;
+                }
+                return <div key={group}><div className="desktop-sidebar-title desktop-nav-section">{group}</div>{destinations}</div>;
+              })}
               <button type="button" className="desktop-nav-link account-menu-tour" onClick={()=>window.dispatchEvent(new Event('traksos-tour-start'))}>
                 <span aria-hidden="true"><NavGlyph glyph="ⓘ"/></span><span>Показать, где какие кнопки</span>
               </button>
