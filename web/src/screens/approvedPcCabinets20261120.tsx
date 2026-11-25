@@ -643,7 +643,7 @@ function InsuranceDesk({inspection}:{inspection:boolean}){
 
 function ModeratorSelectedCase({id}:{id:string}){
   const detail=useLoad(()=>get<any>('/api/mod/cases/'+id),[id],e=>e.type==='mod_case');
-  const c=detail.data;
+  const c=detail.error?null:detail.data;
   return <section className="approved-pc-case">
     <header><div><small>ПРОВЕРЯЕМОЕ ДЕЛО</small><h2>Дело №{text(c?.number||id)}</h2></div>
       {c&&<span className="approved-pc-stage">{text(c.kindName,'Разбирательство')}</span>}
@@ -670,7 +670,7 @@ function ModeratorSelectedCase({id}:{id:string}){
       {Array.isArray(c.log)&&c.log.length>0&&<p className="approved-pc-caveat">Записей в журнале: {c.log.length}. Полный журнал — в деле.</p>}
       {c.status!=='open'&&<p className="approved-pc-caveat">Уже принятое решение: {text(c.decisionName)}.</p>}
       <div className="approved-pc-case-actions">
-        <a className="approved-pc-primary" href={'#/admin/case/'+id}>Открыть проверку и принять решение</a>
+        <a className="approved-pc-primary" href={'#/admin/case/'+id}>{c.status==='open'?'Открыть проверку и принять решение':'Открыть решение и журнал'}</a>
       </div>
       <p className="approved-pc-caveat">Решения доступны только при разрешённом доступе и сохраняются с записью в журнале. Здесь нет неподтверждённых блокировок или финансовых операций.</p>
     </>}
@@ -679,9 +679,10 @@ function ModeratorSelectedCase({id}:{id:string}){
 
 function ModeratorDesk(){
   const [kind,setKind]=useState<'dispute'|'appeal'|'review'>('dispute');
-  const source=useLoad(()=>get<any>('/api/mod/cases?kind='+kind),[kind],e=>e.type==='mod_case');
+  const source=useLoad(async()=>({kind,payload:await get<any>('/api/mod/cases?kind='+kind)}),[kind],e=>e.type==='mod_case'||e.type==='connection_restored');
+  const queue=!source.error&&source.data?.kind===kind?source.data.payload:null;
   const [chosen,setChosen]=useState('');
-  const items=source.data?.items||[];
+  const items=queue?.items||[];
   const selected=items.find((o:any)=>String(o.id)===chosen)||items[0];
   return <main className="approved-pc approved-pc-moderator">
     <Heading title="Модератор" roleArt="moderator" description="Споры, обращения, проверка партнёров и журнал решений"/>
@@ -689,22 +690,21 @@ function ModeratorDesk(){
       ['dispute','Споры и жалобы',null],['appeal','Обжалования',null],['review','Отзывы и отметки',null]]}/>
     <div className="approved-pc-subnav"><a href="#/moderation/support">Обращения</a><a href="#/moderation/verify">Проверка партнёров</a>
       <a href="#/moderation/flagged">Подозрительные сообщения</a><a href="#/moderation/cases">Журнал решений</a></div>
-    <WorkLayout left={<Pane title="Очередь обращений">{!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?
+    <WorkLayout left={<Pane title="Очередь обращений">{!queue?<LoadingBlock error={source.error} retry={source.reload}/>:items.length?
       items.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number)} info={text(o.title)}
         badge={o.priority===1?'Срочно':'На проверке'} active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))}/>)
       :<Empty>Открытых дел в очереди нет.</Empty>}</Pane>}
-      center={selected?<ModeratorSelectedCase id={String(selected.id)}/>:<Pane title="Модерация">
-        {!source.data?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Выберите обращение слева.</Empty>}
+      center={selected?<ModeratorSelectedCase key={String(selected.id)} id={String(selected.id)}/>:<Pane title="Модерация">
+        {!queue?<LoadingBlock error={source.error} retry={source.reload}/>:<Empty>Выберите обращение слева.</Empty>}
       </Pane>}
       right={<><Pane title="Что проверить"><p>✓ Связанная заявка и статус</p><p>✓ Доказательства обеих сторон</p><p>✓ Переписка и правила площадки</p><p>✓ Основание и журнал решения</p></Pane>
-        <Pane title="Рабочие инструменты"><a className="approved-pc-small-link" href="#/moderation/support">Очередь поддержки →</a>
-          <a className="approved-pc-small-link" href="#/moderation/verify">Проверка партнёров →</a></Pane></>}/>
+</>}/>
   </main>;
 }
 function AdminDesk(){
-  const summary=useLoad(()=>get<any>('/api/admin/summary'),[],e=>['order','mod_case','service','partner','registry'].includes(e.type));
-  const live=useLoad(()=>get<any[]>('/api/admin/live'),[],e=>e.type==='order');
-  const d=summary.data;
+  const summary=useLoad(()=>get<any>('/api/admin/summary'),[],e=>['order','mod_case','service','partner','registry','connection_restored'].includes(e.type));
+  const live=useLoad(()=>get<any[]>('/api/admin/live'),[],e=>e.type==='order'||e.type==='connection_restored');
+  const d=summary.error?null:summary.data;
   const [geoChoice,setGeoChoice]=useState('');
   const geoCenters = (Array.isArray(d?.coverage?.centers)?d.coverage.centers:[])
     .filter((c:any)=>Number.isFinite(c?.lat)&&Number.isFinite(c?.lng)
@@ -712,13 +712,13 @@ function AdminDesk(){
   const geoSelected = geoCenters.find((c:any)=>c.id===geoChoice)||geoCenters[0];
   const alertItems=(live.data||[]).filter((o:any)=>o.unilateral_status==='disputed'||o.status==='no_performer'||o.is_sos).slice(0,5);
   const tiles:[string,string,string][]=[['Заявок сегодня',d?number(d.today?.orders):'—','#/admin/section/cases'],
-    ['На линии',d?number((d.today?.mastersOnline||0)+(d.today?.towOnline||0)):'—','#/admin/section/dispatch'],
+    ['На линии',d&&typeof d.today?.mastersOnline==='number'&&typeof d.today?.towOnline==='number'?number(d.today.mastersOnline+d.today.towOnline):'—','#/admin/section/dispatch'],
     ['Открытые споры',d?number(d.today?.disputesOpen):'—','#/admin/section/queue'],
     ['В очереди модерации',d?number(d.today?.modOpen):'—','#/admin/section/queue']];
   return <main className="approved-pc approved-pc-admin">
     <Heading title="Центр управления TrakSOS" roleArt="admin" description="Операции · Партнёры · Заявки · Проверки · Безопасность"/>
     <div className="approved-pc-metrics">{tiles.map(([label,value,href])=><a href={href} key={label}><small>{label}</small><strong>{value}</strong></a>)}</div>
-    <WorkLayout left={<><Pane title="Требуют внимания">{!live.data?<LoadingBlock error={live.error} retry={live.reload}/>:alertItems.length?
+    <WorkLayout left={<><Pane title="Требуют внимания">{!live.data||live.error?<LoadingBlock error={live.error} retry={live.reload}/>:alertItems.length?
       alertItems.map((o:any)=><RowItem href={'#/order/'+o.id} key={o.id} label={'№'+text(o.number)} info={text(o.address,statusName(o))}
         badge={statusName(o)}/>):<Empty>Срочных заявок в текущей выборке нет.</Empty>}
     </Pane><Pane title="Управление"><a className="approved-pc-small-link" href="#/admin/section/registry">Единая база компаний и партнёров →</a>
