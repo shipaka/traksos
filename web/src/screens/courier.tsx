@@ -2,7 +2,7 @@
  * codes, locations, contact numbers, payments or customer receipt.
  */
 import {useRef,useState} from 'react';
-import {get,put,post} from '../api.ts';
+import {get,post} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './courierApproved20261120.css';
 import {CourierAvailability} from './courierAvailability.tsx';
