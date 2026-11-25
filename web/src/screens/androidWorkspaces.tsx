@@ -141,9 +141,11 @@ function OrderRoute({order,role}:{order:any;role:'client'|'performer'}) {
   </div>;
 }
 
-export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress, disabledServices }: {
+export function AndroidClientWorkspace({ orders, loading, error, me, retry, insuranceInProgress, disabledServices, garageVehicles, garageError }: {
   orders: any[]; loading: boolean; error: string | null; me: any; retry: () => void;
   insuranceInProgress: any[];
+  garageVehicles?: any[] | null;
+  garageError?: string | null;
   disabledServices?: {repair:boolean; tow:boolean; service:boolean; consult:boolean; shop:boolean};
 }) {
   const current = orders.find(o => IN_PROGRESS.includes(o.status));
@@ -233,12 +235,17 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
         <strong>{rub(current.money.total)}</strong>
       </div>}
     {orders.length > 1 && <a href="#/orders" className="and19-row-link">Все мои заявки <span>{orders.length} ›</span></a>}
-    <a href={current?.vehicle_id ? '#/garage/'+current.vehicle_id : '#/garage'} className="and19-equipment and19-equipment-vehicle">
+    <a href="#/garage" className="and19-equipment and19-equipment-vehicle">
       {currentVehiclePhoto ? <img className="and19-equipment-model" src={currentVehiclePhoto.src}
         alt={currentVehiclePhoto.description} loading="lazy" />
         : <span className="and19-equipment-icon" aria-hidden="true">▤</span>}
       <span><strong>{isDriver ? 'Моя машина' : 'Моя техника'}</strong>
-        {current?.vehicle_id && currentVehicleName && <small className="and19-equipment-title">{currentVehicleName}</small>}
+        {garageError ? <small>Не удалось обновить список техники · открыть гараж</small> :
+          garageVehicles ? <><small className="and19-equipment-title">{garageVehicles.length ? 'Транспорт: '+garageVehicles.length : 'Пока нет добавленной техники'}</small>
+          {garageVehicles.slice(0,3).map(v=><small key={v.id}>{[v.brand,v.model,v.year,v.plate].filter(Boolean).join(' ')||'Транспортное средство'}</small>)}
+          {garageVehicles.length>3&&<small>Остальная техника — в гараже</small>}</> :
+          garageVehicles===null ? <small>Загружаем список техники…</small> :
+          current?.vehicle_id && currentVehicleName ? <small className="and19-equipment-title">{currentVehicleName}</small> : null}
         <small>История обслуживания, заявки, документы</small></span>
       <span aria-hidden="true">›</span>
     </a>
