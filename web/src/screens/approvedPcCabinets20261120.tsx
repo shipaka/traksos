@@ -4,7 +4,7 @@
  * opens an existing authorized server-backed workflow.
  * Desktop only; Android/mobile continues to use the already-approved routes.
  */
-import {useEffect, useState, type ReactNode} from 'react';
+import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {get, onEvent, post} from '../api.ts';
 import {insurancePresentation, insuranceQueueGroup, type InsuranceQueueGroup} from '../insurancePresentation.ts';
 import {RoadsideMap} from './roadsideMap.tsx';
@@ -30,7 +30,14 @@ const vehicleLabel = (v:any) => [v?.brand, v?.model, v?.year].filter(Boolean).jo
 const fmtDate = (value:any) => value ? new Date(value).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
 const statusName = (o:any) => STATUS[o?.status]?.name || o?.statusName || text(o?.status, 'Статус уточняется');
 const transport = (o:any) => o?.vehicle || o || {};
-const orderDate = (o:any):string => (o?.whenDay || o?.when_day || o?.scheduled_date || o?.scheduledAt || o?.scheduled_at || '').slice(0,10);
+const orderDate = (o:any):string => {
+  const value=o?.whenDay||o?.when_day||o?.scheduled_date||o?.scheduledAt||o?.scheduled_at;
+  if(typeof value!=='string')return '';
+  const date=value.slice(0,10);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return '';
+  const parsed=new Date(date+'T00:00:00Z');
+  return Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===date?date:'';
+};
 const dateIso = (value:Date) => [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
 const todayISO = () => dateIso(new Date());
 
@@ -287,6 +294,9 @@ function CustomerDesk({owner}:{owner:boolean}){
 function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
   const detail=useLoad(()=>get<any>('/api/orders/'+order.id),[order.id],e=>e.type==='order'&&String(e.orderId)===String(order.id));
   const {busy,run}=useAction();
+  const lock=useRef(false);
+  const [refreshing,setRefreshing]=useState(false);
+  const [submittedStatus,setSubmittedStatus]=useState('');
   const [view,setView]=useState<'work'|'vehicle'|'bill'|'chat'|'history'>('work');
   const d=detail.data||order;
   const v=transport(d);
@@ -297,12 +307,16 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
   const steps:[string,string][]=[['accepted','Принято'],['en_route','Выехал'],['arrived','На месте'],['working','Работа'],['completed','Завершено']];
   const index=steps.findIndex(([id])=>id===d.status);
   const takeStep=async()=>{
-    if(!step || busy)return;
+    if(!step || busy || lock.current || !detail.data || detail.error || submittedStatus===d.status)return;
     // "At location" is a manual declaration, not proof of GPS coordinates.
     if(step.action==='arrive'&&!window.confirm('Подтвердить фактическое прибытие к клиенту? После отметки может начаться расчёт времени.'))return;
-    const ok=await run(()=>post('/api/orders/'+encodeURIComponent(String(order.id))+'/step',{action:step.action}),
-      step.action==='depart'?'Клиент увидит, что вы выехали':step.action==='arrive'?'Клиент получил отметку о прибытии':'Начало работы зафиксировано');
-    if(ok)detail.reload();
+    lock.current=true;setRefreshing(true);
+    try{
+      await run(()=>post('/api/orders/'+encodeURIComponent(String(order.id))+'/step',{action:step.action}),
+        step.action==='depart'?'Клиент увидит, что вы выехали':step.action==='arrive'?'Клиент получил отметку о прибытии':'Начало работы зафиксировано');
+      setSubmittedStatus(d.status);
+      await detail.reload();
+    }finally{lock.current=false;setRefreshing(false);}
   };
   return <section className="approved-pc-case approved-pc-performer-case">
     <header><div><small>{tow?'ЭВАКУАЦИЯ':'ВЫЕЗДНОЙ РЕМОНТ'} · ВЫБРАННАЯ ЗАЯВКА</small>
@@ -334,8 +348,10 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
             {steps.map(([id,label],i)=><span key={id} className={d.status===id?'current':index>i?'done':''}>{label}</span>)}
           </div>
           {step&&<button className="approved-pc-primary approved-pc-next-step" type="button"
-            disabled={busy||!detail.data} onClick={takeStep}>{busy?'Отправляем…':step.label}</button>}
+            disabled={busy||refreshing||!detail.data||!!detail.error||submittedStatus===d.status} onClick={takeStep}>{busy||refreshing?'Обновляем этап…':step.label}</button>}
           {!detail.data&&!detail.error&&<p className="approved-pc-caveat">Проверяем возможность следующего действия…</p>}
+          {detail.error&&<button type="button" className="approved-pc-small-link" onClick={()=>{void detail.reload();}}>Повторить загрузку статуса</button>}
+          {submittedStatus===d.status&&!refreshing&&<p className="approved-pc-caveat" role="status">Проверьте текущий этап в карточке заказа. Повторная отправка с рабочего стола заблокирована до изменения статуса.</p>}
           {d.status==='en_route'&&<p className="approved-pc-caveat">Отметку «На месте» ставьте только после фактического прибытия; это не GPS-подтверждение.</p>}
           {d.status==='working'&&<a className="approved-pc-primary approved-pc-next-step"
             href={'#/order/'+d.id}>Оформить выполненную работу и расчёт</a>}
@@ -344,7 +360,6 @@ function SelectedPerformerCase({order,tow}:{order:any;tow:boolean}){
           <div className="approved-pc-case-actions">
             <a href={'#/order/'+d.id+'/chat'}>Чат по заявке</a>
             <a href={'#/order/'+d.id}>Все действия и история</a>
-            {!tow&&<a href="#/techbase/master">ТехБаза</a>}
           </div>
         </Pane>
         <Pane title={tow?'Погрузка и передача':'Отчёт по работе'}>
@@ -402,7 +417,7 @@ function PerformDesk({tow}:{tow:boolean}){
       <p>Предложения отобраны сервером по доступным специализациям и зоне работы.</p>
       <a className="approved-pc-small-link" href="#/work/me">Мои параметры →</a></Pane>}
       center={<Pane title={'Новые предложения · '+(auctions.data?offers.length:'—')}>
-        {auctions.error&&<LoadingBlock error={auctions.error} retry={auctions.reload}/>}
+        {auctions.error&&auctions.data&&<LoadingBlock error={auctions.error} retry={auctions.reload}/>}
         {!auctions.data?<LoadingBlock error={auctions.error} retry={auctions.reload}/>:offers.length?
           offers.map((a:any)=><article key={a.order_id} className="approved-pc-offer">
             <Photo v={a}/><div><h3>Заявка №{text(a.number||a.order_id)}</h3>
@@ -422,7 +437,7 @@ function PerformDesk({tow}:{tow:boolean}){
         :<Empty>На сегодня принятых работ нет.</Empty>}
       </Pane><Pane title={'Запланировано · '+(jobs.data?planned.length:'—')}>
         {planned.map((o:any)=><RowItem key={o.id} label={'№'+text(o.number||o.id)} info={orderDate(o)} v={transport(o)}
-          onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
+          active={selected?.id===o.id} onClick={()=>setChosen(String(o.id))} badge={statusName(o)}/>)}
         {jobs.data&&!planned.length&&<Empty>Записей на следующие дни нет.</Empty>}
       </Pane></>}
       center={selected?<SelectedPerformerCase key={selected.id} order={selected} tow={tow}/>:<Pane title={tow?'Рабочая эвакуация':'Рабочая смена'} className="approved-pc-shift-empty">
