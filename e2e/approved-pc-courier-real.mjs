@@ -83,16 +83,27 @@ try{
       throw Error('Floating TrakBot duplicates the approved courier assistant card and obscures the trip');
     if(await page.locator('.courier-pc-schematic').count()!==1)
       throw Error('Approved schematic is missing');
-    const toggle=page.locator('.courier-pc-presence[role="switch"]');
-    await toggle.waitFor({state:'visible'});
-    const previous=await toggle.getAttribute('aria-checked');
-    await toggle.click();
-    await page.waitForFunction(previous=>
-     document.querySelector('.courier-pc-presence')?.getAttribute('aria-checked')!==previous,
-     previous,{timeout:9000});
-    report.checks.push('courier desktop layout, TrakBot, real online toggle');
+    report.checks.push('courier desktop layout, TrakBot');
    }else if(await page.locator('.courier-pc').count())
     throw Error('Desktop courier leaked into Android');
+   const availability=page.getByLabel('Доступность курьера для новых доставок',{exact:true});
+   const toggle=availability.getByRole('button',{name:/Статус · (На линии|Не на линии)/});
+   await toggle.waitFor({state:'visible'});
+   const previous=(await toggle.innerText()).includes('Не на линии');
+   const desired=previous?'На линии':'Не на линии';
+   const old=previous?'Не на линии':'На линии';
+   await toggle.click();
+   const choices=availability.getByLabel('Выбор доступности курьера');
+   if(await choices.getByRole('button',{name:old,exact:true}).getAttribute('aria-pressed')!=='true')
+     throw Error('Current courier status not marked');
+   await choices.getByRole('button',{name:desired,exact:true}).click();
+   await availability.getByRole('button',{name:'Статус · '+desired,exact:true}).waitFor({timeout:15000});
+   await toggle.click();
+   if(await choices.getByRole('button',{name:desired,exact:true}).getAttribute('aria-pressed')!=='true')
+     throw Error('Saved courier status not reflected in menu');
+   await choices.getByRole('button',{name:old,exact:true}).click();
+   await availability.getByRole('button',{name:'Статус · '+old,exact:true}).waitFor({timeout:15000});
+   report.checks.push('real courier availability menu and server reload '+width);
    const sizes=await page.evaluate(()=>({
     client:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth
    }));
