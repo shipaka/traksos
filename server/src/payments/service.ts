@@ -869,6 +869,7 @@ export class PaymentsService implements PaymentHooks {
     ]);
     await q.query(`insert into payouts(order_id, performer_id, amount, commission, provider) values ($1,$2,$3,$4,$5)`,
       [orderId, order.performer_id, m.amount - s.commission, s.commission, this.provider.name]);
+    await this.orders.referral?.afterOrder(q,order,m.amount);
     await this.orders.event(q, orderId, null, 'paid', { total: m.total, toPerformer: m.amount - s.commission });
   }
 
@@ -888,6 +889,7 @@ export class PaymentsService implements PaymentHooks {
       ]);
       await q.query(`insert into payouts(order_id, performer_id, amount, commission, provider) values ($1,$2,$3,$4,'manual')`,
         [order.id, order.performer_id, pay.amount - s.commission, s.commission]);
+      await this.orders.referral?.afterOrder(q,order,Number(pay.amount));
       await q.query('insert into audit_log(actor_id, action, target) values ($1,$2,$3)', [admin.id, 'invoice.paid', paymentId]);
       return pay;
     });
