@@ -46,21 +46,47 @@ export class ChatService {
   private async liveActor(q: Queryable, user: AuthUser, o: {
     client_id: string; created_by: string; performer_id: string | null; vehicle_id: string | null;
   }): Promise<'admin'|'client'|'performer'|null> {
-    const current = await q.one<{roles:string[]}>(
-      "select roles from users where id=$1 and status='active' for share", [user.id]);
+    if (user.status !== 'active') return null;
+    const current = await q.one<{roles:string[];owner_id:string|null}>(
+      "select roles,owner_id from users where id=$1 and status='active' and deleted_at is null for share", [user.id]);
     if (!current) return null;
     const roles = user.roles.filter(role => current.roles.includes(role));
     if (roles.includes('admin') || roles.includes('moderator')) return 'admin';
-    if (o.client_id === user.id) return 'client';
-    if (o.performer_id === user.id) return 'performer';
+    if (o.client_id === user.id && roles.includes('client') && !current.owner_id) return 'client';
+    if (o.performer_id === user.id && roles.some(r=>['master','tow','service'].includes(r))) return 'performer';
     if (o.created_by !== user.id || !roles.includes('driver')) return null;
     const assignment = await q.one<{ok:number}>(`
       select 1 as ok from users u join vehicles v
         on v.owner_id=u.owner_id and v.driver_id=u.id
+      join users owner on owner.id=u.owner_id
       where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+        and u.status='active' and u.deleted_at is null
+        and owner.status='active' and owner.deleted_at is null
+        and 'client'=any(owner.roles) and owner.owner_id is null
         and ($3::uuid is null or v.id=$3)
-      limit 1 for share of v`, [user.id,o.client_id,o.vehicle_id]);
+      limit 1 for share of v,owner`, [user.id,o.client_id,o.vehicle_id]);
     return assignment ? 'client' : null;
+  }
+
+  // Same live role/link predicate for the participant roster and new human
+  // chat delivery. Historical sender labels in stored messages remain intact.
+  private async currentPeople(q:Queryable,orderId:string) {
+    return q.query<{id:string;name:string|null;who:string}>(`
+      select distinct u.id,u.name,x.who from orders o
+      cross join lateral (values (o.client_id,'owner'),
+        (case when o.created_by<>o.client_id then o.created_by end,'driver'),
+        (o.performer_id,'performer')) x(id,who)
+      join users u on u.id=x.id
+      where o.id=$1 and u.status='active' and u.deleted_at is null and (
+        (x.who='owner' and 'client'=any(u.roles) and u.owner_id is null)
+        or (x.who='performer' and u.roles && array['master','tow','service']::text[])
+        or (x.who='driver' and 'driver'=any(u.roles) and u.owner_id=o.client_id
+          and exists(select 1 from users owner where owner.id=o.client_id
+            and owner.status='active' and owner.deleted_at is null
+            and 'client'=any(owner.roles) and owner.owner_id is null)
+          and exists(select 1 from vehicles v where v.owner_id=o.client_id and v.driver_id=u.id
+            and (o.vehicle_id is null or v.id=o.vehicle_id)))
+      ) order by x.who,u.id`,[orderId]);
   }
 
   async list(user: AuthUser, orderId: string, afterId = 0, window?: ChatWindow) {
@@ -108,25 +134,12 @@ export class ChatService {
         return m;
       }) : msgs;
       // Кто в чате: владелец, водитель (если заказывал он), исполнитель, поддержка — если подключалась
-      const people = await q.query<{ id: string; name: string | null; who: string }>(
-        `select u.id, u.name, x.who from (values ($1::uuid, 'owner'), ($2::uuid, 'driver'), ($3::uuid, 'performer')) x(id, who) join users u on u.id = x.id
-          where x.id is not null`, [order.client_id, order.created_by !== order.client_id ? order.created_by : null, order.performer_id]);
+      const people = await this.currentPeople(q,orderId);
       const support = await q.one<{ n: number }>(
         `select count(*)::int as n from chat_messages m join orders o on o.id=m.order_id
           where m.order_id=$1 and m.sender_id is not null and m.sender_id not in (o.client_id, o.created_by) and m.sender_id is distinct from o.performer_id`, [orderId]);
       const ticket = await q.one('select 1 from support_tickets where order_id=$1 limit 1', [orderId]);
-      // A revoked fleet driver's old ID may remain in orders.created_by as
-      // historical evidence, but must not be a *current* chat participant.
-      const activePeople = new Set([order.client_id,order.performer_id]);
-      if (order.created_by !== order.client_id) {
-        const currentDriver = await q.one<{ok:number}>(`
-          select 1 as ok from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
-          where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles) and u.status='active'
-            and ($3::uuid is null or v.id=$3) limit 1`,
-          [order.created_by,order.client_id,order.vehicle_id]);
-        if (currentDriver) activePeople.add(order.created_by);
-      }
-      const participants = people.filter(p => activePeople.has(p.id))
+      const participants = people
         .map(p => ({ who: p.who, name: p.name, you: p.id === user.id }));
       if ((support?.n ?? 0) > 0 || ticket) participants.push({ who: 'support', name: 'Поддержка TrakSOS', you: false });
       return { messages: visibleMessages, participants, quickReplies: quickRepliesFor(order.service, order.status, role), ...(page ? {page} : {}) };
@@ -178,11 +191,11 @@ export class ChatService {
     // Never notify a former fleet driver merely because created_by was once
     // associated with an order. The recipients helper checks the CURRENT link.
     try {
-      const ids = await this.orders.participants(orderId);
+      const ids = [...new Set((await this.currentPeople(this.db,orderId)).map(p=>p.id))];
       this.notifier.live(ids, { type: 'chat', message: rendered });
       const others = ids.filter(id => id !== user.id);
       await this.notifier.notify(others, { type: 'chat_push', orderId }, {
-        kind: 'normal', title: `Заявка №${number}`, body: safe.slice(0, 120), data: { orderId },
+        kind: 'normal', title: `Заявка №${number}`, body: 'Новое сообщение. Откройте переписку в заявке.', data: { orderId },
       });
     } catch (error) {
       // The message is already committed. Reporting a POST failure here would
