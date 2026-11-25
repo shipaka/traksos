@@ -110,13 +110,16 @@ try{
    report.screenshots.push(jobs);
    await assertClean('courier '+width+' deliveries');
    report.checks.push('real courier route and clickable jobs navigation '+width);
-   // Recipient messaging is not connected yet. The approved primary nav must
-   // offer the existing WORKING support thread, not a dead "Chat" promise.
-   if(await page.locator('a[href="#/courier/chat"]').count())
-     throw Error('Courier primary/menu still advertises unavailable recipient chat');
-   const supportNav=page.locator(width===1440
-     ? '.desktop-sidebar .desktop-nav a[href="#/support"]'
-     : '.tabbar a[href="#/support"]');
+   // Communication is an honest delivery section, not a promise of direct chat.
+   // Both PC and phone must open it, then reach real support from the page.
+   const communication=page.locator(width===1440
+     ? '.desktop-sidebar .desktop-nav a[href="#/courier/chat"]'
+     : '.tabbar a[href="#/courier/chat"]');
+   await communication.waitFor({state:'visible'});
+   await communication.click();
+   await page.getByRole('heading',{name:'Связь по доставкам',exact:true}).waitFor();
+   await page.getByText('Сообщения с получателем пока не подключены.',{exact:false}).waitFor();
+   const supportNav=page.locator('main.courier-android a[href="#/support"]');
    await supportNav.waitFor({state:'visible'});
    await supportNav.click();
    await page.getByRole('heading',{name:'Поддержка',exact:true}).waitFor();
