@@ -108,3 +108,10 @@
 @media(max-width:359px){.work-mobile-launcher{gap:4px}.work-mobile-launcher a,.work-mobile-launcher button{font-size:11px;padding:8px 3px;min-height:86px}
  .work-mobile-launcher-icon{font-size:20px}.work-mobile-state{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.work-mobile-switch,.work-mobile-switch span{transition:none}}
+
+/* Shared status control in existing mobile header; allow wrapping on narrow devices. */
+.work-mobile-header .performer-mobile-availability{margin-top:8px}
+.and19-line:has(.performer-mobile-availability){flex-wrap:wrap}
+.and19-line .performer-mobile-availability{flex:1 1 100%;min-width:0}
+.performer-mobile-availability button.opt,.performer-mobile-availability button.seg{min-height:44px;white-space:normal;max-width:100%;text-align:left}
+.performer-mobile-availability .note{white-space:normal}
