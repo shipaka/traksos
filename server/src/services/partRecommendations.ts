@@ -10,6 +10,7 @@ import { requireProfessionalTechAccess } from '../domain/techbaseAccess.ts';
 import { requirePartActor,requirePartVehicle } from '../domain/partRecommendationAccess.ts';
 
 type Origin='order'|'booking';
+const partChanged=()=>({type:'part_recommendations_changed'});
 const sourceColumn=(origin:Origin)=>origin==='booking'?'source_booking_id':'source_order_id';
 const repairStatuses=['arrived','diagnostics','in_work','waiting_part','agreeing','ready'];
 const orderStatuses=['arrived','working','awaiting_confirmation','completed'];
@@ -157,8 +158,7 @@ export class PartRecommendations {
    await this.storeNotice(q,[o.client_id],origin,msg);
    return {row:inserted[0],created:true,o};
   });
-  if(result.created){const context:Record<string,string>=origin==='booking'?{bookingId:id}:{orderId:id};
-   await this.deliverNotice([result.o.client_id],'client',{type:origin,...context},msg,{id,origin});}
+  if(result.created)await this.deliverNotice([result.o.client_id],'client',partChanged(),msg,{id,origin});
   return {created:result.created,item:safeRow(result.row)};
  }
  async decide(user:AuthUser,id:string,recId:string,accept:boolean,origin:Origin='order'){
@@ -177,7 +177,7 @@ export class PartRecommendations {
   if(result.changed&&result.row.suggested_by){
    try{
     const ids=await this.currentRecipients([result.row.suggested_by],'performer',{id,origin});
-    this.notifier.live(ids,{type:origin,...(origin==='booking'?{bookingId:id}:{orderId:id})});
+    this.notifier.live(ids,partChanged());
    }catch{/* committed decision remains authoritative */}
   }
   return safeRow(result.row);
@@ -201,7 +201,7 @@ export class PartRecommendations {
    await this.storeNotice(q,ids,'part_sourcing',msg);
    return {row:updated,changed:true,ids};
   });
-  if(result.changed)await this.deliverNotice(result.ids,'admin',{type:'part_sourcing'},msg);
+  if(result.changed)await this.deliverNotice(result.ids,'admin',partChanged(),msg);
   return {item:safeRow(result.row),changed:result.changed};
  }
  async sourcingQueue(user:AuthUser,page:number,status:'requested'|'resolved'|'unavailable'){
@@ -249,7 +249,7 @@ export class PartRecommendations {
    await this.storeNotice(q,ids,'part_sourcing',msg);
    return {row:updated,changed:true,ids};
   });
-  if(result.changed)await this.deliverNotice(result.ids,'client',{type:'part_sourcing',orderId:result.row.source_order_id,bookingId:result.row.source_booking_id},msg);
+  if(result.changed)await this.deliverNotice(result.ids,'client',partChanged(),msg);
   return {item:safeRow(result.row),changed:result.changed};
  }
  async checkout(user:AuthUser,id:string){
