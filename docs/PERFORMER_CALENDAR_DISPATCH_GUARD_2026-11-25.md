@@ -38,3 +38,13 @@ without an online performer reaches no_performer, which is intentionally hidden
 from the live calendar. Fixtures now explicitly seed a live linked order,
 assert exclusion in no_performer, and use a separate order for overnight tests.
 This does not relax the production query or claim the new run passed.
+
+## CI clock consistency correction
+
+Full server CI on ae21d4d returned 731 passed / 732 total. The one failure was
+standingGeoAvailability: preview read the injected clock twice, once for the
+SQL reservation cutoff and again for shift eligibility. Both preview paths
+now capture a single instant and use it consistently in SQL and shift logic;
+the regression test also asserts the exact SQL cutoff. The new commit requires
+another complete CI run. Android, real screenshots, load and inter-role sandbox
+passed on ae21d4d only.

@@ -84,6 +84,7 @@ export class StandingService {
       haversineKm({lat:p.lat,lng:p.lng},{lat:o.lat!,lng:o.lng!})<=50);
     // Only active, approved, available colleagues with valid positions can
     // precede this performer for a geographically verified open request.
+    const now=this.now();
     const others=await this.db.query<{
       kind:string;specialties:string[];lat:number|null;lng:number|null;
       schedule:any;off_schedule_until:Date|null;extras:any;brands:Record<string,string>|null
@@ -100,8 +101,7 @@ export class StandingService {
                  where uc.order_id=o.id and uc.status in ('pending_client','disputed')))))
           and not exists(select 1 from performer_time_reservations r
              where r.performer_id=p.user_id and r.status='confirmed' and r.ends_at>$3)`,
-      [p.kind,user.id,this.now()]);
-    const now=this.now();
+      [p.kind,user.id,now]);
     let ahead=0;
     for(const c of others){
       if(!validPoint(c.lat,c.lng)||c.extras?.vacation)continue;
@@ -121,6 +121,8 @@ export class StandingService {
   async mastersNearby(user: AuthUser, p: { service: string; lat?: number; lng?: number; brand?: string; verifiedOnly?: boolean; sortBy?: 'recommended'|'near'|'cheap'|'brand'|'fast' }) {
     const all = await this.settings!.all();
     const kind = performerKindFor(p.service);
+    // One instant for SQL reservation eligibility, shift and ranking.
+    const now=this.now();
     const list = await this.db.query<Candidate & { name: string | null; tier: string; call_out_price: number | null; created_at: Date; jobs: number; busy: boolean; reserved: boolean }>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification, p.tier, p.call_out_price,
               p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras, u.name, p.prep_minutes,
@@ -137,7 +139,7 @@ export class StandingService {
               0 as cash_debt
          from performer_profiles p join users u on u.id=p.user_id
         where p.kind=$1 and p.user_id<>$2 and u.status='active' and u.deleted_at is null
-          and (case when p.kind='ecu' then 'master' else p.kind::text end)=any(u.roles) and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly,this.now()]);
+          and (case when p.kind='ecu' then 'master' else p.kind::text end)=any(u.roles) and ($3::boolean = false or p.verification='approved') and p.line_status in ('online','on_call','on_job')`, [kind, user.id, !!p.verifiedOnly,now]);
     // Never present nationwide performers as if they were near the truck.
     // All three counters and shown cards must cover the SAME proven geography.
     const locationKnown=validPoint(p.lat,p.lng);
@@ -152,7 +154,6 @@ export class StandingService {
     // Distinguish presence from genuine availability. Paused/vacation workers
     // must never inflate the number of colleagues who can take an assignment.
     const online=inScope.filter(c=>!c.paused&&!c.extras?.vacation);
-    const now=this.now();
     const free=online.filter(c=>{
       // A future confirmed reservation does not change presence, but
       // the immediate-dispatch guard cannot assign an unbounded new job.

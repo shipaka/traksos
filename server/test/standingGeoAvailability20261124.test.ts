@@ -178,13 +178,18 @@ test('preview takes one shift-clock snapshot and safely excludes malformed speci
     schedule:{on:true,days:{mon:true},from:'09:00',to:'18:00',phoneTo:'20:00'},
   };
   let reads=0;
+  let cutoff:Date|undefined;
   const service=new StandingService(
-    {query:async()=>[candidate,{...candidate,user_id:'legacy',specialties:null}]} as any,
+    {query:async(_sql:string,params:unknown[])=>{
+      cutoff=params[3] as Date;
+      return [candidate,{...candidate,user_id:'legacy',specialties:null}];
+    }} as any,
     ()=>new Date(reads++===0?'2026-11-23T14:59:59Z':'2026-11-23T15:00:00Z'),
     {all:async()=>({dispatch:{radiusKm:50,citySpeedKmh:40},pricing:{tiers:{}}})} as any,
   );
   const result=await service.mastersNearby({id:'client'} as any,{service:'electric',lat:59.95,lng:30.35});
   assert.equal(reads,1,'free and match must use one shift snapshot');
+  assert.equal(cutoff?.toISOString(),'2026-11-23T14:59:59.000Z','SQL reservation cutoff must use the same shift snapshot');
   assert.equal(result.free,1);
   assert.equal(result.match,1);
   assert.equal(result.items.length,1);
