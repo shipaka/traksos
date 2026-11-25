@@ -1,0 +1,6 @@
+# Android PIN staged port — 25.11.2026
+
+PR #108. Historical head 01e08ec9c40a54d206805f1268d490c43866fa58 is preserved as a parent; current base abda3f141fe744adc00ba2eccc9c3a8cd8af1679.
+Stage 1 ports the account-bound Android Keystore PIN verifier, its native instrumentation tests and additive Android CI gates. The previous tests' wall-clock expiry fixture is corrected to use the monotonic deadline; an extra reboot/rearm regression is included. Existing Android runtime/visual checks remain mandatory and unchanged. No production PIN setup or unlock flow is registered.
+
+Not yet ported: CinematicAppLock.kt, native MainActivity/bridge/account recovery integration, server session recovery/auth changes, backup extraction rules, web security page and CSS, and original native visual capture tests. Preserve current 617/618, current WebView/startup/notifications and online status. Do not ship a partial PIN feature or claim physical-device acceptance based on emulator tests. All old source is recoverable at the historical parent. Stage 1 is a draft candidate, not a deployment.
