@@ -131,3 +131,28 @@ test('overnight reservation appears inside requested Moscow day, keeping actual 
   const next=ok(await t.api('GET','/api/client/calendar?from=2026-12-03&to=2026-12-03',undefined,owner.token));
   assert.ok(!next.items.some((x:any)=>x.id===r.id));
 });
+
+test('STO calendar retains the appointment through repair, invoice, dispute and closed history', async () => {
+  const center = await t.db.one<any>("select id from service_centers where owner_id=$1", [station.id]);
+  assert.ok(center);
+  const item = await t.db.one<any>(`insert into service_bookings
+    (center_id,client_id,vehicle_id,vehicle,need,when_day,when_time,accept_time,status)
+    values($1,$2,$3,'{"brand":"DAF","model":"XF"}','electric','2026-12-15','11:00','12:00','expected') returning id`,
+    [center.id,owner.id,vehicle]);
+  const calendarPath = '/api/client/calendar?from=2026-12-15&to=2026-12-15';
+  const lifecycle = [
+    ['expected','confirmed'], ['arrived','in_progress'], ['diagnostics','in_progress'],
+    ['in_work','in_progress'], ['waiting_part','in_progress'], ['agreeing','in_progress'],
+    ['ready','ready'], ['invoiced','invoiced'], ['disputed','disputed'], ['closed','completed']
+  ];
+  for (const [status,confirmation] of lifecycle) {
+    await t.db.query("update service_bookings set status=$2 where id=$1",[item.id,status]);
+    const row = ok(await t.api('GET',calendarPath,undefined,owner.token)).items.find((x:any)=>x.id===item.id);
+    assert.ok(row, 'Missing calendar appointment at '+status);
+    assert.equal(row.confirmation,confirmation);
+    assert.equal(row.requested_time,'11:00');
+    assert.equal(row.confirmed_time,'12:00');
+    assert.ok(!('amount' in row) && !('comment' in row));
+    assert.ok(!ok(await t.api('GET',calendarPath,undefined,stranger.token)).items.some((x:any)=>x.id===item.id));
+  }
+});
