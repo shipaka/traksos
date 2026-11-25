@@ -364,18 +364,22 @@ export class OrdersService {
     if (f.mode === 'approve') return 'всё через владельца';
     if (f.perOrder != null && amount > f.perOrder) return `дороже лимита на заказ ${(f.perOrder / 100).toLocaleString('ru-RU')} ₽`;
     if (f.perMonth != null) {
-      const spent = await this.monthSpent(user.id);
+      const spent = await this.monthSpent(user.id, user.owner_id!);
       if (spent + amount > f.perMonth) return `сверх лимита на месяц ${(f.perMonth / 100).toLocaleString('ru-RU')} ₽`;
     }
     return null;
   }
 
-  async monthSpent(driverId: string) {
-    const r = await this.db.one<{ s: number }>(
-      `select coalesce(sum(coalesce(call_out_amount, (estimate->>'callOut')::int, 0) + coalesce(work_amount, 0)), 0)::int as s from orders
-        where created_by=$1 and status not in ('cancelled','no_performer','awaiting_owner')
-          and created_at >= date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow'`, [driverId]);
-    return r?.s ?? 0;
+  async monthSpent(driverId: string, ownerId: string) {
+    // A driver's previous fleet must never contribute to a new fleet's budget.
+    // Widen before addition and aggregation; pg returns bigint/numeric as text.
+    const r = await this.db.one<{ s: string }>(
+      `select coalesce(sum(coalesce(call_out_amount::bigint, (estimate->>'callOut')::bigint, 0) + coalesce(work_amount::bigint, 0)), 0)::text as s from orders
+        where created_by=$1 and client_id=$2 and status not in ('cancelled','no_performer','awaiting_owner')
+          and created_at >= date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow'`, [driverId, ownerId]);
+    const spent = Number(r?.s ?? '0');
+    if (!Number.isSafeInteger(spent)) throw new RangeError('Fleet monthly spend exceeds safe integer range');
+    return spent;
   }
 
   /** Владелец: подтвердить заказ водителя или отказать */
