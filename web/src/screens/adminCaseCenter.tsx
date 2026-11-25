@@ -28,7 +28,7 @@ const action = (name:string) => ({
 const status = (s?:string) => (s&&STATUS[s]?.name)||s||'—';
 
 // Mounted separately for each account, selected case, history kind and refresh.
-function CaseHistoryPages({caseId,rootId,kind,renderItem}:{caseId:string;rootId:string;kind:'events'|'chat';renderItem:(item:any)=>ReactNode}){
+function CaseHistoryPages({caseId,rootId,kind,renderItem}:{caseId:string;rootId:string;kind:'events'|'chat'|'vehicle_orders'|'vehicle_bookings';renderItem:(item:any)=>ReactNode}){
   const [cursors,setCursors]=useState<(string|null)[]>([null]);
   const [retry,setRetry]=useState(0);
   const before=cursors[cursors.length-1];
@@ -67,7 +67,7 @@ function CaseHistoryPages({caseId,rootId,kind,renderItem}:{caseId:string;rootId:
       <button type="button" className="btn ghost small" onClick={()=>setRetry(n=>n+1)}>Повторить загрузку истории</button>
     </div>:!current?<p className="note" role="status">Загрузка истории…</p>:
       current.items.length?current.items.map(renderItem):
-      <p className="note">{before!==null?'На этой странице записей нет.':kind==='events'?'Событий пока нет.':'Сообщений по этим заказам пока нет.'}</p>}
+      <p className="note">{before!==null?'На этой странице записей нет.':kind==='events'?'Событий пока нет.':kind==='chat'?'Сообщений по этим заказам пока нет.':kind==='vehicle_orders'?'Других заказов по этому ТС нет.':'Других записей на СТО по этому ТС нет.'}</p>}
     <div className="case-detail-between">
       <button type="button" className="btn ghost small" disabled={cursors.length===1}
         onClick={()=>setCursors(old=>old.length>1?old.slice(0,-1):old)}>Более новые</button>
@@ -77,12 +77,32 @@ function CaseHistoryPages({caseId,rootId,kind,renderItem}:{caseId:string;rootId:
   </>;
 }
 
+function VehicleCaseHistory({caseId,rootId}:{caseId:string;rootId:string}){
+  return <>
+    <section aria-label="История выездов автомобиля">
+      <h4>Заказы и выезды</h4>
+      <CaseHistoryPages caseId={caseId} rootId={rootId} kind="vehicle_orders"
+        renderItem={v=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
+          <span>Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)}</span><b>Открыть ›</b>
+        </a>}/>
+    </section>
+    <section aria-label="История СТО автомобиля">
+      <h4>Записи на СТО</h4>
+      <CaseHistoryPages caseId={caseId} rootId={rootId} kind="vehicle_bookings"
+        renderItem={b=><a key={b.id} className="case-inspect-target" href={'#/booking/'+b.id}>
+          <span>СТО №{b.number} · {b.center_name||'Сервис'} · {date(b.created_at)}</span><b>Открыть ›</b>
+        </a>}/>
+    </section>
+  </>;
+}
+
 export function AdminCaseCenter() {
   const { me } = useMe();
   const [q,setQ]=useState('');
   const [scope,setScope]=useState<Scope>('all');
   const [refresh,setRefresh]=useState(0);
-  const [listState,setListState]=useState<{key:string;rows:any[]}|null>(null);
+  const [listCursors,setListCursors]=useState<(string|null)[]>([null]);
+  const [listState,setListState]=useState<{key:string;rows:any[];hasMore:boolean;nextBefore:string|null}|null>(null);
   const [listFailure,setListFailure]=useState<{key:string;message:string}|null>(null);
   const [selected,setSelected]=useState<string|null>(null);
   const [detailState,setDetailState]=useState<{key:string;value:any}|null>(null);
@@ -99,18 +119,20 @@ export function AdminCaseCenter() {
   const exportingRef=useRef(false);
   const active=useRef<{id:string|null;owner:string|null}>({id:null,owner:null});
   active.current={id:selected,owner:me?.id??null};
-  const listKey=JSON.stringify([me?.id??null,q,scope,refresh]);
+  const listBefore=listCursors[listCursors.length-1];
+  const listKey=JSON.stringify([me?.id??null,q,scope,refresh,listBefore]);
   const detailKey=JSON.stringify([me?.id??null,selected,refresh]);
   // Only show data returned for this exact filter, owner and selected case.
   // Late calls can finish but cannot populate a new identity's workspace.
-  const list=listState?.key===listKey&&!listFailure ? listState.rows : null;
+  const listPage=listState?.key===listKey&&listFailure?.key!==listKey?listState:null;
+  const list=listPage?.rows??null;
   const listError=listFailure?.key===listKey?listFailure.message:'';
-  const detail=detailState?.key===detailKey&&!detailFailure?detailState.value:null;
+  const detail=detailState?.key===detailKey&&detailFailure?.key!==detailKey?detailState.value:null;
   const error=actionError||(detailFailure?.key===detailKey?detailFailure.message:'');
   useEffect(()=>{
     // Clear even in-memory remnants of the previous admin session. A later
     // re-login under the same ID must fetch again rather than reuse old data.
-    setListState(null);setListFailure(null);
+    setListCursors([null]);setListState(null);setListFailure(null);
     setDetailState(null);setDetailFailure(null);
     setSelected(null);setFocused(null);setComment('');setActionError('');
   },[me?.id]);
@@ -118,17 +140,22 @@ export function AdminCaseCenter() {
     if(!me?.id)return;
     let live=true;
     const handle=window.setTimeout(()=>{
-      void get('/api/admin/cases?q='+encodeURIComponent(q)+'&scope='+scope)
-        .then((rows:any)=>{
+      const query=new URLSearchParams({q,scope,limit:'100'});
+      if(listBefore!==null)query.set('before',listBefore);
+      void get('/api/admin/cases?'+query)
+        .then((value:any)=>{
           if(!live)return;
-          if(!Array.isArray(rows))throw new Error('Сервер вернул неверный формат реестра');
-          setListState({key:listKey,rows});setListFailure(null);
+          if(!Array.isArray(value?.items)||value.items.length>100||value.items.some((x:any)=>!x||typeof x.id!=='string')||
+            typeof value.hasMore!=='boolean'||(value.hasMore&&(!value.items.length||typeof value.nextBefore!=='string'||
+            value.nextBefore===listBefore||value.nextBefore!==value.items[value.items.length-1].id))||
+            (!value.hasMore&&value.nextBefore!==null))throw new Error('Сервер вернул неверный формат реестра');
+          setListState({key:listKey,rows:value.items,hasMore:value.hasMore,nextBefore:value.nextBefore});setListFailure(null);
         }).catch((reason:any)=>{
           if(live)setListFailure({key:listKey,message:String(reason?.message||reason)});
         });
     },250);
     return ()=>{live=false;window.clearTimeout(handle);};
-  },[me?.id,q,scope,listKey]);
+  },[me?.id,q,scope,listKey,listBefore]);
   useEffect(()=>{
     if(!selected||!me?.id)return;
     let live=true;
@@ -235,25 +262,25 @@ export function AdminCaseCenter() {
   const segments=[...stages.map((s:any)=>({...s,source_kind:'order'})),
     ...bookings.map((b:any)=>({...b,source_kind:'booking'})),
     ...ecuReferrals.map((h:any)=>({...h,source_kind:'ecu'}))]
-    .sort((a:any,b:any)=>(a.stage_no||0)-(b.stage_no||0));
+    .sort((a:any,b:any)=>(a.stage_no??Number.MAX_SAFE_INTEGER)-(b.stage_no??Number.MAX_SAFE_INTEGER));
   return <div className="case-register">
     <div className="case-reg-intro">
       <div><span className="case-reg-kicker">ОПЕРАЦИОННЫЙ РЕЕСТР</span>
         <h3>Заявки и мультизаявки</h3>
-        <p>Поиск по номеру заказа, номеру М-заявки или госномеру. Данные из настоящих заявок, без демонстрационных сумм.</p></div>
+        <p>Поиск по номеру заказа, записи СТО, номеру М-заявки или госномеру. Данные из настоящих заявок, без демонстрационных сумм.</p></div>
       <span className="case-reg-status">Доступ администратора · действия журналируются</span>
     </div>
     <div className="case-reg-filters">
       <input type="search" className="field" value={q}
-        onChange={e=>setQ(e.target.value)}
+        onChange={e=>{setQ(e.target.value);setListCursors([null]);}}
         placeholder="№ 78456, М-000041 или номер ТС"
         aria-label="Найти заявку, мультизаявку или автомобиль"/>
-      <button type="button" className="btn ghost small" onClick={()=>setRefresh(x=>x+1)}>Обновить</button>
+      <button type="button" className="btn ghost small" onClick={()=>{setListCursors([null]);setRefresh(x=>x+1);}}>Обновить</button>
     </div>
     <div className="case-reg-tabs" role="group" aria-label="Фильтр обращений">
       {scopes.map(x=><button key={x.id} type="button"
         aria-pressed={scope===x.id} className={scope===x.id?'chosen':''}
-        onClick={()=>setScope(x.id)}>{x.name}</button>)}
+        onClick={()=>{setScope(x.id);setListCursors([null]);}}>{x.name}</button>)}
     </div>
     {listError&&<div className="case-reg-error" role="alert">{listError}
       <button type="button" className="btn ghost small" onClick={()=>setRefresh(x=>x+1)}>
@@ -261,7 +288,7 @@ export function AdminCaseCenter() {
       </button>
     </div>}
     {!list?(listError?null:<p className="note" role="status">Загрузка реестра…</p>)
-      :!list.length?<p className="case-reg-empty">По выбранным условиям обращений не найдено.</p>
+      :!list.length?<p className="case-reg-empty">{listBefore?'На этой странице обращений нет.':'По выбранным условиям обращений не найдено.'}</p>
       :<div className="case-reg-list">{list.map(x=>
         <button type="button" className="case-reg-entry" key={x.id} onClick={()=>open(x.id)}
           aria-label={'Открыть '+(x.case_number||'заявку №'+x.number)}>
@@ -280,7 +307,14 @@ export function AdminCaseCenter() {
           </div>
           <span aria-hidden="true" className="case-reg-arrow">↗</span>
         </button>)}</div>}
-    <p className="case-reg-foot">Реестр показывает до 500 последних обращений. Финансовые расчёты и статусы здесь являются отражением существующих записей, а не налоговым заключением.</p>
+    <div className="case-reg-tabs" role="group" aria-label="Страницы реестра">
+      <button type="button" disabled={listCursors.length===1}
+        onClick={()=>setListCursors(old=>old.length>1?old.slice(0,-1):old)}>Предыдущая страница</button>
+      <span className="note">Страница {listCursors.length}</span>
+      <button type="button" disabled={!listPage?.hasMore||!!listError}
+        onClick={()=>{const cursor=listPage?.nextBefore;if(cursor)setListCursors(old=>old.includes(cursor)?old:[...old,cursor]);}}>Следующая страница</button>
+    </div>
+    <p className="case-reg-foot">До 100 обращений на странице, фильтры действуют на весь реестр. Финансовые расчёты и статусы отражают существующие записи, а не налоговое заключение.</p>
 
     {selected&&<div className="case-detail-layer">
       <button type="button" className="case-detail-curtain" onClick={close}
@@ -327,14 +361,7 @@ export function AdminCaseCenter() {
                 {detail.vehicle?.driver_id&&<a className="case-inspect-target" href={'#/admin/user/'+detail.vehicle.driver_id}>Водитель · полная карточка <span>›</span></a>}
               </div>
               <h4>История обращений этого ТС</h4>
-              {!detail.vehicle_history?.length&&!detail.vehicle_history_bookings?.length?<p className="note">Других зарегистрированных обращений по этому ТС нет.</p>:null}
-              {(detail.history_windows?.vehicle_history?.hasOlder||detail.history_windows?.vehicle_history_bookings?.hasOlder)&&<p className="note" role="status">Показаны последние 100 записей каждого типа; есть более ранние обращения.</p>}
-              {detail.vehicle_history?.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
-                <span>Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)}</span><b>Открыть ›</b>
-              </a>)}
-              {detail.vehicle_history_bookings?.map((b:any)=><a key={b.id} className="case-inspect-target" href={'#/booking/'+b.id}>
-                <span>СТО №{b.number} · {b.center_name||'Сервис'} · {date(b.created_at)}</span><b>Открыть ›</b>
-              </a>)}
+              {detail.vehicle?.id===focused.id?<VehicleCaseHistory key={detailKey+':vehicle-focus'} caseId={selected!} rootId={detail.root_id}/>:<p className="note">История недоступна без подтверждённой карточки ТС.</p>}
               <p className="note">История берётся по внутреннему идентификатору машины. Одного совпадения марки или госномера недостаточно для объединения чужих автомобилей.</p>
             </>}
             {focused.kind==='order'&&<>
@@ -447,7 +474,7 @@ export function AdminCaseCenter() {
               <article key={'booking-'+item.id} className="case-detail-stage">
                 <div className="case-detail-between">
                   <button type="button" className="case-inspect-text-link" onClick={()=>drill('booking',item.id)}>
-                    Этап {item.stage_no} · СТО · запись №{item.number} ↗</button>
+                    {item.stage_no==null?'Номер этапа не зафиксирован':'Этап '+item.stage_no} · СТО · запись №{item.number} ↗</button>
                   <span className="case-reg-chip">{item.status}</span>
                 </div>
                 <div>{item.center_name} · {item.need}</div>
@@ -459,13 +486,7 @@ export function AdminCaseCenter() {
                 </div>
               </article>)}
             <h4>Предыдущие обращения по автомобилю</h4>
-            {(detail.history_windows?.vehicle_history?.hasOlder||detail.history_windows?.vehicle_history_bookings?.hasOlder)&&<p className="note" role="status">История ограничена последними 100 записями каждого типа. Есть более ранние обращения.</p>}
-            {!detail.vehicle_history?.length&&!detail.vehicle_history_bookings?.length?<p className="note">Другие записи по указанному автомобилю не найдены.</p>
-              :detail.vehicle_history?.map((v:any)=><a key={v.id} className="case-inspect-target" href={'#/order/'+v.id}>
-                  Заказ №{v.number} · {SERVICES[v.service]?.name||v.service} · {date(v.created_at)} <span>›</span></a>)}
-            {detail.vehicle_history_bookings?.map((b:any)=><a key={'history-booking-'+b.id} className="case-inspect-target" href={'#/booking/'+b.id}>
-              СТО №{b.number} · {b.center_name||'Сервис'} · {date(b.created_at)} <span>›</span>
-            </a>)}
+            {detail.vehicle?.id?<VehicleCaseHistory key={detailKey+':vehicle-overview'} caseId={selected!} rootId={detail.root_id}/>:<p className="note">История недоступна без подтверждённой карточки ТС.</p>}
           </>}
           {detail&&!focused&&tab==='timeline'&&<>
             <h4>Хронология этапов · подтверждённые события</h4>
