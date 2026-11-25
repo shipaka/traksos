@@ -204,3 +204,30 @@ test('эвакуатор: торги с подачей «сборы + дорог
   const v = ok(await t.api('POST', `/api/orders/${o.id}/offers/${list.offers[0].id}/choose`, {}, client.token));
   assert.equal(v.money.callOut, o.estimate.callOut);
 });
+
+test('SOS: недоступный лучший отклик не блокирует назначение другого исполнителя',async()=>{
+  await t.app.settings.set('dispatch',{priorityFirst:false},admin.id);
+  for(const worker of [m1,m2]){
+    ok(await t.api('POST','/api/performer/line',{lineStatus:'online',paused:false},worker.token));
+  }
+  const order=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb',isSos:true},client.token)).order;
+  ok(await t.api('POST',`/api/orders/${order.id}/offers`,{},m1.token));
+  ok(await t.api('POST',`/api/orders/${order.id}/offers`,{},m2.token));
+  const list=ok(await t.api('GET',`/api/orders/${order.id}/offers`,undefined,client.token));
+  const best=list.offers[0],next=list.offers[1];
+  // Simulate a committed availability change before asynchronous release of the bid.
+  await t.db.query("update performer_profiles set paused=true where user_id=$1",[best.performer_id]);
+  try{
+    const denied=await t.api('POST',`/api/orders/${order.id}/offers/${best.id}/choose`,{},client.token);
+    assert.equal(denied.status,409);
+    t.clock.advance(121);
+    await t.app.auction.tick();
+    const view=ok(await t.api('GET',`/api/orders/${order.id}`,undefined,client.token));
+    assert.equal(view.status,'accepted');
+    assert.equal(view.performer.id,next.performer_id);
+    ok(await t.api('POST',`/api/orders/${order.id}/cancel`,{reason:'Тест'},client.token));
+  }finally{
+    await t.db.query("update performer_profiles set paused=false where user_id=$1",[best.performer_id]);
+    await t.app.settings.set('dispatch',{priorityFirst:true},admin.id);
+  }
+});
