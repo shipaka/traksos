@@ -182,6 +182,19 @@ try{
  await locked.waitFor();
  assert(await locked.isDisabled(),'On-job availability action not locked');
  await assertMasterClean('master availability');
+ // Mobile browser uses the same control, without the old duplicate toggle.
+ await page.setViewportSize({width:390,height:844});
+ line='offline';failLine=false;
+ await page.reload({waitUntil:'domcontentloaded'});
+ const mobileAvailability=page.locator('.work-mobile-header .performer-mobile-availability');
+ const mobileTrigger=mobileAvailability.getByRole('button',{name:/Статус · Не на линии/});
+ await mobileTrigger.waitFor();
+ assert(await page.locator('.performer-mobile-availability').count()===1,'Duplicate mobile availability menu');
+ assert(await page.getByRole('switch',{name:'Принимать новые заявки'}).count()===0,'Legacy toggle still visible');
+ await mobileTrigger.click();
+ await mobileAvailability.getByRole('button',{name:'На линии',exact:true}).click();
+ await mobileAvailability.getByRole('button',{name:/Статус · На линии/}).waitFor();
+ await assertMasterClean('master mobile availability');
  await ctx.close();
 
  const owner=await account({phone:'+79990000472',type:'owner',mode:'client'});
