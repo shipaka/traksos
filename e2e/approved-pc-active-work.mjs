@@ -144,8 +144,25 @@ try{
  const oc=await browser.newContext({viewport:{width:1647,height:927},locale:'ru-RU',serviceWorkers:'block'});
  const op=await oc.newPage();
  const assertOwnerClean=watchPageErrors(op);
+ const searchId='synthetic-approved-pc-search';
+ let searchStatus='searching',chosenOffer='',searchAvailable=false,searchDenied=false;
+ const secondOrder=()=>({...order,id:searchId,number:'LOCAL-0003',you:'client',status:searchStatus,vehicleId:truck.id,
+   performer:searchStatus==='accepted'?{id:'synthetic-bid-master',name:'Второй мастер CI',rating:4.8}:null});
  await op.route(url=>url.pathname==='/api/orders',
-   route=>route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'}])));
+   route=>route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'},
+     ...(searchAvailable?[secondOrder()]:[])])));
+ await op.route(url=>url.pathname==='/api/orders/'+searchId,route=>searchDenied
+   ?route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({message:'Нет доступа'})})
+   :route.fulfill(json(secondOrder())));
+ await op.route(url=>url.pathname==='/api/orders/'+searchId+'/offers',
+   route=>route.fulfill(json({autoPick:false,offers:[
+     {id:'bid-1',name:'Первый мастер CI',price:100000,diffPct:0,eta_minutes:10},
+     {id:'bid-2',name:'Второй мастер CI',price:120000,diffPct:0,eta_minutes:15}
+   ]})));
+ await op.route(url=>url.pathname==='/api/orders/'+searchId+'/offers/bid-2/choose',async route=>{
+   assert(route.request().method()==='POST','Expected real choice action');
+   chosenOffer='bid-2';searchStatus='accepted';await route.fulfill(json({ok:true}));
+ });
  await op.route(url=>url.pathname==='/api/orders/'+id,
    route=>route.fulfill(json({...order,you:'client',status:'en_route',
      performer:{id:'synthetic-master',name:'Синтетический мастер',rating:4.9,rating_count:12,
@@ -176,6 +193,30 @@ try{
   'Stale or missing GPS incorrectly displayed as live');
  await op.screenshot({path:output+'/owner-active-1647.png',fullPage:false,animations:'disabled'});
  await assertOwnerClean('owner active order');
+ // Open the second order explicitly while another active order exists.
+ searchAvailable=true;
+ await op.goto(BASE+'/#/?order='+searchId,{waitUntil:'domcontentloaded'});
+ const searchCase=op.locator('.approved-pc-search-case');
+ await searchCase.waitFor();
+ await searchCase.getByText('Второй мастер CI',{exact:true}).waitFor();
+ await searchCase.getByRole('button',{name:'Свернуть поиск'}).click();
+ assert(!await searchCase.locator('.search-workspace-content').isVisible(),'Search did not collapse on dashboard');
+ await searchCase.getByRole('button',{name:'Раскрыть поиск'}).click();
+ await op.screenshot({path:output+'/owner-search-1647.png',fullPage:false,animations:'disabled'});
+ await searchCase.locator('.offer').filter({hasText:'Второй мастер CI'}).getByRole('button',{name:'Выбрать за 1200 ₽'}).click();
+ await op.locator('.approved-pc-case').getByText('Второй мастер CI',{exact:false}).first().waitFor();
+ await searchCase.waitFor({state:'detached'});
+ assert(chosenOffer==='bid-2','Dashboard chose wrong offer');
+ assert(await op.locator('.approved-pc-case').getByRole('link',{name:'История автомобиля'}).count()===1,'Existing vehicle history lost after choice');
+ assert(await op.locator('.approved-pc-case').getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+searchId,'Wrong case after assignment');
+ await op.screenshot({path:output+'/owner-search-assigned-1647.png',fullPage:false,animations:'disabled'});
+ // A denied selected order must never silently fall back to the first order.
+ searchDenied=true;
+ await op.reload({waitUntil:'domcontentloaded'});
+ await op.locator('.approved-pc-center').getByText(/Ошибка загрузки данных/).waitFor();
+ assert(await op.locator('.approved-pc-center').getByText('Синтетический мастер',{exact:false}).count()===0,'Selected-order denial exposed another case');
+ searchDenied=false;
+ await assertOwnerClean('owner selected search lifecycle');
  // Shared inner-screen banners must NOT overlay the old separate photo tile
  // on top of the approved full-card photograph, as caught in real screenshots.
  await op.goto(BASE+'/#/garage',{waitUntil:'domcontentloaded'});
