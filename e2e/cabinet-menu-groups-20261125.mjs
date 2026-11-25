@@ -7,8 +7,8 @@ const bundle=await build({
     import {createRoot} from 'react-dom/client';
     import {MobileRoleMenu} from './web/src/mobileRoleMenu.tsx';
     import {groupCabinetMenu} from './web/src/cabinetMenuGroups.ts';
-    const account=[['/work','Рабочий стол'],['/profile','Аккаунт'],['/support','Поддержка'],['/work/docs','Проверка и документы']];
-    const help=[['/support','Поддержка'],['/help','Помощь и подсказки'],['/training','Обучение'],['/rules','Правила площадки'],['/offer/performer','Оферта'],['/offer/privacy','Оферта'],['/offer/privacy','Политика персональных данных'],['/privacy','Мои персональные данные']];
+    const account=[['/work','Рабочий стол'],['/profile','Аккаунт'],['/support','Поддержка'],['/work/docs','Проверка и документы'],['/work/me/money','Выплаты'],['/work/me/tax','Налоги'],['/work/me/schedule','График'],['/work/filter','Фильтры заявок'],['/work/me/cars','Машины'],['/shop','Магазин запчастей']];
+    const help=[['/support','Поддержка'],['/help','Помощь и подсказки'],['/training','Обучение'],['/rules','Правила площадки'],['/offer/performer','Оферта'],['/offer/privacy','Оферта'],['/offer/privacy','Политика персональных данных'],['/privacy','Мои персональные данные'],['/economics','Комиссии, баллы и рефералы'],['/techbase/master','Закрытая ТехБаза']];
     const groups=groupCabinetMenu(account,help);
     window.groups=groups;
     createRoot(document.getElementById('root')).render(<MobileRoleMenu mode="performer" quick={[['/work','⌂','Главная'],['/menu','menu','Меню']]} account={account} help={help} onLogout={()=>{}}/>);
@@ -37,7 +37,22 @@ try{
     await docs.locator('summary').click();
     for(const route of ['/work/docs','/rules','/offer/performer','/offer/privacy','/privacy'])
       assert(await docs.locator('a[href="#'+route+'"]').isVisible(),'Missing document '+route);
+    const finance=menu.locator('details').filter({has:page.locator('summary[aria-label="Финансы"]')});
+    const settings=menu.locator('.tr-mobile-menu-account');
+    const work=menu.locator('details').filter({has:page.locator('summary[aria-label="Разделы кабинета"]')});
+    assert(await finance.count()===1&&await finance.getAttribute('open')===null,'Finance section missing or expanded');
+    await finance.locator('summary').click();
+    for(const path of ['/work/me/money','/work/me/tax','/economics'])
+      assert(await finance.locator('a[href="#'+path+'"]').isVisible(),'Finance link misplaced '+path);
+    await settings.locator('summary').click();
+    for(const path of ['/profile','/work/me/schedule','/work/filter'])
+      assert(await settings.locator('a[href="#'+path+'"]').isVisible(),'Settings link misplaced '+path);
+    await work.locator('summary').click();
+    for(const path of ['/shop','/techbase/master','/work/me/cars'])
+      assert(await work.locator('a[href="#'+path+'"]').isVisible(),'Working tool misplaced '+path);
     const groups=await page.evaluate(()=>window.groups);
+    assert(groups.work.slice(0,2).map(x=>x[0]).join('|')==='/shop|/techbase/master','Working tools not prioritized');
+    assert(!groups.work.some(x=>x[0]==='/work/me/tax'||x[0]==='/work/me/schedule'),'Finance or settings still mixed with work');
     assert(groups.documents.find(x=>x[0]==='/offer/privacy')[1]==='Политика персональных данных','Incorrect policy label');
     assert(groups.guidance.filter(x=>x[0]==='/support').length===1,'Duplicate support');
     assert(!groups.work.some(x=>x[0]==='/work/docs'),'Documents still mixed with work');
