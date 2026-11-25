@@ -1498,8 +1498,8 @@ async function patchMe(body: unknown) {
 }
 
 export async function logout() {
-  const {logoutSession}=await import('../sessionLogout.ts');
-  await logoutSession();
+  const {logoutSession}=await import('../api.ts');
+  await logoutSession(origin=>{void native.setSession(origin,null).catch(()=>{});});
 }
 
 const PRIO: [string, string][] = [['recommended','Рекомендуем'],['near', 'Ближе'], ['cheap', 'Дешевле'], ['brand', 'Знает марку'], ['fast', 'Быстрее приедет']];
