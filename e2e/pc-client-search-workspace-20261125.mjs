@@ -5,14 +5,15 @@ import {readFile} from 'node:fs/promises';
 
 const stubs={
   '../api.ts': `
-    export function get(path){return Promise.resolve(window.__searchMock.response);}
-    export function post(path){window.__searchMock.chosen.push(path);return Promise.resolve({ok:true});}
+    export function getToken(){return window.__searchMock.token;}
+    export function get(path){const m=window.__searchMock;return m.holdRead?new Promise((resolve,reject)=>{m.pendingRead={resolve,reject}}):Promise.resolve(m.response);}
+    export function post(path){const m=window.__searchMock;m.chosen.push(path);return m.holdChoose?new Promise(resolve=>{m.pendingChoose=resolve}):Promise.resolve({ok:true});}
     export function rub(v){return Math.round(v/100)+' ₽';}
     export function onEvent(fn){window.__searchMock.listener=fn;return ()=>{};}
   `,
   '../ui.tsx': `
     export function useAction(){return {busy:false,run:fn=>fn()};}
-    export function useToast(){return ()=>{};}
+    export function useToast(){return message=>window.__searchMock.toasts.push(message);}
   `,
   './roadsideMap.tsx':'export function RoadsideMap(){return null;}'
 };
@@ -21,14 +22,16 @@ const bundle=await build({
     import React,{useState} from 'react';
     import {createRoot} from 'react-dom/client';
     import {Search} from './web/src/screens/search.tsx';
-    window.__searchMock={response:{offers:[],autoPick:false},chosen:[],complete:0};
+    window.__searchMock={response:{offers:[],autoPick:false},chosen:[],complete:0,token:'session-a',toasts:[]};
     function App(){
       const [collapsed,setCollapsed]=useState(false);
       const [revision,setRevision]=useState(0);
+      const [id,setId]=useState('test');
+      window.__searchMock.switchOrder=setId;
       const [motionEpoch]=useState(()=>performance.now()-2500);
       window.__searchMock.epoch=motionEpoch;
       window.__searchMock.revalidate=()=>setRevision(x=>x+1);
-      return <Search key={revision} d={{id:'test',service:'electric',search:{candidates:4}}}
+      return <Search key={revision} d={{id,service:'electric',search:{candidates:4}}}
         collapsed={collapsed} onCollapsedChange={setCollapsed} motionEpoch={motionEpoch}
         onChosen={()=>window.__searchMock.complete++}/>;
     }
@@ -88,6 +91,30 @@ try{
   await page.waitForFunction(()=>window.__searchMock.complete===1);
   const selected=await page.evaluate(()=>window.__searchMock.chosen);
   if(selected.length!==1||selected[0]!=='/api/orders/test/offers/second/choose')throw Error('Wrong offer chosen: '+selected);
+  // Reconnect discards cards until the server has revalidated availability.
+  await page.evaluate(()=>{const m=window.__searchMock;m.holdRead=true;m.listener({type:'connection_restored'});});
+  await page.locator('.offer').first().waitFor({state:'detached'});
+  await page.waitForFunction(()=>!!window.__searchMock.pendingRead);
+  await page.evaluate(()=>{const m=window.__searchMock;m.holdRead=false;m.pendingRead.resolve(m.response);});
+  await second.waitFor();
+  // Ordinary refresh retains geometry, but stale offers cannot be chosen.
+  await page.evaluate(()=>{const m=window.__searchMock;m.holdRead=true;m.listener({type:'order',orderId:'test'});});
+  await page.waitForFunction(()=>document.querySelector('.offer button')?.disabled);
+  await page.evaluate(()=>{const m=window.__searchMock;m.holdRead=false;m.pendingRead.reject(Error('offline'));});
+  await page.getByText('Не удалось получить свежие отклики.',{exact:false}).waitFor();
+  if(await page.locator('.offer').count())throw Error('Failed verification exposed stale offers');
+  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await second.waitFor();
+  // One request even when invoked twice in the same event loop, and a late
+  // successful response from the previous order must not notify the new one.
+  await page.evaluate(()=>{window.__searchMock.holdChoose=true;const button=[...document.querySelectorAll('.offer button')][1];button.click();button.click();});
+  await page.waitForFunction(()=>!!window.__searchMock.pendingChoose);
+  if(await page.evaluate(()=>window.__searchMock.chosen.length)!==2)throw Error('Duplicate choose');
+  await page.evaluate(()=>{const m=window.__searchMock;m.response={offers:[],autoPick:false};m.token='session-b';m.switchOrder('other');});
+  await page.locator('.search-title').filter({hasText:'Ищем исполнителя'}).waitFor();
+  await page.evaluate(()=>window.__searchMock.pendingChoose({ok:true}));
+  await page.waitForTimeout(100);
+  if(await page.evaluate(()=>window.__searchMock.complete!==1||window.__searchMock.toasts.length!==1))throw Error('Stale choose completed in another session');
   await page.emulateMedia({reducedMotion:'reduce'});
   if(await sweep.evaluate(el=>getComputedStyle(el).animationName)!=='none')throw Error('Reduced motion ignored');
   if(errors.length)throw Error(errors.join('; '));
