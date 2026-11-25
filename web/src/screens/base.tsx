@@ -142,12 +142,12 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
   );
 }
 
-export function StationAvailability({onChanged}:{onChanged:()=>void}){
+export function StationAvailability(){
   const {me}=useMe();
   const token=getToken();
-  return <StationAvailabilitySession key={JSON.stringify([me?.id,token])} token={token} onChanged={onChanged}/>;
+  return <StationAvailabilitySession key={JSON.stringify([me?.id,token])} token={token}/>;
 }
-function StationAvailabilitySession({token,onChanged}:{token:string|null;onChanged:()=>void}){
+function StationAvailabilitySession({token}:{token:string|null}){
   const state=useBaseLoad<{paused:boolean;verification:string;hours:string}>(
     ()=>baseGet('/api/base/availability'),[token],
     e=>e.type==='service_availability_changed'||e.type==='connection_restored');
@@ -175,7 +175,7 @@ function StationAvailabilitySession({token,onChanged}:{token:string|null;onChang
     finally{
       if(current()){
         await state.reload();
-        if(current()){setSaving(false);if(!failed)setOpen(false);onChanged();}
+        if(current()){setSaving(false);if(!failed)setOpen(false);}
       }
       pending.current=false;
     }
@@ -207,7 +207,7 @@ export function BaseHome({ initialTab='req' }: { initialTab?: StationTab } = {})
 }
 function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
   const { me } = useMe();
-  const cab = useBaseLoad(() => baseGet('/api/base'), [], e=>isBookingEvent(e)||e.type==='service_availability_changed'||e.type==='connection_restored');
+  const cab = useBaseLoad(() => baseGet('/api/base'), [], isBookingEvent);
   const [tab, setTab] = useState<'req' | 'cars' | 'expected' | 'ready' | 'done'>(initialTab);
   const { busy, run } = useAction();
   if (!cab.data) return <main>{<WorkerNotices audience="service" />}<StationLoading error={cab.error} reload={cab.reload} /></main>;
@@ -261,7 +261,7 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
           <a className="btn ghost small" href="#/support/new">Написать модератору</a>
         </div>
       )}
-      <StationAvailability onChanged={cab.reload}/>
+      <StationAvailability/>
       {center.closedToday && <div className="banner col"><b>Сегодня вы закрыты</b><span className="note">Записаться на сегодня нельзя — только на другие дни.</span></div>}
       {center.confirmDue && (
         <div className="card">
