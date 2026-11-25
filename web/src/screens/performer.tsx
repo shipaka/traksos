@@ -26,9 +26,9 @@ function WorkForAccount({background=false}:{background?:boolean}={}) {
   const { me, reload } = useMe();
   const mobileWorkspace = useMobileWorkspace();
   const { busy, run } = useAction();
-  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 820px)').matches);
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 899px)').matches);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 820px)');
+    const mq = window.matchMedia('(max-width: 899px)');
     const sync = () => setCompact(mq.matches);
     mq.addEventListener('change', sync);
     return () => mq.removeEventListener('change', sync);
