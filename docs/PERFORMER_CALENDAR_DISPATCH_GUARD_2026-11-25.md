@@ -15,3 +15,16 @@ cancelled, completed and expired intervals do not alone exclude a worker. No
 future time guarantee, public calendar detail, or claim of physical work is
 introduced by this change. The preview remains advisory; final assignment still
 uses its transactional checks.
+
+## Explicit order termination
+
+A database trigger handles future explicit transitions of a linked order to
+cancelled/completed in the same transaction as the order. Cancellation closes
+only that order's open reservations; actual completion marks only the confirmed
+appointment of the assigned performer completed, and closes unaccepted
+alternatives as cancelled. The corresponding audit event is atomic. A rollback
+restores both the order and reservation. No backfill of old rows, automatic
+release after failed search, or reassignment-based cancellation is performed.
+Existing order notifications and financial hooks remain authoritative. Linked
+reservation notification delivery and review of historical inconsistent rows
+remain open until the full planned-order workflow is integrated.

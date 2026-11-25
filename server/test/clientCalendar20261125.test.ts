@@ -88,7 +88,8 @@ test('performer calendar is private, links only accessible real orders and agree
   assert.equal(ok(await t.api('GET',p,undefined,master.token)).items.length,0,'reassignment revokes visibility');
   assert.equal(ok(await t.api('GET',p,undefined,second.token)).items.length,0,'reservation belongs to original performer only');
   await t.db.query("update orders set performer_id=$2,status='cancelled' where id=$1",[order,master.id]);
-  assert.equal(ok(await t.api('GET',p,undefined,master.token)).items.length,0,'terminal order is not a live appointment');
+  const terminal=ok(await t.api('GET',p,undefined,master.token)).items;
+  assert.equal(terminal.find((x:any)=>x.id===reservation)?.confirmation,'cancelled','cancelled order retains history, not a live appointment');
 });
 
 

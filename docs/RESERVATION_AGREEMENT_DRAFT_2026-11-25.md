@@ -57,3 +57,8 @@ No production scheduler or public route is enabled, and actual delayed arrival,
 resolution of a past confirmed appointment, linked-order dispatch and payments
 still require a separately agreed workflow. The existing immediate-dispatch
 policy uses the reservation end time; a review marker is not proof of active work.
+
+Explicit terminal transitions of existing linked orders now synchronize their
+reservation state at the database boundary. This is not a writer for creating a
+planned order. Legacy unlinked negotiations and historical rows are untouched;
+no automatic cancellation on reassignment or failed search is introduced.
