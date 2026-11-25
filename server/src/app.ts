@@ -1488,8 +1488,8 @@ export function createApp(d: Deps) {
       ...(cursorText === null ? {} : {cursor:Number(cursorText)})});
   });
   r.post('/api/orders/:id/messages', true, (c: AuthedCtx) => {
-    const b = parse(z.object({ body: z.string().min(1).max(2000), kind: z.enum(['text', 'quick']).default('text') }), c.body);
-    return chat.post(c.user, c.params.id, b.body, b.kind);
+    const b = parse(z.object({ body: z.string().min(1).max(2000), kind: z.enum(['text', 'quick']).default('text'), requestId:z.string().uuid().optional() }), c.body);
+    return chat.post(c.user, c.params.id, b.body, b.kind, b.requestId);
   });
   r.get('/api/orders/:id/reviews', true, (c: AuthedCtx) => reviews.forOrder(c.user, c.params.id));
   r.post('/api/orders/:id/review', true, (c: AuthedCtx) => reviews.leave(c.user, c.params.id, parse(z.object({
