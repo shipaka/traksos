@@ -19,3 +19,5 @@ test('illustrated master corpus has local inert SVG, provenance and no exact-fit
  for(const [id,count] of [['iso-7638-1',7],['iso-12098',15]] as const){const c=cards.find(x=>x.id===id)!;assert.equal(c.pins.length,count);assert.deepEqual(c.pins.map(p=>p[0]),Array.from({length:count},(_,i)=>String(i+1)));}
  assert.deepEqual(cards.find(c=>c.make==='Volvo')?.models,['FH','FM']);
 });
+
+test('legacy model filters remain thematic and common images have no invented fitments',async()=>{const {cards}=await readTechBaseIllustrations();assert.ok(cards.every(c=>c.bindings.every(b=>b.status==='thematic')));assert.equal(cards.find(c=>c.id==='ebs-modulator')?.bindings.length,0);assert.ok(cards.find(c=>c.id==='scania-r-check-valve')?.bindings.some(b=>b.make==='Scania'&&b.model==='R'));});

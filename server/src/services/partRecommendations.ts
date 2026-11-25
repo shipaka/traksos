@@ -5,6 +5,7 @@ import type { Notifier } from './notify.ts';
 import { maskPhones } from '../util.ts';
 import { TECHBASE_ILLUSTRATED } from '../domain/techbaseIllustrated.ts';
 import { partRefsForCard, samePart } from '../domain/techbasePartRefs.ts';
+import { requireProfessionalTechAccess, verifiedRepairPerformer } from '../domain/techbaseAccess.ts';
 
 type Proposal={brand:string;article:string;name:string;qty:number;reason:string;productId?:string|null;cardId?:string|null;fitmentConfirmed:boolean};
 const clean=(s:string)=>maskPhones(s.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')).text.trim();
@@ -17,15 +18,10 @@ export class PartRecommendations {
  constructor(private db:Db,private settings:SettingsService,private notifier:Notifier){}
  private active(user:AuthUser){if(user.status!=='active')throw forbidden();}
  private async approved(user:AuthUser,q:Queryable=this.db){
-  this.active(user);
-  if(!user.roles.some(x=>x==='master'||x==='service'))throw forbidden('Требуется профиль мастера или СТО');
-  const p=await q.one<{verification:string}>('select verification from performer_profiles where user_id=$1',[user.id]);
-  if(p?.verification!=='approved')throw forbidden('Требуется подтверждённый профиль');
+  if(!await verifiedRepairPerformer(q,user))throw forbidden('Требуется подтверждённый профиль мастера или СТО');
  }
  private async professional(user:AuthUser){
-  this.active(user);
-  if(user.roles.some(x=>x==='admin'||x==='moderator'))return;
-  await this.approved(user);
+  await requireProfessionalTechAccess(this.db,user);
  }
  private async context(user:AuthUser,id:string,q:Queryable=this.db,lock=false){
   this.active(user);
@@ -53,7 +49,7 @@ export class PartRecommendations {
  async list(user:AuthUser,id:string){
   const c=await this.context(user,id);
   const rows=await this.db.query<any>('select * from part_recommendations where source_order_id=$1 order by created_at desc,id',[id]);
-  return {canSuggest:c.performer&&user.roles.some(x=>x==='master'||x==='service')&&c.o.service!=='tow'&&['arrived','working','awaiting_confirmation','completed'].includes(c.o.status),canDecide:c.owner,items:rows.map(safeRow)};
+  return {canSuggest:c.performer&&await verifiedRepairPerformer(this.db,user)&&c.o.service!=='tow'&&['arrived','working','awaiting_confirmation','completed'].includes(c.o.status),canDecide:c.owner,items:rows.map(safeRow)};
  }
  async propose(user:AuthUser,id:string,p:Proposal){
   const brand=p.brand.trim(),article=p.article.trim(),reason=clean(p.reason),name=clean(p.name);

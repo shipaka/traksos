@@ -1,3 +1,4 @@
+import { professionalTechAccess, requireProfessionalTechAccess } from '../domain/techbaseAccess.ts';
 import type { Db } from '../db/index.ts';
 import type { AuthUser } from '../http/router.ts';
 import { bad, forbidden } from '../http/router.ts';
@@ -170,17 +171,12 @@ export class TrakBotService {
       "select role, body from trakbot_messages where user_id=$1 and role='user' order by id desc limit 8",
       [user.id],
     );
-    const specialist = user.roles.some((r) => ['master','service','admin','moderator'].includes(r));
+    const specialist = await professionalTechAccess(this.db,user);
     const isNavigationSafe = codes.length === 0 && !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message);
     let guide = isNavigationSafe ? resolveGuideDestination(message, user.roles) : null;
-    if (guide?.destination.path === '/tech/codes' &&
-        !user.roles.some((r) => ['admin','moderator'].includes(r))) {
-      const p = await this.db.one<{ verification: string }>(
-        'select verification from performer_profiles where user_id=$1', [user.id]);
-      if (p?.verification !== 'approved') {
-        guide = { text: 'Техническая база откроется после подтверждения твоего профиля специалиста.',
-          destination: { path: '/work/docs', label: 'Проверка документов' } };
-      }
+    if (guide && ['/tech/codes','/techbase/master','/tech/cases'].includes(guide.destination.path) && !specialist) {
+      guide = { text: 'Профессиональная ТехБаза доступна подтверждённым специалистам.',
+          destination: { path: user.roles.some(r=>r==='master'||r==='service')?'/work/docs':'/techbase/driver', label: 'Доступные материалы' } };
     }
     const previousQuestions = prior.map((r) => r.body);
     const offlineReply = !guide && codes.length === 0
@@ -211,12 +207,7 @@ export class TrakBotService {
         !SPN_PATTERN.test(message) && !/\bFMI\b/i.test(message) &&
         context.make?.trim() && context.model?.trim() && context.ecu?.trim() &&
         context.year && Number.isInteger(context.year)) {
-      const staff = user.roles.some((r) => ['admin','moderator'].includes(r));
-      const profile = staff ? { verification: 'approved' } :
-        await this.db.one<{ verification: string }>(
-          'select verification from performer_profiles where user_id=$1', [user.id],
-        );
-      if (profile?.verification === 'approved') {
+      if (specialist) {
         const matches = await this.db.query<{
           make: string; model: string; ecu: string; code: string;
           symptoms: string; checks_performed: string; verified_fix: string;
@@ -253,12 +244,7 @@ export class TrakBotService {
   }
 
   async expertLookup(user: AuthUser, query: string) {
-    const staff = user.roles.some((r) => ['admin','moderator'].includes(r));
-    if (!staff) {
-      if (!user.roles.some((r) => ['master','service'].includes(r))) throw forbidden();
-      const profile = await this.db.one<{verification:string}>('select verification from performer_profiles where user_id=$1', [user.id]);
-      if (profile?.verification !== 'approved') throw forbidden('Технический справочник доступен после проверки специалиста');
-    }
+    await requireProfessionalTechAccess(this.db,user);
     const q = query.trim().slice(0, 60);
     if (q.length < 2) return { items: [] };
     const items = await this.db.query(

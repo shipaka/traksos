@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { bindingsForCard } from './techbaseApplicability.ts';
 // No public/static asset route. Images are delivered only in the authorized master payload.
 export const TECHBASE_FAMILIES = [
   [
@@ -3979,6 +3980,6 @@ export const TECHBASE_ILLUSTRATED = [
   }
 ] as const;
 export async function readTechBaseIllustrations(){
- const cards=await Promise.all(TECHBASE_ILLUSTRATED.map(async card=>({...card,image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')})));
- return {version:'2026-11-25-d',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
+ const cards=await Promise.all(TECHBASE_ILLUSTRATED.map(async card=>({...card,bindings:bindingsForCard(card),image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')})));
+ return {version:'2026-11-25-f',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
 }

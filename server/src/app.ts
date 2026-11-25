@@ -19,6 +19,7 @@ import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sa
 import { ReferralService } from './services/referral.ts';
 import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
 import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
+import { effectiveTechRoles } from './domain/techbaseAccess.ts';
 import { readTechBaseIllustrations } from './domain/techbaseIllustrated.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
@@ -172,15 +173,7 @@ export function createApp(d: Deps) {
   // Curated official source links only. No specialist documents are returned
   // to a client even when the caller changes ?audience=master manually.
   r.get('/api/techbase', true, async (c: AuthedCtx) => {
-    // A menu role does not itself prove that a specialist's documents were approved.
-    // Enforce the same server-side verification as the new source directory.
-    const claimedPro = c.user.roles.some(role => role==='master'||role==='service');
-    const profile = claimedPro
-      ? await d.db.one<{verification:string}>(
-          'select verification from performer_profiles where user_id=$1',[c.user.id])
-      : null;
-    const effectiveRoles = profile?.verification==='approved' ? c.user.roles
-      : c.user.roles.filter(role => role!=='master'&&role!=='service');
+    const effectiveRoles = await effectiveTechRoles(d.db,c.user);
     const allowed = techBaseAudience(effectiveRoles);
     if (!allowed.length) throw forbidden();
     const requested = c.query.get('audience');

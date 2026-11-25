@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { Db } from '../db/index.ts';
+import { requireProfessionalTechAccess } from '../domain/techbaseAccess.ts';
 import { forbidden, type AuthUser } from '../http/router.ts';
 
 type Portal = { id: string; title: string; make: string | null; subsystem: string; kind: string; url: string;
@@ -35,17 +36,7 @@ export class VehicleTechnicalLibrary {
   async professional(actor: AuthUser, filter: {make?:string;subsystem?:string;q?:string;category?:'truck'|'trailer'|'passenger'} = {}) {
     if(filter.category && filter.category!=='truck'&&filter.category!=='trailer')
       throw forbidden('Профессиональная ТехБаза содержит материалы только грузового транспорта и прицепов');
-    if (!actor || actor.status !== 'active') throw forbidden();
-    // UNION OF REAL ROLES, not an account-specific exception:
-    // if the same account is both admin and master, it retains the full
-    // professional and administrative view regardless of the currently
-    // selected frontend mode. No phone-number or public profile bypass.
-    if (!actor.roles.some(role=>role==='master'||role==='service'))
-      throw forbidden('Профессиональные материалы доступны только мастерам и СТО');
-    const performer = await this.db.one<{verification:string}>(
-      "select verification from performer_profiles where user_id=$1", [actor.id]);
-    if (performer?.verification!=='approved')
-      throw forbidden('ТехБаза требует подтверждённый профиль мастера или СТО');
+    await requireProfessionalTechAccess(this.db,actor);
     const d = await readSources();
     const make = filter.make?.trim().toLowerCase().slice(0,60);
     const subsystem = filter.subsystem?.trim().toLowerCase().slice(0,60);
