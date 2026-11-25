@@ -69,6 +69,14 @@ try {
       els=>els.map(el=>({href:el.getAttribute('href'),text:(el.textContent??'').trim()}))
     );
     if(links.length < 6)throw Error(kind+': almost empty cabinet menu');
+    const duplicates=links.filter((link,index)=>links.findIndex(x=>x.href===link.href)!==index);
+    if(duplicates.length)throw Error(kind+': repeated cabinet menu destinations '+JSON.stringify(duplicates));
+    for(const required of ['#/profile','#/support','#/offer/privacy']){
+      if(!links.some(x=>x.href===required))throw Error(kind+': required destination removed '+required);
+    }
+    if((kind==='master'||kind==='tow'||kind==='service'||kind==='master_service')&&links.some(x=>x.href==='#/air'))
+      throw Error(kind+': driver-only community exposed in partner menu');
+
     // Each account has its own direct economic explanation, not a generic
     // performer pricing page or unapproved commission in the customer menu.
     const financeMenu=links.find(l=>l.href==='#/economics');
