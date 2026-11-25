@@ -1,41 +1,71 @@
-import {useState} from 'react';
-import {get,post,rub,fmtTime} from '../api.ts';
+import {useEffect,useRef,useState} from 'react';
+import {get,getToken,post,rub,fmtTime} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 
 type Ref={brand:string;article:string;name:string;source:string;sourcePage:number};
 type Product={id:string;brand:string;article:string;name:string;price:number;stock:number|null;leadDays:number};
 type Rec={id:string;source_order_id:string|null;source_booking_id?:string|null;vehicle_id:string|null;product_id:string|null;brand:string;article:string;name:string;qty:number;reason:string;status:string;created_at:string;sourcing_status?:'not_requested'|'requested'|'resolved'|'unavailable';sourcing_note?:string|null;sourcing_requested_at?:string|null};
 const labels:Record<string,string>={pending:'Ожидает решения',accepted:'Замена согласована',declined:'Отказано'};
-export function PartProposal({orderId,bookingId,cardId,onSent}:{orderId?:string;bookingId?:string;cardId?:string;onSent?:()=>void}){
+type ProposalProps={orderId?:string;bookingId?:string;cardId?:string;onSent?:()=>void};
+export function PartProposal(props:ProposalProps){
+ const {me}=useMe();
+ if(!me)return null;
+ return <PartProposalForm key={JSON.stringify([me.id,props.orderId,props.bookingId,props.cardId])} {...props}/>;
+}
+function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
  const source=bookingId?'/api/bookings/'+encodeURIComponent(bookingId):orderId?'/api/orders/'+encodeURIComponent(orderId):null;
  const refs=useLoad<{refs:Ref[]}>(()=>cardId?get('/api/techbase/parts/'+encodeURIComponent(cardId)):Promise.resolve({refs:[]}),[cardId]);
  const [brand,setBrand]=useState(''),[article,setArticle]=useState(''),[name,setName]=useState('');
  const [qty,setQty]=useState(1),[reason,setReason]=useState(''),[confirmed,setConfirmed]=useState(false);
  const [match,setMatch]=useState<{enabled:boolean;products:Product[]}|null>(null),[product,setProduct]=useState('');
  const {busy,run}=useAction();
- const change=(fn:()=>void)=>{fn();setMatch(null);setProduct('');setConfirmed(false);};
+ const generation=useRef(0),submitLock=useRef(false);
+ const [lookupPending,setLookupPending]=useState(false),[lookupError,setLookupError]=useState(false);
+ const token=getToken();
+ useEffect(()=>()=>{generation.current++;},[token]);
+ const change=(fn:()=>void)=>{if(submitLock.current)return;generation.current++;fn();setMatch(null);setProduct('');setLookupError(false);setLookupPending(false);setConfirmed(false);};
+ const materialChange=(fn:()=>void)=>{if(submitLock.current)return;fn();setConfirmed(false);};
+ async function lookup(){
+  if(submitLock.current)return;
+  const id=++generation.current,session=getToken();
+  setMatch(null);setProduct('');setConfirmed(false);setLookupError(false);setLookupPending(true);
+  const current=()=>generation.current===id&&getToken()===session;
+  try{
+   const result=await get<{enabled:boolean;products:Product[]}>('/api/shop/exact-part?brand='+encodeURIComponent(brand)+'&article='+encodeURIComponent(article));
+   if(current())setMatch(result);
+  }catch{if(current())setLookupError(true);}
+  finally{if(current())setLookupPending(false);}
+ }
+ async function submit(){
+  if(submitLock.current||lookupPending||!confirmed||!source||getToken()!==token)return;
+  submitLock.current=true;
+  const id=generation.current;
+  try{
+   const result=await run(()=>post(source+'/part-recommendations',{brand,article,name,qty,reason,productId:product||null,cardId:cardId||null,fitmentConfirmed:true}),'Рекомендация сохранена; заказ не создан');
+   if(result&&generation.current===id&&getToken()===token){setReason('');setConfirmed(false);onSent?.();}
+  }finally{submitLock.current=false;}
+ }
  const refOnly=!!cardId&&!!refs.data?.refs.length;
  return <section className="card flat stack" aria-label="Подбор запчасти">
   <b>Артикул и подбор запчасти</b>
   {cardId&&!refs.data&&<span className="note">{refs.error?'Не удалось получить подтверждённые артикулы':'Загрузка артикулов'}</span>}
   {refs.data?.refs.map(r=><div key={r.brand+r.article} className="stack"><button className="btn ghost small" type="button" onClick={()=>change(()=>{setBrand(r.brand);setArticle(r.article);setName(r.name);})}>{r.brand} {r.article} — {r.name}</button><a href={r.source} target="_blank" rel="noopener noreferrer">Источник артикула · стр. {r.sourcePage}</a></div>)}
   {cardId&&refs.data?.refs.length===0&&<span className="note">Артикул в этой карточке ещё не подтверждён. Укажите номер с маркировки установленной детали.</span>}
-  <label>Производитель<input className="field" value={brand} maxLength={80} readOnly={refOnly} onChange={e=>change(()=>setBrand(e.target.value))}/></label>
-  <label>Артикул<input className="field" value={article} maxLength={100} readOnly={refOnly} onChange={e=>change(()=>setArticle(e.target.value))}/></label>
-  <button type="button" className="btn ghost small" disabled={busy||!brand.trim()||!article.trim()} onClick={async()=>{
-   const result=await run(()=>get('/api/shop/exact-part?brand='+encodeURIComponent(brand)+'&article='+encodeURIComponent(article)),'Поиск завершён');
-   if(result){setMatch(result);setProduct('');}
-  }}>Найти точный артикул в магазине</button>
+  <label>Производитель<input className="field" value={brand} maxLength={80} disabled={busy} readOnly={refOnly} onChange={e=>change(()=>setBrand(e.target.value))}/></label>
+  <label>Артикул<input className="field" value={article} maxLength={100} disabled={busy} readOnly={refOnly} onChange={e=>change(()=>setArticle(e.target.value))}/></label>
+  <button type="button" className="btn ghost small" disabled={busy||lookupPending||!brand.trim()||!article.trim()} onClick={lookup}>Найти точный артикул в магазине</button>
+  {lookupPending&&<span role="status">Ищем точный артикул…</span>}
+  {lookupError&&<span role="status">Не удалось проверить артикул. Повторите поиск.</span>}
   {match&&!match.enabled&&<span className="note">Магазин закрыт. Можно сохранить рекомендацию без цены и товара.</span>}
   {match?.enabled&&match.products.length===0&&<span className="note">Точного товара нет. Можно сохранить запрос на подбор.</span>}
-  {match?.products.map(p=><button className={'btn ghost small'+(product===p.id?' selected':'')} key={p.id} type="button" onClick={()=>{setProduct(p.id);setName(p.name);setConfirmed(false);}}>{p.name} · {rub(p.price)} · {p.stock==null?'Под заказ':'Остаток: '+p.stock} · {p.leadDays} дн.</button>)}
+  {match?.products.map(p=><button className={'btn ghost small'+(product===p.id?' selected':'')} key={p.id} type="button" disabled={busy} onClick={()=>materialChange(()=>{setProduct(p.id);setName(p.name);})}>{p.name} · {rub(p.price)} · {p.stock==null?'Под заказ':'Остаток: '+p.stock} · {p.leadDays} дн.</button>)}
   {match?.enabled&&article&&<a href={'#/shop?q='+encodeURIComponent(article)}>Открыть магазин</a>}
-  {source?<><label>Название детали<input className="field" value={name} maxLength={160} onChange={e=>setName(e.target.value)}/></label>
-   <label>Количество<input className="field" type="number" min={1} max={99} value={qty} onChange={e=>setQty(Number(e.target.value))}/></label>
-   <label>Причина замены<textarea className="field" rows={2} maxLength={1000} value={reason} onChange={e=>setReason(e.target.value)}/></label>
-   <label><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/> Сверил маркировку, исполнение и применимость к этой машине. Совпадение артикула не заменяет проверку VIN.</label>
-   <button className="btn small" type="button" disabled={busy||!confirmed||!brand.trim()||!article.trim()||name.trim().length<2||reason.trim().length<12||!Number.isInteger(qty)||qty<1||qty>99}
-    onClick={async()=>{const result=await run(()=>post(source+'/part-recommendations',{brand,article,name,qty,reason,productId:product||null,cardId:cardId||null,fitmentConfirmed:true}),'Рекомендация сохранена; заказ не создан');if(result){setReason('');setConfirmed(false);onSent?.();}}}>Предложить замену клиенту</button>
+  {source?<><label>Название детали<input className="field" value={name} maxLength={160} disabled={busy} onChange={e=>change(()=>setName(e.target.value))}/></label>
+   <label>Количество<input className="field" type="number" min={1} max={99} value={qty} disabled={busy} onChange={e=>materialChange(()=>setQty(Number(e.target.value)))}/></label>
+   <label>Причина замены<textarea className="field" rows={2} maxLength={1000} value={reason} disabled={busy} onChange={e=>materialChange(()=>setReason(e.target.value))}/></label>
+   <label><input type="checkbox" checked={confirmed} disabled={busy||lookupPending} onChange={e=>setConfirmed(e.target.checked)}/> Сверил маркировку, исполнение и применимость к этой машине. Совпадение артикула не заменяет проверку VIN.</label>
+   <button className="btn small" type="button" disabled={busy||lookupPending||!confirmed||!brand.trim()||!article.trim()||name.trim().length<2||reason.trim().length<12||!Number.isInteger(qty)||qty<1||qty>99}
+    onClick={submit}>Предложить замену клиенту</button>
   </>:<span className="note">Для отправки рекомендации откройте ТехБазу из назначенной заявки или ремонта СТО.</span>}
  </section>;
 }
