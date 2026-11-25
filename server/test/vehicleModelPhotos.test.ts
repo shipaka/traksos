@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,statSync} from 'node:fs';
-import {vehicleReferencePhoto,vehiclePhotoCoverage} from '../../web/src/vehiclePhotoCatalog.ts';
+import {vehicleReferencePhoto,vehicleFamilyReferencePhoto,vehiclePhotoCoverage} from '../../web/src/vehiclePhotoCatalog.ts';
 
 test('six licensed model photos match strictly by brand, model and generation',()=>{
   const known=[
@@ -94,4 +94,16 @@ test('model credit page is accessible to users and lists every licensed photo',(
       html.includes(p.sourcePage.replace(/&/g,'&amp;').replace(/"/g,'&quot;')));
   }
   assert.match(html,/размытие регистрационных знаков/);
+});
+
+
+test('generic Scania R cards may use an explicitly labelled family example only in the known generation',()=>{
+  assert.equal(vehicleReferencePhoto('Scania','R',2020),null,'strict selector must not become a variant guess');
+  const example=vehicleFamilyReferencePhoto('СКАНИЯ','R',2020);
+  assert.equal(example?.src,'/vehicles/models/scania-r520-2016.webp');
+  assert.match(example?.description??'',/пример семейства.*не точная модификация/);
+  for(const [brand,model,year] of [
+    ['Scania','R440',2020],['Scania','R450',2020],['Scania','S',2020],['Scania','R',2015],
+    ['Scania','R',2026],['Scania','R',null],['Scania','R',2019.5],['Volvo','R',2020],['Scania','R520',2020]
+  ] as const) assert.equal(vehicleFamilyReferencePhoto(brand,model,year),null);
 });

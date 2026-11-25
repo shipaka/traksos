@@ -83,10 +83,12 @@ export class AuctionService {
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2
+          and not exists (select 1 from performer_time_reservations r where r.performer_id=p.user_id
+            and r.status='confirmed' and r.ends_at>$3)
           and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
                     x.service='consult' or exists (
                       select 1 from order_unilateral_closures uc
-                        where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`, [kind, order.client_id]);
+                        where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`, [kind, order.client_id, this.now()]);
     const already = await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
@@ -177,6 +179,8 @@ export class AuctionService {
       if (!pr || pr.paused || pr.line_status === 'offline' || pr.line_status === 'on_job' || await this.orders.busyWith(q, user.id, null)) {
         throw conflict('busy', 'Вы заняты или не на линии');
       }
+      if (await this.orders.hasUpcomingReservation(q, user.id))
+        throw conflict('performer_reserved', 'У вас есть подтверждённая запись. Новый выезд пока нельзя принять.');
       const still = await q.one(`select 1 from order_dispatch d join orders o on o.id=d.order_id
           where d.order_id=$1 and d.performer_id=$2 and d.status='bidding' and o.status='searching'`, [orderId, user.id]);
       if (!still) throw conflict('too_late', 'Клиент уже выбрал исполнителя');
@@ -237,9 +241,11 @@ export class AuctionService {
         throw forbidden('Только действующий клиент или водитель может выбрать отклик');
     }
     // Исполнитель мог только что взять другую заявку — его отклик здесь больше не действует
-    if (await this.orders.busyWith(this.db, pre.performer_id, orderId)) {
+    const reserved = await this.orders.hasUpcomingReservation(this.db, pre.performer_id);
+    if (reserved || await this.orders.busyWith(this.db, pre.performer_id, orderId)) {
       await this.db.query(`update bids set status='withdrawn', updated_at=now() where id=$1 and status='active'`, [offerId]);
       this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true });
+      if (reserved) throw conflict('performer_reserved', 'У исполнителя есть подтверждённая запись — выберите другого');
       throw conflict('performer_busy', 'Этот исполнитель только что взял другую заявку — выберите другого');
     }
 
@@ -264,6 +270,8 @@ export class AuctionService {
       // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
       // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
       await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
+      if (await this.orders.hasUpcomingReservation(q, pre.performer_id))
+        throw conflict('performer_reserved', 'У исполнителя есть подтверждённая запись — выберите другого');
       const f0 = await q.one(`select * from bids where id=$1 and order_id=$2 and status='active'`, [offerId, orderId]);
       if (!f0) throw conflict('offer_gone', 'Этот отклик уже недоступен');
       const upd = await q.one(

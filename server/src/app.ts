@@ -43,9 +43,13 @@ import { SupportService, TOPICS } from './services/support.ts';
 import { StatsService } from './services/stats.ts';
 import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
+import { CheckpointEvidenceService } from './services/checkpointEvidence.ts';
+import { CheckpointIntegrityService } from './services/checkpointIntegrity.ts';
+import { checkpointApiEnabled, registerCheckpointRoutes } from './http/checkpointRoutes.ts';
 import { ServiceCenters } from './services/service.ts';
 import { PublicPartnerMap } from './services/publicPartnerMap.ts';
 import { FleetService } from './services/fleet.ts';
+import { clientCalendar, performerCalendar } from './services/clientCalendar.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
 import { PartnerFinance } from './services/partnerFinance.ts';
 import { InsuranceQuoteFlow } from './services/insuranceQuoteFlow.ts';
@@ -164,6 +168,13 @@ export function createApp(d: Deps) {
   centers.onDispute = (p) => moderation.open({ kind: 'dispute', title: p.title, text: p.text, openedBy: p.userId, targetId: p.targetId, bookingId: p.bookingId, ticketId: p.ticketId, priority: 1 });
 
   const r = new Router();
+  // Only the validated isolated sandbox may expose this experimental API.
+  // No location metadata ingestion or arrival/billing changes here.
+  const checkpointOptIn = process.env.CHECKPOINT_EVIDENCE_API_ENABLED === 'true';
+  if (checkpointApiEnabled(config.sandboxInstance, checkpointOptIn)) {
+    registerCheckpointRoutes(r, new CheckpointEvidenceService(d.db),
+      new CheckpointIntegrityService(d.db), config.sandboxInstance, checkpointOptIn);
+  }
   // Public network coverage is opt-in, stationary-only and actually verified.
   // All existing entries default to private; no current mobile performer GPS.
   r.get('/api/public/partner-map', false, () => publicPartnerMap.list());
@@ -1276,6 +1287,10 @@ export function createApp(d: Deps) {
     await d.db.query('update users set insurance_reminders_enabled=$2 where id=$1', [c.user.id, enabled]);
     return { enabled };
   });
+  r.get('/api/client/calendar', ['client', 'driver'], (c: AuthedCtx) =>
+    clientCalendar(d.db, c.user, c.query.get('from'), c.query.get('to')));
+  r.get('/api/performer/calendar', ['master','tow'], (c: AuthedCtx) =>
+    performerCalendar(d.db, c.user, c.query.get('from'), c.query.get('to')));
   r.get('/api/fleet', true, (c: AuthedCtx) => fleet.get(c.user));
   r.put('/api/fleet', true, (c: AuthedCtx) => fleet.set(c.user, parse(z.object({
     mode: z.enum(['limit', 'approve']).optional(),

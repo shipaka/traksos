@@ -52,6 +52,33 @@ try{
   assert.equal(await page.getByRole('dialog',{name:'Оферта для клиентов'}).count(),0,
     'Client terms must not overlay the admin workspace');
   await page.getByText(/Тестовый черновик для проверки интерфейса/).waitFor();
+  // Verify the actual bundled CSS, not a screenshot mock or the old call theme.
+  const consent=page.getByRole('dialog',{name:'Согласие на обработку персональных данных'});
+  const agree=consent.getByRole('checkbox');
+  const accept=consent.getByRole('button',{name:'Принимаю',exact:true});
+  await agree.waitFor();
+  assert.equal(await agree.isChecked(),false);
+  assert.equal(await accept.isDisabled(),true);
+  for(const width of [320,390,1440]){
+    await page.setViewportSize({width,height:width===1440?900:844});
+    await agree.check();
+    assert.equal(await accept.isEnabled(),true);
+    const visual=await consent.evaluate(el=>{
+      const cb=el.querySelector('input[type=checkbox]');
+      const button=el.querySelector(':scope > button.btn');
+      return {accent:getComputedStyle(el).getPropertyValue('--accent').trim(),
+        check:getComputedStyle(cb).accentColor,button:getComputedStyle(button).backgroundColor,
+        overflow:el.scrollWidth-el.clientWidth,
+        width:button.getBoundingClientRect().width,height:button.getBoundingClientRect().height};
+    });
+    assert.equal(visual.accent,'#ff8b45','legacy call accent leaked into legal consent');
+    assert.equal(visual.check,'rgb(255, 139, 69)');
+    assert.equal(visual.button,'rgb(255, 139, 69)');
+    assert.ok(visual.overflow<=1&&visual.height>=44&&visual.width>0,JSON.stringify(visual));
+    await agree.uncheck();
+    assert.equal(await accept.isDisabled(),true);
+  }
+  await page.setViewportSize({width:390,height:844});
 
   // Privacy accepted in the MOCK response only. Do not submit to the real DB.
   privacyAccepted=true;
