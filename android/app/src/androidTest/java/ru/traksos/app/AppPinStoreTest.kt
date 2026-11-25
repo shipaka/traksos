@@ -120,6 +120,28 @@ class AppPinStoreTest {
         assertEquals(AppPinStore.Check.COOLDOWN, AppPinStore.verify(ctx, "0123"))
     }
 
+    @Test fun corruptedRetryMetadataRequiresFullLoginInsteadOfCrashing() {
+        val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        assertTrue(p.edit().putString("failures", "broken").commit())
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        assertTrue(p.edit().putInt("failures", -1).commit())
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+    }
+
+    @Test fun damagedDeadlineAndAccountMetadataDoNotUnlock() {
+        val p = ctx.getSharedPreferences("traksos_app_pin", Context.MODE_PRIVATE)
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        assertTrue(p.edit().putString("blockedUntil", "broken").commit())
+        assertEquals(0L, AppPinStore.waitSeconds(ctx))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+        assertTrue(AppPinStore.create(ctx, "0123", "account-A"))
+        assertTrue(p.edit().putInt("ownerId", 123).commit())
+        assertNull(AppPinStore.owner(ctx))
+        assertEquals(AppPinStore.Check.RELOGIN, AppPinStore.verify(ctx, "0123"))
+    }
+
     /** Even without biometrics or internet the native screen has a working keypad. */
     @Test fun cinematicKeypadAcceptsFourDigitsWithoutWebViewOrKeyboard() {
         val instrument = InstrumentationRegistry.getInstrumentation()
