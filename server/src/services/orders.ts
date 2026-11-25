@@ -574,7 +574,10 @@ export class OrdersService {
 
   async accept(user: AuthUser, orderId: string) {
     const res = await this.db.tx(async (q) => {
-      await q.query('select 1 from performer_profiles where user_id=$1 for update', [user.id]);
+      const profile=await q.one<{line_status:string;paused:boolean;verification:string;user_status:string;extras:any}>(`select p.line_status,p.paused,p.verification,p.extras,u.status as user_status from performer_profiles p join users u on u.id=p.user_id where p.user_id=$1 for update of p`,[user.id]);
+      if(!profile||profile.paused||profile.user_status!=='active'||profile.extras?.vacation||!['online','on_call'].includes(profile.line_status))throw conflict('performer_unavailable','Вы больше не на линии');
+      const policy=await q.one<{verified_only:boolean}>('select verified_only from orders where id=$1',[orderId]);
+      if(policy?.verified_only&&profile.verification!=='approved')throw conflict('performer_unavailable','Для заявки нужен проверенный исполнитель');
       const d = await q.one(
         `update order_dispatch set status='accepted', responded_at=$3
           where order_id=$1 and performer_id=$2 and status='ringing' and ring_until >= $3 returning *`,
@@ -621,7 +624,7 @@ export class OrdersService {
       `select d.order_id, d.ring_until, d.distance_km, o.number, o.service, o.is_sos, o.problem, o.description, o.address,
               o.brand, o.estimate, o.night, o.group_trip, o.site->'road' as road
          from order_dispatch d join orders o on o.id = d.order_id
-        where d.performer_id=$1 and d.status='ringing' and d.ring_until >= $2 order by d.sent_at`,
+        where d.performer_id=$1 and d.status='ringing' and d.ring_until >= $2 and o.status='searching' order by d.sent_at`,
       [user.id, this.now()],
     );
   }
