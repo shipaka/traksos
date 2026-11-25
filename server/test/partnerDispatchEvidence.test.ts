@@ -1,6 +1,8 @@
 import {before,after,test} from 'node:test';
 import assert from 'node:assert/strict';
 import {setup,ok,type T} from './helpers.ts';
+import {privatePartnerDispatchReport} from '../src/services/partnerDispatchReport.ts';
+import type {AuthUser} from '../src/http/router.ts';
 
 let t:T,orderId:string,masterId:string,otherId:string;
 before(async()=>{
@@ -52,4 +54,24 @@ test('prospective dispatch evidence survives retries, excludes queued rows, and 
   assert.equal(rows.length,2);
   assert.equal(new Date(rows.find(r=>r.performer_id===masterId)!.first_observed_sent_at).getTime(),first.getTime());
   assert.equal(new Date(rows.find(r=>r.performer_id===otherId)!.first_observed_sent_at).getTime(),later.getTime());
+  const actor=(id:string,roles:string[]):AuthUser=>({id,roles,status:'active',phone:'',name:null,owner_id:null});
+  const clock=new Date(later.getTime()+1);
+  const mine=await privatePartnerDispatchReport(t.db,actor(masterId,['master']),clock);
+  const other=await privatePartnerDispatchReport(t.db,actor(otherId,['master']),clock);
+  assert.equal(mine.total.personallyOffered,1);
+  assert.equal(other.total.personallyOffered,1);
+  assert.notEqual(mine.weeks.find(w=>w.personallyOffered)?.weekStart,
+    other.weeks.find(w=>w.personallyOffered)?.weekStart);
+  assert.equal(mine.availability.observedAvailableHours,null);
+  assert.equal(mine.dispatchCoverage.deviceDeliveryConfirmed,false);
+  assert.equal(mine.changesCommission,false);
+  assert.ok(!JSON.stringify(mine).includes(orderId));
+  assert.ok(!JSON.stringify(mine).includes(otherId));
+  await assert.rejects(privatePartnerDispatchReport(t.db,actor(masterId,['client']),clock),{status:403});
+  await t.db.query("update users set status='blocked' where id=$1",[masterId]);
+  try {
+    await assert.rejects(privatePartnerDispatchReport(t.db,actor(masterId,['master']),clock),{status:403});
+  } finally {
+    await t.db.query("update users set status='active' where id=$1",[masterId]);
+  }
 });
