@@ -654,8 +654,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     : mode === 'moderator'
       ? [['/moderation', 'Очередь модерации'], ['/moderation/verify', 'Проверка мастеров'], ['/support', 'Поддержка'], ['/profile', 'Аккаунт']]
     : mode === 'admin'
-      ? [['/admin/test-center', 'Тестирование всех кабинетов'],
-         ['/admin/section/queue', 'Модерация — очередь'],
+      ? [['/admin/section/queue', 'Модерация — очередь'],
          ['/admin', 'Административная сводка'],
          ['/admin/section/orders', 'Все заявки'],
          ['/admin/section/search', 'Поиск людей и заявок'],
@@ -674,7 +673,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
          ['/admin/section/flagged', 'Подозрительные действия'],
          ['/admin/section/settings', 'Настройки площадки'],
          ['/pricing-lab', 'Калькулятор прибыльности · проект'],
-         ['/profile', 'Аккаунт'], ['/admin/test-center/client', 'Тестовый кабинет клиента']]
+         ['/profile', 'Аккаунт']]
     : [['/air', 'Эфир водителей'], ['/orders', 'История заявок'], ['/garage', 'Мой гараж'],
        ...(!me?.owner_id && !me?.roles.includes('driver') ? [['/fleet', 'Мой автопарк']] as [string,string][] : []),
        ['/services', 'СТО и запись'],
@@ -872,7 +871,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
                     : mode === 'insurer' || mode === 'inspection'
                       ? tabs
                       : mode === 'moderator' ? [...tabs, ['/profile', '◉', 'Аккаунт']]
-                      : [...tabs, ['/admin/test-center/client', '⌂', 'Клиент'], ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
+                      : [...tabs, ['/profile', '◉', 'Аккаунт']]).map(([href, ic, name], _index, links) => (
                 <a key={href} href={shellHref(href)} className={`desktop-nav-link ${isDesktopPrimaryActive(href, links) ? 'active' : ''} ${href === '/sos' ? 'desktop-nav-sos' : ''}`}>
                   <span aria-hidden="true"><NavGlyph glyph={ic}/></span><span>{name}</span>
                 </a>
