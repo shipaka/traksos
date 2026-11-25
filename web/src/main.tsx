@@ -822,6 +822,10 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
               {accountMenuGroups.work.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
+              {accountMenuGroups.finance.length>0 && <><span className="account-menu-heading">Финансы</span>
+                {accountMenuGroups.finance.map(([href,label])=><a key={href} href={shellHref(href)}>{label}</a>)}</>}
+              {accountMenuGroups.settings.length>0 && <><span className="account-menu-heading">Настройки</span>
+                {accountMenuGroups.settings.map(([href,label])=><a key={href} href={shellHref(href)}>{label}</a>)}</>}
               <span className="account-menu-heading">Помощь</span>
               {<button type="button" className="account-menu-tour" onClick={() => window.dispatchEvent(new Event('traksos-tour-start'))}>Показать, где какие кнопки</button>}
               {accountMenuGroups.guidance.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
