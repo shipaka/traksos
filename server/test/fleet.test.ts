@@ -294,3 +294,45 @@ test('две одновременные привязки водителя к р�
   assert.equal((await t.api('GET', `/api/vehicles/${loserCar}/history`, undefined, fleetDriver.token)).status, 404);
   assert.equal((await t.api('POST', `/api/qr/${loserQr}/join`, {}, fleetDriver.token)).status, 409);
 });
+
+test('сбой доставки уведомления не блокирует единственный запуск подтверждённой заявки', async () => {
+  const fleetOwner = await t.login('+79993334516');
+  const fleetDriver = await t.login('+79993334517');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  const order = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: car }, fleetDriver.token)).order;
+  assert.equal(order.status, 'awaiting_owner');
+  const originalDeliver = t.app.notifier.deliverStored;
+  const originalLaunch = t.app.orders.launch;
+  let launchCount = 0;
+  let deliveryCount = 0;
+  t.app.notifier.deliverStored = async (...args) => {
+    if (args[1].type === 'order' && args[1].orderId === order.id && args[1].status === 'searching') {
+      deliveryCount++;
+      throw new Error('synthetic post-commit delivery failure');
+    }
+    return originalDeliver.apply(t.app.notifier, args);
+  };
+  // Exercise the real decision transaction, not external payments or dispatch.
+  t.app.orders.launch = async (actor, launched) => {
+    assert.equal(launched.id, order.id);
+    launchCount++;
+    return { order: await t.app.orders.view(actor, launched.id), confirmationUrl: null };
+  };
+  try {
+    const approve = () => t.api('POST', `/api/orders/${order.id}/owner-decision`, { approve: true }, fleetOwner.token);
+    assert.equal(ok(await approve()).status, 'searching');
+    assert.equal(ok(await approve()).status, 'searching');
+    assert.equal(deliveryCount, 1);
+    assert.equal(launchCount, 1);
+    const events = await t.db.query("select type from order_events where order_id=$1 and type='owner_approved'", [order.id]);
+    assert.equal(events.length, 1);
+    const inbox = await t.db.query("select id from notifications where user_id=$1 and data->>'orderId'=$2 and title='Владелец подтвердил заказ'", [fleetDriver.id, order.id]);
+    assert.equal(inbox.length, 1);
+  } finally {
+    t.app.notifier.deliverStored = originalDeliver;
+    t.app.orders.launch = originalLaunch;
+  }
+});
