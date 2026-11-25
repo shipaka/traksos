@@ -80,3 +80,16 @@ test('«всё через меня» и запреты: эвакуатор и з
   assert.equal(fs.settings.allow.repair, true);
   assert.equal((await t.api('GET', '/api/fleet', undefined, driver.token)).status, 400, 'парк видит только владелец');
 });
+
+test('владелец не может назначить себя водителем; снятый водитель не видит историю машины',async()=>{
+  const self=await t.api('POST',`/api/vehicles/${vehicleId}/driver`,{phone:'+79991112233'},owner.token);
+  assert.equal(self.status,400);
+  const before=ok(await t.api('GET','/api/fleet',undefined,owner.token));
+  assert.equal(before.cars[0].driver.id,driver.id);
+  const history=ok(await t.api('GET',`/api/vehicles/${vehicleId}/history`,undefined,driver.token));
+  assert.equal(history.summary.spent,null);
+  assert.ok(history.items.every((item:any)=>item.amount===null&&item.lines===null));
+  ok(await t.api('POST',`/api/vehicles/${vehicleId}/driver`,{phone:null},owner.token));
+  assert.equal((await t.api('GET',`/api/vehicles/${vehicleId}/history`,undefined,driver.token)).status,404);
+  assert.equal(ok(await t.api('GET','/api/vehicles',undefined,driver.token)).length,0);
+});
