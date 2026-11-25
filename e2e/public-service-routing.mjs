@@ -53,7 +53,7 @@ try {
 
     // The public app information is a real page, not an invented store link
     // or a sign-in for an unrelated service. Navigate there and back.
-    const appInfo=desktop?'.owner20-bottom-app':'.public-app-card .public-rustore-soon';
+    const appInfo=desktop?'.owner20-bottom-app b':'.public-app-card h2';
     await page.evaluate(()=>sessionStorage.setItem('traksos.pendingLandingAction','tow'));
     await page.locator(appInfo).click();
     await page.waitForURL('**/#/app-info');
@@ -69,6 +69,29 @@ try {
       await info.locator('a[href="#/register"]').count()===1,'App information lacks real auth actions');
     await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
     await info.locator('.guest-info-top a[href="#/"]').click();
+    await page.waitForURL('**/#/');
+    await page.locator(landing).waitFor({state:'visible'});
+
+    // The selected service and typed phone must survive an explicit switch
+    // to customer registration. Cancelling must not affect the next sign-in.
+    await guestAuth(page,'insurance',desktop?'.owner20-feature-insurance':'.public-service-insurance',landing);
+    const contextualLogin=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await contextualLogin.locator('input[type=tel]').fill('+7 900 123 45 67');
+    await contextualLogin.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
+    await page.waitForURL('**/#/register');
+    const registration=page.getByRole('dialog',{name:'Регистрация в TrakSOS'});
+    await registration.getByText('Вы выбрали: Страхование',{exact:true}).waitFor({state:'visible'});
+    check(await registration.locator('input[type=tel]').inputValue()==='+7 900 123 45 67',
+      'Registration discarded the entered phone');
+    await page.keyboard.press('Escape');
+    await page.waitForURL('**/#/');
+    await page.waitForFunction(()=>sessionStorage.getItem('traksos.pendingLandingAction')===null);
+    await page.goto(BASE+'/#/login');
+    const freshLogin=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await freshLogin.waitFor();
+    check(await freshLogin.getByText('Вы выбрали:',{exact:false}).count()===0,
+      'Unrelated login inherited a cancelled service');
+    await page.keyboard.press('Escape');
     await page.waitForURL('**/#/');
     await page.locator(landing).waitFor({state:'visible'});
 
