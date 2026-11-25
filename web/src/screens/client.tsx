@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { get, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { get, getToken, post, postOrder, put, patch, del, rub, fmtTime, fmtPhone } from '../api.ts';
 import { SERVICES, SYMPTOMS, TIERS, STATUS, CONSULT_CONF, ON_SITE, seriesHint } from '../dict.ts';
 import { useLoad, useAction, useMe, go, Loading, Field, Chips, Back, VehicleFields, LiveStrip, type VehicleValue } from '../ui.tsx';
 import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
@@ -512,6 +512,10 @@ function NewOrderForAccount({service}:{service:string}) {
   const [roadSide, setRoadSide] = useState<'right'|'left'|'unknown'>('unknown');
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
+  const geoRevision=useRef(0);
+  const alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;geoRevision.current++;};},[]);
+  const clearGeo=()=>{geoRevision.current++;setGeo(null);setGeoState('idle');};
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('online');
   const [est, setEst] = useState<any>(null);
   const [destination, setDestination] = useState(prefill.destination ?? '');
@@ -568,12 +572,15 @@ function NewOrderForAccount({service}:{service:string}) {
   }, [service, tier, regionId, zoneId, night, group, address, geo?.lat, geo?.lng]);
 
   function locate() {
+    const revision=++geoRevision.current;
+    setGeo(null);setAgree(false);
     if (!navigator.geolocation) return setGeoState('fail');
     setGeoState('wait');
+    const current=()=>alive.current&&geoRevision.current===revision;
     navigator.geolocation.getCurrentPosition(
-      (p) => { setGeo({ lat: p.coords.latitude, lng: p.coords.longitude }); setGeoState('ok'); },
-      () => setGeoState('fail'),
-      { enableHighAccuracy: true, timeout: 15_000 },
+      (p) => {if(!current())return;const {latitude:lat,longitude:lng}=p.coords;if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){setGeoState('fail');return;}setGeo({lat,lng});setGeoState('ok');},
+      () => {if(current())setGeoState('fail');},
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge:0 },
     );
   }
   // Location sharing is optional and user-initiated: an automatically
@@ -593,7 +600,8 @@ function NewOrderForAccount({service}:{service:string}) {
   }, [methods?.online, methods?.invoice, methods?.cash, method]);
 
   async function submit() {
-    if (!methods?.[method]) return;
+    if (busy||missing.length||!methods?.[method]) return;
+    const token=getToken();
     const r = await run(() => postOrder( {
       service, isSos: !!sos, problem: sos?.id, description: description || undefined, address: address || undefined,
       lat: geo?.lat, lng: geo?.lng, regionId: regionId || undefined, zoneId: zoneId || 'phone',
@@ -618,7 +626,8 @@ function NewOrderForAccount({service}:{service:string}) {
         } } : {}),
       } : undefined,
     }));
-    if (!r) return;
+    if (!r||!alive.current||getToken()!==token)return;
+    if(!r.order?.id)return;
     clearNewOrderDraft();
     if (r.confirmationUrl) location.href = r.confirmationUrl;
     else go(`order/${r.order.id}`);
@@ -651,13 +660,13 @@ function NewOrderForAccount({service}:{service:string}) {
     setDriverOnSite(d.driverOnSite);setMethod(d.method);setSite(d.site??{});
     setRoadside(d.roadside);setRoadName(d.roadName);setRoadKm(d.roadKm);
     setRoadDirection(d.roadDirection);setRoadSide(d.roadSide);
-    setGeo(null);setGeoState('idle'); // Never treat old GPS as a current fix.
+    clearGeo(); // Never treat old GPS as a current fix.
     setAgree(false);setEst(null);setTried(false);
   }
 
   const [tried, setTried] = useState(false);
   const need = {
-    car: !!vehicleId || car.brand.trim().length >= 2,
+    car: vehicleId?!!vehicles.data?.some(v=>v.id===vehicleId):!me?.roles.includes('driver')&&car.brand.trim().length>=2,
     what: description.trim().length >= MIN_WHAT,
     where: geoState === 'ok' || address.trim().length >= 3,
     tow: !isTow || destination.trim().length >= 3,
@@ -667,7 +676,7 @@ function NewOrderForAccount({service}:{service:string}) {
     !isConsult && regionId !== 'other' && !zoneId && { id: 'f-where', name: 'тарифная зона' },
     !isConsult && regionId === 'other' && { id: 'f-where', name: 'индивидуальное согласование региона' },
     !est && { id: 'f-where', name: 'проверенная предварительная смета' },
-    !need.car && { id: 'f-car', name: 'марка машины' },
+    !need.car && { id: 'f-car', name: vehicleId?'доступный автомобиль из гаража':'марка машины' },
     !need.what && { id: 'f-what', name: 'описание задачи' },
     !need.where && { id: 'f-where', name: 'где машина' },
     !need.tow && { id: 'f-tow', name: 'куда везти' },
@@ -768,13 +777,13 @@ function NewOrderForAccount({service}:{service:string}) {
       </Step>
 
       <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
-        <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => {setAddress(e.target.value);clearGeo();setAgree(false);}} />
         <div className="row">
           <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
             {geoState === 'wait' ? 'Определяем GPS…' : 'Использовать мою GPS-точку'}
           </button>
           {geo && <button type="button" className="chip" onClick={() => {
-            setGeo(null); setGeoState('idle');
+            clearGeo();setAgree(false);
           }}>Использовать только адрес</button>}
         </div>
         <span className="note">
