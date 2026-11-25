@@ -2,11 +2,12 @@ import {useRef, useState} from 'react';
 import {post} from '../api.ts';
 import {useAction, useMe} from '../ui.tsx';
 import {LINE} from '../dict.ts';
+import {native} from '../native.ts';
 
 const statuses = [['online','На линии'],['on_call','На звонке'],['offline','Не на линии']] as const;
 const breaks = [[15,'15 мин'],[30,'30 мин'],[60,'1 час'],[120,'2 часа']] as const;
 
-export function PcPerformerAvailability({onChanged}:{onChanged:()=>void}) {
+export function PcPerformerAvailability({onChanged,mobile=false}:{onChanged:()=>void;mobile?:boolean}) {
   const {me,reload}=useMe();
   const {busy,run}=useAction();
   const [open,setOpen]=useState(false);
@@ -28,13 +29,14 @@ export function PcPerformerAvailability({onChanged}:{onChanged:()=>void}) {
       const result=await run(()=>post('/api/performer/line',{
         lineStatus,...(minutes?{busyUntil:new Date(Date.now()+minutes*60000).toISOString()}:{}),
       }));
+      if(result && lineStatus==='online' && native.isApp) native.performerOnline();
       // Even if the response was lost, re-read the authoritative state.
       await reload();
       onChanged();
       if(result){setOpen(false);setBreakOpen(false);}
     } finally {pending.current=false;setSaving(false);}
   }
-  return <div className="stack" aria-label="Доступность исполнителя">
+  return <div className={mobile?"stack performer-mobile-availability":"stack"} aria-label="Доступность исполнителя">
     <button className="opt" type="button" aria-expanded={open&&!onJob} disabled={locked}
       onClick={()=>{setOpen(v=>!v);setBreakOpen(false);}}>
       <b><span className={'dot '+(p.line_status==='online'&&!p.paused&&!p.extras?.vacation?'on':'')} aria-hidden="true"/> Статус · {label}</b>
@@ -51,6 +53,6 @@ export function PcPerformerAvailability({onChanged}:{onChanged:()=>void}) {
       {breakOpen&&<div className="grid2">{breaks.map(([minutes,title])=><button key={minutes} className="seg"
         type="button" disabled={busy||saving} onClick={()=>void choose('busy',minutes)}>{title}</button>)}</div>}
     </div>}
-    <a className="approved-pc-small-link" href="#/work/me/schedule">График и отпуск →</a>
+    <a className={mobile?"note":"approved-pc-small-link"} href="#/work/me/schedule">График и отпуск →</a>
   </div>;
 }
