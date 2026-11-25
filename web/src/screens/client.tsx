@@ -1063,7 +1063,7 @@ export function Garage({focusVehicleId}:{focusVehicleId?:string}={}) {
         <div key={v.id} id={`garage-vehicle-${v.id}`} className="card">
           <VehiclePhotoLink brand={v.brand} model={v.model} year={v.year} plate={v.plate} href={`#/garage/${v.id}`}/>
           <div className="between"><b>{v.brand} {v.model ?? ''}{v.year ? `, ${v.year}` : ''}</b><span className="pill">{v.catalog_category==='trailer'?'Прицеп / полуприцеп · ':''}{v.plate ?? 'без номера'}</span></div>
-          <VehicleOwnerGuide vehicle={v} />
+          <VehicleOwnerGuide vehicle={v} canLink={!isDriver&&!!me?.roles?.includes('client')&&!me?.roles?.includes('driver')} onLinked={()=>list.reload()} />
           <a className="btn ghost small" href={`#/techbase/driver/${v.id}`}>ТехБаза по этой машине</a>
           {v.trailer_plate && <span className="note">Прицеп {v.trailer_plate}</span>}
           {v.fixed_at && <span className="pill good" style={{ alignSelf: 'flex-start' }}>уточнено мастером · {fmtTime(v.fixed_at)}</span>}
