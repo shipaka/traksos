@@ -340,13 +340,33 @@ function PerformerCard({p,pos,consult,to,moving}:{
   p:any;pos:{lat:number;lng:number;at:number}|null;consult?:boolean;
   to?:{lat:number;lng:number}|null;moving?:boolean;
 }){
-  const previousPoint=Number.isFinite(p.lat)&&Number.isFinite(p.lng)?{lat:p.lat,lng:p.lng}:null;
-  const at=consult?null:pos??previousPoint;
-  const lastAt=pos?.at??(p.location_at?Date.parse(p.location_at):null);
+  const validPoint=(point:{lat:number;lng:number}|null|undefined):point is {lat:number;lng:number} =>
+    !!point&&Number.isFinite(point.lat)&&Number.isFinite(point.lng)&&
+    Math.abs(point.lat)<=90&&Math.abs(point.lng)<=180;
+  const livePoint=validPoint(pos)?pos:null;
+  const previousPoint=validPoint(p)?{lat:p.lat,lng:p.lng}:null;
+  const at=consult?null:livePoint??previousPoint;
+  const recordedAt=livePoint?.at??(p.location_at?Date.parse(p.location_at):null);
+  const lastAt=at&&recordedAt!=null&&Number.isFinite(recordedAt)?recordedAt:null;
+  // Keep freshness live even if no socket message or parent render arrives.
+  // Foreground refresh handles a suspended or throttled Android WebView.
+  const [,setClock]=useState(0);
+  useEffect(()=>{
+    if(lastAt==null)return;
+    const refresh=()=>setClock(n=>n+1);
+    const timer=window.setInterval(refresh,1000);
+    document.addEventListener('visibilitychange',refresh);
+    window.addEventListener('focus',refresh);
+    return ()=>{
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange',refresh);
+      window.removeEventListener('focus',refresh);
+    };
+  },[lastAt]);
   const ageMs=lastAt==null?null:Date.now()-lastAt;
-  const fresh=ageMs!=null && ageMs>=-30000 && ageMs<=120000;
+  const fresh=!!at&&ageMs!=null&&ageMs>=-30000&&ageMs<=120000;
   // An estimate is NOT a routing ETA; it is omitted for old/missing GPS.
-  const km=fresh&&at&&to?Math.hypot((at.lat-to.lat)*111,(at.lng-to.lng)*111*Math.cos(to.lat*Math.PI/180))*1.3:null;
+  const km=fresh&&at&&validPoint(to)?Math.hypot((at.lat-to.lat)*111,(at.lng-to.lng)*111*Math.cos(to.lat*Math.PI/180))*1.3:null;
   const min=km!=null?Math.max(5,Math.round(km/40*60)):null;
   return <div className="card roadside-performer-card">
     <div className="between">
