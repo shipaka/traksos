@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# SSH-only: create one temporary, single-use code to the fictional cabin preview.
+# The public #/preview page is retired. Do not issue unusable grants or mutate
+# the database from an obsolete operational entry point.
 set -Eeuo pipefail
-cd "$(dirname "$0")"
-docker compose config --quiet
-docker compose exec -T -e OPERATOR_DEMO_CONFIRM=YES app \
-  node --import tsx server/src/ops/provisionOperatorDemo.ts
+printf '%s\n' \
+  'Старый публичный просмотр #/preview закрыт. Код не создан.' \
+  'Войдите обычным администратором через #/login и откройте «Тестирование кабинетов».' \
+  'Для реальных учебных операций нужен настроенный изолированный sandbox.' \
+  'Инструкция: deploy/FULL_FIDELITY_SANDBOX.md' >&2
+exit 1
