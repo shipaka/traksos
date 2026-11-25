@@ -30,7 +30,8 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     // Do not depend on the current production auction/dispatch algorithm.
     await t.db.query("update orders set performer_id=$2,status='accepted' where id=$1",[id,worker.id]);
 
-    const service=new CheckpointEvidenceService(t.db);
+    let evidenceClock: Date | undefined;
+    const service=new CheckpointEvidenceService(t.db,()=>evidenceClock??new Date());
     const integrityService=new CheckpointIntegrityService(t.db);
     await assert.rejects(integrityService.preview(w),(e:any)=>e.status===403);
     const initial=await integrityService.preview(a);
@@ -96,11 +97,22 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal((await service.reviewPass(a,p.planId,pass)).outcome,'cleared');
     assert.equal((await service.reviewPass(a,p.planId,pass)).reused,true);
 
+    const grantTime=await t.db.one<any>(
+      'select recorded_at from checkpoint_gps_consent_events where seq=$1',[granted.eventId]);
+    evidenceClock=new Date(new Date(grantTime.recorded_at).getTime()+60_000);
+    // Synthetic historical sample carrying a correct grant ID, but received
+    // BEFORE that grant. It must not enter the evaluated evidence snapshot.
+    const early=await t.db.one<any>(
+      'insert into performer_route_samples '+
+      '(order_id,performer_id,lat,lng,received_at,accepted,accuracy_m,gps_source,checkpoint_consent,checkpoint_plan_id,checkpoint_consent_seq) '+
+      "select $1,$2,$3,$4,recorded_at-interval '30 seconds',true,12,'gps',true,$5,$6 "+
+      'from checkpoint_gps_consent_events where seq=$6 returning id',
+      [id,worker.id,59.9343,30.3351,p.planId,granted.eventId]);
     await t.db.query(
       'insert into performer_route_samples '+
       '(order_id,performer_id,lat,lng,received_at,accepted,accuracy_m,gps_source,checkpoint_consent,checkpoint_plan_id,checkpoint_consent_seq) '+
-      "values($1,$2,$3,$4,now()-interval '48 seconds',true,12,'gps',true,$5,$6),"+
-      "($1,$2,$3,$4,now()-interval '12 seconds',true,12,'gps',true,$5,$6)",
+      "select $1,$2,$3,$4,recorded_at+offset_seconds*interval '1 second',true,12,'gps',true,$5,$6 "+
+      'from checkpoint_gps_consent_events cross join (values (12),(48)) as offsets(offset_seconds) where seq=$6',
       [id,worker.id,59.9343,30.3351,p.planId,granted.eventId],
     );
     const second=await service.submitAttempt(w,id,{
@@ -115,6 +127,9 @@ test('real database: client plan, pass decision, GPS evidence, manual review, pr
     assert.equal(raw.samples.length,2);
     assert.equal(raw.sampleCount,2);
     assert.equal(raw.sampleDigest.length,64);
+    assert.ok(raw.samples.every((point:any)=>Date.parse(point.receivedAt)>=new Date(grantTime.recorded_at).getTime()));
+    // Remove only the intentionally malformed fixture before existing retention assertions.
+    await t.db.query('delete from performer_route_samples where id=$1',[early.id]);
     // Data older than its retention expiry is never returned even if a
     // separate privileged purge job hasn't removed the underlying row yet.
     const afterExpiry=new CheckpointEvidenceService(t.db,

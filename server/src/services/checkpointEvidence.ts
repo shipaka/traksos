@@ -334,11 +334,13 @@ export class CheckpointEvidenceService {
         return { ...renderAttempt(old), reused: true };
       }
       ensureActive(order);
+      const now = this.now();
       const consent = await q.one<any>(
-        'select seq,action,expires_at from checkpoint_gps_consent_events ' +
+        'select seq,action,expires_at,recorded_at from checkpoint_gps_consent_events ' +
         'where plan_id=$1 order by seq desc limit 1', [plan.id]);
       if (!consent || consent.action !== 'granted' ||
-          new Date(consent.expires_at).getTime() <= this.now().getTime()) {
+          new Date(consent.recorded_at).getTime() > now.getTime() ||
+          new Date(consent.expires_at).getTime() <= now.getTime()) {
         throw forbidden('Согласие на GPS для этого КПП не дано, истекло или отозвано');
       }
       // An idempotent replay returns above even at the rate limit. Unique
@@ -346,7 +348,7 @@ export class CheckpointEvidenceService {
       const count = await q.one<{ n: number }>(
         'select count(*)::int as n from checkpoint_arrival_attempts ' +
         'where order_id=$1 and performer_id=$2 and created_at >= $3',
-        [orderId, actor.id, new Date(this.now().getTime() - 15 * 60_000).toISOString()],
+        [orderId, actor.id, new Date(now.getTime() - 15 * 60_000).toISOString()],
       );
       if (Number(count?.n ?? 0) >= 8) {
         throw new HttpError(429, 'checkpoint_rate_limited',
@@ -359,13 +361,16 @@ export class CheckpointEvidenceService {
       const passState: CheckpointPlan['passState'] = plan.requires_pass
         ? review?.outcome === 'cleared' ? 'manually_cleared' : 'pending'
         : 'not_required';
-      const now = this.now();
       const gpsRows = await q.query<any>(
         'select lat,lng,received_at,accuracy_m,gps_source,mock_location,accepted ' +
         'from performer_route_samples where order_id=$1 and performer_id=$2 ' +
         'and accepted=true and checkpoint_consent=true and checkpoint_plan_id=$3 ' +
         'and checkpoint_consent_seq=$4 and received_at >= $5 and received_at <= $6 ' +
-        'order by received_at desc limit 200',
+        // Compare against the exact PostgreSQL timestamps, not rounded JS dates.
+        'and received_at >= (select recorded_at from checkpoint_gps_consent_events where seq=$4) ' +
+        'and received_at < (select expires_at from checkpoint_gps_consent_events where seq=$4) ' +
+        'and received_at >= (select client_approved_at from checkpoint_evidence_plans where id=$3) ' +
+        'order by received_at desc,id desc limit 200',
         [orderId, actor.id, plan.id, String(consent.seq),
           new Date(now.getTime() - 10 * 60_000).toISOString(), now.toISOString()],
       );
