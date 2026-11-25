@@ -73,7 +73,8 @@ export function AdminTestCenter({roleId}:{roleId?:string;fullFidelity?:boolean})
       <span>Для проверки используется отдельный тестовый сервер без доступа к реальным клиентам, SMS и платежам. Если сервер ещё не подключён, откроется пояснение, а не поддельный реальный кабинет.</span>
     </div>
     <div className="sandbox-role-grid" role="group" aria-label="Выбор тестового кабинета">
-      {DEMO_ROLES.map(r=><a key={r.id} className="sandbox-role-card" href={rolePath(r.id)}>
+      {/* The legacy client ticket remains resolvable, but the owner/driver workspaces are the only visible client choices. */}
+      {DEMO_ROLES.filter(r=>r.id!=='client').map(r=><a key={r.id} className="sandbox-role-card" href={rolePath(r.id)}>
         <span className="sandbox-role-icon" aria-hidden="true"><NavGlyph glyph={r.icon}/></span>
         <b>{r.label}</b><span>{r.subtitle}</span><strong>Открыть кабинет ↗</strong>
       </a>)}
