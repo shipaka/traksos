@@ -16,6 +16,7 @@ import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 import { usePrivateRead } from './privateRead20261124.ts';
 import { ClientCalendar } from './clientCalendar.tsx';
+import { readOrderPrefill, saveOrderPrefill, clearOrderPrefill } from '../orderPrefill.ts';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -213,6 +214,10 @@ function ClientHomeForAccount() {
 
 /** Direction-first SOS workflow is the single active customer help entry point. */
 export function Sos() {
+  const {me}=useMe();
+  return <SosForAccount key={me?.id??'guest'} userId={me?.id}/>;
+}
+function SosForAccount({userId}:{userId?:string}) {
   const [direction, setDirection] = useState<'master' | 'tow' | 'service' | null>(null);
   const options = [
     { id: 'master', name: 'Выездной мастер', icon: '⚡', detail: 'Электрик, диагност, пневматика, отопители, шиномонтаж' },
@@ -277,41 +282,58 @@ export function Sos() {
         </section>
       )}
       {direction && <div className="client-sos-secondary"><span>Не знаете, кто нужен?</span><a href="#/new/consult">Консультация по телефону →</a></div>}
-      <MyPlace />
+      <MyPlace userId={userId} />
     </main>
   );
 }
 
-/** «Ваше место: по GPS · Изменить» — место подставится в заявку само */
-function MyPlace() {
-  const { pricing } = usePrices();
-  const [pos, setPos] = useState<{ lat: number; lng: number; acc: number } | null>(null);
-  const [state, setState] = useState<'wait' | 'ok' | 'fail'>('wait');
+/** Device GPS is informational; only a confirmed truck address transfers to an order. */
+function MyPlace({userId}:{userId?:string}) {
+  const [accuracy, setAccuracy] = useState<number|null>(null);
+  const [state, setState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [edit, setEdit] = useState(false);
-  const [addr, setAddr] = useState(() => { try { return JSON.parse(sessionStorage.getItem('traksos.prefill') ?? '{}').address ?? ''; } catch { return ''; } });
-  useEffect(() => {
+  const [saved, setSaved] = useState(() => readOrderPrefill(userId).address ?? '');
+  const [addr, setAddr] = useState(saved);
+  const [saveError, setSaveError] = useState(false);
+  const locate = () => {
+    setAccuracy(null);
     if (!navigator.geolocation) { setState('fail'); return; }
-    navigator.geolocation.getCurrentPosition((p) => { setPos({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }); setState('ok'); }, () => setState('fail'), { timeout: 8000, maximumAge: 120_000 });
-  }, []);
-  const km = pos ? Math.round(Math.hypot((pos.lat - 59.9343) * 111, (pos.lng - 30.3351) * 111 * Math.cos(pos.lat * Math.PI / 180))) : null;
-  const zones = [...(pricing?.zones ?? [])].sort((a: any, b: any) => (a.km ?? 0) - (b.km ?? 0));
-  const zone = km == null ? null : zones.find((z: any) => km <= (z.km || 20)) ?? zones[zones.length - 1];
-  const save = () => { try { const v = JSON.parse(sessionStorage.getItem('traksos.prefill') ?? '{}'); sessionStorage.setItem('traksos.prefill', JSON.stringify({ ...v, address: addr })); } catch { /* */ } setEdit(false); };
+    setState('wait');
+    navigator.geolocation.getCurrentPosition(p => {
+      const {latitude, longitude, accuracy: acc} = p.coords;
+      if (!Number.isFinite(latitude) || Math.abs(latitude)>90 ||
+          !Number.isFinite(longitude) || Math.abs(longitude)>180 ||
+          !Number.isFinite(acc) || acc<0) { setState('fail'); return; }
+      setAccuracy(acc); setState('ok');
+    }, () => setState('fail'), { timeout: 8000, maximumAge: 0 });
+  };
+  const save = () => {
+    const value=addr.trim();
+    if (!saveOrderPrefill(userId, {...readOrderPrefill(userId), address:value})) {
+      setSaveError(true); return;
+    }
+    setSaved(value); setEdit(false); setSaveError(false);
+  };
   return (
     <div className="card">
       <div className="between">
         <span className="stack" style={{ gap: 0 }}>
-          <span>Ваше место: <b style={{ color: 'var(--accent)' }}>{addr || (state === 'ok' ? (zone ? zone.name : 'по GPS') : state === 'wait' ? 'определяю…' : 'не определено')}</b></span>
-          <small className="note">{addr ? 'указано вами' : state === 'ok' ? `по GPS · точность ~${Math.round(pos!.acc)} м${km != null ? ` · ${km} км от центра` : ''}` : state === 'fail' ? 'разрешите геолокацию или укажите вручную' : ''}</small>
+          <span>Место машины: <b style={{ color: 'var(--accent)' }}>{saved || 'не указано'}</b></span>
+          <small className="note">Укажите адрес машины, даже если вы находитесь в другом месте.</small>
         </span>
-        <button type="button" className="btn ghost small" onClick={() => setEdit(!edit)}>Изменить</button>
+        <button type="button" className="btn ghost small" onClick={() => {setAddr(saved);setSaveError(false);setEdit(!edit);}}>Изменить</button>
       </div>
       {edit && (
         <div className="row" style={{ flexWrap: 'nowrap' }}>
-          <input className="field" value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="Адрес, стоянка или км трассы" />
+          <input className="field" aria-label="Адрес машины" value={addr} onChange={(e) => setAddr(e.target.value)} placeholder="Адрес, стоянка или км трассы" />
           <button type="button" className="btn small" onClick={save}>OK</button>
         </div>
       )}
+      {saveError && <small role="alert" className="note">Не удалось сохранить адрес. Укажите его в самой заявке.</small>}
+      <button type="button" className="btn ghost small" disabled={state==='wait'} onClick={locate}>Определить GPS устройства</button>
+      <small className="note" role="status">{state==='ok' ? 'GPS устройства определён · точность ~'+Math.round(accuracy!)+' м. Это не адрес машины и не тарифная зона.'
+        : state==='wait' ? 'Определяю GPS устройства…' : state==='fail' ? 'GPS недоступен. Укажите адрес машины вручную.'
+        : 'GPS устройства проверяется только по нажатию. Регион и точку машины укажите в заявке.'}</small>
     </div>
   );
 }
@@ -501,7 +523,8 @@ function NewOrderForAccount({service}:{service:string}) {
   const [vehicleId, setVehicleId] = useState<string>('');
   const [car, setCar] = useState<VehicleValue>({ brand: '', model: '', year: '' });
   const [description, setDescription] = useState(sym ? sym.name : '');
-  const [prefill] = useState<{ address?: string; destination?: string }>(() => { try { const v = JSON.parse(sessionStorage.getItem('traksos.prefill') ?? '{}'); sessionStorage.removeItem('traksos.prefill'); return v; } catch { return {}; } });
+  const [prefill] = useState(() => readOrderPrefill(me?.id));
+  useEffect(() => { clearOrderPrefill(); }, []);
   const [address, setAddress] = useState(prefill.address ?? '');
   const [roadside, setRoadside] = useState(false);
   const [roadName, setRoadName] = useState('');
