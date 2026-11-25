@@ -30,3 +30,27 @@ create unique index if not exists vehicle_missing_no_duplicate_pending
   where status in ('new','reviewing');
 create index if not exists vehicle_missing_moderation_queue
   on vehicle_catalog_missing_requests(status,created_at,id);
+
+-- Legacy writes (including on-site corrections) must never leave keys that
+-- describe the PREVIOUS make/model. A later owner confirmation can relink
+-- the corrected identity; preserve year, VIN, owner, orders and other fields.
+create or replace function vehicle_catalog_clear_stale_identity()
+returns trigger language plpgsql as $$
+begin
+  if (new.brand is distinct from old.brand or new.model is distinct from old.model)
+    and (new.catalog_category,new.catalog_brand_key,new.catalog_model_key,new.catalog_source_version)
+      is not distinct from
+        (old.catalog_category,old.catalog_brand_key,old.catalog_model_key,old.catalog_source_version)
+  then
+    new.catalog_category := null;
+    new.catalog_brand_key := null;
+    new.catalog_model_key := null;
+    new.catalog_source_version := null;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists vehicle_catalog_identity_changed on vehicles;
+create trigger vehicle_catalog_identity_changed
+  before update of brand, model on vehicles
+  for each row execute function vehicle_catalog_clear_stale_identity();
