@@ -30,7 +30,7 @@ const b=await build({
    }
    createRoot(document.getElementById('root')).render(<App/>);
  `},
- bundle:true,write:false,platform:'browser',format:'iife',jsx:'automatic',
+ bundle:true,write:false,outdir:'e2e/.temporary-notification-build',platform:'browser',format:'iife',jsx:'automatic',
  plugins:[{name:'private-api-stubs',setup(p){
    p.onResolve({filter:/./},a=>{if(Object.hasOwn(stubs,a.path))return {path:a.path,namespace:'stub'};});
    p.onLoad({filter:/./,namespace:'stub'},a=>({contents:stubs[a.path],loader:a.path.endsWith('tsx')?'tsx':'js',resolveDir:process.cwd()}));
@@ -63,14 +63,25 @@ try{
  await button('Повторить загрузку уведомлений').click();
  await wait('gets',oldPath,2);
  await settle('gets',oldPath,1,{unread:3,items:[notice(99,'Старое')],nextBefore:null});
- await button(/Уведомление: Старое.*Не прочитано/).click();
+ // Rapid repeated activation may not send a second write. Failed writes
+ // remain unread, do not silently retry, and require another explicit click.
+ const unreadOld=button(/Уведомление: Старое.*Не прочитано/);
+ await unreadOld.evaluate(node=>{node.click();node.click();});
  await wait('posts',endpoint+'/99/read',1);
- await settle('posts',endpoint+'/99/read',0,{ok:true});
+ assert.equal(await page.evaluate(path=>window.mock.posts.filter(x=>x.path===path).length,endpoint+'/99/read'),1);
+ await settle('posts',endpoint+'/99/read',0,'write offline',true);
+ await page.getByRole('alert').waitFor();
+ await unreadOld.waitFor();
+ assert.equal(await page.evaluate(path=>window.mock.posts.filter(x=>x.path===path).length,endpoint+'/99/read'),1);
+ await unreadOld.click();
+ await wait('posts',endpoint+'/99/read',2);
+ await settle('posts',endpoint+'/99/read',1,{ok:true});
  await wait('gets',oldPath,3);
  await settle('gets',oldPath,2,{unread:2,items:[notice(99,'Старое','2026-11-25')],nextBefore:null});
  await button(/Уведомление: Старое.*Прочитано/).waitFor();
- await button('Прочитать все').click();
+ await button('Прочитать все').evaluate(node=>{node.click();node.click();});
  await wait('posts',endpoint+'/read',1);
+ assert.equal(await page.evaluate(path=>window.mock.posts.filter(x=>x.path===path).length,endpoint+'/read'),1);
  await settle('posts',endpoint+'/read',0,{ok:true});
  await wait('gets',oldPath,4);
  await settle('gets',oldPath,3,{unread:0,items:[notice(99,'Старое','2026-11-25')],nextBefore:null});
