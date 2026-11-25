@@ -346,7 +346,6 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       <strong>{online ? 'Ожидаем подходящую заявку' : 'Вы не на линии'}</strong>
       <ApprovedEmptyScene kind="shift" />
       <p>{online ? 'Когда заявка поступит, вы получите входящий вызов. Приложение не нужно держать открытым.' : 'Включите статус «На линии», чтобы получать заявки. При необходимости настройте график.'}</p>
-      <a href="#/work/filter" className="and19-link">Настройки заявок ›</a>
     </section>}
     {current && current.money && Number.isFinite(current.money.amount) &&
       <a href={'#/order/'+current.id+'/finance'} className="and19-performer-finance"
@@ -362,7 +361,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
       </a>}
     {pendingReview > 0 && <a className="and19-row-link" href="#/work/jobs">Работы завершены физически, ожидают решения клиента: {pendingReview} ›</a>}
     {auctionsError&&<section className="and19-panel" role="alert"><strong>Не удалось обновить предложения</strong><button className="and19-action" type="button" onClick={reloadAuctions}>Повторить</button></section>}
-    {auctions.length > 0 && <section className="and19-auctions">
+    {!auctionsError && auctions.length > 0 && <section className="and19-auctions">
       <h2>Новые подходящие заявки ({auctions.length})</h2>
       {auctions.map((a: any) => <div className="and19-panel" key={a.order_id}>
         <strong>{a.is_sos ? 'SOS · ' : ''}{SERVICES[a.service]?.name || 'Заявка'} · {a.brand || 'Грузовой транспорт'}</strong>
@@ -393,13 +392,13 @@ export function AndroidMasterChats() {
 }
 function AndroidMasterChatsForAccount() {
   const l = useLoad<any[]>(() => get('/api/orders?as=performer'), [],e=>e.type==='order'||e.type==='connection_restored');
-  const rows = (l.data || []).filter(o => o && o.id && ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status));
+  const rows = (!l.error && Array.isArray(l.data) ? l.data : []).filter(o => o && o.id && ['accepted', 'en_route', 'arrived', 'working', 'awaiting_confirmation', 'completed'].includes(o.status));
   return <main className="and19-chats and19-workspace">
     <h1>Чаты по заявкам</h1>
     <p>Переписка привязана к заказу. Откройте заявку, чтобы перейти к общению.</p>
     {!l.data && !l.error && <MobileLoading label="Загружаем ваши заявки" />}
     {l.error && <div className="and19-panel" role="alert"><p>{l.error}</p><button className="and19-action" onClick={l.reload}>Повторить</button></div>}
-    {l.data && !rows.length && <div className="and19-panel">Чатов по принятым заявкам пока нет.</div>}
+    {!l.error && Array.isArray(l.data) && !rows.length && <div className="and19-panel">Чатов по принятым заявкам пока нет.</div>}
     {rows.map(o => <a key={o.id} className="and19-row-link" href={'#/order/' + o.id + '/chat'}>
       <span>Заявка №{o.number} · {SERVICES[o.service]?.name || 'Работа'}</span><span>Открыть ›</span>
     </a>)}
