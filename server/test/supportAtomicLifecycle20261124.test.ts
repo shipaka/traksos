@@ -262,10 +262,14 @@ test('HTTP/PG: private follow-up bypasses a former moderator and reaches active 
     const path='/api/support/'+id+'/messages';
     const body='Конфиденциальное уточнение по обращению';
     ok(await t.api('POST',path,{body},owner.token));
-    const recipients=await t.db.query<{user_id:string}>(`
-      select user_id from notifications where kind='support' and data->>'ticketId'=$1
-        and body=$2`,[id,body]);
+    const recipients=await t.db.query<{user_id:string;body:string}>(`
+      select user_id,body from notifications where kind='support' and data->>'ticketId'=$1
+        and title like 'Новое сообщение · №%'`,[id]);
     assert.deepEqual(recipients.map(row=>row.user_id),[admin.id]);
+    assert.equal(recipients[0].body,'Откройте личное обращение, чтобы прочитать сообщение.');
+    assert.ok(!recipients[0].body.includes(body),'private reply must remain inside the thread');
+    const thread=ok(await t.api('GET','/api/support/'+id,undefined,owner.token));
+    assert.equal(thread.messages.at(-1).body,body);
     assert.equal((await t.api('GET','/api/support/'+id,undefined,former.token)).status,403);
     ok(await t.api('POST',path,{body:'Новый ответ действующего сотрудника'},admin.token));
     const assigned=await t.db.one<{assignee_id:string}>(
