@@ -5,6 +5,7 @@ import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime, getToken } from '../api.ts';
+import {chatRecoveryKey,chatRecoveryDigest,readChatRecovery,writeChatRecovery,clearChatRecovery,type ChatRecovery} from '../chatRecovery.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
 import { go } from '../ui.tsx';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, VehicleFields } from '../ui.tsx';
@@ -1254,12 +1255,41 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const pendingRef=useRef<PendingChat|null>(null);
   const [pending,setPending]=useState<PendingChat|null>(null);
   const session=useRef(getToken());
+  const recoveryKey=useRef<string|null>(null);
+  const [recovery,setRecovery]=useState<ChatRecovery|null>(null);
+  const [recoveryReady,setRecoveryReady]=useState(false);
+  const [recoveryWarning,setRecoveryWarning]=useState('');
+  const [recoveryCheck,setRecoveryCheck]=useState(false);
+  const [recoveryStatus,setRecoveryStatus]=useState('');
+  const recoveredText=useRef<HTMLInputElement>(null);
   const mounted=useRef(false);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;pendingRef.current=null;};},[]);
   const currentSession=()=>mounted.current&&getToken()===session.current;
   const remember=(p:PendingChat|null)=>{pendingRef.current=p;setPending(p);};
+  useEffect(()=>{
+    let active=true;
+    void (async()=>{
+      try{
+        if(!session.current||!me?.id)throw new Error('Нет активной сессии');
+        const key=await chatRecoveryKey(session.current,me.id,id);
+        if(!active||!currentSession())return;
+        const saved=readChatRecovery(key);
+        recoveryKey.current=key;setRecovery(saved);
+      }catch{
+        if(active&&currentSession())setRecoveryWarning('На этом устройстве восстановление после закрытия недоступно. Перед повторной отправкой проверьте историю.');
+      }finally{if(active&&currentSession())setRecoveryReady(true);}
+    })();
+    return()=>{active=false;};
+  },[]);
+  const clearRecovered=(requestId:string)=>{
+    if(recoveryKey.current){
+      try{clearChatRecovery(recoveryKey.current,requestId);}
+      catch{setRecoveryWarning('Не удалось очистить запись восстановления. Проверьте статус отправки при повторном открытии.');}
+    }
+    setRecovery(old=>old?.requestId===requestId?null:old);
+  };
   const archiveLabel=archived||serverClosed;
-  const readOnly = archiveLabel || loading || !!loadError;
+  const readOnly = archiveLabel || loading || !!loadError || !recoveryReady;
   const box = useRef<HTMLDivElement>(null);
 
   const [older,setOlder]=useState<number|null>(null);
@@ -1286,7 +1316,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       return r;
     };
     const publish=(rows:any[],r:any,next:number|null)=>{
-      if(!alive)return;
+      if(!alive||!currentSession())return;
       loaded.current=rows;
       targetOldest.current=rows[0]?.id??null;
       cursor=next;setOlder(next);
@@ -1296,13 +1326,13 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       setLoadError(null);
     };
     const fail=(error:unknown)=>{
-      if(!alive)return;
+      if(!alive||!currentSession())return;
       loaded.current=[];cursor=null;setOlder(null);
       setMsgs([]);setQuick([]);setPeople([]);
       setLoadError(error instanceof Error?error.message:'Ошибка загрузки переписки');
     };
     async function refresh(){
-      if(!alive)return;
+      if(!alive||!currentSession())return;
       if(busy){queued=true;return;}
       busy=true;
       const old=targetOldest.current;
@@ -1314,20 +1344,20 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       setQuick([]);setPeople([]);
       try{
         const latest=await readPage('latest');
-        if(!alive)return;
+        if(!alive||!currentSession())return;
         let rows=latest.messages as any[],next:number|null=latest.page.nextCursor;
         // Revalidate all previously loaded history as well as every missed page.
         // Do not reuse private bodies after reconnect or infer contiguous global IDs.
         while(old!==null&&next!==null&&rows[0].id>old){
           const earlier=await readPage('before',next);
-          if(!alive)return;
+          if(!alive||!currentSession())return;
           rows=[...earlier.messages,...rows];next=earlier.page.nextCursor;
         }
         publish(rows,latest,next);
       }catch(error){fail(error);}
       finally{
         busy=false;
-        if(alive){setLoading(false);if(queued){queued=false;void refresh();}}
+        if(alive&&currentSession()){setLoading(false);if(queued){queued=false;void refresh();}}
       }
     }
     async function loadEarlier(){
@@ -1337,12 +1367,12 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       scrollDistance.current=node?node.scrollHeight-node.scrollTop:null;
       try{
         const r=await readPage('before',cursor);
-        if(!alive)return;
+        if(!alive||!currentSession())return;
         publish([...r.messages,...loaded.current],r,r.page.nextCursor);
       }catch(error){fail(error);}
       finally{
         busy=false;
-        if(alive){setPaging(false);if(queued){queued=false;void refresh();}}
+        if(alive&&currentSession()){setPaging(false);if(queued){queued=false;void refresh();}}
       }
     }
     refreshRef.current=()=>{void refresh();};
@@ -1370,13 +1400,47 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     if(open&&!loading&&!loadError)setSeen(previous=>Math.max(previous,msgs[msgs.length-1]?.id??0));
   },[open,msgs,loading,loadError]);
 
+  async function checkRecovered(){
+    if(!currentSession()||!recovery||pendingRef.current||loading||loadError||sendingRef.current)return;
+    const saved=recovery;
+    sendingRef.current=true;setRecoveryCheck(true);
+    try{
+      const result=await get(`/api/orders/${id}/messages/request/${saved.requestId}`);
+      if(!currentSession())return;
+      if(result?.state==='committed'&&Number.isSafeInteger(result.messageId)&&result.messageId>0&&result.kind===saved.kind){
+        clearRecovered(saved.requestId);setRecoveryStatus('Предыдущая отправка подтверждена сервером.');
+        refreshRef.current();
+      }else if(result?.state==='not_observed'&&result.messageId===null){
+        setRecoveryStatus('Сервер пока не подтвердил отправку. Для повтора введите точно прежний текст.');
+      }else throw new Error('Не удалось проверить статус отправки');
+    }catch(e){
+      if(currentSession())setRecoveryStatus((e as Error).message??'Ошибка проверки статуса');
+    }finally{if(currentSession()){sendingRef.current=false;setRecoveryCheck(false);}}
+  }
+
+  async function retryRecovered(){
+    if(!currentSession()||!recovery||pendingRef.current||loading||loadError||sendingRef.current)return;
+    const saved=recovery,body=recoveredText.current?.value??'';
+    sendingRef.current=true;setRecoveryCheck(true);
+    try{
+      if(!body.trim()||await chatRecoveryDigest(saved.requestId,saved.kind,body)!==saved.digest){
+        if(currentSession())setRecoveryStatus('Текст отличается от прежней отправки. Повтор не выполнен.');
+        return;
+      }
+      if(!currentSession())return;
+      remember({body,kind:saved.kind,requestId:saved.requestId});
+    }catch{if(currentSession())setRecoveryStatus('Не удалось проверить прежний текст. Повтор не выполнен.');}
+    finally{if(currentSession()){sendingRef.current=false;setRecoveryCheck(false);}}
+    if(currentSession()&&pendingRef.current)void send('','text',true);
+  }
+
   async function send(body: string, kind: 'text' | 'quick' = 'text', retry=false) {
-    if(!currentSession()||sendingRef.current||loading||loadError)return;
+    if(!currentSession()||sendingRef.current||loading||loadError||!recoveryReady)return;
     let attempt=pendingRef.current;
     if(retry){
       if(!attempt)return;
     }else{
-      if(!body.trim()||readOnly||attempt)return;
+      if(!body.trim()||readOnly||attempt||recovery)return;
       // getRandomValues also works in WebViews without crypto.randomUUID.
       try{
         const bytes=globalThis.crypto.getRandomValues(new Uint8Array(16));
@@ -1394,9 +1458,21 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     sendingRef.current=true;
     setSending(true);setSendError('');
     try {
+      if(!retry&&recoveryKey.current){
+        const digest=await chatRecoveryDigest(request.requestId,request.kind,request.body);
+        if(!currentSession())return;
+        const saved={requestId:request.requestId,kind:request.kind,digest};
+        try{writeChatRecovery(recoveryKey.current,saved);setRecovery(saved);}
+        catch(e){
+          remember(null);
+          setRecoveryWarning('Не удалось сохранить идентификатор. Сообщение не отправлено. Откройте чат снова.');
+          return;
+        }
+      }
       const m = await post(`/api/orders/${id}/messages`, request);
       if(!currentSession())return;
       if(!Number.isSafeInteger(m?.id)||m.id<=0)throw new Error('Сервер не подтвердил отправку сообщения');
+      clearRecovered(request.requestId);
       remember(null);
       refreshRef.current();
       // An edited/new draft is never overwritten by completion of an old send.
@@ -1408,6 +1484,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       // A definitive rejection is not an ambiguous transport failure. No
       // automatic retries; uncertain attempts keep their exact payload and key.
       if(error.status===400||error.status===403||error.code==='chat_closed'||error.code==='request_id_conflict'){
+        clearRecovered(request.requestId);
         remember(null);
         setSendError(error.message??'Сервер отклонил отправку.');
       }else{
@@ -1446,6 +1523,16 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         </button>
       </div>}
       {loading&&<span className="note" role="status">Загружаем переписку…</span>}
+      {recoveryWarning&&<span className="note" role="status">{recoveryWarning}</span>}
+      {recoveryStatus&&<span className="note" role="status">{recoveryStatus}</span>}
+      {recovery&&!pending&&!loading&&!loadError&&<div className="stack">
+        <span className="note">Есть неподтверждённая отправка из предыдущего сеанса. Сначала проверьте её статус.</span>
+        <button type="button" className="btn ghost small" disabled={recoveryCheck} onClick={()=>{void checkRecovered();}}>Проверить статус отправки</button>
+        {recoveryStatus.startsWith('Сервер пока')&&<>
+          <input className="field" ref={recoveredText} placeholder="Точный прежний текст" maxLength={2000}/>
+          <button type="button" className="btn ghost small" disabled={recoveryCheck} onClick={()=>{void retryRecovered();}}>Повторить сохранённую отправку</button>
+        </>}
+      </div>}
       {sendError&&<span className="note" role="alert">{sendError}</span>}
       {pending&&!sending&&!loading&&!loadError&&<div className="stack">
         <span className="note">Отправка без подтверждения: {pending.body}</span>
@@ -1470,10 +1557,10 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       {!readOnly && (
         <>
           <div className="scroll-x">{quick.map((q) => <button key={q} type="button"
-            className="chip" disabled={sending||!!pending} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
+            className="chip" disabled={sending||!!pending||!!recovery} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
           <form className="compose" onSubmit={(e) => { e.preventDefault();void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
-            <button className="btn small" disabled={!text.trim()||sending||!!pending}>{sending?'…':'➤'}</button>
+            <button className="btn small" disabled={!text.trim()||sending||!!pending||!!recovery}>{sending?'…':'➤'}</button>
           </form>
         </>
       )}
