@@ -336,3 +336,45 @@ test('сбой доставки уведомления не блокирует �
     t.app.orders.launch = originalLaunch;
   }
 });
+
+test('решение владельца проверяет действующий аккаунт даже при устаревшем контексте', async () => {
+  const fleetOwner = await t.login('+79993334518');
+  const fleetDriver = await t.login('+79993334519');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  const order = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: car }, fleetDriver.token)).order;
+  const actor = { id: fleetOwner.id, phone: '+79993334518', name: null,
+    roles: ['client'], status: 'active', owner_id: null };
+  const reject = () => t.app.orders.ownerDecision(actor, order.id, false, 'Тест полномочий');
+  const denied = (error: unknown) => !!error && typeof error === 'object' &&
+    'status' in error && error.status === 404;
+  const events = () => t.db.query("select type from order_events where order_id=$1 and type in ('owner_approved','owner_rejected')", [order.id]);
+  try {
+    await t.db.query('update users set deleted_at=now() where id=$1', [fleetOwner.id]);
+    await assert.rejects(reject, denied);
+    assert.equal((await t.db.one('select status from orders where id=$1', [order.id]))?.status, 'awaiting_owner');
+    assert.equal((await events()).length, 0);
+  } finally {
+    await t.db.query('update users set deleted_at=null where id=$1', [fleetOwner.id]);
+  }
+  // A deleted driver with a historical assignment must not get a new inbox entry.
+  try {
+    await t.db.query('update users set deleted_at=now() where id=$1', [fleetDriver.id]);
+    assert.equal((await reject()).status, 'cancelled');
+    const inbox = await t.db.query("select id from notifications where user_id=$1 and data->>'orderId'=$2 and title='Владелец отклонил заказ'", [fleetDriver.id, order.id]);
+    assert.equal(inbox.length, 0);
+  } finally {
+    await t.db.query('update users set deleted_at=null where id=$1', [fleetDriver.id]);
+  }
+  try {
+    await t.db.query('update users set deleted_at=now() where id=$1', [fleetOwner.id]);
+    await assert.rejects(reject, denied);
+    assert.equal((await events()).length, 1);
+  } finally {
+    await t.db.query('update users set deleted_at=null where id=$1', [fleetOwner.id]);
+  }
+  assert.equal((await reject()).status, 'cancelled');
+  assert.equal((await events()).length, 1);
+});
