@@ -332,23 +332,26 @@ export function ShopHistory({ vehicleId }: { vehicleId?: string }) {
 export function ShopCart() {
   const contextParams = partsContext();
   const contextSuffix = partsContextSuffix(contextParams);
-  const selectedVehicleFromLink = contextParams.get('vehicleId');
+  const partRecommendationId=contextParams.get('partRecommendationId');
+  const recommendation=useLoad<any>(()=>partRecommendationId?get('/api/shop/part-recommendations/'+encodeURIComponent(partRecommendationId)+'/checkout'):Promise.resolve(null),[partRecommendationId]);
+  const selectedVehicleFromLink = partRecommendationId?recommendation.data?.item?.vehicle_id:contextParams.get('vehicleId');
   const fromServiceBooking = !!contextParams.get('bookingId');
   const c = useLoad(() => get('/api/shop?light=1'), []);
   const live = useLoad(() => get('/api/orders').catch(() => []), []);
   const { me } = useMe();
   const [cart, setCart] = useCart();
-  const selectedIds = Object.keys(cart).sort().join(',');
+  const selectedIds = partRecommendationId?'':Object.keys(cart).sort().join(',');
   const selection = useLoad(() => c.data?.enabled && selectedIds
     ? get(`/api/shop/selection?ids=${encodeURIComponent(selectedIds)}`)
     : Promise.resolve({ products: [] }), [c.data?.enabled, selectedIds]);
-  const vehicles = useLoad(() => c.data?.enabled && selectedIds
-    ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, !!selectedIds]);
+  const vehicles = useLoad(() => c.data?.enabled && (selectedIds||partRecommendationId)
+    ? get('/api/vehicles') : Promise.resolve([]), [c.data?.enabled, !!selectedIds,partRecommendationId]);
   const [vehicleId, setVehicleId] = useState('');
   useEffect(() => {
+    if(partRecommendationId){setVehicleId(selectedVehicleFromLink??'');return;}
     if (selectedVehicleFromLink && ((vehicles.data ?? []) as any[]).some(v => v.id === selectedVehicleFromLink))
       setVehicleId(selectedVehicleFromLink);
-  }, [selectedVehicleFromLink, vehicles.data]);
+  }, [selectedVehicleFromLink, vehicles.data,partRecommendationId]);
   const { busy, run } = useAction();
   const [delivery, setDelivery] = useState<'pickup' | 'delivery' | 'master' | ''>('');
   const [address, setAddress] = useState('');
@@ -357,23 +360,26 @@ export function ShopCart() {
   const [comment, setComment] = useState('');
   const d = c.data;
   if (!d) return <main><Back to="shop" label="Магазин" /><Loading error={c.error} /></main>;
+  if(partRecommendationId&&recommendation.data?.order)return <main><Back to="shop/history" label="История"/><div className="card stack"><b>Заказ №{recommendation.data.order.number} уже оформлен</b><a href="#/shop/history">История покупок</a></div></main>;
+  if(partRecommendationId&&!recommendation.data?.product)return <main><Back to="shop/history" label="История"/><Loading error={recommendation.error}/><button className="btn ghost" onClick={recommendation.reload}>Обновить</button></main>;
   if (!d.enabled) { go('shop'); return null; }
-  const lines = Object.entries(cart).map(([id, qty]) => ({ p: selection.data?.products?.find((x: any) => x.id === id), qty })).filter((l) => l.p);
+  const lines = partRecommendationId?[{p:recommendation.data.product,qty:recommendation.data.item.qty}]:Object.entries(cart).map(([id, qty]) => ({ p: selection.data?.products?.find((x: any) => x.id === id), qty })).filter((l) => l.p);
   const goods = lines.reduce((a, l) => a + l.p.price * l.qty, 0);
   const dl = d.delivery;
-  const open = ((live.data ?? []) as any[]).filter((o) => ['accepted', 'en_route', 'arrived', 'working'].includes(o.status));
+  const open = ((live.data ?? []) as any[]).filter((o) => ['accepted', 'en_route', 'arrived', 'working'].includes(o.status)&&(!partRecommendationId||o.id===recommendation.data?.item?.source_order_id));
   const opts = ([['pickup', 'Самовывоз', dl.pickupAddress || 'адрес пришлём'], ['delivery', 'Доставка', `${rub(dl.deliveryPrice)} · ${dl.deliveryNote}`], ['master', 'С мастером на заявке', 'мастер привезёт на выезд']] as const)
     .filter(([k]) => (k === 'pickup' ? dl.pickup : k === 'delivery' ? dl.delivery : dl.withMaster && open.length > 0));
   const total = goods + (delivery === 'delivery' ? dl.deliveryPrice : 0);
   const setQty = (id: string, q: number) => { const n = { ...cart }; if (q <= 0) delete n[id]; else n[id] = Math.min(99, q); setCart(n); };
   async function submit() {
-    const r = await run(() => post('/api/shop/orders', { items: lines.map((l) => ({ productId: l.p.id, qty: l.qty })), delivery, address: address || null, orderId: orderId || null, payment, comment: comment || null, vehicleId: vehicleId || null }), 'Заказ оформлен — подтвердим и напишем');
-    if (r) { setCart({}); go('shop'); }
+    const r = await run(() => post('/api/shop/orders', { items: lines.map((l) => ({ productId: l.p.id, qty: l.qty })), delivery, address: address || null, orderId: orderId || null, payment, comment: comment || null, vehicleId: vehicleId || null,partRecommendationId:partRecommendationId||null,expectedPartPrice:partRecommendationId?lines[0]?.p.price:null }), 'Заказ оформлен — подтвердим и напишем');
+    if (r) { if(!partRecommendationId)setCart({}); go(partRecommendationId?'shop/history':'shop'); } else if(partRecommendationId)recommendation.reload();
   }
   return (
     <main>
       <Back to={'shop' + contextSuffix} label="Магазин" />
       <div><h1>Корзина</h1><div className="sub">Доступные способы оплаты зависят от настроек магазина; компаниям — по счёту.</div></div>
+      {partRecommendationId&&<div className="note">Точная деталь из согласованной рекомендации. Количество и автомобиль зафиксированы; обычная корзина не изменяется.</div>}
       {fromServiceBooking && <div className="note">Подбор открыт из ремонта СТО. Заказ товаров не меняет стоимость ремонта и не добавляет детали в смету автоматически.</div>}
       {!lines.length ? <div className="empty">{selection.error ?? (selectedIds ? 'Проверяем актуальную цену и наличие…' : 'Корзина пуста')}</div> : <>
         <div className="stack">
@@ -382,16 +388,16 @@ export function ShopCart() {
               <Thumb p={p} size={48} />
               <div className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}><b>{p.name}</b><span className="note">{rub(p.price)} · {p.inStock ? 'в наличии' : `под заказ, от ${p.leadDays} дн.`}</span></div>
               <div className="row" style={{ flexWrap: 'nowrap', gap: 4 }}>
-                <button className="bell" aria-label="Меньше" onClick={() => setQty(p.id, qty - 1)}>−</button>
+                <button disabled={!!partRecommendationId} className="bell" aria-label="Меньше" onClick={() => setQty(p.id, qty - 1)}>−</button>
                 <b style={{ minWidth: 20, textAlign: 'center' }}>{qty}</b>
-                <button className="bell" aria-label="Больше" onClick={() => setQty(p.id, qty + 1)}>+</button>
+                <button disabled={!!partRecommendationId} className="bell" aria-label="Больше" onClick={() => setQty(p.id, qty + 1)}>+</button>
               </div>
             </div>
           ))}
         </div>
         <div className="card">
           <Field label="Для какой машины / прицепа (необязательно)">
-            <select className="field" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+            <select className="field" disabled={!!partRecommendationId} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
               <option value="">Без привязки к машине</option>
               {((vehicles.data ?? []) as any[]).map((v: any) =>
                 <option key={v.id} value={v.id}>{[v.brand, v.model, v.plate || v.trailer_plate].filter(Boolean).join(' ')}</option>)}

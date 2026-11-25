@@ -20,3 +20,7 @@ create table if not exists part_recommendations (
 create unique index if not exists part_recommendations_once on part_recommendations(source_order_id,lower(trim(brand)),lower(trim(article)));
 create index if not exists part_recommendations_history on part_recommendations(client_id,vehicle_id,created_at desc);
 comment on table part_recommendations is 'Non-billable repair advice. Acceptance is not an order or payment; checkout is separate.';
+
+-- Only one explicit shop checkout for a single accepted recommendation.
+alter table shop_orders add column if not exists part_recommendation_id uuid references part_recommendations(id);
+create unique index if not exists shop_orders_part_recommendation_once on shop_orders(part_recommendation_id) where part_recommendation_id is not null;

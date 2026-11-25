@@ -906,6 +906,7 @@ export function createApp(d: Deps) {
   }),c.body)));
   r.post('/api/orders/:id/part-recommendations/:recommendationId/decision',true,(c:AuthedCtx)=>partRecommendations.decide(c.user,
     parse(z.string().uuid(),c.params.id),parse(z.string().uuid(),c.params.recommendationId),parse(z.object({accept:z.boolean()}),c.body).accept));
+  r.get('/api/shop/part-recommendations/:id/checkout',true,(c:AuthedCtx)=>partRecommendations.checkout(c.user,parse(z.string().uuid(),c.params.id)));
   r.get('/api/shop/part-recommendations',true,(c:AuthedCtx)=>partRecommendations.history(c.user,
     parse(z.string().uuid().nullable(),c.query.get('vehicleId')),Number(c.query.get('page')??'0')));
   r.get('/api/shop', true, (c: AuthedCtx) => shop.catalog(c.query.get('light') === '1'));
@@ -984,6 +985,7 @@ export function createApp(d: Deps) {
     delivery: z.enum(['pickup', 'delivery', 'master']), address: z.string().max(300).nullable().optional(), orderId: z.string().uuid().nullable().optional(),
     payment: z.enum(['on_receipt', 'invoice']).optional(), comment: z.string().max(500).nullable().optional(),
     vehicleId: z.string().uuid().nullable().optional(),
+    partRecommendationId:z.string().uuid().nullable().optional(),expectedPartPrice:z.number().int().min(0).nullable().optional(),
   }), c.body)));
   r.get('/api/shop/orders', true, (c: AuthedCtx) => shop.myOrders(c.user));
   r.post('/api/shop/orders/:id/cancel', true, (c: AuthedCtx) => shop.cancelMine(c.user, c.params.id));

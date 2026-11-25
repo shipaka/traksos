@@ -1,6 +1,7 @@
 // Магазин: товары добавляет админ вручную; клиент — корзина и заказ; админ ведёт заказы и может закрыть магазин одной кнопкой.
 
 import type { Db } from '../db/index.ts';
+import { samePart } from '../domain/techbasePartRefs.ts';
 import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -361,9 +362,11 @@ export class ShopService {
   }
 
   // ——— Клиент: заказ ———
-  async order(user: AuthUser, p: { items: { productId: string; qty: number }[]; delivery: 'pickup' | 'delivery' | 'master'; address?: string | null; orderId?: string | null; payment?: 'on_receipt' | 'invoice'; comment?: string | null; vehicleId?: string | null }) {
+  async order(user: AuthUser, p: { items: { productId: string; qty: number }[]; delivery: 'pickup' | 'delivery' | 'master'; address?: string | null; orderId?: string | null; payment?: 'on_receipt' | 'invoice'; comment?: string | null; vehicleId?: string | null; partRecommendationId?:string|null; expectedPartPrice?:number|null }) {
     if (!user.roles.some(r=>['client','driver','master','tow','service'].includes(r)))
       throw forbidden('Покупки доступны только в кабинете клиента или исполнителя ремонта');
+    if (p.partRecommendationId && (user.status!=='active'||user.owner_id||!user.roles.includes('client')))
+      throw forbidden('Заказ по рекомендации оформляет владелец');
     const s = await this.settings.get('shop');
     if (!s.enabled) throw conflict('shop_closed', s.closedTitle);
     if (user.owner_id) {
@@ -389,8 +392,25 @@ export class ShopService {
       linkOrder = o.id;
     }
     return this.db.tx(async (q) => {
+      let recommendation:any=null;
+      if(p.partRecommendationId){
+        recommendation=await q.one<any>('select * from part_recommendations where id=$1 and client_id=$2 for update',[p.partRecommendationId,user.id]);
+        if(!recommendation||recommendation.status!=='accepted')throw forbidden('Сначала согласуйте рекомендацию');
+        const prior=await q.one<any>('select * from shop_orders where part_recommendation_id=$1',[recommendation.id]);
+        if(prior)return {row:prior,created:false};
+        if(!recommendation.product_id||want.size!==1||want.get(recommendation.product_id)!==recommendation.qty||
+           (recommendation.vehicle_id??null)!==(vehicle?.id??null)||
+           (p.delivery==='master'&&linkOrder!==recommendation.source_order_id))
+          throw conflict('recommendation_mismatch','Товар, количество и машина должны совпадать с согласованной рекомендацией');
+      }
       const rows = await q.query<any>(`select id, name, brand, article, price, stock, active, lead_days from shop_products where id = any($1::uuid[]) for update`, [[...want.keys()]]);
       if (rows.length !== want.size || rows.some((r) => !r.active)) throw conflict('gone', 'Часть товаров уже недоступна — обновите корзину');
+      if(recommendation){
+        const part=rows[0];
+        if(!part.brand||!part.article||!samePart(part,recommendation))
+          throw conflict('part_mismatch','Артикул товара изменился; проверьте подбор');
+        if(p.expectedPartPrice!==part.price)throw conflict('price_changed','Цена изменилась. Обновите корзину и проверьте стоимость');
+      }
       const items = rows.map((r) => {
         const qty = want.get(r.id)!;
         if (qty < 1 || qty > 99) throw bad('bad_qty', 'Количество от 1 до 99');
@@ -401,11 +421,12 @@ export class ShopService {
       const goods = items.reduce((a, it) => a + it.price * it.qty, 0);
       const dprice = p.delivery === 'delivery' ? s.deliveryPrice : 0;
       const [row] = await q.query<any>(
-        `insert into shop_orders(client_id, created_by, items, goods_total, delivery, delivery_price, total, address, order_id, payment, comment, vehicle_id, vehicle_snapshot)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
-        [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null, vehicle?.id ?? null, vehicle ? JSON.stringify({ brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate, trailerPlate: vehicle.trailer_plate }) : null]);
-      return row;
-    }).then(async (row: any) => {
+        `insert into shop_orders(client_id, created_by, items, goods_total, delivery, delivery_price, total, address, order_id, payment, comment, vehicle_id, vehicle_snapshot, part_recommendation_id)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning *`,
+        [clientId, user.id, JSON.stringify(items), goods, p.delivery, dprice, goods + dprice, p.address?.trim() || null, linkOrder, p.payment ?? 'on_receipt', p.comment?.trim() || null, vehicle?.id ?? null, vehicle ? JSON.stringify({ brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate, trailerPlate: vehicle.trailer_plate }) : null, recommendation?.id??null]);
+      return {row,created:true};
+    }).then(async ({row,created}) => {
+      if(!created)return this.orderView(row);
       const staff = (await this.db.query<{ id: string }>(`select id from users where roles && '{admin}'::text[]`)).map((r) => r.id);
       await this.notifier.notify(staff, { type: 'shop', shopOrderId: row.id },
         { kind: 'normal', title: `Магазин: заказ №${row.number}`, body: `${(row.total / 100).toLocaleString('ru-RU')} ₽ · ${row.items.length} поз.`, data: { shopOrderId: row.id } });
@@ -417,7 +438,7 @@ export class ShopService {
     return {
       id: o.id, number: o.number, status: o.status, statusName: SHOP_STATUS[o.status], items: o.items, goodsTotal: o.goods_total, delivery: o.delivery,
       deliveryPrice: o.delivery_price, total: o.total, address: o.address, orderId: o.order_id, payment: o.payment, comment: o.comment,
-      adminNote: o.admin_note, cancelReason: o.cancel_reason, vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
+      partRecommendationId:o.part_recommendation_id??null, adminNote: o.admin_note, cancelReason: o.cancel_reason, vehicleId: o.vehicle_id ?? null, vehicle: o.vehicle_snapshot ?? null, createdAt: o.created_at, updatedAt: o.updated_at,
     };
   }
 

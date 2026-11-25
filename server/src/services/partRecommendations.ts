@@ -8,11 +8,11 @@ import { partRefsForCard, samePart } from '../domain/techbasePartRefs.ts';
 
 type Proposal={brand:string;article:string;name:string;qty:number;reason:string;productId?:string|null;cardId?:string|null;fitmentConfirmed:boolean};
 const clean=(s:string)=>maskPhones(s.replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')).text.trim();
-const productCols='id,name,brand,article,price,stock,lead_days';
+const productCols='id,name,brand,article,price,stock,lead_days,photo_mime,updated_at';
 const safeRow=(r:any)=>({id:r.id,source_order_id:r.source_order_id,vehicle_id:r.vehicle_id,
  brand:r.brand,article:r.article,name:r.name,qty:r.qty,reason:r.reason,status:r.status,
  product_id:r.product_id,created_at:r.created_at,decided_at:r.decided_at});
-const productView=(p:any)=>({id:p.id,name:p.name,brand:p.brand,article:p.article,price:p.price,stock:p.stock,leadDays:p.lead_days});
+const productView=(p:any)=>({id:p.id,name:p.name,brand:p.brand,article:p.article,price:p.price,stock:p.stock,leadDays:p.lead_days,inStock:p.stock!=null&&p.stock>0,hasPhoto:!!p.photo_mime,photoVersion:p.updated_at?new Date(p.updated_at).getTime():0});
 export class PartRecommendations {
  constructor(private db:Db,private settings:SettingsService,private notifier:Notifier){}
  private active(user:AuthUser){if(user.status!=='active')throw forbidden();}
@@ -101,6 +101,19 @@ export class PartRecommendations {
    return updated;
   });
   return safeRow(result);
+ }
+ async checkout(user:AuthUser,id:string){
+  this.active(user);
+  if(user.owner_id||!user.roles.includes('client'))throw forbidden('Заказ оформляет владелец');
+  const row=await this.db.one<any>('select * from part_recommendations where id=$1 and client_id=$2',[id,user.id]);
+  if(!row||row.status!=='accepted')throw forbidden('Сначала согласуйте рекомендацию');
+  const prior=await this.db.one<any>('select id,number,status from shop_orders where part_recommendation_id=$1',[id]);
+  if(prior)return {item:safeRow(row),order:prior,product:null};
+  if(!(await this.settings.get('shop')).enabled)throw conflict('shop_closed','Магазин закрыт');
+  if(!row.product_id)throw conflict('part_unavailable','Точный товар ещё не подобран');
+  const product=await this.db.one<any>('select '+productCols+' from shop_products where id=$1 and active',[row.product_id]);
+  if(!product||!product.brand||!product.article||!samePart(product,row))throw conflict('part_mismatch','Товар изменился. Необходимо повторно согласовать подбор');
+  return {item:safeRow(row),product:productView(product),order:null};
  }
  async history(user:AuthUser,vehicleId:string|null,page:number){
   this.active(user);

@@ -44,7 +44,7 @@ function RecRows({rows,canDecide,reload}:{rows:Rec[];canDecide:boolean;reload:()
   <div className="between"><b>{r.name}</b><span className="pill">{labels[r.status]??r.status}</span></div>
   <span>{r.brand} · {r.article} × {r.qty}</span><p>{r.reason}</p><small className="note">{fmtTime(r.created_at)} · Заказ не оформлен автоматически.</small>
   {canDecide&&r.status==='pending'&&<div className="row">{[true,false].map(accept=><button key={String(accept)} className="btn ghost small" disabled={busy} onClick={async()=>{if(await run(()=>post('/api/orders/'+r.source_order_id+'/part-recommendations/'+r.id+'/decision',{accept}),accept?'Замена согласована':'Рекомендация отклонена'))reload();}}>{accept?'Согласовать замену':'Отказаться'}</button>)}</div>}
-  {canDecide&&r.status==='accepted'&&<a className="btn ghost small" href={'#/shop?q='+encodeURIComponent(r.article)+(r.vehicle_id?'&vehicleId='+encodeURIComponent(r.vehicle_id):'')}>Проверить товар и цену в магазине</a>}
+  {canDecide&&r.status==='accepted'&&<a className="btn ghost small" href={r.product_id?'#/shop/cart?partRecommendationId='+encodeURIComponent(r.id):'#/shop?q='+encodeURIComponent(r.article)+(r.vehicle_id?'&vehicleId='+encodeURIComponent(r.vehicle_id):'')}>{r.product_id?'Открыть точную деталь и оформить заказ':'Проверить наличие детали в магазине'}</a>}
   <a href={'#/order/'+r.source_order_id}>Исходная заявка</a>
  </div>)}</>;
 }
