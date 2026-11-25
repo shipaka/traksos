@@ -4,14 +4,14 @@
  * registration plate, VIN or unknown "similar" truck photos as lookup keys.
  */
 import { useEffect, useState } from 'react';
-import { vehicleReferencePhoto } from './vehiclePhotoCatalog.ts';
+import { vehicleReferencePhoto, vehicleFamilyReferencePhoto } from './vehiclePhotoCatalog.ts';
 export { vehicleReferencePhoto } from './vehiclePhotoCatalog.ts';
 import './vehicleVisual.css';
 
-export function VehicleModelPhoto({ brand, model, year, className = '' }: {
-  brand?: string | null; model?: string | null; year?: number|string|null; className?: string;
+export function VehicleModelPhoto({ brand, model, year, className = '', familyExample = false }: {
+  brand?: string | null; model?: string | null; year?: number|string|null; className?: string; familyExample?:boolean;
 }) {
-  const photo = vehicleReferencePhoto(brand, model, year);
+  const photo = vehicleReferencePhoto(brand, model, year) ?? (familyExample ? vehicleFamilyReferencePhoto(brand,model,year) : null);
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [photo?.src]);
   if (!photo || failed) {
@@ -29,15 +29,17 @@ export function VehiclePhotoLink({brand,model,year,plate,href,compact=false}:{
   brand?:string|null;model?:string|null;year?:number|string|null;
   plate?:string|null;href:string;compact?:boolean
 }) {
-  const photo=vehicleReferencePhoto(brand,model,year);
+  const exact=vehicleReferencePhoto(brand,model,year);
+  const family=exact ? null : vehicleFamilyReferencePhoto(brand,model,year);
+  const photo=exact??family;
   const description=[brand,model,year,plate].filter(Boolean).join(' ')||'Грузовой автомобиль';
   return <div className="trak-vehicle-photo-wrap">
     <a className={'trak-vehicle-photo-link'+(compact?' compact':'')} href={href}
       aria-label={'Открыть карточку и историю автомобиля: '+description}>
-      <VehicleModelPhoto brand={brand} model={model} year={year}/>
+      <VehicleModelPhoto brand={brand} model={model} year={year} familyExample/>
       <span className="trak-vehicle-photo-caption">
         <span>{description}</span>
-        <small>{photo ? 'Фото соответствующей модели, не вашей машины'
+        <small>{family ? 'Пример семейства Scania R: R520, не точная модификация' : exact ? 'Фото соответствующей модели, не вашей машины'
           : 'Фото для этой модели пока нет'} · открыть историю автомобиля ›</small>
       </span>
     </a>

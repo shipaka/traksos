@@ -51,7 +51,8 @@ const stubs={
  '../api.ts':api,'../dict.ts':dict,'../ui.tsx':ui,
  './base.tsx':`export function BookingRows(){return null;}
    export function BookingList(){return null;}
-   export function isOpenBooking(){return false;}`,
+   export function isOpenBooking(){return false;}
+   export const NEEDS={electric:'Электрика'};`,
  './fleet.tsx':'export function DriverRules(){return null;}',
  './vehicleServices.tsx':`export function VehicleServiceApplication(){return null;}
    export function VehicleServiceHistory(){return null;}`,
@@ -87,6 +88,7 @@ const b=await build({
      };
      return view.page==='home'?<Home/>:
        view.page==='orders'?<Orders as="client"/>:
+       view.page==='calendar'?<Orders as="client" calendarDate="2026-12-02" calendarPeriod="day"/>:
        view.page==='garage'?<Garage/>:<Profile/>;
    }
    createRoot(document.getElementById('root')).render(<App/>);
@@ -153,6 +155,25 @@ try {
  await answer('/api/orders?as=client','B',1,[order(202)]);
  await page.getByText('№202 · Электрик').waitFor();
 
+ // Calendar account isolation: use the actual calendar React component,
+ // leave an old refresh unresolved and deliver it only after B has loaded.
+ const calendarPath='/api/client/calendar?from=2026-12-02&to=2026-12-02';
+ const appointment=n=>({timezone:'Europe/Moscow',from:'2026-12-02',to:'2026-12-02',truncated:false,items:[
+   {id:'booking-'+n,number:n,kind:'service',service:'electric',day:'2026-12-02',
+     brand:'DAF',model:'XF',requested_time:'11:00',confirmed_time:null,confirmation:'pending'}
+ ]});
+ await nav('calendar','A');await wait(calendarPath,'A',1);
+ await answer(calendarPath,'A',0,appointment(301));
+ await page.getByText('№301 · СТО: Электрика').waitFor();
+ await page.getByRole('button',{name:'Обновить календарь'}).click();
+ await wait(calendarPath,'A',2);
+ await nav('calendar','B');await wait(calendarPath,'B',1);
+ await answer(calendarPath,'B',0,appointment(302));
+ await page.getByText('№302 · СТО: Электрика').waitFor();
+ await answer(calendarPath,'A',1,appointment(399));
+ await page.waitForFunction(()=>document.body.textContent.includes('№302 · СТО: Электрика'));
+ if(await page.getByText('№399 · СТО: Электрика').count()||await page.getByText('№301 · СТО: Электрика').count())
+   throw Error('Previous account calendar leaked into account B');
  // Garage A's private truck must not be briefly exposed to account B.
  await nav('garage','A');await wait('/api/vehicles','A',1);
  await answer('/api/vehicles','A',0,[]);
@@ -203,5 +224,5 @@ try {
  await page.getByText('Тягач, полуприцеп или сцепка').waitFor();
 
  if(errors.length)throw Error('React runtime errors: '+errors.join('; '));
- console.log('PASS client Home, Orders, Garage, Profile account scope and offline retries');
+ console.log('PASS client Home, Orders, Calendar, Garage, Profile account scope and offline retries');
 } finally {await browser.close();}
