@@ -2,7 +2,7 @@
 // Один список — разные сортировки: «Рекомендуем / Дешевле / Быстрее / Ближе».
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { get, post, rub, onEvent } from '../api.ts';
+import { get, post, rub, onEvent, getToken } from '../api.ts';
 import { useAction, useToast } from '../ui.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
 import './searchWorkspace.css';
@@ -14,7 +14,12 @@ const SORTS = [
   { id: 'distance', name: 'Ближе' },
 ] as const;
 
-export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapsedChange, motionEpoch }: { d: any; onChosen: () => void; collapsed?: boolean; onCollapsedChange?: (value: boolean) => void; motionEpoch?: number }) {
+type SearchProps = { d: any; onChosen: () => void; collapsed?: boolean; onCollapsedChange?: (value: boolean) => void; motionEpoch?: number };
+export function Search(props: SearchProps) {
+  const token = getToken();
+  return <SearchForSession key={JSON.stringify([props.d.id,token])} {...props} sessionToken={token} />;
+}
+function SearchForSession({ d, onChosen, collapsed: controlledCollapsed, onCollapsedChange, motionEpoch, sessionToken }: SearchProps & { sessionToken: string | null }) {
   const toast = useToast();
   const { busy, run } = useAction();
   // Приоритет из формы вызова: «Ближе / Дешевле / Быстрее» — сразу сортирует отклики
@@ -36,23 +41,35 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
     else setCollapsedOrder(value ? d.id : null);
   };
   const choosingRef = useRef(false);
+  const alive = useRef(false);
+  useLayoutEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const currentSession = () => alive.current && getToken() === sessionToken;
   const refreshRef = useRef<() => void>(() => {});
+  const requestPending = useRef(true);
+  const [verifying, setVerifying] = useState(true);
   const data = response?.key === key ? response.value : null;
   const loadError = requestError?.key === key ? requestError.message : null;
-  useEffect(() => { choosingRef.current = false; }, [d.id]);
   useEffect(() => {
     let active = true;
     let generation = 0;
-    const load = () => {
+    const load = (discard = false) => {
+      if (!currentSession()) return;
       const current = ++generation;
+      requestPending.current = true;
+      setVerifying(true);
+      if (discard) { setResponse(null); setRequestError(null); }
       void get('/api/orders/' + d.id + '/offers?sort=' + sort)
         .then(value => {
-          if (!active || current !== generation) return;
+          if (!active || current !== generation || !currentSession()) return;
+          requestPending.current = false;
+          setVerifying(false);
           setResponse({key, value});
           setRequestError(null);
         })
         .catch(e => {
-          if (!active || current !== generation) return;
+          if (!active || current !== generation || !currentSession()) return;
+          requestPending.current = false;
+          setVerifying(false);
           // An unsuccessful refresh is NOT evidence that earlier offers are
           // still available. Hide the obsolete cards until a genuine 200.
           setResponse(null);
@@ -61,14 +78,21 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
     };
     refreshRef.current = load;
     load();
+    const recover = () => load(true);
+    const visible = () => { if (document.visibilityState === 'visible') recover(); };
     const stop = onEvent(e => {
-      if (e.orderId === d.id && e.type === 'order') load();
+      if (e.type === 'connection_restored') recover();
+      else if (String(e.orderId) === String(d.id) && e.type === 'order') load();
     });
-    const interval = window.setInterval(load, 10_000);
+    window.addEventListener('online', recover);
+    document.addEventListener('visibilitychange', visible);
+    const interval = window.setInterval(() => load(), 10_000);
     return () => {
       active = false;
       generation++;
       stop();
+      window.removeEventListener('online', recover);
+      document.removeEventListener('visibilitychange', visible);
       window.clearInterval(interval);
       if (refreshRef.current === load) refreshRef.current = () => {};
     };
@@ -85,10 +109,19 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
   const lim = data?.limits ?? d.limits;
 
   async function choose(id: string) {
-    if (choosingRef.current || busy || loadError || !offers.some(offer => offer.id === id)) return;
+    if (!currentSession() || choosingRef.current || busy || requestPending.current || loadError || !offers.some(offer => offer.id === id)) return;
     choosingRef.current = true;
     try {
-      const r = await run(() => post(`/api/orders/${d.id}/offers/${id}/choose`));
+      const r = await run(async () => {
+        try {
+          const result = await post(`/api/orders/${d.id}/offers/${id}/choose`);
+          return currentSession() ? result : undefined;
+        } catch (error) {
+          if (currentSession()) throw error;
+          return undefined;
+        }
+      }, null);
+      if (!currentSession()) return;
       if (r) { toast('Исполнитель выбран'); onChosen(); }
       else refreshRef.current(); // the offer could have expired remotely
     } finally { choosingRef.current = false; }
@@ -168,7 +201,7 @@ export function Search({ d, onChosen, collapsed: controlledCollapsed, onCollapse
                   {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
                   {o.extras?.prepay === 'always' && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
                   {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
-                  <button className="btn small" style={{ width: '100%' }} disabled={busy || !!loadError} onClick={() => void choose(o.id)}>Выбрать за {rub(o.price)}</button>
+                  <button className="btn small" style={{ width: '100%' }} disabled={busy || verifying || !!loadError} onClick={() => void choose(o.id)}>Выбрать за {rub(o.price)}</button>
                 </div>
               );
             })}
