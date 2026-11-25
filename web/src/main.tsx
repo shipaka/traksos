@@ -437,7 +437,7 @@ function App() {
       ? <PerformerOrderWindow id={b} initialTab={(['order','client','finance','chat','history','vehicle'].includes(route[2] ?? '') ? route[2] as 'order'|'client'|'finance'|'chat'|'history'|'vehicle' : 'order')} />
       : <Order id={b} />; break;
     case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
-    case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
+    case 'orders': screen = isCustomer ? <Orders as="client" calendarDate={b==='calendar' ? (route[2]??'') : undefined} calendarPeriod={route[3]==='day'?'day':'week'} /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'menu': screen = <main className="tr-mobile-menu-route" />; break;
@@ -453,7 +453,7 @@ function App() {
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
-        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
+        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" calendarDate={route[2]==='calendar' ? (route[3]??'') : undefined} calendarPeriod={route[4]==='day'?'day':'week'} /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)

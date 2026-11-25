@@ -11,3 +11,7 @@ Before release: verify actual PostgreSQL on fresh and migrated schema; migrate s
 ## Stage 2 — pure reconciliation and CSV import validation
 
 Ported historical reconciliation and bank parser as domain modules with six standalone regression tests. Preserve `taxableRevenue=null`, proof gates, stale-review invalidation, chronology warnings, Moscow date boundaries, exact kopecks and unique bank references. No service classes or API connected. Next stage imports the domain functions into the service classes, not a competing ledger. Tests need actual CI; no financial production activation.
+
+## Stage 3 — isolated evidence services
+
+Ported both historical classes to current calendar main 0e552f70db03939d8cb363aa8b90634bf71213c9, reuse the stage 2 domain modules rather than duplicate their logic. Added live administrator checks and row locking on write transactions; direct disposable service test covers private files, identical import, rejected changed metadata and a revoked administrator role. No registered HTTP API or UI, no real payment action. Source snapshots, mandate-at-creation checks, bank activity classification, transactional read consistency, retention policy and original HTTP tests remain outstanding; this is not full production authorization or a release. Exact combined CI required.
