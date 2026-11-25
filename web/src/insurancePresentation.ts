@@ -107,3 +107,20 @@ export function insuranceQueueGroup(
 export function isOpenInsuranceRequest(status: string | null | undefined): boolean {
   return status !== 'completed' && status !== 'rejected' && status !== 'cancelled';
 }
+
+/** Four existing overview counters describe exact milestones, not totals.
+ * Selected/processing remain visible in the existing action/active queue.
+ * A legacy sent_to_partner record is new only without an explicit stage.
+ * Terminal rejection/cancellation always wins over a stale stage. */
+export function insuranceOverviewCounts(rows: readonly {insurance_stage?:string|null;status?:string|null}[]) {
+  const counts={received:0,preparing:0,offers_sent:0,policy_sent:0};
+  for(const row of rows){
+    const stage=row.insurance_stage, status=row.status;
+    if(status==='rejected'||status==='cancelled')continue;
+    if(status==='completed'||stage==='policy_sent')counts.policy_sent++;
+    else if(stage==='received'||(!stage&&status==='sent_to_partner'))counts.received++;
+    else if(stage==='preparing')counts.preparing++;
+    else if(stage==='offers_sent')counts.offers_sent++;
+  }
+  return counts;
+}
