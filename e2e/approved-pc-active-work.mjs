@@ -336,7 +336,8 @@ try{
  const fleetFixture=await get('/api/fleet',fleetOwner.token);
  const assigned=fleetFixture.cars.find(c=>c.id===vehicle.id);
  assert(!!assigned?.qrCode,'Synthetic fleet QR missing');
- const driver=await account({phone:'+79990000482',type:'client',mode:'client'});
+ // The public account enum uses owner, not the underlying client role.
+ const driver=await account({phone:'+79990000482',type:'owner',mode:'client'});
  await post('/api/qr/'+encodeURIComponent(assigned.qrCode)+'/join',{},driver.token);
  const driverMe=await get('/api/me',driver.token);
  assert(driverMe.roles.includes('driver')&&!!driverMe.owner_id,'Local QR did not produce driver role');
