@@ -153,8 +153,11 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
   const vehicleBrand = current?.vehicle?.brand || current?.v_brand || current?.brand;
   const vehicleModel = current?.vehicle?.model || current?.v_model || current?.model;
   const vehicleYear = current?.vehicle?.year || current?.v_year || current?.year;
-  const currentVehiclePhoto = current?.vehicle_id
-    ? vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear) : null;
+  const firstGarageVehicle=garageVehicles?.[0];
+  const currentVehiclePhoto = firstGarageVehicle
+    ? vehicleReferencePhoto(firstGarageVehicle.brand,firstGarageVehicle.model,firstGarageVehicle.year)
+    : garageVehicles===undefined && current?.vehicle_id
+      ? vehicleReferencePhoto(vehicleBrand, vehicleModel, vehicleYear) : null;
   const currentVehicleName = [vehicleBrand,vehicleModel,vehicleYear].filter(Boolean).join(' ');
   return <div className="and19-workspace and19-client" aria-label="Android рабочий стол клиента">
     <a className="and19-role and19-client-role" href="#/profile" aria-label="Открыть профиль и настройки кабинета">
