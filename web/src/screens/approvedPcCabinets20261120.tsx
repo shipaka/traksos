@@ -65,7 +65,7 @@ export function ApprovedPcDesk({role,fallback}:{role:ApprovedPCRole;fallback:Rea
   return <AdminDesk/>;
 }
 
-function Heading({title,description,children,artKey,roleIcon,roleArt}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind;roleArt?:ApprovedPCRole}){
+function Heading({title,description,children,artKey,roleIcon,roleArt,ratingLabel}:{title:string;description:string;children?:ReactNode;artKey?:FeatureArtworkKey;roleIcon?:TrakServiceIconKind;roleArt?:ApprovedPCRole;ratingLabel?:string}){
   return <header className="approved-pc-heading" data-feature-art={artKey} data-role-art={roleArt}>
     <div>
       <span className="approved-pc-eyebrow">TRAKSOS · РАБОЧИЙ КАБИНЕТ</span>
@@ -73,7 +73,7 @@ function Heading({title,description,children,artKey,roleIcon,roleArt}:{title:str
         {roleIcon&&<span className="approved-pc-heading-role-icon" data-role-icon={roleIcon} aria-hidden="true"><TrakServiceIcon kind={roleIcon}/></span>}
         <h1>{title}</h1>
       </div>
-      <p>{description}</p>
+      <p>{description}{ratingLabel&&<> · <a className="approved-pc-small-link" href="#/work/me/level" aria-label={'Мой рейтинг: '+ratingLabel}>{ratingLabel}</a></>}</p>
     </div>
     {artKey?<FeatureArtwork kind={artKey}/>:<img src={APPROVED_VISUALS.workspaceTruck} alt="Иллюстрация TrakSOS, не транспорт клиента"/>}
     {children}
@@ -393,9 +393,7 @@ function PerformDesk({tow}:{tow:boolean}){
   const selected=[...current,...planned].find((o:any)=>String(o.id)===chosen)||current[0]||planned[0];
   const offers=auctions.data||[];
   return <main className="approved-pc approved-pc-performer">
-    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'}>
-      <a className="approved-pc-small-link" href="#/work/me/level" aria-label={'Мой рейтинг: '+ownRatingLabel(me)}>{ownRatingLabel(me)}</a>
-    </Heading>
+    <Heading title={tow?'Эвакуаторщик':'Выездной мастер'} roleArt={tow?'tow':'master'} roleIcon={tow?'tow':'master'} description={tow?'Эвакуации, погрузка, доставка и передача автомобиля':'Выезды, техника клиента, этапы работ и расписание'} ratingLabel={ownRatingLabel(me)}/>
     <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
       ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
