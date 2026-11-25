@@ -125,16 +125,18 @@ function SupportNewSession({ orderId,owner,token }: { orderId?: string;owner:str
 export function SupportThread({ id }: { id: string }) {
   const { me, mode } = useMe();
   // Old GET/POST and sensitive drafts remain in an unmounted session only.
-  return <SupportThreadSession key={(me?.id ?? 'guest') + ':' + mode + ':' + id} id={id} />;
+  return <SupportThreadSession key={(me?.id ?? 'guest') + ':' + mode + ':' + id + ':' + (getToken()??'')} id={id} token={getToken()} />;
 }
 
-function SupportThreadSession({ id }: { id: string }) {
+function SupportThreadSession({ id,token }: { id: string;token:string|null }) {
   const alive = useSupportSessionAlive();
   const { me, mode } = useMe();
   const th = useLoad(() => get(`/api/support/${id}`), [id], (e) => e.type === 'support' && e.ticketId === id);
   const { busy, run } = useAction();
   const [text, setText] = useState('');
   const sendingRef = useRef(false);
+  const replyKey=useRef<string|null>(null);
+  const [uncertain,setUncertain]=useState(false);
   const closingRef = useRef(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [th.data?.messages.length]);
@@ -183,27 +185,27 @@ function SupportThreadSession({ id }: { id: string }) {
             );
           })}
         </div>
-        {t.status === 'open' && (
+        {uncertain && <p className="note" role="status">Ответ сервера не подтверждён. Повторите то же сообщение без создания дубликата или проверьте переписку. После выхода из формы сначала проверьте историю.</p>}
+        {(t.status === 'open' || uncertain) && (
           <form className="compose" onSubmit={async (e) => {
             e.preventDefault();
-            if (sendingRef.current || closingRef.current || busy || !text.trim()) return;
+            if (sendingRef.current || closingRef.current || busy || !text.trim() || !token || getToken()!==token) return;
             sendingRef.current = true;
             try {
-              const posted = await run(() => post(`/api/support/${id}/messages`, { body: text }), null);
-              if (posted && alive.current) {
-                setText('');
-                void th.reload();
+              if(!replyKey.current) replyKey.current=supportRequestKey();
+              const posted = await run(() => post(`/api/support/${id}/messages`, { body: text, requestKey:replyKey.current }), null);
+              if (alive.current && getToken()===token) {
+                if(posted){setText('');replyKey.current=null;setUncertain(false);void th.reload();}
+                else setUncertain(true);
               }
-              // On an uncertain timeout the original draft remains visible;
-              // never auto-POST the same message a second time.
             } finally { sendingRef.current = false; }
           }}>
-            <input className="field" aria-label="Сообщение поддержке" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} />
-            <button type="submit" className="btn small" disabled={busy || !text.trim()}>➤</button>
+            <input className="field" aria-label="Сообщение поддержке" disabled={busy||uncertain} placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} />
+            <button type="submit" className="btn small" disabled={busy || !text.trim()}>{uncertain?'Повторить':'➤'}</button>
           </form>
         )}
       </div>
-      {t.status === 'open' && <button type="button" className="btn ghost" disabled={busy} onClick={async () => {
+      {t.status === 'open' && <button type="button" className="btn ghost" disabled={busy||uncertain} onClick={async () => {
         if (closingRef.current || sendingRef.current || busy) return;
         closingRef.current = true;
         try {
