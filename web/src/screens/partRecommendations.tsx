@@ -7,7 +7,17 @@ type Ref={brand:string;article:string;name:string;source:string;sourcePage:numbe
 type Product={id:string;brand:string;article:string;name:string;price:number;stock:number|null;leadDays:number};
 type Rec={id:string;source_order_id:string|null;source_booking_id?:string|null;vehicle_id:string|null;product_id:string|null;brand:string;article:string;name:string;qty:number;reason:string;status:string;created_at:string;sourcing_status?:'not_requested'|'requested'|'resolved'|'unavailable';sourcing_note?:string|null;sourcing_requested_at?:string|null};
 const labels:Record<string,string>={pending:'Ожидает решения',accepted:'Замена согласована',declined:'Отказано'};
-type ProposalProps={orderId?:string;bookingId?:string;cardId?:string;onSent?:()=>void};
+type DraftFields={brand:string;article:string;name:string;qty:number;reason:string};
+const emptyDraft=():DraftFields=>({brand:'',article:'',name:'',qty:1,reason:''});
+function useProposalDraft(){
+ const [fields,setFields]=useState<DraftFields>(emptyDraft);
+ const [pending,setPending]=useState(false),[uncertain,setUncertain]=useState(false);
+ const lock=useRef(false),epoch=useRef(0);
+ const clear=()=>{epoch.current++;setFields(emptyDraft());setUncertain(false);};
+ return {fields,setFields,pending,setPending,uncertain,setUncertain,lock,epoch,clear};
+}
+type ProposalDraft=ReturnType<typeof useProposalDraft>;
+type ProposalProps={orderId?:string;bookingId?:string;cardId?:string;onSent?:()=>void;draft?:ProposalDraft};
 export function PartProposal(props:ProposalProps){
  const {me}=useMe();
  const token=getToken();
@@ -16,14 +26,21 @@ export function PartProposal(props:ProposalProps){
  if(!me||!token)return null;
  return <PartProposalForm key={JSON.stringify([me.id,scope.current.revision,props.orderId,props.bookingId,props.cardId])} {...props}/>;
 }
-function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
+function PartProposalForm({orderId,bookingId,cardId,onSent,draft:sharedDraft}:ProposalProps){
  const source=bookingId?'/api/bookings/'+encodeURIComponent(bookingId):orderId?'/api/orders/'+encodeURIComponent(orderId):null;
  const refs=useLoad<{refs:Ref[]}>(()=>cardId?get('/api/techbase/parts/'+encodeURIComponent(cardId)):Promise.resolve({refs:[]}),[cardId]);
- const [brand,setBrand]=useState(''),[article,setArticle]=useState(''),[name,setName]=useState('');
- const [qty,setQty]=useState(1),[reason,setReason]=useState(''),[confirmed,setConfirmed]=useState(false);
+ const localDraft=useProposalDraft(),draft=sharedDraft??localDraft;
+ const {brand,article,name,qty,reason}=draft.fields;
+ const setBrand=(brand:string)=>draft.setFields(f=>({...f,brand}));
+ const setArticle=(article:string)=>draft.setFields(f=>({...f,article}));
+ const setName=(name:string)=>draft.setFields(f=>({...f,name}));
+ const setQty=(qty:number)=>draft.setFields(f=>({...f,qty}));
+ const setReason=(reason:string)=>draft.setFields(f=>({...f,reason}));
+ const [confirmed,setConfirmed]=useState(false);
  const [match,setMatch]=useState<{enabled:boolean;products:Product[]}|null>(null),[product,setProduct]=useState('');
- const {busy,run}=useAction();
- const generation=useRef(0),submitLock=useRef(false);
+ const {busy:actionBusy,run}=useAction();
+ const busy=actionBusy||draft.pending;
+ const generation=useRef(0),submitLock=draft.lock;
  const [lookupPending,setLookupPending]=useState(false),[lookupError,setLookupError]=useState(false);
  const token=getToken();
  useLayoutEffect(()=>()=>{generation.current++;},[token]);
@@ -42,16 +59,24 @@ function PartProposalForm({orderId,bookingId,cardId,onSent}:ProposalProps){
  }
  async function submit(){
   if(submitLock.current||lookupPending||!confirmed||!source||getToken()!==token)return;
-  submitLock.current=true;
-  const id=generation.current;
+  submitLock.current=true;draft.setPending(true);
+  const epoch=draft.epoch.current,id=generation.current;
   try{
    const result=await run(()=>post(source+'/part-recommendations',{brand,article,name,qty,reason,productId:product||null,cardId:cardId||null,fitmentConfirmed:true}),'Рекомендация сохранена; заказ не создан');
-   if(result&&generation.current===id&&getToken()===token){setReason('');setConfirmed(false);onSent?.();}
-  }finally{submitLock.current=false;}
+   if(draft.epoch.current===epoch&&getToken()===token){
+    if(result){
+     draft.clear();
+     if(generation.current===id){setConfirmed(false);setMatch(null);setProduct('');}
+     onSent?.();
+    }else{draft.setUncertain(true);if(generation.current===id)setConfirmed(false);}
+   }
+  }finally{submitLock.current=false;draft.setPending(false);}
  }
  const refOnly=!!cardId&&!!refs.data?.refs.length;
  return <section className="card flat stack" aria-label="Подбор запчасти">
   <b>Артикул и подбор запчасти</b>
+  {draft.pending&&<span role="status">Сохраняем рекомендацию…</span>}
+  {draft.uncertain&&<span className="note">Результат отправки не подтверждён. Проверьте список рекомендаций перед повторной отправкой.</span>}
   {cardId&&!refs.data&&<span className="note">{refs.error?'Не удалось получить подтверждённые артикулы':'Загрузка артикулов'}</span>}
   {refs.data?.refs.map(r=><div key={r.brand+r.article} className="stack"><button className="btn ghost small" type="button" disabled={busy} onClick={()=>change(()=>{setBrand(r.brand);setArticle(r.article);setName(r.name);})}>{r.brand} {r.article} — {r.name}</button><a href={r.source} target="_blank" rel="noopener noreferrer">Источник артикула · стр. {r.sourcePage}</a></div>)}
   {cardId&&refs.data?.refs.length===0&&<span className="note">Артикул в этой карточке ещё не подтверждён. Укажите номер с маркировки установленной детали.</span>}
@@ -127,13 +152,27 @@ export function OrderPartRecommendations({order:o}:{order:any}){
  if(!scope||!['client','performer'].includes(o.you))return null;
  return <OrderPartList key={JSON.stringify([scope,o.id,o.you])} order={o}/>;
 }
+const deniedDraft='part_source_access_denied';
+async function readProposalSource<T>(path:string):Promise<T>{
+ try{return await get<T>(path);}catch(e){
+  if([401,403,404].includes((e as {status?:number}|null)?.status??0))throw Error(deniedDraft);
+  throw e;
+ }
+}
+function useInlineProposal(list:{data:{canSuggest:boolean}|null;error:string|null}){
+ const draft=useProposalDraft();const [open,setOpen]=useState(false);
+ useLayoutEffect(()=>{
+  if(list.error===deniedDraft||(list.data&&!list.data.canSuggest)){draft.clear();setOpen(false);}
+ },[list.data,list.error]);
+ return {draft,open,setOpen};
+}
 function OrderPartList({order:o}:{order:any}){
- const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/orders/'+o.id+'/part-recommendations'),o.id,e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
- const [open,setOpen]=useState(false);
+ const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]} >(()=>readProposalSource('/api/orders/'+o.id+'/part-recommendations'),o.id,e=>(e.type==='order'||e.type==='part_sourcing')&&e.orderId===o.id);
+ const {draft,open,setOpen}=useInlineProposal(list);
  if(o.you!=='client'&&o.you!=='performer')return null;
  return <section className="card stack"><b>Рекомендации по запчастям</b>
   <PartReadStatus read={list}/>
-  {list.data?.canSuggest&&<><a className="btn ghost small" href={'#/techbase/master?orderId='+encodeURIComponent(o.id)}>Подобрать деталь в ТехБазе</a><button type="button" className="btn ghost small" onClick={()=>setOpen(v=>!v)}>{open?'Свернуть':'Предложить по маркировке детали'}</button>{open&&<PartProposal orderId={o.id} onSent={list.reload}/>}</>}
+  {list.data?.canSuggest&&<><a className="btn ghost small" href={'#/techbase/master?orderId='+encodeURIComponent(o.id)}>Подобрать деталь в ТехБазе</a><button type="button" className="btn ghost small" onClick={()=>setOpen(v=>!v)}>{open?'Свернуть':'Предложить по маркировке детали'}</button>{open&&<PartProposal orderId={o.id} draft={draft} onSent={list.reload}/>}</>}
   {list.data&&<RecRows rows={list.data.items} canDecide={list.data.canDecide} reload={list.reload}/>}
  </section>;
 }
@@ -142,12 +181,12 @@ export function BookingPartRecommendations({bookingId}:{bookingId:string}){
  return scope?<BookingPartList key={JSON.stringify([scope,bookingId])} bookingId={bookingId}/>:null;
 }
 function BookingPartList({bookingId}:{bookingId:string}){
- const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]}>(()=>get('/api/bookings/'+encodeURIComponent(bookingId)+'/part-recommendations'),bookingId,e=>(e.type==='booking'||e.type==='part_sourcing')&&e.bookingId===bookingId);
- const [open,setOpen]=useState(false);
+ const list=usePartRead<{canSuggest:boolean;canDecide:boolean;items:Rec[]} >(()=>readProposalSource('/api/bookings/'+encodeURIComponent(bookingId)+'/part-recommendations'),bookingId,e=>(e.type==='booking'||e.type==='part_sourcing')&&e.bookingId===bookingId);
+ const {draft,open,setOpen}=useInlineProposal(list);
  return <section className="card stack"><b>Рекомендации по запчастям</b>
   <span className="note">Рекомендация и заказ магазина не изменяют счёт СТО автоматически.</span>
   <PartReadStatus read={list}/>
-  {list.data?.canSuggest&&<><a className="btn ghost small" href={'#/techbase/master?bookingId='+encodeURIComponent(bookingId)}>Подобрать деталь в ТехБазе</a><button className="btn ghost small" type="button" onClick={()=>setOpen(v=>!v)}>{open?'Свернуть':'Предложить по маркировке детали'}</button>{open&&<PartProposal bookingId={bookingId} onSent={list.reload}/>}</>}
+  {list.data?.canSuggest&&<><a className="btn ghost small" href={'#/techbase/master?bookingId='+encodeURIComponent(bookingId)}>Подобрать деталь в ТехБазе</a><button className="btn ghost small" type="button" onClick={()=>setOpen(v=>!v)}>{open?'Свернуть':'Предложить по маркировке детали'}</button>{open&&<PartProposal bookingId={bookingId} draft={draft} onSent={list.reload}/>}</>}
   {list.data&&<RecRows rows={list.data.items} canDecide={list.data.canDecide} reload={list.reload}/>}
   {list.data?.items.length===0&&!list.data.canSuggest&&<span className="note">Рекомендаций пока нет</span>}
  </section>;
