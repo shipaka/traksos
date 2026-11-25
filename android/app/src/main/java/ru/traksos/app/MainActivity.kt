@@ -18,6 +18,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -60,6 +61,37 @@ class MainActivity : AppCompatActivity() {
     private lateinit var web: WebView
     private lateinit var appRoot: FrameLayout
     private var lockCover: View? = null
+    private data class WebFocusState(
+        val accessibility: Int,
+        val descendants: Int,
+        val focusable: Boolean,
+        val focusableInTouchMode: Boolean
+    )
+    private var coveredWebFocus: WebFocusState? = null
+
+    // A native cover must also hide the covered page from TalkBack and
+    // hardware-keyboard traversal. Restore exactly the prior configuration.
+    private fun suspendCoveredWebFocus() {
+        if (coveredWebFocus != null) return
+        coveredWebFocus = WebFocusState(
+            web.importantForAccessibility, web.descendantFocusability,
+            web.isFocusable, web.isFocusableInTouchMode
+        )
+        web.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        web.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        web.isFocusableInTouchMode = false
+        web.isFocusable = false
+        web.clearFocus()
+    }
+
+    private fun restoreCoveredWebFocus() {
+        val previous = coveredWebFocus ?: return
+        coveredWebFocus = null
+        web.descendantFocusability = previous.descendants
+        web.isFocusableInTouchMode = previous.focusableInTouchMode
+        web.isFocusable = previous.focusable
+        web.importantForAccessibility = previous.accessibility
+    }
     private var unlockInProgress = false
     private var pausedAt = 0L
     private val appLockPrefs by lazy { getSharedPreferences("traksos_app_security", MODE_PRIVATE) }
@@ -97,6 +129,7 @@ class MainActivity : AppCompatActivity() {
         unlockInProgress = false
         lockCover?.let { appRoot.removeView(it) }
         lockCover = null
+        restoreCoveredWebFocus()
         foreground = true
     }
 
@@ -321,6 +354,7 @@ class MainActivity : AppCompatActivity() {
         // >=3.5 s. Insert the native lock *under* the splash, but *above*
         // WebView, so no personal cabinet can flash before authentication.
         val splashVisible = startupOverlay?.visibility == View.VISIBLE
+        suspendCoveredWebFocus()
         if (splashVisible) appRoot.addView(cover, 1, coverParams)
         else appRoot.addView(cover, coverParams)
         lockCover = cover
