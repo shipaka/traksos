@@ -378,3 +378,33 @@ test('решение владельца проверяет действующи�
   assert.equal((await reject()).status, 'cancelled');
   assert.equal((await events()).length, 1);
 });
+
+test('месячный лимит учитывает только текущий календарный месяц по Москве', async () => {
+  const fleetOwner = await t.login('+79993334520');
+  const fleetDriver = await t.login('+79993334521');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  const order = ok(await t.api('POST', '/api/orders', { service: 'consult', vehicleId: car }, fleetDriver.token)).order;
+  assert.equal(order.status, 'awaiting_owner');
+  // Synthetic accounting fixture in the disposable database; no provider call.
+  // All four checks use one transaction and the same PostgreSQL clock.
+  await t.db.tx(async q => {
+    const amount = 12345;
+    const offsets = [
+      { offset: '-1 microsecond', expected: 0 },
+      { offset: '0 seconds', expected: amount },
+      { offset: '1 month -1 microsecond', expected: amount },
+      { offset: '1 month', expected: 0 },
+    ];
+    for (const { offset, expected } of offsets) {
+      await q.query(`update orders set status='completed', call_out_amount=$2, work_amount=0,
+        created_at=((date_trunc('month', now() at time zone 'Europe/Moscow') + $3::interval) at time zone 'Europe/Moscow')
+        where id=$1`, [order.id, amount, offset]);
+      assert.equal(await t.app.orders.monthSpent(fleetDriver.id, fleetOwner.id, q), expected, offset);
+    }
+    // Restore the date so later diagnostics are not polluted by a future row.
+    await q.query('update orders set created_at=now() where id=$1', [order.id]);
+  });
+});
