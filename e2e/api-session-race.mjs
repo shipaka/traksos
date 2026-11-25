@@ -1,17 +1,21 @@
 // Exact compiled browser transport from web/src/api.ts, isolated local CI.
 // No user credentials, server mutation or production endpoints are involved.
-import { readFile } from 'node:fs/promises';
-import { transform } from 'esbuild';
+import { fileURLToPath } from 'node:url';
+import { build } from 'esbuild';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
 if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))
   throw Error('Session race test may only target a local CI origin');
-const source=await readFile(new URL('../web/src/api.ts',import.meta.url),'utf8');
-const compiled=await transform(source,{
-  loader:'ts',format:'esm',define:{__API_URL__:"''"},target:'es2022',
+// Bundle the real transport and its local dependencies. A transform-only
+// module leaves relative TypeScript imports unresolved by this isolated host.
+const compiled=await build({
+  entryPoints:[fileURLToPath(new URL('../web/src/api.ts',import.meta.url))],
+  bundle:true,write:false,platform:'browser',format:'esm',
+  define:{__API_URL__:"''"},target:'es2022',
 });
+const compiledCode=compiled.outputFiles[0].text;
 const browser=await chromium.launch();
 try {
   const context=await browser.newContext({serviceWorkers:'block',locale:'ru-RU'});
@@ -24,7 +28,7 @@ try {
       route.fulfill({status:200,contentType:'text/html',
         body:'<!doctype html><html lang="ru"><head><meta charset="utf-8"></head><body>Isolated CI transport</body></html>'}));
     await page.route('**/__ci_api_session_race.mjs',route=>
-      route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
+      route.fulfill({status:200,contentType:'text/javascript',body:compiledCode}));
     await page.goto(BASE+'/__ci_api_session_race_host',{waitUntil:'domcontentloaded'});
     const actual=await page.evaluate(async()=>{
       const module=await import('/__ci_api_session_race.mjs');
@@ -440,7 +444,7 @@ try {
     // Even a misconfigured sandbox build cannot send protected images to a
     // foreign API. This isolated module uses a synthetic token, never live.
     await page.route('**/__ci_api_remote_transport.mjs',route=>
-      route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
+      route.fulfill({status:200,contentType:'text/javascript',body:compiledCode}));
     const sandboxGuard=await page.evaluate(async()=>{
       const original=window.fetch;let sends=0;
       window.fetch=(...args)=>{
@@ -474,7 +478,7 @@ try {
       route.fulfill({status:200,contentType:'text/html',
         body:'<!doctype html><html lang="ru"><head><meta charset="utf-8"></head><body>Isolated cross-tab CI</body></html>'}));
     await context.route('**/__ci_api_session_race.mjs',route=>
-      route.fulfill({status:200,contentType:'text/javascript',body:compiled.code}));
+      route.fulfill({status:200,contentType:'text/javascript',body:compiledCode}));
     const tabA=await context.newPage();
     const tabB=await context.newPage();
     try {
