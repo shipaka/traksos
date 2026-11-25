@@ -290,6 +290,23 @@ try{
       await menu.locator('summary').press('Escape');
       if(await menu.evaluate(el=>el.open))throw Error('Escape did not close desktop menu');
     }
+    // Direct link and an unrelated prior hash must both return to the
+    // declared SOS parent, not an arbitrary browser history entry.
+    if(role==='owner'){
+      const target='#/new/tow?sos=accident';
+      const back=page.locator('main a.note[href="#/sos"]').filter({hasText:'Назад'});
+      await page.goto(BASE+'/'+target,{waitUntil:'domcontentloaded'});
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await visibleRoute(page,'#/sos',assertClean);
+      await page.evaluate(()=>{location.hash='#/orders';});
+      await visibleRoute(page,'#/orders',assertClean);
+      await page.evaluate(hash=>{location.hash=hash;},target);
+      await back.waitFor({state:'visible',timeout:15000});
+      await back.click();
+      await visibleRoute(page,'#/sos',assertClean);
+      result.explicitBackVerified=true;
+    }
     if(!['client','performer','service'].includes(mode)){
       await page.goto(BASE+'/#/shop',{waitUntil:'domcontentloaded'});
       await page.getByText('Магазин доступен в клиентском кабинете или кабинете исполнителя.').waitFor({state:'visible'});
