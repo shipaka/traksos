@@ -148,12 +148,12 @@ try{
  report.push({role:'master',status:'PASS',scenarios:['selected work','status sequence','TechBase','case tabs','offers mode'],
    screenshots:['master-active-1647.png','master-en-route-1647.png','master-new-proposals-1647.png']});
  // Separate synthetic availability response: confirmed state only, timed break and on-job guard.
- let line='offline', deadline=null, failLine=false, writes=0;
+ let line='offline', deadline=null, failLine=false, writes=0, vacation=false, failVacation=false, vacationWrites=0;
  await page.route(url=>url.pathname==='/api/me',async route=>{
    if(route.request().method()!=='GET')return route.continue();
    const response=await route.fetch();
    const account=await response.json();
-   await route.fulfill({response,json:{...account,performer:{...account.performer,line_status:line,busy_until:deadline}}});
+   await route.fulfill({response,json:{...account,rating:4.82,rating_count:12,performer:{...account.performer,line_status:line,busy_until:deadline,paused:false,extras:{...account.performer.extras,vacation}}}});
  });
  await page.route(url=>url.pathname==='/api/performer/line',async route=>{
    const body=route.request().postDataJSON();writes++;
@@ -164,6 +164,12 @@ try{
    }
    line=body.lineStatus;deadline=body.busyUntil??null;
    await route.fulfill(json({line_status:line,busy_until:deadline}));
+ });
+ await page.route(url=>url.pathname==='/api/performer/extras',async route=>{
+   const body=route.request().postDataJSON();vacationWrites++;
+   assert(route.request().method()==='PUT'&&typeof body.vacation==='boolean','Incorrect vacation request');
+   if(failVacation)return route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({error:'vacation_denied',message:'Отпуск не изменён'})});
+   vacation=body.vacation;await route.fulfill(json({line_status:line,extras:{vacation}}));
  });
  await page.reload({waitUntil:'domcontentloaded'});
  const availability=page.getByLabel('Доступность исполнителя',{exact:true});
@@ -185,6 +191,22 @@ try{
  await page.waitForFunction(()=>!document.querySelector('[aria-label="Доступность исполнителя"] button')?.disabled);
  assert(await paused.isVisible(),'Rejected mutation changed displayed status');
  assert(writes===3,'Unexpected number of status writes');
+ // The rejected status write leaves the menu open; vacation is independent.
+ failLine=false;
+ await availability.getByRole('button',{name:'В отпуск',exact:true}).click();
+ const vacationStatus=availability.getByRole('button',{name:/Статус · В отпуске/});
+ await vacationStatus.waitFor();
+ await availability.getByText('Статус смены: Перерыв',{exact:true}).waitFor();
+ assert(line==='busy'&&deadline!==null&&writes===3,'Vacation overwrote timed break');
+ await vacationStatus.click();
+ failVacation=true;
+ await availability.getByRole('button',{name:'Выйти из отпуска',exact:true}).click();
+ await page.waitForFunction(()=>!document.querySelector('[aria-label="Доступность исполнителя"] button')?.disabled);
+ assert(await vacationStatus.isVisible(),'Rejected vacation change shown as success');
+ failVacation=false;
+ await availability.getByRole('button',{name:'Выйти из отпуска',exact:true}).click();
+ await paused.waitFor();
+ assert(vacationWrites===3&&!vacation&&line==='busy','Vacation return did not preserve line state');
  line='on_job';
  await page.reload({waitUntil:'domcontentloaded'});
  const locked=page.getByRole('button',{name:/Статус · На выезде/});
@@ -203,6 +225,14 @@ try{
  await mobileTrigger.click();
  await mobileAvailability.getByRole('button',{name:'На линии',exact:true}).click();
  await mobileAvailability.getByRole('button',{name:/Статус · На линии/}).waitFor();
+ await mobileAvailability.getByRole('button',{name:/Статус · На линии/}).click();
+ await mobileAvailability.getByRole('button',{name:'В отпуск',exact:true}).click();
+ const mobileVacation=mobileAvailability.getByRole('button',{name:/Статус · В отпуске/});
+ await mobileVacation.waitFor();
+ await mobileVacation.click();
+ await mobileAvailability.getByRole('button',{name:'Выйти из отпуска',exact:true}).click();
+ await mobileAvailability.getByRole('button',{name:/Статус · На линии/}).waitFor();
+ assert(vacationWrites===5&&!vacation&&line==='online','Mobile vacation return incorrect');
  await assertMasterClean('master mobile availability');
  await ctx.close();
 
