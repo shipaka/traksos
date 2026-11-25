@@ -242,3 +242,55 @@ test('конкурирующие решения владельца, повтор
     t.app.orders.event = originalEvent;
   }
 });
+
+test('параллельная замена QR и вход по старой наклейке не возвращают доступ', async () => {
+  const fleetOwner = await t.login('+79993334511');
+  const fleetDriver = await t.login('+79993334512');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  const [rotate, join] = await Promise.all([
+    t.api('POST', `/api/fleet/vehicles/${car}/new-qr`, {}, fleetOwner.token),
+    t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token),
+  ]);
+  ok(rotate);
+  assert.ok([200, 404].includes(join.status), 'вход возможен только до отзыва наклейки');
+  const final = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0];
+  assert.notEqual(final.qrCode, sticker);
+  assert.equal(final.driver, null);
+  assert.equal((await t.api('GET', `/api/qr/${sticker}`)).status, 404);
+  assert.equal((await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token)).status, 404);
+  assert.equal(ok(await t.api('GET', '/api/vehicles', undefined, fleetDriver.token)).length, 0);
+  assert.equal((await t.db.one('select owner_id from users where id=$1', [fleetDriver.id]))?.owner_id, null);
+  // The replacement sticker remains usable; revocation must not lock out a legitimate driver.
+  ok(await t.api('POST', `/api/qr/${final.qrCode}/join`, {}, fleetDriver.token));
+  assert.equal(ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].driver.id, fleetDriver.id);
+});
+
+test('две одновременные привязки водителя к разным паркам дают ровно одну машину', async () => {
+  const firstOwner = await t.login('+79993334513');
+  const secondOwner = await t.login('+79993334514');
+  const fleetDriver = await t.login('+79993334515');
+  const firstCar = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, firstOwner.token)).id;
+  const secondCar = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, secondOwner.token)).id;
+  const firstQr = ok(await t.api('GET', '/api/fleet', undefined, firstOwner.token)).cars[0].qrCode;
+  const secondQr = ok(await t.api('GET', '/api/fleet', undefined, secondOwner.token)).cars[0].qrCode;
+  const [first, second] = await Promise.all([
+    t.api('POST', `/api/qr/${firstQr}/join`, {}, fleetDriver.token),
+    t.api('POST', `/api/qr/${secondQr}/join`, {}, fleetDriver.token),
+  ]);
+  // A stale client token may fail live-role revalidation after the first conversion.
+  assert.equal([first, second].filter(r => r.status === 200).length, 1);
+  assert.ok([first, second].every(r => [200, 403, 409].includes(r.status)));
+  const winner = first.status === 200 ? firstOwner : secondOwner;
+  const winnerCar = first.status === 200 ? firstCar : secondCar;
+  const loser = first.status === 200 ? secondOwner : firstOwner;
+  const loserQr = first.status === 200 ? secondQr : firstQr;
+  const loserCar = first.status === 200 ? secondCar : firstCar;
+  assert.equal(ok(await t.api('GET', '/api/fleet', undefined, winner.token)).cars[0].driver.id, fleetDriver.id);
+  assert.equal(ok(await t.api('GET', '/api/fleet', undefined, loser.token)).cars[0].driver, null);
+  const assignments = await t.db.query('select id, owner_id from vehicles where driver_id=$1', [fleetDriver.id]);
+  assert.deepEqual(assignments.map(r => [r.id, r.owner_id]), [[winnerCar, winner.id]]);
+  assert.equal((await t.db.one('select owner_id from users where id=$1', [fleetDriver.id]))?.owner_id, winner.id);
+  assert.equal((await t.api('GET', `/api/vehicles/${loserCar}/history`, undefined, fleetDriver.token)).status, 404);
+  assert.equal((await t.api('POST', `/api/qr/${loserQr}/join`, {}, fleetDriver.token)).status, 409);
+});
