@@ -148,3 +148,11 @@ test('courier has a private role-specific training path and truthful handover se
   }
   assert.ok(courier.every(x=>x.link.startsWith('/')));
 });
+
+test('training explains settlement separately from confirming the quote',()=>{
+  const stages=Object.values(practiceStages).flat();
+  const closing=stages.find(x=>x.title==='7. В истории');
+  assert.ok(closing);
+  assert.match(closing.explanation,/после подтверждённой оплаты/);
+  assert.match(closing.explanation,/финансовых начислений здесь нет/);
+});
