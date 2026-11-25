@@ -93,6 +93,9 @@ test('запись → уточнить → готовы принять → ре
   assert.equal(item.problem, 'Ремонт на рембазе');
   assert.match(item.performer_name, /Шушары-Трак/);
   assert.equal(item.status, 'completed');
+  assert.equal(item.amount,clientBill.toPay,'История машины должна показывать итог клиентского счёта');
+  assert.equal(item.lines.reduce((sum:number,line:{amount:number})=>sum+line.amount,0),item.amount,'Строки истории должны сходиться с итогом');
+  assert.equal(item.lines.find((line:{label:string})=>line.label==='Сервисный сбор')?.amount,clientBill.clientFee);
   const c = ok(await t.api('GET', `/api/services/${centerId}`, undefined, client.token));
   assert.equal(c.rating, 5);
   assert.equal(c.reviews[0].text, 'Быстро нашли место');
