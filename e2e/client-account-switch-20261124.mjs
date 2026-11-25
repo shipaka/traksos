@@ -20,6 +20,8 @@ const api=`
  export function rub(v){return Math.round((v??0)/100)+' ₽';}
  export function fmtTime(v){return String(v??'');}
  export function fmtPhone(v){return String(v??'');}
+ // Match the account-scoped token contract used by real request guards.
+ export function getToken(){const id=window.__clientMock.user?.id;return id?'synthetic-client-token-'+id:null;}
  export function setToken(){}
  export function disconnectWs(){}
 `;
