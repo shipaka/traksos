@@ -5,6 +5,7 @@ import {useRef,useState} from 'react';
 import {get,put,post} from '../api.ts';
 import {useAction,useLoad,useMe} from '../ui.tsx';
 import './courierApproved20261120.css';
+import {CourierAvailability} from './courierAvailability.tsx';
 import {usePrivateRead} from './privateRead20261124.ts';
 
 type CourierStatus='assigned'|'picked_up'|'en_route'|'arrived'|'code_verified'|'received'|'cancelled';
@@ -52,31 +53,6 @@ function CourierProgress({status}:{status:CourierStatus}){
     </li>)}
   </ol>;
 }
-function CourierStatusSwitch(){
-  const p=useLoad<{online:boolean}>(()=>get('/api/courier/presence'),[]);
-  const {busy,run}=useAction();
-  const [retrying,setRetrying]=useState(false);
-  // A failed presence GET must not impersonate "offline" indefinitely.
-  // Let the courier recover without leaving the workspace.
-  if(p.error)return <span className="courier-presence-error" role="alert">
-    Не удалось проверить статус линии
-    <button type="button" className="courier-switch" disabled={retrying}
-      onClick={async()=>{setRetrying(true);try{await p.reload();}finally{setRetrying(false);}}}>
-      {retrying?'Проверяем…':'Повторить'}
-    </button>
-  </span>;
-  return <button type="button" role="switch" className={'courier-switch'+(p.data?.online?' is-on':'')}
-    aria-label="Доступность курьера для новых доставок"
-    aria-checked={!!p.data?.online} disabled={busy||!p.data}
-    onClick={async()=>{
-      const result=await run(()=>put('/api/courier/presence',{online:!p.data?.online}),
-        p.data?.online?'Вы не на линии':'Вы на линии');
-      if(result)p.reload();
-    }}>
-    <span aria-hidden="true" className="courier-presence-dot"/>
-    {p.data?(p.data.online?'На линии':'Не на линии'):'Проверяем статус…'} <span aria-hidden="true" className="courier-switch-track"/>
-  </button>;
-}
 function CourierJobLink({job,focus=false}:{job:CourierJob;focus?:boolean}){
   const itemCount=job.items.reduce((n,i)=>n+(i.qty||0),0);
   const url='#/courier/jobs/'+encodeURIComponent(job.id);
@@ -103,7 +79,7 @@ export function CourierDesk({section='home'}:{section?:'home'|'jobs'|'chat'}={})
   const current=active[0];
   const packages=active.reduce((n,j)=>n+j.items.reduce((s,i)=>s+(i.qty||0),0),0);
   return <main className="courier-android" aria-label="Рабочий кабинет курьера TrakSOS">
-    <div className="courier-role"><b><span className="courier-role-parcel" aria-hidden="true"><CourierParcelGlyph/></span> Курьер TrakSOS</b><CourierStatusSwitch/></div>
+    <div className="courier-role"><b><span className="courier-role-parcel" aria-hidden="true"><CourierParcelGlyph/></span> Курьер TrakSOS</b><CourierAvailability/></div>
     <h1>{section==='jobs'?'Мои доставки':section==='chat'?'Связь по доставкам':'Рабочий стол'}</h1>
     {section==='chat'?<>
       <p className="courier-muted">Сообщения с получателем пока не подключены. Вопросы по доставке решает поддержка TrakSOS — без раскрытия личных телефонов.</p>
