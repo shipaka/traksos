@@ -5,11 +5,11 @@ import type { AuthUser } from '../src/http/router.ts';
 import { professionalTechAccess,effectiveTechRoles,verifiedRepairPerformer,verifiedWorkshop,requireProfessionalTechAccess } from '../src/domain/techbaseAccess.ts';
 import {bindingsForCard,discoverCard,bindingEvidenceComplete,type TechBinding} from '../src/domain/techbaseApplicability.ts';
 const actor=(roles:string[],status='active'):AuthUser=>({id:'x',phone:'',name:null,roles,status,owner_id:null});
-function db(verification:string){return {one:async()=>({verification}),query:async()=>[]} as unknown as Queryable}
+function db(verification:string){return {one:async()=>({roles:['admin','moderator','master','service','client','driver','tow','insurer'],repair_approved:verification==='approved',workshop_approved:verification==='approved'}),query:async()=>[]} as unknown as Queryable}
 test('staff read access is independent of performer approval; ordinary specialists must be verified',async()=>{
  for(const roles of [['admin'],['moderator'],['admin','master'],['moderator','master']]){
   assert.equal(await professionalTechAccess(db('pending'),actor(roles)),true);
-  assert.deepEqual(await effectiveTechRoles(db('pending'),actor(roles)),roles);
+  assert.deepEqual(await effectiveTechRoles(db('pending'),actor(roles)),roles.filter(r=>r!=='master'));
   assert.equal(await verifiedRepairPerformer(db('pending'),actor(roles)),false);
   assert.equal(await professionalTechAccess(db('approved'),actor(roles,'blocked')),false);
  }
@@ -40,11 +40,27 @@ test('one canonical image is discoverable through multiple independently evidenc
 });
 
 test('verified workshop can read without a mobile performer profile, but a pending or blocked center cannot',async()=>{
- const fixture=(status:string)=>({one:async(sql:string)=>sql.includes('service_centers')?{verification:status}:null}) as unknown as Queryable;
+ const fixture=(status:string)=>({one:async()=>({roles:['service'],repair_approved:false,workshop_approved:status==='approved'})}) as unknown as Queryable;
  assert.equal(await verifiedRepairPerformer(fixture('approved'),actor(['service'])),false);
  assert.equal(await verifiedWorkshop(fixture('approved'),actor(['service'])),true);
  assert.equal(await professionalTechAccess(fixture('approved'),actor(['service'])),true);
  assert.equal(await professionalTechAccess(fixture('pending'),actor(['service'])),false);
  assert.equal(await professionalTechAccess(fixture('approved'),actor(['service'],'blocked')),false);
  assert.equal(await professionalTechAccess(fixture('approved'),actor(['client'])),false);
+});
+
+test('live role revocation, independent approvals and deleted accounts fail closed',async()=>{
+ const fixture=(roles:string[],repair_approved:boolean,workshop_approved:boolean)=>({
+  one:async()=>({roles,repair_approved,workshop_approved})
+ }) as unknown as Queryable;
+ const hybrid=actor(['master','service']);
+ const oldMaster=actor(['master']);
+ assert.equal(await professionalTechAccess(fixture(['service'],true,false),hybrid),false);
+ assert.equal(await verifiedRepairPerformer(fixture(['service'],true,true),hybrid),false);
+ assert.equal(await professionalTechAccess(fixture(['service'],true,true),hybrid),true);
+ assert.deepEqual(await effectiveTechRoles(fixture(['service'],true,true),hybrid),['service']);
+ assert.equal(await professionalTechAccess(fixture(['master'],false,true),hybrid),false);
+ assert.equal(await professionalTechAccess(fixture(['master','service'],false,true),oldMaster),false);
+ assert.equal(await professionalTechAccess(fixture(['client'],true,true),actor(['admin'])),false);
+ assert.equal(await professionalTechAccess({one:async()=>null} as unknown as Queryable,hybrid),false);
 });
