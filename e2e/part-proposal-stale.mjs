@@ -31,6 +31,7 @@ const bundle=await build({
    export const useLoad=()=>({data:{refs:[]},reload:()=>{}});
    export function useAction(){const [busy,setBusy]=useState(false);return {busy,run:async fn=>{setBusy(true);try{return await fn();}finally{setBusy(false);}}};}`,
    api:`export const getToken=()=>window.__part.token;
+   export const onEvent=()=>()=>{};
    export const get=path=>new Promise((resolve,reject)=>window.__part.reads.push({path,resolve,reject}));
    export const post=(path,body)=>new Promise(resolve=>window.__part.writes.push({path,body,resolve}));
    export const rub=p=>String(p);export const fmtTime=t=>t;`
