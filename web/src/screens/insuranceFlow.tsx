@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
-import {authedImage,fmtTime,get,post,rub} from '../api.ts';
+import {authedImage,fmtTime,get,getToken,post,rub} from '../api.ts';
 import {go,useAction,useLoad,useMe,Loading} from '../ui.tsx';
 import { INSURANCE_STAGES, insurancePresentation, insuranceStepIndex } from '../insurancePresentation.ts';
 
@@ -76,6 +76,8 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
   const [consent,setConsent]=useState(false);
   const {busy,run}=useAction();
   const submission=useRef(false);
+  const alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
   const [submitError,setSubmitError]=useState(false);
   useEffect(()=>{
     if(!me?.name)return;
@@ -102,7 +104,7 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
     return null;
   };
   const validateStep=(index:number)=>{
-    if(index===0&&!agentId){
+    if(index===0&&(!agentId||!!agents.error||!agents.data?.some(a=>a.id===agentId))){
       reportError(0,'agent','Выберите страхового агента.');return false;
     }
     if(index===1&&(!applicant.lastName.trim()||!applicant.firstName.trim())){
@@ -111,6 +113,9 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
       return false;
     }
     if(index===2){
+      if(vehicles.error||!vehicles.data||(selectedVehicleId&&!vehicle)){
+        reportError(2,'garageVehicle','Не удалось подтвердить выбранный автомобиль. Выберите машину из гаража или новый автомобиль.');return false;
+      }
       const missing=missingVehicleField();
       if(missing){
         const label=VEHICLE_FIELDS.find(([key])=>key===missing)?.[1]?.replace(' *','')??'поле';
@@ -131,19 +136,21 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
   };
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault();
-    if(submission.current)return;
+    if(submission.current||submitError||busy)return;
     for(const index of [0,1,2,3]){
       if(!validateStep(index))return;
     }
     setValidationError(null);
     setSubmitError(false);
     submission.current=true;
+    const token=getToken();
     try{
     const result=await run(()=>post<{id:string}>('/api/vehicle-service-requests',{
       kind:'insurance',...(selectedVehicleId?{vehicleId:selectedVehicleId}:{}),comment,
       insurance:{agentId,consentToPartner:true,details:{applicant,vehicle:truck}},
     }),'Заявка отправлена выбранному страховому агенту');
-    if(result)go('insurance/request/'+result.id);
+    if(!alive.current||getToken()!==token)return;
+    if(result?.id)go('insurance/request/'+result.id);
     else setSubmitError(true);
     }finally{submission.current=false;}
   };
@@ -154,10 +161,10 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
       <p>Выберите агента, проверьте свои данные и сведения о технике. Предложения и готовый полис придут в переписку по этой заявке.</p>
     </section>
     <div className="banner" role="note">Страховой агент оформляет документы вручную. Расчёт и выпуск полиса через API страховой компании пока не подключены.</div>
-    {(!vehicles.data||!agents.data)?<section className="card stack" role="status">
+    {(!vehicles.data||!agents.data||vehicles.error||agents.error)?<section className="card stack" role="status">
       <Loading error={vehicles.error||agents.error}/>
       {(vehicles.error||agents.error)&&<button className="btn ghost" type="button"
-        onClick={()=>{if(!vehicles.data)void vehicles.reload();if(!agents.data)void agents.reload();}}>
+        onClick={()=>{if(!vehicles.data||vehicles.error)void vehicles.reload();if(!agents.data||agents.error)void agents.reload();}}>
         Повторить загрузку данных
       </button>}
     </section>:
@@ -203,7 +210,7 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
       {step===2&&<section className="card stack">
         <span className="insurance-step-title">03 · Что страхуем</span><h2>Грузовой автомобиль</h2>
         <label>Автомобиль из гаража (необязательно)
-          <select className="field" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
+          <select className="field" data-insurance-field="garageVehicle" value={selectedVehicleId} onChange={e=>setSelectedVehicleId(e.target.value)}>
             <option value="">Новый автомобиль — заполню данные ниже</option>
             {vehicles.data.map(v=><option key={v.id} value={v.id}>
               {[v.brand,v.model,v.year,v.plate,v.vin ? 'VIN '+String(v.vin).slice(-6) : ''].filter(Boolean).join(' · ')}
@@ -240,11 +247,11 @@ function InsuranceApplicationForAccount({vehicleId}:{vehicleId:string}){
           data-insurance-field="consent" aria-invalid={validationError?.key==='consent'||undefined}
           aria-describedby={validationError?.key==='consent'?'insurance-form-error':undefined}
           onChange={e=>{setConsent(e.target.checked);setValidationError(null);}}/><span>Согласен на передачу указанных ФИО и данных грузовика выбранному страховому партнёру для обработки заявки. <a href="#/offer/privacy">Подробнее о данных</a></span></label>
-        <button className="btn insurance-main-action" type="submit" disabled={busy||!agents.data.length}>
+        <button className="btn insurance-main-action" type="submit" disabled={busy||submitError||!agents.data.length}>
           {busy?'Отправляем заявку…':'Отправить заявку страховому агенту'}
         </button>
         {busy&&<p role="status" className="note">Ожидаем подтверждение сервера. Не отправляйте заявку повторно.</p>}
-        {submitError&&<div role="alert" className="insurance-validation-alert">Не получено подтверждение отправки. Введённые данные сохранены на этом экране. Перед повтором проверьте, не появилась ли заявка в гараже, чтобы не создать дубликат.</div>}
+        {submitError&&<div role="alert" className="insurance-validation-alert">Не получено подтверждение отправки. Введённые данные сохранены на этом экране. Перед повтором проверьте, не появилась ли заявка в гараже, чтобы не создать дубликат. <a href="#/garage">Открыть гараж</a> <button type="button" className="btn ghost small" onClick={()=>setSubmitError(false)}>Проверил историю — разрешить повтор</button></div>}
       </section>}
       {step<3&&<div className="insurance-wizard-actions">
         {step>0&&<button type="button" className="btn ghost" onClick={()=>{setValidationError(null);setStep(v=>v-1);}}>Назад</button>}
