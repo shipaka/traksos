@@ -450,3 +450,47 @@ test('новая заявка автопарка требует действую
     t.app.orders.launch = originalLaunch;
   }
 });
+
+test('ожидающая подтверждения заявка, события и уведомление сохраняются атомарно', async () => {
+  const fleetOwner = await t.login('+79993334524');
+  const fleetDriver = await t.login('+79993334525');
+  const car = ok(await t.api('POST', '/api/vehicles', { brand: 'DAF', model: 'XF' }, fleetOwner.token)).id;
+  const sticker = ok(await t.api('GET', '/api/fleet', undefined, fleetOwner.token)).cars[0].qrCode;
+  ok(await t.api('POST', `/api/qr/${sticker}/join`, {}, fleetDriver.token));
+  ok(await t.api('PUT', '/api/fleet', { mode: 'approve' }, fleetOwner.token));
+  const actor = { id: fleetDriver.id, phone: '+79993334525', name: null,
+    roles: ['driver'], status: 'active', owner_id: fleetOwner.id };
+  const create = () => t.app.orders.create(actor, { service: 'consult', vehicleId: car }, 'fleet-approval-atomic-20261125');
+  const originalEvent = t.app.orders.event;
+  const originalDelivery = t.app.notifier.deliverStored;
+  let deliveries = 0;
+  try {
+    t.app.orders.event = async (...args) => {
+      if (args[3] === 'owner_approval_requested') throw new Error('synthetic approval event failure');
+      return originalEvent.apply(t.app.orders, args);
+    };
+    await assert.rejects(create, /synthetic approval event failure/);
+    assert.equal((await t.db.query('select id from orders where client_id=$1 and created_by=$2', [fleetOwner.id, fleetDriver.id])).length, 0);
+    assert.equal((await t.db.query("select id from notifications where user_id=$1 and title='Водитель просит подтвердить заказ'", [fleetOwner.id])).length, 0);
+    t.app.orders.event = originalEvent;
+    t.app.notifier.deliverStored = async (...args) => {
+      if (args[1].type === 'order' && args[1].status === 'awaiting_owner') {
+        deliveries++;
+        throw new Error('synthetic postcommit delivery failure');
+      }
+      return originalDelivery.apply(t.app.notifier, args);
+    };
+    const first = (await create()).order;
+    assert.equal(first.status, 'awaiting_owner');
+    const replay = (await create()).order;
+    assert.equal(replay.id, first.id);
+    assert.equal(deliveries, 1);
+    const events = await t.db.query("select type from order_events where order_id=$1 and type in ('created','owner_approval_requested') order by id", [first.id]);
+    assert.deepEqual(events.map(e => e.type), ['created','owner_approval_requested']);
+    const inbox = await t.db.query("select id from notifications where user_id=$1 and data->>'orderId'=$2 and title='Водитель просит подтвердить заказ'", [fleetOwner.id, first.id]);
+    assert.equal(inbox.length, 1);
+  } finally {
+    t.app.orders.event = originalEvent;
+    t.app.notifier.deliverStored = originalDelivery;
+  }
+});

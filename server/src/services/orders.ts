@@ -277,6 +277,13 @@ export class OrdersService {
     // budget check and INSERT commit. The separate statements see the
     // preceding committed reservation at PostgreSQL READ COMMITTED.
     // Lock assignment before the driver row, matching QR's lock order.
+    const createdEvent = { estimate: est, sos: !!i.isSos,
+      continuationOf: previous?.id ?? null, parallel:!!i.parallelWith };
+    const approvalNotice = (orderId: string, reason: string) => ({
+      kind: 'normal' as const, title: 'Водитель просит подтвердить заказ',
+      body: `${SERVICE_TITLE[i.service] ?? i.service} · ${(est.callOut / 100).toLocaleString('ru-RU')} ₽ — ${reason}`,
+      data: { orderId },
+    });
     const { order, gate, reused } = await this.db.tx(async (q) => {
       if (user.owner_id) {
         const owner = await q.one(`select id from users where id=$1 and status='active' and deleted_at is null
@@ -321,6 +328,16 @@ export class OrdersService {
           actorId:user.id,approvedAt:this.now().toISOString(),secondCallOut:est.callOut,
           paymentMethod:method,independentCharge:true} : null, i.recommendationId ?? null, !!i.verifiedOnly],
       );
+      // Pending approval must be discoverable even if the process stops
+      // immediately after committing the order. Store all durable effects
+      // in the same transaction, with no network calls under the fleet lock.
+      if (order && gate) {
+        await this.event(q, order.id, user.id, 'created', createdEvent);
+        await this.event(q, order.id, user.id, 'owner_approval_requested', { reason: gate });
+        const msg = approvalNotice(order.id, gate);
+        await q.query('insert into notifications(user_id,kind,title,body,data) values ($1,$2,$3,$4,$5)',
+          [clientId, 'order', msg.title, msg.body, msg.data]);
+      }
       return { order, gate, reused: false };
     }).catch(async (e: any) => {
       // Unique violations abort the transaction. Read the winning row
@@ -339,8 +356,7 @@ export class OrdersService {
     });
     if (reused) return reuse(order!);
     if (!order) throw forbidden('Вы больше не закреплены за машиной этого автопарка');
-    await this.event(this.db, order.id, user.id, 'created', { estimate: est, sos: !!i.isSos,
-      continuationOf: previous?.id ?? null, parallel:!!i.parallelWith });
+    if (!gate) await this.event(this.db, order.id, user.id, 'created', createdEvent);
     if (i.parallelWith) {
       await this.event(this.db, previous!.id, user.id, 'parallel_tow_requested',
         {towOrderId:order!.id,acknowledgedCallOut:est.callOut});
@@ -351,9 +367,14 @@ export class OrdersService {
     }
 
     if (gate) {
-      await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
-      await this.notifier.notify([clientId], { type: 'order', orderId: order!.id, status: 'awaiting_owner' },
-        { kind: 'normal', title: 'Водитель просит подтвердить заказ', body: `${SERVICE_TITLE[i.service] ?? i.service} · ${(est.callOut / 100).toLocaleString('ru-RU')} ₽ — ${gate}`, data: { orderId: order!.id } });
+      // Inbox and events already committed. An optional delivery failure
+      // must not turn the saved request into an apparent failed creation.
+      try {
+        await this.notifier.deliverStored([clientId], { type: 'order', orderId: order.id, status: 'awaiting_owner' },
+          approvalNotice(order.id, gate));
+      } catch {
+        console.warn('[fleet] approval request live delivery failed', order.id);
+      }
       return { order: await this.view(user, order!.id), confirmationUrl: null };
     }
     return this.launch(user, order);
