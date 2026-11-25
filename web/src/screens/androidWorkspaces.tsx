@@ -13,6 +13,7 @@ import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { vehicleReferencePhoto } from '../vehiclePhotoCatalog.ts';
 import { NavGlyph } from '../navGlyph.tsx';
 import { OrderPhotoCapture } from './orderPhotos.tsx';
+import { ownRatingLabel, type OwnRating } from '../ownRating.ts';
 
 /** Render a single role dashboard per viewport, rather than hiding a live component tree with CSS. */
 export function useMobileWorkspace() {
@@ -248,10 +249,10 @@ export function AndroidClientWorkspace({ orders, loading, error, me, retry, insu
 }
 
 export function AndroidPerformerWorkspace({ performer, active, auctions, online, busy, setLine, balance,
-  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false }: {
+  reloadAuctions, reloadJobs, todayCount=0, pendingReview=0, reviewOnly=false, accountRating }: {
   performer: any; active: any[]; auctions: any[]; online: boolean; busy: boolean;
   setLine: (status: string) => void; balance: any; reloadAuctions: () => void;
-  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean;
+  reloadJobs?: () => void; todayCount?: number; pendingReview?: number; reviewOnly?:boolean; accountRating?:OwnRating|null;
 }) {
   const tow = performer.kind === 'tow';
   const inJob = performer.line_status === 'on_job';
@@ -283,7 +284,7 @@ export function AndroidPerformerWorkspace({ performer, active, auctions, online,
     <div className="and19-cover"><h1>Рабочий стол</h1></div>
     <div className="and19-metrics">
       <a href="#/work/jobs"><NavGlyph glyph="clipboard"/><span><small>Сегодня</small><strong>{todayCount} заяв.</strong></span></a>
-      <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{performer.rating != null ? Number(performer.rating).toFixed(1).replace('.',',') : '—'}</strong></span></a>
+      <a href="#/work/me/level"><NavGlyph glyph="star"/><span><small>Рейтинг</small><strong>{ownRatingLabel(accountRating)}</strong></span></a>
       <a href="#/work/me/money"><NavGlyph glyph="coins"/><span><small>К выплате</small><strong>{balance?.to_pay != null ? rub(balance.to_pay) : '—'}</strong></span></a>
     </div>
     {active.length ? <section className="and19-panel and19-main-order">
