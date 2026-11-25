@@ -68,6 +68,46 @@ try{
       assert.equal(await page.getByRole('region',{name:'Активные записи на СТО'}).count(),0,
         device+': current-only STO section must not appear in History');
       await page.screenshot({path:`${OUT}/client-orders-history-${device}.png`});
+
+      // Real calendar API on the same authenticated customer; fixture only
+      // for deterministic UI states and failed/late network responses below.
+      const real=await get('/api/client/calendar?from=2026-12-02&to=2026-12-08');
+      assert.equal(real.timezone,'Europe/Moscow');
+      assert.ok(Array.isArray(real.items));
+      let failCalendar=false;
+      await page.route('**/api/client/calendar?*',async route=>{
+        if(failCalendar)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Тестовый отказ'})});
+        const q=new URL(route.request().url()).searchParams;
+        const day=q.get('from');
+        return route.fulfill({json:{timezone:'Europe/Moscow',from:day,to:q.get('to'),truncated:false,items:[
+          {id:'test-sto',kind:'service',number:999,service:'electric',day,brand:'DAF',model:'XF',requested_time:'11:00',confirmed_time:null,confirmation:'pending'},
+          {id:'test-reservation',kind:'roadside',number:archivedOrders[0].number,service:archivedOrders[0].service,day,brand:'DAF',model:'XF',starts_at:day+'T09:00:00Z',ends_at:day+'T10:00:00Z',order_id:archivedOrders[0].id,confirmation:'confirmed'}
+        ]}});
+      });
+      await page.getByRole('tab',{name:'Календарь',exact:true}).click();
+      const calendar=page.getByRole('region',{name:'Календарь заявок'});
+      await calendar.getByLabel('Начало периода').fill('2026-12-02');
+      await page.waitForURL('**/#/orders/calendar/2026-12-02');
+      await calendar.getByText('Желаемое время: 11:00').waitFor();
+      await calendar.getByText('Ожидает подтверждения',{exact:true}).waitFor();
+      await calendar.getByText('Подтверждено',{exact:true}).waitFor();
+      await calendar.getByRole('button',{name:'7 дней →',exact:true}).click();
+      await page.waitForURL('**/#/orders/calendar/2026-12-09');
+      await calendar.getByText('Подтверждено',{exact:true}).waitFor();
+      await calendar.locator('a[href="#/order/'+archivedOrders[0].id+'"]').click();
+      await page.waitForURL('**/#/order/'+archivedOrders[0].id);
+      await page.goBack();
+      await page.waitForURL('**/#/orders/calendar/2026-12-09');
+      await calendar.getByText('Подтверждено',{exact:true}).waitFor();
+      failCalendar=true;
+      await calendar.getByRole('button',{name:'Обновить календарь'}).click();
+      await calendar.getByRole('alert').waitFor();
+      assert.equal(await calendar.getByText('Подтверждено',{exact:true}).count(),0,'failed read must clear old private results');
+      failCalendar=false;
+      await calendar.getByRole('button',{name:'Повторить загрузку календаря'}).click();
+      await calendar.getByText('Подтверждено',{exact:true}).waitFor();
+      await page.screenshot({path:`${OUT}/client-calendar-${device}.png`});
+
     }finally{await ctx.close()}
   }
   console.log('PASS: current SOS and STO bookings separated with real counts; closed orders only in history.');

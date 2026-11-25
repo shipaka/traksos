@@ -24,7 +24,7 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
     select * from (
       select 'service' as kind, b.id, b.number, b.status, b.need as service,
         b.vehicle_id, b.vehicle->>'brand' as brand, b.vehicle->>'model' as model,
-        b.when_day::text as day, b.when_time as requested_time,
+        to_char(b.when_day, 'YYYY-MM-DD') as day, b.when_time as requested_time,
         case when b.status='expected' then b.accept_time else null end as confirmed_time,
         null::timestamptz as starts_at, null::timestamptz as ends_at,
         case when b.status='expected' then 'confirmed'
@@ -41,7 +41,7 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
       union all
       select 'roadside' as kind, r.id, o.number, r.status, o.service,
         o.vehicle_id, o.brand, o.model,
-        ((r.starts_at at time zone 'Europe/Moscow')::date)::text as day,
+        to_char(r.starts_at at time zone 'Europe/Moscow', 'YYYY-MM-DD') as day,
         null::text as requested_time, null::text as confirmed_time,
         r.starts_at, r.ends_at,
         case when r.status='confirmed' then 'confirmed' when r.status in ('cancelled','completed') then r.status else 'pending' end,
@@ -54,7 +54,7 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
           where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=o.client_id and v.id=o.vehicle_id
         )))
         -- Do not call a cancelled or otherwise terminal order a live appointment.
-        and (r.status in ('cancelled','completed') or o.status not in ('cancelled','completed'))
+        and (r.status in ('cancelled','completed') or o.status not in ('cancelled','completed','no_performer'))
     ) calendar
     order by day, coalesce(confirmed_time, requested_time, ''), starts_at nulls first, kind, id
     limit 501`, [user.id, from, to]);

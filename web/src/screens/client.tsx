@@ -15,6 +15,7 @@ import { ApprovedServiceIllustration } from '../approvedServiceIllustration.tsx'
 import { ApprovedOrderTruck } from '../approvedOrderTruck.tsx';
 import { AndroidClientWorkspace, useMobileWorkspace } from './androidWorkspaces.tsx';
 import { usePrivateRead } from './privateRead20261124.ts';
+import { ClientCalendar } from './clientCalendar.tsx';
 
 // Главная: «Что случилось?» и услуги — как в демо --------------------------
 
@@ -963,8 +964,10 @@ function NewOrderForAccount({service}:{service:string}) {
 
 // Мои заявки ----------------------------------------------------------------
 
-export function Orders({as}:{as:'client'|'performer'}) {
+export function Orders({as,calendarDate}:{as:'client'|'performer';calendarDate?:string}) {
   const {me}=useMe();
+  if(as==='client'&&calendarDate!==undefined)
+    return <ClientCalendar key={me?.id??'guest'} userId={me?.id??'guest'} date={calendarDate}/>;
   return <OrdersForAccount key={(me?.id??'guest')+':'+as} as={as} userId={me?.id??'guest'}/>;
 }
 function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
@@ -989,6 +992,7 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
           {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (
             <button key={k} className="chip" role="tab" aria-pressed={ctab === k} onClick={() => setCtab(k)}>{n}</button>
           ))}
+          <button type="button" className="chip" role="tab" aria-pressed={false} onClick={()=>go('orders/calendar')}>Календарь</button>
         </div>
       )}
       {list.error&&<section className="card stack" role="alert">

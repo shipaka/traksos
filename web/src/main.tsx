@@ -437,7 +437,7 @@ function App() {
       ? <PerformerOrderWindow id={b} initialTab={(['order','client','finance','chat','history','vehicle'].includes(route[2] ?? '') ? route[2] as 'order'|'client'|'finance'|'chat'|'history'|'vehicle' : 'order')} />
       : <Order id={b} />; break;
     case 'ecu-handoff': screen = <EcuHandoffPage id={b??''} />; break;
-    case 'orders': screen = isCustomer ? <Orders as="client" /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
+    case 'orders': screen = isCustomer ? <Orders as="client" calendarDate={b==='calendar' ? (route[2]??'') : undefined} /> : <main><div className="empty">Нет доступа к клиентским заявкам</div></main>; break;
     case 'garage': screen = isCustomer ? <Garage focusVehicleId={b} /> : <main><div className="empty">Нет доступа к гаражу</div></main>; break;
     case 'profile': screen = <Profile />; break;
     case 'menu': screen = <main className="tr-mobile-menu-route" />; break;
