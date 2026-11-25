@@ -272,9 +272,28 @@ export class OrdersService {
       (generalFreeAtCreation ? 0 : null);
 
     // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
-    const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
-    let reused = false;
-    const order = await this.db.one(
+    // Hold the same owner row used by fleet settings updates until the
+    // budget check and INSERT commit. The separate statements see the
+    // preceding committed reservation at PostgreSQL READ COMMITTED.
+    // Lock assignment before the driver row, matching QR's lock order.
+    const { order, gate, reused } = await this.db.tx(async (q) => {
+      if (user.owner_id) {
+        const owner = await q.one('select id from users where id=$1 for no key update', [clientId]);
+        if (!owner) throw forbidden('Автопарк больше недоступен');
+        const vehicle = await q.one(`select id from vehicles where owner_id=$1 and driver_id=$2
+          and ($3::uuid is null or id=$3) order by id limit 1 for share`, [clientId, user.id, i.vehicleId ?? null]);
+        const driver = await q.one(`select id from users where id=$1 and owner_id=$2
+          and 'driver'=any(roles) for share`, [user.id, clientId]);
+        if (!vehicle || !driver) throw forbidden('Вы больше не закреплены за машиной этого автопарка');
+        // A same-key replay waiting behind another fleet creation must
+        // not be rejected by a newly exhausted limit or changed settings.
+        if (requestKey) {
+          const prior = await q.one('select * from orders where created_by=$1 and create_request_key=$2', [user.id, requestKey]);
+          if (prior) return { order: prior, gate: null, reused: true };
+        }
+      }
+      const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut, q) : null;
+      const order = await q.one(
       `insert into orders(client_id, created_by, vehicle_id, service, is_sos, problem, description, address, lat, lng,
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
@@ -298,12 +317,16 @@ export class OrdersService {
         i.parallelWith ? {sourceOrderId:previous.id,sourceNumber:previous.number,
           actorId:user.id,approvedAt:this.now().toISOString(),secondCallOut:est.callOut,
           paymentMethod:method,independentCharge:true} : null, i.recommendationId ?? null, !!i.verifiedOnly],
-    ).catch(async (e: any) => {
+      );
+      return { order, gate, reused: false };
+    }).catch(async (e: any) => {
+      // Unique violations abort the transaction. Read the winning row
+      // only after rollback, outside the failed transaction.
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
           'select * from orders where created_by=$1 and create_request_key=$2',
           [user.id,requestKey]);
-        if (prior) { reused = true; return prior; }
+        if (prior) return { order: prior, gate: null, reused: true };
       }
       if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
         throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
@@ -356,24 +379,24 @@ export class OrdersService {
   }
 
   /** null — можно сразу; строка — почему нужно подтверждение владельца; запрещено — ошибка */
-  async fleetGate(user: AuthUser, service: string, amount: number): Promise<string | null> {
-    const owner = await this.db.one<{ fleet: any }>('select fleet from users where id=$1', [user.owner_id]);
+  async fleetGate(user: AuthUser, service: string, amount: number, q: Queryable = this.db): Promise<string | null> {
+    const owner = await q.one<{ fleet: any }>('select fleet from users where id=$1', [user.owner_id]);
     const f = owner?.fleet ?? {};
     const kind = service === 'consult' ? 'consult' : service === 'tow' ? 'tow' : 'repair';
     if (f.allow?.[kind] === false) throw forbidden(kind === 'tow' ? 'Владелец не разрешил вызывать эвакуатор — только SOS' : kind === 'consult' ? 'Владелец не разрешил консультации' : 'Владелец не разрешил вызывать мастера — только SOS');
     if (f.mode === 'approve') return 'всё через владельца';
     if (f.perOrder != null && amount > f.perOrder) return `дороже лимита на заказ ${(f.perOrder / 100).toLocaleString('ru-RU')} ₽`;
     if (f.perMonth != null) {
-      const spent = await this.monthSpent(user.id, user.owner_id!);
-      if (spent + amount > f.perMonth) return `сверх лимита на месяц ${(f.perMonth / 100).toLocaleString('ru-RU')} ₽`;
+      const spent = await this.monthSpent(user.id, user.owner_id!, q);
+      if (BigInt(spent) + BigInt(amount) > BigInt(f.perMonth)) return `сверх лимита на месяц ${(f.perMonth / 100).toLocaleString('ru-RU')} ₽`;
     }
     return null;
   }
 
-  async monthSpent(driverId: string, ownerId: string) {
+  async monthSpent(driverId: string, ownerId: string, q: Queryable = this.db) {
     // A driver's previous fleet must never contribute to a new fleet's budget.
     // Widen before addition and aggregation; pg returns bigint/numeric as text.
-    const r = await this.db.one<{ s: string }>(
+    const r = await q.one<{ s: string }>(
       `select coalesce(sum(coalesce(call_out_amount::bigint, (estimate->>'callOut')::bigint, 0) + coalesce(work_amount::bigint, 0)), 0)::text as s from orders
         where created_by=$1 and client_id=$2 and status not in ('cancelled','no_performer','awaiting_owner')
           and created_at >= date_trunc('month', now() at time zone 'Europe/Moscow') at time zone 'Europe/Moscow'`, [driverId, ownerId]);
