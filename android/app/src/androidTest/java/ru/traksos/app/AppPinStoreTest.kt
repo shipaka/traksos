@@ -20,6 +20,40 @@ class AppPinStoreTest {
     @Before fun setUp() = AppPinStore.clear(ctx)
     @After fun cleanUp() = AppPinStore.clear(ctx)
 
+    @Test fun backupPoliciesExcludeAllPrivateStorageForCloudAndDeviceTransfer() {
+        assertEquals(0, ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_ALLOW_BACKUP)
+        val domains = setOf("root", "file", "database", "sharedpref", "external",
+            "device_root", "device_file", "device_database", "device_sharedpref")
+        fun readPolicy(resource: Int): Map<String, Set<String>> {
+            val sections = mutableMapOf<String, MutableSet<String>>()
+            val xml = ctx.resources.getXml(resource)
+            var section = ""
+            try {
+                while (xml.eventType != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                    if (xml.eventType == org.xmlpull.v1.XmlPullParser.START_TAG) {
+                        when (xml.name) {
+                            "full-backup-content", "cloud-backup", "device-transfer" -> {
+                                section = xml.name
+                                sections.getOrPut(section) { mutableSetOf() }
+                            }
+                            "include" -> fail("Unexpected backup include")
+                            "exclude" -> {
+                                assertEquals(".", xml.getAttributeValue(null, "path"))
+                                assertTrue(section.isNotEmpty())
+                                sections.getValue(section).add(xml.getAttributeValue(null, "domain"))
+                            }
+                        }
+                    }
+                    xml.next()
+                }
+            } finally { xml.close() }
+            return sections
+        }
+        assertEquals(mapOf("full-backup-content" to domains), readPolicy(R.xml.traksos_backup_rules))
+        assertEquals(mapOf("cloud-backup" to domains, "device-transfer" to domains),
+            readPolicy(R.xml.traksos_data_extraction_rules))
+    }
+
     @Test fun setupRequiresFourDigitsAndBindsAccount() {
         assertFalse(AppPinStore.create(ctx, "123", "account-A"))
         assertFalse(AppPinStore.create(ctx, "12345", "account-A"))
