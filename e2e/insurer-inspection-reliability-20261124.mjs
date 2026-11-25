@@ -103,6 +103,74 @@ try{
   await finish(Q,q,'resolve',[caseRow('two','INSURER-B')]);
   await finish(V,v,'resolve',inspectionPage([visit('inspect-B','B-PLATE')]));
   await finish(F,f,'resolve',finance('123456'));
+  // Keep the four approved milestone cards, but never count an accepted
+  // request as new merely because its coarse service status is unchanged.
+  const overview=page.locator('.and20-partner-stats .and20-partner-stat strong');
+  const assertOverview=async(expected)=>{
+    await page.waitForFunction(values=>JSON.stringify(
+      [...document.querySelectorAll('.and20-partner-stats .and20-partner-stat strong')]
+        .map(x=>x.textContent?.trim()))===JSON.stringify(values),expected);
+    assertion(JSON.stringify(await overview.allTextContents())===JSON.stringify(expected),
+      'Incorrect insurer milestone counters: '+expected.join(','));
+  };
+  const assertQueue=async(expected)=>{
+    await page.waitForFunction(values=>JSON.stringify(
+      [...document.querySelectorAll('.insurer-insurance-metrics .tile-value')]
+        .map(x=>x.textContent?.trim()))===JSON.stringify(values),expected);
+  };
+  const refreshInsurance=async()=>{
+    const qi=await n(Q),vi=await n(V),fi=await n(F);
+    await page.evaluate(()=>window.__partnerMock.subscribers.forEach(fn=>fn({type:'vehicle_service'})));
+    await wait(Q,qi+1);await wait(V,vi+1);await wait(F,fi+1);
+    await finish(V,vi,'resolve',inspectionPage([visit('inspect-B','B-PLATE')]));
+    await finish(F,fi,'resolve',finance('123456'));
+    return qi;
+  };
+  await assertOverview(['1','0','0','0']);
+  await assertQueue(['1','1','0','0']);
+  for(const [stage,status,counters,queue] of [
+    ['preparing','sent_to_partner',['0','1','0','0'],['1','0','1','0']],
+    ['offers_sent','sent_to_partner',['0','0','1','0'],['1','0','1','0']],
+    ['selected','sent_to_partner',['0','0','0','0'],['1','1','0','0']],
+    ['processing','sent_to_partner',['0','0','0','0'],['1','0','1','0']],
+    ['policy_sent','completed',['0','0','0','1'],['1','0','0','1']],
+  ]){
+    const next=await refreshInsurance();
+    await finish(Q,next,'resolve',[{...caseRow('two','INSURER-B'),insurance_stage:stage,status}]);
+    await assertOverview(counters);
+    await assertQueue(queue);
+  }
+  // Legacy cases and stale terminal stages must not double count.
+  const mixed=[
+    {...caseRow('legacy-new','LEGACY'),insurance_stage:null},
+    {...caseRow('legacy-done','LEGACY-DONE'),insurance_stage:null,status:'completed'},
+    {...caseRow('rejected','REJECTED'),insurance_stage:'received',status:'rejected'},
+    {...caseRow('cancelled','CANCELLED'),insurance_stage:'policy_sent',status:'cancelled'},
+    {...caseRow('preparing','PREPARING'),insurance_stage:'preparing'},
+    {...caseRow('sent','SENT'),insurance_stage:'offers_sent'},
+    {...caseRow('selected','SELECTED'),insurance_stage:'selected'},
+    {...caseRow('processing','PROCESSING'),insurance_stage:'processing'},
+  ];
+  await page.setViewportSize({width:1440,height:900});
+  let next=await refreshInsurance();
+  await finish(Q,next,'resolve',mixed);
+  await assertOverview(['1','1','1','1']);
+  await assertQueue(['8','2','3','3']);
+  // An unreadable queue is unknown, not a confirmed empty queue.
+  next=await refreshInsurance();
+  await assertOverview(['—','—','—','—']);
+  await finish(Q,next,'reject','offline insurance');
+  await page.getByRole('button',{name:'Повторить загрузку заявок'}).waitFor();
+  await assertOverview(['—','—','—','—']);
+  await page.getByRole('button',{name:'Повторить загрузку заявок'}).click();
+  await wait(Q,next+2);
+  await finish(Q,next+1,'resolve',[]);
+  await assertOverview(['0','0','0','0']);
+  await page.setViewportSize({width:390,height:844});
+  next=await refreshInsurance();
+  await finish(Q,next,'resolve',[caseRow('two','INSURER-B')]);
+  await assertOverview(['1','0','0','0']);
+
   await page.getByRole('button',{name:'Финансы'}).click();
   await page.getByText(/1\s*234,56\s*₽/).first().waitFor();
   const q1=await n(Q),v1=await n(V),f1=await n(F);
