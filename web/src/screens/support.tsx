@@ -1,7 +1,8 @@
 // Поддержка: список обращений, переписка, новое обращение (по заявке или без). Для сотрудников — то же, плюс «Закрыть».
 
 import { useEffect, useRef, useState } from 'react';
-import { get, post, fmtTime, fmtPhone, onEvent, rub } from '../api.ts';
+import { get, post, fmtTime, fmtPhone, onEvent, rub, getToken } from '../api.ts';
+import { takeAirDraft } from '../airSupportDraft.ts';
 
 const ENTRY_KIND: Record<string, string> = {
   earning: 'Начислено за заявку', payout: 'Выплата', adjustment: 'Корректировка', refund_charge: 'Удержание за возврат',
@@ -56,10 +57,10 @@ export function SupportNew() {
   const { me } = useMe();
   const orderId = new URLSearchParams(location.hash.split('?')[1] ?? '').get('order') ?? undefined;
   // Never carry a previous account's support draft into another identity.
-  return <SupportNewSession key={(me?.id ?? 'guest') + ':' + (orderId ?? '')} orderId={orderId} />;
+  return <SupportNewSession key={(me?.id ?? 'guest') + ':' + (orderId ?? '') + ':' + (getToken()??'')} orderId={orderId} owner={me?.id??'guest'} token={getToken()} />;
 }
 
-function SupportNewSession({ orderId }: { orderId?: string }) {
+function SupportNewSession({ orderId,owner,token }: { orderId?: string;owner:string;token:string|null }) {
   const alive = useSupportSessionAlive();
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
@@ -69,10 +70,22 @@ function SupportNewSession({ orderId }: { orderId?: string }) {
   const sendingRef = useRef(false);
   const [topic, setTopic] = useState('');
   const [text, setText] = useState('');
+  const [recipient,setRecipient]=useState<'admin'|'moderator'|null>(null);
+  const loadedDraft=useRef(false);
+  useEffect(()=>{
+    if(loadedDraft.current)return;
+    loadedDraft.current=true;
+    const draft=takeAirDraft(owner,token);
+    if(draft&&!orderId&&token&&getToken()===token){
+      setText(draft.text);
+      setRecipient(draft.recipient);
+    }
+  },[owner,token,orderId]);
   return (
     <main>
       <Back to={orderId ? `order/${orderId}` : 'support'} />
       <h1>{orderId ? 'Позвать поддержку' : 'Написать в поддержку'}</h1>
+      {recipient && <p className="note" role="status">Личное обращение: вы указали {recipient==='admin'?'администратора':'модератора'}. Текст не опубликован в эфире. Обращение поступит в общую приватную очередь поддержки; выберите тему и подтвердите отправку.</p>}
       {topics.error && <div className="stack" role="alert">
         <span className="note">Не удалось загрузить темы обращений: {topics.error}</span>
         <button type="button" className="btn ghost small" onClick={() => void topics.reload()}>Повторить загрузку тем</button>
@@ -82,13 +95,13 @@ function SupportNewSession({ orderId }: { orderId?: string }) {
         <button type="button" key={t} className="chip" disabled={busy} aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
       <textarea className="field" aria-label="Описание проблемы" maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
       <button type="button" className="btn" disabled={busy || !topics.data?.includes(topic) || text.trim().length < 3} onClick={async () => {
-        if (sendingRef.current) return;
+        if (sendingRef.current || !token || getToken()!==token) return;
         sendingRef.current = true;
         try {
           const r = await run(() => post('/api/support', {
             topic, text: text.trim(), orderId
           }), 'Обращение зарегистрировано');
-          if (r && alive.current) location.replace(`#/support/${r.id}`);
+          if (r && alive.current && getToken()===token) location.replace(`#/support/${r.id}`);
           // If the mobile response was lost, do not erase the draft. The user
           // can inspect the list before deliberately retrying a new ticket.
         } finally { sendingRef.current = false; }
