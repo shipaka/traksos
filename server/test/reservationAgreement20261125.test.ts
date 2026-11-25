@@ -93,3 +93,67 @@ test('invalid, past and legacy intervals fail closed',async()=>{
   const legacy=await t.db.one<any>("insert into performer_time_reservations(performer_id,client_id,starts_at,ends_at) values($1,$2,$3,$4) returning id",[master.id,client.id,first.startsAt,first.endsAt]);
   await assert.rejects(service.select(master,legacy.id,1,first),code('not_found'));
 });
+
+async function confirmed(actor:typeof client,input:typeof first,key:string){
+  const r=await service.request(actor,master.id,input,key);
+  await service.select(master,r.id,1,input);
+  return service.confirm(actor,r.id,2);
+}
+test('reschedule retains original span until both parties confirm the current version',async()=>{
+  const a=await confirmed(client,first,'move_request_00001');
+  const asked=await service.proposeMove(client,a.id,3,alternative);
+  assert.equal(asked.move_state,'proposed');
+  assert.equal(asked.status,'confirmed');
+  assert.equal(new Date(asked.starts_at).toISOString(),'2026-12-03T08:00:00.000Z');
+  await assert.rejects(service.confirmMove(client,a.id,4),code('reservation_state'));
+  await assert.rejects(service.proposeMove(other,a.id,4,alternative),code('forbidden'));
+  const agreed=await service.proposeMove(master,a.id,4,alternative);
+  assert.equal(agreed.move_state,'selected');
+  await assert.rejects(service.confirmMove(client,a.id,4),code('reservation_changed'));
+  await assert.rejects(service.confirmMove(master,a.id,5),code('forbidden'));
+  const [x,y]=await Promise.all([service.confirmMove(client,a.id,5),service.confirmMove(client,a.id,5)]);
+  assert.equal(x.id,a.id);
+  assert.equal(y.agreement_version,6);
+  assert.equal(new Date(x.starts_at).toISOString(),'2026-12-03T10:00:00.000Z');
+  assert.equal(x.move_state,null);
+  const events=await t.db.query<any>("select event_type from performer_time_reservation_events where reservation_id=$1 and event_type='move_confirmed'",[a.id]);
+  assert.equal(events.length,1);
+  await service.cancel(client,a.id,6,'Отмена тестовой записи');
+});
+
+test('conflicting move rolls back without releasing original reservation; withdrawing move keeps it',async()=>{
+  const a=await confirmed(client,first,'move_request_00002');
+  const b=await confirmed(other,alternative,'move_request_00003');
+  const proposed=await service.proposeMove(master,a.id,3,alternative);
+  await assert.rejects(service.confirmMove(client,a.id,4),code('reservation_overlap'));
+  const row=await t.db.one<any>('select * from performer_time_reservations where id=$1',[a.id]);
+  assert.equal(row.status,'confirmed');
+  assert.equal(row.move_state,'selected');
+  assert.equal(row.agreement_version,4);
+  assert.equal(new Date(row.starts_at).toISOString(),'2026-12-03T08:00:00.000Z');
+  const stillBlocked=await service.request(other,master.id,first,'move_request_00004');
+  await service.select(master,stillBlocked.id,1,first);
+  await assert.rejects(service.confirm(other,stillBlocked.id,2),code('reservation_overlap'));
+  await assert.rejects(service.withdrawMove(other,a.id,4),code('forbidden'));
+  const withdrawn=await service.withdrawMove(master,a.id,proposed.agreement_version);
+  assert.equal(withdrawn.move_state,null);
+  assert.equal(withdrawn.status,'confirmed');
+  assert.equal((await service.withdrawMove(master,a.id,4)).agreement_version,5);
+  await assert.rejects(service.confirmMove(client,a.id,4),code('reservation_changed'));
+  await service.cancel(client,a.id,5,'Отмена исходной записи');
+  await service.cancel(other,b.id,3,'Отмена второй записи');
+  await service.cancel(other,stillBlocked.id,2,'Отмена предложения');
+});
+
+test('cancel of confirmed appointment clears pending move, but never changes another reservation',async()=>{
+  const a=await confirmed(client,first,'move_request_00005');
+  const b=await confirmed(other,alternative,'move_request_00006');
+  await service.proposeMove(master,a.id,3,alternative);
+  const cancelled=await service.cancel(client,a.id,4,'Отмена записи с переносом');
+  assert.equal(cancelled.status,'cancelled');
+  assert.equal(cancelled.move_state,null);
+  assert.equal(cancelled.move_starts_at,null);
+  assert.equal((await t.db.one<any>('select status from performer_time_reservations where id=$1',[b.id]))?.status,'confirmed');
+  await assert.rejects(service.confirmMove(client,a.id,4),code('reservation_changed'));
+  await service.cancel(other,b.id,3,'Отмена тестовой записи');
+});

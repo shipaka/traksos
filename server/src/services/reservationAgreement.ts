@@ -9,6 +9,9 @@ type Row={
   requested_starts_at:Date|string|null;requested_ends_at:Date|string|null;
   agreement_version:number;status:string;request_key:string|null;
   selected_by:string|null;decided_by:string|null;
+  move_state:'proposed'|'selected'|null;
+  move_starts_at:Date|string|null;move_ends_at:Date|string|null;
+  move_actor_id:string|null;
 };
 type Actor={id:string};
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -151,6 +154,96 @@ export class ReservationAgreement {
       throw e;
     }
   }
+
+  // A confirmed reservation stays confirmed, with its original reserved_span,
+  // throughout negotiation. Client requests; master selects or counteroffers;
+  // master may also initiate a selected proposal. Neither action moves the slot.
+  async proposeMove(actor:Actor,id:string,expected:number,input:Span){
+    version(expected);const [start,end]=span(input);
+    return this.locked(id,actor,'either',async(q,row)=>{
+      await this.parties(q,row.client_id,row.performer_id);
+      const state=actor.id===row.performer_id?'selected':'proposed';
+      if(row.status==='confirmed'&&row.agreement_version===expected+1&&
+        row.move_state===state&&row.move_actor_id===actor.id&&
+        same(row.move_starts_at,start)&&same(row.move_ends_at,end))return row;
+      this.changed(row,expected);
+      if(row.status!=='confirmed')throw conflict('reservation_state','Перенос доступен только для подтверждённой записи');
+      this.future(new Date(row.starts_at));
+      this.future(start);
+      if(same(row.starts_at,start)&&same(row.ends_at,end))
+        throw bad('reservation_same_time','Выберите другое время');
+      const next=(await q.one<Row>(`update performer_time_reservations set
+        move_state=$2,move_starts_at=$3,move_ends_at=$4,move_actor_id=$5,
+        updated_at=$6,agreement_version=agreement_version+1
+        where id=$1 returning *`,[id,state,start,end,actor.id,this.now()]))!;
+      await this.event(q,next,actor.id,state==='selected'?'move_performer_selected':'move_client_requested',row.status,
+        {startsAt:start,endsAt:end,previousStart:row.starts_at,previousEnd:row.ends_at,version:next.agreement_version});
+      return next;
+    });
+  }
+
+  // Client accepts the exact replacement selected by the performer.
+  // Updating the same row avoids a moment with zero or two reservations.
+  // The exclusion constraint checks the new span against ALL other confirmed
+  // spans; rollback preserves the old interval and pending proposal on conflict.
+  async confirmMove(actor:Actor,id:string,expected:number){
+    version(expected);
+    try{
+      return await this.locked(id,actor,'client',async(q,row)=>{
+        await this.parties(q,row.client_id,row.performer_id);
+        // A generic confirmed row is NOT proof of a successful retry. Check
+        // the version-specific event persisted in the same transaction.
+        if(row.status==='confirmed'&&row.agreement_version===expected+1&&row.move_state===null){
+          const prior=await q.one(`select 1 from performer_time_reservation_events
+            where reservation_id=$1 and actor_id=$2 and event_type='move_confirmed'
+            and details->>'version'=$3 limit 1`,[id,actor.id,String(expected+1)]);
+          if(prior)return row;
+        }
+        this.changed(row,expected);
+        if(row.status!=='confirmed'||row.move_state!=='selected'||row.move_actor_id!==row.performer_id||
+          !row.move_starts_at||!row.move_ends_at)
+          throw conflict('reservation_state','Мастер ещё не согласовал новое время');
+        this.future(new Date(row.starts_at));
+        this.future(new Date(row.move_starts_at));
+        if(await this.orders.busyWith(q,row.performer_id,null))
+          throw conflict('performer_busy','Текущий выезд не завершён; перенос пока нельзя подтвердить');
+        const next=(await q.one<Row>(`update performer_time_reservations set
+          starts_at=move_starts_at,ends_at=move_ends_at,
+          move_state=null,move_starts_at=null,move_ends_at=null,move_actor_id=null,
+          selected_by=$2,selected_at=$3,decided_by=$4,decision_at=$3,updated_at=$3,
+          agreement_version=agreement_version+1 where id=$1 returning *`,
+          [id,row.performer_id,this.now(),actor.id]))!;
+        await this.event(q,next,actor.id,'move_confirmed',row.status,
+          {previousStart:row.starts_at,previousEnd:row.ends_at,startsAt:next.starts_at,endsAt:next.ends_at,version:next.agreement_version});
+        return next;
+      });
+    }catch(e){
+      if((e as {code?:string})?.code==='23P01')throw conflict('reservation_overlap','Новое время занято; исходная запись сохранена');
+      throw e;
+    }
+  }
+
+  // Withdraw only the proposed move, never the appointment itself.
+  async withdrawMove(actor:Actor,id:string,expected:number){
+    version(expected);
+    return this.locked(id,actor,'either',async(q,row)=>{
+      if(row.status==='confirmed'&&row.agreement_version===expected+1&&row.move_state===null){
+        const prior=await q.one(`select 1 from performer_time_reservation_events
+          where reservation_id=$1 and actor_id=$2 and event_type='move_withdrawn'
+          and details->>'version'=$3 limit 1`,[id,actor.id,String(expected+1)]);
+        if(prior)return row;
+      }
+      this.changed(row,expected);
+      if(row.status!=='confirmed'||!row.move_state)
+        throw conflict('reservation_state','Нет предложения переноса');
+      const next=(await q.one<Row>(`update performer_time_reservations set
+        move_state=null,move_starts_at=null,move_ends_at=null,move_actor_id=null,
+        updated_at=$2,agreement_version=agreement_version+1 where id=$1 returning *`,[id,this.now()]))!;
+      await this.event(q,next,actor.id,'move_withdrawn',row.status,{version:next.agreement_version});
+      return next;
+    });
+  }
+
   // Only this negotiation is released; a blocked pair may still cancel.
   async cancel(actor:Actor,id:string,expected:number,reason:string){
     version(expected);
@@ -160,7 +253,8 @@ export class ReservationAgreement {
       this.changed(row,expected);
       if(!['proposed','selected','confirmed'].includes(row.status))throw conflict('reservation_state','Запись уже завершена');
       const next=(await q.one<Row>(`update performer_time_reservations set status='cancelled',cancelled_at=$2,
-        cancellation_reason=$3,updated_at=$2,agreement_version=agreement_version+1 where id=$1 returning *`,[id,this.now(),reason.trim()]))!;
+        cancellation_reason=$3,updated_at=$2,move_state=null,move_starts_at=null,move_ends_at=null,move_actor_id=null,
+        agreement_version=agreement_version+1 where id=$1 returning *`,[id,this.now(),reason.trim()]))!;
       await this.event(q,next,actor.id,'cancelled',row.status,{reason:reason.trim()});
       return next;
     });

@@ -17,3 +17,15 @@ pricing/offer terms, dispatch at the confirmed time, durable notifications, expi
 and atomic reschedule retaining the original confirmed slot until replacement.
 Current conservative rule blocks confirmation while an unbounded active order
 exists. This is not the final duration policy. Do not deploy separately.
+
+## Reschedule (internal draft)
+
+The same confirmed row keeps its original reserved_span while pending move metadata
+is proposed by the customer or selected/counteroffered by the performer. The
+customer must confirm the exact current version. An atomic update replaces the
+span without changing the reservation ID; exclusion violation rolls back all
+changes and leaves the original reservation intact. Either party can withdraw
+only the pending move, and cancelling the appointment clears pending metadata.
+The audit retains both intervals and versions. Moves require original and new
+start times in the future; handling late appointments is a separate workflow.
+Still no HTTP routes, live notification delivery, linked order lifecycle or UI.
