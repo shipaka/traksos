@@ -157,7 +157,26 @@ try {
     if(mode==='performer'){
       const desk=page.locator('.and19-performer');
       await desk.waitFor({state:'visible'});
-      if(!await desk.locator('.and19-line button').count())throw Error(role+': availability control missing');
+      const ratingResponse=await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
+      if(!ratingResponse.ok)throw Error(role+': own rating profile unavailable');
+      const account=await ratingResponse.json();
+      const ratingText=await desk.locator('.and19-metrics a[href="#/work/me/level"] strong').innerText();
+      if(account.rating_count===0&&ratingText!=='Пока нет оценок')throw Error(role+': missing no-ratings state');
+      if(account.rating_count>0&&Number.isFinite(account.rating)&&!ratingText.includes(account.rating.toFixed(1).replace('.',',')+' · '+account.rating_count+' '))
+        throw Error(role+': rating is not from current account');
+      const availability=desk.locator('.and19-line .performer-mobile-availability');
+      if(await availability.count()!==1)throw Error(role+': expected one shared availability control');
+      const trigger=availability.getByRole('button',{name:/Статус ·/});
+      if(await trigger.isEnabled()){
+        await trigger.click();
+        for(const name of ['На линии','На звонке','Не на линии','Перерыв · выбрать время'])
+          await availability.getByRole('button',{name,exact:true}).waitFor({state:'visible'});
+        await availability.getByRole('button',{name:'Перерыв · выбрать время',exact:true}).click();
+        await availability.getByRole('button',{name:'15 мин',exact:true}).waitFor();
+        await trigger.click();
+        if(await availability.getByRole('button',{name:'15 мин',exact:true}).count())throw Error(role+': duration options not collapsed');
+      }
+      if(await availability.locator('a[href="#/work/me/schedule"]').count()!==1)throw Error(role+': schedule link missing');
       if(!await desk.locator('a[href="#/work/jobs"]').count())throw Error(role+': jobs path missing');
     }
     const tabs=page.locator('.tabbar a');

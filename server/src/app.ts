@@ -121,7 +121,7 @@ export function createApp(d: Deps) {
   const trakbot = new TrakBotService(d.db);
   const driverAir = new DriverAirService(d.db, now);
   const technicalCases = new TechnicalCasesService(d.db);
-  const reviews = new ReviewsService(d.db, settings, orders);
+  const reviews = new ReviewsService(d.db, settings, orders, userId => notifier.live([userId], { type: 'rating_changed' }));
   const onsite = new OnsiteService(d.db, notifier, orders);
   const offers = new OffersService(d.db, notifier, now, settings);
   const documents = new DocumentsService(d.db, notifier, settings, now);

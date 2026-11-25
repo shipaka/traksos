@@ -10,7 +10,14 @@ export const REVIEW_TAGS = {
 };
 
 export class ReviewsService {
-  constructor(private db: Db, private settings: SettingsService, private orders: OrdersService) {}
+  constructor(private db: Db, private settings: SettingsService, private orders: OrdersService,
+    private ratingChanged: (userId: string) => void = () => {}) {}
+
+  /** A refresh hint is best-effort and must never turn a committed review into a failed HTTP response. */
+  private signalRatingChanged(userId: string) {
+    try { this.ratingChanged(userId); }
+    catch { console.warn('[reviews] rating refresh hint failed'); }
+  }
 
 
   private async currentAuthor(q: Queryable, user: AuthUser) {
@@ -34,7 +41,7 @@ export class ReviewsService {
     // A review, recalculated reputation and the immutable order event are one
     // action. Serialize ratings for the same target across different orders.
     try {
-      return await this.db.tx(async q=>{
+      const result = await this.db.tx(async q=>{
         const current=await q.one<{status:string;client_id:string;created_by:string;
           performer_id:string|null;vehicle_id:string|null}>(
           'select status,client_id,created_by,performer_id,vehicle_id from orders where id=$1 for share',
@@ -66,6 +73,8 @@ export class ReviewsService {
         await this.orders.event(q,orderId,user.id,'review',{stars:r.stars,target});
         return {ok:true,weight};
       });
+      this.signalRatingChanged(target);
+      return result;
     } catch(e:any){
       if(e.code==='23505')throw conflict('already_reviewed','Отзыв по этой заявке уже оставлен');
       throw e;
@@ -119,7 +128,7 @@ export class ReviewsService {
   /** Модератор: оспорить / скрыть */
   async moderate(actor: AuthUser, reviewId: string, p: { disputed?: boolean; hidden?: boolean }) {
     if(!actor.roles.some(role=>role==='admin'||role==='moderator'))throw forbidden();
-    return this.db.tx(async q=>{
+    const result = await this.db.tx(async q=>{
       const current=await this.currentAuthor(q,actor);
       if(!current.roles.some(role=>role==='admin'||role==='moderator'))throw forbidden();
       const existing=await q.one<{target_id:string}>(
@@ -133,7 +142,9 @@ export class ReviewsService {
       if(!changed)throw conflict('review_changed','Отзыв был изменён');
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [actor.id,'review.moderate',reviewId,p]);
-      return this.recompute(changed.target_id,q);
+      return { target: changed.target_id, rating: await this.recompute(changed.target_id,q) };
     });
+    this.signalRatingChanged(result.target);
+    return result.rating;
   }
 }

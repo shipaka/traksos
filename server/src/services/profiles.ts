@@ -159,7 +159,8 @@ export class ProfilesService {
     const outside = s.lineStatus === 'online' && slot(p.schedule, this.now()) !== 'work';
     await this.db.query(
       `update performer_profiles set line_status = coalesce($2::text, line_status),
-         busy_until = case when $2::text = 'busy' then $3::timestamptz else null end,
+         -- Pausing is independent of the timed break; a partial update must retain its deadline.
+         busy_until = case when $2::text is null then busy_until when $2::text = 'busy' then $3::timestamptz else null end,
          off_schedule_until = case when $2::text = 'online' then $5::timestamptz when $2::text = 'offline' then null else off_schedule_until end,
          paused = coalesce($4::boolean, paused), missed_in_row = case when $2::text = 'online' then 0 else missed_in_row end, updated_at = now()
        where user_id=$1`,
