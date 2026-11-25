@@ -1,13 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import type { Db } from '../db/index.ts';
-import { bad, forbidden, type AuthedCtx, type AuthUser, Raw, parse, type Router } from './router.ts';
+import { bad, conflict, forbidden, notFound, type AuthedCtx, type AuthUser, Raw, parse, type Router } from './router.ts';
 import type { SettingsService } from '../services/settings.ts';
 import { PublicVehicleDirectory, type CatalogPurpose } from '../services/publicVehicleDirectory.ts';
 import { VehicleMissingQueue } from '../services/vehicleMissingQueue.ts';
 import { VehicleTechnicalLibrary } from '../services/vehicleTechnicalLibrary.ts';
 import { VehicleHelpAvailability } from '../services/vehicleHelpAvailability.ts';
 import { publicVehicleCard, publicRecoveryGallery } from '../services/vehicleOwnerShelf.ts';
+import { normalizeAlias } from '../domain/vehicleReference.ts';
 
 const purpose = z.enum(['garage','master','tow','service','insurance','parts','admin']);
 const category = z.enum(['passenger','truck','trailer','van','bus']);
@@ -77,6 +78,40 @@ export function registerVehicleReferenceRoutes(
       await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
         [c.user.id,'vehicle.catalog_added',row.id,{category:record.category,
           brandKey:record.brandKey,modelKey:record.modelKey,sourceVersion:record.sourceVersion}]);
+      return row;
+    });
+  });
+
+  // Link a legacy garage record without rewriting its identity or history.
+  // Corrections to a different make/model require a separate verified workflow.
+  r.patch('/api/vehicle-reference/vehicles/:id/catalog',true,async(c:AuthedCtx)=>{
+    if(c.user.status!=='active'||c.user.owner_id||!c.user.roles.includes('client')||c.user.roles.includes('driver'))
+      throw forbidden('Подтвердить каталог может только владелец автопарка');
+    const id=parse(z.string().uuid(),c.params.id);
+    const selection=parse(z.object({
+      category:z.enum(['truck','trailer','van','bus']),
+      brandKey:z.string().min(2).max(64),
+      modelKey:z.string().min(2).max(64),
+    }).strict(),c.body);
+    return db.tx(async q=>{
+      const car=await q.one<any>(
+        'select * from vehicles where id=$1 and owner_id=$2 for update',[id,c.user.id]);
+      if(!car)throw notFound('Машина не найдена в вашем гараже');
+      const record=await dir.resolve(selection.category,selection.brandKey,selection.modelKey);
+      if(normalizeAlias(car.brand)!==normalizeAlias(record.brand)||
+        normalizeAlias(car.model??'')!==normalizeAlias(record.model))
+        throw conflict('catalog_identity_mismatch','Марка и модель должны точно совпадать с существующей карточкой. Для исправления данных обратитесь в поддержку.');
+      const current=[car.catalog_category,car.catalog_brand_key,car.catalog_model_key];
+      if(current.some(Boolean)){
+        if(current[0]===record.category&&current[1]===record.brandKey&&current[2]===record.modelKey)return car;
+        throw conflict('catalog_already_linked','Машина уже привязана к каталогу; замена требует проверки');
+      }
+      const row=await q.one<any>(
+        'update vehicles set catalog_category=$3,catalog_brand_key=$4,catalog_model_key=$5,catalog_source_version=$6 where id=$1 and owner_id=$2 returning *',
+        [id,c.user.id,record.category,record.brandKey,record.modelKey,record.sourceVersion]);
+      if(!row)throw notFound('Машина не найдена');
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [c.user.id,'vehicle.catalog_linked',id,{category:record.category,brandKey:record.brandKey,modelKey:record.modelKey,sourceVersion:record.sourceVersion}]);
       return row;
     });
   });
