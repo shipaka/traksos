@@ -1,0 +1,79 @@
+name: TrakSos sandbox Android debug APK
+
+# Dedicated review build. APP_URL points to sandbox, not the production website.
+# No production deployment, signing, bank credentials, SMS, or RuStore publishing.
+on:
+  # Build from every candidate commit, including backend/docs/fee changes.
+  # Release evidence requires the web, server and APK to reference the same SHA.
+  push:
+    branches:
+      - integration/sandbox-unified-20261119
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-sandbox-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sandbox-debug-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      APP_URL: https://sandbox.traksos.ru
+      RUSTORE_PROJECT_ID: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify and package exact sandbox web revision
+        run: |
+          npm install
+          node scripts/verify-brand.mjs
+          node scripts/verify-current-policy.mjs
+          npm -w web run build
+          node scripts/verify-approved.mjs
+          rm -rf android/app/src/main/assets/www
+          mkdir -p android/app/src/main/assets/www
+          cp -a web/dist/. android/app/src/main/assets/www/
+          for obsolete in tracksos-approved-scenic-hero.webp tracksos-approved-scania-r520.webp tracksos-approved-truck.webp traksos-final-hero.webp traksos-final-insurance.webp traksos-final-parts.webp; do
+            if test -e "android/app/src/main/assets/www/$obsolete"; then
+              echo "FAIL: retired visual asset packaged in APK: $obsolete" >&2
+              exit 1
+            fi
+          done
+          test -s android/app/src/main/assets/www/index.html
+          test -s android/app/src/main/assets/www/app.js
+          test -s android/app/src/main/assets/www/app.css
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
+          test -s android/app/src/main/assets/www/tracksos-approved-hero-owner-20261119.webp
+      - name: Build sandbox-specific unsigned debug APK
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
+      - name: Confirm sandbox target and package identity
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          grep -F '"applicationId": "ru.traksos.app.preview"' android/app/build/outputs/apk/debug/output-metadata.json
+          unzip -Z1 "$APK" | grep -Fx 'assets/www/index.html'
+          sha256sum "$APK"
+          echo "## Sandbox APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Code commit: ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Backend target: https://sandbox.traksos.ru" >> "$GITHUB_STEP_SUMMARY"
+          echo "- This APK does NOT confirm that the matching version has been installed on sandbox." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traksos-sandbox-review-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error

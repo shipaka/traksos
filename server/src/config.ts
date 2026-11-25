@@ -46,13 +46,28 @@ export const config = {
     rustoreProjectId: env.RUSTORE_PROJECT_ID ?? '',
     rustoreServiceToken: env.RUSTORE_SERVICE_TOKEN ?? '',
   },
+  trakbot: {
+    // Legal/privacy review and provider configuration required before production rollout.
+    // Both switches are required: no network inference is enabled by accident.
+    llmEnabled: env.TRAKBOT_LLM_ENABLED === 'true' &&
+      (env.TRAKBOT_LLM_TRANSPORT === 'api' || env.TRAKBOT_LLM_TRANSPORT === 'local'),
+    llmTransport: env.TRAKBOT_LLM_TRANSPORT === 'api' || env.TRAKBOT_LLM_TRANSPORT === 'local'
+      ? env.TRAKBOT_LLM_TRANSPORT : 'off',
+    llmApiKey: env.TRAKBOT_LLM_API_KEY ?? '',
+    llmModel: env.TRAKBOT_LLM_MODEL ?? 'gpt-4.1-mini',
+    // Loopback only; use an SSH tunnel or local proxy for an independent GPU node.
+    llmLocalUrl: env.TRAKBOT_LLM_LOCAL_URL ?? 'http://127.0.0.1:8000/v1/chat/completions',
+  },
+  /** Tochka business invoice documents: entirely separate from live payment processing. */
+  tochkaInvoices: {
+    enabled: env.TOCHKA_INVOICE_ENABLED === 'true',
+    token: env.TOCHKA_API_TOKEN ?? '',
+    customerCode: env.TOCHKA_CUSTOMER_CODE ?? '',
+    accountId: env.TOCHKA_ACCOUNT_ID ?? '',
+  },
   payments: {
-    /** mock — тестовый сервис; yookassa — ЮKassa. Включение оплаты — в настройках площадки. */
-    provider: (env.PAYMENT_PROVIDER ?? 'mock') as 'mock' | 'yookassa',
-    yookassaShopId: env.YOOKASSA_SHOP_ID ?? '',
-    yookassaSecretKey: env.YOOKASSA_SECRET_KEY ?? '',
-    yookassaAgentId: env.YOOKASSA_AGENT_ID ?? '',
-    yookassaPayoutKey: env.YOOKASSA_PAYOUT_KEY ?? '',
+    /** Only a mock provider is valid until a NEW, separately tested Tochka settlement rail is approved. */
+    provider: 'mock' as const,
   },
 };
 
@@ -64,13 +79,15 @@ if (isProd && config.secret === 'dev-secret-change-me') {
 
 // Refuse to start the sandbox unless it is physically separate from production.
 // The sandbox never contacts SMS.ru, RuStore Push or a real payment provider.
+if (config.sandboxInstance && config.tochkaInvoices.enabled)
+  throw new Error('Real Tochka invoice API is forbidden in the isolated sandbox');
 if (config.sandboxInstance) {
   const dbName = new URL(config.databaseUrl).pathname.replace(/^\//, '').toLowerCase();
   if (!dbName.includes('sandbox') || !env.DATABASE_URL)
     throw new Error('SANDBOX_INSTANCE requires its own explicit *sandbox* PostgreSQL database');
   if (config.sms.provider !== 'log' || config.push.provider !== 'log' ||
-      config.payments.provider !== 'mock')
-    throw new Error('Sandbox external integrations must be disabled (log/log/mock)');
+      config.payments.provider !== 'mock' || config.trakbot.llmEnabled)
+    throw new Error('Sandbox external integrations and TrakBot AI must be disabled (log/log/mock/LLM off)');
   if (config.sandboxSharedSecret.length < 32)
     throw new Error('Sandbox shared secret is missing');
   if (!config.adminPhones.includes('+79000000001') ||
@@ -84,4 +101,10 @@ if (config.sandboxUrl) {
     throw new Error('SANDBOX_URL must use a separate HTTPS origin');
   if (config.sandboxSharedSecret.length < 32)
     throw new Error('SANDBOX_SHARED_SECRET is required with SANDBOX_URL');
+}
+
+// Fail closed on an obsolete provider setting rather than silently connecting a bank
+// or treating a formerly live merchant credential as approved after deployment.
+if (env.PAYMENT_PROVIDER && env.PAYMENT_PROVIDER !== 'mock') {
+  throw new Error('Устаревший PAYMENT_PROVIDER отключён. Реальные платежи через Точку ещё не подключены.');
 }

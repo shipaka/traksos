@@ -16,13 +16,13 @@ after(async () => { await t.close(); });
 test('one SOS incident has independently priced stages; duplicate and foreign continuations fail', async () => {
   const original = ok(await t.api('POST', '/api/orders', {
     service: 'electric', isSos: true, zoneId: 'spb', brand: 'Scania',
-    address: 'Трасса М-11, стоянка', description: 'Не заводится, требуется выездной электрик',
+    address: 'Санкт-Петербург, трасса М-11, стоянка', description: 'Не заводится, требуется выездной электрик',
     paymentMethod: 'cash',
   }, client.token));
   const id: string = original.order.id;
   const next = {
     service: 'tow', isSos: true, zoneId: 'spb', brand: 'Scania',
-    description: 'Эвакуация после диагностики', address: 'Трасса М-11, стоянка',
+    description: 'Эвакуация после диагностики', address: 'Санкт-Петербург, трасса М-11, стоянка',
     destination: 'Грузовой сервис в Санкт-Петербурге', cargo: 'tractor',
     paymentMethod: 'cash', continueFrom: id,
   };

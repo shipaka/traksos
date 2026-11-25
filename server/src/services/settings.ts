@@ -1,24 +1,49 @@
 import type { Db } from '../db/index.ts';
+import { legacyCashFixtureEnabled, shopFixtureEnabled, mockCheckoutFixtureEnabled, isolatedSandboxMockEnabled } from '../domain/paymentPolicy.ts';
 import { defaultSettings, type Settings, type SettingsKey } from '../domain/defaults.ts';
 
 /** Настройки площадки: значения по умолчанию + то, что поменял админ. Кэш на 5 секунд. */
 export class SettingsService {
   private cache: { at: number; value: Settings } | null = null;
+  private cacheVersion = 0;
   constructor(private db: Db) {}
 
+  private applyPolicy(merged: Pick<Settings, 'legal' | 'payments' | 'shop'>) {
+    // Brand identity is immutable even when old admin settings exist in the database.
+    merged.legal.brand = 'TrakSOS';
+    // Existing database settings cannot reactivate a cancelled cash policy.
+    merged.payments.cash = legacyCashFixtureEnabled();
+    // This build has MOCK acquiring only. No bank-confirmed online or invoice
+    // checkout can be enabled by an old DB value or stale admin interface.
+    // Only the isolated fake-user sandbox gets built-in mock checkout. Live
+    // production remains closed regardless of a restored database setting.
+    merged.payments.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.online);
+    merged.payments.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!merged.payments.invoice);
+    // An old admin toggle or restored DB must not reopen the unreleased store.
+    merged.shop.enabled = shopFixtureEnabled() && !!merged.shop.enabled;
+  }
+
   async all(): Promise<Settings> {
-    if (this.cache && Date.now() - this.cache.at < 5_000) return this.cache.value;
+    const age = this.cache ? Date.now() - this.cache.at : Infinity;
+    if (this.cache && age >= 0 && age < 5_000) return structuredClone(this.cache.value);
+    const version = this.cacheVersion;
     const rows = await this.db.query<{ key: string; value: any }>('select key, value from settings');
     const merged: any = structuredClone(defaultSettings);
     for (const r of rows) {
-      if (r.key in merged && typeof merged[r.key] === 'object' && !Array.isArray(merged[r.key])) {
+      if (Object.hasOwn(defaultSettings, r.key) && r.value !== null &&
+          typeof r.value === 'object' && !Array.isArray(r.value) &&
+          typeof merged[r.key] === 'object' && !Array.isArray(merged[r.key])) {
         merged[r.key] = { ...merged[r.key], ...r.value };
       }
     }
-    // Brand identity is immutable even when old admin settings exist in the database.
-    merged.legal.brand = 'TrakSOS';
-    this.cache = { at: Date.now(), value: merged };
-    return merged;
+    this.applyPolicy(merged);
+    // An in-flight SELECT from before a completed admin write must not
+    // repopulate the cache with a stale snapshot after set() invalidates it.
+    if (version === this.cacheVersion)
+      this.cache = { at: Date.now(), value: merged };
+    // Consumers may transform a result locally; never expose the shared
+    // cached object or its nested collections as mutable configuration.
+    return structuredClone(merged);
   }
 
   async get<K extends SettingsKey>(key: K): Promise<Settings[K]> {
@@ -26,19 +51,43 @@ export class SettingsService {
   }
 
   async set<K extends SettingsKey>(key: K, patch: Partial<Settings[K]>, actorId: string | null) {
-    if (!(key in defaultSettings)) throw new Error(`Нет такой настройки: ${key}`);
-    const current = (await this.db.one<{ value: any }>('select value from settings where key=$1', [key]))?.value ?? {};
-    const value = { ...current, ...patch };
-    if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
-    await this.db.query(
-      `insert into settings(key, value, updated_by) values ($1,$2,$3)
-       on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by`,
-      [key, value, actorId],
-    );
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [
-      actorId, 'settings.update', key, patch,
-    ]);
+    if (!Object.hasOwn(defaultSettings, key)) throw new Error(`Нет такой настройки: ${key}`);
+    // Key-level advisory lock serializes independent app instances, including
+    // the first INSERT when the settings row does not exist yet. Read/merge,
+    // policy clamps, durable value and audit must commit as ONE operation.
+    const committed = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['traksos-settings:' + key]);
+      const current = (await q.one<{ value: any }>(
+        'select value from settings where key=$1 for update', [key]))?.value ?? {};
+      const stored = current !== null && typeof current === 'object' && !Array.isArray(current) ? current : {};
+      const value = { ...stored, ...patch };
+      if (key === 'legal') (value as { brand?: string }).brand = 'TrakSOS';
+      if (key === 'payments') {
+        const v = value as { cash?: boolean; online?: boolean; invoice?: boolean };
+        v.cash = legacyCashFixtureEnabled();
+        v.online = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.online);
+        v.invoice = isolatedSandboxMockEnabled() || (mockCheckoutFixtureEnabled() && !!v.invoice);
+      }
+      if (key === 'shop')
+        (value as { enabled?: boolean }).enabled = shopFixtureEnabled() &&
+          !!(value as { enabled?: boolean }).enabled;
+      await q.query(
+        `insert into settings(key, value, updated_by) values ($1,$2,$3)
+         on conflict (key) do update set value = excluded.value,
+           updated_at = now(), updated_by = excluded.updated_by`,
+        [key, value, actorId],
+      );
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [
+        actorId, 'settings.update', key, patch,
+      ]);
+      // Return this transaction's committed section, not an unrelated later SELECT.
+      const result = structuredClone(defaultSettings);
+      Object.assign(result, { [key]: { ...result[key], ...value } });
+      this.applyPolicy(result);
+      return result[key];
+    });
+    this.cacheVersion++;
     this.cache = null;
-    return (await this.all())[key];
+    return committed;
   }
 }

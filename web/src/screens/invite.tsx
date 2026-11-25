@@ -1,6 +1,8 @@
 // «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию TrakSOS.
-import { get, fmtTime } from '../api.ts';
-import { useLoad, useToast, Loading } from '../ui.tsx';
+import { useLayoutEffect, useRef } from 'react';
+import { get, getToken, fmtTime } from '../api.ts';
+import { useToast, Loading, useMe } from '../ui.tsx';
+import { usePrivateRead } from './privateRead20261124.ts';
 import { qrSvg } from '../qr.ts';
 
 const pts = (k: number) => Math.round(k / 100).toLocaleString('ru-RU');
@@ -11,17 +13,51 @@ const KIND: Record<string, string> = {
 const WHO: Record<string, string> = { client: 'клиент', performer: 'исполнитель', service: 'рембаза' };
 
 export function Invite() {
-  const d = useLoad(() => get('/api/me/referral'), [], (e) => e.type === 'points' || e.type === 'order');
+  const {me,mode}=useMe();
+  const token=getToken();
+  if(!me||!token)return null;
+  const scope=JSON.stringify([me.id,token]);
+  return <InviteAccount key={scope} scope={scope} mode={mode} token={token} />;
+}
+
+function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string}) {
+  const d = usePrivateRead<any>(() => get('/api/me/referral'), scope, (e) => e.type === 'points' || e.type === 'order');
+  const active=useRef(true);
+  useLayoutEffect(()=>{active.current=true;return ()=>{active.current=false;};},[]);
+  const current=()=>active.current && getToken()===token;
   const toast = useToast();
-  if (!d.data) return <main><Loading error={d.error} /></main>;
+  const linkInput = useRef<HTMLInputElement>(null);
+  if (d.error) return <main><div className="card stack" role="alert"><span>Не удалось загрузить актуальные баллы и приглашения.</span><button type="button" className="btn small" onClick={()=>void d.reload()}>Повторить загрузку</button></div></main>;
+  if (!d.data) return <main><Loading /></main>;
   const r = d.data.rules;
   const link = `${location.origin}${location.pathname}#/r/${d.data.code}`;
   async function share() {
-    const text = `TrakSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку: ${link}`;
+    if(!current())return;
+    // The Web Share API adds "url" itself. Do not repeat it inside "text".
+    const text = `TrakSOS — помощь грузовикам в СПб и ЛО: мастер или эвакуатор на место. По ссылке — ${pts(r.welcome)} баллов на первую заявку.`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'TrakSOS', text, url: link });
+        return;
+      } catch (error) {
+        // Closing the native share sheet is not a failure that needs a toast.
+        if (error instanceof Error && error.name === 'AbortError') return;
+        // Other failures may be recovered by copying the visible referral URL.
+      }
+    }
+    if(!current())return;
     try {
-      if (navigator.share) await navigator.share({ title: 'TrakSOS', text, url: link });
-      else { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); }
-    } catch { /* закрыли окно «Поделиться» */ }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+        if(current())toast('Ссылка скопирована');
+        return;
+      }
+    } catch { /* Clipboard may be unavailable on HTTP or denied by the browser. */ }
+    // Never leave «Поделиться» as a dead button in restricted WebViews.
+    if(!current())return;
+    linkInput.current?.focus();
+    linkInput.current?.select();
+    toast('Не удалось скопировать автоматически. Ссылка выделена — скопируйте вручную.');
   }
   return (
     <main>
@@ -34,13 +70,18 @@ export function Invite() {
         <span className="label">Ваши баллы</span>
         <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 32 }}>{pts(d.data.balance)}</div>
         {d.data.expiringSoon > 0 && <span className="pill warn">{pts(d.data.expiringSoon)} сгорят в ближайший месяц</span>}
-        <span className="note">Гасят до {r.spendCapPct}% сбора или комиссии с каждой заявки — сами, при подтверждении суммы. Живут {Math.round(r.ttlDays / 30)} месяцев.</span>
+        <span className="note">{mode==='client'
+          ? `В клиентском заказе баллами можно покрыть не более ${r.clientSpendCapPct}% стоимости услуги и не больше самого сервисного сбора; фактическое списание ограничено остатком баллов.`
+          : mode==='performer'||mode==='service'
+            ? `Для исполнителя и СТО баллами можно покрыть не более ${r.spendCapPct}% фактически начисленной комиссии TrakSOS по одной заявке или счёту, если хватает баллов. Для выездной заявки с сохранённой акцией 0% списание баллов исполнителя равно нулю.`
+            : 'Баллы и их применение зависят от вашей роли и действующего договора. Откройте финансовые условия кабинета.'}
+          {' '}Срок действия — {r.ttlDays} дней, с учётом правила бесплатного периода.</span>
       </div>
 
       <div className="card">
         <b>Ваша ссылка</b>
         <div className="row" style={{ flexWrap: 'nowrap', gap: 6 }}>
-          <input className="field" readOnly value={link} onFocus={(e) => e.target.select()} style={{ fontSize: 13 }} />
+          <input ref={linkInput} className="field" readOnly aria-label="Ваша реферальная ссылка" value={link} onFocus={(e) => e.target.select()} style={{ fontSize: 13 }} />
           <button type="button" className="btn small" onClick={share}>Поделиться</button>
         </div>
         <details>
@@ -52,11 +93,11 @@ export function Invite() {
       <details className="card">
         <summary><b>За что баллы</b></summary>
         <div className="stack" style={{ marginTop: 8, gap: 6 }}>
-          <div className="sum"><span>Пригласили клиента</span><b>{String(r.clientSharePct).replace('.', ',')}% с его заявок · {Math.round(r.days / 30)} мес.</b></div>
+          <div className="sum"><span>Пригласили клиента</span><b>{String(r.clientSharePct).replace('.', ',')}% от фактического клиентского сервисного сбора после применения баллов · {r.days} дней</b></div>
           <div className="sum"><span>Приглашённому клиенту</span><b>{pts(r.welcome)} на первую заявку</b></div>
           <div className="sum"><span>Пригласили мастера или эвакуаторщика</span><b>{pts(r.performerReward)} после {r.performerJobs} его заявок</b></div>
           <div className="sum"><span>Пригласили рембазу</span><b>{pts(r.serviceReward)} после её первого счёта</b></div>
-          <span className="note">Баллы начисляются только за оплаченное, не за регистрацию. Ссылка работает для новых номеров. Себя пригласить нельзя.</span>
+          <span className="note">Приветственные баллы новому клиенту начисляются при регистрации по действительной реферальной ссылке. Награды пригласившему за заказы — после предусмотренного расчёта по оплаченным заказам, мастерам и СТО — по условиям соответствующей программы. Ссылка только для новых аккаунтов, самого себя приглашать нельзя.</span>
         </div>
       </details>
 
@@ -81,7 +122,7 @@ export function Invite() {
           ))}
         </div>
       )}
-      <span className="note">Баллы — скидка на услуги площадки по правилам <a href="#/offer/client">оферты</a>.</span>
+      <span className="note">Баллы — скидка на услуги площадки; ставки и примеры смотрите в разделе <a href="#/economics">«Комиссии, баллы и рефералы»</a>. Правовые условия — в оферте или договоре, относящемся к вашему кабинету.</span>
     </main>
   );
 }

@@ -1,0 +1,156 @@
+name: TrakSOS — безопасный выпуск на VPS
+run-name: "VPS release ${{ inputs.commit_sha }}"
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Полный SHA уже проверенного коммита main (40 hex)'
+        required: true
+        type: string
+      confirmation:
+        description: 'Введите RELEASE TRAKSOS для явного подтверждения ручного выпуска'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: traksos-production-release
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    steps:
+      - name: Validate release SHA
+        env:
+          TARGET_SHA: ${{ inputs.commit_sha }}
+          RELEASE_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid SHA"; exit 1; }
+          [[ "$RELEASE_CONFIRMATION" == "RELEASE TRAKSOS" ]] || {
+            echo "Confirmation phrase does not match; refusing production release."; exit 1;
+          }
+          echo "TARGET_SHA=$TARGET_SHA" >> "$GITHUB_ENV"
+
+      - name: Check out approved main at exact SHA
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Refuse non-main or outdated commit
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD)" == "$TARGET_SHA" ]] || {
+            echo "The requested release is not the current main HEAD. Aborting."; exit 1;
+          }
+
+      - name: Validate separate SSH deployment key and audited Ed25519 host pin
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST || secrets.TRAKSOS_VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER || 'root' }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS || secrets.TRAKSOS_VPS_HOST_KEY }}
+          VPS_READONLY_KEY: ${{ secrets.TRAKSOS_VPS_READONLY_KEY }}
+        run: |
+          set -euo pipefail
+          for name in VPS_HOST VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS; do
+            [[ -n "${!name}" ]] || { echo "Missing required secret: $name"; exit 1; }
+          done
+          [[ "$VPS_HOST" =~ ^[A-Za-z0-9._-]+$ ]] || { echo 'Invalid VPS host'; exit 1; }
+          [[ "$VPS_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] || { echo 'Invalid VPS user'; exit 1; }
+          # The existing audit key runs authorized_keys command="status".
+          # A separate write-capable key is mandatory.
+          [[ -z "$VPS_READONLY_KEY" || "$VPS_SSH_KEY" != "$VPS_READONLY_KEY" ]] || {
+            echo "Read-only status key cannot be used for deployment."; exit 1;
+          }
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/id_vps"
+          chmod 600 "$HOME/.ssh/id_vps"
+          ssh-keygen -y -f "$HOME/.ssh/id_vps" >/dev/null || {
+            echo "VPS_SSH_KEY is not a usable unencrypted SSH private key."; exit 1;
+          }
+          # Accept the exact pinned Ed25519 key, either bare or in known_hosts form.
+          # NEVER discover/trust the key at release time with ssh-keyscan.
+          pinned_key="$(printf '%s\n' "$VPS_KNOWN_HOSTS" | tr -d '\r' | awk '
+            NF >= 3 && $2 == "ssh-ed25519" { print $3; exit }
+            NF >= 2 && $1 == "ssh-ed25519" { print $2; exit }
+          ')"
+          [[ "$pinned_key" =~ ^[A-Za-z0-9+/]+={0,2}$ ]] || {
+            echo "Pinned Ed25519 public key missing or malformed"; exit 1;
+          }
+          printf '%s ssh-ed25519 %s\n' "$VPS_HOST" "$pinned_key" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh-keygen -lf "$HOME/.ssh/known_hosts" >/dev/null || {
+            echo "Pinned host public key failed validation"; exit 1;
+          }
+          echo "TRAKSOS_VPS_HOST=$VPS_HOST" >> "$GITHUB_ENV"
+          echo "TRAKSOS_VPS_USER=$VPS_USER" >> "$GITHUB_ENV"
+
+      - name: Deploy only fast-forwarded main with database backup and sandbox
+        run: |
+          set -euo pipefail
+          release_log="$(mktemp)"
+          trap 'rm -f "$release_log"' EXIT
+          ssh -i "$HOME/.ssh/id_vps" -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=15 \
+            "$TRAKSOS_VPS_USER@$TRAKSOS_VPS_HOST" bash -s -- "$TARGET_SHA" <<'REMOTE' | tee "$release_log"
+          set -Eeuo pipefail
+          target="$1"
+          cd /root/traksos
+          [[ "$(git rev-parse --show-toplevel)" == "/root/traksos" ]] ||
+            { echo "Unexpected checkout location; abort"; exit 1; }
+          [[ "$(git branch --show-current)" == "main" ]] ||
+            { echo "VPS is not on main; abort"; exit 1; }
+          [[ -z "$(git status --porcelain --untracked-files=no)" ]] ||
+            { echo "VPS has tracked local edits; abort"; exit 1; }
+          origin_url="$(git remote get-url origin)"
+          case "$origin_url" in
+            https://github.com/shipaka/traksos|https://github.com/shipaka/traksos.git|git@github.com:shipaka/traksos|git@github.com:shipaka/traksos.git) ;;
+            *) echo "Unexpected VPS Git origin; abort"; exit 1 ;;
+          esac
+          git fetch --no-tags origin main
+          [[ "$(git rev-parse origin/main)" == "$target" ]] ||
+            { echo "VPS origin/main differs from requested SHA; abort"; exit 1; }
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "VPS Git history is divergent/ahead. No reset, app restart or DB changes."
+            echo "VPS_HEAD=$(git rev-parse HEAD)"
+            exit 1
+          fi
+          # No reset, no cleaning untracked files, no Git hooks.
+          git -c core.hooksPath=/dev/null merge --ff-only origin/main
+          [[ "$(git rev-parse HEAD)" == "$target" ]] ||
+            { echo "Checkout mismatch"; exit 1; }
+          # update-site.sh dumps and verifies PostgreSQL before replacing app;
+          # it also tests the new image against an isolated sandbox database.
+          TRAKSOS_SANDBOX_DIR=/root/traksos-sandbox/deploy \
+            TRAKSOS_SANDBOX_PROJECT=traksos-test \
+            bash deploy/update-site.sh
+          bash deploy/doctor.sh
+          echo "TRAKSOS_RELEASE_COMPLETE=$target"
+          REMOTE
+          # authorized_keys may force a read-only "status" command that exits 0:
+          # this marker proves the real release command finished.
+          grep -Fxq "TRAKSOS_RELEASE_COMPLETE=$TARGET_SHA" "$release_log" || {
+            echo "Release completion marker absent. Not reporting a deployment."; exit 1;
+          }
+
+      - name: Verify public HTTPS after release
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 20 \
+            --retry 3 --retry-delay 2 \
+            https://traksos.ru/api/health > /tmp/traksos-health.json
+          node -e "
+            const fs=require('fs');
+            const h=JSON.parse(fs.readFileSync('/tmp/traksos-health.json','utf8'));
+            if(!h.db || h.sandbox || h.buildRevision!==process.env.TARGET_SHA) process.exit(1);
+            console.log('Production health and revision verified');
+          "

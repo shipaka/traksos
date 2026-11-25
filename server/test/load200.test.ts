@@ -236,7 +236,9 @@ test('one cash settlement and 12-way SOS continuation race reconcile across clie
  assert.equal(confirmed.status,'completed');
  assert.equal(confirmed.money.total,total);
  const workerView=ok(await t.api('GET','/api/orders/'+id,undefined,worker.token));
- assert.equal(workerView.money.total,total,'customer and master see the same agreed price');
+ assert.equal(workerView.money.total,confirmed.money.amount,'master sees price before customer fee');
+ assert.equal(workerView.money.clientFee,undefined,'customer service surcharge is private to the client');
+ assert.equal(confirmed.money.total, workerView.money.total + confirmed.money.clientFee - confirmed.money.discount);
  const balance=ok(await t.api('GET','/api/performer/balance',undefined,worker.token));
  assert.ok(balance.cash_debt>0,'cash commission owed to TrackSOS is visible to the worker');
  const ledger=await t.db.query('select sum(amount)::int as balance from ledger_entries where order_id=$1',[id]);

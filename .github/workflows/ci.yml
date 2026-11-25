@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
   workflow_dispatch:
   # 01:00 Moscow time (UTC+3). Scheduled starts can be delayed by GitHub.
   schedule:
@@ -25,15 +26,19 @@ jobs:
           POSTGRES_DB: traksos_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres -d traksos_test" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/traksos_test
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # knowledge gate checks the whole PR against the target branch
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
+      - name: Проверка конфигурации браузерных React-тестов до долгих прогонов
+        run: node scripts/verify-browser-harness-jsx.mjs
       - name: Предрелизная проверка Docker Compose и резервного копирования
         run: |
           bash -n deploy/launch.sh
@@ -51,49 +56,139 @@ jobs:
           # docker compose requires app.env_file to exist even for config-only checks.
           cp deploy/.env.example deploy/.env
           trap 'rm -f deploy/.env' EXIT
-          DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
+          TRAKSOS_RELEASE_REV="$GITHUB_SHA" DB_PASSWORD=ci-only-check APP_SECRET=ci-only-check docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet
       - name: Проверка единого бренда TrakSOS
         run: node scripts/verify-brand.mjs
+      - name: Согласованность обучения, экономики и оферт с логикой выпуска
+        run: node scripts/verify-knowledge-sync.mjs
+      - name: Проверка действующих бизнес-правил 20.11
+        run: node scripts/verify-current-policy.mjs
+      - name: Магазин — изоляция корзины между аккаунтами и целостность данных
+        run: node e2e/shop-cart-isolation-20261124.mjs
+      - name: Массовая загрузка каталога — строгая CSV валидация до записи
+        run: node e2e/catalog-import-integrity-20261124.mjs
       - name: Сервер — типы
         run: npm run typecheck
       - name: Сервер — тесты
         run: npm test
+      - name: Инвентаризация активных модулей и CSS
+        run: node scripts/audit-ui-reachability.mjs --strict
       - name: Веб — сборка
         run: npm -w web run build
+      - name: TrackSalesBot — 30 состояний и единый персонаж
+        run: node e2e/trakbot-mascot.mjs
       - name: Сверка утверждённого дизайна и комплектации
         run: node scripts/verify-approved.mjs
       - name: Сквозной сценарий в браузере и контроль интерактивности
         run: |
           npx playwright install --with-deps chromium
           psql -h 127.0.0.1 -U postgres -c 'create database traksos'
-          DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 CHECKPOINT_EVIDENCE_API_ENABLED=true npm -w server start &
-          until curl -s localhost:8080/api/health >/dev/null; do sleep 1; done
+          TRAKSOS_LEGACY_CASH_FIXTURES=1 TRAKSOS_SHOP_FIXTURES=1 TRAKSOS_PAYMENT_FIXTURES=1 DATABASE_URL=postgres://postgres@127.0.0.1:5432/traksos ADMIN_PHONES=+79990000001 MODERATOR_PHONES=+79990000147 npm -w server start > /tmp/traksos-ci-server.log 2>&1 &
+          bash scripts/ci-wait-health.sh "$!" /tmp/traksos-ci-server.log
           node e2e/public-shots.mjs e2e/shots
+          # Approved 617.png desktop is a real responsive DOM, not a design JPEG.
+          node e2e/owner20-layout-check.mjs
+          # Actual authenticated PC-workspace React actions with local test data.
+          node e2e/approved-pc-active-work.mjs
+          # Approved Android 618.png uses real role components, synthetic safe fixtures.
+          node e2e/android-apk-design-review.mjs
           node e2e/ui-smoke.mjs
+          node e2e/native-guest-layout.mjs
+          node e2e/trakbot-android-compact.mjs
+          node e2e/trakbot-session-techcodes-20261124.mjs
+          node e2e/support-account-lifecycle-20261124.mjs
           node e2e/public-service-routing.mjs
+          node e2e/legacy-guest-deeplinks.mjs
+          node e2e/api-session-race.mjs
+          # Real React admin CSV import, partial-batch retry and account-change isolation (synthetic API only).
+          node e2e/catalog-import-browser-20261124.mjs
+          # Local, synthetic, real IndexedDB; two concurrent tabs must not roll back the index.
+          node e2e/shop-offline-integrity-20261124.mjs
+          # ShopCart/ShopHistory real React: fleet owner switch, stale selection, no automatic duplicate checkout.
+          node e2e/shop-client-session-reliability-20261124.mjs
+          # Real ProductForm: reject bad photos, decode only bounded media and revoke temporary blob URL.
+          node e2e/shop-admin-photo-reliability-20261124.mjs
+          # Actual DriverAir React UI: offline, A/B account boundary, delayed polls.
+          node e2e/air-session-20261124.mjs
+          # Real STO account, finance, search and booking React; isolated synthetic transport.
+          node e2e/sto-workspace-reliability-20261124.mjs
+          # Admin payout queue must reconcile uncertain writes before another action.
+          node e2e/station-payout-reconcile-20261124.mjs
+          # Real React+Chromium; synthetic error responses, never private production media.
+          node e2e/order-photo-error-ui.mjs
+          # Sign-in, client registration and partner onboarding must stay above the approved public page.
+          node e2e/auth-overlay.mjs
+          # In-flight SMS and password responses cannot switch the user's identity.
+          node e2e/auth-session-transition-hardening-20261124.mjs
           node e2e/temporary-demo-entry.mjs
           node e2e/header-search.mjs
-          node e2e/public-shots.mjs e2e/shots
+          # public-shots already ran before visual contract checks; avoid duplicate capture.
           SHOTS_DIR=e2e/shots/public node e2e/public-layout.mjs
           node e2e/offline.mjs
           SHOTS_DIR=e2e/shots/premium-unified-client node e2e/premium-unified-client.mjs
           node e2e/flow.mjs e2e/shots
+          node e2e/sos-regional-pricing.mjs e2e/shots
+          node e2e/archived-order-chat.mjs e2e/shots
+          node e2e/client-order-sections.mjs e2e/shots
+          # Verified production private-read hook, real customer account-switch UI and order chat.
+          node e2e/client-private-read-20261124.mjs
+          node e2e/client-account-switch-20261124.mjs
+          node e2e/client-order-chat-20261124.mjs
+          node e2e/performer-request-settings.mjs e2e/shots
+          # Real performer React profile: same-route account isolation, schedule/finance and form contracts.
+          node e2e/performer-profile-20261124.mjs
+          # An unverified desktop master can work; old GPS sessions cannot leak.
+          node e2e/performer-line-session-20261124.mjs
+          node e2e/ws-ticket-url.mjs
           node e2e/admin-ops.mjs e2e/shots
           SHOTS_DIR=e2e/shots/roles node e2e/role-matrix.mjs
           SHOTS_DIR=e2e/shots/insurance node e2e/insurance-flow.mjs
+          node e2e/insurer-inspection-reliability-20261124.mjs
+          node e2e/admin-partner-finance-20261124.mjs
+          node e2e/admin-account-settings-20261124.mjs
           node e2e/insurance-locked-ui.mjs
+          # Mixed-role admin must not be covered by an inactive client offer.
+          node e2e/offer-gate-role-ui.mjs
+          # No consent while legal text is pending, failed or mismatched.
+          node e2e/offer-consent-guard.mjs
+          node e2e/economics-retry-20261124.mjs
+          # Personal data/deletion actions must not leak across account changes.
+          node e2e/privacy-account-status-20261124.mjs
           node e2e/moderator-permission-check.mjs
+          # Real moderator React queues: deep-link tabs, mobile deduplication, staff rights.
+          node e2e/moderator-workspace-tabs-20261124.mjs
+          node e2e/moderator-staff-route-20261124.mjs
+          node e2e/techbase-repair-hardening-20261124.mjs
+          node e2e/vehicle-service-history-20261124.mjs
+          # Real read-only role switching, courier training and per-account course progress.
+          # Pure read-only courier/inspection training model and every role transition.
+          node e2e/training-demo-kinds-20261124.mjs
+          # Actual courier React: network retry, delivery-id/session isolation, no real writes.
+          node e2e/courier-offline-reliability-20261124.mjs
+          # Real admin demand, SLA, notices and worker discounts under failures/account changes.
+          node e2e/ops-admin-reliability-20261124.mjs
+          node e2e/learning-role-hardening-20261124.mjs
+          node e2e/continuation-tour-role-20261124.mjs
+          node e2e/ecu-handoff-web-session-20261124.mjs
+          node e2e/roadside-map-gps-consent-20261124.mjs
           node e2e/admin-master-switch.mjs
           node e2e/staff-security.mjs
           node e2e/cabinet-navigation-audit.mjs
           node e2e/admin-navigation-ux.mjs
           node e2e/cabinet-visual-sweep.mjs
+          node e2e/android-approved-workspaces.mjs
           node e2e/cabinet-logout-and-shop.mjs
           node e2e/approved-truck-hero.mjs
           node e2e/visual-text-geometry.mjs
           node e2e/preview-login.mjs
-          # Local, disposable PostgreSQL: sandbox UI only, never production GPS.
-          node e2e/checkpoint-sandbox-ui.mjs
+      - name: Реальный вид TrakBot — ПК и телефон
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trakbot-real-chromium
+          path: e2e/shots/trakbot-proof/*.png
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Снимки экранов каждой проверяемой версии
         if: always()
         uses: actions/upload-artifact@v4

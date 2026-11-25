@@ -4,13 +4,16 @@ import type { SettingsService } from './settings.ts';
 import type { Notifier } from './notify.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { estimate, isNight, billWork, type Tier, type Extra } from '../domain/pricing.ts';
+import { assertRegionalTariff, CoverageError, type ServiceRegion } from '../domain/regionalCoverage.ts';
 import { rankCandidates, performerKindFor, type Candidate } from '../domain/dispatch.ts';
 import { transition, canDo, statusLabels, type Action, type Actor, type OrderStatus } from '../domain/orderState.ts';
-import { cancelStage, cancelSplit, pct } from '../domain/money.ts';
+import { cancelStage, cancelSplit, cappedPct, commissionPct } from '../domain/money.ts';
+import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
 import type { AuctionService } from './auction.ts';
-const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
+import type { OrderContinuationService } from './orderContinuation.ts';
+const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', hydraulics: 'Гидравлика', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
 
 export interface CreateOrderInput {
   service: string;
@@ -21,6 +24,8 @@ export interface CreateOrderInput {
   lat?: number;
   lng?: number;
   zoneId: string;
+  regionId?: ServiceRegion;
+  city?: string;
   tier?: Tier;
   vehicleId?: string;
   brand?: string;
@@ -34,11 +39,19 @@ export interface CreateOrderInput {
   loaded?: 'empty' | 'loaded' | 'adr';
   driverOnSite?: boolean;
   /** Условия на месте: тип места, пропуск, кто встретит, что с машиной, когда */
-  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string };
+  site?: { place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string;
+    road?: { highway?: string; km?: number; direction?: string; side?: 'left' | 'right' | 'unknown' } };
   /** Выезд после консультации: подсказка мастера переходит в заявку, клиенту — скидка */
   fromConsult?: string;
   /** Следующий самостоятельный этап того же обращения. */
   continueFrom?: string;
+  /** A separate tow alongside the accepted master's visit; owner explicitly acknowledges the second call-out. */
+  parallelWith?: string;
+  parallelConsent?: boolean;
+  parallelCallOut?: number;
+  recommendationId?: string;
+  preferredPerformerId?: string;
+  verifiedOnly?: boolean;
 }
 
 /** Подсказка мастера после консультации */
@@ -55,8 +68,25 @@ export interface PaymentHooks {
   assertMethodAllowed(method: string): Promise<void>;
 }
 
-const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'tow', 'consult', 'ecu'];
+const SERVICES = ['electric', 'diag', 'air', 'autonomy', 'tyre', 'hydraulics', 'tow', 'consult', 'ecu'];
 const CONSULT_DISCOUNT = 'Скидка после консультации';
+
+// Keep the server's request fingerprint consistent with web/src/api.ts.
+// JSON object property order is not part of an order's meaning. Arrays still
+// preserve order; undefined/JSON-only values are normalized as on the wire.
+function canonicalOrderRequest(body: CreateOrderInput): string {
+  const normalized = JSON.parse(JSON.stringify(body));
+  const sort = (value: any): any => {
+    if (Array.isArray(value)) return value.map(sort);
+    if (value !== null && typeof value === 'object') {
+      const output: Record<string, unknown> = {};
+      for (const key of Object.keys(value).sort()) output[key] = sort(value[key]);
+      return output;
+    }
+    return value;
+  };
+  return JSON.stringify(sort(normalized));
+}
 
 export class OrdersService {
   onDispute: ((p: { userId: string; orderId: string; text: string; targetId: string | null; title: string }) => Promise<unknown>) | null = null;
@@ -65,6 +95,7 @@ export class OrdersService {
   ops: import('./ops.ts').OpsService | null = null;
   payments!: PaymentHooks;
   auction!: AuctionService;
+  continuations!: OrderContinuationService;
 
   constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private now: () => Date = () => new Date()) {}
 
@@ -72,13 +103,22 @@ export class OrdersService {
 
   async create(user: AuthUser, i: CreateOrderInput, idempotencyKey?: string) {
     if (!SERVICES.includes(i.service)) throw bad('bad_service', 'Неизвестная услуга');
+    // The old auction-based 'ecu' type had a roadside tariff. ECU workshops
+    // cannot be assigned/charged using that contract; use free handoffs.
+    if(i.service==='ecu')throw bad('ecu_station_only',
+      'Ремонт ЭБУ — стационарная услуга. Передайте техническое заключение из заявки специалисту ЭБУ.');
     const requestKey = idempotencyKey?.trim() || null;
     if (requestKey && !/^[A-Za-z0-9._:-]{8,100}$/.test(requestKey))
       throw bad('bad_idempotency_key', 'Недопустимый ключ повторной заявки');
     const requestHash = requestKey
+      ? createHash('sha256').update(canonicalOrderRequest(i)).digest('hex') : null;
+    // Orders created before canonicalization retain the original JSON hash.
+    // An exact replay of that legacy request must continue to work.
+    const legacyRequestHash = requestKey
       ? createHash('sha256').update(JSON.stringify(i)).digest('hex') : null;
     const reuse = async (existing: { id: string; create_request_hash: string | null }) => {
-      if (!requestHash || existing.create_request_hash !== requestHash)
+      if (!requestHash || (existing.create_request_hash !== requestHash &&
+          existing.create_request_hash !== legacyRequestHash))
         throw conflict('idempotency_conflict',
           'Для изменённой заявки требуется новый ключ отправки');
       const pay = await this.db.one<{ confirmation_url: string | null }>(
@@ -93,19 +133,54 @@ export class OrdersService {
       if (previous) return reuse(previous);
     }
     const all = await this.settings.all();
-    const method = i.paymentMethod ?? 'cash';
+    const method = i.paymentMethod ?? (legacyCashFixtureEnabled() ? 'cash' : 'online');
     await this.payments.assertMethodAllowed(method);
 
     const clientId = user.owner_id ?? user.id;
-    // Previous stage must be closed; never mix its price into the next auction.
+    if (user.owner_id) {
+      // Stale membership alone may not charge an employer's fleet, even SOS.
+      const current = await this.db.one<{ok:number}>(`select 1 as ok from users u
+        join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+        where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+        limit 1`, [user.id, clientId]);
+      if (!current) throw forbidden('Водитель больше не закреплён за автопарком');
+    }
+    if(i.recommendationId){
+      // Advice is not a price acceptance: normal paid checkout follows.
+      const parentId=i.parallelWith??i.continueFrom??i.fromConsult;
+      if(!parentId)throw bad('recommendation_without_parent','Нужна исходная заявка');
+      await this.continuations.validateForOrder(user,i.recommendationId,parentId,i.service);
+    }
+    // A second tow can be explicitly parallel, while normal continuations
+    // remain sequential. Both have their own tariff, agreement and ledger.
+    if (i.parallelWith && i.continueFrom)
+      throw bad('bad_link', 'Выберите последовательное продолжение или параллельный эвакуатор');
+    if (!i.parallelWith && (i.parallelConsent || i.parallelCallOut != null))
+      throw bad('parallel_requires_source', 'Для второго выезда укажите первую заявку');
     let previous: any = null;
-    if (i.continueFrom) {
+    if (i.continueFrom || i.parallelWith) {
       if (i.fromConsult || i.service !== 'tow')
-        throw bad('bad_continuation', 'Сейчас можно продолжить выезд мастера вызовом эвакуатора');
-      previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom]);
+        throw bad('bad_continuation', 'Совместное обращение поддерживает выезд и эвакуацию');
+      previous = await this.db.one<any>('select * from orders where id=$1', [i.continueFrom ?? i.parallelWith]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
-      if (previous.status !== 'completed' || !['cause_found', 'not_found'].includes(previous.result) || previous.service === 'tow')
+      const source = await this.mustSee(user, previous.id);
+      if (this.actorOf(user, source) !== 'client')
+        throw forbidden('Продолжить можно только действующее обращение своего автопарка');
+      if (i.parallelWith) {
+        if (user.owner_id || user.roles.includes('driver'))
+          throw forbidden('Параллельный второй выезд с отдельной оплатой подтверждает владелец автопарка');
+        if (i.parallelConsent !== true || !Number.isSafeInteger(i.parallelCallOut))
+          throw bad('need_parallel_consent', 'Отдельно подтвердите стоимость второго выезда');
+        if (!['electric','diag','air','autonomy','tyre','hydraulics'].includes(previous.service) ||
+            !['accepted','en_route','arrived','working','awaiting_confirmation'].includes(previous.status))
+          throw conflict('stage_not_ready', 'Для параллельной эвакуации сначала должен быть принят выезд мастера');
+        if (previous.location_region && i.regionId !== previous.location_region)
+          throw bad('different_location', 'Регион второго выезда должен совпадать с первым');
+        if (i.zoneId !== previous.zone_id)
+          throw bad('different_location', 'Тарифная зона должна совпадать с первым этапом');
+      } else if (previous.status !== 'completed' ||
+          !['cause_found', 'not_found'].includes(previous.result) || previous.service === 'tow')
         throw conflict('stage_not_ready', 'Предыдущий этап не завершён или не требует эвакуации');
       const existing = await this.db.one('select id from orders where continuation_of=$1 and status<>$2', [previous.id, 'cancelled']);
       if (existing) throw conflict('continuation_exists', 'Следующий этап этого обращения уже оформлен');
@@ -113,8 +188,11 @@ export class OrdersService {
         throw bad('different_vehicle', 'Продолжение относится к тому же грузовику');
       i = { ...i, isSos: true, vehicleId: previous.vehicle_id ?? i.vehicleId,
         brand: previous.brand ?? i.brand, model: previous.model ?? i.model, year: previous.year ?? i.year,
-        address: i.address || previous.address, lat: i.lat ?? previous.lat, lng: i.lng ?? previous.lng,
-        description: i.description || previous.description || 'Эвакуация после выездного ремонта' };
+        address: i.parallelWith ? previous.address : i.address || previous.address,
+        lat: i.parallelWith ? previous.lat : i.lat ?? previous.lat,
+        lng: i.parallelWith ? previous.lng : i.lng ?? previous.lng,
+        description: i.description || previous.description || 'Эвакуация после выездного ремонта',
+        site: i.site ?? previous.site ?? undefined };
     }
     let brand = i.brand ?? null;
     let model = i.model ?? null;
@@ -128,10 +206,27 @@ export class OrdersService {
       model = model ?? v.model;
       year = year ?? v.year;
     }
+    // A targeted invitation is only valid for a performer who already worked
+    // for this fleet; arbitrary account IDs cannot be targeted.
+    const preferredId = i.preferredPerformerId ?? null;
+    if (preferredId) {
+      const previousHire = await this.db.one(
+        "select 1 from orders past join performer_profiles p on p.user_id=past.performer_id" +
+        " where past.client_id=$1 and past.performer_id=$2 and past.status='completed'" +
+        " and p.kind=$3 limit 1",
+        [clientId,preferredId,performerKindFor(i.service)]);
+      if (!previousHire) throw forbidden('Пригласить первым можно только ранее работавшего с вашим парком специалиста этого направления');
+    }
+    // Critical: validate the declared location independently of the price zone,
+    // before INSERT, bank hold, owner approval or dispatch. Never guess by IP.
+    try { assertRegionalTariff(i, true); }
+    catch (e) { if (e instanceof CoverageError) throw bad(e.code, e.message); throw e; }
     const isConsult = i.service === 'consult';
     const night = isConsult ? false : i.night ?? isNight(all.pricing, this.now());
     const tier = i.tier ?? 'eco';
     const est = estimate(all.pricing, { service: i.service, tier, zoneId: i.zoneId, night, group: !isConsult && !!i.groupTrip });
+    if (i.parallelWith && i.parallelCallOut !== est.callOut)
+      throw conflict('parallel_price_changed', 'Цена эвакуации изменилась. Проверьте и подтвердите новую сумму');
     const defaultFee = method === 'cash' ? (all.fees.cashChargesClientFee ? all.fees.clientFeePct : 0) : all.fees.clientFeePct;
     // Персональный сбор клиента (назначает администратор) важнее общего. Консультация — фиксированная цена, сбор уже внутри.
     const personal = await this.db.one<{ fee_pct_override: string | null }>('select fee_pct_override from users where id=$1', [clientId]);
@@ -139,11 +234,17 @@ export class OrdersService {
 
     // Выезд после консультации: та же машина, подсказка мастера, скидка — если уложились в срок и скидку ещё не брали
     let consultOf: string | null = null;
+    let consultRootId: string | null = null;
     let discount = 0;
     if (i.fromConsult && !isConsult) {
-      const c = await this.db.one<any>(`select * from orders where id=$1 and service='consult' and (client_id=$2 or created_by=$3)`, [i.fromConsult, clientId, user.id]);
-      if (!c) throw bad('bad_consult', 'Консультация не найдена');
+      const c = await this.mustSee(user, i.fromConsult);
+      if (c.service !== 'consult' || c.client_id !== clientId ||
+          this.actorOf(user, c) !== 'client')
+        throw bad('bad_consult', 'Консультация не найдена');
       consultOf = c.id;
+      // A phone consultation and the following visit are the same incident,
+      // not two unrelated case timelines. Financial contracts stay separate.
+      consultRootId = c.case_root_id ?? c.id;
       const used = await this.db.one('select 1 from orders where consult_of=$1 and discount_reason=$2 and status<>$3', [c.id, CONSULT_DISCOUNT, 'cancelled']);
       const ref = c.completed_at ?? c.accepted_at;
       const fresh = ref && this.now().getTime() - new Date(ref).getTime() <= all.pricing.consult.backHours * 3600_000;
@@ -153,8 +254,17 @@ export class OrdersService {
       year = year ?? c.year;
     }
 
-    // Record the commission campaign on creation. Never recalculate an existing order.
-    const campaign = this.ops ? await this.ops.commissionFor(i.service, this.now()) : null;
+    // Freeze the effective *lower* promotional rate when an order is created.
+    // A general free-until period is not a reason to charge the same order
+    // after the administrator changes that setting or its date passes.
+    // Specific service campaigns retain their existing priority.
+    const createdAt = this.now();
+    const campaign = this.ops ? await this.ops.commissionFor(i.service, createdAt) : null;
+    const freeUntil = all.fees.freeUntil;
+    const generalFreeAtCreation = !!freeUntil &&
+      createdAt <= new Date(freeUntil + 'T23:59:59+03:00');
+    const frozenCommissionPct = campaign?.commission_pct ??
+      (generalFreeAtCreation ? 0 : null);
 
     // Водитель парка: что ему можно и до какой суммы. SOS — всегда, без подтверждения.
     const gate = user.owner_id && !i.isSos ? await this.fleetGate(user, i.service, est.callOut) : null;
@@ -164,15 +274,25 @@ export class OrdersService {
           zone_id, night, group_trip, tier, brand, estimate, payment_method, client_fee_pct, destination, cargo, loaded, driver_on_site,
           consult_of, discount_amount, discount_reason, model, year, site, status, owner_note,
           commission_pct_override, commission_campaign_id, case_root_id, continuation_of,
-          create_request_key,create_request_hash)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) returning *`,
+          create_request_key,create_request_hash,location_region,preferred_performer_id,parallel_consent,continuation_recommendation_id,verified_only)
+       select $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41
+       where $1::uuid=$2::uuid or exists (
+         select 1 from users u join vehicles v
+           on v.owner_id=u.owner_id and v.driver_id=u.id
+         where u.id=$2 and u.owner_id=$1 and 'driver'=any(u.roles)
+           and ($3::uuid is null or v.id=$3)
+         limit 1 for share of v
+       ) returning *`,
       [clientId, user.id, i.vehicleId ?? null, i.service, !!i.isSos, i.problem ?? null, i.description ?? null, isConsult ? null : i.address ?? null,
         isConsult ? null : i.lat ?? null, isConsult ? null : i.lng ?? null, est.zoneId, night, est.group, tier, brand, est, method, feePct,
         i.destination ?? null, i.cargo ?? null, i.loaded ?? null, i.driverOnSite ?? null,
         consultOf, discount, discount ? CONSULT_DISCOUNT : null, model, year, isConsult ? null : i.site ?? null,
-        gate ? 'awaiting_owner' : 'searching', gate, campaign?.commission_pct ?? null, campaign?.id ?? null,
-        previous ? (previous.case_root_id ?? previous.id) : null, previous?.id ?? null,
-        requestKey,requestHash],
+        gate ? 'awaiting_owner' : 'searching', gate, frozenCommissionPct, campaign?.id ?? null,
+        previous ? (previous.case_root_id ?? previous.id) : consultRootId, previous?.id ?? null,
+        requestKey,requestHash, isConsult ? null : i.regionId, preferredId,
+        i.parallelWith ? {sourceOrderId:previous.id,sourceNumber:previous.number,
+          actorId:user.id,approvedAt:this.now().toISOString(),secondCallOut:est.callOut,
+          paymentMethod:method,independentCharge:true} : null, i.recommendationId ?? null, !!i.verifiedOnly],
     ).catch(async (e: any) => {
       if (e?.code === '23505' && e?.constraint === 'orders_create_key_unique') {
         const prior = await this.db.one<any>(
@@ -182,10 +302,22 @@ export class OrdersService {
       }
       if (e?.code === '23505' && e?.constraint === 'orders_one_live_continuation_idx')
         throw conflict('continuation_exists', 'Этап уже оформлен: откройте его из обращения');
+      if (e?.code === '23505' && e?.constraint === 'orders_recommendation_once')
+        throw conflict('recommendation_already_used', 'По этой рекомендации уже создан отдельный заказ');
       throw e;
     });
     if (reused) return reuse(order!);
-    await this.event(this.db, order!.id, user.id, 'created', { estimate: est, sos: !!i.isSos, continuationOf: previous?.id ?? null });
+    if (!order) throw forbidden('Вы больше не закреплены за машиной этого автопарка');
+    await this.event(this.db, order.id, user.id, 'created', { estimate: est, sos: !!i.isSos,
+      continuationOf: previous?.id ?? null, parallel:!!i.parallelWith });
+    if (i.parallelWith) {
+      await this.event(this.db, previous!.id, user.id, 'parallel_tow_requested',
+        {towOrderId:order!.id,acknowledgedCallOut:est.callOut});
+      await this.notifier.notify([previous!.performer_id], {type:'order',orderId:previous!.id},
+        {kind:'normal',title:'К вашей заявке приглашён эвакуатор',
+          body:'Второй выезд согласован владельцем. Погрузка начнётся после освобождения автомобиля.',
+          data:{orderId:previous!.id,towOrderId:order!.id}});
+    }
 
     if (gate) {
       await this.event(this.db, order!.id, user.id, 'owner_approval_requested', { reason: gate });
@@ -198,6 +330,21 @@ export class OrdersService {
 
   /** Заявка пошла в работу: оплата (холд) и вызов исполнителей */
   async launch(user: AuthUser, order: any) {
+    // Owner-approved requests can launch later. Recheck the frozen location
+    // snapshot before creating a bank hold. Do not reprice legacy orders with
+    // a NULL region: their agreed amounts/cancellations remain unchanged.
+    if (order.location_region != null) {
+      try {
+        assertRegionalTariff({
+          service: order.service, regionId: order.location_region,
+          zoneId: order.zone_id, address: order.address,
+          lat: order.lat, lng: order.lng,
+        }, true);
+      } catch (e) {
+        if (e instanceof CoverageError) throw bad(e.code, e.message);
+        throw e;
+      }
+    }
     const pay = await this.payments.onCreated(order);
     if (!pay.holdRequired) await this.startDispatch(order!.id);
     return { order: await this.view(user, order!.id), confirmationUrl: pay.confirmationUrl ?? null };
@@ -236,14 +383,14 @@ export class OrdersService {
       await this.db.query(`update orders set status='cancelled', cancel_reason=$2, cancelled_at=now() where id=$1 and status='awaiting_owner'`, [orderId, why]);
       await this.event(this.db, orderId, owner.id, 'owner_rejected', { reason: why });
       await this.systemMessage(orderId, `Владелец отклонил заказ: ${why}`);
-      await this.notifier.notify([o.created_by], { type: 'order', orderId, status: 'cancelled' },
+      await this.notifier.notify((await this.customerRecipients(o)).filter(id=>id===o.created_by), { type: 'order', orderId, status: 'cancelled' },
         { kind: 'normal', title: 'Владелец отклонил заказ', body: why, data: { orderId } });
       return this.view(owner, orderId);
     }
     const upd = await this.db.one(`update orders set status='searching' where id=$1 and status='awaiting_owner' returning *`, [orderId]);
     if (!upd) throw conflict('bad_status', 'Заявка уже не ждёт подтверждения');
     await this.event(this.db, orderId, owner.id, 'owner_approved', {});
-    await this.notifier.notify([o.created_by], { type: 'order', orderId, status: 'searching' },
+    await this.notifier.notify((await this.customerRecipients(o)).filter(id=>id===o.created_by), { type: 'order', orderId, status: 'searching' },
       { kind: 'normal', title: 'Владелец подтвердил заказ', body: 'Ищем исполнителя', data: { orderId } });
     await this.launch(owner, upd);
     return this.view(owner, orderId);
@@ -256,35 +403,88 @@ export class OrdersService {
     const all = await this.settings.all();
     const order = await this.db.one('select * from orders where id=$1', [orderId]);
     if (!order || order.status !== 'searching') return;
+    // One standard first invitation, if the chosen former performer is eligible.
+    if (order.preferred_performer_id && await this.invitePreferred(order, all, exclude)) return;
     if (!all.dispatch.priorityFirst) return this.auction.start(orderId, exclude);
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, p.is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
+              p.lat, p.lng, p.prep_minutes, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2 and p.is_priority
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`,
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
+                   x.service='consult' or exists (
+                     select 1 from order_unilateral_closures uc
+                       where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`,
       [kind, order.client_id],
     );
     const already = await this.db.query<{ performer_id: string }>('select performer_id from order_dispatch where order_id=$1', [orderId]);
+    const stage=this.auction.stages(order,all.dispatch)?.[0]??null;
     const ranked = rankCandidates(order as any, list, {
-      radiusKm: all.dispatch.radiusKm,
+      radiusKm: stage?.radiusKm??all.dispatch.radiusKm,
       maxCandidates: all.dispatch.maxCandidates,
       cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
       exclude: new Set([...exclude, ...already.map((a) => a.performer_id), order.created_by, ...(await this.blockedBy(order.client_id))]),
     });
-    if (!ranked.length) return this.auction.start(orderId, exclude);
+    const eligible=await this.auction.stagedCandidates(order,list,ranked,stage);
+    if (!eligible.length) return this.auction.start(orderId, exclude);
     const base = already.length;
-    for (const [i, r] of ranked.entries()) {
+    for (const [i, r] of eligible.entries()) {
       await this.enlist(r.user_id,
-        `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
-        [orderId, r.user_id, base + i, r.distanceKm]);
+        stage ?
+          `insert into order_dispatch(order_id,performer_id,rank,distance_km,road_eta_minutes)
+           select $1,$2,$3,$4,$5 from orders where id=$1 and status='searching'
+           on conflict do nothing returning id`:
+          `insert into order_dispatch(order_id, performer_id, rank, distance_km) values ($1,$2,$3,$4) on conflict do nothing`,
+        stage?[orderId,r.user_id,base+i,r.distanceKm,r.roadEtaMinutes]:
+          [orderId,r.user_id,base+i,r.distanceKm],!!stage);
     }
     await this.db.query('update orders set dispatch_started_at = coalesce(dispatch_started_at, now()) where id=$1', [orderId]);
     await this.event(this.db, orderId, null, 'dispatch_started', { candidates: ranked.length });
     await this.ringNext(orderId);
+  }
+
+  /** Invite a previously hired specialist once, under ordinary route and capacity checks. */
+  private async invitePreferred(order: any, all: Awaited<ReturnType<SettingsService['all']>>, exclude: string[]) {
+    const performerId = order.preferred_performer_id as string;
+    const prior = await this.db.one(
+      'select 1 from order_dispatch where order_id=$1 and performer_id=$2', [order.id,performerId]);
+    if (prior) return false;
+    const list = await this.db.query<Candidate>(
+      "select p.user_id,p.kind,p.specialties,p.brands,p.is_priority,p.paused,p.line_status,p.verification," +
+      " p.lat,p.lng,p.prep_minutes,u.rating,p.accepts_group,u.status as user_status,p.schedule,p.off_schedule_until,p.extras," +
+      " (select coalesce(-sum(amount),0)::int from ledger_entries l" +
+      " where l.performer_id=p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt" +
+      " from performer_profiles p join users u on u.id=p.user_id" +
+      " where p.user_id=$1 and p.kind=$2 and not exists" +
+      " (select 1 from orders x where x.performer_id=p.user_id and" +
+      " x.status in ('accepted','en_route','arrived','working','awaiting_confirmation')" +
+      " and not (x.service='consult' and x.status='awaiting_confirmation'))",
+      [performerId,performerKindFor(order.service)]);
+    const policy = this.auction.stages(order, all.dispatch);
+    const stage = policy?.[Number(order.sos_dispatch_stage??0)]??null;
+    const ranked = rankCandidates(order as any,list,{
+      radiusKm: stage?.radiusKm??all.dispatch.radiusKm, maxCandidates:1,
+      cashDebtLimit: all.fees.cashDebtLimit, now:this.now(),
+      exclude: new Set([...exclude,order.client_id,order.created_by,...(await this.blockedBy(order.client_id))]),
+    });
+    const eligible = await this.auction.stagedCandidates(order,list,ranked,stage);
+    const candidate = eligible[0];
+    if (!candidate) return false;
+    const inserted = await this.enlist(performerId,
+      "insert into order_dispatch(order_id,performer_id,rank,distance_km,road_eta_minutes)" +
+      " select $1,$2,0,$3,$4 from orders where id=$1 and status='searching'" +
+      " on conflict(order_id,performer_id) do nothing returning id",
+      [order.id,performerId,candidate.distanceKm,candidate.roadEtaMinutes],true);
+    if (!inserted) return false;
+    await this.db.query(
+      "update orders set dispatch_started_at=coalesce(dispatch_started_at,$2)" +
+      " where id=$1 and status='searching'",[order.id,this.now()]);
+    await this.event(this.db,order.id,null,'preferred_invited',{performerId});
+    await this.ringNext(order.id);
+    return true;
   }
 
   /** Звоним следующему приоритетному; очередь кончилась — общие торги */
@@ -301,7 +501,10 @@ export class OrdersService {
     const next = await this.db.query<{ id: string; performer_id: string; distance_km: number | null }>(
       `update order_dispatch set status='ringing', ring_until=$2, sent_at=$3
         where id in (select d.id from order_dispatch d where d.order_id=$1 and d.status='queued'
-                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))
+                       and not exists (select 1 from orders x where x.performer_id=d.performer_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
+                   x.service='consult' or exists (
+                     select 1 from order_unilateral_closures uc
+                       where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))
                      order by d.rank limit $4)
         returning id, performer_id, distance_km`,
       [orderId, until, this.now(), free],
@@ -312,7 +515,7 @@ export class OrdersService {
       await this.event(this.db, orderId, null, 'ringing', { performerId: n.performer_id });
       await this.notifier.notify([n.performer_id], {
         type: 'incoming_call', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
-        address: order.address, zone: est.zoneName, distanceKm: n.distance_km, brand: order.brand, callOut: est.callOut,
+        address: order.address, road: order.site?.road ?? null, zone: est.zoneName, distanceKm: n.distance_km, brand: order.brand, callOut: est.callOut,
         ringUntil: until.toISOString(),
       }, {
         kind: 'call',
@@ -343,7 +546,7 @@ export class OrdersService {
       }
     }
     for (const orderId of new Set(missed.map((m) => m.order_id))) await this.ringNext(orderId);
-    await this.autoCloseConsults(all.pricing.consult.autoCloseHours);
+    // A consultation cannot be accepted or billed just because the owner is silent.
     await this.applyLineTimers();
     return missed.length;
   }
@@ -368,17 +571,6 @@ export class OrdersService {
     }
   }
 
-  /** Консультация, которую клиент не подтвердил за сутки, закрывается сама — как «Вопрос решён» */
-  private async autoCloseConsults(hours: number) {
-    const due = await this.db.query<{ id: string; client_id: string }>(
-      `select id, client_id from orders where service='consult' and status='awaiting_confirmation' and amount_proposed_at < $1 limit 20`,
-      [new Date(this.now().getTime() - hours * 3600_000)]);
-    for (const o of due) {
-      try {
-        await this.confirmAmount({ id: o.client_id, roles: ['client'], owner_id: null } as unknown as AuthUser, o.id);
-      } catch { /* состояние уже поменялось — пропускаем */ }
-    }
-  }
 
   async accept(user: AuthUser, orderId: string) {
     const res = await this.db.tx(async (q) => {
@@ -408,7 +600,7 @@ export class OrdersService {
     // Остальным приоритетным, кому звонила эта заявка, — закрыть вызов
     this.notifier.live((res as any)._others, { type: 'order', orderId, status: 'released' });
     const name = user.name ?? 'Исполнитель';
-    await this.notifier.notify([res.client_id, res.created_by], { type: 'order', orderId, status: 'accepted' },
+    await this.notifier.notify(await this.customerRecipients(res), { type: 'order', orderId, status: 'accepted' },
       { kind: 'normal', title: 'Заявку приняли', body: `${name} принял заявку №${res.number}`, data: { orderId } });
     await this.systemMessage(orderId, `${name} принял заявку. Чат открыт для всех участников.`);
     return this.view(user, orderId);
@@ -427,7 +619,7 @@ export class OrdersService {
   async incoming(user: AuthUser) {
     return this.db.query(
       `select d.order_id, d.ring_until, d.distance_km, o.number, o.service, o.is_sos, o.problem, o.description, o.address,
-              o.brand, o.estimate, o.night, o.group_trip
+              o.brand, o.estimate, o.night, o.group_trip, o.site->'road' as road
          from order_dispatch d join orders o on o.id = d.order_id
         where d.performer_id=$1 and d.status='ringing' and d.ring_until >= $2 order by d.sent_at`,
       [user.id, this.now()],
@@ -442,19 +634,36 @@ export class OrdersService {
     if (!['accepted', 'en_route'].includes(o.status)) throw conflict('bad_status', 'На месте отказаться уже нельзя — закройте выезд с итогом');
     await this.db.tx(async (q) => {
       await this.guarded(q,
-        `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null
-          where id=$1 and status=$2 and performer_id=$3`, [orderId, o.status, user.id]);
+        `update orders set status='searching', performer_id=null, accepted_at=null, en_route_at=null, call_out_amount=null, auction_until=null,
+            dispatch_started_at=$4
+          where id=$1 and status=$2 and performer_id=$3`, [orderId, o.status, user.id, this.now()]);
       await q.query(`update bids set status='withdrawn' where order_id=$1 and status in ('active','chosen','lost')`, [orderId]);
       await q.query(`delete from order_dispatch where order_id=$1 and performer_id<>$2`, [orderId, user.id]);
       await q.query(`update order_dispatch set status='declined' where order_id=$1 and performer_id=$2`, [orderId, user.id]);
       await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [user.id]);
       await this.event(q, orderId, user.id, 'performer_dropped', { reason });
     });
-    await this.systemMessage(orderId, 'Исполнитель отказался от заявки. Ищем другого.');
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: 'searching' },
-      { kind: 'normal', title: 'Ищем другого исполнителя', body: `Исполнитель отказался от заявки №${o.number}. Уже ищем замену.`, data: { orderId } });
+    // Start replacement discovery immediately. Optional chat/push side effects
+    // must never strand an already-committed searching order if their transport
+    // fails (for example during a brief chat_messages DB outage).
     await this.startDispatch(orderId, [user.id]);
-    return this.view(user, orderId);
+    const current = await this.db.one<{ status: string }>(
+      'select status from orders where id=$1', [orderId]);
+    await this.systemMessage(orderId, 'Исполнитель отказался от заявки. Поиск замены запущен.')
+      .catch((e) => console.warn('[order-drop chat]', (e as Error).message));
+    // If discovery already exhausted all waves, the auction sent the final
+    // no_performer notice. Do not follow it with a false "still searching".
+    if (current?.status === 'searching') {
+      await this.notifier.notify(await this.customerRecipients(o),
+        { type: 'order', orderId, status: 'searching' },
+        { kind: 'normal', title: 'Ищем другого исполнителя',
+          body: `Исполнитель отказался от заявки №${o.number}. Поиск замены запущен.`,
+          data: { orderId } })
+        .catch((e) => console.warn('[order-drop notify]', (e as Error).message));
+    }
+    // The former performer no longer has ACL to the replacement's full
+    // order view; a minimal acknowledgement is both correct and private.
+    return { ok: true, orderId, status: current?.status ?? 'searching' };
   }
 
   // Статусы ----------------------------------------------------------------
@@ -463,13 +672,19 @@ export class OrdersService {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_no_trip', 'Это консультация по телефону — выезда нет. Закройте её с подсказкой.');
     const to = transition(o.status, action, 'performer');
+    if (action === 'start_work' && o.service === 'tow' && o.continuation_of) {
+      const source = await this.db.one<{status:string}>('select status from orders where id=$1',[o.continuation_of]);
+      if (source && !['completed','cancelled','no_performer'].includes(source.status))
+        throw conflict('vehicle_still_in_work', 'Машина ещё у мастера. Эвакуатор может прибыть и ожидать, но не начинать погрузку');
+    }
     const col = { depart: 'en_route_at', arrive: 'arrived_at', start_work: 'work_started_at' }[action];
-    await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4`,
+    await this.guarded(this.db, `update orders set status=$2${col ? `, ${col}=$5` : ''} where id=$1 and status=$3 and performer_id=$4${action === 'start_work' && o.service === 'tow' && o.continuation_of ?
+      ` and not exists(select 1 from orders source where source.id='${o.continuation_of}'::uuid and source.status not in ('completed','cancelled','no_performer'))` : ''}`,
       col ? [orderId, to, o.status, user.id, this.now()] : [orderId, to, o.status, user.id]);
     await this.event(this.db, orderId, user.id, action, {});
     const text = { depart: 'Исполнитель выехал', arrive: 'Исполнитель на месте', start_work: 'Исполнитель начал работу' }[action];
     await this.systemMessage(orderId, text);
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+    await this.notifier.notify(await this.customerRecipients(o), { type: 'order', orderId, status: to },
       { kind: 'normal', title: text, body: `Заявка №${o.number}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -499,6 +714,9 @@ export class OrdersService {
   async proposeAmount(user: AuthUser, orderId: string, p: { extras?: Extra[]; result?: 'solved' | 'cause_found' | 'not_found'; note?: string }) {
     const o = await this.mustBePerformer(user, orderId);
     if (o.service === 'consult') throw bad('consult_fixed', 'Цена консультации фиксированная. Закройте её с подсказкой.');
+    if(await this.db.one(
+      "select 1 from order_unilateral_closures where order_id=$1 and status in ('pending_client','disputed')",[orderId]))
+      throw conflict('emergency_quote_frozen','После аварийной сдачи расчёт не редактируется без модерации');
     const to = transition(o.status, 'propose_amount', 'performer');
     if (['cause_found', 'not_found'].includes(p.result ?? '') && (p.note?.trim().length ?? 0) < 10)
       throw bad('result_reason_required', 'Напишите, почему неисправность нельзя устранить на месте (не меньше 10 символов)');
@@ -518,8 +736,8 @@ export class OrdersService {
       bill.wait ? `ожидание ${bill.waitMinutes} мин ${rub(bill.wait)}` : null,
       ...bill.extras.map((x) => `${x.name} ${rub(x.amount)}`),
     ].filter(Boolean).join(', ');
-    await this.systemMessage(orderId, `Исполнитель закрыл выезд: выезд ${rub(m.callOut)}${parts ? `, ${parts}` : ''}${m.clientFee ? ` + сбор ${rub(m.clientFee)}` : ''} = ${rub(m.total)}. Подтвердите в заявке.`);
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+    await this.systemMessage(orderId, 'Исполнитель завершил работы. Клиенту отправлен подробный расчёт для подтверждения в заявке.');
+    await this.notifier.notify(await this.customerRecipients(o), { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Подтвердите сумму', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -539,7 +757,7 @@ export class OrdersService {
     const m = this.money(o);
     await this.systemMessage(orderId, `Мастер завершил консультацию. Подозрение: ${h.hints.join(', ')}${h.note ? ` — ${h.note}` : ''}. ` +
       `Нажмите «Вопрос решён» (${rub(m.total)}) или «Нужен выезд» — подсказка перейдёт мастеру на выезде.`);
-    await this.notifier.notify([o.client_id, o.created_by], { type: 'order', orderId, status: to },
+    await this.notifier.notify(await this.customerRecipients(o), { type: 'order', orderId, status: to },
       { kind: 'normal', title: 'Консультация завершена', body: `Подозрение: ${h.hints.join(', ')}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -551,6 +769,27 @@ export class OrdersService {
     let used = 0;
     if (expectedTotal != null && expectedTotal !== m.total) throw conflict('amount_changed', 'Сумма изменилась — проверьте заново');
     await this.db.tx(async (q) => {
+      // Serialize acceptance/disagreement and preserve the quoted version.
+      const locked = await q.one<any>('select * from orders where id=$1 for update',[orderId]);
+      if(!locked||locked.status!=='awaiting_confirmation')
+        throw conflict('state_changed','Заявка изменилась — обновите экран');
+      await this.assertCustomerInTx(q, user, locked);
+      const unilateral = await q.one<any>(
+        'select * from order_unilateral_closures where order_id=$1 for update',[orderId]);
+      if(unilateral){
+        // A fleet driver may submit a request, but cannot accept the owner's
+        // final emergency bill merely by being its creator.
+        if(user.id!==locked.client_id)
+          throw forbidden('Аварийную работу и сумму подтверждает владелец автопарка');
+        if(unilateral.status!=='pending_client')
+          throw conflict('emergency_under_review','Аварийное завершение уже оспорено или обработано');
+        if(expectedTotal==null || expectedTotal!==Number(unilateral.quote_total) ||
+          new Date(unilateral.quote_at).getTime()!==new Date(locked.amount_proposed_at).getTime() ||
+          Number(unilateral.work_amount)!==Number(locked.work_amount) ||
+          Number(unilateral.quote_total)!==this.money(locked).total ||
+          Number(unilateral.quote_total)!==m.total)
+          throw conflict('emergency_quote_changed','Проверьте окончательную сумму и подтвердите её явно');
+      }
       // Бонусы клиента списываются сами в момент подтверждения
       const bonus = await q.one<{ b: number }>('select coalesce(sum(amount),0)::int b from bonus_entries where user_id=$1', [o.client_id]);
       const use = Math.min(bonus?.b ?? 0, m.total);
@@ -566,7 +805,20 @@ export class OrdersService {
       await this.guarded(q, `update orders set status=$2, amount_confirmed_at=$3, completed_at=$3
           where id=$1 and status='awaiting_confirmation' and work_amount is not distinct from $4 and performer_id=$5`,
         [orderId, to, this.now(), o.work_amount, o.performer_id]);
-      await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
+      // Serialize availability with acceptance/dispatch, which locks the same
+      // performer profile row. Recheck *after* acquiring the row lock: otherwise
+      // a concurrent new trip could be overwritten to "online" by old approval.
+      await q.one('select user_id from performer_profiles where user_id=$1 for update',
+        [o.performer_id]);
+      if(!(await this.busyWith(q,o.performer_id,orderId)))
+        await q.query(`update performer_profiles set line_status='online' where user_id=$1 and line_status='on_job'`, [o.performer_id]);
+      if(unilateral){
+        await q.query(
+          "update order_unilateral_closures set status='accepted',answered_at=$2,answered_by=$3 "+
+          "where order_id=$1 and status='pending_client'",
+          [orderId,this.now(),user.id]);
+        await this.event(q,orderId,user.id,'emergency_client_accepted',{quoteTotal:unilateral.quote_total});
+      }
       await this.event(q, orderId, user.id, 'amount_confirmed', { total: m.total, method: o.payment_method });
       await this.payments.onConfirmed({ ...o, status: to, discount_amount: Number(o.discount_amount ?? 0) + used }, q);
       await this.referral?.afterOrder(q, { ...o, status: to }, m.amount);
@@ -577,18 +829,25 @@ export class OrdersService {
       .catch((e) => console.error('[order-work-payment-create]', e));
     await this.payments.processCaptureForOrder(orderId)
       .catch((e) => console.error('[order-capture]', e));
-    await this.systemMessage(orderId, `Сумма ${rub(m.total - used)} подтверждена${used ? ` (бонусами и баллами ${rub(used)})` : ''}. Оставьте отзыв друг о друге.`);
+    await this.systemMessage(orderId, 'Клиент подтвердил расчёт. Детали сумм и комиссий доступны каждой стороне в своём кабинете.');
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
-      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: ${rub(m.total)}`, data: { orderId } });
+      { kind: 'normal', title: 'Сумма подтверждена', body: `Заявка №${o.number}: клиент подтвердил работу`, data: { orderId } });
     return this.view(user, orderId);
   }
 
   async disputeAmount(user: AuthUser, orderId: string, reason: string) {
     const o = await this.mustBeClient(user, orderId);
+    const unusual = await this.db.one<{status:string}>(
+      'select status from order_unilateral_closures where order_id=$1',[orderId]);
+    if(unusual)
+      throw conflict('use_emergency_dispute','Аварийное завершение оспаривается отдельно, без возврата мастера в работу');
     const to = transition(o.status, 'dispute_amount', 'client');
-    await this.guarded(this.db, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
+    await this.db.tx(async q => {
+      await this.assertCustomerInTx(q, user, o);
+      await this.guarded(q, `update orders set status=$2, bill = case when bill is null then null else bill || '{"disputed":true}'::jsonb end
         where id=$1 and status='awaiting_confirmation'`, [orderId, to]);
-    await this.event(this.db, orderId, user.id, 'amount_disputed', { reason });
+      await this.event(q, orderId, user.id, 'amount_disputed', { reason });
+    });
     await this.systemMessage(orderId, `Клиент не согласен с расходниками: ${reason}. Время работы не меняется — исправьте строки расходников или позовите поддержку.`);
     await this.onDispute?.({ userId: user.id, orderId, text: reason, targetId: o.performer_id, title: `Не согласен с суммой по заявке №${o.number}` });
     await this.notifier.notify([o.performer_id], { type: 'order', orderId, status: to },
@@ -597,11 +856,13 @@ export class OrdersService {
   }
 
   async cancel(user: AuthUser, orderId: string, reason: string) {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!o) throw notFound();
+    const o = await this.mustSee(user, orderId);
     const actor = this.actorOf(user, o);
     if (actor === 'performer') throw bad('use_drop', 'Исполнитель отказывается от заявки кнопкой «Не смогу приехать»');
     if (!actor) throw forbidden();
+    if(await this.db.one(
+      "select 1 from order_unilateral_closures where order_id=$1 and status in ('pending_client','disputed')",[orderId]))
+      throw conflict('emergency_requires_review','Аварийное завершение нельзя отменить без рассмотрения обращения');
     transition(o.status, 'cancel', actor);
     // Fail closed on the 100% halfway tier: the current location endpoint stores
     // only the last point, and dispatch distance is not a verified travelled route.
@@ -611,10 +872,11 @@ export class OrdersService {
     const stage = cancelStage(o.status);
     const scale = (await this.settings.get('cancel')).scale;
     const m = this.money(o);
-    const splitInfo = cancelSplit(scale, stage, m.callOut, pct(m.callOut, Number(o.client_fee_pct)));
+    const splitInfo = cancelSplit(scale, stage, m.callOut, cappedPct(m.callOut, Number(o.client_fee_pct)));
     const invited = (await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('queued','ringing','bidding')`, [orderId])).map((x) => x.performer_id);
     await this.db.tx(async (q) => {
+      await this.assertCustomerInTx(q, user, o);
       await this.guarded(q, `update orders set status='cancelled', cancelled_at=$5, cancelled_by=$2, cancel_reason=$3, cancel_stage=$4
           where id=$1 and status=$6 and performer_id is not distinct from $7`,
         [orderId, user.id, reason, stage, this.now(), o.status, o.performer_id]);
@@ -651,7 +913,7 @@ export class OrdersService {
       .catch((e) => console.error('[cancel-bank-action]', e));
     this.notifier.live(invited, { type: 'order', orderId, status: 'cancelled' });
     await this.systemMessage(orderId, `Заявка отменена: ${reason}`);
-    await this.notifier.notify([o.client_id, o.created_by, o.performer_id].filter((x) => x !== user.id), { type: 'order', orderId, status: 'cancelled' },
+    await this.notifier.notify([...await this.customerRecipients(o), o.performer_id].filter((x) => x && x !== user.id), { type: 'order', orderId, status: 'cancelled' },
       { kind: 'normal', title: 'Заявка отменена', body: `№${o.number}: ${reason}`, data: { orderId } });
     return this.view(user, orderId);
   }
@@ -659,10 +921,16 @@ export class OrdersService {
   async retry(user: AuthUser, orderId: string) {
     const o = await this.mustBeClient(user, orderId);
     transition(o.status, 'retry', 'client');
-    await this.guarded(this.db, `update orders set status='searching', auction_until=null where id=$1 and status='no_performer'`, [orderId]);
-    await this.db.query(`delete from order_dispatch where order_id=$1`, [orderId]);
-    await this.db.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
-    await this.event(this.db, orderId, user.id, 'retry', {});
+    // A failed cleanup must not leave a customer-facing "searching" order
+    // with stale invitations/bids or without the immutable retry event.
+    // Re-dispatch starts only after the reset has committed.
+    await this.db.tx(async (q) => {
+      await this.assertCustomerInTx(q, user, o);
+      await this.guarded(q, `update orders set status='searching', auction_until=null, sos_dispatch_stage=0, dispatch_started_at=$2 where id=$1 and status='no_performer'`, [orderId, this.now()]);
+      await q.query(`delete from order_dispatch where order_id=$1`, [orderId]);
+      await q.query(`update bids set status='withdrawn' where order_id=$1 and status='active'`, [orderId]);
+      await this.event(q, orderId, user.id, 'retry', {});
+    });
     await this.startDispatch(orderId);
     return this.view(user, orderId);
   }
@@ -672,28 +940,108 @@ export class OrdersService {
     const callOut: number = o.call_out_amount ?? o.estimate?.callOut ?? 0;
     const work: number = o.work_amount ?? 0;
     const amount = callOut + work;
-    const clientFee = pct(amount, Number(o.client_fee_pct ?? 0));
+    const clientFee = cappedPct(amount, Number(o.client_fee_pct ?? 0));
     // Скидка и бонусы — за счёт площадки, не больше суммы заявки
     const discount = Math.min(Number(o.discount_amount ?? 0), amount + clientFee);
     return { callOut, work, amount, clientFee, discount, total: amount + clientFee - discount };
   }
 
+  /** Viewer-scoped monetary data; the performer's price excludes the client surcharge. */
+  async moneyForViewer(o: any, actor: Actor | null) {
+    const full = this.money(o);
+    if (actor === 'client' || actor === 'admin') return full;
+    const base = { callOut: full.callOut, work: full.work, amount: full.amount, total: full.amount };
+    if (actor !== 'performer') return base;
+    const fees = await this.settings.get('fees');
+    const worker = await this.db.one<{ is_priority: boolean }>(
+      'select is_priority from performer_profiles where user_id=$1', [o.performer_id]);
+    const rate = commissionPct(fees, {
+      isPriority: !!worker?.is_priority,
+      overridePct: o.commission_pct_override == null ? null : Number(o.commission_pct_override),
+      // Eligibility for the general free-fee period belongs to the order
+      // creation date, not to a later amount-confirmation day.
+      at: o.created_at ? new Date(o.created_at) : this.now(),
+    });
+    // The agent's compensation is capped at 5 000 ₽ per side of an order.
+    // The client fee already uses cappedPct above: the worker-visible payout
+    // must apply the SAME approved cap, even on expensive repairs.
+    const commission = cappedPct(full.amount, rate);
+    const pointsCommission = Math.min(commission, Math.max(0, Number(o.points_commission ?? 0)));
+    return { ...base, commission, commissionPct: rate,
+      pointsCommission, payout: full.amount - commission + pointsCommission,
+      // Cash is physically received by the worker; the receipt amount is required
+      // to prevent undercollection. This does NOT expose the customer's fee split.
+      cashToCollect: o.payment_method === 'cash' ? full.total : undefined };
+  }
+
   // Просмотр ---------------------------------------------------------------
+
+  /**
+   * A driver's creator_id is NOT a perpetual right to a former employer's
+   * orders. Read the live owner/vehicle assignment from PostgreSQL instead.
+   * No order without a vehicle can be read after the driver leaves that fleet.
+   */
+  private liveDriverLink(alias: string, userParam: string) {
+    return `exists (select 1 from users u join vehicles v
+      on v.owner_id=u.owner_id and v.driver_id=u.id
+      where u.id=${userParam} and 'driver'=any(u.roles)
+        and u.owner_id=${alias}.client_id
+        and (${alias}.vehicle_id is null or v.id=${alias}.vehicle_id))`;
+  }
+
+  /** For financial/status changes, the live driver/car link is locked until COMMIT. */
+  private async assertCustomerInTx(q: Queryable, user: AuthUser, o: any) {
+    if (o.client_id === user.id || user.roles.includes('admin') ||
+        user.roles.includes('moderator')) return;
+    if (o.created_by !== user.id) throw forbidden('Это не ваша заявка');
+    const linked = await q.one<{ok:number}>(`select 1 as ok from users u
+      join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+      where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+        and ($3::uuid is null or v.id=$3)
+      limit 1 for share of v`, [user.id, o.client_id, o.vehicle_id]);
+    if (!linked) throw forbidden('Вы больше не закреплены за машиной этой заявки');
+  }
 
   actorOf(user: AuthUser, o: any): Actor | null {
     if (user.roles.includes('admin') || user.roles.includes('moderator')) return 'admin';
-    if (o.client_id === user.id || o.created_by === user.id) return 'client';
+    if (o.client_id === user.id) return 'client';
+    // Deliberately fail closed for a raw order row without an evaluated ACL.
+    // mustSee() supplies this value in the same SQL snapshot as the order.
+    if (o.created_by === user.id && o.current_driver_access === true) return 'client';
     if (o.performer_id === user.id) return 'performer';
     return null;
   }
 
+  /** Only the *currently* assigned driver receives order and chat broadcasts. */
+  private async customerRecipients(o: any): Promise<string[]> {
+    if (!o.created_by || o.created_by === o.client_id) return [o.client_id];
+    const current = await this.db.one<{ ok: number }>(
+      `select 1 as ok from orders order_row where order_row.id=$1
+         and order_row.created_by=$2 and ${this.liveDriverLink('order_row','$2')} limit 1`,
+      [o.id, o.created_by]);
+    return current ? [o.client_id, o.created_by] : [o.client_id];
+  }
+
+  /** Authorized owner plus the driver currently assigned to this order's car. */
+  async customerRecipientsForOrder(orderId: string): Promise<string[]> {
+    const order = await this.db.one<{id:string;client_id:string;created_by:string}>(
+      'select id,client_id,created_by from orders where id=$1', [orderId]);
+    return order ? this.customerRecipients(order) : [];
+  }
+
   async participants(orderId: string) {
-    const o = await this.db.one('select client_id, created_by, performer_id from orders where id=$1', [orderId]);
-    return o ? [o.client_id, o.created_by, o.performer_id].filter(Boolean) as string[] : [];
+    const o = await this.db.one<any>(
+      `select o.client_id,
+        case when o.created_by=o.client_id or ${this.liveDriverLink('o','o.created_by')}
+          then o.created_by else null end as created_by,
+        o.performer_id from orders o where o.id=$1`, [orderId]);
+    return o ? [...new Set([o.client_id, o.created_by, o.performer_id].filter(Boolean))] as string[] : [];
   }
 
   async mustSee(user: AuthUser, orderId: string) {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
+    const o = await this.db.one<any>(
+      `select o.*, (o.created_by=$2 and ${this.liveDriverLink('o','$2')}) as current_driver_access
+         from orders o where o.id=$1`, [orderId, user.id]);
     if (!o) throw notFound('Заявка не найдена');
     if (this.actorOf(user, o)) return o;
     // Исполнитель, которому сейчас «звонит» заявка, видит её без контактов
@@ -705,6 +1053,9 @@ export class OrdersService {
   async view(user: AuthUser, orderId: string) {
     const o = await this.mustSee(user, orderId);
     const actor = this.actorOf(user, o);
+    const unilateral = actor ? await this.db.one<any>(
+      'select order_id,reason,note,quote_total,status,created_at,answered_at,answer_reason '+
+      'from order_unilateral_closures where order_id=$1',[orderId]) : null;
     const performer = o.performer_id
       ? await this.db.one(
           `select u.id, u.name, u.rating::float as rating, u.rating_count, p.car, p.kind, p.lat, p.lng, p.location_at, (p.extras->>'waitRate')::int as wait_rate
@@ -715,6 +1066,11 @@ export class OrdersService {
       : null;
     const vehicle = o.vehicle_id ? await this.db.one('select brand, model, year, plate, trailer_plate from vehicles where id=$1', [o.vehicle_id]) : null;
     const events = actor ? await this.db.query('select type, data, actor_id, created_at from order_events where order_id=$1 order by id', [orderId]) : [];
+    const latestAbsence = o.status === 'no_performer' && actor === 'client'
+      ? [...events].reverse().find((event: any) => event.type === 'no_performer')?.data?.absenceReason
+      : null;
+    const absenceReason = ['not_connected', 'temporarily_unavailable', 'no_response', 'offers_withdrawn'].includes(latestAbsence)
+      ? latestAbsence : 'unknown';
     // Cancellation terms are snapshotted in the immutable order event at the
     // moment of cancellation. Never recompute them from today's admin tariffs.
     const cancelEvent = o.status === 'cancelled'
@@ -755,14 +1111,21 @@ export class OrdersService {
       : [];
     const caseBookings = actor === 'client' || actor === 'admin'
       ? await this.db.query<any>(
-          `select b.id, b.number, b.status, b.need, b.amount, b.discount, b.from_order_id
+          `select b.id, b.number, b.status, b.need, b.amount, b.client_fee, b.discount, b.from_order_id
              from service_bookings b left join orders step on step.id=b.from_order_id
             where b.case_root_id=$1 or step.id=$1 or step.case_root_id=$1
             order by b.created_at, b.number`, [caseRootId])
       : [];
+    const caseEcuReferrals = actor === 'client' || actor === 'admin'
+      ? await this.db.query(
+          'select h.id,h.number,h.state,h.selected_at,h.selected_performer_id,'+
+          'i.ordinal as stage_no from ecu_handoffs h left join case_stage_index i'+
+          " on i.root_order_id=h.root_order_id and i.source_kind='ecu' and i.source_id=h.id"+
+          ' where h.root_order_id=$1 order by h.created_at,h.number',[caseRootId])
+      : [];
     const caseServiceStages = caseBookings.map((b: any) => ({
       id: b.id, number: b.number, status: b.status, need: b.need,
-      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) - Number(b.discount ?? 0)) : null,
+      confirmedTotal: b.status === 'closed' ? Math.max(0, Number(b.amount ?? 0) + Number(b.client_fee ?? 0) - Number(b.discount ?? 0)) : null,
     }));
     const caseSteps = caseRows.map((step: any) => ({
       id: step.id, number: step.number, service: step.service, status: step.status,
@@ -771,30 +1134,53 @@ export class OrdersService {
     const caseConfirmedTotal = caseRows.filter((step: any) => step.status === 'completed')
       .reduce((sum: number, step: any) => sum + this.money(step).total, 0)
       + caseServiceStages.reduce((sum: number, stage: any) => sum + (stage.confirmedTotal ?? 0), 0);
+    const dispatchSettings = o.status === 'searching' ? await this.settings.get('dispatch') : null;
+    const searchStages = dispatchSettings ? this.auction.stages(o,dispatchSettings) : null;
+    const searchStage = searchStages ? {
+      wave: Math.min(Number(o.sos_dispatch_stage??0)+1,searchStages.length),
+      waves: searchStages.length, verifiedRoadEta: true,
+      maxRoadEtaMinutes: searchStages[Math.min(Number(o.sos_dispatch_stage??0),searchStages.length-1)].maxRoadEtaMinutes,
+    } : null;
     const search = o.status === 'searching'
       ? await this.db.one<{ candidates: number; offers: number }>(
           `select (select count(*)::int from order_dispatch where order_id=$1 and status in ('bidding','ringing','queued')) as candidates,
                   (select count(*)::int from bids where order_id=$1 and status='active') as offers`, [orderId])
       : null;
     return {
-      id: o.id, number: o.number, status: o.status as OrderStatus, statusLabel: statusLabels[o.status as OrderStatus],
+      id: o.id, number: o.number, status: o.status as OrderStatus,
+      absenceReason: o.status === 'no_performer' && actor === 'client' ? absenceReason : undefined,
+      statusLabel: unilateral?.status==='pending_client' ? 'Работа сдана · ожидаем клиента'
+        : unilateral?.status==='disputed' ? 'Работа сдана · разбирательство'
+        : statusLabels[o.status as OrderStatus],
+      unilateralCanApprove: !!unilateral && user.id===o.client_id,
+      unilateralClosure: unilateral ? {
+        status: unilateral.status, reason: unilateral.reason, note: unilateral.note,
+        quoteTotal: unilateral.quote_total, createdAt: unilateral.created_at,
+        answeredAt: unilateral.answered_at, answerReason: unilateral.answer_reason
+      } : null,
       service: o.service, isSos: o.is_sos, problem: o.problem, description: o.description,
-      address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, night: o.night, groupTrip: o.group_trip, tier: o.tier,
+      address: o.address, lat: o.lat, lng: o.lng, zoneId: o.zone_id, locationRegion: o.location_region ?? null,
+      night: o.night, groupTrip: o.group_trip, verifiedOnly: !!o.verified_only, tier: o.tier,
       brand: o.brand, model: o.model, year: o.year, vehicleId: o.vehicle_id, vehicle, estimate: o.estimate, paymentMethod: o.payment_method,
-      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search,
+      auction: o.status === 'searching' && !!o.auction_until, auctionUntil: o.auction_until, autoPick: o.auto_pick, search, searchStage,
       limits: o.status === 'searching' ? this.auction.limits(o, (await this.settings.get('dispatch'))) : null,
-      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site, discountReason: o.discount_reason,
-      money: this.money(o), result: o.result, resultNote: o.result_note,
-      pointsFee: o.points_fee ?? 0, pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
-      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.available(o.client_id, this.money(o).clientFee) : null,
+      destination: o.destination, cargo: o.cargo, loaded: o.loaded, driverOnSite: o.driver_on_site,
+      discountReason: actor === 'client' || actor === 'admin' ? o.discount_reason : undefined,
+      money: await this.moneyForViewer(o, actor), result: o.result, resultNote: o.result_note,
+      pointsFee: actor === 'client' || actor === 'admin' ? o.points_fee ?? 0 : undefined,
+      pointsCommission: actor === 'performer' || actor === 'admin' ? o.points_commission ?? 0 : undefined,
+      points: actor === 'client' && o.status === 'awaiting_confirmation' && this.referral ? await this.referral.clientAvailable(o.client_id, this.money(o).amount, this.money(o).clientFee) : null,
       bill: o.bill ?? null, billingStep: Number((await this.settings.get('pricing')).billingStepMinutes ?? 60),
       site: o.site, workStartedAt: o.work_started_at ?? null, waitRate: performer?.wait_rate ?? null, ownerNote: o.owner_note ?? null, partMode: o.part_mode ?? null, waitStartedAt: o.wait_started_at ?? null, waitMinutes: o.wait_minutes ?? 0,
       consultHint: o.consult_hint, consultOf: o.consult_of,
+      preferredPerformerId: o.preferred_performer_id ?? null,
       continuationOf: o.continuation_of ?? null, caseRootId,
+      parallelTow: actor === 'client' || actor === 'admin' ? o.parallel_consent ?? null : null,
       caseSummary: {
         rootId: caseRootId, stages: caseSteps, serviceBookings: caseServiceStages,
+        ecuReferrals:caseEcuReferrals,
         confirmedTotal: caseConfirmedTotal,
-        multiStage: caseSteps.length + caseServiceStages.length > 1,
+        multiStage: caseSteps.length + caseServiceStages.length + caseEcuReferrals.length > 1,
       },
       canContinueWithTow: actor === 'client' && o.status === 'completed' &&
         o.service !== 'tow' && ['cause_found', 'not_found'].includes(o.result) &&
@@ -806,7 +1192,8 @@ export class OrdersService {
       followUps: o.service === 'consult' ? await this.db.query(`select id, number, service, status from orders where consult_of=$1 order by created_at`, [o.id]) : [],
       consultBack: o.service === 'consult' ? (await this.settings.get('pricing')).consult : null,
       cancelReason: o.cancel_reason, cancelStage: o.cancel_stage,
-      cancelBreakdown, cancellationPayment: cancellationPayment ? {
+      cancelBreakdown: actor === 'client' || actor === 'admin' ? cancelBreakdown : null,
+      cancellationPayment: cancellationPayment ? {
         paymentStatus: cancellationPayment.payment_status,
         paymentTotal: cancellationPayment.payment_total,
         refundedAmount: cancellationPayment.refunded_amount,
@@ -816,26 +1203,60 @@ export class OrdersService {
         plannedRefund: cancellationPayment.planned_refund,
       } : null,
       createdAt: o.created_at, acceptedAt: o.accepted_at, arrivedAt: o.arrived_at, completedAt: o.completed_at,
-      performer, client, events,
+      performer, client,
+      events: actor === 'client' || actor === 'admin'
+        ? events : events.map((e: any) => ({ type: e.type, actor_id: e.actor_id, created_at: e.created_at })),
       you: actor ?? 'candidate',
-      actions: actor ? canDo(o.status, actor === 'admin' ? 'admin' : actor) : [],
+      actions: unilateral && ['pending_client','disputed'].includes(unilateral.status)
+        ? (actor==='client' && unilateral.status==='pending_client' ? ['confirm_amount'] : [])
+        : actor ? canDo(o.status, actor === 'admin' ? 'admin' : actor) : [],
     };
   }
 
   async list(user: AuthUser, scope: 'client' | 'performer', status?: string) {
-    const where = scope === 'performer' ? 'o.performer_id = $1' : user.owner_id ? 'o.created_by = $1' : '(o.client_id = $1 or o.created_by = $1)';
+    // The former creator must not receive the old fleet's address, location or
+    // financial archive merely because created_by still references their UUID.
+    const where = scope === 'performer' ? 'o.performer_id = $1'
+      : `(o.client_id=$1 or (o.created_by=$1 and ${this.liveDriverLink('o','$1')}))`;
     const items = await this.db.query<any>(
-      `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.brand, o.estimate, o.work_amount, o.call_out_amount,
-              o.client_fee_pct, o.discount_amount, o.payment_method, o.created_at, o.completed_at, o.consult_of,
+      `select o.id, o.number, o.status, o.service, o.is_sos, o.problem, o.description, o.address, o.lat, o.lng, o.brand, o.estimate, o.work_amount, o.call_out_amount,
+              o.client_fee_pct, o.discount_amount, o.payment_method,
+              o.created_at, o.accepted_at, o.en_route_at, o.arrived_at, o.completed_at, o.consult_of,
+              o.performer_id, o.commission_pct_override, o.points_commission,
               o.case_root_id, o.continuation_of, o.result, o.result_note, o.vehicle_id,
+              uc.status as unilateral_status,
               v.brand as v_brand, v.model as v_model, v.year as v_year, v.plate as v_plate,
+              -- These fields are the same public professional card already shown
+              -- in the authenticated order detail. Never expose phone or raw GPS.
+              perf.name as performer_name, perf.rating::float as performer_rating,
+              perf.rating_count as performer_rating_count,
+              -- Staged dispatch ETA is an estimate made at dispatch; never
+              -- present it as a fresh live GPS arrival time.
+              (select d.road_eta_minutes from order_dispatch d
+                 where d.order_id=o.id and d.performer_id=o.performer_id
+                   and d.road_eta_minutes is not null
+                 order by d.sent_at desc nulls last limit 1) as dispatch_eta_minutes,
               (select coalesce(company_name, name) from users where id=o.client_id) as client_name
-         from orders o left join vehicles v on v.id=o.vehicle_id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
+         from orders o left join vehicles v on v.id=o.vehicle_id
+         left join users perf on perf.id=o.performer_id
+         left join order_unilateral_closures uc on uc.order_id=o.id where ${where} ${status ? 'and o.status = $2' : ''} order by o.created_at desc limit 100`,
       status ? [user.id, status] : [user.id],
     );
     // The archive and the order detail must use the same final price formula.
     // Do not recalculate totals from just call_out_amount + work_amount on the client.
-    return items.map((order: any) => ({ ...order, money: this.money(order) }));
+    if (scope === 'performer') {
+      return Promise.all(items.map(async (row: any) => {
+        const { client_fee_pct, discount_amount, commission_pct_override,
+          points_commission, ...order } = row;
+        void client_fee_pct; void discount_amount; void commission_pct_override; void points_commission;
+        return { ...order, money: await this.moneyForViewer(row, 'performer') };
+      }));
+    }
+    return items.map((row: any) => {
+      const { commission_pct_override, points_commission, ...order } = row;
+      void commission_pct_override; void points_commission;
+      return { ...order, money: this.money(row) };
+    });
   }
 
   /**
@@ -851,14 +1272,14 @@ export class OrdersService {
    * Поставить исполнителя в звонки/торги заявки — под блокировкой исполнителя, той же, что при выборе.
    * Если он в этот миг взял другую заявку или ушёл с линии — не ставим. false — не поставлен.
    */
-  async enlist(performerId: string, sql: string, params: unknown[]) {
+  async enlist(performerId: string, sql: string, params: unknown[], requireInserted = false) {
     return this.db.tx(async (q) => {
       const p = await q.one<{ line_status: string; paused: boolean }>(
         'select line_status, paused from performer_profiles where user_id=$1 for update', [performerId]);
       if (!p || p.paused || p.line_status === 'offline' || p.line_status === 'on_job') return false;
       if (await this.busyWith(q, performerId, null)) return false;
-      await q.query(sql, params);
-      return true;
+      const rows=await q.query(sql, params);
+      return !requireInserted || rows.length>0;
     });
   }
 
@@ -900,7 +1321,13 @@ export class OrdersService {
   /** Есть ли у исполнителя другая заявка в работе */
   async busyWith(q: Queryable, performerId: string, exceptOrderId: string | null) {
     return !!(await q.one(
-      `select 1 from orders where performer_id=$1 and status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (service='consult' and status='awaiting_confirmation') and ($2::uuid is null or id<>$2::uuid) limit 1`,
+      `select 1 from orders o where o.performer_id=$1
+       and o.status in ('accepted','en_route','arrived','working','awaiting_confirmation')
+       and not (o.status='awaiting_confirmation' and
+         (o.service='consult' or exists (
+           select 1 from order_unilateral_closures uc
+             where uc.order_id=o.id and uc.status in ('pending_client','disputed'))))
+       and ($2::uuid is null or o.id<>$2::uuid) limit 1`,
       [performerId, exceptOrderId]));
   }
 
@@ -932,7 +1359,9 @@ export class OrdersService {
   /** После release: клиентам — обновить отклики, исполнителю — закрыть вызовы; если там звонили приоритетным — звоним дальше */
   async afterRelease(r: { performerId: string; orders: { orderId: string; clients: string[] }[] }) {
     for (const o of r.orders) {
-      this.notifier.live(o.clients, { type: 'order', orderId: o.orderId, status: 'searching', offers: true });
+      this.notifier.live(await this.customerRecipients({
+        id: o.orderId, client_id: o.clients[0], created_by: o.clients[1],
+      }), { type: 'order', orderId: o.orderId, status: 'searching', offers: true });
       this.notifier.live([r.performerId], { type: 'order', orderId: o.orderId, status: 'released' });
       await this.ringNext(o.orderId);
     }
@@ -948,9 +1377,8 @@ export class OrdersService {
   }
 
   private async mustBeClient(user: AuthUser, orderId: string) {
-    const o = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!o) throw notFound();
-    if (o.client_id !== user.id && o.created_by !== user.id) throw forbidden('Это не ваша заявка');
+    const o = await this.mustSee(user, orderId);
+    if (this.actorOf(user, o) !== 'client') throw forbidden('Это не ваша заявка');
     return o;
   }
 

@@ -26,7 +26,7 @@ try {
       await page.getByRole('button',{name:'Электрик',exact:true}).click();
     } else await page.getByRole('button',{name:'Владелец / автопарк',exact:true}).click();
     await page.locator('input[type=tel]').fill('+79990000444');
-    await page.locator('input[type=checkbox]').check();
+    await page.getByRole('checkbox',{name:/Согласен.*обработку персональных данных/i}).check();
     await page.getByRole('button',{name:'Получить код'}).click();
     await page.getByRole('alert').getByText('Для этого номера доступен только страховой кабинет').waitFor();
     if(requests.length!==1 || requests[0].accountType!==(master?'master':'owner'))

@@ -1,20 +1,56 @@
 // Catalog ingestion is separate from sellable products: never invent prices.
-import { useEffect, useState } from 'react';
-import { get, post } from '../api.ts';
-import { useLoad, useAction, Loading } from '../ui.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { get, post, getToken } from '../api.ts';
+import { useLoad, useAction, useMe, Loading } from '../ui.tsx';
 import { parseCatalogCsv, type CatalogCsvRow } from '../catalogCsv.ts';
 
+type CatalogPreview = { newRows: number; existingRows: number; processed: number; revision: number; actorId: string; token: string };
 export function AdminShopCatalog() {
-  const config = useLoad(() => get('/api/shop?light=1'), []);
-  const stats = useLoad(() => get('/api/admin/shop/catalog/stats'), []);
+  const { me } = useMe();
+  const config = useLoad(() => get('/api/shop?light=1'), [me?.id]);
+  const stats = useLoad(() => get('/api/admin/shop/catalog/stats'), [me?.id]);
   const [sourceNote, setSourceNote] = useState('');
   const [rights, setRights] = useState(false);
   const [rows, setRows] = useState<CatalogCsvRow[]>([]);
   const [fileError, setFileError] = useState('');
-  const [preview, setPreview] = useState<{ newRows: number; existingRows: number; processed: number } | null>(null);
+  const [preview, setPreview] = useState<CatalogPreview | null>(null);
   const [progress, setProgress] = useState('');
   const [revision, setRevision] = useState(0);
   const { busy, run } = useAction();
+  const fileReadId = useRef(0);
+  const formRevision = useRef(0);
+  const requestBusy = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const currentUserId = useRef(me?.id);
+  currentUserId.current = me?.id;
+  const invalidate = () => {
+    ++formRevision.current;
+    setPreview(null);
+    setProgress('');
+  };
+  const sameSession = (actor: string, token: string, rev: number) =>
+    currentUserId.current === actor && getToken() === token && formRevision.current === rev;
+  useEffect(() => {
+    // Do not reuse another administrator's CSV, provenance or approval.
+    ++fileReadId.current;
+    invalidate();
+    setRows([]); setRights(false); setSourceNote(''); setFileError('');
+    if (inputRef.current) inputRef.current.value = '';
+  }, [me?.id]);
+  useEffect(() => {
+    const reset = () => {
+      ++fileReadId.current;
+      invalidate();
+      setRows([]); setRights(false); setSourceNote(''); setFileError('');
+      if (inputRef.current) inputRef.current.value = '';
+    };
+    window.addEventListener('traksos-auth-external-change', reset);
+    window.addEventListener('traksos-auth-expired', reset);
+    return () => {
+      window.removeEventListener('traksos-auth-external-change', reset);
+      window.removeEventListener('traksos-auth-expired', reset);
+    };
+  }, []);
 
   const [state, setState] = useState('pending');
   const [query, setQuery] = useState('');
@@ -24,62 +60,153 @@ export function AdminShopCatalog() {
     const t = setTimeout(() => { setDebounced(query); setPage(0); }, 320);
     return () => clearTimeout(t);
   }, [query]);
-  const list = useLoad(() => get(
-    `/api/admin/shop/catalog?state=${encodeURIComponent(state)}&q=${encodeURIComponent(debounced)}&page=${page}`
-  ), [state, debounced, page, revision]);
-
+  // A late GET for an old account or search filter may never repopulate
+  // the current moderator view with stale products or approval actions.
+  const listKey=JSON.stringify([me?.id,getToken(),state,debounced,page,revision]);
+  type ListData={items:any[];total:number;page:number;limit:number};
+  const [listResult,setListResult]=useState<{
+    key:string;data:ListData|null;error:string|null
+  }>({key:'',data:null,error:null});
+  useEffect(()=>{
+    let active=true;
+    const actor=me?.id,token=getToken();
+    setListResult({key:listKey,data:null,error:null});
+    if(!actor || !token)return ()=>{active=false;};
+    void get<ListData>('/api/admin/shop/catalog?state='+encodeURIComponent(state)+
+      '&q='+encodeURIComponent(debounced)+'&page='+page).then(data=>{
+      if(active&&currentUserId.current===actor&&getToken()===token)
+        setListResult({key:listKey,data,error:null});
+    }).catch(()=>{
+      if(active&&currentUserId.current===actor&&getToken()===token)
+        setListResult({key:listKey,data:null,error:'Не удалось получить список артикулов'});
+    });
+    return ()=>{active=false};
+  },[listKey]);
+  const list={
+    data:listResult.key===listKey?listResult.data:null,
+    error:listResult.key===listKey?listResult.error:null,
+    reload:()=>setRevision(n=>n+1),
+  };
   async function loadFile(file: File | undefined) {
-    setPreview(null); setProgress(''); setFileError(''); setRows([]);
+    const readId = ++fileReadId.current;
+    invalidate(); setFileError(''); setRows([]);
     if (!file) return;
+    const actor=me?.id, token=getToken(), rev=formRevision.current;
     try {
+      if (!actor || !token) throw new Error('Войдите заново перед загрузкой справочника');
       if (file.size > 2_000_000) throw new Error('Выберите CSV меньше 2 МБ.');
-      const parsed = parseCatalogCsv(await file.text(), config.data?.categories ?? {});
+      const source=await file.text();
+      if (readId!==fileReadId.current || !sameSession(actor,token,rev)) return;
+      const parsed=parseCatalogCsv(source,config.data?.categories ?? {});
+      if (readId!==fileReadId.current || !sameSession(actor,token,rev)) return;
       setRows(parsed);
     } catch (error) {
-      setFileError(error instanceof Error ? error.message : 'Не удалось прочитать CSV');
+      if (readId===fileReadId.current && formRevision.current===rev)
+        setFileError(error instanceof Error ? error.message : 'Не удалось прочитать CSV');
     }
   }
 
-  const valid = !!rows.length && rights && sourceNote.trim().length >= 3;
+  const valid = !!me?.id && !!rows.length && rights && sourceNote.trim().length >= 3;
+  const approvedPreview=!!preview && valid && preview.revision===formRevision.current &&
+    preview.actorId===me?.id && preview.token===getToken() &&
+    preview.processed===rows.length;
+
   async function check() {
-    const answer = await run(async () => {
-      let newRows = 0, existingRows = 0;
-      for (let i = 0; i < rows.length; i += 150) {
-        const chunk = rows.slice(i, i + 150);
-        const result = await post('/api/admin/shop/catalog/import', {
-          rows: chunk, sourceNote, rightsConfirmed: true, dryRun: true,
-        });
-        newRows += result.newRows;
-        existingRows += result.existingRows;
-        setProgress(`Проверено ${Math.min(i + chunk.length, rows.length)} из ${rows.length}`);
-      }
-      return { newRows, existingRows, processed: rows.length };
-    }, null);
-    if (answer) setPreview(answer);
+    if(requestBusy.current || !valid || !me?.id || !getToken()) return;
+    requestBusy.current=true;
+    const actor=me.id, token=getToken()!, revision=formRevision.current;
+    const snapshot=rows.map(row=>({...row}));
+    const provenance=sourceNote.trim();
+    setPreview(null);
+    setProgress('');
+    try {
+      const result=await run(async()=>{
+        let newRows=0, existingRows=0;
+        for(let i=0;i<snapshot.length;i+=150){
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Проверьте сведения заново.');
+          const chunk=snapshot.slice(i,i+150);
+          const answer=await post('/api/admin/shop/catalog/import',{
+            rows:chunk,sourceNote:provenance,rightsConfirmed:true,dryRun:true,
+          });
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Проверьте сведения заново.');
+          newRows+=answer.newRows;
+          existingRows+=answer.existingRows;
+          setProgress('Проверено '+Math.min(i+chunk.length,snapshot.length)+
+            ' из '+snapshot.length);
+        }
+        return {newRows,existingRows,processed:snapshot.length};
+      },null);
+      if(result && sameSession(actor,token,revision))
+        setPreview({...result,revision,actorId:actor,token});
+    } finally {
+      requestBusy.current=false;
+    }
   }
 
   async function importAll() {
-    const ok = await run(async () => {
-      for (let i = 0; i < rows.length; i += 150) {
-        const chunk = rows.slice(i, i + 150);
-        await post('/api/admin/shop/catalog/import', {
-          rows: chunk, sourceNote, rightsConfirmed: true, dryRun: false,
-        });
-        setProgress(`Загружено ${Math.min(i + chunk.length, rows.length)} из ${rows.length}`);
+    if(requestBusy.current || !approvedPreview || !me?.id || !getToken()) return;
+    requestBusy.current=true;
+    const actor=me.id, token=getToken()!, revision=formRevision.current;
+    const provenance=sourceNote.trim(),snapshot=rows.map(row=>({...row}));
+    let confirmed=0;
+    setProgress('Начинаем загрузку. Не закрывайте раздел до подтверждения последней партии.');
+    try {
+      const success=await run(async()=>{
+        for(let i=0;i<snapshot.length;i+=150){
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Загрузка остановлена.');
+          const chunk=snapshot.slice(i,i+150);
+          // Each batch is an atomic server transaction. Unknown network
+          // outcomes must NEVER be represented as completed imports.
+          const answer=await post('/api/admin/shop/catalog/import',{
+            rows:chunk,sourceNote:provenance,rightsConfirmed:true,dryRun:false,
+          });
+          if(!sameSession(actor,token,revision))
+            throw new Error('Аккаунт или файл изменён. Загрузка остановлена.');
+          confirmed+=answer.processed;
+          setProgress('Сервер подтвердил '+confirmed+' из '+snapshot.length+
+            '. Эти позиции отправлены только на ручную проверку.');
+        }
+        return true;
+      },null);
+      if(!sameSession(actor,token,revision))return;
+      if(success){
+        setPreview(null);setRows([]);setProgress('');
+        ++formRevision.current;
+        if(inputRef.current)inputRef.current.value='';
+        stats.reload();setRevision(n=>n+1);
+      }else{
+        setPreview(null);
+        setProgress('Подтверждено сервером '+confirmed+' из '+snapshot.length+
+          '. Ответ по последней партии мог потеряться. Проверьте файл повторно и загрузите остаток; одинаковые записи не размножаются.');
       }
-      return true;
-    }, 'Справочник загружен на проверку');
-    if (ok) {
-      setPreview(null); setRows([]); setProgress('');
-      stats.reload(); setRevision((n) => n + 1);
+    } finally {
+      requestBusy.current=false;
     }
   }
 
-  const reviewEntry = async (id: string, reviewed: boolean) => {
-    if (reviewed && !window.confirm('Вы проверили номер детали и право использовать его описание? Подтвердить публикацию справочной записи?')) return;
-    const done = await run(() => post(`/api/admin/shop/catalog/${id}/review`, { reviewed }),
-      reviewed ? 'Позиция проверена' : 'Позиция возвращена на проверку');
-    if (done) { stats.reload(); list.reload(); }
+  const reviewEntry=async(item:any, reviewed:boolean)=>{
+    if(requestBusy.current || busy || !me?.id)return;
+    if(reviewed && !window.confirm('Вы проверили номер детали и право использовать его описание? Подтвердить публикацию справочной записи?'))return;
+    requestBusy.current=true;
+    const actor=me.id,token=getToken();
+    try {
+      const done=await run(()=>post('/api/admin/shop/catalog/'+encodeURIComponent(item.id)+'/review',{
+        reviewed,expectedUpdatedAt:item.updatedAt,
+        expectedName:item.name,expectedSourceNote:item.sourceNote,
+        expectedBrand:item.brand,expectedArticle:item.article,
+        expectedCategory:item.category,expectedSearchTerms:item.searchTerms,
+      }),reviewed?'Позиция проверена':'Позиция возвращена на проверку');
+      if(actor===currentUserId.current && token===getToken()){
+        // Also on a version-conflict refresh the actual row before retrying.
+        await Promise.all([stats.reload(),list.reload()]);
+      }
+      return done;
+    } finally {
+      requestBusy.current=false;
+    }
   };
 
   if (!config.data) return <Loading error={config.error} />;
@@ -95,16 +222,17 @@ export function AdminShopCatalog() {
       <span className="note">Формат CSV (разделитель «;», запятая или табуляция). Колонки: <b>бренд;артикул;название;категория;синонимы</b>. Категория — код или название раздела TrakSOS. Поддерживаются русские заголовки и кавычки.</span>
       <label className="field" style={{ display: 'block' }}>
         Выберите файл CSV
-        <input type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain"
-          onChange={(e) => void loadFile(e.target.files?.[0])} style={{ display: 'block', marginTop: 8, maxWidth: '100%' }} />
+        <input ref={inputRef} type="file" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain"
+          disabled={busy} onChange={(e) => void loadFile(e.target.files?.[0])}
+          style={{ display: 'block', marginTop: 8, maxWidth: '100%' }} />
       </label>
       <label className="stack" style={{ gap: 5 }}>
         <b>Откуда получены данные?</b>
-        <input className="field" maxLength={300} value={sourceNote} onChange={(e) => { setSourceNote(e.target.value); setPreview(null); }}
+        <input className="field" maxLength={300} disabled={busy} value={sourceNote} onChange={(e) => { invalidate(); setSourceNote(e.target.value); }}
           placeholder="Название каталога, источник и разрешение на использование" />
       </label>
       <label className="agree">
-        <input type="checkbox" checked={rights} onChange={(e) => { setRights(e.target.checked); setPreview(null); }}/>
+        <input type="checkbox" disabled={busy} checked={rights} onChange={(e) => { invalidate(); setRights(e.target.checked); }}/>
         <span>Подтверждаю, что имею право использовать и импортировать эти данные в TrakSOS.</span>
       </label>
       {fileError && <div className="banner warn">{fileError}</div>}
@@ -116,17 +244,17 @@ export function AdminShopCatalog() {
         </div>)}
       </>}
       {progress && <span className="note" role="status">{progress}</span>}
-      {preview && <div className="banner">
-        Проверка файла: {preview.processed} позиций · новых: {preview.newRows} · уже известных: {preview.existingRows}. Ничего не опубликовано.
+      {approvedPreview && preview && <div className="banner">
+        Предварительная проверка: {preview.processed} позиций · новых: {preview.newRows} · уже известных: {preview.existingRows}. Ничего не опубликовано. Если другой администратор изменит каталог, итоговые числа могут отличаться.
       </div>}
       <div className="row">
         <button className="btn ghost" disabled={busy || !valid} onClick={() => void check()}>
           {busy ? 'Обрабатываем…' : 'Проверить перед загрузкой'}
         </button>
-        <button className="btn" disabled={busy || !valid || !preview || preview.processed !== rows.length}
+        <button className="btn" disabled={busy || !approvedPreview}
           onClick={() => void importAll()}>Загрузить на проверку</button>
       </div>
-      <span className="note">За один запрос передаётся максимум 150 деталей. При обрыве интернета файл можно загрузить повторно — одинаковые записи не размножаются.</span>
+      <span className="note">За один запрос передаётся максимум 150 деталей. При обрыве связи прогресс показывает только подтверждённые сервером партии; повторно проверьте исходный CSV, затем загрузите снова. Записи остаются на ручной модерации, а не в продаже.</span>
     </div>
     <div className="card stack">
       <b>Проверка импортированных артикулов</b>
@@ -135,7 +263,11 @@ export function AdminShopCatalog() {
           <button key={k} className="chip" aria-pressed={state === k} onClick={() => { setState(k); setPage(0); }}>{label}</button>)}
       </div>
       <input className="field" placeholder="Искать бренд, номер или название" value={query} onChange={(e) => setQuery(e.target.value)}/>
-      {!list.data ? <Loading error={list.error} /> : <>
+      {list.error ? <div className="card stack" role="alert">
+        <span>Не удалось обновить список артикулов. Не подтверждайте устаревшие сведения.</span>
+        <button type="button" className="btn ghost" disabled={busy}
+          onClick={() => void list.reload()}>Повторить загрузку</button>
+      </div> : !list.data ? <Loading error={list.error} /> : <>
         {!list.data.items.length && <div className="empty">Подходящих записей нет</div>}
         {list.data.items.map((p: any) => <div key={p.id} className="card stack" style={{ gap: 8 }}>
           <b>{p.name}</b>
@@ -144,7 +276,7 @@ export function AdminShopCatalog() {
           <div className="row">
             <span className={p.reviewed ? 'pill good' : 'pill'}>{p.reviewed ? 'Подтверждена' : 'Требует проверки'}</span>
             <button className="btn ghost small" disabled={busy}
-              onClick={() => void reviewEntry(p.id, !p.reviewed)}>
+              onClick={() => void reviewEntry(p, !p.reviewed)}>
               {p.reviewed ? 'Отозвать проверку' : 'Подтвердить запись'}
             </button>
           </div>

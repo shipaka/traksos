@@ -1,0 +1,140 @@
+/* Approved 617 stays unchanged in compact state. Expanded public network
+   is a separate accessible layer, approx 70vw x 70vh, real opt-in data only. */
+.tr-network-backdrop{
+  position:fixed;z-index:3000;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(1,9,17,.78);padding:18px;
+  animation:tr-network-veil .2s ease-out;
+}
+.tr-network-dialog{
+  box-sizing:border-box;width:min(70vw,1450px);height:70vh;min-height:380px;
+  max-height:calc(100vh - 36px);min-width:min(520px,calc(100vw - 36px));
+  display:flex;flex-direction:column;overflow:hidden;
+  color:#f7fbff;background:#071c2a;border:1px solid #406579;
+  border-radius:20px;box-shadow:0 25px 90px rgba(0,0,0,.78);
+  animation:tr-network-entry .23s ease-out;
+}
+.tr-network-heading{
+  flex:none;min-height:66px;display:flex;gap:14px;align-items:center;
+  justify-content:space-between;padding:12px 18px;
+  background:linear-gradient(115deg,#071e2a,#102e3c);
+  border-bottom:1px solid #315c69;
+}
+.tr-network-heading>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.tr-network-heading b{font-size:clamp(17px,1.5vw,24px);font-weight:900}
+.tr-network-heading small{font-size:12px;line-height:1.35;color:#b9d4e0}
+.tr-network-close{
+  border:1px solid #ee9958;background:#a6410d;color:#fff;cursor:pointer;
+  display:flex;gap:7px;align-items:center;justify-content:center;
+  min-height:44px;min-width:44px;border-radius:12px;padding:8px 13px;font-weight:750;
+}
+.tr-network-viewport{
+  position:relative;flex:1;min-height:180px;overflow:hidden;touch-action:none;
+  cursor:grab;outline-offset:-3px;background:#102e39;
+  background-image:linear-gradient(90deg,#143b43 1px,transparent 1px),
+                   linear-gradient(0deg,#143b43 1px,transparent 1px);
+  background-size:48px 48px;
+}
+.tr-network-viewport:active{cursor:grabbing}
+.tr-network-tiles{position:absolute;inset:0;pointer-events:none}
+.tr-network-tiles img{position:absolute;width:256px;height:256px;max-width:none;
+  user-select:none;opacity:.86;pointer-events:none}
+.tr-network-zoom{position:absolute;z-index:4;left:14px;top:15px;
+  display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.tr-network-zoom button{
+  box-sizing:border-box;border:1px solid #e6a36e;min-width:44px;
+  min-height:44px;padding:9px;cursor:pointer;color:#fff;background:#102a3e;
+  box-shadow:0 3px 12px #031322aa;border-radius:10px;font-weight:850;font-size:17px}
+.tr-network-zoom button:disabled{cursor:not-allowed;opacity:.45}
+.tr-network-zoom button:last-child{font-size:12px}
+.tr-network-marker{
+  position:absolute;z-index:3;min-width:44px;min-height:44px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid #fff2a7;background:#ffce24;color:#34250b;
+  border-radius:50%;box-shadow:0 2px 0 #8f6b12,0 0 0 7px #ffd42b30,0 3px 16px #050a1299;
+  font-size:16px;font-weight:900;cursor:pointer;
+  transform:translate(-50%,-50%);transition:box-shadow .2s ease;
+}
+.tr-network-marker:hover,.tr-network-marker:focus-visible{box-shadow:0 0 0 9px #ffcb4580,0 4px 20px #000}
+.tr-network-marker.is-cluster{min-width:42px;min-height:42px;font-size:13px}
+/* Two verified services can share a building/coordinates. At max zoom a
+   cluster opens a genuinely selectable list; never place invented GPS pins. */
+.tr-network-cluster-list{
+  position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);
+  box-sizing:border-box;width:min(380px,calc(100% - 24px));max-height:75%;
+  display:flex;flex-direction:column;gap:10px;
+  padding:14px;border:1px solid #f1c466;border-radius:14px;
+  color:#fff;background:#092637f5;box-shadow:0 10px 36px #031522df;
+}
+.tr-network-cluster-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tr-network-cluster-head b{font-size:14px;line-height:1.4}
+.tr-network-cluster-head>button{min-width:44px;min-height:44px;border-radius:9px;
+  color:#fff;background:#304656;border:1px solid #648391;cursor:pointer}
+.tr-network-cluster-options{display:flex;flex-direction:column;gap:8px;
+  overflow-y:auto;overscroll-behavior:contain}
+.tr-network-cluster-options>button{display:block;min-height:44px;flex:none;text-align:left;
+  padding:10px 12px;overflow-wrap:anywhere;color:#ffe3b8;background:#143344;
+  border:1px solid #8e9f9d;border-radius:10px;cursor:pointer}
+.tr-network-cluster-options>button:hover,.tr-network-cluster-options>button:focus-visible{
+  background:#244755;border-color:#ffc44f;outline:2px solid #ffbd6e;outline-offset:1px}
+.tr-network-partner{
+  position:absolute;z-index:5;right:15px;top:15px;max-width:min(305px,calc(100% - 80px));
+  box-sizing:border-box;display:flex;flex-direction:column;gap:9px;
+  border:1px solid #f9c467;border-radius:14px;padding:17px;
+  color:#fff;background:#092637f5;box-shadow:0 10px 35px #031522cc;
+  line-height:1.38;
+}
+.tr-network-partner b{font-size:17px;padding-right:18px;overflow-wrap:anywhere}
+.tr-network-partner span{font-size:12px;color:#ffd68a}
+.tr-network-partner small{font-size:12px;color:#bfd2de}
+.tr-network-partner a{font-weight:800;color:#ffe0b0;text-decoration:underline}
+.tr-network-dismiss{
+  position:absolute;right:7px;top:7px;min-width:44px;min-height:44px;
+  border:0;background:#3b5363;color:#fff;border-radius:7px;cursor:pointer}
+.tr-network-notice{
+  position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(390px,calc(100% - 110px));box-sizing:border-box;
+  text-align:center;line-height:1.5;color:#e3f1f7;background:#09283de9;
+  border:1px solid #3a667d;border-radius:15px;padding:19px 16px;
+  box-shadow:0 7px 25px #0008;font-size:13px}
+.tr-network-retry{
+  display:block;margin:12px auto 0;min-height:44px;min-width:170px;
+  padding:9px 14px;border-radius:10px;border:1px solid #f3ba68;
+  background:#183e4e;color:#ffebd2;font-weight:800;cursor:pointer;
+}
+.tr-network-retry:focus-visible{outline:2px solid #ffbd6e;outline-offset:2px}
+.tr-network-attribution{
+  position:absolute;z-index:3;bottom:0;right:0;left:0;
+  display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;
+  padding:7px 12px;background:#0b1f2ad9;
+  color:#d0e0e6;font-size:10px;pointer-events:none}
+.owner20-map-open{
+  position:absolute;z-index:6;inset:0;display:block;width:100%;height:100%;padding:0;border:0;
+  text-align:left;background:transparent;color:inherit;cursor:zoom-in;
+}
+.owner20-map .owner20-map-footer-open{
+  position:absolute;bottom:10px;right:12px;border:1px solid #66c4cf;
+  border-radius:20px;padding:6px 12px;background:transparent;
+  color:#f3fafb;cursor:pointer;font-size:11px;font-weight:750;
+}
+.owner20-map-open:focus-visible{outline:3px solid #ffbd5c;outline-offset:-3px;border-radius:10px}
+.owner20-map-expand-label{
+  position:absolute;bottom:4px;left:8px;z-index:2;
+  display:block;background:#132e39ed;border:1px solid #ffb366;
+  color:#ffe1b9;padding:5px 9px;border-radius:10px;font-size:11px;font-weight:850;
+}
+@keyframes tr-network-veil{from{opacity:0}to{opacity:1}}
+@keyframes tr-network-entry{from{opacity:.75;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+@media(max-width:1100px){
+  .tr-network-dialog{width:min(86vw,1450px);height:78vh}
+}
+@media(max-width:699px){
+  .tr-network-backdrop{padding:8px}
+  .tr-network-dialog{width:calc(100vw - 16px);height:calc(100vh - 16px);min-width:0;min-height:0}
+  .tr-network-heading small{font-size:11px}
+  .tr-network-close span{display:none}
+  .tr-network-zoom{left:8px;top:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tr-network-backdrop,.tr-network-dialog{animation:none!important}
+  .tr-network-marker{transition:none!important}
+}

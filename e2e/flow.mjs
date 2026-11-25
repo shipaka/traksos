@@ -21,23 +21,16 @@ async function checkCabinetMenu(page, expectedLinks, { shopTab = true } = {}) {
     if (!href || !href.startsWith('#/')) throw new Error('Invalid cabinet route for ' + label);
   }
   await summary.click();
-  if (!shopTab) return; // Admin, insurer, inspection and moderator use role-specific navigation.
-  const shop = page.locator('.tabbar').locator('a[href="#/shop"]');
-  try {
-    await shop.waitFor({ state: 'visible', timeout: 10000 });
-  } catch {
-    throw new Error('Shop tab must be visible for every account: ' + JSON.stringify({
-      url: page.url(),
-      tabbar: await page.locator('.tabbar').count(),
-      links: await page.locator('.tabbar a').allTextContents(),
-      menu: await page.locator('.account-menu nav a').allTextContents(),
-    }));
-  }
+  if (!shopTab) return; // Only client and masters have the parts catalog entry.
+  const shop = page.locator('.account-menu nav a[href="#/shop"]');
+  if(await shop.count() !== 1) throw Error('Parts catalogue must remain accessible in the account menu');
+  if(await page.locator('.tabbar a[href="#/shop"]').count())
+    throw Error('Android bottom tabs must not be overloaded by the closed parts catalog');
 }
 async function assertDashboardTheme(page, role) {
   const result = await page.evaluate(() => {
     const app = document.querySelector('.app');
-    const card = document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
+    const card = document.querySelector('.and19-panel') ?? document.querySelector('.and19-cover') ?? document.querySelector('.card') ?? document.querySelector('.client-dashboard .desktop-hero');
     if (!app || !card) return null;
     const css = getComputedStyle(app);
     return {
@@ -48,7 +41,7 @@ async function assertDashboardTheme(page, role) {
       offenders: [...document.querySelectorAll('*')].filter(e => e.getBoundingClientRect().right > innerWidth + 2).slice(0, 6).map(e => [e.tagName, e.className, Math.round(e.getBoundingClientRect().right)]),
     };
   });
-  if (!result || result.theme !== '#f51a78' || !result.gradient.includes('gradient') || result.overflow)
+  if (!result || result.theme.toLowerCase() !== '#ff7627' || !result.gradient.includes('gradient') || result.overflow)
     throw new Error('Dashboard theme regression (' + role + '): ' + JSON.stringify(result));
 }
 
@@ -94,7 +87,11 @@ async function login(page, phoneNum, how) {
     await page.goto(BASE + '/#/login');
   } else if (how === 'client') {
     await page.goto(BASE + '/#/explore/van');
-    await page.locator('.guest-explore-cta').click();
+    const selected=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+    await selected.waitFor();
+    await selected.getByRole('button',{name:'Нет аккаунта? Зарегистрироваться'}).click();
+    await page.waitForURL('**/#/register');
+    await page.getByRole('dialog',{name:'Регистрация в TrakSOS'}).waitFor();
   } else if (how === 'login') {
     await page.goto(BASE + '/#/login');
   } else {
@@ -108,9 +105,15 @@ async function login(page, phoneNum, how) {
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
     return;
   }
-  await page.locator('input[type=checkbox]').check();
+  // Partner forms offer an independent master+STO checkbox. Only the
+  // explicitly labelled terms/privacy consent authorizes registration.
+  await page.getByRole('checkbox', { name: /Согласен с (агентским договором|офертой).*обработку персональных данных/ }).check();
   await page.getByRole('button', { name: 'Получить код' }).click();
-  const hint = await page.getByText(/Тестовый режим: код/).textContent();
+  const codeHint = page.getByText(/Тестовый режим: код/);
+  const error = page.locator('form [role=alert]');
+  await codeHint.or(error).first().waitFor();
+  if (await error.isVisible()) throw Error('Registration rejected: '+await error.innerText());
+  const hint = await codeHint.textContent();
   await page.locator('input[autocomplete=one-time-code]').fill(hint.match(/\d{4}/)[0]);
   await page.locator('input[type=password]').fill(password);
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
@@ -130,8 +133,8 @@ await m.locator('input[placeholder="ИНН, 12 цифр"]').fill('780000000001')
 await m.locator('input[placeholder="Марка: Lada Largus"]').fill('Lada Largus');
 await m.locator('input[placeholder="Госномер"]').fill('а123вс78');
 await shot(m, '01-master-profile');
-await m.getByRole('button', { name: /Дальше — фото/ }).click();
-// Сразу после профиля — фото для проверки
+await m.getByRole('button', { name: 'Дальше — добровольная проверка' }).click();
+// Опциональная фото-проверка остаётся доступной после сохранения профиля
 await m.waitForURL(/work\/docs/);
 await m.getByText(/^0 из \d$/).waitFor();
 const n = await m.locator('input[type=file]').count();
@@ -158,7 +161,9 @@ try {
   };
   throw new Error('Admin login did not reach the dashboard: ' + JSON.stringify(diagnostics), { cause: error });
 }
-await a.getByRole('button', { name: 'Проверка', exact: true }).click();
+// Approved admin verification is a protected work section, not the retired homepage tab.
+await a.goto(BASE + '/#/admin/section/verify');
+await a.getByRole('heading', { name: 'Проверка', exact: true }).waitFor();
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
   await a.getByRole('button', { name: 'Принять' }).first().click();
@@ -168,13 +173,24 @@ await shot(a, '01c-admin-verify');
 await a.getByRole('button', { name: 'Одобрить' }).click();
 await a.getByText('Очередь пуста').waitFor();
 await m.goto(BASE + '/#/work');
-const lineStatus = m.getByRole('button', { name: /Статус ·/ });
-await lineStatus.waitFor({ timeout: 10000 });
-await lineStatus.click();
-await m.getByRole('button', { name: 'Свободен', exact: false }).click();
+const availabilitySwitch = m.getByRole('switch', { name: 'Принимать новые заявки' });
+await availabilitySwitch.waitFor({ timeout: 10000 });
+if (await availabilitySwitch.getAttribute('aria-checked') !== 'true') await availabilitySwitch.click();
+await m.getByRole('searchbox', { name: /Поиск по своим заявкам/ }).waitFor();
 await m.getByText(/Геолокация включена/).waitFor();
 await assertDashboardTheme(m, 'master');
-await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта']);
+await checkCabinetMenu(m, ['Профиль исполнителя', 'Финансы и выплаты', 'Проверка и документы', 'История заявок', 'Оферта'], { shopTab: false });
+// Mobile search is role-scoped and offers honest empty results before any jobs.
+// It must not route to the global user/partner registry.
+const masterSearch=m.getByRole('searchbox',{name:/Поиск по своим заявкам/});
+await masterSearch.waitFor();
+await masterSearch.fill('НЕСУЩЕСТВУЮЩАЯ-ЗАЯВКА-00991');
+await m.getByText('Ничего не найдено. Проверьте номер или переключите фильтр.').waitFor();
+await m.getByRole('button',{name:'Входящие',exact:true}).click();
+await m.getByRole('region',{name:'Найденные заявки'}).waitFor();
+await masterSearch.fill('');
+await m.getByRole('button',{name:'Мои',exact:true}).click();
+await m.getByRole('button',{name:'Свернуть поиск'}).click();
 await shot(m, '02-master-online');
 
 // Клиент
@@ -183,12 +199,13 @@ await login(k, '+79991112233', 'client');
 // Регистрация после выбора выездной помощи открывает нужный раздел SOS.
 await k.waitForURL(/#\/sos/);
 await k.goto(BASE + '/#/');
-await k.locator('.client-dashboard .desktop-quick-card').first().waitFor();
+await k.locator('.and19-client .and19-services > a[href="#/sos"]').first().waitFor();
 await assertDashboardTheme(k, 'client');
 await checkCabinetMenu(k, ['История заявок', 'Мой гараж', 'Мой автопарк', 'Оферта', 'Профиль и настройки']);
 await shot(k, '03-client-home');
-// Home and SOS share the approved direction-first flow.
-await k.locator('.client-dashboard .desktop-quick-card').first().click();
+// Mobile browser and Android APK both use the approved responsive .and19-client workspace.
+// Home and SOS share the direction-first flow.
+await k.locator('.and19-client .and19-services > a[href="#/sos"]').first().click();
 await k.getByRole('button', { name: /Выездной мастер/ }).click();
 await k.getByRole('link', { name: /Электрик/ }).first().click();
 await k.getByRole('button', { name: /Вызвать мастера/ }).click(); // рано: подсветит, чего не хватает
@@ -198,12 +215,24 @@ await k.locator('select[aria-label="Марка"]').selectOption('Scania');
 await k.locator('select[aria-label="Модель"]').selectOption('R-серия');
 await k.locator('select[aria-label="Год выпуска"]').selectOption('2012');
 await k.locator('input[placeholder^="Адрес"]').fill('Тосно, М-11, стоянка у АЗС');
+await k.getByRole('button', { name: 'Ленинградская область' }).click();
 await k.getByRole('button', { name: /Тосно/ }).click();
+const nearSort=k.getByRole('button',{name:'Ближе',exact:true});
+const fastSort=k.getByRole('button',{name:'Быстрее приедет',exact:true});
+await nearSort.waitFor();
+if(!await nearSort.isDisabled()||!await fastSort.isDisabled())
+  throw Error('Geographic sorting enabled without vehicle GPS');
+const cheapSort=k.getByRole('button',{name:'Дешевле',exact:true});
+await cheapSort.click();
+if(await cheapSort.getAttribute('aria-pressed')!=='true')
+  throw Error('Price sorting did not activate');
+await k.getByRole('button',{name:'Рекомендуем',exact:true}).click();
 await k.getByText('Проверьте перед вызовом').waitFor();
 await k.locator('.agree input').check();
 await shot(k, '04-client-new-order');
 await k.getByRole('button', { name: 'Вызвать мастера' }).click();
 await k.waitForURL(/order\//);
+await k.getByRole('button', { name: 'Отменить заявку' }).waitFor({ timeout: 10000 });
 await k.locator('.radar').waitFor();
 await k.waitForTimeout(1500);
 await shot(k, '05-client-searching');
@@ -215,7 +244,7 @@ const callStyle = await m.locator('[role="alertdialog"]').evaluate((el) => ({
   bg: getComputedStyle(el).backgroundImage,
   overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 2,
 }));
-if (callStyle.accent !== '#f51a78' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
+if (callStyle.accent !== '#f77c24' || !callStyle.bg.includes('radial-gradient') || callStyle.overflow)
   throw new Error('Incoming SOS visual regression: ' + JSON.stringify(callStyle));
 await shot(m, '06-master-incoming-call');
 await m.getByRole('alertdialog').getByRole('button', { name: /Беру за/ }).click();
@@ -229,16 +258,26 @@ await k.getByRole('button', { name: /Выбрать за/ }).click();
 await m.waitForURL(/order\//, { timeout: 10000 });
 await k.getByText('Иван').first().waitFor({ timeout: 10000 });
 await shot(k, '07-client-accepted');
+// Tap the actual truck photo, not a dummy image: it opens this order's
+// server-authorized vehicle history, without another customer's prices.
+await m.locator('.trak-vehicle-photo-link').first().click();
+await m.waitForURL(/\/order\/[^/]+\/vehicle$/, {timeout: 10000});
+await m.getByRole('heading', {name:'История автомобиля'}).waitFor();
+await m.getByText('История обслуживания · без сумм').waitFor();
+await m.getByRole('link',{name:'Вернуться к заявке'}).click();
+await m.getByRole('tab',{name:'Работа'}).waitFor();
 
 // Чат
 // Чат свёрнут, пока не нажали
 await k.getByRole('button', { name: /Чат по заявке/ }).click();
 await k.locator('.compose input').fill('Позвоните мне 8 921 111-22-33');
 await k.locator('.compose button').click();
+await m.getByRole('tab', { name: 'Чат' }).click();
 await m.getByRole('button', { name: /Чат по заявке/ }).click();
 await m.getByText('[номер скрыт]').first().waitFor({ timeout: 10000 });
 
-// Статусы
+// Статусы: возврат на вкладку работы после переписки.
+await m.getByRole('tab', { name: 'Работа' }).click();
 await m.locator('button.btn', { hasText: 'Выехал' }).click();
 await m.locator('button.btn:not([disabled])', { hasText: 'Я на месте' }).waitFor();
 await m.locator('button.btn', { hasText: 'Я на месте' }).click();
@@ -263,26 +302,38 @@ await m.getByText('Как прошло с клиентом?').waitFor({ timeout:
 await m.getByRole('button', { name: '4 из 5' }).click();
 await m.getByRole('button', { name: 'Оставить отзыв' }).click();
 await m.goto(BASE + '/#/work');
-await m.getByText('Долг по комиссии с наличных').waitFor();
+// Finance reports actual confirmed payout and only displays historical debt when present.
+await m.locator('.work-mobile-balance').getByText(/К выплате:/).waitFor();
 await shot(m, '11-master-balance');
 
 // Админ в браузере
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Распределение' }).click();
+await a.goto(BASE + '/#/admin/section/dispatch');
+await a.getByRole('heading', { name: 'Распределение', exact: true }).waitFor();
+await a.getByText('Настройки распределения и торгов', { exact: true }).click();
 await a.getByText('Сначала заявки нам').waitFor();
 await assertDashboardTheme(a, 'admin');
 await checkCabinetMenu(a, ['Все заявки', 'Деньги и выплаты', 'Настройки площадки', 'Модерация — очередь'], { shopTab: false });
 await shot(a, '12-admin-dispatch');
-await a.getByRole('button', { name: 'Деньги', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/payments');
 await a.getByText('Способы оплаты').waitFor();
 await shot(a, '13-admin-payments');
 
-// Переходы между кабинетами: из админки в клиента и обратно, «Назад» ведёт в свой список
-await clickCabinetLink(a, 'Кабинет клиента');
-await a.locator('.client-dashboard .desktop-quick-card').first().waitFor();
-await clickCabinetLink(a, 'Профиль и настройки');
-await a.getByRole('button', { name: 'Кабинет администратора' }).click();
-await a.getByText('Администратор').first().waitFor();
+// Admin's "client" shortcut must go to the REAL isolated sandbox selector,
+// never turn the production/staff account into a pretend client role.
+await clickCabinetLink(a, 'Тестовый кабинет клиента');
+await a.waitForURL(/#\/admin\/test-center\/client$/);
+await a.getByRole('heading', { name: 'Клиент', exact: true }).waitFor();
+if (await a.evaluate(() => localStorage.getItem('traksos.mode')) !== 'admin')
+  throw new Error('Admin sandbox entry changed the active staff mode');
+if (await a.locator('.and19-client .and19-services').count())
+  throw new Error('Admin sandbox entry exposed the live client dashboard');
+await a.getByRole('link', { name: '← Выбор кабинета' }).click();
+await a.getByRole('heading', { name: 'Тестирование кабинетов' }).waitFor();
+await a.getByRole('link', { name: 'Вернуться в админку' }).click();
+// Returning from test center must mount the approved 618 mobile admin
+// workspace at phone width; approved 617 PC is used only at >=900px.
+await a.locator((await a.evaluate(() => window.innerWidth)) < 900
+  ? 'main.admin-workspace' : 'main.approved-pc-admin').waitFor();
 await m.goto(BASE + '/#/work/jobs');
 await m.locator('a.list-item').first().click();
 await m.getByText('← Назад').click();
@@ -294,7 +345,10 @@ await shot(m, '16b-master-money');
 await m.getByText('← Профиль').click();
 await m.getByRole('button', { name: /Аккаунт/ }).click();
 await m.waitForURL(/#\/profile$/);
-await m.getByRole('heading', { name: 'Профиль', exact: true }).waitFor();
+// The approved 617/618 secondary-page chrome is the one visible title.
+// The old page heading is deliberately hidden, but working account forms stay mounted.
+await m.locator('.desktop-content > .tr-inner-hero h1').waitFor({state:'visible'});
+await m.locator('main.account-profile-page').waitFor({state:'visible'});
 // Master/client isolation is checked after route state has settled.
 await m.waitForTimeout(250);
 if (await m.getByRole('button', { name: 'Кабинет клиента', exact: true }).isVisible()) {
@@ -312,8 +366,7 @@ await m.getByText('Для вызова SOS нужен клиентский ак�
 await m.goto(BASE + '/#/work');
 
 // Админ: поиск → карточка клиента → бонусы; клиент видит их в профиле
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Поиск', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/search');
 await a.locator('input[placeholder^="Телефон, имя"]').fill('1112233');
 await a.getByRole('button', { name: 'Найти' }).click();
 await a.locator('a.list-item').first().click();
@@ -324,15 +377,29 @@ for (const tab of ['Заявки', 'Машины', 'Отзывы', 'Платеж
 }
 await a.locator('input[placeholder="Сумма, ₽"]').fill('300');
 await a.locator('input[placeholder^="За что"]').fill('Подарок за первый заказ');
+// The real admin form deliberately requires explicit confirmation of a financial mutation.
+// Playwright otherwise auto-dismisses native confirm dialogs.
+let bonusConfirmation;
+a.once('dialog', async dialog => {
+  bonusConfirmation = { type: dialog.type(), message: dialog.message() };
+  if (dialog.type() === 'confirm' && dialog.message() === 'Подтвердить начисление баллов пользователя?')
+    await dialog.accept();
+  else await dialog.dismiss();
+});
+const bonusResponse = a.waitForResponse(r => r.request().method() === 'POST' &&
+  /\/api\/admin\/users\/[^/]+\/bonus$/.test(new URL(r.url()).pathname));
 await a.getByRole('button', { name: 'Начислить' }).click();
+if (bonusConfirmation?.type !== 'confirm' || bonusConfirmation.message !== 'Подтвердить начисление баллов пользователя?')
+  throw Error('Expected explicit bonus confirmation: ' + JSON.stringify(bonusConfirmation));
+const credited = await bonusResponse;
+if (!credited.ok()) throw Error('Bonus API rejected confirmed credit: HTTP ' + credited.status() + ' ' + await credited.text());
 await a.getByText('Бонусы начислены').waitFor();
 await shot(a, '14-admin-user-card');
 await k.goto(BASE + '/#/profile');
 await k.getByText(/спишутся сами/).waitFor({ timeout: 10000 });
 
 // Админ: карточка мастера → начисление; мастер видит в балансе
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Поиск', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/search');
 await a.locator('input[placeholder^="Телефон, имя"]').fill('2223344');
 await a.getByRole('button', { name: 'Найти' }).click();
 await a.locator('a.list-item').first().click();
@@ -344,18 +411,18 @@ await a.getByText('Начислено').first().waitFor();
 await shot(a, '15-admin-performer');
 
 // Админ: новая редакция оферты → клиенту окно с галочкой → принял
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Оферты', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/offers');
+await a.getByRole('heading', { name: 'Оферты', exact: true }).waitFor();
 await a.getByRole('button', { name: 'Оферта для клиентов' }).click();
 await a.locator('textarea').fill('# Оферта для клиентов\n\nТестовая редакция для проверки окна согласия. Здесь будет текст от юриста.\n\n1. Пункт первый');
 await a.locator('input[placeholder^="Что изменилось"]').fill('Новая шкала отмены');
 await a.getByRole('button', { name: 'Опубликовать' }).click();
 await a.getByText(/Опубликовано/).waitFor();
-// Админ тоже пользователь — новую редакцию для клиентов принимает и он
-await a.getByRole('dialog').waitFor({ timeout: 10000 });
-await a.getByRole('dialog').locator('input[type=checkbox]').check();
-await a.getByRole('button', { name: 'Принимаю' }).click();
-await a.getByRole('dialog').waitFor({ state: 'detached' });
+// Mixed-role admin must NOT be blocked by client terms in the admin cabinet.
+// When switched to the client workspace, the server still enforces that offer.
+await a.waitForTimeout(300);
+if (await a.getByRole('dialog').count())
+  throw new Error('Admin cabinet is blocked by inactive client offer');
 await k.goto(BASE + '/#/');
 await k.getByRole('dialog').waitFor({ timeout: 10000 });
 await shot(k, '16-client-offer-gate');
@@ -373,8 +440,8 @@ await k.getByRole('button', { name: 'Не согласен с суммой' }).c
 await k.locator('textarea').fill('Хочу уточнить итоговую сумму');
 await k.getByRole('button', { name: 'Отправить' }).click();
 await k.waitForURL(/#\/support\//);
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Обращения', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/support');
+await a.getByRole('heading', { name: 'Обращения', exact: true }).waitFor();
 await a.getByText('Ждёт ответа').click();
 await a.locator('.compose input').fill('Здравствуйте! Сейчас проверим');
 await a.locator('.compose button').click();
@@ -382,10 +449,17 @@ await k.getByText('Сейчас проверим').waitFor({ timeout: 10000 });
 await shot(k, '17-client-support');
 await a.getByRole('button', { name: 'Закрыть обращение' }).click();
 await k.getByText(/Поддержка закрыла обращение/).waitFor({ timeout: 10000 });
-await a.goto(BASE + '/#/admin');
-await a.getByRole('button', { name: 'Статистика', exact: true }).click();
+await a.goto(BASE + '/#/admin/section/stats');
+await a.getByRole('heading', { name: 'Статистика', exact: true }).waitFor();
 await a.getByText('Заявок в день').waitFor();
 await shot(a, '18-admin-stats');
+// CRM smoke: admin can open unified participant database, filter and see actual cards.
+await a.goto(BASE + '/#/admin/section/registry');
+await a.getByRole('heading', { name: 'Единая база клиентов и партнёров' }).waitFor();
+await a.locator('input[placeholder^="Имя, компания, телефон"]').fill('79991112233');
+await a.getByRole('button', { name: 'Найти участников' }).click();
+await a.getByText(/Найдено участников:/).waitFor();
+await shot(a, '18b-admin-registry');
 await k.goto(BASE + '/#/notifications');
 await k.getByText('Поддержка ответила', { exact: false }).first().waitFor();
 
@@ -393,7 +467,7 @@ await k.getByText('Поддержка ответила', { exact: false }).first
 const sto = await mk();
 await login(sto, '+79993334455', 'СТО');
 await sto.waitForURL(/#\/base/);
-await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта']);
+await checkCabinetMenu(sto, ['Заявки и история ремонтов', 'Карточка СТО', 'Финансы', 'Оферта'], {shopTab:false});
 await shot(sto, '19-service-cabinet');
 await clickCabinetLink(sto, 'Карточка СТО');
 await sto.waitForURL(/#\/base\/me/);
@@ -405,11 +479,11 @@ const both = await mk();
 await login(both, '+79993334456', 'hybrid');
 await both.waitForURL(new RegExp('work'));
 await both.goto(BASE + '/#/work');
-await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя']);
+await checkCabinetMenu(both, ['Моя СТО — стационарный ремонт', 'Профиль исполнителя'], { shopTab: false });
 await shot(both, '21-hybrid-master');
 await clickCabinetLink(both, 'Моя СТО — стационарный ремонт');
 await both.waitForURL(/#\/base$/);
-await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО']);
+await checkCabinetMenu(both, ['Выездной мастер — заявки', 'Карточка СТО'], {shopTab:false});
 await shot(both, '22-hybrid-service');
 await clickCabinetLink(both, 'Выездной мастер — заявки');
 await both.waitForURL(/#\/work$/);

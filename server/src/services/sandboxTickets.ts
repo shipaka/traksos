@@ -8,7 +8,7 @@ import { DEMO } from '../seed.ts';
 
 export const SANDBOX_ROLES = [
   'client', 'owner', 'driver', 'master', 'tow', 'service', 'master_service',
-  'insurer', 'inspection', 'moderator', 'admin',
+  'insurer', 'inspection', 'courier', 'moderator', 'admin',
 ] as const;
 export type SandboxRole = (typeof SANDBOX_ROLES)[number];
 
@@ -22,6 +22,7 @@ export const SANDBOX_USER_PHONE: Record<SandboxRole, string> = {
   master_service: '+79000000051',
   insurer: '+79000000052',
   inspection: '+79000000053',
+  courier: '+79000000054',
   moderator: DEMO.moderator,
   admin: DEMO.admin,
 };
@@ -36,6 +37,7 @@ export const SANDBOX_LANDING: Record<SandboxRole, string> = {
   master_service: '#/work',
   insurer: '#/insurance',
   inspection: '#/inspections',
+  courier: '#/courier',
   moderator: '#/moderation',
   admin: '#/admin',
 };
@@ -43,19 +45,45 @@ export const SANDBOX_LANDING: Record<SandboxRole, string> = {
 function signature(payload: string, secret: string): Buffer {
   return createHmac('sha256', secret).update('traksos-sandbox-handoff-v1.').update(payload).digest();
 }
+const validClock = (now:number) => Number.isSafeInteger(now) && now>=0 && now<=8_640_000_000_000_000-12*60*60_000;
 const forbidden = () => new HttpError(403, 'sandbox_access_denied', 'Доступ к тестовому кабинету не подтверждён');
 
+/** The issuer controls the HTTPS return origin. A ticket may only navigate
+ * back to the approved administrator test-center route, never a caller's path.
+ * Reject credentials, search parameters and deceptive fragments outright.
+ */
+function safeAdminReturn(value: unknown): string | undefined {
+  if (value === '') return undefined;
+  if (typeof value !== 'string' || value.length > 512 || /[\u0000-\u001f\u007f]/.test(value))
+    return undefined;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password ||
+        !/^\/+$/u.test(url.pathname) || url.search ||
+        url.hash !== '#/admin/test-center') return undefined;
+    // PUBLIC_URL may already have a trailing slash; the caller appends
+    // '/#/admin/test-center'. Canonicalize harmless repeated root slashes.
+    url.pathname = '/';
+    return url.href;
+  } catch { return undefined; }
+}
+
 export function issueSandboxTicket(role: SandboxRole, secret: string, now = Date.now(), returnUrl = ''): string {
-  if (!secret || secret.length < 32 || !SANDBOX_ROLES.includes(role)) throw forbidden();
+  if (!secret || secret.length < 32 || !SANDBOX_ROLES.includes(role) ||
+      !validClock(now)) throw forbidden();
+  const back = safeAdminReturn(returnUrl);
+  if (returnUrl && !back) throw forbidden();
   const payload = Buffer.from(JSON.stringify({
     v: 1, aud: 'traksos-isolated-sandbox', role,
-    exp: now + 45_000, nonce: randomBytes(24).toString('hex'), returnUrl,
+    exp: now + 45_000, nonce: randomBytes(24).toString('hex'), returnUrl: back ?? '',
   })).toString('base64url');
   return payload + '.' + signature(payload, secret).toString('base64url');
 }
 
 export async function exchangeSandboxTicket(ticket: string, secret: string, db: Db, now = Date.now()) {
-  if (!secret || secret.length < 32 || ticket.length > 1300) throw forbidden();
+  if (!secret || secret.length < 32 || typeof ticket !== 'string' || ticket.length > 1300 ||
+      !validClock(now)) throw forbidden();
+  const started=performance.now();
   const segments = ticket.split('.');
   if (segments.length !== 2 || !/^[a-zA-Z0-9_-]+$/.test(segments[0]) ||
       !/^[a-zA-Z0-9_-]{43}$/.test(segments[1])) throw forbidden();
@@ -71,14 +99,17 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
   catch { throw forbidden(); }
   if (p?.v !== 1 || p.aud !== 'traksos-isolated-sandbox' ||
       !SANDBOX_ROLES.includes(p.role) || !/^[a-f0-9]{48}$/.test(p.nonce) ||
-      !Number.isSafeInteger(p.exp) || p.exp < now || p.exp > now + 45_000) throw forbidden();
+      !Number.isSafeInteger(p.exp) || p.exp <= now || p.exp > now + 45_000 ||
+      (p.returnUrl !== '' && !safeAdminReturn(p.returnUrl))) throw forbidden();
 
   const role = p.role as SandboxRole;
   const phone = SANDBOX_USER_PHONE[role];
   const result = await db.tx(async q => {
     const user = await q.one<{id:string;phone:string;roles:string[];status:string}>(
-      'select id,phone,roles,status from users where phone=$1 for update', [phone]);
+      'select id,phone,roles,status from users where phone=$1 and deleted_at is null for update', [phone]);
     if (!user || user.status !== 'active') throw forbidden();
+    // A valid ticket can expire while queued behind another transaction.
+    if(p.exp<=now+Math.floor(performance.now()-started))throw forbidden();
     const requiredRole = role === 'inspection' ? 'inspection_operator' :
       role === 'owner' || role === 'client' ? 'client' : role === 'driver' ? 'driver' :
       role === 'master_service' ? 'master' : role;
@@ -86,13 +117,57 @@ export async function exchangeSandboxTicket(ticket: string, secret: string, db: 
         (role === 'master_service' && !user.roles.includes('service'))) throw forbidden();
     const used = await q.one('insert into sandbox_ticket_uses(nonce_hash,expires_at) values ($1,$2) on conflict do nothing returning nonce_hash',
       [sha256(p.nonce), new Date(p.exp)]);
-    if (!used) throw forbidden(); // replayed handoff
+    if (!used || p.exp<=now+Math.floor(performance.now()-started)) throw forbidden(); // replayed or expired handoff
     const token = newToken();
     await q.query('insert into sessions(token_hash,user_id,expires_at,device) values ($1,$2,$3,$4)', [
-      sha256(token), user.id, new Date(now + 2*60*60_000), 'sandbox-role-preview',
+      sha256(token), user.id,
+      new Date(now + (role === 'admin' ? 12 : 2)*60*60_000),
+      role === 'admin' ? 'sandbox-supervisor' : 'sandbox-role-preview',
     ]);
     return token;
   });
   return { token: result, role, landing: SANDBOX_LANDING[role], sandbox: true,
-    returnUrl: typeof p.returnUrl === 'string' && /^https:\/\//.test(p.returnUrl) ? p.returnUrl : undefined };
+    returnUrl: safeAdminReturn(p.returnUrl) };
+}
+
+// The long-lived (12-hour) supervisor comes from a one-time signed *admin*
+// handoff on the separate sandbox origin. Role sessions never become supervisors,
+// even when the chosen fictitious role happens to be "admin".
+export async function switchSandboxRole(
+  db: Db, supervisorToken: string, role: SandboxRole, now = Date.now(),
+) {
+  if (typeof supervisorToken !== 'string' ||
+      !/^[A-Za-z0-9_-]{20,512}$/.test(supervisorToken) ||
+      !SANDBOX_ROLES.includes(role) || !validClock(now)) throw forbidden();
+  const started=performance.now();
+  return db.tx(async q => {
+    const supervisor = await q.one<{expires_at:Date}>(
+      `select s.expires_at from sessions s join users u on u.id=s.user_id
+        where s.token_hash=$1 and s.device='sandbox-supervisor'
+          and s.expires_at>now() and u.phone=$2
+          and u.status='active' and u.deleted_at is null and 'admin'=any(u.roles)
+        for share of s,u`,
+      [sha256(supervisorToken), SANDBOX_USER_PHONE.admin],
+    );
+    if (!supervisor) throw forbidden();
+    const target = await q.one<{id:string;roles:string[]}>(
+      "select id,roles from users where phone=$1 and status='active' and deleted_at is null for share",
+      [SANDBOX_USER_PHONE[role]],
+    );
+    const required = role==='owner'||role==='client'?'client':
+      role==='inspection'?'inspection_operator':
+      role==='master_service'?'master':role;
+    if (!target?.roles.includes(required) ||
+        (role==='master_service'&&!target.roles.includes('service')))
+      throw forbidden();
+    const token = newToken();
+    const expiresAt = new Date(Math.min(now+12*60*60_000,
+      new Date(supervisor.expires_at).getTime()));
+    if(expiresAt.getTime()<=now+Math.floor(performance.now()-started))throw forbidden();
+    await q.query(
+      'insert into sessions(token_hash,user_id,expires_at,device) values ($1,$2,$3,$4)',
+      [sha256(token),target.id,expiresAt,'sandbox-role-switched'],
+    );
+    return {token,role,landing:SANDBOX_LANDING[role],sandbox:true,expiresAt};
+  });
 }

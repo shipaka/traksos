@@ -1,23 +1,27 @@
 import http from 'node:http';
-import { WebSocketServer } from 'ws';
 import { config } from './config.ts';
 import { createDb } from './db/index.ts';
 import { migrate } from './db/migrate.ts';
-import { createApp, bearer } from './app.ts';
+import { createApp } from './app.ts';
 import { createSms } from './providers/sms.ts';
 import { sendInsuranceReminders } from './services/insuranceReminders.ts';
 import { createPush } from './providers/push.ts';
 import { MockProvider } from './payments/provider.ts';
-import { YooKassaProvider } from './payments/yookassa.ts';
+import { PersistentSandboxMockProvider, prepareSandboxMockDb } from './payments/persistentSandboxMock.ts';
 import { staticHandler } from './http/static.ts';
 import { PublicWeatherService } from './services/publicWeather.ts';
+import { attachRealtimeGateway } from './realtime/gateway.ts';
 
 const db = await createDb(config.databaseUrl);
 const applied = await migrate(db);
 if (applied.length) console.log('Миграции:', applied.join(', '));
 
-const payments = config.payments.provider === 'yookassa'
-  ? new YooKassaProvider(config.payments.yookassaShopId, config.payments.yookassaSecretKey, config.payments.yookassaAgentId, config.payments.yookassaPayoutKey)
+// Real acquiring/payouts are deliberately disconnected: TrakSOS chose Tochka.
+// The sandbox uses the same payment interface, but persists fake state in its
+// own PostgreSQL database so a restart cannot erase holds or duplicate payouts.
+if (config.sandboxInstance) await prepareSandboxMockDb(db);
+const payments = config.sandboxInstance
+  ? new PersistentSandboxMockProvider(db, config.publicUrl)
   : new MockProvider(config.publicUrl);
 
 const app = createApp({ db, sms: createSms(), push: createPush(), payments });
@@ -47,42 +51,40 @@ const server = http.createServer((req, res) => {
   return void serveWeb(req, res);
 });
 
-// WebSocket: /ws?token=... — статусы, чат, входящие вызовы
-const wss = new WebSocketServer({ noServer: true });
-server.on('upgrade', async (req, socket, head) => {
-  if (!req.url?.startsWith('/ws')) return socket.destroy();
-  const user = await app.auth.authenticate(bearer(req));
-  if (!user) return socket.destroy();
-  const previewUntil = user.roles.includes('admin')
-    ? (await db.one<{ admin_preview_until: Date | null }>('select admin_preview_until from users where id=$1', [user.id]))?.admin_preview_until ?? null
-    : null;
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    app.hub.add(user.id, ws);
-    ws.send(JSON.stringify({ type: 'hello', userId: user.id }));
-    const ping = setInterval(() => ws.readyState === 1 && ws.ping(), 25_000);
-    // A preview login must not keep receiving staff notifications after expiry.
-    const previewTimer = previewUntil
-      ? setTimeout(() => ws.close(1008, 'Preview expired'), Math.max(0, new Date(previewUntil).getTime() - Date.now()))
-      : null;
-    ws.on('close', () => {
-      clearInterval(ping);
-      if (previewTimer) clearTimeout(previewTimer);
-      app.hub.remove(user.id, ws);
-    });
-  });
-});
+// Both existing APKs and new one-use-ticket clients remain compatible.
+// Legacy URL token support is a *temporary* release gate tracked by #115.
+attachRealtimeGateway(server,app,db);
 
 // Очередь вызовов: истёкшие → следующему
 const timer = setInterval(() => {
   app.orders.tick().catch((e) => console.error('[tick]', e));
   app.auction.tick().catch((e) => console.error('[auction]', e));
 }, 2_000);
+// Check stalled order stages once per minute, separately from the two-second call queue.
+const orderSlaTimer = setInterval(() => {
+  void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
+}, 60_000);
+void app.orderSla.tick().catch((e) => console.error('[order-sla]', e));
+// Recover saved no-performer inbox notifications after database storage outages
+// and process restarts, independently of the two-second dispatch timer.
+const noPerformerAlertsTimer = setInterval(() => {
+  void app.auction.flushPendingNoPerformerAlerts()
+    .catch((e) => console.error('[no-performer-alerts]', e));
+}, 30_000);
+void app.auction.flushPendingNoPerformerAlerts()
+  .catch((e) => console.error('[no-performer-alerts]', e));
 // First human response deadline, one durable overdue notification at 60 min.
 // Database row locks and event uniqueness protect multi-instance operation.
 const supportSlaTimer = setInterval(() => {
   app.support.tickSla().catch((e) => console.error('[support-sla]', e));
 }, 30_000);
 void app.support.tickSla().catch((e) => console.error('[support-sla]', e));
+// Durable emergency handoff SLA: reminder and manual review only, never financial completion.
+const unilateralSlaTimer=setInterval(()=>{
+  void app.unilateral.tickSla().catch(e=>console.error('[unilateral-sla]',e));
+},60_000);
+void app.unilateral.tickSla().catch(e=>console.error('[unilateral-sla]',e));
+
 // Background delivery is durable across restarts. Missing webhook config keeps reports
 // in the internal admin queue; it never silently sends personal data externally.
 const developerDeliveryTimer = setInterval(() => {
@@ -99,6 +101,8 @@ const housekeeping = async () => {
       .catch((e) => console.error('[sms-quota-cleanup]', e)),
     db.query("delete from auth_login_attempts where window_start < now() - interval '24 hours'")
       .catch((e) => console.error('[login-quota-cleanup]', e)),
+    db.query("delete from realtime_ws_tickets where expires_at < now() - interval '1 minute'")
+      .catch((e) => console.error('[ws-ticket-cleanup]', e)),
     db.query("delete from diagnostic_events where occurred_at < now() - interval '30 days'")
       .catch((e) => console.error('[diagnostics-cleanup]', e)),
     // GPS coordinates are sensitive; retain the minimal route evidence for
@@ -128,6 +132,9 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
     clearInterval(hourly);
     clearInterval(captureTimer);
     clearInterval(supportSlaTimer);
+    clearInterval(orderSlaTimer);
+    clearInterval(noPerformerAlertsTimer);
+    clearInterval(unilateralSlaTimer);
     clearInterval(developerDeliveryTimer);
     server.close();
     await db.close();

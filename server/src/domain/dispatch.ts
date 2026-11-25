@@ -19,6 +19,7 @@ export interface Candidate {
   verification: string;
   lat: number | null;
   lng: number | null;
+  prep_minutes?: number | null;
   rating: number | string | null;
   accepts_group: boolean;
   user_status: string;
@@ -35,10 +36,20 @@ export interface DispatchOrder {
   lat: number | null;
   lng: number | null;
   group_trip: boolean;
+  verified_only?: boolean;
   cargo?: string | null;
 }
 
 const brandRank: Record<BrandLevel, number> = { excellent: 0, good: 1, last_resort: 2, refuse: 99 };
+
+function ownBrandLevel(brands: Candidate['brands'], brand: string | null): BrandLevel {
+  const level = brand && brands && Object.hasOwn(brands, brand) ? brands[brand] : undefined;
+  return typeof level==='string' && Object.hasOwn(brandRank,level) ? level : 'good';
+}
+function knownPosition(lat: number|null, lng: number|null): boolean {
+  return typeof lat==='number' && typeof lng==='number' && Number.isFinite(lat) && Number.isFinite(lng) &&
+    Math.abs(lat)<=90 && Math.abs(lng)<=180 && !(lat===0 && lng===0);
+}
 
 export function performerKindFor(service: string) {
   if (service === 'tow') return 'tow';
@@ -63,25 +74,30 @@ export interface Ranked {
 
 export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankOptions): Ranked[] {
   const kind = performerKindFor(order.service);
+  const now = o.now ?? new Date();
+  const orderLocated=knownPosition(order.lat,order.lng);
   const rows = list
-    .filter((c) => c.kind === kind && c.user_status === 'active' && c.verification === 'approved' && !c.paused)
-    .filter((c) => kind !== 'master' || order.service === 'consult' || c.specialties.includes(order.service))
+    .filter((c) => c.kind === kind && c.user_status === 'active' && !c.paused)
+    // Owner/driver preference persists on the order and applies to EVERY dispatch stage.
+    .filter((c) => !order.verified_only || c.verification === 'approved')
+    .filter((c) => kind !== 'master' || order.service === 'consult' || (Array.isArray(c.specialties) && c.specialties.includes(order.service)))
     .filter((c) => c.line_status === 'online' || c.line_status === 'on_call')
     // Распорядок: вне рабочего времени не звоним; в часы «на телефоне» — только консультации
-    .filter((c) => { const s = slot(c.schedule, o.now ?? new Date(), c.off_schedule_until); return s === 'work' || (s === 'phone' && order.service === 'consult'); })
+    .filter((c) => { const s = slot(c.schedule, now, c.off_schedule_until); return s === 'work' || (s === 'phone' && order.service === 'consult'); })
     .filter((c) => !o.exclude?.has(c.user_id))
     // В отпуске — не звоним; эвакуатор не берёт такой груз — не звоним
     .filter((c) => !c.extras?.vacation)
-    .filter((c) => kind !== 'tow' || !order.cargo || !c.extras?.takes?.length || c.extras.takes.includes(order.cargo))
+    .filter((c) => kind !== 'tow' || !order.cargo || !c.extras?.takes?.length || (Array.isArray(c.extras.takes) && c.extras.takes.includes(order.cargo)))
     .filter((c) => !order.group_trip || c.accepts_group)
     .filter((c) => (c.cash_debt ?? 0) <= o.cashDebtLimit)
     .map((c) => {
-      const level: BrandLevel = order.brand ? c.brands?.[order.brand] ?? 'good' : 'good';
+      const level = ownBrandLevel(c.brands,order.brand);
       const distanceKm =
-        order.lat != null && order.lng != null && c.lat != null && c.lng != null
-          ? haversineKm({ lat: order.lat, lng: order.lng }, { lat: c.lat, lng: c.lng })
+        orderLocated && knownPosition(c.lat,c.lng)
+          ? haversineKm({ lat: order.lat!, lng: order.lng! }, { lat: c.lat!, lng: c.lng! })
           : null;
-      return { c, level, distanceKm, rating: c.rating == null ? 0 : Number(c.rating) };
+      const rating=Number(c.rating ?? 0);
+      return { c, level, distanceKm, rating: Number.isFinite(rating) ? rating : 0 };
     })
     .filter((r) => r.level !== 'refuse')
     .filter((r) => r.distanceKm === null || r.distanceKm <= o.radiusKm);
@@ -89,6 +105,8 @@ export function rankCandidates(order: DispatchOrder, list: Candidate[], o: RankO
   rows.sort((a, b) =>
     Number(b.c.is_priority) - Number(a.c.is_priority) ||
     brandRank[a.level] - brandRank[b.level] ||
+    // A verified badge improves ranking, but not eligibility for work.
+    Number(b.c.verification === 'approved') - Number(a.c.verification === 'approved') ||
     // «на звонке» — виден, но ниже в очереди
     Number(a.c.line_status === 'on_call') - Number(b.c.line_status === 'on_call') ||
     (a.distanceKm ?? 1e6) - (b.distanceKm ?? 1e6) ||

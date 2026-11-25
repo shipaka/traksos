@@ -47,6 +47,18 @@ PY
 else
   echo "Существующий deploy/.env не изменён."
 fi
+command -v git >/dev/null 2>&1 || { echo "Git required to pin the exact release" >&2; exit 1; }
+[[ "$(git -C "$BASE/.." branch --show-current)" == "main" ]] || {
+  echo "Выпуск разрешён только из проверенной ветки main" >&2; exit 1;
+}
+[[ -z "$(git -C "$BASE/.." status --porcelain --untracked-files=no)" ]] || {
+  echo "В исходниках локальные изменения. Сначала проверьте и сохраните их." >&2; exit 1;
+}
+export TRAKSOS_RELEASE_REV="$(git -C "$BASE/.." rev-parse HEAD)"
+[[ "$TRAKSOS_RELEASE_REV" =~ ^[0-9a-f]{40}$ ]] || {
+  echo "Полный SHA выпуска не найден. Запуск остановлен." >&2; exit 1;
+}
+echo "Точный релиз: ${TRAKSOS_RELEASE_REV:0:12} (mutable latest запрещён)"
 echo "Проверка Docker Compose..."
 docker compose config --quiet
 echo "Сборка актуального кода и запуск..."

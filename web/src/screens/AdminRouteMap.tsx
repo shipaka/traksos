@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { get, fmtTime } from '../api.ts';
-import { useLoad, Loading } from '../ui.tsx';
+import { useLoad, useMe, Loading } from '../ui.tsx';
 
 type RoutePoint = { lat: number; lng: number; received_at: string; performer_id: string };
 const mercator = (lat: number) => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
@@ -12,11 +13,24 @@ const distanceKm = (a: RoutePoint, b: RoutePoint) => {
   return 6371 * 2 * Math.asin(Math.min(1, Math.sqrt(h)));
 };
 export function AdminRouteMap({ orderId }: { orderId: string }) {
-  const route = useLoad(() => get(`/api/admin/orders/${encodeURIComponent(orderId)}/route`), [orderId]);
-  if (!route.data) return <section className="card"><b>Карта GPS-маршрута · только администратор</b><Loading error={route.error}/></section>;
+  const { me } = useMe();
+  const route=useLoad<{ownerId:string|null;orderId:string;payload:any}>(
+    async()=>({ownerId:me?.id??null,orderId,
+      payload:await get(`/api/admin/orders/${encodeURIComponent(orderId)}/route`)}),
+    [orderId,me?.id]);
+  const payload=!route.error && !!me?.id && route.data?.ownerId===me.id &&
+    route.data.orderId===orderId ? route.data.payload : null;
+  const [externalFor,setExternalFor]=useState('');
+  const externalKey=String(me?.id??'')+':'+orderId;
+  if (!payload) return <section className="card stack">
+    <b>Карта GPS-маршрута · только администратор</b>
+    <Loading error={route.error}/>
+    {route.error && <button type="button" className="btn ghost small"
+      onClick={()=>void route.reload()}>Повторить загрузку GPS-истории</button>}
+  </section>;
   // Never connect samples with missing coordinates or timestamps: a zero coerced
   // from null would falsely place a performer near the Gulf of Guinea.
-  const points: RoutePoint[] = (Array.isArray(route.data.points) ? route.data.points : [])
+  const points: RoutePoint[] = (Array.isArray(payload.points) ? payload.points : [])
     .filter((p: RoutePoint | null) => p != null &&
       typeof p.lat === 'number' && Number.isFinite(p.lat) &&
       typeof p.lng === 'number' && Number.isFinite(p.lng) &&
@@ -86,12 +100,22 @@ export function AdminRouteMap({ orderId }: { orderId: string }) {
     '&mlon=' + Number(last.lng).toFixed(6) + '#map=15/' +
     Number(last.lat).toFixed(6) + '/' + Number(last.lng).toFixed(6);
   return <section className="card stack" aria-label="Карта истории GPS исполнителя">
-    <div className="between"><b>Маршрут исполнителя · №{route.data.number}</b><span className="pill">Только администратор</span></div>
+    <div className="between"><b>Маршрут исполнителя · №{payload.number}</b><span className="pill">Только администратор</span></div>
     <p className="note">Принятых GPS-точек: {points.length}. Разрывов маршрута (смена исполнителя, паузы, скачки GPS): {gapCount}. Сумма прямых отрезков между достоверно последовательными точками: {straightLineKm.toFixed(1)} км (не дорожный пробег). Первая: {fmtTime(first.received_at)}. Последняя: {fmtTime(last.received_at)}.</p>
     {crossesDateLine && <p className="note">Маршрут пересекает линию перемены дат: карта показывает район последней точки, а схема ниже — всю траекторию.</p>}
-    <div style={{height:360,borderRadius:14,overflow:'hidden',background:'#152638'}}>
-      <iframe title="Карта OpenStreetMap района движения" src={url} loading="lazy" referrerPolicy="no-referrer"
-        style={{width:'100%',height:'100%',border:0}}/>
+    <div style={{minHeight:160,borderRadius:14,overflow:'hidden',background:'#152638'}}>
+      {externalFor===externalKey
+        ? <iframe title="Карта OpenStreetMap района движения" src={url}
+            loading="lazy" referrerPolicy="no-referrer"
+            style={{width:'100%',height:360,border:0}}/>
+        : <div className="stack" style={{padding:18,gap:10}}>
+            <b>Внешняя карта выключена для защиты GPS</b>
+            <p className="note">Схема с точками ниже доступна без передачи геолокации сторонним сервисам.
+              Если открыть карту OpenStreetMap, её сервер получит примерный район последних
+              GPS-координат и сетевые данные браузера.</p>
+            <button type="button" className="btn ghost small"
+              onClick={()=>setExternalFor(externalKey)}>Открыть внешнюю карту с GPS</button>
+          </div>}
     </div>
     <div className="stack" style={{gap:6}}>
       <b>История движения · схема по принятым точкам</b>

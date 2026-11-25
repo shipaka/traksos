@@ -22,8 +22,10 @@ export function validateRoles(existing: string[], requested: readonly string[]) 
   const target = new Set([...current, ...requested]);
   const client = target.has('client') || target.has('driver');
   const provider = ['master', 'tow', 'service'].some((r) => target.has(r));
+  const courier = target.has('courier');
   const insurer = target.has('insurer') || target.has('inspection_operator');
-  if ((client && provider) || (insurer && (client || provider)) ||
+  if ((client && (provider || courier)) || (insurer && (client || provider || courier)) ||
+      (courier && provider) ||
       (target.has('client') && target.has('driver'))) {
     throw bad('incompatible_roles', 'Этот номер уже привязан к другой категории. Для другой деятельности нужен отдельный аккаунт.');
   }

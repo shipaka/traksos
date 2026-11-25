@@ -6,6 +6,19 @@ let t: T;
 before(async () => { t = await setup(); });
 after(() => t.close());
 
+test('voluntary verification does not block a registered unverified master from going online', async () => {
+  const worker=await t.login('+79998882223','master');
+  const profile=ok(await t.api('PUT','/api/performer/profile',{
+    kind:'master',name:'Мастер без добровольных фото',specialties:['electric'],
+  },worker.token));
+  assert.equal(profile.verification,'pending');
+  const online=ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},worker.token));
+  assert.equal(online.line_status,'online');
+  assert.equal(online.verification,'pending');
+  const offline=ok(await t.api('POST','/api/performer/line',{lineStatus:'offline'},worker.token));
+  assert.equal(offline.line_status,'offline');
+});
+
 test('background is not a logout: on-line status persists until explicit signout', async () => {
   const admin = await t.login('+79990000001');
   const worker = await t.login('+79998882222', 'master');

@@ -13,11 +13,15 @@ async function api(method,path,body,token,status=200) {
   return data;
 }
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
-async function acceptPendingOffers(page,token) {
+async function acceptPendingOffers(page,token,activeMode) {
   const response=await fetch(BASE+'/api/me/offers',{headers:{authorization:'Bearer '+token}});
   if(!response.ok) throw Error('Could not read pending offer status');
   const offers=await response.json();
-  for (const item of offers.filter(x=>x.current && !x.accepted)) {
+  // API lists all roles on a multi-role account, but the UI only prompts
+  // for documents required by the currently opened workspace.
+  const applicable={owner:['client'],client:['client'],insurer:['insurer'],admin:[]};
+  for (const item of offers.filter(x=>x.current && !x.accepted &&
+    (x.audience==='privacy' || applicable[activeMode]?.includes(x.audience)))) {
     const dialog=page.getByRole('dialog',{name:item.name});
     await dialog.waitFor({state:'visible',timeout:15000});
     await dialog.locator('input[type=checkbox]').check();
@@ -54,6 +58,21 @@ if(policy.primaryConfigured) {
 }
 const car=await api('POST','/api/vehicles',{brand:'Scania',model:'R520',year:2020,plate:'Т123ТТ78'},owner.token);
 assert(car.id,'Vehicle was not created');
+// Neither a partner nor a staff account can create customer insurance/inspection
+// cases, even by bypassing the form and calling the API directly.
+const masterWithoutCustomerRole=await register('+79990000654','master');
+const beforeRejected=await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,owner.token);
+for(const actor of [partner,masterWithoutCustomerRole,...(admin.user.roles.some(r=>r==='client'||r==='driver')?[]:[admin])]){
+  assert(!actor.user.roles.some(r=>r==='client'||r==='driver'),
+    'Negative test actor unexpectedly has a customer role');
+  for(const kind of ['insurance','inspection']){
+    await api('POST','/api/vehicle-service-requests',
+      {vehicleId:car.id,kind,comment:'CI: prohibited non-customer role'},actor.token,403);
+  }
+}
+const afterRejected=await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,owner.token);
+assert(afterRejected.length===beforeRejected.length,
+  'Forbidden role inserted a customer request into vehicle history');
 await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,outsider.token,404);
 const request=await api('POST','/api/vehicle-service-requests',{vehicleId:car.id,kind:'insurance',comment:'CI: проверить новый полис'},owner.token);
 assert(request.id && request.kind==='insurance','Insurance request missing');
@@ -72,13 +91,31 @@ assert(completed.status==='completed','Insurer completion not saved');
 const history=await api('GET','/api/vehicles/'+car.id+'/service-history',undefined,owner.token);
 assert(history.some(x=>x.id===request.id && x.status==='completed'),'Owner insurance history missing completion');
 assert(history.find(x=>x.id===request.id).events.length>=3,'History events not preserved');
+// A staff status transition must never overwrite the ID of a designated
+// insurer/inspection operator with the ID of the moderator or administrator.
+const rejectedRequest=await api('POST','/api/vehicle-service-requests',
+  {vehicleId:car.id,kind:'insurance',comment:'CI: preserve assigned insurer on rejection'},owner.token);
+await api('PATCH','/api/admin/vehicle-service-requests/'+rejectedRequest.id,
+  {status:'in_review'},admin.token);
+await api('PATCH','/api/admin/vehicle-service-requests/'+rejectedRequest.id,
+  {status:'sent_to_partner'},admin.token);
+await api('POST','/api/admin/vehicle-service-requests/'+rejectedRequest.id+'/assign-insurer',
+  {insurerId:partner.user.id},admin.token);
+const beforeStatus=await api('GET','/api/insurance/requests/'+rejectedRequest.id,undefined,admin.token);
+assert(beforeStatus.request.assigned_to===partner.user.id,
+  'Insurance partner assignment did not persist before staff review');
+await api('PATCH','/api/admin/vehicle-service-requests/'+rejectedRequest.id,
+  {status:'rejected',note:'Синтетический тест: отказано после проверки'},admin.token);
+const afterStatus=await api('GET','/api/insurance/requests/'+rejectedRequest.id,undefined,admin.token);
+assert(afterStatus.request.assigned_to===partner.user.id&&afterStatus.request.status==='rejected',
+  'Staff status update silently replaced the assigned insurance partner');
 
 const browser=await chromium.launch();
 try{
   for(const item of [
-    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой гараж',expected:'Страхование и техосмотр'},
+    {name:'owner',token:owner.token,hash:'#/garage',heading:'Мой транспорт',expected:'Страхование и техосмотр'},
     {name:'insurer',token:partner.token,hash:'#/insurance',heading:'Страхование',expected:'Полис оформлен'},
-    {name:'admin',token:admin.token,hash:'#/admin',heading:'Администратор',expected:'Страхование и ТО'}
+    {name:'admin',token:admin.token,hash:'#/admin/section/vehicleServices',heading:'Страхование и ТО',expected:'Страхование и ТО'}
   ]){
     const context=await browser.newContext({...devices['Pixel 7'],deviceScaleFactor:1,locale:'ru-RU'});
     const page=await context.newPage();
@@ -87,13 +124,11 @@ try{
     await page.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},item.token);
     await page.goto(BASE+'/'+item.hash,{waitUntil:'domcontentloaded'});
     await page.getByRole('heading',{name:item.heading}).waitFor();
-    await acceptPendingOffers(page,item.token);
+    await acceptPendingOffers(page,item.token,item.name);
     if(item.name==='insurer') await page.getByRole('button',{name:'Все',exact:true}).click();
     if(item.name!=='admin') await page.getByText(item.expected,{exact:false}).first().waitFor();
     if(item.name==='admin') {
-      await page.getByRole('button',{name:/Разделы управления/}).click();
-      await page.getByRole('navigation',{name:'Разделы администрации'})
-        .getByRole('button',{name:'Страхование и ТО'}).click();
+      await page.locator('.admin-stage-head h2').getByText('Страхование и ТО',{exact:true}).waitFor();
       await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
       await page.getByRole('button',{name:/Страховые агенты/}).click();
        await page.getByText('Страховые партнёры',{exact:true}).waitFor();
@@ -110,9 +145,19 @@ try{
   const clientPage=await clientCtx.newPage();
   await clientPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','client')},owner.token);
   await clientPage.goto(BASE+'/#/insurance/request/new/'+truck.id);
-  await acceptPendingOffers(clientPage,owner.token);
+  await acceptPendingOffers(clientPage,owner.token,'client');
   await clientPage.getByRole('heading',{name:'Заявка на страхование грузовика'}).waitFor();
+  // Invalid steps must be explained inline, never open blocking Android/browser alerts.
+  clientPage.on('dialog',dialog=>{throw Error('Native browser dialog in insurance wizard: '+dialog.message());});
+  await clientPage.getByRole('button',{name:'Продолжить'}).click();
+  await clientPage.locator('.insurance-validation-alert').getByText('Выберите страхового агента.').waitFor();
+  assert(await clientPage.locator('[data-insurance-field="agent"]').getAttribute('aria-invalid')==='true',
+    'Missing agent must mark the field invalid');
+  assert(await clientPage.locator('[data-insurance-field="agent"]').evaluate(el=>document.activeElement===el),
+    'Missing agent validation must focus the input');
   await clientPage.locator('select').first().selectOption(partner.user.id);
+  assert(await clientPage.locator('.insurance-validation-alert').count()===0,
+    'Correcting agent must clear the validation error');
   await clientPage.getByRole('button',{name:'Продолжить'}).click();
   await clientPage.getByLabel('Фамилия').fill('Иванов');
   await clientPage.getByLabel('Имя',{exact:true}).fill('Иван');
@@ -144,6 +189,44 @@ try{
   assert(requestId&&requestId!==truck.id,'New insurance dossier was not opened');
   await clientPage.getByText('Заявка отправлена страховому агенту',{exact:true}).waitFor();
   await clientPage.screenshot({path:OUT+'/client-sent-status.png',fullPage:true});
+  // Staff members can read the case but must not see a fake client garage
+  // or a composer that the server explicitly rejects with HTTP 403.
+  const staffCtx=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  const staffPage=await staffCtx.newPage();
+  await staffPage.addInitScript(t=>{
+    localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','admin');
+  },admin.token);
+  await staffPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await staffPage.locator('.insurance-live-kicker').filter({hasText:'ПРОСМОТР СОТРУДНИКА'}).waitFor();
+  assert(await staffPage.locator('a.insurance-back[href="#/admin/section/vehicleServices"]').count()===1,
+    'Staff dossier must link back to real admin insurance queue, not client garage');
+  assert(await staffPage.locator('.insurance-chat-editor').count()===0,
+    'Staff must not see a forbidden insurance message composer');
+  await staffPage.getByText('Только просмотр: отправлять сообщения могут заявитель и назначенный страховой агент.').waitFor();
+  await api('POST','/api/insurance/requests/'+requestId+'/messages',
+    {message:'A moderator or admin must not send this'},admin.token,403);
+  await staffPage.screenshot({path:OUT+'/admin-insurance-readonly.png',fullPage:true});
+  await staffPage.goto(BASE+'/#/insurance/request/new');
+  await staffPage.getByText('Оформление страховой заявки доступно только клиенту').waitFor();
+  await staffCtx.close();
+
+  // Closed cases must retain their history but hide the forbidden composer.
+  // Mock only the response in isolated Chromium, not a real database update.
+  const openDetail=await api('GET','/api/insurance/requests/'+requestId,undefined,owner.token);
+  const detailPath='**/api/insurance/requests/'+requestId;
+  for(const closedStatus of ['cancelled','rejected']){
+    const closedHandler=route=>route.fulfill({status:200,contentType:'application/json',
+      body:JSON.stringify({...openDetail,request:{...openDetail.request,status:closedStatus}})});
+    await clientPage.route(detailPath,closedHandler);
+    await clientPage.reload();
+    await clientPage.getByText('Заявка закрыта. История переписки доступна только для чтения.').waitFor();
+    assert(await clientPage.locator('.insurance-chat-editor').count()===0,
+      closedStatus+': client still sees a composer on a closed insurance case');
+    await clientPage.getByRole('button',{name:/Показать переписку/}).waitFor();
+    await clientPage.unroute(detailPath,closedHandler);
+  }
+  await clientPage.reload();
+  await clientPage.locator('.insurance-chat-editor').waitFor();
   // The MAIN customer dashboard must not hide the newly submitted request.
   await clientPage.goto(BASE+'/#/');
   const homeInsurance=clientPage.getByRole('region',{name:'Мои активные страховые заявки'});
@@ -162,20 +245,43 @@ try{
   const inboxPage=await inboxContext.newPage();
   await inboxPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await inboxPage.goto(BASE+'/#/insurance');
-  await acceptPendingOffers(inboxPage,partner.token);
-  await inboxPage.getByText('Получена новая заявка',{exact:true}).waitFor();
-  await inboxPage.getByRole('button',{name:'Требуют действий'}).waitFor();
+  await acceptPendingOffers(inboxPage,partner.token,'insurer');
+  await inboxPage.locator('.approved-pc-case').getByText('Получена новая заявка',{exact:true}).waitFor();
+  await inboxPage.getByRole('tab',{name:/^Требуют действий/}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-incoming.png',fullPage:true});
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
+  await inboxPage.getByRole('tab',{name:/^В работе/}).click();
   await inboxPage.getByText('Нет заявок в работе.',{exact:true}).waitFor();
   await api('POST','/api/insurance/requests/'+requestId+'/accept',{},partner.token);
+  // Agent-side validation should stay inside the TrakSOS workdesk.
+  await inboxPage.goto(BASE+'/#/insurance/request/'+requestId);
+  await inboxPage.getByRole('button',{name:'Отправить 1 предложений клиенту'}).click();
+  await inboxPage.locator('.insurance-validation-alert').getByText(/Предложение 1/).waitFor();
+  assert(await inboxPage.locator('[data-insurance-offer-field="0-company"]').evaluate(el=>document.activeElement===el),
+    'Missing insurance company should focus the offer field');
+  // Price is an exact monetary value, not a JavaScript expression or a
+  // rounded approximation. Never submit 1e3 or 3 fractional kopeck digits.
+  await inboxPage.locator('[data-insurance-offer-field="0-company"]').fill('Страховая А');
+  await inboxPage.locator('[data-insurance-offer-field="0-product"]').fill('ОСАГО грузовика');
+  const amount=inboxPage.locator('[data-insurance-offer-field="0-price"]');
+  for(const invalidPrice of ['1e3','32500.001','10000000.01','0']){
+    await amount.fill(invalidPrice);
+    await inboxPage.getByRole('button',{name:'Отправить 1 предложений клиенту'}).click();
+    await inboxPage.locator('.insurance-validation-alert')
+      .getByText(/не более двух знаков после запятой/).waitFor();
+    assert(await amount.getAttribute('aria-invalid')==='true',
+      'Invalid premium '+invalidPrice+' must be rejected and marked invalid');
+  }
+  await amount.fill('32 500,75');
+  assert(await amount.getAttribute('aria-invalid')!=='true',
+    'Valid Russian decimal amount should be accepted without rounding');
+  await inboxPage.goto(BASE+'/#/insurance');
   const one={company:'Страховая А',product:'ОСАГО грузовика',premiumKopecks:3250000,
     description:'Цена агентом рассчитана вручную',coverage:'Условия согласовываются'};
   await api('POST','/api/insurance/requests/'+requestId+'/offers',
     {offers:[one,{...one,company:'Страховая Б',premiumKopecks:3560000}]},partner.token);
   await inboxPage.reload();
-  await inboxPage.getByRole('button',{name:'В работе',exact:true}).click();
-  await inboxPage.getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
+  await inboxPage.getByRole('tab',{name:/^В работе/}).click();
+  await inboxPage.locator('.approved-pc-case').getByText('Предложения отправлены клиенту',{exact:true}).waitFor();
   await inboxPage.screenshot({path:OUT+'/insurer-desktop-working.png',fullPage:true});
   await inboxContext.close();
   await clientPage.reload();
@@ -198,7 +304,7 @@ try{
   const agentPage=await agentCtx.newPage();
   await agentPage.addInitScript(t=>{localStorage.setItem('traksos.token',t);localStorage.setItem('traksos.mode','insurer')},partner.token);
   await agentPage.goto(BASE+'/#/insurance/request/'+requestId);
-  await acceptPendingOffers(agentPage,partner.token);
+  await acceptPendingOffers(agentPage,partner.token,'insurer');
   await agentPage.getByRole('heading',{name:/DAF XF/}).waitFor();
   await agentPage.getByText('Анкета для оформления').waitFor();
   // The working action is immediately available before a long progress list
@@ -224,15 +330,33 @@ try{
   await agentPage.getByRole('button',{name:'Принято в работу'}).click();
   await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).waitFor();
   await agentPage.screenshot({path:OUT+'/agent-mobile-policy-action.png',fullPage:true});
+  await agentPage.locator('input[type=date]').fill('2000-01-01');
+  await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
+  await agentPage.locator('.insurance-validation-alert')
+    .getByText('Укажите корректную будущую дату окончания полиса.').waitFor();
+  assert(await agentPage.locator('[data-insurance-policy-field="date"]').evaluate(el=>document.activeElement===el),
+    'Expired policy date must keep focus in the insurance workdesk');
   await agentPage.locator('input[type=date]').fill('2030-12-31');
+  // Android document pickers can provide a real .pdf with no MIME type.
+  // The UI must normalize its data URL; the server still checks PDF bytes.
   await agentPage.locator('input[type=file]').setInputFiles({
-    name:'policy.pdf',mimeType:'application/pdf',
+    name:'policy.pdf',mimeType:'',
     buffer:Buffer.from('%PDF-1.4\n'+'TrakSOS synthetic test '.repeat(20)),
   });
   await agentPage.getByRole('button',{name:'Отправить готовый полис клиенту'}).click();
   await agentPage.getByText('Готовый страховой полис').first().waitFor();
   await clientPage.reload();
   await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).waitFor();
+  // Reject a non-PDF response even with HTTP 200; never download private
+  // HTML/error content as a trusted "insurance-policy.pdf".
+  const policyPath='**/api/insurance/requests/'+requestId+'/policy';
+  const badPdf=route=>route.fulfill({status:200,contentType:'text/html',
+    body:'<html>unexpected HTML response</html>'});
+  await clientPage.route(policyPath,badPdf);
+  await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).click();
+  await clientPage.locator('.insurance-validation-alert')
+    .getByText(/Не удалось скачать PDF/).waitFor();
+  await clientPage.unroute(policyPath,badPdf);
   const downloadEvent=clientPage.waitForEvent('download');
   await clientPage.getByRole('button',{name:'Скачать PDF-полис'}).click();
   const dl=await downloadEvent;

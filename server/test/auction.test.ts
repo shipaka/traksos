@@ -107,9 +107,92 @@ test('переключатель «Сначала нам» выключен — 
   ok(await t.api('PUT', '/api/admin/settings/dispatch', { priorityFirst: true }, admin.token));
 });
 
+test('bidding-only поиск: без откликов причина no_response; пустой retry не наследует старые приглашения', async () => {
+  ok(await t.api('PUT','/api/admin/settings/dispatch',{priorityFirst:false},admin.token));
+  for(const u of [father,m1,m2])
+    ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},u.token));
+  try {
+    const originalCalls=kinds(father.id,'incoming_call').length;
+    const o=ok(await t.api('POST','/api/orders',{
+      service:'electric',zoneId:'spb',
+    },client.token)).order;
+    assert.equal(kinds(father.id,'incoming_call').length,originalCalls,
+      'bidding-only dispatch has no direct ringing invitation');
+    const started=ok(await t.api('GET',`/api/orders/${o.id}`,undefined,client.token));
+    const bidsStarted=started.events.filter((e:any)=>e.type==='auction_started');
+    assert.ok(bidsStarted.some((e:any)=>Number(e.data?.candidates)>0),
+      'server recorded actual bidding invitations; not an empty auction');
+    t.clock.advance(11*60);
+    await t.app.auction.tick();
+    const failed=ok(await t.api('GET',`/api/orders/${o.id}`,undefined,client.token));
+    assert.equal(failed.status,'no_performer');
+    assert.equal(failed.absenceReason,'no_response',
+      'bidding invitations without bids are a confirmed no-response, even without ringing');
+    for(const u of [father,m1,m2])
+      ok(await t.api('POST','/api/performer/line',{lineStatus:'offline'},u.token));
+    const retried=ok(await t.api('POST',`/api/orders/${o.id}/retry`,{},client.token));
+    assert.equal(retried.status,'no_performer');
+    assert.equal(retried.absenceReason,'unknown',
+      'a new empty attempt must not reuse immutable invitations before its retry event');
+    const attempts=retried.events.filter((e:any)=>e.type==='auction_started');
+    assert.ok(attempts.some((e:any)=>Number(e.data?.candidates)===0));
+  } finally {
+    ok(await t.api('PUT','/api/admin/settings/dispatch',{priorityFirst:true},admin.token));
+    for(const u of [father,m1,m2])
+      ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},u.token));
+  }
+});
+
+test('real offer → withdraw → expiry is not misreported as nobody responded; retries have separate evidence', async () => {
+  ok(await t.api('PUT','/api/admin/settings/dispatch',{priorityFirst:false},admin.token));
+  for(const u of [father,m1,m2])
+    ok(await t.api('POST','/api/performer/line',{lineStatus:'online'},u.token));
+  try {
+    const order=ok(await t.api('POST','/api/orders',{
+      service:'electric',zoneId:'spb',verifiedOnly:true,
+    },client.token)).order;
+    const id=order.id;
+    for(const performer of [m1,m2]){
+      const offer=await t.api('POST',`/api/orders/${id}/offers`,{},performer.token);
+      assert.equal(offer.status,200,'real offer must enter the normal auction');
+      assert.equal((await t.api('DELETE',`/api/orders/${id}/offers`,undefined,performer.token)).status,200);
+      const visible=ok(await t.api('GET',`/api/orders/${id}/offers`,undefined,client.token));
+      assert.ok(!visible.offers.some((x:any)=>x.status==='active'),
+        'withdrawn bids are not active options');
+      t.clock.advance(11*60);
+      await t.app.auction.tick();
+      const failed=ok(await t.api('GET',`/api/orders/${id}`,undefined,client.token));
+      assert.equal(failed.status,'no_performer');
+      assert.equal(failed.absenceReason,'offers_withdrawn',
+        'real historical offer was made; never tell client nobody replied');
+      const terminal=failed.events.filter((x:any)=>x.type==='no_performer');
+      assert.equal(terminal.at(-1)?.data?.absenceReason,'offers_withdrawn');
+      const offerEvents=failed.events.filter((x:any)=>x.type==='offer');
+      assert.ok(offerEvents.length>=1);
+      if(performer===m1){
+        const retried=ok(await t.api('POST',`/api/orders/${id}/retry`,{},client.token));
+        assert.equal(retried.status,'searching',
+          'valid real candidates should be invited again on retry');
+      }
+    }
+    // Last cycle: there were real invitations but NO new offer; a bid made
+    // before the last retry cannot leak into this attempt's classification.
+    const third=ok(await t.api('POST',`/api/orders/${id}/retry`,{},client.token));
+    assert.equal(third.status,'searching');
+    t.clock.advance(11*60);
+    await t.app.auction.tick();
+    const noNewOffer=ok(await t.api('GET',`/api/orders/${id}`,undefined,client.token));
+    assert.equal(noNewOffer.status,'no_performer');
+    assert.equal(noNewOffer.absenceReason,'no_response',
+      'historical withdrawn offers cannot turn a later no-offer attempt into withdrawn');
+  }finally{
+    ok(await t.api('PUT','/api/admin/settings/dispatch',{priorityFirst:true},admin.token));
+  }
+});
+
 test('эвакуатор: торги с подачей «сборы + дорога», куда везти и что везём', async () => {
   const o = ok(await t.api('POST', '/api/orders', {
-    service: 'tow', zoneId: 'kad30', address: 'КАД, 72-й км', destination: 'Шушары-Трак', cargo: 'coupling', loaded: 'loaded', driverOnSite: true,
+    service: 'tow', zoneId: 'kad30', address: 'Ленинградская область, КАД, 72-й км', destination: 'Шушары-Трак', cargo: 'coupling', loaded: 'loaded', driverOnSite: true,
   }, client.token)).order;
   assert.equal(o.destination, 'Шушары-Трак');
   assert.deepEqual(kinds(tow.id, 'auction').at(-1), o.id);

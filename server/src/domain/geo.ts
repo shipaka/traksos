@@ -5,7 +5,8 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
   const dLat = toRad(b.lat - a.lat);
   const dLng = toRad(b.lng - a.lng);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
+  // Floating-point roundoff can put antipodal points just outside [0,1].
+  return 2 * R * Math.asin(Math.sqrt(Math.min(1,Math.max(0,h))));
 }
 
 

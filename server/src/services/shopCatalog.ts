@@ -2,7 +2,7 @@
 // Records have no sale price. Bulk imports are never published automatically.
 import type { Db } from '../db/index.ts';
 import type { SettingsService } from './settings.ts';
-import { bad, notFound, type AuthUser } from '../http/router.ts';
+import { bad, forbidden, notFound, type AuthUser } from '../http/router.ts';
 import { SHOP_CATEGORIES } from './shop.ts';
 
 export interface CatalogEntryInput {
@@ -54,9 +54,17 @@ export class ShopCatalogService {
   constructor(private db: Db, private settings: SettingsService) {}
 
   async importBatch(actor: AuthUser, batch: CatalogBatchInput) {
+    if (!actor.roles.includes('admin')) throw forbidden();
     const rows = validateEntries(batch);
     const sourceNote = batch.sourceNote.trim();
     return this.db.tx(async (q) => {
+      // Sequence values are allocated before commit. Serialize catalogue writers
+      // before any row lock so a newer committed delta cannot hide an older one.
+      if (!batch.dryRun) await q.query("select pg_advisory_xact_lock(hashtext('shop_catalog_reference_writer'))");
+      const admin = await q.one<{id:string}>(
+        "select id from users where id=$1 and status='active' and deleted_at is null "+
+        "and 'admin'=any(roles) for share", [actor.id]);
+      if (!admin) throw forbidden();
       const args: string[] = [];
       const params: string[] = [];
       for (const row of rows) {
@@ -74,7 +82,9 @@ export class ShopCatalogService {
 
       // Keep each batch atomic. Repeated identical file uploads do not undo prior review.
       // Changes to the reference (including its provenance) invalidate old verification.
-      for (const r of rows) {
+      const ordered = [...rows].sort((a,b) => a.brandKey < b.brandKey ? -1 : a.brandKey > b.brandKey ? 1 :
+        a.articleKey < b.articleKey ? -1 : a.articleKey > b.articleKey ? 1 : 0);
+      for (const r of ordered) {
         await q.query(`insert into shop_catalog_entries(
           brand, article, brand_key, article_key, name, category, search_terms, source_note, updated_by)
           values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
@@ -103,11 +113,10 @@ export class ShopCatalogService {
   async indexManifest() {
     const settings = await this.settings.get('shop');
     if (!settings.enabled) return { enabled: false, revision: '0', count: 0 };
-    const count = await this.db.one<{ n: number }>(
-      'select count(*)::int as n from shop_catalog_entries where reviewed=true');
-    const latest = await this.db.one<{ revision: string }>(
-      'select coalesce(max(seq),0)::text as revision from shop_catalog_reference_changes');
-    return { enabled: true, revision: latest?.revision ?? '0', count: count?.n ?? 0 };
+    const snapshot = await this.db.one<{ n: number; revision: string }>(`select
+      (select count(*)::int from shop_catalog_entries where reviewed=true) as n,
+      (select coalesce(max(seq),0)::text from shop_catalog_reference_changes) as revision`);
+    return { enabled: true, revision: snapshot?.revision ?? '0', count: snapshot?.n ?? 0 };
   }
 
   /** Snapshot: six small strings per entry, ordered by UUID for cursor paging. */
@@ -135,16 +144,21 @@ export class ShopCatalogService {
     if (!/^\d{1,19}$/.test(after) || BigInt(after) > 9223372036854775807n)
       throw bad('bad_cursor', 'Неверная версия справочника');
     const take = Number.isFinite(limit) ? Math.max(1, Math.min(1000, Math.floor(limit))) : 750;
-    const latest = await this.db.one<{ revision: string }>(
-      'select coalesce(max(seq),0)::text as revision from shop_catalog_reference_changes');
-    const revision = latest?.revision ?? '0';
-    const events = await this.db.query<any>(
-      `select c.seq::text as seq, c.entry_id, c.removed,
-        p.id, p.reviewed, p.category, p.brand, p.article, p.name, p.search_terms
-       from shop_catalog_reference_changes c
-       left join shop_catalog_entries p on p.id=c.entry_id
-       where c.seq>$1::bigint and c.seq<=$2::bigint
-       order by c.seq limit $3`, [after, revision, take + 1]);
+    // Revision and page must observe the same PostgreSQL statement snapshot.
+    // LEFT JOIN LATERAL retains the watermark even when the page is empty.
+    const snapshot = await this.db.query<any>(
+      `with watermark as (select coalesce(max(seq),0) as revision from shop_catalog_reference_changes)
+       select w.revision::text as revision, e.*
+       from watermark w left join lateral (
+         select c.seq::text as seq, c.seq as seq_order, c.entry_id, c.removed,
+           p.id, p.reviewed, p.category, p.brand, p.article, p.name, p.search_terms
+         from shop_catalog_reference_changes c
+         left join shop_catalog_entries p on p.id=c.entry_id
+         where c.seq>$1::bigint and c.seq<=w.revision
+         order by c.seq limit $2
+       ) e on true order by e.seq_order`, [after, take + 1]);
+    const revision = snapshot[0]?.revision ?? '0';
+    const events = snapshot.filter(p=>p.seq !== null);
     const page = events.slice(0, take);
     return {
       enabled: true,
@@ -192,21 +206,60 @@ export class ShopCatalogService {
     return { items: rows, total: count?.n ?? 0, page: offset / take, limit: take };
   }
 
-  async review(actor: AuthUser, id: string, approved: boolean) {
-    const row = await this.db.one<{ id: string; source_note: string }>(
-      'select id, source_note from shop_catalog_entries where id=$1', [id]);
-    if (!row) throw notFound('Позиция каталога не найдена');
-    if (approved && row.source_note.trim().length < 3)
-      throw bad('missing_provenance', 'Для публикации необходим источник проверки');
-    await this.db.tx(async (q) => {
+  async review(actor: AuthUser, id: string, approved: boolean, expected?: {
+    expectedUpdatedAt?: string;
+    expectedName?: string;
+    expectedSourceNote?: string;
+    expectedBrand?: string;
+    expectedArticle?: string;
+    expectedCategory?: string;
+    expectedSearchTerms?: string | null;
+  }) {
+    if (!actor.roles.includes('admin')) throw forbidden();
+    return this.db.tx(async (q) => {
+      await q.query("select pg_advisory_xact_lock(hashtext('shop_catalog_reference_writer'))");
+      const admin = await q.one<{id:string}>(
+        "select id from users where id=$1 and status='active' and deleted_at is null "+
+        "and 'admin'=any(roles) for share", [actor.id]);
+      if (!admin) throw forbidden();
+      // Import ON CONFLICT updates and moderator approvals must serialize on
+      // the SAME row. Checking provenance outside this transaction allowed a
+      // concurrent re-import to turn an unreviewed replacement into approved.
+      const row = await q.one<{
+        id: string; source_note: string; name: string; brand: string;
+        article: string; category: string; search_terms: string | null;
+        reviewed: boolean; updated_at: Date | string;
+      }>(
+        'select id, source_note, name, brand, article, category, search_terms, reviewed, updated_at ' +
+        'from shop_catalog_entries where id=$1 for update', [id]);
+      if (!row) throw notFound('Позиция каталога не найдена');
+      if (expected?.expectedUpdatedAt) {
+        const oldTime = new Date(expected.expectedUpdatedAt).getTime();
+        const currentTime = new Date(row.updated_at).getTime();
+        if (!Number.isFinite(oldTime) || oldTime !== currentTime ||
+            (expected.expectedName !== undefined && expected.expectedName !== row.name) ||
+            (expected.expectedSourceNote !== undefined &&
+             expected.expectedSourceNote !== row.source_note) ||
+            (expected.expectedBrand !== undefined && expected.expectedBrand !== row.brand) ||
+            (expected.expectedArticle !== undefined && expected.expectedArticle !== row.article) ||
+            (expected.expectedCategory !== undefined && expected.expectedCategory !== row.category) ||
+            (expected.expectedSearchTerms !== undefined &&
+             expected.expectedSearchTerms !== row.search_terms)) {
+          throw bad('catalog_entry_changed',
+            'Запись изменена другим участником. Обновите список и проверьте её повторно.');
+        }
+      }
+      if (approved && row.source_note.trim().length < 3)
+        throw bad('missing_provenance', 'Для публикации необходим источник проверки');
+      if (row.reviewed === approved) return { ok: true, reviewed: approved, unchanged: true };
       await q.query(`update shop_catalog_entries set reviewed=$2,
         reviewed_by=case when $2 then $3::uuid else null end,
         reviewed_at=case when $2 then now() else null end,
         updated_at=now() where id=$1`, [id, approved, actor.id]);
       await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)',
         [actor.id, 'shop.catalog_review', id, { reviewed: approved }]);
+      return { ok: true, reviewed: approved, unchanged: false };
     });
-    return { ok: true, reviewed: approved };
   }
 
   /** Confirmed catalog-only results are informational, never directly purchasable.
@@ -214,7 +267,7 @@ export class ShopCatalogService {
   async search(query: string, category: string, page = 0) {
     const setting = await this.settings.get('shop');
     if (!setting.enabled) return { enabled: false, items: [], total: 0, page: 0, limit: 24 };
-    if (category && category !== 'all' && !SHOP_CATEGORIES[category])
+    if (category && category !== 'all' && !Object.prototype.hasOwnProperty.call(SHOP_CATEGORIES, category))
       throw bad('bad_category', 'Неизвестный раздел каталога');
     const params: unknown[] = [];
     const filters = ['reviewed=true'];

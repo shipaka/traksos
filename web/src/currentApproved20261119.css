@@ -1,0 +1,202 @@
+/* CURRENT OWNER-APPROVED HOME 19.11.2026.
+   Scope to guest landing only; NEVER use the obsolete 14.11 layout as a
+   release baseline. Earlier base CSS may supply non-design primitives. */
+.guest-app.guest-home{background:#031725!important;}
+.guest-app .top{background:#031725!important;border-color:#11364a!important;}
+.guest-app .guest-site-nav>a:first-child{color:#f4fbff;border-bottom:3px solid #0ac7f7;}
+.guest-app .guest-site-nav .guest-nav-dropdown--all{
+  display:grid!important;grid-template-columns:repeat(2,minmax(145px,1fr));
+  gap:2px 16px;min-width:min(430px,80vw);
+  max-height:min(76vh,680px);overflow-y:auto;padding:12px;
+  border:1px solid #2e5a73;border-radius:15px;background:#071f33;
+}
+.guest-app .guest-site-nav .guest-nav-dropdown--all>a{
+  white-space:normal!important;padding:9px 8px!important;
+  min-height:38px;border-radius:7px;
+}
+.guest-app .guest-site-nav .guest-nav-dropdown--all>a:hover{background:#163b54;}
+.guest-app .guest-site-nav .guest-nav-dropdown--all .guest-nav-hint{grid-column:1/-1;}
+.guest-app .public-landing .public-brand-hero{
+  min-height:clamp(420px,35vw,520px)!important;
+  background:#041726!important;
+}
+.guest-app .public-landing .public-hero-visual{
+  width:100%!important;
+  background:url('/tracksos-approved-hero-owner-20261119-retouched.webp') right center/cover no-repeat!important;
+}
+.guest-app .public-landing .public-brand-hero::before{
+  content:""!important;display:block!important;
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(90deg,#031623f9 0%,rgba(3,22,35,.85) 27%,rgba(3,22,35,.20) 63%,transparent 85%)!important;
+}
+.guest-app .public-landing .public-hero-copy{
+  width:min(49%,680px)!important;
+  background:none!important;
+}
+.guest-app .public-landing .public-brand-hero h1{
+  font-size:clamp(42px,4.2vw,70px)!important;line-height:1.08!important;
+  max-width:680px!important;
+}
+.guest-app .public-landing .public-hero-copy>p{
+  max-width:520px!important;font-size:clamp(15px,1.34vw,20px)!important;
+}
+.guest-app .public-landing .public-actions{margin-top:27px!important;}
+.guest-app .public-landing .public-button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none!important;}
+.guest-app .public-landing .public-content-grid{margin-top:0!important;gap:12px!important;}
+.guest-app .public-landing .public-service-tile{
+  min-height:158px!important;height:auto!important;
+  justify-content:center!important;align-items:flex-start!important;
+  gap:10px!important;border:1px solid #244862!important;
+  border-radius:16px!important;padding:15px 14px!important;
+  background:linear-gradient(135deg,#0e293e,#0b2035)!important;
+  box-shadow:inset 0 1px 0 #244157,0 8px 20px #00132166!important;
+}
+.guest-app .public-landing .public-service-tile::after{
+  background-image:none!important;background:none!important;opacity:0!important;
+}
+.guest-app .public-landing .public-service-tile::before{background:none!important;}
+.guest-app .public-landing .public-service-tile .public-service-icon{
+  display:grid!important;place-items:center;
+  width:42px!important;height:42px!important;
+  font-size:32px!important;color:#02c9f9!important;
+  filter:drop-shadow(0 0 8px #03bce854);
+}
+.guest-app .public-landing .public-service-tile b{
+  font-size:clamp(13px,1.1vw,18px)!important;letter-spacing:0!important;
+}
+.guest-app .public-landing .public-service-tile small{
+  font-size:clamp(10px,.8vw,12px)!important;color:#c5d7e9!important;
+}
+.guest-app .public-landing .public-service-tile .public-service-arrow{
+  display:none!important;
+}
+.guest-app .public-landing .public-why-strip{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:22px!important;
+}
+.guest-app .public-landing .public-benefit-value{display:none!important;}
+.guest-app .public-landing .public-app-card{
+  min-height:158px!important;padding-top:14px!important;padding-bottom:14px!important;
+}
+@media(max-width:1199px){
+  .guest-app .public-landing .public-service-tiles{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  .guest-app .public-landing .public-brand-hero h1{font-size:clamp(32px,4.2vw,55px)!important;}
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-hero-copy{width:100%!important;}
+  .guest-app .public-landing .public-brand-hero h1{font-size:clamp(30px,7vw,44px)!important;}
+  .guest-app .public-landing .public-brand-hero{min-height:365px!important;}
+  .guest-app .public-landing .public-hero-visual{
+    background-size:contain!important;background-position:right bottom!important;
+  }
+  .guest-app .public-landing .public-service-tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .guest-app .public-landing .public-service-tile{
+    min-height:132px!important;padding:12px!important;
+  }
+  .guest-app .public-landing .public-why-strip{grid-template-columns:1fr!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .guest-app .public-landing .public-service-tile{transition:none!important;}
+}
+
+/* Slide actions remain functional; all photographs use the post-17 Nov approved source. */
+/* Preserve actual three-slide interaction without resurrecting a static
+   14 Nov image. Hero media changes on the selected server-free slide. */
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved{
+  background-image:url('/tracksos-approved-hero-owner-20261119-retouched.webp')!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-rescue{
+  background-image:url('/tracksos-approved-hero-owner-20261119-retouched.webp')!important;
+}
+.guest-app .public-landing .public-hero-visual.public-hero-slide-service{
+  background-image:url('/tracksos-approved-hero-owner-20261119-retouched.webp')!important;
+}
+
+/* Retained for the mobile-browser landing only. Desktop uses the
+   separately approved 20 November React home. */
+
+.guest-app .public-landing .public-service-icon svg{
+  display:block;width:36px;height:36px;stroke:currentColor;
+  filter:drop-shadow(0 0 5px rgba(0,204,255,.35));
+}
+.guest-app .public-landing .public-service-tile:focus-visible{
+  outline:3px solid #2bdaff!important;outline-offset:3px!important;
+}
+@media(max-width:899px){
+  .guest-app .public-landing .public-service-tile .public-service-icon svg{
+    width:30px;height:30px;
+  }
+}
+
+/* Desktop 617 standalone shell: preserve only its content container layout. */
+@media(min-width:900px){
+  .guest-app.guest-home .desktop-layout{display:block!important;max-width:none!important}
+  .guest-app.guest-home .desktop-content{max-width:none!important;width:100%!important;padding:0!important;color:#f8fcff!important;background:#031725!important}
+}
+
+
+/* Exact logo cropped from the OWNER'S accepted 19 Nov desktop source PNG:
+   truck silhouette plus white/cyan TrakSOS mark, not a newly invented wordmark. */
+.guest-app .top .guest-approved-mark{
+  display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;
+  padding:0!important;margin:0!important;border:0!important;background:none!important;
+  width:clamp(190px,17vw,275px)!important;max-width:46vw!important;min-width:0!important;
+  text-decoration:none!important;box-shadow:none!important;
+}
+.guest-app .top .guest-approved-mark img{
+  display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;
+}
+@media(max-width:899px){
+  .guest-app .top .guest-approved-mark{width:min(218px,66vw)!important;max-width:100%!important;}
+}
+
+.guest-app .public-landing .public-actions .public-button-sos{
+  background:linear-gradient(105deg,#07d9f6,#05bdf3)!important;
+  border:1px solid #25e6fb!important;color:#032436!important;
+  box-shadow:0 6px 22px rgba(0,191,238,.18)!important;
+}
+.guest-app .public-landing .public-service-tile,
+.guest-app .public-landing .public-service-tile b,
+.guest-app .public-landing .public-service-tile small{
+  text-decoration:none!important;
+}
+
+
+/* November 19 mobile public actions: the long Russian signup label was
+   visually clipped at 390px. Preserve the two existing actions and height. */
+@media(max-width:899px){
+  .guest-app .public-landing .public-actions .public-button{
+    min-width:0!important;max-width:100%!important;
+    padding:10px 7px!important;
+    font-size:clamp(10px,3.05vw,13px)!important;line-height:1.3!important;
+    white-space:normal!important;overflow-wrap:break-word!important;
+    text-align:center!important;
+  }
+}
+
+/* 20 Nov correction: directly accessible TechBase, present in the current
+   information architecture instead of buried solely in a dropdown. */
+@media(min-width:1251px){
+  .guest-app .guest-site-nav>a.guest-nav-techbase{color:#6de0f9!important;white-space:nowrap!important}
+  .guest-app .guest-site-nav>a.guest-nav-techbase:hover{color:#fff!important}
+}
+.guest-app .public-track-extra.public-track-techbase{border-color:#217799!important;}
+.guest-app .public-track-extra.public-track-techbase b{color:#d9f8ff!important;}
+@media(max-width:1250px){
+  .guest-app .guest-site-nav>a.guest-nav-techbase{display:none!important}
+}
+
+/* Visual acceptance corrections from real 1602x981 Chromium screenshot.
+   Never allow the retired Scania R520 pseudo-layer behind the approved truck.
+   Secondary TechBase remains accessible through "Возможности" and its own
+   lower-page link; it is not a sixth top-level nav item in the 19 Nov canon. */
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved::before,
+.guest-app .public-landing .public-hero-visual.public-hero-slide-approved::after{
+  content:none!important;display:none!important;
+  background:none!important;background-image:none!important;
+}
+@media(min-width:1251px){
+  .guest-app .top .guest-site-nav>a.guest-nav-techbase{display:none!important}
+}
+

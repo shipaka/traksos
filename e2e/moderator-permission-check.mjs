@@ -16,4 +16,12 @@ for (const endpoint of [
 for(const endpoint of ['/api/mod/cases', '/api/admin/verification', '/api/admin/support']) {
   if (!src.includes("'"+endpoint+"', staff,")) throw Error('Moderation endpoint inaccessible to staff: '+endpoint);
 }
-console.log('Moderator permission boundary static check OK');
+// Do not route the moderator's «Проверки» navigation into an unrelated
+// administrative queue: the real, permission-scoped verification tab exists.
+const ui = readFileSync('web/src/main.tsx', 'utf8');
+if (!ui.includes("['/moderation/verify', '⚑', 'Проверки']") ||
+    ui.includes("['/admin/section/queue', '⚑', 'Проверки']"))
+  throw Error('Moderator checks must open the real moderation/verify tab');
+if (!ui.includes("['/moderation/verify', 'Проверка мастеров']"))
+  throw Error('Moderator mobile menu lost verification deep link');
+console.log('Moderator permission boundary and verification navigation OK');

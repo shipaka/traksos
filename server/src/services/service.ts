@@ -7,11 +7,12 @@ import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import type { SupportService } from './support.ts';
 import { haversineKm } from '../domain/geo.ts';
+import { maskPhones } from '../util.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
 
 export const NEEDS: Record<string, string> = {
   electric: 'Электрика', air: 'Пневматика', engine: 'Двигатель', gearbox: 'КПП', brakes: 'Тормоза',
-  chassis: 'Ходовая', tires: 'Шины', ecu: 'Блоки управления', heater: 'Автономка', other: 'Другое',
+  chassis: 'Ходовая', tires: 'Шины', hydraulics: 'Гидравлика', ecu: 'Блоки управления', heater: 'Автономка', other: 'Другое',
 };
 export const REPAIR_STATUSES = ['arrived', 'diagnostics', 'in_work', 'waiting_part', 'agreeing'] as const;
 export const STATUS_NAME: Record<string, string> = {
@@ -20,7 +21,14 @@ export const STATUS_NAME: Record<string, string> = {
   agreeing: 'Согласуем с клиентом', ready: 'Готова', invoiced: 'Счёт выставлен', closed: 'Закрыто',
   disputed: 'Спор по работам', cancelled: 'Отменено',
 };
-export const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Сварка', 'Замена масла и фильтров'];
+// A recommendation may contain free-text contact information. The selected
+// workshop receives a technical diagnosis, not personal contact details.
+const publicHandoff = (text:string) => maskPhones(text
+ .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,'[email скрыт]')
+ .replace(/\b[A-HJ-NPR-Z0-9]{17}\b/gi,'[VIN скрыт]')
+ .replace(/[АВЕКМНОРСТУХABEKMHOPCTYX]\s?\d{3}\s?[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\s?\d{2,3}/gi,'[госномер скрыт]')
+).text.trim();
+export const WORKS = ['Диагностика', 'Электрика', 'Пневматика', 'Двигатель', 'КПП', 'Тормоза', 'Ходовая', 'Шины', 'Гидравлика', 'Сварка', 'Замена масла и фильтров'];
 export const DECLINE = ['Нет такого специалиста', 'Нет мест', 'Не работаем с этой маркой'];
 
 const msk = (d: Date) => new Date(d.getTime() + 3 * 3600_000).toISOString().slice(0, 10);
@@ -72,13 +80,38 @@ export class ServiceCenters {
            values ($1,$2,$3,$4::float8,$5::float8,coalesce($6::text,'08:00–20:00'),$7::text,coalesce($8::text[],'{}'),coalesce($9::jsonb,'{}'),coalesce($10::text[],'{}'),coalesce($11::text[],'{quick,day}'),coalesce($12::date[],'{}'),now())`,
           [user.id, p.name!.trim(), p.address!.trim(), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays)]);
       } else {
+        // Nullable coordinates are a real edit: undefined means "leave alone",
+        // while an explicit null must delete the old public stationary location.
+        // Evaluate the old row in THIS UPDATE (not a stale pre-transaction
+        // snapshot), and revoke consent and moderator geo proof atomically.
+        const locationChanged = `(
+          ($2::text is not null and name is distinct from $2::text)
+          or ($3::text is not null and address is distinct from $3::text)
+          or ($4::boolean and lat is distinct from $5::float8)
+          or ($6::boolean and lng is distinct from $7::float8)
+        )`;
         await q.query(
-          `update service_centers set name=coalesce($2::text,name), address=coalesce($3::text,address), lat=coalesce($4::float8,lat), lng=coalesce($5::float8,lng),
-             hours=coalesce($6::text,hours), inn=coalesce($7::text,inn), brands=coalesce($8::text[],brands), staff=coalesce($9::jsonb,staff),
-             conditions=coalesce($10::text[],conditions), accepts=coalesce($11::text[],accepts), closed_days=coalesce($12::date[],closed_days),
-             paused=coalesce($13::boolean,paused), accepts_confirmed_at = case when $11::text[] is not null or $12::date[] is not null then now() else accepts_confirmed_at end
+          `update service_centers set
+             name=coalesce($2::text,name), address=coalesce($3::text,address),
+             lat=case when $4::boolean then $5::float8 else lat end,
+             lng=case when $6::boolean then $7::float8 else lng end,
+             hours=coalesce($8::text,hours), inn=coalesce($9::text,inn),
+             brands=coalesce($10::text[],brands), staff=coalesce($11::jsonb,staff),
+             conditions=coalesce($12::text[],conditions), accepts=coalesce($13::text[],accepts),
+             closed_days=coalesce($14::date[],closed_days),
+             paused=coalesce($15::boolean,paused),
+             -- A form save is not the explicit weekly service attestation.
+             -- Full accepts/closedDays arrays are sent for ANY edited field;
+             -- only POST /api/base/confirm-accepts may renew this timestamp.
+
+             public_map_opt_in=case when ${locationChanged} then false else public_map_opt_in end,
+             public_map_opted_at=case when ${locationChanged} then null else public_map_opted_at end,
+             public_map_location_verified_at=case when ${locationChanged} then null else public_map_location_verified_at end
            where owner_id=$1`,
-          [user.id, v(p.name?.trim()), v(p.address?.trim()), v(p.lat), v(p.lng), v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions), v(p.accepts), v(p.closedDays), v(p.paused)]);
+          [user.id, v(p.name?.trim()), v(p.address?.trim()),
+           p.lat!==undefined, v(p.lat), p.lng!==undefined, v(p.lng),
+           v(p.hours), v(p.inn), v(p.brands), v(p.staff), v(p.conditions),
+           v(p.accepts), v(p.closedDays), v(p.paused)]);
       }
     });
     return this.cabinet(user);
@@ -87,14 +120,20 @@ export class ServiceCenters {
   /** Раз в неделю: «приём всё так же?» — одна кнопка */
   async confirmAccepts(user: AuthUser) {
     await this.mustMine(user);
-    await this.db.query('update service_centers set accepts_confirmed_at=now() where owner_id=$1', [user.id]);
+    // The public map validates evidence against PostgreSQL time. Record
+    // confirmation using that same clock, never a simulated booking clock.
+    await this.db.query('update service_centers set accepts_confirmed_at=now() where owner_id=$1',
+      [user.id]);
     return this.cabinet(user);
   }
 
   // ——— Кабинет рембазы ———
   async cabinet(user: AuthUser) {
-    const c = await this.mine(user);
+    const c = await this.db.one(
+      `select *, coalesce(accepts_confirmed_at between now()-interval '7 days' and now(),false) as accepts_current
+         from service_centers where owner_id=$1`,[user.id]);
     if (!c) return { center: null, groups: null };
+    const { accepts_current, ...center } = c;
     const rows = await this.db.query(
       `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating
          from service_bookings b join users u on u.id=b.client_id
@@ -103,11 +142,11 @@ export class ServiceCenters {
     const today = msk(this.now());
     const weekAgo = this.now().getTime() - 7 * 86400_000;
     const view = (b: any) => this.bookingView(b, 'service', weekAgo);
-    const confirmDue = !c.accepts_confirmed_at || new Date(c.accepts_confirmed_at).getTime() < weekAgo;
+    const confirmDue = !accepts_current;
     const rt = await this.db.one<{ r: number | null; n: number }>(
       `select round(avg(review_stars)::numeric, 1)::float as r, count(review_stars)::int as n from service_bookings where center_id=$1`, [c.id]);
     return {
-      center: { ...c, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
+      center: { ...center, closedToday: (c.closed_days ?? []).some((d: any) => msk(new Date(d)) === today), confirmDue, rating: rt?.r ?? null, reviews: rt?.n ?? 0 },
       groups: {
         requests: rows.filter((b) => ['new', 'clarify'].includes(b.status)).map(view),
         expected: rows.filter((b) => b.status === 'expected').map(view),
@@ -118,6 +157,26 @@ export class ServiceCenters {
     };
   }
 
+  /** Immutable invoice snapshot. Legacy invoices deliberately keep their zero customer fee. */
+  private settlement(b: any) {
+    const total = b.amount == null ? null : Math.max(0, Number(b.amount) + Number(b.client_fee ?? 0) - Number(b.discount ?? 0));
+    const received = Number(b.received_amount ?? 0);
+    const refunded = Number(b.refunded_amount ?? 0);
+    const netReceived = received - refunded;
+    const required = !!b.payment_required;
+    return {
+      total, netReceived, outstanding: total == null ? null : Math.max(0,total-netReceived),
+      paymentRequired: required,
+      paymentStatus: total == null ? 'not_invoiced'
+        : !required ? 'legacy_not_verified'
+        : netReceived >= total ? 'received'
+        : netReceived > 0 ? 'partial'
+        : refunded > 0 ? 'refunded'
+        : 'awaiting_payment',
+      recoveryNeeded: required && b.paid_out_at != null && total != null && netReceived < total,
+    };
+  }
+
   private bookingView(b: any, as: 'service' | 'client', weekAgo = 0) {
     const repair = (REPAIR_STATUSES as readonly string[]).includes(b.status);
     const notes = as === 'client' && !b.notes_public ? [] : b.notes;
@@ -125,10 +184,17 @@ export class ServiceCenters {
       id: b.id, number: b.number, status: b.status, statusName: STATUS_NAME[b.status], need: b.need, needName: NEEDS[b.need] ?? b.need,
       whenDay: b.when_day, whenTime: b.when_time, acceptTime: b.accept_time, arrival: b.arrival, comment: b.comment,
       vehicle: b.vehicle, vehicleId: b.vehicle_id, clarifyQ: b.clarify_q, clientAnswer: b.client_answer, declineReason: b.decline_reason,
+      partsAmount: b.amount == null ? null : Number(b.parts_amount ?? 0),
+      feeBaseAmount: b.amount == null ? null : (b.payment_required ? Number(b.fee_base_amount ?? 0) : Number(b.amount)-Number(b.parts_amount ?? 0)),
       notes, notesPublic: b.notes_public, works: b.works, amount: b.amount, discount: b.discount,
+      // Never include the customer's separately charged service fee in the service owner's JSON.
+      clientFee: as === 'client' ? Number(b.client_fee ?? 0) : undefined,
+      clientFeePct: as === 'client' ? Number(b.client_fee_pct ?? 0) : undefined,
       commission: as === 'service' ? b.commission : undefined, points: as === 'service' ? b.points ?? 0 : undefined, paidOutAt: as === 'service' ? b.paid_out_at ?? null : undefined,
       payout: as === 'service' && b.amount != null ? b.amount - b.commission : undefined,
-      toPay: b.amount != null ? b.amount - b.discount : null,
+      toPay: as === 'client' ? this.settlement(b).total : undefined,
+      paymentStatus: this.settlement(b).paymentStatus,
+      paymentConfirmed: this.settlement(b).paymentStatus === 'received',
       fromOrder: !!b.from_order_id, fromOrderId: as === 'client' ? b.from_order_id : undefined,
       caseRootId: as === 'client' ? b.case_root_id ?? null : undefined, arrivedAt: b.arrived_at, readyAt: b.ready_at, createdAt: b.created_at,
       daysInRepair: b.arrived_at ? Math.max(1, Math.ceil((this.now().getTime() - new Date(b.arrived_at).getTime()) / 86400_000)) : null,
@@ -138,6 +204,23 @@ export class ServiceCenters {
     };
   }
 
+  /** A booking creator is NOT a permanent fleet participant. Owners retain
+   * their own history, but an ex-driver must still be assigned to THIS truck
+   * in THIS fleet, including when an old bearer token carries stale owner_id. */
+  private async canSeeCustomerBooking(user: AuthUser, b: any): Promise<boolean> {
+    if (!user.roles.some(role => role === 'client' || role === 'driver')) return false;
+    if (!user.owner_id) return b.client_id === user.id;
+    if (b.client_id !== user.owner_id || b.created_by !== user.id || !b.vehicle_id)
+      return false;
+    const current = await this.db.one<{ id: string }>(
+      `select v.id from vehicles v join users u on u.id=$3
+        where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+          and u.owner_id=v.owner_id
+          and 'driver'=any(u.roles)`,
+      [b.vehicle_id, b.client_id, user.id]);
+    return !!current;
+  }
+
   private async mineBooking(user: AuthUser, id: string) {
     const c = await this.mustMine(user);
     const b = await this.db.one('select * from service_bookings where id=$1 and center_id=$2', [id, c.id]);
@@ -145,21 +228,63 @@ export class ServiceCenters {
     return { c, b };
   }
 
+  /** Push recipients are LIVE participants, never a permanent created_by
+   * list. A revoked driver must not receive old fleet plates or repairs. */
+  private async currentCustomerRecipients(b: any): Promise<string[]> {
+    const recipients: string[] = [b.client_id];
+    if (b.created_by && b.created_by !== b.client_id && b.vehicle_id) {
+      const current = await this.db.one<{ id: string }>(
+        `select v.id from vehicles v join users u on u.id=$3
+          where v.id=$1 and v.owner_id=$2 and v.driver_id=$3
+            and u.owner_id=v.owner_id and 'driver'=any(u.roles)`,
+        [b.vehicle_id, b.client_id, b.created_by]);
+      if (current) recipients.push(b.created_by);
+    }
+    return recipients;
+  }
+
   private async tell(b: any, title: string, body: string) {
-    await this.notifier.notify([b.client_id, b.created_by], { type: 'booking', bookingId: b.id, status: b.status },
+    await this.notifier.notify(await this.currentCustomerRecipients(b),
+      { type: 'booking', bookingId: b.id, status: b.status },
       { kind: 'normal', title, body, data: { bookingId: b.id } });
   }
 
   async booking(user: AuthUser, id: string) {
     const b = await this.db.one(
-      `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating, c.owner_id, c.name as center_name, c.address as center_address
-         from service_bookings b join users u on u.id=b.client_id join service_centers c on c.id=b.center_id where b.id=$1`, [id]);
+      `select b.*, u.name as client_name, u.company_name, u.rating::float as client_rating,
+              c.owner_id, c.name as center_name, c.address as center_address,
+              r.summary as continuation_summary, src.number as continuation_source_number,
+              author.name as continuation_author_name
+         from service_bookings b
+         join users u on u.id=b.client_id join service_centers c on c.id=b.center_id
+         left join order_continuation_recommendations r on r.id=b.continuation_recommendation_id
+         left join orders src on src.id=r.source_order_id
+         left join users author on author.id=r.suggested_by
+        where b.id=$1`, [id]);
     if (!b) throw notFound('Запись не найдена');
-    const asService = b.owner_id === user.id;
-    const clientId = user.owner_id ?? user.id;
-    if (!asService && b.client_id !== clientId && b.created_by !== user.id && !user.roles.some((r) => r === 'admin' || r === 'moderator')) throw forbidden();
+    const asService = b.owner_id === user.id && user.roles.includes('service');
+    const isStaff = user.roles.some(role => role === 'admin' || role === 'moderator');
+    if (!asService && !isStaff && !(await this.canSeeCustomerBooking(user, b)))
+      throw forbidden('Запись другого автопарка недоступна');
     const v = this.bookingView(b, asService ? 'service' : 'client', this.now().getTime() - 7 * 86400_000);
-    return { ...v, center: { id: b.center_id, name: b.center_name, address: b.center_address }, mine: asService, history: asService && b.vehicle_id ? await this.carHistory(b.vehicle_id, b.id) : [] };
+    const linkedTow = b.arrival === 'tow' && b.case_root_id
+      ? await this.db.one<{number:number;status:string}>(
+        "select number,status from orders where (id=$1 or case_root_id=$1)" +
+        " and service='tow' and status not in ('cancelled','no_performer')" +
+        ' order by created_at desc limit 1',[b.case_root_id])
+      : null;
+    return { ...v,
+      handoff: b.continuation_summary ? {
+        sourceNumber: b.continuation_source_number,
+        suggestedBy: b.continuation_author_name || 'Предыдущий исполнитель',
+        summary: publicHandoff(String(b.continuation_summary)),
+      } : null,
+      transport: linkedTow ? {
+        orderNumber:linkedTow.number, status:linkedTow.status,
+        deliveryReported:['awaiting_confirmation','completed'].includes(linkedTow.status),
+      } : null,
+      center: { id: b.center_id, name: b.center_name, address: b.center_address },
+      mine: asService, history: asService && b.vehicle_id ? await this.carHistory(b.vehicle_id, b.id) : [] };
   }
 
   /** Вся история машины на TrakSOS для сервиса — чужие работы тоже, без сумм */
@@ -179,25 +304,41 @@ export class ServiceCenters {
   async respond(user: AuthUser, id: string, p: { action: 'accept' | 'clarify' | 'decline' | 'undo'; time?: string; q?: string; reason?: string }) {
     const { b } = await this.mineBooking(user, id);
     if (p.action === 'undo') {
-      if (b.status !== 'expected') throw conflict('bad_status', 'Отменить можно, пока машина не приехала');
-      await this.db.query(`update service_bookings set status='new', accept_time=null, updated_at=now() where id=$1`, [id]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='new', accept_time=null, updated_at=now()
+          where id=$1 and status='expected' returning *`, [id]);
+      if (!updated) throw conflict('bad_status', 'Отменить можно, пока машина не приехала');
       return this.booking(user, id);
     }
-    if (!['new', 'clarify'].includes(b.status)) throw conflict('bad_status', 'На запрос уже ответили');
+    const allowed = "status in ('new','clarify')";
     if (p.action === 'accept') {
       const time = p.time?.trim() || b.when_time || null;
-      await this.db.query(`update service_bookings set status='expected', accept_time=$2, updated_at=now() where id=$1`, [id, time]);
-      await this.tell({ ...b, status: 'expected' }, 'Сервис ждёт вас', `Ждём вас ${fmtDay(b.when_day)}${time ? ` в ${time}` : ''}`);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='expected', accept_time=$2, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, time]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис ждёт вас',
+        `Ждём вас ${fmtDay(updated.when_day)}${time ? ` в ${time}` : ''}`);
     } else if (p.action === 'clarify') {
       const q = p.q?.trim();
       if (!q) throw bad('empty', 'Что уточнить?');
-      await this.db.query(`update service_bookings set status='clarify', clarify_q=$2, client_answer=null, updated_at=now() where id=$1`, [id, q]);
-      await this.tell({ ...b, status: 'clarify' }, 'Сервис уточняет', q);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='clarify', clarify_q=$2,
+              client_answer=null, updated_at=now()
+          where id=$1 and ${allowed}
+            and (status <> 'clarify' or clarify_q is distinct from $2::text)
+          returning *`, [id, q]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис уточняет', q);
     } else {
       const reason = p.reason?.trim();
       if (!reason) throw bad('empty', 'Укажите причину');
-      await this.db.query(`update service_bookings set status='declined', decline_reason=$2, updated_at=now() where id=$1`, [id, reason]);
-      await this.tell({ ...b, status: 'declined' }, 'Сервис не может принять', `${reason} — посмотрите другие сервисы рядом`);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='declined', decline_reason=$2, updated_at=now()
+          where id=$1 and ${allowed} returning *`, [id, reason]);
+      if (!updated) throw conflict('bad_status', 'На запрос уже ответили');
+      await this.tell(updated, 'Сервис не может принять',
+        `${reason} — посмотрите другие сервисы рядом`);
     }
     return this.booking(user, id);
   }
@@ -206,9 +347,27 @@ export class ServiceCenters {
     const { b } = await this.mineBooking(user, id);
     if (!(REPAIR_STATUSES as readonly string[]).includes(status)) throw bad('bad_status', 'Нет такого статуса');
     if (!['expected', ...REPAIR_STATUSES].includes(b.status)) throw conflict('bad_status', 'Статус уже не поменять');
-    await this.db.query(
-      `update service_bookings set status=$2, arrived_at=coalesce(arrived_at, now()), updated_at=now() where id=$1`, [id, status]);
-    await this.tell({ ...b, status }, `Ремонт: ${STATUS_NAME[status]}`, `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim());
+    // A prebooked workshop cannot jump to "arrived" OR "in_work" while a
+    // linked tow is still searching, driving to pickup or transporting.
+    // "awaiting_confirmation" is the tow's reported delivery, not an
+    // automatic physical receipt; the workshop must still mark receipt.
+    if (b.case_root_id && b.arrival === 'tow' && !b.arrived_at) {
+      const movingTow = await this.db.one<{number:number;status:string}>(
+        "select number,status from orders where (id=$1 or case_root_id=$1)" +
+        " and service='tow' and status in ('searching','accepted','en_route','arrived','working')" +
+        ' order by created_at desc limit 1',[b.case_root_id]);
+      if(movingTow)throw conflict('tow_not_delivered',
+        `Эвакуатор №${movingTow.number} ещё не сообщил о доставке. СТО может подтвердить запись, но не отмечать приезд машины.`);
+    }
+    const updated = await this.db.one<any>(
+      `update service_bookings set status=$2,
+              arrived_at=coalesce(arrived_at, now()), updated_at=now()
+        where id=$1 and status=any($3::text[]) and status<>$2
+        returning *`,
+      [id, status, ['expected', ...REPAIR_STATUSES]]);
+    if (!updated) throw conflict('bad_status', 'Статус изменился. Обновите карточку ремонта.');
+    await this.tell(updated, `Ремонт: ${STATUS_NAME[status]}`,
+      `${updated.vehicle?.brand ?? ''} ${updated.vehicle?.plate ?? ''}`.trim());
     return this.booking(user, id);
   }
 
@@ -227,7 +386,10 @@ export class ServiceCenters {
   async stillHere(user: AuthUser, id: string) {
     const { b } = await this.mineBooking(user, id);
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Машина не в ремонте');
-    await this.db.query('update service_bookings set still_here_at=now() where id=$1', [id]);
+    const changed = await this.db.one<any>(
+      'update service_bookings set still_here_at=now() where id=$1 and status=any($2::text[]) returning id',
+      [id, REPAIR_STATUSES]);
+    if (!changed) throw conflict('bad_status', 'Машина уже не отмечена в ремонте');
     return this.booking(user, id);
   }
 
@@ -237,25 +399,44 @@ export class ServiceCenters {
     if (!(REPAIR_STATUSES as readonly string[]).includes(b.status)) throw conflict('bad_status', 'Сначала отметьте, что машина приехала');
     const clean = [...new Set(works.map((w) => w.trim()).filter(Boolean))].slice(0, 20);
     if (!clean.length) throw bad('no_works', 'Отметьте, что делали');
-    await this.db.query(`update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now() where id=$1`, [id, clean]);
-    await this.tell({ ...b, status: 'ready' }, 'Машина готова', `Сделано: ${clean.join(', ')}`);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='ready', works=$2, ready_at=now(), updated_at=now()
+        where id=$1 and status=any($3::text[]) returning *`,
+      [id, clean, REPAIR_STATUSES]);
+    if (!updated) throw conflict('bad_status', 'Состояние ремонта изменилось. Обновите карточку.');
+    await this.tell(updated, 'Машина готова', `Сделано: ${clean.join(', ')}`);
     return this.booking(user, id);
   }
 
-  /** Агентский счёт: клиент платит через TrakSOS, сервису — за вычетом комиссии; скидка по совету мастера — из комиссии */
-  async invoice(user: AuthUser, id: string, amount: number, points = 0) {
-    const { b } = await this.mineBooking(user, id);
-    if (b.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
+  /** New invoices snapshot BOTH independent caps. Financial and points writes are atomic. */
+  async invoice(user: AuthUser, id: string, amount: number, points = 0, partsAmount = 0) {
+    if(!Number.isSafeInteger(partsAmount) || partsAmount<0 || partsAmount>amount)
+      throw bad('bad_parts_amount','Запчасти не могут стоить больше общей суммы счёта');
+    const feeBase = amount - partsAmount;
+    const c = await this.mustMine(user);
     const fees = await this.settings.get('fees');
-    let commission = Math.min(Math.round(amount * fees.serviceCommissionPct / 100), fees.serviceCommissionMax ?? Infinity);
-    const discount = b.from_order_id ? Math.min(commission, Math.round(amount * fees.serviceReferralDiscountPct / 100)) : 0;
-    // Баллы рембазы гасят до половины комиссии, что остаётся TrakSOS после скидки
-    const pts = this.referral ? await this.referral.spendServiceCommission(this.db, user.id, commission - discount, id, b.number, points) : 0;
-    commission -= pts;
-    await this.db.query(
-      `update service_bookings set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5, invoiced_at=now(), updated_at=now() where id=$1`,
-      [id, amount, commission, discount, pts]);
-    await this.tell({ ...b, status: 'invoiced' }, 'Счёт за ремонт', `${((amount - discount) / 100).toLocaleString('ru-RU')} ₽ — сверьте работы`);
+    const clientPct = Math.max(0, Math.min(5, fees.clientFeePct)); // approved ceiling: 5% and max 5,000 RUB.
+    const clientFee = Math.min(Math.round(feeBase * clientPct / 100), 500_000);
+    const b = await this.db.tx(async q => {
+      const row = await q.one<any>('select * from service_bookings where id=$1 and center_id=$2 for update', [id, c.id]);
+      if (!row) throw notFound('Запрос не найден');
+      if (row.status !== 'ready') throw conflict('bad_status', 'Сначала «Машина готова»');
+      let commission = Math.min(Math.round(feeBase * Math.max(0, Math.min(5,fees.serviceCommissionPct)) / 100), fees.serviceCommissionMax ?? 500_000, 500_000);
+      const discount = row.from_order_id ? Math.min(commission, Math.round(feeBase * fees.serviceReferralDiscountPct / 100)) : 0;
+      // Points and the new invoice must commit together; never spend points twice on a retry.
+      const pts = this.referral
+        ? await this.referral.spendServiceCommission(q, user.id, commission - discount, id, row.number, points) : 0;
+      commission -= pts;
+      await q.query(
+        `update service_bookings
+            set status='invoiced', amount=$2, commission=$3, discount=$4, points=$5,
+                client_fee=$6, client_fee_pct=$7, parts_amount=$8, fee_base_amount=$9,
+                payment_required=true, invoiced_at=now(), updated_at=now()
+          where id=$1`,
+        [id, amount, commission, discount, pts, clientFee, clientPct, partsAmount, feeBase]);
+      return {...row, client_fee:clientFee, discount, amount, parts_amount:partsAmount, fee_base_amount:feeBase};
+    });
+    await this.tell({ ...b, status: 'invoiced' }, 'Счёт за ремонт', 'Работы завершены. Проверьте в личном кабинете состав счёта и итог к оплате.');
     return this.booking(user, id);
   }
 
@@ -284,6 +465,7 @@ export class ServiceCenters {
     const c = await this.mustMine(user);
     const rows = await this.db.query<any>(
       `select b.id, b.number, b.status, b.works, b.amount, b.discount, b.commission, b.points, b.invoiced_at, b.closed_at, b.paid_out_at, b.vehicle,
+              b.payment_required, b.client_fee, b.received_amount, b.refunded_amount,
               coalesce(nullif(u.company_name,''), u.name, 'Клиент') as client_name, b.from_order_id is not null as from_order
          from service_bookings b join users u on u.id=b.client_id
         where b.center_id=$1 and b.amount is not null and b.status in ('invoiced','closed','disputed')
@@ -293,12 +475,18 @@ export class ServiceCenters {
       amount: b.amount, discount: b.discount, commission: b.commission, points: b.points ?? 0,
       commissionFull: b.commission + (b.points ?? 0), payout: b.amount - b.commission,
       invoicedAt: b.invoiced_at, closedAt: b.closed_at, paidOutAt: b.paid_out_at,
-      state: b.paid_out_at ? 'paid' : b.status === 'closed' ? 'to_pay' : b.status === 'disputed' ? 'disputed' : 'awaiting',
+      // Only boolean status is sent to service owner, not client fee or client invoice total.
+      state: b.paid_out_at ? 'paid'
+        : b.status === 'disputed' ? 'disputed'
+        : b.status === 'closed'
+          ? (!b.payment_required ||
+             b.received_amount-b.refunded_amount >= b.amount+b.client_fee-b.discount ? 'to_pay' : 'unpaid')
+          : 'awaiting',
     });
     const items = rows.map(item);
     const sum = (f: (x: any) => boolean, k: string) => items.filter(f).reduce((s, x: any) => s + x[k], 0);
     const months = new Map<string, any>();
-    for (const x of items.filter((i) => i.state !== 'awaiting' && i.state !== 'disputed')) {
+    for (const x of items.filter((i) => i.state !== 'awaiting' && i.state !== 'disputed' && i.state !== 'unpaid')) {
       const m = new Date(new Date(x.closedAt ?? x.invoicedAt).getTime() + 3 * 3600_000).toISOString().slice(0, 7);
       const r = months.get(m) ?? { month: m, count: 0, amount: 0, discount: 0, commission: 0, points: 0, payout: 0 };
       r.count++; r.amount += x.amount; r.discount += x.discount; r.commission += x.commission; r.points += x.points; r.payout += x.payout;
@@ -308,29 +496,48 @@ export class ServiceCenters {
     return {
       summary: {
         toPay: sum((x) => x.state === 'to_pay', 'payout'), awaiting: sum((x) => x.state === 'awaiting', 'payout'),
+        unpaid: sum((x) => x.state === 'unpaid', 'payout'),
         disputed: sum((x) => x.state === 'disputed', 'payout'), paid: sum((x) => x.state === 'paid', 'payout'),
         points: sum(() => true, 'points'),
       },
       months: [...months.values()],
       items,
-      rule: { pct: fees.serviceCommissionPct, max: fees.serviceCommissionMax, referralPct: fees.serviceReferralDiscountPct },
+      rule: { pct: Math.min(5,fees.serviceCommissionPct), max: Math.min(500_000,fees.serviceCommissionMax ?? 500_000), referralPct: fees.serviceReferralDiscountPct },
     };
   }
 
   /** Админ: подтверждённые счета, которые ещё не выплачены сервисам */
   async payoutsDue() {
     return this.db.query(
-      `select b.id, b.number, b.amount, b.commission, b.amount - b.commission as payout, b.closed_at, c.name as center_name, c.inn
+      `select b.id, b.number, b.amount, b.client_fee, b.discount, b.commission,
+              b.received_amount, b.refunded_amount, b.payment_required,
+              b.amount - b.commission as payout, b.closed_at, c.name as center_name, c.inn,
+              (not b.payment_required or b.received_amount-b.refunded_amount >= b.amount+b.client_fee-b.discount) as payout_ready
          from service_bookings b join service_centers c on c.id=b.center_id
         where b.status='closed' and b.amount is not null and b.paid_out_at is null order by b.closed_at`);
   }
 
-  async markPaidOut(admin: AuthUser, id: string) {
-    const b = await this.db.one<any>(`update service_bookings set paid_out_at=now() where id=$1 and status='closed' and paid_out_at is null
-        returning id, number, center_id, amount - commission as payout`, [id]);
-    if (!b) throw conflict('bad_status', 'Счёт не подтверждён клиентом или уже выплачен');
+  async markPaidOut(admin: AuthUser, id: string, reference?: string) {
+    if (!admin.roles.includes('admin')) throw forbidden();
+    const ref = reference?.trim() || null;
+    const b = await this.db.tx(async q => {
+      const paid = await q.one<any>(`update service_bookings
+           set paid_out_at=now(),payout_reference=case when payment_required then $2::text else payout_reference end
+         where id=$1 and status='closed' and paid_out_at is null
+           and (not payment_required or
+                (length(coalesce($2::text,'')) between 4 and 200 and
+                 received_amount-refunded_amount >= amount+client_fee-discount))
+          returning id, number, center_id, amount - commission as payout`, [id,ref]).catch((e:any)=>{
+        if(e?.code==='23505') throw conflict('duplicate_payout_reference','Эта банковская выплата уже отмечена');
+        throw e;
+      });
+      if (!paid) throw conflict('payout_not_ready',
+        'Нужны: подтверждение работ, проверенное поступление всей суммы и номер фактически отправленной выплаты СТО (для новых счетов). Повторную выплату отметить нельзя.');
+      await q.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4::jsonb)',
+        [admin.id, 'service.paid_out', id, JSON.stringify({reference:ref,payout:paid.payout})]);
+      return paid;
+    });
     const c = await this.db.one<{ owner_id: string }>('select owner_id from service_centers where id=$1', [b.center_id]);
-    await this.db.query('insert into audit_log(actor_id, action, target) values ($1,$2,$3)', [admin.id, 'service.paid_out', id]);
     if (c) await this.notifier.notify([c.owner_id], { type: 'booking', bookingId: id, status: 'paid' },
       { kind: 'normal', title: 'Выплата отправлена', body: `Счёт №${b.number}: ${(b.payout / 100).toLocaleString('ru-RU')} ₽`, data: { bookingId: id } });
     return { ok: true };
@@ -348,7 +555,7 @@ export class ServiceCenters {
     const today = msk(this.now());
     const max = Math.max(1, ...rows.map((r: any) => r.closed_n));
     return rows
-      .filter((c: any) => !p.need || c.staff?.[p.need] !== 'none')
+      .filter((c: any) => !p.need || (Object.hasOwn(NEEDS,p.need) && c.staff?.[p.need] !== 'none'))
       .map((c: any) => ({
         id: c.id, name: c.name, address: c.address, lat: c.lat, lng: c.lng, hours: c.hours, brands: c.brands, staff: c.staff,
         conditions: c.conditions, accepts: c.accepts, rating: c.rating, reviews: c.reviews_n, load: c.load_n,
@@ -371,11 +578,23 @@ export class ServiceCenters {
     return { ...c, reviews: reviews };
   }
 
-  async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null }) {
+  async book(user: AuthUser, centerId: string, p: { vehicleId?: string | null; need: string; day: string; time?: string | null; arrival: 'self' | 'tow'; comment?: string | null; fromOrderId?: string | null; caseOrderId?: string | null; recommendationId?: string | null }) {
+    if (!user.roles.some(role => role === 'client' || role === 'driver'))
+      throw forbidden('Для записи в СТО нужен клиентский аккаунт');
+    // A driver can book only their CURRENT assigned truck; a stale fleet
+    // session must never submit a phantom or previous-owner booking.
+    if (user.owner_id && !p.vehicleId && !p.caseOrderId)
+      throw forbidden('Выберите назначенную вам машину для записи');
     const c = await this.db.one(`select * from service_centers where id=$1 and verification='approved' and not paused`, [centerId]);
     if (!c) throw notFound('Сервис не найден');
     if (c.owner_id === user.id) throw bad('self', 'Это ваш сервис');
-    if (!(p.need in NEEDS)) throw bad('bad_need', 'Что нужно?');
+    if (!Object.hasOwn(NEEDS, p.need)) throw bad('bad_need', 'Выберите существующую работу');
+    // Route-level YYYY-MM-DD shape is not enough: 2026-02-31 is not a day.
+    const parsedDay=new Date(p.day+'T00:00:00Z');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.day) ||
+        !Number.isFinite(parsedDay.getTime()) ||
+        parsedDay.toISOString().slice(0,10)!==p.day)
+      throw bad('bad_day','Выберите действительную дату записи');
     if (p.day < msk(this.now())) throw bad('past', 'Выберите сегодня или позже');
     if ((c.closed_days ?? []).some((d: any) => msk(new Date(d)) === p.day)) throw bad('closed', 'В этот день сервис не работает');
     const clientId = user.owner_id ?? user.id;
@@ -385,20 +604,44 @@ export class ServiceCenters {
     }
     let vehicle: any = {};
     if (p.vehicleId) {
-      const v = await this.db.one('select * from vehicles where id=$1 and owner_id=$2', [p.vehicleId, clientId]);
-      if (!v || (user.owner_id && v.driver_id !== user.id)) throw notFound('Машина не найдена');
+      const v = await this.db.one(
+        `select v.* from vehicles v
+          left join users current_driver on current_driver.id=$3
+         where v.id=$1 and v.owner_id=$2
+           and ($3::uuid=v.owner_id or
+             (v.driver_id=$3 and current_driver.owner_id=v.owner_id
+              and 'driver'=any(current_driver.roles)))`,
+        [p.vehicleId, clientId, user.id]);
+      if (!v) throw notFound('Машина не найдена');
       vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
     }
     // A case link is NOT a referral. Do not use from_order_id for tow->STO
     // or the old workshop referral discount would be applied incorrectly.
     if (p.caseOrderId && p.fromOrderId) throw bad('bad_link', 'Выберите одно продолжение обращения');
+    // Owner-approved STO recommendation may link an in-progress consultation,
+    // master visit or tow to a future workshop booking. The booking is still
+    // an independent service contract and produces no immediate payment.
+    let approvedRecommendation=false;
+    if (p.recommendationId) {
+      if (!p.caseOrderId || p.fromOrderId || user.owner_id)
+        throw forbidden('Запись по рекомендации подтверждает владелец автопарка');
+      const rec=await this.db.one<{id:string}>(
+        "select id from order_continuation_recommendations where id=$1 and source_order_id=$2 and client_id=$3 and target_kind='sto' and status='approved'",
+        [p.recommendationId,p.caseOrderId,user.id]);
+      if(!rec)throw forbidden('Сначала согласуйте рекомендацию СТО');
+      approvedRecommendation=true;
+    }
     let caseRootId: string | null = null;
     if (p.caseOrderId) {
       const previous = await this.db.one<any>('select id, case_root_id, client_id, created_by, vehicle_id, brand, model, year, status, result, service from orders where id=$1', [p.caseOrderId]);
       if (!previous || previous.client_id !== clientId || (user.owner_id && previous.created_by !== user.id))
         throw forbidden('Продолжить можно только собственное обращение');
-      if (previous.status !== 'completed' ||
-          !(previous.service === 'tow' || ['cause_found','not_found'].includes(previous.result)))
+      const canPreBookTow=approvedRecommendation && previous.service==='tow' &&
+        p.arrival==='tow' && ['accepted','en_route'].includes(previous.status);
+      if ((approvedRecommendation
+            ? !canPreBookTow && !['arrived','working','awaiting_confirmation','completed'].includes(previous.status)
+            : previous.status !== 'completed' ||
+              !(previous.service === 'tow' || ['cause_found','not_found'].includes(previous.result))))
         throw conflict('stage_not_ready', 'Сначала завершите текущий этап помощи');
       if (previous.vehicle_id && p.vehicleId && previous.vehicle_id !== p.vehicleId)
         throw bad('different_vehicle', 'Запись должна относиться к тому же грузовику');
@@ -406,13 +649,20 @@ export class ServiceCenters {
         throw bad('different_vehicle', 'Для продолжения используйте грузовик из исходного обращения');
       if (previous.vehicle_id && !p.vehicleId) {
         // Link the exact same garage vehicle, even if the user never reopened the picker.
-        const v = await this.db.one<any>('select * from vehicles where id=$1 and owner_id=$2', [previous.vehicle_id, clientId]);
-        if (!v || (user.owner_id && v.driver_id !== user.id))
-          throw forbidden('Машина этого обращения недоступна для записи');
+        const v = await this.db.one<any>(
+          `select v.* from vehicles v left join users current_driver on current_driver.id=$3
+            where v.id=$1 and v.owner_id=$2
+              and ($3::uuid=v.owner_id or
+                (v.driver_id=$3 and current_driver.owner_id=v.owner_id
+                 and 'driver'=any(current_driver.roles)))`,
+          [previous.vehicle_id, clientId, user.id]);
+        if (!v) throw forbidden('Машина этого обращения недоступна для записи');
         p = { ...p, vehicleId: previous.vehicle_id };
         vehicle = { brand: v.brand, model: v.model, year: v.year, plate: v.plate, trailerPlate: v.trailer_plate };
       }
       if (!previous.vehicle_id) {
+        if (user.owner_id)
+          throw forbidden('Водителю нужна действующая привязка к автомобилю исходного обращения');
         // Incidents created before the truck was added to a garage still retain
         // the brand/model/year snapshot in the following workshop booking.
         vehicle = { brand: previous.brand ?? null, model: previous.model ?? null, year: previous.year ?? null };
@@ -421,14 +671,35 @@ export class ServiceCenters {
     }
     let fromOrderId: string | null = null;
     if (p.fromOrderId) {
-      const o = await this.db.one('select id from orders where id=$1 and client_id=$2', [p.fromOrderId, clientId]);
-      fromOrderId = o?.id ?? null;
+      const o = await this.db.one<any>(
+        `select id,vehicle_id,created_by,recommended_center_id
+          from orders where id=$1 and client_id=$2`, [p.fromOrderId, clientId]);
+      if (!o || o.recommended_center_id !== centerId)
+        throw forbidden('Скидка действует только для рекомендованного мастером сервиса');
+      if (user.owner_id && (o.created_by !== user.id || !o.vehicle_id ||
+          o.vehicle_id !== p.vehicleId))
+        throw forbidden('Доступ к рекомендации есть только у действующего водителя этой машины');
+      if (o.vehicle_id && p.vehicleId && o.vehicle_id !== p.vehicleId)
+        throw bad('different_vehicle', 'Рекомендация относится к другому автомобилю');
+      if (o.vehicle_id && !p.vehicleId) {
+        // A referral is tied to this specific fleet truck. Never create a
+        // no-vehicle discounted booking while referencing another truck.
+        const sourceVehicle=await this.db.one<any>(
+          'select * from vehicles where id=$1 and owner_id=$2', [o.vehicle_id,clientId]);
+        if (!sourceVehicle) throw notFound('Машина рекомендованного обращения больше не доступна');
+        p={...p,vehicleId:sourceVehicle.id};
+        vehicle={brand:sourceVehicle.brand,model:sourceVehicle.model,year:sourceVehicle.year,
+          plate:sourceVehicle.plate,trailerPlate:sourceVehicle.trailer_plate};
+      }
+      fromOrderId = o.id;
     }
     const b = await this.db.one(
-      `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning *`,
-      [centerId, clientId, user.id, p.vehicleId ?? null, vehicle, p.need, p.day, p.time?.trim() || null, p.arrival, p.comment?.trim() || null, fromOrderId, caseRootId]
+      `insert into service_bookings(center_id, client_id, created_by, vehicle_id, vehicle, need, when_day, when_time, arrival, comment, from_order_id, case_root_id, continuation_recommendation_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
+      [centerId, clientId, user.id, p.vehicleId ?? null, vehicle, p.need, p.day, p.time?.trim() || null, p.arrival, p.comment?.trim() || null, fromOrderId, caseRootId, approvedRecommendation ? p.recommendationId : null]
     ).catch((e: any) => {
+      if(e?.code==='23505' && e?.constraint==='service_booking_recommendation_once')
+        throw conflict('continuation_exists','Эта рекомендация уже оформлена как запись на СТО');
       if (e?.code === '23505' && e?.constraint === 'service_bookings_one_open_case_idx')
         throw conflict('continuation_exists', 'В этом обращении уже есть незакрытая запись на СТО');
       throw e;
@@ -439,25 +710,53 @@ export class ServiceCenters {
   }
 
   async myBookings(user: AuthUser) {
-    const clientId = user.owner_id ?? user.id;
+    if (!user.roles.some(role => role === 'client' || role === 'driver')) throw forbidden();
+    // A driver may have made the booking, but leaving/reassigning the truck
+    // ends their access to its notes, repair status and financial history.
+    const filter = user.owner_id
+      ? `and b.created_by=$2 and b.vehicle_id is not null
+         and exists (
+           select 1 from vehicles v join users current_driver on current_driver.id=$2
+           where v.id=b.vehicle_id and v.owner_id=b.client_id
+             and v.driver_id=$2 and current_driver.owner_id=v.owner_id
+             and 'driver'=any(current_driver.roles)
+         )`
+      : '';
     const rows = await this.db.query(
-      `select b.*, c.name as center_name, c.address as center_address from service_bookings b join service_centers c on c.id=b.center_id
-        where b.client_id=$1 ${user.owner_id ? 'and b.created_by=$2' : ''} order by b.created_at desc limit 100`,
-      user.owner_id ? [clientId, user.id] : [clientId]);
-    return rows.map((b: any) => ({ ...this.bookingView(b, 'client'), center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
+      `select b.*, c.name as center_name, c.address as center_address
+         from service_bookings b join service_centers c on c.id=b.center_id
+        where b.client_id=$1 ${filter} order by b.created_at desc limit 100`,
+      user.owner_id ? [user.owner_id, user.id] : [user.id]);
+    return rows.map((b: any) => ({ ...this.bookingView(b, 'client'),
+      center: { id: b.center_id, name: b.center_name, address: b.center_address } }));
+  }
+
+  /** Keep a current-fleet predicate in the write itself, not only in GET. */
+  private customerWriteAcl(param: number): string {
+    const id = '$' + param + '::uuid';
+    return `(client_id=${id} or (created_by=${id} and vehicle_id is not null
+      and exists (
+        select 1 from vehicles v join users current_driver on current_driver.id=${id}
+         where v.id=service_bookings.vehicle_id and v.owner_id=service_bookings.client_id
+           and v.driver_id=${id} and current_driver.owner_id=v.owner_id
+           and 'driver'=any(current_driver.roles)
+      )))`;
   }
 
   private async clientBooking(user: AuthUser, id: string) {
     const b = await this.db.one('select b.*, c.owner_id from service_bookings b join service_centers c on c.id=b.center_id where b.id=$1', [id]);
-    if (!b || (b.client_id !== (user.owner_id ?? user.id))) throw notFound('Запись не найдена');
-    if (user.owner_id && b.created_by !== user.id) throw notFound('Запись не найдена');
+    if (!b || !(await this.canSeeCustomerBooking(user, b)))
+      throw notFound('Запись не найдена');
     return b;
   }
 
   async answer(user: AuthUser, id: string, text: string) {
     const b = await this.clientBooking(user, id);
     if (b.status !== 'clarify') throw conflict('bad_status', 'Сервис ничего не спрашивал');
-    await this.db.query(`update service_bookings set status='new', client_answer=$2, updated_at=now() where id=$1`, [id, text.trim()]);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='new', client_answer=$2, updated_at=now()
+        where id=$1 and status='clarify' and ${this.customerWriteAcl(3)} returning id`, [id, text.trim(), user.id]);
+    if (!updated) throw conflict('bad_status', 'Ответ по этой записи уже обработан');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'new' },
       { kind: 'normal', title: 'Клиент ответил', body: text.trim().slice(0, 120), data: { bookingId: id } });
     return this.booking(user, id);
@@ -466,7 +765,10 @@ export class ServiceCenters {
   async cancel(user: AuthUser, id: string) {
     const b = await this.clientBooking(user, id);
     if (!['new', 'clarify', 'expected'].includes(b.status)) throw conflict('bad_status', 'Машина уже в сервисе — отменить нельзя, напишите сервису');
-    await this.db.query(`update service_bookings set status='cancelled', updated_at=now() where id=$1`, [id]);
+    const updated = await this.db.one<any>(
+      `update service_bookings set status='cancelled', updated_at=now()
+        where id=$1 and status in ('new','clarify','expected') and ${this.customerWriteAcl(2)} returning id`, [id, user.id]);
+    if (!updated) throw conflict('bad_status', 'Запись уже перешла в следующий этап');
     await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'cancelled' },
       { kind: 'normal', title: 'Клиент отменил запись', body: `${b.vehicle?.brand ?? ''} ${b.vehicle?.plate ?? ''}`.trim() || 'Запись отменена', data: { bookingId: id } });
     return this.booking(user, id);
@@ -477,16 +779,24 @@ export class ServiceCenters {
     const b = await this.clientBooking(user, id);
     if (b.status !== 'invoiced') throw conflict('bad_status', 'Счёта ещё нет');
     if (p.agree) {
-      await this.db.query(
-        `update service_bookings set status='closed', closed_at=now(), review_stars=$2, review_text=$3, updated_at=now() where id=$1`,
-        [id, p.stars ?? null, p.text?.trim() || null]);
-      await this.referral?.afterBookingClosed(b.owner_id, id);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='closed', closed_at=now(),
+                review_stars=$2, review_text=$3, updated_at=now()
+          where id=$1 and status='invoiced' and ${this.customerWriteAcl(4)} returning id`,
+        [id, p.stars ?? null, p.text?.trim() || null, user.id]);
+      if (!updated) throw conflict('bad_status', 'Работы уже подтверждены либо открыт спор');
+      // New agreements award post-payment bonuses only after a recorded receipt.
+      if (!b.payment_required) await this.referral?.afterBookingClosed(b.owner_id, id);
+      else if (this.settlement(b).paymentStatus === 'received') await this.referral?.afterBookingClosed(b.owner_id, id);
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'closed' },
         { kind: 'normal', title: 'Клиент подтвердил работы', body: `Счёт №${b.number} — деньги придут после оплаты`, data: { bookingId: id } });
     } else {
       const why = p.why?.trim();
       if (!why || why.length < 5) throw bad('empty', 'Напишите, с чем не согласны');
-      await this.db.query(`update service_bookings set status='disputed', updated_at=now() where id=$1`, [id]);
+      const updated = await this.db.one<any>(
+        `update service_bookings set status='disputed', updated_at=now()
+          where id=$1 and status='invoiced' and ${this.customerWriteAcl(2)} returning id`, [id, user.id]);
+      if (!updated) throw conflict('bad_status', 'По этому счёту уже принято решение');
       const t = await this.support.open(user, { topic: 'Ремонт в сервисе', text: `Ремонт в сервисе, счёт №${b.number}: ${why}` }) as any;
       await this.onDispute?.({ userId: user.id, bookingId: id, ticketId: t?.id ?? null, text: why, targetId: b.owner_id, title: `Спор по ремонту в сервисе, счёт №${b.number}` });
       await this.notifier.notify([b.owner_id], { type: 'booking', bookingId: id, status: 'disputed' },
@@ -495,17 +805,152 @@ export class ServiceCenters {
     return this.booking(user, id);
   }
 
+  // ——— Сверка оплаченных счетов СТО: only staff attest bank/cash movements ———
+  /** These are immutable external-receipt attestations, NEVER a payment gateway operation. */
+  async paymentEvents(user: AuthUser, id: string) {
+    if (!user.roles.includes('admin')) throw forbidden();
+    const b = await this.db.one<any>(
+      `select b.*, c.name as center_name from service_bookings b
+         join service_centers c on c.id=b.center_id where b.id=$1`,[id]);
+    if (!b) throw notFound('Счёт не найден');
+    const events = await this.db.query(
+      `select e.id::int as id,e.kind,e.amount,e.method,e.reference,e.created_at,
+              u.phone as verified_by from service_payment_events e
+         join users u on u.id=e.confirmed_by where e.booking_id=$1
+         order by e.id desc`,[id]);
+    return {invoice:{id:b.id,number:b.number,centerName:b.center_name,amount:b.amount,
+      clientFee:b.client_fee,discount:b.discount,partsAmount:b.parts_amount,feeBaseAmount:b.fee_base_amount,commission:b.commission,payout:b.amount==null?null:b.amount-b.commission,
+      received:b.received_amount,refunded:b.refunded_amount,paidOutAt:b.paid_out_at,payoutReference:b.payout_reference,
+      ...this.settlement(b)},events};
+  }
+
+  async financialRegister(user: AuthUser) {
+    if (!user.roles.includes('admin')) throw forbidden();
+    const rows = await this.db.query<any>(
+      `select b.id,b.number,b.status,b.amount,b.parts_amount,b.fee_base_amount,b.client_fee,b.discount,b.commission,b.points,
+              b.payment_required,b.received_amount,b.refunded_amount,b.paid_out_at,b.payout_reference,b.invoiced_at,
+              c.name as center_name, coalesce(u.company_name,u.name,u.phone) as client_name
+         from service_bookings b
+         join service_centers c on c.id=b.center_id
+         join users u on u.id=b.client_id
+         where b.amount is not null order by b.invoiced_at desc limit 300`);
+    return rows.map(b=>({...b,toPay:this.settlement(b).total,
+      netReceived:this.settlement(b).netReceived,
+      outstanding:this.settlement(b).outstanding,paymentStatus:this.settlement(b).paymentStatus,
+      recoveryNeeded:this.settlement(b).recoveryNeeded,
+      payout:b.amount-b.commission,
+      payoutReady:b.status==='closed' && b.paid_out_at==null &&
+        (!b.payment_required || this.settlement(b).paymentStatus==='received')}));
+  }
+
+  async recordTransfer(admin: AuthUser, id: string, entry: {
+    kind:'receipt'|'refund';amount:number;method:'invoice'|'online'|'cash'|'other';reference:string;
+  }) {
+    if (!admin.roles.includes('admin')) throw forbidden();
+    if (!Number.isSafeInteger(entry.amount) || entry.amount <= 0)
+      throw bad('bad_amount','Сумма внешней операции должна быть положительной и целой');
+    const reference=entry.reference.trim();
+    if (reference.length<4 || reference.length>200) throw bad('bad_reference','Укажите номер подтверждённой банковской или кассовой операции');
+    const updated=await this.db.tx(async q=>{
+      const b=await q.one<any>('select * from service_bookings where id=$1 for update',[id]);
+      if (!b) throw notFound('Счёт не найден');
+      if (!b.payment_required || b.amount==null) throw conflict('legacy_invoice','Для старого счёта нужна отдельная ручная сверка; данные не изменяем');
+      if (!['invoiced','closed','disputed'].includes(b.status)) throw conflict('bad_status','Счёт не выставлен');
+      const total=this.settlement(b).total!;
+      const current=Number(b.received_amount)-Number(b.refunded_amount);
+      if (entry.kind==='receipt' && current+entry.amount>total)
+        throw conflict('overpayment','Сумма подтверждённых поступлений не может превышать согласованный счёт');
+      if (entry.kind==='refund' && entry.amount>current)
+        throw conflict('refund_exceeds_receipts','Возврат не может превышать действительно полученные средства');
+      try {
+        await q.query(
+          `insert into service_payment_events(booking_id,kind,amount,method,reference,confirmed_by)
+           values ($1,$2,$3,$4,$5,$6)`,
+          [id,entry.kind,entry.amount,entry.method,reference,admin.id]);
+      } catch(e:any) {
+        if(e?.code==='23505') throw conflict('duplicate_bank_reference','Эта внешняя операция уже зарегистрирована');
+        throw e;
+      }
+      const field=entry.kind==='receipt' ? 'received_amount' : 'refunded_amount';
+      await q.query(`update service_bookings set ${field}=${field}+$2,updated_at=now() where id=$1`,
+        [id,entry.amount]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values($1,$2,$3,$4::jsonb)',
+        [admin.id,'service.payment.'+entry.kind,id,JSON.stringify({...entry})]);
+      return {...b,received_amount:Number(b.received_amount)+(entry.kind==='receipt'?entry.amount:0),
+        refunded_amount:Number(b.refunded_amount)+(entry.kind==='refund'?entry.amount:0)};
+    });
+    if (updated.status==='closed' && entry.kind==='receipt' && this.settlement(updated).paymentStatus==='received')
+      await this.referral?.afterBookingClosed((await this.db.one<{owner_id:string}>(
+        'select owner_id from service_centers where id=$1',[updated.center_id]))!.owner_id,id);
+    return this.paymentEvents(admin,id);
+  }
+
   // ——— Модерация ———
   async pending() {
     return this.db.query(`select c.*, u.phone from service_centers c join users u on u.id=c.owner_id order by (c.verification='pending') desc, c.created_at desc limit 100`);
   }
   async verify(actor: AuthUser, id: string, decision: 'approved' | 'rejected') {
-    const c = await this.db.one('update service_centers set verification=$2 where id=$1 returning *', [id, decision]);
+    if (!actor.roles.some(role => role === 'admin' || role === 'moderator')) throw forbidden();
+    // Business approval is NOT evidence that self-entered coordinates are real.
+    // Fail closed on every standard verification; only a separate documented
+    // stationary location review may enable the yellow public map pin.
+    const c = await this.db.one(`update service_centers
+      set verification=$2,
+          public_map_location_verified_at=null,
+          public_map_opt_in=false,
+          public_map_opted_at=null
+      where id=$1 returning *`, [id, decision]);
     if (!c) throw notFound();
-    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision }]);
+    await this.db.query('insert into audit_log(actor_id, action, target, data) values ($1,$2,$3,$4)', [actor.id, 'service.verify', id, { decision, locationVerified:false }]);
     await this.notifier.notify([c.owner_id], { type: 'verification', decision },
-      { kind: 'normal', title: decision === 'approved' ? 'Сервис проверен' : 'Проверка не пройдена', body: decision === 'approved' ? 'Клиенты видят вас на карте' : 'Напишите в поддержку', data: {} });
+      { kind: 'normal', title: decision === 'approved' ? 'Сервис проверен' : 'Проверка не пройдена',
+        body: decision === 'approved'
+          ? 'СТО одобрена для работы. Публичная карта требует отдельной проверки адреса и вашего согласия.'
+          : 'Напишите в поддержку', data: {} });
     return c;
+  }
+
+  /** Explicit evidence-based review of FIXED station location, separate from
+   * ordinary business approval. Requires a human staff member's affirmative
+   * match against an actual independent source; audit records source and the
+   * exact address/coords approved, never mobile master GPS.
+   */
+  async verifyPublicLocation(actor:AuthUser,id:string,proof:{
+    kind:'official_registry'|'site_visit'|'verified_document';
+    reference:string;
+    confirmed:true;
+  }){
+    if (!actor.roles.some(role => role === 'admin' || role === 'moderator')) throw forbidden();
+    if (!['official_registry','site_visit','verified_document'].includes(proof.kind))
+      throw bad('public_location_evidence_required','Укажите вид подтверждённого документа или проверки');
+    return this.db.tx(async q=>{
+      const center=await q.one<any>('select * from service_centers where id=$1 for update',[id]);
+      if(!center)throw notFound();
+      const lat=Number(center.lat),lng=Number(center.lng);
+      if(center.verification!=='approved' || center.paused ||
+         center.lat==null || center.lng==null ||
+         !Number.isFinite(lat)||!Number.isFinite(lng)||
+         lat < -90 || lat > 90 || lng < -180 || lng > 180 ||
+         (lat===0&&lng===0) ||
+         typeof center.address!=='string' || center.address.trim().length<8)
+        throw bad('public_location_not_ready',
+          'Сначала одобрите действующую СТО и убедитесь, что указан её настоящий стационарный адрес.');
+      const reference=proof.reference.trim();
+      if(reference.length<8 || proof.confirmed!==true)
+        throw bad('public_location_evidence_required',
+          'Для геопроверки нужны подтверждённые документы/источник и явное подтверждение сверки.');
+      const row=await q.one(`update service_centers
+         set public_map_location_verified_at=now(),
+             public_map_opt_in=false,public_map_opted_at=null
+         where id=$1 returning *`,[id]);
+      await q.query(`insert into audit_log(actor_id,action,target,data)
+        values($1,$2,$3,$4::jsonb)`,
+        [actor.id,'service.public_location.verify',id,JSON.stringify({
+          kind:proof.kind,reference,address:center.address,
+          lat,lng,confirmed:true,verifiedAt:new Date().toISOString()
+        })]);
+      return row;
+    });
   }
 }
 

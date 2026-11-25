@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { TrakServiceIcon, type TrakServiceIconKind } from '../trakServiceIcon.tsx';
+import { TrakAppPhone } from '../trakAppPhone.tsx';
+import { useEffect, useRef, useState } from 'react';
+import { native } from '../native.ts';
 import { post, setToken, connectWs, ApiError } from '../api.ts';
 import { useAction, useMe, useToast, Field, go } from '../ui.tsx';
-import { SERVICE_TILES, MASTER_SPECIALTIES, rememberGuestService } from '../guestCatalog.ts';
+import { PUBLIC_HOME_TILES, MASTER_SPECIALTIES, rememberGuestService, rememberGuestAction, guestCustomerDestination, type GuestAction } from '../guestCatalog.ts';
+import { OwnerDesktopHome20261120 } from './ownerDesktopHome20261120.tsx';
 
 const HERO_SLIDES = [
-  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'ЕДИНАЯ ПЛАТФОРМА ДЛЯ ГРУЗОВОГО ТРАНСПОРТА',
-    description: 'Эвакуация · Выездной мастер · Ремонт и ТО · Запчасти · Страхование · Техосмотры · Консультации',
-    caption: 'Зона запуска: Санкт-Петербург и Ленинградская область. В других регионах выездные услуги пока недоступны.' },
+  { id: 'approved', label: 'Единая платформа TrakSOS', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ И В ДЕЛЕ',
+    description: 'Единая платформа для водителей, перевозчиков и всех, кто работает с грузовой техникой',
+    caption: 'TrakSOS — платформа для всей России. Доступность выездных мастеров определяется по вашему региону.' },
   { id: 'rescue', label: 'Эвакуация грузового транспорта', eyebrow: 'TRAKSOS · ПОМОЩЬ НА ДОРОГЕ',
     description: 'Нужен эвакуатор? Опишите технику и маршрут, ознакомьтесь с предложениями исполнителей в личном кабинете.',
     caption: 'Наличие исполнителя и условия выезда зависят от региона и выбранной заявки.' },
@@ -14,6 +18,24 @@ const HERO_SLIDES = [
     description: 'Ищите грузовые СТО, планируйте ремонт и обслуживание, следите за обращениями и историей работ.',
     caption: 'Запись доступна после входа при наличии подключённых станций.' },
 ] as const;
+
+
+/** Approved 19 November visual system: recognisable service icons, not font glyph boxes. */
+function PublicTileIcon({ id }: { id: typeof PUBLIC_HOME_TILES[number]['id'] }) {
+  // Reuse the EXACT same approved service illustration on Android/mobile,
+  // desktop PC and partner onboarding, not a mobile-only wrench for the STO.
+  if(['van','tow','sto','consult','parts','insurance','ecu','inspection','tech'].includes(id))
+    return <TrakServiceIcon kind={id as TrakServiceIconKind}/>;
+  const shared = { fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round' as const, strokeLinejoin:'round' as const };
+  return <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true" focusable="false" {...shared}>
+    {id === 'sos' ? <><path d="M24 5 45 42H3Z"/><path d="M24 17v13m0 6v1"/></>
+      : id === 'air' ? <><circle cx="24" cy="25" r="4" fill="currentColor" stroke="none"/><path d="M15 16a12 12 0 0 0 0 18m18-18a12 12 0 0 1 0 18M9 10a20 20 0 0 0 0 30m30-30a20 20 0 0 1 0 30"/></>
+      : id === 'sto' ? <><path d="M29 5a13 13 0 0 0-11 18L5 36a5 5 0 0 0 7 7l13-13A13 13 0 0 0 43 14l-9 9-9-2-2-9Z"/></>
+      : id === 'ecu' ? <><rect x="11" y="11" width="26" height="26" rx="3"/><rect x="18" y="18" width="12" height="12" rx="1"/><path d="M17 4v7m7-7v7m7-7v7M17 37v7m7-7v7m7-7v7M4 17h7m-7 7h7m-7 7h7m26-14h7m-7 7h7m-7 7h7"/></>
+      : id === 'parts' ? <><path d="M19 5h10l2 6 5 2 6-2 5 9-5 4v6l5 4-5 9-6-2-5 2-2 6H19l-2-6-5-2-6 2-5-9 5-4v-6l-5-4 5-9 6 2 5-2Z" transform="translate(0,-3) scale(.96)"/><circle cx="24" cy="24" r="8"/></>
+      : <><path d="M24 4 42 12v14c0 10-7 17-18 20C13 43 6 36 6 26V12Z"/><path d="m15 25 6 6 12-13"/></>}
+  </svg>;
+}
 
 function PublicDemoMapBackdrop() {
   // The public demonstration map is a bundled, immutable asset.
@@ -66,6 +88,7 @@ export function homeFor(roles: string[], intent: Intent): string {
   if (intent === 'join') return roles.includes('insurer') ? '#/insurance' : performer ? '#/as/performer' : '#/as/service';
   if (roles.includes('admin')) return '#/as/admin';
   if (roles.includes('moderator')) return '#/as/moderator';
+  if (roles.includes('courier')) return '#/courier';
   if (roles.includes('insurer')) return '#/insurance';
   if (roles.includes('inspection_operator')) return '#/inspections';
   if (roles.includes('client') || roles.includes('driver')) return '#/as/client';
@@ -74,15 +97,61 @@ export function homeFor(roles: string[], intent: Intent): string {
   return '#/as/client';
 }
 
-export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = {}) {
+const GUEST_SERVICE_NAMES: Record<string,string> = {
+  van:'Выездной мастер',tow:'Эвакуация',sto:'СТО и ремонт',
+  ecu:'Специалисты ЭБУ',consult:'Консультация',parts:'Запчасти',
+  insurance:'Страхование',inspection:'Техосмотр',sos:'Помощь SOS',
+  air:'Эфир водителей',club:'Клуб TrakSOS',tech:'ТехБаза',
+  garage:'Мой гараж',training:'Обучение',trakbot:'TrakBot'
+};
+export function Login({ driver, entry, serviceContext }: {
+  driver?: boolean; entry?: Intent; serviceContext?: string;
+} = {}) {
   const { reload } = useMe();
   const { busy, run } = useAction();
   const [intent, setIntent] = useState<Intent | null>(driver ? 'login' : entry ?? null);
   const [heroSlide, setHeroSlide] = useState(0);
-  const [phone, setPhone] = useState('+7 ');
+  // Even a wide/resizable Android WebView remains the approved app guest flow.
+  // Only desktop browsers may show the independently approved 617.png page.
+  const [desktopPublic, setDesktopPublic] = useState(() => !native.isApp && window.matchMedia('(min-width: 900px)').matches);
+  useEffect(() => {
+    if (native.isApp) return;
+    const q = window.matchMedia('(min-width: 900px)');
+    const update = () => setDesktopPublic(q.matches);
+    q.addEventListener('change',update);
+    return () => q.removeEventListener('change',update);
+  }, []);
+  // Preserve only an explicitly entered login phone while the user
+  // switches to client registration. A direct new registration starts blank.
+  useEffect(() => {
+    if (!serviceContext || !Object.prototype.hasOwnProperty.call(GUEST_SERVICE_NAMES, serviceContext)) return;
+    rememberGuestAction(serviceContext as GuestAction);
+  }, [serviceContext]);
+  const [phone, setPhone] = useState(() => {
+    try {
+      if (entry !== 'register' || sessionStorage.getItem('traksos.authTransition') !== 'register') return '+7 ';
+      const draft = sessionStorage.getItem('traksos.authPhoneDraft') || '+7 ';
+      sessionStorage.removeItem('traksos.authTransition');
+      sessionStorage.removeItem('traksos.authPhoneDraft');
+      return draft;
+    } catch { return '+7 '; }
+  });
+  const startClientRegistration = () => {
+    authGeneration.current += 1;
+    cancelPendingLogin();
+    try {
+      sessionStorage.setItem('traksos.authTransition', 'register');
+      sessionStorage.setItem('traksos.authPhoneDraft', phone);
+    } catch { /* Strict private browsing */ }
+    // The register route mounts a fresh form and restores the phone draft.
+    // Avoid a transient, editable registration form on the old login route.
+    go('register');
+  };
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteChange, setInviteChange] = useState(false);
+  const [inviteNewPassword, setInviteNewPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [codeError, setCodeError] = useState('');
   const [codeStatus, setCodeStatus] = useState('');
@@ -91,6 +160,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [role, setRole] = useState<JoinRole | null>(null);
   const [customerType, setCustomerType] = useState<'owner' | 'driver'>('owner');
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [hybridMasterService, setHybridMasterService] = useState(false);
+  // A single vetted company may run both the mobile master and the fixed STO.
+  // The two cabinets and their scopes stay separate; no extra public role card.
   const [specialtiesOpen, setSpecialtiesOpen] = useState(true);
   const [insurerOnly, setInsurerOnly] = useState(false);
   const [agree, setAgree] = useState(false);
@@ -113,17 +185,113 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   const [appealToken, setAppealToken] = useState<string | null>(null);
   const [appealText, setAppealText] = useState('');
   const [appealSent, setAppealSent] = useState(false);
+  // A delayed SMS/login response must not authenticate a different phone or
+  // redirect after the user has changed form or account. Each edit invalidates
+  // the previous operation, including when this component unmounts.
+  const authGeneration = useRef(0);
+  // The visible busy state is not a synchronous request lock. Track the
+  // generation that owns the lock so an obsolete response cannot unlock
+  // a newer password attempt, even before React commits the next render.
+  const loginPending = useRef<number | null>(null);
+  const cancelPendingLogin = () => {
+    loginPending.current = null;
+    setLoginBusy(false);
+  };
+  useEffect(() => {
+    authGeneration.current += 1;
+    return () => { authGeneration.current += 1; };
+  }, [phone, intent, password, code, role, customerType, hybridMasterService, specialties, inviteNewPassword]);
+
+  const changeAuthPhone = (value: string) => {
+    authGeneration.current += 1;
+    setPhone(value);
+    setPassword('');
+    setInviteChange(false); setInviteNewPassword('');
+    setCode('');
+    setDevCode(null);
+    setCodeError('');
+    setCodeStatus('');
+    setInsurerOnly(false);
+    cancelPendingLogin();
+    if (step === 'code') setStep('phone');
+  };
+  const otherAuthNumber = () => {
+    authGeneration.current += 1;
+    cancelPendingLogin();
+    setStep('phone');
+    setCode('');
+    setDevCode(null);
+    setPassword('');
+    setInviteChange(false); setInviteNewPassword('');
+    setCodeStatus('');
+    setCodeError('');
+    setInsurerOnly(false);
+  };
 
   // A routed auth form must clear its URL as well as local state on Back.
   // Otherwise the guest header links to #/login, #/register or #/join
   // have no effect after a previous visit to the same unchanged hash.
   const backToPublic = () => {
+    authGeneration.current += 1;
     setIntent(null);
+    setStep('phone');
+    setCode('');
+    setDevCode(null);
+    setPassword('');
+    setInviteChange(false); setInviteNewPassword('');
+    cancelPendingLogin();
+    setCodeStatus('');
+    try {
+      sessionStorage.removeItem('traksos.authTransition');
+      sessionStorage.removeItem('traksos.authPhoneDraft');
+      // Cancelled service selection must not redirect the user's next
+      // unrelated login into an earlier, abandoned request.
+      sessionStorage.removeItem('traksos.pendingLandingAction');
+      sessionStorage.removeItem('traksos.pendingCatalogChoice');
+    } catch { /* Strict private browsing */ }
     if (entry) go('');
   };
 
+  // Escape, keyboard focus and scroll locking apply only to the browser dialog.
+  useEffect(() => {
+    if (!intent || native.isApp) return;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusInitial = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('.tr-auth-close')?.focus();
+    });
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        backToPublic();
+      } else if (event.key === 'Tab') {
+        const dialog = document.querySelector<HTMLElement>('.tr-auth-panel');
+        if (!dialog) return;
+        const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(el => el.getClientRects().length > 0);
+        if (!controls.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+          event.preventDefault(); first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.cancelAnimationFrame(focusInitial);
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = oldOverflow;
+    };
+  }, [intent, entry]); // Browser auth routes provide their own independent dialog lifecycle.
+
+  const partnerAccountType = intent === 'join' && (role === 'master' || role === 'service') && hybridMasterService
+    ? 'master_service' : role;
   async function sendCode() {
     if (busy) return;
+    const generation = ++authGeneration.current;
     setCodeError('');
     const digits = phone.replace(/\D/g, '');
     if (digits.length !== 11 || !/^[78]/.test(digits)) {
@@ -138,7 +306,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       setCodeError('Выберите, кем хотите работать с TrakSOS.');
       return;
     }
-    if (intent === 'join' && role === 'master' && specialties.length === 0) {
+    if (intent === 'join' && (role === 'master' || hybridMasterService) && specialties.length === 0) {
       setCodeError('Выберите хотя бы одну специализацию мастера.');
       return;
     }
@@ -147,13 +315,17 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     const r = await run(async () => {
       try {
         return await post('/api/auth/code', { phone, purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register',
-          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined });
+          accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined });
       } catch (e) {
+        // A failed SMS response for a phone already edited by the user must
+        // not overwrite the current form with an error from the old number.
+        if (generation !== authGeneration.current) return null;
         if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
         setCodeError(authErrorMessage(e, 'Не удалось связаться с сервером. Проверьте интернет и повторите попытку.'));
         throw e;
       }
     }, null);
+    if (generation !== authGeneration.current) return;
     setCodeStatus('');
     if (r?.sent === true) {
       setDevCode(r.devCode ?? null);
@@ -166,7 +338,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
   async function verify() {
     if (intent === 'join' && !role) return;
     if (intent === 'login') {
-      if (loginBusy) return;
+      if (loginPending.current !== null) return;
+      const generation = ++authGeneration.current;
       setLoginError('');
       const digits = phone.replace(/\D/g, '');
       if (digits.length !== 11 || !/^[78]/.test(digits)) {
@@ -177,56 +350,72 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         setLoginError('Введите пароль. Если забыли его, нажмите «Забыли пароль?».');
         return;
       }
+      if (inviteChange && inviteNewPassword.length < 10) { setLoginError('Введите новый пароль (не менее 10 символов).'); return; }
+      loginPending.current = generation;
       setLoginBusy(true);
       try {
-        const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200) });
-        await signedIn(login);
+        const login = await post('/api/auth/login', { phone, password, device: navigator.userAgent.slice(0, 200), ...(inviteChange ? {newPassword:inviteNewPassword}: {}) });
+        if (generation === authGeneration.current) await signedIn(login, generation);
       } catch (e) {
-        setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
+        if (generation === authGeneration.current) {
+          if (e instanceof ApiError && e.code === 'insurer_password_change_required') setInviteChange(true);
+          setLoginError(authErrorMessage(e, 'Не удалось завершить вход. Проверьте соединение и повторите попытку.'));
+        }
       } finally {
-        setLoginBusy(false);
+        if (loginPending.current === generation) cancelPendingLogin();
       }
       return;
     }
+    const generation = ++authGeneration.current;
     const r = await run(async () => {
       try {
         return await post('/api/auth/verify', { phone, code,
           role: intent === 'join' ? role : undefined,
-          accountType: intent === 'join' ? role : intent === 'register' || intent === 'help' ? customerType : undefined,
+          accountType: intent === 'join' ? partnerAccountType : intent === 'register' || intent === 'help' ? customerType : undefined,
           purpose: intent === 'reset' || intent === 'activate' ? 'reset' : 'register', password,
           ref: (() => { try { return localStorage.getItem('traksos.ref') ?? undefined; } catch { return undefined; } })(), device: navigator.userAgent.slice(0, 200), acceptOffers: agree });
       } catch (e) {
+        if (generation !== authGeneration.current) return null;
         // Заблокирован — показываем форму обжалования, номер уже подтверждён кодом
-        if (e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) { setAppealToken(e.data.appealToken); return null; }
-        if (e instanceof ApiError && e.code === 'insurer_only') setInsurerOnly(true);
+        if (generation === authGeneration.current &&
+            e instanceof ApiError && e.code === 'blocked' && e.data?.appealToken) {
+          setAppealToken(e.data.appealToken);
+          return null;
+        }
+        if (generation === authGeneration.current && e instanceof ApiError && e.code === 'insurer_only')
+          setInsurerOnly(true);
         throw e;
       }
     }, null);
-    if (r) await signedIn(r);
+    if (r && generation === authGeneration.current) await signedIn(r, generation);
   }
-  async function signedIn(r: any) {
-      if (intent === 'join' && role === 'master') {
+  async function signedIn(r: any, generation: number) {
+      if (generation !== authGeneration.current) return;
+      if (intent === 'join' && (role === 'master' || hybridMasterService)) {
         try { sessionStorage.setItem('traksos.masterSpecialties', JSON.stringify(specialties)); } catch { /* private browsing */ }
       }
       toast('Вы вошли');
       try { localStorage.removeItem('traksos.ref'); } catch { /* */ }
+      // Consume the exact service selection BEFORE publishing the new
+      // authenticated identity. React may render protected navigation during
+      // reload(); a concurrent route effect must not steal or replay this hint.
+      let pending: string | null = null;
+      try {
+        pending = sessionStorage.getItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingLandingAction');
+        sessionStorage.removeItem('traksos.pendingCatalogChoice');
+      } catch { /* private browsing */ }
       setToken(r.token);
       connectWs();
+      // Publishing the authenticated profile naturally unmounts this guest
+      // form. Navigation after reload is part of the successful login, so do
+      // not treat that intentional unmount as cancellation.
       await reload();
       let qr: string | null = null;
       try { qr = sessionStorage.getItem('traksos.qr'); } catch { /* */ }
       const roles: string[] = r.user?.roles ?? [];
       const customer = roles.includes('client') || roles.includes('driver');
-      let pending: string | null = null;
-      try {
-        pending = sessionStorage.getItem('traksos.pendingLandingAction');
-        sessionStorage.removeItem('traksos.pendingLandingAction');
-      } catch { /* private browsing */ }
-      const selectedDestination: string | undefined = customer ? ({
-        van: '#/sos/master', tow: '#/new/tow', sto: '#/services',
-        consult: '#/new/consult', insurance: '#/insurance/request/new',
-        parts: '#/shop', inspection: '#/garage'
-      } as Record<string,string>)[pending ?? ''] : undefined;
+      const selectedDestination = customer ? guestCustomerDestination(pending) : null;
       // Dual-role admins may choose a preferred workspace on their own device.
       // A new master registration still goes to the profile first.
       const preferredMode = (() => { try { return localStorage.getItem('traksos.mode'); } catch { return null; } })();
@@ -248,10 +437,15 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
     : intent === 'join' ? 'Выберите, кем подключаетесь. После входа заполните профиль — проверим и откроем заявки.'
     : intent === 'register' ? 'Укажите номер телефона. Если аккаунта ещё нет, создадим его после подтверждения SMS-кодом.'  : 'Вход по паролю, без SMS. Если забыли пароль — восстановите доступ.'; // legacy description
 
-  if (!intent) return (
-    <main className="public-home public-landing" id="public-home">
+  // The public page stays mounted beneath browser sign-in and registration.
+  // Native Android keeps the separately approved full-screen auth experience.
+  const showOverlay = !native.isApp && !!intent;
+
+  const mobileLanding = (
+    <main className="public-home public-landing" id="public-home"
+      inert={showOverlay || undefined} aria-hidden={showOverlay || undefined}>
       <div className="public-landing-head">
-        <span className="public-landing-region">◉ Санкт-Петербург и Ленинградская область</span>
+        <span className="public-landing-region">◉ TrakSOS — вся Россия</span>
 
       </div>
 
@@ -259,7 +453,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <div className="public-hero-copy">
           <span className="public-eyebrow">{HERO_SLIDES[heroSlide].eyebrow}</span>
           <h1 id="public-main-title" key={'title-'+heroSlide}>
-            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> — помощь<br/>в пути и полный сервис<br/>для грузовиков и прицепов</>
+            {heroSlide === 0 ? <><em>Trak<b>SOS</b></em> —<br/>помощь в пути</>
             : heroSlide === 1 ? <>Эвакуация грузовиков<br/>и помощь в пути<br/>с <em>Trak<b>SOS</b></em></>
             : <>Ремонт и запись в СТО<br/>для грузового транспорта<br/>с <em>Trak<b>SOS</b></em></>}
           </h1>
@@ -267,20 +461,22 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <div className="public-track-benefits" aria-label="Преимущества TrakSOS">
             <span><i aria-hidden="true">ϟ</i>Быстрое обращение</span>
             <span><i aria-hidden="true">✓</i>Проверка исполнителей</span>
-            <span><i aria-hidden="true">⌖</i>Санкт-Петербург и Ленобласть</span>
+            <span><i aria-hidden="true">⌖</i>По всей России</span>
             <span><i aria-hidden="true">▤</i>Работа с юрлицами</span>
           </div>
           <div className="public-actions">
             <button type="button" className="public-button public-button-sos"
-              onClick={() => heroSlide === 0 ? go('login') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
-              {heroSlide === 0 ? 'Войти' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
+              onClick={() => heroSlide === 0 ? go('register') : go(heroSlide === 1 ? 'explore/tow' : 'explore/sto')}>
+              {heroSlide === 0 ? 'Зарегистрироваться' : heroSlide === 1 ? 'Узнать об эвакуации' : 'Узнать о СТО'}
             </button>
-            <button type="button" className="public-button public-button-outline" onClick={() => go('register')}>Регистрация</button>
+            <a className="public-button public-button-outline" href="#/login">Войти в TrakSOS</a>
           </div>
 
           <div className="public-hero-caption" key={'caption-'+heroSlide}>{HERO_SLIDES[heroSlide].caption}</div>
         </div>
-        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true" />
+        <div key={'slide-art-'+HERO_SLIDES[heroSlide].id} className={'public-hero-visual public-hero-slide-' + HERO_SLIDES[heroSlide].id} aria-hidden="true">
+          <img className="public-hero-mobile-photo" src="/tracksos-approved-hero-owner-20261119-retouched.webp" alt="" loading="eager" decoding="async" />
+        </div>
         <div className="public-hero-carousel" role="group" aria-label="Фотографии TrakSOS">
           <div className="public-hero-dots">
             {HERO_SLIDES.map((slide, index) => <button key={slide.id} type="button"
@@ -301,10 +497,10 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <section className="public-real-services" id="public-services">
           <div className="public-section-head public-services-a11y-title"><span className="public-section-kicker">ПОМОЩЬ ГРУЗОВИКАМ</span><h2>Все услуги TrakSOS</h2></div>
           <div className="public-service-tiles">
-            {SERVICE_TILES.map(({id,icon,title,hint}) => (
-              <a href={'#/explore/' + id} className={'public-service-tile public-service-' + id}
-                key={id} onClick={() => rememberGuestService(id)}>
-                <span className="public-service-icon" aria-hidden="true">{icon}</span>
+            {PUBLIC_HOME_TILES.map(({id,title,hint,href}) => (
+              <a href={href} className={'public-service-tile public-service-' + id}
+                key={id}>
+                <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
                 <b>{title}</b><small>{hint}</small><span className="public-service-arrow">Далее <span aria-hidden="true">›</span></span>
               </a>
             ))}
@@ -317,11 +513,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         {!(window as any).TrakSOSNative && <aside className="public-app-card">
           <div className="public-section-kicker">TRAKSOS В ТЕЛЕФОНЕ</div>
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
-          <div className="public-app-phone" aria-hidden="true">
-            <span className="public-app-logo">Trak<b>SOS</b></span>
-            <img className="public-app-phone-truck" src="/tracksos-approved-scania-r520.webp" alt="" loading="lazy" />
-            <span>Помощь грузовику<br/>в дороге</span>
-          </div>
+          <TrakAppPhone className="public-app-phone"/>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
           <span className="public-rustore-soon">Скоро в RuStore</span>
           <small>Ссылка на скачивание появится после публикации приложения.</small>
@@ -329,35 +521,36 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
       </div>
 
       <section className="public-why-strip" aria-label="Преимущества сервиса">
-        <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">⚡</span><b>Быстрая помощь</b><small>Обращение можно оформить онлайн</small></article>
-        <article className="public-benefit public-benefit-verified"><span className="public-benefit-icon">
+        <article className="public-benefit public-benefit-community"><span className="public-benefit-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M24 4 39 10v12c0 10-6 17-15 22C15 39 9 32 9 22V10Z" />
-            <path d="m17 24 5 5 10-11" />
-          </svg></span><b>Проверенные партнёры</b><small>Проверка мастеров, СТО и эвакуаторов</small></article>
+            <path d="M24 4 41 11v12c0 12-7 18-17 22C14 41 7 35 7 23V11Z" />
+            <path d="m15 24 6 6 12-13"/>
+          </svg></span><b>Надёжное сообщество</b><small>Реальный опыт, поддержка коллег и проверенные решения</small></article>
+        <article className="public-benefit public-benefit-speed"><span className="public-benefit-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M27 3 8 27h15l-3 18 20-25H25Z"/>
+          </svg></span><b>Быстрая помощь</b><small>Оперативные ответы и конкретные действия в любой ситуации</small></article>
         <article className="public-benefit public-benefit-unified"><span className="public-benefit-icon">
           <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="24" cy="12" r="6" /><circle cx="11" cy="34" r="6" /><circle cx="37" cy="34" r="6" />
-            <path d="m21 18-7 10m13-10 7 10M18 34h12" />
-          </svg></span><b>Всё в одном месте</b><small>Помощь, запчасти и страхование</small></article>
-        <article className="public-benefit public-benefit-value"><span className="public-benefit-icon">%</span><b>Выгодные условия</b><small>Для водителей и автопарков</small></article>
+            <path d="m24 4 19 11-19 11L5 15Z"/><path d="m5 23 19 11 19-11M5 32l19 11 19-11"/>
+          </svg></span><b>Всё в одном месте</b><small>Сервисы, инструменты и контакты для работы с грузовой техникой</small></article>
       </section>
       <div className="public-track-extras">
         <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('register'); }}>
-          <span className="public-track-insurance-art" aria-hidden="true" />
+          
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
           <strong>Оформить заявку →</strong>
         </button>
         <div className="public-track-extras-grid">
           <a href="#/explore/parts" className="public-track-extra public-track-parts" onClick={() => rememberGuestService('parts')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
+            <b>Запчасти</b><small>Оригиналы и проверенные аналоги</small><span aria-hidden="true">›</span>
           </a>
           <a href="#/explore/inspection" className="public-track-extra public-track-inspection" onClick={() => rememberGuestService('inspection')}>
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
+            <b>Техосмотр</b><small>Информация и доступные варианты</small><span aria-hidden="true">›</span>
           </a>
-          <a href="#/explore/guide" className="public-track-extra public-track-guide">
-            <span className="public-track-extra-art" aria-hidden="true"/><b>Полезное</b><small>Как работает сервис</small><span aria-hidden="true">›</span>
+          <a href="#/explore/tech" className="public-track-extra public-track-techbase">
+            <b>ТехБаза</b><small>Коды ошибок, схемы и проверенные технические источники</small><span aria-hidden="true">›</span>
           </a>
         </div>
       </div>
@@ -391,16 +584,58 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <span className="public-section-kicker">ДЛЯ МАСТЕРОВ И СТО</span>
           <h2>Станьте партнёром TrakSOS</h2>
           <p>Подключайте свой сервис и работайте с заявками через отдельный кабинет.</p>
-          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Подключиться →</button>
+          <button type="button" className="public-button public-button-partner" onClick={() => go('join')}>Хотим работать</button>
         </div>
       </div>
 
     </main>
   );
 
+  // Native Android is designed for thumb interaction: a welcome stage with
+  // explicit sign-in/registration, followed by optional expandable services.
+  // Browser mobile and 617 PC keep their independently approved layouts.
+  const nativeLanding = (
+    <main className="public-home public-landing tr-native-welcome" id="public-home"
+      aria-label="Главная приложения TrakSOS">
+      <section className="tr-native-welcome-stage" aria-labelledby="tr-native-welcome-title">
+        <span className="tr-native-welcome-kicker">TRAKSOS · ПОМОЩЬ ГРУЗОВИКАМ</span>
+        <div className="tr-native-welcome-photo">
+          <img src="/tracksos-approved-hero-owner-20261119-retouched.webp"
+            alt="Фирменный грузовик TrakSOS на дороге" loading="eager" decoding="async"/>
+        </div>
+        <h1 id="tr-native-welcome-title">Помощь в дороге — <em>в одном приложении</em></h1>
+        <p>Выездные мастера, эвакуация, СТО и консультации. Заявки и история доступны после входа.</p>
+        <div className="tr-native-welcome-actions">
+          <a href="#/login" className="tr-native-welcome-login">Войти</a>
+          <a href="#/register" className="tr-native-welcome-register">Зарегистрироваться</a>
+        </div>
+        <small>TrakSOS — платформа для всей России. Выездная помощь зависит от подключения партнёров в регионе.</small>
+      </section>
+      <details className="tr-native-welcome-services" id="public-services">
+        <summary>Услуги TrakSOS <span>Показать все <span aria-hidden="true">⌄</span></span></summary>
+        <nav className="tr-native-welcome-service-list" aria-label="Услуги TrakSOS">
+          {PUBLIC_HOME_TILES.map(({id,title,href}) => (
+            <a key={id} href={href} className={'public-service-tile tr-native-welcome-service-'+id}>
+              <span className="public-service-icon" aria-hidden="true"><PublicTileIcon id={id}/></span>
+              <strong>{title}</strong><span aria-hidden="true">›</span>
+            </a>
+          ))}
+        </nav>
+      </details>
+      <a href="#/join" className="tr-native-welcome-partner">Хотим работать с TrakSOS <span aria-hidden="true">›</span></a>
+    </main>
+  );
+  if (!intent) return native.isApp ? nativeLanding : desktopPublic ? <OwnerDesktopHome20261120 /> : mobileLanding;
+
   return (
-    <main className="auth-desktop-layout">
+    <>
+      {showOverlay && (desktopPublic ? <OwnerDesktopHome20261120 overlayBackground /> : mobileLanding)}
+      {showOverlay && <div className="tr-auth-backdrop" onClick={backToPublic} aria-hidden="true" />}
+      <main className={'auth-desktop-layout' + (showOverlay ? ' tr-auth-panel tr-auth-panel--' + intent : '')}
+        role={showOverlay ? 'dialog' : undefined} aria-modal={showOverlay ? true : undefined}
+        aria-labelledby={showOverlay ? 'tr-auth-title' : undefined}>
       <section className="auth-desktop-form">
+      {showOverlay && <button type="button" className="tr-auth-close" onClick={backToPublic} aria-label="Закрыть окно">×</button>}
       {intent === 'login' && step === 'phone' && <div className="auth-entry-options" aria-label="Варианты входа">
         <button type="button" onClick={() => setIntent('login')}>Войти по номеру</button>
         <button type="button" onClick={() => go('join')}>Хочу работать с TrakSOS</button>
@@ -410,7 +645,9 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         <a href="#/join" aria-current={intent === 'join' ? 'page' : undefined}>Зарегистрироваться как партнёр</a>
       </nav>}
       <div>
-        <h1>{title}</h1>
+        {serviceContext && GUEST_SERVICE_NAMES[serviceContext] &&
+          <span className="label" style={{display:'block',color:'var(--accent)',marginBottom:8}}>Вы выбрали: {GUEST_SERVICE_NAMES[serviceContext]}</span>}
+        <h1 id="tr-auth-title">{title}</h1>
         <div className="sub">{sub}</div>
       </div>
 
@@ -425,11 +662,13 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
         </div>
       ) : intent === 'login' ? (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
-          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { setPhone(e.target.value); setLoginError(''); }} /></Field>
-          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Телефон"><input className="field" type="tel" autoComplete="username" value={phone} onChange={(e) => { changeAuthPhone(e.target.value); setLoginError(''); }} /></Field>
+          <Field label="Пароль"><input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => { authGeneration.current += 1; cancelPendingLogin(); setPassword(e.target.value); setInviteChange(false); setInviteNewPassword(''); setLoginError(''); }} /></Field>
+          {inviteChange && <Field label="Придумайте свой пароль (от 10 символов)"><input className="field" type="password" autoComplete="new-password" minLength={10} maxLength={128} value={inviteNewPassword} onChange={e=>{authGeneration.current+=1;cancelPendingLogin();setInviteNewPassword(e.target.value);}} /></Field>}
           {loginError && <div role="alert" className="card" style={{ borderColor: 'var(--danger, #e25b69)' }}>{loginError}</div>}
-          <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : 'Войти'}</button>
-          <button type="button" className="btn ghost" onClick={() => { setIntent('reset'); setStep('phone'); }}>Забыли пароль?</button>
+          <button className="btn" disabled={loginBusy}>{loginBusy ? 'Входим…' : inviteChange ? 'Установить пароль и войти' : 'Войти'}</button>
+          <button type="button" className="btn ghost" onClick={startClientRegistration}>Нет аккаунта? Зарегистрироваться</button>
+          <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; cancelPendingLogin(); setIntent('reset'); setStep('phone'); setCode(''); setDevCode(null); }}>Забыли пароль?</button>
           <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>
         </form>
       ) : step === 'phone' ? (
@@ -458,7 +697,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
               <button key={r.id} type="button" className={'opt guest-partner-role guest-partner-role-' + r.id} aria-pressed={role === r.id}
                 aria-label={r.name} aria-describedby={'join-role-hint-' + r.id}
                 onClick={() => setRole(r.id)}>
-                <b>{r.name}</b><small id={'join-role-hint-' + r.id}>{r.hint}</small>
+                <span className="guest-partner-role-label"><TrakServiceIcon kind={r.id}/><b>{r.name}</b></span>
+                <small id={'join-role-hint-' + r.id}>{r.hint}</small>
               </button>
             ))}
             </div>
@@ -468,9 +708,13 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
                 <b>{partnerShowcase.tag}</b><span>{partnerShowcase.title}</span>
               </div>
             </div>
-            {role === 'master' && <details className="guest-master-specialties" open={specialtiesOpen}>
+            {(role === 'master' || role === 'service') && <label className="agree guest-partner-hybrid">
+              <input type="checkbox" checked={hybridMasterService} onChange={event=>setHybridMasterService(event.target.checked)}/>
+              <span><b>Работаю и выездным мастером, и в своей СТО</b> — открыть оба кабинета, профиль работ и режим работы каждого отдельно</span>
+            </label>}
+            {(role === 'master' || (role === 'service' && hybridMasterService)) && <details className="guest-master-specialties" open={specialtiesOpen}>
               <summary onClick={event => { event.preventDefault(); setSpecialtiesOpen(v => !v); }}>
-                Специализации мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
+                Специализации выездного мастера · выбрано: {specialties.length} <span aria-hidden="true">⌄</span>
               </summary>
               <span className="label">Можно выбрать несколько вариантов</span>
               <div className="guest-master-specialties-grid">
@@ -482,7 +726,7 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
             </details>}
           </div>}
           <Field label="Телефон">
-            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => { setPhone(e.target.value); setInsurerOnly(false); setCodeError(''); }} />
+            <input className="field" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => changeAuthPhone(e.target.value)} />
           </Field>
           {insurerOnly && <div className="card stack" role="alert">
             <b>Для этого номера доступен только страховой кабинет</b>
@@ -498,25 +742,25 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           {codeError && <div className="card" role="alert" style={{ borderColor: 'var(--danger, #e25b69)' }}>{codeError}</div>}
           {codeStatus && <div className="note" role="status">{codeStatus}</div>}
           <button className="btn" disabled={busy}>{busy ? 'Отправляем…' : 'Получить код'}</button>
-          {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { setIntent('login'); setStep('phone'); setCode(''); }}>Уже есть аккаунт? Войти по паролю</button>}
+          {intent !== 'login' && <button type="button" className="btn ghost" onClick={() => { authGeneration.current += 1; setIntent('login'); otherAuthNumber(); }}>Уже есть аккаунт? Войти по паролю</button>}
           {!driver && <button type="button" className="btn ghost" onClick={backToPublic}>Назад</button>}
         </form>
       ) : (
         <form className="stack" onSubmit={(e) => { e.preventDefault(); verify(); }}>
           <Field label={`Код из SMS на ${phone}`} hint={devCode ? `Тестовый режим: код ${devCode}` : undefined}>
             <input className="field" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
+              onChange={(e) => { authGeneration.current += 1; setCode(e.target.value.replace(/\D/g, '')); }} style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }} />
           </Field>
           <Field label={intent === 'reset' || intent === 'activate' ? 'Новый пароль' : 'Придумайте пароль (минимум 10 символов)'}>
-            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={10} />
+            <input className="field" type="password" autoComplete="new-password" value={password} onChange={(e) => { authGeneration.current += 1; setPassword(e.target.value); }} minLength={10} />
           </Field>
           <button className="btn" disabled={busy || code.length < 4 || password.length < 10}>{intent === 'reset' ? 'Изменить пароль' : intent === 'activate' ? 'Активировать аккаунт' : 'Зарегистрироваться'}</button>
           {insurerOnly && <button type="button" className="btn" onClick={() => { setStep('phone'); setCode(''); setRole('insurer'); setIntent('join'); setInsurerOnly(false); }}>Перейти к страховому кабинету</button>}
-          <button type="button" className="btn ghost" onClick={() => { setStep('phone'); setCode(''); setInsurerOnly(false); }}>Другой номер</button>
+          <button type="button" className="btn ghost" onClick={otherAuthNumber}>Другой номер</button>
         </form>
       )}
       </section>
-      <aside className={'auth-desktop-showcase partner-showcase partner-art-'+partnerShowcaseKey}
+      {!showOverlay && <aside className={'auth-desktop-showcase partner-showcase partner-art-'+partnerShowcaseKey}
         aria-label="Иллюстрация выбранного направления партнёрства TrakSOS">
         <div key={'visual-'+partnerShowcaseKey} className="auth-desktop-showcase-photo"
           role="img" aria-label={partnerShowcase.imageLabel}/>
@@ -526,7 +770,8 @@ export function Login({ driver, entry }: { driver?: boolean; entry?: Intent } = 
           <p>{partnerShowcase.description}</p>
         </div>
         <span className="partner-showcase-footnote">Кинематографичная иллюстрация возможностей TrakSOS</span>
-      </aside>
-    </main>
+      </aside>}
+      </main>
+    </>
   );
 }

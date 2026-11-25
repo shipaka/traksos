@@ -34,7 +34,7 @@ await dp.goto(BASE+'/#/new/electric'); await dp.waitForTimeout(1200);
 await dp.screenshot({path:`${OUT}/d3-new.png`,fullPage:true});
 const dTok = await dp.evaluate(()=>localStorage.getItem('traksos.token'));
 for (const aud of ['client','privacy']) { const o = await api('GET','/api/offers/current/'+aud); if (o) await api('POST','/api/offers/'+o.id+'/accept',{},dTok); }
-const o = (await api('POST','/api/orders',{service:'electric',zoneId:'spb',vehicleId:v.id,description:'Не горит свет прицепа'},dTok)).order;
+const o = (await api('POST','/api/orders',{service:'electric',regionId:'spb',zoneId:'spb',address:'Санкт-Петербург, тестовая стоянка',vehicleId:v.id,description:'Не горит свет прицепа'},dTok)).order;
 await dp.goto(BASE+'/#/order/'+o.id); await dp.waitForTimeout(1000); await dp.screenshot({path:`${OUT}/d4-wait.png`,fullPage:true});
 await kp.reload(); await kp.waitForTimeout(1200); await kp.screenshot({path:`${OUT}/f2-pending.png`,fullPage:true});
 await C(kp.getByRole('button',{name:'Подтвердить',exact:true})); await kp.waitForTimeout(1000);

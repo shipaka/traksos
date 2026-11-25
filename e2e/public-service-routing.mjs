@@ -1,249 +1,566 @@
-// Public TrackSOS routing contract, tested on mobile and desktop without real registrations.
-import { chromium } from 'playwright';
+// Owner-approved 617 PC / 618 mobile browser public entry routing.
+// Real Chromium clicks. Do not reintroduce the retired guest bottom tabs,
+// duplicate ECU, guest tours, or public access to protected services.
+import {chromium} from 'playwright';
+import {mkdir} from 'node:fs/promises';
+
 const BASE=process.env.BASE_URL??'http://127.0.0.1:8080';
-if (!['127.0.0.1','localhost'].includes(new URL(BASE).hostname)) throw Error('Local CI only');
+if(!['127.0.0.1','localhost'].includes(new URL(BASE).hostname))throw Error('Local CI only');
 const browser=await chromium.launch();
+const fail=(message)=>{throw new Error(message)};
+const check=(condition,message)=>{if(!condition)fail(message)};
+const target=(key)=>'#/explore/'+key;
+
+async function guestAuth(page,key,selector,landing) {
+  await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+  const link=page.locator(selector).first();
+  await link.waitFor({state:'visible'});
+  await link.click();
+  await page.waitForURL('**/'+target(key));
+  const modal=page.getByRole('dialog',{name:'Вход по номеру телефона'});
+  await modal.waitFor({state:'visible'});
+  check(await page.locator(landing).isVisible(),
+    key+': approved landing replaced with old guest page');
+  check(await page.locator('.guest-explore-hero:visible').count()===0,
+    key+': obsolete guest tour appeared');
+  check(await modal.getByText('Вы выбрали:',{exact:false}).isVisible(),
+    key+': selected service context not preserved');
+}
+
 try {
-  for (const [width,height] of [[390,844],[1440,900]]) {
-    const context=await browser.newContext({viewport:{width,height},locale:'ru-RU'});
-    const page=await context.newPage();
-    const jsErrors=[];
-    page.on('pageerror',e=>jsErrors.push(e.message));
-    await page.goto(BASE+'/#/');
-    await page.getByRole('heading',{name:/TrakSOS.*помощь.*в пути/i}).waitFor();
-
-    // Only public guest actions are visible in the bottom menu, not protected workflows.
-    const bottom=page.getByRole('navigation',{name:'Гостевая навигация TrakSOS'});
-    if(width<900){
-      for(const missing of ['Заявки','Помощь','Запчасти','SOS'])
-        if(await bottom.getByText(missing,{exact:true}).count())throw Error('Protected guest tab '+missing);
-      if(await bottom.locator('a').count()!==4)throw Error('Guest tabbar count incorrect');
+  for(const [width,height] of [[390,844],[1440,900]]) {
+    const ctx=await browser.newContext({viewport:{width,height},locale:'ru-RU'});
+    const page=await ctx.newPage();
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    const desktop=width>=900;
+    const landing=desktop?'.owner20-home':'.public-landing';
+    await page.locator(landing).waitFor({state:'visible'});
+    const publicGlyphs={};
+    const glyphSelectors=desktop?[
+      ['master','.owner20-quick a[href="#/explore/van"] svg'],
+      ['tow','.owner20-quick a[href="#/explore/tow"] svg'],
+      ['service','.owner20-quick a[href="#/explore/sto"] svg'],
+      ['insurer','.owner20-feature-insurance svg'],
+    ]:[
+      ['service','.public-service-sto .public-service-icon svg'],
+      ['insurer','.public-service-insurance .public-service-icon svg'],
+    ];
+    for(const [key,selector] of glyphSelectors){
+      publicGlyphs[key]=await page.locator(selector).first().evaluate(el=>el.innerHTML);
     }
-    for(const id of ['tow','van','sto','insurance','parts','consult']) {
-      await page.goto(BASE+'/#/');
-      const card=page.locator('.public-service-tile.public-service-'+id);
-      await card.getByText('Далее').waitFor();
-      await card.click();
-      await page.waitForURL(new RegExp('#/explore/'+id+'$'));
-      await page.locator('.guest-explore-hero h1').waitFor({state:'visible'});
-      const saved=await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'));
-      if(saved!==id)throw Error(id+': selected service lost: '+saved);
-      const next=page.locator('.guest-explore-cta');
-      await next.waitFor({state:'visible'});
-      if(await next.count()!==1)throw Error(id+': missing registration CTA');
-      if(await next.getAttribute('href')!=='#/register')throw Error(id+': wrong registration destination');
-    }
-    // Three lower tiles have real information pages, not blind registration.
-    for(const [selector,destination,heading] of [
-      ['.public-track-parts','parts','Запчасти'],
-      ['.public-track-inspection','inspection','Техосмотр грузового транспорта'],
-      ['.public-track-guide','guide','Как работает TrakSOS'],
-    ]) {
-      await page.goto(BASE+'/#/');
-      await page.locator(selector).click();
-      await page.waitForURL('**/#/explore/'+destination);
-      await page.getByRole('heading',{name:heading,exact:destination!=='parts'}).waitFor();
-      if(!await page.locator('.guest-explore-section').count())
-        throw Error(destination+': no informational content behind landing tile');
-    }
-    await page.goto(BASE+'/#/');
-    await page.locator('.public-track-insurance').click();
-    await page.waitForURL('**/#/register');
-    await page.getByRole('heading',{name:'Регистрация в TrakSOS'}).waitFor();
-    if(await page.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))!=='insurance')
-      throw Error('Insurance request intent lost while opening registration');
 
-    // The hero controls must actually change photographs and selected dot.
-    await page.goto(BASE+'/#/');
-    const bgImage=()=>page.locator('.public-hero-visual').evaluate(el=>getComputedStyle(el).backgroundImage);
-    const firstPhoto=await bgImage();
-    if(!firstPhoto.includes('tracksos-approved-scenic-hero'))throw Error('Unapproved first hero photo: '+firstPhoto);
-    if(firstPhoto.includes('traksos-final-hero'))throw Error('First slide has baked-in fake carousel controls');
-    const photoGeometry=await page.evaluate(()=>{
-      const hero=document.querySelector('.public-brand-hero')?.getBoundingClientRect();
-      const visual=document.querySelector('.public-hero-visual')?.getBoundingClientRect();
-      return hero&&visual?{heroWidth:hero.width,heroHeight:hero.height,photoWidth:visual.width,photoHeight:visual.height}:null;
-    });
-    if(!photoGeometry||Math.abs(photoGeometry.heroWidth-photoGeometry.photoWidth)>3||
-       Math.abs(photoGeometry.heroHeight-photoGeometry.photoHeight)>3)
-      throw Error('Hero image is not full bleed: '+JSON.stringify(photoGeometry));
-    if(await page.locator('.public-hero-dots button').count()!==3)throw Error('Hero must show three selectable photographs');
-    await page.getByRole('button',{name:'Следующее фото'}).click();
-    const secondPhoto=await bgImage();
-    await page.getByRole('heading',{name:/Эвакуация грузовиков/}).waitFor();
-    await page.getByRole('button',{name:'Узнать об эвакуации'}).waitFor();
-    if(!secondPhoto.includes('tracksos-hero-rescue-hq') || secondPhoto===firstPhoto)
-      throw Error('Hero next arrow does not change photograph: '+secondPhoto);
-    if(await page.locator('.public-hero-dot[aria-pressed="true"]').count()!==1)
-      throw Error('Hero active dot state not updated');
-    await page.getByRole('button',{name:'Следующее фото'}).click();
-    const thirdPhoto=await bgImage();
-    await page.getByRole('heading',{name:/Ремонт и запись в СТО/}).waitFor();
-    await page.getByRole('button',{name:'Узнать о СТО'}).waitFor();
-    if(!thirdPhoto.includes('tracksos-hero-service-hq') || thirdPhoto===secondPhoto)
-      throw Error('Hero next arrow does not show third photograph');
-    await page.getByRole('button',{name:'Предыдущее фото'}).click();
-    if(await bgImage()!==secondPhoto)throw Error('Hero previous arrow did not reverse photograph');
-    await page.getByRole('button',{name:/Показать фото 1:/}).click();
-    if(await bgImage()!==firstPhoto)throw Error('Hero dot did not select original photograph');
+    if(desktop){
+      check(await page.locator('.owner20-quick>a').count()===5,
+        'PC must retain five quick service tiles');
+      check(await page.locator('.owner20-features>a').count()===5,
+        'PC must retain five illustrated feature tiles');
+      check(await page.locator('.owner20-quick>a').filter({hasText:'ЭБУ'}).count()===0,
+        'ECU is duplicated in quick service tiles');
+      check(await page.locator('.owner20-feature-ecu').count()===1,
+        'Single illustrated specialists ECU card missing');
+      check(await page.locator('.owner20-quick-trakbot').count()===1,
+        'Fifth TrakBot tile missing');
+      // The new fifth tile opens the ONE existing assistant without navigating.
+      await page.locator('.owner20-quick-trakbot').click();
+      await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+      check(await page.locator('.trakbot-dock-panel').count()===1,
+        'Fifth quick tile spawned more than one TrakBot');
+      check(page.url().endsWith('/#/'),'TrakBot navigated away from main page');
+      await page.locator('.trakbot-dock-close').click();
+      check(await page.locator('.trakbot-dock-panel').count()===0,
+        'TrakBot did not close');
 
-    // Benefit cards use recognizable vector artwork, no unexplained square glyph.
-    if(await page.locator('.public-benefit-verified svg').count()!==1 ||
-       await page.locator('.public-benefit-unified svg').count()!==1)
-      throw Error('Second and third benefit illustrations are not vectors');
-    if(width<900) {
-      for(const tile of ['parts','inspection','guide']) {
-        const geometry=await page.locator('.public-track-'+tile).evaluate(el=>{
-          const art=el.querySelector('.public-track-extra-art')?.getBoundingClientRect();
-          const label=el.querySelector('b')?.getBoundingClientRect();
-          return art&&label ? {artBottom:art.bottom,labelTop:label.top} : null;
-        });
-        if(!geometry || geometry.artBottom>geometry.labelTop+3)
-          throw Error('Art overlaps text in '+tile+': '+JSON.stringify(geometry));
+      for(const key of ['van','tow','sto','consult']){
+        await guestAuth(page,key,'.owner20-quick>a[href="'+target(key)+'"]',landing);
       }
+      for(const key of ['tech','ecu','parts','insurance','inspection']){
+        await guestAuth(page,key,'.owner20-feature-'+key,landing);
+      }
+      for(const key of ['air','club']){
+        await guestAuth(page,key,'.owner20-bottom-'+key,landing);
+      }
+
+      await page.goto(BASE+'/#/');
+      const top=page.locator('.owner20-topnav');
+      const menus=top.locator('details');
+      const summary=menus.nth(0).locator('summary');
+      await summary.click();
+      check(await menus.nth(0).evaluate(el=>el.open),'Platform dropdown failed');
+      await page.mouse.move(0,0);
+      check(!await menus.nth(0).evaluate(el=>el.open),'Platform dropdown did not close on mouse leave');
+      await summary.click();
+      const platformLinks=await menus.nth(0).locator('a').allTextContents();
+      check(platformLinks.length===1&&platformLinks[0].trim()==='О нас',
+        'Platform menu still exposes fees/tours/terms as public actions');
+      await menus.nth(1).locator('summary').click();
+      check(!await menus.nth(0).evaluate(el=>el.open),
+        'Two desktop menus overlap');
+      // Physically move the mouse through the disclosure-to-popup gap.
+      // A premature mouseleave must not make its own links unreachable.
+      const serviceHeader=await menus.nth(1).locator('summary').boundingBox();
+      const serviceLink=menus.nth(1).locator('a[href="#/explore/van"]');
+      const serviceBox=await serviceLink.boundingBox();
+      check(!!serviceHeader&&!!serviceBox,'Services popup has no geometry');
+      await page.mouse.move(serviceHeader.x+serviceHeader.width/2,serviceHeader.y+serviceHeader.height/2);
+      await page.mouse.move(serviceBox.x+serviceBox.width/2,serviceBox.y+serviceBox.height/2,{steps:20});
+      check(await menus.nth(1).evaluate(el=>el.open),'Services dropdown closed while moving to its own link');
+      check(await serviceLink.isVisible(),'Services link vanished before mouse could reach it');
+      await menus.nth(1).locator('summary').press('Escape');
+      check(!await menus.nth(1).evaluate(el=>el.open),
+        'Escape did not close the dropdown');
+      await page.locator('.owner20-region>summary').click();
+      check(await page.locator('.owner20-region-menu').isVisible(),
+        'Region disclosure does not open');
+      check(await page.locator('.owner20-region-menu').getByText('TrakSOS — вся Россия').count()===1,
+        'Region panel wrongly limits TrakSOS to SPb');
+      await page.mouse.move(0,0);
+      check(!await page.locator('.owner20-region').evaluate(el=>el.open),
+        'Region menu did not close on mouse leave');
+      check(await page.locator('.owner20-region-menu a[href="#/login"]').count()===1,
+        'Region availability should open sign-in');
+      // The owner-approved coverage control now expands the live opt-in map
+      // rather than taking the guest directly to sign-in.
+      const coverage=page.getByRole('button',{name:'Подробнее о покрытии →'});
+      check(await coverage.count()===1,'Expanded coverage trigger missing');
+      await coverage.click();
+      const network=page.getByRole('dialog',{name:'Карта партнёров TrakSOS'});
+      await network.waitFor({state:'visible'});
+      check(await network.getByRole('button',{name:'Закрыть карту'}).count()===1,
+        'Network modal lacks accessible close action');
+      await page.keyboard.press('Escape');
+      await network.waitFor({state:'detached'});
+      check(await coverage.evaluate(el=>document.activeElement===el),
+        'Closing coverage map did not restore keyboard focus to footer trigger');
+      check(await top.locator(':scope > a[href="#/join"]').count()===0,
+        'Partner action must be inside submenu, not a second top-level link');
+      await page.locator('.owner20-topnav details').nth(3).locator('summary').click();
+      check(await page.locator('.owner20-topnav details').nth(3).locator('a[href="#/join"]').count()===1,
+        'Partner CTA does not lead to partner signup');
+      await page.locator('.owner20-topnav details').nth(3).locator('a[href="#/join"]').click();
+    } else {
+      // Approved mobile 618 already has first-screen auth and a real
+      // "Возможности" menu: the old 4-link bottom tabbar is NOT allowed.
+      check(await page.locator('.track-guest-tabbar').count()===0,
+        'Retired unstyled guest tabbar returned below the legal footer');
+      check(await page.locator('.public-landing-region').getByText('TrakSOS — вся Россия').count()===1,
+        'Mobile landing incorrectly claims SPb-only platform');
+      check(await page.locator('.guest-header-actions a[href="#/login"]').count()===1,
+        'Mobile first-screen sign-in is missing');
+      check(await page.locator('.guest-header-actions a[href="#/register"]').count()===1,
+        'Mobile first-screen registration is missing');
+      for(const key of ['sos','air','sto','ecu','parts','insurance']){
+        await guestAuth(page,key,'.public-service-tile.public-service-'+key,landing);
+      }
+      for(const [key,selector] of [
+        ['parts','.public-track-parts'],['inspection','.public-track-inspection'],
+        ['tech','.public-track-techbase']
+      ]) {
+        await guestAuth(page,key,selector,landing);
+      }
+
+      // The second hero action now opens login rather than an old public guide.
+      await page.goto(BASE+'/#/');
+      const signin=page.locator('.public-actions a.public-button-outline');
+      check(await signin.count()===1 &&
+        await signin.getAttribute('href')==='#/login',
+        'Second hero CTA must lead to sign-in, not a guide');
+      await signin.click();
+      await page.waitForURL('**/#/login');
+      await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
+
+      await page.goto(BASE+'/#/');
+      const menu=page.locator('.guest-mobile-catalog');
+      await menu.locator('summary').click();
+      const links=menu.getByRole('navigation',{name:'Возможности TrakSOS'});
+      for(const key of ['van','tow','sto','ecu','consult','parts','insurance'])
+        check(await links.locator('a[href="'+target(key)+'"]').count()===1,
+          'Mobile catalogue missing '+key);
+      check(await links.locator('a[href="#/company"]').count()===1,
+        'Mobile About link missing');
+      check(await links.locator('a[href="#/join"]').count()===1,
+        'Mobile partner registration missing');
+      check(await links.locator('a[href="#/login"]').count()===1,
+        'Mobile support must lead to login');
+      await links.locator('a[href="#/join"]').click();
     }
 
-    const map=page.locator('.public-map-static-link');
-    if(!(await map.getAttribute('href')).includes('yandex.ru/maps/'))throw Error('Static map is not linked to Yandex Maps');
-    if(!(await map.getAttribute('target'))?.includes('_blank'))throw Error('Map must open an external tab');
-    await page.getByText('Пример расположения услуг.',{exact:false}).waitFor();
-    const mapGeo=await page.evaluate(()=>{
-      const how=document.querySelector('.public-how')?.getBoundingClientRect();
-      const map=document.querySelector('.public-demo-map')?.getBoundingClientRect();
-      const image=document.querySelector('.public-map-wrap')?.getBoundingClientRect();
-      return how&&map&&image?{howX:how.x,mapX:map.x,howY:how.y,mapY:map.y,mapWidth:map.width,mapImageRatio:image.width/image.height}:null;
-    });
-    if(!mapGeo || mapGeo.mapImageRatio<1.7 || mapGeo.mapImageRatio>2.6)
-      throw Error('Map intrinsic composition distorted: '+JSON.stringify(mapGeo));
-    if(width>=900 && mapGeo.mapX<=mapGeo.howX)throw Error('Desktop map must be to the right of process');
-    if(width<900 && mapGeo.mapY<=mapGeo.howY)throw Error('Mobile map must stack after process');
-
-    // Temporary demo cannot be entered or impersonate an admin without the VPS code.
-    await page.goto(BASE+'/#/preview');
-    await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
-    if(await page.locator('.sandbox-role-card').count())
-      throw Error('Anonymous visitor bypassed the PC preview code');
-    await page.goto(BASE+'/#/admin/test-center');
-    await page.getByRole('heading',{name:'Проверка тестовых кабинетов'}).waitFor();
-    if(await page.locator('.sandbox-role-card').count())
-      throw Error('Anonymous visitor entered admin test center directly');
-
-    await page.goto(BASE+'/#/company');
-    await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
-    await page.goto(BASE+'/#/offers');
-    await page.getByRole('heading',{name:'Оферты и документы'}).waitFor();
-    for(const path of ['#/offer/client','#/offer/performer','#/offer/privacy']){
-      if(!(await page.locator('a[href="'+path+'"]').count()))throw Error('Missing legal document '+path);
-    }
-
-    await page.goto(BASE+'/#/');
-    const buttons=page.locator('.public-actions button');
-    if(await buttons.count()!==2)throw Error('Hero must have 2 call-to-action buttons');
-    if(!await page.getByRole('button',{name:'Войти',exact:true}).count())throw Error('Hero login missing');
-    await buttons.first().click();
-    await page.waitForURL(/#\/login$/);
-    await page.getByRole('heading',{name:'Вход по номеру телефона'}).waitFor();
-    if(await page.getByText('Помогите — нужна помощь').count())throw Error('Legacy help on entry');
-
-    await page.goto(BASE+'/#/register');
-    await page.getByRole('button',{name:'Владелец / автопарк'}).waitFor();
-    await page.getByRole('button',{name:'Водитель автопарка'}).waitFor();
-    if(await page.getByRole('button',{name:'Мастер',exact:true}).count())throw Error('Partner listed in client registration');
-
-    const registrationKind=page.getByRole('navigation',{name:'Тип регистрации'});
-    await registrationKind.getByRole('link',{name:'Клиент',exact:true}).waitFor();
-    await registrationKind.getByRole('link',{name:'Зарегистрироваться как партнёр'}).click();
     await page.waitForURL('**/#/join');
     await page.getByRole('heading',{name:'Работать с TrakSOS'}).waitFor();
-    if(await page.getByRole('navigation',{name:'Тип регистрации'}).count())
-      throw Error('Partner registration must not repeat the client selector');
-    for(const forbidden of ['Все услуги','Регистрация клиента','Для бизнеса']){
-      if(await page.locator('.desktop-sidebar').getByText(forbidden,{exact:true}).count())
-        throw Error('Redundant auth sidebar entry: '+forbidden);
-    }
-    for(const label of ['Мастер','Эвакуаторщик','СТО','Страховой агент'])
-      await page.getByRole('button',{name:new RegExp('^'+label)}).waitFor();
-    if(await page.locator('.auth-desktop-form .opt').count()!==4)throw Error('Partner categories must be exactly four');
-    // No role is forced on initial opening; the fixed right-side image is Scania.
-    const showcaseImage=width>=900?'.auth-desktop-showcase-photo':'.guest-partner-mobile-preview';
-    const visual=page.locator(showcaseImage);
-    await visual.waitFor();
-    const photo=()=>visual.evaluate(el=>getComputedStyle(el).backgroundImage);
-    if(!(await photo()).includes('tracksos-approved-scania-r520'))
-      throw Error('Partner page must initially display the generic Scania hero');
-    const fixedPosition=width>=900 ? await page.locator('.partner-showcase').evaluate(el=>{
-      const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
-    }) : null;
-    for(const [roleName,asset] of [
-      ['Эвакуаторщик','tracksos-partner-tow-approved'],
-      ['Мастер','tracksos-partner-master-approved'],
-      ['СТО','tracksos-partner-sto-approved'],
-      ['Страховой агент','tracksos-partner-insurer-approved'],
+    const roles=page.locator('.guest-partner-role');
+    check(await roles.count()===4,'Public signup must show 4 approved partner choices');
+    for(const [key,title] of [
+      ['master','Мастер'],['tow','Эвакуаторщик'],
+      ['service','СТО'],['insurer','Страховой агент']
     ]){
-      await page.getByRole('button',{name:roleName,exact:true}).click();
-      if(!(await photo()).includes(asset))throw Error('Wrong cinematic showcase when choosing '+roleName);
-      if(width>=900 && fixedPosition) {
-        const next=await page.locator('.partner-showcase').evaluate(el=>{
-          const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};
-        });
-        if(Math.abs(next.x-fixedPosition.x)>3 || Math.abs(next.width-fixedPosition.width)>3 ||
-           Math.abs(next.height-fixedPosition.height)>3)
-          throw Error('Desktop partner illustration shifts layout when switching '+roleName+': '+JSON.stringify({fixedPosition,next}));
+      const role=page.getByRole('button',{name:title,exact:true});
+      await role.click();
+      check(await role.getAttribute('aria-pressed')==='true',
+        'Partner signup role not selectable: '+key);
+      const btn=page.locator('.guest-partner-role-'+key);
+      const symbol=btn.locator('.guest-partner-role-label svg');
+      check(await symbol.count()===1,
+        key+': partner choice lacks canonical vector service symbol');
+      if(publicGlyphs[key]) {
+        const glyph=await symbol.evaluate(el=>el.innerHTML);
+        check(glyph===publicGlyphs[key],
+          key+': partner icon no longer matches exact '+(desktop?'PC':'mobile/Android')+' public service pictogram');
+      }
+      if(width===390) {
+        if(key==='tow'){
+          const label=await btn.locator('.guest-partner-role-label b').evaluate(el=>({
+            text:el.textContent.trim(),whiteSpace:getComputedStyle(el).whiteSpace,
+            width:el.clientWidth,scrollWidth:el.scrollWidth,
+          }));
+          check(label.text==='Эвакуаторщик'&&label.whiteSpace==='nowrap'&&
+            label.scrollWidth<=label.width+2,
+            'Mobile tow partner label wrapped or clipped: '+JSON.stringify(label));
+        }
+        const image=await btn.evaluate(el=>({
+          before:getComputedStyle(el,'::before').backgroundImage,
+          position:getComputedStyle(el,'::before').backgroundPosition,
+          after:getComputedStyle(el,'::after').backgroundImage,
+        }));
+        if(key!=='insurer'){
+          check(image.before.includes('traksos-service-scenes-desktop-hq.webp'),
+            key+': photography hidden behind obsolete gradient: '+JSON.stringify(image));
+          const expected={master:0,tow:33.3333,service:66.6667}[key];
+          check(Math.abs(parseFloat(image.position)-expected)<0.5,
+            key+': wrong approved photo crop '+image.position);
+        }else check(image.after.includes('owner20-artwork-sprite-retouched.webp'),
+          'Insurer illustration missing');
       }
     }
-    await page.getByRole('button',{name:/^Мастер/}).click();
-    for(const specialty of ['Электрик','Автономщик']){
-      const button=page.getByRole('button',{name:specialty,exact:true});
-      await button.waitFor();await button.click();
-      if(await button.getAttribute('aria-pressed')!=='true')throw Error('Specialty selection not persisted: '+specialty);
+    await page.getByRole('button',{name:'Мастер',exact:true}).click();
+    for(const name of ['Электрик','Автономщик']){
+      const specialty=page.getByRole('button',{name,exact:true});
+      await specialty.waitFor();
+      await specialty.click();
+      check(await specialty.getAttribute('aria-pressed')==='true',
+        'Multi-specialty option not retained: '+name);
     }
-    if(!await page.getByText('Специализации мастера · выбрано: 2').count())
-      throw Error('Partner specialty accordion did not retain multiple choices');
-    if(!await page.locator('.guest-partner-role-master').evaluate(el=>getComputedStyle(el).backgroundImage.includes('tracksos-photo-master')))
-      throw Error('Master signup role card is not photographic');
 
-    // Every public parts category opens a descriptive premium preview, not direct login.
-    await page.goto(BASE+'/#/');
-    if(width>=900){
-      const nav=page.locator('.guest-site-nav');
-      const parts=nav.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'Запчасти'})});
-      await parts.locator('summary').click();
-      for(const a of await parts.locator('.guest-nav-dropdown a').all()){
-        const href=await a.getAttribute('href');
-        if(!href?.startsWith('#/explore/parts/'))throw Error('Parts entry jumps to login: '+href);
+    // Published legal documents and About remain public. The old guide/help
+    // routes must never return old pink/white pages for anonymous visitors.
+    const legalShots='e2e/shots/public-documents';
+    await mkdir(legalShots,{recursive:true});
+    for(const [route,heading] of [
+      ['company','Компания TrakSOS'],['offers','Оферты и документы'],
+      ['rules','Правила площадки'],['offer/privacy',null],
+      ['offer/client',null],['offer/performer',null]
+    ]){
+      await page.goto(BASE+'/#/'+(route.startsWith('offer/')?'offers':''));
+      const links=route.startsWith('offer/')?page.locator('.guest-info-grid'):page.locator('.site-footer');
+      const link=links.locator('a[href="#/'+route+'"]');
+      const selectedTitle=route.startsWith('offer/')?await link.locator('b').innerText():null;
+      await link.click();
+      await page.waitForURL('**/#/'+route);
+      if(heading) await page.getByRole('heading',{name:heading,exact:true}).waitFor();
+      else {
+        const document=page.locator('main.public-offer-page');
+        await document.locator('.offer-text, .offer-unpublished').waitFor();
+        check(!await document.getByRole('alert').count(),route+': legal document request failed');
+        const unpublished=document.locator('.offer-unpublished');
+        if(await unpublished.count()){
+          await document.getByRole('heading',{name:selectedTitle,exact:true}).waitFor();
+          const art=await unpublished.evaluate(node=>getComputedStyle(node,'::before').backgroundImage);
+          check(art.includes('owner20-artwork-sprite-retouched.webp'),route+': missing approved document illustration');
+        }
       }
-      await parts.locator('summary').hover();
-      await page.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'СТО и сервисы'})}).locator('summary').hover();
-      if(await parts.getAttribute('open')!==null)throw Error('Previous desktop dropdown did not close');
-      await page.locator('.top .logo').hover();
-      if(await nav.locator('.guest-nav-group[open]').count())throw Error('Guest dropdown remains open after pointer leaves nav');
-      const sto=nav.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'СТО и сервисы'})});
-      await sto.locator('summary').click();
-      if(!(await sto.locator('.guest-nav-dropdown a').first().innerText()).includes('Запись в СТО'))
-        throw Error('STO first public option must be booking');
-      await sto.locator('summary').press('Escape');
-      if(await sto.getAttribute('open')!==null)throw Error('Escape did not close desktop dropdown');
-      const consult=nav.locator('.guest-nav-group').filter({has:page.locator('summary',{hasText:'Консультации'})});
-      await consult.locator('summary').click();
-      if(await consult.locator('.guest-nav-dropdown a').count()!==2)throw Error('Consultations should display two simple choices');
-      await page.locator('.top .logo').hover();
+      if(route==='offers' && width<900){
+        // Captured 390px legal page previously had TrakBot covering the note.
+        // Use actual glyph-line rectangles, not the note element's entire box.
+        const footnote=await page.evaluate(()=>{
+          const note=document.querySelector('.guest-info-offers > .guest-info-note');
+          const bot=document.querySelector('.trakbot-dock-launcher');
+          if(!note||!bot)return {missing:true};
+          const range=document.createRange();range.selectNodeContents(note);
+          const b=bot.getBoundingClientRect();
+          const textRects=[...range.getClientRects()].filter(r=>r.width>0&&r.height>0);
+          return {missing:false,lines:textRects.length,
+            overlap:textRects.some(r=>r.left<b.right&&r.right>b.left&&r.top<b.bottom&&r.bottom>b.top),
+            noteWidth:note.getBoundingClientRect().width,
+            bot:[b.left,b.top,b.right,b.bottom]};
+        });
+        check(!footnote.missing&&footnote.lines>0&&footnote.noteWidth>170&&!footnote.overlap,
+          'Mobile legal footnote hidden under floating TrakBot: '+JSON.stringify(footnote));
+      }
+      if(width<900){
+        // Secondary legal/info pages must use the approved 618 non-floating dock:
+        // a fixed mascot covered a Rules accordion, the cookie notice and
+        // the Offers footnote despite the old screenshot-only gate passing.
+        const legalBot=await page.evaluate(()=>{
+          const dock=document.querySelector('.guest-app:not(.guest-home) > .trakbot-dock');
+          const launcher=dock?.querySelector('.trakbot-dock-launcher');
+          if(!dock||!launcher)return {missing:true};
+          const b=launcher.getBoundingClientRect();
+          const targets=['.guest-info-note','.site-footer .banner[role="note"] > .note',
+            '.tr-rules-public button[aria-expanded]'];
+          const overlaps=[];
+          for(const selector of targets){
+            for(const el of document.querySelectorAll(selector)){
+              const range=document.createRange();range.selectNodeContents(el);
+              if([...range.getClientRects()].some(r=>r.width>0&&r.height>0&&
+                r.left<b.right&&r.right>b.left&&r.top<b.bottom&&r.bottom>b.top))
+                overlaps.push(selector);
+            }
+          }
+          return {position:getComputedStyle(dock).position,overlaps,
+            hasLauncher:launcher.getBoundingClientRect().width>=44};
+        });
+        check(!legalBot.missing&&legalBot.position==='relative'&&legalBot.hasLauncher&&
+          legalBot.overlaps.length===0,
+          route+': TrakBot must follow mobile legal content instead of covering it: '+JSON.stringify(legalBot));
+      }
+      await page.screenshot({path:legalShots+'/'+route.replace('/','-')+'-'+width+'.png',animations:'disabled'});
     }
-    await page.goto(BASE+'/#/');
-    if(width>=900){
-      const nav=page.locator('.guest-site-nav');
-      for(const title of ['Помощь в дороге','Страхование','Запчасти','СТО и сервисы','Консультации'])
-        await nav.locator('details').filter({has:page.locator('summary', {hasText:title})}).first().count();
-      await nav.getByRole('link',{name:'Компания'}).click();
-      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
-      await nav.getByRole('link',{name:'Оферты'}).click();
-      await page.getByRole('heading',{name:'Оферты и документы'}).waitFor();
-    } else {
-      await page.locator('.guest-mobile-catalog > summary').click();
-      await page.getByRole('navigation',{name:'Каталог услуг TrakSOS'}).getByRole('link',{name:'Компания'}).click();
-      await page.getByRole('heading',{name:'Компания TrakSOS'}).waitFor();
+    for(const route of ['help','explore/guide','explore/pricing']){
+      await page.goto(BASE+'/#/'+route);
+      check(await page.locator('.guest-explore-hero:visible').count()===0,
+        route+': old public tour leaked');
+      check(await page.getByRole('dialog',{name:'Вход по номеру телефона'}).count()===1 ||
+        await page.getByRole('heading',{name:'Вход по номеру телефона'}).count()===1,
+        route+': protected route did not lead to sign-in');
     }
-    if(jsErrors.length)throw Error('JS exceptions: '+jsErrors.join('; '));
-    await context.close();
+    check(errors.length===0,
+      width+'px: JS errors '+errors.join('; '));
+    const widths=await page.evaluate(()=>({
+      viewport:document.documentElement.clientWidth,
+      scroll:document.documentElement.scrollWidth
+    }));
+    check(widths.scroll<=widths.viewport+3,
+      width+'px: horizontal overflow '+JSON.stringify(widths));
+    await ctx.close();
   }
-} finally {await browser.close();}
-console.log('PASS: responsive photo carousel, contextual auth, 6 service previews, partner roles, exclusive menus, compact map and legal pages');
+  // Signed-in customers following a public service bookmark should open the
+  // existing working section immediately, not silently fall back to the desk.
+  const signedInContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    await signedInContext.addInitScript(()=>localStorage.setItem('traksos.token','CI-CUSTOMER-DEEPLINK'));
+    const signedInPage=await signedInContext.newPage();
+    await signedInPage.route('**/api/**',async route=>{
+      const path=new URL(route.request().url()).pathname;
+      if(path==='/api/me')return route.fulfill({status:200,contentType:'application/json',
+        body:JSON.stringify({id:'ci-customer',name:null,phone:'',roles:['client'],
+          owner_id:null,company_name:null,company_inn:null,rating:null,rating_count:0,performer:null})});
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    for(const [service,route] of [
+      ['van','#/sos/master'],['tow','#/new/tow'],['sto','#/services'],
+      ['consult','#/new/consult'],['insurance','#/insurance/request/new'],
+      ['parts','#/shop'],['inspection','#/garage'],['ecu','#/new/ecu'],
+      ['sos','#/sos'],['air','#/air'],['club','#/air'],
+      ['tech','#/techbase/driver'],['garage','#/garage'],
+      ['training','#/training'],['trakbot','#/trakbot']
+    ]){
+      await signedInPage.goto(BASE+'/#/explore/'+service,{waitUntil:'domcontentloaded'});
+      await signedInPage.waitForFunction(expected=>location.hash===expected,route);
+      check(signedInPage.url().endsWith(route),
+        'Authenticated customer service link '+service+' did not open '+route);
+      check(await signedInPage.evaluate(()=>
+        sessionStorage.getItem('traksos.pendingLandingAction'))===null,
+        'Authenticated shortcut '+service+' left a stale service for the next sign-in');
+    }
+    await signedInPage.goto(BASE+'/#/explore/unknown-ci-service');
+    await signedInPage.waitForFunction(()=>location.hash==='#/');
+    check(await signedInPage.evaluate(()=>sessionStorage.getItem('traksos.pendingLandingAction'))===null,
+      'Unknown signed-in service left stale booking intent');
+    // A sibling tab changing accounts cannot carry this tab's pending
+    // vehicle/catalogue selection into the new account's workspace.
+    await signedInPage.evaluate(()=>{
+      sessionStorage.setItem('traksos.pendingLandingAction','insurance');
+      sessionStorage.setItem('traksos.pendingCatalogChoice','insurance/quote');
+      window.dispatchEvent(new StorageEvent('storage',{
+        key:'traksos.token',oldValue:'CI-CUSTOMER-DEEPLINK',
+        newValue:'CI-OTHER-ACCOUNT',storageArea:localStorage
+      }));
+    });
+    await signedInPage.waitForFunction(()=>location.hash==='#/' &&
+      sessionStorage.getItem('traksos.pendingLandingAction')===null &&
+      sessionStorage.getItem('traksos.pendingCatalogChoice')===null);
+  }finally{await signedInContext.close();}
+  // A public deep link must not open client-only workspaces for a courier,
+  // master, station or other non-customer role.
+  const partnerContext=await browser.newContext({viewport:{width:1024,height:900},locale:'ru-RU'});
+  try {
+    await partnerContext.addInitScript(()=>localStorage.setItem('traksos.token','CI-COURIER-DEEPLINK'));
+    const partnerPage=await partnerContext.newPage();
+    await partnerPage.route('**/api/**',async route=>{
+      const path=new URL(route.request().url()).pathname;
+      if(path==='/api/me')return route.fulfill({status:200,contentType:'application/json',
+        body:JSON.stringify({id:'ci-courier',name:null,phone:'',roles:['courier'],
+          owner_id:null,company_name:null,company_inn:null,rating:null,rating_count:0,performer:null})});
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    await partnerPage.goto(BASE+'/#/explore/van',{waitUntil:'domcontentloaded'});
+    await partnerPage.waitForFunction(()=>location.hash==='#/');
+    check(!partnerPage.url().includes('/sos/master'),
+      'Public bookmark must not bypass role checks for a courier');
+  }finally{await partnerContext.close();}
+  // The public legal footer must recover after its first API request fails;
+  // neither a hard reload nor invented legal/contact data is acceptable.
+  const legalContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    const legalPage=await legalContext.newPage();
+    let requests=0;
+    let firstResolved;
+    const firstRequest=new Promise(resolve=>{firstResolved=resolve;});
+    await legalPage.route('**/api/legal',async route=>{
+      requests++;
+      const first=requests===1;
+      await route.fulfill({status:first?503:200,contentType:'application/json',
+        body:first?JSON.stringify({error:'temporary_unavailable'}):
+          JSON.stringify({brand:'TrakSOS',entity:'CI-LEGAL-RESTORED'})});
+      if(first)firstResolved();
+    });
+    await legalPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await legalPage.locator('.site-footer').waitFor();
+    await firstRequest;
+    await legalPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await legalPage.locator('.site-footer').getByText('CI-LEGAL-RESTORED').waitFor();
+    check(requests>=2,'Legal footer did not retry after offline/online');
+    check(await legalPage.locator('.site-footer').getByText('CI-LEGAL-RESTORED').count()===1,
+      'Recovered legal details must not be duplicated');
+  }finally{await legalContext.close();}
+  // A storage read can throw synchronously before React mounts (for example
+  // a restricted browser profile). The approved guest page must still paint.
+  const restrictedContext=await browser.newContext({viewport:{width:390,height:844},locale:'ru-RU'});
+  try {
+    await restrictedContext.addInitScript(()=>{
+      const realGet=Storage.prototype.getItem;
+      Storage.prototype.getItem=function(key){
+        if(key==='traksos.reduceMotion' || key==='traksos.sandboxMode')
+          throw new DOMException('storage denied','SecurityError');
+        return realGet.call(this,key);
+      };
+    });
+    const restrictedPage=await restrictedContext.newPage();
+    const failures=[];
+    restrictedPage.on('pageerror',e=>failures.push(e.message));
+    await restrictedPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await restrictedPage.locator('main.public-landing').waitFor({state:'visible',timeout:15000});
+    check(failures.length===0,'Denied motion or sandbox preference storage blanked the guest app: '+failures.join('; '));
+    check(await restrictedPage.getByRole('link',{name:'Войти',exact:true}).count()===1,
+      'Login must remain reachable when the motion preference cannot be read');
+  }finally{await restrictedContext.close();}
+  // The transport may receive a real 401 after React has mounted an account
+  // workspace. Mock ONLY this isolated browser network (never a production
+  // login): a fake test token is enough to reproduce the stale identity bug.
+  const expiredContext=await browser.newContext({viewport:{width:1024,height:900},locale:'ru-RU'});
+  try {
+    await expiredContext.addInitScript(()=>{
+      localStorage.setItem('traksos.token','CI-EXPIRED-FAKE-SESSION');
+    });
+    const expiredPage=await expiredContext.newPage();
+    let release401,releaseStaleProfile;
+    let sawTicket,sawStaleProfile;
+    let profileReads=0;
+    const ticketRequest=new Promise(resolve=>{sawTicket=resolve;});
+    const staleProfileRequest=new Promise(resolve=>{sawStaleProfile=resolve;});
+    const profileResponse=JSON.stringify({
+      id:'ci-courier-identity',phone:'',name:null,roles:['courier'],
+      owner_id:null,company_name:null,company_inn:null,
+      rating:null,rating_count:0,performer:null
+    });
+    await expiredPage.route('**/api/**',async route=>{
+      const url=new URL(route.request().url());
+      if(url.pathname==='/api/me'){
+        profileReads++;
+        if(profileReads>1){
+          releaseStaleProfile=()=>route.fulfill({status:200,
+            contentType:'application/json',body:profileResponse});
+          sawStaleProfile();
+          return;
+        }
+        return route.fulfill({status:200,contentType:'application/json',
+          body:profileResponse});
+      }
+      if(url.pathname==='/api/auth/realtime-ticket'){
+        release401=()=>route.fulfill({status:401,contentType:'application/json',
+          body:JSON.stringify({error:'expired_session',message:'Session expired'})});
+        sawTicket();
+        return;
+      }
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    await expiredPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await expiredPage.locator('.app.role-courier').waitFor({state:'visible'});
+    await Promise.race([ticketRequest,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('Session ticket request did not start')),10000))]);
+    check(typeof release401==='function','WebSocket ticket did not reach the protected API');
+    // A profile refresh was already in flight when the old ticket expired.
+    // Its delayed HTTP 200 must never resurrect the expired courier account.
+    await expiredPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await Promise.race([staleProfileRequest,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('Stale profile refresh did not start')),10000))]);
+    check(typeof releaseStaleProfile==='function','Missing delayed profile response');
+    await release401();
+    await expiredPage.waitForURL('**/#/login');
+    await expiredPage.locator('.app.role-courier').waitFor({state:'detached'});
+    await expiredPage.getByRole('dialog',{name:'Вход по номеру телефона'}).waitFor();
+    check(await expiredPage.evaluate(()=>localStorage.getItem('traksos.token'))===null,
+      '401 must clear the obsolete bearer token');
+    check(await expiredPage.locator('.tr-approved-route-unavailable').count()===0,
+      'Expired account must render sign-in, not a misleading already-signed-in page');
+    await releaseStaleProfile();
+    await expiredPage.waitForTimeout(200);
+    check(await expiredPage.locator('.app.role-courier').count()===0,
+      'A delayed previous-session profile re-mounted the expired workspace');
+    check(await expiredPage.evaluate(()=>localStorage.getItem('traksos.offlineIdentity'))===null,
+      'Stale previous-session profile may not persist an offline account');
+  }finally{await expiredContext.close();}
+  // Two concurrent profile refreshes with the SAME bearer token may complete
+  // out of order; stale old roles/identities must not overwrite newer data.
+  const refreshContext=await browser.newContext({viewport:{width:1024,height:900},locale:'ru-RU'});
+  try {
+    await refreshContext.addInitScript(()=>localStorage.setItem('traksos.token','CI-SAME-TOKEN'));
+    const refreshPage=await refreshContext.newPage();
+    let profileCount=0,releaseOld,releaseLatest,oldSeen,latestSeen;
+    const oldStarted=new Promise(resolve=>{oldSeen=resolve;});
+    const latestStarted=new Promise(resolve=>{latestSeen=resolve;});
+    const profile=(id)=>JSON.stringify({
+      id,phone:'',name:null,roles:['courier'],owner_id:null,
+      company_name:null,company_inn:null,rating:null,rating_count:0,performer:null
+    });
+    await refreshPage.route('**/api/**',async route=>{
+      const pathname=new URL(route.request().url()).pathname;
+      if(pathname==='/api/me'){
+        const number=++profileCount;
+        if(number===1)return route.fulfill({status:200,contentType:'application/json',
+          body:profile('CI-INITIAL')});
+        if(number===2){releaseOld=()=>route.fulfill({status:200,
+          contentType:'application/json',body:profile('CI-STALE')});oldSeen();return;}
+        if(number===3){releaseLatest=()=>route.fulfill({status:200,
+          contentType:'application/json',body:profile('CI-LATEST')});latestSeen();return;}
+        return route.fulfill({status:200,contentType:'application/json',
+          body:profile('CI-LATEST')});
+      }
+      if(pathname==='/api/auth/realtime-ticket')
+        return route.fulfill({status:503,contentType:'application/json',
+          body:JSON.stringify({error:'CI_NO_SOCKET'})});
+      return route.fulfill({status:200,contentType:'application/json',body:'{}'});
+    });
+    await refreshPage.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
+    await refreshPage.locator('.app.role-courier').waitFor({state:'visible'});
+    await refreshPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await Promise.race([oldStarted,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('first refresh did not start')),10000))]);
+    await refreshPage.evaluate(()=>window.dispatchEvent(new Event('online')));
+    await Promise.race([latestStarted,new Promise((_,reject)=>
+      setTimeout(()=>reject(Error('second refresh did not start')),10000))]);
+    await releaseLatest();
+    await refreshPage.waitForFunction(()=>{
+      try{return JSON.parse(localStorage.getItem('traksos.offlineIdentity'))?.id==='CI-LATEST';}
+      catch{return false;}
+    });
+    await releaseOld();
+    await refreshPage.waitForTimeout(150);
+    check(await refreshPage.evaluate(()=>{
+      try{return JSON.parse(localStorage.getItem('traksos.offlineIdentity'))?.id;}
+      catch{return null;}
+    })==='CI-LATEST',
+      'older same-token profile overwrote the latest verified offline identity');
+  }finally{await refreshContext.close();}
+}finally{await browser.close();}
+console.log('PASS: owner-approved 617/618 routes, service auth, offline identity refresh races and session expiry');

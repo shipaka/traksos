@@ -30,13 +30,36 @@ function hashPassword(password: string) {
 }
 function verifyPassword(password: string, stored: string | null) {
   if (!stored) return false;
-  const [algorithm, salt, expected] = stored.split(':');
-  if (algorithm !== 'scrypt' || !salt || !expected || expected.length !== 128) return false;
-  const actual = scryptSync(password, Buffer.from(salt,'hex'),64);
-  return timingSafeEqual(actual, Buffer.from(expected,'hex'));
+  const parts = stored.split(':');
+  if (parts.length !== 3) return false;
+  const [algorithm, salt, expected] = parts;
+  // A truncated/non-hex hash must fail as invalid credentials, never crash
+  // timingSafeEqual or turn a normal login into a 500 response.
+  if (algorithm !== 'scrypt' || !/^[0-9a-f]{32}$/i.test(salt) ||
+      !/^[0-9a-f]{128}$/i.test(expected)) return false;
+  const actual = scryptSync(password, Buffer.from(salt, 'hex'), 64);
+  return timingSafeEqual(actual, Buffer.from(expected, 'hex'));
 }
 
 
+// A pending invitation is deliberately NOT a normal scrypt password hash.
+const INVITE_PREFIX = 'insurer-invite:';
+export function createInsurerInvitation(now: Date) {
+  const temporaryPassword = randomBytes(24).toString('base64url');
+  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  return { temporaryPassword, expiresAt,
+    passwordHash: INVITE_PREFIX + expiresAt.getTime() + ':' + hashPassword(temporaryPassword) };
+}
+export function isInsurerInvitation(stored: string | null) {
+  return typeof stored === 'string' && stored.startsWith(INVITE_PREFIX);
+}
+function invitationPasswordHash(stored: string | null, now: Date): string | null {
+  const m = stored?.match(/^insurer-invite:(\d{13}):(scrypt:[0-9a-f]{32}:[0-9a-f]{128})$/);
+  return m && Number(m[1]) > now.getTime() ? m[2] : null;
+}
+function strongNewPassword(p: string) {
+  return passwordValid(p) && !/^(?:\d{10,14}|password1234?|qwerty12345|qwertyuiop|admin12345|пароль12345|traksos1234|tracksos1234)$/i.test(p.normalize('NFKC').replace(/\s+/g,''));
+}
 export { SELF_ROLES } from '../domain/roles.ts';
 
 /** Persistent limits: no SMS flood after deployment restart or on multi-instance hosting. */
@@ -134,78 +157,111 @@ export class AuthService {
     return { phone, sent: true, devCode: this.sms.exposesCode && !isProd ? code : undefined };
   }
 
-  /** role не передан — вход «как есть»: новый номер становится клиентом, у существующего роли не меняются */
+  /** SMS is for registration / recovery only. Redeem an SMS code exactly once. */
   async verify(rawPhone: string, code: string, role?: SelfRole, device?: string, accountType?: AccountChoice, password?: string, purpose: 'register' | 'reset' = 'register') {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
-    // Re-check on verification: users may forge accountType or re-use an old SMS.
     if (purpose === 'register') await this.ensureInsuranceRegistration(phone, accountType ?? (role as AccountChoice | undefined));
-    const row = await this.db.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
-      'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1', [phone],
-    );
-    if (!row || new Date(row.expires_at) < this.now()) throw bad('code_expired', 'Код устарел, запросите новый');
-    if (row.purpose !== purpose && isProd) throw bad('wrong_purpose', 'Запросите код для выбранной операции');
     if (isProd && !passwordValid(password ?? '')) throw bad('weak_password', 'Пароль — от 10 до 128 символов');
-    if (row.attempts >= MAX_ATTEMPTS) throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код');
-    if (row.code_hash !== hmac(phone + ':' + code.trim())) {
-      await this.db.query('update auth_codes set attempts = attempts + 1 where phone=$1', [phone]);
-      throw bad('wrong_code', 'Неверный код');
-    }
-    await this.db.query('delete from auth_codes where phone=$1', [phone]);
 
-    // Production never grants administrator privileges from control of an SMS number alone.
-    // Historical development fixtures retain the old behavior solely outside production.
-    const extra = !isProd && config.adminPhones.includes(phone) ? ['admin'] : [];
+    // Reject invalid role pairs before using a one-time SMS code; a typo or
+    // forged category must not burn an otherwise valid registration attempt.
     const requested = purpose === 'reset' ? [] : accountType ? requestedRoles(accountType) : role ? [role] : [];
-    if (role && accountType && !requested.includes(role)) {
+    if (purpose !== 'reset' && role && accountType && !requested.includes(role))
       throw bad('invalid_role', 'Указанная специализация не соответствует типу регистрации');
-    }
-    // Serialize per-phone account creation/role changes, so two simultaneous requests
-    // cannot bypass the mutually exclusive role policy.
-    const user = await this.db.tx(async (q) => {
+
+    // Use the same advisory lock as requestCode(), plus a row lock: concurrent
+    // verify / resend requests cannot both redeem a code or increment a stale
+    // attempt counter. Account + password + new session + code deletion either
+    // commit together or do not change at all.
+    const result = await this.db.tx(async q => {
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['sms:' + phone]);
+      const row = await q.one<{ code_hash: string; expires_at: Date; attempts: number; purpose: string }>(
+        'select code_hash, expires_at, attempts, purpose from auth_codes where phone=$1 for update', [phone]);
+      if (!row || new Date(row.expires_at) < this.now())
+        throw bad('code_expired', 'Код устарел, запросите новый');
+      if (row.purpose !== purpose && isProd)
+        throw bad('wrong_purpose', 'Запросите код для выбранной операции');
+      if (row.attempts >= MAX_ATTEMPTS)
+        throw new HttpError(429, 'too_many_attempts', 'Слишком много попыток, запросите новый код');
+
+      if (row.code_hash !== hmac(phone + ':' + code.trim())) {
+        // Return a tagged result rather than throwing inside the transaction:
+        // the increment must COMMIT even though the HTTP response is an error.
+        await q.query('update auth_codes set attempts=attempts+1 where phone=$1', [phone]);
+        return { kind: 'wrong_code' as const };
+      }
+
+      // Match the account lock used by other flows without losing the SMS lock.
       await q.query('select pg_advisory_xact_lock(hashtext($1))', [phone]);
-      const previous = await q.one<AuthUser>('select id, phone, name, roles, status, owner_id from users where phone=$1 for update', [phone]);
-      // A plain login never grants additional privileges. The legacy client default
-      // applies only to a genuinely new account without a selected category.
-      if (purpose === 'reset' && !previous) throw bad('not_registered', 'Такой аккаунт не найден');
-      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') || config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone) || (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone)))
+      const previous = await q.one<AuthUser>(
+        'select id, phone, name, roles, status, owner_id from users where phone=$1 for update', [phone]);
+      if (purpose === 'reset' && !previous)
+        throw bad('not_registered', 'Такой аккаунт не найден');
+      if (purpose === 'reset' && (previous?.roles.some(r => r === 'admin' || r === 'moderator') ||
+          config.adminPhones.includes(phone) || config.moderatorPhones.includes(phone) ||
+          (config.insurerPrimaryPhone && phone === config.insurerPrimaryPhone)))
         throw new HttpError(403, 'staff_recovery_protected', 'Нельзя сбросить служебный пароль только по SMS.');
-      if (previous && purpose === 'register' && isProd) throw bad('already_registered', 'Аккаунт уже зарегистрирован');
+      if (previous && purpose === 'register' && isProd)
+        throw bad('already_registered', 'Аккаунт уже зарегистрирован');
+
+      // A blocked account can appeal using proof of its phone, but must not
+      // silently change password or roles before receiving the 403 response.
+      if (previous?.status !== undefined && previous.status !== 'active') {
+        await q.query('delete from auth_codes where phone=$1', [phone]);
+        return { kind: 'blocked' as const };
+      }
+
+      const extra = !isProd && config.adminPhones.includes(phone) ? ['admin'] : [];
+      let user: AuthUser | null;
       if (previous) {
         const roles = requested.length ? validateRoles(previous.roles, requested) : previous.roles;
         const normalized = [...new Set([...roles, ...extra])];
-        return await q.one<AuthUser>('update users set roles=$2::text[], password_hash=coalesce($3,password_hash), last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id,false as inserted',
+        if (!staffRoleAllowed(phone, normalized))
+          throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
+        user = await q.one<AuthUser>(
+          'update users set roles=$2::text[], password_hash=coalesce($3,password_hash), last_seen_at=now() where id=$1 returning id,phone,name,roles,status,owner_id,false as inserted',
           [previous.id, normalized, password ? hashPassword(password) : null]);
+      } else {
+        const roles = [...new Set([...(requested.length ? requested : ['client']), ...extra])];
+        validateRoles([], roles);
+        if (!staffRoleAllowed(phone, roles))
+          throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
+        user = await q.one<AuthUser>(
+          'insert into users(phone,roles,registration_kind,password_hash) values ($1,$2::text[],$3,$4) returning id,phone,name,roles,status,owner_id,true as inserted',
+          [phone, roles, accountType ?? (role === 'driver' ? 'driver' : role === 'master' || role === 'tow' || role === 'service' || role === 'insurer' ? role : 'owner'),
+            password ? hashPassword(password) : null]);
       }
-      const roles = [...new Set([...(requested.length ? requested : ['client']), ...extra])];
-      validateRoles([], roles);
-      return await q.one<AuthUser>('insert into users(phone,roles,registration_kind,password_hash) values ($1,$2::text[],$3,$4) returning id,phone,name,roles,status,owner_id,true as inserted',
-        [phone, roles, accountType ?? (role === 'driver' ? 'driver' : role === 'master' || role === 'tow' || role === 'service' || role === 'insurer' ? role : 'owner'), password ? hashPassword(password) : null]);
-    });
-    if (!user || user.status !== 'active') {
-      // Заблокированный может оспорить блокировку — номер подтверждён кодом, выдаём одноразовый пропуск на обжалование
-      throw new HttpError(403, 'blocked', 'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.', { appealToken: appealToken(phone, this.now()) });
-    }
+      if (!user) throw new Error('Не удалось сохранить подтверждённый аккаунт');
+      if (user.status !== 'active')
+        throw new HttpError(403, 'blocked', 'Подтверждённый аккаунт недоступен');
 
-    // Password reset invalidates every prior session; a stolen token cannot survive recovery.
-    if (purpose === 'reset') {
-      // Legacy tokens are not session-bound; clear them too when credentials change.
-      await this.db.query('delete from push_tokens where user_id=$1', [user.id]);
-      await this.db.query('delete from sessions where user_id=$1', [user.id]);
-      if (!staffRoleAllowed(phone, user.roles))
-      throw new HttpError(403, 'staff_phone_mismatch', 'Доступ к служебному аккаунту ограничен.');
-    await this.db.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
-    }
-    const token = newToken();
-    await this.db.query('insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)', [
-      sha256(token), user.id, new Date(this.now().getTime() + SESSION_DAYS * 86_400_000), device ?? null,
-    ]);
-    return { token, user };
+      if (purpose === 'reset') {
+        // The credential rotation and revocation of all previous sessions,
+        // including push registrations, must be one transaction.
+        await q.query('delete from push_tokens where user_id=$1', [user.id]);
+        await q.query('delete from sessions where user_id=$1', [user.id]);
+        await q.query("delete from auth_login_attempts where scope='phone' and identity=$1", [phone]);
+      }
+      await q.query('delete from auth_codes where phone=$1', [phone]);
+      const token = newToken();
+      await q.query(
+        'insert into sessions(token_hash, user_id, expires_at, device) values ($1,$2,$3,$4)',
+        [sha256(token), user.id, new Date(this.now().getTime() + SESSION_DAYS * 86_400_000), device ?? null]);
+      return { kind: 'ok' as const, token, user };
+    });
+
+    if (result.kind === 'wrong_code') throw bad('wrong_code', 'Неверный код');
+    if (result.kind === 'blocked')
+      throw new HttpError(403, 'blocked',
+        'Аккаунт заблокирован. Можно оспорить блокировку — ответ придёт по SMS.',
+        { appealToken: appealToken(phone, this.now()) });
+    return { token: result.token, user: result.user };
   }
 
   /** Normal login: never sends SMS and never changes roles. */
   /** Password-only login. Counters are shared by all processes and survive restart. */
-  async loginPassword(rawPhone: string, password: string, device?: string, ip = '') {
+  async loginPassword(rawPhone: string, password: string, device?: string, ip = '', newPassword?: string) {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw bad('bad_phone', 'Неверный номер');
     if (password.length > 128) throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
@@ -232,6 +288,37 @@ export class AuthService {
     });
     const user = await this.db.one<AuthUser & { password_hash: string | null; admin_preview_until: Date | null }>(
       'select id, phone, name, roles, status, owner_id, password_hash, admin_preview_until from users where phone=$1', [phone]);
+    // No bearer is issued for an invitation. The first successful exchange
+    // replaces the pending hash atomically and only then creates a session.
+    if (user && isInsurerInvitation(user.password_hash)) {
+      const temporaryHash = invitationPasswordHash(user.password_hash, now);
+      if (user.status !== 'active' || phone !== config.insurerPrimaryPhone ||
+          user.roles.length !== 1 || user.roles[0] !== 'insurer' ||
+          user.admin_preview_until !== null || !temporaryHash || !verifyPassword(password, temporaryHash))
+        throw new HttpError(401, 'bad_credentials', 'Неверный номер, пароль или истёк срок приглашения');
+      if (newPassword === undefined)
+        throw new HttpError(409, 'insurer_password_change_required', 'Установите свой пароль для первого входа.');
+      if (!strongNewPassword(newPassword)) throw bad('weak_password', 'Новый пароль должен быть сложным и содержать 10–128 символов.');
+      if (verifyPassword(newPassword, temporaryHash)) throw bad('same_password', 'Новый пароль должен отличаться от временного.');
+      return this.db.tx(async q => {
+        const updated = await q.one<AuthUser>(
+          "update users set password_hash=$3,last_seen_at=now() where id=$1 and password_hash=$2 and phone=$4 and status='active' and roles=array['insurer']::text[] and admin_preview_until is null returning id,phone,name,roles,status,owner_id",
+          [user.id, user.password_hash, hashPassword(newPassword), phone]);
+        if (!updated || !invitationPasswordHash(user.password_hash, this.now()))
+          throw new HttpError(401, 'bad_credentials', 'Приглашение уже использовано или истекло.');
+        await q.query('delete from push_tokens where user_id=$1', [user.id]);
+        await q.query('delete from sessions where user_id=$1', [user.id]);
+        const token = newToken();
+        await q.query('insert into sessions(token_hash,user_id,expires_at,device) values ($1,$2,$3,$4)',
+          [sha256(token), user.id, new Date(now.getTime() + SESSION_DAYS * 86_400_000), device ?? null]);
+        await q.query("delete from auth_login_attempts where scope='phone' and identity=$1",[phone]);
+        await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+          [user.id,'insurer.invite_activated',user.id,{method:'one_time_password'}]);
+        return {token,user:updated};
+      });
+    }
+    if (newPassword !== undefined)
+      throw new HttpError(401, 'bad_credentials', 'Приглашение недействительно. Войдите с собственным паролем.');
     if (!user || user.status !== 'active' || !verifyPassword(password, user.password_hash) ||
         (user.admin_preview_until !== null && new Date(user.admin_preview_until) <= now)) {
       throw new HttpError(401, 'bad_credentials', 'Неверный номер или пароль');
@@ -246,17 +333,107 @@ export class AuthService {
     return { token, user: safe };
   }
 
-  async authenticate(token: string | null | undefined): Promise<AuthUser | null> {
-    if (!token) return null;
-    const u = await this.db.one<AuthUser>(
-      `select u.id, u.phone, u.name, u.roles, u.status, u.owner_id
-         from sessions s join users u on u.id = s.user_id
-        where s.token_hash = $1 and s.expires_at > now()
-          and (u.admin_preview_until is null or u.admin_preview_until > now())`,
-      [sha256(token)],
-    );
-    if (!u || u.status !== 'active' || !staffRoleAllowed(u.phone, u.roles)) return null;
+  /** A known-password change does not contact SMS.ru or invalidate the active job. */
+  async changePassword(user:AuthUser,currentPassword:string,newPassword:string,currentToken:string) {
+    if (!passwordValid(newPassword) || /^(?:\d{10,14}|password1234?|qwerty12345|qwertyuiop|admin12345|пароль12345|traksos1234|tracksos1234)$/i.test(newPassword.normalize('NFKC').replace(/\s+/g,'')))
+      throw bad('weak_password','Новый пароль должен содержать 10–128 символов и не быть очевидным или только цифровым кодом');
+    const now=this.now();
+    const sessionHash=sha256(currentToken);
+    // One shared throttle for login and in-session old-password attempts.
+    // Reserve outside the credential transaction so failures cannot roll
+    // back the counter, even across multiple API processes.
+    await this.db.tx(async q=>{
+      const attempt=await q.one<{attempts:number}>(
+        `insert into auth_login_attempts(scope,identity,window_start,attempts)
+          values('phone',$1,$2,1)
+          on conflict (scope,identity) do update
+          set window_start=case when auth_login_attempts.window_start <= $2::timestamptz - interval '15 minutes'
+               then $2::timestamptz else auth_login_attempts.window_start end,
+              attempts=case when auth_login_attempts.window_start <= $2::timestamptz - interval '15 minutes'
+               then 1 else auth_login_attempts.attempts+1 end
+          where auth_login_attempts.window_start <= $2::timestamptz - interval '15 minutes'
+             or auth_login_attempts.attempts < 10
+          returning attempts`,[user.phone,now]);
+      if(!attempt)throw new HttpError(429,'too_many_attempts',
+        'Слишком много попыток. Повторите через 15 минут или восстановите пароль.');
+    });
+    return this.db.tx(async q=>{
+      const stored=await q.one<{password_hash:string|null}>(
+        'select password_hash from users where id=$1 for update',[user.id]);
+      if(!stored||!verifyPassword(currentPassword,stored.password_hash))
+        throw new HttpError(403,'bad_current_password','Текущий пароль указан неверно');
+      if(verifyPassword(newPassword,stored.password_hash))
+        throw bad('same_password','Новый пароль должен отличаться от текущего');
+      const session=await q.one<{ok:number}>(
+        'select 1 as ok from sessions where token_hash=$1 and user_id=$2 and expires_at>now()',
+        [sessionHash,user.id]);
+      if(!session)throw new HttpError(401,'unauthorized','Войдите снова');
+      await q.query('update users set password_hash=$2 where id=$1',
+        [user.id,hashPassword(newPassword)]);
+      // Keep only the actual device making the change. Close all other
+      // HTTP/WS sessions and remove their push token registrations.
+      await q.query('delete from sessions where user_id=$1 and token_hash<>$2',
+        [user.id,sessionHash]);
+      await q.query('delete from push_tokens where user_id=$1 and (session_token_hash is null or session_token_hash<>$2)',
+        [user.id,sessionHash]);
+      await q.query("delete from auth_login_attempts where scope='phone' and identity=$1",
+        [user.phone]);
+      return {ok:true,otherSessionsRevoked:true};
+    });
+  }
+
+  private async authenticateHash(hash:string):Promise<AuthUser|null>{
+    const u=await this.db.one<AuthUser>(
+      `select u.id,u.phone,u.name,u.roles,u.status,u.owner_id
+         from sessions s join users u on u.id=s.user_id
+        where s.token_hash=$1 and s.expires_at>now()
+          and (u.admin_preview_until is null or u.admin_preview_until>now())`,
+      [hash]);
+    if(!u||u.status!=='active'||!staffRoleAllowed(u.phone,u.roles))return null;
     return u;
+  }
+
+  async authenticate(token: string | null | undefined): Promise<AuthUser | null> {
+    return token ? this.authenticateHash(sha256(token)) : null;
+  }
+
+  async authenticateRealtimeSession(sessionHash:string):Promise<AuthUser|null>{
+    // Internal authenticated gateway only: never accept this as an API bearer.
+    return this.authenticateHash(sessionHash);
+  }
+
+  async issueRealtimeTicket(token:string){
+    const user=await this.authenticate(token);
+    if(!user)throw new HttpError(401,'unauthorized','Нужно войти заново');
+    const sessionHash=sha256(token);
+    // Limit outstanding tickets per session. Expired tickets do not count.
+    const ticket=randomBytes(32).toString('base64url');
+    await this.db.tx(async q=>{
+      await q.query('select pg_advisory_xact_lock(hashtext($1))',['ws-ticket:'+sessionHash]);
+      const existing=await q.one<{n:number}>(
+        'select count(*)::int as n from realtime_ws_tickets where session_token_hash=$1 and expires_at>now()',
+        [sessionHash]);
+      if((existing?.n??0)>=5)throw new HttpError(429,'ws_ticket_limit','Слишком много подключений');
+      await q.query(
+        "insert into realtime_ws_tickets(ticket_hash,user_id,session_token_hash,expires_at) "+
+        "values($1,$2,$3,now()+interval '30 seconds')",
+        [sha256(ticket),user.id,sessionHash]);
+    });
+    return {ticket,expiresInSeconds:30};
+  }
+
+  async consumeRealtimeTicket(ticket:string){
+    if(!/^[A-Za-z0-9_-]{43}$/.test(ticket))return null;
+    // DELETE ... RETURNING consumes the ticket exactly once, even if two
+    // sockets race to use the same URL. There is no permanent token in it.
+    const record=await this.db.one<{user_id:string;session_token_hash:string}>(
+      "delete from realtime_ws_tickets where ticket_hash=$1 and expires_at>now() "+
+      "returning user_id,session_token_hash",
+      [sha256(ticket)]);
+    if(!record)return null;
+    const user=await this.authenticateHash(record.session_token_hash);
+    if(!user||user.id!==record.user_id)return null;
+    return {user,sessionHash:record.session_token_hash};
   }
 
   async logout(token: string) {

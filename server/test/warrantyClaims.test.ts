@@ -572,3 +572,33 @@ test('recourse: voluntary acknowledged payment is attested once and is capped by
     assert.equal((await f.t.db.query('select id from payments where order_id=$1',[f.id])).length,0);
   }finally{await f.t.close();}
 });
+
+
+test('warranty remedy: concurrent offer replays and participant reads use one parent-first lock order',
+ {timeout:60000},async()=>{
+  const f=await completedRepair();
+  try{
+    const claim=ok(await f.t.api('POST',`/api/orders/${f.id}/warranty-claims`,{
+      defect:'Повторная неисправность генератора после предыдущего выездного ремонта',
+      requestedRemedy:'rework',
+    },f.client.token));
+    ok(await f.t.api('POST',`/api/admin/warranty-claims/${claim.id}/decide`,{
+      decision:'repair_by_original',
+      note:'Подтверждена необходимость бесплатного повторного исправления исходным мастером',
+    },f.admin.token));
+    const offerPath=`/api/admin/warranty-claims/${claim.id}/remedies`;
+    const payload={performerId:f.performer.id,budgetKopecks:0,
+      task:'Повторно диагностировать генератор и исправить неисправность бесплатно'};
+    const first=ok(await f.t.api('POST',offerPath,payload,f.admin.token));
+    const viewPath=`/api/warranty-remedies/${first.id}`;
+    const outcomes=await Promise.all(Array.from({length:18},(_,i)=>
+      i%3===0?f.t.api('POST',offerPath,payload,f.admin.token):
+        i%3===1?f.t.api('GET',viewPath,undefined,f.client.token):
+          f.t.api('GET',viewPath,undefined,f.performer.token)));
+    assert.ok(outcomes.every(x=>x.status===200),JSON.stringify(outcomes));
+    assert.ok(outcomes.every(x=>x.body.id===first.id&&x.body.status==='offered'));
+    assert.equal((await f.t.db.query('select id from warranty_rework_jobs where claim_id=$1',[claim.id])).length,1);
+    assert.equal((await f.t.db.query("select id from warranty_rework_events where job_id=$1 and event='offered'",[first.id])).length,1);
+    assert.equal((await f.t.db.query("select id from notifications where kind='warranty' and data->>'jobId'=$1",[first.id])).length,2);
+  }finally{await f.t.close();}
+});

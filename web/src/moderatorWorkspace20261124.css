@@ -1,0 +1,19 @@
+/* PR #274: one visual vocabulary for the moderator on PC and Android.
+   Leave approved dashboard cards intact; do not show their duplicate tab strip
+   on phone/tablet viewports. No global overrides or role permission changes. */
+.moderator-workspace .moderator-action>span { color:#ffab59; }
+.moderator-workspace .moderator-action.active,
+.moderator-workspace .moderator-action:hover { border-color:#ff9d46; }
+.moderator-workspace .internal-role-hero-moderator::after { color:#ff9d46; }
+.moderator-workspace .moderator-desk-tabs .chip:focus-visible,
+.moderator-workspace .moderator-action:focus-visible {
+  outline:2px solid #ffd29f;
+  outline-offset:3px;
+}
+@media (max-width:899px) {
+  .moderator-workspace > .moderator-desk-tabs { display:none!important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .moderator-workspace .moderator-action { transition:none!important; }
+  .moderator-workspace .moderator-action:hover { transform:none!important; }
+}

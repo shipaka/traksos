@@ -1,0 +1,35 @@
+name: TrakSOS — read-only audit of every branch
+on:
+  push:
+    branches:
+      - integration/sandbox-unified-20261119
+    paths:
+      - .github/workflows/audit-all-branches.yml
+      - scripts/audit-all-branches.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch every branch and keep main unchanged
+        run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare branch file hashes and diff inventories
+        run: node scripts/audit-all-branches.mjs
+      - name: Export detailed report without pushing commits
+        uses: actions/upload-artifact@v4
+        with:
+          name: trakSOS-all-branches-audit
+          path: audit-out/
+          retention-days: 30
+          if-no-files-found: error

@@ -12,9 +12,32 @@ import { rankCandidates, performerKindFor, type Candidate } from '../domain/disp
 import { offerLimits, sortOffers, etaMinutes, type Sort } from '../domain/offers.ts';
 import type { Settings } from '../domain/defaults.ts';
 import { rub } from '../util.ts';
+import { policyFor, withinStage, type VerifiedRoadEta, type SosSearchStage } from '../domain/progressiveSos.ts';
+import { classifyNoPerformerReason, type NoPerformerReason, type PartnerPresence } from '../domain/noPerformerReason.ts';
 
 export class AuctionService {
-  constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService, private now: () => Date) {}
+  constructor(private db: Db, private settings: SettingsService, private notifier: Notifier, private orders: OrdersService,
+    private now: () => Date, readonly roadEta?: VerifiedRoadEta) {}
+
+  /** Disabled for real users until admin approves thresholds AND a trusted router is connected. */
+  stages(order: any, dispatch: Settings['dispatch']): SosSearchStage[] | null {
+    return policyFor(order, dispatch.sosProgressive);
+  }
+
+  /** Filter AFTER ordinary eligibility: no missing GPS, no fabricated drive time. */
+  async stagedCandidates(order:any, list: Candidate[], ranked: import('../domain/dispatch.ts').Ranked[],
+    stage:SosSearchStage|null) {
+    if (!stage) return ranked.map(r=>({...r,roadEtaMinutes:null as number|null}));
+    const pickup=order.lat==null||order.lng==null?null:{lat:Number(order.lat),lng:Number(order.lng)};
+    const matches = await Promise.all(ranked.map(async r=>{
+      const p=list.find(c=>c.user_id===r.user_id);
+      const performer=p?.lat==null||p?.lng==null?null:{lat:Number(p.lat),lng:Number(p.lng)};
+      const eta=await withinStage(stage,pickup,performer,r.distanceKm,
+        Number(p?.prep_minutes ?? 0),this.roadEta);
+      return eta?{...r,roadEtaMinutes:eta.totalMinutes}:null;
+    }));
+    return matches.filter((x):x is NonNullable<typeof x>=>x!==null);
+  }
 
   limits(order: any, d: Settings['dispatch']) {
     // Консультация — фиксированная цена, торговаться не о чем
@@ -31,47 +54,86 @@ export class AuctionService {
 
   async start(orderId: string, exclude: string[] = []) {
     const all = await this.settings.all();
-    const order = await this.db.one('select * from orders where id=$1', [orderId]);
-    if (!order || order.status !== 'searching') return;
+    const loaded = await this.db.one('select * from orders where id=$1', [orderId]);
+    if (!loaded || loaded.status !== 'searching') return;
+    // Loaded row passed the existence guard. Subsequent conditional UPDATE
+    // RETURNING rows are non-null when present.
+    let order: NonNullable<typeof loaded> = loaded;
+    const stages = this.stages(order,all.dispatch);
+    const stageIndex=Number(order.sos_dispatch_stage??0);
+    const stage=stages?.[stageIndex]??null;
+    if (stages && !stage) return this.finishEmpty(order, all.dispatch);
+    // Only one tick/HTTP worker claims a given wave. Cancellation wins if the
+    // order has already left searching; a retry must clear auction_until first.
+    if (stage) {
+      const deadline=new Date(this.now().getTime()+stage.waitSeconds*1000);
+      const claimed=await this.db.query<any>(
+        `update orders set auction_until=$3,auto_pick=true,dispatch_started_at=coalesce(dispatch_started_at,$4)
+          where id=$1 and status='searching' and sos_dispatch_stage=$2
+            and auction_until is null returning *`,
+        [orderId,stageIndex,deadline,this.now()]);
+      if (!claimed.length) return;
+      order=claimed[0];
+    }
     const kind = performerKindFor(order.service);
     const list = await this.db.query<Candidate>(
       `select p.user_id, p.kind, p.specialties, p.brands, false as is_priority, p.paused, p.line_status, p.verification,
-              p.lat, p.lng, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
+              p.lat, p.lng, p.prep_minutes, u.rating, p.accepts_group, u.status as user_status, p.schedule, p.off_schedule_until, p.extras,
               (select coalesce(-sum(amount),0)::int from ledger_entries l
                 where l.performer_id = p.user_id and l.kind in ('cash_commission','cash_commission_paid')) as cash_debt
          from performer_profiles p join users u on u.id = p.user_id
         where p.kind = $1 and p.user_id <> $2
-          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.service='consult' and x.status='awaiting_confirmation'))`, [kind, order.client_id]);
+          and not exists (select 1 from orders x where x.performer_id=p.user_id and x.status in ('accepted','en_route','arrived','working','awaiting_confirmation') and not (x.status='awaiting_confirmation' and (
+                    x.service='consult' or exists (
+                      select 1 from order_unilateral_closures uc
+                        where uc.order_id=x.id and uc.status in ('pending_client','disputed')))))`, [kind, order.client_id]);
     const already = await this.db.query<{ performer_id: string }>(
       `select performer_id from order_dispatch where order_id=$1 and status in ('declined','missed','bidding','lost')`, [orderId]);
     const ranked = rankCandidates(order as any, list, {
-      radiusKm: all.dispatch.radiusKm, maxCandidates: all.dispatch.maxCandidates, cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
+      radiusKm: stage?.radiusKm??all.dispatch.radiusKm,
+      maxCandidates: all.dispatch.maxCandidates, cashDebtLimit: all.fees.cashDebtLimit, now: this.now(),
       exclude: new Set([order.created_by, ...exclude, ...already.map((a) => a.performer_id), ...(await this.orders.blockedBy(order.client_id))]),
     });
-    const ms = order.is_sos ? all.dispatch.sosAuctionSeconds * 1000 : all.dispatch.auctionMinutes * 60_000;
-    const until = new Date(this.now().getTime() + ms);
-    await this.db.query('update orders set auction_until=$2, auto_pick=$3, dispatch_started_at=coalesce(dispatch_started_at,$4) where id=$1',
-      [orderId, until, !!order.is_sos, this.now()]);
-    const invited: typeof ranked = [];
-    for (const [i, r] of ranked.entries()) {
+    const eligible=await this.stagedCandidates(order,list,ranked,stage);
+    const ms = stage ? stage.waitSeconds*1000 :
+      order.is_sos ? all.dispatch.sosAuctionSeconds * 1000 : all.dispatch.auctionMinutes * 60_000;
+    const until = stage ? new Date(order.auction_until) : new Date(this.now().getTime() + ms);
+    if (!stage) await this.db.query(
+      'update orders set auction_until=$2, auto_pick=$3, dispatch_started_at=coalesce(dispatch_started_at,$4) where id=$1 and status=\'searching\'',
+      [orderId,until,!!order.is_sos,this.now()]);
+    const invited: typeof eligible = [];
+    for (const [i, r] of eligible.entries()) {
+      if (stage && !(await this.db.one(
+        "select 1 from orders where id=$1 and status='searching' and sos_dispatch_stage=$2",
+        [orderId,stageIndex]))) break;
       const ok = await this.orders.enlist(r.user_id,
-        `insert into order_dispatch(order_id, performer_id, rank, distance_km, status, ring_until, sent_at)
-         values ($1,$2,$3,$4,'bidding',$5,$6)
-         on conflict (order_id, performer_id) do update set status='bidding', ring_until=excluded.ring_until, sent_at=excluded.sent_at`,
-        [orderId, r.user_id, 100 + i, r.distanceKm, until, this.now()]);
+        stage
+          ? `insert into order_dispatch(order_id,performer_id,rank,distance_km,status,ring_until,sent_at,road_eta_minutes)
+             select $1,$2,$3,$4,'bidding',$5,$6,$7
+              from orders where id=$1 and status='searching' and sos_dispatch_stage=$8
+             on conflict (order_id,performer_id) do nothing returning id`
+          : `insert into order_dispatch(order_id, performer_id, rank, distance_km, status, ring_until, sent_at)
+             values ($1,$2,$3,$4,'bidding',$5,$6)
+             on conflict (order_id, performer_id) do update set status='bidding', ring_until=excluded.ring_until, sent_at=excluded.sent_at`,
+        stage?[orderId,r.user_id,100+i,r.distanceKm,until,this.now(),r.roadEtaMinutes,stageIndex]:
+          [orderId,r.user_id,100+i,r.distanceKm,until,this.now()],!!stage);
       if (ok) invited.push(r);
     }
-    await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos });
-    const ids = await this.participants(orderId);
-    this.notifier.live([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', auction: true });
-    if (!invited.length) return this.finishEmpty(order);
+    await this.orders.event(this.db, orderId, null, 'auction_started', { candidates: invited.length, until, sos: !!order.is_sos, wave: stage?stageIndex+1:null, waves: stages?.length??null });
+    this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', auction: true });
+    if (!invited.length) return stage ? undefined : this.finishEmpty(order, all.dispatch);
 
     const lim = this.limits(order, all.dispatch);
     const ring = new Date(this.now().getTime() + Math.min(ms, all.dispatch.ringSeconds * 1000)).toISOString();
     for (const r of invited) {
+      // The customer may cancel while routes/push payloads are prepared.
+      // Never send a new call for an already-cancelled or finished request.
+      if (!(await this.db.one(
+        "select 1 from orders where id=$1 and status='searching'",
+        [orderId]))) break;
       await this.notifier.notify([r.user_id], {
         type: 'auction', orderId, number: order.number, service: order.service, sos: order.is_sos, problem: order.problem,
-        description: order.description, address: order.address, destination: order.destination, cargo: order.cargo,
+        description: order.description, address: order.address, road: order.site?.road ?? null, destination: order.destination, cargo: order.cargo,
         zone: order.estimate.zoneName, brand: order.brand, distanceKm: r.distanceKm,
         usual: lim.usual, floor: lim.floor, ceil: lim.ceil, until: until.toISOString(), ringUntil: ring,
       }, {
@@ -82,11 +144,6 @@ export class AuctionService {
         ttlSeconds: all.dispatch.ringSeconds,
       });
     }
-    void ids;
-  }
-
-  private async participants(orderId: string) {
-    return this.orders.participants(orderId);
   }
 
   /** Отклик исполнителя: price не указана — по обычной цене. Можно поменять, пока клиент не выбрал. */
@@ -110,7 +167,9 @@ export class AuctionService {
     }
     const prof = await this.db.one<{ prep_minutes: number }>('select prep_minutes from performer_profiles where user_id=$1', [user.id]);
     const speed = order.service === 'tow' ? all.dispatch.towSpeedKmh : all.dispatch.citySpeedKmh;
-    const eta = etaMinutes(d.distance_km == null ? null : Number(d.distance_km), prof?.prep_minutes ?? 0, speed);
+    const eta = d.road_eta_minutes == null
+      ? etaMinutes(d.distance_km == null ? null : Number(d.distance_km), prof?.prep_minutes ?? 0, speed)
+      : Number(d.road_eta_minutes);
     const hour = await this.hourFor(user.id, order);
     const o = await this.db.tx(async (q) => {
       // Та же блокировка, что при выборе: занятый или ушедший с линии в этот миг не откликнется
@@ -129,7 +188,7 @@ export class AuctionService {
     });
     await this.orders.event(this.db, orderId, user.id, 'offer', { price: p, eta });
     const diff = Math.round((p / lim.usual - 1) * 100);
-    await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId, status: 'searching', offers: true },
+    await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true },
       { kind: 'normal', title: 'Новый отклик', body: `${user.name ?? 'Исполнитель'}: ${rub(p)}${diff ? ` (${diff > 0 ? '+' : ''}${diff}%)` : ''}, подача ~${eta} мин`, data: { orderId } });
     return o;
   }
@@ -138,7 +197,7 @@ export class AuctionService {
     await this.db.query(`update bids set status='withdrawn', updated_at=now() where order_id=$1 and performer_id=$2 and status='active'`, [orderId, user.id]);
     await this.db.query(`update order_dispatch set status='declined', responded_at=$3 where order_id=$1 and performer_id=$2 and status='bidding'`, [orderId, user.id, this.now()]);
     const o = await this.db.one('select client_id, created_by from orders where id=$1', [orderId]);
-    if (o) this.notifier.live([o.client_id, o.created_by], { type: 'order', orderId, status: 'searching', offers: true });
+    if (o) this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true });
     return { ok: true };
   }
 
@@ -159,7 +218,7 @@ export class AuctionService {
   private async rows(orderId: string, brand: string | null, onlyPerformer: string | null) {
     const rows = await this.db.query(
       `select f.id, f.performer_id, f.price, f.hour_price, f.eta_minutes, f.status,
-              u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, p.extras, d.distance_km::float as distance_km,
+              u.name, u.rating::float as rating, u.rating_count, p.car, p.brands, p.tier, p.extras, d.distance_km::float as distance_km, d.road_eta_minutes,
               (select count(*)::int from orders c where c.performer_id=f.performer_id and c.status='completed') as completed
          from bids f join users u on u.id=f.performer_id left join performer_profiles p on p.user_id=f.performer_id
          left join order_dispatch d on d.order_id=f.order_id and d.performer_id=f.performer_id
@@ -172,15 +231,36 @@ export class AuctionService {
   async choose(user: AuthUser | null, orderId: string, offerId: string) {
     const pre = await this.db.one('select o.client_id, o.created_by, b.performer_id from orders o join bids b on b.order_id=o.id where o.id=$1 and b.id=$2', [orderId, offerId]);
     if (!pre) throw notFound('Отклик не найден');
-    if (user && pre.client_id !== user.id && pre.created_by !== user.id) throw forbidden();
+    if (user) {
+      const visible = await this.orders.mustSee(user, orderId);
+      if (this.orders.actorOf(user, visible) !== 'client')
+        throw forbidden('Только действующий клиент или водитель может выбрать отклик');
+    }
     // Исполнитель мог только что взять другую заявку — его отклик здесь больше не действует
     if (await this.orders.busyWith(this.db, pre.performer_id, orderId)) {
       await this.db.query(`update bids set status='withdrawn', updated_at=now() where id=$1 and status='active'`, [offerId]);
-      this.notifier.live([pre.client_id, pre.created_by], { type: 'order', orderId, status: 'searching', offers: true });
+      this.notifier.live(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'searching', offers: true });
       throw conflict('performer_busy', 'Этот исполнитель только что взял другую заявку — выберите другого');
     }
 
     const res = await this.db.tx(async (q) => {
+      // Check authorization again in the write transaction. Lock the active
+      // driver vehicle (FOR SHARE) so a concurrent revoke cannot commit before
+      // the acceptance. Creator UUID alone never authorizes a fleet order.
+      if (user) {
+        const row = await q.one<{client_id:string;created_by:string;vehicle_id:string|null}>(
+          'select client_id,created_by,vehicle_id from orders where id=$1', [orderId]);
+        if (!row) throw notFound('Заявка не найдена');
+        if (row.client_id !== user.id) {
+          if (row.created_by !== user.id) throw forbidden();
+          const live = await q.one<{ok:number}>(`select 1 as ok from users u
+            join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+            where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=$2
+              and ($3::uuid is null or v.id=$3)
+            limit 1 for share of v`, [user.id, row.client_id, row.vehicle_id]);
+          if (!live) throw forbidden('Водитель больше не закреплён за машиной этой заявки');
+        }
+      }
       // Сначала занимаем заявку: из двух одновременных выборов пройдёт только один
       // Блокируем исполнителя: выборы одного и того же человека в разных заявках идут строго по очереди
       await q.query('select 1 from performer_profiles where user_id=$1 for update', [pre.performer_id]);
@@ -208,7 +288,7 @@ export class AuctionService {
       { kind: 'normal', title: 'Клиент выбрал вас', body: res.o.service === 'consult' ? `Консультация №${res.o.number}: свяжитесь с клиентом` : `Заявка №${res.o.number}: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     this.notifier.live(res.losers, { type: 'order', orderId, status: 'lost' });
     if (!user) {
-      await this.notifier.notify([res.o.client_id, res.o.created_by], { type: 'order', orderId, status: 'accepted' },
+      await this.notifier.notify(await this.orders.customerRecipientsForOrder(orderId), { type: 'order', orderId, status: 'accepted' },
         { kind: 'normal', title: 'Исполнитель назначен', body: res.o.service === 'consult' ? 'Мастер на связи — он позвонит или напишет в чат' : `Выбрали лучшего из откликов: выезд ${rub(res.f.price)}, подача ~${res.f.eta_minutes} мин`, data: { orderId } });
     }
     await this.orders.systemMessage(orderId, res.o.service === 'consult'
@@ -240,7 +320,29 @@ export class AuctionService {
     for (const o of due) {
       const rows = await this.rows(o.id, o.brand, null);
       const active = rows.filter((r: any) => r.status === 'active');
-      if (!active.length) { await this.finishEmpty(o); n++; continue; }
+      if (!active.length) {
+        const stages=this.stages(o,all.dispatch);
+        const index=Number(o.sos_dispatch_stage??0);
+        if (stages && index+1 < stages.length) {
+          // Atomic compare-and-set: concurrent timers advance a wave once.
+          // A cancelled order or another tick must never restart dispatch.
+          const next=await this.db.query<{id:string}>(
+            `update orders set sos_dispatch_stage=sos_dispatch_stage+1,auction_until=null
+              where id=$1 and status='searching' and sos_dispatch_stage=$2
+                and auction_until<=$3 returning id`,[o.id,index,this.now()]);
+          if (next.length) {
+            await this.orders.event(this.db,o.id,null,'search_expanded',{
+              wave:index+2,waves:stages.length,maxRoadEtaMinutes:stages[index+1].maxRoadEtaMinutes,
+            });
+            await this.start(o.id);
+            n++;
+          }
+        } else {
+          await this.finishEmpty(o, all.dispatch);
+          n++;
+        }
+        continue;
+      }
       if (o.auto_pick) {
         const best = sortOffers(active, 'recommended', this.limits(o, all.dispatch), all.dispatch.weights)[0];
         await this.choose(null, o.id, best.id).catch(() => {});
@@ -250,12 +352,142 @@ export class AuctionService {
     return n;
   }
 
-  private async finishEmpty(order: any) {
-    const r = await this.db.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
-    if (!r.length) return;
-    await this.db.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
-    await this.orders.event(this.db, order.id, null, 'no_performer', { auction: true });
-    await this.notifier.notify([order.client_id, order.created_by], { type: 'order', orderId: order.id, status: 'no_performer' },
-      { kind: 'normal', title: 'Нет откликов', body: 'Свободных исполнителей рядом сейчас нет. Попробуйте ещё раз или позвоните в поддержку.', data: { orderId: order.id } });
+  /**
+   * Turn persisted terminal events into one durable inbox notification per
+   * recipient. Lock intents until the insert and acknowledgement COMMIT, so
+   * concurrent servers and retries cannot duplicate a stored notification.
+   * A push or WebSocket failure never removes the customer's stored inbox row.
+   */
+  async flushPendingNoPerformerAlerts(limit = 50): Promise<number> {
+    const delivered = await this.db.tx(async q => {
+      const rows = await q.query<{
+        eventId: string; userId: string; orderId: string;
+        status: string; latestEventId: string | null; stillRecipient: boolean;
+      }>(`select a.event_id::text as "eventId",a.user_id as "userId",
+                   a.order_id as "orderId",o.status,
+                   -- A previously enqueued alert is not a permanent right:
+                   -- only the owning client or the currently assigned creator
+                   -- may receive the private order notification.
+                   (a.user_id=o.client_id or
+                      (a.user_id=o.created_by and exists (
+                        select 1 from users u join vehicles v
+                          on v.owner_id=u.owner_id and v.driver_id=u.id
+                        where u.id=a.user_id and 'driver'=any(u.roles)
+                          and u.owner_id=o.client_id
+                          and (o.vehicle_id is null or v.id=o.vehicle_id)
+                      ))) as "stillRecipient",
+                   (select max(e.id)::text from order_events e
+                     where e.order_id=a.order_id and e.type='no_performer') as "latestEventId"
+            from order_no_performer_alerts a
+            join orders o on o.id=a.order_id
+           where a.handled_at is null
+           order by a.created_at,a.event_id
+           limit $1
+           for update of a,o skip locked`,[Math.min(100,Math.max(1,limit))]);
+      const stored: {eventId:string;userId:string;orderId:string}[] = [];
+      for (const row of rows) {
+        // A retry can start a new search before this background attempt.
+        // Never notify the requester about a superseded terminal search.
+        const current = row.status === 'no_performer' &&
+          row.latestEventId === row.eventId && row.stillRecipient === true;
+        if (current) {
+          const data = JSON.stringify({
+            orderId: row.orderId, terminalEventId: row.eventId,
+          });
+          await q.query(
+            `insert into notifications(user_id,kind,title,body,data)
+               values ($1,'order',$2,$3,$4::jsonb)`,
+            [row.userId,'Поиск исполнителя завершён',
+              'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.',
+              data]);
+          stored.push({eventId:row.eventId,userId:row.userId,orderId:row.orderId});
+        }
+        await q.query(
+          `update order_no_performer_alerts
+              set handled_at=now(),outcome=$3
+            where event_id=$1::bigint and user_id=$2`,
+          [row.eventId,row.userId,current?'stored':'obsolete']);
+      }
+      return stored;
+    });
+    // At least the in-app notification is durable even if the process stops
+    // between COMMIT and push. Push delivery itself is best effort.
+    for (const item of delivered) {
+      await this.notifier.deliverStored([item.userId],
+        {type:'order',orderId:item.orderId,status:'no_performer'},
+        {kind:'normal',title:'Поиск исполнителя завершён',
+          body:'Поиск завершён без подтверждённого исполнителя. Откройте заявку, чтобы повторить поиск или обратиться в поддержку.',
+          data:{orderId:item.orderId}})
+        .catch(err=>console.warn('[no-performer delivery]',(err as Error).message));
+    }
+    return delivered.length;
+  }
+
+  private async finishEmpty(order: any, dispatch: Settings['dispatch']) {
+    // The requester can poll as soon as the status changes. Publish the status
+    // and its immutable explanation in the same commit.
+    const finished = await this.db.tx(async (q) => {
+      const r = await q.query(`update orders set status='no_performer' where id=$1 and status='searching' returning id`, [order.id]);
+      if (!r.length) return false;
+      await q.query(`update order_dispatch set status='missed' where order_id=$1 and status='bidding'`, [order.id]);
+      // Snapshot ONLY the current search attempt: after an accepted worker
+      // drops out, the old invitation and accepted offer belong to the
+      // previous search. A replacement with zero offers must not be labelled
+      // "offers withdrawn" because of that old bid.
+      // Never infer a missing partner from no_performer status alone.
+      let absenceReason: NoPerformerReason = 'unknown';
+      await q.query('savepoint classify_absence');
+      try {
+        const evidence = await q.one<{ invited: boolean; hadOffer: boolean }>(
+          `select
+            exists(select 1 from order_events e where e.order_id=$1
+               and e.id>coalesce((select max(id) from order_events
+                                   where order_id=$1 and type in ('retry','performer_dropped')),0)
+               and (e.type='ringing' or
+                    (e.type='auction_started' and
+                     coalesce(nullif(e.data->>'candidates','')::numeric,0)>0))) as invited,
+            exists(select 1 from order_events e where e.order_id=$1
+               and e.type='offer'
+               and e.id>coalesce((select max(id) from order_events
+                                   where order_id=$1 and type in ('retry','performer_dropped')),0)) as "hadOffer"`,
+          [order.id]);
+        const profiles = await q.query<PartnerPresence>(
+          `select p.kind,p.specialties,u.status as user_status,p.verification,
+                  p.line_status,p.paused,p.extras,p.lat,p.lng
+             from performer_profiles p join users u on u.id=p.user_id
+            where p.kind=$1`, [performerKindFor(order.service)]);
+        absenceReason = classifyNoPerformerReason({
+          service: order.service, verifiedOnly: !!order.verified_only,
+          lat: order.lat ?? null, lng: order.lng ?? null,
+          radiusKm: dispatch.radiusKm, invited: !!evidence?.invited,
+          hadOffer: !!evidence?.hadOffer, profiles
+        });
+      } catch (err) {
+        // Explanatory copy must never block the terminal order status, payment,
+        // immutable event or customer notification.
+        await q.query('rollback to savepoint classify_absence');
+        console.error('[no-performer-classification]', err);
+      }
+      const terminal = await q.one<{id:string}>(
+        `insert into order_events(order_id,actor_id,type,data)
+           values ($1,null,'no_performer',$2::jsonb) returning id::text as id`,
+        [order.id,JSON.stringify({auction:true,absenceReason})]);
+      if (!terminal) throw new Error('Terminal search event was not persisted');
+      // The notification intent survives a later outage in notifications
+      // independently of the order status, without storing personal data.
+      await q.query(
+        `insert into order_no_performer_alerts(event_id,user_id,order_id)
+           select $1::bigint,recipient.user_id,$2::uuid
+             from (select distinct unnest($3::uuid[]) as user_id) recipient
+            where recipient.user_id is not null
+           on conflict (event_id,user_id) do nothing`,
+        [terminal.id,order.id,[order.client_id,order.created_by].filter(Boolean)]);
+      return true;
+    });
+    if (!finished) return;
+    // Try immediate delivery for a responsive UI. If notification storage
+    // is down, the scheduled drain retries the persisted intent after recovery.
+    await this.flushPendingNoPerformerAlerts()
+      .catch((err) => console.warn('[no-performer notify pending]', (err as Error).message));
   }
 }

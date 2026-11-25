@@ -81,6 +81,11 @@ export const defaultSettings = {
     parallel: 10,
     parallelSos: 10,
     radiusKm: 220,
+    /** #51: awaiting approved limits and road ETA connector; legacy search unchanged until enabled. */
+    sosProgressive: {
+      enabled: false,
+      stages: [] as import('./progressiveSos.ts').SosSearchStage[],
+    },
     /** Торги: сколько минут принимаем отклики на обычную заявку */
     auctionMinutes: 10,
     /** SOS: через столько секунд назначаем лучшего из «Рекомендуем», если клиент не выбрал */
@@ -115,8 +120,10 @@ export const defaultSettings = {
     serviceReferralDiscountPct: 1,
   },
   referral: {
-    /** Кто угодно пригласил клиента: % от его оплаченных заявок баллами, срок — days */
-    clientSharePct: 0.5,
+    /** Доля пригласившему: % от фактического сервисного сбора TrakSOS с заказа приглашённого клиента */
+    clientSharePct: 10,
+    /** Для клиента — не более 10% стоимости заказа баллами, и не больше самого сервисного сбора */
+    clientSpendCapPct: 10,
     days: 180,
     /** Приглашённому клиенту — на первую заявку, копейки */
     welcome: 30_000,
@@ -131,8 +138,8 @@ export const defaultSettings = {
     ttlDays: 180,
   },
   payments: {
-    /** Наличные мастеру — работает всегда */
-    cash: true,
+    /** Наличные отменены для новых заказов. Исторический ledger не удаляется. */
+    cash: false,
     /** Безнал на сайте и в приложении (агентская схема) — включается после юриста и бухгалтера */
     online: false,
     /** Счёт для компаний по ИНН */
