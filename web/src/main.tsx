@@ -72,6 +72,7 @@ import { DemoPreviewGate } from './screens/demoPreview.tsx';
 import { AndroidDesignReview } from './screens/androidDesignReview.tsx';
 import { NavGlyph } from './navGlyph.tsx';
 import { MobileRoleMenu } from './mobileRoleMenu.tsx';
+import { AccountMenuDetails } from './accountMenuDetails.tsx';
 import { MobileSectionChrome } from './mobileSectionChrome.tsx';
 import { ApprovedInnerHero, ApprovedInnerRail } from './approvedInnerExperience.tsx';
 import { SandboxEnter, SandboxModeBadge } from './screens/isolatedSandbox.tsx';
@@ -811,37 +812,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
             </nav>}
           {me && <a href="#/help" className="bell" aria-label="Справка">?</a>}
           {me && <Bell />}
-          {me && <details className="account-menu" key={here}
-            onPointerLeave={event=>{
-              // Close desktop flyouts when the pointer actually leaves; don't
-              // treat touch scrolling/taps as a hover exit on Android.
-              if(event.pointerType==='mouse' &&
-                 window.matchMedia('(hover: hover) and (pointer: fine)').matches)
-                event.currentTarget.open=false;
-            }}
-            onBlur={event=>{
-              if(!event.currentTarget.contains(event.relatedTarget as Node | null))
-                event.currentTarget.open=false;
-            }}
-            onKeyDown={event=>{
-              if(event.key==='Escape' && event.currentTarget.open){
-                event.currentTarget.open=false;
-                (event.currentTarget.querySelector('summary') as HTMLElement | null)?.focus();
-                event.preventDefault();
-              }
-            }}>
+          {me && <AccountMenuDetails key={here}>
             <summary aria-label="Открыть меню кабинета"><span className="account-menu-desktop-glyph" aria-hidden="true">☰</span><span className="account-menu-desktop-label">Меню</span><span className="account-menu-mobile-glyph" aria-hidden="true"><NavGlyph glyph="◉" /></span></summary>
-            <nav aria-label="Все разделы кабинета"
-              onClick={event=>{
-                // A link may point to the current route, so keyed remounting
-                // alone cannot close native <details>. Close on any real
-                // action, including Help and "show tour", before it obscures
-                // the destination screen. Plain whitespace doesn't dismiss.
-                if((event.target as Element).closest('a,button')){
-                  const menu=event.currentTarget.closest('details') as HTMLDetailsElement | null;
-                  if(menu)menu.open=false;
-                }
-              }}>
+            <nav aria-label="Все разделы кабинета">
               <span className="account-menu-heading">Мой кабинет</span>
               {accountLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               <span className="account-menu-heading">Помощь и документы</span>
@@ -849,7 +822,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
               {helpLinks.map(([href, label]) => <a key={href} href={shellHref(href)}>{label}</a>)}
               {<button type="button" className="account-menu-logout" onClick={safeLogout}>Выйти из аккаунта</button>}
             </nav>
-          </details>}
+          </AccountMenuDetails>}
         </div>
       </header>
       <NetworkStatus />
