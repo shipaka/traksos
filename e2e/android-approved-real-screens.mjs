@@ -212,6 +212,19 @@ try{
       if(!await accountDetails.locator('a[href="#/profile"]').isVisible()||
          !await accountDetails.locator('button.tr-mobile-menu-logout').isVisible())
         throw Error(role+': account did not reveal the real profile and logout actions');
+      if(role==='master'){
+        const finance=menu.locator('details.tr-mobile-menu-section').filter({
+          has:page.locator('summary[aria-label="Финансы"]')
+        });
+        if(await finance.count()!==1)throw Error('Master finance menu missing');
+        await finance.locator('summary').click();
+        for(const path of ['#/work/me/money','#/work/me/tax','#/economics'])
+          if(!await finance.locator('a[href="'+path+'"]').isVisible())
+            throw Error('Master finance route misplaced: '+path);
+        for(const path of ['#/work/me/schedule','#/work/filter'])
+          if(!await accountDetails.locator('a[href="'+path+'"]').isVisible())
+            throw Error('Master settings route misplaced: '+path);
+      }
       await assertClean(role+' Android account menu');
       await accountDetails.locator('a[href="#/profile"]').click();
       await page.waitForURL(url => url.hash === '#/profile', {timeout:10000});
