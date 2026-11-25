@@ -33,11 +33,12 @@ function Progress({stage}:{stage:Stage}){
   </ol>;
 }
 export function ApprovedPcCourier(){
-  const jobs=useLoad<Job[]>(()=>get('/api/courier/jobs'),[],e=>e.type==='shop');
+  const jobs=useLoad<Job[]>(()=>get('/api/courier/jobs'),[],e=>e.type==='shop'||e.type==='connection_restored');
   const presence=useLoad<{online:boolean}>(()=>get('/api/courier/presence'),[]);
   const {busy,run}=useAction();
   const [selected,setSelected]=useState<string|null>(null);
-  const all=jobs.data||[];
+  const ready=!jobs.error&&Array.isArray(jobs.data);
+  const all=ready?(jobs.data??[]):[];
   const active=all.filter(j=>LIVE.has(j.status));
   const current=active.find(j=>j.id===selected)||active[0]||null;
   const itemCount=active.reduce((n,j)=>n+j.items.reduce((k,x)=>k+(x.qty||0),0),0);
@@ -47,25 +48,25 @@ export function ApprovedPcCourier(){
     <header className="courier-pc-header">
       <div><small>TRAKSOS · КУРЬЕРСКАЯ ДОСТАВКА</small><h1>Рабочий стол</h1>
         <p>Рейсы, посылки и подтверждение получателя — в одном месте.</p></div>
-      <button type="button" role="switch" className={'courier-pc-presence'+(presence.data?.online?' on':'')}
+      {presence.error?<button type="button" className="courier-pc-presence" onClick={presence.reload}>Повторить проверку статуса</button>:<button type="button" role="switch" className={'courier-pc-presence'+(presence.data?.online?' on':'')}
         aria-checked={!!presence.data?.online} disabled={!presence.data||busy}
         onClick={async()=>{if(!presence.data)return;const next=!presence.data.online;
           const ok=await run(()=>put('/api/courier/presence',{online:next}),next?'Вы на линии':'Вы не на линии');
           if(ok)presence.reload();}}>
         <span className="courier-pc-light" aria-hidden="true"/>
         {!presence.data?'Статус загружается':presence.data.online?'На линии':'Не на линии'}
-        <i aria-hidden="true"/></button>
+        <i aria-hidden="true"/></button>}
     </header>
     <div className="courier-pc-grid">
       <div className="courier-pc-primary">
         <div className="courier-pc-stats">
-          <a className="orange" href="#/courier/jobs"><span>▣</span><small>Активные рейсы</small><strong>{jobs.data?active.length:'—'}</strong></a>
-          <a className="teal" href="#/courier/jobs"><span>⬡</span><small>Посылки</small><strong>{jobs.data?itemCount:'—'}</strong></a>
-          <a className="blue" href="#/courier/jobs"><span>⌖</span><small>Остановки</small><strong>{jobs.data?active.length:'—'}</strong></a>
+          <a className="orange" href="#/courier/jobs"><span>▣</span><small>Активные рейсы</small><strong>{ready?active.length:'—'}</strong></a>
+          <a className="teal" href="#/courier/jobs"><span>⬡</span><small>Посылки</small><strong>{ready?itemCount:'—'}</strong></a>
+          <a className="blue" href="#/courier/jobs"><span>⌖</span><small>Остановки</small><strong>{ready?active.length:'—'}</strong></a>
         </div>
-        <section className={"courier-pc-trip"+(jobs.data&&active.length===0?" courier-pc-trip--empty":"")}>
+        <section className={"courier-pc-trip"+(ready&&active.length===0?" courier-pc-trip--empty":"")}>
           <header><div><span className="courier-pc-trip-icon">▣</span>
-              <div><h2>{current?'Доставка №'+current.orderNumber:jobs.data?'Пока нет назначенных доставок':'Проверяем назначения'}</h2>
+              <div><h2>{current?'Доставка №'+current.orderNumber:jobs.error?'Не удалось загрузить доставки':ready?'Пока нет назначенных доставок':'Проверяем назначения'}</h2>
                 <small>{current?'Назначенная доставка запчастей':'На экране появятся только реальные назначения из системы'}</small></div></div>
             {current&&<em>{STATUS[current.status]}</em>}</header>
           <div className="courier-pc-trip-hero">
@@ -77,7 +78,7 @@ export function ApprovedPcCourier(){
               <strong>{current?"Назначенные адреса":"Новые назначения"}</strong>
               {jobs.error&&<p role="alert">Не удалось загрузить рейсы. <button onClick={jobs.reload}>Повторить</button></p>}
               {!jobs.data&&!jobs.error&&<p>Загружаем назначения…</p>}
-              {jobs.data&&active.length===0&&<p>Пока нет назначенных доставок. Новые появятся после назначения диспетчером.</p>}
+              {ready&&active.length===0&&<p>Пока нет назначенных доставок. Новые появятся после назначения диспетчером.</p>}
               {active.slice(0,5).map((job,i)=><button type="button" key={job.id}
                 className={current?.id===job.id?'selected':''} onClick={()=>setSelected(job.id)}>
                 <b>{i+1}</b><span><strong>Заказ №{job.orderNumber}</strong>
@@ -93,20 +94,20 @@ export function ApprovedPcCourier(){
       </div>
       <aside className="courier-pc-side">
         <section className="courier-pc-route">
-          <h2>{current?"Адреса доставок":"Ожидание назначений"} <small>{current?"По текущим заказам":"Маршрут не сформирован"}</small></h2>
+          <h2>{current?"Адреса доставок":jobs.error?"Не удалось обновить адреса":"Ожидание назначений"} <small>{current?"По текущим заказам":ready?"Маршрут не сформирован":"Данные недоступны"}</small></h2>
           <div className={"courier-pc-schematic"+(!current?" courier-pc-schematic--empty":"")} aria-label={current?"Список остановок, без автоматической прокладки маршрута":"Нет назначенного маршрута"}>
             <span className="courier-pc-schematic-title">{current?"Доставки по заданиям":"Реальные адреса появятся после назначения"}</span>
             <div className="courier-pc-route-line">
               {active.length?active.slice(0,4).map((job,i)=><button key={job.id} type="button"
                 className={current?.id===job.id?'selected':''} onClick={()=>setSelected(job.id)}
                 aria-label={'Выбрать доставку '+job.orderNumber}>{i+1}</button>)
-                :<span>Маршрут ещё не назначен</span>}
+                :<span>{ready?'Маршрут ещё не назначен':'Нет актуальных данных'}</span>}
             </div>
             <small>{current?"Схема, не географическая карта. Порядок маршрута не рассчитывается.":"Когда появится доставка, здесь будут только её реальные адреса."}</small>
           </div>
         </section>
         <section className="courier-pc-order">
-          <header><h2>{current?'Заказ №'+current.orderNumber:'Нет текущей доставки'}</h2>
+          <header><h2>{current?'Заказ №'+current.orderNumber:ready?'Нет текущей доставки':'Данные доставки недоступны'}</h2>
             {current&&<em>{STATUS[current.status]}</em>}</header>
           {current?<><div className="courier-pc-items"><span className="courier-pc-package">⬡</span>
             <div><strong>{current.items[0]?.name||'Запчасти'}</strong>
