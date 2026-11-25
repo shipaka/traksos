@@ -123,18 +123,21 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     route[1]==='requests' ? 'all' : 'action');
   const [search, setSearch] = useState('');
   const [actionError,setActionError]=useState('');
+  const decisionLock=useRef(false);
+  const [unconfirmed,setUnconfirmed]=useState(false);
   const [draftScope,setDraftScope]=useState('');
   const currentDraft=draftScope===accessScope;
   useEffect(()=>{
     // This may be the same mounted component with a different login or a
     // switched insurer/inspection workspace. Reset all case-specific input.
     setDraftScope(accessScope);setCheckedSteps({});setNotes({});
-    setInspectionNotes({});setExpires({});setActionError('');
+    setInspectionNotes({});setExpires({});setActionError('');setUnconfirmed(false);
     setSearch('');setInspectionView('active');
     setWorkspace(inspectionOnly?'inspection':'insurance');
     setFilter(route[1]==='requests'?'all':'action');
   },[accessScope]);
   async function update(id: string, status: 'completed' | 'rejected') {
+    if(decisionLock.current||busy||unconfirmed||!currentDraft||!canInsure||!requests.data)return;
     const startedAs=accessScope;
     const note = (currentDraft?(notes[id]??''):'').trim();
     const policyExpiresOn = currentDraft?expires[id]:undefined;
@@ -148,18 +151,21 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
     }
     if(inspectionOnly)return;
     setActionError('');
+    decisionLock.current=true;
     const result = await run(() => patch(`/api/insurer/requests/${id}`, {
       status, note: note || undefined,
       policyExpiresOn: status === 'completed' ? policyExpiresOn : undefined,
-    }), 'Заявка обновлена');
+    }), 'Заявка обновлена').finally(()=>{decisionLock.current=false;});
     if(identityRef.current!==startedAs)return;
     if(result){
       setNotes(old=>{const value={...old};delete value[id];return value;});
       setExpires(old=>{const value={...old};delete value[id];return value;});
       requests.reload();
-    }else setActionError('Изменение заявки не подтверждено. Обновите очередь перед повторной отправкой.');
+    }else {setUnconfirmed(true);setActionError('Изменение заявки не подтверждено. Обновите очередь перед повторной отправкой.');}
   }
   async function decideInspection(id:string,status:'completed'|'rejected') {
+    if(decisionLock.current||busy||unconfirmed||!currentDraft||!canInspect||!inspections.data)return;
+    if(status==='completed'&&!['documents','vehicle','result'].every(k=>checkedSteps[id+':'+k]))return;
     const startedAs=accessScope;
     const note=(currentDraft?(inspectionNotes[id]??''):'').trim();
     if(status==='rejected'&&!note){setActionError('Укажите причину отказа.');return;}
@@ -167,14 +173,15 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
       setActionError('Укажите фактический результат осмотра (не менее 5 символов).');return;
     }
     setActionError('');
+    decisionLock.current=true;
     const result=await run(()=>patch('/api/insurer/inspections/'+id,{status,note:note||undefined}),
-      status==='completed'?'Техосмотр отмечен выполненным':'Заявка отклонена');
+      status==='completed'?'Техосмотр отмечен выполненным':'Заявка отклонена').finally(()=>{decisionLock.current=false;});
     if(identityRef.current!==startedAs)return;
     if(result){
       setCheckedSteps(old=>Object.fromEntries(Object.entries(old).filter(([key])=>!key.startsWith(id+':'))));
       setInspectionNotes(old=>{const values={...old};delete values[id];return values;});
       inspections.reload();
-    }else setActionError('Решение по техосмотру не подтверждено. Обновите очередь перед повторной отправкой.');
+    }else {setUnconfirmed(true);setActionError('Решение по техосмотру не подтверждено. Обновите очередь перед повторной отправкой.');}
   }
   const rows: any[] | undefined = Array.isArray(requests.data)?requests.data:undefined;
   const inspectionRows:any[]|null=Array.isArray(inspections.data)?inspections.data:null;
@@ -238,9 +245,10 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             onChange={e=>setInspectionNotes(old=>({...old,[inspectionId]:e.target.value}))}/>
         </label>
         {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
-        <button type="button" className="btn" disabled={busy||!verified||note.length<5}
+        {unconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={()=>{requests.reload();inspections.reload();}}>Обновить очередь для сверки</button><button type="button" className="btn ghost small" disabled={requests.loading||inspections.loading||!!requests.error||!!inspections.error} onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
+        <button type="button" className="btn" disabled={busy||unconfirmed||!verified||note.length<5}
           onClick={()=>decideInspection(inspectionId,'completed')}>Внести результат техосмотра</button>
-        <button type="button" className="btn ghost" disabled={busy||note.length<5}
+        <button type="button" className="btn ghost" disabled={busy||unconfirmed||note.length<5}
           onClick={()=>decideInspection(inspectionId,'rejected')}>Отказать с указанием причины</button>
         <p className="note">Завершение заявки в TrakSOS не означает выдачу диагностической карты. Её оформляют отдельно в уполномоченной системе.</p>
       </section> : <section className="card">
@@ -299,6 +307,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
           <button type="button" className="btn ghost small" onClick={inspections.reload}>Обновить</button>
         </div>
         {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+        {unconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={()=>{requests.reload();inspections.reload();}}>Обновить очередь для сверки</button><button type="button" className="btn ghost small" disabled={requests.loading||inspections.loading||!!requests.error||!!inspections.error} onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
         {!inspectionRows?<div className="empty" role={inspections.error?'alert':'status'}>{inspections.error?
             <>Не удалось загрузить техосмотры: {inspections.error}
               <button type="button" className="btn ghost small" onClick={inspections.reload}>Повторить загрузку техосмотров</button></>
@@ -317,7 +326,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                   onChange={e=>setInspectionNotes(v=>({...v,[r.id]:e.target.value}))}/></label>
               <div className="row">
                 {!inspectionOnly&&<a className="btn small" href={'#/inspections/'+encodeURIComponent(r.id)}>Открыть этапы осмотра</a>}
-                <button type="button" className="btn ghost small" disabled={busy||!currentDraft}
+                <button type="button" className="btn ghost small" disabled={busy||unconfirmed||!currentDraft}
                   onClick={()=>decideInspection(r.id,'rejected')}>Отказать</button>
               </div>
               <p className="note">Отметка выполнения не является выдачей диагностической карты.</p>
@@ -390,6 +399,7 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
             </label>
           </div>
           {actionError&&<div className="banner warn" role="alert">{actionError}</div>}
+        {unconfirmed&&<div className="row"><button type="button" className="btn ghost small" onClick={()=>{requests.reload();inspections.reload();}}>Обновить очередь для сверки</button><button type="button" className="btn ghost small" disabled={requests.loading||inspections.loading||!!requests.error||!!inspections.error} onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
           <span className="label">Показано заявок: {visible.length}</span>
           {!visible.length && <div className="empty">{filter==='action'?'Нет заявок, требующих действий. Новые обращения появятся здесь.':filter==='active'?'Нет заявок в работе.':'По выбранным фильтрам заявок нет.'}</div>}
           <div className="web-insurance-grid">
@@ -428,8 +438,8 @@ export function InsurerCabinet({inspectionOnly=false}:{inspectionOnly?:boolean}=
                     placeholder="Комментарий или причина отказа"
                     value={currentDraft?(notes[r.id]??''):''} onChange={(e) => setNotes((old) => ({ ...old, [r.id]: e.target.value }))} />
                   <div className="grid2">
-                    <button type="button" className="btn small" disabled={busy||!currentDraft||!futureDate(expires[r.id]??'')} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
-                    <button type="button" className="btn ghost small" disabled={busy} onClick={() => update(r.id, 'rejected')}>Отказать</button>
+                    <button type="button" className="btn small" disabled={busy||unconfirmed||!currentDraft||!futureDate(expires[r.id]??'')} onClick={() => update(r.id, 'completed')}>Полис оформлен</button>
+                    <button type="button" className="btn ghost small" disabled={busy||unconfirmed} onClick={() => update(r.id, 'rejected')}>Отказать</button>
                   </div>
                 </>}
               </div>
