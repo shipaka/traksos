@@ -318,8 +318,8 @@ try{
  const fullRecoveryId='synthetic-full-order-recovery';
  const fullRecoveryOrder={...consultOrder,id:fullRecoveryId,number:'LOCAL-RECOVERY',status:'searching',
    performer:null,actions:[],events:[],createdAt:new Date().toISOString()};
- let fullRecoveryChoices=0;
- await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId,route=>route.fulfill(json(fullRecoveryOrder)));
+ let fullRecoveryChoices=0,fullRecoveryReads=0;
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId,route=>{fullRecoveryReads++;return route.fulfill(json(fullRecoveryOrder));});
  await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[]})));
  await op.route(url=>url.pathname.startsWith('/api/orders/'+fullRecoveryId+'/offers/')&&url.pathname.endsWith('/choose'),route=>{
    fullRecoveryChoices++;return route.fulfill({status:409,contentType:'application/json',body:'{}'});
@@ -333,6 +333,13 @@ try{
  await op.locator('.roadside-performer-card').getByText('Мастер отдельной заявки CI',{exact:true}).waitFor();
  assert(await op.locator('h1').filter({hasText:'LOCAL-RECOVERY'}).count()===1,'Recovered full detail changed order');
  assert(await op.locator('.search-workspace').count()===0&&fullRecoveryChoices===0,'Recovery must not leave search open or choose automatically');
+ // Once searching ends, the new recovery handler must not remount unrelated
+ // order/chat forms on foreground or online notifications.
+ await op.waitForTimeout(100);
+ const confirmedReads=fullRecoveryReads;
+ await op.evaluate(()=>window.dispatchEvent(new Event('online')));
+ await op.waitForTimeout(350);
+ assert(fullRecoveryReads===confirmedReads,'Nonsearching order was unnecessarily reloaded by search recovery');
  await assertOwnerClean('full order missed assignment recovery');
 
  await op.unroute(consultPricingRoute);
