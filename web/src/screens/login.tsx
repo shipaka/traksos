@@ -519,7 +519,7 @@ export function Login({ driver, entry, serviceContext }: {
           <h2>Мобильное приложение <em>TrakSOS</em></h2>
           <TrakAppPhone className="public-app-phone"/>
           <p>Заявки, специалисты, документы и связь с мастером — в одном приложении.</p>
-          <span className="public-rustore-soon">Скоро в RuStore</span>
+          <a className="public-rustore-soon" href="#/app-info" aria-label="Информация о мобильном приложении TrakSOS">Скоро в RuStore</a>
           <small>Ссылка на скачивание появится после публикации приложения.</small>
         </aside>}
       </div>
@@ -540,7 +540,7 @@ export function Login({ driver, entry, serviceContext }: {
           </svg></span><b>Всё в одном месте</b><small>Сервисы, инструменты и контакты для работы с грузовой техникой</small></article>
       </section>
       <div className="public-track-extras">
-        <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('register'); }}>
+        <button type="button" className="public-track-insurance" onClick={() => { rememberGuestService('insurance'); go('explore/insurance'); }}>
           
           <span><b>Страхование грузового транспорта</b>
           <small>ОСАГО, КАСКО, груз, ответственность — заявка через TrakSOS</small></span>
