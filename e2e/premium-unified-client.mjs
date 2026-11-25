@@ -128,9 +128,12 @@ try {
           throw Error('Approved PC workspace artwork missing: ' + JSON.stringify(truck));
         if (!await page.locator('.approved-pc-three').isVisible())
           throw Error('Approved PC three-column workspace missing');
-        for (const route of ['#/sos', '#/new/tow', '#/services', '#/orders']) {
-          if (!(await page.locator('.approved-pc-client a[href="' + route + '"]').count()))
-            throw Error('Approved PC workspace missing working destination ' + route);
+        const shortcuts=page.getByRole('navigation',{name:'Услуги помощи',exact:true});
+        await shortcuts.waitFor({state:'visible'});
+        for (const route of ['#/sos', '#/new/tow', '#/services', '#/new/consult', '#/orders']) {
+          const link=shortcuts.locator('a[href="' + route + '"]');
+          if (await link.count()!==1 || !await link.isVisible())
+            throw Error('Approved PC workspace missing visible working destination ' + route);
         }
       }
       // Older photographic service cards were physically retired at the owner's
