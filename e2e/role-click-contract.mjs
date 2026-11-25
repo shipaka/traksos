@@ -54,3 +54,17 @@ export function assertDesktopActions(role,links,home){
   }
   if(role==='driver'&&links.includes('#/fleet'))throw Error('Driver sees owner fleet action');
 }
+
+// PC 617: personal destinations belong to the header; work/help to the sidebar.
+// This independent list must not be derived from the rendered application.
+export const desktopPersonalPaths=Object.freeze(['#/profile','#/privacy','#/work/me','#/work/me/about','#/work/me/phone','#/work/me/cars','#/work/me/tax','#/base/me']);
+export function assertDesktopMenu(mode,role,left,right,home){
+  const all=[...left,...right];
+  assertRoleMenu(mode,all);
+  assertDesktopActions(role,all,home);
+  if(new Set(all).size!==all.length)throw Error(role+': duplicate desktop destination');
+  if(left.some(x=>desktopPersonalPaths.includes(x))||right.some(x=>!desktopPersonalPaths.includes(x)))
+    throw Error(role+': incorrect desktop menu placement');
+  for(const href of ['#/profile','#/privacy'])if(!right.includes(href))throw Error(role+': missing personal destination '+href);
+  for(const href of ['#/support','#/help','#/economics','#/learn'])if(!left.includes(href))throw Error(role+': missing work/help destination '+href);
+}

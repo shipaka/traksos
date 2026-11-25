@@ -3,7 +3,7 @@
 // No order, payment, or delivery is submitted. Logout touches synthetic sessions only.
 import {chromium} from 'playwright';
 import {mkdir,writeFile} from 'node:fs/promises';
-import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,assertDesktopActions} from './role-click-contract.mjs';
+import {expectedTabs,assertRoleTabs,assertActiveTab,assertRoleMenu,desktopActions,desktopPersonalPaths,assertDesktopMenu} from './role-click-contract.mjs';
 import {watchPageErrors} from './visual-page-errors.mjs';
 import {clickWorkingAction} from './desktop-working-action.mjs';
 
@@ -192,7 +192,10 @@ try{
     }else{
       const sidebar=page.locator('.desktop-sidebar .desktop-nav');
       await sidebar.waitFor({state:'visible'});
-      assertDesktopActions(role,await linksOf(sidebar.locator('a[href^="#/"]')),home);
+      let menu=await openHeaderMenu(page);
+      assertDesktopMenu(mode,role,await linksOf(sidebar.locator('a[href^="#/"]')),await linksOf(menu.locator('nav a[href^="#/"]')),home);
+      await menu.locator('summary').press('Escape');
+      if(await menu.evaluate(el=>el.open))throw Error('Escape did not close desktop menu');
       const clickDesktop=async href=>{
         const link=sidebar.locator('a[href="'+href+'"]');
         await clickWorkingAction(link,async()=>{
@@ -234,12 +237,12 @@ try{
         result.clicked.push('workdesk:#/base/inbox');
         await clickDesktop(home);
       }
-      for(const href of desktopActions[role])await clickDesktop(href);
+      for(const href of new Set([...desktopActions[role].filter(href=>!desktopPersonalPaths.includes(href)),'#/support','#/help']))await clickDesktop(href);
       await clickDesktop(home);
       result.clicked.push('desktop:return-home');
-      let menu=await openHeaderMenu(page);
-      assertRoleMenu(mode,await linksOf(menu.locator('nav a[href^="#/"]')));
-      for(const href of ['#/profile','#/support','#/help']){
+      menu=await openHeaderMenu(page);
+      assertDesktopMenu(mode,role,await linksOf(sidebar.locator('a[href^="#/"]')),await linksOf(menu.locator('nav a[href^="#/"]')),home);
+      for(const href of new Set(['#/profile',...desktopActions[role].filter(href=>desktopPersonalPaths.includes(href))])){
         await clickRoute(page,menu.locator('nav a[href="'+href+'"]').first(),href,assertClean);
         if(await page.locator('.account-menu').evaluate(el=>el.open))throw Error('Header menu stayed open');
         result.clicked.push(href);
