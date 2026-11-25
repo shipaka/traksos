@@ -1,12 +1,12 @@
 // Independent acceptance matrix for the approved role navigation (617/618).
 // Keep this explicit: deriving expected tabs from the app would miss regressions.
 export const expectedTabs=Object.freeze({
-  client:['#/','#/orders','#/air','#/garage','#/menu'],
+  client:['#/','#/orders','#/air','#/garage','#/shop','#/menu'],
   performer:['#/work','#/work/jobs','#/work/chats','#/menu'],
   service:['#/base','#/base/inbox','#/shop','#/base/money','#/menu'],
   insurer:['#/insurance','#/insurance/requests','#/insurance/chats','#/menu'],
   inspection:['#/inspections','#/menu'],
-  courier:['#/courier','#/courier/jobs','#/support','#/menu'],
+  courier:['#/courier','#/courier/jobs','#/courier/chat','#/menu'],
   moderator:['#/moderation','#/support','#/menu'],
   admin:['#/admin','#/admin/section/orders','#/admin/section/people','#/menu']
 });
@@ -41,7 +41,7 @@ export const desktopActions=Object.freeze({
   'hybrid-master':['#/work/jobs','#/work/me/schedule','#/work/filter','#/work/me/money','#/work/docs','#/shop'],
   insurer:['#/profile'],
   inspection:['#/profile'],
-  courier:['#/courier/jobs','#/support'],
+  courier:['#/courier/jobs','#/courier/chat','#/support'],
   moderator:['#/moderation/verify','#/support','#/profile'],
   admin:['#/admin/section/orders','#/admin/section/support','#/profile']
 });
