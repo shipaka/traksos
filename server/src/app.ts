@@ -1193,6 +1193,12 @@ export function createApp(d: Deps) {
     return request;
   });
   r.get('/api/insurer/requests', ['insurer'], (c: AuthedCtx) => vehicleRequests.insurerQueue(c.user));
+  r.get('/api/insurer/requests/page', ['insurer'], (c: AuthedCtx) => {
+    const b=parse(z.object({view:z.enum(['active','history']).default('active'),
+      page:z.coerce.number().int().min(1).max(1000000).default(1),q:z.string().max(100).default('')}),
+      {view:c.query.get('view')??undefined,page:c.query.get('page')??undefined,q:c.query.get('q')??undefined});
+    return vehicleRequests.insurerPage(c.user,b.view,b.page,b.q);
+  });
   r.get('/api/admin/inspection-partners', ['admin','moderator'], (c: AuthedCtx) => vehicleRequests.inspectionPartners(c.user));
   r.get('/api/insurer/inspections', ['insurer','inspection_operator'], (c: AuthedCtx) => vehicleRequests.inspectionQueue(c.user));
   r.get('/api/insurer/finance', ['insurer','inspection_operator'], (c: AuthedCtx) => partnerFinance.mine(c.user));
@@ -1245,6 +1251,13 @@ export function createApp(d: Deps) {
     return updated;
   });
   r.get('/api/admin/vehicle-service-requests', ['admin'], (c: AuthedCtx) => vehicleRequests.queue(c.user));
+  r.get('/api/admin/vehicle-service-requests/page', ['admin'], (c: AuthedCtx) => {
+    const b=parse(z.object({kind:z.enum(['insurance','inspection']).optional(),view:z.enum(['active','history']).default('active'),
+      page:z.coerce.number().int().min(1).max(1000000).default(1),q:z.string().max(100).default('')}),
+      {kind:c.query.get('kind')??undefined,view:c.query.get('view')??undefined,
+        page:c.query.get('page')??undefined,q:c.query.get('q')??undefined});
+    return vehicleRequests.adminPage(c.user,b.kind??null,b.view,b.page,b.q);
+  });
   r.patch('/api/admin/vehicle-service-requests/:id', staff, async (c: AuthedCtx) => {
     const b = parse(z.object({ status: vehicleRequestStatus, note: z.string().max(2000).optional(), policyExpiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }), c.body);
     const updated = await vehicleRequests.setStatus(c.user, c.params.id, b.status, b.note, b.policyExpiresOn);
