@@ -37,7 +37,7 @@ test('inspection assignment is restricted to staff and kind',async()=>{
 });
 test('only assigned inspection partner can close an inspection',async()=>{
   const {db}=fixture();
-  const result=await new VehicleServiceRequests(db).updateInspection(partner,'request','completed');
+  const result=await new VehicleServiceRequests(db).updateInspection(partner,'request','completed','Осмотр выполнен');
   assert.equal(result.status,'completed');
   await assert.rejects(new VehicleServiceRequests(db).updateInspection(outsider,'request','completed'));
   const wrong=fixture('insurance');
@@ -57,6 +57,20 @@ test('inspection-only operator can access assigned inspection queue and decision
   const {db,calls}=fixture();
   await new VehicleServiceRequests(db).inspectionQueue(operator);
   assert.ok(calls.some(c=>c.sql.includes("kind='inspection'")));
-  const result=await new VehicleServiceRequests(db).updateInspection(operator,'request','completed');
+  const result=await new VehicleServiceRequests(db).updateInspection(operator,'request','completed','Осмотр выполнен');
   assert.equal(result.status,'completed');
+});
+
+
+test('assigned inspection partner must provide a new meaningful result before completion',async()=>{
+  for(const note of [undefined,'','   ','  итог  ']){
+    const {db,calls}=fixture();
+    await assert.rejects(new VehicleServiceRequests(db).updateInspection(partner,'request','completed',note),/фактический результат осмотра/);
+    assert.equal(calls.some(c=>c.sql.startsWith('update vehicle_service_requests')),false);
+    assert.equal(calls.some(c=>c.sql.startsWith('insert into audit_log')),false);
+  }
+  const {db,calls}=fixture();
+  const result=await new VehicleServiceRequests(db).updateInspection(partner,'request','completed','  Осмотр выполнен  ');
+  assert.equal(result.status,'completed');
+  assert.equal(calls.find(c=>c.sql.startsWith('update vehicle_service_requests'))?.params[2],'Осмотр выполнен');
 });

@@ -331,6 +331,8 @@ export class VehicleServiceRequests {
         throw bad('invalid_status','Техосмотр уже обработан или ещё не передан партнёру');
       if (status === 'rejected' && !note?.trim())
         throw bad('missing_status_reason','Укажите причину отказа');
+      if (status === 'completed' && (note?.trim().length ?? 0) < 5)
+        throw bad('inspection_result_required','Укажите фактический результат осмотра (не менее 5 символов)');
       const updated = await q.one<any>(
         `update vehicle_service_requests set status=$2, staff_note=$3, updated_at=now()
          where id=$1 and kind='inspection' and assigned_to=$4 returning *`,
