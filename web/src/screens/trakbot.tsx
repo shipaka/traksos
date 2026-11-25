@@ -13,6 +13,16 @@ interface CodeRecord {
   code: string; title_en: string; title_ru: string|null;
   detail_en: string|null; detail_ru: string|null; source_url: string; review_state: string;
 }
+const validMessage=(m:unknown):m is BotMessage=>{
+  if(!m||typeof m!=='object')return false;
+  const value=m as BotMessage;
+  return typeof value.id==='string'&&!!value.id&&['user','bot'].includes(value.role)&&typeof value.body==='string';
+};
+const historyMessages=(result:BotHistory)=>{
+  if(!result||!Array.isArray(result.messages)||!result.messages.every(validMessage))
+    throw new Error('Сервер не подтвердил историю переписки');
+  return [...new Map(result.messages.map(m=>[m.id,m])).values()];
+};
 const initialGreeting = 'Здорово! Что с машиной? Напиши код ошибки или просто расскажи, что происходит. По порядку разберёмся.';
 
 /** Only real bot messages receive the technician character; other chats stay untouched. */
@@ -53,6 +63,9 @@ function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: {
   const [historyError, setHistoryError] = useState('');
   const [historyAttempt, setHistoryAttempt] = useState(0);
   const submissionPending = useRef(false);
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const [reviewPending,setReviewPending]=useState(false);
   const [text, setText] = useState('');
   const [make, setMake] = useState('');
   const [ecu, setEcu] = useState('');
@@ -101,13 +114,13 @@ function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: {
     setHistoryLoading(true);
     setHistoryLoaded(false);
     setHistoryError('');
-    setMessages([]);
+    setMessages([]);setJustAnsweredId(null);setHandoff(false);
     setAiAvailable(false);
     setAiConsent(false);
     get<BotHistory>('/api/trakbot/messages')
       .then((result) => {
         if (!live) return;
-        setMessages(Array.isArray(result.messages) ? result.messages : []);
+        setMessages(historyMessages(result));
         setAiAvailable(!!result.aiAvailable);
         setAiTransport(result.aiTransport === 'local' ? 'local' : 'api');
         setHistoryLoaded(true);
@@ -119,7 +132,8 @@ function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: {
   useEffect(() => { if (msgBox.current) msgBox.current.scrollTop = msgBox.current.scrollHeight; }, [messages.length, working]);
 
   const send = async () => {
-    if (submissionPending.current || working || !historyLoaded || !text.trim()) return;
+    if (submissionPending.current || working || reviewPending || !historyLoaded || !text.trim()) return;
+    if(year && (!/^\d{4}$/.test(year)||Number(year)<1900||Number(year)>2100)){setError('Укажи корректный год выпуска или оставь поле пустым.');return;}
     const body = text.trim();
     submissionPending.current = true;
     setWorking(true);
@@ -130,18 +144,23 @@ function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: {
         vehicle: { ...(make.trim() && { make: make.trim() }), ...(model.trim() && { model: model.trim() }),
           ...(year.length === 4 && { year: Number(year) }), ...(ecu.trim() && { ecu: ecu.trim() }) },
       });
-      setMessages((old) => [...old, result.userMessage, result.message]);
+      if(!mounted.current)return;
+      if(!validMessage(result?.userMessage)||!validMessage(result?.message)||result.userMessage.role!=='user'||result.message.role!=='bot')throw new Error('Сервер не подтвердил ответ');
+      setMessages(old=>[...new Map([...old,result.userMessage,result.message].map(m=>[m.id,m])).values()]);
       setJustAnsweredId(result.message.id);
-      setText('');
+      setText(current=>current.trim()===body?'':current);
       setHandoff(!!result.handoffSuggested);
     } catch (e: any) {
+      if(!mounted.current)return;
+      setReviewPending(true);
       // POST may have committed before a network timeout. Never auto-repeat.
       setError((e.message || 'Ошибка связи') + ' Проверь историю перед ручной повторной отправкой.');
       try {
         const history = await get<BotHistory>('/api/trakbot/messages');
-        setMessages(Array.isArray(history.messages) ? history.messages : []);
+        if(!mounted.current)return;
+        setMessages(historyMessages(history));
       } catch {
-        setError('Не удалось подтвердить отправку и перечитать историю. Текст сохранён в поле; сначала восстанови связь и проверь историю.');
+        if(mounted.current){setHistoryLoaded(false);setHistoryError('Не удалось загрузить историю после отправки.');setError('Не удалось подтвердить отправку и перечитать историю. Текст сохранён в поле; сначала восстанови связь и проверь историю.');}
       }
     } finally {
       submissionPending.current = false;
@@ -156,12 +175,13 @@ function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: {
     setError('');
     try {
       await del('/api/trakbot/messages');
-      setMessages([]);
+      if(!mounted.current)return;
+      setReviewPending(false);setMessages([]);
       setJustAnsweredId(null);
       setHandoff(false);
       setText('');
     } catch (e: any) {
-      setError(e.message || 'Не получилось очистить историю. Попробуй ещё раз.');
+      if(mounted.current){setError('Удаление не подтверждено. Проверь историю перед повтором.');setHistoryAttempt(n=>n+1);}
     } finally {
       submissionPending.current = false;
       setWorking(false);
@@ -218,13 +238,14 @@ function TrakBotChatSession({ compact = false, onNavigate, onComposerSubmit }: {
           onClick={() => setHistoryAttempt((n) => n + 1)}>Повторить загрузку переписки</button>
       </div>}
       {error && <div role="alert" className="note" style={{ color: 'var(--danger, #b42318)' }}>{error}</div>}
+      {reviewPending&&historyLoaded&&<button type="button" className="btn ghost small" disabled={working} onClick={()=>setReviewPending(false)}>Историю проверил — разрешить повтор</button>}
       {compact && handoff && <div className="trakbot-compact-handoff" role="note">
         Нет проверенной расшифровки. {!isTech && <a href="#/new/consult" onClick={onNavigate}>Связаться с мастером</a>}
       </div>}
       <form className="compose" onSubmit={(event) => { event.preventDefault(); void send(); onComposerSubmit?.(); }}>
         <input className="field" maxLength={700} disabled={!historyLoaded || working} value={text} onChange={(e) => setText(e.target.value)} placeholder="Например: Iveco, ошибка P0087..." aria-label="Сообщение TrakBot" />
         {speechAvailable && <button type="button" className="btn ghost small" aria-label={listening ? 'Остановить запись голоса' : 'Надиктовать вопрос'} title="Надиктовать вопрос — ответ придёт текстом" onClick={startDictation}>{listening ? 'Стоп' : '🎙'}</button>}
-        <button type="submit" className="btn small" disabled={!historyLoaded || working || !text.trim()}>{working ? '...' : 'Отправить'}</button>
+        <button type="submit" className="btn small" disabled={!historyLoaded || working || reviewPending || !text.trim()}>{working ? '...' : 'Отправить'}</button>
       </form>
     </section>
     {!compact && <TrakBotReactionGallery />}
@@ -270,7 +291,8 @@ function TechCodesSession() {
     try {
       const result = await get<{items: CodeRecord[]}>(`/api/tech/codes?q=${encodeURIComponent(query)}`);
       if (request === searchSequence.current) {
-        setItems(Array.isArray(result.items) ? result.items : []);
+        if(!result||!Array.isArray(result.items)||result.items.some(it=>!it||typeof it.code!=='string'||typeof it.source_url!=='string'))throw new Error('Сервер не подтвердил результаты поиска');
+        setItems(result.items);
         setSearched(true);
       }
     } catch (e: any) {
