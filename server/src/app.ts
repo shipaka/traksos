@@ -1013,7 +1013,16 @@ export function createApp(d: Deps) {
   r.get('/api/courier/presence', ['courier'], (c:AuthedCtx) => deliveries.presence(c.user));
   r.put('/api/courier/presence', ['courier'], (c:AuthedCtx) =>
     deliveries.setPresence(c.user,parse(z.object({online:z.boolean()}),c.body).online));
-  r.get('/api/courier/jobs', ['courier'], (c:AuthedCtx) => deliveries.list(c.user));
+  r.get('/api/courier/jobs', ['courier'], (c:AuthedCtx) => {
+    const scope=c.query.get('scope');
+    if(scope===null&&!c.query.has('limit')&&!c.query.has('before'))return deliveries.list(c.user);
+    const page=parse(z.object({
+      scope:z.enum(['active','history']),
+      limit:z.coerce.number().int().min(1).max(100),
+      before:z.string().uuid().nullable()
+    }),{scope,limit:c.query.get('limit')??'50',before:c.query.get('before')});
+    return deliveries.listPage(c.user,page.scope,page.limit,page.before);
+  });
   r.get('/api/courier/jobs/:id', ['courier'], (c:AuthedCtx) => deliveries.one(c.user,c.params.id));
   r.post('/api/courier/jobs/:id/stage', ['courier'], (c:AuthedCtx) =>
     deliveries.progress(c.user,c.params.id,parse(z.object({
