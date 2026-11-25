@@ -176,3 +176,9 @@ test('repeat invitation training preserves old financial state and requires acce
   assert.match(teaching,/не меняет финансовый статус старого заказа/);
   assert.equal(allowedScenario('driver',item.id),null);
 });
+
+test('repeat invitation course explains live eligibility rather than guaranteed assignment',()=>{
+  const item=allowedScenario('master','repeat-after-emergency-release');
+  assert.ok(item);
+  assert.ok(item.steps.some(step=>step.choices.some(choice=>choice.recommended&&choice.feedback.includes('повторно проверяет роль, профиль и доступность'))));
+});
