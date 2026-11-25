@@ -48,22 +48,25 @@ function timeLabel(item:CalendarItem){
   return item.requested_time?'Желаемое время: '+item.requested_time:'Время не указано';
 }
 
-export function ClientCalendar({userId,date,as='client'}:{userId:string;date:string;as?:'client'|'performer'}){
+export function ClientCalendar({userId,date,as='client',period='week'}:{userId:string;date:string;as?:'client'|'performer';period?:'day'|'week'}){
   const performer=as==='performer';
   const root=performer?'work/jobs':'orders';
   const route=root+'/calendar';
   const from=validDay(date)?date:today();
-  const to=shift(from,6);
+  const single=period==='day';
+  const days=single?1:7;
+  const to=shift(from,days-1);
+  const pathFor=(day:string,p:'day'|'week'=period)=>route+'/'+day+(p==='day'?'/day':'');
   // Put the date in the real route, not shared storage. Browser/Android Back
   // from an order returns to the same seven-day window.
   useEffect(()=>{
-    if(date!==from)window.location.replace('#/'+route+'/'+from);
-  },[date,from,route]);
+    if(date!==from)window.location.replace('#/'+route+'/'+from+(single?'/day':''));
+  },[date,from,route,single]);
   const calendar=usePrivateRead<CalendarResponse>(
     ()=>get('/api/'+as+'/calendar?from='+from+'&to='+to),
     'calendar:'+as+':'+userId+':'+from+':'+to,
     e=>['order','booking','fleet','reservation'].includes(e.type));
-  const select=(day:string)=>{if(validDay(day))go(route+'/'+day);};
+  const select=(day:string)=>{if(validDay(day))go(pathFor(day));};
   const items=calendar.data?.items??[];
   const groups=Array.from(new Set(items.map(item=>item.day))).sort();
   return <main className={(performer?'performer-orders-page':'client-orders-page')+' stack'}>
@@ -75,22 +78,26 @@ export function ClientCalendar({userId,date,as='client'}:{userId:string;date:str
     <section className="card stack" aria-label="Календарь заявок">
       <h2>Календарь</h2>
       <span className="note">{performer?'Ваши связанные с заявками интервалы выездов.':'Записи на СТО и согласуемые выезды.'} Все даты и время — московские. Отсутствие записей не означает доступность мастера.</span>
+      <div className="row" role="group" aria-label="Период просмотра" style={{gap:8}}>
+        <button type="button" className="chip" aria-pressed={single} onClick={()=>go(pathFor(from,'day'))}>День</button>
+        <button type="button" className="chip" aria-pressed={!single} onClick={()=>go(pathFor(from,'week'))}>Неделя</button>
+      </div>
       <label className="stack" style={{gap:4}}>
-        <span className="label">Начало недели просмотра</span>
+        <span className="label">{single?'Дата просмотра':'Начало недели просмотра'}</span>
         <input type="date" aria-label="Начало периода" value={from} min="1900-01-01" max="9999-12-24" onChange={e=>select(e.target.value)}/>
       </label>
       <div className="row" style={{flexWrap:'wrap',gap:8}}>
-        <button className="btn ghost small" type="button" disabled={!validDay(shift(from,-7))} onClick={()=>select(shift(from,-7))}>← 7 дней</button>
+        <button className="btn ghost small" type="button" disabled={!validDay(shift(from,-days))} onClick={()=>select(shift(from,-days))}>{single?'← День':'← 7 дней'}</button>
         <button className="btn ghost small" type="button" onClick={()=>select(today())}>Сегодня</button>
-        <button className="btn ghost small" type="button" disabled={!validDay(shift(from,7))} onClick={()=>select(shift(from,7))}>7 дней →</button>
+        <button className="btn ghost small" type="button" disabled={!validDay(shift(from,days))} onClick={()=>select(shift(from,days))}>{single?'День →':'7 дней →'}</button>
       </div>
-      <p className="note">{dateLabel(from)} — {dateLabel(to)}</p>
+      <p className="note">{dateLabel(from)}{!single?' — '+dateLabel(to):''}</p>
       <button className="btn ghost small" type="button" onClick={()=>{void calendar.reload();}}>Обновить календарь</button>
       {calendar.error?<div role="alert" className="stack"><b>Не удалось загрузить календарь</b>
         <button className="btn ghost small" type="button" onClick={()=>{void calendar.reload();}}>Повторить загрузку календаря</button></div>
       :calendar.loading?<Loading/>
       :calendar.data&&<>
-        {calendar.data.truncated&&<p role="status" className="note">Показаны первые 500 записей. Часть записей не вошла в список; проверьте конкретную заявку в истории.</p>}
+        {calendar.data.truncated&&<p role="status" className="note">Показаны первые 500 записей. {single?'Часть записей не вошла в список; проверьте конкретную заявку в истории.':'Выберите режим «День», чтобы сузить период.'}</p>}
         {!items.length?<div className="empty">На этот период записей нет</div>:groups.map(day=><section className="stack" key={day} aria-label={dateLabel(day)}>
           <h3>{dateLabel(day)}</h3>
           <div className="rows">{items.filter(item=>item.day===day).map(item=><a key={item.kind+':'+item.id}

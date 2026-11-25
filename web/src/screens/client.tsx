@@ -967,10 +967,10 @@ function NewOrderForAccount({service}:{service:string}) {
 
 // Мои заявки ----------------------------------------------------------------
 
-export function Orders({as,calendarDate}:{as:'client'|'performer';calendarDate?:string}) {
+export function Orders({as,calendarDate,calendarPeriod}:{as:'client'|'performer';calendarDate?:string;calendarPeriod?:'day'|'week'}) {
   const {me}=useMe();
   if(calendarDate!==undefined)
-    return <ClientCalendar key={(me?.id??'guest')+':'+as} userId={me?.id??'guest'} date={calendarDate} as={as}/>;
+    return <ClientCalendar key={(me?.id??'guest')+':'+as} userId={me?.id??'guest'} date={calendarDate} as={as} period={calendarPeriod}/>;
   return <OrdersForAccount key={(me?.id??'guest')+':'+as} as={as} userId={me?.id??'guest'}/>;
 }
 function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {

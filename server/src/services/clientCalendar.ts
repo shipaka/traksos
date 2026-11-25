@@ -45,7 +45,7 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
       union all
       select 'roadside' as kind, r.id, o.number, r.status, o.service,
         o.vehicle_id, o.brand, o.model,
-        to_char(r.starts_at at time zone 'Europe/Moscow', 'YYYY-MM-DD') as day,
+        to_char(greatest((r.starts_at at time zone 'Europe/Moscow')::date,$2::date), 'YYYY-MM-DD') as day,
         null::text as requested_time, null::text as confirmed_time,
         r.starts_at, r.ends_at,
         case when r.status='confirmed' then 'confirmed' when r.status in ('cancelled','completed') then r.status else 'pending' end,
@@ -76,7 +76,7 @@ export async function performerCalendar(db:Db,user:AuthUser,from:string|null,to:
   const items=await db.query(`
     select 'roadside' as kind,r.id,o.number,r.status,o.service,
       o.vehicle_id,o.brand,o.model,
-      to_char(r.starts_at at time zone 'Europe/Moscow','YYYY-MM-DD') as day,
+      to_char(greatest((r.starts_at at time zone 'Europe/Moscow')::date,$2::date),'YYYY-MM-DD') as day,
       null::text as requested_time,null::text as confirmed_time,
       r.starts_at,r.ends_at,
       case when r.status='confirmed' then 'confirmed'

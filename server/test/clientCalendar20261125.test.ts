@@ -90,3 +90,22 @@ test('performer calendar is private, links only accessible real orders and agree
   await t.db.query("update orders set performer_id=$2,status='cancelled' where id=$1",[order,master.id]);
   assert.equal(ok(await t.api('GET',p,undefined,master.token)).items.length,0,'terminal order is not a live appointment');
 });
+
+
+test('overnight reservation appears inside requested Moscow day, keeping actual interval in both calendars',async()=>{
+  await t.db.query("update orders set status='accepted',performer_id=$2 where id=$1",[order,master.id]);
+  const r=await t.db.one<any>(`insert into performer_time_reservations
+    (performer_id,client_id,order_id,starts_at,ends_at,status,decision_at,decided_by)
+    values($1,$2,$3,'2026-12-01T20:30:00Z','2026-12-01T22:30:00Z','confirmed',$4,$2) returning id`,
+    [master.id,owner.id,order,t.clock.now()]);
+  const p='/api/performer/calendar?from=2026-12-02&to=2026-12-02';
+  const a=ok(await t.api('GET',path,undefined,owner.token)).items.find((x:any)=>x.id===r.id);
+  const b=ok(await t.api('GET',p,undefined,master.token)).items.find((x:any)=>x.id===r.id);
+  assert.ok(a);
+  assert.equal(a.day,'2026-12-02','group date must be inside the requested period');
+  assert.equal(a.starts_at,'2026-12-01T20:30:00.000Z','actual start is not changed by grouping');
+  assert.equal(a.ends_at,'2026-12-01T22:30:00.000Z');
+  assert.deepEqual(a,b);
+  const next=ok(await t.api('GET','/api/client/calendar?from=2026-12-03&to=2026-12-03',undefined,owner.token));
+  assert.ok(!next.items.some((x:any)=>x.id===r.id));
+});
