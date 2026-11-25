@@ -20,6 +20,7 @@ import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
 import {BaseHome, RequestCard} from './base.tsx';
 import {native} from '../native.ts';
+import {PcPerformerAvailability} from './pcPerformerAvailability.tsx';
 import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
 
 export type ApprovedPCRole = 'driver'|'owner'|'master'|'tow'|'service'|'insurer'|'inspection'|'courier'|'moderator'|'admin';
@@ -396,7 +397,7 @@ function PerformDesk({tow}:{tow:boolean}){
     <Tabs items={[[ 'work','Текущая работа · '+(jobs.data?current.length:'—')+'  |  Запланировано · '+(jobs.data?planned.length:'—'),null ],
       ['offers','Новые предложения',auctions.data?offers.length:null]]} active={mode} onChange={(id)=>setMode(id as 'work'|'offers')}/>
     {mode==='offers'?<WorkLayout left={<Pane title="Параметры и доступность">
-      <p><b>Статус:</b> {text(me?.performer?.line_status,'Проверьте профиль')}</p>
+      <PcPerformerAvailability key={me?.id} onChanged={auctions.reload}/>
       <p>Предложения отобраны сервером по доступным специализациям и зоне работы.</p>
       <a className="approved-pc-small-link" href="#/work/me">Мои параметры →</a></Pane>}
       center={<Pane title={'Новые предложения · '+(auctions.data?offers.length:'—')}>
@@ -436,8 +437,7 @@ function PerformDesk({tow}:{tow:boolean}){
             <ApprovedEmptyScene kind="shift"/>
           </div>}
       </Pane>}
-      right={<><Calendar items={all}/><Pane title="Моя смена"><p>Статус: <b>{text(me?.performer?.line_status)}</b></p>
-        <a className="approved-pc-small-link" href="#/work/me/schedule">Расписание и доступность →</a></Pane>
+      right={<><Calendar items={all}/><Pane title="Моя смена"><PcPerformerAvailability key={me?.id} onChanged={auctions.reload}/></Pane>
         <Bot message={tow?'Помогу с погрузкой и документами.':'Подскажу по диагностике и заявке.'}/></>}/>}
   </main>;
 }
