@@ -19,8 +19,8 @@ import { SANDBOX_HANDOFF_PROTOCOL, assessSandboxPeerHealth } from './services/sa
 import { ReferralService } from './services/referral.ts';
 import { financeGuide, type FinanceRole } from './domain/economicsGuide.ts';
 import { techBaseAudience, techBaseForRoles } from './domain/techbase.ts';
-import { effectiveTechRoles } from './domain/techbaseAccess.ts';
-import { readTechBaseIllustrations } from './domain/techbaseIllustrated.ts';
+import { effectiveTechRoles, requireProfessionalTechAccess } from './domain/techbaseAccess.ts';
+import { techBaseIllustratedMeta,searchTechBaseIllustrations,readTechBaseIllustration } from './domain/techbaseIllustrated.ts';
 import { ProfilesService } from './services/profiles.ts';
 import { OrdersService } from './services/orders.ts';
 import { OrderPhotosService } from './services/orderPhotos.ts';
@@ -181,10 +181,27 @@ export function createApp(d: Deps) {
       throw bad('audience', 'Неизвестный раздел ТехБазы');
     if (requested && !allowed.includes(requested as 'driver' | 'master'))
       throw forbidden('Профессиональная ТехБаза требует подтверждённого мастера или СТО');
-    // Only explicit authorized professional requests receive the local image corpus.
+    // Only explicit authorized professional requests receive catalogue metadata; no SVG in this response.
     const illustrated = requested === 'master' && allowed.includes('master') && c.user.status === 'active'
-      ? await readTechBaseIllustrations() : undefined;
+      ? techBaseIllustratedMeta() : undefined;
     return { audiences: allowed, documents: techBaseForRoles(effectiveRoles, requested ?? undefined), ...(illustrated ? { illustrated } : {}) };
+  });
+  r.get('/api/techbase/illustrations',true,async(c:AuthedCtx)=>{
+    await requireProfessionalTechAccess(d.db,c.user);
+    const f=parse(z.object({make:z.string().max(80).optional(),model:z.string().max(100).optional(),
+      category:z.string().max(80).optional(),system:z.string().max(100).optional(),q:z.string().max(160).optional(),
+      year:z.coerce.number().int().min(1990).max(2026).optional(),
+      page:z.coerce.number().int().min(0).max(100000).optional(),
+      limit:z.coerce.number().int().min(1).max(50).optional(),general:z.enum(['0','1']).optional()
+    }),Object.fromEntries(c.query.entries()));
+    return searchTechBaseIllustrations({...f,general:f.general!=='0'});
+  });
+  r.get('/api/techbase/illustrations/:id',true,async(c:AuthedCtx)=>{
+    await requireProfessionalTechAccess(d.db,c.user);
+    const id=parse(z.string().regex(/^[a-z0-9-]{1,100}$/),c.params.id);
+    const card=await readTechBaseIllustration(id);
+    if(!card)throw notFound('Иллюстрация не найдена');
+    return card;
   });
   const staff = ['admin', 'moderator'];
   const performerRoles = ['master', 'tow', 'service'];

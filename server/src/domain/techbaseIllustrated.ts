@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { bindingsForCard } from './techbaseApplicability.ts';
+import { bindingsForCard, discoverCard, type BindingFilter } from './techbaseApplicability.ts';
+import { partRefsForCard } from './techbasePartRefs.ts';
 // No public/static asset route. Images are delivered only in the authorized master payload.
 export const TECHBASE_FAMILIES = [
   [
@@ -3979,7 +3980,34 @@ export const TECHBASE_ILLUSTRATED = [
     ]
   }
 ] as const;
+export const TECHBASE_VERSION='2026-11-25-g';
+const index=TECHBASE_ILLUSTRATED.map(card=>({...card,bindings:bindingsForCard(card)}));
+type IndexedCard=typeof index[number];
+const byId=new Map(index.map(c=>[c.id as string,c]));
+const summary=(c:IndexedCard)=>({id:c.id,title:c.title,kind:c.kind,category:c.category,system:c.system,make:c.make,models:c.models,bindings:c.bindings,fitment:c.fitment,reviewStatus:c.reviewStatus});
+const searchIndex=index.map(c=>({card:c,text:[c.title,c.system,c.body,c.scope,c.make??'',...c.models,...c.pins.flat(),...c.bindings.flatMap(b=>[b.make,b.model,b.generation??'',b.variant??'',b.manufacturer??'',b.article??'']),...partRefsForCard(c.id).flatMap(p=>[p.brand,p.article,p.name])].join(' ').toLowerCase()}));
+export function techBaseIllustratedMeta(){
+ return {version:TECHBASE_VERSION,families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,systems:[...new Set(index.map(c=>c.system))].sort(),total:index.length,pageSize:20};
+}
+export type IllustratedFilter=BindingFilter&{q?:string;category?:string;system?:string;general?:boolean;page?:number;limit?:number};
+export function searchTechBaseIllustrations(f:IllustratedFilter={}){
+ const take=Number.isFinite(f.limit)?Math.max(1,Math.min(50,Math.floor(f.limit!))):20;
+ const page=Number.isFinite(f.page)?Math.max(0,Math.min(100000,Math.floor(f.page!))):0;
+ const term=(f.q??'').trim().toLowerCase().slice(0,160);
+ const matched=searchIndex.filter(({card:c,text})=>
+  (!f.category||c.category===f.category)&&(!f.system||c.system===f.system)&&
+  (f.general!==false||c.bindings.length>0)&&discoverCard(c,c.bindings,f,f.general!==false)&&
+  (!term||term.split(/\s+/).every(word=>text.includes(word))));
+ return {version:TECHBASE_VERSION,total:matched.length,page,limit:take,hasMore:(page+1)*take<matched.length,items:matched.slice(page*take,(page+1)*take).map(x=>summary(x.card))};
+}
+export async function readTechBaseIllustration(id:string){
+ const card=byId.get(id);
+ if(!card)return null;
+ const relatedCards=card.related.flatMap(key=>{const x=byId.get(key);return x?[summary(x)]:[];});
+ return {...card,relatedCards,image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')};
+}
+// Used by repository validation, never by the HTTP list route.
 export async function readTechBaseIllustrations(){
- const cards=await Promise.all(TECHBASE_ILLUSTRATED.map(async card=>({...card,bindings:bindingsForCard(card),image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')})));
- return {version:'2026-11-25-f',families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
+ const cards=await Promise.all(index.map(async card=>({...card,image:await readFile(new URL('../../data/techbase-illustrated/'+card.id+'.svg',import.meta.url),'utf8')})));
+ return {version:TECHBASE_VERSION,families:TECHBASE_FAMILIES,categories:TECHBASE_CATEGORIES,cards};
 }
