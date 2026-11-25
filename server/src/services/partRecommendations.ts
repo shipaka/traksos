@@ -6,6 +6,7 @@ import { maskPhones } from '../util.ts';
 import { TECHBASE_ILLUSTRATED } from '../domain/techbaseIllustrated.ts';
 import { partRefsForCard, samePart } from '../domain/techbasePartRefs.ts';
 import { requireProfessionalTechAccess } from '../domain/techbaseAccess.ts';
+import { requirePartActor,requirePartVehicle } from '../domain/partRecommendationAccess.ts';
 
 type Origin='order'|'booking';
 const sourceColumn=(origin:Origin)=>origin==='booking'?'source_booking_id':'source_order_id';
@@ -142,17 +143,13 @@ export class PartRecommendations {
   if(result.suggested_by)this.notifier.live([result.suggested_by],{type:origin,...(origin==='booking'?{bookingId:id}:{orderId:id}),recommendationId:recId});
   return safeRow(result);
  }
- private requireShopAdmin(user:AuthUser){
-  this.active(user);
-  if(!user.roles.includes('admin'))throw forbidden('Подбором магазина управляет администратор');
- }
  // The owner's request is a separate, non-billable action, even with the shop closed.
  async requestSourcing(user:AuthUser,id:string){
-  this.active(user);
-  if(user.owner_id||!user.roles.includes('client'))throw forbidden('Запрос оформляет владелец');
   const result=await this.db.tx(async q=>{
+   await requirePartActor(q,user,'client');
    const row=await q.one<any>('select * from part_recommendations where id=$1 and client_id=$2 for update',[id,user.id]);
    if(!row)throw notFound();
+   await requirePartVehicle(q,user.id,row.vehicle_id);
    if(row.status!=='accepted'||row.product_id)throw conflict('sourcing_not_needed','Сначала согласуйте замену; для уже подобранного товара используйте магазин');
    if(row.sourcing_status==='requested')return {row,changed:false};
    if(!['not_requested','unavailable','resolved'].includes(row.sourcing_status))throw conflict('sourcing_status','Запрос недоступен');
@@ -162,32 +159,37 @@ export class PartRecommendations {
    return {row:updated,changed:true};
   });
   if(result.changed){
-   const admins=await this.db.query<{id:string}>("select id from users where status='active' and roles && '{admin}'::text[]");
+   const admins=await this.db.query<{id:string}>("select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[]");
    await this.notifier.notify(admins.map(a=>a.id),{type:'part_sourcing',recommendationId:id},
     {kind:'normal',title:'Новый запрос подбора запчасти',body:'В магазине появился запрос на точный артикул.',data:{recommendationId:id}}).catch(()=>{});
   }
   return {item:safeRow(result.row),changed:result.changed};
  }
  async sourcingQueue(user:AuthUser,page:number,status:'requested'|'resolved'|'unavailable'){
-  this.requireShopAdmin(user);
-  const rows=await this.db.query<any>(`select * from part_recommendations where sourcing_status=$1
+  const shopEnabled=(await this.settings.get('shop')).enabled;
+  return this.db.tx(async q=>{
+   await requirePartActor(q,user,'admin');
+   const rows=await q.query<any>(`select * from part_recommendations where sourcing_status=$1
     order by sourcing_requested_at asc,id limit 21 offset $2`,[status,page*20]);
-  return {items:rows.slice(0,20).map(safeRow),hasMore:rows.length>20,shopEnabled:(await this.settings.get('shop')).enabled};
+   return {items:rows.slice(0,20).map(safeRow),hasMore:rows.length>20,shopEnabled};
+  });
  }
  async sourcingCandidates(user:AuthUser,id:string){
-  this.requireShopAdmin(user);
-  const row=await this.db.one<any>("select brand,article from part_recommendations where id=$1 and sourcing_status='requested'",[id]);
+  return this.db.tx(async q=>{
+   await requirePartActor(q,user,'admin');
+   const row=await q.one<any>("select brand,article from part_recommendations where id=$1 and sourcing_status='requested' for share",[id]);
   if(!row)throw notFound('Активный запрос не найден');
   // Internal catalogue lookup is permitted while the public storefront is closed.
-  const matches=await this.db.query<any>('select '+productCols+' from shop_products where active and lower(trim(brand))=lower(trim($1)) and lower(trim(article))=lower(trim($2)) order by id limit 21',[row.brand,row.article]);
+  const matches=await q.query<any>('select '+productCols+' from shop_products where active and lower(trim(brand))=lower(trim($1)) and lower(trim(article))=lower(trim($2)) order by id limit 21',[row.brand,row.article]);
   return {products:matches.slice(0,20).map(productView),hasMore:matches.length>20};
+  });
  }
  async resolveSourcing(user:AuthUser,id:string,input:{status:'resolved'|'unavailable';productId?:string;note?:string}){
-  this.requireShopAdmin(user);
   const note=input.note?clean(input.note):null;
   if(input.status==='resolved'&&!input.productId)throw bad('product_required','Выберите точный товар');
   if(input.status==='unavailable'&&(!note||note.length<8||input.productId))throw bad('sourcing_note','Укажите причину отсутствия детали');
   const result=await this.db.tx(async q=>{
+   await requirePartActor(q,user,'admin');
    const row=await q.one<any>('select * from part_recommendations where id=$1 for update',[id]);
    if(!row)throw notFound();
    if(row.sourcing_status===input.status&&((input.status==='resolved'&&row.product_id===input.productId)||input.status==='unavailable'))
@@ -211,24 +213,28 @@ export class PartRecommendations {
   return {item:safeRow(result.row),changed:result.changed};
  }
  async checkout(user:AuthUser,id:string){
-  this.active(user);
-  if(user.owner_id||!user.roles.includes('client'))throw forbidden('Заказ оформляет владелец');
-  const row=await this.db.one<any>('select * from part_recommendations where id=$1 and client_id=$2',[id,user.id]);
+  const enabled=(await this.settings.get('shop')).enabled;
+  return this.db.tx(async q=>{
+   await requirePartActor(q,user,'client');
+   const row=await q.one<any>('select * from part_recommendations where id=$1 and client_id=$2 for share',[id,user.id]);
   if(!row||row.status!=='accepted')throw forbidden('Сначала согласуйте рекомендацию');
-  const prior=await this.db.one<any>('select id,number,status from shop_orders where part_recommendation_id=$1',[id]);
+  const prior=await q.one<any>('select id,number,status from shop_orders where part_recommendation_id=$1 and client_id=$2 and created_by=$2',[id,user.id]);
   if(prior)return {item:safeRow(row),order:prior,product:null};
-  if(!(await this.settings.get('shop')).enabled)throw conflict('shop_closed','Магазин закрыт');
+  await requirePartVehicle(q,user.id,row.vehicle_id);
+  if(!enabled)throw conflict('shop_closed','Магазин закрыт');
   if(!row.product_id)throw conflict('part_unavailable','Точный товар ещё не подобран');
-  const product=await this.db.one<any>('select '+productCols+' from shop_products where id=$1 and active',[row.product_id]);
+  const product=await q.one<any>('select '+productCols+' from shop_products where id=$1 and active',[row.product_id]);
   if(!product||!product.brand||!product.article||!samePart(product,row))throw conflict('part_mismatch','Товар изменился. Необходимо повторно согласовать подбор');
   return {item:safeRow(row),product:productView(product),order:null};
+  });
  }
  async history(user:AuthUser,vehicleId:string|null,page:number){
-  this.active(user);
-  if(user.owner_id||!user.roles.includes('client'))throw forbidden('История рекомендаций доступна владельцу');
-  if(vehicleId&&!await this.db.one('select id from vehicles where id=$1 and owner_id=$2',[vehicleId,user.id]))throw forbidden();
+  return this.db.tx(async q=>{
+   await requirePartActor(q,user,'client');
+   await requirePartVehicle(q,user.id,vehicleId);
   const p=Number.isFinite(page)?Math.max(0,Math.min(1000,Math.floor(page))):0;
-  const rows=await this.db.query<any>('select * from part_recommendations where client_id=$1 and ($2::uuid is null or vehicle_id=$2::uuid) order by created_at desc,id limit 21 offset $3',[user.id,vehicleId,p*20]);
+  const rows=await q.query<any>('select * from part_recommendations where client_id=$1 and ($2::uuid is null or vehicle_id=$2::uuid) order by created_at desc,id limit 21 offset $3',[user.id,vehicleId,p*20]);
   return {items:rows.slice(0,20).map(safeRow),hasMore:rows.length>20};
+  });
  }
 }
