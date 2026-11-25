@@ -328,8 +328,11 @@ export class SupportService {
   }
 
   /** Очередь: сначала открытые, где последнее слово за пользователем */
-  async queue(status: 'open' | 'closed' = 'open') {
-    return this.db.query(
+  async queue(user: AuthUser, status: 'open' | 'closed' = 'open') {
+    return this.db.tx(async q => {
+      const actor = await this.liveActor(q,user);
+      if (!isStaff(actor)) throw forbidden();
+      return q.query(
       `select t.id, t.number, t.topic, t.status, t.order_id, o.number as order_number, t.created_at, t.updated_at,
               u.id as user_id, u.name, u.phone, a.name as assignee_name,
               t.sla_deadline_at, t.first_staff_reply_at, t.sla_overdue_at,
@@ -337,6 +340,7 @@ export class SupportService {
               (select not from_staff from support_messages m where m.ticket_id=t.id and m.sender_id is not null order by m.id desc limit 1) as waiting
          from support_tickets t join users u on u.id=t.user_id left join orders o on o.id=t.order_id left join users a on a.id=t.assignee_id
         where t.status=$1 order by waiting desc nulls last, t.updated_at desc limit 200`, [status]);
+    });
   }
 
   async thread(user: AuthUser, ticketId: string) {
