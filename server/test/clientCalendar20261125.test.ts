@@ -64,3 +64,29 @@ test('calendar has role, account and live vehicle isolation and validates date r
   assert.equal(ok(await t.api('GET',path,undefined,stranger.token)).items.length,0);
   assert.equal(ok(await t.api('GET',path,undefined,owner.token)).items.length,2);
 });
+
+
+test('performer calendar is private, links only accessible real orders and agrees with customer calendar',async()=>{
+  const p='/api/performer/calendar?from=2026-12-02&to=2026-12-02';
+  // Profile existence is required in addition to the role.
+  ok(await t.api('PUT','/api/performer/profile',{kind:'master',name:'Мастер',specialties:['electric']},master.token));
+  assert.equal((await t.api('GET',p,undefined,owner.token)).status,403);
+  assert.equal((await t.api('GET',p,undefined,station.token)).status,403);
+  assert.equal(ok(await t.api('GET',p,undefined,master.token)).items.length,0,'an unassigned order without an invitation is not accessible');
+  await t.db.query("update orders set performer_id=$2,status='accepted' where id=$1",[order,master.id]);
+  const own=ok(await t.api('GET',p,undefined,master.token));
+  const customer=ok(await t.api('GET',path,undefined,owner.token));
+  const item=own.items.find((x:any)=>x.id===reservation);
+  assert.ok(item);
+  assert.equal(item.order_id,order);
+  assert.deepEqual(item,customer.items.find((x:any)=>x.id===reservation));
+  assert.ok(!('address' in item)&&!('phone' in item)&&!('client_id' in item));
+  const second=await t.login('+79997810016','master');
+  ok(await t.api('PUT','/api/performer/profile',{kind:'master',name:'Другой мастер',specialties:['electric']},second.token));
+  assert.equal(ok(await t.api('GET',p,undefined,second.token)).items.length,0);
+  await t.db.query("update orders set performer_id=$2 where id=$1",[order,second.id]);
+  assert.equal(ok(await t.api('GET',p,undefined,master.token)).items.length,0,'reassignment revokes visibility');
+  assert.equal(ok(await t.api('GET',p,undefined,second.token)).items.length,0,'reservation belongs to original performer only');
+  await t.db.query("update orders set performer_id=$2,status='cancelled' where id=$1",[order,master.id]);
+  assert.equal(ok(await t.api('GET',p,undefined,master.token)).items.length,0,'terminal order is not a live appointment');
+});

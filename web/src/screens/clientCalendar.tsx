@@ -48,30 +48,33 @@ function timeLabel(item:CalendarItem){
   return item.requested_time?'Желаемое время: '+item.requested_time:'Время не указано';
 }
 
-export function ClientCalendar({userId,date}:{userId:string;date:string}){
+export function ClientCalendar({userId,date,as='client'}:{userId:string;date:string;as?:'client'|'performer'}){
+  const performer=as==='performer';
+  const root=performer?'work/jobs':'orders';
+  const route=root+'/calendar';
   const from=validDay(date)?date:today();
   const to=shift(from,6);
   // Put the date in the real route, not shared storage. Browser/Android Back
   // from an order returns to the same seven-day window.
   useEffect(()=>{
-    if(date!==from)window.location.replace('#/orders/calendar/'+from);
-  },[date,from]);
+    if(date!==from)window.location.replace('#/'+route+'/'+from);
+  },[date,from,route]);
   const calendar=usePrivateRead<CalendarResponse>(
-    ()=>get('/api/client/calendar?from='+from+'&to='+to),
-    'client-calendar:'+userId+':'+from+':'+to,
-    e=>['order','booking','fleet'].includes(e.type));
-  const select=(day:string)=>{if(validDay(day))go('orders/calendar/'+day);};
+    ()=>get('/api/'+as+'/calendar?from='+from+'&to='+to),
+    'calendar:'+as+':'+userId+':'+from+':'+to,
+    e=>['order','booking','fleet','reservation'].includes(e.type));
+  const select=(day:string)=>{if(validDay(day))go(route+'/'+day);};
   const items=calendar.data?.items??[];
   const groups=Array.from(new Set(items.map(item=>item.day))).sort();
-  return <main className="client-orders-page stack">
+  return <main className={(performer?'performer-orders-page':'client-orders-page')+' stack'}>
     <h1>Заявки</h1>
     <div className="scroll-x" role="tablist" aria-label="Разделы заявок">
-      <button className="chip" role="tab" aria-pressed={false} onClick={()=>go('orders')}>Сейчас</button>
+      <button className="chip" role="tab" aria-pressed={false} onClick={()=>go(root)}>{performer?'История':'Сейчас'}</button>
       <button className="chip" role="tab" aria-pressed={true}>Календарь</button>
     </div>
     <section className="card stack" aria-label="Календарь заявок">
       <h2>Календарь</h2>
-      <span className="note">Записи на СТО и согласуемые выезды. Все даты и время — московские. Отсутствие записей не означает доступность мастера.</span>
+      <span className="note">{performer?'Ваши связанные с заявками интервалы выездов.':'Записи на СТО и согласуемые выезды.'} Все даты и время — московские. Отсутствие записей не означает доступность мастера.</span>
       <label className="stack" style={{gap:4}}>
         <span className="label">Начало недели просмотра</span>
         <input type="date" aria-label="Начало периода" value={from} min="1900-01-01" max="9999-12-24" onChange={e=>select(e.target.value)}/>
@@ -87,7 +90,7 @@ export function ClientCalendar({userId,date}:{userId:string;date:string}){
         <button className="btn ghost small" type="button" onClick={()=>{void calendar.reload();}}>Повторить загрузку календаря</button></div>
       :calendar.loading?<Loading/>
       :calendar.data&&<>
-        {calendar.data.truncated&&<p role="status" className="note">Показаны первые 500 записей. Откройте более короткий период по дате заявки.</p>}
+        {calendar.data.truncated&&<p role="status" className="note">Показаны первые 500 записей. Часть записей не вошла в список; проверьте конкретную заявку в истории.</p>}
         {!items.length?<div className="empty">На этот период записей нет</div>:groups.map(day=><section className="stack" key={day} aria-label={dateLabel(day)}>
           <h3>{dateLabel(day)}</h3>
           <div className="rows">{items.filter(item=>item.day===day).map(item=><a key={item.kind+':'+item.id}
@@ -103,6 +106,6 @@ export function ClientCalendar({userId,date}:{userId:string;date:string}){
         </section>)}
       </>}
     </section>
-    <a className="btn ghost" href="#/orders">К списку заявок и истории</a>
+    <a className="btn ghost" href={'#/'+root}>К списку заявок и истории</a>
   </main>;
 }

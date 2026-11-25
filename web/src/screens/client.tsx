@@ -969,8 +969,8 @@ function NewOrderForAccount({service}:{service:string}) {
 
 export function Orders({as,calendarDate}:{as:'client'|'performer';calendarDate?:string}) {
   const {me}=useMe();
-  if(as==='client'&&calendarDate!==undefined)
-    return <ClientCalendar key={me?.id??'guest'} userId={me?.id??'guest'} date={calendarDate}/>;
+  if(calendarDate!==undefined)
+    return <ClientCalendar key={(me?.id??'guest')+':'+as} userId={me?.id??'guest'} date={calendarDate} as={as}/>;
   return <OrdersForAccount key={(me?.id??'guest')+':'+as} as={as} userId={me?.id??'guest'}/>;
 }
 function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
@@ -989,7 +989,7 @@ function OrdersForAccount({as,userId}:{as:'client'|'performer';userId:string}) {
   return (
     <main className={as === 'performer' ? 'performer-orders-page' : 'client-orders-page'}>
       <h1>{as === 'performer' ? 'История' : 'Заявки'}</h1>
-      {as === 'performer' && <HistoryTabs tab={tab} setTab={setTab} />}
+      {as === 'performer' && <><HistoryTabs tab={tab} setTab={setTab} /><a className="btn ghost small" href="#/work/jobs/calendar">Календарь выездов</a></>}
       {as === 'client' && (
         <div className="scroll-x" role="tablist">
           {([['now', `Сейчас${list.data ? ` · ${list.data.filter(live).length}` : ''}`], ['my', 'Мои мастера'], ['hist', 'История'], ['black', 'Чёрный список']] as const).map(([k, n]) => (

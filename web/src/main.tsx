@@ -453,7 +453,7 @@ function App() {
       }
       screen = !me.performer || b === 'profile' || (b === 'me' && !route[2]) ? <PerformerHub />
         : b === 'me' ? ({ about: <AboutSection />, phone: <PhoneSection />, schedule: <ScheduleSection />, cars: <CarsSection />, tax: <TaxSection />, money: <MoneySection />, level: <LevelSection /> } as Record<string, JSX.Element>)[route[2]] ?? <PerformerHub />
-        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
+        : b === 'filter' ? <FilterSection /> : b === 'jobs' ? <Orders as="performer" calendarDate={route[2]==='calendar' ? (route[3]??'') : undefined} /> : b === 'chats' ? <AndroidMasterChats /> : b === 'docs' ? <Documents /> : me.performer?.kind === 'ecu' ? <Work /> : <ApprovedPcDesk role={me.performer?.kind === 'tow' ? 'tow' : 'master'} fallback={<Work />} />;
       break;
     case 'base': screen = !isService
       ? (isPerformer && b === 'me' ? <BaseSetup /> : <UnavailableRole label="Кабинет СТО недоступен" />)
