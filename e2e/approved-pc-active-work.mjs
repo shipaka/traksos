@@ -275,7 +275,7 @@ try{
      return original.call(this,frames,options);
    };
  });
- await searchCase.locator('.offer').filter({hasText:'Второй мастер CI'}).getByRole('button',{name:'Выбрать за 1200 ₽'}).click();
+ await searchCase.locator('.offer').filter({hasText:'Второй мастер CI'}).getByRole('button',{name:/Выбрать за 1\s?200 ₽/}).click();
  await op.locator('.approved-pc-case').getByText('Второй мастер CI',{exact:false}).first().waitFor();
  await searchCase.waitFor({state:'detached'});
  assert(chosenOffer==='bid-2','Dashboard chose wrong offer');
@@ -328,6 +328,61 @@ try{
  report.push({role:'owner',status:'PASS',scenarios:['selected order','performer details','safe GPS absence'],
    screenshots:['owner-active-1647.png']});
  await oc.close();
+
+ // A real local QR assignment yields the driver role; only order transport
+ // is intercepted for this independent UI scenario. No external providers.
+ const fleetOwner=await account({phone:'+79990000481',type:'owner',mode:'client'});
+ const vehicle=await post('/api/vehicles',{brand:'DAF',model:'XF',year:2017},fleetOwner.token);
+ const fleetFixture=await get('/api/fleet',fleetOwner.token);
+ const assigned=fleetFixture.cars.find(c=>c.id===vehicle.id);
+ assert(!!assigned?.qrCode,'Synthetic fleet QR missing');
+ const driver=await account({phone:'+79990000482',type:'client',mode:'client'});
+ await post('/api/qr/'+encodeURIComponent(assigned.qrCode)+'/join',{},driver.token);
+ const driverMe=await get('/api/me',driver.token);
+ assert(driverMe.roles.includes('driver')&&!!driverMe.owner_id,'Local QR did not produce driver role');
+ const dc=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block',reducedMotion:'reduce'});
+ try{
+   const dp=await dc.newPage(),assertDriverClean=watchPageErrors(dp);
+   const driverId='synthetic-driver-search';
+   let driverStatus='searching',driverChoice='',offers=[];
+   const driverOrder=()=>({...order,id:driverId,number:'LOCAL-DRIVER',you:'client',status:driverStatus,
+     vehicleId:vehicle.id,vehicle,performer:driverStatus==='accepted'?{id:'driver-bid-3',name:'Третий мастер CI'}:null});
+   await dp.route(url=>url.pathname==='/api/orders',route=>route.fulfill(json([driverOrder()])));
+   await dp.route(url=>url.pathname==='/api/orders/'+driverId,route=>route.fulfill(json(driverOrder())));
+   await dp.route(url=>url.pathname==='/api/orders/'+driverId+'/offers',route=>route.fulfill(json({autoPick:false,offers})));
+   await dp.route(url=>url.pathname==='/api/orders/'+driverId+'/offers/third/choose',async route=>{
+     assert(route.request().method()==='POST','Expected driver choice POST');
+     driverChoice='third';driverStatus='accepted';await route.fulfill(json({ok:true}));
+   });
+   await open(dp,driver.token,driver.mode,'#/?order='+driverId);
+   await assertFullBleedCabinetBanner(dp,'driver');
+   const driverCase=dp.locator('.approved-pc-search-case');
+   await driverCase.locator('.search-title').filter({hasText:'Ищем исполнителя'}).waitFor();
+   assert(await driverCase.locator('.radar .blip').count()===0,'Empty driver search invented offers');
+   assert(await driverCase.locator('.sweep').evaluate(el=>getComputedStyle(el).animationName)==='none','Driver reduced motion ignored');
+   const first={id:'first',name:'Первый мастер CI',price:100000,diffPct:0,eta_minutes:10};
+   offers=[first];
+   await dp.evaluate(()=>window.dispatchEvent(new Event('online')));
+   await driverCase.getByRole('button',{name:/Выбрать за/}).waitFor();
+   assert(await driverCase.locator('.offer').count()===1,'One offer must produce one card');
+   offers=[first,{id:'second',name:'Второй мастер CI',price:120000,diffPct:0,eta_minutes:15},
+     {id:'third',name:'Третий мастер CI',price:140000,diffPct:0,eta_minutes:20}];
+   await dp.evaluate(()=>window.dispatchEvent(new Event('online')));
+   const third=driverCase.locator('.offer').filter({hasText:'Третий мастер CI'});
+   await third.waitFor();
+   assert(await driverCase.locator('.offer').count()===3,'Three real returned offers must produce three cards');
+   await dp.screenshot({path:output+'/driver-search-1440.png',fullPage:false,animations:'disabled'});
+   await third.getByRole('button',{name:/Выбрать за/}).click();
+   await driverCase.waitFor({state:'detached'});
+   const finalCase=dp.locator('.approved-pc-case:not(.approved-pc-search-case)');
+   await finalCase.getByText('Третий мастер CI',{exact:false}).waitFor();
+   assert(driverChoice==='third','Driver choice did not select third offer');
+   assert(await finalCase.getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+driverId,'Driver assignment changed selected case');
+   assert(await finalCase.getByRole('link',{name:'Управление автопарком'}).count()===0,'Owner-only action on driver case');
+   await dp.screenshot({path:output+'/driver-search-assigned-1440.png',fullPage:false,animations:'disabled'});
+   await assertDriverClean('driver search and assignment');
+   report.push({role:'driver',status:'PASS',scenarios:['local QR role','0/1/3 offers','third choice','reduced motion','same assigned order'],screenshots:['driver-search-1440.png','driver-search-assigned-1440.png']});
+ }finally{await dc.close();}
 
  // The real mobile browser uses the approved 618-style workspace. Its first
  // viewport must not be consumed by an unsolicited multi-line tutorial.
