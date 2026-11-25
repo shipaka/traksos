@@ -1294,6 +1294,8 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
 
   const [older,setOlder]=useState<number|null>(null);
   const [paging,setPaging]=useState(false);
+  const [historyTrimmed,setHistoryTrimmed]=useState(false);
+  const AUTO_REFRESH_PAGE_LIMIT=10;
   const loaded=useRef<any[]>([]);
   const targetOldest=useRef<number|null>(null);
   const scrollDistance=useRef<number|null>(null);
@@ -1301,14 +1303,16 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const olderRef=useRef<()=>void>(()=>{});
   useEffect(()=>{
     let alive=true,busy=false,queued=false;
+    let followup:ReturnType<typeof setTimeout>|null=null;
     let cursor:number|null=null;
     const endpoint=`/api/orders/${id}/messages`;
     const readPage=async(mode:'latest'|'before',before?:number)=>{
+      if(!alive||!currentSession())throw new Error('Сессия изменилась');
       const r=await get(endpoint+'?window='+mode+'&limit=100'+(before===undefined?'':'&cursor='+before));
       if(!r||!Array.isArray(r.messages)||r.page?.mode!==mode||typeof r.page.hasMore!=='boolean')
         throw new Error('Сервер не подтвердил страницу переписки');
       const rows=r.messages as any[];
-      if(rows.some((m,i)=>!Number.isSafeInteger(m.id)||m.id<=0||(i>0&&m.id<=rows[i-1].id)||
+      if(rows.length>100||rows.some((m,i)=>!Number.isSafeInteger(m.id)||m.id<=0||(i>0&&m.id<=rows[i-1].id)||
         (before!==undefined&&m.id>=before))||
         (r.page.hasMore&&(!rows.length||r.page.nextCursor!==rows[0].id))||
         (!r.page.hasMore&&r.page.nextCursor!==null))
@@ -1327,14 +1331,19 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     };
     const fail=(error:unknown)=>{
       if(!alive||!currentSession())return;
-      loaded.current=[];cursor=null;setOlder(null);
+      loaded.current=[];cursor=null;setOlder(null);setHistoryTrimmed(false);
       setMsgs([]);setQuick([]);setPeople([]);
       setLoadError(error instanceof Error?error.message:'Ошибка загрузки переписки');
     };
+    function drain(){
+      if(!alive||!currentSession()||!queued||followup!==null)return;
+      queued=false;
+      followup=setTimeout(()=>{followup=null;if(alive&&currentSession())void refresh();},250);
+    }
     async function refresh(){
       if(!alive||!currentSession())return;
-      if(busy){queued=true;return;}
-      busy=true;
+      if(busy||followup!==null){queued=true;return;}
+      queued=false;busy=true;
       const old=targetOldest.current;
       const node=box.current;
       if(node&&node.scrollHeight-node.scrollTop-node.clientHeight>48)
@@ -1346,22 +1355,31 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         const latest=await readPage('latest');
         if(!alive||!currentSession())return;
         let rows=latest.messages as any[],next:number|null=latest.page.nextCursor;
-        // Revalidate all previously loaded history as well as every missed page.
-        // Do not reuse private bodies after reconnect or infer contiguous global IDs.
-        while(old!==null&&next!==null&&rows[0].id>old){
+        // Revalidate a bounded newest contiguous window; older cached bodies
+        // are discarded, never trusted across an authorization refresh.
+        let pages=1;
+        while(pages<AUTO_REFRESH_PAGE_LIMIT&&old!==null&&next!==null&&rows[0].id>old){
           const earlier=await readPage('before',next);
           if(!alive||!currentSession())return;
-          rows=[...earlier.messages,...rows];next=earlier.page.nextCursor;
+          rows=[...earlier.messages,...rows];next=earlier.page.nextCursor;pages++;
         }
+        const trimmed=old!==null&&next!==null&&rows[0].id>old;
+        setHistoryTrimmed(trimmed);
+        if(trimmed)scrollDistance.current=null;
         publish(rows,latest,next);
       }catch(error){fail(error);}
       finally{
         busy=false;
-        if(alive&&currentSession()){setLoading(false);if(queued){queued=false;void refresh();}}
+        if(alive&&currentSession()){
+          // If another signal arrived while reading, keep the composer and
+          // history hidden until that authoritative follow-up has finished.
+          if(!queued)setLoading(false);
+          drain();
+        }
       }
     }
     async function loadEarlier(){
-      if(!alive||busy||cursor===null)return;
+      if(!alive||!currentSession()||busy||followup!==null||cursor===null)return;
       busy=true;setPaging(true);
       const node=box.current;
       scrollDistance.current=node?node.scrollHeight-node.scrollTop:null;
@@ -1369,10 +1387,11 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         const r=await readPage('before',cursor);
         if(!alive||!currentSession())return;
         publish([...r.messages,...loaded.current],r,r.page.nextCursor);
+        if(r.page.nextCursor===null)setHistoryTrimmed(false);
       }catch(error){fail(error);}
       finally{
         busy=false;
-        if(alive&&currentSession()){setPaging(false);if(queued){queued=false;void refresh();}}
+        if(alive&&currentSession()){setPaging(false);if(queued)setLoading(true);drain();}
       }
     }
     refreshRef.current=()=>{void refresh();};
@@ -1385,7 +1404,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
     window.addEventListener('online',foreground);
     document.addEventListener('visibilitychange',foreground);
     void refresh();
-    return ()=>{alive=false;off();window.removeEventListener('online',foreground);
+    return ()=>{alive=false;if(followup!==null)clearTimeout(followup);off();window.removeEventListener('online',foreground);
       document.removeEventListener('visibilitychange',foreground);
       refreshRef.current=()=>{};olderRef.current=()=>{};};
   },[id,status,retryVersion]);
@@ -1540,6 +1559,7 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         <span className="note">Сначала подтвердите прежнюю отправку. Новый черновик сохраняется. При выходе из заявки проверьте историю перед повторной отправкой.</span>
       </div>}
       {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
+      {!loading&&!loadError&&historyTrimmed&&<span className="note" role="status">Показана свежая часть переписки. Более ранние сообщения доступны по кнопке ниже.</span>}
       {!loading&&!loadError&&older!==null&&<button type="button" className="btn ghost small" disabled={paging} onClick={()=>olderRef.current()}>{paging?'Загружаем…':'Загрузить более ранние сообщения'}</button>}
       <div className="msgs" ref={box}>
         {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}
