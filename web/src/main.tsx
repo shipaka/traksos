@@ -346,7 +346,7 @@ function App() {
   useEffect(() => onEvent((e) => {
     if (e.type === 'verification') { toast(e.decision === 'approved' ? 'Проверка пройдена — выходите на линию' : 'Проверка не пройдена'); reload(); }
     // Админ поменял цену, бонусы или баланс — профиль обновляется сам, без перезагрузки
-    if (e.type === 'pricing' || e.type === 'balance' || e.type === 'line_status') reload();
+    if (e.type === 'pricing' || e.type === 'balance' || e.type === 'line_status' || e.type === 'rating_changed' || e.type === 'connection_restored') reload();
     if (e.type === 'order' && e.status === 'accepted' && modeRef.current !== 'performer' && !location.hash.startsWith('#/work')) toast('Исполнитель найден');
   }), [reload, toast]);
 
