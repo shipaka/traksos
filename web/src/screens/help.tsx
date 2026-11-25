@@ -11,8 +11,12 @@ type Item = [string, string];
 
 export function Help() {
   const { me, mode } = useMe();
-  const { pricing: p } = usePrices();
-  const [q, setQ] = useState('');
+  return <HelpForAccount key={(me?.id??'guest')+':'+mode}/>;
+}
+function HelpForAccount(){
+  const {me,mode}=useMe();
+  const {pricing:p}=usePrices();
+  const [q,setQ]=useState('');
   // A failed /api/pricing request must never produce invented promises.
   const feeText = typeof p?.clientFeePct === 'number' && Number.isFinite(p.clientFeePct)
     ? `Сервисный сбор TrakSOS — ${p.clientFeePct}% сверх стоимости работы, но не выше 5 000 ₽ с одного заказа.`
@@ -90,10 +94,12 @@ export function Help() {
     [item.title,item.text+' '+item.tip]);
   const sections: [string, Item[]][] = mode === 'service' ? [['Рембаза', service]]
     : mode === 'performer' ? [['Исполнителю', performer]]
-    : ['insurer','inspection','moderator','admin'].includes(role) ? [[courses[role].label,specialistLessons]]
+    : ['insurer','inspection','courier','moderator','admin'].includes(role) ? [[courses[role].label,specialistLessons]]
     : isDriver ? [['Водителю', driver], ['Как всё устроено', client]]
     : [['Как всё устроено', client], ['Владельцу парка', owner]];
-  const match = (it: Item) => !q.trim() || (it[0] + ' ' + it[1]).toLowerCase().includes(q.trim().toLowerCase());
+  const normalize=(value:string)=>value.normalize('NFKC').toLocaleLowerCase('ru-RU').replace(/ё/g,'е').trim();
+  const terms=normalize(q).split(/\s+/).filter(Boolean);
+  const match=(it:Item)=>terms.every(word=>normalize(it.join(' ')).includes(word));
   return (
     <main>
       <Back to="" label="Назад" />
@@ -107,6 +113,7 @@ export function Help() {
       <input className="field" type="search" placeholder="Поиск по справке и ситуациям" value={q} onChange={(e) => setQ(e.target.value)} />
       {me && <EconomicsGuide />}
       {me && <ScenarioEncyclopedia query={q} />}
+      {terms.length>0&&!sections.some(([,items])=>items.some(match))&&<p className="note" role="status">В текстовых статьях совпадений нет. Проверьте учебные ситуации выше или задайте вопрос в поддержку.</p>}
       {sections.map(([title, items]) => {
         const shown = items.filter(match);
         if (!shown.length) return null;
