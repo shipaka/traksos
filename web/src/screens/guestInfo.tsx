@@ -45,7 +45,8 @@ export function GuestAppInfo() {
       <span className="guest-info-overline">TRAKSOS · В ТЕЛЕФОНЕ</span>
       <h1>Мобильное приложение TrakSOS</h1>
       <p>Заявки, связь с исполнителями, транспорт и история обращений — в личном кабинете.</p>
-      <p>Ссылка на скачивание в RuStore появится после подтверждённой публикации. Пока можно пользоваться мобильной версией сайта.</p>
+      <p className="guest-app-release-status">Ссылка на скачивание в RuStore появится после подтверждённой публикации.</p>
+      <p>Пока можно пользоваться мобильной версией сайта.</p>
       <div className="guest-info-actions">
         <a href="#/login">Войти</a><a href="#/register">Зарегистрироваться</a>
       </div>
