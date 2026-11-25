@@ -111,10 +111,10 @@ function AdminOpsDashboard({userId}:{userId:string}) {
             {[5,10,15,30,60,120].map(n=><option key={n} value={n}>{n} минут</option>)}
           </select>
         </label>
-        <button className="btn ghost small" onClick={()=>report.reload()}>Обновить данные</button>
+        <button className="btn ghost small" onClick={()=>{void report.reload();void sla.reload();}}>Обновить данные</button>
       </div>
     </div>
-    {!d ? <Loading error={report.error}/> : <>
+    {!d ? <div className="stack"><Loading error={report.error}/>{report.error&&<button type="button" className="btn ghost small" onClick={report.reload}>Повторить загрузку проблемных заявок</button>}</div> : <>
       <div className="tiles">
         <Metric name="Всего заявок" value={d.summary.total} hint={'За '+days+' дней'}/>
         <Metric name="Были без исполнителя" value={d.summary.unfilled} hint={'В том числе повторно найденных: '+(d.summary.recovered_after_retry??0)}/>
@@ -161,7 +161,7 @@ function AdminOpsDashboard({userId}:{userId:string}) {
         <b>Контроль зависших этапов · третий табличный блок</b>
         <span className="note">Поиск, ожидание выезда, дорога, работа, подтверждение. Контрольный интервал — не доказательство вины. Выезд далеко за КАД требует отдельной проверки времени маршрута. Указанная причина остаётся в журнале.</span>
         <button className="btn ghost small" style={{alignSelf:'flex-start'}} onClick={()=>sla.reload()}>Обновить нарушения этапов</button>
-        {!sla.data ? <Loading error={sla.error}/> : <>
+        {!sla.data ? <div className="stack"><Loading error={sla.error}/>{sla.error&&<button type="button" className="btn ghost small" onClick={sla.reload}>Повторить загрузку нарушений этапов</button>}</div> : <>
           <div className="scroll-x"><table><thead><tr><th>Заявка / этап</th><th>Начало этапа</th><th>Контрольная дата</th><th>Текущий статус</th><th>Разбор</th></tr></thead>
             <tbody>{sla.data.incidents.length ? sla.data.incidents.map((i:any)=>
               <SlaIncidentRow key={i.id+':'+(i.reviewed_at??'')+':'+(i.review_state??'')} incident={i} onSaved={()=>sla.reload()}/>) :
@@ -188,9 +188,9 @@ function AdminOpsDashboard({userId}:{userId:string}) {
           </select>
           <label className="row"><input type="checkbox" checked={onlyOpen} onChange={e=>setOnlyOpen(e.target.checked)}/> Только неразобранные</label>
         </div>
-        {incidents.length===0 && <span className="note">За выбранный период случаев не найдено.</span>}
+        {incidents.length===0 && <span className="note">{filter!=='all'||onlyOpen?'Нет случаев, соответствующих фильтрам.':'За выбранный период случаев не найдено.'}</span>}
         {incidents.map((o:any)=><IncidentRow key={o.id+':'+(o.reviewed_at??'')+':'+(o.review_state??'')} order={o} editable={admin}
-          onSave={async (state,note)=>{const x=await run(()=>put('/api/admin/demand/'+o.id+'/review',{state,note}),'Разбор сохранён');if(x)report.reload();}} busy={busy}/>)}
+          onSave={async (state,note)=>{await run(()=>put('/api/admin/demand/'+o.id+'/review',{state,note}),'Разбор сохранён');await report.reload();}} busy={busy}/>)}
       </div>
     </>}
   </div>;
@@ -220,7 +220,7 @@ function SlaIncidentRow({incident:i,onSaved}:{incident:any;onSaved:()=>void}) {
       <input className="field" value={note} maxLength={1200} placeholder="Причина и доказательства"
         aria-label="Объяснение и доказательства" onChange={e=>setNote(e.target.value)}/>
       <button className="btn ghost small" disabled={busy||note.trim().length<10}
-        onClick={async()=>{if(await run(()=>put('/api/admin/order-sla/'+i.id+'/review',{state,note}),'Разбор сохранён'))onSaved();}}>Сохранить</button>
+        onClick={async()=>{await run(()=>put('/api/admin/order-sla/'+i.id+'/review',{state,note:note.trim()}),'Разбор сохранён');onSaved();}}>Сохранить</button>
     </div></td>
   </tr>;
 }
