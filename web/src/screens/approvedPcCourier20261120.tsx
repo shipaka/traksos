@@ -5,10 +5,11 @@
  * The buyer, not the courier, confirms final receipt after code verification.
  */
 import {useState} from 'react';
-import {get,put} from '../api.ts';
-import {useAction,useLoad} from '../ui.tsx';
+import {get} from '../api.ts';
+import {useLoad} from '../ui.tsx';
 import {APPROVED_VISUALS} from '../approvedVisuals.ts';
 import './approvedPcCourier20261120.css';
+import {CourierAvailability} from './courierAvailability.tsx';
 
 type Stage='assigned'|'picked_up'|'en_route'|'arrived'|'code_verified'|'received'|'cancelled';
 type Item={productId:string;name:string;qty:number;article?:string|null};
@@ -34,8 +35,6 @@ function Progress({stage}:{stage:Stage}){
 }
 export function ApprovedPcCourier(){
   const jobs=useLoad<Job[]>(()=>get('/api/courier/jobs'),[],e=>e.type==='shop'||e.type==='connection_restored');
-  const presence=useLoad<{online:boolean}>(()=>get('/api/courier/presence'),[]);
-  const {busy,run}=useAction();
   const [selected,setSelected]=useState<string|null>(null);
   const ready=!jobs.error&&Array.isArray(jobs.data);
   const all=ready?(jobs.data??[]):[];
@@ -48,14 +47,7 @@ export function ApprovedPcCourier(){
     <header className="courier-pc-header">
       <div><small>TRAKSOS · КУРЬЕРСКАЯ ДОСТАВКА</small><h1>Рабочий стол</h1>
         <p>Рейсы, посылки и подтверждение получателя — в одном месте.</p></div>
-      {presence.error?<button type="button" className="courier-pc-presence" onClick={presence.reload}>Повторить проверку статуса</button>:<button type="button" role="switch" className={'courier-pc-presence'+(presence.data?.online?' on':'')}
-        aria-checked={!!presence.data?.online} disabled={!presence.data||busy}
-        onClick={async()=>{if(!presence.data)return;const next=!presence.data.online;
-          const ok=await run(()=>put('/api/courier/presence',{online:next}),next?'Вы на линии':'Вы не на линии');
-          if(ok)presence.reload();}}>
-        <span className="courier-pc-light" aria-hidden="true"/>
-        {!presence.data?'Статус загружается':presence.data.online?'На линии':'Не на линии'}
-        <i aria-hidden="true"/></button>}
+      <CourierAvailability desktop/>
     </header>
     <div className="courier-pc-grid">
       <div className="courier-pc-primary">
