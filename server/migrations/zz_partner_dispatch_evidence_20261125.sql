@@ -28,6 +28,12 @@ begin
       return new;
     end if;
   end if;
+  -- Serialize evidence capture with soft deletion of this account. A
+  -- committed deletion must neither retain nor recreate this read-model data.
+  perform 1 from users where id=new.performer_id and deleted_at is null for share;
+  if not found then
+    return new;
+  end if;
   insert into partner_dispatch_evidence(order_id,performer_id,first_observed_sent_at)
     values(new.order_id,new.performer_id,new.sent_at)
     on conflict(order_id,performer_id) do nothing;
@@ -37,3 +43,17 @@ $$;
 create trigger partner_dispatch_evidence_capture
   after insert or update of sent_at on order_dispatch
   for each row execute function record_partner_dispatch_evidence();
+
+-- PrivacyService anonymizes the user row rather than physically deleting it.
+-- The FK cascade alone therefore cannot implement erasure of this extra
+-- activity read model. Existing order and accounting records are unaffected.
+create function erase_partner_dispatch_evidence() returns trigger language plpgsql as $$
+begin
+  delete from partner_dispatch_evidence where performer_id=new.id;
+  return new;
+end;
+$$;
+create trigger partner_dispatch_evidence_soft_delete
+  after update of deleted_at on users
+  for each row when (old.deleted_at is null and new.deleted_at is not null)
+  execute function erase_partner_dispatch_evidence();
