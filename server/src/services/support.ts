@@ -148,89 +148,76 @@ export class SupportService {
     if (p.requestKey || p.requestedRole) throw bad('support_context','Этот способ доступен только для личного обращения без привязки к заявке.');
     // Only the stored thread contains the redacted text, never notice previews.
     const safeText = maskPhones(text).text;
-    // Вопрос по конкретной операции: начисление, списание, выплата — поддержка увидит её целиком
+    // Ledger intake validates the source and persists the staff inbox in the
+    // same transaction as the initial message and ticket.
     if (p.ledgerEntryId) {
-      const e = await this.db.one<{ id: number; order_id: string | null }>(
-        `select id, order_id from ledger_entries where id=$1 and performer_id=$2`, [p.ledgerEntryId, user.id]);
-      if (!e) throw notFound('Операция не найдена');
-      // A repeated tap, browser retry or a second app instance may race with
-      // the first request. The existence check and INSERT must be serialized.
-      const result = await this.db.tx(async (q) => {
+      const result = await this.db.tx(async q => {
+        await this.liveActor(q,user);
+        const e = await q.one<{ id: number; order_id: string | null }>(
+          `select id, order_id from ledger_entries where id=$1 and performer_id=$2 for share`, [p.ledgerEntryId, user.id]);
+        if (!e) throw notFound('Операция не найдена');
         await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:ledger:' + user.id + ':' + e.id]);
         const existing = await q.one<{ id: string }>(
           'select id from support_tickets where user_id=$1 and ledger_entry_id=$2 and status=$3',
           [user.id, e.id, 'open']);
-        if (existing) return { id: existing.id, number: 0, created: false };
+        if (existing) return { id: existing.id, delivery: null };
         const created = await q.one<{ id: string; number: number }>(
           `insert into support_tickets(user_id, order_id, topic, ledger_entry_id, sla_deadline_at)
              values ($1,$2,$3,$4,$5) returning id, number`,
           [user.id, e.order_id, p.topic.slice(0, 80), e.id,
             new Date(this.now().getTime() + 3_600_000)]);
-        // Never commit an empty support ticket if its initial message fails.
+        if (!created) throw Error('Support ticket insert failed');
         await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
-          [created!.id, user.id, safeText]);
-        return { id: created!.id, number: created!.number, created: true };
+          [created.id, user.id, safeText]);
+        return { id: created.id, delivery: await this.persistInitialNotice(q,created) };
       });
-      if (!result.created) {
-        await this.post(user, result.id, text);
-        return this.thread(user, result.id);
-      }
-      const t = result;
-      await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-        kind: 'normal', title: `Новое обращение №${t!.number}`,
-        body: 'Откройте личное обращение, чтобы прочитать сообщение.',
-        data: { ticketId: t!.id },
-      });
-      return this.thread(user, t!.id);
+      if (!result.delivery) return this.post(user,result.id,text);
+      await this.notifier.deliverStored(result.delivery.ids,
+        {type:'support',ticketId:result.id},result.delivery.msg).catch(()=>{});
+      return this.thread(user,result.id);
     }
-    let uniqueTicket: { id: string; number: number } | null = null;
-    if (p.orderId) {
-      const o = await this.orders.mustSee(user, p.orderId);
-      if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
-      // One open thread per customer + order. All concurrent requests serialize
-      // before the SELECT/INSERT; no silent duplicate conversations are created.
-      const result = await this.db.tx(async (q) => {
-        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:order:' + user.id + ':' + p.orderId]);
-        const existing = await q.one<{ id: string }>(
-          'select id from support_tickets where user_id=$1 and order_id=$2 and status=$3',
-          [user.id, p.orderId, 'open']);
-        if (existing) return { id: existing.id, number: 0, created: false };
-        const created = await q.one<{ id: string; number: number }>(
-          `insert into support_tickets(user_id, order_id, topic, sla_deadline_at)
-             values ($1,$2,$3,$4) returning id, number`,
-          [user.id, p.orderId, p.topic.slice(0, 80),
-            new Date(this.now().getTime() + 3_600_000)]);
-        // Never commit an empty support ticket if its initial message fails.
-        await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
-          [created!.id, user.id, safeText]);
-        return { id: created!.id, number: created!.number, created: true };
-      });
-      if (!result.created) {
-        await this.post(user, result.id, text);
-        return this.thread(user, result.id);
-      }
-      uniqueTicket = { id: result.id, number: result.number };
-    }
-    const t = uniqueTicket ?? await this.db.tx(async q => {
+    if (!p.orderId) throw bad('support_context','Не указана заявка');
+    const o = await this.orders.mustSee(user, p.orderId);
+    if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
+    // Serialize first intake per participant and order. The ticket, message and
+    // staff inbox either all commit or all roll back. Order/dispute callbacks
+    // remain separate post-commit effects, not part of this guarantee.
+    const result = await this.db.tx(async q => {
+      await this.liveActor(q,user);
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:order:' + user.id + ':' + p.orderId]);
+      const existing = await q.one<{ id: string }>(
+        'select id from support_tickets where user_id=$1 and order_id=$2 and status=$3',
+        [user.id, p.orderId, 'open']);
+      if (existing) return { id: existing.id, number: 0, delivery:null };
       const created = await q.one<{ id: string; number: number }>(
         `insert into support_tickets(user_id, order_id, topic, sla_deadline_at)
            values ($1,$2,$3,$4) returning id, number`,
-        [user.id, null, p.topic.slice(0, 80), new Date(this.now().getTime() + 3_600_000)]);
+        [user.id, p.orderId, p.topic.slice(0, 80),
+          new Date(this.now().getTime() + 3_600_000)]);
+      if (!created) throw Error('Support ticket insert failed');
       await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
-        [created!.id, user.id, safeText]);
-      return created!;
+        [created.id, user.id, safeText]);
+      return {id:created.id,number:created.number,delivery:await this.persistInitialNotice(q,created)};
     });
-    if (p.orderId) {
-      await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: t!.number, topic: p.topic });
-      await this.orders.systemMessage(p.orderId, `Подключили поддержку (обращение №${t!.number}). Первый ответ специалиста — в течение часа.`);
-    }
-    if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId ?? null, ticketId: t!.id, text, topic: p.topic });
-    await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-      kind: 'normal', title: `Новое обращение №${t!.number}`,
-      body: 'Откройте личное обращение, чтобы прочитать сообщение.',
-      data: { ticketId: t!.id },
-    });
-    return this.thread(user, t!.id);
+    if (!result.delivery) return this.post(user,result.id,text);
+    // Send the already-persisted staff notice even if a later order callback
+    // fails. A push failure cannot undo or duplicate the stored inbox.
+    await this.notifier.deliverStored(result.delivery.ids,
+      {type:'support',ticketId:result.id},result.delivery.msg).catch(()=>{});
+    await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: result.number, topic: p.topic });
+    await this.orders.systemMessage(p.orderId, `Подключили поддержку (обращение №${result.number}). Первый ответ специалиста — в течение часа.`);
+    if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId, ticketId: result.id, text, topic: p.topic });
+    return this.thread(user,result.id);
+  }
+
+  private async persistInitialNotice(q:Queryable,ticket:{id:string;number:number}) {
+    const ids=await this.intakeStaffIds(q);
+    const msg={kind:'normal' as const,title:`Новое обращение №${ticket.number}`,
+      body:'Откройте личное обращение, чтобы прочитать сообщение.',data:{ticketId:ticket.id}};
+    for(const id of ids) await q.query(
+      "insert into notifications(user_id,kind,title,body,data) values($1,'support',$2,$3,$4)",
+      [id,msg.title,msg.body,msg.data]);
+    return {ids,msg};
   }
 
   async post(user: AuthUser, ticketId: string, body: string, requestKey?: string) {
