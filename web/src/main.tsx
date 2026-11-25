@@ -621,7 +621,9 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
   // and its child (for example /courier and /courier/jobs).
   const activeMobileTabHref = mobileTabs
     .filter(([href]) => here === href ||
-      (href !== '/' && here.startsWith(href + '/')))
+      (href !== '/' && here.startsWith(href + '/')) ||
+      (href === '/orders' && route[0] === 'order') ||
+      (href === '/insurance/requests' && route[0] === 'insurance' && route[1] === 'request'))
     .sort((a,b) => b[0].length - a[0].length)[0]?.[0];
   // Desktop primary navigation follows the same deepest-match rule.
   const isDesktopPrimaryActive = (href: string, links: readonly (readonly string[])[]) =>
@@ -679,7 +681,7 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
        ['/services', 'СТО и запись'],
        ['/reviews', 'Мои отзывы'], ['/invite', 'Пригласить друга'],
        ['/shop', 'Магазин запчастей'], ['/profile', 'Профиль и настройки']];
-  const helpLinks: [string, string][] = [
+  const rawHelpLinks: [string, string][] = [
     ...(me?.roles.some(r => ['master','service','admin','moderator'].includes(r))
       ? [['/techbase/master','ТехБаза специалиста'] as [string,string]] : []),
     ...(me?.roles.some(r => ['client','driver','tow'].includes(r))
@@ -692,9 +694,14 @@ function Shell({ mode, me, children }: { mode: Mode; me: Me | null; children: Re
     ['/support', 'Поддержка'], ['/notifications', 'Уведомления'],
     ['/learn', 'Знакомство с TrakSOS'], ['/training', 'Обучение по шагам'], ['/practice', 'Учебный тренажёр'], ['/help', 'Помощь и подсказки'],
     ['/economics', 'Комиссии, баллы и рефералы'], ['/trakbot', 'TrakBot · личный чат'], ['/rules', 'Правила площадки'],
-    ['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : mode === 'admin' || mode === 'moderator' ? 'privacy' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта'],
+    ...(mode==='admin'||mode==='moderator' ? [] : [['/offer/' + (mode === 'performer' || mode === 'service' ? 'performer' : mode === 'insurer' ? 'insurer' : mode === 'inspection' ? 'inspection' : 'client'), mode === 'insurer' || mode === 'inspection' ? 'Договор партнёра' : 'Оферта']] as [string,string][]),
     ['/offer/privacy', 'Политика персональных данных'],
     ['/privacy', 'Мои персональные данные']];
+  // Keep the help/documents group unique, including routes already in the account group.
+  // A staff privacy offer is the same destination as the legal privacy policy.
+  const helpLinks = rawHelpLinks.filter(([href],index,links)=>
+    !accountLinks.some(([accountHref])=>accountHref===href) &&
+    links.findIndex(([other])=>other===href)===index);
   // Visible on Android secondary screens only; the owner-approved dashboard
   // composition is intentionally untouched. Titles come from authorized routes.
   const innerRole = mode === 'performer' && me?.performer?.kind === 'tow' ? 'tow' : mode;
