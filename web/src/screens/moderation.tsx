@@ -8,16 +8,21 @@ const KINDS: [string, string][] = [['dispute', 'Споры'], ['appeal', 'Обж
 const PRI: Record<number, [string, string]> = { 1: ['Срочно', 'bad'], 2: ['Обычно', 'warn'], 3: ['Не горит', ''] };
 
 export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}={}) {
+  const {me}=useMe();
+  return <ModQueueForAccount key={(me?.id??'guest')+':'+initialKind} initialKind={initialKind}/>;
+}
+function ModQueueForAccount({initialKind}:{initialKind:'dispute'|'log'}){
   const [kind, setKind] = useState<string>(initialKind);
   const log = kind === 'log';
-  const q = useLoad(() => get(`/api/mod/cases?${log ? 'status=resolved' : `kind=${kind}`}`), [kind], (e) => e.type === 'mod_case');
-  const counts = q.data?.counts ?? {};
+  const q = useLoad(async()=>({kind,payload:await get(`/api/mod/cases?${log ? 'status=resolved' : `kind=${kind}`}`)}), [kind], (e) => e.type === 'mod_case'||e.type==='connection_restored');
+  const data=!q.error&&q.data?.kind===kind?q.data.payload:null;
+  const counts = data?.counts ?? {};
   const total = Object.values(counts as Record<string, number>).reduce((a, b) => a + b, 0);
-  const urgent = log ? null : (q.data?.items ?? []).filter((c: any) => c.priority === 1).length;
+  const urgent = log||!data ? null : (data.items ?? []).filter((c: any) => c.priority === 1).length;
   return (
     <div className="stack">
       <div className="grid2">
-        <div className="card tile"><span className="label">В очереди</span><span className="tile-value">{total}</span></div>
+        <div className="card tile"><span className="label">В очереди</span><span className="tile-value">{data?total:'—'}</span></div>
         <div className="card tile"><span className="label">Срочно</span><span className="tile-value" style={{ color: urgent ? 'var(--bad)' : undefined }}>{urgent ?? '—'}</span><span className="note">в этой вкладке</span></div>
       </div>
       <span className="note">Срочные — сверху. Проверка исполнителей и подозрительное — в соседних разделах кабинета.</span>
@@ -25,9 +30,9 @@ export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}=
         {KINDS.map(([k, n]) => <button type="button" key={k} className="chip" aria-pressed={kind === k} onClick={() => setKind(k)}>{n}{counts[k] ? ` · ${counts[k]}` : ''}</button>)}
         <button type="button" className="chip" aria-pressed={log} onClick={() => setKind('log')}>Журнал решений</button>
       </div>
-      {!q.data ? <Loading error={q.error} /> : !q.data.items.length ? <div className="empty">{log ? 'Решений пока нет' : 'Очередь пуста'}</div> : (
+      {!data ? <div className="stack"><Loading error={q.error}/>{q.error&&<button className="btn ghost small" type="button" onClick={q.reload}>Повторить загрузку дел</button>}</div> : !data.items.length ? <div className="empty">{log ? 'Решений пока нет' : 'Очередь пуста'}</div> : (
         <div className="rows">
-          {q.data.items.map((c: any) => (
+          {data.items.map((c: any) => (
             <a key={c.id} href={`#/admin/case/${c.id}`} className="list-item">
               <div className="stack" style={{ gap: 2 }}>
                 <b>№{c.number} · {c.title}</b>
@@ -42,18 +47,30 @@ export function ModQueue({initialKind='dispute'}:{initialKind?:'dispute'|'log'}=
   );
 }
 
-export function ModCase({ id }: { id: string }) {
+export function ModCase({id}:{id:string}){
+  const {me,mode}=useMe();
+  return <ModCaseForAccount key={(me?.id??'guest')+':'+mode+':'+id} id={id}/>;
+}
+function ModCaseForAccount({ id }: { id: string }) {
   const { mode } = useMe();
   const backTo = mode === 'moderator' ? 'moderation/cases' : 'admin';
   const c = useLoad(() => get(`/api/mod/cases/${id}`), [id]);
   const { busy, run } = useAction();
   const [note, setNote] = useState('');
-  const d = c.data;
-  if (!d) return <main><Back to={backTo} label="Очередь" /><Loading error={c.error} /></main>;
-  const act = async (path: string, body: any, okText: string) => { const r = await run(() => post(`/api/mod/cases/${id}/${path}`, body), okText); if (r) c.setData(r); return r; };
+  const [unconfirmed,setUnconfirmed]=useState(false);
+  const d = c.error?null:c.data;
+  if (!d) return <main><Back to={backTo} label="Очередь" /><Loading error={c.error} />{c.error&&<button type="button" className="btn ghost small" onClick={c.reload}>Повторить загрузку дела</button>}</main>;
+  const act = async (path: string, body: any, okText: string) => {
+    if(busy||unconfirmed)return;
+    const r = await run(() => post(`/api/mod/cases/${id}/${path}`, body), okText);
+    if(r){if(path!=='enter-chat')c.setData(r);}
+    else{setUnconfirmed(true);void c.reload();}
+    return r;
+  };
   return (
     <main>
       <Back to={backTo} label="Очередь" />
+      {unconfirmed&&<div className="banner warn" role="alert">Ответ на действие не подтверждён. Сверьте состояние дела и журнал перед повтором. <button type="button" className="btn ghost small" onClick={async()=>{await c.reload();}}>Обновить дело</button> <button type="button" className="btn ghost small" onClick={()=>setUnconfirmed(false)}>Состояние проверено</button></div>}
       <div>
         <h1>{d.kindName} №{d.number}</h1>
         <div className="sub">{d.title} · {fmtTime(d.createdAt)}</div>
@@ -61,7 +78,7 @@ export function ModCase({ id }: { id: string }) {
       {d.text && <div className="card"><span className="label">Что пишут</span><span style={{ whiteSpace: 'pre-wrap' }}>{d.text}</span></div>}
       {d.status === 'open' && (
         <div className="scroll-x">
-          {[1, 2, 3].map((p) => <button key={p} className="chip" aria-pressed={d.priority === p} disabled={busy} onClick={() => act('priority', { priority: p }, `Приоритет: ${PRI[p][0]}`)}>{PRI[p][0]}</button>)}
+          {[1, 2, 3].map((p) => <button key={p} className="chip" aria-pressed={d.priority === p} disabled={busy||unconfirmed} onClick={() => act('priority', { priority: p }, `Приоритет: ${PRI[p][0]}`)}>{PRI[p][0]}</button>)}
         </div>
       )}
       {d.order && (
@@ -83,7 +100,7 @@ export function ModCase({ id }: { id: string }) {
               </div>
             </details>
           )}
-          <button className="btn ghost small" disabled={busy} onClick={async () => { const r = await act('enter-chat', {}, 'Вы в чате — это записано в журнал'); if (r) go(`order/${r.orderId}`); }}>Войти в чат заявки</button>
+          <button className="btn ghost small" disabled={busy||unconfirmed} onClick={async () => { const r = await act('enter-chat', {}, 'Вы в чате — это записано в журнал'); if (r) go(`order/${r.orderId}`); }}>Войти в чат заявки</button>
         </div>
       )}
       {d.booking && (
@@ -117,7 +134,7 @@ export function ModCase({ id }: { id: string }) {
           <textarea className="field" placeholder="Коротко — стороны увидят" value={note} onChange={(e) => setNote(e.target.value)} />
           <div className="stack">
             {Object.entries(d.decisions as Record<string, string>).map(([k, n]) => (
-              <button key={k} className="opt" disabled={busy} onClick={() => act('decide', { decision: k, note: note || undefined }, `Решение: ${n}. Стороны получили уведомление`)}><b>{n}</b></button>
+              <button key={k} className="opt" disabled={busy||unconfirmed} onClick={() => act('decide', { decision: k, note: note || undefined }, `Решение: ${n}. Стороны получили уведомление`)}><b>{n}</b></button>
             ))}
           </div>
           {d.kind === 'dispute' && <span className="note">Деньги по решению — возврат или доплата — делаются в карточке оплаты заявки.</span>}
@@ -127,7 +144,7 @@ export function ModCase({ id }: { id: string }) {
           <b>{d.decisionName}</b>
           {d.decisionNote && <span>{d.decisionNote}</span>}
           <span className="note">{fmtTime(d.decidedAt)}</span>
-          <button className="btn ghost small" disabled={busy} onClick={() => act('reopen', {}, 'Вернули в очередь')}>Вернуть в очередь</button>
+          <button className="btn ghost small" disabled={busy||unconfirmed} onClick={() => act('reopen', {}, 'Вернули в очередь')}>Вернуть в очередь</button>
         </div>
       )}
       {d.log.length > 0 && (
