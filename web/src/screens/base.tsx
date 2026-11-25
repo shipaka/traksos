@@ -989,7 +989,13 @@ function BookFormPanel({ id }: { id: string }) {
   const from = query().get('from');
   const caseOrderId=query().get('case');
   const recommendationId=query().get('recommendation');
-  const source=useBaseLoad(()=>caseOrderId ? get('/api/orders/'+caseOrderId) : Promise.resolve(null),[caseOrderId]);
+  const sourceId=caseOrderId||from;
+  const source=useBaseLoad(()=>sourceId ? get('/api/orders/'+sourceId) : Promise.resolve(null),[sourceId],e=>e.type==='fleet'||e.type==='order');
+  const linked=!!sourceId;
+  const invalidSource=!!(caseOrderId&&from)||!!(recommendationId&&!caseOrderId)||!!(source.data&&(source.data.id!==sourceId||(from&&source.data.recommendedCenter?.id!==id)));
+  const sourceVehicleId=source.data?.vehicleId??null;
+  const sourceCar=sourceVehicleId?cars.data?.find((v:any)=>v.id===sourceVehicleId):source.data;
+  const sourceReady=linked&&!invalidSource&&!!source.data&&(!sourceVehicleId||!!sourceCar);
   const { busy, run } = useAction();
   const submitting = useRef(false);
   const [vehicleId, setVehicle] = useState('');
@@ -998,20 +1004,18 @@ function BookFormPanel({ id }: { id: string }) {
   const [time, setTime] = useState('');
   const [arrival, setArrival] = useState<'self' | 'tow'>('self');
   const [comment, setComment] = useState('');
-  useEffect(() => { if (cars.data?.length && !vehicleId && !caseOrderId) setVehicle(cars.data[0].id); }, [cars.data,caseOrderId]);
-  useEffect(()=>{if(source.data){
-    setVehicle(source.data.vehicleId??'');
-    if(source.data.service==='tow')setArrival('tow');
-  }},[source.data]); // eslint-disable-line
+  useEffect(() => { if (cars.data?.length && !vehicleId && !linked) setVehicle(cars.data[0].id); }, [cars.data,linked,vehicleId]);
+  useEffect(()=>{if(source.data?.service==='tow')setArrival('tow');},[source.data?.service]);
   if (!c.data) return <main><Back to={`services/${id}`} label="Сервис" /><StationLoading error={c.error} reload={c.reload} /></main>;
   const d = c.data;
   const needs = Object.entries(NEEDS).filter(([k]) => k === 'other' || (d.staff?.[k] && d.staff[k] !== 'none'));
+  const canSubmit=!!need&&!!day&&!busy&&!invalidSource&&(linked?sourceReady:!!cars.data&&!cars.error);
   async function send() {
-    if (submitting.current) return;
+    if (submitting.current||!canSubmit) return;
     submitting.current = true;
     try {
       const result = await run(() => post(`/api/services/${id}/book`, {
-        vehicleId: vehicleId || null, need, day, time: time || null, arrival,
+        vehicleId: linked?sourceVehicleId:(vehicleId||null), need, day, time: time || null, arrival,
         comment: comment || null, fromOrderId: from, caseOrderId, recommendationId
       }), 'Запрос отправлен — сервис ответит уведомлением');
       if (result) go(`booking/${result.id}`);
@@ -1023,7 +1027,17 @@ function BookFormPanel({ id }: { id: string }) {
       <div><h1>Запись в сервис</h1><div className="sub">Рембаза «{d.name}» · {d.address}</div></div>
       <div className="card">
         <Field label="Машина" group>
-          {cars.error ? (
+          {linked ? (
+            <div className="stack" style={{gap:6}}>
+              {invalidSource ? <span role="alert">Исходная заявка не соответствует этой записи. Вернитесь в заявку.</span>
+                : source.error ? <div className="stack" role="alert"><b>Не удалось подтвердить исходную заявку</b><span className="note">{source.error}</span><button type="button" className="btn ghost small" onClick={source.reload}>Повторить загрузку заявки</button></div>
+                : !source.data ? <span className="note" role="status">Загружаем исходную заявку…</span>
+                : sourceVehicleId&&cars.error ? <div className="stack" role="alert"><span className="note">Не удалось проверить машину исходной заявки</span><button type="button" className="btn ghost small" onClick={cars.reload}>Повторить загрузку машин</button></div>
+                : sourceVehicleId&&!cars.data ? <span className="note" role="status">Проверяем машину исходной заявки…</span>
+                : !sourceCar ? <span role="alert">Машина исходной заявки больше недоступна. Проверьте привязку к гаражу.</span>
+                : <div className="opt" aria-label="Машина исходной заявки"><b>{carName(sourceCar)}</b>{sourceCar.plate&&<small>{sourceCar.plate}</small>}<small>Из заявки №{source.data.number} · замена машины недоступна</small></div>}
+            </div>
+          ) : cars.error ? (
             <div className="stack" role="alert">
               <span className="note">Не удалось проверить машины гаража: {cars.error}</span>
               <button type="button" className="btn ghost small" onClick={cars.reload}>
@@ -1059,16 +1073,9 @@ function BookFormPanel({ id }: { id: string }) {
         </div>
         <Field label="Комментарий · по желанию"><textarea className="field" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Что беспокоит" /></Field>
       </div>
-      {from && <span className="note">По совету мастера — скидка применится в счёте сама.</span>}
+      {from && sourceReady && <span className="note">Запись по рекомендации мастера. Условия скидки определяются при расчёте счёта.</span>}
       {caseOrderId && <span className="note">Продолжение обращения №{source.data?.number??'…'}. СТО подтвердит запись и согласует отдельную смету; рекомендация не является оплатой. Если грузовик на эвакуаторе, запись предварительная и не означает доставку.</span>}
-      {caseOrderId && source.error && <div className="card stack" role="alert">
-        <b>Не удалось подтвердить исходную заявку</b>
-        <span className="note">{source.error}</span>
-        <button type="button" className="btn ghost small" onClick={source.reload}>
-          Повторить загрузку заявки
-        </button>
-      </div>}
-      <button className="btn" disabled={busy || !need || !day || !!cars.error || (!!caseOrderId && !source.data)} onClick={send}>Отправить запрос</button>
+      <button className="btn" disabled={!canSubmit} onClick={send}>Отправить запрос</button>
       <span className="note">Сервис подтвердит готовность или уточнит детали — придёт уведомление.</span>
     </main>
   );
