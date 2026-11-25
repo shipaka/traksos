@@ -1,3 +1,4 @@
+import { NotificationHistory } from './notificationHistory.tsx';
 // Поддержка: список обращений, переписка, новое обращение (по заявке или без). Для сотрудников — то же, плюс «Закрыть».
 
 import { useEffect, useRef, useState } from 'react';
@@ -269,74 +270,5 @@ export function Notifications() {
 }
 
 function NotificationsSession() {
-  const alive = useSupportSessionAlive();
-  const { me } = useMe();
-  const list = useLoad(() => get('/api/me/notifications'), [me?.id]);
-  const [readError,setReadError]=useState('');
-  const [markingAll,setMarkingAll]=useState(false);
-  const [openingId,setOpeningId]=useState<number|null>(null);
-  const open = async (n: any) => {
-    if (openingId !== null || markingAll) return;
-    setOpeningId(n.id);
-    setReadError('');
-    if (!n.read_at) {
-      try {
-        // Only the owning user can mark this actual row as read. The backend
-        // verifies user_id and returns 404 for foreign/missing IDs.
-        await post(`/api/me/notifications/${n.id}/read`);
-        if (!alive.current) return;
-        window.dispatchEvent(new Event('traksos:notifications-read'));
-        void list.reload(); // update read styling for non-navigating messages
-      } catch {
-        if (alive.current)
-          setReadError('Не удалось отметить уведомление прочитанным. Повторите после восстановления связи.');
-        // The destination may still be useful offline for THIS account.
-      }
-    }
-    if (!alive.current) return;
-    if (n.data?.orderId) go(`order/${n.data.orderId}`);
-    else if (n.data?.ticketId) go(`support/${n.data.ticketId}`);
-    else if (n.kind === 'verification') go('work/docs');
-    else if (n.kind === 'balance') go('work');
-    else if (n.kind === 'pricing') go('profile');
-    if (alive.current) setOpeningId(null);
-  };
-  return (
-    <main>
-      <Back to="" />
-      <div className="between notifications-header"><h1>Уведомления</h1>
-        <button type="button" className="btn ghost small" disabled={markingAll || openingId !== null || !list.data?.unread} onClick={async()=>{
-          setMarkingAll(true);setReadError('');
-          try{
-            await post('/api/me/notifications/read');
-            if (!alive.current) return;
-            await list.reload();
-            if (alive.current) window.dispatchEvent(new Event('traksos:notifications-read'));
-          }catch{
-            if (alive.current) setReadError('Не удалось отметить уведомления: соединение недоступно');
-          }finally{
-            if (alive.current) setMarkingAll(false);
-          }
-        }}>Прочитать все</button>
-      </div>
-      {readError && <p className="err" role="alert">{readError}</p>}
-      {!list.data ? <div className="stack">
-        <Loading error={list.error} />
-        {list.error && <button type="button" className="btn ghost small" onClick={() => void list.reload()}>Повторить загрузку уведомлений</button>}
-      </div> : !list.data.items.length ? <div className="empty">Пока ничего</div> : (
-        <div className="rows">{list.data.items.map((n: any) => (
-          <button type="button" key={n.id} className="list-item"
-            aria-label={`Уведомление: ${n.title ?? 'TrakSOS'}. ${n.read_at ? 'Прочитано' : 'Не прочитано'}`}
-            disabled={openingId !== null || markingAll}
-            style={{ width: '100%', background: n.read_at ? 'transparent' : 'var(--accent-soft)', border: 0, textAlign: 'left', color: 'inherit' }} onClick={() => void open(n)}>
-            <div className="stack" style={{ gap: 2 }}>
-              <b style={{ fontSize: 14 }}>{n.title ?? 'TrakSOS'}</b>
-              <span style={{ fontSize: 14 }}>{n.body}</span>
-              <span className="note">{fmtTime(n.created_at)}</span>
-            </div>
-          </button>
-        ))}</div>
-      )}
-    </main>
-  );
+  return <NotificationHistory />;
 }
