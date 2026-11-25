@@ -108,6 +108,53 @@ try {
         scene.bodyRight>scene.frameLeft+scene.frameWidth*.8)
        throw Error(width+': clipped/overlapping/missing canonical service art '+JSON.stringify(scene));
    }
+   // Validate actual text glyph rectangles and the quick-service atlas mapping,
+   // not just the element widths (overflow:hidden can hide the failure).
+   const tileReading=await page.evaluate(async()=>{
+     const issues=[];
+     const bounds=el=>el.getBoundingClientRect();
+     const inside=(r,b)=>r.left>=b.left-2&&r.right<=b.right+2&&
+       r.top>=b.top-2&&r.bottom<=b.bottom+2;
+     const glyphs=el=>{
+       if(!el||getComputedStyle(el).display==='none')return [];
+       const range=document.createRange();range.selectNodeContents(el);
+       return [...range.getClientRects()].filter(r=>r.width>0&&r.height>0);
+     };
+     const overlaps=(a,b)=>a.left<b.right-2&&a.right>b.left+2&&a.top<b.bottom-2&&a.bottom>b.top+2;
+     const atlas=await fetch('/traksos-service-scenes-desktop-hq.webp').then(async r=>{
+       if(!r.ok)return null;
+       return createImageBitmap(await r.blob());
+     }).catch(()=>null);
+     if(!atlas||atlas.width<400||atlas.height<50)issues.push('quick service atlas could not be decoded');
+     atlas?.close();
+     for(const tile of document.querySelectorAll('.owner20-quick>a,.owner20-feature')){
+       const box=bounds(tile);
+       const title=tile.querySelector('.owner20-quick-copy b,.owner20-feature-title b');
+       const body=tile.querySelector('.owner20-quick-copy small,p');
+       const action=tile.querySelector('.owner20-feature-cta');
+       const groups=[glyphs(title),glyphs(body),glyphs(action)];
+       const name=title?.textContent||tile.className;
+       if(!groups[0].length)issues.push(name+': title not rendered');
+       if(groups.flat().some(r=>!inside(r,box)))issues.push(name+': text outside tile');
+       if(groups[0].some(a=>groups[1].some(b=>overlaps(a,b)))||
+          [...groups[0],...groups[1]].some(a=>groups[2].some(b=>overlaps(a,b))))
+         issues.push(name+': title, body or CTA collide');
+       if(action&&(!groups[2].length||!inside(bounds(action),box)))issues.push(name+': CTA outside tile');
+     }
+     for(const [key,index] of [['repair',0],['tow',1],['service',2],['consult',3]]){
+       const scene=document.querySelector('.owner20-quick .tr-service-illustration--'+key);
+       if(!scene){issues.push('missing quick illustration '+key);continue;}
+       const style=getComputedStyle(scene),box=bounds(scene);
+       const position=parseFloat(style.backgroundPositionX);
+       const size=parseFloat(style.backgroundSize);
+       if(!style.backgroundImage.includes('traksos-service-scenes-desktop-hq.webp')||
+          Math.abs(position+box.width*index)>2||Math.abs(size-4*box.width)>2||
+          !inside(box,bounds(scene.parentElement))||style.pointerEvents!=='none')
+         issues.push('wrong/clipped quick illustration '+key+': '+style.backgroundPosition+' / '+style.backgroundSize);
+     }
+     return issues;
+   });
+   if(tileReading.length)throw Error(width+': public tile reading/illustration regression: '+JSON.stringify(tileReading));
    // Narrow PC is still the approved four-card strip. Check that the
    // extra community imagery is full-bleed and does NOT paste bitmap
    // captions over the text. The fifth "Почему" line must fit above
