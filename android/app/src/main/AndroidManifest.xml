@@ -15,6 +15,7 @@
     <application
         android:name=".TrakSosApp"
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/traksos_data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
