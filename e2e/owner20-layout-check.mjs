@@ -379,8 +379,24 @@ try {
       return mascot.left>=tile.getBoundingClientRect().left && mascot.right<=title.getBoundingClientRect().left;
     });
     if(!mascotFits)throw Error(width+'px: fifth tile clips TrakBot or overlaps its label');
+    const launcher=page.locator('.trakbot-dock-launcher');
+    const launcherArt=()=>launcher.evaluate(button=>{
+      const mascot=button.querySelector('.trakbot-mascot');
+      const art=mascot.querySelector('.trakbot-mascot-original');
+      const style=getComputedStyle(art);
+      const b=mascot.getBoundingClientRect(), a=art.getBoundingClientRect();
+      return {reaction:mascot.dataset.reaction, image:style.backgroundImage,
+        size:style.backgroundSize, animation:style.animationName,
+        contained:a.left>=b.left-.5&&a.right<=b.right+.5&&a.top>=b.top-.5&&a.bottom<=b.bottom+.5};
+    });
+    const beforeArt=await launcherArt();
+    if(beforeArt.reaction!=='hello'||!beforeArt.image.includes('trakbot-approved-hello.webp')||!beforeArt.contained)
+      throw Error(width+': launcher must use the contained HQ greeting: '+JSON.stringify(beforeArt));
     await botShortcut.click();
     await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+    const openArt=await launcherArt();
+    if(openArt.reaction!==beforeArt.reaction||openArt.image!==beforeArt.image||openArt.size!==beforeArt.size||!openArt.contained)
+      throw Error(width+': opening the dock changed its artwork or bounds: '+JSON.stringify(openArt));
     if(!page.url().endsWith('/#/')) throw Error('TrakBot shortcut navigated off 617 landing');
     if(await page.locator('.trakbot-dock-panel').count()!==1) throw Error('Duplicate TrakBot panels');
     await page.locator('.trakbot-dock-close').click();
