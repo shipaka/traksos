@@ -1,5 +1,7 @@
 // Связь с сервером: HTTP + WebSocket. Токен хранится в localStorage (в Android — тоже, внутри WebView).
 
+import { clearAirDraft } from './airSupportDraft.ts';
+
 declare const __API_URL__: string;
 export const API_URL = (window as any).TRAKSOS_API ?? (__API_URL__ || '');
 
@@ -13,6 +15,7 @@ export const getToken = () => token;
 export function setToken(t: string | null) {
   if (token !== t) {
     disconnectWs();
+    clearAirDraft();
     // A failed POST retains its idempotency key in module memory as well as
     // sessionStorage. NEVER reuse that key for another signed-in account.
     fallbackPending = null;
