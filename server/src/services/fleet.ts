@@ -1,6 +1,6 @@
 // «Мой парк»: машины и водители, что водителю можно, лимиты, подтверждение заказов, ЭДО, вход водителя по QR-наклейке.
 
-import type { Db } from '../db/index.ts';
+import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -18,9 +18,19 @@ const maskPhone = (p: string) => p.replace(/^(\+7)(\d{3})\d{3}(\d{2})(\d{2})$/, 
 export class FleetService {
   constructor(private db: Db, private notifier: Notifier, private orders: OrdersService) {}
 
+  /** Same owner lock as the order-budget transaction, before any vehicle lock. */
+  private async lockOwner(q: Queryable, ownerId: string) {
+    return q.one(`select id from users where id=$1 and status='active' and deleted_at is null
+      and owner_id is null and 'client'=any(roles) and not ('driver'=any(roles))
+      for no key update`, [ownerId]);
+  }
+
   async get(owner: AuthUser) {
     if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver')) throw bad('driver', 'Парком управляет владелец');
-    const u = await this.db.one<any>('select fleet, company_name, company_inn, edo_operator, edo_id, edo_pdf_only from users where id=$1', [owner.id]);
+    const u = await this.db.one<any>(`select fleet, company_name, company_inn, edo_operator, edo_id, edo_pdf_only from users
+      where id=$1 and status='active' and deleted_at is null and owner_id is null
+        and 'client'=any(roles) and not ('driver'=any(roles))`, [owner.id]);
+    if (!u) throw forbidden('Парком управляет только действующий владелец автопарка');
     const cars = await this.db.query(
       `select v.id, v.brand, v.model, v.year, v.plate, v.trailer_plate, v.qr_code, v.driver_id, v.driver_since,
               d.name as driver_name, d.phone as driver_phone
@@ -51,8 +61,8 @@ export class FleetService {
     if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver'))
       throw forbidden('Парком управляет только владелец автопарка');
     await this.db.tx(async (q) => {
-      const record = await q.one<any>('select fleet from users where id=$1 for update', [owner.id]);
-      if (!record) throw notFound('Владелец не найден');
+      if (!await this.lockOwner(q, owner.id)) throw forbidden('Парком управляет только действующий владелец автопарка');
+      const record = await q.one<any>('select fleet from users where id=$1', [owner.id]);
       const cur = record.fleet ?? {};
       const next = { ...cur };
       if (p.mode) next.mode = p.mode;
@@ -69,8 +79,9 @@ export class FleetService {
   async newQr(owner: AuthUser, vehicleId: string) {
     if (owner.owner_id || !owner.roles.includes('client') || owner.roles.includes('driver'))
       throw forbidden('Парком управляет только владелец автопарка');
-    await this.db.tx(async (q) => {
-      // Same vehicle lock as qrJoin: a revoked QR cannot win a stale race.
+    const removed = await this.db.tx(async (q) => {
+      if (!await this.lockOwner(q, owner.id)) throw forbidden('Парком управляет только действующий владелец автопарка');
+      // Owner, then vehicle, matching qrJoin and order creation.
       const vehicle = await q.one<{ id: string; driver_id: string | null }>(
         'select id, driver_id from vehicles where id=$1 and owner_id=$2 for update', [vehicleId, owner.id]);
       if (!vehicle) throw notFound('Машина не найдена');
@@ -82,31 +93,43 @@ export class FleetService {
           and not exists (select 1 from vehicles where driver_id=$1)`,
           [vehicle.driver_id, owner.id]);
       }
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [owner.id, 'fleet.qr_rotate', vehicle.id, { removedDriverId: vehicle.driver_id }]);
+      return vehicle.driver_id;
     });
+    // Generic invalidation only; no new sticker or vehicle metadata sent to a former driver.
+    if (removed) this.notifier.live([removed], { type: 'fleet' });
     return this.get(owner);
   }
 
   /** Водитель: что ему можно — чтобы не предлагать лишнего и честно сказать про лимит */
   async rules(user: AuthUser) {
     if (!user.owner_id || !user.roles.includes('driver')) return null;
-    // Historical revoked assignments may still have an owner_id. Confirm
-    // the current vehicle link in the SAME SQL snapshot as owner settings.
-    const o = await this.db.one<any>(`select u.fleet, coalesce(u.company_name,u.name) as owner
-      from users u where u.id=$1 and exists (
-        select 1 from vehicles v where v.owner_id=u.id and v.driver_id=$2
-      )`, [user.owner_id, user.id]);
-    if (!o) return null;
-    const f = o?.fleet ?? {};
-    return {
-      owner: o?.owner ?? 'Владелец', mode: f.mode ?? 'limit', perOrder: f.perOrder ?? null, perMonth: f.perMonth ?? null,
-      allow: { repair: true, tow: true, consult: true, service: true, shop: true, insurance: false, inspection: false, ...(f.allow ?? {}) }, monthSpent: await this.orders.monthSpent(user.id, user.owner_id),
-    };
+    // Check live owner and driver assignment, then read the scoped total
+    // while QR rotation, transfer and budget settings are serialized.
+    return this.db.tx(async q => {
+      if (!await this.lockOwner(q, user.owner_id!)) return null;
+      const o = await q.one<any>(`select u.fleet, coalesce(u.company_name,u.name) as owner
+        from users u join vehicles v on v.owner_id=u.id
+        join users d on d.id=v.driver_id and d.owner_id=u.id
+        where u.id=$1 and d.id=$2 and d.status='active' and d.deleted_at is null
+          and 'driver'=any(d.roles) limit 1 for share of v,d`, [user.owner_id, user.id]);
+      if (!o) return null;
+      const f = o.fleet ?? {};
+      return {
+        owner: o.owner ?? 'Владелец', mode: f.mode ?? 'limit', perOrder: f.perOrder ?? null, perMonth: f.perMonth ?? null,
+        allow: { repair: true, tow: true, consult: true, service: true, shop: true, insurance: false, inspection: false, ...(f.allow ?? {}) },
+        monthSpent: await this.orders.monthSpent(user.id, user.owner_id!, q),
+      };
+    });
   }
 
   /** Публично: что за машина на наклейке — водитель видит перед входом */
   async qrInfo(code: string) {
     const v = await this.db.one<any>(
-      `select v.brand, v.model, v.plate, coalesce(u.company_name, u.name) as owner from vehicles v join users u on u.id=v.owner_id where v.qr_code=$1`, [code]);
+      `select v.brand, v.model, v.plate, coalesce(u.company_name, u.name) as owner from vehicles v join users u on u.id=v.owner_id where v.qr_code=$1
+        and u.status='active' and u.deleted_at is null and u.owner_id is null
+        and 'client'=any(u.roles) and not ('driver'=any(u.roles))`, [code]);
     if (!v) throw notFound('Наклейка не действует — попросите у владельца новую');
     return { brand: v.brand, model: v.model, plate: v.plate ? v.plate.replace(/^(.)(\d{3})(..)(.*)$/, '$1***$3$4') : null, owner: v.owner ?? 'Владелец' };
   }
@@ -114,19 +137,23 @@ export class FleetService {
   /** Join requires an actual customer account and an unrevoked QR, not just a signed-in user. */
   async qrJoin(user: AuthUser, code: string) {
     const result = await this.db.tx(async (q) => {
-      // Lock the vehicle BEFORE reading the QR result and changing assignments.
-      // Concurrent newQr/qrJoin requests then serialize on the same vehicle.
-      const v = await q.one<any>('select * from vehicles where qr_code=$1 for update', [code]);
+      // Discover the owner without trusting this initial QR lookup; lock the
+      // owner first, then re-read the exact sticker under the vehicle lock.
+      // This serializes opposing moves within one fleet and QR rotation.
+      const target = await q.one<{ owner_id: string }>('select owner_id from vehicles where qr_code=$1', [code]);
+      if (!target || !await this.lockOwner(q, target.owner_id))
+        throw notFound('Наклейка не действует — попросите у владельца новую');
+      const v = await q.one<any>('select * from vehicles where qr_code=$1 and owner_id=$2 for update', [code, target.owner_id]);
       if (!v) throw notFound('Наклейка не действует — попросите у владельца новую');
       const current = await q.one<{ id: string; roles: string[]; owner_id: string | null }>(
-        'select id, roles, owner_id from users where id=$1 for update', [user.id]);
+        "select id, roles, owner_id from users where id=$1 and status='active' and deleted_at is null for update", [user.id]);
       if (!current) throw notFound('Аккаунт не найден');
       if (v.owner_id === current.id) throw bad('owner', 'Это ваша машина — вы владелец');
       // Staff and non-customer accounts must never gain a driver role via QR.
       // An owner-client with no vehicles may convert to a driver explicitly.
       if (current.roles.some(r => ['admin','moderator','master','tow','service','insurer',
         'inspection_operator','courier'].includes(r)) ||
-        !current.roles.some(r => r === 'client' || r === 'driver'))
+        !current.roles.some(r => (r === 'client' || r === 'driver') && user.roles.includes(r)))
         throw forbidden('Привязка по QR доступна только клиенту или водителю');
       validateRoles(current.roles.filter(r => r !== 'client'), ['driver']);
       const own = await q.one<{ n: number }>('select count(*)::int as n from vehicles where owner_id=$1', [current.id]);
@@ -150,6 +177,8 @@ export class FleetService {
       if (prev) await q.query(`update users set owner_id=null
         where id=$1 and owner_id=$2
         and not exists (select 1 from vehicles where driver_id=$1)`, [prev, v.owner_id]);
+      await q.query('insert into audit_log(actor_id,action,target,data) values ($1,$2,$3,$4)',
+        [current.id, 'fleet.qr_join', v.id, { ownerId: v.owner_id, removedDriverId: prev }]);
       return { v, prev };
     });
     const { v, prev } = result;
