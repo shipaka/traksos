@@ -91,7 +91,7 @@ try{
  const ctx=await browser.newContext({viewport:{width:1647,height:927},locale:'ru-RU',serviceWorkers:'block'});
  const page=await ctx.newPage();
  const assertMasterClean=watchPageErrors(page);
- let stepStatus='accepted';
+ let stepStatus='accepted',stepCalls=0,failNextStep=false;
  await page.route(url=>url.pathname==='/api/orders'&&url.searchParams.get('as')==='performer',
    route=>route.fulfill(json([order])));
  await page.route(url=>url.pathname==='/api/orders/'+id,
@@ -102,6 +102,8 @@ try{
    async route=>{
      if(route.request().method()!=='POST')return route.continue();
      const {action}=route.request().postDataJSON();
+     stepCalls++;
+     if(failNextStep){failNextStep=false;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Ответ не подтверждён'})});}
      const changes={depart:'en_route',arrive:'arrived',start_work:'working'};
      assert((action==='depart'&&stepStatus==='accepted')||
        (action==='arrive'&&stepStatus==='en_route')||
@@ -123,6 +125,7 @@ try{
  await page.getByRole('button',{name:'Выехал'}).click();
  await page.getByRole('button',{name:'Подтвердить прибытие'}).waitFor();
  assert(stepStatus==='en_route','Server-controlled status was not changed');
+ assert(stepCalls===1,'More than one departure mutation');
  await page.screenshot({path:output+'/master-en-route-1647.png',fullPage:false,animations:'disabled'});
  await assertMasterClean('master en route');
  // Internal case tabs must not create duplicate order selectors.
@@ -136,6 +139,14 @@ try{
  await page.getByRole('tab',{name:/Текущая работа/}).click();
  assert(await page.locator('.approved-pc-performer-case').count()===1,'Work mode not restored');
  await assertMasterClean('master order tabs and proposals');
+ // An ambiguous POST must never trigger an automatic resend of the same stage.
+ failNextStep=true;
+ page.once('dialog',dialog=>dialog.accept());
+ await page.getByRole('button',{name:'Подтвердить прибытие'}).click();
+ await page.getByText(/Повторная отправка с рабочего стола заблокирована/).waitFor();
+ assert(await page.getByRole('button',{name:'Подтвердить прибытие'}).isDisabled(),'Unconfirmed step can be sent again');
+ assert(stepCalls===2&&stepStatus==='en_route','Unexpected retry or fabricated status');
+ await assertMasterClean('master ambiguous step');
  report.push({role:'master',status:'PASS',scenarios:['selected work','status sequence','TechBase','case tabs','offers mode'],
    screenshots:['master-active-1647.png','master-en-route-1647.png','master-new-proposals-1647.png']});
  await ctx.close();
