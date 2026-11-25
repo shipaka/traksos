@@ -128,13 +128,25 @@ try {
           throw Error('Approved PC workspace artwork missing: ' + JSON.stringify(truck));
         if (!await page.locator('.approved-pc-three').isVisible())
           throw Error('Approved PC three-column workspace missing');
-        const shortcuts=page.getByRole('navigation',{name:'Услуги помощи',exact:true});
+        const desk=page.locator('main.approved-pc-client');
+        const shortcuts=desk.getByRole('navigation',{name:'Услуги помощи',exact:true});
         await shortcuts.waitFor({state:'visible'});
+        // The empty-state SOS action is in the centre; order history is in
+        // the left pane. The owner requested one action per destination.
+        await desk.getByText('Активных заявок сейчас нет.',{exact:false}).waitFor();
         for (const route of ['#/sos', '#/new/tow', '#/services', '#/new/consult', '#/orders']) {
-          const link=shortcuts.locator('a[href="' + route + '"]');
+          const link=desk.locator('a[href="' + route + '"]');
           if (await link.count()!==1 || !await link.isVisible())
-            throw Error('Approved PC workspace missing visible working destination ' + route);
+            throw Error('Approved PC workspace missing or duplicates visible working destination ' + route);
         }
+        for(const route of ['#/new/tow','#/services','#/new/consult'])
+          if(await shortcuts.locator('a[href="'+route+'"]').count()!==1)
+            throw Error('Assistance navigation lost '+route);
+        await desk.locator('a[href="#/sos"]').click();
+        await page.waitForURL(/#\/sos$/);
+        await page.locator('.client-sos-choices').waitFor();
+        await page.goBack();
+        await desk.waitFor({state:'visible'});
       }
       // Older photographic service cards were physically retired at the owner's
       // request. Preserve only verified actual vehicle-model photos in the app.

@@ -98,6 +98,17 @@ export function vehicleReferencePhoto(
   return {src:match.src,description:match.description,author:match.author,
     license:match.license,sourcePage:match.sourcePage,generation:match.generation};
 }
+/** An explicitly generic family may show a clearly labelled example of the
+ * same documented generation. Never fall back for a specified variant. */
+export function vehicleFamilyReferencePhoto(
+  brand?:string|null,model?:string|null,year?:number|string|null
+):VehiclePhoto|null {
+  const y=typeof year==='number'?year:typeof year==='string'&&/^\d{4}$/.test(year.trim())?Number(year):NaN;
+  if(canonicalVehicleBrand(brand)!=='scania'||key(model)!=='r'||!Number.isInteger(y)||y<2016||y>2025)
+    return null;
+  const example=vehicleReferencePhoto('Scania','R520',y);
+  return example ? {...example,description:'Scania R нового поколения (пример семейства: R520, не точная модификация)'} : null;
+}
 export const vehiclePhotoCoverage=records.map(x=>({brand:x.brand,generation:x.generation,
   src:x.src,license:x.license,author:x.author,sourcePage:x.sourcePage,
   yearMin:x.yearMin,yearMax:x.yearMax}));

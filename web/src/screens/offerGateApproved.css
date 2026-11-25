@@ -1,0 +1,32 @@
+/* Legal consent is not an incoming call. Keep the existing mandatory
+ * overlay and its server-backed acceptance guard; isolate only its skin. */
+.call.tr-offer-consent {
+  --bg:#11171b; --surface:#1b252b; --surface-2:#243037; --surface-3:#303d44;
+  --line:#40505a; --line-2:#60717a; --fg:#f2f2f0; --fg-2:#d0d8dc;
+  --muted:#b0bdc5; --accent:#ff8b45; --accent-soft:rgba(255,139,69,.14);
+  --on-accent:#15171a;
+  box-sizing:border-box;
+  color:var(--fg); background:linear-gradient(145deg,#20292e,#101619 76%);
+  justify-content:flex-start; gap:14px; overflow-y:auto;
+  padding:calc(env(safe-area-inset-top) + 24px) clamp(16px,4vw,48px) calc(env(safe-area-inset-bottom) + 24px);
+}
+.call.tr-offer-consent > * {
+  box-sizing:border-box; flex-shrink:0; width:100%; max-width:760px;
+  min-width:0; margin-inline:auto; overflow-wrap:anywhere;
+}
+.call.tr-offer-consent h1 {color:var(--fg);margin-block:0;}
+.call.tr-offer-consent .note {color:var(--muted);}
+.call.tr-offer-consent .card {background:var(--surface);border-color:var(--line);}
+.call.tr-offer-consent .offer-text {max-height:50vh;overflow-y:auto;overscroll-behavior:contain;}
+.call.tr-offer-consent input[type="checkbox"] {accent-color:#ff8b45;flex-shrink:0;}
+.call.tr-offer-consent > label {min-height:44px;cursor:pointer;}
+.call.tr-offer-consent > .btn {
+  min-height:48px; background:#ff8b45; color:#15171a; border:1px solid #ff8b45;
+}
+.call.tr-offer-consent > .btn:disabled {
+  opacity:1; background:#3d484e; color:#d0d8dc; border-color:#52616a; cursor:not-allowed;
+}
+.call.tr-offer-consent .btn.ghost {
+  min-height:44px;background:var(--surface-2);color:var(--fg);border-color:var(--line-2);
+}
+.call.tr-offer-consent :focus-visible {outline:3px solid #ffae78;outline-offset:3px;}

@@ -6,6 +6,7 @@ import { get, getToken, post, onEvent, ApiError } from '../api.ts';
 import { useAction, useMe } from '../ui.tsx';
 import { Markdown } from '../markdown.tsx';
 import { EconomicsGuide } from './economicsGuide.tsx';
+import './offerGateApproved.css';
 
 /** Любой ответ сервера «offer_required» открывает окно согласия */
 export const offerRequired = new EventTarget();
@@ -82,7 +83,7 @@ function OfferModal({ item, left, onDone, token }: { item: any; left: number; on
   }, [item.current.id, item.current.version, item.audience, retry]);
   const canAccept = !!full && !loadError && !busy;
   return (
-    <div className="call" role="dialog" aria-modal="true" aria-label={item.name} style={{ justifyContent: 'flex-start', gap: 14, overflowY: 'auto' }}>
+    <div className="call tr-offer-consent" role="dialog" aria-modal="true" aria-label={item.name}>
       <span className="label" style={{ color: 'var(--accent)' }}>Условия изменились{left > 1 ? ` · ещё ${left - 1}` : ''}</span>
       <h1>{item.name}</h1>
       <span className="note">Редакция {item.current.version} · с {new Date(item.current.effective_at).toLocaleDateString('ru-RU')}</span>
