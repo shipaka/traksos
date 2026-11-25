@@ -2,6 +2,7 @@
 
 import type { Db } from '../db/index.ts';
 import { samePart } from '../domain/techbasePartRefs.ts';
+import { requirePartActor,requirePartVehicle } from '../domain/partRecommendationAccess.ts';
 import type { Notifier } from './notify.ts';
 import type { SettingsService } from './settings.ts';
 import { bad, conflict, forbidden, notFound, type AuthUser } from '../http/router.ts';
@@ -394,10 +395,14 @@ export class ShopService {
     return this.db.tx(async (q) => {
       let recommendation:any=null;
       if(p.partRecommendationId){
+        await requirePartActor(q,user,'client');
         recommendation=await q.one<any>('select * from part_recommendations where id=$1 and client_id=$2 for update',[p.partRecommendationId,user.id]);
         if(!recommendation||recommendation.status!=='accepted')throw forbidden('Сначала согласуйте рекомендацию');
-        const prior=await q.one<any>('select * from shop_orders where part_recommendation_id=$1',[recommendation.id]);
+        const prior=await q.one<any>('select * from shop_orders where part_recommendation_id=$1 and client_id=$2 and created_by=$2',[recommendation.id,user.id]);
         if(prior)return {row:prior,created:false};
+        await requirePartVehicle(q,user.id,recommendation.vehicle_id);
+        if(p.delivery==='master'&&!await q.one("select id from orders where id=$1 and client_id=$2 and status in ('accepted','en_route','arrived','working') for share",[linkOrder,user.id]))
+          throw bad('need_order','Заявка для передачи с мастером больше недоступна');
         if(!recommendation.product_id||want.size!==1||want.get(recommendation.product_id)!==recommendation.qty||
            (recommendation.vehicle_id??null)!==(vehicle?.id??null)||
            (p.delivery==='master'&&linkOrder!==recommendation.source_order_id))
