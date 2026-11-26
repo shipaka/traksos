@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="680" viewBox="0 0 1000 680" role="img" aria-labelledby="t d">
+<title id="t">BPW ECO Air — модуль пневмоподвески прицепа</title>
+<desc id="d">Авторская условная иллюстрация взаимного расположения круглой балки оси, продольного рычага и опоры пневморессоры. Не монтажный чертёж и не подтверждение применимости.</desc>
+<metadata>id: bpw-eco-air-module; status: draft_expert_pending; source: https://www.bpw.de/en/products/axle-running-gears/air-suspension/eco-air ; source2: https://newsroom-en.bpw.de/pressreleases/six-years-of-eco-air-200000-trailers-across-europe-demonstrate-the-success-of-modular-air-suspension-in-large-scale-production-3459152 ; checked: 2026-11-26; rights: original_illustration; fitment: not_confirmed; pins: none; ports: unknown; article: unknown</metadata>
+<rect width="1000" height="680" rx="24" fill="#101d2b"/>
+<g font-family="sans-serif" fill="#f2f6fa">
+<text x="40" y="55" font-size="31" font-weight="700">BPW ECO Air</text>
+<text x="40" y="85" font-size="19" fill="#afc3d5">Модуль пневмоподвески прицепа · функциональная иллюстрация</text>
+<rect x="38" y="112" width="924" height="382" rx="16" fill="#192b3d" stroke="#3d5266"/>
+<!-- Frame reference, not literal mounting geometry -->
+<path d="M170 164 H828" stroke="#7a8da0" stroke-width="15" stroke-linecap="round"/>
+<text x="180" y="149" font-size="16" fill="#b5c6d7">Рама (условно)</text>
+<!-- Hanger and pivot -->
+<path d="M260 173 V248 H320 V173" fill="#53677c" stroke="#a5b7c7" stroke-width="3"/>
+<circle cx="290" cy="245" r="22" fill="#162536" stroke="#91a5b8" stroke-width="5"/>
+<!-- Rounded axle beam, perspective endpoint -->
+<path d="M380 397 L589 282" stroke="#152231" stroke-width="65" stroke-linecap="round"/>
+<path d="M380 397 L589 282" stroke="#59a6bc" stroke-width="48" stroke-linecap="round"/>
+<ellipse cx="380" cy="397" rx="27" ry="23" fill="#315f76" stroke="#a1d5e1" stroke-width="4"/>
+<!-- trailing arm -->
+<path d="M290 245 Q410 286 510 325 Q566 347 608 342" fill="none" stroke="#1a2330" stroke-width="48" stroke-linecap="round"/>
+<path d="M290 245 Q410 286 510 325 Q566 347 608 342" fill="none" stroke="#d5a348" stroke-width="32" stroke-linecap="round"/>
+<circle cx="290" cy="245" r="11" fill="#26394c" stroke="#f1cf85" stroke-width="3"/>
+<!-- air spring beam -->
+<path d="M592 344 H746" stroke="#c58756" stroke-width="31" stroke-linecap="round"/>
+<path d="M662 171 H756 M662 311 H756" stroke="#c4d1dd" stroke-width="12" stroke-linecap="round"/>
+<path d="M673 180 Q650 195 673 215 Q650 235 673 255 Q650 275 673 300 H745 Q768 275 745 255 Q768 235 745 215 Q768 195 745 180 Z" fill="#344b61" stroke="#91a9bf" stroke-width="4"/>
+<path d="M709 318 V335" stroke="#a5b7c7" stroke-width="12"/>
+<!-- leaders -->
+<g stroke-width="2.5" fill="none"><path d="M410 386 L275 438 H95" stroke="#76c4d6"/><path d="M435 288 L463 216 H514" stroke="#e4bb6b"/><path d="M630 345 L668 408 H850" stroke="#dda881"/><path d="M753 236 L798 218 H904" stroke="#b4c8dc"/></g>
+<g font-size="17" font-weight="600"><text x="95" y="462" fill="#97dbeb">1 · Круглая балка оси</text><text x="470" y="207" fill="#f0cd87">2 · Продольный рычаг</text><text x="638" y="431" fill="#efbc98">3 · Опора пневморессоры</text><text x="785" y="210" fill="#c5d6e6">4 · Пневморессора</text></g>
+<text x="40" y="532" font-size="20" font-weight="700">Назначение и границы применимости</text>
+<text x="40" y="559" font-size="17" fill="#d7e2ec">Ось несёт колёса; продольный рычаг направляет её перемещение; пневморессора</text>
+<text x="40" y="582" font-size="17" fill="#d7e2ec">поддерживает раму. Показана общая взаимосвязь, а не реальные размеры или крепёж.</text>
+<text x="40" y="618" font-size="16" fill="#f0cd87">Черновик · экспертная проверка не пройдена · не руководство по ремонту.</text>
+<text x="40" y="642" font-size="15" fill="#afc3d5">Артикул, ревизию, моменты затяжки и применимость сверять по маркировке оси и документации BPW.</text>
+</g></svg>
