@@ -47,9 +47,10 @@ object ModuleSearch {
     fun find(query:String):List<ResearchTarget> {
         if(query.length>120) return emptyList()
         if(query.isBlank()) return CoverageRoadmap.targets
-        if(HaldexEarlyReference.isListedPart(query)) return listOfNotNull(CoverageRoadmap.byId("haldex-eb1"))
+        val catalogTargets=CatalogModuleParts.targetIds(query)
         val partMatches=WabcoPartReference.find(query)
-        if(partMatches.isNotEmpty()) return partMatches.mapNotNull { CoverageRoadmap.byId(it.targetId) }.distinct()
+        val allPartTargets=(catalogTargets+partMatches.map { it.targetId }).distinct()
+        if(allPartTargets.isNotEmpty()) return allPartTargets.mapNotNull(CoverageRoadmap::byId)
         val q=normalize(query)
         if(q.isEmpty()) return emptyList()
         return index.mapNotNull { (row,t)->

@@ -34,7 +34,11 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
             }
             if(query.isNotBlank() || manufacturer!=null) {
                 Text("Найдено: ${visible.size}",fontSize=12.sp)
-                if(HaldexEarlyReference.isListedPart(query)) Text("Номер из каталога Gen1: проверьте, установлен ли именно этот блок.",fontSize=11.sp)
+                val catalogTargets=CatalogModuleParts.targetIds(query)
+                if(catalogTargets.isNotEmpty()) Text(
+                    if(catalogTargets.size>1) "Номер встречается в нескольких семействах. Уточните основной блок и поколение."
+                    else "Совпадение с заводским каталогом. Электронная идентификация не подтверждена.",
+                    fontSize=11.sp)
                 if(WabcoPartReference.find(query).isNotEmpty()) Text("Совпадение с опубликованным диапазоном номеров. Точная модель и протокол не подтверждены.",fontSize=11.sp)
                 visible.forEach { row ->
                     OutlinedButton(onClick={ onSelect(row.id) },modifier=Modifier.fillMaxWidth()) {
@@ -45,6 +49,9 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
                                 ResearchStage.SYSTEM_DOCUMENTED -> "Есть сведения о системе"
                                 ResearchStage.CANDIDATE -> "Требуется документация"
                             },fontSize=11.sp)
+                            CatalogModuleParts.find(query).filter { it.targetId==row.id }.forEach { part ->
+                                Text(part.variant,fontSize=11.sp)
+                            }
                             if(row.scope==ScopeGroup.FUTURE_MARKET) Text("Отдельный рынок / интерфейс: подключение не предусмотрено",color=MaterialTheme.colorScheme.error,fontSize=11.sp)
                         }
                     }
