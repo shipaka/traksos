@@ -1,0 +1,72 @@
+{
+  "id": "wabco-etasc-4630905000",
+  "article": "4630905000",
+  "nameRu": "Клапан регулирования высоты eTASC",
+  "manufacturer": "WABCO",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-etasc-4630905000.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4630905000",
+      "publisher": "ZF/WABCO",
+      "checked": "2026-11-26"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102523.pdf",
+      "textChecked": true,
+      "visualChecked": false
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150100933.pdf",
+      "publisher": "WABCO",
+      "section": "GIO functions",
+      "textChecked": true,
+      "visualChecked": false
+    }
+  ],
+  "spec": {
+    "dualCircuit": true,
+    "testConnection": true,
+    "dimensionsMm": [
+      196,
+      107,
+      97
+    ],
+    "massKg": 2.571,
+    "protection": "IP6K9K",
+    "gtin": "04057875214144"
+  },
+  "crossReferences": [
+    {
+      "make": "CHEREAU",
+      "article": "20218",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "CIMC",
+      "article": "65LHD012",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "VAN HOOL",
+      "article": "11357909",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "WIELTON",
+      "article": "mz100101005",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    }
+  ],
+  "functionalContext": "eTASC combines manual height lever with electronically controlled air suspension; TEBS E Premium E3 or newer and height sensor in documented TEBS E configuration.",
+  "limitations": [
+    "Body and lever represented conceptually; manufacturer's outline not inspected",
+    "No assumption of compatibility with Basic Air, no mounting geometry or control instructions",
+    "No exact VIN/model/year, pinout, system pressure limit or repair procedure",
+    "No expert acceptance, runtime integration or rendered QA"
+  ]
+}
