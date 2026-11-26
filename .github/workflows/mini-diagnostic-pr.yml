@@ -33,6 +33,20 @@ jobs:
       - name: Compile minified unsigned release (no publishing keys)
         working-directory: mini-diagnostic
         run: gradle --no-daemon :app:assembleRelease
+      - name: Inspect the actual release APK manifest
+        working-directory: mini-diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/apk_security_review.py app/build/outputs/apk/release/app-release-unsigned.apk --output apk-security-review.json
+      - name: Preserve release security review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-apk-security-review
+          path: mini-diagnostic/apk-security-review.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Preserve Android unit-test results
         if: always()
         uses: actions/upload-artifact@v4
