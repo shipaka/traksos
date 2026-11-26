@@ -5,6 +5,7 @@ object ReferenceSelection {
     private val associations=mapOf(
         "zf-tebs-d" to listOf(DisplayReferenceEdition.WABCO_D,DisplayReferenceEdition.WABCO_D_SYSTEM),
         "zf-tebs-e" to listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM),
+        "kb-g22" to listOf(DisplayReferenceEdition.KNORR_G22_PRESSURE),
         "kb-tebs4" to listOf(DisplayReferenceEdition.KNORR_TEBS4),
         "haldex-eb1" to listOf(DisplayReferenceEdition.HALDEX_GEN1_2005),
         "haldex-eb2" to listOf(DisplayReferenceEdition.HALDEX_GEN2_INFO1),

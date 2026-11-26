@@ -32,7 +32,7 @@ object CoverageRoadmap {
         target("kb-tebs4","Knorr-Bremse","TEBS4",KnorrTebs4Reference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("kb-g20","Knorr-Bremse","TEBS G2.0",KNORR),
         target("kb-g21","Knorr-Bremse","TEBS G2.1",KNORR),
-        target("kb-g22","Knorr-Bremse","TEBS G2.2",KNORR),
+        target("kb-g22","Knorr-Bremse","TEBS G2.2",KnorrG22PressureReference.BULLETIN,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("kb-itebs-x","Knorr-Bremse","iTEBS X",KNORR),
         target("kb-a18","Knorr-Bremse","A18",KNORR_ABS,ScopeGroup.INTERFACE_REVIEW),
         target("kb-kb3ta","Knorr-Bremse","KB3-TA",KNORR_ABS,ScopeGroup.INTERFACE_REVIEW),

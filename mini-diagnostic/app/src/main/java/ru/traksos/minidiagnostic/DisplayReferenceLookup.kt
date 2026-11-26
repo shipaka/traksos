@@ -13,6 +13,7 @@ enum class DisplayReferenceEdition(val title:String) {
     HALDEX_GEN3_DIAG("Haldex EB+ Gen3 · DIAG+ / Info Centre 2"),
     HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
+    KNORR_G22_PRESSURE("Knorr TEBS G2.2 · давление, бюллетень 2019"),
     KNORR_G2_EXAMPLE("Knorr TEBS G2 · заводской пример ECUtalk 2019"),
 }
 data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
@@ -21,6 +22,7 @@ object DisplayReferenceLookup {
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
         if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
+        if(edition==DisplayReferenceEdition.KNORR_G22_PRESSURE) return KnorrG22PressureReference.lookup(s)
         if(edition==DisplayReferenceEdition.KNORR_G2_EXAMPLE) return KnorrG2ExampleReference.lookup(s)
         if(edition==DisplayReferenceEdition.KNORR_TEBS4) {
             val r=KnorrTebs4Reference.lookup(s) ?: return null

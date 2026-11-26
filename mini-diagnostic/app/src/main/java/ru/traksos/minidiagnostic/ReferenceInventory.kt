@@ -15,6 +15,7 @@ object ReferenceInventory {
         ReferenceCount("Haldex MODAL/MODULAR",HaldexModalReference.count),
         ReferenceCount("Haldex Gen3 DIAG+ additional",HaldexGen3DiagReference.count),
         ReferenceCount("Knorr G2 OEM ECUtalk example",KnorrG2ExampleReference.count),
+        ReferenceCount("Knorr G2.2 pressure bulletin and TD-2077",KnorrG22PressureReference.count),
     )
     fun total():Int=counts().sumOf { it.entries }
 }
