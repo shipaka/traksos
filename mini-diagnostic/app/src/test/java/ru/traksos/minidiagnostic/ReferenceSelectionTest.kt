@@ -16,6 +16,7 @@ class ReferenceSelectionTest {
     }
     @Test fun generalTesterNotImplicitlyAssigned() {
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.WABCO_COMPACT_TESTER in ReferenceSelection.forTarget(it.id) })
+        assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.KNORR_G2_EXAMPLE in ReferenceSelection.forTarget(it.id) })
         assertFalse(DisplayReferenceEdition.HALDEX_GEN3_INFO1 in ReferenceSelection.forTarget("haldex-eb2"))
         assertFalse(DisplayReferenceEdition.WABCO_D in ReferenceSelection.forTarget("zf-tebs-e"))
     }

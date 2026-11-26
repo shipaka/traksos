@@ -37,6 +37,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
             DisplayReferenceEdition.HALDEX_GEN3_DIAG -> "Например ECU shutdown FET"
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
             DisplayReferenceEdition.HALDEX_MODAL_MODULAR -> "Например 05, 91 или CF"
+            DisplayReferenceEdition.KNORR_G2_EXAMPLE -> "Шестизначный код ECUtalk, например 001200"
             DisplayReferenceEdition.KNORR_TEBS4 -> "Десятичный код, например 137"
             DisplayReferenceEdition.WABCO_COMPACT_TESTER -> "Три символа, например 411"
             DisplayReferenceEdition.HALDEX_GEN1_2005, DisplayReferenceEdition.HALDEX_GEN2_INFO1, DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
