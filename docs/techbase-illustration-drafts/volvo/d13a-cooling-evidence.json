@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "vehicle_family_candidate": "Volvo FH / FM",
+  "engine": "D13A",
+  "source": {
+    "title": "Volvo Truck Corporation D13A Design and Function, Service Bulletin 200 281 01, February 2006",
+    "url": "https://www.scribd.com/document/600863296/D13A-D-F-200-281-1-8-06",
+    "access": "third_party_mirror_text_only",
+    "pages": [
+      51,
+      52,
+      53,
+      54,
+      55,
+      58,
+      61,
+      62
+    ],
+    "rights": "OEM illustrations not copied; original functional drawings; verify access/rights before publication"
+  },
+  "assets": [
+    {
+      "id": "volvo-d13a-coolant-flow",
+      "path": "d13a-coolant-flow.svg",
+      "evidence_pages": [
+        51,
+        52,
+        53
+      ],
+      "scope": "Pump → oil heat exchanger → liner jackets → cylinder head → thermostat → radiator or bypass → pump. Other branches intentionally omitted."
+    },
+    {
+      "id": "volvo-d13a-fan-control",
+      "path": "d13a-fan-control.svg",
+      "evidence_pages": [
+        55,
+        58,
+        61
+      ],
+      "scope": "EECU controls viscous fan with PWM; rotational speed feedback. EECU on left engine side, coolant temperature sensor front of cylinder head, electromagnet and speed sensor at hub."
+    }
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "count_towards_5000": 0,
+  "vin_applicability": "unknown",
+  "visual_geometry": "conceptual; not source photograph, not exact part geometry",
+  "source_visual_review": "not performed: HTML text only",
+  "expert_review": "pending",
+  "render_review": "pending",
+  "prohibited_claims": [
+    "exact pinout",
+    "exact vehicle routing",
+    "universal D13 fitment",
+    "OEM drawing",
+    "repair procedure"
+  ],
+  "next": "Confirm engine/vehicle variant in authorized OEM system, inspect actual parts and physical routing, expert review and render check before acceptance."
+}
