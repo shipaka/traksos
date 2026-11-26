@@ -4,7 +4,8 @@ import { APPROVED_VISUALS } from '../approvedVisuals.ts';
 import { RecommendService } from './base.tsx';
 import { DestinationCard } from './DestinationCard.tsx';
 import { useEffect, useRef, useState } from 'react';
-import { get, post, rub, fmtTime } from '../api.ts';
+import { get, post, rub, fmtTime, getToken } from '../api.ts';
+import {chatRecoveryKey,chatRecoveryDigest,readChatRecovery,writeChatRecovery,clearChatRecovery,type ChatRecovery} from '../chatRecovery.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
 import { go } from '../ui.tsx';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, VehicleFields } from '../ui.tsx';
@@ -1230,8 +1231,8 @@ function WorksCheck({ id }: { id: string }) {
 
 type ChatPanelProps = {id:string;status:string;open:boolean;setOpen:(open:boolean)=>void};
 function Chat({id,status,open,setOpen}:ChatPanelProps) {
-  const {me}=useMe();
-  return <AccountOrderChat key={(me?.id??'guest')+':'+id}
+  const {me,mode}=useMe();
+  return <AccountOrderChat key={(me?.id??'guest')+':'+mode+':'+id+':'+(getToken()??'')}
     id={id} status={status} open={open} setOpen={setOpen}/>;
 }
 function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
@@ -1249,65 +1250,276 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
   const [retryVersion,setRetryVersion]=useState(0);
   const [sending,setSending]=useState(false);
   const sendingRef=useRef(false);
+  const [sendError,setSendError]=useState('');
+  type PendingChat = {body:string;kind:'text'|'quick';requestId:string};
+  const pendingRef=useRef<PendingChat|null>(null);
+  const [pending,setPending]=useState<PendingChat|null>(null);
+  const session=useRef(getToken());
+  const recoveryKey=useRef<string|null>(null);
+  const [recovery,setRecovery]=useState<ChatRecovery|null>(null);
+  const [recoveryReady,setRecoveryReady]=useState(false);
+  const [recoveryWarning,setRecoveryWarning]=useState('');
+  const [recoveryCheck,setRecoveryCheck]=useState(false);
+  const [recoveryStatus,setRecoveryStatus]=useState('');
+  const recoveredText=useRef<HTMLInputElement>(null);
+  const mounted=useRef(false);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;pendingRef.current=null;};},[]);
+  const currentSession=()=>mounted.current&&getToken()===session.current;
+  const remember=(p:PendingChat|null)=>{pendingRef.current=p;setPending(p);};
+  useEffect(()=>{
+    let active=true;
+    void (async()=>{
+      try{
+        if(!session.current||!me?.id)throw new Error('Нет активной сессии');
+        const key=await chatRecoveryKey(session.current,me.id,id);
+        if(!active||!currentSession())return;
+        const saved=readChatRecovery(key);
+        recoveryKey.current=key;setRecovery(saved);
+      }catch{
+        if(active&&currentSession())setRecoveryWarning('На этом устройстве восстановление после закрытия недоступно. Перед повторной отправкой проверьте историю.');
+      }finally{if(active&&currentSession())setRecoveryReady(true);}
+    })();
+    return()=>{active=false;};
+  },[]);
+  const clearRecovered=(requestId:string)=>{
+    if(recoveryKey.current){
+      try{clearChatRecovery(recoveryKey.current,requestId);}
+      catch{setRecoveryWarning('Не удалось очистить запись восстановления. Проверьте статус отправки при повторном открытии.');}
+    }
+    setRecovery(old=>old?.requestId===requestId?null:old);
+  };
   const archiveLabel=archived||serverClosed;
-  const readOnly = archiveLabel || loading || !!loadError;
+  const readOnly = archiveLabel || loading || !!loadError || !recoveryReady;
   const box = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let alive = true;
-    // A failed GET cannot claim "Сообщений пока нет"; hide any previous
-    // content and expose manual retry without navigating away from the order.
-    setLoading(true);setLoadError(null);
-    setMsgs([]);setQuick([]);setPeople([]);
-    get(`/api/orders/${id}/messages`).then((r) => {
-      if(!alive)return;
-      const received=Array.isArray(r.messages)?r.messages:[];
-      setMsgs(current=>[...received,...current.filter(
-        (m:any)=>!received.some((item:any)=>item.id===m.id))]);
+  const [older,setOlder]=useState<number|null>(null);
+  const [paging,setPaging]=useState(false);
+  const [historyTrimmed,setHistoryTrimmed]=useState(false);
+  const AUTO_REFRESH_PAGE_LIMIT=10;
+  const loaded=useRef<any[]>([]);
+  const targetOldest=useRef<number|null>(null);
+  const scrollDistance=useRef<number|null>(null);
+  const refreshRef=useRef<()=>void>(()=>{});
+  const olderRef=useRef<()=>void>(()=>{});
+  useEffect(()=>{
+    let alive=true,busy=false,queued=false;
+    let followup:ReturnType<typeof setTimeout>|null=null;
+    let cursor:number|null=null;
+    const endpoint=`/api/orders/${id}/messages`;
+    const readPage=async(mode:'latest'|'before',before?:number)=>{
+      if(!alive||!currentSession())throw new Error('Сессия изменилась');
+      const r=await get(endpoint+'?window='+mode+'&limit=100'+(before===undefined?'':'&cursor='+before));
+      if(!r||!Array.isArray(r.messages)||r.page?.mode!==mode||typeof r.page.hasMore!=='boolean')
+        throw new Error('Сервер не подтвердил страницу переписки');
+      const rows=r.messages as any[];
+      if(rows.length>100||rows.some((m,i)=>!Number.isSafeInteger(m.id)||m.id<=0||(i>0&&m.id<=rows[i-1].id)||
+        (before!==undefined&&m.id>=before))||
+        (r.page.hasMore&&(!rows.length||r.page.nextCursor!==rows[0].id))||
+        (!r.page.hasMore&&r.page.nextCursor!==null))
+        throw new Error('Сервер вернул некорректную страницу переписки');
+      return r;
+    };
+    const publish=(rows:any[],r:any,next:number|null)=>{
+      if(!alive||!currentSession())return;
+      loaded.current=rows;
+      targetOldest.current=rows[0]?.id??null;
+      cursor=next;setOlder(next);
+      setMsgs(rows);
       setQuick(Array.isArray(r.quickReplies)?r.quickReplies:[]);
       setPeople(Array.isArray(r.participants)?r.participants:[]);
-      setLoading(false);
-    }).catch((error) => {
-      if(!alive)return;
+      setLoadError(null);
+    };
+    const fail=(error:unknown)=>{
+      if(!alive||!currentSession())return;
+      loaded.current=[];cursor=null;setOlder(null);setHistoryTrimmed(false);
       setMsgs([]);setQuick([]);setPeople([]);
       setLoadError(error instanceof Error?error.message:'Ошибка загрузки переписки');
-      setLoading(false);
+    };
+    function drain(){
+      if(!alive||!currentSession()||!queued||followup!==null)return;
+      queued=false;
+      followup=setTimeout(()=>{followup=null;if(alive&&currentSession())void refresh();},250);
+    }
+    async function refresh(){
+      if(!alive||!currentSession())return;
+      if(busy||followup!==null){queued=true;setLoading(true);setPeople([]);setQuick([]);return;}
+      queued=false;busy=true;
+      const old=targetOldest.current;
+      const node=box.current;
+      if(node&&node.scrollHeight-node.scrollTop-node.clientHeight>48)
+        scrollDistance.current=node.scrollHeight-node.scrollTop;
+      else scrollDistance.current=null;
+      setLoading(true);setLoadError(null);
+      setQuick([]);setPeople([]);
+      try{
+        const latest=await readPage('latest');
+        if(!alive||!currentSession())return;
+        let rows=latest.messages as any[],next:number|null=latest.page.nextCursor;
+        // Revalidate a bounded newest contiguous window; older cached bodies
+        // are discarded, never trusted across an authorization refresh.
+        let pages=1;
+        while(pages<AUTO_REFRESH_PAGE_LIMIT&&old!==null&&next!==null&&rows[0].id>old){
+          const earlier=await readPage('before',next);
+          if(!alive||!currentSession())return;
+          rows=[...earlier.messages,...rows];next=earlier.page.nextCursor;pages++;
+        }
+        const trimmed=old!==null&&next!==null&&rows[0].id>old;
+        setHistoryTrimmed(trimmed);
+        if(trimmed)scrollDistance.current=null;
+        publish(rows,latest,next);
+      }catch(error){fail(error);}
+      finally{
+        busy=false;
+        if(alive&&currentSession()){
+          // If another signal arrived while reading, keep the composer and
+          // history hidden until that authoritative follow-up has finished.
+          if(!queued)setLoading(false);
+          drain();
+        }
+      }
+    }
+    async function loadEarlier(){
+      if(!alive||!currentSession()||busy||followup!==null||cursor===null)return;
+      busy=true;setPaging(true);
+      const node=box.current;
+      scrollDistance.current=node?node.scrollHeight-node.scrollTop:null;
+      try{
+        const r=await readPage('before',cursor);
+        if(!alive||!currentSession())return;
+        publish([...r.messages,...loaded.current],r,r.page.nextCursor);
+        if(r.page.nextCursor===null)setHistoryTrimmed(false);
+      }catch(error){fail(error);}
+      finally{
+        busy=false;
+        if(alive&&currentSession()){setPaging(false);if(queued)setLoading(true);drain();}
+      }
+    }
+    refreshRef.current=()=>{void refresh();};
+    olderRef.current=()=>{void loadEarlier();};
+    const off=onEvent(e=>{
+      if(e.type==='connection_restored'||(e.type==='chat'&&String(e.message?.order_id)===String(id)))
+        void refresh();
     });
-    const off=onEvent((e) => {
-      if(alive && e.type==='chat' && e.message?.order_id===id)
-        setMsgs((m)=>(m.some((x)=>x.id===e.message.id)?m:[...m,e.message]));
-    });
-    return () => { alive = false; off(); };
-  }, [id, status, retryVersion]);
-  useEffect(() => {
-    setServerClosed(false);
-    setMsgs([]); setQuick([]); setPeople([]); setSeen(0);
-  }, [id]);
-  useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [msgs.length, open]);
-  useEffect(() => { if (open) setSeen(msgs.length); }, [open, msgs.length]);
+    const foreground=()=>{if(document.visibilityState==='visible')void refresh();};
+    window.addEventListener('online',foreground);
+    document.addEventListener('visibilitychange',foreground);
+    void refresh();
+    return ()=>{alive=false;if(followup!==null)clearTimeout(followup);off();window.removeEventListener('online',foreground);
+      document.removeEventListener('visibilitychange',foreground);
+      refreshRef.current=()=>{};olderRef.current=()=>{};};
+  },[id,status,retryVersion]);
+  useEffect(()=>{
+    if(loading||loadError||!open)return;
+    const node=box.current;
+    if(node)node.scrollTo(0,scrollDistance.current===null?node.scrollHeight:
+      Math.max(0,node.scrollHeight-scrollDistance.current));
+    scrollDistance.current=null;
+  },[msgs,open,loading,loadError]);
+  useEffect(()=>{
+    if(open&&!loading&&!loadError)setSeen(previous=>Math.max(previous,msgs[msgs.length-1]?.id??0));
+  },[open,msgs,loading,loadError]);
 
-  async function send(body: string, kind: 'text' | 'quick' = 'text') {
-    if(!body.trim()||readOnly||sendingRef.current)return;
+  async function checkRecovered(){
+    if(!currentSession()||!recovery||pendingRef.current||loading||loadError||sendingRef.current)return;
+    const saved=recovery;
+    sendingRef.current=true;setRecoveryCheck(true);
+    try{
+      const result=await get(`/api/orders/${id}/messages/request/${saved.requestId}`);
+      if(!currentSession())return;
+      if(result?.state==='committed'&&Number.isSafeInteger(result.messageId)&&result.messageId>0&&result.kind===saved.kind){
+        clearRecovered(saved.requestId);setRecoveryStatus('Предыдущая отправка подтверждена сервером.');
+        refreshRef.current();
+      }else if(result?.state==='not_observed'&&result.messageId===null){
+        setRecoveryStatus('Сервер пока не подтвердил отправку. Для повтора введите точно прежний текст.');
+      }else throw new Error('Не удалось проверить статус отправки');
+    }catch(e){
+      if(currentSession())setRecoveryStatus((e as Error).message??'Ошибка проверки статуса');
+    }finally{if(currentSession()){sendingRef.current=false;setRecoveryCheck(false);}}
+  }
+
+  async function retryRecovered(){
+    if(!currentSession()||!recovery||pendingRef.current||loading||loadError||sendingRef.current)return;
+    const saved=recovery,body=recoveredText.current?.value??'';
+    sendingRef.current=true;setRecoveryCheck(true);
+    try{
+      if(!body.trim()||await chatRecoveryDigest(saved.requestId,saved.kind,body)!==saved.digest){
+        if(currentSession())setRecoveryStatus('Текст отличается от прежней отправки. Повтор не выполнен.');
+        return;
+      }
+      if(!currentSession())return;
+      remember({body,kind:saved.kind,requestId:saved.requestId});
+    }catch{if(currentSession())setRecoveryStatus('Не удалось проверить прежний текст. Повтор не выполнен.');}
+    finally{if(currentSession()){sendingRef.current=false;setRecoveryCheck(false);}}
+    if(currentSession()&&pendingRef.current)void send('','text',true);
+  }
+
+  async function send(body: string, kind: 'text' | 'quick' = 'text', retry=false) {
+    if(!currentSession()||sendingRef.current||loading||loadError||!recoveryReady)return;
+    let attempt=pendingRef.current;
+    if(retry){
+      if(!attempt)return;
+    }else{
+      if(!body.trim()||readOnly||attempt||recovery)return;
+      // getRandomValues also works in WebViews without crypto.randomUUID.
+      try{
+        const bytes=globalThis.crypto.getRandomValues(new Uint8Array(16));
+        bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+        const hex=Array.from(bytes,x=>x.toString(16).padStart(2,'0')).join('');
+        const requestId=[hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+        attempt={body,kind,requestId};remember(attempt);
+      }catch{
+        setSendError('Не удалось создать безопасный идентификатор отправки. Сообщение не отправлено.');
+        return;
+      }
+    }
+    const request=attempt;
+    if(!request)return;
     sendingRef.current=true;
-    setSending(true);
+    setSending(true);setSendError('');
     try {
-      const m = await post(`/api/orders/${id}/messages`, { body, kind });
-      setMsgs((x) => (x.some((y) => y.id === m.id) ? x : [...x, m]));
-      // Do not erase a new draft typed while the previous message was posting.
-      setText(current=>current===body?'':current);
+      if(!retry&&recoveryKey.current){
+        const digest=await chatRecoveryDigest(request.requestId,request.kind,request.body);
+        if(!currentSession())return;
+        const saved={requestId:request.requestId,kind:request.kind,digest};
+        try{writeChatRecovery(recoveryKey.current,saved);setRecovery(saved);}
+        catch(e){
+          remember(null);
+          setRecoveryWarning('Не удалось сохранить идентификатор. Сообщение не отправлено. Откройте чат снова.');
+          return;
+        }
+      }
+      const m = await post(`/api/orders/${id}/messages`, request);
+      if(!currentSession())return;
+      if(!Number.isSafeInteger(m?.id)||m.id<=0)throw new Error('Сервер не подтвердил отправку сообщения');
+      clearRecovered(request.requestId);
+      remember(null);
+      refreshRef.current();
+      // An edited/new draft is never overwritten by completion of an old send.
+      if(request.kind==='text')setText(current=>current===request.body?'':current);
     } catch (e) {
-      // Concurrent completion can beat the browser event. Fail closed immediately
-      // even before the parent order status refreshes.
-      if ((e as { code?: string }).code === 'chat_closed') { setServerClosed(true); setQuick([]); }
-      toast((e as Error).message);
+      if(!currentSession())return;
+      const error=e as {code?:string;status?:number;message?:string};
+      if(error.code==='chat_closed'){setServerClosed(true);setQuick([]);}
+      // A definitive rejection is not an ambiguous transport failure. No
+      // automatic retries; uncertain attempts keep their exact payload and key.
+      if(error.status===400||error.status===403||error.code==='chat_closed'||error.code==='request_id_conflict'){
+        clearRecovered(request.requestId);
+        remember(null);
+        setSendError(error.message??'Сервер отклонил отправку.');
+      }else{
+        setSendError('Не получили подтверждение отправки. Повторите именно эту отправку — новое сообщение не будет создано дважды.');
+      }
+      refreshRef.current();
+      toast(error.message??'Ошибка отправки');
     }finally{
-      sendingRef.current=false;
-      setSending(false);
+      if(currentSession()){
+        sendingRef.current=false;setSending(false);
+      }
     }
   }
 
   // Свёрнут, пока не нажали: лента заявки не переполнена. Новые сообщения видно по счётчику.
-  const fresh = msgs.slice(seen).filter((m) => m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
+  const fresh = loading||loadError?0:msgs.filter((m) => m.id>seen && m.sender_id && m.sender_id !== me?.id && m.kind !== 'system').length;
   if (!open) return (
     <button type="button" className="card" onClick={() => setOpen(true)} style={{ textAlign: 'left', cursor: 'pointer', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
       <b>{archiveLabel ? 'Архив переписки' : '💬 Чат по заявке'}</b>
@@ -1315,13 +1527,13 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         {fresh > 0 && <span className="pill warn">новых: {fresh}</span>}
         <span className="note">{loadError?'ошибка загрузки · открыть для повтора':
           loading?'загружаем переписку':readOnly?'только чтение':
-          msgs.length?`${msgs.length} сообщ.`:'открыть'} ▾</span>
+          msgs.length?`${msgs.length} загружено`:'открыть'} ▾</span>
       </span>
     </button>
   );
   return (
     <div className="card" aria-label={archiveLabel ? 'Архив переписки по заявке' : 'Чат по заявке'}>
-      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">{readOnly ? 'Завершить диалог' : 'свернуть ▴'}</span></button>
+      <button type="button" onClick={() => setOpen(false)} className="between" style={{ background: 'none', border: 0, padding: 0, color: 'inherit', cursor: 'pointer' }}><b>{archiveLabel ? 'Архив переписки' : 'Чат по заявке'}</b><span className="note">свернуть ▴</span></button>
       {(archived||serverClosed) && <span className="note">Заявка закрыта. История сообщений сохранена, новые сообщения недоступны. Для нового обращения используйте поддержку.</span>}
       {loadError&&<div className="stack" role="alert">
         <span className="note">Не удалось загрузить переписку: {loadError}</span>
@@ -1330,7 +1542,25 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
         </button>
       </div>}
       {loading&&<span className="note" role="status">Загружаем переписку…</span>}
-      {people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
+      {recoveryWarning&&<span className="note" role="status">{recoveryWarning}</span>}
+      {recoveryStatus&&<span className="note" role="status">{recoveryStatus}</span>}
+      {recovery&&!pending&&!loading&&!loadError&&<div className="stack">
+        <span className="note">Есть неподтверждённая отправка из предыдущего сеанса. Сначала проверьте её статус.</span>
+        <button type="button" className="btn ghost small" disabled={recoveryCheck} onClick={()=>{void checkRecovered();}}>Проверить статус отправки</button>
+        {recoveryStatus.startsWith('Сервер пока')&&<>
+          <input className="field" ref={recoveredText} placeholder="Точный прежний текст" maxLength={2000}/>
+          <button type="button" className="btn ghost small" disabled={recoveryCheck} onClick={()=>{void retryRecovered();}}>Повторить сохранённую отправку</button>
+        </>}
+      </div>}
+      {sendError&&<span className="note" role="alert">{sendError}</span>}
+      {pending&&!sending&&!loading&&!loadError&&<div className="stack">
+        <span className="note">Отправка без подтверждения: {pending.body}</span>
+        <button type="button" className="btn ghost small" onClick={()=>{void send('','text',true);}}>Повторить прежнюю отправку</button>
+        <span className="note">Сначала подтвердите прежнюю отправку. Новый черновик сохраняется. При выходе из заявки проверьте историю перед повторной отправкой.</span>
+      </div>}
+      {!loading&&!loadError&&people.length > 0 && <span className="note">В чате: {people.map((p) => p.you ? 'вы' : `${({ owner: 'владелец', driver: 'водитель', performer: 'исполнитель', support: '' } as Record<string, string>)[p.who]} ${p.name ?? ''}`.trim()).join(', ')}. Номера скрыты.</span>}
+      {!loading&&!loadError&&historyTrimmed&&<span className="note" role="status">Показана свежая часть переписки. Более ранние сообщения доступны по кнопке ниже.</span>}
+      {!loading&&!loadError&&older!==null&&<button type="button" className="btn ghost small" disabled={paging} onClick={()=>olderRef.current()}>{paging?'Загружаем…':'Загрузить более ранние сообщения'}</button>}
       <div className="msgs" ref={box}>
         {!loading&&!loadError&&msgs.length===0&&<span className="note">Сообщений пока нет</span>}
         {!loading&&!loadError&&msgs.map((m) => {
@@ -1347,10 +1577,10 @@ function AccountOrderChat({id,status,open,setOpen}:ChatPanelProps) {
       {!readOnly && (
         <>
           <div className="scroll-x">{quick.map((q) => <button key={q} type="button"
-            className="chip" disabled={sending} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
+            className="chip" disabled={sending||!!pending||!!recovery} onClick={() => {void send(q,'quick');}}>{q}</button>)}</div>
           <form className="compose" onSubmit={(e) => { e.preventDefault();void send(text); }}>
             <input className="field" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} />
-            <button className="btn small" disabled={!text.trim()||sending}>{sending?'…':'➤'}</button>
+            <button className="btn small" disabled={!text.trim()||sending||!!pending||!!recovery}>{sending?'…':'➤'}</button>
           </form>
         </>
       )}

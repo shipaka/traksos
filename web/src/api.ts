@@ -1,5 +1,7 @@
 // Связь с сервером: HTTP + WebSocket. Токен хранится в localStorage (в Android — тоже, внутри WebView).
 
+import {clearAllChatRecovery} from './chatRecovery.ts';
+
 declare const __API_URL__: string;
 export const API_URL = (window as any).TRAKSOS_API ?? (__API_URL__ || '');
 
@@ -16,6 +18,7 @@ export function setToken(t: string | null) {
     // A failed POST retains its idempotency key in module memory as well as
     // sessionStorage. NEVER reuse that key for another signed-in account.
     fallbackPending = null;
+    clearAllChatRecovery();
     store.set('traksos.offlineIdentity', null);
     try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ }
     store.set('traksos.savedOrderDraft.v1', null);

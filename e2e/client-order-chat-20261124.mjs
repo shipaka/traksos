@@ -4,6 +4,7 @@ import {build} from 'esbuild';
 import {chromium} from 'playwright';
 
 const api=`
+  export function getToken(){return window.__orderMock.user?.id??null;}
   export function get(path) {
     return new Promise((resolve,reject)=>window.__orderMock.gets.push({path,resolve,reject}));
   }
@@ -96,7 +97,8 @@ const browser=await chromium.launch();
 try{
   const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
-  await page.setContent('<!doctype html><html lang="ru"><body><div id="root"></div></body></html>');
+  await page.route('http://localhost:41731/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><html lang="ru"><body><div id="root"></div></body></html>'}));
+  await page.goto('http://localhost:41731/');
   await page.addScriptTag({content:js.text});
   const wait=(path,n)=>page.waitForFunction(([path,n])=>
     window.__orderMock.gets.filter(x=>x.path===path).length>=n,[path,n]);
@@ -116,7 +118,14 @@ try{
   await wait('/api/orders/A',1);
   await settle('/api/orders/A',0,order('A',101));
   await page.getByText('№101 · Электрик').waitFor();
-  const chatA='/api/orders/A/messages';
+  const latest=id=>'/api/orders/'+id+'/messages?window=latest&limit=100';
+  const earlier=(id,cursor)=>'/api/orders/'+id+'/messages?window=before&limit=100&cursor='+cursor;
+  const msg=(id,body,sender_id='other')=>({id,kind:'text',sender_id,body});
+  const windowPage=(messages,mode='latest',hasMore=false)=>({messages,quickReplies:[],participants:[],
+    page:{mode,hasMore,oldestId:messages[0]?.id??null,newestId:messages.at(-1)?.id??null,
+      nextCursor:hasMore?messages[0].id:null}});
+  const emit=event=>page.evaluate(e=>window.__orderMock.listeners.slice().forEach(fn=>fn(e)),event);
+  const chatA=latest('A');
   await wait(chatA,1);
   await settle(chatA,0,'offline conversation',true);
   await page.getByRole('button',{name:/Чат по заявке/}).click();
@@ -125,11 +134,68 @@ try{
     throw Error('Chat showed empty history when GET failed');
   await page.getByRole('button',{name:'Повторить загрузку переписки'}).click();
   await wait(chatA,2);
-  await settle(chatA,1,{
-    messages:[{id:'A1',kind:'text',sender_id:'other',body:'PRIVATE A CHAT'}],
-    quickReplies:[],participants:[]});
+  await settle(chatA,1,windowPage([msg(101,'PRIVATE A CHAT')],'latest',true));
+  await page.getByRole('button',{name:'Загрузить более ранние сообщения'}).click();
+  await wait(earlier('A',101),1);
+  await settle(earlier('A',101),0,windowPage([msg(7,'OLDER A CHAT')],'before'));
+  await page.getByText('OLDER A CHAT').waitFor();
   await page.getByText('PRIVATE A CHAT').waitFor();
   await page.getByPlaceholder('Сообщение').fill('PRIVATE A DRAFT');
+  // Reconnect returns a newer window with a gap. Every previously loaded
+  // page is re-read under the current authorization, not kept from memory.
+  await emit({type:'connection_restored'});
+  await wait(chatA,3);
+  await settle(chatA,2,windowPage([msg(507,'NEW A CHAT')],'latest',true));
+  await wait(earlier('A',507),1);
+  await settle(earlier('A',507),0,windowPage([msg(101,'PRIVATE A CHAT'),msg(305,'MISSED A CHAT')],'before',true));
+  await wait(earlier('A',101),2);
+  await settle(earlier('A',101),1,windowPage([msg(7,'OLDER A CHAT')],'before'));
+  await page.getByText('MISSED A CHAT').waitFor();
+  if((await page.locator('.msgs .b').allTextContents()).join('|')!=='OLDER A CHAT|PRIVATE A CHAT|MISSED A CHAT|NEW A CHAT')
+    throw Error('Reconnect lost or reordered durable history');
+  if(await page.getByPlaceholder('Сообщение').inputValue()!=='PRIVATE A DRAFT')
+    throw Error('Reconnect lost mounted draft');
+  // A large offline backlog must not turn one event into an unbounded read.
+  const rows=(start)=>Array.from({length:100},(_,i)=>msg(start+i,'HISTORY '+(start+i)));
+  await emit({type:'connection_restored'});
+  await wait(chatA,4);
+  await settle(chatA,3,windowPage(rows(1101),'latest',true));
+  for(let cursor=1101;cursor>=301;cursor-=100){
+    const path=earlier('A',cursor);
+    await wait(path,1);
+    await settle(path,0,windowPage(rows(cursor-100),'before',true));
+  }
+  await page.getByText('Показана свежая часть переписки.',{exact:false}).waitFor();
+  if(await page.locator('.msgs .b').count()!==1000)throw Error('Automatic history window not bounded at 1000');
+  if(await page.evaluate(()=>window.__orderMock.gets.some(x=>x.path.endsWith('cursor=201'))))
+    throw Error('Automatic refresh exceeded ten pages');
+  if(await page.getByText('OLDER A CHAT').count())throw Error('Stale cached message retained across bounded refresh');
+  if(await page.getByPlaceholder('Сообщение').inputValue()!=='PRIVATE A DRAFT')throw Error('Bounded refresh lost draft');
+  // Manual earlier pagination is still available.
+  await page.getByRole('button',{name:'Загрузить более ранние сообщения'}).click();
+  await wait(earlier('A',201),1);
+  await settle(earlier('A',201),0,windowPage(rows(101),'before',true));
+  await page.getByText('HISTORY 101',{exact:true}).waitFor();
+  if(await page.locator('.msgs .b').count()!==1100)throw Error('Older page inaccessible after bounded refresh');
+  // A burst during one in-flight request produces just one trailing refresh.
+  await page.evaluate(()=>{
+    for(let i=0;i<40;i++)window.__orderMock.listeners.slice().forEach(fn=>fn({
+      type:'chat',message:{order_id:'A',id:1201+i,body:'UNCONFIRMED SOCKET BODY'}
+    }));
+  });
+  await wait(chatA,5);
+  if(await page.getByText('UNCONFIRMED SOCKET BODY').count())throw Error('Unconfirmed socket body rendered');
+  if(await page.evaluate(p=>window.__orderMock.gets.filter(x=>x.path===p).length,chatA)!==5)
+    throw Error('Concurrent refreshes started for event burst');
+  await settle(chatA,4,'access revoked',true);
+  await wait(chatA,6);
+  await settle(chatA,5,'access revoked',true);
+  await page.getByRole('button',{name:'Повторить загрузку переписки'}).waitFor();
+  if(await page.locator('.msgs .b').count()||await page.getByText('OLDER A CHAT').count())
+    throw Error('Denied refresh retained chat history');
+  await page.waitForTimeout(350);
+  if(await page.evaluate(p=>window.__orderMock.gets.filter(x=>x.path===p).length,chatA)!==6)
+    throw Error('Event burst triggered more than one trailing refresh');
 
   // A different order has a blank chat and a separate GET; old A is never shown.
   await navigate('B');
@@ -137,8 +203,8 @@ try{
   if(await page.getByText('PRIVATE A CHAT').count()||await page.getByText('PRIVATE A DRAFT').count())
     throw Error('A chat remained during navigation to B');
   await settle('/api/orders/B',0,order('B',202));
-  await wait('/api/orders/B/messages',1);
-  await settle('/api/orders/B/messages',0,{messages:[],quickReplies:[],participants:[]});
+  await wait(latest('B'),1);
+  await settle(latest('B'),0,windowPage([]));
   // An unauthenticated/stale payment GET is not an empty ledger: show retry
   // and never fall back to another order's captured amount.
   const paymentPath='/api/orders/B/payments';
@@ -153,6 +219,7 @@ try{
   if((await message.inputValue())!=='')throw Error('A chat draft leaked into B');
 
   await message.fill('B first message');
+  await page.waitForFunction(()=>!document.querySelector('form.compose button')?.disabled);
   // DOM-double click in a single task probes the ref lock before setState.
   await page.evaluate(()=>{
     const button=Array.from(document.querySelectorAll('form.compose button'))
@@ -164,19 +231,74 @@ try{
   if((await page.evaluate(()=>window.__orderMock.posts.length))!==1)
     throw Error('Double submit produced two POST requests');
   await message.fill('B second draft');
-  await page.evaluate(()=>window.__orderMock.posts[0].resolve({
-    id:'B1',kind:'text',sender_id:'U1',body:'B first message'}));
+  const original=await page.evaluate(()=>window.__orderMock.posts[0].body);
+  if(!/^[0-9a-f-]{36}$/.test(original.requestId))throw Error('Missing request UUID');
+  // The server may have committed; only the transport confirmation was lost.
+  await page.evaluate(()=>window.__orderMock.posts[0].reject(Object.assign(Error('offline'),{status:0,code:'network'})));
+  await wait(latest('B'),2);
+  await settle(latest('B'),1,windowPage([msg(808,'B first message','U1')]));
+  const retry=page.getByRole('button',{name:'Повторить прежнюю отправку'});
+  await retry.waitFor();
+  if(await message.inputValue()!=='B second draft')throw Error('Retry erased new draft');
+  if(!(await page.locator('form.compose button').isDisabled()))throw Error('New send enabled before unresolved prior attempt');
+  if(await page.evaluate(()=>window.__orderMock.posts.length)!==1)throw Error('Automatic POST replay');
+  await page.evaluate(()=>{
+    const button=Array.from(document.querySelectorAll('button')).find(x=>x.textContent==='Повторить прежнюю отправку');
+    if(!button)throw Error('Missing explicit retry');
+    button.click();button.click();
+  });
+  await page.waitForFunction(()=>window.__orderMock.posts.length===2);
+  const repeated=await page.evaluate(()=>window.__orderMock.posts[1].body);
+  if(JSON.stringify(repeated)!==JSON.stringify(original))throw Error('Retry altered payload or key');
+  await page.evaluate(()=>window.__orderMock.posts[1].resolve({
+    id:808,kind:'text',sender_id:'U1',body:'B first message'}));
+  await wait(latest('B'),3);
+  await settle(latest('B'),2,windowPage([msg(808,'B first message','U1')]));
   await page.getByText('B first message').waitFor();
   if(await message.inputValue()!=='B second draft')
     throw Error('Pending response erased the subsequent chat draft');
 
+  // The next intentional message gets a distinct key.
+  await page.locator('form.compose button').click();
+  await page.waitForFunction(()=>window.__orderMock.posts.length===3);
+  const third=await page.evaluate(()=>window.__orderMock.posts[2].body);
+  if(third.requestId===original.requestId||third.body!=='B second draft')throw Error('New send reused prior identity');
+  const saved=await page.evaluate(()=>Object.entries(localStorage).filter(([k])=>k.startsWith('traksos.chatPending.v1:')));
+  if(saved.length!==1||!saved[0][1].includes(third.requestId)||saved[0][1].includes('B second draft')||saved[0][0].includes('U1'))
+    throw Error('Recovery storage missing or contains private text/session token');
+  // Leave while the response is outstanding; reopen the same authorized order.
+  await navigate('C');
+  await wait('/api/orders/C',1);
+  await navigate('B');
+  await wait('/api/orders/B',2);
+  await settle('/api/orders/B',1,order('B',202));
+  await wait(latest('B'),4);
+  await settle(latest('B'),3,windowPage([msg(808,'B first message','U1')]));
+  await page.getByRole('button',{name:/Чат по заявке/}).click();
+  await page.getByRole('button',{name:'Проверить статус отправки'}).click();
+  const statusPath='/api/orders/B/messages/request/'+third.requestId;
+  await wait(statusPath,1);
+  await settle(statusPath,0,{state:'not_observed',messageId:null,kind:null});
+  await page.getByPlaceholder('Точный прежний текст').fill('wrong text');
+  await page.getByRole('button',{name:'Повторить сохранённую отправку'}).click();
+  await page.getByText('Текст отличается от прежней отправки. Повтор не выполнен.').waitFor();
+  if(await page.evaluate(()=>window.__orderMock.posts.length)!==3)throw Error('Mismatched recovered text sent');
+  await page.getByRole('button',{name:'Проверить статус отправки'}).click();
+  await wait(statusPath,2);
+  await settle(statusPath,1,{state:'committed',messageId:809,kind:'text'});
+  await wait(latest('B'),5);
+  await settle(latest('B'),4,windowPage([msg(808,'B first message','U1'),msg(809,'B second draft','U1')]));
+  await page.getByText('Предыдущая отправка подтверждена сервером.').waitFor();
+  if(await page.evaluate(()=>Object.keys(localStorage).some(k=>k.startsWith('traksos.chatPending.v1:'))))throw Error('Confirmed recovery metadata not cleared');
+  if(await page.evaluate(()=>window.__orderMock.posts.length)!==3)throw Error('Status recovery sent another POST');
   // Same order ID but another authenticated account is a fresh private GET.
   await navigate('B','U2');
-  await wait('/api/orders/B',2);
+  await wait('/api/orders/B',3);
   if(await page.getByText('B first message').count()||
      await page.getByText('B second draft').count())
     throw Error('Former account message shown before fresh ACL GET');
-  await settle('/api/orders/B',1,'forbidden',true);
+  await page.evaluate(()=>window.__orderMock.posts[2].resolve({id:809,kind:'text',sender_id:'U1',body:'B second draft'}));
+  await settle('/api/orders/B',2,'forbidden',true);
   await page.getByRole('button',{name:'Повторить загрузку заявки'}).waitFor();
   if(await page.getByText('№202 · Электрик').count())
     throw Error('Unauthorized account saw old order after 403');

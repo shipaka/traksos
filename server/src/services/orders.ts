@@ -11,6 +11,7 @@ import { cancelStage, cancelSplit, cappedPct, commissionPct } from '../domain/mo
 import { legacyCashFixtureEnabled } from '../domain/paymentPolicy.ts';
 import { slot } from '../domain/schedule.ts';
 import { rub } from '../util.ts';
+import {currentChatPeople,redactChatSystemBody} from '../domain/chatVisibility.ts';
 import type { AuctionService } from './auction.ts';
 import type { OrderContinuationService } from './orderContinuation.ts';
 const SERVICE_TITLE: Record<string, string> = { consult: 'Консультация', electric: 'Электрик', air: 'Пневматика', autonomy: 'Автономка', tyre: 'Шиномонтаж', hydraulics: 'Гидравлика', diag: 'Диагност', ecu: 'Блоки управления', tow: 'Эвакуатор' };
@@ -1419,7 +1420,15 @@ export class OrdersService {
       `insert into chat_messages(order_id, sender_id, kind, body) values ($1, null, 'system', $2) returning id, order_id, sender_id, kind, body, created_at`,
       [orderId, body],
     );
-    this.notifier.live(await this.participants(orderId), { type: 'chat', message: m });
+    if(!m)return;
+    // Retain the event shape used by installed clients, but never send
+    // customer-only financial text to a performer or obsolete participant.
+    const people=await currentChatPeople(this.db,orderId);
+    const performers=new Set(people.filter(p=>p.who==='performer').map(p=>p.id));
+    const customers=people.filter(p=>!performers.has(p.id)).map(p=>p.id);
+    if(customers.length)this.notifier.live(customers,{type:'chat',message:m});
+    if(performers.size)this.notifier.live([...performers],{type:'chat',message:{...m,body:redactChatSystemBody(body)}});
+
   }
 }
 

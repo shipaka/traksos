@@ -2,6 +2,7 @@
 // Real HTTP + disposable PostgreSQL. No production data or customer communications.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
 import { setup, ok } from './helpers.ts';
 
 const phone=(n:number)=>'+7999777'+String(n).padStart(4,'0');
@@ -77,7 +78,7 @@ test('Chat: revoked fleet driver loses read/write rights, owner retains records'
   }finally{await t.close();}
 });
 
-test('Chat: failure of optional notification must NOT make committed user message fail and invite duplicates',async()=>{
+test('Chat: durable inbox failure rolls back fleet message and same-key retry commits once',async()=>{
   const t=await setup();
   try{
     const owner=await t.login(phone(4205));
@@ -100,27 +101,32 @@ test('Chat: failure of optional notification must NOT make committed user messag
       create trigger reject_chat_push_20261124 before insert on notifications
         for each row execute function reject_chat_push_20261124();
     `);
-    const posted=ok(await t.api('POST',`/api/orders/${order.id}/messages`,
-      {body:'One final committed message despite optional push outage'},owner.token));
-    assert.ok(posted.id);
-    const count=await t.db.one<{n:number}>(
+    const payload={body:'Fleet message with durable inbox',requestId:randomUUID()};
+    const url=`/api/orders/${order.id}/messages`;
+    const count=async()=>Number((await t.db.one<{n:number}>(
       'select count(*)::int as n from chat_messages where order_id=$1 and sender_id=$2 and body=$3',
-      [order.id,owner.id,'One final committed message despite optional push outage']);
-    assert.equal(count?.n,1);
-    const received=await t.db.one<{n:number}>(
+      [order.id,owner.id,payload.body]))?.n??0);
+    const received=async()=>Number((await t.db.one<{n:number}>(
       `select count(*)::int as n from notifications
         where user_id=$1 and kind='chat_push' and data->>'orderId'=$2`,
-      [driver.id,order.id]);
-    assert.equal(received?.n,0,'injected durable inbox failure was actually exercised');
+      [driver.id,order.id]))?.n??0);
+    assert.equal((await t.api('POST',url,payload,owner.token)).status,500);
+    assert.equal(await count(),0,'message must roll back with failed durable inbox');
+    assert.equal(await received(),0);
     await t.db.exec(`
       drop trigger reject_chat_push_20261124 on notifications;
       drop function reject_chat_push_20261124();
     `);
+    const posted=ok(await t.api('POST',url,payload,owner.token));
+    assert.ok(posted.id);
+    assert.equal(ok(await t.api('POST',url,payload,owner.token)).id,posted.id);
+    assert.equal(await count(),1);
+    assert.equal(await received(),1);
   }finally{await t.close();}
 });
 
 
-test('Chat: captured staff permissions are revoked and a failed recipient lookup cannot undo a committed post',
+test('Chat: captured staff permissions are revoked and optional live delivery failure cannot undo a committed post',
   {timeout:60000},async()=>{
   const t=await setup();
   try{
@@ -132,20 +138,21 @@ test('Chat: captured staff permissions are revoked and a failed recipient lookup
     const capturedAdmin=await t.db.one<any>('select * from users where id=$1',[admin.id]);
     const capturedOwner=await t.db.one<any>('select * from users where id=$1',[owner.id]);
     const {ChatService}=await import('../src/services/chat.ts');
-    let lookups=0;
-    const svc=new ChatService(t.db,t.app.settings,{} as any,{
+    let deliveryAttempts=0;
+    const svc=new ChatService(t.db,t.app.settings,{
+      live:()=>{deliveryAttempts++;throw Error('synthetic optional live delivery failure');},
+    } as any,{
       mustSee:async()=>({id:order.id}),
-      participants:async()=>{lookups++;throw Error('synthetic recipient lookup failure');},
     } as any);
     await t.db.query("update users set roles=array['client']::text[] where id=$1",[admin.id]);
     await assert.rejects(svc.list(capturedAdmin,order.id),/только участникам/);
     await assert.rejects(svc.post(capturedAdmin,order.id,'Former staff message'),/только участникам/);
-    assert.equal(lookups,0);
-    const posted=await svc.post(capturedOwner,order.id,'Committed despite recipient lookup failure');
+    assert.equal(deliveryAttempts,0);
+    const posted=await svc.post(capturedOwner,order.id,'Committed despite optional delivery failure');
     assert.ok(posted.id);
-    assert.equal(lookups,1);
+    assert.equal(deliveryAttempts,1);
     const history=await svc.list(capturedOwner,order.id);
-    assert.equal(history.messages.filter((m:any)=>m.body==='Committed despite recipient lookup failure').length,1);
+    assert.equal(history.messages.filter((m:any)=>m.body==='Committed despite optional delivery failure').length,1);
     assert.equal(history.messages.some((m:any)=>m.body==='Former staff message'),false);
   }finally{await t.close();}
 });

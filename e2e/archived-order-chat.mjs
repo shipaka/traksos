@@ -67,7 +67,9 @@ async function openArchive(page,label) {
   assert.equal(await archived.locator('input').count(),0,label+': archive must not contain message inputs');
   assert.equal(await archived.locator('form.compose').count(),0,label+': archive must not contain send form');
   assert.equal(await archived.locator('button.chip').count(),0,label+': archive must not offer quick messages');
-  assert.equal(await archived.getByText('Завершить диалог').count(),1,label+': archive must have collapse action');
+  const collapse=archived.getByRole('button',{name:/^Архив переписки\s+свернуть/});
+  assert.equal(await collapse.count(),1,label+': archive must have collapse action');
+  assert.ok(await collapse.isVisible(),label+': archive collapse must be visible');
   assert.equal(await archived.getByText('Я на месте',{exact:true}).count(),0,label+': status action cannot be chat text');
   return archived;
 }
@@ -84,8 +86,10 @@ try {
   assert.equal(await archived.locator('form.compose').count(),0,'chat must become read-only without reload');
   assert.equal(await archived.locator('input').count(),0,'mobile composer must disappear');
   await customerPage.screenshot({path:OUT+'/closed-chat-client-mobile.png'});
-  await archived.getByText('Завершить диалог').click();
+  await archived.getByRole('button',{name:/^Архив переписки\s+свернуть/}).click();
+  await archived.waitFor({state:'hidden'});
   const reopened=await openArchive(customerPage,'reopened client');
+  await reopened.locator('.msg').first().waitFor({state:'visible',timeout:12000});
   assert.ok((await reopened.locator('.msg').count())>0,'archived messages must remain readable');
 
   const masterPage=await pageFor(performer.token,1440,900,id);

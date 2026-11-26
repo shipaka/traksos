@@ -165,3 +165,21 @@ test('calendar training separates pending proposals, reservations and actual ava
   for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
     assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
 });
+
+test('order chat course teaches explicit same-key recovery, archive and current participant access',()=>{
+  for(const role of ['owner','driver','master','tow','service'] as const){
+    const item=allowedScenario(role,'order-chat-send-recovery');
+    assert.ok(item);
+    assert.equal(item.steps.length,3);
+    assert.equal(item.link,'/help');
+    const text=item.steps.map(s=>s.situation+' '+s.why+' '+s.choices.filter(c=>c.recommended).map(c=>c.label+' '+c.feedback).join(' ')).join(' ');
+    assert.match(text,/тот же идентификатор/);
+    assert.match(text,/точный прежний текст/);
+    assert.match(text,/повторный запрос отправки не нужен/);
+    assert.match(text,/в архиве только читать/);
+    assert.match(text,/Прежний водитель после утраты привязки не получает доступ/);
+    assert.match(text,/отпечаток, а не исходный текст/);
+  }
+  for(const role of ['insurer','inspection','courier','moderator','admin'] as const)
+    assert.equal(allowedScenario(role,'order-chat-send-recovery'),null);
+});
