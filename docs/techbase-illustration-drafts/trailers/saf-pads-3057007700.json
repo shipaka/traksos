@@ -1,0 +1,33 @@
+{
+  "id": "saf-pads-3057007700",
+  "manufacturer": "SAF",
+  "article": "3 057 0077 00",
+  "nameRu": "Комплект колодок SN7",
+  "family": "SK RB 9022K",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-pads-3057007700.svg",
+  "sources": [
+    {
+      "url": "https://safholland.com/gb/en/products/document/resource/environment/project1_p/documents/documentationP/2022/2022_10/Repair%2520kit_catalogue_XL-AA11753AL-2022_en-DE.pdf",
+      "reference": "XL-AA11753AL Rev F, 08/2022 p82",
+      "visualChecked": false,
+      "screenshotError": "size limit"
+    },
+    {
+      "url": "https://safholland.com/au/en/products/document/resource/environment/project1_p/documents/documentationP/Before%2520Empolis%2520Box%2520update/pLiterature/SAF-06c-SparesManual-SAFaxles-SuspensionAssemblies_en-AU.pdf",
+      "reference": "p18 item 064",
+      "visualChecked": false
+    }
+  ],
+  "relatedDraftIds": [
+    "saf-sn7-caliper",
+    "saf-disc-4079001301"
+  ],
+  "catalogueNotes": "Catalogue includes holder kit and items 64.1,64.2,65,65.1. Not an exact part-count diagram.",
+  "limitations": [
+    "Original schematic, not exact physical geometry or OEM drawing",
+    "No installation steps, pinout, repair limits or VIN-specific fitment",
+    "No rendered visual QA or expert acceptance"
+  ],
+  "watermark": "TrakSOS diagonal pattern"
+}
