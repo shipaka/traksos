@@ -1,0 +1,203 @@
+{
+  "batch": "TECHBASE-BENDIX-AD9-ADIS-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "sources": [
+    {
+      "url": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/BLTpe6uXI0EBhB_SD-08-2412_US_008.pdf",
+      "doc": "SD-08-2412 US 008",
+      "review": "PDF text and physical pp1–3 screenshots inspected, product photos and charge/purge cross-sections"
+    },
+    {
+      "url": "https://static.nhtsa.gov/odi/tsbs/2014/SB-10055150-4858.pdf",
+      "doc": "SD-08-2418",
+      "review": "PDF text and physical pp1,4,5 screenshots inspected, assembly photos and cycle diagrams"
+    }
+  ],
+  "assets": [
+    {
+      "name": "ad9-assembly.svg",
+      "model": "AD-9 / AD-9 PG",
+      "pages": [
+        1,
+        2
+      ],
+      "facts": [
+        "Standard and extended purge shells; bottom cover; internal cartridge; similar exterior PG"
+      ],
+      "source": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/BLTpe6uXI0EBhB_SD-08-2412_US_008.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "ad9-charge.svg",
+      "model": "AD-9 / AD-9 PG",
+      "pages": [
+        2,
+        3
+      ],
+      "facts": [
+        "Air enters oil separator, then desiccant upwards, fills surrounding purge volume, delivery check open"
+      ],
+      "source": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/BLTpe6uXI0EBhB_SD-08-2412_US_008.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "ad9-purge.svg",
+      "model": "AD-9 / AD-9 PG",
+      "pages": [
+        3
+      ],
+      "facts": [
+        "Reverse flow from surrounding purge volume through drying bed, exhaust open, delivery check prevents reservoir backflow"
+      ],
+      "source": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/BLTpe6uXI0EBhB_SD-08-2412_US_008.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "adis-assembly.svg",
+      "model": "AD-IS / AD-IS PuraGuard",
+      "pages": [
+        1
+      ],
+      "facts": [
+        "External cartridge, adjacent purge reservoir, governor, four pressure protection valves, port labels from figure 1"
+      ],
+      "source": "https://static.nhtsa.gov/odi/tsbs/2014/SB-10055150-4858.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "adis-charge.svg",
+      "model": "AD-IS / AD-IS PuraGuard",
+      "pages": [
+        4
+      ],
+      "facts": [
+        "Dry air branches to separate purge reservoir via orifice and through delivery check to four pressure protection valves"
+      ],
+      "source": "https://static.nhtsa.gov/odi/tsbs/2014/SB-10055150-4858.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "adis-purge.svg",
+      "model": "AD-IS / AD-IS PuraGuard",
+      "pages": [
+        5
+      ],
+      "facts": [
+        "Purge reservoir feeds reverse flow through desiccant, purge open, turbo cut-off closed, delivery check closed"
+      ],
+      "source": "https://static.nhtsa.gov/odi/tsbs/2014/SB-10055150-4858.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "ad9-vs-adis.svg",
+      "model": "AD-9 versus AD-IS",
+      "pages": [
+        1,
+        2,
+        4
+      ],
+      "facts": [
+        "Internal purge volume vs separate purge reservoir; different labelled ports and integrated distribution on AD-IS"
+      ],
+      "source": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/BLTpe6uXI0EBhB_SD-08-2412_US_008.pdf; https://static.nhtsa.gov/odi/tsbs/2014/SB-10055150-4858.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    },
+    {
+      "name": "ad9-pg-filter.svg",
+      "model": "AD-9 standard / AD-9 PG",
+      "pages": [
+        1,
+        2
+      ],
+      "facts": [
+        "PG adds coalescing media at drying bed inlet, higher oil removal; similar exterior; PG label"
+      ],
+      "source": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/BLTpe6uXI0EBhB_SD-08-2412_US_008.pdf",
+      "status": "HOLD",
+      "limits": [
+        "Functional schematic, not dimensional or internal machining detail",
+        "No chassis-specific installation photography or verified part fitment",
+        "Independent visual-render and technical approval pending"
+      ]
+    }
+  ],
+  "readbacks": [
+    {
+      "name": "ad9-assembly.svg",
+      "sha": "07cfaf9b8652994f5fc0414b6b44d57135dc41fe",
+      "exact": true
+    },
+    {
+      "name": "ad9-charge.svg",
+      "sha": "92aeca8a3b763ddd9fd871d70d289bfef83abb71",
+      "exact": true
+    },
+    {
+      "name": "ad9-purge.svg",
+      "sha": "3af5d4a23f359034f8cf6bd7d239fbdd11e0bdbb",
+      "exact": true
+    },
+    {
+      "name": "adis-assembly.svg",
+      "sha": "49d94f448971bd895387c5f928ec04a510e04f6e",
+      "exact": true
+    },
+    {
+      "name": "adis-charge.svg",
+      "sha": "29667117e7720d882ed873b675da278666ff80ef",
+      "exact": true
+    },
+    {
+      "name": "adis-purge.svg",
+      "sha": "0be2711a826aee75daed886221fd1220d66299b1",
+      "exact": true
+    },
+    {
+      "name": "ad9-vs-adis.svg",
+      "sha": "cf78e29c30e3db6d005080e163b01a0b9e0cb254",
+      "exact": true
+    },
+    {
+      "name": "ad9-pg-filter.svg",
+      "sha": "f125f62da192d51834ce9d0cb6aa7c026c574af0",
+      "exact": true
+    }
+  ],
+  "rights": "Original SVGs, no reproduced OEM images; static watermark not access control.",
+  "qa": "Flow and component facts compared to OEM diagrams; actual installed vehicle photos and independent render/technical acceptance not verified. HOLD. No bypass instructions or invented service values."
+}
