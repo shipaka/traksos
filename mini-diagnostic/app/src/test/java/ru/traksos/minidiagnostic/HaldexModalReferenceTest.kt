@@ -20,6 +20,12 @@ class HaldexModalReferenceTest {
         assertTrue(m.exactPair)
         assertNotNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_MODAL_MODULAR,"05"))
         assertTrue(DisplayReferenceEdition.entries.none { it.name=="HALDEX_UABS_ACTIVE" })
-        assertTrue(ReferenceSelection.forTarget("haldex-uabs").isEmpty())
+        // U-ABS now has its own electronic Info Centre 2 edition; lamp codes
+        // must remain excluded, not the entire U-ABS family.
+        assertEquals(listOf(DisplayReferenceEdition.HALDEX_UABS_INFO2),ReferenceSelection.forTarget("haldex-uabs"))
+        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_UABS_INFO2,"05"))
+        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_UABS_INFO2,"90"))
+        assertNotNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_UABS_INFO2,"Power low voltage"))
+        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_MODAL_MODULAR,"Power low voltage"))
     }
 }
