@@ -1,0 +1,126 @@
+{
+  "id": "scania-ebs-visual-reference-navigation",
+  "status": "visual_reference_owner_approved_asset_transfer_pending",
+  "asset": {
+    "expectedFile": "scania-ebs-overview-visual-reference.png",
+    "width": 1448,
+    "height": 1086,
+    "repositoryPresence": "not_uploaded",
+    "topology": "illustrative_not_verified",
+    "modelGeneration": "unconfirmed",
+    "releaseBlocked": true
+  },
+  "hotspots": [
+    {
+      "id": "ecu",
+      "label": "Блок EBS",
+      "bounds": [
+        0.25,
+        0.29,
+        0.36,
+        0.39
+      ],
+      "target": null
+    },
+    {
+      "id": "foot-valve",
+      "label": "Тормозной кран",
+      "bounds": [
+        0.17,
+        0.32,
+        0.23,
+        0.41
+      ],
+      "target": null
+    },
+    {
+      "id": "front-modulator",
+      "label": "Модулятор передней оси",
+      "bounds": [
+        0.24,
+        0.49,
+        0.31,
+        0.57
+      ],
+      "target": null
+    },
+    {
+      "id": "rear-modulator",
+      "label": "Модулятор задней оси",
+      "bounds": [
+        0.48,
+        0.48,
+        0.57,
+        0.57
+      ],
+      "target": null
+    },
+    {
+      "id": "trailer-valve",
+      "label": "Клапан управления прицепом",
+      "bounds": [
+        0.44,
+        0.34,
+        0.53,
+        0.41
+      ],
+      "target": null
+    },
+    {
+      "id": "wheel-sensor",
+      "label": "Датчики ABS",
+      "bounds": [
+        0.56,
+        0.66,
+        0.79,
+        0.94
+      ],
+      "target": "cojali-scania-abs-sensor-connector-length",
+      "verifiedExamples": [
+        {
+          "article": "2260130",
+          "brand": "COJALI",
+          "type": "straight S+",
+          "lengthMm": 2675,
+          "connector": "Deutsch DT06-2S B",
+          "source": "https://www.cojaliparts.com/en/reference/4410329020/abs-sensor/2260130/"
+        },
+        {
+          "article": "2260699",
+          "brand": "COJALI",
+          "type": "elbow",
+          "lengthMm": 1500,
+          "connector": "Superseal 2-pin socket",
+          "source": "https://www.cojaliparts.com/en/reference/1892051/abs-sensor/2260699/"
+        }
+      ]
+    },
+    {
+      "id": "wear-harness",
+      "label": "Жгуты датчиков износа",
+      "bounds": [
+        0.79,
+        0.66,
+        0.995,
+        0.94
+      ],
+      "target": "cojali-scania-wear-sensor-harness",
+      "verifiedExamples": [
+        {
+          "article": "2261080",
+          "brand": "COJALI",
+          "oe": "1525357",
+          "lengthMm": [
+            1750,
+            1650
+          ],
+          "connector": "Deutsch DT16-6SB-KP01 B; 2× BVA 3-pin socket",
+          "source": "https://www.cojaliparts.com/en/reference/1525357/abs-sensor-extension-cable/2261080/"
+        }
+      ]
+    }
+  ],
+  "sourceCheckedOn": "2026-11-26",
+  "coordinateSpace": "normalized visual-reference layout only, not physical mounting",
+  "policy": "No runtime or shop access; unknown targets disabled; exact VIN, actual topology, photo fidelity and rights need acceptance."
+}
