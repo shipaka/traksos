@@ -7,6 +7,9 @@ class HaldexEb4DiagReferenceTest {
         assertEquals(22,HaldexEb4DiagReference.numericCount)
         val r=HaldexEb4DiagReference.lookup("0x01")!!
         assertEquals(r,HaldexEb4DiagReference.lookup("S1A continuity"))
+        assertEquals(HaldexEb4DiagReference.lookup("0x2B"),HaldexEb4DiagReference.lookup(" 0X2b "))
+        assertNull(HaldexEb4DiagReference.lookup("0x002B"))
+        assertNull(HaldexEb4DiagReference.lookup("2B"))
         assertTrue(r.condition!!.contains("Обрыв или короткое"))
         assertTrue(HaldexEb4DiagReference.lookup("0x2B")!!.component!!.contains("дополнительного блока 1"))
         assertEquals(HaldexEb4DiagReference.lookup("0x39"),HaldexEb4DiagReference.lookup("SB SLAVE 2 continuity"))
