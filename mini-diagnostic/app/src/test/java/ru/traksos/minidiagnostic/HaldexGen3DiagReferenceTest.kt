@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class HaldexGen3DiagReferenceTest {
     @Test fun groupedAliasesDoNotInventWheelOrChannel() {
-        assertEquals(17,HaldexGen3DiagReference.aliasCount)
+        assertEquals(27,HaldexGen3DiagReference.aliasCount)
         assertEquals(4,HaldexGen3DiagReference.count)
         val wheel=HaldexGen3DiagReference.lookup("Wheel sensor 2A or 2B continuity")!!
         assertFalse(wheel.exactPair)
@@ -16,6 +16,16 @@ class HaldexGen3DiagReferenceTest {
         assertNull(HaldexGen3DiagReference.lookup("Wheel sensor 3A or 3B continuity"))
         assertNull(HaldexGen3DiagReference.lookup("EPRV 21 hold solenoid short circuit"))
         assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE,"Wheel sensor 2A or 2B continuity"))
+    }
+    @Test fun powerAndPressureAliasesUseTheirOwnPageAndEdition() {
+        val low=HaldexGen3DiagReference.lookup("Power low voltage")!!
+        assertTrue(low.condition!!.contains("8 В"))
+        assertTrue(low.source!!.endsWith("#page=111"))
+        assertFalse(low.exactPair)
+        assertTrue(HaldexGen3DiagReference.lookup("Reservoir sensor open circuit")!!.source!!.endsWith("#page=110"))
+        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_GEN2_INFO1,"Power low voltage"))
+        assertTrue(LegacyDisplayReference.haldexInfo1("EPRV 21 SLOW REC")!!.second.contains("восстановление скорости"))
+        assertTrue(LegacyDisplayReference.haldexInfo1("AUX4")!!.second.contains("конфигурации"))
     }
     @Test fun onlyAdditionalDocumentedLabels() {
         assertEquals(4,HaldexGen3DiagReference.count)
