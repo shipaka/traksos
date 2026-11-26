@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "wear_sensors": [
+    {
+      "article": "2260461",
+      "oe": "20928533",
+      "length_mm": 1500,
+      "connector": "Socket · 3 pin",
+      "mass_g": 119.5,
+      "model_rows": [
+        "FH 2005-2012",
+        "FH12 2001-2005",
+        "FH16 2003-2006"
+      ],
+      "source": "https://www.cojaliparts.com/cz/reference/20928533/senzor-opotrebeni-desek-brzdoveho-tremu/2260461/",
+      "crossrefs": [
+        "20442608",
+        "20392985",
+        "20392982",
+        "68323919"
+      ],
+      "fitment_level": "manufacturer_catalogue_model_rows",
+      "vin": "unknown"
+    },
+    {
+      "article": "2260464",
+      "oe": "20928541",
+      "length_mm": 1560,
+      "connector": "Delphi · 3 pin · plug",
+      "mass_g": 128,
+      "model_rows": [
+        "FH 2005-2012",
+        "FH12 2001-2005",
+        "FH16 2003-2006"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/20928541/brake-caliper-wear-sensor/2260464/",
+      "crossrefs": [
+        "20526767"
+      ],
+      "fitment_level": "manufacturer_catalogue_model_rows",
+      "vin": "unknown"
+    },
+    {
+      "article": "2260465",
+      "oe": "21390374",
+      "length_mm": 1540,
+      "connector": "Delphi · 3 pin · plug",
+      "mass_g": 127,
+      "model_rows": [
+        "FH 2005-2012",
+        "FH12 2001-2005",
+        "FH16 2003-2006"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/21390374/brake-caliper-wear-sensor/2260465/",
+      "crossrefs": [
+        "20526766",
+        "20928539",
+        "68326733"
+      ],
+      "fitment_level": "manufacturer_catalogue_model_rows",
+      "vin": "unknown"
+    },
+    {
+      "article": "2260021",
+      "oe": "21296869",
+      "length_mm": 1800,
+      "connector": "HDSCS · 3 pin · A · socket",
+      "mass_g": 137.5,
+      "model_rows": [
+        "FH 2012-"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/21296869/brake-caliper-wear-sensor/2260021/",
+      "crossrefs": [],
+      "fitment_level": "manufacturer_catalogue_model_rows",
+      "vin": "unknown"
+    },
+    {
+      "article": "2260019",
+      "oe": "21296874",
+      "length_mm": 2130,
+      "connector": "HDSCS · 3 pin · B · socket",
+      "mass_g": 153,
+      "model_rows": [
+        "FH 2012-"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/21296874/brake-caliper-wear-sensor/2260019/",
+      "crossrefs": [
+        "23740261"
+      ],
+      "fitment_level": "manufacturer_catalogue_model_rows",
+      "vin": "unknown"
+    }
+  ],
+  "ebs_catalogue": {
+    "title": "Knorr-Bremse EBS Product Catalogue Y074812 EN REV 003 October 2016",
+    "url": "https://www.befa.gr/wp-content/uploads/2018/11/EBS-CATALOGUE.pdf",
+    "visually_reviewed_printed_pages": [
+      21,
+      32,
+      42
+    ],
+    "fitment_level": "Volvo brand only; FH application unconfirmed",
+    "records": [
+      {
+        "type": "FBM",
+        "generation": "5",
+        "basic": "K040156",
+        "iam": "K040156N50",
+        "page": 21
+      },
+      {
+        "type": "FBM",
+        "generation": "7",
+        "basic": "K027386",
+        "iam": "K103367K50",
+        "page": 21,
+        "note": "kit"
+      },
+      {
+        "type": "EPM 1",
+        "generation": "5",
+        "basic": "K000914",
+        "iam": "K021203N50",
+        "page": 32
+      },
+      {
+        "type": "EPM 1",
+        "generation": "5.X",
+        "basic": "K021203",
+        "iam": "K021203N50",
+        "page": 32
+      },
+      {
+        "type": "EPM 1",
+        "generation": "7",
+        "basic": "K093190",
+        "iam": "K093190N50",
+        "page": 32
+      },
+      {
+        "type": "TCM",
+        "generation": "5",
+        "basic": "K000918",
+        "iam": "K020624N50",
+        "page": 42
+      },
+      {
+        "type": "TCM",
+        "generation": "5",
+        "basic": "K000919",
+        "iam": "K020623N50",
+        "page": 42
+      },
+      {
+        "type": "TCM",
+        "generation": "5.X",
+        "basic": "K020624",
+        "iam": "K020624N50",
+        "page": 42
+      }
+    ],
+    "central_ecu": "not identified",
+    "two_channel_epm": "not included pending source review"
+  },
+  "excluded": [
+    {
+      "article": "2209301 / 4802070010",
+      "reason": "Cojali application Schmitz trailer, Volvo cross-reference not FH tractor fitment",
+      "source": "https://www.cojaliparts.com/en/reference/4802070010/ebs-modulator/2209301/"
+    },
+    {
+      "article": "2232001 / 4800015000",
+      "reason": "Cojali application DAF/Scania/Solaris, no Volvo",
+      "source": "https://www.cojaliparts.com/ru/reference/4800015000/transmisor-del-senal-de-frenado/2232001/"
+    }
+  ],
+  "assets": [
+    "fh-wear-sensor-variants.svg",
+    "volvo-ebs-generation-catalogue.svg"
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "render_review": "pending",
+  "expert_review": "pending",
+  "verified_count_increment": 0,
+  "limitations": "Conceptual views and comparative catalogue chart; no exact physical geometry, routing, axle allocation, pinout or repair instructions. No copied product images."
+}
