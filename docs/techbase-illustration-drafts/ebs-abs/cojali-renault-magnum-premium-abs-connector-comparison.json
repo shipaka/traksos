@@ -1,0 +1,274 @@
+{
+  "id": "cojali-renault-magnum-premium-abs-connector-comparison",
+  "make": "Renault Trucks",
+  "models": [
+    "AE Magnum",
+    "KERAX",
+    "PREMIUM",
+    "Premium PR",
+    "Premium TR",
+    "PUNCHER",
+    "Magnum 2005–2013",
+    "Midlum с 2006",
+    "Premium с 2005",
+    "C",
+    "D",
+    "Magnum DXi 12",
+    "Magnum DXi 13",
+    "Premium II DXi 7",
+    "Premium II PR",
+    "Premium II TR"
+  ],
+  "system": "EBS/ABS",
+  "component": "wheel_speed_sensor",
+  "documentedVariant": "elbow plug/socket and straight S+ Deutsch A; comparative catalogue cable lengths",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "hotspots": [
+    {
+      "id": "h-2260009",
+      "catalogueBrand": "COJALI",
+      "article": "2260009",
+      "source": "https://www.cojaliparts.com/en/reference/0486000040000/abs-sensor/2260009/",
+      "revision": null,
+      "models": [
+        "AE Magnum",
+        "KERAX",
+        "PREMIUM",
+        "Premium PR",
+        "Premium TR",
+        "PUNCHER"
+      ],
+      "otherBindings": [],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "elbow",
+        "connector": "Plug, 2 pin",
+        "cableLengthAsPublished": "54 23/32 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "KNORR BREMSE",
+          "article": "0486000040000",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "5010344187",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260010",
+      "catalogueBrand": "COJALI",
+      "article": "2260010",
+      "source": "https://www.cojaliparts.com/en/reference/0486000039/abs-sensor/2260010/",
+      "revision": null,
+      "models": [
+        "AE Magnum",
+        "KERAX",
+        "PREMIUM",
+        "Premium PR",
+        "Premium TR",
+        "PUNCHER"
+      ],
+      "otherBindings": [],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "elbow",
+        "connector": "Socket, 2 pin",
+        "cableLengthAsPublished": "55 23/32 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "KNORR BREMSE",
+          "article": "0486000039",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "5010344188",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260048",
+      "catalogueBrand": "COJALI",
+      "article": "2260048",
+      "source": "https://www.cojaliparts.com/en/reference/4410329950/abs-sensor/2260048/",
+      "revision": null,
+      "models": [
+        "Magnum 2005–2013",
+        "Midlum с 2006",
+        "Premium с 2005"
+      ],
+      "otherBindings": [
+        {
+          "make": "VOLVO",
+          "models": [
+            "FE с 2006",
+            "FE II с 2013",
+            "FL с 2006"
+          ]
+        }
+      ],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "straight",
+        "connector": "Deutsch DT06-2S, A",
+        "cableLengthAsPublished": "68 29/32 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410329950",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "5010457874",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "7421363474",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "20916177",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "2136349",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260064",
+      "catalogueBrand": "COJALI",
+      "article": "2260064",
+      "source": "https://www.cojaliparts.com/en/reference/4410323470/abs-sensor/2260064/",
+      "revision": null,
+      "models": [
+        "C",
+        "D",
+        "Magnum DXi 12",
+        "Magnum DXi 13",
+        "Premium II DXi 7",
+        "Premium II PR",
+        "Premium II TR"
+      ],
+      "otherBindings": [
+        {
+          "make": "VOLVO",
+          "models": [
+            "FE с 2006"
+          ]
+        }
+      ],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "straight",
+        "connector": "Deutsch DT06-2S, A",
+        "cableLengthAsPublished": "155 1/2 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410323470",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "7420915970",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "7421363488",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "20915970",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260681",
+      "catalogueBrand": "COJALI",
+      "article": "2260681",
+      "source": "https://www.cojaliparts.com/en/reference/4410359302/abs-%D8%AD%D8%B3%D8%A7%D8%B3-/2260681/",
+      "revision": null,
+      "models": [
+        "C",
+        "D",
+        "Magnum DXi 12",
+        "Magnum DXi 13",
+        "Premium II DXi 7",
+        "Premium II PR",
+        "Premium II TR"
+      ],
+      "otherBindings": [],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "straight",
+        "connector": "Deutsch DT06-2S, A",
+        "cableLengthAsPublished": "155 1/2 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410359302",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "7420794630",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "7420916178",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "RENAULT TRUCKS",
+          "article": "7421296846",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    }
+  ],
+  "scope": "Условный сравнительный рисунок, не точная геометрия, распиновка, позиция оси или подтверждение взаимозаменяемости. Неясная строка FE в каталоге 2260681 исключена."
+}
