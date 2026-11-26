@@ -1,0 +1,322 @@
+{
+  "schema_version": 1,
+  "scope": "source_research_only",
+  "checked_on": "2026-11-26",
+  "vehicle": {
+    "make": "IVECO",
+    "model": "Stralis 440S46",
+    "canonical_vehicle_id": null,
+    "variants": [
+      {
+        "id": "stralis-cursor10-f3ae3681y",
+        "engine": "Cursor 10 F3AE3681Y",
+        "catalogue_from": "2011-07",
+        "displacement_cc": 10308,
+        "power_kw": 338
+      },
+      {
+        "id": "stralis-cursor11-f3g-f3h",
+        "engine": "Cursor 11 F3G/F3H",
+        "catalogue_from": "2012-09",
+        "displacement_cc": 11118,
+        "power_kw": 338
+      },
+      {
+        "id": "stralis-xp-f3gfe611e",
+        "family": "Stralis II / Stralis XP",
+        "engine": "Cursor 11 F3GFE611E",
+        "catalogue_from": "2016-06",
+        "displacement_cc": 11118,
+        "power_kw": 338
+      }
+    ]
+  },
+  "records": [
+    {
+      "id": "mann-filter:c33920/5",
+      "manufacturer": "MANN-FILTER",
+      "article": "C 33 920/5",
+      "system": "intake",
+      "kind": "Воздушный фильтр",
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/c33920/5_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": null,
+          "status": "manufacturer_catalogue_row_not_vin"
+        },
+        {
+          "variant": "stralis-cursor11-f3g-f3h",
+          "condition": null,
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:c321420/2",
+      "manufacturer": "MANN-FILTER",
+      "article": "C 32 1420/2",
+      "system": "intake",
+      "kind": "Воздушный фильтр",
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/c321420/2_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": null,
+          "status": "manufacturer_catalogue_row_not_vin"
+        },
+        {
+          "variant": "stralis-cursor11-f3g-f3h",
+          "condition": "Hi-Road или Hi-Street",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:hu11002x",
+      "manufacturer": "MANN-FILTER",
+      "article": "HU 11 002 x",
+      "system": "lubrication",
+      "kind": "Масляный фильтрующий элемент",
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/hu11002x_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": "OE 5801592277; сверить заводской регламент",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:w13004",
+      "manufacturer": "MANN-FILTER",
+      "article": "W 13 004",
+      "system": "lubrication",
+      "kind": "Масляный фильтр",
+      "source": "https://www.mann-filter.com/en/catalog/search-results/product.html/w13004_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": "каталог указывает пластиковый корпус с элементом; сверить исполнение и регламент",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:wk950/19",
+      "manufacturer": "MANN-FILTER",
+      "article": "WK 950/19",
+      "system": "fuel",
+      "kind": "Предварительный топливный фильтр",
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/wk950/19_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": "предфильтр; сверить установленный корпус",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:wk1070x",
+      "manufacturer": "MANN-FILTER",
+      "article": "WK 1070 x",
+      "system": "fuel",
+      "kind": "Топливный водоотделитель",
+      "source": "https://www.mann-filter.com/en/catalog/search-results/product.html/wk1070x_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": "высота 158 мм; водоотделитель",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:hu12008x",
+      "manufacturer": "MANN-FILTER",
+      "article": "HU 12 008 x",
+      "system": "lubrication",
+      "kind": "Масляный фильтр",
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/hu12008x_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor11-f3g-f3h",
+          "condition": null,
+          "status": "manufacturer_catalogue_row_not_vin"
+        },
+        {
+          "variant": "stralis-xp-f3gfe611e",
+          "condition": "до номера двигателя 52024 включительно",
+          "status": "manufacturer_catalogue_row_not_vin",
+          "engine_serial_max": 52024
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:hu12013z",
+      "manufacturer": "MANN-FILTER",
+      "article": "HU 12 013 z",
+      "system": "lubrication",
+      "kind": "Масляный фильтр",
+      "source": "https://www.mann-filter.com/ru-ru/catalog/search-results/product.html/hu12013z_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-xp-f3gfe611e",
+          "condition": "с номера двигателя 52025",
+          "status": "manufacturer_catalogue_row_not_vin",
+          "engine_serial_min": 52025
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:u1002",
+      "manufacturer": "MANN-FILTER",
+      "article": "U 1002",
+      "system": "scr",
+      "kind": "Предфильтр реагента SCR",
+      "source": "https://www.mann-filter.com/en/catalog/search-results/product.html/u1002_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": "только Denoxtronic 1",
+          "status": "manufacturer_catalogue_row_not_vin"
+        },
+        {
+          "variant": "stralis-cursor11-f3g-f3h",
+          "condition": "только Denoxtronic 1",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "mann-filter:u1005",
+      "manufacturer": "MANN-FILTER",
+      "article": "U 1005",
+      "system": "scr",
+      "kind": "Предфильтр реагента SCR",
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/u1005_mann-filter.html",
+      "bindings": [
+        {
+          "variant": "stralis-cursor10-f3ae3681y",
+          "condition": "только Denoxtronic 2",
+          "status": "manufacturer_catalogue_row_not_vin"
+        },
+        {
+          "variant": "stralis-cursor11-f3g-f3h",
+          "condition": "только Denoxtronic 2",
+          "status": "manufacturer_catalogue_row_not_vin"
+        }
+      ],
+      "vin_applicability": "unknown",
+      "technical_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "article": "C 18 016",
+      "source": "https://www.mann-filter.com/en/catalog/search-results/product.html/c18016_mann-filter.html",
+      "reason": "Строка Cursor 10 содержит противоречащую пометку Cursor 11+13. Для Cursor 11 указаны Euro 6, OE 5801856860 и номер двигателя от 16792; требует отдельной проверки конфигурации."
+    },
+    {
+      "article": "LC 21 001",
+      "source": "https://www.mann-filter.com/en/catalog/search-results/product.html/lc21001_mann-filter.html",
+      "reason": "Для Cursor 10 указано обозначение Cursor 9; строка Cursor 11 ограничена Euro 5. Не переносить на все 440S46."
+    }
+  ],
+  "selection_rules": [
+    "Даты — начала применимости строк каталога, не гарантированные годы выпуска машины.",
+    "Номер двигателя не VIN. Для XP F3GFE611E при неизвестном номере двигателя выбор HU 12 008 x / HU 12 013 z = unknown.",
+    "Совпадение марки и модели не подтверждает взаимозаменяемость. Не считать альтернативные масляные фильтры или предфильтры одновременно установленными.",
+    "Не переносить применимость из разделов S-Way, X-Way, NP/CNG на дизельный Stralis.",
+    "Один артикул — один кандидат на каноническую карточку; проверить глобальные дубли перед импортом."
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-intake-variants",
+      "nodes": [
+        "воздухозабор",
+        "корпус воздушного фильтра (вариант)",
+        "компрессор турбонаддува",
+        "охладитель наддува",
+        "впуск двигателя"
+      ],
+      "purpose": "Показать функциональную последовательность, отдельно фильтры C 33 920/5 и C 32 1420/2; не рисовать точное место корпуса без OEM/фото."
+    },
+    {
+      "id": "stralis-lube-xp-serial-break",
+      "nodes": [
+        "масляный поддон",
+        "насос",
+        "фильтрация",
+        "смазываемые узлы двигателя",
+        "возврат масла"
+      ],
+      "purpose": "Сравнить XP до 52024 и от 52025; не рисовать внутренние каналы или клапаны без документации."
+    },
+    {
+      "id": "stralis-fuel-water-separation",
+      "nodes": [
+        "бак дизельного топлива",
+        "предварительная фильтрация/водоотделение",
+        "дальнейшая фильтрация и подача к двигателю"
+      ],
+      "purpose": "Раздельные условные варианты WK 950/19 и WK 1070 x; конкретная последовательность и наличие обоих не доказаны."
+    },
+    {
+      "id": "stralis-scr-denoxtronic-variants",
+      "nodes": [
+        "бак реагента",
+        "предфильтрация",
+        "подающий модуль",
+        "дозирование в выпуск",
+        "SCR-катализатор"
+      ],
+      "purpose": "Показать функциональную роль U 1002 и U 1005 для разных Denoxtronic; не утверждать точную трассу, давление, контакты или расположение."
+    }
+  ],
+  "diagnostic_notes": [
+    "Перед подбором сверить код двигателя, номер двигателя, исполнение корпуса, оригинальный номер детали и систему SCR по заводскому каталогу.",
+    "При несовпадении маркировки не рекомендовать замену автоматически. Для течи или предупреждения давления масла действовать по заводской инструкции и не продолжать работу двигателя при опасном падении давления.",
+    "Не вскрывать находящиеся под давлением контуры; процедуры обслуживания и моменты затяжки не подтверждены в этом пакете."
+  ],
+  "rights": "Только оригинальные формулировки и отдельные каталожные факты со ссылками; изображения и таблицы производителя не скопированы. Проверить права перед публикацией.",
+  "release_gates": [
+    "global article dedup",
+    "canonical vehicle ID",
+    "VIN/installed configuration",
+    "OEM routing and geometry",
+    "visual render",
+    "expert and legal approval",
+    "runtime integration and CI"
+  ],
+  "verified_illustrations_added": 0
+}
