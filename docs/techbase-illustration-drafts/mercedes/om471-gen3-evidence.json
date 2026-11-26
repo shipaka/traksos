@@ -1,0 +1,78 @@
+{
+  "batch": "TECHBASE-MERCEDES-OM471-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "source": {
+    "url": "https://www.daimlertruck.com/en/newsroom/pressrelease/full-power-even-more-efficiency-in-2022-mercedes-benz-trucks-will-be-launching-the-third-generation-of-its-om-471-heavy-duty-commercial-vehicle-engine-on-the-market-51913559",
+    "date": "2022-04-07",
+    "accessed": "2026-11-26",
+    "sections": [
+      "Greater fuel efficiency",
+      "Reduced friction losses",
+      "High driving dynamics"
+    ],
+    "scope": "Third-generation OM 471, launch October 2022, Actros/Arocs. OEM release text verified; no service drawing or parts catalogue."
+  },
+  "assets": [
+    {
+      "filename": "om471-turbo-variants.svg",
+      "tier": "professional_educational",
+      "kind": "original_editable_functional_svg",
+      "publication": "hold",
+      "verifiedFacts": [
+        "Two turbo application variants: economy up to 350 kW and power/braking up to 390 kW; construction variants can overlap."
+      ],
+      "limits": [
+        "No VIN-level fitment",
+        "Not dimensional or physical installation drawing",
+        "No actual operating procedure",
+        "Rendering and expert review pending"
+      ]
+    },
+    {
+      "filename": "om471-combustion.svg",
+      "tier": "professional_educational",
+      "kind": "original_editable_functional_svg",
+      "publication": "hold",
+      "verifiedFacts": [
+        "Compression ratio 18.3:1 to 20.3:1; changes to piston bowl, injection nozzle, cylinder-head gas exchange."
+      ],
+      "limits": [
+        "No VIN-level fitment",
+        "Not dimensional or physical installation drawing",
+        "No actual operating procedure",
+        "Rendering and expert review pending"
+      ]
+    },
+    {
+      "filename": "om471-oil-control.svg",
+      "tier": "professional_educational",
+      "kind": "original_editable_functional_svg",
+      "publication": "hold",
+      "verifiedFacts": [
+        "Oil pressure valve downstream of pump and upstream of thermostat, electrically actuated map control."
+      ],
+      "limits": [
+        "No VIN-level fitment",
+        "Not dimensional or physical installation drawing",
+        "No actual operating procedure",
+        "Rendering and expert review pending"
+      ]
+    },
+    {
+      "filename": "om471-powershift-advanced.svg",
+      "tier": "professional_educational",
+      "kind": "original_editable_functional_svg",
+      "publication": "hold",
+      "verifiedFacts": [
+        "PowerShift Advanced automated control; G281 Top Torque on 330/350 kW in gears 7–12, A Standard, +200 Nm."
+      ],
+      "limits": [
+        "No VIN-level fitment",
+        "Not dimensional or physical installation drawing",
+        "No actual operating procedure",
+        "Rendering and expert review pending"
+      ]
+    }
+  ],
+  "rights": "Original SVG artwork; no manufacturer artwork copied. Static watermark is not runtime access control."
+}
