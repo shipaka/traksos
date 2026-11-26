@@ -1,0 +1,35 @@
+{
+  "id": "saf-airbag-3229004100",
+  "manufacturer": "SAF",
+  "article": "3 229 0041 00",
+  "type": "2924V",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-airbag-3229004100.svg",
+  "source": {
+    "url": "https://literature1.safholland.com/sites/damedit/literature/XL-SA10033WI_en-DE.pdf",
+    "reference": "Important Info 33, 04.08.2004, p2",
+    "textChecked": true,
+    "visualChecked": false,
+    "screenshotError": "internal error"
+  },
+  "spec": {
+    "diameterMm": 350,
+    "suspensionTravelMm": 200,
+    "piston": "composite",
+    "separateLowerPlate": false
+  },
+  "parts": [
+    {
+      "article": "3 229 0028 00",
+      "nameRu": "Предыдущее исполнение SAF 2923VK, заменено согласно бюллетеню"
+    }
+  ],
+  "description": "Композитный монопоршень со встроенной резьбой; отдельная нижняя монтажная пластина исключена.",
+  "fitment": "SAF INTRA range per bulletin; exact axle variant unknown",
+  "geometryEvidence": "Bulletin lists diameter 350 mm and unchanged total suspension travel 200 mm; no exact mounting geometry inferred",
+  "limitations": [
+    "Not an exact OEM drawing or mounting procedure",
+    "VIN, axle serial, exact mounting, line routing and actual ECU applicability unknown",
+    "No render QA or expert approval"
+  ]
+}
