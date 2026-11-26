@@ -34,7 +34,16 @@ object HaldexEb4DiagReference {
     private val byLabel=rows.associateBy { it.label }
     init { require(byCode.size==rows.size && byLabel.size==rows.size) }
     private const val GUIDE="https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006300056_en.pdf"
+    // Extended DTC screenshot, p.26: exact visible names, no numeric identifiers.
+    // The guide covers EBS and ABS 4.0; manual reference only, no ECU-specific raw mapping.
+    private fun electrical(component:String)=DisplayLookup(component,
+        "Электрическая неисправность цепи клапана. Точный вид повреждения не указан; требуется профессиональная проверка тормозной системы.",GUIDE+"#page=26",true)
     private val named=mapOf(
+        "BRK apply master electric failure" to electrical("Клапан подачи тормозного давления основного модулятора"),
+        "EPRV 21 master hold electric failure" to electrical("Клапан удержания давления EPRV 21 основного модулятора"),
+        "EPRV 21 master dump electric failure" to electrical("Клапан сброса давления EPRV 21 основного модулятора"),
+        "EPRV 22 master hold electric failure" to electrical("Клапан удержания давления EPRV 22 основного модулятора"),
+        "EPRV 22 master dump electric failure" to electrical("Клапан сброса давления EPRV 22 основного модулятора"),
         "AUX 4 OC" to DisplayLookup("Цепь AUX4 · контроль износа накладок",
             "Обрыв цепи. Если AUX4 настроен для контроля износа, сообщение может означать износ тормозных накладок. Проверить фактический износ и цепь датчика; не считать один код доказательством износа.",GUIDE+"#page=59",true),
         "AUX 4 SC" to DisplayLookup("Цепь AUX4 · контроль износа накладок",
