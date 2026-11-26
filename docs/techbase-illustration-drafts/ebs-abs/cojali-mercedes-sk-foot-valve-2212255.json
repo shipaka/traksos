@@ -1,0 +1,38 @@
+{
+  "id": "cojali-mercedes-sk-foot-valve-2212255",
+  "make": "Mercedes-Benz",
+  "models": [
+    "SK 1831 AK",
+    "SK 1834 / L / S / LS",
+    "SK 1838 / L / S / LS / K / AK",
+    "SK 1844 / L",
+    "SK 1850 / L / S / LS",
+    "SK 1853 / L / S / LS / AK"
+  ],
+  "otherBindings": [],
+  "system": "EBS/ABS",
+  "source": "https://www.cojaliparts.com/en/reference/4613152580/foot-brake-valve/2212255/",
+  "sourceCheckedOn": "2026-11-26",
+  "status": "source_checked_expert_pending",
+  "rights": "original_illustration",
+  "fitment": "catalogue_application_vin_unverified",
+  "hotspots": [
+    {
+      "id": "h-2212255",
+      "catalogueBrand": "COJALI",
+      "article": "2212255",
+      "source": "https://www.cojaliparts.com/en/reference/4613152580/foot-brake-valve/2212255/",
+      "revision": null,
+      "shopProductId": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4613152580",
+          "relationship": "catalogue_cross_reference"
+        }
+      ]
+    }
+  ],
+  "scope": "Педаль и корпус показаны условно; не схема портов. No exact VIN, pinout, mounting or interchangeability confirmed."
+}
