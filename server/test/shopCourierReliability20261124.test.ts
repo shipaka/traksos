@@ -141,8 +141,14 @@ test('courier: revoked driver of the same fleet cannot reveal code or confirm a 
    {},driver.token)).status,404);
   assert.equal((await t.api('GET',`/api/shop/orders/${order.id}/receipt-code`,
    undefined,owner.token)).status,404,'owner is not the individual who receives this code');
-  ok(await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
-   {code:codeBefore},courier.token));
+  const beforeVerify=await t.db.one('select status,code_attempts from shop_courier_deliveries where id=$1',[assigned.id]);
+  assert.equal(beforeVerify?.status,'arrived');
+  const denied=await t.api('POST',`/api/courier/jobs/${assigned.id}/verify`,
+   {code:codeBefore},courier.token);
+  assert.equal(denied.status,409);
+  assert.equal(denied.body.error,'receipt_buyer_unavailable');
+  assert.deepEqual(await t.db.one('select status,code_attempts from shop_courier_deliveries where id=$1',[assigned.id]),beforeVerify,
+   'revocation must not consume an attempt or verify a stale receipt');
   assert.equal((await t.db.one<{n:number}>(
    "select count(*)::int as n from notifications where user_id=$1 and kind='shop'",
    [driver.id]))?.n,oldCount,
@@ -153,7 +159,7 @@ test('courier: revoked driver of the same fleet cannot reveal code or confirm a 
    'select status from shop_orders where id=$1',[order.id]))?.status,'shipped',
    'revoked driver cannot close or pay an old fleet shipment');
   assert.equal((await t.db.one<{status:string}>(
-   'select status from shop_courier_deliveries where id=$1',[assigned.id]))?.status,'code_verified');
+   'select status from shop_courier_deliveries where id=$1',[assigned.id]))?.status,'arrived');
  }finally{await t.close();}
 });
 
