@@ -1,0 +1,14 @@
+# Engineering ledger — provisional, not assembly instructions
+## Evidence to review before implementation
+* ISO 11992-1 and -4 (applicable edition), ISO 7638-1, ISO 12098, ISO 14229: obtain legitimate documentation and record edition and clause. Standards do not prove ECU-specific service availability.
+* Espressif DevKitC and ESP-IDF TWAI: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/user_guide.html
+* Atmel B10011S: https://www.canlab.cz/sites/default/files/pages/download/Atmel/B10011S.pdf — legacy candidate, not final BOM; verify complete reference circuit, logic levels, availability, mode and bus electrical compatibility. Generic high-speed CAN transceivers not assumed suitable.
+* WABCO SmartBoard, Knorr ECUtalk, VIE technical documentation: gather manufacturer tables, record exact model/version/page and permissions; do not assume display codes are raw DTC bytes. Unknown codes shown raw and unclassified.
+* UDS libraries https://github.com/pylessard/python-udsoncan and https://github.com/pylessard/python-can-isotp — reference only, verify transport/addressing applicable to actual ISO 11992 profile, not assumed interchangeable.
+* Infineon BTT6030 family, TI TPS4811-Q1: candidate only; compare common resettable current limit + relays against per-channel smart switches. Bench-test cold lamp inrush, short circuits, fault discrimination, heating, reverse feed and simultaneous load.
+## Hardware interface candidates
+ISO 12098 light pins in Channel enum; return pin 4. ISO 7638 separate valve and ECU power circuits (1/2 supply; 3/4 returns), pin 5 warning signal, 6/7 CAN. Validate connector variant and actual wiring before energizing. GPIO22 TX / GPIO21 RX reserved for TWAI. No pin assignment is final until circuit reviewed.
+## Proposed BLE contract (not implemented)
+Versioned service; paired and authenticated session; capabilities, state request, set light pattern, all off, reset protection (no energization), read ECU and DTCs through verified allowlisted profile only. No unrestricted raw CAN transmit from phone. Correlation IDs, bounded payloads, duplicate rejection and state acknowledgment; loss of authenticated session stops outputs via independent watchdog and adapter timeout. Define safe state for EBS test fixture before firmware. Diagnostic log export redacts identifiers where appropriate. Raw receive log on bench may be captured separately. No automatic fault re-energization.
+## Gates
+1. Demo state and unit tests. 2. BLE simulator and contract tests. 3. Adapter hardware review and fault-injection bench tests. 4. Passive CAN receive; confirm verified profile and authorized read-only requests on separate bench. 5. Validate response mapping using known faults and reference diagnostics if needed. 6. Clear inactive DTC only after documented support and independent post-repair validation. 7. Release after electrical, thermal, EMC and safety review.
