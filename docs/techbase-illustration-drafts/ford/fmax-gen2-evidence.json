@@ -1,0 +1,44 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "manufacturer": "Ford Trucks",
+  "models": [
+    "F-MAX",
+    "F-MAX L",
+    "F-MAX LL"
+  ],
+  "scope": "Technical Features, February 2025, 4x2 listed configurations",
+  "source": {
+    "url": "https://media.fordtrucks.com.tr/Uploads/teknikfoyler80525/en/f-maxseries-en.pdf",
+    "edition": "February 2025",
+    "pdf_pages": [
+      2,
+      3
+    ],
+    "visual_screenshot_checked": true
+  },
+  "assets": [
+    {
+      "name": "fmax-gen2-driveline.svg",
+      "kind": "original functional SVG",
+      "review": "pending"
+    },
+    {
+      "name": "fmax-gen2-suspension.svg",
+      "kind": "original functional SVG",
+      "review": "pending"
+    },
+    {
+      "name": "fmax-gen2-braking.svg",
+      "kind": "original functional SVG",
+      "review": "pending"
+    }
+  ],
+  "limitations": [
+    "Not VIN-specific; actual optional equipment and market configuration must be verified.",
+    "No OEM component geometry, routing, electrical pinouts or service instructions.",
+    "Suspension symbols represent counts, not physical mounting locations.",
+    "Braking diagram groups functions; arrows are not pneumatic or electrical lines.",
+    "Retarder is optional in source table. Do not sum braking ratings as a certified combined rating.",
+    "Independent technical and rendered-visual review pending."
+  ]
+}
