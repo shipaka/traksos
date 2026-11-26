@@ -1,0 +1,96 @@
+{
+  "status": "DRAFT_EXPERT_PENDING",
+  "date": "2026-11-26",
+  "sourceType": "official product HTML, textual characteristics inspected; OEM photos not inspected",
+  "illustrations": [
+    {
+      "file": "lm20-cylinder-functions.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-LM.20",
+      "title": "Две пары гидроцилиндров",
+      "source": "https://www.dhollandia.com/GB/en/8/category/33/product/40",
+      "claim": "Два цилиндра подъёма и два цилиндра наклона платформы.",
+      "sourceSections": "53–55",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "lm20-electric-hydraulic.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-LM.20",
+      "title": "Электрогидравлический привод",
+      "source": "https://www.dhollandia.com/GB/en/8/category/33/product/40",
+      "claim": "Насосный агрегат постоянного тока 12 или 24 В. Напряжение выбирают по исполнению.",
+      "sourceSections": "53–67",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "lm20-cylinder-valves.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-LM.20",
+      "title": "Защитные клапаны цилиндров",
+      "source": "https://www.dhollandia.com/GB/en/8/category/33/product/40",
+      "claim": "На всех четырёх цилиндрах предусмотрены электрические защитные клапаны. Их условное обозначение не показывает реальное место монтажа.",
+      "sourceSections": "53–59",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "lm08-arm-variants.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-LM.08",
+      "title": "Широкие и узкие рычаги",
+      "source": "https://www.dhollandia.com/US/en-us/175/DH-LM-08-:-40-kg-oszcz-dno-ci-masy-dla-lekkich-pojazd-o-DMC-do-3-5-T",
+      "claim": "В зависимости от шасси рычаги располагаются с внешней либо внутренней стороны лонжеронов.",
+      "sourceSections": "3–10",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "sms-slider-motion.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-SMS",
+      "title": "Выдвижной механизм",
+      "source": "https://www.dhollandia.com/US/en/8/category/231/product/401",
+      "claim": "Гидромотор обеспечивает выдвижение и втягивание сдвижного механизма.",
+      "sourceSections": "9–14, 28–36",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "sms-fold-platform.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-SMS",
+      "title": "Платформа с одним сгибом",
+      "source": "https://www.dhollandia.com/US/en/8/category/231/product/401",
+      "claim": "Четырёхцилиндровый сдвижной подъёмник имеет складываемую платформу с одним сочленением.",
+      "sourceSections": "9–14, 24–36",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "vodh-column-support.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-VODH",
+      "title": "Колонны и цепная поддержка платформы",
+      "source": "https://www.dhollandia.com/US/en/8/category/403/product/408",
+      "claim": "Усиленные стальные колонны; платформа поддерживается цепями, автоматически складывается. Крепление к кузову.",
+      "sourceSections": "9–14, 26–33",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    },
+    {
+      "file": "lmh-level-ride.svg",
+      "manufacturer": "Dhollandia",
+      "model": "DH-LMH",
+      "title": "Горизонтальное перемещение платформы",
+      "source": "https://www.dhollandia.com/US/en/8/category/233/product/398",
+      "claim": "Два цилиндра подъёма; горизонтальное перемещение платформы с автоматическим наклоном у земли.",
+      "sourceSections": "24–36",
+      "applicability": "model family as stated on product page; exact chassis and serial number unknown",
+      "limits": "Functional only. No exact mounting, dimensions, hydraulic circuit, override, service instructions. Independent technical and rendered visual verification pending."
+    }
+  ],
+  "accepted": false
+}
