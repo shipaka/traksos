@@ -1,0 +1,175 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-wheel-end-brake-variants",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "checked_on": "2026-11-26",
+  "scope": {
+    "make": "Scania",
+    "family": "R",
+    "vin": null
+  },
+  "cards": [
+    {
+      "manufacturer": "Fersa",
+      "article": "F 400016",
+      "name": "Предварительно собранный ступичный подшипниковый узел",
+      "axle": "front",
+      "brake": "disc",
+      "scania_crossrefs": [
+        "1864430",
+        "2290532"
+      ],
+      "application": "P,G,R,T",
+      "source": "https://www.fersa.com/en/news/the-preset-hub-assemblies-family-grows-for-scania-and-volvo-applications/",
+      "vin": null,
+      "fitment": "catalogue_family_or_model_only",
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "Fersa",
+      "article": "F 400015",
+      "name": "Предварительно собранный ступичный подшипниковый узел",
+      "axle": "front",
+      "brake": "drum",
+      "scania_crossrefs": [
+        "2085471",
+        "2290532"
+      ],
+      "application": "P,G,R,T",
+      "source": "https://www.fersa.com/en/news/the-preset-hub-assemblies-family-grows-for-scania-and-volvo-applications/",
+      "vin": null,
+      "fitment": "catalogue_family_or_model_only",
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "Cojali",
+      "article": "2251402",
+      "name": "Энергоаккумулятор 24/24 для кулачкового тормозного механизма",
+      "wabco_reference": "9254310110",
+      "brake": "cam/drum",
+      "application": "R500 R I; R730 R I",
+      "axle": null,
+      "source": "https://www.cojaliparts.com/en/reference/9254310110/spring-brake-cam-brake-2424/2251402/",
+      "vin": null,
+      "fitment": "catalogue_family_or_model_only",
+      "exact_mount": null
+    }
+  ],
+  "held": [
+    {
+      "trp_catalogue_reference": "1962327",
+      "brand": "TRP",
+      "name": "Тормозной диск",
+      "oe": "1882817",
+      "application": "4/G/P/R",
+      "axle": "front and rear",
+      "source": "https://dafpdf.nl/DAF_TRP_FastmoverCatalogue_SO_EN/files/assets/common/downloads/DAF%20TRP%20FastmoverCatalogue%20EN.pdf",
+      "source_section": "Scania R series D12/D13 — Braking, printed p19",
+      "verification": "parsed text only; screenshot size limit",
+      "status": "hold_visual_verification",
+      "vin": null
+    },
+    {
+      "trp_catalogue_reference": "1540214",
+      "brand": "FAG",
+      "name": "Комплект подшипника; номер в каталоге TRP",
+      "oe": "1868087",
+      "application": "4/G/P/R",
+      "axle": "front",
+      "source": "https://dafpdf.nl/DAF_TRP_FastmoverCatalogue_SO_EN/files/assets/common/downloads/DAF%20TRP%20FastmoverCatalogue%20EN.pdf",
+      "source_section": "Scania R series D12/D13 — Braking, printed p19",
+      "verification": "parsed text only; screenshot size limit",
+      "status": "hold_visual_verification",
+      "vin": null
+    },
+    {
+      "trp_catalogue_reference": "1540192",
+      "brand": "TRP",
+      "name": "Комплект колодок SN7",
+      "oe": "1890861",
+      "application": "G/P/R through 12/2016",
+      "axle": "unknown",
+      "source": "https://dafpdf.nl/DAF_TRP_FastmoverCatalogue_SO_EN/files/assets/common/downloads/DAF%20TRP%20FastmoverCatalogue%20EN.pdf",
+      "source_section": "Scania R series D12/D13 — Braking, printed p19",
+      "verification": "parsed text only; screenshot size limit",
+      "status": "hold_visual_verification",
+      "vin": null
+    },
+    {
+      "trp_catalogue_reference": "1541516",
+      "brand": "TRP",
+      "name": "Комплект колодок SN7 HP",
+      "oe": "2325212",
+      "application": "G/P/R after 01/2017",
+      "axle": "unknown",
+      "source": "https://dafpdf.nl/DAF_TRP_FastmoverCatalogue_SO_EN/files/assets/common/downloads/DAF%20TRP%20FastmoverCatalogue%20EN.pdf",
+      "source_section": "Scania R series D12/D13 — Braking, printed p19",
+      "verification": "parsed text only; screenshot size limit",
+      "status": "hold_visual_verification",
+      "vin": null
+    },
+    {
+      "manufacturer": "Ferodo",
+      "article": "FCR170A",
+      "name": "Тормозной диск",
+      "application": "G,P,R,T 2004+, catalogue front and rear rows",
+      "source": "https://www.drivparts.com/content/dam/marketing/emea/fmmp/ecat/CATFE1502.pdf",
+      "source_page": 140,
+      "reason": "PDF screenshot returned 403; parsed table potentially misaligned; no dimensions asserted",
+      "status": "hold_visual_verification"
+    },
+    {
+      "trp_catalogue_reference": "2169198",
+      "name": "Комплект направляющих и уплотнений суппорта",
+      "crossrefs": [
+        "K001915",
+        "K028451"
+      ],
+      "application": "Knorr SB/SN6&7&SK/SL/SM7",
+      "source": "https://dafpdf.nl/DAF_TRP_FastmoverCatalogue_SO_EN/files/assets/common/downloads/DAF%20TRP%20FastmoverCatalogue%20EN.pdf",
+      "status": "hold_caliper_code_and_visual_verification"
+    },
+    {
+      "trp_catalogue_reference": "2169199",
+      "name": "Комплект толкателей суппорта",
+      "crossrefs": [
+        "K001300",
+        "K010603",
+        "K000366"
+      ],
+      "application": "Knorr SN6/SN7/SK7",
+      "source": "https://dafpdf.nl/DAF_TRP_FastmoverCatalogue_SO_EN/files/assets/common/downloads/DAF%20TRP%20FastmoverCatalogue%20EN.pdf",
+      "status": "hold_caliper_code_and_visual_verification"
+    }
+  ],
+  "selection_rules": [
+    "Одинаковый кросс-номер 2290532 встречается у двух Fersa вариантов; не означает взаимозаменяемость, уточнить тип тормозов и точный код оси.",
+    "Не присваивать энергоаккумулятор для кулачкового тормоза дисковому суппорту.",
+    "Номер TRP не выдавать за артикул производителя FAG.",
+    "Колодки SN7 и SN7 HP разделять по типу суппорта и OE; даты каталога не универсальны.",
+    "Не повторять существующую карточку датчика износа; связать с ней только после проверки варианта."
+  ],
+  "visual_briefs": [
+    {
+      "id": "scania-front-wheel-end-disc-drum",
+      "scope": "Реалистичное раздельное изображение двух типов ступичного узла по Fersa; уточнить форму и состав по разрешённым техническим чертежам."
+    },
+    {
+      "id": "scania-cam-brake-actuator",
+      "scope": "Показать энергоаккумулятор 24/24 и кулачковый тормозный механизм, не подменять дисковым суппортом; точные крепления не подтверждены."
+    }
+  ],
+  "safety": "Не использовать данные для затяжки ступицы, регулировки или ремонта энергоаккумулятора. Тормоза и пружинные камеры требуют квалифицированного обслуживания и заводской инструкции.",
+  "gates": {
+    "manufacturer_html": "checked",
+    "trp_pdf_screenshot": "failed_size_limit",
+    "ferodo_pdf_screenshot": "failed_403",
+    "vin": "unknown",
+    "geometry": "unknown",
+    "expert_review": "pending",
+    "visual_assets": "not created",
+    "runtime_import": "not performed"
+  }
+}
