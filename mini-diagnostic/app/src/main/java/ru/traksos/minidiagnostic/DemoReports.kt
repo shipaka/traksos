@@ -15,8 +15,17 @@ object DemoReports {
     private val examples=mapOf(
         "zf-tebs-e" to listOf(Example(DisplayReferenceEdition.WABCO_E_OEM_EXACT,"002/05"),
             Example(DisplayReferenceEdition.WABCO_E_HUMBAUR,"251/05")),
-        "kb-g22" to listOf(Example(DisplayReferenceEdition.KNORR_G2_EXAMPLE,"001200"),
-            Example(DisplayReferenceEdition.KNORR_G2_EXAMPLE,"000D00")),
+        // G2 examples do not establish exact G2.2 software compatibility.
+        "kb-tebs4" to listOf(Example(DisplayReferenceEdition.KNORR_TEBS4,"25"),Example(DisplayReferenceEdition.KNORR_TEBS4,"35"),
+            Example(DisplayReferenceEdition.KNORR_TEBS4,"24")),
+        "haldex-eb1" to listOf(Example(DisplayReferenceEdition.HALDEX_GEN1_2005,"S1A CONT"),
+            Example(DisplayReferenceEdition.HALDEX_GEN1_2005,"S2B SIGNAL"),Example(DisplayReferenceEdition.HALDEX_GEN1_2005,"EPRV 21 HOLD OC")),
+        "haldex-uabs" to listOf(Example(DisplayReferenceEdition.HALDEX_UABS_INFO2,"Wheel sensor 1A or 1B continuity"),
+            Example(DisplayReferenceEdition.HALDEX_UABS_INFO2,"EPRV 21 or 22 hold solenoid open circuit"),
+            Example(DisplayReferenceEdition.HALDEX_UABS_INFO2,"Wheel sensor 2A or 2B signal integrity")),
+        "sorl-trailer-abs" to listOf(Example(DisplayReferenceEdition.SORL_ABS_TESTER_36302900020,"3.1 Нет Д №1"),
+            Example(DisplayReferenceEdition.SORL_ABS_TESTER_36302900020,"4.2 Зазор Д №2"),
+            Example(DisplayReferenceEdition.SORL_ABS_TESTER_36302900020,"2.1 КЗ КМ")),
         "haldex-eb4" to listOf(Example(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE,"0x01"),
             Example(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE,"0x0C"),
             Example(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE,"EPRV 21 master hold electric failure")),
@@ -26,6 +35,7 @@ object DemoReports {
         "vie-tebs" to listOf(Example(DisplayReferenceEdition.VIE_101,"5/5"),Example(DisplayReferenceEdition.VIE_101,"62/5"),
             Example(DisplayReferenceEdition.VIE_101,"254/12"),Example(DisplayReferenceEdition.VIE_101,"6/1"))
     )
+    private val autoTargets=listOf("zf-tebs-e","zf-iebs","kb-g22","kb-itebs-x","haldex-eb3","haldex-eb4","vie-tebs","sorl-trailer-abs")
     private val sampleParts=mapOf("zf-tebs-e" to "4801020300","kb-g22" to "K055369","vie-tebs" to "4801020630")
     private val synthetic=listOf(
         DemoReportFault("DEMO-ABS-01","Колёсный датчик ABS","Обрыв цепи: проверить датчик, жгут и разъём.",true,false),
@@ -35,9 +45,9 @@ object DemoReports {
     )
     fun make(id:String,dateMs:Long,targetId:String?,electrical:ElectricalPreview,random:Random=Random.Default):DemoReport {
         require(electrical.canRunDemo)
-        val target=CoverageRoadmap.byId(targetId ?: examples.keys.toList().random(random))
+        val target=CoverageRoadmap.byId(targetId ?: autoTargets.random(random))
             ?: error("Unknown demo model")
-        val candidates=examples[target.id].orEmpty().mapNotNull { e ->
+        val candidates=examples[target.id].orEmpty().filter { it.edition in ReferenceSelection.forTarget(target.id) }.mapNotNull { e ->
             val d=DisplayReferenceLookup.find(e.edition,e.code)
             if(d?.exactPair!=true || d.component==null || d.condition==null) null
             else DemoReportFault(e.code,d.component,d.condition,false,true)
@@ -45,7 +55,7 @@ object DemoReports {
         val faults=candidates.shuffled(random).take(random.nextInt(minOf(2,candidates.size),minOf(3,candidates.size)+1))
             .mapIndexed { i,f -> f.copy(active=i==0 || random.nextBoolean()) }
         return DemoReport(id,dateMs,target.id,target.maker,target.model,sampleParts[target.id],
-            "DEMO-"+id.take(8),targetId==null,electrical.canErrors,electrical.supplyMv,electrical.minimumMv,faults)
+            "DEMO-"+target.id.uppercase(java.util.Locale.ROOT),targetId==null,electrical.canErrors,electrical.supplyMv,electrical.minimumMv,faults)
     }
 }
 
