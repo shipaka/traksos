@@ -1,0 +1,130 @@
+{
+  "id": "wabco-tebs-e-premium-4801020630",
+  "status": "source_verified_visual_draft_pending_expert",
+  "source": {
+    "publisher": "ZF/WABCO",
+    "url": "https://www.wabco-customercentre.com/catalog/en/4801020630",
+    "checked": "2026-11-26",
+    "outlineDocumentId": "4801020630____005_dascheck_j4_page-1---notset",
+    "technicalManualId": "81500933",
+    "outlineVisuallyVerified": false
+  },
+  "component": {
+    "manufacturer": "WABCO",
+    "article": "4801020630",
+    "nameRu": "Модулятор электронного управления тормозами прицепа",
+    "system": "Trailer EBS E",
+    "type": "Premium",
+    "configuration": "4S/3M",
+    "version": "TEBS E with PEM",
+    "voltageV": 24,
+    "dimensionsMm": [
+      224,
+      259,
+      198
+    ],
+    "massKg": 6.28,
+    "protection": "IP 6K9K",
+    "temperatureC": [
+      -40,
+      65
+    ]
+  },
+  "catalogueCrossReferences": [
+    {
+      "make": "KRONE",
+      "article": "515024036",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "1042743",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "1115125",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "KÄSSBOHRER",
+      "article": "21150110185",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "TIRSAN",
+      "article": "21150110185",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "VAN HOOL",
+      "article": "11074055",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "SCHWARZMÜLLER",
+      "article": "83603",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "FELDBINDER",
+      "article": "1066116",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "LANGENDORF",
+      "article": "1268388",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "DOLL",
+      "article": "7118837",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "GOLDHOFER",
+      "article": "170974",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "OTOKAR",
+      "article": "AIF2062",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    },
+    {
+      "make": "SCANIA",
+      "article": "1935126",
+      "relationship": "manufacturer_catalogue_replaces",
+      "modelFitment": "unknown"
+    }
+  ],
+  "relatedParts": [
+    {
+      "article": "4615130000",
+      "nameRu": "Модуль расширения пневматики PEM"
+    },
+    {
+      "article": "4801029352",
+      "nameRu": "Комплект ремонтных деталей по каталогу"
+    }
+  ],
+  "limitations": [
+    "Not the 2S/2M configuration previously illustrated",
+    "Exact vehicle model, year, VIN, mounting, physical cable routes and port locations not verified",
+    "No repair procedure or pinout implied",
+    "Generated illustration requires comparison with exact manufacturer drawing and specialist review before publication",
+    "Do not count evidence JSON as an illustration"
+  ]
+}
