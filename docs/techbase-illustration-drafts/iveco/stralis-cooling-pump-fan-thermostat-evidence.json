@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis",
+    "target_model": "440S46",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "id": "vaden:525.05.0003",
+      "manufacturer": "Vaden",
+      "article": "525.05.0003",
+      "name": "Водяной насос",
+      "system": "cooling",
+      "source": "https://www.vadenoriginal.com/en/products/525050003-0105-055-water-pump-cooling-system",
+      "scope": "explicit_catalogue_model_engine",
+      "applications": [
+        {
+          "family": "Stralis I",
+          "model": "AS 440S46",
+          "engine": "Cursor 10 E 46"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP",
+          "engine": "Cursor 10 E 46"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TP",
+          "engine": "Cursor 10 E 46"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AD440S46TP",
+          "engine": "Cursor 10 E 46"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "5801931139"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5801807827"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "500356553"
+        }
+      ],
+      "spec": {},
+      "note": "Выборка целевых строк из каталога, не полный список. Cursor 11 в проверенной выборке не подтверждён. Не распространять на него этот насос.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "vaden:331.05.0007",
+      "manufacturer": "Vaden",
+      "article": "331.05.0007",
+      "name": "Натяжитель ремня вентилятора",
+      "system": "cooling",
+      "source": "https://www.vadenoriginal.com/en/products/331050007-fan-belt-tensioner-cooling-system",
+      "scope": "explicit_catalogue_model_engine",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP",
+          "engine": "Cursor 10 E 46"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP",
+          "engine": "Cursor 11"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TP",
+          "engine": "Cursor 10 E 46"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TP",
+          "engine": "Cursor 11"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "99471920"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "99436331"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504046191"
+        },
+        {
+          "manufacturer": "DAYCO",
+          "article": "APV1048"
+        }
+      ],
+      "spec": {},
+      "note": "Один компонент с несколькими привязками, не две карточки. Точная трасса ремня неизвестна.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:7053421",
+      "manufacturer": "Cojali",
+      "article": "7053421",
+      "name": "Вискомуфта вентилятора с электронным управлением",
+      "system": "cooling",
+      "source": "https://www.cojaliparts.com/en/reference/5801735571/electronically-controlled-fan-clutch/7053421/",
+      "scope": "explicit_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis E6",
+          "engine": null
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "5801735571"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802503583"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5801735570*C"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802467273*C"
+        }
+      ],
+      "spec": {
+        "clutch_model": "T21",
+        "centring_mm": 180,
+        "fan_screw_circle_mm": 200,
+        "fan_holes": 6,
+        "fixing_holes": 6,
+        "fixing_type": "plate",
+        "mass_g": 10700
+      },
+      "note": "Пометки *C сохранены как опубликованы; не трактовать как разрешение замены. Электрическая схема, сигнал управления и тип двигателя неизвестны.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:7057127",
+      "manufacturer": "Cojali",
+      "article": "7057127",
+      "name": "Крыльчатка вентилятора",
+      "system": "cooling",
+      "source": "https://www.cojaliparts.com/en/reference/5801735568/fan-blades/7057127/",
+      "scope": "explicit_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis E6",
+          "engine": null
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "5801735568"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5801617468"
+        }
+      ],
+      "spec": {
+        "diameter_mm": 715,
+        "centring_mm": 180,
+        "fan_screw_circle_mm": 200,
+        "blades": 9,
+        "fan_holes": 6,
+        "mass_g": 5300,
+        "rotation_catalogue": "clockwise",
+        "material": "plastic"
+      },
+      "note": "Направление наблюдения в тексте каталога не определено. Совпадение крепёжных размеров с 7053421 не доказывает утверждённую сборку или совместимость с конкретным радиатором.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "id": "cojali:21100025",
+      "manufacturer": "Cojali",
+      "article": "21100025",
+      "name": "Термостат",
+      "system": "cooling",
+      "source": "https://www.cojaliparts.com/en/reference/504387382/thermostat/21100025/",
+      "scope": "brand_crossreference_only",
+      "applications": [],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "504387382"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504110432"
+        }
+      ],
+      "spec": {
+        "opening_temperature_catalogue": "82°",
+        "mass_g": 360
+      },
+      "note": "Нет модельной строки. Значение из каталога детали не является допустимой температурой работы двигателя.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:21100012",
+      "manufacturer": "Cojali",
+      "article": "21100012",
+      "name": "Термостат",
+      "system": "cooling",
+      "source": "https://www.cojaliparts.com/catalogos/anexo-de-componentes-electronicos-548.pdf",
+      "scope": "brand_crossreference_only_pdf_text",
+      "applications": [],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "504238777"
+        }
+      ],
+      "spec": {},
+      "note": "Страница товара недоступна; артикул подтверждён текстом бюллетеня 02.2026, скриншот PDF не удался. Температура открытия и применимость неизвестны.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "excluded": [
+    {
+      "manufacturer": "Cojali",
+      "article": "7059002",
+      "source": "https://www.cojaliparts.com/en/reference/500379570/fan-clutch-support/7059002/",
+      "reason": "Каталог указывает ASTRA HD9; наличие кроссов IVECO 500379570/500335287 не подтверждает Stralis."
+    }
+  ],
+  "existing_links": [
+    {
+      "id": "cojali:2260408",
+      "path": "stralis-edc-scr-pneumatic-sensors-evidence.json",
+      "note": "Уже записанный датчик температуры ОЖ; не считать новым."
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-coolant-functional-loop",
+      "nodes": [
+        "насос",
+        "рубашка охлаждения двигателя",
+        "термостат",
+        "радиатор",
+        "возврат к насосу"
+      ],
+      "purpose": "Условный большой и малый круг; не утверждать точные шланги, расположение или присутствие конкретного термостата."
+    },
+    {
+      "id": "stralis-fan-t21-airflow",
+      "nodes": [
+        "запрос управления",
+        "электронно управляемая муфта",
+        "крыльчатка",
+        "воздушный поток через теплообменники"
+      ],
+      "purpose": "Две отдельные артикульные точки с подтверждёнными характеристиками; не считать комплектом без OEM каталога. Девять лопастей у 7057127."
+    },
+    {
+      "id": "stralis-belt-drive-variant",
+      "nodes": [
+        "привод двигателя",
+        "ремень",
+        "натяжитель",
+        "ведомые агрегаты"
+      ],
+      "purpose": "Один натяжитель с модельными строками Cursor 10 и 11; не изображать неподтверждённую трассу ремня или натяг."
+    },
+    {
+      "id": "stralis-temperature-diagnosis",
+      "nodes": [
+        "измерение температуры ОЖ",
+        "сигнал ЭБУ",
+        "команда на охлаждение",
+        "фактическое охлаждение"
+      ],
+      "purpose": "Показать концептуальную обратную связь и связать ранее сохранённый датчик; точные пины, управляющие сигналы и DTC отсутствуют."
+    }
+  ],
+  "diagnostic_notes": [
+    "При опасном перегреве остановиться безопасно согласно инструкции производителя. Не открывать горячую систему охлаждения под давлением.",
+    "Проверять уровень на остывшем двигателе, признаки течи и состояние ременного привода по OEM регламенту; шум подшипника или течь через контрольное отверстие насоса — повод для дальнейшей профессиональной диагностики, не автоматический диагноз.",
+    "Перед выбором детали сверить VIN, код двигателя, OE и исполнение установленного узла. Нет подтверждённых объёмов ОЖ, моментов затяжки, температуры включения вентилятора или электрических пинов."
+  ],
+  "rights": "Самостоятельные формулировки и каталожные факты со ссылками. Фото и чертежи производителей не копируются. Будущие авторские изображения — стандарт TrakSOS #278.",
+  "release_gates": [
+    "global canonical dedup",
+    "VIN and installed configuration",
+    "OEM routing and wiring",
+    "legal/technical review",
+    "visual render",
+    "runtime/CI"
+  ],
+  "verified_illustrations_added": 0
+}
