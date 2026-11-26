@@ -12,6 +12,7 @@ object ReferenceInventory {
         ReferenceCount("Vario C examples",WabcoVarioExamples.count),
         ReferenceCount("VCS I",WabcoVcsReference.count),
         ReferenceCount("Haldex Gen3",LegacyDisplayReference.haldexCount),
+        ReferenceCount("Haldex Gen1 2005",HaldexEarlyReference.count),
         ReferenceCount("Haldex Gen2",HaldexExpandedReference.gen2Count),
         ReferenceCount("Haldex U-ABS",AdditionalAbsReference.haldexCount),
         ReferenceCount("Ekran",AdditionalAbsReference.ekranCount),

@@ -32,7 +32,7 @@ fun DisplayReferenceContent() {
             DisplayReferenceEdition.VCS_I_EXPERT -> "Две группы, например 3/5"
             DisplayReferenceEdition.WABCO_COMPACT_TESTER -> "Три символа, например 411"
             DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"
-            DisplayReferenceEdition.HALDEX_GEN2_INFO1, DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
+            DisplayReferenceEdition.HALDEX_GEN1_2005, DisplayReferenceEdition.HALDEX_GEN2_INFO1, DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
             else -> "Например 003/05"
         }
         OutlinedTextField(value=code,onValueChange={ code=it.take(64) },modifier=Modifier.fillMaxWidth(),

@@ -47,6 +47,7 @@ object ModuleSearch {
     fun find(query:String):List<ResearchTarget> {
         if(query.length>120) return emptyList()
         if(query.isBlank()) return CoverageRoadmap.targets
+        if(HaldexEarlyReference.isListedPart(query)) return listOfNotNull(CoverageRoadmap.byId("haldex-eb1"))
         val partMatches=WabcoPartReference.find(query)
         if(partMatches.isNotEmpty()) return partMatches.mapNotNull { CoverageRoadmap.byId(it.targetId) }.distinct()
         val q=normalize(query)

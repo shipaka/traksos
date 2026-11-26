@@ -10,6 +10,7 @@ enum class DisplayReferenceEdition(val title:String) {
     VCS_I_EXPERT("WABCO VCS I · экспертные световые коды"),
     WABCO_COMPACT_TESTER("WABCO Compact Tester II · три символа"),
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
+    HALDEX_GEN1_2005("Haldex EB+ Gen1 · руководство 02.2005"),
     HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
     HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
@@ -59,6 +60,10 @@ object DisplayReferenceLookup {
         if(edition==DisplayReferenceEdition.VCS_II_FLASH) {
             val r=LegacyDisplayReference.vcsFlash(s) ?: return null
             return DisplayLookup(r,"Текущая неисправность: тип не определяется по числу вспышек",LegacyDisplayReference.VCS_SOURCE,false)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_GEN1_2005) {
+            val r=HaldexEarlyReference.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,HaldexEarlyReference.SOURCE,true)
         }
         if(edition==DisplayReferenceEdition.HALDEX_GEN2_INFO1) {
             val r=HaldexExpandedReference.gen2(s) ?: return null

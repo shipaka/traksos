@@ -34,6 +34,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
             }
             if(query.isNotBlank() || manufacturer!=null) {
                 Text("Найдено: ${visible.size}",fontSize=12.sp)
+                if(HaldexEarlyReference.isListedPart(query)) Text("Номер из каталога Gen1: проверьте, установлен ли именно этот блок.",fontSize=11.sp)
                 if(WabcoPartReference.find(query).isNotEmpty()) Text("Совпадение с опубликованным диапазоном номеров. Точная модель и протокол не подтверждены.",fontSize=11.sp)
                 visible.forEach { row ->
                     OutlinedButton(onClick={ onSelect(row.id) },modifier=Modifier.fillMaxWidth()) {
