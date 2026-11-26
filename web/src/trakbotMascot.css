@@ -192,3 +192,20 @@ html.traksos-reduced-motion .trakbot-message--new .trakbot-mascot {animation:non
   -webkit-mask-image:radial-gradient(ellipse at 50% 51%,#000 0 58%,rgba(0,0,0,.96) 65%,transparent 82%);
   mask-image:radial-gradient(ellipse at 50% 51%,#000 0 58%,rgba(0,0,0,.96) 65%,transparent 82%);
 }
+
+/* A floating launcher must not bob outside its circular hit area. Keep its
+   original artwork and button dimensions; move only the image within them. */
+.trakbot-dock .trakbot-dock-launcher .trakbot-mascot-truck {
+  transform-origin:50% 50%;
+  transform:scale(.88);
+}
+@keyframes trakbot-launcher-contained-bob {
+  0%,100% { transform:translateY(0) scale(.88); }
+  50% { transform:translateY(-2px) scale(.88); }
+}
+@media (prefers-reduced-motion:no-preference) {
+  html:not(.traksos-reduced-motion) .trakbot-dock .trakbot-dock-launcher .trakbot-mascot.is-ambient:not(.is-active) .trakbot-mascot-truck {
+    animation:trakbot-launcher-contained-bob 4.8s ease-in-out infinite;
+    transform-origin:50% 50%;
+  }
+}

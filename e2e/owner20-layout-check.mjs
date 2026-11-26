@@ -7,8 +7,8 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname)) throw Error('Loc
 await mkdir('e2e/shots/owner20-pc',{recursive:true});
 const browser=await chromium.launch();
 try {
- for(const width of [900,1024,1280,1440,1536,1672]){
-  const ctx=await browser.newContext({viewport:{width,height:width===1536?864:900},locale:'ru-RU'});
+ for(const width of [900,1024,1280,1440,1536,1672,1920]){
+  const ctx=await browser.newContext({viewport:{width,height:width===1920?1080:width===1536?864:900},locale:'ru-RU'});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
@@ -168,7 +168,13 @@ try {
      const copyStoreCollision=!!(copyRect&&storeRect&&
        copyRect.left<storeRect.right&&copyRect.right>storeRect.left&&
        copyRect.top<storeRect.bottom&&copyRect.bottom>storeRect.top);
+     const screen=phone.querySelector('.traksos-app-phone-screen');
+     const screenRect=screen?.getBoundingClientRect();
+     const iconRect=img.getBoundingClientRect(),markRect=mark.getBoundingClientRect();
+     const withinScreen=r=>!!screenRect&&r.left>=screenRect.left-1&&r.right<=screenRect.right+1&&r.top>=screenRect.top-1&&r.bottom<=screenRect.bottom+1;
      return {textCollision,headingLines,copyStoreCollision,
+       portrait:p.height>=p.width*1.45, screenFits:withinScreen(iconRect)&&withinScreen(markRect),
+       noTinyCaption:!phone.querySelector('.traksos-app-phone-caption'),
        phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
        assetLoaded:img.naturalWidth>30,branded:mark.getAttribute('src')==='/traksos-brand-logo-approved-618.png' &&
          mark.naturalWidth>0 && mark.clientWidth>0 && mark.clientHeight>0,
@@ -180,6 +186,7 @@ try {
    });
    if(phoneBot.missing||phoneBot.phoneCount!==1||!phoneBot.assetLoaded||!phoneBot.branded||
       !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps||phoneBot.textCollision||
+      !phoneBot.portrait||!phoneBot.screenFits||!phoneBot.noTinyCaption||(width===1920&&phoneBot.phone[3]<140)||
       (width>=1200&&(phoneBot.headingLines>2||phoneBot.copyStoreCollision)))
      throw Error(width+': app-card copy clipped, broken or overlapping branded phone/RuStore/TrakBot: '+JSON.stringify(phoneBot));
    if(width===1536){
@@ -379,8 +386,24 @@ try {
       return mascot.left>=tile.getBoundingClientRect().left && mascot.right<=title.getBoundingClientRect().left;
     });
     if(!mascotFits)throw Error(width+'px: fifth tile clips TrakBot or overlaps its label');
+    const launcher=page.locator('.trakbot-dock-launcher');
+    const launcherArt=()=>launcher.evaluate(button=>{
+      const mascot=button.querySelector('.trakbot-mascot');
+      const art=mascot.querySelector('.trakbot-mascot-original');
+      const style=getComputedStyle(art);
+      const b=mascot.getBoundingClientRect(), a=art.getBoundingClientRect();
+      return {reaction:mascot.dataset.reaction, image:style.backgroundImage,
+        size:style.backgroundSize, animation:style.animationName,
+        contained:a.left>=b.left-.5&&a.right<=b.right+.5&&a.top>=b.top-.5&&a.bottom<=b.bottom+.5};
+    });
+    const beforeArt=await launcherArt();
+    if(beforeArt.reaction!=='hello'||!beforeArt.image.includes('trakbot-approved-hello.webp')||!beforeArt.contained)
+      throw Error(width+': launcher must use the contained HQ greeting: '+JSON.stringify(beforeArt));
     await botShortcut.click();
     await page.getByRole('dialog',{name:'TrakBot — личный помощник'}).waitFor();
+    const openArt=await launcherArt();
+    if(openArt.reaction!==beforeArt.reaction||openArt.image!==beforeArt.image||openArt.size!==beforeArt.size||!openArt.contained)
+      throw Error(width+': opening the dock changed its artwork or bounds: '+JSON.stringify(openArt));
     if(!page.url().endsWith('/#/')) throw Error('TrakBot shortcut navigated off 617 landing');
     if(await page.locator('.trakbot-dock-panel').count()!==1) throw Error('Duplicate TrakBot panels');
     await page.locator('.trakbot-dock-close').click();

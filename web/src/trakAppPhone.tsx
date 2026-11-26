@@ -12,7 +12,6 @@ export function TrakAppPhone({className = ''}:{className?:string}) {
         width="274" height="46" alt=""/>
       <img className="public-app-phone-truck traksos-app-phone-icon"
         src="/icon-192.png?v=approved-20261120" alt="" loading="lazy" decoding="async"/>
-      <span className="traksos-app-phone-caption">Помощь грузовику в дороге</span>
       <span className="traksos-app-phone-home"/>
     </div>
   </div>;

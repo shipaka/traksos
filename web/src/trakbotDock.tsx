@@ -144,7 +144,8 @@ export function TrakBotDock({ authenticated }: { authenticated: boolean }) {
       <button ref={triggerRef} type="button" className="trakbot-dock-launcher"
         aria-label={open ? 'Закрыть TrakBot' : 'Открыть TrakBot'} aria-expanded={open}
         onClick={() => { if (open) close(); else setOpen(true); }}>
-        <TrakBotMascot reaction={open ? 'ok' : 'hello'} size="small" ambient />
+        {/* The launcher is a stable control, not a chat reaction. Keep the HQ greeting crop in both states. */}
+        <TrakBotMascot reaction="hello" size="small" ambient />
         <span className="trakbot-dock-label">{open ? 'Закрыть' : authenticated ? 'TrakBot' : 'Наш ИИ-помощник'}</span>
       </button>
     </aside>
