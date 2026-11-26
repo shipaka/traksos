@@ -19,6 +19,7 @@ object ReferenceInventory {
         ReferenceCount("Haldex EB+4.0 DIAG++ and WABCO Humbaur reference",ModernDisplayExamples.count),
         ReferenceCount("WABCO TEBS E explicit OEM pair",WabcoEExactReference.count),
         ReferenceCount("SORL trailer ABS electronic tester",SorlTrailerTesterReference.count),
+        ReferenceCount("Haldex U-ABS Info Centre 2",HaldexUabsReference.count),
     )
     fun total():Int=counts().sumOf { it.entries }
     // Preliminary secondary-source entries are not included in the established inventory.
