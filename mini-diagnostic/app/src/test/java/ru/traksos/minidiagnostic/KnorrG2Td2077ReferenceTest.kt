@@ -3,7 +3,8 @@ import org.junit.Assert.*
 import org.junit.Test
 class KnorrG2Td2077ReferenceTest {
     @Test fun provisionalRowsNeverClaimExactProfileOrDuplicateEarlierCodes() {
-        assertEquals(99,KnorrG2Td2077Reference.count)
+        assertEquals(104,KnorrG2Td2077Reference.count)
+        assertEquals(15,KnorrG2Td2077Reference.currentIndexMatchedCount)
         assertEquals(14,KnorrG2Td2077Reference.originalTextMatchedCount)
         assertTrue(KnorrG2Td2077Reference.lookup("000700")!!.source!!.contains("индексированным"))
         assertEquals("Датчик колеса D",KnorrG2Td2077Reference.lookup("000C00")!!.component)
@@ -23,7 +24,14 @@ class KnorrG2Td2077ReferenceTest {
         assertTrue(KnorrG2Td2077Reference.lookup("013300")!!.condition!!.contains("сопутствующий код"))
         assertFalse(KnorrG2Td2077Reference.lookup("012F00")!!.exactPair)
         assertNull(KnorrG2Td2077Reference.lookup("003C00"))
-        for(code in listOf("000D00","001200","00ED00","00F300","00F500","003A00","2400","0x002400"))
+        for(code in listOf("003A00","003B00","003D00","003E00","003F00")) {
+            val valve=KnorrG2Td2077Reference.lookup(code)!!
+            assertFalse(valve.exactPair)
+            assertTrue(valve.source!!.contains("manual06.pdf"))
+            assertTrue(valve.condition!!.contains("точную функцию сверить"))
+            assertEquals(if(code in listOf("003A00","003B00")) "Модулятор P21" else "Модулятор P22",valve.component)
+        }
+        for(code in listOf("000D00","001200","00ED00","00F300","00F500","2400","0x002400"))
             assertNull(KnorrG2Td2077Reference.lookup(code))
         assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.KNORR_G22_PRESSURE,"002400"))
         assertNull(DtcCatalog().decode(EcuFamily.KNORR_TEBS_G2,null,RawDtc("002400",DtcStatus.UNKNOWN,"00240000")).descriptionRu)
