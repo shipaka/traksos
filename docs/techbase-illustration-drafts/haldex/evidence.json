@@ -1,0 +1,144 @@
+{
+  "batch": "TECHBASE-HALDEX-EBGEN3-40-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "sources": [
+    {
+      "url": "https://www.haldex.com/en/europe/trailer-application-guide/ebs/eb-gen3/valves/eb-gen3-series/",
+      "review": "OEM HTML port table opened"
+    },
+    {
+      "url": "https://www.haldex.com/globalassets/europe/3.-trailer-application-guide/trailer-guide/ebs-system/eb-gen3/gen3-3sides-w-port-number-1200px.png",
+      "review": "OEM annotated three-view image visually examined"
+    },
+    {
+      "url": "https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006700042_gb.pdf",
+      "review": "PDF screenshot physical page 2 and text examined"
+    },
+    {
+      "url": "https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006300018_en.pdf",
+      "review": "2021 manual parsed p43; screenshots failed 19MB limit"
+    },
+    {
+      "url": "https://www.haldex.com/globalassets/europe/tag/eb/eb-files/006300018_en.pdf",
+      "review": "2021 manual parsed p66; screenshot 404"
+    },
+    {
+      "url": "https://www.haldex.com/en/europe/haldexnewsroom/More-stories-to-read/2022/eb4.0-safeandsecure",
+      "review": "OEM 2022 HTML lines 11–18 examined"
+    }
+  ],
+  "records": [
+    {
+      "name": "gen3-2m-ports.svg",
+      "source": "https://www.haldex.com/en/europe/trailer-application-guide/ebs/eb-gen3/valves/eb-gen3-series/; https://www.haldex.com/globalassets/europe/3.-trailer-application-guide/trailer-guide/ebs-system/eb-gen3/gen3-3sides-w-port-number-1200px.png",
+      "facts": [
+        "Annotated OEM image confirms relative port locations on three faces; roles from product table; not fitting specification"
+      ],
+      "publication": "HOLD",
+      "limits": [
+        "Original schematic, not exact dimensional geometry",
+        "Independent rendered and technical acceptance pending",
+        "No chassis-specific installation photograph or serial applicability"
+      ]
+    },
+    {
+      "name": "gen3-standard-premium.svg",
+      "source": "https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006700042_gb.pdf",
+      "facts": [
+        "OEM brochure p2 screenshot: 2M vs 2M/3M, 8–32V, 2 CAN, 3/5 digital outputs, 2 analogue inputs, premium standby/load transfer"
+      ],
+      "publication": "HOLD",
+      "limits": [
+        "Original schematic, not exact dimensional geometry",
+        "Independent rendered and technical acceptance pending",
+        "No chassis-specific installation photograph or serial applicability"
+      ]
+    },
+    {
+      "name": "gen3-supply-modes.svg",
+      "source": "https://www.haldex.com/globalassets/europe/tag/eb/eb-files/006300018_en.pdf",
+      "facts": [
+        "Printed p66 parsed text only: 7-pin full EBS, 5-pin ABS+ELS only, stop-light supply ABS only; screenshot unavailable"
+      ],
+      "publication": "HOLD",
+      "limits": [
+        "Original schematic, not exact dimensional geometry",
+        "Independent rendered and technical acceptance pending",
+        "No chassis-specific installation photograph or serial applicability"
+      ]
+    },
+    {
+      "name": "gen3-semi-bogie-location.svg",
+      "source": "https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006300018_en.pdf",
+      "facts": [
+        "Printed p43 parsed text: semi X/Y 1.5m, within LH/RH chassis members, upright; no exact mounting claim; schematic green area clipped to frame"
+      ],
+      "publication": "HOLD",
+      "limits": [
+        "Original schematic, not exact dimensional geometry",
+        "Independent rendered and technical acceptance pending",
+        "No chassis-specific installation photograph or serial applicability"
+      ]
+    },
+    {
+      "name": "eb4-modular-config.svg",
+      "source": "https://www.haldex.com/en/europe/haldexnewsroom/More-stories-to-read/2022/eb4.0-safeandsecure",
+      "facts": [
+        "Four versions; standard 2S/2M; maximum 8S/4M, one master two slaves; official 2022 article"
+      ],
+      "publication": "HOLD",
+      "limits": [
+        "Original schematic, not exact dimensional geometry",
+        "Independent rendered and technical acceptance pending",
+        "No chassis-specific installation photograph or serial applicability"
+      ]
+    },
+    {
+      "name": "eb4-parking-control.svg",
+      "source": "https://www.haldex.com/en/europe/haldexnewsroom/More-stories-to-read/2022/eb4.0-safeandsecure",
+      "facts": [
+        "Optional valve bank extends electronic control to spring brake side; service brake retains solenoid modulator design"
+      ],
+      "publication": "HOLD",
+      "limits": [
+        "Original schematic, not exact dimensional geometry",
+        "Independent rendered and technical acceptance pending",
+        "No chassis-specific installation photograph or serial applicability"
+      ]
+    }
+  ],
+  "readbacks": [
+    {
+      "name": "gen3-2m-ports.svg",
+      "sha": "f2a49e225aff74f6a871760f67cd9af7811b4a63",
+      "exact": true
+    },
+    {
+      "name": "gen3-standard-premium.svg",
+      "sha": "d8ac1848c0b3e52c5d949e1701daf8be2665199b",
+      "exact": true
+    },
+    {
+      "name": "gen3-supply-modes.svg",
+      "sha": "6e2f7093aab900703f3000b3bcc264e855cffb70",
+      "exact": true
+    },
+    {
+      "name": "gen3-semi-bogie-location.svg",
+      "sha": "082442c12929b74a8c9c45c5dd1fb772dd3a7885",
+      "exact": true
+    },
+    {
+      "name": "eb4-modular-config.svg",
+      "sha": "4ef81b970f090a936e835e29f53d7cc2e9a9acea",
+      "exact": true
+    },
+    {
+      "name": "eb4-parking-control.svg",
+      "sha": "45d31b3963cc35989ee253678a8e9a6b360c16c7",
+      "exact": true
+    }
+  ],
+  "rights": "Original SVG, no copied OEM imagery; watermark not ACL",
+  "limitations": "No installed vehicle images, full visual technical checks or publication approval. Gen3 location is source-text schematic and held."
+}
