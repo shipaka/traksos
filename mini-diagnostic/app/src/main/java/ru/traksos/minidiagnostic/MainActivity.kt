@@ -284,8 +284,6 @@ private fun ElectricalStatusPanel(status:ElectricalPreview,scenario:DemoElectric
             }
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                 ElectricalMetric("Питание",volts(status.supplyMv),supplyColor,Modifier.weight(1f))
-                ElectricalMetric("Масса",when(status.returnOk) { true -> "Есть"; false -> "Потеря"; null -> "—" },
-                    stateColor(status.returnOk),Modifier.weight(1f))
                 ElectricalMetric("CAN",when(status.canTraffic) { true -> "Обмен"; false -> "Нет обмена"; null -> "—" },
                     stateColor(status.canTraffic),Modifier.weight(1f))
             }
@@ -294,7 +292,7 @@ private fun ElectricalStatusPanel(status:ElectricalPreview,scenario:DemoElectric
                 Text("Ошибки CAN: "+(status.canErrors?.toString()?:"—"),color=Muted,fontSize=12.sp)
             }
             status.reason?.let { Text(it,color=Red,fontSize=12.sp,fontWeight=FontWeight.Bold) }
-            Text("Виртуальные значения · реальные измерения недоступны",color=Muted,fontSize=11.sp)
+            Text("Демо · напряжение только при наличии согласованного входа измерения",color=Muted,fontSize=11.sp)
             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp)).clickable(onClick=onExpand).padding(vertical=5.dp),
                 verticalAlignment=Alignment.CenterVertically) {
                 Text("Демо-сценарий: "+scenario.title,color=Orange,fontSize=12.sp,modifier=Modifier.weight(1f))
@@ -308,7 +306,7 @@ private fun ElectricalStatusPanel(status:ElectricalPreview,scenario:DemoElectric
                         Text(option.title,fontSize=13.sp)
                     }
                 }
-                Text("Нет обмена не доказывает обрыв CAN-H/CAN-L. Без измерения нельзя подтвердить массу или состояние линии.",
+                Text("При отсутствии ответа проверить питание, массу и соединения. Прибор не измеряет массу отдельно и не определяет обрыв конкретного провода CAN.",
                     color=Muted,fontSize=11.sp)
             }
         }
