@@ -22,6 +22,7 @@ object ModuleSearch {
         "zf-vcs" to listOf("вцс","вкс","vcs1","vcs i"),
         "zf-vcs-ii" to listOf("вцс2","вкс2","vcs2","vcs ii"),
         "zf-iebs" to listOf("иебс","айебс"),
+        "kb-itebs-x" to listOf("iTEBS X ECO","iTEBS X PLUS","iTEBS X LAC","айтебс икс","итебс х"),
         "kb-g20" to listOf("g2","g2.0","г2","г2.0"),
         "kb-g21" to listOf("g2","g2.1","г2","г2.1"),
         "kb-g22" to listOf("g2","g2.2","г2","г2.2"),

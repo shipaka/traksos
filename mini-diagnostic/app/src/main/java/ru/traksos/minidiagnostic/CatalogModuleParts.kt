@@ -79,12 +79,28 @@ object CatalogModuleParts {
         CatalogModulePart("841001001","haldex-eb4","Ведомый модулятор 1M, не основной ECU","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf"),
         CatalogModulePart("823034001","haldex-eb3","Master 2M в системе 3M","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf"),
         CatalogModulePart("810023001","haldex-eb3","Ведомый модулятор 1M, не основной ECU","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf")
+,
+        CatalogModulePart("K211213","kb-itebs-x","ECO · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("K211212","kb-itebs-x","PLUS · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("K211211","kb-itebs-x","LAC · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("K267862","kb-itebs-x","IAM ECO / PLUS · вариант не определён","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("K267861","kb-itebs-x","IAM LAC","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("ES2031","kb-itebs-x","ECO · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("ES2033","kb-itebs-x","PLUS · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
+        CatalogModulePart("ES2035","kb-itebs-x","LAC · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf")
     )
     init {
         check(rows.map { it.number to it.targetId }.distinct().size==rows.size)
     }
     private fun normalized(input:String):String? {
-        if(input.length>120 || input.any { it !in '0'..'9' && it!=' ' && it!='-' })return null
+        if(input.length>120) return null
+        // Knorr base/type lookup only. Vxx/Nxx suffixes describe software/packaging;
+        // a match does not validate that this particular suffix combination exists.
+        val label=input.trim().uppercase(java.util.Locale.ROOT)
+        if(Regex("K[0-9]{6}(V[0-9]{2}N[0-9]{2})?").matches(label))
+            return label.take(7)
+        if(Regex("ES[0-9]{4}").matches(label)) return label
+        if(input.any { it !in '0'..'9' && it!=' ' && it!='-' })return null
         return input.filter { it in '0'..'9' }.takeIf { it.length in 9..10 }
     }
     fun find(input:String):List<CatalogModulePart> {

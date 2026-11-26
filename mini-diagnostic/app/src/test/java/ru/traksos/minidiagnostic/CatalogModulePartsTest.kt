@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(75,CatalogModuleParts.count)
+        assertEquals(83,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -27,6 +27,19 @@ class CatalogModulePartsTest {
         for(number in listOf("842005999","842005XXX","950800923","823028001","844511065","844001120")) {
             assertTrue(CatalogModuleParts.find(number).isEmpty())
         }
+    }
+    @Test fun knorrTypeAndPartNumbersKeepVariantsSeparate() {
+        for(number in listOf("K211213","K211212","K211211","K267862","K267861","ES2031","ES2033","ES2035")) {
+            assertEquals("kb-itebs-x",ModuleSearch.find(number).single().id)
+            assertEquals("kb-itebs-x",CatalogModuleParts.find(number).single().targetId)
+        }
+        assertTrue(CatalogModuleParts.find("K267862").single().variant.contains("ECO / PLUS"))
+        assertEquals(CatalogModuleParts.find("K211212"),CatalogModuleParts.find(" k211212v01n49 "))
+        assertTrue(CatalogModuleParts.find("ES2035").single().variant.contains("LAC"))
+        for(number in listOf("K211214","K211212V01","K211212V01N4","K211212X01N49","K202012V02N49","ES2032","K112780N00"))
+            assertTrue(CatalogModuleParts.find(number).isEmpty())
+        for(q in listOf("iTEBS X ECO","iTEBS X PLUS","iTEBS X LAC","айтебс икс"))
+            assertEquals("kb-itebs-x",ModuleSearch.find(q).first().id)
     }
     @Test fun sharedSlaveNumbersRemainAmbiguous() {
         for(number in listOf("810011001","812011001")) {
