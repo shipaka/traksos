@@ -1,0 +1,114 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "scope": "MAN TGX MY2025 D30 PowerLion, normal/low 4x2 tractors; D26 comparison only",
+  "date": "2026-11-26",
+  "sources": {
+    "powerlion": "https://www.man.eu/global/en/truck/man-d30-powerlion-drive%20train-efficiency-redefined.html",
+    "iaa": "https://press.mantruckandbus.com/corporate/climate-friendly-and-economical-man-lions-with-new-powerlion-driveline/",
+    "story": "https://www.man.eu/uk/en/about-us/experience-man/truckers-world/stories/man-d30-engine-new-heart-of-the-man-truck-176896.html",
+    "engineImage": "https://media.man.eu/is/image/MAN/man-lkw-d30-teaser-4-3",
+    "scrImage": "https://media.man.eu/is/image/MAN/doppelte-scr-abgasnachbehandlung-v2-4x3",
+    "crbImage": "https://media.man.eu/is/image/MAN/man-hochleistungsmotorbremse-CRB-4x3"
+  },
+  "source_method": "Official HTML opened and reviewed; three OEM component images directly opened and visually inspected (D3066, twin SCR and CRB).",
+  "assets": [
+    {
+      "file": "tgx-d30-overview.svg",
+      "sources": [
+        "powerlion",
+        "iaa",
+        "engineImage"
+      ],
+      "fact": "D3066 12.7 L, 380–560 hp; TipMatic 14 and new hypoid axle portfolio",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-compression.svg",
+      "sources": [
+        "powerlion"
+      ],
+      "fact": "D26 21:1 versus D30 23:1",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-xpi.svg",
+      "sources": [
+        "iaa",
+        "story"
+      ],
+      "fact": "XPI Common Rail up to 1800 bar; ten-hole injector nozzle",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-twin-scr.svg",
+      "sources": [
+        "powerlion",
+        "scrImage"
+      ],
+      "fact": "Two sequential SCR stages; absence of cooled regulated EGR, not a universal claim about EGR",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-crb.svg",
+      "sources": [
+        "powerlion",
+        "iaa",
+        "crbImage"
+      ],
+      "fact": "Additional rocker arms actuate exhaust valves near compression TDC; optional up to 355 kW",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-retarder47.svg",
+      "sources": [
+        "iaa",
+        "powerlion"
+      ],
+      "fact": "Optional detachable Retarder 47, up to 4700 Nm",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-tipmatic14.svg",
+      "sources": [
+        "iaa",
+        "powerlion"
+      ],
+      "fact": "14 forward, 2 reverse plus 6 optional; 13th direct and 14th overdrive",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-smartshifting.svg",
+      "sources": [
+        "iaa",
+        "powerlion"
+      ],
+      "fact": "Sensor-informed engine speed, clutch and gear coordination",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-brake-pad-return.svg",
+      "sources": [
+        "iaa"
+      ],
+      "fact": "Spring elements withdraw pads on release; new heavy truck brake generation",
+      "acceptance": "pending"
+    },
+    {
+      "file": "tgx-d30-combined-tank.svg",
+      "sources": [
+        "iaa"
+      ],
+      "fact": "One combined tank option, isolated 690 L diesel and 165 L AdBlue compartments",
+      "acceptance": "pending"
+    }
+  ],
+  "checks": [
+    "10 SVGs retrieved; structure and labels inspected; four revisions stored, three exact readbacks and compression correction confirmed by subsequent content inspection (initial exact comparison false)."
+  ],
+  "limitations": [
+    "Original schematic SVGs, not photorealistic or OEM mounting diagrams.",
+    "No exact chassis installation photos, VIN fitment, physical routing or independent rendered technical acceptance.",
+    "No service pressure, calibration or repair procedure inferred. Retarder and CRB options. Tank is one example, not universal."
+  ],
+  "accepted_count": 0
+}
