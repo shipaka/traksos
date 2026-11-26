@@ -55,6 +55,8 @@ jobs:
         run: |
           g++ -std=c++11 -Wall -Wextra -Werror -pedantic -Iinclude tools/test_bench_engine.cpp -o /tmp/traksos-bench-tests
           /tmp/traksos-bench-tests
+          g++ -std=c++11 -Wall -Wextra -Werror -pedantic -Iinclude tools/test_interface_guard.cpp -o /tmp/traksos-interface-tests
+          /tmp/traksos-interface-tests
       - name: Build USB-only BLE bench firmware
         working-directory: mini-diagnostic/firmware
         run: pio run -e esp32_bench_ble

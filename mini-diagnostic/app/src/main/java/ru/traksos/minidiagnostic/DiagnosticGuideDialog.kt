@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.sp
 fun DiagnosticGuideDialog(onClose:()->Unit) {
     var selected by remember { mutableStateOf<ConnectionPlace?>(null) }
     var showChecks by remember { mutableStateOf(false) }
+    var showCables by remember { mutableStateOf(false) }
+    var search by remember { mutableStateOf("") }
     val entry=selected?.let(DiagnosticGuide::entry)
     AlertDialog(
         onDismissRequest=onClose,
@@ -21,9 +23,26 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
         text={
             Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                if(entry==null) {
+                if(showCables) {
+                    Text("Реестр кабелей и интерфейсов",fontWeight=FontWeight.Bold)
+                    Text("Исследовательский список. Ни один кабель пока не разрешён для работы нашим прибором.",color=MaterialTheme.colorScheme.error)
+                    OutlinedTextField(value=search,onValueChange={ search=it.take(80) },
+                        label={ Text("Производитель или модель") },singleLine=true,modifier=Modifier.fillMaxWidth())
+                    val rows=CableResearch.search(search)
+                    Text("Найдено: ${rows.size}",fontSize=12.sp)
+                    rows.forEach { row ->
+                        HorizontalDivider()
+                        Text(row.name,fontWeight=FontWeight.Bold)
+                        Text(row.place.title + " · " + (row.path?.title ?: "Интерфейс уточняется"),fontSize=12.sp)
+                        Text(row.note)
+                        Text("Не проверено на приборе",color=MaterialTheme.colorScheme.error,fontSize=12.sp)
+                    }
+                } else if(entry==null) {
                     Text("Выберите место подключения. Справка работает без интернета и не активирует прибор.")
                     Text("Пока доступен только стендовый деморежим.",color=MaterialTheme.colorScheme.error)
+                    OutlinedButton(onClick={ showCables=true; search="" },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+                        Text("Кабели по производителям")
+                    }
                     ConnectionPlace.entries.forEach { place ->
                         OutlinedButton(onClick={ selected=place; showChecks=false },
                             modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(place.title) }
@@ -53,6 +72,6 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
         },
         confirmButton={ TextButton(onClick=onClose) { Text("Закрыть") } },
         dismissButton={
-            if(entry!=null) TextButton(onClick={ selected=null; showChecks=false }) { Text("Назад") }
+            if(entry!=null || showCables) TextButton(onClick={ selected=null; showChecks=false; showCables=false }) { Text("Назад") }
         })
 }
