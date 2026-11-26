@@ -1,0 +1,119 @@
+{
+  "id": "wabco-ecas-valve-4729051140",
+  "article": "4729051140",
+  "nameRu": "Клапан ECAS / подъёмной оси",
+  "manufacturer": "WABCO",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-ecas-valve-4729051140.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4729051140",
+      "publisher": "ZF/WABCO",
+      "checked": "2026-11-26"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150801433.pdf",
+      "publisher": "WABCO",
+      "revision": "10.2019",
+      "section": "OptiLevel",
+      "textChecked": true,
+      "visualChecked": false,
+      "screenshotError": "timeout"
+    }
+  ],
+  "spec": {
+    "voltageV": 24,
+    "currentMa": 340,
+    "componentMaxOperatingPressureBar": 20,
+    "dimensionsMm": [
+      256,
+      205,
+      139
+    ],
+    "massKg": 4.248,
+    "temperatureC": [
+      -40,
+      80
+    ],
+    "protection": "IP6K9K",
+    "port26": "closed",
+    "silencers": {
+      "article": "4324070600",
+      "quantity": 2
+    }
+  },
+  "crossReferences": [
+    {
+      "make": "KRONE",
+      "article": "5814363",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KÄSSBOHRER",
+      "article": "21145210018",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KÖGEL",
+      "article": "337321",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "LANGENDORF",
+      "article": "1111651",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCANIA",
+      "article": "1935902",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "052703",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "054435",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHWARZMÜLLER",
+      "article": "3568",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "TIRSAN",
+      "article": "21150110030",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "DAF",
+      "article": "1518110",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    }
+  ],
+  "related": [
+    {
+      "article": "4410501000",
+      "relationship": "TEBS E overview lists both components, not verified exact chassis configuration"
+    }
+  ],
+  "limitations": [
+    "Functional original visual, not accurate CAD",
+    "No physical wiring, port allocation, VIN or installation procedure",
+    "Component rating does not establish system operating limits",
+    "Expert acceptance and rendered QA pending"
+  ]
+}
