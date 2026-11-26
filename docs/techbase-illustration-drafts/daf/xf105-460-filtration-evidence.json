@@ -1,0 +1,171 @@
+{
+  "schema": "research-draft-v1",
+  "id": "daf-xf105-460-mx340s-filtration",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "vehicle": {
+    "make": "DAF",
+    "family": "XF105",
+    "model_catalogue": "105.460",
+    "engine": "MX 340 S",
+    "emissions": "Euro 4/5/EEV",
+    "displacement_cc": 12900,
+    "power_kw": 340,
+    "power_hp_catalogue": 462,
+    "catalogue_start": "2006-01",
+    "catalogue_end": null,
+    "axle_configuration": null,
+    "vin": null,
+    "canonical_vehicle_id": null
+  },
+  "cards": [
+    {
+      "id": "fuel-main",
+      "article": "PU 966/1 x",
+      "manufacturer": "MANN-FILTER",
+      "title": "Основной топливный фильтр",
+      "gtin": "4011558683306",
+      "dimensions": {
+        "A_mm": 90,
+        "B_mm": 20,
+        "C_mm": 46,
+        "H_mm": 250
+      },
+      "source": {
+        "url": "https://www.mann-filter.com/ru-ru/catalog/search-results/product.html/pu966/1x_mann-filter.html",
+        "section": "Dimensions; Vehicles / Applications > DAF TRUCKS > XF105 > 105.460",
+        "checked_on": "2026-11-26",
+        "type": "manufacturer_product_catalogue"
+      },
+      "functional_role": "Очистка дизельного топлива от частиц; не путать с отдельным предварительным фильтром.",
+      "application_condition": null,
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "location": null,
+      "physical_route": null
+    },
+    {
+      "id": "fuel-preline",
+      "article": "PL 420 x",
+      "manufacturer": "MANN-FILTER",
+      "title": "Предварительный топливный фильтр — водоотделитель",
+      "gtin": "4011558935504",
+      "dimensions": {
+        "A_mm": 108,
+        "H_mm": 230,
+        "F_thread": "S80x3",
+        "G_thread": "1-14 UNS"
+      },
+      "source": {
+        "url": "https://www.mann-filter.com/us-en/catalog/search-results/product.html/pl420x_mann-filter.html",
+        "section": "Dimensions; Vehicles / Applications > DAF TRUCKS > XF105 > 105.460",
+        "checked_on": "2026-11-26",
+        "type": "manufacturer_product_catalogue"
+      },
+      "functional_role": "Предварительная очистка и отделение воды.",
+      "application_condition": "Только при наличии системы PreLine, указанной в строке применения.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "location": null,
+      "physical_route": null
+    },
+    {
+      "id": "oil-element",
+      "article": "HU 12 103 x",
+      "manufacturer": "MANN-FILTER",
+      "title": "Масляный фильтрующий элемент",
+      "gtin": "4011558299200",
+      "dimensions": {
+        "A_mm": 113,
+        "B_mm": 56,
+        "C_mm": 56,
+        "H_mm": 220
+      },
+      "source": {
+        "url": "https://www.mann-filter.com/ru-ru/catalog/search-results/product.html/hu12103x_mann-filter.html",
+        "section": "Dimensions; Vehicles / Applications > DAF TRUCKS > XF105 > 105.460",
+        "checked_on": "2026-11-26",
+        "type": "manufacturer_product_catalogue"
+      },
+      "functional_role": "Задерживает загрязнения моторного масла; не является ротором центрифуги.",
+      "application_condition": null,
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "location": null,
+      "physical_route": null
+    },
+    {
+      "id": "oil-centrifuge",
+      "article": "ZR 905 z",
+      "manufacturer": "MANN-FILTER",
+      "title": "Ротор центробежного масляного фильтра",
+      "gtin": "4011558751104",
+      "dimensions": {
+        "D_mm": 104,
+        "F_mm": 6,
+        "G_mm": 11,
+        "H_mm": 145
+      },
+      "source": {
+        "url": "https://www.mann-filter.com/ru-ru/catalog/search-results/product.html/zr905z_mann-filter.html",
+        "section": "Dimensions; Vehicles / Applications > DAF TRUCKS > XF105 > 105.460",
+        "checked_on": "2026-11-26",
+        "type": "manufacturer_product_catalogue"
+      },
+      "functional_role": "Отдельный компонент центробежной очистки масла; не заменяет фильтрующий элемент HU.",
+      "application_condition": null,
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "location": null,
+      "physical_route": null
+    }
+  ],
+  "diagnostic_context": [
+    {
+      "symptom": "Потеря тяги, затруднённый запуск",
+      "system": "fuel",
+      "note": "Загрязнение фильтра — одна из возможных причин, не диагноз; проверить историю ТО, точный вариант двигателя и результаты диагностики давления по OEM."
+    },
+    {
+      "symptom": "Предупреждение о давлении масла",
+      "system": "lubrication",
+      "note": "Не считать замену фильтра устранением неисправности; при предупреждении о низком давлении прекратить эксплуатацию безопасным способом и следовать инструкции производителя."
+    }
+  ],
+  "illustration_briefs": [
+    {
+      "id": "daf-xf105-fuel-filtration",
+      "components": [
+        "fuel tank",
+        "fuel-preline (conditional)",
+        "fuel-main",
+        "fuel pump/injection system"
+      ],
+      "requirement": "Отдельная наглядная схема функционального назначения; до получения OEM схемы не утверждать фактический порядок элементов, точки крепления или трассу."
+    },
+    {
+      "id": "daf-xf105-oil-filtration",
+      "components": [
+        "oil sump",
+        "oil pump",
+        "oil-element",
+        "oil-centrifuge",
+        "engine lubrication"
+      ],
+      "requirement": "Показать различие фильтрующего элемента и ротора; не рисовать неизвестную последовательность, параллельные ветви или реальное расположение без OEM."
+    }
+  ],
+  "gates": {
+    "source_model_rows": "checked",
+    "source_product_dimensions": "checked",
+    "oem_location": "missing",
+    "oem_circuit": "missing",
+    "visual_geometry": "not_checked",
+    "rights_to_republish_oem_images": "not_established",
+    "expert_review": "pending",
+    "shop_linkage": "not_tested",
+    "runtime_import": "not_performed"
+  },
+  "handoff": "Для иллюстратора: использовать оригинальные изображения только после подтверждения геометрии и прав; получить DAF chassis-specific RMI для креплений, трасс и схем. Данные каталога не подтверждают VIN; не переносить на XF106 или другие двигатели автоматически. Не публиковать черновик как ремонтную инструкцию. Не считать четыре карточки четырьмя готовыми иллюстрациями."
+}
