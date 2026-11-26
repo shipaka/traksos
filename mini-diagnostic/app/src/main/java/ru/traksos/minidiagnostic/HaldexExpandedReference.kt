@@ -3,7 +3,7 @@ package ru.traksos.minidiagnostic
 // Manufacturer display labels only. Gen2 and Gen3 are separate reference editions.
 // No DTC bytes, addressing, live transport, or fault activation is implied.
 object HaldexExpandedReference {
-    const val GEN2_SOURCE="https://manualzz.com/doc/6359285/haldex-eb--gen-2-electronic-brake-system-operator-s-guide"
+    const val GEN2_SOURCE="https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/000700341_gb.pdf"
     // Gen3 2013 Russian guide pp106-108; checked against 2021 English guide pp110-112.
     private val extra3=buildMap<String,Pair<String,String>> {
         for(m in listOf(21,22)) {
@@ -71,7 +71,16 @@ object HaldexExpandedReference {
         val values=verified.associateWith { requireNotNull(LegacyDisplayReference.haldexInfo1(it)) }.toMutableMap()
         values["PWR ISO7638 FAIL"]="Питание ISO 7638" to "Пропало на контакте 1 или 2"
         values["PWR LO VOLT"]="Питание ЭБУ" to "Ниже 19 В при возбуждении тормозного соленоида (данная редакция Gen2)"
-        // Gen2 BRK APPLY OC / UNSPEC omitted due to unclear descriptions in transcription.
+        // Original PDF p9 itself prints short circuit for OC/UNSPEC; leave ambiguous entries excluded.
+        // Keep the Gen2 wording independent of Gen3 for the wheel recovery messages.
+        for(m in listOf(21,22))
+            values["EPRV $m SLOW REC"]="Колесо модулятора $m" to "Замедленное восстановление скорости колеса"
+        values["SLAVE VALVE SLOW REC"]="Колесо ведомого клапана" to "Замедленное восстановление скорости колеса"
+        for(s in listOf("1A","1B","2A","2B")) {
+            values["S$s CONT"]="Колёсный датчик $s" to "Обрыв или КЗ датчика либо проводки"
+            values["S$s SIGNAL"]="Колёсный датчик $s" to "Нарушение сигнала"
+            values["S$s OUTPUT"]="Колёсный датчик $s" to "Недостаточный выходной сигнал; проверить систему датчика"
+        }
         values.toMap()
     }
     fun gen3(code:String)=extra3[code]

@@ -12,6 +12,9 @@ class HaldexExpandedReferenceTest {
     }
     @Test fun gen2SeparateThresholdAndSpelling() {
         assertEquals(71,HaldexExpandedReference.gen2Count)
+        assertEquals("https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/000700341_gb.pdf",HaldexExpandedReference.GEN2_SOURCE)
+        assertTrue(HaldexExpandedReference.gen2("EPRV 21 SLOW REC")!!.second.contains("скорости колеса"))
+        assertTrue(HaldexExpandedReference.gen2("S1A CONT")!!.second.contains("Обрыв или КЗ"))
         assertTrue(HaldexExpandedReference.gen2("PWR LO VOLT")!!.second.contains("19 В"))
         assertTrue(HaldexExpandedReference.gen3("PWR LO VOLT")!!.second.contains("8 В"))
         assertNotNull(HaldexExpandedReference.gen2("PWR ISO7638 FAIL"))
