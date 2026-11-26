@@ -13,6 +13,6 @@ class ModernDisplayExamplesTest {
         assertTrue(w.condition!!.contains("обрыв"))
         assertNull(ModernDisplayExamples.wabcoE("251/04"))
         assertNull(ModernDisplayExamples.wabcoE("003/05"))
-        assertEquals(26,ModernDisplayExamples.count)
+        assertEquals(31,ModernDisplayExamples.count)
     }
 }
