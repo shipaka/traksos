@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class HaldexEb4DiagReferenceTest {
     @Test fun numericAndDisplayKeysAreOneDocumentedEntry() {
-        assertEquals(25,HaldexEb4DiagReference.count)
+        assertEquals(30,HaldexEb4DiagReference.count)
         assertEquals(22,HaldexEb4DiagReference.numericCount)
         val r=HaldexEb4DiagReference.lookup("0x01")!!
         assertEquals(r,HaldexEb4DiagReference.lookup("S1A continuity"))
@@ -27,6 +27,17 @@ class HaldexEb4DiagReferenceTest {
         assertTrue(tpms.source!!.endsWith("#page=41"))
         assertNull(HaldexEb4DiagReference.lookup("AUX 5 OC"))
         assertNull(HaldexEb4DiagReference.lookup("Soft Docking"))
+    }
+    @Test fun extendedScreenNamedValvesAreNotNumericCodes() {
+        for (channel in listOf("21","22")) for (mode in listOf("hold","dump")) {
+            val r=HaldexEb4DiagReference.lookup("EPRV $channel master $mode electric failure")!!
+            assertTrue(r.component!!.contains(channel))
+            assertTrue(r.condition!!.contains("Точный вид повреждения не указан"))
+            assertTrue(r.source!!.endsWith("#page=26"))
+        }
+        assertNotNull(HaldexEb4DiagReference.lookup("BRK apply master electric failure"))
+        assertNull(HaldexEb4DiagReference.lookup("EPRV 23 master hold electric failure"))
+        assertNull(HaldexEb4DiagReference.lookup("EPRV 21 master hold"))
     }
     @Test fun auxiliaryContextsRemainSeparate() {
         assertEquals(4,HaldexAuxReference.count)
