@@ -1,0 +1,229 @@
+{
+  "schema": "research-draft-v1",
+  "id": "man-tgx-18440-2007-2016-filtration",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "vehicle": {
+    "make": "MAN",
+    "family": "TGX",
+    "model": "18.440",
+    "engine_candidates": [
+      "D 2066",
+      "D 2676"
+    ],
+    "catalogue_start": "2007-10",
+    "catalogue_end": "2016-07",
+    "power_kw": 324,
+    "power_hp_catalogue": 440,
+    "displacement_cc": null,
+    "emissions": null,
+    "axle_configuration": null,
+    "vin": null,
+    "canonical_vehicle_id": null
+  },
+  "cards": [
+    {
+      "article": "PU 1059 x",
+      "manufacturer": "MANN-FILTER",
+      "system": "fuel",
+      "name": "Топливный фильтр",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/pu1059x_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Строка модели без уточнения корпуса",
+      "role": "Задерживает загрязнения топлива; не считать автоматически заменой PU 10 021 z.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "PU 10 021 z",
+      "manufacturer": "MANN-FILTER",
+      "system": "fuel",
+      "name": "Топливный фильтрующий элемент",
+      "source": {
+        "url": "https://www.mann-filter.com/sg-en/catalog/search-results/product.html/pu10021z_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Строка модели без уточнения корпуса",
+      "role": "Вариант фильтрации топлива, фактическое исполнение уточнять по OE и корпусу.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "PL 270/31 z",
+      "manufacturer": "MANN-FILTER",
+      "system": "fuel",
+      "name": "Топливный фильтр",
+      "source": {
+        "url": "https://www.mann-filter.com/sg-en/catalog/search-results/product.html/pl270/31z_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Точная компоновка топливного фильтрующего блока неизвестна",
+      "role": "Отдельная каталожная позиция; не выводить последовательность и количество элементов из списка.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "HU 13 125 x",
+      "manufacturer": "MANN-FILTER",
+      "system": "lubrication",
+      "name": "Масляный фильтрующий элемент",
+      "source": {
+        "url": "https://www.mann-filter.com/my-en/catalog/search-results/product.html/hu13125x_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Строка модели без уточнения корпуса в доступном представлении",
+      "role": "Очистка моторного масла; не заменять по сходству артикула.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "HU 13 125/3 x",
+      "manufacturer": "MANN-FILTER",
+      "system": "lubrication",
+      "name": "Масляный фильтр для системы Hengst",
+      "source": {
+        "url": "https://www.mann-filter.com/en/catalog/search-results/product.html/hu13125/3x_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "В строке TGX 18.440 указаны Hengst и EEV",
+      "role": "Очистка моторного масла; требуется совпадение фильтрующего корпуса и исполнения.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "HU 1291/1 z",
+      "manufacturer": "MANN-FILTER",
+      "system": "lubrication",
+      "name": "Масляный фильтр системы MANN+HUMMEL",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/hu1291/1z_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Euro 6, с 09/2012, система MANN+HUMMEL",
+      "role": "Не распространять на все TGX 18.440; проверить изготовителя корпуса.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "C 27 1250/1",
+      "manufacturer": "MANN-FILTER",
+      "system": "intake",
+      "name": "Воздушный фильтр двигателя",
+      "source": {
+        "url": "https://www.mann-filter.com/ru-ru/catalog/search-results/product.html/c271250/1_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "EEV в строке TGX 18.440",
+      "role": "Очистка впускного воздуха; не переносить строку TGX II на первое поколение.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "C 27 023",
+      "manufacturer": "MANN-FILTER",
+      "system": "intake",
+      "name": "Воздушный фильтр для специальной конфигурации",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/c27023_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Euro 6, с 09/2012, автомобили для строительных площадок",
+      "role": "Не считать применимым для обычного дорожного тягача без проверки исполнения.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    },
+    {
+      "article": "CF 1640",
+      "manufacturer": "MANN-FILTER",
+      "system": "intake",
+      "name": "Вторичный элемент воздушного фильтра",
+      "source": {
+        "url": "https://www.mann-filter.com/en/catalog/search-results/product.html/cf1640_mann-filter.html",
+        "section": "MAN TRUCK > TGX > 18.440 (10/07–07/16)",
+        "accessed": "2026-11-26"
+      },
+      "condition": "Строка TGX 18.440; наличие конкретного корпуса не подтверждено",
+      "role": "Вторичный элемент фильтрации; не утверждать обязательную установку вместе с любым из основных фильтров.",
+      "fitment_status": "catalogue_model_match_only",
+      "vin_fitment": null,
+      "physical_location": null
+    }
+  ],
+  "selection_rules": [
+    "Не приравнивать 18.440 первого поколения к TGX II 18.440.",
+    "Сначала идентифицировать двигатель, экологическое исполнение, VIN, OE и производителя корпуса. Не объединять Hengst и MANN+HUMMEL.",
+    "Каталожные совпадения нескольких артикулов не доказывают взаимозаменяемость или одновременное наличие на автомобиле.",
+    "C 27 023 оставлять в отдельном условном варианте для строительной конфигурации; для дорожного тягача не рекомендовать без подтверждения.",
+    "H 929/3 исключён: строка модели содержит ограничение с 07/2016, ретардер R3500/4100 TipMatic 12+2; точная применимость требует отдельного исследования."
+  ],
+  "excluded_candidate_evidence": [
+    {
+      "article": "H 929/3",
+      "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/h929/3_mann-filter.html",
+      "reason": "Не считать автоматически применимым к диапазону 2007–2016."
+    }
+  ],
+  "illustration_briefs": [
+    {
+      "system": "fuel",
+      "components": [
+        "топливный бак",
+        "фильтрующий блок",
+        "насос",
+        "двигатель"
+      ],
+      "requirements": "Раздельные варианты фильтрующих элементов. Подтвердить датчики, магистрали, количество, порядок по OEM."
+    },
+    {
+      "system": "lubrication",
+      "components": [
+        "поддон",
+        "масляный насос",
+        "фильтрующий корпус Hengst либо MANN+HUMMEL",
+        "двигатель"
+      ],
+      "requirements": "Сравнить исполнения корпуса; реальный проток, датчики и физическая компоновка неизвестны."
+    },
+    {
+      "system": "intake",
+      "components": [
+        "воздухозаборник",
+        "основной фильтр",
+        "вторичный элемент при наличии",
+        "турбокомпрессор",
+        "двигатель"
+      ],
+      "requirements": "Разделить дорожные и строительные исполнения. Трассы и датчики только после OEM."
+    }
+  ],
+  "gates": {
+    "source_catalogue_model_rows": "checked",
+    "source_product_geometry": "not_checked",
+    "oem_circuit": "missing",
+    "oem_location": "missing",
+    "vin_fitment": "unknown",
+    "expert_review": "pending",
+    "visual_assets": "not_created",
+    "runtime_import": "not_performed"
+  },
+  "handoff": "Глобальная дедупликация артикулов, OEM-геометрия, реальные связи и VIN — отдельная проверка. Не считать записи иллюстрациями."
+}
