@@ -1,0 +1,114 @@
+{
+  "id": "wabco-ecas-height-4410501000",
+  "article": "4410501000",
+  "nameRu": "Датчик высоты ECAS",
+  "manufacturer": "WABCO",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-ecas-height-4410501000.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en_GB/4410501000",
+      "publisher": "ZF/WABCO",
+      "checked": "2026-11-26"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150801433.pdf",
+      "publisher": "WABCO",
+      "revision": "10.2019",
+      "section": "OptiLevel",
+      "textChecked": true,
+      "visualChecked": false,
+      "screenshotError": "timeout"
+    }
+  ],
+  "spec": {
+    "voltageV": 12,
+    "currentMa": 90,
+    "rangeDegrees": [
+      -50,
+      50
+    ],
+    "type": "inductive",
+    "lever": "straight",
+    "lengthMm": 100,
+    "dimensionsMm": [
+      110,
+      128,
+      60
+    ],
+    "massKg": 0.126,
+    "temperatureC": [
+      -40,
+      80
+    ],
+    "protection": "IP6K9K"
+  },
+  "crossReferences": [
+    {
+      "make": "KRONE",
+      "article": "515005712",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KÄSSBOHRER",
+      "article": "21151103152",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KÖGEL",
+      "article": "65031430",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "LANGENDORF",
+      "article": "1273177",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCANIA",
+      "article": "1934584",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "1055349",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHWARZMÜLLER",
+      "article": "86461",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "TIRSAN",
+      "article": "21151103152",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "DAF",
+      "article": "1365935",
+      "relation": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    }
+  ],
+  "related": [
+    {
+      "article": "4729051140",
+      "relationship": "TEBS E overview lists both components, not verified exact chassis configuration"
+    }
+  ],
+  "limitations": [
+    "Functional original visual, not accurate CAD",
+    "No physical wiring, port allocation, VIN or installation procedure",
+    "Component rating does not establish system operating limits",
+    "Expert acceptance and rendered QA pending"
+  ]
+}
