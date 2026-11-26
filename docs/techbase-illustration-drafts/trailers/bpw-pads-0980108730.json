@@ -1,0 +1,32 @@
+{
+  "id": "bpw-pads-0980108730",
+  "manufacturer": "BPW",
+  "article": "09.801.08.73.0",
+  "nameRu": "Комплект колодок 8201",
+  "family": "TS2 4309",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-pads-0980108730.svg",
+  "sources": [
+    {
+      "url": "https://www.bpw.de/uploads/tx_szdownloadcenter/BPW-News-Aftermarket_AM03_New_repair_kits_for_ECO_Disc_trailer_disc_brake_TS2_74261901e.pdf",
+      "reference": "74261901e AM03/2019, p1",
+      "visualChecked": true
+    },
+    {
+      "url": "https://www.bpw.de/fileadmin/user_upload/Service/Downloads/ECO_Disc_TS2_TSB_spare-parts-list_BPW_en_2020.pdf",
+      "reference": "item 388–398",
+      "visualChecked": false
+    }
+  ],
+  "relatedDraftIds": [
+    "bpw-ts2-4309-caliper",
+    "bpw-disc-0308835127"
+  ],
+  "catalogueNotes": "2020 catalogue identifies pad subarticles as not sold loose; distinguish TS2 3709 kit 09.801.08.72.0.",
+  "limitations": [
+    "Original schematic, not exact physical geometry or OEM drawing",
+    "No installation steps, pinout, repair limits or VIN-specific fitment",
+    "No rendered visual QA or expert acceptance"
+  ],
+  "watermark": "TrakSOS diagonal pattern"
+}
