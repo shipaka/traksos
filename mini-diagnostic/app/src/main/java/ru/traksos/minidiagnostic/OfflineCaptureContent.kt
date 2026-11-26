@@ -11,6 +11,14 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun OfflineCaptureContent(targetId:String?) {
+    var canMode by remember { mutableStateOf(false) }
+    OutlinedButton(onClick={canMode=!canMode},modifier=Modifier.fillMaxWidth()) {
+        Text(if(canMode) "Ввод полного ответа UDS" else "Импорт выбранных кадров CAN (ISO-TP)")
+    }
+    if(canMode) {
+        OfflineCanContent(targetId)
+        return
+    }
     var input by remember { mutableStateOf("") }
     var synthetic by remember { mutableStateOf(false) }
     var tooLong by remember { mutableStateOf(false) }
