@@ -145,6 +145,8 @@ def main(argv=None):
                 out.write(text)
         else:
             sys.stdout.write(text)
+        if r["findings"]:
+            print("APK manifest policy findings: " + ", ".join(r["findings"]), file=sys.stderr)
         return 2 if r["findings"] else 0
     except (ValueError, OSError, ET.ParseError, subprocess.TimeoutExpired) as exc:
         print("APK review failed: " + str(exc), file=sys.stderr)
