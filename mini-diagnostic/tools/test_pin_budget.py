@@ -12,7 +12,7 @@ class PinBudgetTest(unittest.TestCase):
         self.assertEqual(len(numbers),len(set(numbers)))
         self.assertEqual(len(pins),len({p["role"] for p in pins}))
         self.assertFalse(set(numbers)&set(data["reserved"]))
-        self.assertEqual(set(numbers),{4,13,14,16,17,18,19,21,22,23,25,26,27,32,33,34,35,36,39})
+        self.assertEqual(set(numbers),{4,13,14,16,17,18,19,21,22,23,25,26,27,32,33,35,36,39})
         for p in pins:
             self.assertIn(p["direction"],{"in","out"})
             if p["gpio"] in {34,35,36,39}:

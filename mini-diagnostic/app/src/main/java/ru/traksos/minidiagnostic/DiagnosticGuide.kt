@@ -6,14 +6,12 @@ enum class ConnectionPlace(val title:String) {
     FRONT("Передняя розетка ABS/EBS"),
     SIDE("Боковой диагностический разъём"),
     DIRECT("Напрямую к модулятору"),
-    BLINK("ABS: сигнальная лампа"),
     UNKNOWN("Разъём или блок неизвестен")
 }
 enum class ElectricalPath(val title:String) {
     ISO11992("CAN ISO 11992"),
     K_LINE("K-line"),
-    ISO11898("CAN ISO 11898"),
-    WARNING_INPUT("Сигнальная линия ABS")
+    ISO11898("CAN ISO 11898")
 }
 data class GuideEntry(val place:ConnectionPlace,val explanation:String,
     val possiblePaths:Set<ElectricalPath>,val examples:String,val warning:String,
@@ -49,12 +47,6 @@ object DiagnosticGuide {
             "Исследуем WABCO ABS/EBS, Knorr-Bremse, Haldex, VIE / ТСР SUBSYSTEM и SORL. Для каждой ревизии нужен свой подтверждённый кабель.",
             "Не отсоединять рабочие датчики и клапаны ради диагностики. Не соединять неизвестные контакты и не использовать универсальный pinout.",
             listOf(WABCO,HALDEX,"https://vbsauto.ru/literatura/","https://sorl.ru/manuals/rukovodstvo-dlya-diagnosticheskogo-oborudovaniya-sorl.pdf")),
-        GuideEntry(ConnectionPlace.BLINK,
-            "Некоторые старые ABS выводят информацию через предусмотренный производителем режим мигания контрольной лампы. Способ зависит от блока.",
-            setOf(ElectricalPath.WARNING_INPUT),
-            "Исследуется для старых ABS. Пока только справочный раздел.",
-            "Не замыкать линию предупреждения и не подавать на неё импульсы. Сначала требуется точное руководство конкретного блока.",
-            listOf(HALDEX_TOOLS)),
         GuideEntry(ConnectionPlace.UNKNOWN,
             "Если маркировка не читается, интерфейс или распиновка неизвестны, остановите подключение. Установите точную модель и найдите документацию.",
             emptySet(),

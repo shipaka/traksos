@@ -16,8 +16,10 @@ int main() {
     g.tick(203,missing); assert(g.enabledMask()==0);
     assert(g.select(G::Path::KLine,300,ok)); g.tick(400,ok); assert(g.enabledMask()==2);
     assert(g.renew(1000,ok)); g.tick(3000,ok); assert(g.enabledMask()==0);
-    assert(g.select(G::Path::WarningInput,4000,ok)); g.tick(4100,ok);
-    assert(g.enabledMask()==8 && !g.txAllowed());
+    assert(!g.select(static_cast<G::Path>(4),3999,ok));
+    assert(g.enabledMask()==0 && !g.txAllowed());
+    assert(g.select(G::Path::Iso11992,4000,ok)); g.tick(4100,ok);
+    assert(g.enabledMask()==1 && g.txAllowed());
     auto failure=ok; failure.hardwareOk=false;
     g.tick(4101,failure); assert(g.state()==G::State::Latched && g.enabledMask()==0);
     assert(!g.select(G::Path::KLine,4200,ok)); assert(!g.reset(ok));

@@ -49,7 +49,6 @@ class EcuIdentityResolver(signatures:List<IdentitySignature> = emptyList()) {
     init {
         require(rows.all { s ->
             s.targetId.isNotBlank() && s.evidence.isNotBlank() &&
-            s.path!=ElectricalPath.WARNING_INPUT &&
             IdentityDid.SUPPLIER in s.required && IdentityDid.PART in s.required &&
             (IdentityDid.HW in s.required || IdentityDid.SUPPLIER_HW in s.required) &&
             (IdentityDid.SW in s.required || IdentityDid.SUPPLIER_SW_VERSION in s.required) &&

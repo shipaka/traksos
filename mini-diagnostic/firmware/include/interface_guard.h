@@ -5,7 +5,7 @@
 // The real hardware must independently fail safe; this model cannot prove that.
 class InterfaceGuard {
 public:
-    enum class Path : uint8_t { Off=0, Iso11992=1, KLine=2, Iso11898=3, WarningInput=4 };
+    enum class Path : uint8_t { Off=0, Iso11992=1, KLine=2, Iso11898=3 };
     enum class State : uint8_t { Off, Break, Active, Latched };
     struct Conditions { bool session; bool permit; bool cable; bool lightOff; bool hardwareOk; bool authenticated; };
     static constexpr uint32_t breakMs=100; // virtual test value, not final electrical timing
@@ -41,9 +41,9 @@ public:
     uint8_t enabledMask() const {
         return state_==State::Active ? uint8_t(1u<<(static_cast<uint8_t>(desired_)-1u)) : 0;
     }
-    bool txAllowed() const { return state_==State::Active && desired_!=Path::WarningInput; }
+    bool txAllowed() const { return state_==State::Active; }
 private:
-    static bool known(Path p) { return p>=Path::Iso11992 && p<=Path::WarningInput; }
+    static bool known(Path p) { return p>=Path::Iso11992 && p<=Path::Iso11898; }
     static bool safe(Conditions c) { return c.session && c.permit && c.cable && c.lightOff && c.hardwareOk && c.authenticated; }
     State state_=State::Off;
     Path desired_=Path::Off;

@@ -8,6 +8,7 @@ object CableResearch {
     private const val HALDEX = "https://www.haldex.com/sv/europe/trailer-application-guide/ebs/diagnostic/diag-tools/"
     private const val VIE = "https://vbsauto.ru/literatura/"
     private const val SORL = "https://sorl.ru/manuals/rukovodstvo-dlya-diagnosticheskogo-oborudovaniya-sorl.pdf"
+    private const val KNORR_2023 = "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/HHFAbb20I0EBhB_Y138839-003-EN_WEB.pdf"
     val rows = listOf(
         CableResearchEntry("vcs2-k","WABCO VCS II Standard / Premium / Separate ECU",ConnectionPlace.DIRECT,ElectricalPath.K_LINE,"Разные исполнения имеют разные диагностические контакты. Нужна проверка полного номера блока и жгута.",VCS),
         CableResearchEntry("vcs2-can","WABCO VCS II Premium / Separate ECU",ConnectionPlace.FRONT,ElectricalPath.ISO11992,"CAN имеется не у всех исполнений; диагностика зависит от версии.",VCS),
@@ -15,8 +16,10 @@ object CableResearch {
         CableResearchEntry("wabco-tebs","WABCO TEBS D / E / iEBS",ConnectionPlace.FRONT,ElectricalPath.ISO11992,"Семейства для исследования; диагностический протокол и кабель ещё не подтверждены.", "https://www.wabco-customercentre.com/catalog/en_GB/4801020000"),
         CableResearchEntry("haldex-front","Haldex EB+",ConnectionPlace.FRONT,ElectricalPath.ISO11992,"Уточнить поколение и диагностический режим.",HALDEX),
         CableResearchEntry("haldex-side","Haldex EB+ SOV",ConnectionPlace.SIDE,ElectricalPath.ISO11898,"Отдельная физическая шина, нужна проверка версии и жгута.",HALDEX),
-        CableResearchEntry("haldex-abs","Haldex U-ABS / старые ABS",ConnectionPlace.BLINK,ElectricalPath.WARNING_INPUT,"Режим индикации только по инструкции конкретного блока.",HALDEX),
         CableResearchEntry("knorr-g2","Knorr-Bremse TEBS G2 / iTEBS X",ConnectionPlace.FRONT,ElectricalPath.ISO11992,"Исследовательская позиция, точная совместимость неизвестна.", "https://truckservices.knorr-bremse.com/en/de/products/service-new-parts/electronic-systems/trailer-ebs/"),
+        CableResearchEntry("knorr-side-2023","Knorr-Bremse TEBS · Bayonet 5 V CAN",ConnectionPlace.SIDE,ElectricalPath.ISO11898,"Y138839 EN003, стр. 2,4: заводская схема и кабель K010837/EZ1037. Точная ревизия и транспорт требуют проверки.",KNORR_2023),
+        CableResearchEntry("haldex-eb4-direct","Haldex EB+ 4.0 · H-CAN",ConnectionPlace.DIRECT,null,"Каталог Haldex: кабель 844511065 к H-CAN. Уровни/протокол не предполагаются автоматически.", "https://www.haldex.com/en/europe/trailer-application-guide/ebs/diagnostic/diag-tools/"),
+        CableResearchEntry("haldex-gen3-direct","Haldex EB+ Gen3 · DIAG",ConnectionPlace.DIRECT,null,"Фирменный кабель 814036001; подтверждён порт, не рабочий профиль.",HALDEX),
         CableResearchEntry("knorr-legacy","Knorr-Bremse TEBS4 / ABS",ConnectionPlace.DIRECT,null,"Интерфейс и распиновку устанавливать по модели, без подбора наугад.", "https://www.jaltest.com/en/coverage/2/12/123/remorque/trailer/trailer/"),
         CableResearchEntry("vie-front","VIE / ТСР TEBS CAN 24",ConnectionPlace.FRONT,ElectricalPath.ISO11992,"Нужна проверка маркировки и варианта с CAN 24.",VIE),
         CableResearchEntry("vie-subsystem","VIE / ТСР TEBS SUBSYSTEM",ConnectionPlace.DIRECT,null,"Отдельный порт: электрические уровни и полный кабель не подтверждены.",VIE),

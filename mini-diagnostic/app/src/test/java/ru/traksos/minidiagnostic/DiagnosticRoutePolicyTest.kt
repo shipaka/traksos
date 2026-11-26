@@ -32,7 +32,7 @@ class DiagnosticRoutePolicyTest {
         }
     }
     @Test fun researchNeverAuthorizes() {
-        assertEquals(14,CableResearch.rows.size)
+        assertEquals(16,CableResearch.rows.size)
         assertEquals(2,CableResearch.search("SORL").size)
         assertTrue(CableResearch.search("vie").all { it.name.contains("VIE") })
         assertTrue(CableResearch.search("not a module").isEmpty())

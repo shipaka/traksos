@@ -16,7 +16,7 @@ class DiagnosticGuideTest {
     @Test fun physicalPathsAreSeparated() {
         assertEquals(setOf(ElectricalPath.ISO11992),DiagnosticGuide.entry(ConnectionPlace.FRONT).possiblePaths)
         assertEquals(setOf(ElectricalPath.K_LINE,ElectricalPath.ISO11898),DiagnosticGuide.entry(ConnectionPlace.SIDE).possiblePaths)
-        assertEquals(setOf(ElectricalPath.WARNING_INPUT),DiagnosticGuide.entry(ConnectionPlace.BLINK).possiblePaths)
+        assertEquals(3,ElectricalPath.entries.size)
         assertTrue(DiagnosticGuide.entry(ConnectionPlace.UNKNOWN).possiblePaths.isEmpty())
         assertTrue(DiagnosticGuide.entry(ConnectionPlace.DIRECT).possiblePaths.contains(ElectricalPath.K_LINE))
     }

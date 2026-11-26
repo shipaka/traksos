@@ -78,11 +78,6 @@
       "role": "WATCHDOG_HEARTBEAT"
     },
     {
-      "gpio": 34,
-      "direction": "in",
-      "role": "WARNING_SENSE"
-    },
-    {
       "gpio": 35,
       "direction": "in",
       "role": "INTERLOCK_FEEDBACK"
@@ -114,7 +109,7 @@
     11
   ],
   "limitations": [
-    "No unused general-purpose header GPIO in proposed budget",
+    "GPIO34 unallocated input-only; no additional output capacity",
     "No individual feedback for seven light channels allocated",
     "No ECU valve/electronics power enable or feedback allocated",
     "All signal conditioning and independent watchdog/one-hot interlock require electrical design and validation",
