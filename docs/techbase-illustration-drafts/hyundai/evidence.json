@@ -1,0 +1,157 @@
+{
+  "status": "DRAFT_EXPERT_PENDING",
+  "date": "2026-11-26",
+  "sources": {
+    "a": {
+      "url": "https://www.hyundai.com/content/hyundai/worldwide/en/newsroom/detail/hyundai-motor%E2%80%99s-delivery-of-xcient-fuel-cell-trucks-in-europe-heralds-its-commercial-truck-expansion-to-global-markets-0000000615.html",
+      "section": "Main Specifications; 7 October 2020",
+      "lines": "148–190"
+    },
+    "b": {
+      "url": "https://ecv.hyundai.com/global/en/newsroom/press-releases/hyundai-motor-unveils-the-new-xcient-heavy-duty-fuel-cell-truck-at-act-expo-2025-BL00200607",
+      "section": "North America ACT Expo 29 April 2025",
+      "lines": "67–101"
+    },
+    "c": {
+      "url": "https://ecv.hyundai.com/global/en/products/xcient-fuel-cell-tractor-fcev",
+      "section": "How hydrogen system works / North America key specs",
+      "lines": "158–180, 518–608"
+    },
+    "d": {
+      "url": "https://trucknbus.hyundai.com/global/en/products/truck/xcient",
+      "section": "Performance & Safety / Maintenance",
+      "lines": "277–307"
+    }
+  },
+  "illustrations": [
+    {
+      "file": "xcient-fc-stack-2020-2025.svg",
+      "model": "XCIENT Fuel Cell · 2020 / 2025",
+      "title": "Сравнение топливных элементов",
+      "sources": [
+        "a",
+        "b"
+      ],
+      "claim": "2020 Swiss 4×2: 190 kW = 2×95 kW; 2025 North America: 180 kW = 2×90 kW.",
+      "limitations": [
+        "Швейцарское шасси 2020: 2 × 95 кВт. Североамериканская модель 2025: 2 × 90 кВт.",
+        "Сравнение заявленных номиналов; не доказательство взаимозаменяемости."
+      ]
+    },
+    {
+      "file": "xcient-fc-battery-variants.svg",
+      "model": "XCIENT Fuel Cell · 2020 / 2025",
+      "title": "Два исполнения тяговой батареи",
+      "sources": [
+        "a",
+        "b",
+        "c"
+      ],
+      "claim": "2020 4×2: Akasol 661 V / 73.2 kWh. North America: 72 kWh; current NA tractor specification 3×24 kWh.",
+      "limitations": [
+        "Данные разных конфигураций. Напряжение североамериканской батареи здесь не установлено.",
+        "Условные блоки без схемы соединения модулей."
+      ]
+    },
+    {
+      "file": "xcient-fc-motor-variants.svg",
+      "model": "XCIENT Fuel Cell · 2020 / 2025",
+      "title": "Тяговый электромотор и момент",
+      "sources": [
+        "a",
+        "b"
+      ],
+      "claim": "2020 Swiss 4×2: Siemens motor/inverter 350 kW / 3400 Nm. 2025 NA: 350 kW / 2237 Nm.",
+      "limitations": [
+        "Максимальный момент относится к указанной производителем силовой установке.",
+        "Моторы изображены условно; физические размеры и совместимость неизвестны."
+      ]
+    },
+    {
+      "file": "xcient-fc-transmission-variants.svg",
+      "model": "XCIENT Fuel Cell · 4×2 / NA 6×4",
+      "title": "Различия автоматических трансмиссий",
+      "sources": [
+        "a",
+        "c"
+      ],
+      "claim": "2020 Swiss 4×2: Allison ATM 4500R 6 forward, 1 reverse. Current NA 6×4 tractor: 5-speed automatic; reverse count not specified on page.",
+      "limitations": [
+        "Сравнение доступных спецификаций, а не схема переключения или указание на совместимость.",
+        "Количество передач заднего хода для текущего NA исполнения не уточняется."
+      ]
+    },
+    {
+      "file": "xcient-fc-na-energy-flow.svg",
+      "model": "XCIENT Fuel Cell Tractor · NA 6×4",
+      "title": "Потоки энергии при движении и торможении",
+      "sources": [
+        "c"
+      ],
+      "claim": "Fuel cells generate electricity, lithium-ion battery stores energy, motor drives axle; regenerative braking returns electricity to battery.",
+      "limitations": [
+        "Стрелки показывают преобразование энергии, не электрическую схему или трассы проводов.",
+        "Управляющая силовая электроника здесь не детализирована."
+      ]
+    },
+    {
+      "file": "xcient-fc-na-tanks-zone.svg",
+      "model": "XCIENT Fuel Cell Tractor · NA",
+      "title": "Зона размещения водородных баллонов",
+      "sources": [
+        "c"
+      ],
+      "claim": "OEM states ten hydrogen tanks mounted behind cab. Exact mounting geometry not established.",
+      "limitations": [
+        "Производитель подтверждает размещение десяти баллонов позади кабины.",
+        "Зона выделена условно, без геометрии кронштейнов, вентилей и магистралей."
+      ]
+    },
+    {
+      "file": "xcient-diesel-4x2-ecas.svg",
+      "model": "XCIENT · дизельный тягач 4×2",
+      "title": "Задняя пневмоподвеска ECAS",
+      "sources": [
+        "d"
+      ],
+      "claim": "OEM describes optional/configuration rear four-bag air suspension with automatic ECAS for 4×2 tractor.",
+      "limitations": [
+        "Четырёхбаллонное исполнение с автоматическим управлением уровнем.",
+        "Схема считает баллоны, но не задаёт их монтажные координаты или контур пневмолиний."
+      ]
+    },
+    {
+      "file": "xcient-diesel-cab-suspension.svg",
+      "model": "XCIENT · дизельная линейка",
+      "title": "Подвеска кабины: функции амортизаторов",
+      "sources": [
+        "d"
+      ],
+      "claim": "OEM describes integrated spring and shock absorber, with lateral shock absorber to reduce side-to-side motion.",
+      "limitations": [
+        "Упругая опора и амортизатор снижают вертикальные колебания; поперечный амортизатор — боковые.",
+        "Показаны функции элементов, а не точки крепления на конкретной кабине."
+      ]
+    },
+    {
+      "file": "xcient-diesel-retarder.svg",
+      "model": "XCIENT · дизельная линейка",
+      "title": "Дополнительный тормоз-замедлитель",
+      "sources": [
+        "d"
+      ],
+      "claim": "Retarder offered as an option, supplementary braking reduces service brake lining wear; exact retarder variant unspecified.",
+      "limitations": [
+        "Ретардер — опциональная система. Внутреннее устройство и расположение по модели не установлены.",
+        "Функциональное сравнение, без указания на тип жидкости, охлаждение или метод ремонта."
+      ]
+    }
+  ],
+  "quality": {
+    "sourceText": "opened official Hyundai HTML in this run",
+    "installedPhotos": "not checked",
+    "renderedVisual": "not independently checked",
+    "exactFitment": "not established",
+    "accepted": false
+  }
+}
