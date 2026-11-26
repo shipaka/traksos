@@ -1,0 +1,146 @@
+{
+  "schema": "techbase-source-evidence-v1",
+  "id": "scania-ebs-2001-pneumatic-location",
+  "status": "draft_source_research_only",
+  "manufacturer": "Scania",
+  "system": "EBS",
+  "source": {
+    "author": "Scania CV AB",
+    "document": "10:03-08",
+    "issue": "1 en",
+    "year": 2001,
+    "documentNumber": "1 712 935",
+    "title": "Testing brake system",
+    "url": "https://www.truckspares365.co.uk/hub/wp-content/uploads/2022/08/100308en.pdf",
+    "host": "third-party mirror; reproduction rights not verified",
+    "visuallyCheckedPrintedPages": [
+      12,
+      14
+    ],
+    "textCheckedPrintedPages": [
+      1,
+      13,
+      15
+    ],
+    "note": "p13 screenshot unavailable; component legend retrieved as text"
+  },
+  "scope": {
+    "documentApplicability": "EBS-equipped vehicles covered by this 2001 booklet",
+    "model": null,
+    "generation": null,
+    "productionYears": null,
+    "vinRange": null,
+    "exactCab": null,
+    "exactAxleFormula": null,
+    "warning": "Overview shows variant alternatives; not a single verified bill of materials. Do not generalize to later Scania families."
+  },
+  "mountingEvidence": [
+    {
+      "code": "E43",
+      "role": "central EBS ECU",
+      "zone": "forward cab area below central electrical assembly in depicted overview",
+      "page": 12
+    },
+    {
+      "code": "C92",
+      "role": "trailer electrical coupling",
+      "zone": "rear end of chassis",
+      "page": 12
+    },
+    {
+      "code": "D39",
+      "role": "pedal position sensing",
+      "zone": "forward cab pedal area",
+      "page": 12
+    },
+    {
+      "code": "V82",
+      "role": "left axle control module",
+      "zone": "forward chassis near front axle",
+      "page": 12
+    },
+    {
+      "code": "V83",
+      "role": "right axle control module",
+      "zone": "front axle region on opposite side",
+      "page": 12
+    },
+    {
+      "code": "V95",
+      "alternatives": [
+        "V84",
+        "V85"
+      ],
+      "role": "rear axle control module variant",
+      "zone": "rear chassis near axle group",
+      "page": 12,
+      "variant": "V95 EBS 2.2; alternatives must not be counted together"
+    },
+    {
+      "code": "V96",
+      "alternatives": [
+        "V86"
+      ],
+      "role": "third axle control module variant",
+      "zone": "rear axle group",
+      "page": 12,
+      "variant": "V96 6x4 EBS 2.2"
+    },
+    {
+      "code": "T13/T28",
+      "role": "wheel speed sensing",
+      "zone": "rear wheel/hub positions depicted",
+      "page": 12
+    }
+  ],
+  "functionalEvidence": {
+    "page": 14,
+    "kind": "logical pneumatic circuit illustration, not installation routing",
+    "circuits": [
+      {
+        "code": "A",
+        "role": "supply"
+      },
+      {
+        "code": "B",
+        "role": "front axle brakes"
+      },
+      {
+        "code": "C",
+        "role": "rear axle brakes"
+      },
+      {
+        "code": "D",
+        "role": "trailer brakes"
+      },
+      {
+        "code": "E",
+        "role": "auxiliary consumers"
+      },
+      {
+        "code": "F",
+        "role": "parking brake"
+      }
+    ],
+    "doNotInfer": "No physical pipe path, harness routing, tube length or actual paint colours from diagram colours."
+  },
+  "gates": {
+    "source_checked": true,
+    "model_fitment": "unknown",
+    "article_fitment": "unknown",
+    "physical_route_verified": false,
+    "expert_reviewed": false,
+    "rights_cleared": false,
+    "rendered_visual": false,
+    "merged": false,
+    "deployed": false
+  },
+  "next": [
+    "Obtain VIN-filtered OEM SWS mounting documentation and parts catalogue for exact cab, chassis and brake option",
+    "Verify all node geometries, part numbers, variants and physical routes before creating realistic model-specific artwork"
+  ],
+  "countDelta": {
+    "strict": 0,
+    "visualReady": 0
+  }
+}
