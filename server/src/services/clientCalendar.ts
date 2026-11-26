@@ -25,6 +25,11 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
   // One statement/snapshot: a revoked driver assignment cannot authorize a subsequent read.
   // No addresses, personal contacts, private notes, prices or performer profiles are returned.
   const items = await db.query(`
+    with actor as (
+      select id, roles, owner_id from users
+      where id=$1 and status='active' and deleted_at is null
+        and roles && '{client,driver}'::text[]
+    )
     select * from (
       select 'service' as kind, b.id, b.number, b.status, b.need as service,
         b.vehicle_id, b.vehicle->>'brand' as brand, b.vehicle->>'model' as model,
@@ -41,12 +46,11 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
              when b.status in ('cancelled','declined') then b.status
              else 'pending' end as confirmation,
         null::uuid as order_id, null::text as order_status
-      from service_bookings b
+      from service_bookings b cross join actor a
       where b.when_day between $2::date and $3::date
         and b.status in ('new','clarify','expected','arrived','diagnostics','in_work','waiting_part','agreeing','ready','invoiced','disputed','closed','cancelled','declined')
-        and (b.client_id=$1 or (b.created_by=$1 and exists (
-          select 1 from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
-          where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=b.client_id and v.id=b.vehicle_id
+        and (b.client_id=a.id or (b.created_by=a.id and 'driver'=any(a.roles) and a.owner_id=b.client_id and exists (
+          select 1 from vehicles v where v.owner_id=a.owner_id and v.driver_id=a.id and v.id=b.vehicle_id
         )))
       union all
       select 'roadside' as kind, r.id, o.number, r.status, o.service,
@@ -57,11 +61,11 @@ export async function clientCalendar(db: Db, user: AuthUser, from: string | null
         case when r.status='confirmed' then 'confirmed' when r.status in ('cancelled','completed') then r.status else 'pending' end,
         o.id as order_id, o.status as order_status
       from performer_time_reservations r join orders o on o.id=r.order_id and o.client_id=r.client_id
+      cross join actor a
       where r.starts_at < (($3::date + 1)::timestamp at time zone 'Europe/Moscow')
         and r.ends_at > ($2::date::timestamp at time zone 'Europe/Moscow')
-        and (o.client_id=$1 or (o.created_by=$1 and exists (
-          select 1 from users u join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
-          where u.id=$1 and 'driver'=any(u.roles) and u.owner_id=o.client_id and v.id=o.vehicle_id
+        and (o.client_id=a.id or (o.created_by=a.id and 'driver'=any(a.roles) and a.owner_id=o.client_id and exists (
+          select 1 from vehicles v where v.owner_id=a.owner_id and v.driver_id=a.id and v.id=o.vehicle_id
         )))
         -- Do not call a cancelled or otherwise terminal order a live appointment.
         and (r.status in ('cancelled','completed') or o.status not in ('cancelled','completed','no_performer'))
