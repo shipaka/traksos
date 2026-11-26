@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis",
+    "target_model": "440S46 and adjacent explicitly catalogued models",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "mahle:008tc17836000",
+      "manufacturer": "MAHLE",
+      "article": "008 TC 17836 000",
+      "name": "Турбокомпрессор",
+      "system": "boost",
+      "source": "https://www.mahle-aftermarket.com/media/homepage/facelift/media-center/product-catalogs/2025_turbocharger_catalog_online_version.pdf",
+      "printed_pages": [
+        85
+      ],
+      "visual_check": "failed: file size limit; parsed catalogue row checked",
+      "scope": "manufacturer_text_model_engine",
+      "applications": [
+        {
+          "family": "Stralis I",
+          "model": "440S42",
+          "engine": [
+            "F3AE3681B",
+            "F3AE3681D"
+          ],
+          "power_kw": 310,
+          "catalogue_from": "2006-01"
+        },
+        {
+          "family": "Stralis I",
+          "model": "440S45",
+          "engine": [
+            "F3AE3681A"
+          ],
+          "power_kw": 331,
+          "catalogue_from": "2006-07"
+        }
+      ],
+      "related_catalogue_codes": [
+        "008 TM 17836 000",
+        "008 TA 17836 000"
+      ],
+      "note": "Не переносить на 440S46 F3AE3681Y. Связанные коды не считать самостоятельными подтверждёнными карточками."
+    },
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "mahle:008tc17392000",
+      "manufacturer": "MAHLE",
+      "article": "008 TC 17392 000",
+      "name": "Турбокомпрессор",
+      "system": "boost",
+      "source": "https://www.mahle-aftermarket.com/media/homepage/facelift/media-center/product-catalogs/2025_turbocharger_catalog_online_version.pdf",
+      "printed_pages": [
+        85
+      ],
+      "visual_check": "failed: file size limit; parsed catalogue row checked",
+      "scope": "manufacturer_text_model_engine",
+      "applications": [
+        {
+          "family": "Stralis I",
+          "model": "450S38T",
+          "engine": [
+            "F3BE0681G"
+          ],
+          "power_kw": 278,
+          "catalogue_from": "2005-08"
+        },
+        {
+          "family": "Stralis I",
+          "model": "450S42T",
+          "engine": [
+            "F3BE0681V"
+          ],
+          "power_kw": 309,
+          "catalogue_from": "2005-08"
+        },
+        {
+          "family": "Stralis I",
+          "model": "570S42T",
+          "engine": [
+            "F3BE0681V"
+          ],
+          "power_kw": 309,
+          "catalogue_from": "2005-08"
+        }
+      ],
+      "related_catalogue_codes": [
+        "008 TM 17392 000",
+        "008 TA 17392 000"
+      ],
+      "note": "Отдельная группа двигателей и рынков; не подменяет 440S46 и не объявляется взаимозаменяемой с 17836."
+    },
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "nrf:30452",
+      "manufacturer": "NRF",
+      "article": "30452",
+      "name": "Интеркулер",
+      "system": "charge_air",
+      "source": "https://www.nrf.eu/wp-content/uploads/2019/07/NRF-Truck-and-bus-range-June-2019.pdf",
+      "printed_pages": [
+        8
+      ],
+      "visual_check": "PDF page index 9 screenshot confirmed",
+      "scope": "explicit_catalogue_family",
+      "applications": [
+        {
+          "family": "IVECO Stralis",
+          "catalogue_period_raw": "00-"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "504015564"
+        }
+      ],
+      "note": "Дата в таблице не является доказательством года начала производства. Двигатель, размеры и комплектация конкретного ТС не подтверждены."
+    }
+  ],
+  "hold": [
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "holset:4033317h",
+      "manufacturer": "Holset",
+      "article": "4033317H",
+      "name": "HE500VG",
+      "system": "boost",
+      "scope": "secondary_supplier_only",
+      "source": "https://turbomotori.com/en/prodotto/turbo-4033317h-iveco-stralis-eurorider",
+      "applications": [
+        {
+          "family": "Stralis",
+          "engine_family": "F3AE3681"
+        }
+      ],
+      "candidate_oe": [
+        "504269260",
+        "504269261"
+      ],
+      "reason": "Нет точной строки F3AE3681Y и официального подтверждения производителя. Не рекомендовать как замену."
+    },
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "nrf:309272",
+      "manufacturer": "NRF",
+      "article": "309272",
+      "name": "Интеркулер",
+      "system": "charge_air",
+      "scope": "conflicting_model_evidence",
+      "source": "https://www.nrf.eu/wp-content/uploads/2019/07/NRF-Truck-and-bus-range-June-2019.pdf",
+      "printed_pages": [
+        8
+      ],
+      "visual_check": "PDF page index 9 screenshot confirmed",
+      "applications": [
+        {
+          "model": "AD 190T38 W / AT 190T38 W",
+          "catalogue_period_raw": "04-"
+        }
+      ],
+      "candidate_oe": [
+        "41214448",
+        "500060970"
+      ],
+      "secondary_source": "https://tachka.ru/intercooler/iveco/stralis/2002/nrf-309272-7193",
+      "reason": "Продавец указывает AS 440S46, но в проверенной таблице производителя указан другой автомобиль. Не публиковать применимость Stralis, пока не найден актуальный OEM/NRF каталог."
+    }
+  ],
+  "systems": [
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "iveco-stralis-cursor10-euro5-460-boost",
+      "name": "Cursor 10 Euro V / EEV, 460 л.с.",
+      "scope": "oem_engine_family",
+      "source": "https://www.iveco.com/global/Press/PressReleases/2013/Stralis-HiWay-and-HIeSCR-TV-certifies-a-fuel-consumption-reduction-of-233",
+      "secondary_source": "https://www.iveco.com/poland/Odkryj-IVECO/centrum-prasowe/Informacja-prasowa/2013/Iveco-Stralis-Hi-Way-w-firmie-Epo-Trans-Logistics",
+      "note": "Подтверждён пример Hi-Way с Cursor 10, 10308 см³, 338 кВт; точный артикул турбины и тип привода неизвестны."
+    },
+    {
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold",
+      "id": "iveco-stralis-cursor11-xp-460-evgt",
+      "name": "Cursor 11 Euro VI / Stralis XP, 460 л.с.",
+      "scope": "oem_engine_family",
+      "source": "https://www.iveco.com/global/Press/PressReleases/2017/IVECO-610-NEW-STRALIS-XP-and-NP-for-the-Lannutti-Group",
+      "secondary_source": "https://www.fptindustrial.com/en/engines/Onroad/Trucks/CURSOR-11",
+      "additional_source": "https://www.iveco.com/france/Decouvrir-IVECO/Presse/Communiques-de-presse/2012/IVECOLANCELENOUVEAUSTRALISHI-WAY",
+      "note": "IVECO подтверждает AT440S46T/XP 6x2 с Cursor 11, FPT описывает e-VGT для семейства Cursor 11. Конкретный артикул привода, схема и калибровка не установлены."
+    }
+  ],
+  "existing_links": [
+    {
+      "file": "stralis-edc-scr-pneumatic-sensors-evidence.json",
+      "ids": [
+        "cojali:2260729",
+        "cojali:2260991"
+      ],
+      "scope": "previous MAP hold records, not promoted or counted"
+    },
+    {
+      "file": "stralis-440s46-filter-variants-evidence.json",
+      "ids": [
+        "mann-filter:c33920/5",
+        "mann-filter:c321420/2"
+      ],
+      "scope": "previous intake filters, not counted"
+    }
+  ],
+  "diagnostic_cards": [
+    {
+      "id": "boost-low-power",
+      "title": "Недостаточная тяга",
+      "source": "https://www.garrettmotion.com/turbo-replacement/turbo-diagnostics/turbocharger-system-diagnostics-guide/",
+      "symptoms": [
+        "недостаточная мощность",
+        "посторонний шум",
+        "дымность"
+      ],
+      "checks": [
+        "зафиксировать DTC и условия проявления",
+        "проверить тракт воздуха на засорение и негерметичность по OEM",
+        "проверить выпуск, смазку и подачу топлива до вывода о неисправности турбины"
+      ],
+      "limits": "Не назначать замену только по симптомам; осмотр на холодном выключенном двигателе, параметры по OEM."
+    },
+    {
+      "id": "boost-oil-leak",
+      "title": "Масло во впуске или выпуске",
+      "source": "https://www.garrettmotion.com/knowledge-center-category/turbo-replacement/the-turbocharger-oil-and-gas-sealing-system/",
+      "checks": [
+        "проверить причины нарушения отвода масла и давления по регламенту",
+        "сопоставить расход масла, дымность и состояние двигателя"
+      ],
+      "limits": "Масляные следы сами по себе не доказывают дефект турбины. При признаках разноса, чрезмерного дыма или опасной потери масла прекратить эксплуатацию."
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-turbo-two-streams",
+      "nodes": [
+        "воздушный фильтр",
+        "компрессор",
+        "интеркулер",
+        "впуск",
+        "цилиндры",
+        "выпуск",
+        "турбина",
+        "система нейтрализации"
+      ],
+      "purpose": "Два потока и общая ось турбины; показать принцип без точной трассы патрубков."
+    },
+    {
+      "id": "stralis-evgt-control",
+      "nodes": [
+        "ЭБУ двигателя",
+        "управление геометрией",
+        "турбина",
+        "обратная связь"
+      ],
+      "purpose": "Концептуальный принцип e-VGT для Cursor 11, без номеров контактов, калибровки и неподтверждённых деталей."
+    },
+    {
+      "id": "stralis-intercooler-reference",
+      "nodes": [
+        "горячий наддувочный воздух",
+        "теплообменник",
+        "охлаждённый воздух",
+        "наружный воздушный поток"
+      ],
+      "purpose": "Отдельно NRF 30452 и предупреждение о 309272; не копировать геометрию без разрешённого фото."
+    },
+    {
+      "id": "stralis-turbo-lubrication",
+      "nodes": [
+        "подача масла",
+        "подшипниковый корпус турбины",
+        "слив масла"
+      ],
+      "purpose": "Функциональная связь смазки и неисправностей; без давлений, диаметров и точного расположения."
+    }
+  ],
+  "rights": "Оригинальные описания и ссылки, без копирования OEM графики. Будущие собственные изображения — стандарт TrakSOS #278.",
+  "release_gates": [
+    "global dedup",
+    "exact 440S46 turbo and actuator number",
+    "VIN",
+    "OEM layout",
+    "MAHLE visual verification",
+    "expert/legal review",
+    "image creation",
+    "runtime/CI"
+  ],
+  "verified_illustrations_added": 0
+}
