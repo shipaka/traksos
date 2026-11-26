@@ -14,7 +14,7 @@ object HaldexExpandedReference {
                 put("EPRV $m $key SC DRIVE",name to "КЗ с постоянным возбуждением")
                 put("EPRV $m $key UNSPEC",name to "Сбой управления обмоткой")
             }
-            put("EPRV $m SLOW REC","Модулятор $m" to "Замедленное растормаживание колеса")
+            put("EPRV $m SLOW REC","Модулятор $m" to "Замедленное восстановление скорости одного колеса")
             put("EPRV $m DEL SC","Датчик выходного давления $m" to "КЗ")
             put("EPRV $m DEL OC","Датчик выходного давления $m" to "Обрыв")
         }
@@ -36,11 +36,11 @@ object HaldexExpandedReference {
         put("BRK APPLY OC","Соленоид подачи тормозного давления" to "Обрыв")
         put("BRK APPLY SC DRIVE","Соленоид подачи тормозного давления" to "КЗ с постоянным возбуждением")
         // BRK APPLY UNSPEC: omit, different meaning in Info Centre 2 table.
-        for(i in 1..5) put("AUX$i","Дополнительный выход $i" to "Обрыв либо КЗ")
+        for(i in 1..5) put("AUX$i","Дополнительная цепь $i" to "Обрыв либо КЗ системы или проводки; назначение зависит от конфигурации")
         put("SLAVE VALVE SENSOR","Датчик давления ведомого клапана" to "Обрыв либо КЗ")
         put("SLAVE VALVE MODULATOR","Соленоиды ведомого клапана" to "Обрыв либо КЗ")
         put("SLAVE VALVE CABLE","Жгут ведомого клапана" to "Обрыв либо КЗ")
-        put("SLAVE VALVE SLOW REC","Ведомый клапан" to "Замедленное растормаживание")
+        put("SLAVE VALVE SLOW REC","Ведомый клапан" to "Замедленное восстановление скорости одного колеса")
         put("SLAVE SUSP LOW","Давление подвески ведомого блока" to "Вне рабочего диапазона")
         put("PNEUMATIC DEMAND LOSS","Пневматическое управление" to "Нет соответствующего управляющего давления")
         put("TOWED CAN DEMAND LOSS","CAN тягач–прицеп" to "Нарушение линии связи")
