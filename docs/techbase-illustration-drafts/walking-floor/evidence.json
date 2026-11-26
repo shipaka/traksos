@@ -1,0 +1,76 @@
+{
+  "status": "DRAFT_EXPERT_PENDING",
+  "date": "2026-11-26",
+  "sources_verified": "OEM product HTML text only; no installed photos or rendered visual verification",
+  "illustrations": [
+    {
+      "file": "cf500-slc-bulkmover-planks.svg",
+      "model": "Cargo Floor CF500 SLC",
+      "title": "Стандарт и Bulkmover: ширина профилей",
+      "source": "https://www.cargofloor.com/en/moving-floor/bulkmover",
+      "claim": "15 широких профилей вместо 21 при одинаковой общей ширине пола; Bulkmover предназначен для насыпных грузов. Не использовать как доказательство взаимозаменяемости профилей.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "cf500-sl-slc-cylinder-variants.svg",
+      "model": "Cargo Floor CF500 SL / SLC",
+      "title": "Различие типов цилиндров",
+      "source": "https://www.cargofloor.com/en/cilindercheck",
+      "claim": "SL — длинная версия, SLC — короткая. Производитель прямо запрещает считать их взаимозаменяемыми; сверять номер системы и оригинальный каталог.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "cf500-lr-subdeck.svg",
+      "model": "Cargo Floor CF500 SLC LR",
+      "title": "Подвижный пол и сплошная опора",
+      "source": "https://www.cargofloor.com/en/moving-floor/lr-leak-resist",
+      "claim": "LR: сплошная продольная опора под профилями, специальный поднастил без уплотнений; соединения с приводом могут пропускать жидкость. Не гарантирована полная герметичность.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "cf-drive-application.svg",
+      "model": "Cargo Floor — семейства приводов",
+      "title": "Выбор семейства по назначению",
+      "source": "https://www.cargofloor.com/en/moving-floor/driveunit",
+      "claim": "CF500 SLC — стандарт; CF600 — низкое давление; CF800 HD — тяжёлые условия; CF100 SLL — облегчённые применения. Не подбор по VIN.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "keith-rx2-rx3.svg",
+      "model": "KEITH RX2 / RX3",
+      "title": "Два или три цилиндра",
+      "source": "https://www.keithwalkingfloor.com/rx-technology/",
+      "claim": "RX2 — двухцилиндровая архитектура для отдельных сельскохозяйственных и древесных грузов; RX3 — трёхцилиндровая для более разнообразных тяжёлых применений.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "keith-rx-protection.svg",
+      "model": "KEITH RX Technology",
+      "title": "Защита и переключение",
+      "source": "https://www.keithwalkingfloor.com/rx-technology/",
+      "claim": "Платформа RX включает автоматическое переключение, защиту от перегрева и картриджные обратные клапаны. Точные соединения и логика не показаны.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "keith-rfii-bore-variants.svg",
+      "model": "KEITH RUNNING FLOOR II",
+      "title": "Варианты диаметра цилиндра",
+      "source": "https://www.keithwalkingfloor.com/mobile-unloaders/",
+      "claim": "Каталожные номиналы диаметра цилиндра: 3,0 / 3,5 / 4,0 дюйма (76 / 89 / 102 мм в таблице производителя). Не размеры для ремонта.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    },
+    {
+      "file": "keith-floor-profile-applications.svg",
+      "model": "KEITH WALKING FLOOR",
+      "title": "Семейства профилей пола",
+      "source": "https://www.keithwalkingfloor.com/mobile-unloaders/",
+      "claim": "LEAKPROOF — влажные грузы, V-FLOOR — тяжёлые и высокотемпературные применения, PRESSURE SEAL LITE — мелкие фракции, STANDARD ALUMINUM — универсальный профиль. Сечения не показаны.",
+      "scope": "functional comparison only, exact serial/chassis fitment unknown"
+    }
+  ],
+  "limitations": [
+    "not OEM geometry or repair/installation guidance",
+    "no hydraulic routing, pinout, mounting dimensions or exact installation claims",
+    "independent technical and visual review pending; publication HOLD"
+  ]
+}
