@@ -16,7 +16,7 @@ class WabcoCodeReaderReferenceTest {
         assertTrue(DisplayReferenceLookup.find(d,"1/5")!!.condition!!.contains("Обрыв"))
         assertTrue(DisplayReferenceLookup.find(e,"172/15")!!.condition!!.contains("Остаточное"))
         assertFalse(DisplayReferenceLookup.find(e,"172/15")!!.exactPair)
-        assertTrue(DisplayReferenceLookup.find(e,"172/15")!!.source!!.contains("#page=24"))
+        assertTrue(DisplayReferenceLookup.find(e,"172/15")!!.source!!.contains("#page=25"))
         assertNull(DisplayReferenceLookup.find(d,"172/15"))
         assertNull(DisplayReferenceLookup.find(v,"1/5"))
         assertNull(DisplayReferenceLookup.find(e,"255/1"))
