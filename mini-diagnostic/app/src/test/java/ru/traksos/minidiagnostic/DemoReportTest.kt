@@ -26,4 +26,34 @@ class DemoReportTest {
         assertTrue(rows.all { it.automatic && it.serial.startsWith("DEMO-") })
         assertEquals(rows.take(50),DemoReportCodec.decode(DemoReportCodec.encode(rows)))
     }
+    @Test fun allCatalogModelsCanBeSimulatedWithoutVoltage() {
+        for(target in CoverageRoadmap.targets) {
+            val first=DemoReports.make("first",100,target.id,electrical,Random(2))
+            val next=DemoReports.make("next",200,target.id,electrical,Random(3))
+            assertEquals(target.id,first.targetId)
+            assertEquals(first.serial,next.serial)
+            assertNotEquals(first.id,next.id)
+            assertNull(first.supplyMv)
+            assertNull(first.minimumMv)
+            assertTrue(first.faults.size in 2..3)
+            for(f in first.faults) {
+                if(f.reference) assertTrue(ReferenceSelection.forTarget(target.id).any { edition ->
+                    val lookup=DisplayReferenceLookup.find(edition,f.code)
+                    lookup?.exactPair==true && lookup.component==f.component && lookup.condition==f.description
+                }) else assertTrue(f.code.startsWith("DEMO-"))
+            }
+            assertEquals(listOf(next,first),DemoReportCodec.decode(DemoReportCodec.encode(listOf(next,first))))
+        }
+    }
+    @Test fun sorlHasItsOwnElectronicTesterExamples() {
+        val report=DemoReports.make("sorl",1,"sorl-trailer-abs",electrical,Random(8))
+        assertTrue(report.faults.all { it.reference && !it.code.startsWith("DEMO-") })
+    }
+    @Test fun canOnlyDisconnectedScenarioDoesNotInventVoltage() {
+        val noCan=DemoElectricalPreview.snapshot(true,DemoElectricalCase.NO_CAN)
+        assertNull(noCan.supplyMv)
+        assertNull(noCan.minimumMv)
+        assertEquals(false,noCan.canTraffic)
+        assertFalse(noCan.canRunDemo)
+    }
 }
