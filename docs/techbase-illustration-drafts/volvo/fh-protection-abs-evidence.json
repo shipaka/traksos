@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "records": [
+    {
+      "article": "9347147400",
+      "manufacturer": "WABCO",
+      "category": "Quadruple Protection Valve",
+      "source": "https://www.wabco-customercentre.com/catalog/en/9347147400",
+      "oe_volvo": [
+        "21225479",
+        "20755195",
+        "20716313",
+        "20452151",
+        "20382309"
+      ],
+      "size_mm": [
+        110,
+        108,
+        96
+      ],
+      "mass_kg": 0.728,
+      "pressure_sensor": false,
+      "gtin": "7895851075184",
+      "fitment": {
+        "level": "brand_crossref_only",
+        "vin": "unknown"
+      },
+      "secondary_fitment_source": "https://portal.ecupa.com.tr/en/volvo-circuit-protection-valve-ab39347147400-21225479",
+      "secondary_fitment_note": "ECUPA alternative catalogue lists FH family years; not OEM VIN confirmation. Do not infer actual port assignments. Generic compressor boilerplate on WABCO page ignored."
+    },
+    {
+      "article": "2309218",
+      "manufacturer": "Cojali",
+      "category": "ABS modulator",
+      "source": "https://www.cojaliparts.com/en/reference/k038450n00/abs-modulator/2309218/",
+      "crossref": {
+        "manufacturer": "Knorr-Bremse",
+        "article": "K038450N00"
+      },
+      "voltage_v": 24,
+      "mass_g": 685,
+      "connection": "M22 x 1.5 VOSS (two)",
+      "electrical_connection": "Bayonet DIN 72585 A1-3",
+      "catalogue_rows": [
+        "FH 12 1993-2005",
+        "FH 16 2003-",
+        "FH 2012-",
+        "FM 12 1998-2008",
+        "FM 2005-",
+        "FM 2010-",
+        "FM9 2002-2005"
+      ],
+      "fitment": {
+        "level": "manufacturer_catalogue_model_rows",
+        "vin": "unknown"
+      },
+      "note": "Catalogue dates reproduced without assuming every chassis is compatible; ABS valve is not an EBS axle ECU."
+    }
+  ],
+  "hold": [
+    {
+      "article": "2333002",
+      "manufacturer": "Cojali",
+      "crossref": "K000918",
+      "category": "EBS trailer control valve",
+      "source": "https://www.cojaliparts.com/en/reference/k000918/ebs-modulator-valve/2333002/",
+      "reason": "Volvo brand only in catalogue; no explicit FH model, no axle EBS fitment. No illustration or publication as FH component."
+    }
+  ],
+  "assets": [
+    "wabco-9347147400-protection.svg",
+    "cojali-2309218-abs.svg"
+  ],
+  "verified_count_increment": 0,
+  "render_review": "pending",
+  "expert_review": "pending",
+  "limitations": "Original conceptual views. No OEM images copied. No exact geometry, connector pins, circuit routing, brake settings or service instructions. No confirmed EBS axle variant. Source pages accessed 2026-11-26."
+}
