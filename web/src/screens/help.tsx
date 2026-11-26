@@ -108,6 +108,7 @@ export function Help() {
       {me && <a className="btn" href="#/learn">Пройти знакомство с TrakSOS · по шагам</a>}
       <input className="field" type="search" placeholder="Поиск по справке и ситуациям" value={q} onChange={(e) => setQ(e.target.value)} />
       {me && <EconomicsGuide />}
+      {me && <details className="card" open={!!q.trim()}><summary><b>История приглашений и баллов</b></summary><p className="note">В разделе «Кого пригласили» показан общий счётчик и до 100 записей на странице. Новые регистрации могут сдвигать страницы. История баллов показывает последние 50 операций. Количество и роли приглашённых не гарантируют начисление.</p><a href="#/invite">Открыть мои приглашения</a></details>}
       {me && <ScenarioEncyclopedia query={q} />}
       {sections.map(([title, items]) => {
         const shown = items.filter(match);

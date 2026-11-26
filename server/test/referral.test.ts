@@ -109,3 +109,42 @@ test('баллы — по желанию: мастер выключил гаше
   assert.equal(ok(await t.api('GET', '/api/me/referral', undefined, master.token)).balance, b0);
   ok(await t.api('PUT', '/api/performer/extras', { pointsAuto: true }, master.token));
 });
+
+
+test('приглашённые: полный счётчик, страницы, реальные роли и изоляция владельца', async () => {
+  const account = await t.login('+79995557777');
+  await t.db.query(`
+    insert into users(phone,name,roles,referred_by,referred_at)
+    select '+7999556'||lpad(n::text,4,'0'), 'Page fixture '||n,
+      case n when 1 then array['insurer'] when 2 then array['inspection_operator']
+        when 3 then array['courier'] when 4 then array['master','service']
+        when 5 then array['driver'] else array['client'] end,
+      $1, '2026-11-25T00:00:00Z'::timestamptz
+    from generate_series(1,103) n
+  `,[account.id]);
+  const first=ok(await t.api('GET','/api/me/referral',undefined,account.token));
+  const second=ok(await t.api('GET','/api/me/referral?invitedPage=1',undefined,account.token));
+  const empty=ok(await t.api('GET','/api/me/referral?invitedPage=2',undefined,account.token));
+  assert.equal(first.invitedTotal,103);
+  assert.equal(second.invitedTotal,103);
+  assert.equal(empty.invitedTotal,103);
+  assert.equal(first.invitedPage,0);
+  assert.equal(second.invitedPage,1);
+  assert.equal(first.invitedPageSize,100);
+  assert.equal(first.invited.length,100);
+  assert.equal(second.invited.length,3);
+  assert.deepEqual(empty.invited,[]);
+  const names=[...first.invited,...second.invited];
+  assert.equal(new Set(names.map((x:any)=>x.name)).size,103);
+  for(const [n,role] of [[1,'insurer'],[2,'inspection'],[3,'courier'],[4,'master_service'],[5,'driver']])
+    assert.equal(names.find((x:any)=>x.name==='Page fixture '+n)?.who,role);
+  const again=ok(await t.api('GET','/api/me/referral',undefined,account.token));
+  assert.deepEqual(again.invited,first.invited);
+  const foreign=ok(await t.api('GET','/api/me/referral',undefined,inviter.token));
+  assert.equal(foreign.invited.some((x:any)=>x.name.startsWith('Page fixture ')),false);
+  for(const value of ['-1','1.5','abc','100001'])
+    assert.equal((await t.api('GET','/api/me/referral?invitedPage='+value,undefined,account.token)).status,400);
+  assert.equal((await t.api('GET','/api/me/referral?invitedPage=1')).status,401);
+  assert.equal(first.balance,0);
+  assert.equal(second.balance,0);
+});
