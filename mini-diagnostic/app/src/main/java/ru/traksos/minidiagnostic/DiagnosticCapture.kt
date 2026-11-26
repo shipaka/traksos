@@ -11,11 +11,11 @@ class ProfileRegistry(entries: List<ProfileEvidence> = emptyList()) {
     init {
         require(byIdentity.size == entries.size)
         require(entries.all {
-            it.identity.partNumber.isNotBlank() && !it.identity.softwareVersion.isNullOrBlank()
+            it.identity.complete()
                 && it.profileId.isNotBlank() && it.evidence.isNotBlank()
         })
     }
-    fun exact(identity: EcuIdentity?): ProfileEvidence? = identity?.let { byIdentity[it] }
+    fun exact(identity: EcuIdentity?): ProfileEvidence? = identity?.takeIf { it.complete() }?.let { byIdentity[it] }
 }
 data class CaptureMetadata(val origin: CaptureOrigin, val identity: EcuIdentity?,
     val observedAtEpochMs: Long, val statusSelectionMask: Int? = null) {
@@ -51,6 +51,14 @@ class DiagnosticCapture(private val registry: ProfileRegistry = ProfileRegistry(
             is UdsDtcResponse.Invalid -> CaptureResult.Rejected(result.reason)
             is UdsDtcResponse.Negative -> CaptureResult.Negative(metadata,hex,result.reason)
             is UdsDtcResponse.Report -> {
+                // Validate a supplied request mask against supported bits and every response
+                // record. A missing mask stays unknown; never reconstruct it from the response.
+                metadata.statusSelectionMask?.let { requested ->
+                    val effective = requested and result.availabilityMask
+                    if(effective==0) return CaptureResult.Rejected("UNSUPPORTED_STATUS_FILTER")
+                    if(result.records.any { it.statusByte and effective == 0 })
+                        return CaptureResult.Rejected("RECORD_OUTSIDE_STATUS_FILTER")
+                }
                 // Synthetic captures never receive a production interpretation, even if they
                 // claim the identity of a real ECU. Manual import does not itself verify origin.
                 val profile = if(metadata.origin == CaptureOrigin.MANUAL_BENCH_IMPORT)
@@ -80,10 +88,25 @@ object DiagnosticComparison {
         val a = before.metadata
         val b = after.metadata
         if (!samePhysicalEcuConfirmed || a.identity == null || a.identity != b.identity ||
-            a.identity.partNumber.isBlank() || a.identity.softwareVersion.isNullOrBlank()) return reject("ECU_IDENTITY")
+            !a.identity.complete()) return reject("ECU_IDENTITY")
         if (a.origin != b.origin || a.observedAtEpochMs >= b.observedAtEpochMs) return reject("CAPTURE_ORDER_OR_ORIGIN")
         if (a.statusSelectionMask == null || a.statusSelectionMask != b.statusSelectionMask ||
             before.availabilityMask != after.availabilityMask) return reject("STATUS_FILTER_OR_MASK")
+        val effective = a.statusSelectionMask and before.availabilityMask
+        if(effective==0) return reject("STATUS_FILTER_OR_MASK")
+        // Guard callers constructing Report directly instead of going through import.
+        fun valid(r:CaptureResult.Report):Boolean {
+            val decoded=UdsDtcDecoder.decode(
+                r.rawPduHex.takeIf { it.length in 6..8190 && it.length%2==0 &&
+                    it.all { c->c in '0'..'9' || c in 'A'..'F' } }
+                    ?.chunked(2)?.map { it.toInt(16).toByte() }?.toByteArray()
+                    ?: return false
+            ) as? UdsDtcResponse.Report ?: return false
+            return decoded.availabilityMask==r.availabilityMask &&
+                decoded.records.all { it.statusByte and effective!=0 } &&
+                decoded.records.map { it.raw() }==r.records.map { it.raw }
+        }
+        if(!valid(before) || !valid(after)) return reject("REPORT_INTEGRITY")
         val first = before.records.associateBy { it.raw.code }
         val second = after.records.associateBy { it.raw.code }
         val common = first.keys.intersect(second.keys)

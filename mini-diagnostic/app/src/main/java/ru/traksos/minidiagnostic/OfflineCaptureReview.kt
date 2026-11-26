@@ -22,6 +22,8 @@ object OfflineCaptureReview {
         "UNEXPECTED_SERVICE" -> "Не распознан ответ UDS 59 02"
         "NEGATIVE_RESPONSE" -> "Некорректный отрицательный ответ"
         "PDU_LENGTH" -> "Неверная длина ответа"
+        "UNSUPPORTED_STATUS_FILTER" -> "Запрошенные статусы не поддерживаются в данном ответе"
+        "RECORD_OUTSIDE_STATUS_FILTER" -> "Запись DTC не соответствует указанному фильтру"
         else -> "Ответ не принят"
     }
     fun reportText(result:CaptureResult):String=buildString {

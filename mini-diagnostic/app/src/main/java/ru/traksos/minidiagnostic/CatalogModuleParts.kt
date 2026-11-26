@@ -78,8 +78,7 @@ object CatalogModuleParts {
         CatalogModulePart("942013131","haldex-eb4","Premium+ 2M AM","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf"),
         CatalogModulePart("841001001","haldex-eb4","Ведомый модулятор 1M, не основной ECU","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf"),
         CatalogModulePart("823034001","haldex-eb3","Master 2M в системе 3M","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf"),
-        CatalogModulePart("810023001","haldex-eb3","Ведомый модулятор 1M, не основной ECU","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf")
-,
+        CatalogModulePart("810023001","haldex-eb3","Ведомый модулятор 1M, не основной ECU","https://www.haldex.com/globalassets/europe/61.-documents/haldex/006700150_en.pdf"),
         CatalogModulePart("K211213","kb-itebs-x","ECO · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("K211212","kb-itebs-x","PLUS · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("K211211","kb-itebs-x","LAC · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
@@ -87,8 +86,7 @@ object CatalogModuleParts {
         CatalogModulePart("K267861","kb-itebs-x","IAM LAC","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("ES2031","kb-itebs-x","ECO · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("ES2033","kb-itebs-x","PLUS · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
-        CatalogModulePart("ES2035","kb-itebs-x","LAC · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf")
-,
+        CatalogModulePart("ES2035","kb-itebs-x","LAC · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("4801020630","vie-tebs","ТСР · CAN 24 только при подтверждённой ревизии","https://vbsauto.ru/wp-content/uploads/2025/10/TEBS_%D0%A2%D0%A1%D0%90.pdf"),
         CatalogModulePart("4801020630","vie-tebs-subsystem","ТСР · SUBSYSTEM; наличие CAN 24 не установлено по номеру","https://vbsauto.ru/wp-content/uploads/2025/10/TEBS_%D0%A2%D0%A1%D0%90.pdf"),
         CatalogModulePart("4801020630","zf-tebs-e","WABCO Premium с PEM · отдельно сверить марку","https://www.wabco-customercentre.com/catalog/en_GB/4801020630"),
@@ -126,5 +124,14 @@ object CatalogModuleParts {
     fun targetIds(input:String):List<String> =
         (find(input).map { it.targetId } +
             if(HaldexEarlyReference.isListedPart(input)) listOf("haldex-eb1") else emptyList()).distinct()
+    // Strict ASCII part DID hints: no trim, alias, type designation, numeric range,
+    // guessed padding, or transliteration. Knorr suffixes are base-number hints only.
+    fun partDidCandidates(ascii:String):List<String> {
+        if(ascii.length>120)return emptyList()
+        val numeric=Regex("[0-9]+(?:[ -][0-9]+)*").matches(ascii) &&
+            ascii.count { it in '0'..'9' } in 9..11
+        val knorr=Regex("K[0-9]{6}(V[0-9]{2}N[0-9]{2})?").matches(ascii)
+        return if(numeric || knorr) targetIds(ascii) else emptyList()
+    }
     val count get()=rows.size
 }

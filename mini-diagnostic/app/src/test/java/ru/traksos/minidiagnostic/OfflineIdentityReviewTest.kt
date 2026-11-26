@@ -23,6 +23,24 @@ class OfflineIdentityReviewTest {
         }
         assertNull(OfflineIdentityReview.printableAscii("0031"))
     }
+    @Test fun modernPartDidHintsNeverChooseAmbiguousVariant() {
+        for((label,expected) in mapOf(
+            "K211212" to setOf("kb-itebs-x"),
+            "K211212V01N49" to setOf("kb-itebs-x"),
+            "K267862" to setOf("kb-itebs-x"),
+            "35503100090" to setOf("sorl-trailer-abs"),
+            "35682030050" to setOf("sorl-research"),
+            "4801020630" to setOf("vie-tebs","vie-tebs-subsystem","zf-tebs-e")
+        )) {
+            val actual=OfflineIdentityReview.parse(part(label),false) as OfflineIdentityResult.Accepted
+            assertEquals(label,expected,actual.catalogCandidates.toSet())
+            assertTrue((OfflineIdentityReview.parse(part(label),true) as OfflineIdentityResult.Accepted).catalogCandidates.isEmpty())
+        }
+        for(label in listOf("ES2031","k211212"," K211212","K211212 ","K211212V01","K211214",
+            "35682030020","35503100090 ","480--1020630","K211212V01N49X")) {
+            assertTrue(label,(OfflineIdentityReview.parse(part(label),false) as OfflineIdentityResult.Accepted).catalogCandidates.isEmpty())
+        }
+    }
     @Test fun rejectInvalidOrConflictingData() {
         fun reason(input:String)=(OfflineIdentityReview.parse(input,false) as OfflineIdentityResult.Rejected).reason
         assertEquals("CONFLICTING_IDENTITY",reason(part("810011001")+"\n"+part("810003101")))

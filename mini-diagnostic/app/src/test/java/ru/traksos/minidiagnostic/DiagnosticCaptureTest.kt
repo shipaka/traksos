@@ -4,7 +4,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DiagnosticCaptureTest {
-    private val ecu = EcuIdentity(EcuFamily.WABCO_TEBS_E,"TEST-PART","TEST-SW")
+    private val ecu = EcuIdentity(EcuFamily.WABCO_TEBS_E,"TEST-PART","TEST-SW","TEST-HW",ElectricalPath.ISO11992)
     private fun meta(time:Long=1,origin:CaptureOrigin=CaptureOrigin.MANUAL_BENCH_IMPORT,
         identity:EcuIdentity?=ecu,filter:Int?=0x49) = CaptureMetadata(origin,identity,time,filter)
     private val capture = DiagnosticCapture()
@@ -31,6 +31,22 @@ class DiagnosticCaptureTest {
         assertNull(description(meta(identity=ecu.copy(softwareVersion="other"))))
         assertNull(description(meta(identity=ecu.copy(softwareVersion=null))))
         assertNull(description(meta(origin=CaptureOrigin.SYNTHETIC)))
+        assertNull(description(meta(identity=ecu.copy(hardwareRevision=null))))
+        assertNull(description(meta(identity=ecu.copy(hardwareRevision="other"))))
+        assertNull(description(meta(identity=ecu.copy(path=ElectricalPath.ISO11898))))
+        assertNull(description(meta(identity=ecu.copy(path=null))))
+        for(incomplete in listOf(ecu.copy(hardwareRevision="unknown"),ecu.copy(path=null),ecu.copy(softwareVersion=" "))) {
+            assertFalse(incomplete.complete())
+            assertTrue(runCatching { ProfileRegistry(listOf(ProfileEvidence(incomplete,"fixture","test"))) }.isFailure)
+        }
+    }
+    @Test fun declaredFilterMustMatchSupportedStatusAndEveryRecord() {
+        assertEquals(CaptureResult.Rejected("UNSUPPORTED_STATUS_FILTER"),
+            capture.importHex(meta(filter=2),"590249"))
+        assertEquals(CaptureResult.Rejected("RECORD_OUTSIDE_STATUS_FILTER"),
+            capture.importHex(meta(filter=1),"590249ABCDEF08"))
+        assertTrue(capture.importHex(meta(filter=1),"590249ABCDEF09") is CaptureResult.Report)
+        assertTrue(capture.importHex(meta(filter=null),"590249ABCDEF08") is CaptureResult.Report)
     }
     @Test fun compareTracksObservedRecordsRatherThanRepair() {
         val a = capture.importHex(meta(),"590249ABCDEF090000010800000209")
@@ -44,6 +60,9 @@ class DiagnosticCaptureTest {
     @Test fun compareRejectsIncompatibleOrIncompleteCaptures() {
         val a = capture.importHex(meta(),"590249ABCDEF09")
         val b = capture.importHex(meta(2),"590249")
+        val report=b as CaptureResult.Report
+        val corrupted=report.copy(rawPduHex="590249ABCDEF09")
+        assertEquals(CaptureComparison.NotComparable("REPORT_INTEGRITY"),DiagnosticComparison.compare(a,corrupted,true))
         assertTrue(DiagnosticComparison.compare(a,b,false) is CaptureComparison.NotComparable)
         assertTrue(DiagnosticComparison.compare(b,a,true) is CaptureComparison.NotComparable)
         assertTrue(DiagnosticComparison.compare(a,capture.importHex(meta(2,filter=null),"590249"),true) is CaptureComparison.NotComparable)

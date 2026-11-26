@@ -61,10 +61,8 @@ object OfflineIdentityReview {
         // Deliberately exclude numeric-range matches, aliases and synthetic data.
         // Only the part DID may suggest an exact published catalog association.
         val part=values[IdentityDid.PART]?.let(::printableAscii)
-        val candidates=if(!synthetic && part!=null &&
-            Regex("[0-9]+(?:[ -][0-9]+)*").matches(part) &&
-            part.count { it in '0'..'9' } in 9..10)
-            CatalogModuleParts.targetIds(part) else emptyList()
+        val candidates=if(!synthetic && part!=null)
+            CatalogModuleParts.partDidCandidates(part) else emptyList()
         val sha=MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
             .joinToString("") { String.format(Locale.ROOT,"%02x",it.toInt() and 255) }
         return OfflineIdentityResult.Accepted(rows.toList(),values.toMap(),candidates.toList(),synthetic,sha,input)
