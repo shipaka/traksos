@@ -75,6 +75,7 @@ private fun MiniApp() {
     var historyOpen by remember { mutableStateOf(false) }
     var detail by remember { mutableIntStateOf(-1) }
     var bleProbeOpen by remember { mutableStateOf(false) }
+    var connectionGuideOpen by remember { mutableStateOf(false) }
 
     fun now() = SystemClock.elapsedRealtime() - session.startedAt
     fun apply(desired: LightState) {
@@ -114,6 +115,7 @@ private fun MiniApp() {
         return
     }
     if (bleProbeOpen) BenchBleDialog { bleProbeOpen = false }
+    if (connectionGuideOpen) DiagnosticGuideDialog { connectionGuideOpen = false }
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -202,6 +204,14 @@ private fun MiniApp() {
                             Text("Очистка недоступна: протокол реального ЭБУ не подтверждён.",color = Muted,fontSize = 11.sp)
                         }
                     }
+                }
+                OutlinedButton(onClick = {
+                    off()
+                    scanning = false
+                    if (scan < 100) scan = 0
+                    connectionGuideOpen = true
+                },modifier = Modifier.fillMaxWidth()) {
+                    Text("Справка: как подключиться")
                 }
                 OutlinedButton(onClick = { historyOpen = !historyOpen },modifier = Modifier.fillMaxWidth()) {
                     Text(if(historyOpen) "Скрыть историю" else "История диагностики")
