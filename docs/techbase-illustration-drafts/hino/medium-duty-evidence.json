@@ -1,0 +1,197 @@
+{
+  "batch": "TECHBASE-HINO-FUSO-MEDIUM-DUTY-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "market": "AU",
+  "sources": [
+    {
+      "url": "https://www.hino.com.au/uploads/pdf/500-standard/HSMY19FD1124FE1424C-1118%20WEB.pdf",
+      "doc": "HSMY19FD1124FE1424C-1118",
+      "pages": [
+        2
+      ],
+      "inspection": "PDF screenshot and text checked"
+    },
+    {
+      "url": "https://www.hino.com.au/uploads/pdf/500-standard/hsmy19fd1126-1118%20web.pdf",
+      "doc": "HSMY19FD1126-1118",
+      "pages": [
+        2
+      ],
+      "inspection": "PDF screenshot and text checked"
+    },
+    {
+      "url": "https://www.fuso.com.au/contentassets/342b22b9f22d4cf69eb10bf057ab715a/fighter_1424_manual_steel_suspension_e6.pdf",
+      "doc": "Fighter 1424 FK62FLZ5RFAH 4x2 steel 6MT",
+      "pages": [
+        1,
+        2
+      ],
+      "inspection": "PDF screenshots checked; cover vehicle may differ from actual configuration"
+    }
+  ],
+  "records": [
+    {
+      "path": "hino/a05c-variant-comparison.svg",
+      "model": "FD1124 Crew / FE1424 Crew / FD1126",
+      "system": "engine variants",
+      "facts": "A05C-TE 177kW/794Nm; TD 177kW/833Nm; TC 191kW/882Nm; 5.123L; 4 cyl",
+      "sources": [
+        "https://www.hino.com.au/uploads/pdf/500-standard/HSMY19FD1124FE1424C-1118%20WEB.pdf",
+        "https://www.hino.com.au/uploads/pdf/500-standard/hsmy19fd1126-1118%20web.pdf"
+      ],
+      "blobSha": "8c6f7b2f25113c5bcf36dd1c17fbeeb4c01adf95",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "hino/a05c-tc-boost.svg",
+      "model": "FD1126 A05C-TC",
+      "system": "boost",
+      "facts": "Twin turbocharged, intercooled",
+      "sources": [
+        "https://www.hino.com.au/uploads/pdf/500-standard/hsmy19fd1126-1118%20web.pdf"
+      ],
+      "blobSha": "781a0672a83f3129f5179f5eda80bd9b2c264faa",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "hino/fd1126-aoh.svg",
+      "model": "FD1126",
+      "system": "braking",
+      "facts": "Air over hydraulic dual circuit; front/rear drums 320x110/320x120mm",
+      "sources": [
+        "https://www.hino.com.au/uploads/pdf/500-standard/hsmy19fd1126-1118%20web.pdf"
+      ],
+      "blobSha": "17b1723d9d964933991acb5efac5ea3e998f35eb",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "hino/fd1126-transmission.svg",
+      "model": "FD1126 MT/AT",
+      "system": "transmission",
+      "facts": "MX06 six-speed, Allison 2500 six-speed, rear ratios 4.875/4.333",
+      "sources": [
+        "https://www.hino.com.au/uploads/pdf/500-standard/hsmy19fd1126-1118%20web.pdf"
+      ],
+      "blobSha": "27e17ef80ad1c04dc5724bdaf07200242305ba7d",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "hino/fd1126-has200.svg",
+      "model": "FD1126 SH13/HAS200",
+      "system": "suspension",
+      "facts": "Air, HAS200 with shock absorbers and mechanical ride height valve",
+      "sources": [
+        "https://www.hino.com.au/uploads/pdf/500-standard/hsmy19fd1126-1118%20web.pdf"
+      ],
+      "blobSha": "501890eea04b4be9e3f060af144ea076dfa26b02",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "fuso/fighter-1424-vgt.svg",
+      "model": "FK62FLZ5RFAH 6M60-CAT5",
+      "system": "boost",
+      "facts": "VGT, air-to-air intercooler, RH underbody air cleaner",
+      "sources": [
+        "https://www.fuso.com.au/contentassets/342b22b9f22d4cf69eb10bf057ab715a/fighter_1424_manual_steel_suspension_e6.pdf"
+      ],
+      "blobSha": "0b073d58191e78c43362a213457b8b63ad31ed43",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "fuso/fighter-1424-fuel.svg",
+      "model": "FK62FLZ5RFAH 6M60-CAT5",
+      "system": "fuel",
+      "facts": "DENSO electronic common rail; tank 200L",
+      "sources": [
+        "https://www.fuso.com.au/contentassets/342b22b9f22d4cf69eb10bf057ab715a/fighter_1424_manual_steel_suspension_e6.pdf"
+      ],
+      "blobSha": "29ae9df216305acca83e6fc3aab15ce5c4e2389c",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "fuso/fighter-1424-full-air.svg",
+      "model": "FK62FLZ5RFAH 1424",
+      "system": "braking",
+      "facts": "Full air dual circuit; 370x150mm drums; ABS; single-cylinder water-cooled 340cc compressor",
+      "sources": [
+        "https://www.fuso.com.au/contentassets/342b22b9f22d4cf69eb10bf057ab715a/fighter_1424_manual_steel_suspension_e6.pdf"
+      ],
+      "blobSha": "8980659b0ca73e3b4ff7a54dd7f3a597acf9bebf",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "fuso/fighter-1424-driveline.svg",
+      "model": "FK62FLZ5RFAH 6MT",
+      "system": "driveline",
+      "facts": "C7M38 single plate, M070S6-OD, P10, R052T 4.875",
+      "sources": [
+        "https://www.fuso.com.au/contentassets/342b22b9f22d4cf69eb10bf057ab715a/fighter_1424_manual_steel_suspension_e6.pdf"
+      ],
+      "blobSha": "768e0bfc39a414f71d540d32e1bb875631204fc3",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    },
+    {
+      "path": "fuso/fighter-1424-rear-leaf.svg",
+      "model": "FK62FLZ5RFAH steel",
+      "system": "suspension",
+      "facts": "Semi-elliptic leaf with stabiliser; main 1300x70; helper 900x70",
+      "sources": [
+        "https://www.fuso.com.au/contentassets/342b22b9f22d4cf69eb10bf057ab715a/fighter_1424_manual_steel_suspension_e6.pdf"
+      ],
+      "blobSha": "e2f7ae1a454dd37470430ce6cedb2e76d5052cdf",
+      "status": "HOLD",
+      "limits": [
+        "No verified installed-component photograph or VIN-specific fitment",
+        "Symbolic vector; not actual geometry or mounting",
+        "Independent render and expert acceptance pending"
+      ]
+    }
+  ],
+  "rights": "Original SVG drafts, no copied OEM images; watermark is not runtime ACL.",
+  "qa": "All ten files retrieved and blob SHA recorded; source facts checked. No exact installed-component photographs or independent render/technical acceptance. Do not publish/count as accepted."
+}
