@@ -1,0 +1,99 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "scope": "Kenworth T680 Next Gen and specified PACCAR component families. US/North America catalogue.",
+  "date": "2026-11-26",
+  "sources": {
+    "kenworth": "https://kenworth.anthology-digital.com/trucks/t680/",
+    "tx12": "https://paccarpowertrain.com/wp-content/uploads/2022/03/TX-12-Spec-Sheet_2021_English.pdf",
+    "tx12pro": "https://paccarpowertrain.com/wp-content/uploads/2022/03/TX-12-Pro-Spec-Sheet_2025-_English.pdf",
+    "hardware": "https://paccarpowertrain.com/products/tx-12/",
+    "dx40": "https://paccarpowertrain.com/wp-content/uploads/2022/03/DX-40-Spec-Sheet_2025_English.pdf"
+  },
+  "source_method": "PACCAR TX-12 and TX-12 PRO PDF physical pages 1–2 and DX-40 PDF page 1 screenshots examined, including component product images and specification tables; PACCAR HTML hardware table and Kenworth alternate-domain product HTML inspected. Primary Kenworth domain and 2021 brochure screenshot blocked by bot challenge; not relied on.",
+  "assets": [
+    {
+      "file": "t680-powertrain.svg",
+      "sources": [
+        "kenworth"
+      ],
+      "fact": "Catalog standard MX-13/TX-12/DX-40, other options not assumed compatible in every combination.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-tx12-ratios.svg",
+      "sources": [
+        "tx12",
+        "tx12pro"
+      ],
+      "fact": "Both dated tables show identical 12 forward and two reverse ratios.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-tx12-lubrication.svg",
+      "sources": [
+        "hardware"
+      ],
+      "fact": "Pressure and temperature sensors; no oil cooler.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-tx12-pto.svg",
+      "sources": [
+        "hardware",
+        "tx12pro"
+      ],
+      "fact": "8-bolt bottom standard for both; 4-bolt rear optional for TX-12 and standard for PRO; 95 hp combined.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-dx40-tandem.svg",
+      "sources": [
+        "dx40"
+      ],
+      "fact": "Thru-shaft pinion family feature; schematic drive links only.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-dx40-diff-lock.svg",
+      "sources": [
+        "dx40"
+      ],
+      "fact": "Driver controlled forward axle differential lock; not an interaxle lock diagram.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-digitalvision.svg",
+      "sources": [
+        "kenworth"
+      ],
+      "fact": "Driver rear camera; passenger rear and look-down, 12.3 and 15 inch respective displays.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-bendix-fusion.svg",
+      "sources": [
+        "kenworth"
+      ],
+      "fact": "Forward camera and bumper radar, ACC/AEB/lane departure warning.",
+      "acceptance": "pending"
+    },
+    {
+      "file": "t680-torque-steer.svg",
+      "sources": [
+        "kenworth"
+      ],
+      "fact": "Electric assistance to hydraulic gear, speed dependent and three levels.",
+      "acceptance": "pending"
+    }
+  ],
+  "limitations": [
+    "Generic original SVG component shapes, not verified installation imagery or OEM internal geometry.",
+    "No VIN-specific fitment, routing, electrical pins, safety calibration, maintenance instructions or independent technical/rendered visual review.",
+    "TX-12 PRO with MX-13 compatibility is not asserted: PACCAR product table lists PX-9/MX-11, whereas 2025 trade reports describe expanded availability; reconcile by dated OEM configuration before any model-specific claim.",
+    "Not all ADAS and DigitalVision options installed on every T680."
+  ],
+  "checks": [
+    "All nine SVGs fetched, structure, disclaimer and label content inspected; three corrected and exact readback verified."
+  ],
+  "accepted_count": 0
+}
