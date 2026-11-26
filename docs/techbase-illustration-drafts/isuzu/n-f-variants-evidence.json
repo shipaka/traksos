@@ -1,0 +1,159 @@
+{
+  "batch": "TECHBASE-ISUZU-N-F-VARIANTS-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "market": "Australia",
+  "sources": [
+    {
+      "url": "https://prd1.isuzu.com.au/media/j0mim05s/spec_npr_70_45_190_tradepack_2601_r3.pdf",
+      "document": "NPR_70_45_190_TRADEPACK_2601_R3",
+      "pages": [
+        1,
+        2
+      ],
+      "inspection": "screenshots reviewed; cover expressly not representative of model"
+    },
+    {
+      "url": "https://prd1.isuzu.com.au/media/o45mcl2h/spec_fsr_fsd_140_120_240-_2511_r1.pdf",
+      "document": "FSR_FSD_140_120_240_2511_R1",
+      "page": 2,
+      "inspection": "parsed text; screenshot 404"
+    },
+    {
+      "url": "https://www.isuzu.com.au/Media/Isuzu_Files/Spec_Sheets/Current_spec_sheets/Spec_FVR_FVD_165_300_2311R.pdf",
+      "document": "FVR_FVD_165_300_2311R",
+      "pages": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "inspection": "screenshots reviewed including FVD chassis photo and OEM dimension diagram; not component-level installation evidence"
+    },
+    {
+      "url": "https://www.isuzu.com.au/news/news-articles/new-technology-and-all-new-heights-for-isuzu-f-series/",
+      "inspection": "OEM 2016 HTML; DOC option not universal"
+    },
+    {
+      "url": "https://www.isuzu.com.au/news/news-articles/isuzu-trucks-unleashes-major-my25-model-wave/",
+      "inspection": "OEM MY25 HTML"
+    },
+    {
+      "url": "https://www.hendrickson-intl.com/en-au/products/has/has-single-axle",
+      "inspection": "manufacturer product search text; no installed component photo verified"
+    },
+    {
+      "url": "https://allisontransmission.com/applications--products/products/3000-series",
+      "inspection": "manufacturer product search text; no installed component photo verified"
+    }
+  ],
+  "assets": [
+    {
+      "filename": "npr-4hk1-tcc-boost.svg",
+      "model": "NPR 70/45-190 Tradepack",
+      "variant": "4HK1-TCC",
+      "system": "boost",
+      "facts": [
+        "single electronically controlled variable-nozzle turbo; air-to-air intercooler; 140 kW/513 Nm"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified"
+      ]
+    },
+    {
+      "filename": "fsr-4hk1-tch-boost.svg",
+      "model": "FSR/FSD 140/120-240",
+      "variant": "4HK1-TCH",
+      "system": "boost",
+      "facts": [
+        "low-pressure plus high-pressure VGS stages; air-to-air intercooler; 177 kW/765 Nm"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified",
+        "PDF screenshot failed; hold"
+      ]
+    },
+    {
+      "filename": "fvr-fvd-6hk1-tcs-emissions.svg",
+      "model": "FVR/FVD 165-300 4x2",
+      "variant": "6HK1-TCS",
+      "system": "emissions",
+      "facts": [
+        "cooled EGR and DPD; ADR80/03; do not confuse with 2016 260 PS DOC option"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified"
+      ]
+    },
+    {
+      "filename": "fvr-fvd-rear-suspension.svg",
+      "model": "FVR/FVD 165-300 4x2",
+      "variant": "FVR leaf / FVD HAS230",
+      "system": "rear_suspension",
+      "facts": [
+        "FVR main/helper leaf; FVD airbag HAS230"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified"
+      ]
+    },
+    {
+      "filename": "fvr-fvd-gearbox-variants.svg",
+      "model": "FVR/FVD 165-300 4x2",
+      "variant": "ZF 9S1110 TO / Allison 3000",
+      "system": "gearbox",
+      "facts": [
+        "nine-speed MT, six-speed AT; MT axle ratio 5.625, AT 6.428; highest gears .75/.65"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified"
+      ]
+    },
+    {
+      "filename": "fvr-fvd-24v-supply.svg",
+      "model": "FVR/FVD 165-300 4x2",
+      "variant": "24V",
+      "system": "electrical",
+      "facts": [
+        "two 115E41L batteries in series; 90 A alternator; 5.0 kW starter"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified"
+      ]
+    },
+    {
+      "filename": "npr-mzz6f-drive.svg",
+      "model": "NPR 70/45-190 Tradepack",
+      "variant": "MZZ-6F",
+      "system": "gearbox",
+      "facts": [
+        "6-speed AM; automated electrohydraulic wet clutch and lock-up fluid coupling; ratios verified"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "not exact part numbers, chassis coordinates, geometry or VIN",
+        "rendered image and independent expert review pending",
+        "exact installed component photographs not verified"
+      ]
+    }
+  ],
+  "rights": "Original SVG drafts, no OEM illustration copied; static watermark does not implement runtime protection.",
+  "quality": "Readback and source-fact checks only; do not count as accepted or publish until all gates in issue #278 are met."
+}
