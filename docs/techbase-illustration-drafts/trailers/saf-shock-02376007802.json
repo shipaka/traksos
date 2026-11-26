@@ -1,0 +1,49 @@
+{
+  "id": "saf-shock-02376007802",
+  "manufacturer": "SAF",
+  "article": "02 376 0078 02",
+  "nameRu": "Амортизатор подвески",
+  "family": "INTRA — пневмоподушка 2619 UP",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-shock-02376007802.svg",
+  "source": {
+    "url": "https://literature1.safholland.com/sites/damedit/literature/Design_handbook_TSS_INTRA_en-DE.pdf",
+    "reference": "XL-AS10002DM-en-DE Rev G, 2020-01, p45; table for SAF 2619 UP, code 53",
+    "textChecked": true,
+    "visualChecked": false,
+    "screenshotError": "screenshot unsupported",
+    "checked": "2026-11-26"
+  },
+  "spec": {
+    "airSpring": "2619 UP",
+    "airSpringCode": 53,
+    "configurations": [
+      {
+        "type": "IU25/2000 53",
+        "rideHeightRangeMm": [
+          230,
+          270
+        ]
+      },
+      {
+        "type": "IU28/2005 53",
+        "rideHeightRangeMm": [
+          260,
+          300
+        ]
+      }
+    ]
+  },
+  "documentedSuspensionTypes": [
+    "IU25/2000 53",
+    "IU28/2005 53"
+  ],
+  "replacement": null,
+  "context": "Высота в таблице — высота подвески, не длина амортизатора. Размеры амортизатора не подтверждены.",
+  "limitations": [
+    "Approximate functional drawing, not exact geometry, not OEM image",
+    "Exact axle serial, trailer model/year/VIN, mounting orientation and fasteners not confirmed",
+    "No dimensions inferred for SAF from BPW; no repair or installation instructions",
+    "Rendered QA and expert acceptance pending"
+  ]
+}
