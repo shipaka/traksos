@@ -1,0 +1,83 @@
+{
+  "schema": "techbase-source-evidence-v1",
+  "id": "scania-electrical-generation-6-7-variant",
+  "status": "draft_source_research_only",
+  "manufacturer": "Scania",
+  "system": "electrical architecture / EBS applicability guard",
+  "sources": [
+    {
+      "author": "Scania CV AB",
+      "title": "Newsletter from Scania Bodybuilding Centre",
+      "date": "2024-03-27",
+      "url": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/newsletter/BBC_Newsletter_March_2024.pdf",
+      "visuallyCheckedPdfPages": [
+        1,
+        2
+      ],
+      "section": "Electrical System Generation 7 in a nutshell; Scania Workshop Suite"
+    },
+    {
+      "author": "Scania",
+      "title": "BICT, SWS and SDP3",
+      "url": "https://bodybuilder.scania.com/trucks/en/tools-and-services/electric-configuration.html",
+      "checked": "2026-11-26",
+      "type": "official web page"
+    }
+  ],
+  "variants": [
+    {
+      "electricalGeneration": 6,
+      "variantCode": "9742A",
+      "sourcePage": 2
+    },
+    {
+      "electricalGeneration": 7,
+      "variantCode": "9742B",
+      "rollout": "gradual during 2024; no universal VIN/year cutoff established",
+      "sourcePage": 1
+    }
+  ],
+  "evidence": [
+    {
+      "sourcePage": 1,
+      "fact": "The Gen 7 transition coincides with gradual introduction of Smart Dash; visual appearance or registration year alone does not establish the configuration."
+    },
+    {
+      "sourcePage": 1,
+      "fact": "P9 is the cab bodybuilder electrical unit, P11 the chassis electrical unit; bodywork interface remains broadly unchanged. Neither is a BMS identification or mounting proof."
+    },
+    {
+      "sourcePage": 2,
+      "fact": "SWS supports both generations; Gen 7 replaces SDP3 for diagnostic connection. The official tools page identifies VCI4 for cybersecure Gen 7."
+    }
+  ],
+  "scope": {
+    "model": null,
+    "exactCab": null,
+    "vinRange": null,
+    "axleFormula": null,
+    "brakeSystemVariant": null,
+    "warning": "Electrical system generation 7 is not proof of EBS7. Require independent brake-system variant evidence."
+  },
+  "requiredBeforeIllustration": [
+    "VIN/chassis-specific configuration and FPC code",
+    "cab and axle geometry matching actual vehicle",
+    "OEM BMS/EBS component location document",
+    "OEM brake system variant and part catalogue fitment",
+    "physical harness and pneumatic routing evidence",
+    "rights and expert review"
+  ],
+  "gates": {
+    "source_checked": true,
+    "expert_reviewed": false,
+    "rights_cleared": false,
+    "fitment": "unknown",
+    "physicalMounting": "unknown",
+    "routing": "unknown",
+    "article": null,
+    "visualReady": false,
+    "strictCountDelta": 0,
+    "visualCountDelta": 0
+  },
+  "note": "Metadata and independent factual summary only; no reproduced source images, no operational repair directions."
+}
