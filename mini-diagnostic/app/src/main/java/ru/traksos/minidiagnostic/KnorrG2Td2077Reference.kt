@@ -11,10 +11,13 @@ object KnorrG2Td2077Reference {
         put("000300",Entry("ЭБУ","Ошибка EEPROM",26))
         put("000400",Entry("ЭБУ","Контрольная сумма EEPROM",26))
         put("000500",Entry("ЭБУ","Данные EEPROM",26))
+        put("000700",Entry("ЭБУ","Несовместимость аппаратной версии и программного обеспечения",26))
         put("000800",Entry("ЭБУ","Несовместимость ПО двух микроконтроллеров",26))
         // TD-2077, p. 26
-        put("000900",Entry("Питание","Сбой электропитания",26))
+        put("000900",Entry("Питание","Повторное снижение напряжения при торможении",26))
         // TD-2077, p. 26
+        put("000C00",Entry("Датчик колеса D","Некорректный сигнал датчика",26))
+        put("000D00",Entry("Датчик колеса C","Некорректный сигнал датчика",26))
         put("001300",Entry("Датчик колеса D","КЗ на массу",26))
         put("001900",Entry("Датчик колеса D","Избыточная частота",26))
         put("001F00",Entry("Датчик колеса D","Скачок скорости",26))
@@ -90,10 +93,15 @@ object KnorrG2Td2077Reference {
         put("018500",Entry("Электропитание","Высокое сопротивление цепи",31))
         put("018600",Entry("Электропитание","Обрыв массы ЭБУ на стоянке",31))
     }
+    // Matching indexed original text, not a visual audit. Keep provisional.
+    private val originalTextMatched=setOf("000300","000400","000500","000700","000800","000900",
+        "000C00","000D00","001300","001800","001900","001E00","001F00")
+    val originalTextMatchedCount get()=originalTextMatched.size
     fun lookup(code:String):DisplayLookup? {
         val r=rows[code] ?: return null
         return DisplayLookup(r.component,r.condition+" — предварительно; требуется сверка оригинала и версии ЭБУ",
-            COPY+" · TD-2077, стр."+r.page+" · текстовая копия; оригинал: "+ORIGINAL,false)
+            COPY+" · TD-2077, стр."+r.page+" · текстовая копия; оригинал: "+ORIGINAL+
+                (if(code in originalTextMatched) " · совпадает с индексированным текстом оригинала (не визуальная сверка)" else ""),false)
     }
     val count get()=rows.size
 }

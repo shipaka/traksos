@@ -4,12 +4,14 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_D("WABCO TEBS D · памятка водителя"),
     WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
     WABCO_E("WABCO TEBS E · памятка водителя"),
+    WABCO_E_HUMBAUR("WABCO TEBS E · пример Humbaur"),
     WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
     WABCO_COMPACT_TESTER("WABCO Compact Tester II · три символа"),
     HALDEX_GEN1_2005("Haldex EB+ Gen1 · руководство 02.2005"),
     HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
+    HALDEX_EB4_DIAG_EXAMPLE("Haldex EB+ 4.0 · DIAG++ (пример 2025)"),
     HALDEX_GEN3_DIAG("Haldex EB+ Gen3 · DIAG+ / Info Centre 2"),
     HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
@@ -22,6 +24,8 @@ object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.WABCO_E_HUMBAUR) return ModernDisplayExamples.wabcoE(s)
+        if(edition==DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE) return ModernDisplayExamples.haldex4(s)
         if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
         if(edition==DisplayReferenceEdition.KNORR_G2_TD2077) return KnorrG2Td2077Reference.lookup(s)
         if(edition==DisplayReferenceEdition.KNORR_G22_PRESSURE) return KnorrG22PressureReference.lookup(s)

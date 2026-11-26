@@ -41,7 +41,7 @@ object CoverageRoadmap {
         target("haldex-eb1","Haldex","EB+ Gen1",HaldexEarlyReference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-eb2","Haldex","EB+ Gen2",HaldexExpandedReference.GEN2_SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-eb3","Haldex","EB+ Gen3",LegacyDisplayReference.HALDEX_SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
-        target("haldex-eb4","Haldex","EB+ 4.0",HALDEX),
+        target("haldex-eb4","Haldex","EB+ 4.0",ModernDisplayExamples.HALDEX_SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-uabs","Haldex","U-ABS",HALDEX_ABS,ScopeGroup.INTERFACE_REVIEW),
         target("haldex-abs4","Haldex","ABS 4.0",HALDEX_ABS,ScopeGroup.INTERFACE_REVIEW),
         target("haldex-modal","Haldex","MODAL",HaldexModalReference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
