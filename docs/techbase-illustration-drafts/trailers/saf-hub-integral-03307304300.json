@@ -1,0 +1,39 @@
+{
+  "id": "saf-hub-integral-03307304300",
+  "manufacturer": "SAF",
+  "article": "03 307 3043 00",
+  "title": "INTEGRAL Hub Unit",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-hub-integral-03307304300.svg",
+  "source": {
+    "url": "https://literature1.safholland.com/sites/damedit/literature/WH-Error_diagnosis_Service_of_the_Hub_Unit_en-DE.pdf",
+    "reference": "Edition 05/2010, cover and pp2–3",
+    "visualChecked": true,
+    "textChecked": true,
+    "checked": "2026-11-26"
+  },
+  "parts": [
+    {
+      "article": "03 307 3044 00",
+      "role": "other hub covered by manual, not interchangeable by default"
+    },
+    {
+      "article": "03 307 3045 00",
+      "role": "other hub covered by manual, not interchangeable by default"
+    },
+    {
+      "article": "03 307 3046 00",
+      "role": "other hub covered by manual, not interchangeable by default"
+    },
+    {
+      "article": "03 307 3056 00",
+      "role": "other hub covered by manual, not interchangeable by default"
+    }
+  ],
+  "notes": "82 and 88 mm bearing groups are addressed in the service manual; mapping to individual hub article unknown. Cover image representative of family.",
+  "limitations": [
+    "Conceptual geometry, no exact dimensions or installation instructions",
+    "Exact axle serial, VIN and mounting unknown",
+    "No rendered QA or expert acceptance"
+  ]
+}
