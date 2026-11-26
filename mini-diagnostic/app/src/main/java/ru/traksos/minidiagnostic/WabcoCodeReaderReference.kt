@@ -150,6 +150,6 @@ object WabcoCodeReaderReference {
             DisplayReferenceEdition.WABCO_D_READER -> if(fmi<=11) 21 else 22
             else -> 25
         }
-        return DisplayLookup(component,condition,listOf(componentPage,typePage).distinct().joinToString("\n") { SOURCE+"#page="+it },false)
+        return DisplayLookup(component,condition,listOf(componentPage,typePage).distinct().joinToString("\n") { SOURCE+"#page="+(it+1) },false)
     }
 }
