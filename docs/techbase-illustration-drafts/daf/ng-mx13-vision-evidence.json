@@ -1,0 +1,80 @@
+{
+  "batch": "TECHBASE-DAF-NG-MX13-VISION-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "created": "2026-11-26",
+  "rights": "Original TrakSOS vector illustrations; no OEM artwork reproduced. Runtime watermark/access control not implemented here.",
+  "sources": [
+    {
+      "url": "https://prd-stg-www-dafcomponents-com.sitecore.daf.com/en/products/paccar-daf-engines/paccar-mx-13-truck-engine",
+      "scope": "DAF Components Euro 6 MX-13 truck engine: two block-integrated high-pressure pump units, common rail, six inline cylinders, engine-mounted combined filter/water separator, VTG and intercooling, integrated feeds for water/oil/low-pressure fuel."
+    },
+    {
+      "url": "https://startthefuture.daf.com/en-us/efficiency",
+      "scope": "New Generation XF/XG/XG+ available with 10.8 and 12.9 L MX; new block, injectors and turbo; not proof that every family detail persists unchanged."
+    },
+    {
+      "url": "https://www.daf.com/en/news-and-media/news-articles/global/2021/q2/daf-is-starting-the-future-with-an-entirely-new-line-up-of-trucks-short",
+      "scope": "Digital camera replaces conventional main/wide-angle mirrors; Corner View covers passenger-side A-pillar vicinity."
+    },
+    {
+      "url": "https://startthefuture.daf.com/en-us/safety",
+      "scope": "XD model context; direct and indirect vision and optional configurations."
+    }
+  ],
+  "assets": [
+    {
+      "filename": "ng-mx13-common-rail.svg",
+      "tier": "professional_educational",
+      "scope": "MX-13 Euro 6 truck engine family; NG applicability not verified by VIN/generation",
+      "unknown": [
+        "VIN/serial and exact variant",
+        "physical location/routing or field geometry",
+        "expert acceptance"
+      ],
+      "publication": "hold",
+      "kind": "original_functional_svg"
+    },
+    {
+      "filename": "ng-mx13-air-path.svg",
+      "tier": "professional_educational",
+      "scope": "MX-13 Euro 6 truck engine family; NG applicability not verified by VIN/generation",
+      "unknown": [
+        "VIN/serial and exact variant",
+        "physical location/routing or field geometry",
+        "expert acceptance"
+      ],
+      "publication": "hold",
+      "kind": "original_functional_svg"
+    },
+    {
+      "filename": "ng-mx13-integrated-feeds.svg",
+      "tier": "professional_educational",
+      "scope": "MX-13 Euro 6 truck engine family; NG applicability not verified by VIN/generation",
+      "unknown": [
+        "VIN/serial and exact variant",
+        "physical location/routing or field geometry",
+        "expert acceptance"
+      ],
+      "publication": "hold",
+      "kind": "original_functional_svg"
+    },
+    {
+      "filename": "ng-daf-camera-roles.svg",
+      "tier": "driver_educational",
+      "scope": "DAF New Generation functional roles; not exact coverage",
+      "unknown": [
+        "VIN/serial and exact variant",
+        "physical location/routing or field geometry",
+        "expert acceptance"
+      ],
+      "publication": "hold",
+      "kind": "original_functional_svg"
+    }
+  ],
+  "guards": [
+    "No OEM pinout, dimensions, pressures, repair procedure or exact fitment inferred.",
+    "Family-level source only; NG context does not certify all engine design details.",
+    "Fuel diagram simplified topology; no procedural steps.",
+    "Camera view polygons are symbolic, not measured."
+  ]
+}
