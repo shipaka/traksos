@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "vehicle_family": "Volvo FH / FM",
+  "date": "2026-11-26",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/1718nl0.pdf",
+      "type": "OEM_market_information",
+      "page": 2,
+      "visual_review": "confirmed",
+      "note": "FH13 listed for 412704027R and 912512029R; no year or D13A-only confirmation"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/9125120290",
+      "type": "manufacturer_product"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4127040270",
+      "type": "manufacturer_product"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4324251050",
+      "type": "manufacturer_product"
+    }
+  ],
+  "records": [
+    {
+      "article": "9125120290",
+      "remanned": "912512029R",
+      "swept_cm3": 636,
+      "bore_mm": 85,
+      "stroke_mm": 56,
+      "dimensions_mm": [
+        305,
+        329,
+        187
+      ],
+      "mass_kg": 19.908,
+      "max_operating_pressure_bar": 14,
+      "operating_speed_rpm_catalogue": 3000,
+      "cooling": "water",
+      "lubrication": "engine",
+      "volvo_oe": [
+        "20774294",
+        "20846000",
+        "22016995",
+        "85013935"
+      ],
+      "gtin": "7895851086241",
+      "note": "ignore generic 704cc boilerplate in catalogue; structured swept volume and title agree at 636"
+    },
+    {
+      "article": "4127040270",
+      "remanned": "412704027R",
+      "swept_cm3": 704,
+      "bore_mm": 85,
+      "stroke_mm": 62,
+      "dimensions_mm": [
+        359,
+        339,
+        187
+      ],
+      "mass_kg": 20.122,
+      "max_operating_pressure_bar": 14,
+      "operating_speed_rpm_catalogue": 3000,
+      "cooling": "water",
+      "lubrication": "engine",
+      "volvo_oe": [
+        "22040497",
+        "20765890",
+        "20845313",
+        "21172036",
+        "21379906",
+        "85013941"
+      ],
+      "gtin": "04057875156376"
+    },
+    {
+      "article": "4324251050",
+      "category": "electronically controlled air dryer",
+      "cartridge": "Air System Protector Plus M39",
+      "max_operating_pressure_bar": 13,
+      "voltage_v": 24,
+      "dimensions_mm": [
+        296,
+        169,
+        152
+      ],
+      "mass_kg": 3.876,
+      "volvo_oe": [
+        "20884103",
+        "21480092",
+        "21620170",
+        "20466522",
+        "20700794",
+        "20873849",
+        "21398254",
+        "21480094",
+        "21620172"
+      ],
+      "gtin": "7895851064393"
+    }
+  ],
+  "assets": [
+    "wabco-fh-compressor-comparison.svg",
+    "wabco-fh-ecad-4324251050.svg"
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "verified_illustration_increment": 0,
+  "vin_applicability": "unknown",
+  "limitations": "No exact D13A fitment, chassis routing, port geometry, connector mapping or brake settings. Drawings are original conceptual SVG, no manufacturer images copied; rendering and expert review pending. Further official circuit evidence needed before illustration of specific multi-circuit valve."
+}
