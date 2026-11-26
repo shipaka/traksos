@@ -78,6 +78,9 @@ private fun MiniApp() {
     var connectionGuideOpen by remember { mutableStateOf(false) }
     var modulePickerOpen by remember { mutableStateOf(false) }
     var manualTargetId by remember { mutableStateOf<String?>(null) }
+    var electricalCase by remember { mutableStateOf(DemoElectricalCase.NORMAL) }
+    val electrical=DemoElectricalPreview.snapshot(state.connected,electricalCase)
+    var electricalExpanded by remember { mutableStateOf(false) }
 
     fun now() = SystemClock.elapsedRealtime() - session.startedAt
     fun apply(desired: LightState) {
@@ -102,8 +105,9 @@ private fun MiniApp() {
             delay(40)
         }
     }
-    LaunchedEffect(scanning) {
-        if (scanning) {
+    LaunchedEffect(scanning,state.connected,electricalCase) {
+        if (scanning && !electrical.canRunDemo) { scanning=false; scan=0; detail=-1 }
+        else if (scanning) {
             // Explicitly demo-only scan. Never submits CAN requests.
             for (i in 1..20) { delay(90); scan = i * 5 }
             history = (listOf(java.text.DateFormat.getDateTimeInstance().format(java.util.Date()) +
@@ -130,7 +134,7 @@ private fun MiniApp() {
                 .padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(if (state.connected) "● Виртуальный адаптер" else "○ Демо отключено",
                     color = if(state.connected) Green else Muted, modifier = Modifier.weight(1f), fontSize = 13.sp)
-                Text("24 В · ДЕМО", color = Orange, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("24 В · ДЕМО (ном.)", color = Orange, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             if (tab == 0) {
                 val lights = state.lights
@@ -176,7 +180,12 @@ private fun MiniApp() {
                         modifier = Modifier.weight(1f)) { Text("Демо: КЗ",fontSize = 11.sp) }
                 }
             } else {
-                Box(Modifier.fillMaxWidth().height(148.dp).clip(RoundedCornerShape(14.dp))) {
+                ElectricalStatusPanel(electrical,electricalCase,electricalExpanded,
+                    onExpand={ electricalExpanded=!electricalExpanded },
+                    onScenario={ next ->
+                        scanning=false; scan=0; detail=-1; electricalCase=next
+                    })
+                Box(Modifier.fillMaxWidth().height(104.dp).clip(RoundedCornerShape(14.dp))) {
                     Image(painterResource(R.drawable.splash_truck), "Иллюстрация грузовика", Modifier.fillMaxSize(),contentScale = ContentScale.Crop)
                     Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color.Transparent,Graphite.copy(alpha=.92f)))))
                     Column(Modifier.align(Alignment.CenterEnd).padding(18.dp),horizontalAlignment = Alignment.CenterHorizontally) {
@@ -193,7 +202,7 @@ private fun MiniApp() {
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                             Button(onClick={
                                 off(); manualTargetId=null; scan=0; detail=-1; scanning=true
-                            },enabled=!scanning && state.connected,modifier=Modifier.weight(1f).heightIn(min=64.dp)) {
+                            },enabled=!scanning && electrical.canRunDemo,modifier=Modifier.weight(1f).heightIn(min=64.dp)) {
                                 Column(horizontalAlignment=Alignment.CenterHorizontally) {
                                     Text("◎",fontSize=20.sp)
                                     Text("Автопоиск",fontSize=13.sp,fontWeight=FontWeight.Bold)
@@ -224,7 +233,7 @@ private fun MiniApp() {
                                 DemoFault("Колесный датчик D","Пример: отсутствие сигнала · сохранённая",Orange,detail == 1) { detail = if(detail == 1) -1 else 1 }
                                 Text("Это не результат проверки реального прицепа.",color = Muted,fontSize = 11.sp)
                             }
-                            if(chosen!=null || scan==100) Button(onClick = { scan = 0; detail = -1; scanning = true },enabled=state.connected,
+                            if(chosen!=null || scan==100) Button(onClick = { scan = 0; detail = -1; scanning = true },enabled=electrical.canRunDemo,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                 Text(if(scan == 100) "Повторить демо" else "Начать демо-диагностику",fontWeight = FontWeight.Bold)
                             }
@@ -254,6 +263,63 @@ private fun MiniApp() {
             NavTile("☼","Освещение",tab == 0,Modifier.weight(1f)) { if(tab != 0) { scanning = false; if(scan < 100) scan = 0; tab = 0 } }
             NavTile("◎","Диагностика",tab == 1,Modifier.weight(1f)) { if(tab != 1) { off(); tab = 1 } }
         }
+    }
+}
+
+@Composable
+private fun ElectricalStatusPanel(status:ElectricalPreview,scenario:DemoElectricalCase,expanded:Boolean,
+    onExpand:()->Unit,onScenario:(DemoElectricalCase)->Unit) {
+    fun volts(mv:Int?):String=mv?.let { String.format(java.util.Locale.forLanguageTag("ru-RU"),"%.1f В",it/1000f) } ?: "—"
+    val supplyColor=when {
+        status.supplyMv==null -> Muted
+        scenario==DemoElectricalCase.SAG || scenario==DemoElectricalCase.NO_POWER -> Red
+        else -> Green
+    }
+    fun stateColor(value:Boolean?)=when(value) { true -> Green; false -> Red; null -> Muted }
+    Card(colors=CardDefaults.cardColors(containerColor=Panel),shape=RoundedCornerShape(14.dp)) {
+        Column(Modifier.fillMaxWidth().padding(12.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                Text("Питание и связь",fontSize=16.sp,fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f))
+                Text("ДЕМО",color=Orange,fontSize=11.sp,fontWeight=FontWeight.Bold)
+            }
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                ElectricalMetric("Питание",volts(status.supplyMv),supplyColor,Modifier.weight(1f))
+                ElectricalMetric("Масса",when(status.returnOk) { true -> "Есть"; false -> "Потеря"; null -> "—" },
+                    stateColor(status.returnOk),Modifier.weight(1f))
+                ElectricalMetric("CAN",when(status.canTraffic) { true -> "Обмен"; false -> "Нет обмена"; null -> "—" },
+                    stateColor(status.canTraffic),Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                Text("Мин. "+volts(status.minimumMv),color=supplyColor,fontSize=12.sp)
+                Text("Ошибки CAN: "+(status.canErrors?.toString()?:"—"),color=Muted,fontSize=12.sp)
+            }
+            status.reason?.let { Text(it,color=Red,fontSize=12.sp,fontWeight=FontWeight.Bold) }
+            Text("Виртуальные значения · реальные измерения недоступны",color=Muted,fontSize=11.sp)
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp)).clickable(onClick=onExpand).padding(vertical=5.dp),
+                verticalAlignment=Alignment.CenterVertically) {
+                Text("Демо-сценарий: "+scenario.title,color=Orange,fontSize=12.sp,modifier=Modifier.weight(1f))
+                Text(if(expanded) "▴" else "▾",color=Orange)
+            }
+            if(expanded) {
+                for(option in DemoElectricalCase.entries) {
+                    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable { onScenario(option) }.padding(5.dp),
+                        verticalAlignment=Alignment.CenterVertically) {
+                        RadioButton(selected=option==scenario,onClick={ onScenario(option) })
+                        Text(option.title,fontSize=13.sp)
+                    }
+                }
+                Text("Нет обмена не доказывает обрыв CAN-H/CAN-L. Без измерения нельзя подтвердить массу или состояние линии.",
+                    color=Muted,fontSize=11.sp)
+            }
+        }
+    }
+}
+@Composable
+private fun ElectricalMetric(label:String,value:String,color:Color,modifier:Modifier) {
+    Column(modifier.background(Graphite,RoundedCornerShape(8.dp)).padding(horizontal=7.dp,vertical=8.dp),
+        verticalArrangement=Arrangement.spacedBy(3.dp)) {
+        Text(label,color=Muted,fontSize=11.sp)
+        Text(value,color=color,fontSize=14.sp,fontWeight=FontWeight.Bold)
     }
 }
 
