@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "engine": "D13A",
+  "vehicle_family_candidate": "Volvo FH / FM",
+  "source": {
+    "title": "Volvo Truck Corporation D13A Design and Function, 200 281 01, 02.2006",
+    "url": "https://www.scribd.com/document/600863296/D13A-D-F-200-281-1-8-06",
+    "access": "third-party HTML text, not original figure; source visual review not performed",
+    "pages": [
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      45,
+      46
+    ]
+  },
+  "assets": [
+    {
+      "file": "d13a-air-turbo.svg",
+      "pages": [
+        31,
+        33
+      ],
+      "facts": "Air intake and filter behind cab; combined low-pressure and temperature sensor before compressor. Three-section exhaust manifold and MWE intake design. General charge cooling circuit; exact pipe routing unknown."
+    },
+    {
+      "file": "d13a-epg-avu.svg",
+      "pages": [
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "facts": "Downstream exhaust shutter moved by pneumatic cylinder under AVU PWM control; AVU variants with/without wastegate; no wiring/ports."
+    },
+    {
+      "file": "d13a-vcb-rocker.svg",
+      "pages": [
+        40,
+        41,
+        42,
+        45,
+        46
+      ],
+      "facts": "VEB combines EPG and VCB; hydraulic rocker mechanism, extra cam lobes and control valve at head between cylinders 3 and 4. Y39 controlled by EECU. No valve adjustment instructions."
+    }
+  ],
+  "distinct_from": "server/data/techbase-illustrated/volvo-fh-veb.svg (generic overview inspected)",
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "exact_geometry": false,
+  "vin_applicability": "unknown",
+  "render_review": "pending",
+  "expert_review": "pending",
+  "verified_count_increment": 0
+}
