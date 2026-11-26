@@ -7,9 +7,10 @@ class ReferenceSelectionTest {
     @Test fun onlyExplicitAssociations() {
         val documented=CoverageRoadmap.targets.filter { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL }.map { it.id }.toSet()
         assertEquals(documented,ReferenceSelection.targetIds)
-        assertEquals(14,documented.size)
+        assertEquals(15,documented.size)
+        assertEquals(listOf(DisplayReferenceEdition.WABCO_VCS2_READER),ReferenceSelection.forTarget("zf-vcs-ii"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_UABS_INFO2),ReferenceSelection.forTarget("haldex-uabs"))
-        assertEquals(listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR,DisplayReferenceEdition.WABCO_E_OEM_EXACT),ReferenceSelection.forTarget("zf-tebs-e"))
+        assertEquals(listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR,DisplayReferenceEdition.WABCO_E_OEM_EXACT,DisplayReferenceEdition.WABCO_E_READER),ReferenceSelection.forTarget("zf-tebs-e"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_GEN2_INFO1),ReferenceSelection.forTarget("haldex-eb2"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_GEN3_INFO1,DisplayReferenceEdition.HALDEX_GEN3_DIAG),ReferenceSelection.forTarget("haldex-eb3"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE),ReferenceSelection.forTarget("haldex-eb4"))
