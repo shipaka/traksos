@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "engine": "D13A",
+  "vehicle_family_candidate": "Volvo FH / FM",
+  "source": {
+    "title": "Volvo Truck Corporation, D13A Design and Function, Service Bulletin 200 281 01, 02.2006",
+    "url": "https://www.scribd.com/document/600863296/D13A-D-F-200-281-1-8-06",
+    "access": "HTML text on third-party mirror; source drawings not inspected or reproduced",
+    "pages": [
+      54,
+      61,
+      62,
+      63,
+      64
+    ]
+  },
+  "assets": [
+    {
+      "file": "d13a-ems-sensor-map.svg",
+      "pages": [
+        61
+      ],
+      "scope": "12 numbered elements, subsystem grouping, textual locations and EMS logic. Positions are list indices, not connector pins."
+    },
+    {
+      "file": "d13a-starter-control.svg",
+      "pages": [
+        62
+      ],
+      "scope": "EMS start permission, EECU/VECU and start relay; not a power circuit."
+    },
+    {
+      "file": "d13a-alternator-drive-ground.svg",
+      "pages": [
+        54,
+        64
+      ],
+      "scope": "Inner drive: alternator and A/C; outer drive: fan and coolant pump. Two engine ground locations. No belt routing or charging schematic."
+    }
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "vin_applicability": "unknown",
+  "render_review": "pending",
+  "expert_review": "pending",
+  "physical_geometry": "conceptual",
+  "verified_count_increment": 0,
+  "limitations": "Not exact installation or electrical schematic; check authorized Volvo documentation by VIN, engine variant and group 33, obtain component photos, review SVG rendering and expert signoff before publication."
+}
