@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(48,CatalogModuleParts.count)
+        assertEquals(75,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -14,6 +14,19 @@ class CatalogModulePartsTest {
         assertTrue(CatalogModuleParts.find("820 007 XXX").isEmpty())
         assertTrue(CatalogModuleParts.find("950800304").isEmpty())
         assertTrue(CatalogModuleParts.find("820028001").isEmpty())
+    }
+    @Test fun modernHaldexExactNumbersOnly() {
+        for(number in listOf("842005001","842005011","842006001","842015001","842015011","842001001","842001011","842002001","842011001","842011121","842011811","842011401","842003001","842003011","842004001","842013001","842013011","842013131","942015001","942011001","942011121","942011811","942011401","942013131","841001001","823034001","810023001")) {
+            val entry=CatalogModuleParts.find(number).single()
+            assertEquals(if(number in listOf("823034001","810023001")) "haldex-eb3" else "haldex-eb4",entry.targetId)
+            assertTrue(ModuleSearch.find(number).any { it.id==entry.targetId })
+        }
+        assertTrue(CatalogModuleParts.find("841001001").single().variant.contains("не основной ECU"))
+        assertEquals("Basic+ 2M AM",CatalogModuleParts.find("942 011 121").single().variant)
+        assertEquals("Premium+ 2M",CatalogModuleParts.find("842013131").single().variant)
+        for(number in listOf("842005999","842005XXX","950800923","823028001","844511065","844001120")) {
+            assertTrue(CatalogModuleParts.find(number).isEmpty())
+        }
     }
     @Test fun sharedSlaveNumbersRemainAmbiguous() {
         for(number in listOf("810011001","812011001")) {
