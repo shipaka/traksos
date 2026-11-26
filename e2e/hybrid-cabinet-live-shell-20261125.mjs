@@ -44,6 +44,12 @@ try{
       const writes=[];
       page.on('request',r=>{
         const path=new URL(r.url()).pathname;
+        // Reloading the document reconnects realtime with a short-lived, one-use
+        // ticket bound to the existing session. It is not a login or role change.
+        if(path==='/api/auth/realtime-ticket'&&r.method()==='POST'){
+          if(r.headers().authorization!=='Bearer '+token)writes.push('realtime-ticket: unexpected session');
+          return;
+        }
         if(!['GET','HEAD','OPTIONS'].includes(r.method())&&
           (/^\/api\/auth\//.test(path)||/^\/api\/(performer\/line|base|service)(\/|$)/.test(path)))writes.push(path);
       });
