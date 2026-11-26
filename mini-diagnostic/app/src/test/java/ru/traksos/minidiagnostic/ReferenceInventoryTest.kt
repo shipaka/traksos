@@ -10,7 +10,7 @@ class ReferenceInventoryTest {
         assertEquals(listOf(168,125,41,72,73,71,125,52,4,2,3,32,2,27,30),rows.map { it.entries })
         assertEquals(293,rows.take(2).sumOf { it.entries })
         assertEquals(534,rows.drop(2).sumOf { it.entries })
-        assertEquals(109,ReferenceInventory.provisionalCount())
+        assertEquals(114,ReferenceInventory.provisionalCount())
         assertEquals(198,WabcoElexReference.count)
         assertEquals(19,WabcoRouterReference.count)
         assertEquals(4,HaldexAuxReference.count)
