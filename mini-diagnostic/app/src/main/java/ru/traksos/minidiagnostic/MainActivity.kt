@@ -21,13 +21,28 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun DiagnosticScreen() {
-    var lights by remember { mutableStateOf(LightState()) }
+    val session = remember { DemoSession(startedAt = android.os.SystemClock.elapsedRealtime()) }
+    var state by remember { mutableStateOf(session.connect(0)) }
+    val lights = state.lights
+    var message by remember { mutableStateOf("") }
+    fun apply(desired: LightState) {
+        val reply = session.setLights(desired.enabled, elapsedNow(session))
+        state = reply.state
+        message = if (reply.code == ResultCode.OK) "" else "Команда отклонена: ${reply.code}"
+    }
+    fun off() {
+        state = session.allOff(elapsedNow(session)).state
+    }
     var tab by remember { mutableIntStateOf(0) }
     var elapsed by remember { mutableLongStateOf(0L) }
     LaunchedEffect(Unit) {
-        val started = android.os.SystemClock.elapsedRealtime()
+        var lastHeartbeat = 0L
         while (true) {
-            elapsed = android.os.SystemClock.elapsedRealtime() - started
+            elapsed = elapsedNow(session)
+            if (state.connected && elapsed - lastHeartbeat >= 500) {
+                state = session.heartbeat(elapsed).state
+                lastHeartbeat = elapsed
+            } else state = session.advance(elapsed)
             delay(40)
         }
     }
@@ -36,9 +51,16 @@ private fun DiagnosticScreen() {
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("TrakSOS Mini Diagnostic", style = MaterialTheme.typography.headlineSmall)
         Text("ДЕМОРЕЖИМ — оборудование не подключено", color = MaterialTheme.colorScheme.error)
+        Text(if (state.connected) "Виртуальный адаптер: подключён" else "Виртуальный адаптер: отключён")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { state = if (state.connected) session.disconnect() else session.connect(elapsedNow(session)); message = "" }) {
+                Text(if (state.connected) "Разорвать связь" else "Подключить демо")
+            }
+        }
+        if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { tab = 0 }) { Text("Свет") }
-            Button(onClick = { lights = lights.allOff(); tab = 1 }) { Text("ABS / EBS") }
+            Button(onClick = { off(); tab = 1 }) { Text("ABS / EBS") }
         }
         if (tab == 0) {
             Text("Поворотники", style = MaterialTheme.typography.titleMedium)
@@ -51,18 +73,18 @@ private fun DiagnosticScreen() {
                         Turn.OFF -> emptySet()
                     }
                     val selected = lights.enabled.intersect(setOf(Channel.LEFT,Channel.RIGHT)) == requested
-                    if (selected) Button(onClick = { lights = lights.turn(Turn.OFF) }, modifier = Modifier.weight(1f)) { Text(label) }
-                    else OutlinedButton(onClick = { lights = lights.turn(mode) }, modifier = Modifier.weight(1f)) { Text(label) }
+                    if (selected) Button(onClick = { apply(lights.turn(Turn.OFF)) }, modifier = Modifier.weight(1f)) { Text(label) }
+                    else OutlinedButton(onClick = { apply(lights.turn(mode)) }, modifier = Modifier.weight(1f)) { Text(label) }
                 }
             }
             Text("Габариты", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                OutlinedButton(onClick = { lights = lights.toggle(Channel.LEFT_SIDE) }, modifier = Modifier.weight(1f)) { Text("Левый") }
-                OutlinedButton(onClick = { lights = lights.bothSides() }, modifier = Modifier.weight(1f)) { Text("Оба") }
-                OutlinedButton(onClick = { lights = lights.toggle(Channel.RIGHT_SIDE) }, modifier = Modifier.weight(1f)) { Text("Правый") }
+                OutlinedButton(onClick = { apply(lights.toggle(Channel.LEFT_SIDE)) }, modifier = Modifier.weight(1f)) { Text("Левый") }
+                OutlinedButton(onClick = { apply(lights.bothSides()) }, modifier = Modifier.weight(1f)) { Text("Оба") }
+                OutlinedButton(onClick = { apply(lights.toggle(Channel.RIGHT_SIDE)) }, modifier = Modifier.weight(1f)) { Text("Правый") }
             }
             listOf(Channel.STOP,Channel.REVERSE,Channel.FOG).forEach { ch ->
-                OutlinedButton(onClick = { lights = lights.toggle(ch) }, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = { apply(lights.toggle(ch)) }, modifier = Modifier.fillMaxWidth()) {
                     Text(ch.title + if (ch in lights.enabled) " · ВКЛ" else " · ВЫКЛ")
                 }
             }
@@ -76,9 +98,9 @@ private fun DiagnosticScreen() {
                     else -> "выключен"
                 })
             }
-            OutlinedButton(onClick = { lights = lights.trip(Channel.LEFT_SIDE) }) { Text("Демо: КЗ левого габарита") }
-            OutlinedButton(onClick = { lights = lights.resetFault(Channel.LEFT_SIDE) }) { Text("Демо: сброс защиты после ремонта") }
-            Button(onClick = { lights = lights.allOff() }, modifier = Modifier.fillMaxWidth(),
+            OutlinedButton(onClick = { state = session.trip(Channel.LEFT_SIDE) }) { Text("Демо: КЗ левого габарита") }
+            OutlinedButton(onClick = { state = session.resetFault(Channel.LEFT_SIDE, elapsedNow(session)).state }) { Text("Демо: сброс защиты после ремонта") }
+            Button(onClick = { off() }, modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Выключить всё") }
         } else {
             Text("Диагностика тормозной системы", style = MaterialTheme.typography.titleMedium)
@@ -90,3 +112,5 @@ private fun DiagnosticScreen() {
         }
     }
 }
+
+private fun elapsedNow(session: DemoSession): Long = android.os.SystemClock.elapsedRealtime() - session.startedAt
