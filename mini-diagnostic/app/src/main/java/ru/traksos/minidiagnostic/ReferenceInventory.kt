@@ -13,6 +13,7 @@ object ReferenceInventory {
         ReferenceCount("Haldex Gen2",HaldexExpandedReference.gen2Count),
         ReferenceCount("Knorr TEBS4",KnorrTebs4Reference.count),
         ReferenceCount("Haldex MODAL/MODULAR",HaldexModalReference.count),
+        ReferenceCount("Haldex Gen3 DIAG+ additional",HaldexGen3DiagReference.count),
     )
     fun total():Int=counts().sumOf { it.entries }
 }

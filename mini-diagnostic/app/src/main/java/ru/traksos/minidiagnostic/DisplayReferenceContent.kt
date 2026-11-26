@@ -34,6 +34,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
     edition?.let { e ->
         if(target!=null && e !in suggested) Text("Выбран другой справочник. Результат не относится автоматически к выбранному модулятору.",color=MaterialTheme.colorScheme.error)
         val placeholder=when(e) {
+            DisplayReferenceEdition.HALDEX_GEN3_DIAG -> "Например ECU shutdown FET"
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
             DisplayReferenceEdition.HALDEX_MODAL_MODULAR -> "Например 05, 91 или CF"
             DisplayReferenceEdition.KNORR_TEBS4 -> "Десятичный код, например 137"

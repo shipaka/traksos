@@ -8,7 +8,7 @@ object ReferenceSelection {
         "kb-tebs4" to listOf(DisplayReferenceEdition.KNORR_TEBS4),
         "haldex-eb1" to listOf(DisplayReferenceEdition.HALDEX_GEN1_2005),
         "haldex-eb2" to listOf(DisplayReferenceEdition.HALDEX_GEN2_INFO1),
-        "haldex-eb3" to listOf(DisplayReferenceEdition.HALDEX_GEN3_INFO1),
+        "haldex-eb3" to listOf(DisplayReferenceEdition.HALDEX_GEN3_INFO1,DisplayReferenceEdition.HALDEX_GEN3_DIAG),
         "haldex-modal" to listOf(DisplayReferenceEdition.HALDEX_MODAL_MODULAR),
         "haldex-modular" to listOf(DisplayReferenceEdition.HALDEX_MODAL_MODULAR),
         "vie-tebs" to listOf(DisplayReferenceEdition.VIE_101),
