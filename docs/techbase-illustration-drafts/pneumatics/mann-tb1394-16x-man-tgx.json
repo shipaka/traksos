@@ -1,0 +1,41 @@
+{
+  "id": "mann-tb1394-16x-man-tgx",
+  "make": "MAN",
+  "models": [
+    "TGX 18.430"
+  ],
+  "documentedVariant": "Advanced Performance, коалесцентный фильтр; высокая нагрузка",
+  "bindings": [
+    {
+      "make": "MAN",
+      "model": "TGX 18.430",
+      "engine": "D 2676",
+      "from": "2019-01",
+      "to": null,
+      "condition": "Advanced Performance, коалесцентный фильтр; высокая нагрузка"
+    }
+  ],
+  "source": "https://www.mann-filter.com/tr-tr/katalog/arama-sonuclar%C4%B1/urun.html/tb1394/16x_mann-filter.html",
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "dimensions": {
+    "outerDiameter": 136,
+    "height": 164,
+    "thread": "M39×1.5"
+  },
+  "hotspots": [
+    {
+      "id": "h-dryer",
+      "catalogueBrand": "MANN-FILTER",
+      "article": "TB 1394/16 x",
+      "name": "MAN TGX 18.430 — картридж осушителя",
+      "revision": null,
+      "source": "https://www.mann-filter.com/tr-tr/katalog/arama-sonuclar%C4%B1/urun.html/tb1394/16x_mann-filter.html",
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null
+    }
+  ],
+  "scope": "Авторская условная схема. Не подтверждены точная геометрия, место установки, совместимость с VIN."
+}
