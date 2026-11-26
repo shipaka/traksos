@@ -1,0 +1,46 @@
+{
+  "id": "wabco-tristop-drum-9253761230",
+  "manufacturer": "WABCO",
+  "article": "9253761230",
+  "nameRu": "TRISTOP D — барабанный тормоз",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-tristop-drum-9253761230.svg",
+  "spec": {
+    "type": "24/30",
+    "strokeMm": [
+      75,
+      75
+    ],
+    "pushrodIncludingYokeMm": 190,
+    "releasePressureBar": 4.8,
+    "componentMaxOperatingPressureBar": {
+      "service": 10.2,
+      "spring": 8.5
+    },
+    "internalBreathingValve": true
+  },
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/tristop-d_trailer_en.pdf",
+      "pages": [
+        1,
+        2
+      ],
+      "visualChecked": true
+    }
+  ],
+  "crossReferences": [
+    {
+      "make": "WABCO",
+      "article": "925 376 103 0",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    }
+  ],
+  "watermark": "TrakSOS diagonal pattern",
+  "limitations": [
+    "Original approximate geometry, no confirmed exact ports or routing",
+    "No disassembly, repair, installation or VIN-specific applicability",
+    "Component pressure ratings not system limits",
+    "Expert and rendered QA pending"
+  ]
+}
