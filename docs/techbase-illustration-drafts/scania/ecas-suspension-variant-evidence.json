@@ -1,0 +1,272 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-ecas-suspension-variants",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "checked_on": "2026-11-26",
+  "scope": {
+    "make": "Scania",
+    "family": "R",
+    "generation": "retain source application wording",
+    "vin": null
+  },
+  "cards": [
+    {
+      "manufacturer": "Cojali",
+      "article": "2209114",
+      "wabco": "4410502010",
+      "name": "Датчик высоты ECAS",
+      "principle": "Hall",
+      "connector": "HDSCS 3 pin socket A",
+      "voltage_v": 24,
+      "scania_crossrefs": [
+        "1889797",
+        "1809797"
+      ],
+      "applications": [
+        "L,P,G,R,S",
+        "P,G,R,T"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/4410502010/ecas-height-sensor-/2209114/",
+      "fitment": "family_level_only",
+      "vin": null,
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "Cojali",
+      "article": "2209115",
+      "wabco": "4410502020",
+      "name": "Датчик высоты ECAS",
+      "principle": "Hall",
+      "connector": "HDSCS 3 pin socket A",
+      "voltage_v": 24,
+      "scania_crossrefs": [],
+      "applications": [
+        "L,P,G,R,S",
+        "P,G,R,T"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/4410502020/ecas-height-sensor/2209115/",
+      "note": "Каталог содержит строки Scania, но не приводит Scania OE. Не присваивать номера от 2209114.",
+      "fitment": "family_level_only",
+      "vin": null,
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "Cojali",
+      "article": "2209109",
+      "wabco": "4410501010",
+      "name": "Датчик высоты ECAS",
+      "principle": "inductive",
+      "connector": "DIN 72585-2.1 plug A",
+      "voltage_v": null,
+      "scania_crossrefs": [
+        "1495828",
+        "2099046"
+      ],
+      "applications": [
+        "P,G,R,T Serie 2004 -"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/4410501010/ecas-height-sensor/2209109/",
+      "fitment": "family_level_only",
+      "vin": null,
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "ContiTech",
+      "article": "6700 N P02",
+      "order_no": "69728",
+      "gtin": "4054387101351",
+      "name": "Пневмобаллон подвески",
+      "piston": "steel",
+      "scania_crossrefs": [
+        "1774804",
+        "1903608",
+        "1944314",
+        "2198915",
+        "2357532"
+      ],
+      "applications": [
+        "P,R,T: 1774804, 1903608, 2198915, 2357532",
+        "R-Series new generation: 1944314"
+      ],
+      "brand_only_refs": [
+        "2357460",
+        "2808412"
+      ],
+      "source": "https://www.airspringapp.com/gb/EMEA/Product/Airspring?idBalg=26812",
+      "note": "Повторяющиеся строки каталога объединены; ось и точная высота шасси не установлены.",
+      "fitment": "family_level_only",
+      "vin": null,
+      "exact_mount": null
+    }
+  ],
+  "held": [
+    {
+      "manufacturer": "WABCO",
+      "article": "4461702200",
+      "name": "ЭБУ ECAS",
+      "system": "4x2",
+      "voltage_v": 24,
+      "connectors_count_pins": [
+        18,
+        15
+      ],
+      "scania_crossrefs": [
+        "1862647",
+        "1851677"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en_US/4461702200",
+      "fitment": "hold_brand_or_configuration_only",
+      "vin": null,
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "WABCO",
+      "article": "4460554060",
+      "name": "ЭБУ ECAS",
+      "system": "6x2-DV",
+      "voltage_v": 24,
+      "connectors_count_pins": [
+        35
+      ],
+      "scania_crossrefs": [
+        "1404233",
+        "1324374",
+        "1397936",
+        "1397966"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en_US/4460554060",
+      "fitment": "hold_brand_or_configuration_only",
+      "vin": null,
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "Cojali",
+      "article": "2209440",
+      "wabco": "4729001020",
+      "name": "Клапан ECAS",
+      "scania_crossrefs": [
+        "1365414"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/4729001020/ecas-suspension-control-solenoid-valve/2209440/",
+      "fitment": "hold_brand_or_configuration_only",
+      "vin": null,
+      "exact_mount": null
+    },
+    {
+      "manufacturer": "Cojali",
+      "article": "2209461",
+      "wabco": "4728800500",
+      "name": "Клапан ECAS",
+      "voltage_v": 24,
+      "scania_crossrefs": [
+        "1448080",
+        "1721022"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/4728800500/ecas-suspension-control-solenoid-valve/2209461/",
+      "fitment": "hold_brand_or_configuration_only",
+      "vin": null,
+      "exact_mount": null
+    }
+  ],
+  "excluded": [
+    {
+      "article": "4461702160",
+      "reason": "WABCO system descriptor ECAS 6x2 BUS CAN 2; do not classify as tractor ECU despite Scania crossrefs",
+      "source": "https://www.wabco-customercentre.com/catalog/en/4461702160"
+    }
+  ],
+  "selection_rules": [
+    "Датчики Холла и индуктивные датчики не считать взаимозаменяемыми.",
+    "Одинаковый разъём и напряжение 2209114/2209115 не доказывают взаимозаменяемость.",
+    "4x2 и 6x2-DV ЭБУ не объединять; номера контактов не означают распиновку.",
+    "Не назначать ось или поколение по одному номеру пневмобаллона без OEM."
+  ],
+  "functional_nodes": [
+    {
+      "id": "air",
+      "name": "Ресивер / подготовка воздуха"
+    },
+    {
+      "id": "ecu",
+      "name": "ЭБУ ECAS"
+    },
+    {
+      "id": "height",
+      "name": "Датчик высоты"
+    },
+    {
+      "id": "valve",
+      "name": "Электромагнитный клапан"
+    },
+    {
+      "id": "bellows",
+      "name": "Пневмобаллоны"
+    },
+    {
+      "id": "chassis",
+      "name": "Высота шасси"
+    },
+    {
+      "id": "command",
+      "name": "Заданная высота / управление"
+    }
+  ],
+  "conceptual_edges": [
+    [
+      "air",
+      "valve",
+      "air supply"
+    ],
+    [
+      "valve",
+      "bellows",
+      "air pressure control"
+    ],
+    [
+      "bellows",
+      "chassis",
+      "mechanical support"
+    ],
+    [
+      "chassis",
+      "height",
+      "height measurement"
+    ],
+    [
+      "height",
+      "ecu",
+      "feedback"
+    ],
+    [
+      "command",
+      "ecu",
+      "requested height"
+    ],
+    [
+      "ecu",
+      "valve",
+      "control"
+    ]
+  ],
+  "functional_warning": "Схема принципа действия; не подтверждает фактические магистрали, распиновку, количество клапанов или датчиков.",
+  "visual_briefs": [
+    {
+      "id": "scania-ecas-sensor-compare",
+      "scope": "Реалистичное сравнение трёх датчиков по каталожным референсам, отдельно Hall и индуктивный; интерактивные карточки артикулов."
+    },
+    {
+      "id": "scania-ecas-loop",
+      "scope": "Реалистичный обзор шасси с ЭБУ, датчиками, клапанами, ресивером и пневмобаллонами. До OEM геометрии — только функциональные связи, не фактические трассы."
+    }
+  ],
+  "safety": "Перед работами под шасси обеспечить механическую страховку по инструкции производителя. Не полагаться на давление в пневмобаллонах. Не использовать черновик для калибровки или подключения.",
+  "gates": {
+    "catalogue_rows": "checked",
+    "oem_routing": "missing",
+    "visual_assets": "not created",
+    "expert_review": "pending",
+    "runtime_import": "not performed"
+  }
+}
