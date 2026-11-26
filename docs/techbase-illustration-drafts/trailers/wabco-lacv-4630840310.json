@@ -1,0 +1,97 @@
+{
+  "id": "wabco-lacv-4630840310",
+  "article": "4630840310",
+  "nameRu": "Клапан подъёмной оси LACV",
+  "manufacturer": "WABCO",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-lacv-4630840310.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4630840310",
+      "publisher": "ZF/WABCO",
+      "checked": "2026-11-26"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/13.pdf",
+      "page": 1,
+      "visualChecked": true
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150100933.pdf",
+      "publisher": "WABCO",
+      "section": "GIO functions",
+      "textChecked": true,
+      "visualChecked": false
+    }
+  ],
+  "spec": {
+    "singleCircuit": true,
+    "springReturn": true,
+    "voltageV": 24,
+    "ratedCurrentMa": 220,
+    "componentMaxOperatingPressureBar": 13,
+    "dimensionsMm": [
+      194,
+      65,
+      66
+    ],
+    "massKg": 0.667,
+    "temperatureC": [
+      -40,
+      80
+    ],
+    "protection": "IP6K9K",
+    "gtin": "04057875213826"
+  },
+  "crossReferences": [
+    {
+      "make": "DAF",
+      "article": "1518092",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "DAF",
+      "article": "1527440",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "DOLL",
+      "article": "7086851",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "FAYMONVILLE",
+      "article": "128612",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "FELDBINDER",
+      "article": "1059809",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KRONE",
+      "article": "515003124",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KRONE",
+      "article": "5058203500",
+      "relation": "catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    }
+  ],
+  "functionalContext": "Single circuit spring-returned valve; trailer rigid axle where axle manufacturer's requirements permit. EBS/ECAS control as a function of axle load.",
+  "limitations": [
+    "No actual installation geometry; port numbers deliberately omitted",
+    "Variants 4630840410 and 4630840420 have equivalent function but different fittings; do not assume installation interchange",
+    "No exact VIN/model/year, pinout, system pressure limit or repair procedure",
+    "No expert acceptance, runtime integration or rendered QA"
+  ]
+}
