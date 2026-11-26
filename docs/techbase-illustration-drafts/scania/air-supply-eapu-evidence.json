@@ -1,0 +1,339 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-air-supply-eapu",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "checked_on": "2026-11-26",
+  "scope": {
+    "make": "Scania",
+    "model": "R candidate; not established for specific R variants",
+    "vin": null
+  },
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "page": 1,
+      "screenshot_checked": true,
+      "scope": "single and twin cartridge FuelGuard portfolio, repair kits and replacement references"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/9125220000",
+      "scope": "compressor technical data and replacement reference",
+      "catalogue_conflict": "generic subheading says 704cc; detailed swept volume and product related description say 636cc"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4127040087",
+      "scope": "distinct compressor 704 cm³, exchange unit, Scania brand crossref"
+    }
+  ],
+  "units": [
+    {
+      "article": "9325102600",
+      "name": "E-APU с одним картриджем",
+      "cartridges": 1,
+      "crossrefs": [
+        {
+          "wabco_oe": "9325102000",
+          "scania": [
+            "2551090"
+          ]
+        },
+        {
+          "wabco_oe": "9325102010",
+          "scania": [
+            "2564984"
+          ]
+        },
+        {
+          "wabco_oe": "9325102020",
+          "scania": [
+            "2564986",
+            "2651887"
+          ]
+        },
+        {
+          "wabco_oe": "9325102030",
+          "scania": [
+            "2594138",
+            "2598599"
+          ]
+        },
+        {
+          "wabco_oe": "9325102040",
+          "scania": [
+            "2801380"
+          ]
+        },
+        {
+          "wabco_oe": "9325102050",
+          "scania": [
+            "2795850"
+          ]
+        },
+        {
+          "wabco_oe": "9325102060",
+          "scania": [
+            "2897060"
+          ]
+        },
+        {
+          "wabco_oe": "9325102070",
+          "scania": [
+            "2942346"
+          ]
+        },
+        {
+          "wabco_oe": "9325102080",
+          "scania": [
+            "2945811"
+          ]
+        },
+        {
+          "wabco_oe": "9325102090",
+          "scania": [
+            "3087974"
+          ]
+        },
+        {
+          "wabco_oe": "9325102100",
+          "scania": [
+            "3087494"
+          ]
+        },
+        {
+          "wabco_oe": "9325102110",
+          "scania": [
+            "3252722"
+          ]
+        }
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "Scania brand only"
+    },
+    {
+      "article": "9325102610",
+      "name": "E-APU с двумя картриджами",
+      "cartridges": 2,
+      "crossrefs": [
+        {
+          "wabco_oe": "9325102210",
+          "scania": [
+            "2551090"
+          ]
+        },
+        {
+          "wabco_oe": "9325102220",
+          "scania": [
+            "2564984"
+          ]
+        },
+        {
+          "wabco_oe": "9325102230",
+          "scania": [
+            "2564986"
+          ]
+        },
+        {
+          "wabco_oe": "9325102240",
+          "scania": [
+            "2594138"
+          ]
+        },
+        {
+          "wabco_oe": "9325102250",
+          "scania": [
+            "2801380"
+          ]
+        },
+        {
+          "wabco_oe": "9325102260",
+          "scania": [
+            "2795850"
+          ]
+        },
+        {
+          "wabco_oe": "9325102270",
+          "scania": [
+            "2897060"
+          ]
+        },
+        {
+          "wabco_oe": "9325102280",
+          "scania": [
+            "2942346"
+          ]
+        },
+        {
+          "wabco_oe": "9325102290",
+          "scania": [
+            "2945811"
+          ]
+        },
+        {
+          "wabco_oe": "9325102300",
+          "scania": [
+            "3087974"
+          ]
+        },
+        {
+          "wabco_oe": "9325102310",
+          "scania": [
+            "3087494"
+          ]
+        },
+        {
+          "wabco_oe": "9325102320",
+          "scania": [
+            "3252722"
+          ]
+        },
+        {
+          "wabco_oe": "9325102330",
+          "scania": [
+            "3252723"
+          ]
+        }
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "Scania brand only"
+    }
+  ],
+  "kits": [
+    {
+      "article": "9325109132",
+      "name": "Выпускной клапан",
+      "units": [
+        "9325102600"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "9325109772",
+      "name": "Электромагнитный клапан",
+      "units": [
+        "9325102600",
+        "9325102610"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "9325109962",
+      "name": "Многоконтурный защитный клапан",
+      "units": [
+        "9325102600",
+        "9325102610"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "9325109102",
+      "name": "Осушитель, один картридж",
+      "units": [
+        "9325102600"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "9325109982",
+      "name": "Осушитель, два картриджа",
+      "units": [
+        "9325102610"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "9325109142",
+      "name": "Модуль датчиков давления",
+      "units": [
+        "9325102600",
+        "9325102610"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "9325109822",
+      "name": "Клапан (без уточнения функции)",
+      "units": [
+        "9325102600",
+        "9325102610"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    },
+    {
+      "article": "4329012282",
+      "name": "Картридж осушителя",
+      "units": [
+        "9325102600",
+        "9325102610"
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/docs/WABCO_EAPU2_SCANIA_A4_Flyer_CMYK_202506_EN.pdf",
+      "fitment": "unit-level only",
+      "vin": null
+    }
+  ],
+  "compressors": [
+    {
+      "article": "9125220000",
+      "scania_crossref": "2039907",
+      "swept_volume_cm3": 636,
+      "cylinders": 2,
+      "cooling": "water",
+      "lubrication": "engine supplied",
+      "source": "https://www.wabco-customercentre.com/catalog/en/9125220000",
+      "fitment": "brand only; catalogue discrepancy requires confirmation before publication"
+    },
+    {
+      "article": "4127040087",
+      "scania_crossref": "1932582",
+      "exchange_for": "4127040080",
+      "swept_volume_cm3": 704,
+      "cylinders": 2,
+      "cooling": "water",
+      "lubrication": "engine supplied",
+      "source": "https://www.wabco-customercentre.com/catalog/en/4127040087",
+      "fitment": "brand only; not interchangeable with 636 cm3 example"
+    }
+  ],
+  "functional_groups": [
+    "компрессор",
+    "подготовка воздуха: осушитель и картридж",
+    "контроль давления",
+    "управляющие клапаны",
+    "многоконтурная защита",
+    "ресиверы и потребители"
+  ],
+  "visual_briefs": [
+    {
+      "id": "scania-eapu-single-twin",
+      "description": "Сравнить реальные формы одно- и двухкартриджного E-APU по первоисточнику, оригинальная иллюстрация без копирования OEM фотографий. Кликабельные узлы, номера комплектов и отдельные варианты; не утверждать монтаж на определённом R."
+    },
+    {
+      "id": "scania-compressor-eapu",
+      "description": "Функциональная карта подготовки воздуха. До получения точного R chassis specification и OEM схемы не изображать реальную прокладку, номера контуров и порты."
+    }
+  ],
+  "safety": "Пневматические тормоза критичны для безопасности. Не использовать каталог как инструкцию по подключению, настройке давления или ремонту. При предупреждении о низком давлении следовать руководству автомобиля, безопасно остановиться.",
+  "gates": {
+    "catalogue_and_flyer": "checked",
+    "specific_model_and_vin": "unknown",
+    "oem_routing": "missing",
+    "visual_asset": "not created",
+    "expert_review": "pending",
+    "runtime_import": "not performed"
+  }
+}
