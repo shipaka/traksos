@@ -1,0 +1,274 @@
+{
+  "id": "cojali-scania-abs-sensor-connector-length",
+  "make": "Scania",
+  "models": [
+    "4-Serie 1996–2005",
+    "P/G/R/T с 2004",
+    "P/G/R/S/(L) с 2016",
+    "P/G/R/S/(L) с 2017",
+    "P/G/R/T с 2016",
+    "3-Serie 1987–1996"
+  ],
+  "system": "EBS/ABS",
+  "component": "wheel_speed_sensor",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "hotspots": [
+    {
+      "id": "h-2261094",
+      "catalogueBrand": "COJALI",
+      "article": "2261094",
+      "source": "https://www.cojaliparts.com/en/reference/1892059/abs-sensor/2261094/",
+      "models": [
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Deutsch DT06-2S A",
+        "cableLengthAsPublished": "133 27/32 inch",
+        "orientation": "straight"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1892059",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260130",
+      "catalogueBrand": "COJALI",
+      "article": "2260130",
+      "source": "https://www.cojaliparts.com/en/reference/4410329020/abs-sensor/2260130/",
+      "models": [
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004",
+        "P/G/R/S/(L) с 2016",
+        "P/G/R/S/(L) с 2017",
+        "P/G/R/T с 2016"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Deutsch DT06-2S B",
+        "cableLengthAsPublished": "105 5/16 inch",
+        "orientation": "straight"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410329020",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1530705",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1428452",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260128",
+      "catalogueBrand": "COJALI",
+      "article": "2260128",
+      "source": "https://www.cojaliparts.com/en/reference/4410329100/abs-sensor/2260128/",
+      "models": [
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004",
+        "P/G/R/S/(L) с 2016"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Sure Seal, 2 контакта",
+        "cableLengthAsPublished": "45 7/8 inch",
+        "orientation": "straight"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410329100",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1530700",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1431120",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1534519",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260625",
+      "catalogueBrand": "COJALI",
+      "article": "2260625",
+      "source": "https://www.cojaliparts.com/en/reference/4410327290/abs-sensor/2260625/",
+      "models": [
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004",
+        "P/G/R/S/(L) с 2016"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Sure Seal, 2 контакта",
+        "cableLengthAsPublished": "45 7/8 inch",
+        "orientation": "straight"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410327290",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1360615",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260699",
+      "catalogueBrand": "COJALI",
+      "article": "2260699",
+      "source": "https://www.cojaliparts.com/en/reference/1892051/abs-sensor/2260699/",
+      "models": [
+        "3-Serie 1987–1996",
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004",
+        "P/G/R/S/(L) с 2016"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Superseal, 2 контакта",
+        "cableLengthAsPublished": "59 1/16 inch",
+        "orientation": "elbow"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1892051",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260134",
+      "catalogueBrand": "COJALI",
+      "article": "2260134",
+      "source": "https://www.cojaliparts.com/en/reference/4410328700/abs-sensor/2260134/",
+      "models": [
+        "3-Serie 1987–1996",
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004",
+        "P/G/R/S/(L) с 2016"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Superseal, 2 контакта",
+        "cableLengthAsPublished": "59 1/16 inch",
+        "orientation": "elbow"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410328700",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1428450",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1530696",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1534527",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260410",
+      "catalogueBrand": "COJALI",
+      "article": "2260410",
+      "source": "https://www.cojaliparts.com/en/reference/4410329892/abs-sensor/2260410/",
+      "models": [
+        "3-Serie 1987–1996",
+        "4-Serie 1996–2005",
+        "P/G/R/T с 2004",
+        "P/G/R/S/(L) с 2016"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "connector": "Superseal, 2 контакта",
+        "cableLengthAsPublished": "63 inch",
+        "orientation": "elbow"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410329892",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "SCANIA",
+          "article": "1892028",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    }
+  ],
+  "scope": "Условный авторский рисунок. Не OEM-геометрия, не монтаж, не электрическая распиновка, не гарантия взаимозаменяемости. Неоднозначные даты из каталога сохранены с оговоркой."
+}
