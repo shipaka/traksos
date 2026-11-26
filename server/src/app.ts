@@ -617,9 +617,15 @@ export function createApp(d: Deps) {
       startsAt:z.string().datetime(),endsAt:z.string().datetime(),published:z.boolean(),
     }),c.body)));
   r.get('/api/worker/announcements', performerRoles, (c: AuthedCtx) => {
-    const kind = c.user.roles.includes('service') && c.query.get('audience') === 'service' ? 'service'
-      : c.user.roles.includes('tow') ? 'tow' : c.user.roles.includes('master') ? 'master' : 'service';
-    return ops.announcements(kind, false, c.query.get('service') ?? undefined);
+    const audience = c.query.get('audience');
+    const service = c.query.get('service');
+    if (audience !== null && audience !== 'master' && audience !== 'tow' && audience !== 'service')
+      throw bad('bad_audience','Неизвестная аудитория');
+    if (audience !== null && !c.user.roles.includes(audience))
+      throw forbidden('Нет доступа к аудитории');
+    if (service !== null && !['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu'].includes(service))
+      throw bad('bad_service','Неизвестный тип услуги');
+    return ops.workerAnnouncements(c.user,audience,service);
   });
   r.put('/api/admin/announcements/:id/status', ['admin'], (c:AuthedCtx) => {
     const b=parse(z.object({published:z.boolean()}),c.body);

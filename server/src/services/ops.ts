@@ -8,6 +8,26 @@ import { bad, notFound } from '../http/router.ts';
 const SERVICES = ['electric','diag','air','autonomy','tyre','hydraulics','tow','consult','ecu'] as const;
 const AUDIENCES = ['master','tow','service','all_workers'] as const;
 export type Audience = typeof AUDIENCES[number];
+type WorkerAudience = Exclude<Audience,'all_workers'>;
+
+// Shared live eligibility for the feed and the durable broadcast. Aliases are
+// fixed in both queries; roleFilter is a SQL parameter, never user-provided SQL.
+const announcementRecipient = (roleFilter: '$2' | 'null') => `
+  u.status='active' and u.deleted_at is null and (
+    ((${roleFilter}::text is null or ${roleFilter}::text='master')
+      and a.audience in ('master','all_workers') and 'master'=any(u.roles)
+      and p.verification='approved'
+      and (a.service is null or a.service=any(coalesce(p.specialties,'{}'::text[]))
+        or (a.service='ecu' and 'electric'=any(coalesce(p.specialties,'{}'::text[])))))
+    or ((${roleFilter}::text is null or ${roleFilter}::text='tow')
+      and a.audience in ('tow','all_workers') and 'tow'=any(u.roles)
+      and p.verification='approved' and (a.service is null or a.service='tow'))
+    or ((${roleFilter}::text is null or ${roleFilter}::text='service')
+      and a.audience in ('service','all_workers') and 'service'=any(u.roles)
+      and exists(select 1 from service_centers center
+        where center.owner_id=u.id and center.verification='approved'))
+  )`;
+
 
 export class OpsService {
   constructor(private db: Db, private now: () => Date = () => new Date()) {}
@@ -104,6 +124,19 @@ export class OpsService {
     return rows;
   }
 
+
+  async workerAnnouncements(actor:AuthUser, audience:WorkerAudience|null, service:string|null) {
+    return this.db.query(`select a.id,a.audience,a.service,a.title,a.body,a.starts_at,a.ends_at,a.published,a.created_at
+      from worker_announcements a
+      join users u on u.id=$1
+      left join performer_profiles p on p.user_id=u.id
+      where a.published=true and a.starts_at <= $3 and a.ends_at > $3
+        and ($4::text is null or a.service is null or a.service=$4)
+        and ${announcementRecipient('$2')}
+      order by a.created_at desc,a.id desc limit 100`,
+      [actor.id,audience,this.now(),service]);
+  }
+
   async publish(actor: AuthUser,p: {
     audience:Audience; service?:string|null; title:string;body:string;
     startsAt:string;endsAt:string;published:boolean;
@@ -181,19 +214,9 @@ export class OpsService {
       if(!row.published||this.now()<new Date(row.starts_at)||this.now()>=new Date(row.ends_at))
         throw bad('not_active','Для рассылки сначала опубликуйте действующее объявление');
       const users=await q.query<{id:string}>(`select u.id from users u
+        join worker_announcements a on a.id=$1
         left join performer_profiles p on p.user_id=u.id
-        where u.status='active' and (
-          ($1 in ('master','all_workers') and u.roles @> '{master}'::text[]
-             and p.verification='approved' and
-             ($2::text is null or $2 = any(coalesce(p.specialties,'{}'::text[]))
-                or ($2='ecu' and 'electric'=any(coalesce(p.specialties,'{}'::text[])))))
-          or ($1 in ('tow','all_workers') and u.roles @> '{tow}'::text[]
-             and p.verification='approved'
-             and ($2::text is null or $2='tow'))
-          or ($1 in ('service','all_workers') and u.roles @> '{service}'::text[]
-              and exists(select 1 from service_centers center
-                where center.owner_id=u.id and center.verification='approved'))
-        ) limit 501`,[row.audience,row.service]);
+        where ${announcementRecipient('null')} limit 501`,[id]);
       if(users.length===0)throw bad('no_recipients',
         'Пока нет подходящих получателей. Объявление сохранено — можно повторить рассылку после подключения партнёров');
       if(users.length>500)throw bad('too_many_recipients','Для массовой рассылки более 500 исполнителям обратитесь к администратору сервера');

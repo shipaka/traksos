@@ -404,16 +404,50 @@ function WorkerNoticesScoped({userId,mode,specialties}:{
   const matching = (service?:string|null) => !service ||
     (mode==='service' ? true : mode==='tow' ? service==='tow' :
       specialties.includes(service) || (service==='ecu' && specialties.includes('electric')));
-  const announcements=(list.data??[]).filter((x:any)=>matching(x.service));
-  const offers=(promos.data??[]).filter((x:any)=>matching(x.service));
+  const [clock,setClock]=useState(()=>Date.now());
+  const [online,setOnline]=useState(()=>navigator.onLine);
+  useEffect(()=>{
+    let lastRefresh=-Infinity;
+    const tick=()=>setClock(Date.now());
+    const refresh=()=>{
+      tick();setOnline(navigator.onLine);
+      if(document.visibilityState==='hidden'||!navigator.onLine)return;
+      const now=performance.now();
+      // Focus and visibility can arrive together. Avoid duplicate GETs,
+      // including after a user changes the device clock.
+      if(now-lastRefresh<1000)return;
+      lastRefresh=now;
+      void list.reload();void promos.reload();
+    };
+    const disconnected=()=>{tick();setOnline(false);};
+    const expiryTimer=window.setInterval(tick,1000);
+    const refreshTimer=window.setInterval(refresh,60000);
+    window.addEventListener('focus',refresh);
+    window.addEventListener('online',refresh);
+    window.addEventListener('offline',disconnected);
+    document.addEventListener('visibilitychange',refresh);
+    return ()=>{
+      window.clearInterval(expiryTimer);window.clearInterval(refreshTimer);
+      window.removeEventListener('focus',refresh);
+      window.removeEventListener('online',refresh);
+      window.removeEventListener('offline',disconnected);
+      document.removeEventListener('visibilitychange',refresh);
+    };
+  },[list.reload,promos.reload]);
+  // Even a successful old snapshot stops being applicable at the exact end
+  // of its interval. The local clock only hides data; it never grants a rate.
+  const announcements=(list.data??[]).filter((x:any)=>
+    matching(x.service)&&workerNoticeWindow(x,clock)==='active');
+  const offers=(promos.data??[]).filter((x:any)=>
+    matching(x.service)&&campaignWindow(x,clock)==='active');
   // A failed private GET cannot mean there are "no campaigns" and must not
   // keep a previous account's discount or announcement visible.
-  if(list.error||promos.error)return <div className="card stack" role="alert">
+  if(!online||list.error||promos.error)return <div className="card stack" role="alert">
     <b>Не удалось проверить объявления и действующие акции</b>
     <span className="note">Проверьте соединение. Актуальная ставка подтверждается в конкретной заявке.</span>
-    <button type="button" className="btn ghost small" onClick={()=>{
-      if(list.error)void list.reload();
-      if(promos.error)void promos.reload();
+    <button type="button" className="btn ghost small" disabled={!online} onClick={()=>{
+      if(list.error||!list.data)void list.reload();
+      if(promos.error||!promos.data)void promos.reload();
     }}>Повторить загрузку</button>
   </div>;
   if(!announcements.length&&!offers.length)return null;
