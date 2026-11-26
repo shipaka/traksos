@@ -8,7 +8,7 @@ class CoverageRoadmapTest {
         assertEquals(34,rows.size)
         assertEquals(rows.size,rows.map { it.id }.toSet().size)
         assertTrue(rows.all { it.model.isNotBlank() && it.evidence.startsWith("https://") })
-        assertEquals(6,rows.count { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL })
+        assertEquals(8,rows.count { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL })
         assertEquals(2,rows.count { it.stage==ResearchStage.CANDIDATE })
     }
     @Test fun generationsAndDifferentElectricalMarketsStaySeparate() {

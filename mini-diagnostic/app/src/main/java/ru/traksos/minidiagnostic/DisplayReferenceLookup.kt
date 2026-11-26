@@ -5,13 +5,20 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_E("WABCO TEBS E · SmartBoard"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
-    HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1")
+    HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
+    HALDEX_UABS_ACTIVE("Haldex U-ABS · активные световые коды"),
+    EKRAN_EBP("Экран АБС-П / ЭБП · световые коды")
 }
 data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
 object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE || edition==DisplayReferenceEdition.EKRAN_EBP) {
+            val haldex=edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE
+            val r=(if(haldex) AdditionalAbsReference.haldex(s) else AdditionalAbsReference.ekran(s)) ?: return null
+            return DisplayLookup(r.first,r.second,if(haldex) AdditionalAbsReference.HALDEX_SOURCE else AdditionalAbsReference.EKRAN_SOURCE,true)
+        }
         if(edition==DisplayReferenceEdition.VCS_II_FLASH) {
             val r=LegacyDisplayReference.vcsFlash(s) ?: return null
             return DisplayLookup(r,"Текущая неисправность: тип не определяется по числу вспышек",LegacyDisplayReference.VCS_SOURCE,false)

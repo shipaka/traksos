@@ -21,6 +21,8 @@ fun DisplayReferenceContent() {
     edition?.let { e ->
         val placeholder=when(e) {
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
+            DisplayReferenceEdition.HALDEX_UABS_ACTIVE -> "Две цифры, например 01"
+            DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"
             DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"
             DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
             else -> "Например 003/05"
