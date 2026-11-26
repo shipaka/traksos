@@ -52,8 +52,25 @@ object OfflineCaptureReview {
                 appendLine("Маска доступных статусов: "+hexByte(result.availabilityMask))
                 appendLine("Записей в ответе: "+result.records.size)
                 if(result.records.isEmpty())appendLine("Нет записей в данном ответе; исправность не подтверждена")
+                // Offline import cannot authenticate a physical source. Even a
+                // matching catalog description remains a reference explanation.
+                val described=result.records.count { d ->
+                    result.metadata.origin!=CaptureOrigin.SYNTHETIC &&
+                        !result.profileId.isNullOrBlank() &&
+                        !d.descriptionRu.isNullOrBlank() && !d.source.isNullOrBlank() &&
+                        !d.descriptionRu.trim().equals(d.raw.code.trim(),ignoreCase=true)
+                }
+                appendLine("Справочных расшифровок по профилю: "+described+" из "+result.records.size)
+                if(described<result.records.size)
+                    appendLine("Без подтверждённой расшифровки: "+(result.records.size-described)+" — диагностика по этим кодам неполная")
                 result.records.forEach { d ->
+                    val known=result.metadata.origin!=CaptureOrigin.SYNTHETIC &&
+                        !result.profileId.isNullOrBlank() &&
+                        !d.descriptionRu.isNullOrBlank() && !d.source.isNullOrBlank() &&
+                        !d.descriptionRu.trim().equals(d.raw.code.trim(),ignoreCase=true)
+                    appendLine(if(known) d.descriptionRu else "Неисправность: подтверждённая расшифровка не найдена")
                     appendLine(d.raw.code+" · статус "+d.raw.rawHex.takeLast(2)+" · "+statusLabel(d.raw.status))
+                    if(known) appendLine("Источник справочного описания: "+d.source)
                 }
                 appendLine("PDU: "+result.rawPduHex)
             }

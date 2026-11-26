@@ -19,7 +19,11 @@ class DtcCatalog(definitions: List<DtcDefinition> = emptyList()) {
     private val index = definitions.associateBy { Triple(it.family,it.profileId,it.code) }
     init {
         require(index.size == definitions.size)
-        require(definitions.all { it.source.isNotBlank() && it.profileId.isNotBlank() && it.code.isNotBlank() })
+        require(definitions.all {
+            it.source.isNotBlank() && it.profileId.isNotBlank() && it.code.isNotBlank() &&
+                it.descriptionRu.isNotBlank() &&
+                !it.descriptionRu.trim().equals(it.code.trim(),ignoreCase=true)
+        })
     }
     fun decode(family: EcuFamily, verifiedProfileId: String?, raw: RawDtc): DecodedDtc {
         val d = verifiedProfileId?.let { index[Triple(family,it,raw.code)] }

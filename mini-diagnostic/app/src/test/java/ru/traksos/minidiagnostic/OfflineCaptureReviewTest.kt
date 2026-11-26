@@ -15,6 +15,28 @@ class OfflineCaptureReviewTest {
         assertTrue(text.contains("ABCDEF · статус 09"))
         assertTrue(text.contains("590249ABCDEF0900000108"))
         assertTrue(text.contains("источник не проверен"))
+        assertTrue(text.contains("Без подтверждённой расшифровки: 2"))
+        assertTrue(text.contains("Неисправность: подтверждённая расшифровка не найдена"))
+    }
+    @Test fun explanationAndSourceAreVisibleOnlyForReferenceProfile() {
+        val id=EcuIdentity(EcuFamily.WABCO_TEBS_E,"TEST-PART","TEST-SW","TEST-HW",ElectricalPath.ISO11992)
+        val catalog=DtcCatalog(listOf(DtcDefinition(id.family,"fixture","ABCDEF","Датчик колеса: обрыв цепи","Тестовый источник")))
+        val capture=DiagnosticCapture(ProfileRegistry(listOf(ProfileEvidence(id,"fixture","test"))),catalog)
+        val metadata=CaptureMetadata(CaptureOrigin.MANUAL_BENCH_IMPORT,id,1)
+        val report=capture.importHex(metadata,"590249ABCDEF0900000108") as CaptureResult.Report
+        val text=OfflineCaptureReview.reportText(report)
+        assertTrue(text.contains("Справочных расшифровок по профилю: 1 из 2"))
+        assertTrue(text.contains("Датчик колеса: обрыв цепи"))
+        assertTrue(text.contains("Источник справочного описания: Тестовый источник"))
+        assertTrue(text.contains("Без подтверждённой расшифровки: 1"))
+        assertTrue(text.contains("источник не проверен"))
+        val synthetic=report.copy(metadata=metadata.copy(origin=CaptureOrigin.SYNTHETIC))
+        assertFalse(OfflineCaptureReview.reportText(synthetic).contains("Датчик колеса: обрыв цепи"))
+        val unprofiled=report.copy(profileId=null)
+        assertFalse(OfflineCaptureReview.reportText(unprofiled).contains("Датчик колеса: обрыв цепи"))
+        for(desc in listOf(" ","ABCDEF"," abcdef ")) {
+            assertTrue(runCatching { DtcCatalog(listOf(DtcDefinition(id.family,"fixture","ABCDEF",desc,"test"))) }.isFailure)
+        }
     }
     @Test fun countReportNeverConfusesZeroWithConfirmedHealthy() {
         val result=OfflineCaptureReview.parse("59 01 49 03 00 00",true,1) as CaptureResult.Count
