@@ -15,6 +15,6 @@ class ReferenceInventoryTest {
         assertEquals(19,WabcoRouterReference.count)
         assertEquals(4,HaldexAuxReference.count)
         assertEquals(221,ReferenceInventory.auxiliaryCount())
-        assertEquals(4,ReferenceInventory.provisionalAuxiliaryCount())
+        assertEquals(5,ReferenceInventory.provisionalAuxiliaryCount())
     }
 }
