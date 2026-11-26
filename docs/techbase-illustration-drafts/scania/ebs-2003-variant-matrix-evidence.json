@@ -1,0 +1,96 @@
+{
+  "id": "scania-ebs-2003-variant-matrix-evidence",
+  "manufacturer": "Scania",
+  "system": "EBS",
+  "status": "source_research_only",
+  "source_checked_text": true,
+  "source_checked_visual": false,
+  "rights_cleared": false,
+  "expert_reviewed": false,
+  "visual_ready": false,
+  "strict_count": 0,
+  "source": {
+    "author": "Scania CV AB",
+    "document": "10:04-04",
+    "issue": 4,
+    "year": 2003,
+    "url": "https://www.scribd.com/document/508067136/EBS",
+    "access": "third-party HTML transcription; original illustrations not visually verified"
+  },
+  "variants": [
+    {
+      "version": "2.0",
+      "introduction_year": 1996,
+      "channels": 4,
+      "configurations": [
+        "4x2"
+      ],
+      "vehicle_type": "tractor",
+      "page": 3
+    },
+    {
+      "version": "2.1",
+      "introduction_year": 1997,
+      "channels": 5,
+      "configurations": [
+        "6x2",
+        "6x2*4",
+        "6x2/4"
+      ],
+      "vehicle_type": "truck",
+      "page": 3
+    },
+    {
+      "version": "2.2",
+      "introduction_year": 1999,
+      "channels": 6,
+      "configurations": [
+        "6x4",
+        "8x2",
+        "8x2*6",
+        "8x4"
+      ],
+      "page": 3
+    }
+  ],
+  "additional_documented_example": {
+    "version": "2.2",
+    "configuration": "4x2",
+    "condition": "without front axle spring brake chambers",
+    "location_text": "Secondary brake relay and solenoid valves beneath chassis, aft of battery box.",
+    "pages": [
+      8,
+      9
+    ],
+    "exact_bracket": null
+  },
+  "functional_differences": [
+    {
+      "pages": [
+        24,
+        27
+      ],
+      "finding": "2.0/2.1 ECU appearance matches but software differs; 2.2 connector arrangement differs."
+    },
+    {
+      "page": 10,
+      "finding": "2.2 load sensing signal reaches cab ECU through double module and CAN; 2.0/2.1 direct signal."
+    },
+    {
+      "page": 12,
+      "finding": "TCM-equipped and relay-valve-equipped trailer control are separate variants."
+    },
+    {
+      "page": 14,
+      "finding": "Retarder disengagement uses different mechanisms in 2.0/2.1 and 2.2."
+    }
+  ],
+  "limits": [
+    "Dates refer to version introduction, not a complete production-year applicability rule.",
+    "Channel counts are historical examples, not universal across every configuration.",
+    "No verified orderable article, exact model/chassis range, bracket, or physical hose/harness routing.",
+    "No copied diagram or repair instructions; do not present this record as a complete system illustration.",
+    "OEM location document 10:04-08 pages 60/66 screenshot requests failed; visual confirmation remains pending."
+  ],
+  "next": "Validate matching original mounting drawings and chassis-specific parts catalogue; keep these variants separate."
+}
