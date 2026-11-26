@@ -1,0 +1,79 @@
+{
+  "status": "DRAFT_EXPERT_PENDING",
+  "date": "2026-11-26",
+  "illustrations": [
+    {
+      "file": "carrier-he19-edrive.svg",
+      "model": "Carrier Vector HE 19",
+      "title": "Энергетическая архитектура E-Drive",
+      "claim": "Энергия двигателя преобразуется в электрическую для питания холодильной установки.",
+      "source": "https://www.carrier.com/carrier/en/worldwide/news/news-article/carrier-transicold-vector-he-iaa-commercial-vehicles-2018.html",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "carrier-he19-heat-exchange.svg",
+      "model": "Carrier Vector HE 19",
+      "title": "Ключевые элементы холодильного контура",
+      "claim": "Подтверждённые элементы системы; связи условны, не схема циркуляции хладагента.",
+      "source": "https://www.carrier.com/carrier/en/worldwide/news/news-article/carrier-transicold-presents-the-new-vector-he-19-unit-in-germany.html",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "carrier-ecool-energy.svg",
+      "model": "Carrier Vector eCool",
+      "title": "Рекуперация энергии полуприцепа",
+      "claim": "Электроэнергия от осевого генератора накапливается для питания холодильной установки.",
+      "source": "https://www.carrier.com/truck-trailer/en/uk/products/eu-truck-trailer/trailer/vector-ecool/",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "carrier-recool-retrofit.svg",
+      "model": "Carrier [R]eCool / Vector",
+      "title": "Модернизация дизельной установки",
+      "claim": "Решение для переоснащения совместимых Vector; гибридный вариант допускает заряд от генератора.",
+      "source": "https://www.carrier.com/carrier/en/worldwide/news/news-article/carrier-transicold-launches--r-ecool--a-100--electric-retrofit-solution-compatible-with-the-vector-range-of-refrigeration-units-for-trailers.html",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "carrier-1950-e-mt.svg",
+      "model": "Carrier Vector 1950 E MT",
+      "title": "Мультитемпературное охлаждение",
+      "claim": "Две зоны показаны для примера; реальная конфигурация отсеков зависит от исполнения.",
+      "source": "https://www.carrier.com/truck-trailer/ru/ru/products/eu-truck-trailer/trailer/vector-1950-e-mt/",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "tk-a400-airflow.svg",
+      "model": "Thermo King Advancer A-400",
+      "title": "Регулирование воздушного потока",
+      "claim": "Производительность воздушного потока может регулироваться независимо от частоты двигателя.",
+      "source": "https://europe.thermoking.com/advancer/range-and-specifications/a-400",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "tk-a500-spectrum.svg",
+      "model": "Thermo King Advancer A-500 Spectrum",
+      "title": "Мультитемпературная конфигурация",
+      "claim": "Мультитемпературная установка; две зоны условны, число испарителей и их монтаж не заданы.",
+      "source": "https://europe.thermoking.com/advancer/range-and-specifications/a-500-spectrum",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    },
+    {
+      "file": "tk-axlepower.svg",
+      "model": "Thermo King Advancer AxlePower",
+      "title": "Генераторная ось BPW и накопитель",
+      "claim": "Интегрированная независимая от тягача система; генераторы управляются по потребности энергии.",
+      "source": "https://europe.thermoking.com/mediaroom/logista-advances-sustainable-operations-with-electric-self-charging-trailer-cooling-system-from-thermo-king",
+      "scope": "functional; exact serial and vehicle fitment not established",
+      "limitations": "No actual installation geometry, piping, wiring, pressures or repair instructions. Official HTML source; independent rendered visual and technical review required."
+    }
+  ],
+  "not_accepted": true
+}
