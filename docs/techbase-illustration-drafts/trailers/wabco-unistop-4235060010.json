@@ -1,0 +1,61 @@
+{
+  "id": "wabco-unistop-4235060010",
+  "manufacturer": "WABCO",
+  "article": "4235060010",
+  "nameRu": "UNISTOP — рабочая камера",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-unistop-4235060010.svg",
+  "spec": {
+    "type": "24",
+    "strokeMm": 64,
+    "componentMaxOperatingPressureBar": 10.2,
+    "massKg": 3.61,
+    "portThread": "M16 x 1.5",
+    "mountingBoltSpacingMm": 120.6
+  },
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en_GB/4235060010",
+      "textChecked": true
+    }
+  ],
+  "crossReferences": [
+    {
+      "make": "SAF",
+      "article": "3454106960",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "KÖGEL",
+      "article": "337902",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "DOLL",
+      "article": "7054433",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "FELDBINDER",
+      "article": "006993",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "NOOTEBOOM",
+      "article": "1664253",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "DAF",
+      "article": "1517956",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    }
+  ],
+  "watermark": "TrakSOS diagonal pattern",
+  "limitations": [
+    "Original approximate geometry, no confirmed exact ports or routing",
+    "No disassembly, repair, installation or VIN-specific applicability",
+    "Component pressure ratings not system limits",
+    "Expert and rendered QA pending"
+  ]
+}
