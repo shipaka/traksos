@@ -16,6 +16,7 @@ from PIL import Image, ImageOps
 # Additional sources must be visually reviewed; unavailable images are not replaced with other models.
 # Never reuse a photograph for another generation.
 SOURCES = {
+    "haldex_eb1": ("EB+ Gen1 2M main assembly, official small catalog image", "https://www.haldex.com/globalassets/europe/3.-trailer-application-guide/trailer-guide/xq_img/image79.jpg", "https://www.haldex.com/en/europe/trailer-application-guide/ebs/eb-gen2gen1/eb-gen1-series/"),
     "haldex_uabs": ("364564001 U-ABS Premium assembly", "https://www.trucksystems.de/media/image/product/35145/lg/haldex-abs-ventileinheit-premium-uabs-364564001.jpg", "https://www.trucksystems.de/Haldex-ABS-Ventileinheit-Premium-UABS-364564001"),
     "kb_g20": ("K019349V02N50, G2.0 Standard", "https://landwirtschaft.rw.net/medias/940Wx705H-K019349V02N50.webp?context=bWFzdGVyfHJhaWZmZWlzZW5BZ3Jhcnw4NTY0MnxpbWFnZS93ZWJwfGNtRnBabVpsYVhObGJrRm5jbUZ5TDJobFpTOW9OR1V2TVRBd05UWTBPRE0zT1Rrd056QXVkMlZpY0F8ODUxMzdlM2Q4OWRmODk2YzljZDVkODRlMGI5OWE5ODgzMmY4MGE1ZjZiZTBmNzhkOTE5YzU4YjY4MGQ5ODQ3NA", "https://landwirtschaft.rw.net/KNORR-Bremse-TEBS-G20-Standard-Anhaengermodul/p/826K019349V02N50"),
     "kb_g21": ("G2.1, MTW 189022", "https://d1mv2b9v99cq0i.cloudfront.net/eyJidWNrZXQiOiJ3ZWItbmluamEtaW1hZ2VzIiwia2V5IjoibW9kdHJhbnNuelwvaW1hZ2VzXC9wcm9kaW1nXC8yNDg1OF8xLmpwZyIsImVkaXRzIjp7InJlc2l6ZSI6eyJ3aWR0aCI6MTIwMCwiaGVpZ2h0Ijo2MzAsImZpdCI6Imluc2lkZSIsIndpdGhvdXRFbmxhcmdlbWVudCI6dHJ1ZX19LCJ2ZXJzaW9uIjoiMzBmMzM2NzFlYjVlY2M2NTgwMjI2YWQxOTU3MDA1YTM0Nzg2ZGFkMiJ9", "https://www.mtw.co.nz/product/24858-knorr-bremse-g2-1-tebs-ecu"),
@@ -48,10 +49,11 @@ def prepare(item):
         if len(raw) > MAX_BYTES:
             raise ValueError("image exceeds size limit")
         with Image.open(io.BytesIO(raw)) as image:
-            if image.format not in ("PNG", "JPEG", "WEBP") or min(image.size) < 150:
+            if image.format not in ("PNG", "JPEG", "WEBP") or min(image.size) < (100 if key == "haldex_eb1" else 150):
                 raise ValueError("not a usable image")
             if image.width * image.height > 20_000_000:
                 raise ValueError("pixel count exceeds limit")
+            result["original_size"] = list(image.size)
             image = ImageOps.exif_transpose(image).convert("RGBA")
             image.thumbnail((760, 760), Image.Resampling.LANCZOS)
             backdrop = Image.new("RGBA", image.size, (247, 248, 249, 255))
@@ -83,6 +85,16 @@ def main():
         (OUT / ("module_" + key + ".webp")).unlink(missing_ok=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=7) as pool:
         report = list(pool.map(prepare, SOURCES.items()))
+    # Reject exact duplicate source photos across different model IDs, never substitute a generic image.
+    by_hash = {}
+    for row in report:
+        if row["status"] == "downloaded":
+            by_hash.setdefault(row["source_sha256"], []).append(row)
+    for group in by_hash.values():
+        if len(group) > 1:
+            for row in group:
+                (OUT / ("module_" + row["model_id"] + ".webp")).unlink(missing_ok=True)
+                row.update(status="unavailable", error="identical source image used for multiple model families")
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     successful = [r["model_id"] for r in report if r["status"] == "downloaded"]
     print("Downloaded reference photos:", ", ".join(successful))
