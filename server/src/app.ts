@@ -641,7 +641,10 @@ export function createApp(d: Deps) {
     }),c.body)));
 
   r.get('/api/admin/support', staff, (c: AuthedCtx) => support.queue(c.query.get('status') === 'closed' ? 'closed' : 'open'));
-  r.get('/api/me/referral', true, (c: AuthedCtx) => referral.mine(c.user));
+  r.get('/api/me/referral', true, (c: AuthedCtx) => {
+    const invitedPage = parse(z.coerce.number().int().min(0).max(100000), c.query.get('invitedPage') ?? '0');
+    return referral.mine(c.user, invitedPage);
+  });
   // Only the actor's own financial conditions: never expose an executor's fee
   // through the client-facing pricing API or the economics explanation.
   r.get('/api/me/economics', true, async (c: AuthedCtx) => {

@@ -1,5 +1,5 @@
 // «Пригласить»: личная ссылка и QR, баллы и за что они, кого пригласили. 1 балл = 1 ₽ скидки на сбор или комиссию TrakSOS.
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { get, getToken, fmtTime } from '../api.ts';
 import { useToast, Loading, useMe } from '../ui.tsx';
 import { usePrivateRead } from './privateRead20261124.ts';
@@ -10,7 +10,7 @@ const KIND: Record<string, string> = {
   welcome: 'Подарок за вход по приглашению', ref_client: 'За приглашённого клиента', ref_performer: 'За приглашённого исполнителя',
   ref_service: 'За приглашённую рембазу', spend: 'Погашено баллами', expire: 'Сгорело', admin: 'От TrakSOS',
 };
-const WHO: Record<string, string> = { client: 'клиент', performer: 'исполнитель', service: 'рембаза' };
+const WHO: Record<string, string> = { client: 'клиент', driver: 'водитель автопарка', performer: 'исполнитель', service: 'рембаза', master_service: 'мастер и СТО', insurer: 'страховой партнёр', inspection: 'оператор техосмотра', courier: 'курьер', admin: 'администратор', moderator: 'модератор', other: 'другая роль' };
 
 export function Invite() {
   const {me,mode}=useMe();
@@ -21,15 +21,20 @@ export function Invite() {
 }
 
 function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string}) {
-  const d = usePrivateRead<any>(() => get('/api/me/referral'), scope, (e) => e.type === 'points' || e.type === 'order');
+  const [invitedPage,setInvitedPage]=useState(0);
+  const [invitedOpen,setInvitedOpen]=useState(false);
+  const d = usePrivateRead<any>(() => get('/api/me/referral'+(invitedPage?'?invitedPage='+invitedPage:'')), JSON.stringify([scope,invitedPage]), (e) => e.type === 'points' || e.type === 'order');
   const active=useRef(true);
   useLayoutEffect(()=>{active.current=true;return ()=>{active.current=false;};},[]);
   const current=()=>active.current && getToken()===token;
   const toast = useToast();
   const linkInput = useRef<HTMLInputElement>(null);
-  if (d.error) return <main><div className="card stack" role="alert"><span>Не удалось загрузить актуальные баллы и приглашения.</span><button type="button" className="btn small" onClick={()=>void d.reload()}>Повторить загрузку</button></div></main>;
+  if (d.error) return <main><div className="card stack" role="alert"><span>Не удалось загрузить актуальные баллы и приглашения.</span><button type="button" className="btn small" onClick={()=>void d.reload()}>Повторить загрузку</button>{invitedPage>0&&<button type="button" className="btn ghost small" onClick={()=>setInvitedPage(n=>Math.max(0,n-1))}>К предыдущей странице</button>}</div></main>;
   if (!d.data) return <main><Loading /></main>;
   const r = d.data.rules;
+  const total = Number.isSafeInteger(d.data.invitedTotal) && d.data.invitedTotal >= 0 ? d.data.invitedTotal : null;
+  const pageSize = d.data.invitedPageSize === 100 ? 100 : null;
+  const canNext = total !== null && pageSize !== null && (invitedPage+1)*pageSize < total;
   const link = `${location.origin}${location.pathname}#/r/${d.data.code}`;
   async function share() {
     if(!current())return;
@@ -101,17 +106,24 @@ function InviteAccount({scope,mode,token}:{scope:string;mode:string;token:string
         </div>
       </details>
 
-      <details className="card">
-        <summary><b>Кого пригласили · {d.data.invited.length}</b></summary>
+      <details className="card" open={invitedOpen} onToggle={e=>setInvitedOpen(e.currentTarget.open)}>
+        <summary><b>Кого пригласили · {total===null?'показано '+d.data.invited.length:total}</b></summary>
         <div className="stack" style={{ marginTop: 8, gap: 6 }}>
-          {!d.data.invited.length ? <span className="note">Пока никого. Поделитесь ссылкой — с водителями на стоянке, в чате дальнобойщиков, с коллегами.</span>
+          {!d.data.invited.length ? <span className="note">{invitedPage?'На этой странице нет записей. Вернитесь к предыдущей странице.':'Пока никого. Поделитесь ссылкой — с водителями на стоянке, в чате дальнобойщиков, с коллегами.'}</span>
             : d.data.invited.map((x: any, i: number) => (
-              <div key={i} className="sum"><span>{x.name}<small className="note" style={{ display: 'block' }}>{WHO[x.who]} · с {fmtTime(x.at)}</small></span><b>+{pts(x.earned)}</b></div>
+              <div key={i} className="sum"><span>{x.name}<small className="note" style={{ display: 'block' }}>{WHO[x.who]??WHO.other} · с {fmtTime(x.at)}</small></span><b>+{pts(x.earned)}</b></div>
             ))}
+          {pageSize!==null&&total!==null&&<div className="stack">
+            <span className="note">Страница {invitedPage+1} · показано {d.data.invited.length} из {total}. Список обновляется при загрузке.</span>
+            <div className="row" role="group" aria-label="Страницы приглашённых">
+              <button type="button" className="btn ghost small" disabled={invitedPage===0} onClick={()=>setInvitedPage(n=>Math.max(0,n-1))}>Предыдущая</button>
+              <button type="button" className="btn ghost small" disabled={!canNext} onClick={()=>setInvitedPage(n=>n+1)}>Следующая</button>
+            </div>
+          </div>}
         </div>
       </details>
 
-      <span className="label">История</span>
+      <span className="label">История · последние 50 операций</span>
       {!d.data.entries.length ? <div className="empty">Начислений пока нет</div> : (
         <div className="stack">
           {d.data.entries.map((e: any) => (
