@@ -3,6 +3,9 @@ package ru.traksos.minidiagnostic
 // Independent U-ABS electronic Info Centre 2 reference. Not blink codes or raw CAN DTCs.
 object HaldexUabsReference {
     const val SOURCE="https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_ru.pdf#page=47"
+    const val SOURCE_EN="https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=51"
+    const val INFO_CENTRE_SCOPE="https://www.haldex.com/sv/europe/trailer-application-guide/ebs/Features/info-centre/"
+    const val MIN_INFO_CENTRE_SOFTWARE="A650"
     private data class Entry(val component:String,val condition:String,val grouped:Boolean=false)
     private val rows=buildMap<String,Entry> {
         for (n in listOf("1","2")) {
@@ -42,6 +45,6 @@ object HaldexUabsReference {
             else -> key
         }
         val r=rows[normalized] ?: return null
-        return DisplayLookup(r.component,r.condition,SOURCE,!r.grouped)
+        return DisplayLookup(r.component,r.condition,SOURCE+"\n"+SOURCE_EN,!r.grouped)
     }
 }
