@@ -86,7 +86,15 @@ try{
   await checkPhase();
   if(await page.locator('.radar .blip.on').count()!==2)throw Error('Offer markers not synchronized');
   // The current server deadline overrides the stale ten-minute parent value.
-  await page.getByText(/Время выбора: (?:01:|02:00)/).waitFor();
+  const countdown=page.getByText(/Время выбора: \d+:\d{2}/);
+  await countdown.waitFor();
+  const timing=await countdown.evaluate(el=>{
+    const match=el.textContent.match(/Время выбора: (\d+):(\d{2})/);
+    const expected=Math.max(0,Math.ceil((Date.parse(window.__searchMock.response.until)-Date.now())/1000));
+    return {shown:match?Number(match[1])*60+Number(match[2]):NaN,expected};
+  });
+  if(!Number.isFinite(timing.shown)||timing.expected<=0||timing.expected>120||Math.abs(timing.shown-timing.expected)>2)
+    throw Error('Countdown does not follow current server deadline: '+JSON.stringify(timing));
   await page.evaluate(()=>{const m=window.__searchMock;m.response.until=new Date(Date.now()-1000).toISOString();m.listener({type:'order',orderId:'test'});});
   await page.getByText(/Время выбора истекло/).waitFor();
   if(await page.evaluate(()=>window.__searchMock.chosen.length||window.__searchMock.complete))throw Error('Timer expiry performed a client-side assignment');
