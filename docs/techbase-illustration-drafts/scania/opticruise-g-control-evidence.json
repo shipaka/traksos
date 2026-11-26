@@ -1,0 +1,233 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-opticruise-g-control",
+  "language": "ru",
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "publication_allowed": false,
+  "checked_on": "2026-11-26",
+  "sources": [
+    {
+      "url": "https://www.scania.com/content/dam/www/market/master/pdf/trucks/features/opticruise-gearbox-g25-g33-g38.pdf",
+      "pages": [
+        2,
+        4
+      ],
+      "visual_check": "PDF screenshots inspected",
+      "scope": "G25/G33/G38, standard CM and heavy-duty CH"
+    },
+    {
+      "url": "https://www.scania.com/group/en/home/newsroom/press-releases/press-release-detail-page.html/3781777-",
+      "scope": "G33CM planetary reversing and PTO driven from layshaft"
+    },
+    {
+      "url": "https://www.scania.com/uk/en/home/products/trucks/r-series/r-series-specifications.html",
+      "scope": "R-series available gearbox platform"
+    },
+    {
+      "url": "https://www.scania.com/group/en/home/newsroom/press-releases/press-release-detail-page.html/4884704-scania-introduces-g38-to-team-up-with-its-770-v8",
+      "scope": "G38 launch and V8 application"
+    }
+  ],
+  "variants": [
+    {
+      "code": "G25",
+      "max_input_torque_nm": 2500,
+      "engine_hp_range": [
+        220,
+        460
+      ],
+      "standard": "G25CM",
+      "heavy_duty": "G25CH"
+    },
+    {
+      "code": "G33",
+      "max_input_torque_nm": 3300,
+      "engine_hp_range": [
+        500,
+        660
+      ],
+      "standard": "G33CM",
+      "heavy_duty": "G33CH"
+    },
+    {
+      "code": "G38",
+      "max_input_torque_nm": 3800,
+      "engine_hp_range": [
+        770,
+        770
+      ],
+      "standard": "G38CM",
+      "heavy_duty": "G38CH"
+    }
+  ],
+  "platform": {
+    "forward_gears": 14,
+    "reverse_standard": 4,
+    "reverse_optional_total": 8,
+    "features": [
+      "Super crawler и overdrive",
+      "планетарный механизм заднего хода",
+      "регулирование объёма масла и распыление для смазки",
+      "датчики уровня и температуры масла",
+      "масляный фильтр увеличенного размера",
+      "автоматический выбор передач",
+      "PTO в зависимости от исполнения",
+      "отключаемый ретардер в соответствующей комплектации"
+    ],
+    "previous_platform": [
+      "GRS905",
+      "GRSO905",
+      "GRSO926",
+      "GRSO935"
+    ],
+    "warning": "Не переносить детали, электрические схемы и процедуры с предыдущей платформы."
+  },
+  "cards": [
+    {
+      "article": "2260835",
+      "manufacturer": "Cojali",
+      "oem": "2388629",
+      "crossrefs": [
+        "1435680"
+      ],
+      "name": "Датчик положения элементов КПП",
+      "application_rows": [
+        "TRUCK SCANIA P,G,R,T"
+      ],
+      "technical": {
+        "connector": "MQS 6-pin plug",
+        "voltage_v": 5
+      },
+      "sources": [
+        "https://www.cojaliparts.com/en/reference/2388629/position-sensor/2260835/",
+        "https://www.cojaliparts.com/en/reference/2388629/sensore-id-posizione/2260835/"
+      ],
+      "fitment": "R_family_only",
+      "gearbox_code": null,
+      "vin": null
+    },
+    {
+      "article": "2816006",
+      "manufacturer": "Cojali",
+      "oem": "2181643",
+      "crossrefs": [
+        "2000099",
+        "2090529"
+      ],
+      "name": "Цилиндр переключения групп КПП (split/range)",
+      "application_rows": [
+        "TRUCK SCANIA P,G,R,T model R",
+        "TRUCK SCANIA L,P,G,R,S model R"
+      ],
+      "sources": [
+        "https://www.cojaliparts.com/en/reference/2181643/gearbox-cylinder/2816006/"
+      ],
+      "fitment": "R_family_only",
+      "gearbox_code": null,
+      "vin": null
+    }
+  ],
+  "held": [
+    {
+      "article": "2260838",
+      "oem": "1783287",
+      "length_in": "26 9/16",
+      "url": "https://www.cojaliparts.com/en/reference/1783287/position-sensor/2260838/",
+      "reason": "нет строки применимости R"
+    },
+    {
+      "article": "2260837",
+      "oem": "1783288",
+      "length_mm": 950,
+      "url": "https://www.cojaliparts.com/en/reference/1783288/position-sensor/2260837/",
+      "reason": "нет строки применимости R"
+    }
+  ],
+  "functional_nodes": [
+    {
+      "id": "oil",
+      "name": "Масло КПП"
+    },
+    {
+      "id": "filter",
+      "name": "Фильтр масла"
+    },
+    {
+      "id": "spray",
+      "name": "Распыление смазки"
+    },
+    {
+      "id": "gears",
+      "name": "Зубчатые передачи"
+    },
+    {
+      "id": "level",
+      "name": "Датчик уровня"
+    },
+    {
+      "id": "temp",
+      "name": "Датчик температуры"
+    },
+    {
+      "id": "control",
+      "name": "Контур контроля параметров"
+    }
+  ],
+  "functional_associations": [
+    [
+      "oil",
+      "filter",
+      "functional"
+    ],
+    [
+      "oil",
+      "spray",
+      "functional"
+    ],
+    [
+      "spray",
+      "gears",
+      "lubrication"
+    ],
+    [
+      "oil",
+      "level",
+      "measurement"
+    ],
+    [
+      "oil",
+      "temp",
+      "measurement"
+    ],
+    [
+      "level",
+      "control",
+      "conceptual_signal"
+    ],
+    [
+      "temp",
+      "control",
+      "conceptual_signal"
+    ]
+  ],
+  "diagram_warning": "Не заводская гидравлическая или электрическая схема: порядок фильтра и насоса, точки подключения, номера датчиков и ЭБУ неизвестны. Каталожные датчики положения не являются датчиками масла и не привязаны к G25/G33/G38.",
+  "diagnostic_context": [
+    {
+      "symptom": "Проблемы переключения",
+      "note": "Уточнить код коробки, ошибки и данные OEM; датчик положения и исполнительный цилиндр — только возможные направления проверки."
+    },
+    {
+      "symptom": "Предупреждение об уровне или температуре масла",
+      "note": "Следовать инструкции для конкретной КПП; не продолжать эксплуатацию при критическом предупреждении."
+    }
+  ],
+  "visual": "opticruise-g-lubrication-monitoring.svg",
+  "gates": {
+    "source_screenshots": "checked pp2,4",
+    "exact_mounting": "missing",
+    "pinout": "missing",
+    "gearbox_serial_fitment": "unknown",
+    "expert_review": "pending",
+    "runtime_import": "not performed"
+  }
+}
