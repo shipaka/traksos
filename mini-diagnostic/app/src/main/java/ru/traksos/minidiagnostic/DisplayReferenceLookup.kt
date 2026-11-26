@@ -1,6 +1,7 @@
 package ru.traksos.minidiagnostic
 
 enum class DisplayReferenceEdition(val title:String) {
+    WABCO_CD_BULLETIN("WABCO TEBS C1–D · бюллетень 4007de0 (предварительно)"),
     WABCO_D("WABCO TEBS D · памятка водителя"),
     WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
     WABCO_E("WABCO TEBS E · памятка водителя"),
@@ -32,6 +33,7 @@ object DisplayReferenceLookup {
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
         if(edition==DisplayReferenceEdition.SORL_ABS_TESTER_36302900020) return SorlTrailerTesterReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_CD_BULLETIN) return WabcoCdBulletinReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_E_OEM_EXACT) return WabcoEExactReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_CAN_ROUTER) return WabcoRouterReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)
