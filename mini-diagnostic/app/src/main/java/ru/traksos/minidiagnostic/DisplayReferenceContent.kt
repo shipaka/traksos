@@ -47,6 +47,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
             DisplayReferenceEdition.HALDEX_SOFT_DOCKING_GEN3 -> "Например Sensor Error"
             DisplayReferenceEdition.HALDEX_TPMS2 -> "Например F002 или A1002"
             DisplayReferenceEdition.HALDEX_CAN_HUB -> "Например Shutdown FET"
+            DisplayReferenceEdition.WABCO_VCS2_READER, DisplayReferenceEdition.WABCO_D_READER, DisplayReferenceEdition.WABCO_E_READER -> "SPN/FMI, например 3/7"
             DisplayReferenceEdition.WABCO_CD_BULLETIN -> "Например 077/03"
             DisplayReferenceEdition.WABCO_E_OEM_EXACT -> "Например 002/05"
             DisplayReferenceEdition.WABCO_CAN_ROUTER -> "Например 18312 или 7805"
