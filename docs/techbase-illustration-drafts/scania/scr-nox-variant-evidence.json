@@ -1,0 +1,162 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-scr-nox-variants",
+  "language": "ru",
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "publication_allowed": false,
+  "source_checked_on": "2026-11-26",
+  "cards": [
+    {
+      "article": "2269006",
+      "oe": "2294290",
+      "position_relative_to_catalyst": "upstream",
+      "connector": "Tyco HDSCS 4-pin",
+      "connector_code": "B",
+      "cable_length": "910 mm",
+      "application_rows": [
+        "P,G,R,S (2016-)",
+        "P,G,R,T (2003-)"
+      ],
+      "crossrefs": [
+        "2296800",
+        "2247380",
+        "2064768"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/2294290/nox-sensor/2269006/",
+      "fitment": "family_only",
+      "vin": null,
+      "exact_mount": null,
+      "pinout": null
+    },
+    {
+      "article": "2269007",
+      "oe": "2294291",
+      "position_relative_to_catalyst": "downstream",
+      "connector": "Tyco HDSCS 4-pin",
+      "connector_code": "A",
+      "cable_length": "35 13/16 in",
+      "application_rows": [
+        "P,G,R,S (2016-)",
+        "P,G,R,T (2003-)"
+      ],
+      "crossrefs": [
+        "2296801",
+        "2247381",
+        "2064769"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/2294291/nox-sensor/2269007/",
+      "fitment": "family_only",
+      "vin": null,
+      "exact_mount": null,
+      "pinout": null
+    },
+    {
+      "article": "2269089",
+      "oe": "2296798",
+      "position_relative_to_catalyst": "upstream",
+      "connector": "DIN 72585-4.1 bayonet",
+      "connector_code": "B",
+      "cable_length": "900 mm",
+      "application_rows": [
+        "P,G,R,T explicit model R"
+      ],
+      "crossrefs": [],
+      "url": "https://www.cojaliparts.com/en/reference/2296798/nox-sensor/2269089/",
+      "fitment": "family_only",
+      "vin": null,
+      "exact_mount": null,
+      "pinout": null
+    },
+    {
+      "article": "2269013",
+      "oe": "2296799",
+      "position_relative_to_catalyst": "downstream",
+      "connector": "DIN 72585-4.1 bayonet",
+      "connector_code": "A",
+      "cable_length": "29 29/32 in",
+      "application_rows": [
+        "P,G,R,T (2003-)"
+      ],
+      "crossrefs": [],
+      "url": "https://www.cojaliparts.com/en/reference/2296799/nox-sensor/2269013/",
+      "fitment": "family_only",
+      "vin": null,
+      "exact_mount": null,
+      "pinout": null
+    }
+  ],
+  "held": [
+    {
+      "article": "2269114",
+      "oe": "2659849",
+      "role": "NOx upstream",
+      "url": "https://www.cojaliparts.com/en/reference/2659849/nox-sensor/2269114/",
+      "status": "hold_no_model_application_row",
+      "vin": null
+    },
+    {
+      "article": "2269115",
+      "oe": "2659850",
+      "role": "NOx downstream",
+      "url": "https://www.cojaliparts.com/en/reference/2659850/nox-sensor/2269115/",
+      "status": "hold_no_model_application_row",
+      "vin": null
+    },
+    {
+      "article": "2265028",
+      "oe": "2722701",
+      "role": "AdBlue dosing module",
+      "url": "https://www.cojaliparts.com/en/reference/2722701/urea-dosing-module/2265028/",
+      "status": "hold_no_model_application_row",
+      "vin": null
+    },
+    {
+      "article": "2265008",
+      "oe": "2182737",
+      "role": "AdBlue supply module",
+      "url": "https://www.cojaliparts.com/en/reference/2182737/modul-de-alimentare-a-ureei/2265008/",
+      "status": "hold_no_model_application_row",
+      "vin": null
+    }
+  ],
+  "selection_rules": [
+    "До и после катализатора — разные позиции; одинаковый корпус не доказывает заменяемость.",
+    "HDSCS и DIN bayonet, коды A/B не смешивать.",
+    "Привязка семейства не подтверждает конкретный двигатель, год или VIN.",
+    "Ни один из этих артикулов не привязан автоматически к Twin SCR."
+  ],
+  "twin_scr": {
+    "source": "https://www.scania.com/se/sv/home/newsroom/news/2021/scania-super-en-teknologisk-peak.html",
+    "secondary_source": "https://www.scania.com/uk/en/home/products/trucks/super-powertrain.html",
+    "scope": "Super; OEM reports first Twin SCR introduced with updated V8 in 2020",
+    "nodes": [
+      "турбина / выпуск",
+      "первое дозирование рядом с турбиной после заслонки выпускного тормоза",
+      "первый SCR",
+      "DPF",
+      "второе дозирование в блоке нейтрализации",
+      "второй SCR"
+    ],
+    "flow": "functional sequence only; source describes DPF between SCR catalysts",
+    "control_context": "Бак, подача AdBlue и контур управления — функциональные группы; номера блока, разводка и число насосов не подтверждены. Не утверждать конкретное расположение NOx датчиков Twin SCR.",
+    "visual": "twin-scr-functional.svg"
+  },
+  "diagnostic_context": [
+    {
+      "symptom": "Ошибка NOx или эффективности SCR",
+      "note": "Не считать датчик единственной причиной; проверять данные и коды по OEM для конкретной конфигурации."
+    },
+    {
+      "symptom": "Ошибка дозирования AdBlue",
+      "note": "Различать подачу и дозирование; не подменять один модуль другим, не обходить систему контроля выбросов."
+    }
+  ],
+  "gates": {
+    "catalogue_rows": "checked for four",
+    "brand_only": "four on hold",
+    "exact_routing": "missing",
+    "expert_review": "pending",
+    "visual_render": "not independently rendered",
+    "runtime_import": "not performed"
+  }
+}
