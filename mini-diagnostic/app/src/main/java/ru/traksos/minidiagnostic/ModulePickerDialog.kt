@@ -121,7 +121,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
 }
 
 @Composable
-private fun ModelPhoto(item:ResearchTarget,modifier:Modifier) {
+fun ModelPhoto(item:ResearchTarget,modifier:Modifier) {
     val context=LocalContext.current
     // Release-approved exact model photos are bundled in drawable-nodpi with this naming convention.
     val resource=remember(item.id) {
