@@ -7,6 +7,7 @@ object ReferenceSelection {
         "zf-tebs-e" to listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR,DisplayReferenceEdition.WABCO_E_OEM_EXACT),
         "kb-g22" to listOf(DisplayReferenceEdition.KNORR_G22_PRESSURE),
         "kb-tebs4" to listOf(DisplayReferenceEdition.KNORR_TEBS4),
+        "haldex-uabs" to listOf(DisplayReferenceEdition.HALDEX_UABS_INFO2),
         "haldex-eb1" to listOf(DisplayReferenceEdition.HALDEX_GEN1_2005),
         "haldex-eb2" to listOf(DisplayReferenceEdition.HALDEX_GEN2_INFO1),
         "haldex-eb4" to listOf(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE),
