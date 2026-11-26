@@ -1,0 +1,46 @@
+{
+  "id": "bpw-shock-0237227902",
+  "manufacturer": "BPW",
+  "article": "02.3722.79.02",
+  "nameRu": "Амортизатор подвески",
+  "family": "ECO Air / ECO Air COMPACT",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-shock-0237227902.svg",
+  "source": {
+    "url": "https://www.bpw.de/fileadmin/user_upload/PDF-Downloads/Technische-PDFs/Ersatzteillisten/Spareparts_Air_suspension_BPW_2022_EN_31052201.pdf",
+    "reference": "BPW-EL-Luft 31052201e §5.1, standard shock absorber; §11/12 spare parts, item 1300",
+    "textChecked": true,
+    "visualChecked": false,
+    "screenshotError": "size limit",
+    "checked": "2026-11-26"
+  },
+  "spec": {
+    "execution": "A",
+    "installationDiagram": "I",
+    "LMinMm": 287,
+    "LMaxMm": 412,
+    "calculatedStrokeMm": 125,
+    "XMm": 204,
+    "DMm": 75,
+    "dMm": 65,
+    "quantityPerAxle": 2
+  },
+  "documentedSuspensionTypes": [
+    "EAAU",
+    "EAAM",
+    "ACAU",
+    "ACAM"
+  ],
+  "replacement": {
+    "previous": "02.3722.79.00",
+    "current": "02.3722.79.02",
+    "condition": "Observe replacement bushes"
+  },
+  "context": "В таблицах ECO Air указано по два амортизатора на ось; конкретное исполнение проверяется по комплектации.",
+  "limitations": [
+    "Approximate functional drawing, not exact geometry, not OEM image",
+    "Exact axle serial, trailer model/year/VIN, mounting orientation and fasteners not confirmed",
+    "No dimensions inferred for SAF from BPW; no repair or installation instructions",
+    "Rendered QA and expert acceptance pending"
+  ]
+}
