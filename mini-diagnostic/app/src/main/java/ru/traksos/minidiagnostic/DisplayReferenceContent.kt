@@ -19,18 +19,23 @@ fun DisplayReferenceContent() {
         }
     }
     edition?.let { e ->
-        val vie=e==DisplayReferenceEdition.VIE_101
+        val placeholder=when(e) {
+            DisplayReferenceEdition.VIE_101 -> "Например 5/5"
+            DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"
+            DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
+            else -> "Например 003/05"
+        }
         OutlinedTextField(value=code,onValueChange={ code=it.take(16) },modifier=Modifier.fillMaxWidth(),
-            label={ Text(if(vie) "Например 5/5" else "Например 003/05") },singleLine=true)
+            label={ Text(placeholder) },singleLine=true)
         val r=DisplayReferenceLookup.find(e,code)
         if(code.isNotBlank()) {
             if(r==null) Text("Совпадение не найдено. Не переносите коды из другой системы.",color=MaterialTheme.colorScheme.error)
             else {
                 Text(r.component ?: "Компонент не найден",fontWeight=FontWeight.Bold)
                 Text(r.condition ?: "Тип неисправности не найден")
-                if(!r.exactPair) Text("Компонент и тип — отдельные справочные поля. Сочетание не подтверждено как конкретная неисправность.")
+                if(!r.exactPair) Text("Справочная информация ограничена указанными полями; точная причина неисправности не установлена.")
                 Text(r.source.orEmpty(),style=MaterialTheme.typography.bodySmall)
-                Text("Сверьте руководство именно вашего блока; статус ошибки неизвестен. Не заменяйте детали и не допускайте прицеп к эксплуатации по одному коду.")
+                Text("Сверьте руководство именно вашего блока; ручной ввод не подтверждает текущее состояние системы. Не заменяйте детали и не допускайте прицеп к эксплуатации по одному коду.")
             }
         }
     }
