@@ -5,6 +5,7 @@ package ru.traksos.minidiagnostic
 object KnorrG2Td2077Reference {
     private const val COPY="https://www.scribd.com/document/920465068/PDF-2024061305"
     private const val ORIGINAL="https://www.fruehauf.co.jp/2024/06/PDF/PDF2024061305.pdf"
+    private const val CURRENT_INDEX="https://www.fruehauf.co.jp/pdf/manual06.pdf"
     private data class Entry(val component:String,val condition:String,val page:Int)
     private val rows=buildMap<String,Entry> {
         // TD-2077, p. 26
@@ -32,6 +33,13 @@ object KnorrG2Td2077Reference {
         put("002B00",Entry("Датчик колеса D","Нет сигнала при трогании",27))
         put("003100",Entry("Датчик колеса D","Электрические помехи",27))
         // TD-2077, p. 27
+        // TD-2077 p.27, indexed Fruehauf manual06: channel matches across the two indexed versions.
+        // Specific valve function remains provisional; 003C00 has a channel conflict and is excluded.
+        put("003A00",Entry("Модулятор P21","Сбой клапана; в manual06 обозначен резервный клапан, точную функцию сверить с оригинальной страницей",27))
+        put("003B00",Entry("Модулятор P21","Сбой клапана; в manual06 обозначен клапан повышения давления, точную функцию сверить с оригинальной страницей",27))
+        put("003D00",Entry("Модулятор P22","Сбой клапана; в manual06 обозначен резервный клапан, точную функцию сверить с оригинальной страницей",27))
+        put("003E00",Entry("Модулятор P22","Сбой клапана; в manual06 обозначен клапан повышения давления, точную функцию сверить с оригинальной страницей",27))
+        put("003F00",Entry("Модулятор P22","Сбой клапана; в manual06 обозначен выпускной клапан, точную функцию сверить с оригинальной страницей",27))
         put("004700",Entry("ЭБУ","Недостаточно памяти EEPROM",27))
         put("004C00",Entry("ЭБУ","Внутренний сбой",27))
         // TD-2077, p. 27
@@ -134,11 +142,15 @@ object KnorrG2Td2077Reference {
     // Matching indexed original text, not a visual audit. Keep provisional.
     private val originalTextMatched=setOf("000200","000300","000400","000500","000600","000700","000800","000900",
         "000C00","001300","001800","001900","001E00","001F00")
+    // Separate current index; do not misattribute this evidence to the 2024 original URL.
+    private val currentIndexMatched=setOf("002400","002500","002A00","002B00","003000","003100","003600","004700","004800","004C00",
+        "003A00","003B00","003D00","003E00","003F00")
+    val currentIndexMatchedCount get()=currentIndexMatched.size
     val originalTextMatchedCount get()=originalTextMatched.size
     fun lookup(code:String):DisplayLookup? {
         val r=rows[code] ?: return null
         return DisplayLookup(r.component,r.condition+" — предварительно; требуется сверка оригинала и версии ЭБУ",
-            COPY+" · TD-2077, стр."+r.page+" · текстовая копия; оригинал: "+ORIGINAL+
+            (if(code in currentIndexMatched) CURRENT_INDEX+" · TD-2077, стр."+r.page+" · индексированный текст производителя (не визуальная сверка)" else COPY+" · TD-2077, стр."+r.page+" · текстовая копия; оригинал: "+ORIGINAL)+
                 (if(code in originalTextMatched) " · совпадает с индексированным текстом оригинала (не визуальная сверка)" else ""),false)
     }
     val count get()=rows.size
