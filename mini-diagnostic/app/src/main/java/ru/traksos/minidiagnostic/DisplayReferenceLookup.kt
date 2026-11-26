@@ -9,6 +9,7 @@ enum class DisplayReferenceEdition(val title:String) {
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
     HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
+    HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
     HALDEX_UABS_ACTIVE("Haldex U-ABS · активные световые коды"),
     EKRAN_EBP("Экран АБС-П / ЭБП · световые коды"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
@@ -28,6 +29,10 @@ object DisplayReferenceLookup {
             val knorr=edition==DisplayReferenceEdition.KNORR_KB4TA
             val r=(if(knorr) KnorrSorlReference.knorr(s) else KnorrSorlReference.sorl(s)) ?: return null
             return DisplayLookup(r.first,r.second,if(knorr) KnorrSorlReference.KNORR_SOURCE else KnorrSorlReference.SORL_SOURCE,true)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_MODAL_MODULAR) {
+            val r=HaldexModalReference.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,HaldexModalReference.SOURCE,true)
         }
         if(edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE || edition==DisplayReferenceEdition.EKRAN_EBP) {
             val haldex=edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE
