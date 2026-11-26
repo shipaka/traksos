@@ -1,0 +1,35 @@
+{
+  "id": "bpw-hub-ecoplus2-0980107330",
+  "manufacturer": "BPW",
+  "article": "09.801.07.33.0",
+  "title": "ECO Plus 2",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-hub-ecoplus2-0980107330.svg",
+  "source": {
+    "url": "https://www.bpw.de/fileadmin/user_upload/Service/Downloads/BPW-ECO_Disc_Disc_brake_TS2_TSB_Original_spare_parts_BPW_2025_en__31232501e.pdf",
+    "reference": "pp44,52",
+    "visualChecked": false,
+    "textChecked": true,
+    "checked": "2026-11-26"
+  },
+  "parts": [
+    {
+      "article": "33118",
+      "role": "inner roller bearing"
+    },
+    {
+      "article": "33213",
+      "role": "outer roller bearing"
+    },
+    {
+      "article": "02.5664.74.00",
+      "role": "ECOseal"
+    }
+  ],
+  "notes": "Article denotes bearing repair kit with axle bolt and hub cap, not entire hub. Bearing codes apply to documented 8–9 t SH/SK ECO Plus 2.",
+  "limitations": [
+    "Conceptual geometry, no exact dimensions or installation instructions",
+    "Exact axle serial, VIN and mounting unknown",
+    "No rendered QA or expert acceptance"
+  ]
+}
