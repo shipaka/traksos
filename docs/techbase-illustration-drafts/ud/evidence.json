@@ -1,0 +1,121 @@
+{
+  "status": "DRAFT_EXPERT_PENDING",
+  "date": "2026-11-26",
+  "illustrations": [
+    {
+      "file": "quon-cw25-gh8f-injection.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Fuel and intake",
+      "claim": "Common Rail direct injection",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-filter-roles.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Fuel and intake",
+      "claim": "Primary filter chassis-mounted, secondary engine-mounted",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-at2612f.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Transmission",
+      "claim": "AT2612F 12 forward/2 reverse; electronic selector",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-electrical.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Electrical",
+      "claim": "24 V negative ground, 2 x 12 V 135 Ah batteries, 110 A alternator",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-front-suspension.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Front axle and suspension",
+      "claim": "Reverse Elliot I-beam, parabolic leaf spring and shock absorbers",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-rear-suspension.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Rear axle and suspension",
+      "claim": "Multi-leaf or eight air bags with ECAS4 and shock absorbers",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-disc-brakes.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Brakes",
+      "claim": "430 mm disc brakes all axles, EBS, spring park brake drive axles",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-steering.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Steering",
+      "claim": "Recirculating ball and screw, hydraulic assist",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cw25-engine-brake.svg",
+      "model": "Quon CW 25 360 / GH8F / Australia December 2022",
+      "source": "https://www.udtrucks.com/sites/default/files/2023-06/Quon%20CW%2025%20360%20Spec%20Sheet%20-%20updated%20Dec%2022.pdf",
+      "page": 2,
+      "section": "Brakes",
+      "claim": "Exhaust and compression engine brake EEB",
+      "verification": "PDF p2 screenshot inspected"
+    },
+    {
+      "file": "quon-cg30-transmission-variants.svg",
+      "model": "Quon CG 30 360 GH8F AU",
+      "source": "https://www.udtrucks.com/australia/trucks/quon/specs",
+      "section": "8-Litre Quon CG 30 360 Specifications",
+      "claim": "8x4; 12 speed ESCOT VI AMT or 6 speed Allison automatic"
+    },
+    {
+      "file": "quon-2017-traffic-eye.svg",
+      "model": "Quon generation launched Japan 11 April 2017",
+      "source": "https://www.udtrucks.com/news-and-stories/news/ud-trucks-launches-the-all-new-heavy-duty-quon-truck",
+      "section": "Safety",
+      "claim": "Radar and cab-mounted camera for collision mitigation"
+    },
+    {
+      "file": "quester-escot-control.svg",
+      "model": "Quester GH8E/GH11E with ESCOT",
+      "source": "https://www.udtrucks.com/trucks/quester/fuel-efficiency",
+      "section": "How does it work?",
+      "claim": "Electronic control of pneumatic shifts and automatic clutch"
+    },
+    {
+      "file": "quester-euro5-scr.svg",
+      "model": "Quester Euro 5 South Africa",
+      "source": "https://www.udtrucks.com/southafrica/trucks/quester/euro-5",
+      "section": "SCR",
+      "claim": "SCR emission treatment to reduce NOx"
+    }
+  ],
+  "limitations": [
+    "Original conceptual SVGs. Not OEM wiring, exact mounting geometry, component photos, VIN-specific applicability, repair instructions or hydraulic routing.",
+    "All 13 files stored and retrieved. No rendered visual or independent technical QA completed; not accepted for production.",
+    "For CW25 use December 2022 AU specification, not specifications for other models or markets."
+  ],
+  "accepted": false
+}
