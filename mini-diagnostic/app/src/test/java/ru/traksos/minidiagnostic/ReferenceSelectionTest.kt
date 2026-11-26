@@ -17,6 +17,8 @@ class ReferenceSelectionTest {
             assertTrue(ReferenceSelection.forTarget(id).isEmpty())
     }
     @Test fun generalTesterNotImplicitlyAssigned() {
+        assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.HALDEX_CAN_HUB in ReferenceSelection.forTarget(it.id) })
+        assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.HALDEX_SOFT_DOCKING_GEN3 in ReferenceSelection.forTarget(it.id) })
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.WABCO_CAN_ROUTER in ReferenceSelection.forTarget(it.id) })
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.WABCO_ELEX in ReferenceSelection.forTarget(it.id) })
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.WABCO_COMPACT_TESTER in ReferenceSelection.forTarget(it.id) })

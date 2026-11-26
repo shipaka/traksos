@@ -14,7 +14,9 @@ enum class DisplayReferenceEdition(val title:String) {
     HALDEX_GEN1_2005("Haldex EB+ Gen1 · руководство 02.2005"),
     HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
-    HALDEX_EB4_DIAG_EXAMPLE("Haldex EB+ 4.0 · DIAG++ (пример 2025)"),
+    HALDEX_EB4_DIAG_EXAMPLE("Haldex EB+ 4.0 · DIAG++ (таблица 2025)"),
+    HALDEX_SOFT_DOCKING_GEN3("Haldex EB+ Gen3 · Soft Docking"),
+    HALDEX_CAN_HUB("Haldex EB+ CAN Hub · бюллетень 2025"),
     HALDEX_GEN3_DIAG("Haldex EB+ Gen3 · DIAG+ / Info Centre 2"),
     HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
@@ -31,6 +33,8 @@ object DisplayReferenceLookup {
         if(edition==DisplayReferenceEdition.WABCO_CAN_ROUTER) return WabcoRouterReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_E_HUMBAUR) return ModernDisplayExamples.wabcoE(s)
+        if(edition==DisplayReferenceEdition.HALDEX_SOFT_DOCKING_GEN3) return HaldexAuxReference.softDocking(s)
+        if(edition==DisplayReferenceEdition.HALDEX_CAN_HUB) return HaldexAuxReference.canHub(s)
         if(edition==DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE) return ModernDisplayExamples.haldex4(s)
         if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
         if(edition==DisplayReferenceEdition.KNORR_G2_TD2077) return KnorrG2Td2077Reference.lookup(s)
