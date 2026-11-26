@@ -148,7 +148,7 @@ private fun MiniApp() {
                         val target = when(mode) { Turn.LEFT -> setOf(Channel.LEFT); Turn.RIGHT -> setOf(Channel.RIGHT); else -> setOf(Channel.LEFT,Channel.RIGHT) }
                         val active = turn == target
                         Tile(icon,label,active,state.connected,Modifier.weight(1f),
-                            glow = active && (mode != Turn.BOTH || Channel.LEFT in outputs)) {
+                            glow = active && (Channel.LEFT in outputs || Channel.RIGHT in outputs)) {
                             apply(lights.turn(if (active) Turn.OFF else mode))
                         }
                     }
@@ -163,7 +163,7 @@ private fun MiniApp() {
                         Tile(icon,label,ch in lights.enabled,state.connected,Modifier.weight(1f)) { apply(lights.toggle(ch)) }
                     }
                 }
-                Text("Боковые фонари и подсветка номера — вместе с габаритами. Схема расположения условная.", color = Muted, fontSize = 11.sp)
+                Text("Демонстрационная схема. Подсветка номера зависит от проводки прицепа.", color = Muted, fontSize = 11.sp)
                 Button(onClick = { off() }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC72D2D),contentColor = Color.White)) {
                     Text("⏻  Выключить всё", fontWeight = FontWeight.Bold, fontSize = 17.sp)
@@ -190,13 +190,28 @@ private fun MiniApp() {
                         Text("Диагностика системы тормозов",fontSize = 18.sp,fontWeight = FontWeight.Bold)
                         Text("ДЕМО — реальные модуляторы не подключены",color = Orange,fontSize = 12.sp)
                         val chosen = manualTargetId?.let(CoverageRoadmap::byId)
-                        OutlinedButton(onClick = {
-                            off(); scanning=false; scan=0; detail=-1; modulePickerOpen=true
-                        }, modifier=Modifier.fillMaxWidth()) {
-                            Text(if(chosen==null) "Автопоиск / выбрать блок" else chosen.maker+" · "+chosen.model)
+                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                            Button(onClick={
+                                off(); manualTargetId=null; scan=0; detail=-1; scanning=true
+                            },enabled=!scanning && state.connected,modifier=Modifier.weight(1f).heightIn(min=64.dp)) {
+                                Column(horizontalAlignment=Alignment.CenterHorizontally) {
+                                    Text("◎",fontSize=20.sp)
+                                    Text("Автопоиск",fontSize=13.sp,fontWeight=FontWeight.Bold)
+                                }
+                            }
+                            OutlinedButton(onClick={
+                                off(); scanning=false; scan=0; detail=-1; modulePickerOpen=true
+                            },modifier=Modifier.weight(1f).heightIn(min=64.dp)) {
+                                Column(horizontalAlignment=Alignment.CenterHorizontally) {
+                                    Text("⌕",fontSize=20.sp)
+                                    Text("Ручной поиск",fontSize=13.sp,fontWeight=FontWeight.Bold)
+                                }
+                            }
                         }
-                        Text(if(chosen==null) "Автопоиск: пока только демонстрация" else "Выбрано вручную — электронная идентификация не подтверждена",
-                            color=Muted,fontSize=11.sp)
+                        if(chosen!=null) {
+                            Text(chosen.maker+" · "+chosen.model,fontWeight=FontWeight.Bold)
+                            Text("Выбрано вручную · ДЕМО",color=Muted,fontSize=11.sp)
+                        }
                         if(scanning) {
                             Text(when { scan < 25 -> "Подключение симулятора"; scan < 60 -> "Идентификация (демо)"; else -> "Чтение примеров ошибок" })
                             LinearProgressIndicator(progress = { scan / 100f },modifier = Modifier.fillMaxWidth(),color = Orange)
@@ -209,12 +224,11 @@ private fun MiniApp() {
                                 DemoFault("Колесный датчик D","Пример: отсутствие сигнала · сохранённая",Orange,detail == 1) { detail = if(detail == 1) -1 else 1 }
                                 Text("Это не результат проверки реального прицепа.",color = Muted,fontSize = 11.sp)
                             }
-                            Button(onClick = { scan = 0; detail = -1; scanning = true },
+                            if(chosen!=null || scan==100) Button(onClick = { scan = 0; detail = -1; scanning = true },enabled=state.connected,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                 Text(if(scan == 100) "Повторить демо" else "Начать демо-диагностику",fontWeight = FontWeight.Bold)
                             }
-                            OutlinedButton(onClick = {},enabled = false,modifier = Modifier.fillMaxWidth()) { Text("Очистить ошибки после ремонта") }
-                            Text("Очистка недоступна: протокол реального ЭБУ не подтверждён.",color = Muted,fontSize = 11.sp)
+                            if(scan==100) OutlinedButton(onClick = {},enabled = false,modifier = Modifier.fillMaxWidth()) { Text("Очистить ошибки (недоступно)") }
                         }
                     }
                 }
@@ -264,26 +278,91 @@ private fun Splash() {
 
 @Composable
 private fun TrailerLighting(outputs: Set<Channel>) {
-    // Single fixed illustration. Local lamp darkening overlays only; never animate position or the full image.
-    Box(Modifier.fillMaxWidth().aspectRatio(600f/319f).clip(RoundedCornerShape(12.dp))) {
-        Image(painterResource(R.drawable.lighting_art),"Иллюстрация расположения фонарей",Modifier.fillMaxSize(),contentScale = ContentScale.FillBounds)
-        Canvas(Modifier.fillMaxSize()) {
-            fun shade(ch: Channel,x:Float,y:Float,rx:Float,ry:Float) {
-                if(ch in outputs) return
-                val c = Offset(size.width*x,size.height*y)
-                val r = maxOf(size.width*rx,size.height*ry)
-                drawCircle(Brush.radialGradient(listOf(Color(0xED15191C),Color(0xB515191C),Color.Transparent),center=c,radius=r),r,c)
+    // Neutral illustration drawn from independent segments, not masks over a lit photograph.
+    // Each visible lamp is always present; only its light emission changes.
+    @Composable fun level(ch:Channel)=animateFloatAsState(
+        targetValue=if(ch in outputs) 1f else 0f,
+        animationSpec=tween(120),label=ch.name).value
+    val left=level(Channel.LEFT); val right=level(Channel.RIGHT)
+    val ls=level(Channel.LEFT_SIDE); val rs=level(Channel.RIGHT_SIDE)
+    val stop=level(Channel.STOP); val fog=level(Channel.FOG); val rev=level(Channel.REVERSE)
+    val plate=maxOf(ls,rs)
+    Column(Modifier.fillMaxWidth().background(Color(0xFF151D26),RoundedCornerShape(16.dp))
+        .border(1.dp,Line,RoundedCornerShape(16.dp)).padding(12.dp),
+        verticalArrangement=Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+            Text("ВИД СЗАДИ",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold)
+            Text(if(outputs.isEmpty()) "Свет выключен" else "Активные фонари",color=if(outputs.isEmpty()) Muted else Orange,fontSize=11.sp)
+        }
+        Canvas(Modifier.fillMaxWidth().aspectRatio(1.43f)) {
+            fun point(x:Float,y:Float)=Offset(size.width*x,size.height*y)
+            fun rect(x:Float,y:Float,w:Float,h:Float,c:Color,r:Float=.012f) {
+                drawRoundRect(c,point(x,y),androidx.compose.ui.geometry.Size(size.width*w,size.height*h),
+                    androidx.compose.ui.geometry.CornerRadius(size.width*r))
             }
-            shade(Channel.LEFT,.375f,.638f,.048f,.055f)
-            shade(Channel.RIGHT,.705f,.638f,.048f,.055f)
-            shade(Channel.STOP,.395f,.711f,.043f,.047f)
-            shade(Channel.STOP,.695f,.711f,.043f,.047f)
-            shade(Channel.FOG,.48f,.755f,.028f,.034f)
-            shade(Channel.REVERSE,.61f,.75f,.029f,.034f)
-            listOf(.18f to .505f,.218f to .48f,.26f to .448f,.30f to .421f,.32f to .39f,.323f to .105f).forEach { (x,y) ->
-                shade(Channel.LEFT_SIDE,x,y,.016f,.026f)
+            fun lamp(x:Float,y:Float,w:Float,h:Float,c:Color,a:Float) {
+                rect(x,y,w,h,androidx.compose.ui.graphics.lerp(c.copy(alpha=.23f),c,a),.008f)
+                if(a>0f) {
+                    val center=point(x+w/2,y+h/2)
+                    val radius=size.width*w*.85f
+                    drawCircle(Brush.radialGradient(listOf(c.copy(alpha=.24f*a),Color.Transparent),center=center,radius=radius),radius,center)
+                    rect(x+.008f,y+.005f,w-.016f,h-.010f,c.copy(alpha=.88f*a),.006f)
+                }
             }
-            // Right flank is hidden in the approved rear three-quarter view; the right channel state is shown by its tile.
+            // Door frame, hinges, metal door panels, tyres and bumper.
+            rect(.19f,.035f,.62f,.67f,Color(0xFF84909C),.022f)
+            rect(.206f,.055f,.588f,.627f,Color(0xFF37424D),.012f)
+            rect(.219f,.073f,.274f,.59f,Color(0xFF56636E),.008f)
+            rect(.507f,.073f,.274f,.59f,Color(0xFF56636E),.008f)
+            for(x in listOf(.254f,.447f,.553f,.746f)) {
+                rect(x,.085f,.012f,.56f,Color(0xFFABB5BE),.003f)
+                for(y in listOf(.11f,.39f,.62f)) rect(x-.019f,y,.05f,.018f,Color(0xFF252F38),.003f)
+            }
+            rect(.46f,.48f,.08f,.019f,Color(0xFFD0D6DC),.003f)
+            for(x in listOf(.205f,.685f)) {
+                rect(x,.72f,.11f,.23f,Color(0xFF080B10),.02f)
+                rect(x+.026f,.76f,.055f,.16f,Color(0xFF262D36),.012f)
+            }
+            rect(.155f,.697f,.69f,.17f,Color(0xFF343F49),.015f)
+            for(x in listOf(.17f,.655f)) rect(x,.713f,.175f,.133f,Color(0xFF171D23),.012f)
+            val amber=Color(0xFFFFA52B); val red=Color(0xFFFF4548); val white=Color(0xFFFFF2D6)
+            // Left/right tail lamps, separate stop and indicator sections.
+            lamp(.18f,.725f,.15f,.031f,amber,left)
+            lamp(.67f,.725f,.15f,.031f,amber,right)
+            lamp(.18f,.767f,.15f,.025f,red,ls*.76f)
+            lamp(.67f,.767f,.15f,.025f,red,rs*.76f)
+            lamp(.18f,.802f,.15f,.031f,red,stop)
+            lamp(.67f,.802f,.15f,.031f,red,stop)
+            // Central registration plate and independent number illumination.
+            rect(.433f,.775f,.134f,.062f,androidx.compose.ui.graphics.lerp(Color(0xFF68717A),Color(0xFFFFF3C8),plate),.005f)
+            lamp(.441f,.752f,.118f,.018f,white,plate)
+            lamp(.352f,.798f,.065f,.038f,red,fog)
+            lamp(.583f,.798f,.065f,.038f,white,rev)
+            // Upper clearance lamps.
+            lamp(.216f,.045f,.046f,.018f,red,ls)
+            lamp(.738f,.045f,.046f,.018f,red,rs)
+            // Red reflective tape remains reflective, not a light.
+            for(x in listOf(.24f,.32f,.58f,.66f)) rect(x,.625f,.067f,.016f,Color(0xFF97494C),.001f)
+        }
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+            SideMarkers("Левый борт",ls,Modifier.weight(1f))
+            SideMarkers("Правый борт",rs,Modifier.weight(1f))
+        }
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+            Text("Задние габариты",color=if(ls+rs>0f) Orange else Muted,fontSize=11.sp)
+            Text("Подсветка номера",color=if(plate>0f) Orange else Muted,fontSize=11.sp)
+        }
+    }
+}
+
+@Composable
+private fun SideMarkers(label:String,level:Float,modifier:Modifier) {
+    Column(modifier.background(Graphite,RoundedCornerShape(9.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        Text(label,color=if(level>0f) Orange else Muted,fontSize=11.sp)
+        Canvas(Modifier.fillMaxWidth().height(15.dp)) {
+            val c=androidx.compose.ui.graphics.lerp(Color(0xFF594733),Color(0xFFFFAD32),level)
+            drawLine(Color(0xFF687582),Offset(0f,size.height/2),Offset(size.width,size.height/2),strokeWidth=2f)
+            for(i in 0..4) drawCircle(c, size.height*.27f,Offset(size.width*(.1f+.2f*i),size.height/2))
         }
     }
 }
