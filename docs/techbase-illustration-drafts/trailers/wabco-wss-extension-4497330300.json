@@ -1,0 +1,68 @@
+{
+  "id": "wabco-wss-extension-4497330300",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-wss-extension-4497330300.svg",
+  "sources": [
+    {
+      "publisher": "ZF/WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/en/4497330300",
+      "checked": "2026-11-26"
+    },
+    {
+      "publisher": "ZF/WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102943.pdf",
+      "page": 1,
+      "visualChecked": true,
+      "section": "GIO Cables, ABS Sensor"
+    },
+    {
+      "publisher": "WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102523.pdf",
+      "textChecked": true
+    }
+  ],
+  "component": {
+    "manufacturer": "WABCO",
+    "article": "4497330300",
+    "nameRu": "Соединительный кабель датчика скорости колеса",
+    "lengthM": 3,
+    "massKg": 0.064,
+    "gtin": "04057876081240",
+    "systemFamilies": [
+      "Trailer iEBS",
+      "Trailer iABS"
+    ],
+    "ends": [
+      "GIO connector, blue coding",
+      "ABS sensor connector"
+    ]
+  },
+  "related": [
+    {
+      "article": "4410328080",
+      "role": "S+ wheel speed sensor, 400 mm; manual specifies 449733 cable family"
+    },
+    {
+      "article": "4497330130",
+      "lengthM": 1.3
+    },
+    {
+      "article": "4497330180",
+      "lengthM": 1.8
+    },
+    {
+      "article": "4497330700",
+      "lengthM": 7
+    },
+    {
+      "article": "4497331200",
+      "lengthM": 12
+    }
+  ],
+  "limitations": [
+    "Illustration shows functional path, not exact connector dimensions or internal pinout",
+    "Do not equate iEBS with TEBS E",
+    "Actual routing and length selection depend on vehicle and ECU variant; no VIN/model-year fitment asserted",
+    "No installation instructions; expert review pending"
+  ]
+}
