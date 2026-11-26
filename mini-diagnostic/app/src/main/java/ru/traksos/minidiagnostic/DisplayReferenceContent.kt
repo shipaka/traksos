@@ -45,6 +45,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
             DisplayReferenceEdition.HALDEX_MODAL_MODULAR -> "Например 05, 91 или CF"
             DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE -> "Например 0x01 или S1A continuity"
             DisplayReferenceEdition.HALDEX_SOFT_DOCKING_GEN3 -> "Например Sensor Error"
+            DisplayReferenceEdition.HALDEX_TPMS2 -> "Например F002 или A1002"
             DisplayReferenceEdition.HALDEX_CAN_HUB -> "Например Shutdown FET"
             DisplayReferenceEdition.WABCO_CD_BULLETIN -> "Например 077/03"
             DisplayReferenceEdition.WABCO_E_OEM_EXACT -> "Например 002/05"
