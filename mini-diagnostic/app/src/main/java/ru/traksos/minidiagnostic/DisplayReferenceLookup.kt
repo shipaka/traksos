@@ -18,6 +18,7 @@ enum class DisplayReferenceEdition(val title:String) {
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
     HALDEX_EB4_DIAG_EXAMPLE("Haldex EB+ 4.0 · DIAG++ (таблица 2025)"),
     HALDEX_SOFT_DOCKING_GEN3("Haldex EB+ Gen3 · Soft Docking"),
+    HALDEX_TPMS2("Haldex TPMS 2.0 · отдельный RCU (примеры 2025)"),
     HALDEX_CAN_HUB("Haldex EB+ CAN Hub · бюллетень 2025"),
     HALDEX_UABS_INFO2("Haldex U-ABS · Info Centre 2"),
     HALDEX_GEN3_DIAG("Haldex EB+ Gen3 · DIAG+ / Info Centre 2"),
@@ -39,6 +40,7 @@ object DisplayReferenceLookup {
         if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_E_HUMBAUR) return ModernDisplayExamples.wabcoE(s)
         if(edition==DisplayReferenceEdition.HALDEX_SOFT_DOCKING_GEN3) return HaldexAuxReference.softDocking(s)
+        if(edition==DisplayReferenceEdition.HALDEX_TPMS2) return HaldexTpms2Reference.lookup(s)
         if(edition==DisplayReferenceEdition.HALDEX_CAN_HUB) return HaldexAuxReference.canHub(s)
         if(edition==DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE) return ModernDisplayExamples.haldex4(s)
         if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
