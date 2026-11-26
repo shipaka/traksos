@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { get, post, rub, fmtTime } from '../api.ts';
 import { SERVICES, STATUS, STEPS, STEP_NAMES, RESULTS, CONSULT_HINTS, CONSULT_CONF } from '../dict.ts';
 import { go } from '../ui.tsx';
+import { saveOrderPrefill } from '../orderPrefill.ts';
 import { useLoad, useAction, useMe, Loading, Back, RubInput, Field, useToast, VehicleFields } from '../ui.tsx';
 import { onEvent } from '../api.ts';
 import { Search, OfferForm } from './search.tsx';
@@ -639,6 +640,7 @@ function WorkInProgress({ d }: { d: any }) {
 
 /** «Нужна запчасть, которой нет у мастера?» — мастер ждёт / уедет и вернётся / эвакуатор. Видят обе стороны. */
 function PartPicker({ d, onDone, performer }: { d: any; onDone: () => void; performer?: boolean }) {
+  const {me}=useMe();
   const { busy, run } = useAction();
   const [now, setNow] = useState(Date.now());
   useEffect(() => { if (!d.waitStartedAt) return; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, [d.waitStartedAt]);
@@ -658,7 +660,7 @@ function PartPicker({ d, onDone, performer }: { d: any; onDone: () => void; perf
       <div className="stack" style={{ marginTop: 8 }}>
         <button className="opt" disabled={busy} onClick={() => set('wait', 'Таймер переключён на ожидание')}><b>Мастер ждёт</b><small>Таймер переключится на «ожидание» по ставке мастера{rate ? ` ${rub(rate)}/ч` : ''}. Дорогу за запчастью оплачивает тот, кто уехал.</small></button>
         <button className="opt" aria-pressed={d.partMode === 'return'} disabled={busy} onClick={() => set('return', 'Мастер вернётся с запчастью')}><b>Уедет и вернётся</b><small>Мастер закроет текущую работу и вернётся, когда деталь будет на месте. Возвращение — новый выезд по его прайсу.</small></button>
-        <button className="opt" aria-pressed={d.partMode === 'tow'} disabled={busy} onClick={async () => { if (await set('tow', 'Мастер закроет работу с диагнозом') && !performer) { try { sessionStorage.setItem('traksos.prefill', JSON.stringify({ address: d.address ?? '' })); } catch { /* */ } go('new/tow'); } }}><b>Эвакуатор</b><small>Мастер закроет работу с диагнозом — его увидит сервис. Эвакуатор — с этого же места.</small></button>
+        <button className="opt" aria-pressed={d.partMode === 'tow'} disabled={busy} onClick={async () => { if (await set('tow', 'Мастер закроет работу с диагнозом') && !performer) { saveOrderPrefill(me?.id, { address: d.address ?? '' }); go('new/tow'); } }}><b>Эвакуатор</b><small>Мастер закроет работу с диагнозом — его увидит сервис. Эвакуатор — с этого же места.</small></button>
       </div>
     </details>
   );
