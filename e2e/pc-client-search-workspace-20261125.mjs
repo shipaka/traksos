@@ -31,7 +31,7 @@ const bundle=await build({
       const [motionEpoch]=useState(()=>performance.now()-2500);
       window.__searchMock.epoch=motionEpoch;
       window.__searchMock.revalidate=()=>setRevision(x=>x+1);
-      return <Search key={revision} d={{id,service:'electric',search:{candidates:4},autoPick:true,auctionUntil:window.__searchMock.parentDeadline}}}
+      return <Search key={revision} d={{id,service:'electric',search:{candidates:4},autoPick:true,auctionUntil:window.__searchMock.parentDeadline}}
         collapsed={collapsed} onCollapsedChange={setCollapsed} motionEpoch={motionEpoch}
         onChosen={()=>window.__searchMock.complete++}/>;
     }
