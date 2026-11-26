@@ -296,8 +296,10 @@ try{
  await op.route(consultPricingRoute,route=>route.fulfill(json({payments:{invoice:true},consult:{price:70000,backDiscount:20000,backHours:48}})));
  await op.route(consultVehiclesRoute,route=>route.fulfill(json([truck])));
  await op.goto(BASE+'/#/new/consult',{waitUntil:'domcontentloaded'});
- try{await op.locator('#f-car select.field').waitFor();}catch(error){await assertOwnerClean('consultation form timeout');throw error;}
- await op.locator('#f-car select.field').selectOption(truck.id);
+ const savedVehicle=op.locator('#f-car select').filter({has:op.locator('option[value="'+truck.id+'"]')});
+ try{await savedVehicle.waitFor();}catch(error){await assertOwnerClean('consultation form timeout');throw error;}
+ await savedVehicle.selectOption(truck.id);
+ assert(await savedVehicle.inputValue()===truck.id,'Consultation did not select the saved truck');
  await op.locator('#f-agree input').check();
  await op.getByRole('button',{name:/Заказать консультацию/}).click();
  await op.waitForURL(url=>url.hash==='#/?order='+consultId);
