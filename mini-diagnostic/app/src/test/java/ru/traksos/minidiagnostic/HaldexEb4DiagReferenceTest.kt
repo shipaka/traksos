@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class HaldexEb4DiagReferenceTest {
     @Test fun numericAndDisplayKeysAreOneDocumentedEntry() {
-        assertEquals(30,HaldexEb4DiagReference.count)
+        assertEquals(31,HaldexEb4DiagReference.count)
         assertEquals(22,HaldexEb4DiagReference.numericCount)
         val r=HaldexEb4DiagReference.lookup("0x01")!!
         assertEquals(r,HaldexEb4DiagReference.lookup("S1A continuity"))
@@ -26,7 +26,11 @@ class HaldexEb4DiagReferenceTest {
         assertTrue(tpms.condition!!.contains("TPMS 1.0"))
         assertTrue(tpms.source!!.endsWith("#page=41"))
         assertNull(HaldexEb4DiagReference.lookup("AUX 5 OC"))
-        assertNull(HaldexEb4DiagReference.lookup("Soft Docking"))
+        val dock=HaldexEb4DiagReference.lookup("Soft Docking")!!
+        assertTrue(dock.condition!!.contains("не раскрывает конкретную причину"))
+        assertTrue(dock.source!!.endsWith("#page=135"))
+        assertNull(HaldexEb4DiagReference.lookup("Soft Docking Sensor Error"))
+        assertNull(HaldexAuxReference.softDocking("Soft Docking"))
     }
     @Test fun extendedScreenNamedValvesAreNotNumericCodes() {
         for (channel in listOf("21","22")) for (mode in listOf("hold","dump")) {
