@@ -1,0 +1,37 @@
+{
+  "id": "bpw-disc-0308835127",
+  "manufacturer": "BPW",
+  "article": "03.088.35.12.7",
+  "family": "ECO Disc TS2 / TSB 4309",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-disc-0308835127.svg",
+  "spec": {
+    "diameterMm": 430,
+    "thicknessMm": null,
+    "hubFamily": "ECO Plus 3"
+  },
+  "source": {
+    "url": "https://www.bpw.de/fileadmin/user_upload/Service/Downloads/BPW-ECO_Disc_Disc_brake_TS2_TSB_Original_spare_parts_BPW_2025_en__31232501e.pdf",
+    "reference": "31232501e p49 item 380",
+    "textChecked": true,
+    "visualChecked": false,
+    "screenshotError": "12.6 MB size limit",
+    "checked": "2026-11-26"
+  },
+  "related": [
+    {
+      "article": "09.801.09.78.0",
+      "role": "9 t ECO Plus 3 ET 0 wheelend"
+    },
+    {
+      "article": "09.801.09.79.0",
+      "role": "9 t ECO Plus 3 ET 120 wheelend"
+    }
+  ],
+  "limitations": [
+    "Original conceptual illustration, not an exact depiction of this article",
+    "Hole count/geometry shown schematically, not verified; no exact mounting or wear limit inferred",
+    "No automatic interchange based on diameter; axle serial and VIN applicability unknown",
+    "Rendered QA and expert acceptance pending"
+  ]
+}
