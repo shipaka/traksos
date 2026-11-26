@@ -1,0 +1,157 @@
+{
+  "id": "cojali-daf-xf95-xf105-short-abs-splus",
+  "make": "DAF",
+  "models": [
+    "CF 65",
+    "CF 75",
+    "CF 85",
+    "CF 65 II/IV",
+    "CF 75 IV",
+    "CF 85 IV",
+    "LF55 IV",
+    "XF 105",
+    "XF 95"
+  ],
+  "system": "EBS/ABS",
+  "component": "wheel_speed_sensor",
+  "documentedVariant": "S+, elbow, 230 mm",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "sources": [
+    "https://www.cojaliparts.com/en/reference/4410328780/abs-sensor/2260053/",
+    "https://www.cojaliparts.com/en/reference/4410321720/abs-sensor/2260038/"
+  ],
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "hotspots": [
+    {
+      "id": "h-2260053",
+      "catalogueBrand": "COJALI",
+      "article": "2260053",
+      "source": "https://www.cojaliparts.com/en/reference/4410328780/abs-sensor/2260053/",
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410328780",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410321720",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1361393",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "PACCAR",
+          "article": "1361393",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ],
+      "models": [
+        "CF 65",
+        "CF 75",
+        "CF 85",
+        "CF 65 II/IV",
+        "CF 75 IV",
+        "CF 85 IV",
+        "LF55 IV",
+        "XF 105",
+        "XF 95"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "cableLengthMm": 230,
+        "contactCount": 2,
+        "version": "angular",
+        "type": "S+"
+      }
+    },
+    {
+      "id": "h-2260038",
+      "catalogueBrand": "COJALI",
+      "article": "2260038",
+      "source": "https://www.cojaliparts.com/en/reference/4410321720/abs-sensor/2260038/",
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410321720",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1778554",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1361393",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1315691",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1230594",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1238561",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "DAF",
+          "article": "1778553",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "PACCAR",
+          "article": "1778554",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ],
+      "models": [
+        "CF 65",
+        "CF 75",
+        "CF 85",
+        "CF 65 II/IV",
+        "CF 75 IV",
+        "CF 85 IV",
+        "LF55 IV",
+        "XF 105",
+        "XF 95"
+      ],
+      "revision": null,
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "cableLengthMm": 230,
+        "contactCount": 2,
+        "version": "angular",
+        "type": "S+"
+      }
+    }
+  ],
+  "scope": "Одна иллюстрация для каталожных вариантов; размеры корпуса, позиции на оси, пины, точный VIN и взаимозаменяемость не подтверждены."
+}
