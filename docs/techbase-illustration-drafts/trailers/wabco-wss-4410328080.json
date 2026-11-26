@@ -1,0 +1,88 @@
+{
+  "id": "wabco-wss-4410328080",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-wss-4410328080.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en_GB/4410328080",
+      "publisher": "ZF/WABCO"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102523.pdf",
+      "pages": [
+        71,
+        91
+      ],
+      "textChecked": true,
+      "visualChecked": false,
+      "reason": "PDF screenshot size limit"
+    }
+  ],
+  "component": {
+    "article": "4410328080",
+    "nameRu": "Радиальный индуктивный датчик скорости колеса S+",
+    "diameterMm": 16,
+    "cableLengthMm": 400,
+    "temperatureC": [
+      -40,
+      80
+    ],
+    "protection": [
+      "IP68",
+      "IP69K"
+    ],
+    "massKg": 0.05
+  },
+  "system": {
+    "family": "Trailer iEBS",
+    "signal": "AC frequency depends on rotating toothed ring speed",
+    "extensionCableFamily": "449733",
+    "variants": [
+      {
+        "article": "4410328090",
+        "cableLengthMm": 1000
+      },
+      {
+        "article": "4410329212",
+        "type": "repair kit 400 mm"
+      }
+    ]
+  },
+  "crossReferences": [
+    {
+      "make": "SCANIA",
+      "article": "1934568",
+      "exactFitment": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "050019",
+      "exactFitment": "unknown"
+    },
+    {
+      "make": "KÄSSBOHRER",
+      "article": "7788075000",
+      "exactFitment": "unknown"
+    },
+    {
+      "make": "FELDBINDER",
+      "article": "1008598",
+      "exactFitment": "unknown"
+    },
+    {
+      "make": "LANGENDORF",
+      "article": "1110276",
+      "exactFitment": "unknown"
+    },
+    {
+      "make": "TIRSAN",
+      "article": "21150110037",
+      "exactFitment": "unknown"
+    }
+  ],
+  "limitations": [
+    "Functional diagram, not OEM geometry",
+    "No exact vehicle model, generation, VIN, installation gap, pinout, tooth count or harness route asserted",
+    "Expert acceptance required before publication"
+  ]
+}
