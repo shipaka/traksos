@@ -46,6 +46,12 @@ jobs:
       - name: Verify photographs packaged in debug APK
         working-directory: mini-diagnostic
         run: python tools/prepare_debug_module_photos.py --verify-apk app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-diagnostic-demo
+          path: mini-diagnostic/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
       - name: Compile minified unsigned release (no publishing keys)
         working-directory: mini-diagnostic
         run: gradle --no-daemon :app:assembleRelease
@@ -70,12 +76,6 @@ jobs:
           name: traksos-mini-diagnostic-unit-results
           path: mini-diagnostic/app/build/test-results/testDebugUnitTest/
           if-no-files-found: warn
-          retention-days: 7
-      - uses: actions/upload-artifact@v4
-        with:
-          name: traksos-mini-diagnostic-demo
-          path: mini-diagnostic/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
           retention-days: 7
   bench-firmware:
     runs-on: ubuntu-latest
