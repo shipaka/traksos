@@ -3,7 +3,8 @@ import org.junit.Assert.*
 import org.junit.Test
 class HaldexEb4DiagReferenceTest {
     @Test fun numericAndDisplayKeysAreOneDocumentedEntry() {
-        assertEquals(22,HaldexEb4DiagReference.count)
+        assertEquals(25,HaldexEb4DiagReference.count)
+        assertEquals(22,HaldexEb4DiagReference.numericCount)
         val r=HaldexEb4DiagReference.lookup("0x01")!!
         assertEquals(r,HaldexEb4DiagReference.lookup("S1A continuity"))
         assertTrue(r.condition!!.contains("Обрыв или короткое"))
@@ -13,6 +14,19 @@ class HaldexEb4DiagReferenceTest {
             assertNull(HaldexEb4DiagReference.lookup(code))
         assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_GEN3_INFO1,"0x01"))
         assertNull(DtcCatalog().decode(EcuFamily.HALDEX_EB_PLUS,null,RawDtc("000001",DtcStatus.UNKNOWN,"00000100")).descriptionRu)
+    }
+    @Test fun namedFaultsRetainConfigurationAndSource() {
+        val oc=HaldexEb4DiagReference.lookup("AUX 4 OC")!!
+        assertTrue(oc.condition!!.contains("Если AUX4 настроен"))
+        assertTrue(oc.source!!.endsWith("#page=59"))
+        val sc=HaldexEb4DiagReference.lookup("AUX 4 SC")!!
+        assertTrue(sc.condition!!.contains("Короткое замыкание"))
+        assertTrue(sc.source!!.endsWith("#page=61"))
+        val tpms=HaldexEb4DiagReference.lookup("External TPMS")!!
+        assertTrue(tpms.condition!!.contains("TPMS 1.0"))
+        assertTrue(tpms.source!!.endsWith("#page=41"))
+        assertNull(HaldexEb4DiagReference.lookup("AUX 5 OC"))
+        assertNull(HaldexEb4DiagReference.lookup("Soft Docking"))
     }
     @Test fun auxiliaryContextsRemainSeparate() {
         assertEquals(4,HaldexAuxReference.count)
