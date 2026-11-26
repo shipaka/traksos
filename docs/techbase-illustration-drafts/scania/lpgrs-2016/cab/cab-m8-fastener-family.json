@@ -1,0 +1,117 @@
+{
+  "id": "scania-lpgrs-cab-m8-fastener-family",
+  "asset": "cab-m8-fastener-family.svg",
+  "category": "Ходовая и механика / кабина",
+  "make": "Scania",
+  "models": [
+    "P",
+    "G",
+    "R",
+    "S"
+  ],
+  "generation": "LPGRS series introduced September 2016",
+  "generationSource": "https://bodybuilder.scania.com/trucks/en/help/searching-for-information/terms-and-abbreviations.html",
+  "applicability": "catalogue_group_only",
+  "vinFitment": "not_confirmed",
+  "sourceCheckedOn": "2026-11-26",
+  "reviewStatus": "source_checked_expert_pending",
+  "rights": "original_illustration",
+  "partRefs": [
+    {
+      "hotspotId": "part-1777941",
+      "brand": "Scania",
+      "article": "1777941",
+      "name": "Самоформирующий резьбу винт M8, 15 мм",
+      "lengthMm": 15,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-815472",
+      "brand": "Scania",
+      "article": "815472",
+      "name": "Самоформирующий резьбу винт M8, 20 мм",
+      "lengthMm": 20,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-815891",
+      "brand": "Scania",
+      "article": "815891",
+      "name": "Самоформирующий резьбу винт M8, 25 мм",
+      "lengthMm": 25,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-815474",
+      "brand": "Scania",
+      "article": "815474",
+      "name": "Самоформирующий резьбу винт M8, 30 мм",
+      "lengthMm": 30,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-815475",
+      "brand": "Scania",
+      "article": "815475",
+      "name": "Самоформирующий резьбу винт M8, 40 мм",
+      "lengthMm": 40,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-815620",
+      "brand": "Scania",
+      "article": "815620",
+      "name": "Самоформирующий резьбу винт M8, 60 мм",
+      "lengthMm": 60,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-816056",
+      "brand": "Scania",
+      "article": "816056",
+      "name": "Самоформирующий резьбу винт M8, 90 мм",
+      "lengthMm": 90,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    },
+    {
+      "hotspotId": "part-1778348",
+      "brand": "Scania",
+      "article": "1778348",
+      "name": "Самоформирующий резьбу винт M8, 100 мм",
+      "lengthMm": 100,
+      "source": "https://bodybuilder.scania.com/content/dam/bodybuilder/tbb-files/scania-parts-for-bodybuilding/Cab_interior_and_exterior.pdf",
+      "sourcePage": 1,
+      "fitment": "unknown",
+      "revision": null
+    }
+  ],
+  "shopIntegration": {
+    "identity": "brand+article",
+    "status": "draft_contract_only",
+    "requireVehicleFitmentCheck": true,
+    "requireOwnerConsent": true,
+    "unknownArticle": "request_sourcing",
+    "noAutomaticOrder": true
+  }
+}
