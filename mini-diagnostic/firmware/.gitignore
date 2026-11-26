@@ -1,1 +1,4 @@
 .pio/
+dist/
+.venv/
+__pycache__/
