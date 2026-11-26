@@ -4,6 +4,12 @@ package ru.traksos.minidiagnostic
 data class CatalogModulePart(val number:String,val targetId:String,val variant:String,val source:String)
 object CatalogModuleParts {
     private val rows=listOf(
+        // OEM replacement bulletin identifies original C part numbers; D replacements are not C identities.
+        CatalogModulePart("4801020000","zf-tebs-c","TEBS C · EBS/BVA","https://www.wabco-customercentre.com/catalog/docs/doc_000130_en.pdf"),
+        CatalogModulePart("4801020010","zf-tebs-c","TEBS C · EBS/BVA, Battery","https://www.wabco-customercentre.com/catalog/docs/doc_000130_en.pdf"),
+        CatalogModulePart("4801020020","zf-tebs-c","TEBS C · EBS/Trailer Central Electronic","https://www.wabco-customercentre.com/catalog/docs/doc_000130_en.pdf"),
+        CatalogModulePart("4801020040","zf-tebs-c","TEBS C · EBS/RSS/BVA","https://www.wabco-customercentre.com/catalog/docs/doc_000130_en.pdf"),
+        CatalogModulePart("4801020050","zf-tebs-c","TEBS C · EBS/Trailer Central Electronic/RSS","https://www.wabco-customercentre.com/catalog/docs/doc_000130_en.pdf"),
         CatalogModulePart("K019300","kb-g20","Premium · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/j3HA9rYqI0EBhB_Y142784-013-EN_WEB.pdf#page=2"),
         CatalogModulePart("K019302","kb-g20","Premium · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/j3HA9rYqI0EBhB_Y142784-013-EN_WEB.pdf#page=2"),
         CatalogModulePart("K019309","kb-g20","Premium · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/j3HA9rYqI0EBhB_Y142784-013-EN_WEB.pdf#page=2"),
