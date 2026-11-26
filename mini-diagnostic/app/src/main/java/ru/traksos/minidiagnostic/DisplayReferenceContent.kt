@@ -25,6 +25,7 @@ fun DisplayReferenceContent() {
             DisplayReferenceEdition.HALDEX_UABS_ACTIVE -> "Две цифры, например 01"
             DisplayReferenceEdition.KNORR_TEBS4 -> "Десятичный код, например 137"
             DisplayReferenceEdition.KNORR_KB4TA -> "Две группы, например 2/4"
+            DisplayReferenceEdition.BENDIX_TABS6 -> "Две группы, например 2/4"
             DisplayReferenceEdition.SORL_ABS -> "Например 3.1"
             DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"
             DisplayReferenceEdition.VCS_I_EXPERT -> "Две группы, например 3/5"

@@ -17,7 +17,8 @@ class WabcoLegacyExpansionTest {
         assertFalse(x.exactPair)
         assertTrue(WabcoCompactReference.lookup("H59")!!.condition!!.contains("9 или более"))
         assertTrue(WabcoCompactReference.lookup("LE1")!!.condition!!.contains("Перенапряжение"))
-        for(code in listOf("410","4/1/1","old","UC1","000","4111","U II")) assertNull(WabcoCompactReference.lookup(code))
+        assertFalse(WabcoCompactReference.lookup("UC1")!!.exactPair)
+        for(code in listOf("410","4/1/1","old","UX1","000","4111","U II")) assertNull(WabcoCompactReference.lookup(code))
     }
     @Test fun printedRangesAreNotExactIdentity() {
         assertEquals(7,WabcoPartReference.ranges.size)

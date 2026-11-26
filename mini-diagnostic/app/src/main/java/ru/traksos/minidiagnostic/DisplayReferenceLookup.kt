@@ -16,13 +16,18 @@ enum class DisplayReferenceEdition(val title:String) {
     EKRAN_EBP("Экран АБС-П / ЭБП · световые коды"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
     KNORR_KB4TA("Knorr KB4TA / KB4TA D · световые коды"),
-    SORL_ABS("SORL ABS прицепа · световые коды")
+    SORL_ABS("SORL ABS прицепа · световые коды"),
+    BENDIX_TABS6("Bendix TABS-6 Standard/Premium · 12 В · световые коды")
 }
 data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
 object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.BENDIX_TABS6) {
+            val r=BendixTabs6Reference.lookup(s) ?: return null
+            return DisplayLookup(r.component,r.condition,BendixTabs6Reference.SOURCE+" · стр. "+r.page,true)
+        }
         if(edition==DisplayReferenceEdition.VCS_I_EXPERT) {
             val r=WabcoVcsReference.lookup(s) ?: return null
             return DisplayLookup(r.first,r.second,WabcoVcsReference.SOURCE,true)

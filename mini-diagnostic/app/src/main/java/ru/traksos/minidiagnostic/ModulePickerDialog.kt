@@ -44,6 +44,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
                                 ResearchStage.SYSTEM_DOCUMENTED -> "Есть сведения о системе"
                                 ResearchStage.CANDIDATE -> "Требуется документация"
                             },fontSize=11.sp)
+                            if(row.scope==ScopeGroup.FUTURE_MARKET) Text("Отдельный рынок / интерфейс: подключение не предусмотрено",color=MaterialTheme.colorScheme.error,fontSize=11.sp)
                         }
                     }
                 }

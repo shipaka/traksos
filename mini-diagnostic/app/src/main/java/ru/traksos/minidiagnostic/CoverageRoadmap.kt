@@ -59,7 +59,7 @@ object CoverageRoadmap {
             AdditionalAbsReference.EKRAN_SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("ekran-ebpv","Экран (Беларусь)","ЭБП-В АДЮИ.453633.024",
             "https://b24truck.ru/files/catalog/Автокомпоненты/ekran.pdf",ScopeGroup.INTERFACE_REVIEW,ResearchStage.CANDIDATE),
-        target("bendix-tabs6","Bendix","TABS-6","https://www.manualslib.com/manual/392710/bendix-tabs-6-trailer-abs-module.html",ScopeGroup.FUTURE_MARKET),
+        target("bendix-tabs6","Bendix","TABS-6 Standard/Premium",BendixTabs6Reference.SOURCE,ScopeGroup.FUTURE_MARKET,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-plc","Haldex","PLC Select / PLC Plus","https://manualzz.com/doc/6303407/haldex-l30030-installation-and-service-manual",ScopeGroup.FUTURE_MARKET)
     )
     fun byId(id:String):ResearchTarget? = targets.firstOrNull { it.id==id }
