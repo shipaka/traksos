@@ -16,6 +16,16 @@ class OfflineCaptureReviewTest {
         assertTrue(text.contains("590249ABCDEF0900000108"))
         assertTrue(text.contains("источник не проверен"))
     }
+    @Test fun countReportNeverConfusesZeroWithConfirmedHealthy() {
+        val result=OfflineCaptureReview.parse("59 01 49 03 00 00",true,1) as CaptureResult.Count
+        assertEquals(0,result.count)
+        assertEquals(3,result.formatIdentifier)
+        assertNull(result.metadata.identity)
+        val text=OfflineCaptureReview.reportText(result)
+        assertTrue(text.contains("Количество по ответу ЭБУ: 0"))
+        assertTrue(text.contains("исправность не подтверждена"))
+        assertTrue(text.contains("Синтетический пример"))
+    }
     @Test fun emptyPendingMalformedAndSyntheticStaySeparate() {
         assertTrue(OfflineCaptureReview.reportText(OfflineCaptureReview.parse("590249",false,1)).contains("исправность не подтверждена"))
         assertTrue(OfflineCaptureReview.reportText(OfflineCaptureReview.parse("7F1978",false,1)).contains("Промежуточный ответ"))

@@ -19,8 +19,10 @@ object OfflineCaptureReview {
         "INVALID_HEX" -> "Неверная запись шестнадцатеричных байтов"
         "TRUNCATED_RECORD" -> "Неполная запись DTC"
         "DUPLICATE_DTC" -> "Повторяющийся идентификатор DTC"
-        "UNEXPECTED_SERVICE" -> "Не распознан ответ UDS 59 02"
+        "UNEXPECTED_SERVICE" -> "Не распознан ответ UDS 59 01 / 59 02"
         "NEGATIVE_RESPONSE" -> "Некорректный отрицательный ответ"
+        "COUNT_LENGTH" -> "Неверная длина ответа о количестве DTC"
+        "COUNT_OUTSIDE_STATUS_FILTER" -> "Ненулевое количество при отсутствии поддерживаемых выбранных статусов"
         "PDU_LENGTH" -> "Неверная длина ответа"
         "UNSUPPORTED_STATUS_FILTER" -> "Запрошенные статусы не поддерживаются в данном ответе"
         "RECORD_OUTSIDE_STATUS_FILTER" -> "Запись DTC не соответствует указанному фильтру"
@@ -33,6 +35,15 @@ object OfflineCaptureReview {
             is CaptureResult.Negative -> {
                 appendLine("Отрицательный ответ: "+hexByte(result.reason))
                 if(result.reason==0x78)appendLine("Промежуточный ответ: ожидается окончательный результат")
+                appendLine("PDU: "+result.rawPduHex)
+            }
+            is CaptureResult.Count -> {
+                appendLine(if(result.metadata.origin==CaptureOrigin.SYNTHETIC) "Синтетический пример" else "Введённый вручную ответ")
+                appendLine("Электронная идентификация и профиль не подтверждены")
+                appendLine("Маска доступных статусов: "+hexByte(result.availabilityMask))
+                appendLine("Идентификатор формата DTC: "+hexByte(result.formatIdentifier))
+                appendLine("Количество по ответу ЭБУ: "+result.count)
+                appendLine("Фильтр и полнота списка не подтверждены; исправность не подтверждена")
                 appendLine("PDU: "+result.rawPduHex)
             }
             is CaptureResult.Report -> {

@@ -27,6 +27,8 @@ data class CaptureMetadata(val origin: CaptureOrigin, val identity: EcuIdentity?
 sealed interface CaptureResult {
     data class Report(val metadata: CaptureMetadata, val rawPduHex: String,
         val availabilityMask: Int, val records: List<DecodedDtc>, val profileId: String?) : CaptureResult
+    data class Count(val metadata: CaptureMetadata, val rawPduHex: String,
+        val availabilityMask: Int, val formatIdentifier: Int, val count: Int) : CaptureResult
     data class Negative(val metadata: CaptureMetadata, val rawPduHex: String, val reason: Int) : CaptureResult
     data class Rejected(val reason: String) : CaptureResult
 }
@@ -50,6 +52,14 @@ class DiagnosticCapture(private val registry: ProfileRegistry = ProfileRegistry(
         return when(val result = UdsDtcDecoder.decode(pdu)) {
             is UdsDtcResponse.Invalid -> CaptureResult.Rejected(result.reason)
             is UdsDtcResponse.Negative -> CaptureResult.Negative(metadata,hex,result.reason)
+            is UdsDtcResponse.Count -> {
+                // A zero effective selection can legitimately report zero. It is
+                // not useful evidence for a count/list cross-check, however.
+                val requested=metadata.statusSelectionMask
+                if(requested!=null && (requested and result.availabilityMask)==0 && result.count!=0)
+                    return CaptureResult.Rejected("COUNT_OUTSIDE_STATUS_FILTER")
+                CaptureResult.Count(metadata,hex,result.availabilityMask,result.formatIdentifier,result.count)
+            }
             is UdsDtcResponse.Report -> {
                 // Validate a supplied request mask against supported bits and every response
                 // record. A missing mask stays unknown; never reconstruct it from the response.
@@ -113,5 +123,39 @@ object DiagnosticComparison {
         // Compare actual status bytes, including unclassified flags, rather than just labels.
         val changed = common.filter { first.getValue(it).raw.rawHex != second.getValue(it).raw.rawHex }.toSet()
         return CaptureComparison.Compared(first.keys-second.keys,second.keys-first.keys,changed,common-changed)
+    }
+}
+
+sealed interface CountListCheck {
+    data class Consistent(val reportedCount:Int,val formatIdentifier:Int):CountListCheck
+    data class Different(val reportedCount:Int,val actualRecords:Int):CountListCheck
+    data class NotComparable(val reason:String):CountListCheck
+}
+// A count and list can be from different instants; equality is not proof of completeness.
+// Caller must explicitly confirm the same physical ECU AND same observation interval.
+// Reparse original bytes with their declared masks before comparing.
+object DiagnosticCountCheck {
+    fun compare(count:CaptureResult,list:CaptureResult,samePhysicalEcuConfirmed:Boolean,
+        sameObservationIntervalConfirmed:Boolean):CountListCheck {
+        fun reject(reason:String)=CountListCheck.NotComparable(reason)
+        if(count !is CaptureResult.Count || list !is CaptureResult.Report)return reject("COUNT_AND_LIST_REQUIRED")
+        val a=count.metadata
+        val b=list.metadata
+        if(!samePhysicalEcuConfirmed || !sameObservationIntervalConfirmed ||
+            a.identity==null || !a.identity.complete() || a.identity!=b.identity)
+            return reject("ECU_OR_INTERVAL")
+        if(a.origin!=b.origin || a.observedAtEpochMs>b.observedAtEpochMs)
+            return reject("CAPTURE_ORDER_OR_ORIGIN")
+        val requested=a.statusSelectionMask
+        if(requested==null || requested!=b.statusSelectionMask ||
+            count.availabilityMask!=list.availabilityMask || requested and count.availabilityMask==0)
+            return reject("STATUS_FILTER_OR_MASK")
+        val reader=DiagnosticCapture()
+        val c=reader.importHex(a,count.rawPduHex) as? CaptureResult.Count ?: return reject("REPORT_INTEGRITY")
+        val l=reader.importHex(b,list.rawPduHex) as? CaptureResult.Report ?: return reject("REPORT_INTEGRITY")
+        if(c!=count || l.rawPduHex!=list.rawPduHex || l.availabilityMask!=list.availabilityMask ||
+            l.records.map { it.raw }!=list.records.map { it.raw })return reject("REPORT_INTEGRITY")
+        return if(c.count==l.records.size) CountListCheck.Consistent(c.count,c.formatIdentifier)
+            else CountListCheck.Different(c.count,l.records.size)
     }
 }

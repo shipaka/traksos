@@ -33,7 +33,7 @@ fun OfflineCaptureContent(targetId:String?) {
     val clipboard=LocalClipboardManager.current
     val selected=targetId?.let(CoverageRoadmap::byId)
     Text("Офлайн-разбор UDS",fontWeight=FontWeight.Bold)
-    Text("Вставьте полный, уже собранный диагностический ответ 59 02 или 7F 19 в HEX. Не отдельный CAN-кадр и не запрос. Прибор не подключается и команды не отправляются.")
+    Text("Вставьте полный, уже собранный диагностический ответ 59 01, 59 02 или 7F 19 в HEX. Не отдельный CAN-кадр и не запрос. Прибор не подключается и команды не отправляются.")
     if(selected!=null) Text("Выбрано вручную: "+selected.maker+" · "+selected.model+". Это не идентификация источника.")
     Text("Таблицы отображаемых кодов не применяются к сырым DTC без подтверждённого профиля.",color=MaterialTheme.colorScheme.error)
     OutlinedTextField(value=input,onValueChange={

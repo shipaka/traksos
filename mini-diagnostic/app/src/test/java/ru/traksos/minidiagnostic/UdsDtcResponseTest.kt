@@ -18,6 +18,13 @@ class UdsDtcResponseTest {
         assertEquals(9,r.records.single().statusByte)
         assertEquals(DtcStatus.UNKNOWN,r.records.single().classification)
     }
+    @Test fun countPreservesFormatAndUnsignedCountWithoutGuessing() {
+        assertEquals(UdsDtcResponse.Count(0x49,3,258),UdsDtcDecoder.decode(pdu(0x59,1,0x49,3,1,2)))
+        assertEquals(UdsDtcResponse.Count(0,0xFE,0),UdsDtcDecoder.decode(pdu(0x59,1,0,0xFE,0,0)))
+        assertEquals(UdsDtcResponse.Count(255,255,65535),UdsDtcDecoder.decode(pdu(0x59,1,255,255,255,255)))
+        assertEquals(UdsDtcResponse.Invalid("COUNT_LENGTH"),UdsDtcDecoder.decode(pdu(0x59,1,0x49,3,1)))
+        assertEquals(UdsDtcResponse.Invalid("COUNT_LENGTH"),UdsDtcDecoder.decode(pdu(0x59,1,0x49,3,1,2,0)))
+    }
     @Test fun negativePendingIsNotAnEmptyReport() {
         assertEquals(UdsDtcResponse.Negative(0x78),UdsDtcDecoder.decode(pdu(0x7F,0x19,0x78)))
         assertEquals(UdsDtcResponse.Negative(0x31),UdsDtcDecoder.decode(pdu(0x7F,0x19,0x31)))

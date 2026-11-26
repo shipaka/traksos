@@ -48,6 +48,23 @@ class DiagnosticCaptureTest {
         assertTrue(capture.importHex(meta(filter=1),"590249ABCDEF09") is CaptureResult.Report)
         assertTrue(capture.importHex(meta(filter=null),"590249ABCDEF08") is CaptureResult.Report)
     }
+    @Test fun countListCrossCheckRequiresComparableEvidence() {
+        val count=capture.importHex(meta(),"590149030002") as CaptureResult.Count
+        val list=capture.importHex(meta(2),"590249ABCDEF0900000108") as CaptureResult.Report
+        assertEquals(CountListCheck.Consistent(2,3),DiagnosticCountCheck.compare(count,list,true,true))
+        val shorter=capture.importHex(meta(2),"590249ABCDEF09")
+        assertEquals(CountListCheck.Different(2,1),DiagnosticCountCheck.compare(count,shorter,true,true))
+        assertEquals(CountListCheck.NotComparable("ECU_OR_INTERVAL"),DiagnosticCountCheck.compare(count,list,true,false))
+        assertEquals(CountListCheck.NotComparable("ECU_OR_INTERVAL"),DiagnosticCountCheck.compare(count,list,false,true))
+        assertEquals(CountListCheck.NotComparable("REPORT_INTEGRITY"),DiagnosticCountCheck.compare(count.copy(count=3),list,true,true))
+        assertEquals(CountListCheck.NotComparable("REPORT_INTEGRITY"),DiagnosticCountCheck.compare(count,list.copy(records=emptyList()),true,true))
+        assertEquals(CountListCheck.NotComparable("STATUS_FILTER_OR_MASK"),DiagnosticCountCheck.compare(count,list.copy(metadata=meta(2,filter=null)),true,true))
+        assertEquals(CountListCheck.NotComparable("CAPTURE_ORDER_OR_ORIGIN"),DiagnosticCountCheck.compare(count,list.copy(metadata=meta(0)),true,true))
+        assertEquals(CountListCheck.NotComparable("COUNT_AND_LIST_REQUIRED"),DiagnosticCountCheck.compare(list,count,true,true))
+        assertTrue(DiagnosticComparison.compare(count,list,true) is CaptureComparison.NotComparable)
+        assertEquals(CaptureResult.Rejected("COUNT_OUTSIDE_STATUS_FILTER"),capture.importHex(meta(filter=2),"590149030001"))
+        assertTrue(capture.importHex(meta(filter=2),"590149030000") is CaptureResult.Count)
+    }
     @Test fun compareTracksObservedRecordsRatherThanRepair() {
         val a = capture.importHex(meta(),"590249ABCDEF090000010800000209")
         val b = capture.importHex(meta(2),"590249ABCDEF080000020900000309")

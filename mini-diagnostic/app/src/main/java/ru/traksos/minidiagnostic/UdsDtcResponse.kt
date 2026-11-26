@@ -6,6 +6,7 @@ import java.util.Locale
 // No ECU address, transport, active request or vendor compatibility is inferred here.
 sealed interface UdsDtcResponse {
     data class Report(val availabilityMask: Int, val records: List<UdsDtcRecord>) : UdsDtcResponse
+    data class Count(val availabilityMask: Int, val formatIdentifier: Int, val count: Int) : UdsDtcResponse
     data class Negative(val reason: Int) : UdsDtcResponse
     data class Invalid(val reason: String) : UdsDtcResponse
 }
@@ -33,7 +34,13 @@ object UdsDtcDecoder {
             return if (pdu.size == 3 && u(1) == 0x19)
                 UdsDtcResponse.Negative(u(2)) else invalid("NEGATIVE_RESPONSE")
         }
-        if (pdu.size < 3 || u(0) != 0x59 || u(1) != 0x02) return invalid("UNEXPECTED_SERVICE")
+        if (pdu.size < 2 || u(0) != 0x59) return invalid("UNEXPECTED_SERVICE")
+        if (u(1) == 0x01) {
+            if (pdu.size != 6) return invalid("COUNT_LENGTH")
+            // Preserve the identifier even when its meaning is unknown or reserved.
+            return UdsDtcResponse.Count(u(2),u(3),(u(4) shl 8) or u(5))
+        }
+        if (pdu.size < 3 || u(1) != 0x02) return invalid("UNEXPECTED_SERVICE")
         if ((pdu.size-3)%4 != 0) return invalid("TRUNCATED_RECORD")
         val mask = u(2)
         val records = ArrayList<UdsDtcRecord>()
