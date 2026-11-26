@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "sensor_records": [
+    {
+      "cojali": "2309101",
+      "oe": "0504002112",
+      "oe_brand": "Knorr-Bremse",
+      "voltage_v": 5,
+      "type": "potentiometric",
+      "connector": "Bayonet DIN 72585-3.1-PLUG code A",
+      "mass_g": 326,
+      "model_rows": [
+        "FH/FM 2005-2012",
+        "FH12 1998-2005",
+        "FH16 1998-2006"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/0504002112/ecas-height-sensor-/2309101/"
+    },
+    {
+      "cojali": "2880165",
+      "oe": "21643575",
+      "oe_brand": "Volvo",
+      "voltage_v": 5,
+      "type": "potentiometric",
+      "connector": "Bayonet DIN 72585-3.1-PLUG code A",
+      "mass_g": 281,
+      "model_rows": [
+        "FH 2005-",
+        "FH16 2003-",
+        "FM 2010-",
+        "FM4 2013-"
+      ],
+      "source": "https://www.cojaliparts.com/en/reference/21643575/ecas-height-sensor-/2880165/"
+    }
+  ],
+  "hold_valves": [
+    {
+      "cojali": "2209463",
+      "wabco": "4728800320",
+      "voltage_v": 24,
+      "source": "https://www.cojaliparts.com/en/reference/4728800320/ecas-solenoid-valve/2209463/",
+      "reason": "Volvo brand only; no FH model or exact fitment"
+    },
+    {
+      "cojali": "2209456",
+      "wabco": "4728800230",
+      "volvo_oe": "20514451",
+      "voltage_v": 24,
+      "source": "https://www.cojaliparts.com/en/reference/4728800230/ecas-suspension-control-solenoid-valve/2209456/",
+      "reason": "Volvo brand only; no FH model or exact fitment"
+    }
+  ],
+  "volvo_factory_variants": [
+    {
+      "code": "RST-AIR",
+      "meaning": "standard rear bellows"
+    },
+    {
+      "code": "RST-AIR4",
+      "meaning": "extra stiff, robust; mandatory RALIM20; larger drive axle bellows than pusher/tag axle"
+    },
+    {
+      "code": "RST-AIR6",
+      "meaning": "heat-resistant for heavy transport in hot climates; larger bellows than RST-AIR"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://stpi.it.volvo.com/STPIFiles/Volvo/FactSheet/RST-AIR%2CRST-AIR4%2CRST-AIR6_Eng_04_339203768.pdf",
+      "title": "Rear Air Springs",
+      "date": "2024-02-26",
+      "version": "04",
+      "review": "text pages 1–2; screenshot page 2 confirmed"
+    },
+    {
+      "url": "https://stpi.it.volvo.com/STPIFiles/Volvo/FactSheet/RSS-AIR_Eng_01_337856880.pdf",
+      "title": "Air Suspension",
+      "date": "2024-12-02",
+      "version": "01",
+      "review": "text pages 1–2; screenshot page 2 confirmed"
+    }
+  ],
+  "assets": [
+    "fh-ecas-height-variants.svg",
+    "volvo-rst-air-variants.svg"
+  ],
+  "verified_count_increment": 0,
+  "render_review": "pending",
+  "expert_review": "pending",
+  "vin_applicability": "unknown",
+  "limitations": "Original functional illustrations, not exact geometry, chassis routing, pinout, service instructions, or proof of vehicle fitment. No manufacturer images copied. No part-level bellows OE until verified."
+}
