@@ -65,8 +65,7 @@ object DisplayReferenceLookup {
         }
         if(edition==DisplayReferenceEdition.VIE_101) {
             if(!Regex("[0-9]{1,3}/[0-9]{1,2}").matches(s)) return null
-            val r=VieDisplayReference.lookup(EcuFamily.VIE_TEBS,s) ?: return null
-            return DisplayLookup(r.component,r.condition,VieDisplayReference.DOCUMENT+" · "+r.section,true)
+            return VieDisplayReference.detailedLookup(s)
         }
         if(!Regex("[0-9]{3}/[0-9]{2}").matches(s)) return null
         if(edition==DisplayReferenceEdition.WABCO_D_SYSTEM || edition==DisplayReferenceEdition.WABCO_E_SYSTEM) {

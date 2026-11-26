@@ -3,6 +3,21 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class VieDisplayReferenceTest {
+    @Test fun allExistingCodesHaveDetailedGuidanceAndSource() {
+        val v=EcuFamily.VIE_TEBS
+        for(row in VieDisplayReference.entries(v)) {
+            val d=DisplayReferenceLookup.find(DisplayReferenceEdition.VIE_101,row.code)!!
+            assertTrue(d.condition!!.length>row.condition.length)
+            assertTrue(d.source!!.startsWith(VieDisplayReference.PDF+"#page="))
+            assertTrue(d.source!!.endsWith(row.section))
+        }
+        assertTrue(VieDisplayReference.detailedLookup("254/15")!!.condition!!.contains("ни один датчик"))
+        assertTrue(VieDisplayReference.detailedLookup("77/12")!!.condition!!.contains("1 бар"))
+        assertTrue(VieDisplayReference.detailedLookup("251/3")!!.condition!!.contains("32 В"))
+        assertTrue(VieDisplayReference.detailedLookup("5/6")!!.condition!!.contains("малый зазор"))
+        assertNull(VieDisplayReference.detailedLookup("3/2"))
+        assertEquals(41,VieDisplayReference.count)
+    }
     @Test fun documentedPairsOnly() {
         val v=EcuFamily.VIE_TEBS
         assertEquals(41,VieDisplayReference.count)
