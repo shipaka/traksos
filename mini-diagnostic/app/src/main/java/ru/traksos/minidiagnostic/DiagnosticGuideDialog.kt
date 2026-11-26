@@ -32,7 +32,7 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
                     Text("Реестр разработки, не список поддержанных прибором блоков.",color=MaterialTheme.colorScheme.error)
                     OutlinedTextField(value=search,onValueChange={ search=it.take(80) },
                         label={ Text("Производитель или система") },singleLine=true,modifier=Modifier.fillMaxWidth())
-                    val rows=CoverageRoadmap.targets.filter { search.isBlank() || (it.maker+" "+it.model).contains(search.trim(),ignoreCase=true) }
+                    val rows=ModuleSearch.find(search)
                     Text("Найдено: ${rows.size}",fontSize=12.sp)
                     rows.forEach { row ->
                         HorizontalDivider()

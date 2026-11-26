@@ -76,6 +76,8 @@ private fun MiniApp() {
     var detail by remember { mutableIntStateOf(-1) }
     var bleProbeOpen by remember { mutableStateOf(false) }
     var connectionGuideOpen by remember { mutableStateOf(false) }
+    var modulePickerOpen by remember { mutableStateOf(false) }
+    var manualTargetId by remember { mutableStateOf<String?>(null) }
 
     fun now() = SystemClock.elapsedRealtime() - session.startedAt
     fun apply(desired: LightState) {
@@ -116,6 +118,9 @@ private fun MiniApp() {
     }
     if (bleProbeOpen) BenchBleDialog { bleProbeOpen = false }
     if (connectionGuideOpen) DiagnosticGuideDialog { connectionGuideOpen = false }
+    if (modulePickerOpen) ModulePickerDialog(manualTargetId,
+        onSelect={ manualTargetId=it; modulePickerOpen=false; scan=0; detail=-1 },
+        onClose={ modulePickerOpen=false })
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -184,6 +189,14 @@ private fun MiniApp() {
                     Column(Modifier.padding(14.dp),verticalArrangement = Arrangement.spacedBy(9.dp)) {
                         Text("Диагностика системы тормозов",fontSize = 18.sp,fontWeight = FontWeight.Bold)
                         Text("ДЕМО — реальные модуляторы не подключены",color = Orange,fontSize = 12.sp)
+                        val chosen = manualTargetId?.let(CoverageRoadmap::byId)
+                        OutlinedButton(onClick = {
+                            off(); scanning=false; scan=0; detail=-1; modulePickerOpen=true
+                        }, modifier=Modifier.fillMaxWidth()) {
+                            Text(if(chosen==null) "Автопоиск / выбрать блок" else chosen.maker+" · "+chosen.model)
+                        }
+                        Text(if(chosen==null) "Автопоиск: пока только демонстрация" else "Выбрано вручную — электронная идентификация не подтверждена",
+                            color=Muted,fontSize=11.sp)
                         if(scanning) {
                             Text(when { scan < 25 -> "Подключение симулятора"; scan < 60 -> "Идентификация (демо)"; else -> "Чтение примеров ошибок" })
                             LinearProgressIndicator(progress = { scan / 100f },modifier = Modifier.fillMaxWidth(),color = Orange)
