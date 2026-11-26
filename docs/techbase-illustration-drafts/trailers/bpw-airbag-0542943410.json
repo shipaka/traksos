@@ -1,0 +1,43 @@
+{
+  "id": "bpw-airbag-0542943410",
+  "manufacturer": "BPW",
+  "article": "05.429.43.41.0",
+  "type": "36 K",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-airbag-0542943410.svg",
+  "source": {
+    "url": "https://www.bpw.de/fileadmin/user_upload/PDF-Downloads/Technische-PDFs/Ersatzteillisten/Spareparts_Air_suspension_BPW_2022_EN_31052201.pdf",
+    "reference": "31052201e §4.1.2, BPW 36 K B1 V45/80; general p73",
+    "textChecked": true,
+    "visualChecked": false,
+    "screenshotError": "size limit"
+  },
+  "spec": {
+    "diameterMm": 360,
+    "suspensionTravelMm": 180,
+    "piston": "GRP",
+    "separateLowerPlate": true
+  },
+  "parts": [
+    {
+      "article": "05.429.41.01.0",
+      "nameRu": "Резинокордная оболочка в сборе без поршня (bare air bag)"
+    },
+    {
+      "article": "05.139.39.53.0",
+      "nameRu": "Поршень GRP"
+    },
+    {
+      "article": "03.280.95.03.0",
+      "nameRu": "Нижняя пластина"
+    }
+  ],
+  "description": "Стандартная пневмоподушка BPW 36 K; GRP-поршень и отдельная нижняя пластина.",
+  "fitment": "Catalogue series O/SL/AL/EA/AC; exact axle variant unknown",
+  "geometryEvidence": "B1, V 45/80, X 70/120, K 135, B 210, C 25, D 95 mm per catalogue symbols; no mounting geometry inferred",
+  "limitations": [
+    "Not an exact OEM drawing or mounting procedure",
+    "VIN, axle serial, exact mounting, line routing and actual ECU applicability unknown",
+    "No render QA or expert approval"
+  ]
+}
