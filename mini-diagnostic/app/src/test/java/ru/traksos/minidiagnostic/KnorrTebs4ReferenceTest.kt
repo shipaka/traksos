@@ -9,7 +9,9 @@ class KnorrTebs4ReferenceTest {
         assertEquals("Давление питания",KnorrTebs4Reference.lookup("121")?.first)
         assertEquals("Недостаточное напряжение",KnorrTebs4Reference.lookup("10")?.second)
         assertNotNull(DisplayReferenceLookup.find(DisplayReferenceEdition.KNORR_TEBS4,"137"))
-        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.KNORR_KB4TA,"137"))
+        assertTrue(DisplayReferenceEdition.entries.none { it.name=="KNORR_KB4TA" })
+        assertTrue(ReferenceSelection.forTarget("kb-kb4ta").isEmpty())
+        assertTrue(ReferenceSelection.forTarget("kb-kb4ta-d").isEmpty())
         for(code in listOf("9","11","41","44","58","95","96","100","107","130","141","148","153","155","165","171","0","173","0137","2/4","89FF")) assertNull(KnorrTebs4Reference.lookup(code))
     }
 }

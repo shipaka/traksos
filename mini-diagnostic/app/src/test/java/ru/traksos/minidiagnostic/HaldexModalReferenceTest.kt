@@ -13,11 +13,13 @@ class HaldexModalReferenceTest {
         for(code in listOf("00","07","37","88","CA","CC","A1","A2","A3","db","E0","E9","5","0A"))
             assertNull(HaldexModalReference.lookup(code))
     }
-    @Test fun modalAndUabsDoNotShareMeanings() {
+    @Test fun modalDigitalLookupRemainsWithoutRemovedLampEdition() {
         val m=DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_MODAL_MODULAR,"90")!!
-        val u=DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_UABS_ACTIVE,"90")!!
-        assertNotEquals(m.condition,u.condition)
+        assertEquals(HaldexModalReference.SOURCE,m.source)
+        assertTrue(m.condition!!.contains("18 В"))
+        assertTrue(m.exactPair)
         assertNotNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_MODAL_MODULAR,"05"))
-        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_UABS_ACTIVE,"05"))
+        assertTrue(DisplayReferenceEdition.entries.none { it.name=="HALDEX_UABS_ACTIVE" })
+        assertTrue(ReferenceSelection.forTarget("haldex-uabs").isEmpty())
     }
 }
