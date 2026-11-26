@@ -12,7 +12,7 @@ import android.os.Looper
 import android.os.ParcelUuid
 import java.util.UUID
 
-// Read-only, foreground, explicitly initiated bench check. No GATT write operations.
+// Foreground, explicitly initiated USB-only bench check. Writes only to the simulated bench service.
 @SuppressLint("MissingPermission")
 class BenchBleProbe(context: Context, private val onStatus: (String) -> Unit) {
     private val app = context.applicationContext
@@ -20,6 +20,8 @@ class BenchBleProbe(context: Context, private val onStatus: (String) -> Unit) {
     private val manager = app.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
     private val serviceId = UUID.fromString(BenchCapabilities.SERVICE)
     private val characteristicId = UUID.fromString(BenchCapabilities.CHARACTERISTIC)
+    private var step = 0
+    private var roundTrip = false
     private var scanner: BluetoothLeScanner? = null
     private var scanCallback: ScanCallback? = null
     private var gatt: BluetoothGatt? = null
@@ -34,6 +36,8 @@ class BenchBleProbe(context: Context, private val onStatus: (String) -> Unit) {
 
     fun stop() {
         epoch++
+        step = 0
+        roundTrip = false
         handler.removeCallbacksAndMessages(null)
         stopScan()
         val connection = gatt
@@ -107,11 +111,56 @@ class BenchBleProbe(context: Context, private val onStatus: (String) -> Unit) {
                     ch.properties and BluetoothGattCharacteristic.PROPERTY_READ == 0 || !g.readCharacteristic(ch))
                     finish("Стендовый протокол не найден")
             }
+
             private fun received(g: BluetoothGatt,ch: BluetoothGattCharacteristic,value: ByteArray,status: Int) = post(g) {
-                if (status == BluetoothGatt.GATT_SUCCESS && ch.uuid == characteristicId &&
-                    ch.service.uuid == serviceId && BenchCapabilities.isCompatible(value))
-                    finish("BLE: стендовый протокол v1 прочитан. Силовые выходы и CAN отключены.")
-                else finish("Версия или формат ответа не поддерживается")
+                if (status != BluetoothGatt.GATT_SUCCESS || ch.service.uuid != serviceId) {
+                    finish("Ошибка чтения BLE"); return@post
+                }
+                if (ch.uuid == characteristicId && !roundTrip) {
+                    when {
+                        BenchCapabilities.isRoundTrip(value) -> {
+                            roundTrip = true
+                            step = 0
+                            sendStep(g)
+                        }
+                        BenchCapabilities.isCompatible(value) -> finish("BLE v1.0 прочитан. Для проверки обмена нужна прошивка v1.1.")
+                        else -> finish("Версия или формат ответа не поддерживается")
+                    }
+                } else if (ch.uuid == UUID.fromString(BenchCapabilities.REPLY) && roundTrip) {
+                    if (!BenchRoundTrip.matches(step,value)) {
+                        finish("Ответ ESP32 не соответствует тесту ${step+1}"); return@post
+                    }
+                    step++
+                    if (step == BenchRoundTrip.requests.size)
+                        finish("BLE: двусторонний тест пройден. Все виртуальные выходы выключены; CAN и GPIO не используются.")
+                    else sendStep(g)
+                } else finish("Неожиданный ответ BLE")
+            }
+            @Suppress("DEPRECATION")
+            private fun sendStep(g: BluetoothGatt) {
+                val command = g.getService(serviceId)?.getCharacteristic(UUID.fromString(BenchCapabilities.COMMAND))
+                if (command == null || command.properties and BluetoothGattCharacteristic.PROPERTY_WRITE == 0) {
+                    finish("Стендовый канал команд не найден"); return
+                }
+                val bytes = AdapterProtocol.encode(BenchRoundTrip.requests[step])
+                onStatus("Проверка виртуального обмена: ${step+1}/${BenchRoundTrip.requests.size}")
+                val started = if (Build.VERSION.SDK_INT >= 33)
+                    g.writeCharacteristic(command,bytes,BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) == BluetoothStatusCodes.SUCCESS
+                else {
+                    command.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    command.value = bytes
+                    g.writeCharacteristic(command)
+                }
+                if (!started) finish("Не удалось записать тестовую команду")
+            }
+            override fun onCharacteristicWrite(g: BluetoothGatt,ch: BluetoothGattCharacteristic,status: Int) = post(g) {
+                if (!roundTrip || ch.uuid != UUID.fromString(BenchCapabilities.COMMAND) ||
+                    ch.service.uuid != serviceId || status != BluetoothGatt.GATT_SUCCESS) {
+                    finish("Ошибка тестовой записи BLE"); return@post
+                }
+                val response = g.getService(serviceId)?.getCharacteristic(UUID.fromString(BenchCapabilities.REPLY))
+                if (response == null || response.properties and BluetoothGattCharacteristic.PROPERTY_READ == 0 ||
+                    !g.readCharacteristic(response)) finish("Не удалось прочитать ответ ESP32")
             }
             @Deprecated("Legacy Android callback")
             override fun onCharacteristicRead(g: BluetoothGatt,ch: BluetoothGattCharacteristic,status: Int) {

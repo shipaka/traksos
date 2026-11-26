@@ -33,7 +33,7 @@ fun BenchBleDialog(onDismiss: () -> Unit) {
     }
     AlertDialog(onDismissRequest = { probe.stop(); onDismiss() },
         title = { Text("Проверка Bluetooth") },
-        text = { Text(status + "\n\nТолько чтение версии. Не подключает управление освещением или EBS.") },
+        text = { Text(status + "\n\nПроверка версии и обмена виртуальными командами. Не управляет физическим освещением или EBS.") },
         confirmButton = {
             TextButton(onClick = {
                 if (probe.permitted()) probe.start() else permissionLauncher.launch(BenchBleProbe.permissions())
