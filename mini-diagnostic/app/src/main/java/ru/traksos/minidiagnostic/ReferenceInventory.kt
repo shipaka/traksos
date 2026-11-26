@@ -23,5 +23,5 @@ object ReferenceInventory {
     // Preliminary secondary-source entries are not included in the established inventory.
     fun provisionalCount():Int=KnorrG2Td2077Reference.count
     // Auxiliary ECU, not a TEBS braking fault count. Two aliases count as one row.
-    fun auxiliaryCount():Int=WabcoElexReference.count
+    fun auxiliaryCount():Int=WabcoElexReference.count+WabcoRouterReference.count
 }

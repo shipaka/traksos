@@ -5,6 +5,7 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
     WABCO_E("WABCO TEBS E · памятка водителя"),
     WABCO_E_OEM_EXACT("WABCO TEBS E · подтверждённый пример 002/05"),
+    WABCO_CAN_ROUTER("WABCO CAN Router / Repeater · отдельный блок"),
     WABCO_ELEX("WABCO ELEX · отдельный модуль расширения"),
     WABCO_E_HUMBAUR("WABCO TEBS E · пример Humbaur"),
     WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
@@ -27,6 +28,7 @@ object DisplayReferenceLookup {
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
         if(edition==DisplayReferenceEdition.WABCO_E_OEM_EXACT) return WabcoEExactReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_CAN_ROUTER) return WabcoRouterReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_E_HUMBAUR) return ModernDisplayExamples.wabcoE(s)
         if(edition==DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE) return ModernDisplayExamples.haldex4(s)

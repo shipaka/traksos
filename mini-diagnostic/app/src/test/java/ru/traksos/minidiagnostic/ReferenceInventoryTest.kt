@@ -11,6 +11,8 @@ class ReferenceInventoryTest {
         assertEquals(293,rows.take(2).sumOf { it.entries })
         assertEquals(445,rows.drop(2).sumOf { it.entries })
         assertEquals(61,ReferenceInventory.provisionalCount())
-        assertEquals(198,ReferenceInventory.auxiliaryCount())
+        assertEquals(198,WabcoElexReference.count)
+        assertEquals(19,WabcoRouterReference.count)
+        assertEquals(217,ReferenceInventory.auxiliaryCount())
     }
 }
