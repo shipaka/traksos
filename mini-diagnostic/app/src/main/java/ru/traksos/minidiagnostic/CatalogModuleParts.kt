@@ -4,6 +4,15 @@ package ru.traksos.minidiagnostic
 data class CatalogModulePart(val number:String,val targetId:String,val variant:String,val source:String)
 object CatalogModuleParts {
     private val rows=listOf(
+        CatalogModulePart("364564001","haldex-uabs","Premium · модулятор в сборе; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
+        CatalogModulePart("364569001","haldex-uabs","Premium · отдельный ЭБУ; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
+        CatalogModulePart("364565001","haldex-uabs","Standard · модулятор в сборе; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
+        CatalogModulePart("364570001","haldex-uabs","Standard · отдельный ЭБУ; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
+        CatalogModulePart("364566001","haldex-uabs","Basic · модулятор в сборе; электронной CAN-диагностики нет","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
+        CatalogModulePart("364571001","haldex-uabs","Basic · отдельный ЭБУ; электронной CAN-диагностики нет","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
+        CatalogModulePart("950364824","haldex-uabs","Premium · комплект замены ЭБУ, не номер установленного блока","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=74"),
+        CatalogModulePart("950364825","haldex-uabs","Standard · комплект замены ЭБУ, не номер установленного блока","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=74"),
+        CatalogModulePart("950364826","haldex-uabs","Basic · комплект замены ЭБУ; электронной CAN-диагностики нет","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=74"),
         CatalogModulePart("820011001","haldex-eb2","2M — каталожная модификация","https://www.haldex.com/es/europe/trailer-application-guide/ebs/eb-gen2gen1/eb-gen2-series/820-011-xxx/"),
         CatalogModulePart("820011101","haldex-eb2","2M — каталожная модификация","https://www.haldex.com/es/europe/trailer-application-guide/ebs/eb-gen2gen1/eb-gen2-series/820-011-xxx/"),
         CatalogModulePart("820011111","haldex-eb2","2M — каталожная модификация","https://www.haldex.com/es/europe/trailer-application-guide/ebs/eb-gen2gen1/eb-gen2-series/820-011-xxx/"),
