@@ -117,7 +117,7 @@ private fun MiniApp() {
         return
     }
     if (bleProbeOpen) BenchBleDialog { bleProbeOpen = false }
-    if (connectionGuideOpen) DiagnosticGuideDialog { connectionGuideOpen = false }
+    if (connectionGuideOpen) DiagnosticGuideDialog(manualTargetId) { connectionGuideOpen = false }
     if (modulePickerOpen) ModulePickerDialog(manualTargetId,
         onSelect={ manualTargetId=it; modulePickerOpen=false; scan=0; detail=-1 },
         onClose={ modulePickerOpen=false })

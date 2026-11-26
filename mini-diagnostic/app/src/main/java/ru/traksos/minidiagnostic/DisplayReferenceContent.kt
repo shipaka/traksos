@@ -8,17 +8,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DisplayReferenceContent() {
-    var edition by remember { mutableStateOf<DisplayReferenceEdition?>(null) }
+fun DisplayReferenceContent(targetId:String?=null) {
+    val target=targetId?.let(CoverageRoadmap::byId)
+    val suggested=ReferenceSelection.forTarget(targetId)
+    var showAll by remember(targetId) { mutableStateOf(target==null) }
+    var edition by remember(targetId) { mutableStateOf<DisplayReferenceEdition?>(null) }
     var code by remember { mutableStateOf("") }
     Text("Ручная расшифровка",fontWeight=FontWeight.Bold)
     Text("Выберите точное семейство и редакцию справочника. Вводите только отображаемый код; это не чтение ECU и не проверка исправности.")
-    DisplayReferenceEdition.entries.forEach { e ->
+    if(target!=null) {
+        Text("Выбранный блок: "+target.maker+" · "+target.model,fontWeight=FontWeight.Bold)
+        if(suggested.isEmpty()) Text("Для выбранного блока собственного справочника пока нет. Не используйте коды похожего поколения.",color=MaterialTheme.colorScheme.error)
+        else Text("Доступные справочники выбранного семейства. Уточните редакцию по источнику кода.")
+        OutlinedButton(onClick={ showAll=!showAll; edition=null; code="" },modifier=Modifier.fillMaxWidth()) {
+            Text(if(showAll) "Только выбранное семейство" else "Все справочники")
+        }
+        if(showAll) Text("Другие справочники — только отдельный ручной поиск, не данные выбранного блока.")
+    }
+    val visible=if(showAll) DisplayReferenceEdition.entries else suggested
+    visible.forEach { e ->
         OutlinedButton(onClick={ edition=e; code="" },modifier=Modifier.fillMaxWidth()) {
             Text((if(edition==e) "✓ " else "")+e.title)
         }
     }
     edition?.let { e ->
+        if(target!=null && e !in suggested) Text("Выбран другой справочник. Результат не относится автоматически к выбранному модулятору.",color=MaterialTheme.colorScheme.error)
         val placeholder=when(e) {
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
             DisplayReferenceEdition.HALDEX_MODAL_MODULAR -> "Например 05, 91 или CF"

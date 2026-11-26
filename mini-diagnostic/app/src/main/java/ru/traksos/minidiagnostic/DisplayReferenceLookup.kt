@@ -83,7 +83,11 @@ object DisplayReferenceLookup {
             val (component,type)=s.split("/")
             return SmartBoardSystemReference.find(edition==DisplayReferenceEdition.WABCO_D_SYSTEM,component,type)
         }
-        val family=if(edition==DisplayReferenceEdition.WABCO_D) EcuFamily.WABCO_TEBS_D else EcuFamily.WABCO_TEBS_E
+        val family=when(edition) {
+            DisplayReferenceEdition.WABCO_D -> EcuFamily.WABCO_TEBS_D
+            DisplayReferenceEdition.WABCO_E -> EcuFamily.WABCO_TEBS_E
+            else -> return null
+        }
         val (component,type)=s.split("/")
         val r=SmartBoardReference.decode(family,component,type)
         if(r.component==null && r.faultType==null) return null

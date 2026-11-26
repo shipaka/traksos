@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun DiagnosticGuideDialog(onClose:()->Unit) {
+fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
     var selected by remember { mutableStateOf<ConnectionPlace?>(null) }
     var showChecks by remember { mutableStateOf(false) }
     var showCables by remember { mutableStateOf(false) }
@@ -26,7 +26,7 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
             Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement=Arrangement.spacedBy(10.dp)) {
                 if(showReference) {
-                    DisplayReferenceContent()
+                    DisplayReferenceContent(targetId)
                 } else if(showSystems) {
                     Text("Системы и поколения",fontWeight=FontWeight.Bold)
                     Text("Реестр разработки, не список поддержанных прибором блоков.",color=MaterialTheme.colorScheme.error)
