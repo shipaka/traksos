@@ -22,6 +22,7 @@ fun DisplayReferenceContent() {
         val placeholder=when(e) {
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
             DisplayReferenceEdition.HALDEX_UABS_ACTIVE -> "Две цифры, например 01"
+            DisplayReferenceEdition.KNORR_TEBS4 -> "Десятичный код, например 137"
             DisplayReferenceEdition.KNORR_KB4TA -> "Две группы, например 2/4"
             DisplayReferenceEdition.SORL_ABS -> "Например 3.1"
             DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"

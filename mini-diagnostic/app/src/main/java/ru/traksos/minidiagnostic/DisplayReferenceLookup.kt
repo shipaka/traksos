@@ -9,6 +9,7 @@ enum class DisplayReferenceEdition(val title:String) {
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
     HALDEX_UABS_ACTIVE("Haldex U-ABS · активные световые коды"),
     EKRAN_EBP("Экран АБС-П / ЭБП · световые коды"),
+    KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
     KNORR_KB4TA("Knorr KB4TA / KB4TA D · световые коды"),
     SORL_ABS("SORL ABS прицепа · световые коды")
 }
@@ -17,6 +18,10 @@ object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.KNORR_TEBS4) {
+            val r=KnorrTebs4Reference.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,KnorrTebs4Reference.SOURCE,true)
+        }
         if(edition==DisplayReferenceEdition.KNORR_KB4TA || edition==DisplayReferenceEdition.SORL_ABS) {
             val knorr=edition==DisplayReferenceEdition.KNORR_KB4TA
             val r=(if(knorr) KnorrSorlReference.knorr(s) else KnorrSorlReference.sorl(s)) ?: return null

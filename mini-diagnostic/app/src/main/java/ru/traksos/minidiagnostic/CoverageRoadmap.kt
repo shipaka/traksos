@@ -27,7 +27,7 @@ object CoverageRoadmap {
         target("zf-vario-c","WABCO / ZF","Vario C",ZF_ABS,ScopeGroup.INTERFACE_REVIEW),
         target("zf-vcs","WABCO / ZF","VCS",ZF_ABS,ScopeGroup.INTERFACE_REVIEW),
         target("zf-vcs-ii","WABCO / ZF","VCS II",LegacyDisplayReference.VCS_SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
-        target("kb-tebs4","Knorr-Bremse","TEBS4",KNORR_COVERAGE,ScopeGroup.INTERFACE_REVIEW),
+        target("kb-tebs4","Knorr-Bremse","TEBS4",KnorrTebs4Reference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("kb-g20","Knorr-Bremse","TEBS G2.0",KNORR),
         target("kb-g21","Knorr-Bremse","TEBS G2.1",KNORR),
         target("kb-g22","Knorr-Bremse","TEBS G2.2",KNORR),
