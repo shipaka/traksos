@@ -1,0 +1,47 @@
+{
+  "id": "bpw-ts2-4309-caliper",
+  "manufacturer": "BPW",
+  "family": "TS2 4309",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-ts2-4309-caliper.svg",
+  "articles": {
+    "right": "09.362.72.42.0",
+    "left": "09.362.72.43.0",
+    "disc": "03.088.35.12.7",
+    "pads": "BPW 8201"
+  },
+  "functional": {
+    "tappets": 1
+  },
+  "sources": [
+    {
+      "url": "https://www.bpw.de/fileadmin/user_upload/Service/Aftermarket_News/2024/BPW-News_75882401e_AM04_Conversion_of_the_TS2_brake_callipers.pdf",
+      "reference": "75882401e AM04 12.12.2024 p1",
+      "visualChecked": true
+    },
+    {
+      "url": "https://www.bpw.de/fileadmin/user_upload/Service/Downloads/BPW-ECO_Disc_Disc_brake_TS2_TSB_Original_spare_parts_BPW_2025_en__31232501e.pdf",
+      "reference": "pp17–20",
+      "visualChecked": false,
+      "screenshotError": "size limit"
+    }
+  ],
+  "additional": {
+    "fromProductionWeek": "49/2024",
+    "oldCap": "rubber",
+    "newCap": "screw cap",
+    "replacementKitsWithPads": {
+      "right": "09.362.72.42.3",
+      "left": "09.362.72.43.3"
+    },
+    "oldKitsWithoutPads": {
+      "right": "09.362.72.32.0",
+      "left": "09.362.72.33.0"
+    }
+  },
+  "limitations": [
+    "Original conceptual graphic; not verified physical geometry or handedness depiction",
+    "No exact axle serial/VIN fitment, mounting or repair instructions",
+    "No rendered QA or expert acceptance; not published"
+  ]
+}
