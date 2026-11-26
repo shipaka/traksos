@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val Orange = Color(0xFFFF8B23)
 private val Graphite = Color(0xFF11171E)
@@ -67,7 +69,7 @@ private fun MiniApp() {
     var elapsed by remember { mutableLongStateOf(0L) }
     var message by remember { mutableStateOf("") }
     val prefs = remember { context.getSharedPreferences("mini_demo_history", 0) }
-    var history by remember { mutableStateOf(prefs.getString("reports", "")!!.split("\n").filter { it.isNotBlank() }) }
+    var history by remember { mutableStateOf(emptyList<String>()) }
     var scan by remember { mutableIntStateOf(0) }
     var scanning by remember { mutableStateOf(false) }
     var historyOpen by remember { mutableStateOf(false) }
@@ -81,7 +83,10 @@ private fun MiniApp() {
     }
     fun off() { state = session.allOff(now()).state }
     LaunchedEffect(Unit) {
-        // Local demo data initialization, no network or adapter connection implied.
+        // Read local report index asynchronously. No artificial delay or network connection.
+        history = withContext(Dispatchers.IO) {
+            prefs.getString("reports", "").orEmpty().split("\n").filter { it.isNotBlank() }.take(50)
+        }
         ready = true
         var last = 0L
         while (true) {
