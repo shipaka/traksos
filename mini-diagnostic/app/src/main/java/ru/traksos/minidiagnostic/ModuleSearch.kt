@@ -47,6 +47,8 @@ object ModuleSearch {
     fun find(query:String):List<ResearchTarget> {
         if(query.length>120) return emptyList()
         if(query.isBlank()) return CoverageRoadmap.targets
+        val partMatches=WabcoPartReference.find(query)
+        if(partMatches.isNotEmpty()) return partMatches.mapNotNull { CoverageRoadmap.byId(it.targetId) }.distinct()
         val q=normalize(query)
         if(q.isEmpty()) return emptyList()
         return index.mapNotNull { (row,t)->

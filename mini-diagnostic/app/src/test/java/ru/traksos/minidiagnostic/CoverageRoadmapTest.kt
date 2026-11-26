@@ -5,10 +5,10 @@ import org.junit.Test
 class CoverageRoadmapTest {
     @Test fun distinctTargetsAndSources() {
         val rows=CoverageRoadmap.targets
-        assertEquals(34,rows.size)
+        assertEquals(36,rows.size)
         assertEquals(rows.size,rows.map { it.id }.toSet().size)
         assertTrue(rows.all { it.model.isNotBlank() && it.evidence.startsWith("https://") })
-        assertEquals(15,rows.count { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL })
+        assertEquals(16,rows.count { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL })
         assertEquals(2,rows.count { it.stage==ResearchStage.CANDIDATE })
     }
     @Test fun generationsAndDifferentElectricalMarketsStaySeparate() {

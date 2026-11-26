@@ -16,7 +16,7 @@ class ModuleSearchTest {
         assertTrue(tebs.any { it.id=="zf-tebs-d" })
         assertTrue(tebs.any { it.id=="zf-tebs-e" })
         assertTrue(tebs.any { it.id=="vie-tebs" })
-        assertEquals(34,ModuleSearch.find("").size)
+        assertEquals(36,ModuleSearch.find("").size)
         assertTrue(ModuleSearch.find("?!").isEmpty())
         assertTrue(ModuleSearch.find("unlisted-module-1234567").isEmpty())
     }

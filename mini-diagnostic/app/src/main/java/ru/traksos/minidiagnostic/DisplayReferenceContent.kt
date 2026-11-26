@@ -27,6 +27,8 @@ fun DisplayReferenceContent() {
             DisplayReferenceEdition.KNORR_KB4TA -> "Две группы, например 2/4"
             DisplayReferenceEdition.SORL_ABS -> "Например 3.1"
             DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"
+            DisplayReferenceEdition.VCS_I_EXPERT -> "Две группы, например 3/5"
+            DisplayReferenceEdition.WABCO_COMPACT_TESTER -> "Три символа, например 411"
             DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"
             DisplayReferenceEdition.HALDEX_GEN2_INFO1, DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
             else -> "Например 003/05"

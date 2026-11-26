@@ -21,7 +21,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
             Button(onClick={ onSelect(null) },modifier=Modifier.fillMaxWidth()) { Text("Автоматический поиск"+if(currentId==null) " ✓" else "") }
             Text("Или выберите по надписи на корпусе. Номер детали для выбора семейства не обязателен.",fontSize=12.sp)
             OutlinedTextField(value=query,onValueChange={ query=it.take(80); manufacturer=null },
-                modifier=Modifier.fillMaxWidth(),singleLine=true,label={ Text("Например TEBS E, ТЭПСЕ, SORL") })
+                modifier=Modifier.fillMaxWidth(),singleLine=true,label={ Text("TEBS E, SORL или номер детали") })
             if(query.isBlank()) {
                 Text("Производитель",fontWeight=FontWeight.Bold)
                 if(manufacturer==null) {
@@ -34,6 +34,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
             }
             if(query.isNotBlank() || manufacturer!=null) {
                 Text("Найдено: ${visible.size}",fontSize=12.sp)
+                if(WabcoPartReference.find(query).isNotEmpty()) Text("Совпадение с опубликованным диапазоном номеров. Точная модель и протокол не подтверждены.",fontSize=11.sp)
                 visible.forEach { row ->
                     OutlinedButton(onClick={ onSelect(row.id) },modifier=Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(vertical=4.dp)) {
