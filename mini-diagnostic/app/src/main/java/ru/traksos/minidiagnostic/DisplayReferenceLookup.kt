@@ -7,13 +7,20 @@ enum class DisplayReferenceEdition(val title:String) {
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
     HALDEX_UABS_ACTIVE("Haldex U-ABS · активные световые коды"),
-    EKRAN_EBP("Экран АБС-П / ЭБП · световые коды")
+    EKRAN_EBP("Экран АБС-П / ЭБП · световые коды"),
+    KNORR_KB4TA("Knorr KB4TA / KB4TA D · световые коды"),
+    SORL_ABS("SORL ABS прицепа · световые коды")
 }
 data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
 object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.KNORR_KB4TA || edition==DisplayReferenceEdition.SORL_ABS) {
+            val knorr=edition==DisplayReferenceEdition.KNORR_KB4TA
+            val r=(if(knorr) KnorrSorlReference.knorr(s) else KnorrSorlReference.sorl(s)) ?: return null
+            return DisplayLookup(r.first,r.second,if(knorr) KnorrSorlReference.KNORR_SOURCE else KnorrSorlReference.SORL_SOURCE,true)
+        }
         if(edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE || edition==DisplayReferenceEdition.EKRAN_EBP) {
             val haldex=edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE
             val r=(if(haldex) AdditionalAbsReference.haldex(s) else AdditionalAbsReference.ekran(s)) ?: return null
