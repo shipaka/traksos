@@ -280,16 +280,37 @@ export class ReferralService {
   }
 
   /** Экран «Пригласить»: код, остаток, история, кого пригласили, правила */
-  async mine(user: AuthUser) {
+  async mine(user: AuthUser, invitedPage = 0) {
     const code = await this.code(user.id);
     const b = await this.balance(user.id);
     const entries = await this.db.query(
       `select id::int as id, amount, kind, note, expires_at, created_at from points_entries where user_id=$1 order by created_at desc limit 50`, [user.id]);
-    const invited = await this.db.query(
-      `select coalesce(nullif(u.company_name,''), nullif(u.name,''), 'Без имени') as name, u.referred_at as at,
-              case when u.roles && '{master,tow}'::text[] then 'performer' when 'service' = any(u.roles) then 'service' else 'client' end as who,
-              coalesce((select sum(p.amount) from points_entries p where p.user_id=$1 and p.ref_user_id=u.id and p.amount > 0), 0)::int as earned
-         from users u where u.referred_by=$1 order by u.referred_at desc limit 100`, [user.id]);
-    return { code, ...b, entries, invited, rules: await this.settings.get('referral') };
+    const pageSize = 100;
+    const page = await this.db.one<{total:number; invited:any[]}>(
+      `with page as (
+         select u.id, coalesce(nullif(u.company_name,''), nullif(u.name,''), 'Без имени') as name,
+           u.referred_at as at,
+           case when 'master'=any(u.roles) and 'service'=any(u.roles) then 'master_service'
+                when u.roles && '{master,tow}'::text[] then 'performer'
+                when 'service'=any(u.roles) then 'service'
+                when 'insurer'=any(u.roles) then 'insurer'
+                when 'inspection_operator'=any(u.roles) then 'inspection'
+                when 'courier'=any(u.roles) then 'courier'
+                when 'driver'=any(u.roles) then 'driver'
+                when 'client'=any(u.roles) then 'client'
+                when 'admin'=any(u.roles) then 'admin'
+                when 'moderator'=any(u.roles) then 'moderator'
+                else 'other' end as who,
+           coalesce((select sum(p.amount) from points_entries p where p.user_id=$1 and p.ref_user_id=u.id and p.amount > 0), 0)::int as earned
+         from users u where u.referred_by=$1
+         order by u.referred_at desc nulls last, u.id desc limit $2 offset $3
+       )
+       select (select count(*)::int from users where referred_by=$1) as total,
+         coalesce((select jsonb_agg(jsonb_build_object('name',name,'at',at,'who',who,'earned',earned)
+           order by at desc nulls last,id desc) from page),'[]'::jsonb) as invited`,
+      [user.id,pageSize,invitedPage*pageSize]);
+    const invitedTotal=page?.total??0;
+    return { code, ...b, entries, invited:page?.invited??[], invitedTotal, invitedPage,
+      invitedPageSize:pageSize, rules: await this.settings.get('referral') };
   }
 }

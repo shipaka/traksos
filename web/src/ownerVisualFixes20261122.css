@@ -1006,7 +1006,7 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 .traksos-app-phone-screen{
   min-width:0;min-height:0;flex:1;display:flex;flex-direction:column;
   align-items:center;justify-content:space-around;
-  padding:8px 4px 4px;border-radius:13px;overflow:hidden;
+  padding:5px 3px 3px;border-radius:11px;overflow:hidden;
   color:#fff;background:radial-gradient(circle at 52% 72%,#f0793147,transparent 66%),
     linear-gradient(165deg,#0c2734,#152e3d 60%,#071b26);
 }
@@ -1015,11 +1015,9 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
 .traksos-app-phone-screen>.traksos-app-phone-mark{
   display:block;width:88%;height:auto;object-fit:contain;mix-blend-mode:screen;
 }
-.traksos-app-phone-icon{display:block!important;width:56%!important;max-width:64px!important;
-  height:auto!important;max-height:55px!important;object-fit:contain!important;
+.traksos-app-phone-icon{display:block!important;width:82%!important;max-width:82px!important;
+  height:auto!important;max-height:76px!important;object-fit:contain!important;
   border-radius:9px;box-shadow:0 4px 12px #0007;filter:none!important;}
-.traksos-app-phone-caption{display:block;max-width:95%;font-size:9px;line-height:1.2;
-  font-weight:600;text-align:center;color:#dce9ea}
 .traksos-app-phone-home{display:block;width:24%;height:3px;min-height:3px;border-radius:8px;
   background:#8ba7ac}
 @media(min-width:900px){
@@ -1032,7 +1030,7 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
   }
   .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
     position:absolute;z-index:2;top:8px;right:12px;
-    width:72px!important;height:110px!important;
+    width:64px!important;height:114px!important;
   }
   .guest-app.guest-home .owner20-bottom-app> b,
   .guest-app.guest-home .owner20-bottom-app>p,
@@ -1051,7 +1049,8 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
      Shrink its height only enough to clear the fixed mascot at 1536px. */
   .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
     right:10px!important;top:5px!important;
-    height:84px!important;width:68px!important;
+    height:84px!important;width:49px!important;
+    padding:3px!important;border-width:2px;border-radius:12px;
     transform:rotate(2deg)!important;
   }
   #public-home .owner20-bottom-app>:is(b,p,.owner20-store){
@@ -1064,6 +1063,14 @@ html.traksos-browser .approved-pc .approved-pc-heading[data-feature-art] > div:f
     word-break:normal!important;
   }
 
+}
+/* A larger portrait mockup on tall desktop viewports. The compact variant
+   protects the existing fixed mascot and the approved card at laptop heights. */
+@media(min-width:1200px) and (min-height:1050px){
+  .guest-app.guest-home .owner20-bottom-app>.traksos-app-phone{
+    width:82px!important;height:146px!important;
+    padding:5px!important;border-width:3px;border-radius:18px;
+  }
 }
 @media(max-width:899px){
   .guest-app .public-landing .public-app-card>.traksos-app-phone.public-app-phone{

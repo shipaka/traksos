@@ -4,7 +4,7 @@ import { usePrivateRead } from './privateRead20261124.ts';
 import { learningRole } from './platformIntro.tsx';
 
 type Example={amount:number;fee:number;total:number;partnerReceives?:number;title:string;formula:string};
-type Guide={role:string;title:string;cap:number;paragraphs:{title:string;text:string}[];examples:Example[];
+type Guide={role:string;title:string;cap:number;paragraphs:{title:string;text:string}[];examples:Example[];referralHistoryNote?:string;
   rules:{clientSharePct:number;referralDays:number;welcome:number;clientSpendCapPct:number;spendCapPct:number;performerReward:number;performerJobs:number;serviceReward:number;ttlDays:number}};
 /** Server-calculated, role-limited values: identical data powers economics and published offer annexes. */
 export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
@@ -58,6 +58,7 @@ export function EconomicsGuide({inOffer=false}:{inOffer?:boolean}) {
     </div>}
     <p className="note">Для конкретной заявки расчёт может отличаться из-за скидок, баллов, индивидуального тарифа, акций и этапа отмены. Окончательная сумма и условия подтверждаются в самой заявке.</p>
     {(role==='master'||role==='tow') && <p className="note">Для выездной заявки сохраняется ставка комиссии на момент создания. При временной акции 0% комиссия и погашение её баллами равны нулю; при положительной ставке удержание не выше 5 000 ₽. Текущие примеры выше не пересчитывают старые заказы.</p>}
+    {info.referralHistoryNote && !inOffer && <p className="note">{info.referralHistoryNote}</p>}
     <div className="row" style={{gap:12,flexWrap:'wrap'}}>
       <a href="#/help">Энциклопедия и вопросы</a>
       <a href="#/invite">Реферальная ссылка и мои баллы</a>

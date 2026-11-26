@@ -7,8 +7,8 @@ if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname)) throw Error('Loc
 await mkdir('e2e/shots/owner20-pc',{recursive:true});
 const browser=await chromium.launch();
 try {
- for(const width of [900,1024,1280,1440,1536,1672]){
-  const ctx=await browser.newContext({viewport:{width,height:width===1536?864:900},locale:'ru-RU'});
+ for(const width of [900,1024,1280,1440,1536,1672,1920]){
+  const ctx=await browser.newContext({viewport:{width,height:width===1920?1080:width===1536?864:900},locale:'ru-RU'});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
    await page.goto(BASE+'/#/',{waitUntil:'domcontentloaded'});
@@ -168,7 +168,13 @@ try {
      const copyStoreCollision=!!(copyRect&&storeRect&&
        copyRect.left<storeRect.right&&copyRect.right>storeRect.left&&
        copyRect.top<storeRect.bottom&&copyRect.bottom>storeRect.top);
+     const screen=phone.querySelector('.traksos-app-phone-screen');
+     const screenRect=screen?.getBoundingClientRect();
+     const iconRect=img.getBoundingClientRect(),markRect=mark.getBoundingClientRect();
+     const withinScreen=r=>!!screenRect&&r.left>=screenRect.left-1&&r.right<=screenRect.right+1&&r.top>=screenRect.top-1&&r.bottom<=screenRect.bottom+1;
      return {textCollision,headingLines,copyStoreCollision,
+       portrait:p.height>=p.width*1.45, screenFits:withinScreen(iconRect)&&withinScreen(markRect),
+       noTinyCaption:!phone.querySelector('.traksos-app-phone-caption'),
        phone:[p.x,p.y,p.width,p.height],dock:[b.x,b.y,b.width,b.height],
        assetLoaded:img.naturalWidth>30,branded:mark.getAttribute('src')==='/traksos-brand-logo-approved-618.png' &&
          mark.naturalWidth>0 && mark.clientWidth>0 && mark.clientHeight>0,
@@ -180,6 +186,7 @@ try {
    });
    if(phoneBot.missing||phoneBot.phoneCount!==1||!phoneBot.assetLoaded||!phoneBot.branded||
       !phoneBot.rustore||!phoneBot.pseudoHidden||!phoneBot.inside||phoneBot.overlaps||phoneBot.textCollision||
+      !phoneBot.portrait||!phoneBot.screenFits||!phoneBot.noTinyCaption||(width===1920&&phoneBot.phone[3]<140)||
       (width>=1200&&(phoneBot.headingLines>2||phoneBot.copyStoreCollision)))
      throw Error(width+': app-card copy clipped, broken or overlapping branded phone/RuStore/TrakBot: '+JSON.stringify(phoneBot));
    if(width===1536){
