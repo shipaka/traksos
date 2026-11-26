@@ -1,0 +1,123 @@
+{
+  "batch": "TECHBASE-CUMMINS-X15-VARIANTS-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "sources": [
+    {
+      "url": "https://quickserve.cummins.com/protected/files/qsol/cms/CSP_SB_13-20_Rev01_X15e6_CM2350_Infant_Care_Package.pdf",
+      "id": "CSP SB 13-20 Rev01",
+      "date": "2021-03-02",
+      "pages": [
+        8,
+        9
+      ],
+      "inspection": "text and page screenshots",
+      "scope": "Australian/South Pacific X15e6 CM2350; wastegate, no EGR, 12V, XPI, single module, integrated control; functional diagram, listed Kenworth chassis only"
+    },
+    {
+      "url": "https://mart.cummins.com/imagelibrary/data/assetfiles/0076186.pdf",
+      "id": "6491587 Rev. 10/24",
+      "pages": [
+        1,
+        2
+      ],
+      "inspection": "text and two engine product photographs visually inspected",
+      "scope": "2024 EPA Efficiency engine, six cylinders, not 2021 Euro VI installation"
+    },
+    {
+      "url": "https://www.cummins.com/en-eu/engines/products/x15-efficiency-series-2024",
+      "inspection": "official product result text",
+      "scope": "EPA 2024 X15 Efficiency: VGT/XPI, not Euro VI"
+    },
+    {
+      "url": "https://www.cummins.com/fr-eu/components/turbochargers/holset-turbochargers",
+      "inspection": "manufacturer text; product image link not inspected",
+      "scope": "Holset family sliding nozzle ring and wastegate principles; no article/ESN"
+    },
+    {
+      "url": "https://www.cummins.com/en-na/components/electronics-fuel-systems/fuel-systems/common-rail-systems",
+      "inspection": "official manufacturer text; image link not inspected",
+      "scope": "HD XPI common rail, multiple pump options; exact X15 pump/pressure not established"
+    },
+    {
+      "url": "https://www.cummins.com/en-na/components/aftertreatment/how-it-works",
+      "inspection": "manufacturer search result text",
+      "scope": "functional aftertreatment generic; not proof of exact 2021 layout"
+    }
+  ],
+  "assets": [
+    {
+      "filename": "x15-turbo-market-comparison.svg",
+      "system": "boost",
+      "tier": "professional_educational",
+      "application": "comparison: 2021 CSP X15e6 vs 2024 EPA Efficiency",
+      "status": "hold",
+      "unknown": [
+        "exact ESN and vehicle build",
+        "article and physical geometry",
+        "actual chassis installation photo / routing",
+        "expert and visual-render validation"
+      ],
+      "checks": [
+        "functional facts crosschecked",
+        "no guessed pressures, pinouts or physical installation",
+        "original SVG; no OEM image embedded"
+      ]
+    },
+    {
+      "filename": "x15-e6-aftertreatment.svg",
+      "system": "aftertreatment",
+      "tier": "professional_educational",
+      "application": "2021 CSP X15e6 CM2350",
+      "status": "hold",
+      "unknown": [
+        "exact ESN and vehicle build",
+        "article and physical geometry",
+        "actual chassis installation photo / routing",
+        "expert and visual-render validation"
+      ],
+      "checks": [
+        "functional facts crosschecked",
+        "no guessed pressures, pinouts or physical installation",
+        "original SVG; no OEM image embedded"
+      ]
+    },
+    {
+      "filename": "x15-xpi-functional.svg",
+      "system": "fuel",
+      "tier": "professional_educational",
+      "application": "X15 XPI family-level; 2021 CSP X15e6 and EPA24 references kept separate",
+      "status": "hold",
+      "unknown": [
+        "exact ESN and vehicle build",
+        "article and physical geometry",
+        "actual chassis installation photo / routing",
+        "expert and visual-render validation"
+      ],
+      "checks": [
+        "functional facts crosschecked",
+        "no guessed pressures, pinouts or physical installation",
+        "original SVG; no OEM image embedded"
+      ]
+    },
+    {
+      "filename": "x15-e6-ecm-architecture.svg",
+      "system": "engine_electronics",
+      "tier": "professional_educational",
+      "application": "2021 CSP X15e6 CM2350",
+      "status": "hold",
+      "unknown": [
+        "exact ESN and vehicle build",
+        "article and physical geometry",
+        "actual chassis installation photo / routing",
+        "expert and visual-render validation"
+      ],
+      "checks": [
+        "functional facts crosschecked",
+        "no guessed pressures, pinouts or physical installation",
+        "original SVG; no OEM image embedded"
+      ]
+    }
+  ],
+  "rights": "Original educational diagrams, not copies of OEM drawings. Static watermark only; runtime rights/ACL handled separately.",
+  "guard": "The source document gives a functional layout, not actual mounting. Do not publish until model-specific installation evidence and review are obtained; never generalize wastegate/no EGR to all X15."
+}
