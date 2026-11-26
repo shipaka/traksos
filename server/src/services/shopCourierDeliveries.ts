@@ -28,32 +28,36 @@ export class ShopCourierDeliveries {
   constructor(private db:Db,private notify:Notifier) {}
   private async requireCourier(q:Queryable,courier:AuthUser,lock=false){
     if(!courier.roles.includes('courier')||!await q.one(
-      "select id from users where id=$1 and status='active' and 'courier'=any(roles)"+(lock?' for share':''),[courier.id]))
+      "select id from users where id=$1 and status='active' and deleted_at is null and 'courier'=any(roles)"+(lock?' for share':''),[courier.id]))
       throw forbidden('Доступ курьера отозван');
   }
-  /** A fleet buyer's original order is not a permanent right to a previous
-   * employer's parcel. A vehicle-specific order requires that SAME vehicle.
-   * A legacy order without vehicle keeps the existing active-fleet contract.
-   */
+  private async currentOwner(q:Queryable,id:string,lock=false){
+    return !!await q.one(
+      "select id from users where id=$1 and owner_id is null and status='active' and deleted_at is null and roles && '{client,driver,master,tow,service}'::text[]"+(lock?' for share':''),
+      [id]);
+  }
+  /** Receipt remains restricted to the actual purchaser, with the same
+   * live fleet conditions as ordinary shop reads. Lock all relevant rows
+   * during writes so a concurrent revocation cannot authorize stale access. */
   private async currentBuyer(q:Queryable,clientId:string,createdBy:string,
     vehicleId:string|null,buyerId:string,lock=false){
     if(createdBy!==buyerId)return false;
-    if(createdBy===clientId)return !!await q.one(
-      "select id from users where id=$1 and status='active'"+(lock?' for share':''),[buyerId]);
+    if(createdBy===clientId)return this.currentOwner(q,buyerId,lock);
     if(vehicleId){
-      const linked=await q.one<{ok:number}>(
-        `select 1 as ok from users u join vehicles v
-           on v.owner_id=u.owner_id and v.driver_id=u.id
-          where u.id=$1 and u.owner_id=$2 and u.status='active' and 'driver'=any(u.roles)
-            and v.id=$3 limit 1${lock?' for share of u,v':''}`,
+      return !!await q.one(
+        `select 1 from users u join users owner on owner.id=u.owner_id
+          join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
+          where u.id=$1 and u.owner_id=$2 and u.status='active' and u.deleted_at is null
+            and 'driver'=any(u.roles) and owner.status='active' and owner.deleted_at is null
+            and v.id=$3 limit 1${lock?' for share of u,owner,v':''}`,
         [buyerId,clientId,vehicleId]);
-      return !!linked;
     }
-    const linked=await q.one<{ok:number}>(
-      `select 1 as ok from users u where u.id=$1 and u.owner_id=$2
-        and u.status='active' and 'driver'=any(u.roles)${lock?' for share of u':''}`,
+    return !!await q.one(
+      `select 1 from users u join users owner on owner.id=u.owner_id
+        where u.id=$1 and u.owner_id=$2 and u.status='active' and u.deleted_at is null
+          and 'driver'=any(u.roles) and owner.status='active' and owner.deleted_at is null
+          ${lock?'for share of u,owner':''}`,
       [buyerId,clientId]);
-    return !!linked;
   }
   private async storeInbox(q:Queryable,ids:(string|null|undefined)[],shopOrderId:string,
     title:string,body:string){
@@ -64,7 +68,7 @@ export class ShopCourierDeliveries {
   private async lockedRecipients(q:Queryable,d:{
     shop_order_id:string;client_id:string;created_by:string;vehicle_id:string|null;
   }){
-    return [d.client_id,...(d.created_by!==d.client_id&&
+    return [...(await this.currentOwner(q,d.client_id,true)?[d.client_id]:[]),...(d.created_by!==d.client_id&&
       await this.currentBuyer(q,d.client_id,d.created_by,d.vehicle_id,d.created_by,true)
         ?[d.created_by]:[])];
   }
@@ -72,7 +76,7 @@ export class ShopCourierDeliveries {
     const o=await this.db.one<{client_id:string;created_by:string;vehicle_id:string|null}>(
       'select client_id,created_by,vehicle_id from shop_orders where id=$1',[orderId]);
     if(!o)return [];
-    return [o.client_id,...(o.created_by!==o.client_id &&
+    return [...(await this.currentOwner(this.db,o.client_id)?[o.client_id]:[]),...(o.created_by!==o.client_id &&
       await this.currentBuyer(this.db,o.client_id,o.created_by,o.vehicle_id,o.created_by)
         ?[o.created_by]:[])];
   }
@@ -97,7 +101,7 @@ export class ShopCourierDeliveries {
   }
   async candidates(){
     return this.db.query<{id:string;name:string|null}>(
-      `select id,name from users where 'courier'=any(roles) and status='active'
+      `select id,name from users where 'courier'=any(roles) and status='active' and deleted_at is null
          order by name nulls last,id limit 200`);
   }
   private view(d:any){
@@ -118,7 +122,7 @@ export class ShopCourierDeliveries {
       if(o.delivery!=='delivery'||o.status!=='ready'||!o.address)
         throw conflict('delivery_unavailable','Назначение возможно только для собранного заказа с адресной доставкой');
       const courier=await q.one<{id:string}>(
-        `select id from users where id=$1 and 'courier'=any(roles) and status='active' for share`,[courierId]);
+        `select id from users where id=$1 and 'courier'=any(roles) and status='active' and deleted_at is null for share`,[courierId]);
       if(!courier)throw bad('invalid_courier','Выберите активного курьера TrakSOS');
       const old=await q.one<{id:string;status:Stage;courier_id:string}>(
         'select id,status,courier_id from shop_courier_deliveries where shop_order_id=$1 for update',[orderId]);
@@ -171,7 +175,7 @@ export class ShopCourierDeliveries {
       `select d.*,o.number as order_number,o.items,o.address,o.vehicle_snapshot
          from shop_courier_deliveries d
          join shop_orders o on o.id=d.shop_order_id
-        where d.courier_id=$1 and exists(select 1 from users u where u.id=$1 and u.status='active' and 'courier'=any(u.roles)) order by
+        where d.courier_id=$1 and exists(select 1 from users u where u.id=$1 and u.status='active' and u.deleted_at is null and 'courier'=any(u.roles)) order by
           case when d.status in ('received','cancelled') then 1 else 0 end,
           d.updated_at desc limit 100`,[courier.id]);
     return rows.map(d=>this.view(d));
@@ -181,7 +185,7 @@ export class ShopCourierDeliveries {
       `select d.*,o.number as order_number,o.items,o.address,o.vehicle_snapshot
          from shop_courier_deliveries d
          join shop_orders o on o.id=d.shop_order_id
-        where d.id=$1 and d.courier_id=$2 and exists(select 1 from users u where u.id=$2 and u.status='active' and 'courier'=any(u.roles))`,[id,courier.id]);
+        where d.id=$1 and d.courier_id=$2 and exists(select 1 from users u where u.id=$2 and u.status='active' and u.deleted_at is null and 'courier'=any(u.roles))`,[id,courier.id]);
     if(!d)throw notFound('Доставка не назначена этому курьеру');
     return this.view(d);
   }
@@ -231,6 +235,8 @@ export class ShopCourierDeliveries {
         where d.id=$1 and d.courier_id=$2 for update of d,o`,[id,courier.id]);
       if(!d)throw notFound('Доставка не назначена этому курьеру');
       await this.requireCourier(q,courier,true);
+      if(!await this.currentBuyer(q,d.client_id,d.created_by,d.vehicle_id,d.created_by,true))
+        throw conflict('receipt_buyer_unavailable','Получатель больше не закреплён за этой доставкой. Требуется ручное решение поддержки.');
       if(d.status==='code_verified')return {ok:true,d,repeated:true};
       if(d.status!=='arrived'||d.shop_status!=='shipped')
         throw conflict('invalid_stage','Код можно проверить только после прибытия по открытой доставке');
