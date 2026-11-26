@@ -1,0 +1,401 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-r-family-ems-sensor-catalogue",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "scope": {
+    "make": "Scania",
+    "family": "R",
+    "generation": "preserve separate manufacturer catalogue rows",
+    "engine": null,
+    "vin": null,
+    "canonical_vehicle_id": null
+  },
+  "cards": [
+    {
+      "article": "2260250",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "2154180",
+        "catalogue_cross_references": [
+          "1862890",
+          "2149696",
+          "1457305",
+          "1535520",
+          "1787155",
+          "1471740"
+        ]
+      },
+      "name": "Комбинированный датчик давления и температуры впуска",
+      "system": "intake",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/2154180/turbi%CC%87n-basinc-sensoru/2260250/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "4-Serie 1996 - 2005",
+        "P, G, R, S, (L) Serie 2016 -",
+        "P, G, R, T Serie 2004 -"
+      ],
+      "technical_data": {
+        "cable_mm": 1225,
+        "connector": "LEAR 5-pin socket",
+        "range_bar": [
+          0,
+          5
+        ],
+        "supply_v": 5,
+        "offset_v": 1,
+        "sensitivity_mv_per_bar": 1150
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    },
+    {
+      "article": "2260172",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "1377930",
+        "catalogue_cross_references": []
+      },
+      "name": "Датчик температуры охлаждающей жидкости",
+      "system": "cooling",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/1377930/temperature-sensor/2260172/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "4-Serie 1996 - 2005",
+        "P, G, R, T Serie 2004 -"
+      ],
+      "technical_data": {
+        "cable_mm": 1550,
+        "connector": "Deutsch DT06-2S, 2 pin"
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    },
+    {
+      "article": "2260471",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "1865315",
+        "catalogue_cross_references": [
+          "1539106",
+          "1788498"
+        ]
+      },
+      "name": "Датчик температуры охлаждающей жидкости, другое исполнение",
+      "system": "cooling",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/1865315/temperature-sensor/2260471/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "4-Serie 1994 - 2008",
+        "P, G, R, S (2016-)",
+        "P, G, R, T (2003-)"
+      ],
+      "technical_data": {
+        "cable_in": 78.74
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    },
+    {
+      "article": "2260876",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "1881331",
+        "catalogue_cross_references": [
+          "1804063"
+        ]
+      },
+      "name": "Датчик температуры моторного масла",
+      "system": "lubrication",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/1881331/temperature-sensor/2260876/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "P, G, R, T (2003-)"
+      ],
+      "technical_data": {
+        "cable_in": "59 27/32"
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    },
+    {
+      "article": "2260767",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "1100799",
+        "catalogue_cross_references": []
+      },
+      "name": "Датчик температуры воздуха на впуске",
+      "system": "intake",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/1100799/temperature-sensor/2260767/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "3-Serie 1987 - 1996",
+        "4-Serie 1994 - 2008",
+        "P, G, R, T (2003-)"
+      ],
+      "technical_data": {
+        "connector": "2-pin plug"
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    },
+    {
+      "article": "2260281",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "1862895",
+        "catalogue_cross_references": [
+          "1539110"
+        ]
+      },
+      "name": "Датчик температуры топлива",
+      "system": "fuel",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/1862895/temperature-sensor/2260281/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "4-Serie",
+        "P, G, R, T"
+      ],
+      "technical_data": {
+        "cable_in": 31.5,
+        "connection": "4 open wires"
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    },
+    {
+      "article": "2260907",
+      "manufacturer": "Cojali",
+      "oe": {
+        "make": "Scania",
+        "primary": "2265872",
+        "catalogue_cross_references": [
+          "2253825",
+          "1882567"
+        ]
+      },
+      "name": "Датчик температуры выхлопных газов",
+      "system": "aftertreatment",
+      "source": {
+        "url": "https://www.cojaliparts.com/en/reference/2265872/exhaust-gas-temperature-sensor/2260907/",
+        "sections": [
+          "technical data",
+          "applications",
+          "cross-referencing"
+        ],
+        "checked_on": "2026-11-26"
+      },
+      "truck_application_rows": [
+        "P, G, R, T"
+      ],
+      "technical_data": {
+        "cable_in": "16 15/16",
+        "connector": "Deutsch DT06-2S code B",
+        "thread": "M14x1.5"
+      },
+      "fitment_status": "family_level_only",
+      "engine_code": null,
+      "vin_fitment": null,
+      "location": null,
+      "pinout": null
+    }
+  ],
+  "system_context": {
+    "source": "https://www.scania.com/uk/en/home/products/trucks/r-series/r-series-specifications.html",
+    "verified_claim": "DC13 164 is one of the 450 hp engine options in the official R-series specification; this does not establish that any of these sensor articles fit DC13 164.",
+    "nodes": [
+      {
+        "id": "ems",
+        "name": "Блок управления двигателем EMS",
+        "article": null,
+        "variant": null
+      },
+      {
+        "id": "aftertreatment_control",
+        "name": "Контур управления нейтрализацией выхлопа",
+        "article": null,
+        "variant": null
+      },
+      {
+        "id": "fuel_injection",
+        "name": "Исполнительные устройства впрыска",
+        "article": null,
+        "variant": null
+      },
+      {
+        "id": "boost_control",
+        "name": "Контур управления наддувом",
+        "article": null,
+        "variant": null
+      }
+    ],
+    "functional_associations": [
+      {
+        "from": "intake",
+        "to": "ems",
+        "type": "conceptual_feedback",
+        "verified_wiring": false
+      },
+      {
+        "from": "cooling",
+        "to": "ems",
+        "type": "conceptual_temperature_feedback",
+        "verified_wiring": false
+      },
+      {
+        "from": "fuel",
+        "to": "ems",
+        "type": "conceptual_feedback",
+        "verified_wiring": false
+      },
+      {
+        "from": "lubrication",
+        "to": "ems",
+        "type": "possible_monitoring",
+        "verified_wiring": false
+      },
+      {
+        "from": "aftertreatment",
+        "to": "aftertreatment_control",
+        "type": "conceptual_feedback",
+        "verified_wiring": false
+      },
+      {
+        "from": "ems",
+        "to": "fuel_injection",
+        "type": "conceptual_control",
+        "verified_wiring": false
+      },
+      {
+        "from": "ems",
+        "to": "boost_control",
+        "type": "conceptual_control",
+        "verified_wiring": false
+      }
+    ],
+    "note": "Функциональные связи — не заводская схема, не доказательство соединения конкретного артикула с конкретным ЭБУ; точная архитектура зависит от двигателя и поколения."
+  },
+  "excluded": [
+    {
+      "article": "2260222",
+      "oe": "1862800",
+      "reason": "catalogue truck row only Serie 4",
+      "url": "https://www.cojaliparts.com/en/reference/1862800/map-sensor-manifold-absolute-pressure/2260222/"
+    },
+    {
+      "article": "2260273",
+      "oe": "1862799",
+      "reason": "catalogue truck row only Serie 4",
+      "url": "https://www.cojaliparts.com/en/reference/1862799/boost-pressure-sensor/2260273/"
+    },
+    {
+      "article": "2260248",
+      "oe": "1862798",
+      "reason": "catalogue truck row only Serie 4",
+      "url": "https://www.cojaliparts.com/en/reference/1862798/boost-pressure-sensor/2260248/"
+    },
+    {
+      "article": "2260753",
+      "oe": "1862891",
+      "reason": "brand-only Scania truck application; no R-family row",
+      "url": "https://www.cojaliparts.com/en/reference/1862891/pressure-sensor/2260753/"
+    },
+    {
+      "article": "2262082",
+      "oe": "2093727",
+      "reason": "brand-only Scania truck application; no R-family row",
+      "url": "https://www.cojaliparts.com/en/reference/2093727/pressure-sensor/2262082/"
+    }
+  ],
+  "illustration_briefs": [
+    {
+      "id": "ems-intake",
+      "scope": "Блок управления, турбина, впуск, комбинированный датчик и отдельный температурный датчик как варианты; не утверждать совместное наличие."
+    },
+    {
+      "id": "ems-temperature",
+      "scope": "Контуры температуры охлаждающей жидкости, масла и топлива; не соединять напрямую с одним ECU без схемы."
+    },
+    {
+      "id": "exhaust-temperature",
+      "scope": "Датчик температуры отработавших газов и контур нейтрализации; точное положение до/после DPF/SCR и блок не установлены."
+    }
+  ],
+  "gates": {
+    "catalogue_rows": "checked",
+    "oem_crossrefs": "aftermarket_catalogue_only",
+    "oem_routing": "missing",
+    "expert_review": "pending",
+    "visuals": "not_created",
+    "runtime_import": "not_performed"
+  },
+  "handoff": "Получить OEM EMS variant, component locations, circuit and VIN-specific parts catalogue. Не объединять строки P/G/R/T и P/G/R/S, не использовать диапазоны/напряжения как указания по проверке контактов. Не считать записи иллюстрациями."
+}
