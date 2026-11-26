@@ -1,0 +1,34 @@
+{
+  "id": "bpw-pivot-bush-0203169000",
+  "manufacturer": "BPW",
+  "article": "02.0316.90.00",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-pivot-bush-0203169000.svg",
+  "nameRu": "Сайлентблок продольного рычага",
+  "type": "SGS",
+  "spec": {
+    "innerDiameterMm": 30,
+    "outerDiameterMm": 57,
+    "lengthMm": 102,
+    "trailingArmWidthMm": 100,
+    "construction": "steel/rubber/steel"
+  },
+  "source": {
+    "url": "https://www.bpw.de/fileadmin/user_upload/PDF-Downloads/Technische-PDFs/Ersatzteillisten/Spareparts_Air_suspension_BPW_2022_EN_31052201.pdf",
+    "reference": "31052201e item 1005 pp18,20,22",
+    "textChecked": true,
+    "visualChecked": false,
+    "checked": "2026-11-26"
+  },
+  "related": [
+    {
+      "article": "02.0316.06.00",
+      "relation": "older rubber/steel variant, 30/60 x 102; do not assume interchange"
+    }
+  ],
+  "limitations": [
+    "Conceptual original illustration, not exact CAD",
+    "No installation orientation, VIN, axle serial fitment or repair procedure",
+    "Rendered QA and expert acceptance pending"
+  ]
+}
