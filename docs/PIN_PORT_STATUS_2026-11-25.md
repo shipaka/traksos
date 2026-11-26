@@ -1,0 +1,12 @@
+# Android PIN staged port — 25.11.2026
+
+PR #108. Historical head 01e08ec9c40a54d206805f1268d490c43866fa58 is preserved as a parent; current base abda3f141fe744adc00ba2eccc9c3a8cd8af1679.
+Stage 1 ports the account-bound Android Keystore PIN verifier, its native instrumentation tests and additive Android CI gates. The previous tests' wall-clock expiry fixture is corrected to use the monotonic deadline; an extra reboot/rearm regression is included. Existing Android runtime/visual checks remain mandatory and unchanged. No production PIN setup or unlock flow is registered.
+
+Not yet ported: CinematicAppLock.kt, native MainActivity/bridge/account recovery integration, server session recovery/auth changes, web security page and CSS, and original native visual capture tests. Preserve current 617/618, current WebView/startup/notifications and online status. Do not ship a partial PIN feature or claim physical-device acceptance based on emulator tests. All old source is recoverable at the historical parent. Stage 1 is a draft candidate, not a deployment.
+
+Stage 2: explicit legacy backup and Android 12+ cloud/device-transfer exclusions for all app storage domains, preserving allowBackup=false. Native instrumentation checks the installed application flag and XML policies. This does not establish physical OEM transfer behavior or enable PIN login; those remain separate acceptance steps.
+
+Stage 2 CI diagnosis: on 2384d250 both API29 and API35 produced OK (12 tests), final instrumentation code -1 and twelve successful test statuses; the wrapper still expected 11. Update the wrapper to require exactly 12 successful statuses, the exact summary and final completion, and reject negative test statuses, including CRLF normalization. Shell syntax and mocked adb positive/negative cases verified locally; real Android CI must be verified on the new SHA. No native production code changed.
+
+Stage 3: verifier now requires the explicit current authenticated account ID on every verification. A mismatched or missing account returns RELOGIN before checking the PIN or mutating the retry budget. All existing native tests adapted, plus account-switch and retry-isolation regression; exact CI wrapper expects 13 tests. The previous b31d049 Android workflow succeeded on API29/35; new code awaits emulator verification. Future session integration must pass the trusted session identity, never owner(ctx). No PIN UI or active unlock behavior yet.

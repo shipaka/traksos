@@ -15,6 +15,7 @@ on:
       - 'scripts/verify-android-618.mjs'
       - 'scripts/verify-brand.mjs'
       - 'scripts/android-pr-runtime-smoke.sh'
+      - 'scripts/android-pin-core-instrumentation.sh'
       - 'scripts/verify-android-screen.py'
       - '.github/workflows/android-pr-check.yml'
   workflow_dispatch:
@@ -74,7 +75,7 @@ jobs:
 
       - name: Build debug APK without release credentials
         working-directory: android
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug assembleDebugAndroidTest
 
       - name: Check bundled pages and installed package metadata
         run: |
@@ -94,6 +95,13 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tracksos-pr-debug-test-apk
+          path: android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           retention-days: 7
           if-no-files-found: error
 
@@ -135,6 +143,10 @@ jobs:
         with:
           name: tracksos-pr-debug-apk
           path: apk
+      - uses: actions/download-artifact@v4
+        with:
+          name: tracksos-pr-debug-test-apk
+          path: apk-test
       # SDK repository downloads sometimes terminate with "Premature EOF" before
       # any emulator is booted. Retry the SDK package install, not the app test.
       - name: Preinstall Android emulator with bounded network retries
@@ -168,7 +180,9 @@ jobs:
           # The later -feature -Vulkan override did not cure API35 and has not
           # produced a confirmed role PNG. Keep ALL runtime screenshot/DOM gates.
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: bash scripts/android-pr-runtime-smoke.sh
+          script: |
+            bash scripts/android-pr-runtime-smoke.sh
+            bash scripts/android-pin-core-instrumentation.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -183,4 +197,5 @@ jobs:
             emulator-ui.xml
             runtime-ready.log
             android-compositor-diagnostics.log
+            pin-core-test.log
           if-no-files-found: warn
