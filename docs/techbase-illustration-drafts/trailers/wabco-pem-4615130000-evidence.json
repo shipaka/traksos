@@ -1,0 +1,55 @@
+{
+  "id": "wabco-pem-4615130000",
+  "status": "source_checked_visual_draft_pending_expert",
+  "source": {
+    "publisher": "ZF/WABCO",
+    "url": "https://www.wabco-customercentre.com/catalog/en/4615130000",
+    "checked": "2026-11-26",
+    "outlineDocumentId": "4615130090____053_dascheck_k10_page-1---notset",
+    "outlineVisuallyVerified": false
+  },
+  "component": {
+    "manufacturer": "WABCO",
+    "article": "4615130000",
+    "nameRu": "Модуль расширения пневматики PEM",
+    "material": "aluminium",
+    "chargingPressureBar": 6.2,
+    "maxOperatingPressureBar": 9.5,
+    "dimensionsMm": [
+      205,
+      152,
+      120
+    ],
+    "massKg": 1.18,
+    "temperatureC": [
+      -40,
+      65
+    ],
+    "gtin": "04057875211754"
+  },
+  "related": [
+    {
+      "article": "4801020630",
+      "name": "Trailer EBS E Premium",
+      "relation": "catalogue association",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/wabco_product-catalogue_en.pdf"
+    },
+    {
+      "article": "4615139202",
+      "nameRu": "Комплект для установки",
+      "relation": "catalogue required kit"
+    }
+  ],
+  "crossReference": {
+    "make": "SCANIA",
+    "article": "2091374",
+    "modelYearVinFitment": "unknown"
+  },
+  "limitations": [
+    "No exact port locations or installation inferred",
+    "No repair instructions",
+    "Do not reuse previous rendering of electronic modulator as PEM: this component is pneumatic",
+    "Visual draft requires manufacturer outline comparison and specialist acceptance",
+    "Not a counted illustration"
+  ]
+}
