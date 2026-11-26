@@ -24,6 +24,8 @@ class HaldexEb4DiagReferenceTest {
         assertTrue(sc.source!!.endsWith("#page=61"))
         val tpms=HaldexEb4DiagReference.lookup("External TPMS")!!
         assertTrue(tpms.condition!!.contains("TPMS 1.0"))
+        assertTrue(tpms.condition!!.contains("настроенного порога"))
+        assertTrue(tpms.condition!!.contains("не доказывает отказ приёмника"))
         assertTrue(tpms.source!!.endsWith("#page=41"))
         assertNull(HaldexEb4DiagReference.lookup("AUX 5 OC"))
         val dock=HaldexEb4DiagReference.lookup("Soft Docking")!!
