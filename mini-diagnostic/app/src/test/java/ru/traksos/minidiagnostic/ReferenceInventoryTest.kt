@@ -9,6 +9,7 @@ class ReferenceInventoryTest {
         assertEquals(827,ReferenceInventory.total())
         assertEquals(listOf(168,125,41,72,73,71,125,52,4,2,3,32,2,27,30),rows.map { it.entries })
         assertEquals(293,rows.take(2).sumOf { it.entries })
+        assertEquals(180,ReferenceInventory.electronicReaderComponentCount())
         assertEquals(534,rows.drop(2).sumOf { it.entries })
         assertEquals(114,ReferenceInventory.provisionalCount())
         assertEquals(198,WabcoElexReference.count)
