@@ -18,6 +18,7 @@ enum class DisplayReferenceEdition(val title:String) {
     HALDEX_EB4_DIAG_EXAMPLE("Haldex EB+ 4.0 · DIAG++ (таблица 2025)"),
     HALDEX_SOFT_DOCKING_GEN3("Haldex EB+ Gen3 · Soft Docking"),
     HALDEX_CAN_HUB("Haldex EB+ CAN Hub · бюллетень 2025"),
+    HALDEX_UABS_INFO2("Haldex U-ABS · Info Centre 2"),
     HALDEX_GEN3_DIAG("Haldex EB+ Gen3 · DIAG+ / Info Centre 2"),
     HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
@@ -58,6 +59,7 @@ object DisplayReferenceLookup {
             val r=HaldexExpandedReference.gen2(s) ?: return null
             return DisplayLookup(r.first,r.second,HaldexExpandedReference.GEN2_SOURCE,true)
         }
+        if(edition==DisplayReferenceEdition.HALDEX_UABS_INFO2) return HaldexUabsReference.lookup(s)
         if(edition==DisplayReferenceEdition.HALDEX_GEN3_DIAG) return HaldexGen3DiagReference.lookup(s)
         if(edition==DisplayReferenceEdition.HALDEX_GEN3_INFO1) {
             val r=LegacyDisplayReference.haldexInfo1(s) ?: return null
