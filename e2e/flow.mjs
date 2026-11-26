@@ -171,8 +171,33 @@ try {
   throw new Error('Admin login did not reach the dashboard: ' + JSON.stringify(diagnostics), { cause: error });
 }
 // Approved admin verification is a protected work section, not the retired homepage tab.
-await a.goto(BASE + '/#/admin/section/verify');
-await a.getByRole('heading', { name: 'Проверка', exact: true }).waitFor();
+// A hash alone does not prove that password login has committed the authenticated
+// workspace. Wait for the real mobile admin shell before changing its route.
+const verifyStatuses = [];
+const collectVerifyStatus = response => {
+  if (new URL(response.url()).pathname === '/api/admin/verification')
+    verifyStatuses.push(response.status());
+};
+a.on('response', collectVerifyStatus);
+try {
+  await a.locator('.app.role-admin .admin-stage').waitFor({ timeout: 15000 });
+  await a.goto(BASE + '/#/admin/section/verify');
+  await a.waitForURL(/#\/admin\/section\/verify$/, { timeout: 15000 });
+  await a.getByRole('region', { name: 'Рабочий раздел: Проверка' }).waitFor();
+  await a.getByRole('heading', { name: 'Проверка', exact: true }).waitFor();
+} catch (error) {
+  const state = await a.evaluate(() => ({
+    hash: location.hash,
+    roleClass: [...(document.querySelector('.app')?.classList ?? [])].filter(x => x.startsWith('role-')),
+    stageVisible: !!document.querySelector('.admin-stage')?.getClientRects().length,
+    stageHeading: document.querySelector('.admin-stage-head h2')?.textContent?.trim() ?? null,
+    loginVisible: !!document.querySelector('input[type=password]')?.getClientRects().length,
+  }));
+  throw new Error('Real admin login/verification navigation failed: ' +
+    JSON.stringify({ ...state, verifyStatuses, pageErrorCount: errors.length }), { cause: error });
+} finally {
+  a.off('response', collectVerifyStatus);
+}
 await a.getByText('Отправил').waitFor();
 for (let i = 0; i < n; i++) {
   await a.getByRole('button', { name: 'Принять' }).first().click();

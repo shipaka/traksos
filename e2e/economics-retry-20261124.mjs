@@ -11,7 +11,7 @@ const apiStub = `
   export function rub(cents) { return Math.round(cents/100).toLocaleString('ru-RU')+' ₽'; }
   export function get(path) {
     const mock=window.__economicsMock;
-    if (!path.startsWith('/api/me/economics?role=') && path!=='/api/me/referral') throw Error('Unexpected API read: '+path);
+    if (!path.startsWith('/api/me/economics?role=') && path!=='/api/me/referral' && path!=='/api/me/referral?invitedPage=1') throw Error('Unexpected API read: '+path);
     mock.paths.push(path);
     return new Promise((resolve,reject)=>mock.pending.push({path,resolve,reject}));
   }
@@ -129,8 +129,9 @@ try{
 
   await page.evaluate(()=>window.__showInvite());
   await page.waitForFunction(()=>window.__economicsMock.pending.length===6);
-  const referral=(code,name)=>({code,balance:10000,expiringSoon:0,
+  const referral=(code,name,total=1,page=0)=>({code,balance:10000,expiringSoon:0,
     rules:{welcome:10000,clientSpendCapPct:10,spendCapPct:10,ttlDays:180,clientSharePct:10,days:180,performerReward:1000,performerJobs:2,serviceReward:1000},
+    invitedTotal:total,invitedPage:page,invitedPageSize:100,
     invited:[{name,who:'client',at:'2026-11-24',earned:1000}],entries:[]});
   await page.evaluate(data=>window.__economicsMock.pending[5].resolve(data),referral('PRIVATE-B','PRIVATE INVITED B'));
   const link=page.getByRole('textbox',{name:'Ваша реферальная ссылка'});
@@ -146,13 +147,21 @@ try{
   await page.getByRole('alert').waitFor();
   await page.getByRole('button',{name:'Повторить загрузку'}).click();
   await page.waitForFunction(()=>window.__economicsMock.pending.length===8);
-  await page.evaluate(data=>window.__economicsMock.pending[7].resolve(data),referral('PRIVATE-C','PRIVATE INVITED C'));
+  await page.evaluate(data=>window.__economicsMock.pending[7].resolve(data),referral('PRIVATE-C','PRIVATE INVITED C',101));
   await link.waitFor();
   if(!(await link.inputValue()).endsWith('PRIVATE-C'))throw Error('Wrong C referral URL after retry');
+  await page.getByText('Кого пригласили · 101').click();
+  await page.getByRole('button',{name:'Следующая'}).click();
+  await page.waitForFunction(()=>window.__economicsMock.pending.length===9);
+  if(await page.evaluate(()=>window.__economicsMock.paths.at(-1))!=='/api/me/referral?invitedPage=1')throw Error('Wrong referral page URL');
+  await page.evaluate(data=>window.__economicsMock.pending[8].resolve(data),referral('PRIVATE-C','PRIVATE INVITED C PAGE TWO',101,1));
+  await page.getByText('Страница 2 · показано 1 из 101. Список обновляется при загрузке.').waitFor();
+  await page.locator('details .sum > span').filter({hasText:'PRIVATE INVITED C PAGE TWO'}).waitFor();
+  if(await page.getByRole('button',{name:'Следующая'}).isEnabled())throw Error('Unexpected next page beyond total');
   await page.evaluate(()=>window.__showGuestFinance());
   await link.waitFor({state:'detached'});
   if(await page.getByRole('region',{name:/Финансовые условия/}).count())throw Error('Guest rendered private finances');
-  if(await page.evaluate(()=>window.__economicsMock.pending.length)!==8)throw Error('Guest triggered private finance request');
+  if(await page.evaluate(()=>window.__economicsMock.pending.length)!==9)throw Error('Guest triggered private finance request');
   if(errors.length)throw Error('Browser runtime errors: '+errors.join('; '));
   console.log('PASS: live EconomicsGuide/Invite private-read retry, late response and account isolation');
 }finally{await browser.close();}
