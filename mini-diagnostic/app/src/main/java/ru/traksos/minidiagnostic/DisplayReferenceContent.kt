@@ -38,6 +38,8 @@ fun DisplayReferenceContent(targetId:String?=null) {
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
             DisplayReferenceEdition.HALDEX_MODAL_MODULAR -> "Например 05, 91 или CF"
             DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE -> "Например S1A continuity"
+            DisplayReferenceEdition.WABCO_E_OEM_EXACT -> "Например 002/05"
+            DisplayReferenceEdition.WABCO_ELEX -> "Например 1552-03 или 2483503"
             DisplayReferenceEdition.WABCO_E_HUMBAUR -> "Например 251/05"
             DisplayReferenceEdition.KNORR_G2_TD2077 -> "Шесть символов, например 002400"
             DisplayReferenceEdition.KNORR_G22_PRESSURE -> "Например 00ED00, 00F300 или 00F500"

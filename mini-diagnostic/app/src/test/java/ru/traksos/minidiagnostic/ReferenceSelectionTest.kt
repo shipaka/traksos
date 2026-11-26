@@ -8,7 +8,7 @@ class ReferenceSelectionTest {
         val documented=CoverageRoadmap.targets.filter { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL }.map { it.id }.toSet()
         assertEquals(documented,ReferenceSelection.targetIds)
         assertEquals(12,documented.size)
-        assertEquals(listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR),ReferenceSelection.forTarget("zf-tebs-e"))
+        assertEquals(listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR,DisplayReferenceEdition.WABCO_E_OEM_EXACT),ReferenceSelection.forTarget("zf-tebs-e"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_GEN2_INFO1),ReferenceSelection.forTarget("haldex-eb2"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_GEN3_INFO1,DisplayReferenceEdition.HALDEX_GEN3_DIAG),ReferenceSelection.forTarget("haldex-eb3"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE),ReferenceSelection.forTarget("haldex-eb4"))
@@ -17,6 +17,7 @@ class ReferenceSelectionTest {
             assertTrue(ReferenceSelection.forTarget(id).isEmpty())
     }
     @Test fun generalTesterNotImplicitlyAssigned() {
+        assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.WABCO_ELEX in ReferenceSelection.forTarget(it.id) })
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.WABCO_COMPACT_TESTER in ReferenceSelection.forTarget(it.id) })
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.KNORR_G2_EXAMPLE in ReferenceSelection.forTarget(it.id) })
         assertTrue(CoverageRoadmap.targets.none { DisplayReferenceEdition.KNORR_G2_TD2077 in ReferenceSelection.forTarget(it.id) })

@@ -4,6 +4,8 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_D("WABCO TEBS D · памятка водителя"),
     WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
     WABCO_E("WABCO TEBS E · памятка водителя"),
+    WABCO_E_OEM_EXACT("WABCO TEBS E · подтверждённый пример 002/05"),
+    WABCO_ELEX("WABCO ELEX · отдельный модуль расширения"),
     WABCO_E_HUMBAUR("WABCO TEBS E · пример Humbaur"),
     WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
@@ -24,6 +26,8 @@ object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.WABCO_E_OEM_EXACT) return WabcoEExactReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_E_HUMBAUR) return ModernDisplayExamples.wabcoE(s)
         if(edition==DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE) return ModernDisplayExamples.haldex4(s)
         if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
