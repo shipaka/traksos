@@ -1,0 +1,110 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "scope": "Fifth Generation Freightliner Cascadia, DD15 Gen5 and applicable Detroit component families; US model specification",
+  "review_date": "2026-11-26",
+  "sources": {
+    "dd15": "https://www.demanddetroit.com/engines/DD15",
+    "spec": "https://www.freightliner.com/trucks/cascadia/specifications/",
+    "idp": "https://www.demanddetroit.com/idp/",
+    "dt12": "https://www.demanddetroit.com/transmission/dt12-on-highway",
+    "safety": "https://www.freightliner.com/blog-and-newsletters/truck-total-cost-of-ownership-tco-guide-freightliner/",
+    "vehicle": "https://www.freightliner.com/trucks/cascadia/"
+  },
+  "source_method": "Official HTML opened and inspected in this run; no PDF or installation photo used.",
+  "assets": [
+    {
+      "file": "cascadia5-dd15-simple-turbo.svg",
+      "sources": [
+        "dd15"
+      ],
+      "fact": "Simple geometry and ball-bearing turbo; generic bearing symbol, not actual geometry",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-dd15-swirl.svg",
+      "sources": [
+        "dd15"
+      ],
+      "fact": "Swirl piston combustion principle; generic bowl and swirl arrows",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-dd15-thermocoasting.svg",
+      "sources": [
+        "dd15"
+      ],
+      "fact": "Reduces cooling of ATS while coasting; mechanism unspecified",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-idp-network.svg",
+      "sources": [
+        "idp",
+        "spec"
+      ],
+      "fact": "Integrated mechanical powertrain and electronic data exchange; not wiring",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-dt12-air-actuation.svg",
+      "sources": [
+        "dt12"
+      ],
+      "fact": "Computer controlled air actuation of clutch and shifts",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-dt12-ipm.svg",
+      "sources": [
+        "dt12",
+        "idp"
+      ],
+      "fact": "Mapping/GPS based shift, coast, acceleration optimization",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-alm2.svg",
+      "sources": [
+        "idp"
+      ],
+      "fact": "Tandem family oil level regulation at ring gear; not physical layout",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-assurance-aba6.svg",
+      "sources": [
+        "safety",
+        "spec"
+      ],
+      "fact": "Five radars, 4 short/1 long, camera; optional Active Lane Assist 2",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-brake-control.svg",
+      "sources": [
+        "vehicle",
+        "spec"
+      ],
+      "fact": "Electronic service braking with pneumatic backup; not a plumbing diagram",
+      "review": "pending"
+    },
+    {
+      "file": "cascadia5-parked-hvac.svg",
+      "sources": [
+        "vehicle"
+      ],
+      "fact": "Auxiliary battery and thermostat; optional/configuration dependent",
+      "review": "pending"
+    }
+  ],
+  "limitations": [
+    "Gen6 availability January 2027 per OEM spec; excluded from this batch. Vehicle generation and engine generation are distinct.",
+    "No OEM physical installation, VIN, exact routing, wiring, pinouts or service procedure verified.",
+    "Diagrams use original generic component shapes and conceptual links. No independent technical or rendered visual acceptance. Keep draft.",
+    "ALM2 family evidence not universal rear axle fitment. Parked HVAC and integrated powertrain configuration dependent."
+  ],
+  "checks": [
+    "10 SVGs fetched, opening/closing tags, draft disclaimer and label text inspected."
+  ],
+  "accepted_count": 0
+}
