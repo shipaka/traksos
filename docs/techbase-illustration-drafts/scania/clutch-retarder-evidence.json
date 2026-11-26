@@ -1,0 +1,162 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-r-clutch-retarder",
+  "language": "ru",
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "publication_allowed": false,
+  "checked_on": "2026-11-26",
+  "cards": [
+    {
+      "article": "2550304",
+      "name": "Усилитель сцепления",
+      "kongsberg": "1000178631AM",
+      "scania_crossrefs": [
+        "1784480",
+        "1927825"
+      ],
+      "stroke_in": "3 11/32",
+      "catalogue_connections": [
+        "11: M16x1.5",
+        "1-4: M14x1.5"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/1000178631am/clutch-servo/2550304/",
+      "manufacturer": "Cojali",
+      "application": "TRUCK SCANIA P,G,R,T model R",
+      "fitment": "catalogue_family_only",
+      "gearbox_code": null,
+      "vin": null,
+      "location": null
+    },
+    {
+      "article": "2550905",
+      "name": "Усилитель сцепления, другое исполнение",
+      "kongsberg": "629683AM",
+      "scania_crossrefs": [
+        "1913717",
+        "1469161",
+        "1513717",
+        "1454590"
+      ],
+      "stroke_mm": 28,
+      "catalogue_connections": [
+        "1: M16x1.5 + Ø8x1 adapter",
+        "2: M16x1.5 + M14x1.5 adapter"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/629683am/clutch-servo/2550905/",
+      "manufacturer": "Cojali",
+      "application": "TRUCK SCANIA P,G,R,T model R",
+      "fitment": "catalogue_family_only",
+      "gearbox_code": null,
+      "vin": null,
+      "location": null
+    },
+    {
+      "article": "2556024",
+      "name": "Главный цилиндр сцепления",
+      "scania_crossrefs": [
+        "1754943",
+        "1506121",
+        "1545626"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/1754943/master-cylinder/2556024/",
+      "manufacturer": "Cojali",
+      "application": "TRUCK SCANIA P,G,R,T model R",
+      "fitment": "catalogue_family_only",
+      "gearbox_code": null,
+      "vin": null,
+      "location": null
+    }
+  ],
+  "held": [
+    {
+      "article": "2550307",
+      "scania_crossrefs": [
+        "1523399"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/627946am/clutch-servo/2550307/",
+      "reason": "only explicit G truck model row; no R row"
+    },
+    {
+      "article": "2550206",
+      "scania_crossrefs": [
+        "2555088"
+      ],
+      "url": "https://www.cojaliparts.com/en/reference/1000785679am/servoembrague/2550206/",
+      "reason": "brand-only truck row"
+    }
+  ],
+  "retarder": {
+    "sources": [
+      {
+        "url": "https://www.scania.com/content/dam/scanianoe/market/fr/products-and-services/trucks/retarder.pdf",
+        "edition": "04/2017",
+        "page": 2,
+        "screenshot_checked": true
+      },
+      {
+        "url": "https://www.scania.com/uk/en/home/products/trucks/r-series/r-series-specifications.html"
+      },
+      {
+        "url": "https://www.scania.com/uk/en/home/products/trucks/v8/v8-specifications.html",
+        "note": "platform-era context; not universal current compatibility"
+      }
+    ],
+    "variants": [
+      {
+        "code": "R3500",
+        "brake_torque_nm": 3500,
+        "scope": "2017 brochure long haul"
+      },
+      {
+        "code": "R4100",
+        "brake_torque_nm": 4100,
+        "scope": "2017 brochure heavy duty and off-road"
+      },
+      {
+        "code": "R4100D",
+        "scope": "2017 brochure long haul, disengageable",
+        "brake_torque_nm": null
+      },
+      {
+        "code": "R4700D",
+        "brake_torque_nm": 4700,
+        "scope": "G33CM example in official V8 page, disengages when unused; no exhaustive application inference"
+      }
+    ],
+    "warning": "Тормозной момент ретардера не является входным моментом КПП. Ретардер — дополнительный замедлитель; не заменяет рабочие тормоза. Не переносить интервалы обслуживания, масло и подключения между моделями."
+  },
+  "clutch_comparison": {
+    "manual": [
+      "педаль",
+      "главный цилиндр",
+      "гидравлическое управление усилителем",
+      "механизм выключения сцепления"
+    ],
+    "automated": [
+      "электронное управление",
+      "исполнительный механизм (вариант неизвестен)",
+      "механизм выключения сцепления"
+    ],
+    "warning": "Концептуальные функциональные цепочки, не утверждение что все три детали установлены совместно. Не присваивать ручные цилиндры новой платформе Opticruise G без OEM."
+  },
+  "diagnostic_context": [
+    {
+      "symptom": "Неполное выключение сцепления или затруднённое переключение",
+      "note": "Уточнить код КПП, привод и ошибки; не считать причиной конкретный усилитель без диагностики."
+    },
+    {
+      "symptom": "Неэффективный ретардер или температурное предупреждение",
+      "note": "Следовать предупреждениям автомобиля, использовать безопасные способы остановки и OEM-диагностику. Не отключать защиту."
+    }
+  ],
+  "visual": "clutch-actuation-comparison.svg",
+  "gates": {
+    "catalogue_rows": "checked",
+    "retarder_brochure_visual": "checked",
+    "geometry": "not established",
+    "pinout": "unknown",
+    "vin": "unknown",
+    "expert_review": "pending",
+    "runtime_import": "not performed"
+  }
+}
