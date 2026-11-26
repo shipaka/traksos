@@ -3,8 +3,9 @@ package ru.traksos.minidiagnostic
 // Explicit family-to-display-edition associations. No implicit cross-generation fallback.
 object ReferenceSelection {
     private val associations=mapOf(
-        "zf-tebs-d" to listOf(DisplayReferenceEdition.WABCO_D,DisplayReferenceEdition.WABCO_D_SYSTEM),
-        "zf-tebs-e" to listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR,DisplayReferenceEdition.WABCO_E_OEM_EXACT),
+        "zf-tebs-d" to listOf(DisplayReferenceEdition.WABCO_D,DisplayReferenceEdition.WABCO_D_SYSTEM,DisplayReferenceEdition.WABCO_D_READER),
+        "zf-tebs-e" to listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM,DisplayReferenceEdition.WABCO_E_HUMBAUR,DisplayReferenceEdition.WABCO_E_OEM_EXACT,DisplayReferenceEdition.WABCO_E_READER),
+        "zf-vcs-ii" to listOf(DisplayReferenceEdition.WABCO_VCS2_READER),
         "kb-g22" to listOf(DisplayReferenceEdition.KNORR_G22_PRESSURE),
         "kb-tebs4" to listOf(DisplayReferenceEdition.KNORR_TEBS4),
         "haldex-uabs" to listOf(DisplayReferenceEdition.HALDEX_UABS_INFO2),
