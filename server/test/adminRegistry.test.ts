@@ -22,6 +22,40 @@ test('CRM registry: real roles, regional source, combined filters, export and au
     ok(await t.api('PUT','/api/base',
       {name:'Рембаза Центр',address:'Санкт-Петербург, Софийская улица, 8'},base.token));
 
+    // The center's tax identifier is not necessarily the owner's or the
+    // mobile performer's identifier. Search the authoritative center column.
+    const centerInn='7812345678';
+    await t.db.query('update service_centers set inn=$1 where owner_id=$2',[centerInn,base.id]);
+    await t.db.query('update users set company_inn=null where id=$1',[base.id]);
+    await t.db.query('update performer_profiles set inn=null where user_id=$1',[base.id]);
+
+    const centerFilter={q:centerInn,role:'service',region:'spb'};
+    const centerQuery=new URLSearchParams(centerFilter).toString();
+    const centerMatches=ok(await t.api('GET','/api/admin/registry?'+centerQuery,undefined,admin.token));
+    assert.equal(centerMatches.total,1);
+    assert.equal(centerMatches.items.length,1);
+    assert.equal(centerMatches.items[0].id,base.id);
+    assert.equal(centerMatches.items[0].center_inn,centerInn);
+    const centerExport=ok(await t.api('POST','/api/admin/registry/export',centerFilter,admin.token));
+    assert.equal(centerExport.count,1);
+    assert.equal(centerExport.total,1);
+    assert.equal(centerExport.truncated,false);
+    assert.ok(centerExport.csv.includes(centerInn));
+    assert.ok(centerExport.csv.includes('Рембаза Центр'));
+    assert.ok(!centerExport.csv.includes('Тестовая логистика'));
+    for(const filter of [{...centerFilter,role:'client'},{...centerFilter,region:'lo'}]){
+      const result=ok(await t.api('GET','/api/admin/registry?'+new URLSearchParams(filter),undefined,admin.token));
+      assert.equal(result.total,0);
+      assert.equal(result.items.length,0);
+      const exported=ok(await t.api('POST','/api/admin/registry/export',filter,admin.token));
+      assert.equal(exported.count,0);
+      assert.ok(!exported.csv.includes(centerInn));
+    }
+    for(const token of [master.token,stranger.token]){
+      assert.equal((await t.api('GET','/api/admin/registry?'+centerQuery,undefined,token)).status,403);
+      assert.equal((await t.api('POST','/api/admin/registry/export',centerFilter,token)).status,403);
+    }
+
     // Also include partner roles without a performer profile.
     await t.db.query(
       "insert into users(phone,name,roles) values($1,$2,$3::text[]),($4,$5,$6::text[])",

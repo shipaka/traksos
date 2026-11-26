@@ -14,6 +14,8 @@ export interface FeeExample {
 export interface FinanceGuide {
   role:FinanceRole; title:string; cap:number; paragraphs: {title:string;text:string}[];
   examples:FeeExample[];
+  /** UI-only reading guidance; not part of the versioned contractual annex. */
+  referralHistoryNote:string;
   rules:{clientSharePct:number;referralDays:number;welcome:number;clientSpendCapPct:number;spendCapPct:number;performerReward:number;performerJobs:number;serviceReward:number;ttlDays:number};
 }
 const show=(k:number)=>new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:2}).format(k/100);
@@ -22,6 +24,7 @@ export const FINANCE_EDITION='traksos-economics-v1';
 export function financeGuide(s:Settings,role:FinanceRole):FinanceGuide {
   const f=s.fees, r=s.referral;
   const base={role,title:'Как считаются деньги',cap:PER_SIDE_FEE_CAP,
+    referralHistoryNote:'В личном разделе приглашений счётчик отражает общее количество; до 100 записей на странице. Новые регистрации могут сдвигать страницы. История баллов показывает последние 50 операций. Количество и роли приглашённых не гарантируют начисление.',
     rules:{clientSharePct:r.clientSharePct,referralDays:r.days,welcome:r.welcome,
       clientSpendCapPct:r.clientSpendCapPct,spendCapPct:r.spendCapPct,
       performerReward:r.performerReward,performerJobs:r.performerJobs,
