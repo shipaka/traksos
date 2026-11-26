@@ -1,0 +1,144 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "manufacturer": "ZF / WABCO",
+  "system": "iEBS",
+  "variants": [
+    "Basic Steel",
+    "Basic Air",
+    "Standard",
+    "Premium"
+  ],
+  "source": {
+    "url": "https://aftermarket.zf.com/en/aftermarket-portal/knowledge-hub/iebs-trailer-modulator/",
+    "section": "Variants / Main functions",
+    "accessed": "2026-11-26",
+    "type": "manufacturer HTML"
+  },
+  "illustrations": [
+    {
+      "file": "iebs-abs-channel-matrix.svg",
+      "title": "ABS: датчики и каналы управления",
+      "claims": [
+        [
+          "Basic Steel",
+          "4S / 2M"
+        ],
+        [
+          "Basic Air",
+          "2S / 2M"
+        ],
+        [
+          "Standard",
+          "4S / 2M"
+        ],
+        [
+          "Premium",
+          "4S / 3M"
+        ]
+      ],
+      "limitations": "Количество каналов по сравнительной таблице ZF; не схема разводки."
+    },
+    {
+      "file": "iebs-lift-axle-control-matrix.svg",
+      "title": "Управление подъёмными осями",
+      "claims": [
+        [
+          "Basic Steel",
+          "Не указано"
+        ],
+        [
+          "Basic Air",
+          "1 независимый канал"
+        ],
+        [
+          "Standard",
+          "2 независимых канала"
+        ],
+        [
+          "Premium",
+          "3 независимых канала"
+        ]
+      ],
+      "limitations": "Число доступных независимых функций не определяет фактическое число осей."
+    },
+    {
+      "file": "iebs-height-control-matrix.svg",
+      "title": "Управление уровнем подвески",
+      "claims": [
+        [
+          "Basic Steel",
+          "Не указано"
+        ],
+        [
+          "Basic Air",
+          "Обычный Return-to-Ride"
+        ],
+        [
+          "Standard",
+          "OptiLevel: 1 точка"
+        ],
+        [
+          "Premium",
+          "OptiLevel: 2 точки"
+        ]
+      ],
+      "limitations": "Для Standard и Premium также предусмотрен обычный и электронный Return-to-Ride."
+    },
+    {
+      "file": "iebs-tyre-monitoring-matrix.svg",
+      "title": "Контроль давления шин OptiTire",
+      "claims": [
+        [
+          "Basic Steel",
+          "Внешний ЭБУ"
+        ],
+        [
+          "Basic Air",
+          "Внешний ЭБУ"
+        ],
+        [
+          "Standard",
+          "Внешний / встроенный*"
+        ],
+        [
+          "Premium",
+          "Внешний / встроенный*"
+        ]
+      ],
+      "limitations": "* Интеграция зависит от конкретной версии и активации; не универсальная комплектация."
+    },
+    {
+      "file": "iebs-premium-option-matrix.svg",
+      "title": "Дополнительные функции iEBS",
+      "claims": [
+        [
+          "Basic Steel",
+          "Функции ниже не указаны"
+        ],
+        [
+          "Basic Air",
+          "Функции ниже не указаны"
+        ],
+        [
+          "Standard",
+          "SafeStart / Tilt Alert / BVA"
+        ],
+        [
+          "Premium",
+          "Также OptiTurn / OptiLoad"
+        ]
+      ],
+      "limitations": "Immobilizer и TailGUARD — опционально у Premium; проверять конкретную комплектацию."
+    }
+  ],
+  "limitations": [
+    "Functional comparison, not a physical location drawing, repair procedure or wiring diagram.",
+    "No VIN or trailer make/model applicability established.",
+    "Blank cells rendered as not listed, not proof of absence.",
+    "Independent technical and visual review pending; not accepted for production."
+  ],
+  "excludedSource": {
+    "url": "https://doc.wabco-auto.com/ProductFiles/anteros/Document/8150100933.pdf",
+    "reason": "TEBS E is a different generation; PDF screenshots failed size limit, not used for these assets."
+  }
+}
