@@ -16,6 +16,16 @@ from PIL import Image, ImageOps
 # Additional sources must be visually reviewed; unavailable images are not replaced with other models.
 # Never reuse a photograph for another generation.
 SOURCES = {
+    # Additional model photographs reviewed against catalog captions and visible markings.
+    "haldex_plc": ("PLC Select 1M AL919338", "https://www.kahgotruckparts.com/web/image/product.template/84508/image_1024?unique=91bce21", "https://www.kahgotruckparts.com/shop/haldex-electronic-control-unit-al919338-84508"),
+    "bendix_tabs6": ("TABS-6 standard 4 port 2S/1M", "https://cdn.shopify.com/s/files/1/1750/0827/products/Screenshot_2023-06-01_at_12.13.14_PM_1024x1024.png?v=1685636019", "https://miamistar.com/products/bendix-ecu-valve-assembly-std-4-port-2s-1m-axle-only-abs-modulator-valve"),
+    "kb_kb4ta": ("KB4TA ABS ECU K004236 / K004246", "https://d1mv2b9v99cq0i.cloudfront.net/eyJidWNrZXQiOiJ3ZWItbmluamEtaW1hZ2VzIiwia2V5IjoibW9kdHJhbnNuelwvaW1hZ2VzXC9wcm9kaW1nXC8yMjM1MF8xLmpwZyIsImVkaXRzIjp7InJlc2l6ZSI6eyJ3aWR0aCI6MTIwMCwiaGVpZ2h0Ijo2MzAsImZpdCI6Imluc2lkZSIsIndpdGhvdXRFbmxhcmdlbWVudCI6dHJ1ZX19LCJ2ZXJzaW9uIjoiMjJjMWNkNjA5NzQ4YjBlZWZlY2Y3YjA0NDg2NGE1MmZmNTEyYWRjOSJ9", "https://www.mtw.co.nz/product/22350-knorr-bremse-kb4ta-abs-ecu"),
+    "kb_kb3ta": ("KB3-TA II33582 ES1215", "https://www.diagtrucks.fr/97-thickbox_default/systeme-abs-kb3ta-knorr-ii33582.jpg", "https://www.diagtrucks.fr/racine/101-systeme-abs-kb3ta-knorr-ii33582.html"),
+    "haldex_modal": ("MODAL 950364081", "https://www.trucksystems.de/media/image/product/16377/lg/haldex-elektronikeinheit-ecu-abs-modul-24v-950364081.jpg", "https://www.trucksystems.de/Haldex-Elektronikeinheit-ECU-ABS-Modul-24V-950364081"),
+    "haldex_modular": ("MODULAR 1+/2/2+ ADR reference example", "https://www.diagtrucks.fr/94-thickbox_default/systeme-abs-modular-1-modular-2-ou-modular-2-adr-haldex.jpg", "https://www.diagtrucks.fr/racine/98-systeme-abs-modular-1-modular-2-ou-modular-2-adr-haldex.html"),
+    "zf_vcs": ("VCS I 4461080300", "https://www.wabco-customercentre.com/catalog/productImage/e6108030_tif.png", "https://www.wabco-customercentre.com/catalog/en/4461080300"),
+    "zf_tcs_ii": ("TCS II 4005001010 2S/1M Basic MSH", "https://trucktotrailerparts.com/cdn/shop/files/s4005001010-genuine-meritor-wabco-r-trailer-abs-ecu-valve-truck-to-trailer-1.jpg?v=1754616947&width=1214", "https://trucktotrailerparts.com/products/s4005001010-genuine-meritor-wabco-trailer-abs-ecu-valve-s400-500-101-0"),
+    "zf_vario_c": ("Vario C 4461050320 label visible", "https://www.lkw-bus-service.de/images/pictures/Wabco%20Steuerger%C3%A4t%204461050320.JPG", "https://www.lkw-bus-service.de/anhaenger-auflieger-steuergeraete-reparatur/abs-vario-c.html"),
     # Official SORL catalog 35503100090 shows KORMEE cast into the cover and
     # SORL identification on the rear label. This is the listed TABS+RSS
     # assembly, not evidence for every KORMEE TEBS generation.
