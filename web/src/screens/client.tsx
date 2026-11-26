@@ -6,6 +6,7 @@ import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import { clientOrderDestination } from '../clientOrderDestination.ts';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
@@ -345,6 +346,7 @@ export function Consult() {
   return <ConsultForAccount key={(me?.id??'guest')+':'+location.hash}/>;
 }
 function ConsultForAccount() {
+  const {mode} = useMe();
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sym = SYMPTOMS.find((p) => p.id === params.get('p'));
   const { busy, run } = useAction();
@@ -377,7 +379,7 @@ function ConsultForAccount() {
       service: 'consult', problem: sym?.id, description: description.trim() || undefined,
       vehicleId: vehicleId || undefined, ...carBody(vehicleId, car), paymentMethod: consultMethod ?? 'online',
     }));
-    if (r) go(`order/${r.order.id}`);
+    if (r) go(clientOrderDestination(r, mode === 'client' && !native.isApp && window.matchMedia('(min-width: 900px)').matches));
   }
 
   return (
@@ -485,6 +487,7 @@ export function NewOrder({service}:{service:string}) {
     service={service}/>;
 }
 function NewOrderForAccount({service}:{service:string}) {
+  const {mode} = useMe();
   const params = new URLSearchParams(location.hash.split('?')[1] ?? '');
   const sos = SYMPTOMS.find((p) => p.id === params.get('sos'));
   const sym = sos ?? SYMPTOMS.find((p) => p.id === params.get('p'));
@@ -642,7 +645,7 @@ function NewOrderForAccount({service}:{service:string}) {
     if (!r) return;
     clearNewOrderDraft();
     if (r.confirmationUrl) location.href = r.confirmationUrl;
-    else go(`order/${r.order.id}`);
+    else go(clientOrderDestination(r, mode === 'client' && !native.isApp && window.matchMedia('(min-width: 900px)').matches));
   }
 
   const [site, setSite] = useState<{ place?: string; pass?: string; meet?: string; state?: string; when?: string; time?: string }>({});

@@ -32,9 +32,25 @@ export function Order({id,initialTab='order'}:{id:string;initialTab?:PerformerOr
 function OrderForSession({id,initialTab,userId}:{
   id:string;initialTab:PerformerOrderTab;userId:string;
 }) {
+  // Retain only a boolean for the last confirmed search state, never order
+  // contents. Foreground recovery must not newly unmount unrelated chat or
+  // performer forms: their draft/reconnect lifecycle is handled separately.
+  const wasSearching=useRef(false);
   const o=usePrivateRead<any>(()=>get(`/api/orders/${id}`),
     'order:'+userId+':'+id,
-    (e:any)=>e.orderId===id&&(e.type==='order'||e.type==='payment'));
+    (e:any)=>(e.type==='connection_restored'&&wasSearching.current)||
+      (e.orderId===id&&(e.type==='order'||e.type==='payment')));
+  useEffect(()=>{
+    if(o.data)wasSearching.current=o.data.status==='searching'&&
+      (o.data.you==='client'||o.data.you==='admin');
+  },[o.data]);
+  useEffect(()=>{
+    const reload=()=>{if(wasSearching.current)void o.reload();};
+    const visible=()=>{if(document.visibilityState==='visible')reload();};
+    window.addEventListener('online',reload);
+    document.addEventListener('visibilitychange',visible);
+    return ()=>{window.removeEventListener('online',reload);document.removeEventListener('visibilitychange',visible);};
+  },[o.reload]);
   const [perfPos, setPerfPos] = useState<{ lat: number; lng: number; at: number } | null>(null);
   useEffect(() => {
     setPerfPos(null); // Never display another order's last GPS position after switching the route.
@@ -57,6 +73,9 @@ function OrderForSession({id,initialTab,userId}:{
   // Private data and drafts still unmount while authorization is rechecked.
   // OrderForSession is keyed by account and order, so this cannot cross either.
   const [chatOpen, setChatOpen] = useState(() => new URLSearchParams(location.hash.split('?')[1] || '').get('chat') === '1');
+  // Preserve only presentation preference when the same order revalidates.
+  const [searchCollapsed, setSearchCollapsed] = useState(false);
+  const [searchMotionEpoch] = useState(() => performance.now());
   useEffect(() => { setPtab(initialTab); }, [id, initialTab]);
   const backTo = mode === 'admin' ? 'admin' : mode === 'performer' ? 'work' : 'orders';
   if (!o.data) return <main className="stack"><Back to={backTo} />
@@ -100,7 +119,8 @@ function OrderForSession({id,initialTab,userId}:{
               completedAt={d.completedAt} isAdmin={false} />
         : <>
       {d.status === 'awaiting_owner' && <OwnerApproval d={d} onDone={o.reload} />}
-      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} />}
+      {d.status === 'searching' && d.you === 'client' && <a className="search-workspace-desk-link" href={'#/?order='+encodeURIComponent(id)}>Открыть поиск на рабочем столе →</a>}
+      {d.status === 'searching' && (d.you === 'client' || d.you === 'admin') && <Search d={d} onChosen={o.reload} collapsed={searchCollapsed} onCollapsedChange={setSearchCollapsed} motionEpoch={searchMotionEpoch} />}
       {d.status === 'searching' && d.actions?.includes('cancel') && !isPerformer && <Cancel id={id} status={d.status} consult={isConsult} onDone={o.reload} />}
       {d.you === 'candidate' && <CandidateView d={d} onDone={o.reload} />}
 

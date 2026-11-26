@@ -1,10 +1,11 @@
 // Живой поиск исполнителя: радар, счётчики, отклики появляются по одному.
 // Один список — разные сортировки: «Рекомендуем / Дешевле / Быстрее / Ближе».
 
-import { useEffect, useRef, useState } from 'react';
-import { get, post, rub, onEvent } from '../api.ts';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { get, post, rub, onEvent, getToken } from '../api.ts';
 import { useAction, useToast } from '../ui.tsx';
 import { RoadsideMap } from './roadsideMap.tsx';
+import './searchWorkspace.css';
 
 const SORTS = [
   { id: 'recommended', name: 'Рекомендуем' },
@@ -13,16 +14,12 @@ const SORTS = [
   { id: 'distance', name: 'Ближе' },
 ] as const;
 
-const PHRASES = [
-  'Ищем свободных мастеров рядом',
-  'Отправили заявку тем, кто знает вашу марку',
-  'Мастера смотрят заявку',
-  'Сравниваем рейтинг и расстояние',
-];
-const CONSULT_PHRASES = ['Ищем мастеров на связи', 'Сначала — тем, кто хорошо знает вашу марку', 'Мастера смотрят заявку'];
-const TOW_PHRASES = ['Ищем эвакуаторы рядом', 'Эвакуаторщики смотрят заявку', 'Считаем подачу: сборы + дорога'];
-
-export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
+type SearchProps = { d: any; onChosen: () => void; collapsed?: boolean; onCollapsedChange?: (value: boolean) => void; motionEpoch?: number };
+export function Search(props: SearchProps) {
+  const token = getToken();
+  return <SearchForSession key={JSON.stringify([props.d.id,token])} {...props} sessionToken={token} />;
+}
+function SearchForSession({ d, onChosen, collapsed: controlledCollapsed, onCollapsedChange, motionEpoch, sessionToken }: SearchProps & { sessionToken: string | null }) {
   const toast = useToast();
   const { busy, run } = useAction();
   // Приоритет из формы вызова: «Ближе / Дешевле / Быстрее» — сразу сортирует отклики
@@ -35,25 +32,44 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
   const key = d.id + ':' + sort;
   const [response, setResponse] = useState<{key: string; value: any} | null>(null);
   const [requestError, setRequestError] = useState<{key: string; message: string} | null>(null);
-  const seen = useRef(new Set<string>());
+  const panelId = useId();
+  const [localMotionEpoch] = useState(() => performance.now());
+  const [collapsedOrder, setCollapsedOrder] = useState<string | null>(null);
+  const collapsed = controlledCollapsed ?? collapsedOrder === d.id;
+  const setCollapsed = (value: boolean) => {
+    if (onCollapsedChange) onCollapsedChange(value);
+    else setCollapsedOrder(value ? d.id : null);
+  };
   const choosingRef = useRef(false);
+  const alive = useRef(false);
+  useLayoutEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const currentSession = () => alive.current && getToken() === sessionToken;
   const refreshRef = useRef<() => void>(() => {});
+  const requestPending = useRef(true);
+  const [verifying, setVerifying] = useState(true);
   const data = response?.key === key ? response.value : null;
   const loadError = requestError?.key === key ? requestError.message : null;
-  useEffect(() => { seen.current.clear(); choosingRef.current = false; }, [d.id]);
   useEffect(() => {
     let active = true;
     let generation = 0;
-    const load = () => {
+    const load = (discard = false) => {
+      if (!currentSession()) return;
       const current = ++generation;
+      requestPending.current = true;
+      setVerifying(true);
+      if (discard) { setResponse(null); setRequestError(null); }
       void get('/api/orders/' + d.id + '/offers?sort=' + sort)
         .then(value => {
-          if (!active || current !== generation) return;
+          if (!active || current !== generation || !currentSession()) return;
+          requestPending.current = false;
+          setVerifying(false);
           setResponse({key, value});
           setRequestError(null);
         })
         .catch(e => {
-          if (!active || current !== generation) return;
+          if (!active || current !== generation || !currentSession()) return;
+          requestPending.current = false;
+          setVerifying(false);
           // An unsuccessful refresh is NOT evidence that earlier offers are
           // still available. Hide the obsolete cards until a genuine 200.
           setResponse(null);
@@ -62,14 +78,21 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
     };
     refreshRef.current = load;
     load();
+    const recover = () => load(true);
+    const visible = () => { if (document.visibilityState === 'visible') recover(); };
     const stop = onEvent(e => {
-      if (e.orderId === d.id && e.type === 'order') load();
+      if (e.type === 'connection_restored') recover();
+      else if (String(e.orderId) === String(d.id) && e.type === 'order') load();
     });
-    const interval = window.setInterval(load, 10_000);
+    window.addEventListener('online', recover);
+    document.addEventListener('visibilitychange', visible);
+    const interval = window.setInterval(() => load(), 10_000);
     return () => {
       active = false;
       generation++;
       stop();
+      window.removeEventListener('online', recover);
+      document.removeEventListener('visibilitychange', visible);
       window.clearInterval(interval);
       if (refreshRef.current === load) refreshRef.current = () => {};
     };
@@ -77,49 +100,74 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
 
   const offers: any[] = data?.offers ?? [];
   const isTow = d.service === 'tow';
-  const phrases = isTow ? TOW_PHRASES : d.service === 'consult' ? CONSULT_PHRASES : PHRASES;
-  const phrase = usePhrase(phrases, !!loadError || offers.length > 0);
-  const left = useLeft(d.autoPick ? d.auctionUntil : null);
+  const phrase = isTow ? 'Ищем эвакуатор' : d.service === 'consult' ? 'Ищем мастера для консультации' : 'Ищем исполнителя';
+  const autoPick = data?.autoPick ?? d.autoPick;
+  const deadline = autoPick ? (data ? data.until ?? null : d.auctionUntil ?? null) : null;
+  const left = useLeft(deadline);
+  const offerCount = offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : null;
+  const statusText = loadError ? 'Не удалось обновить поиск' : offerCount ?? (!data ? 'Загружаем предложения…' : phrase);
   const lim = data?.limits ?? d.limits;
 
   async function choose(id: string) {
-    if (choosingRef.current || busy || loadError || !offers.some(offer => offer.id === id)) return;
+    if (!currentSession() || choosingRef.current || busy || requestPending.current || loadError || !offers.some(offer => offer.id === id)) return;
     choosingRef.current = true;
     try {
-      const r = await run(() => post(`/api/orders/${d.id}/offers/${id}/choose`));
+      const r = await run(async () => {
+        try {
+          const result = await post(`/api/orders/${d.id}/offers/${id}/choose`);
+          return currentSession() ? result : undefined;
+        } catch (error) {
+          if (currentSession()) throw error;
+          return undefined;
+        }
+      }, null);
+      if (!currentSession()) return;
       if (r) { toast('Исполнитель выбран'); onChosen(); }
       else refreshRef.current(); // the offer could have expired remotely
     } finally { choosingRef.current = false; }
   }
 
   return (
-    <div className="stack" style={{ gap: 14 }}>
+    <section className="search-workspace stack" aria-label="Поиск исполнителя" style={{ gap: 14 }}>
+      <div className="card search-workspace-head">
+        <div className="stack" style={{gap:4}}>
+          <b>Поиск исполнителя</b>
+          <span className="note" role="status">{statusText}{collapsed && !loadError ? ' · поиск продолжается' : ''}</span>
+        </div>
+        <button type="button" className="btn ghost small search-workspace-toggle"
+          aria-expanded={!collapsed} aria-controls={panelId}
+          onClick={() => setCollapsed(!collapsed)}>
+          {collapsed ? 'Раскрыть поиск' : 'Свернуть поиск'}
+        </button>
+      </div>
+      <div className="search-workspace-content" id={panelId} hidden={collapsed}>
+      <div className="search-workspace-visual stack">
       {d.service !== 'consult' && <RoadsideMap
         point={Number.isFinite(d.lat)&&Number.isFinite(d.lng)?{lat:d.lat,lng:d.lng}:null}
         address={d.address} synthetic={String(d.id).startsWith('demo-')} />}
       <div className="card search-card">
-        <Radar dots={Math.min(d.search?.candidates ?? 0, 8)} hits={offers.length} />
+        <Radar hits={offers.length} epoch={motionEpoch ?? localMotionEpoch} collapsed={collapsed} />
         {loadError && <div className="and19-search-error" role="alert">Не удалось получить свежие отклики. <button type="button" onClick={() => refreshRef.current()}>Повторить</button><small>{loadError}</small></div>}
         <div className="stack" style={{ gap: 4, textAlign: 'center' }}>
-          <b className="search-title">{loadError ? 'Нет подтверждённых актуальных откликов' : offers.length ? `${offers.length} ${plural(offers.length, 'отклик', 'отклика', 'откликов')}` : phrase}</b>
+          <b className="search-title">{statusText}</b>
           <span className="note">
             {loadError ? 'Повторите загрузку, чтобы увидеть актуальные предложения.'
               : offers.length
-              ? (d.autoPick && left != null ? `Выберите сами — или через ${mmss(left)} назначим лучшего` : 'Выберите исполнителя — остальным сообщим сами')
-              : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Звоним ближайшим'}
+              ? (autoPick && left != null ? (left > 0 ? `Время выбора: ${mmss(left)} · затем система проверит возможность назначения` : 'Время выбора истекло · ожидаем результат от сервера') : 'Выберите подходящего исполнителя')
+              : d.search?.candidates ? `Заявку видят ${d.search.candidates} ${plural(d.search.candidates, d.service === 'tow' ? 'эвакуаторщик' : 'мастер', d.service === 'tow' ? 'эвакуаторщика' : 'мастера', d.service === 'tow' ? 'эвакуаторщиков' : 'мастеров')}${d.service === 'consult' ? ' на связи' : ' рядом'} — ждём, кто откликнется` : 'Ожидаем доступные предложения'}
           </span>
         </div>
-        <span className="note and19-radar-note">Радар — анимация ожидания, не карта перемещения мастеров. Количество откликов обновляется сервером.</span>
+        <span className="note and19-radar-note">Радар — схема поиска, не географические координаты. Светящиеся точки — полученные предложения (до 8 точек).</span>
         {d.searchStage && !loadError && <div className="note" role="status">
           Ищем исполнителей: этап {d.searchStage.wave} из {d.searchStage.waves}.
           Приглашаем только тех, для кого дорожное время подачи подтверждено маршрутизатором
           и не превышает {d.searchStage.maxRoadEtaMinutes} минут с учётом сборов.
           Дальний выезд без отдельного согласия не назначается.
         </div>}
-        {d.autoPick && left != null && data?.until && <Progress until={data.until} />}
         {lim && <div className="sum" style={{ justifyContent: 'center', gap: 6 }}><span>{d.service === 'consult' ? 'Стоимость консультации' : `Обычная цена ${isTow ? 'перевозки' : 'выезда'}`}</span><b>{rub(lim.usual)}</b></div>}
       </div>
-
+      </div>
+      <div className="search-workspace-results stack">
       {offers.length > 0 && (
         <>
           <div className="scroll-x">
@@ -127,10 +175,8 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
           </div>
           <div className="stack">
             {offers.map((o, i) => {
-              const fresh = !seen.current.has(o.id);
-              seen.current.add(o.id);
               return (
-                <div key={o.id} className={`card offer ${fresh ? 'fresh' : ''} ${i === 0 && sort === 'recommended' ? 'best' : ''}`}>
+                <div key={o.id} className={`card offer fresh ${i === 0 && sort === 'recommended' ? 'best' : ''}`}>
                   {i === 0 && sort === 'recommended' && <span className="pill accent" style={{ alignSelf: 'flex-start' }}>Лучший выбор</span>}
                   <div className="between" style={{ alignItems: 'flex-start' }}>
                     <div className="stack" style={{ gap: 2 }}>
@@ -155,67 +201,53 @@ export function Search({ d, onChosen }: { d: any; onChosen: () => void }) {
                   {(o.extras?.weekendPct || o.extras?.nightPct || o.extras?.waitRate) && d.service !== 'consult' ? <span className="note">Наценки мастера: {[o.extras.weekendPct && `выходные +${o.extras.weekendPct}%`, o.extras.nightPct && `ночь +${o.extras.nightPct}%`, o.extras.waitRate && `ожидание ${rub(o.extras.waitRate)}/ч`].filter(Boolean).join(' · ')}</span> : null}
                   {o.extras?.prepay === 'always' && <span className="note" style={{ color: 'var(--warn)' }}>Берёт предоплату за работу</span>}
                   {o.car && d.service !== 'consult' && <span className="note">Приедет на: {o.car.brand}{o.car.color ? `, ${o.car.color}` : ''}</span>}
-                  <button className="btn small" style={{ width: '100%' }} disabled={busy || !!loadError} onClick={() => void choose(o.id)}>Выбрать за {rub(o.price)}</button>
+                  <button className="btn small" style={{ width: '100%' }} disabled={busy || verifying || !!loadError} onClick={() => void choose(o.id)}>Выбрать за {rub(o.price)}</button>
                 </div>
               );
             })}
           </div>
         </>
       )}
-    </div>
+      </div>
+      </div>
+    </section>
   );
 }
 
-/** Радар: расходящиеся круги, точки — исполнители, которые видят заявку; загораются, когда откликнулись */
-function Radar({ dots, hits }: { dots: number; hits: number }) {
-  const pts = Array.from({ length: Math.max(dots, hits) }, (_, i) => {
+/** Abstract indicators of actual returned offers, never GPS positions. */
+function Radar({ hits, epoch, collapsed }: { hits: number; epoch: number; collapsed: boolean }) {
+  const sweep = useRef<HTMLSpanElement>(null);
+  // Restore the clock phase only on mount/reopen, never on a poll/render.
+  // The epoch contains no private data and survives same-order revalidation.
+  useLayoutEffect(() => {
+    if (collapsed || !sweep.current) return;
+    const phase = Math.max(0, performance.now() - epoch) % 8000;
+    sweep.current.style.setProperty('--search-sweep-delay', (-phase / 1000) + 's');
+  }, [epoch, collapsed]);
+  const pts = Array.from({ length: Math.min(hits, 8) }, (_, i) => {
     const a = (i * 137.5 * Math.PI) / 180;
     const r = 28 + ((i * 23) % 44);
-    return { x: 50 + Math.cos(a) * r * 0.55, y: 50 + Math.sin(a) * r * 0.55, on: i < hits, delay: i * 0.35 };
+    return { x: 50 + Math.cos(a) * r * 0.55, y: 50 + Math.sin(a) * r * 0.55 };
   });
   return (
-    <div className="radar" aria-hidden="true">
-      <span className="wave" /><span className="wave w2" /><span className="wave w3" />
-      <span className="sweep" />
-      {pts.map((p, i) => <span key={i} className={`blip ${p.on ? 'on' : ''}`} style={{ left: `${p.x}%`, top: `${p.y}%`, animationDelay: `${p.delay}s` }} />)}
+    <div className="radar search-workspace-radar" aria-hidden="true">
+      <span ref={sweep} className="sweep" />
+      {pts.map((p, i) => <span key={i} className="blip on" style={{ left: `${p.x}%`, top: `${p.y}%` }} />)}
       <span className="core">🚛</span>
     </div>
   );
 }
 
-function Progress({ until }: { until: string }) {
-  const [pct, setPct] = useState(100);
+function useLeft(until: string | null) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const end = new Date(until).getTime();
-    const total = Math.max(1, end - Date.now());
-    const update = () => setPct(Math.max(0, Math.min(100,
-      Number.isFinite(end) ? ((end - Date.now()) / total) * 100 : 0)));
-    update();
-    const t = setInterval(update, 250);
+    if (!until) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(t);
   }, [until]);
-  return <div className="progress"><span style={{ width: `${pct}%` }} /></div>;
-}
-
-function usePhrase(list: readonly string[], stop: boolean) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (stop) return;
-    const t = setInterval(() => setI((x) => (x + 1) % list.length), 2600);
-    return () => clearInterval(t);
-  }, [stop, list]);
-  return list[i];
-}
-
-function useLeft(until: string | null) {
-  const calc = () => (until ? Math.max(0, Math.ceil((new Date(until).getTime() - Date.now()) / 1000)) : null);
-  const [left, setLeft] = useState(calc);
-  useEffect(() => {
-    setLeft(calc());
-    const t = setInterval(() => setLeft(calc()), 500);
-    return () => clearInterval(t);
-  }, [until]); // eslint-disable-line
-  return left;
+  const end = until ? new Date(until).getTime() : NaN;
+  return Number.isFinite(end) ? Math.max(0, Math.ceil((end - now) / 1000)) : null;
 }
 
 export const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;

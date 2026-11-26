@@ -818,7 +818,7 @@ expect(pcSource.includes("export type ApprovedPCRole") &&
 expect(courierPcCss.includes('@media(min-width:900px)') &&
   !courierPcCss.includes('@media(min-width:1000px)'),
   'approved PC courier stylesheet must activate at the 900px router breakpoint; no unstyled 960px truck');
-expect(pcSource.includes("get<any[]>('/api/orders')") &&
+expect(pcSource.includes("usePrivateRead<any[]>(()=>get('/api/orders'),'pc-client-orders:'+accountId") &&
   pcSource.includes("get<any[]>('/api/orders?as=performer')") &&
   pcSource.includes("get<any[]>('/api/performer/auctions')") &&
   pcSource.includes("get<any>('/api/base')") &&
@@ -832,10 +832,14 @@ expect(pcSource.includes("get<any[]>('/api/orders')") &&
   pcSource.includes("import {TrakBotMascot} from '../trakbotMascot.tsx';"),
   'desktop cards, bids, inspections, moderation, map and canonical animated bot use real API/approved assets');
 expect(pcSource.includes("href={'#/order/'+o.id+'?chat=1'}") &&
-  pcSource.includes('owner?get<any>(\'/api/fleet\')') &&
+  pcSource.includes("owner?get('/api/fleet'):Promise.resolve(null),'pc-client-fleet:'+accountId") &&
   pcSource.includes('fleet.data?.cars') &&
   pcSource.includes('dateIso(new Date') &&
-  pcSource.includes("get<any>('/api/orders/'+o.id)") &&
+  pcSource.includes("usePrivateRead<any>(()=>get('/api/orders/'+encodeURIComponent(id))") &&
+  pcSource.includes("'pc-client-case:'+accountId+':'+id") &&
+  pcSource.includes("String(d.id)!==id||d.you!=='client'") &&
+  pcSource.includes('key={selectedId} id={selectedId} accountId={accountId}') &&
+  pcSource.includes('<Tabs active={selectedId}') &&
   pcSource.includes('Math.abs(event.lat)<=90'),
   'drivers and fleet owners have real order detail, order tabs, calendar and safe GPS handling');
 expect(pcSource.includes('geoCenters.length>0') &&
@@ -851,6 +855,14 @@ expect(pcSource.includes('geoCenters.length>0') &&
 // New approved interactive PC contracts. These checks prevent empty placeholders,
 // accidental early completion, and broken main actions from re-entering the repo.
 const pcE2E=await read('e2e/approved-pc-active-work.mjs');
+expect(pcSource.includes("if(d.status==='searching')") &&
+  pcSource.includes('<Search d={d} collapsed={collapsed}') &&
+  pcSource.includes('<RealCase o={d} owner={owner}') &&
+  pcE2E.includes('Dashboard chose wrong offer') &&
+  pcE2E.includes('Selected-order denial exposed another case') &&
+  pcE2E.includes('Driver choice did not select third offer') &&
+  pcE2E.includes('Driver assignment changed selected case'),
+  'desktop search retains authorized selection, real offers and existing assigned-case layout');
 expect(pcSource.includes('function SelectedPerformerCase(') &&
   pcSource.includes("'depart',label:'Выехал'") &&
   pcSource.includes("'arrive',label:'Подтвердить прибытие'") &&

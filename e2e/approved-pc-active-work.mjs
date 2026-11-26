@@ -6,12 +6,22 @@ import { watchPageErrors } from './visual-page-errors.mjs';
  * selected-order card without a real payment or external SMS.
  */
 import {chromium} from 'playwright';
+import {build} from 'esbuild';
 import {mkdir,writeFile} from 'node:fs/promises';
 const BASE=process.env.BASE_URL||'http://127.0.0.1:8080';
 if(!['localhost','127.0.0.1'].includes(new URL(BASE).hostname))throw Error('Local CI ONLY');
 const output='e2e/shots/pc-active-synthetic';
 await mkdir(output,{recursive:true});
 const assert=(ok,msg)=>{if(!ok)throw Error(msg)};
+const routeBundle=await build({entryPoints:['web/src/clientOrderDestination.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {clientOrderDestination}=await import('data:text/javascript;base64,'+Buffer.from(routeBundle.outputFiles[0].text).toString('base64'));
+const created={order:{id:'new-case',status:'searching',you:'client'}};
+assert(clientOrderDestination(created,true)==='?order=new-case','PC client route');
+assert(clientOrderDestination(created,false)==='order/new-case','Mobile/native route');
+for(const status of ['awaiting_owner','awaiting_payment','accepted','no_performer','cancelled'])
+  assert(clientOrderDestination({order:{...created.order,status}},true)==='order/new-case','Full order route for '+status);
+assert(clientOrderDestination({...created,confirmationUrl:'https://payment.invalid'},true)==='order/new-case','Payment route must not open search');
+assert(clientOrderDestination({order:{...created.order,you:'admin'}},true)==='order/new-case','Nonclient actor must not open search');
 
 /** Real CSS contract on actual authenticated PC role screens.
  * Photograph fills the WHOLE banner; the same truck is on the right,
@@ -144,8 +154,36 @@ try{
  const oc=await browser.newContext({viewport:{width:1647,height:927},locale:'ru-RU',serviceWorkers:'block'});
  const op=await oc.newPage();
  const assertOwnerClean=watchPageErrors(op);
- await op.route(url=>url.pathname==='/api/orders',
-   route=>route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'}])));
+ const searchId='synthetic-approved-pc-search';
+ let searchStatus='searching',chosenOffer='',searchAvailable=false,searchDenied=false;
+ const consultId='synthetic-created-consult';
+ let consultCreated=false;
+ const consultOrder={...order,id:consultId,number:'LOCAL-0004',you:'client',service:'consult',status:'searching',vehicleId:truck.id};
+ const secondOrder=()=>({...order,id:searchId,number:'LOCAL-0003',you:'client',status:searchStatus,vehicleId:truck.id,
+   performer:searchStatus==='accepted'?{id:'synthetic-bid-master',name:'Второй мастер CI',rating:4.8}:null});
+ await op.route(url=>url.pathname==='/api/orders',async route=>{
+   if(route.request().method()==='POST'){
+     assert(route.request().postDataJSON().service==='consult','Unexpected synthetic creation');
+     consultCreated=true;
+     return route.fulfill(json({order:consultOrder,confirmationUrl:null}));
+   }
+   return route.fulfill(json([{...order,you:'client',performer_name:'Синтетический мастер',status:'en_route'},
+     ...(searchAvailable?[secondOrder()]:[]),...(consultCreated?[consultOrder]:[])]));
+ });
+ await op.route(url=>url.pathname==='/api/orders/'+consultId,route=>route.fulfill(json(consultOrder)));
+ await op.route(url=>url.pathname==='/api/orders/'+consultId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[]})));
+ await op.route(url=>url.pathname==='/api/orders/'+searchId,route=>searchDenied
+   ?route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({message:'Нет доступа'})})
+   :route.fulfill(json(secondOrder())));
+ await op.route(url=>url.pathname==='/api/orders/'+searchId+'/offers',
+   route=>route.fulfill(json({autoPick:false,offers:[
+     {id:'bid-1',name:'Первый мастер CI',price:100000,diffPct:0,eta_minutes:10},
+     {id:'bid-2',name:'Второй мастер CI',price:120000,diffPct:0,eta_minutes:15}
+   ]})));
+ await op.route(url=>url.pathname==='/api/orders/'+searchId+'/offers/bid-2/choose',async route=>{
+   assert(route.request().method()==='POST','Expected real choice action');
+   chosenOffer='bid-2';searchStatus='accepted';await route.fulfill(json({ok:true}));
+ });
  await op.route(url=>url.pathname==='/api/orders/'+id,
    route=>route.fulfill(json({...order,you:'client',status:'en_route',
      performer:{id:'synthetic-master',name:'Синтетический мастер',rating:4.9,rating_count:12,
@@ -176,6 +214,141 @@ try{
   'Stale or missing GPS incorrectly displayed as live');
  await op.screenshot({path:output+'/owner-active-1647.png',fullPage:false,animations:'disabled'});
  await assertOwnerClean('owner active order');
+ // Open the second order explicitly while another active order exists.
+ searchAvailable=true;
+ await op.goto(BASE+'/#/?order='+searchId,{waitUntil:'domcontentloaded'});
+ const searchCase=op.locator('.approved-pc-search-case');
+ await searchCase.waitFor();
+ await searchCase.getByText('Второй мастер CI',{exact:true}).waitFor();
+ await searchCase.getByRole('button',{name:'Свернуть поиск'}).click();
+ assert(!await searchCase.locator('.search-workspace-content').isVisible(),'Search did not collapse on dashboard');
+ await searchCase.getByRole('button',{name:'Раскрыть поиск'}).click();
+ await op.screenshot({path:output+'/owner-search-1647.png',fullPage:false,animations:'disabled'});
+ // Use the actual center pane width, not monitor width, for the search layout.
+ async function checkSearchGeometry(p,label){
+   const root=p.locator('.approved-pc-search-case .search-workspace');
+   await root.locator('.offer').first().waitFor();
+   const g=await root.evaluate(el=>{
+     const panel=el.querySelector('.search-workspace-content');
+     const radar=el.querySelector('.search-workspace-radar');
+     const box=el.getBoundingClientRect(),r=radar.getBoundingClientRect();
+     const columns=getComputedStyle(panel).gridTemplateColumns.trim().split(/\s+/).length;
+     const outside=[...el.querySelectorAll('.offer,.offer button,.search-workspace-toggle,.search-workspace-radar')].some(n=>{
+       const b=n.getBoundingClientRect();
+       return b.left<box.left-2||b.right>box.right+2;
+     });
+     return {width:box.width,columns,outside,radarWidth:r.width,radarHeight:r.height,
+       dpr:devicePixelRatio,documentWidth:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth};
+   });
+   assert(g.columns===(g.width>=680?2:1),label+' wrong pane-based columns '+JSON.stringify(g));
+   assert(!g.outside&&g.scrollWidth<=g.documentWidth+3,label+' search overflow '+JSON.stringify(g));
+   assert(g.radarWidth>0&&Math.abs(g.radarWidth-g.radarHeight)<2,label+' radar distorted '+JSON.stringify(g));
+   return g;
+ }
+ for(const width of [1280,1440,1920,2560]){
+   await op.setViewportSize({width,height:width>=1920?1080:900});
+   await checkSearchGeometry(op,String(width));
+   await op.screenshot({path:output+'/owner-search-'+width+'.png',fullPage:false,animations:'disabled'});
+ }
+ await op.setViewportSize({width:1647,height:927});
+ const hidpi=await browser.newContext({viewport:{width:1920,height:1080},deviceScaleFactor:2,locale:'ru-RU',serviceWorkers:'block'});
+ try{
+   const hp=await hidpi.newPage();
+   await hp.route(url=>url.pathname==='/api/orders',route=>route.fulfill(json([secondOrder()])));
+   await hp.route(url=>url.pathname==='/api/orders/'+searchId,route=>route.fulfill(json(secondOrder())));
+   await hp.route(url=>url.pathname==='/api/orders/'+searchId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[
+     {id:'bid-1',name:'Первый мастер CI',price:100000,diffPct:0,eta_minutes:10},
+     {id:'bid-2',name:'Второй мастер CI',price:120000,diffPct:0,eta_minutes:15}
+   ]})));
+   await hp.route(url=>url.pathname==='/api/fleet',route=>route.fulfill(json({cars:[truck],pending:[]})));
+   await open(hp,owner.token,owner.mode,'#/?order='+searchId);
+   const g=await checkSearchGeometry(hp,'1920 HiDPI');
+   assert(g.dpr===2,'HiDPI fixture not configured');
+   await hp.screenshot({path:output+'/owner-search-1920-hidpi.png',scale:'device',fullPage:false,animations:'disabled'});
+ }finally{await hidpi.close();}
+
+ await op.evaluate(()=>{
+   const original=Element.prototype.animate;
+   window.__caseReveals=[];
+   Element.prototype.animate=function(frames,options){
+     if(this.matches('.approved-pc-case:not(.approved-pc-search-case)'))window.__caseReveals.push(options?.duration);
+     return original.call(this,frames,options);
+   };
+ });
+ await searchCase.locator('.offer').filter({hasText:'Второй мастер CI'}).getByRole('button',{name:/Выбрать за 1\s?200 ₽/}).click();
+ await op.locator('.approved-pc-case').getByText('Второй мастер CI',{exact:false}).first().waitFor();
+ await searchCase.waitFor({state:'detached'});
+ assert(chosenOffer==='bid-2','Dashboard chose wrong offer');
+ assert(await op.evaluate(()=>window.__caseReveals.filter(x=>x===320).length===1),'Confirmed assignment must reveal the existing card exactly once');
+ assert(await op.locator('.approved-pc-case').getByRole('link',{name:'История автомобиля'}).count()===1,'Existing vehicle history lost after choice');
+ assert(await op.locator('.approved-pc-case').getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+searchId,'Wrong case after assignment');
+ await op.screenshot({path:output+'/owner-search-assigned-1647.png',fullPage:false,animations:'disabled'});
+ // A denied selected order must never silently fall back to the first order.
+ searchDenied=true;
+ await op.reload({waitUntil:'domcontentloaded'});
+ await op.locator('.approved-pc-center').getByText(/Ошибка загрузки данных/).waitFor();
+ assert(await op.locator('.approved-pc-center').getByText('Синтетический мастер',{exact:false}).count()===0,'Selected-order denial exposed another case');
+ searchDenied=false;
+ await assertOwnerClean('owner selected search lifecycle');
+ // Real form submit, synthetic server response. Existing older cases must not win.
+ const consultPricingRoute=url=>url.pathname==='/api/pricing';
+ const consultVehiclesRoute=url=>url.pathname==='/api/vehicles';
+ await op.route(consultPricingRoute,route=>route.fulfill(json({payments:{invoice:true},consult:{price:70000,backDiscount:20000,backHours:48}})));
+ await op.route(consultVehiclesRoute,route=>route.fulfill(json([truck])));
+ await op.goto(BASE+'/#/new/consult',{waitUntil:'domcontentloaded'});
+ const savedVehicle=op.locator('#f-car select').filter({has:op.locator('option[value="'+truck.id+'"]')});
+ try{await savedVehicle.waitFor();}catch(error){await assertOwnerClean('consultation form timeout');throw error;}
+ await savedVehicle.selectOption(truck.id);
+ assert(await savedVehicle.inputValue()===truck.id,'Consultation did not select the saved truck');
+ await op.locator('#f-agree input').check();
+ await op.getByRole('button',{name:/Заказать консультацию/}).click();
+ await op.waitForURL(url=>url.hash==='#/?order='+consultId);
+ await op.locator('.approved-pc-search-case').getByText(/LOCAL-0004/).waitFor();
+ assert(consultCreated,'Consultation form did not create order');
+ assert(await op.locator('.approved-pc-search-case .offer').count()===0,'Empty search invented offers');
+ // The server assigns the consultation while the browser misses its order event.
+ // Reconnection must reread the order itself, not just the empty offer list.
+ consultOrder.status='accepted';
+ consultOrder.performer={id:'synthetic-auto-consult',name:'Назначен сервером CI'};
+ await op.evaluate(()=>window.dispatchEvent(new Event('online')));
+ const recoveredCase=op.locator('.approved-pc-case:not(.approved-pc-search-case)');
+ await recoveredCase.getByText('Назначен сервером CI',{exact:false}).waitFor();
+ assert(await recoveredCase.getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+consultId,'Recovered assignment changed selected order');
+ assert(await op.locator('.approved-pc-search-case').count()===0,'Missed assignment left search open');
+ await assertOwnerClean('owner new consultation search routing and missed assignment recovery');
+ // Independent full order route: recovery is a read, never a client selection.
+ const fullRecoveryId='synthetic-full-order-recovery';
+ const fullRecoveryOrder={...consultOrder,id:fullRecoveryId,number:'LOCAL-RECOVERY',status:'searching',
+   performer:null,actions:[],events:[],createdAt:new Date().toISOString(),
+   paymentMethod:'invoice',money:{callOut:70000,work:0,amount:70000,clientFee:0,discount:0,total:70000}};
+ let fullRecoveryChoices=0,fullRecoveryReads=0;
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId,route=>{fullRecoveryReads++;return route.fulfill(json(fullRecoveryOrder));});
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/offers',route=>route.fulfill(json({autoPick:false,offers:[]})));
+ await op.route(url=>url.pathname.startsWith('/api/orders/'+fullRecoveryId+'/offers/')&&url.pathname.endsWith('/choose'),route=>{
+   fullRecoveryChoices++;return route.fulfill({status:409,contentType:'application/json',body:'{}'});
+ });
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/chat',route=>route.fulfill(json({messages:[],quick:[],participants:[]})));
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/payments',route=>route.fulfill(json([])));
+ await op.route(url=>url.pathname==='/api/orders/'+fullRecoveryId+'/photos',route=>route.fulfill(json([])));
+ await op.goto(BASE+'/#/order/'+fullRecoveryId,{waitUntil:'domcontentloaded'});
+ await op.locator('.search-workspace .search-title').filter({hasText:'Ищем мастера для консультации'}).waitFor();
+ fullRecoveryOrder.status='accepted';
+ fullRecoveryOrder.performer={id:'synthetic-full-recovered-master',name:'Мастер отдельной заявки CI'};
+ await op.evaluate(()=>window.dispatchEvent(new Event('online')));
+ try{await op.locator('.roadside-performer-card').getByText('Мастер отдельной заявки CI',{exact:true}).waitFor();}catch(error){await assertOwnerClean('full order recovery timeout');throw error;}
+ assert(await op.locator('h1').filter({hasText:'LOCAL-RECOVERY'}).count()===1,'Recovered full detail changed order');
+ assert(await op.locator('.search-workspace').count()===0&&fullRecoveryChoices===0,'Recovery must not leave search open or choose automatically');
+ // Once searching ends, the new recovery handler must not remount unrelated
+ // order/chat forms on foreground or online notifications.
+ await op.waitForTimeout(100);
+ const confirmedReads=fullRecoveryReads;
+ await op.evaluate(()=>window.dispatchEvent(new Event('online')));
+ await op.waitForTimeout(350);
+ assert(fullRecoveryReads===confirmedReads,'Nonsearching order was unnecessarily reloaded by search recovery');
+ await assertOwnerClean('full order missed assignment recovery');
+
+ await op.unroute(consultPricingRoute);
+ await op.unroute(consultVehiclesRoute);
  // Shared inner-screen banners must NOT overlay the old separate photo tile
  // on top of the approved full-card photograph, as caught in real screenshots.
  await op.goto(BASE+'/#/garage',{waitUntil:'domcontentloaded'});
@@ -197,6 +370,62 @@ try{
  report.push({role:'owner',status:'PASS',scenarios:['selected order','performer details','safe GPS absence'],
    screenshots:['owner-active-1647.png']});
  await oc.close();
+
+ // A real local QR assignment yields the driver role; only order transport
+ // is intercepted for this independent UI scenario. No external providers.
+ const fleetOwner=await account({phone:'+79990000481',type:'owner',mode:'client'});
+ const vehicle=await post('/api/vehicles',{brand:'DAF',model:'XF',year:2017},fleetOwner.token);
+ const fleetFixture=await get('/api/fleet',fleetOwner.token);
+ const assigned=fleetFixture.cars.find(c=>c.id===vehicle.id);
+ assert(!!assigned?.qrCode,'Synthetic fleet QR missing');
+ // The public account enum uses owner, not the underlying client role.
+ const driver=await account({phone:'+79990000482',type:'owner',mode:'client'});
+ await post('/api/qr/'+encodeURIComponent(assigned.qrCode)+'/join',{},driver.token);
+ const driverMe=await get('/api/me',driver.token);
+ assert(driverMe.roles.includes('driver')&&!!driverMe.owner_id,'Local QR did not produce driver role');
+ const dc=await browser.newContext({viewport:{width:1440,height:900},locale:'ru-RU',serviceWorkers:'block',reducedMotion:'reduce'});
+ try{
+   const dp=await dc.newPage(),assertDriverClean=watchPageErrors(dp);
+   const driverId='synthetic-driver-search';
+   let driverStatus='searching',driverChoice='',offers=[];
+   const driverOrder=()=>({...order,id:driverId,number:'LOCAL-DRIVER',you:'client',status:driverStatus,
+     vehicleId:vehicle.id,vehicle,performer:driverStatus==='accepted'?{id:'driver-bid-3',name:'Третий мастер CI'}:null});
+   await dp.route(url=>url.pathname==='/api/orders',route=>route.fulfill(json([driverOrder()])));
+   await dp.route(url=>url.pathname==='/api/orders/'+driverId,route=>route.fulfill(json(driverOrder())));
+   await dp.route(url=>url.pathname==='/api/orders/'+driverId+'/offers',route=>route.fulfill(json({autoPick:false,offers})));
+   await dp.route(url=>url.pathname==='/api/orders/'+driverId+'/offers/third/choose',async route=>{
+     assert(route.request().method()==='POST','Expected driver choice POST');
+     driverChoice='third';driverStatus='accepted';await route.fulfill(json({ok:true}));
+   });
+   await open(dp,driver.token,driver.mode,'#/?order='+driverId);
+   await assertFullBleedCabinetBanner(dp,'driver');
+   const driverCase=dp.locator('.approved-pc-search-case');
+   await driverCase.locator('.search-title').filter({hasText:'Ищем исполнителя'}).waitFor();
+   assert(await driverCase.locator('.radar .blip').count()===0,'Empty driver search invented offers');
+   assert(await driverCase.locator('.sweep').evaluate(el=>getComputedStyle(el).animationName)==='none','Driver reduced motion ignored');
+   const first={id:'first',name:'Первый мастер CI',price:100000,diffPct:0,eta_minutes:10};
+   offers=[first];
+   await dp.evaluate(()=>window.dispatchEvent(new Event('online')));
+   await driverCase.getByRole('button',{name:/Выбрать за/}).waitFor();
+   assert(await driverCase.locator('.offer').count()===1,'One offer must produce one card');
+   offers=[first,{id:'second',name:'Второй мастер CI',price:120000,diffPct:0,eta_minutes:15},
+     {id:'third',name:'Третий мастер CI',price:140000,diffPct:0,eta_minutes:20}];
+   await dp.evaluate(()=>window.dispatchEvent(new Event('online')));
+   const third=driverCase.locator('.offer').filter({hasText:'Третий мастер CI'});
+   await third.waitFor();
+   assert(await driverCase.locator('.offer').count()===3,'Three real returned offers must produce three cards');
+   await dp.screenshot({path:output+'/driver-search-1440.png',fullPage:false,animations:'disabled'});
+   await third.getByRole('button',{name:/Выбрать за/}).click();
+   await driverCase.waitFor({state:'detached'});
+   const finalCase=dp.locator('.approved-pc-case:not(.approved-pc-search-case)');
+   await finalCase.getByText('Третий мастер CI',{exact:false}).waitFor();
+   assert(driverChoice==='third','Driver choice did not select third offer');
+   assert(await finalCase.getByRole('link',{name:'Открыть заявку и следующий шаг'}).getAttribute('href')==='#/order/'+driverId,'Driver assignment changed selected case');
+   assert(await finalCase.getByRole('link',{name:'Управление автопарком'}).count()===0,'Owner-only action on driver case');
+   await dp.screenshot({path:output+'/driver-search-assigned-1440.png',fullPage:false,animations:'disabled'});
+   await assertDriverClean('driver search and assignment');
+   report.push({role:'driver',status:'PASS',scenarios:['local QR role','0/1/3 offers','third choice','reduced motion','same assigned order'],screenshots:['driver-search-1440.png','driver-search-assigned-1440.png']});
+ }finally{await dc.close();}
 
  // The real mobile browser uses the approved 618-style workspace. Its first
  // viewport must not be consumed by an unsolicited multi-line tutorial.
