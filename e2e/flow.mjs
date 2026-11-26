@@ -123,6 +123,15 @@ async function login(page, phoneNum, how) {
 const c = await api('POST', '/api/auth/code', { phone: '+79990000001' });
 const admin = await api('POST', '/api/auth/verify', { phone: '+79990000001', code: c.devCode, password: 'TrakSOS-Test-2026!' });
 
+// The diagnostic needs the synthetic admin created above, not an empty DB.
+if (process.env.TRAKSOS_VERIFY_ENTRY_PROBE === '1') {
+  if (!admin.token) throw Error('Synthetic administrator bootstrap did not return a session');
+  const { execFileSync } = await import('node:child_process');
+  execFileSync(process.execPath, ['e2e/admin-navigation-ux.mjs', '--verify-entry'], {
+    stdio: 'inherit', env: { ...process.env, BASE_URL: BASE },
+  });
+}
+
 // Мастер
 const m = await mk();
 await login(m, '+79992223344', 'Мастер');
