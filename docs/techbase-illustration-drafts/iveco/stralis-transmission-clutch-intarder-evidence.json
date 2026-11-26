@@ -1,0 +1,499 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis",
+    "target_model": "440S46",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "id": "cojali:2350118",
+      "manufacturer": "Cojali",
+      "article": "2350118",
+      "name": "Усилитель привода сцепления",
+      "system": "clutch",
+      "source": "https://www.cojaliparts.com/en/reference/vg3287/clutch-servo/2350118/",
+      "scope": "explicit_stralis_family_only",
+      "applications": [
+        "IVECO Stralis"
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41035649"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "VG3287"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "K004295"
+        }
+      ],
+      "spec": {
+        "mass_g": 3143
+      },
+      "gearbox_variant": null,
+      "vin_applicability": "unknown",
+      "mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:2350108",
+      "manufacturer": "Cojali",
+      "article": "2350108",
+      "name": "Усилитель привода сцепления",
+      "system": "clutch",
+      "source": "https://www.cojaliparts.com/en/reference/vg3289/clutch-servo/2350108/",
+      "scope": "explicit_stralis_family_only",
+      "applications": [
+        "IVECO Stralis"
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41035647"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "VG3289"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "K004297"
+        }
+      ],
+      "spec": {
+        "mass_oz": 123.11,
+        "stroke_in": "3 5/32",
+        "catalogue_connection_threads": {
+          "11": "M16×1.5",
+          "22": "M12×1.5",
+          "1-4": "M14×1.5"
+        },
+        "fluid_spec_component": "SAE J 1703"
+      },
+      "gearbox_variant": null,
+      "vin_applicability": "unknown",
+      "mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:2350112",
+      "manufacturer": "Cojali",
+      "article": "2350112",
+      "name": "Усилитель привода сцепления",
+      "system": "clutch",
+      "source": "https://www.cojaliparts.com/en/reference/vg3286/clutch-servo/2350112/",
+      "scope": "explicit_stralis_family_only",
+      "applications": [
+        "IVECO Stralis"
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41035648"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802192368"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "VG3286"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "K002173"
+        }
+      ],
+      "spec": {
+        "mass_g": 3143
+      },
+      "gearbox_variant": null,
+      "vin_applicability": "unknown",
+      "mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:2556044",
+      "manufacturer": "Cojali",
+      "article": "2556044",
+      "name": "Главный цилиндр сцепления",
+      "system": "clutch",
+      "source": "https://www.cojaliparts.com/en/reference/k013984/master-cylinder/2556044/",
+      "scope": "explicit_stralis_family_only",
+      "applications": [
+        "IVECO Stralis"
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41285167"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "K013984"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "MC1D"
+        }
+      ],
+      "spec": {
+        "mass_g": 767
+      },
+      "gearbox_variant": null,
+      "vin_applicability": "unknown",
+      "mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:2556042",
+      "manufacturer": "Cojali",
+      "article": "2556042",
+      "name": "Главный цилиндр сцепления",
+      "system": "clutch",
+      "source": "https://www.cojaliparts.com/en/reference/k029301n00/master-cylinder/2556042/",
+      "scope": "explicit_stralis_family_only",
+      "applications": [
+        "IVECO Stralis"
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41285355"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "K029301N00"
+        },
+        {
+          "manufacturer": "Knorr-Bremse",
+          "article": "MC2AKR"
+        }
+      ],
+      "spec": {
+        "mass_g": 1000
+      },
+      "gearbox_variant": null,
+      "vin_applicability": "unknown",
+      "mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "cojali:2556037",
+      "manufacturer": "Cojali",
+      "article": "2556037",
+      "name": "Главный цилиндр сцепления",
+      "system": "clutch",
+      "source": "https://www.cojaliparts.com/en/reference/41211006/master-cylinder/2556037/",
+      "scope": "explicit_stralis_family_only",
+      "applications": [
+        "IVECO Stralis"
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41211006"
+        }
+      ],
+      "spec": {
+        "mass_oz": 35.27
+      },
+      "gearbox_variant": null,
+      "vin_applicability": "unknown",
+      "mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "id": "wabco:421355011R",
+      "manufacturer": "WABCO",
+      "article": "421355011R",
+      "variant": "GS 3.0 Standard",
+      "system": "gearbox",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf",
+      "printed_pages": [
+        6,
+        7
+      ],
+      "scope": "aggregate_family_only_not_stralis_fitment",
+      "cross_references": [
+        {
+          "manufacturer": "WABCO",
+          "article": "4213550110"
+        },
+        {
+          "manufacturer": "ZF",
+          "article": "6009274069"
+        },
+        {
+          "manufacturer": "ZF",
+          "article": "6009074900"
+        }
+      ],
+      "note": "Актуатор в сборе, ЭБУ без ПО",
+      "vin_applicability": "unknown",
+      "publication": "hold",
+      "expert_review": "pending"
+    },
+    {
+      "id": "wabco:421355012R",
+      "manufacturer": "WABCO",
+      "article": "421355012R",
+      "variant": "GS 3.3 Standard",
+      "system": "gearbox",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf",
+      "printed_pages": [
+        6,
+        7
+      ],
+      "scope": "aggregate_family_only_not_stralis_fitment",
+      "cross_references": [
+        {
+          "manufacturer": "WABCO",
+          "article": "4213550120"
+        },
+        {
+          "manufacturer": "ZF",
+          "article": "6009297007"
+        },
+        {
+          "manufacturer": "ZF",
+          "article": "6009097900"
+        }
+      ],
+      "note": "Актуатор в сборе, ЭБУ без ПО",
+      "vin_applicability": "unknown",
+      "publication": "hold",
+      "expert_review": "pending"
+    },
+    {
+      "id": "wabco:421355950R",
+      "manufacturer": "WABCO",
+      "article": "421355950R",
+      "variant": "GS 3.0/3.3 lower part",
+      "system": "gearbox",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf",
+      "printed_pages": [
+        6,
+        7
+      ],
+      "scope": "aggregate_family_only_not_stralis_fitment",
+      "cross_references": [
+        {
+          "manufacturer": "WABCO",
+          "article": "4213559502"
+        },
+        {
+          "manufacturer": "ZF",
+          "article": "6009274088"
+        }
+      ],
+      "note": "Нижняя механическая часть без ЭБУ; набор прокладок 4213559282 отдельно",
+      "vin_applicability": "unknown",
+      "publication": "hold",
+      "expert_review": "pending"
+    }
+  ],
+  "systems": [
+    {
+      "id": "iveco-eurotronic2",
+      "name": "EuroTronic 2",
+      "scope": "diagnostic_family",
+      "bindings": [
+        {
+          "family": "Stralis AS Euro 3",
+          "period": "2001– (каталог)",
+          "source": "https://www.jaltest.com/en/coverage/17/1/2/40/truck/iveco/stralis-as-euro-3/"
+        },
+        {
+          "family": "Stralis AS Euro 4/5/EEV",
+          "period": "2007– (каталог)",
+          "source": "https://www.jaltest.com/en/coverage/17/1/2/974/truck/iveco/stralis-as-euro-45eev/"
+        }
+      ],
+      "oem": {
+        "family": "Stralis Hi-Way 2012",
+        "gears": 12,
+        "source": "https://www.iveco.com/en-us/press-room/kit/documents/new%20stralis%20hi-way/20120701_newstralis_eng%20last.pdf",
+        "printed_page": 16,
+        "screenshot_status": "502; text inspected"
+      },
+      "vin_applicability": "unknown",
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "iveco-hitronix",
+      "name": "Hi-Tronix / TraXon",
+      "scope": "diagnostic_and_launch_family",
+      "bindings": [
+        {
+          "family": "Stralis XP / Hi-Way / Hi-Road / Hi-Street Euro 6",
+          "period": "2016–2020 (каталог)",
+          "source": "https://www.jaltest.com/en/coverage/17/1/2/8294/truck/iveco/stralis-xphi-wayhi-roadhi-street-euro-6/"
+        }
+      ],
+      "oem": {
+        "family": "New Stralis 2016",
+        "gears": 12,
+        "source": "https://www.iveco.com/uk/discover-iveco/press-room/Press-Releases/2016/New-Stralis-the-TCO2-Champion"
+      },
+      "vin_applicability": "unknown",
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "iveco-intarder-est52",
+      "name": "Intarder 3 EST-52",
+      "scope": "diagnostic_family_only",
+      "bindings": [
+        {
+          "family": "Stralis AS Euro 4/5/EEV",
+          "source": "https://www.jaltest.com/en/coverage/17/1/2/974/truck/iveco/stralis-as-euro-45eev/"
+        }
+      ],
+      "note": "Ретардер опционален в ряде исполнений; наличие на конкретном ТС неизвестно.",
+      "vin_applicability": "unknown",
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "iveco-intarder-est54",
+      "name": "Intarder 3 EST-54",
+      "scope": "diagnostic_family_only",
+      "bindings": [
+        {
+          "family": "Stralis XP / Hi-Way / Hi-Road / Hi-Street Euro 6",
+          "source": "https://www.jaltest.com/en/coverage/17/1/2/8294/truck/iveco/stralis-xphi-wayhi-roadhi-street-euro-6/"
+        }
+      ],
+      "note": "Не считать EST-52 и EST-54 взаимозаменяемыми.",
+      "vin_applicability": "unknown",
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "excluded": [
+    {
+      "article": "421355015R",
+      "reason": "GS 3.6 — DAF only",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf"
+    },
+    {
+      "article": "421355022R",
+      "reason": "Автобусный вариант GS 3.0",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf"
+    },
+    {
+      "article": "421355023R",
+      "reason": "Автобусный вариант GS 3.3",
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf"
+    }
+  ],
+  "supporting_sources": [
+    {
+      "source": "https://aftermarket.zf.com/en/aftermarket-portal/for-workshops/useful-tips/clutches/calibrating-conact/",
+      "scope": "general ConAct function only"
+    },
+    {
+      "source": "https://aftermarket.zf.com/pl/portal-aftermarket/co-nowego/oferta-zf-dla-pojazdow-uzytkowych/",
+      "scope": "TraXon generation and ConAct, no exact Iveco article"
+    },
+    {
+      "source": "https://www.wabco-customercentre.com/catalog/docs/8150102663.pdf",
+      "printed_pages": [
+        6,
+        7
+      ],
+      "visual_check": "PDF spread index 3 visually checked; no copied images"
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-eurotronic-vs-hitronix",
+      "nodes": [
+        "двигатель",
+        "сцепление",
+        "КПП",
+        "выходной вал",
+        "кардан",
+        "ведущий мост"
+      ],
+      "purpose": "Два функциональных тракта с блоком управления КПП; не считать их одинаковыми по жгуту и актуаторам."
+    },
+    {
+      "id": "stralis-clutch-servo-variants",
+      "nodes": [
+        "педаль",
+        "главный цилиндр",
+        "гидравлический сигнал",
+        "усилитель",
+        "механизм выключения сцепления"
+      ],
+      "purpose": "Отдельная ветка для педального привода; 6 карточек компонентов, без назначения на автоматизированные КПП и без заводской монтажной схемы."
+    },
+    {
+      "id": "zf-gs-30-33-actuator",
+      "nodes": [
+        "ЭБУ внутри агрегата",
+        "пневматический привод",
+        "выбор ряда",
+        "выбор передачи",
+        "диапазон",
+        "делитель"
+      ],
+      "purpose": "Показать четыре функции Gear/Gate/Range/Split согласно WABCO; GS 3.0 и 3.3 не объединять в один заменяемый узел, нижняя часть отдельно, без программы."
+    },
+    {
+      "id": "zf-conact-functional",
+      "nodes": [
+        "пневматический привод выключения",
+        "первичный вал",
+        "сцепление",
+        "управление"
+      ],
+      "purpose": "Общий принцип концентрического исполнительного цилиндра TraXon, не VIN-схема и не инструкция калибровки."
+    },
+    {
+      "id": "stralis-intarder-est52-est54",
+      "nodes": [
+        "запрос вспомогательного торможения",
+        "управление",
+        "гидродинамический замедлитель",
+        "теплоотвод"
+      ],
+      "purpose": "Два диагностических поколения; не рисовать неподтверждённую схему охлаждения или пины."
+    }
+  ],
+  "diagnostic_boundaries": [
+    "Перед подбором записать тип КПП с таблички, VIN, артикул и ревизию актуатора, идентификаторы ECU и DTC; применять официальную документацию конкретной модификации.",
+    "Не подбирать компоненты по одному модельному семейству, массе, типу соединения или совпадению размера резьбы; жидкость для ТС проверять по OEM.",
+    "После ремонта актуатора и сцепления необходимость и порядок адаптации определять по точной версии КПП и сервисной инструкции. Программирование пустого ECU не описано.",
+    "При неисправности торможения, невозможности надёжно включать передачу или непредсказуемом движении не продолжать эксплуатацию; обеспечить безопасность и профессиональную диагностику."
+  ],
+  "rights": "Самостоятельные описания, отдельные каталожные факты и ссылки. Изображения OEM не скопированы; собственные иллюстрации при публикации под защитой TrakSOS.",
+  "release_gates": [
+    "global dedup",
+    "canonical vehicle mapping",
+    "exact gearbox/VIN",
+    "OEM wiring and mounting",
+    "legal and technical review",
+    "visual creation and review",
+    "runtime integration/CI"
+  ],
+  "verified_illustrations_added": 0
+}
