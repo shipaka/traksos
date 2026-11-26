@@ -39,6 +39,8 @@ object HaldexEb4DiagReference {
     private fun electrical(component:String)=DisplayLookup(component,
         "Электрическая неисправность цепи клапана. Точный вид повреждения не указан; требуется профессиональная проверка тормозной системы.",GUIDE+"#page=26",true)
     private val named=mapOf(
+        "Soft Docking" to DisplayLookup("Система безопасного приближения к рампе",
+            "Общая неисправность EB+ Soft Docking. DIAG++ в редакции руководства 2025 года не раскрывает конкретную причину; необходима отдельная диагностика системы.",GUIDE+"#page=135",true),
         "BRK apply master electric failure" to electrical("Клапан подачи тормозного давления основного модулятора"),
         "EPRV 21 master hold electric failure" to electrical("Клапан удержания давления EPRV 21 основного модулятора"),
         "EPRV 21 master dump electric failure" to electrical("Клапан сброса давления EPRV 21 основного модулятора"),
