@@ -2,6 +2,21 @@ package ru.traksos.minidiagnostic
 import org.junit.Assert.*
 import org.junit.Test
 class HaldexGen3DiagReferenceTest {
+    @Test fun groupedAliasesDoNotInventWheelOrChannel() {
+        assertEquals(17,HaldexGen3DiagReference.aliasCount)
+        assertEquals(4,HaldexGen3DiagReference.count)
+        val wheel=HaldexGen3DiagReference.lookup("Wheel sensor 2A or 2B continuity")!!
+        assertFalse(wheel.exactPair)
+        assertTrue(wheel.component!!.contains("2A или 2B"))
+        assertTrue(wheel.condition!!.contains("не определено"))
+        val valve=HaldexGen3DiagReference.lookup("EPRV 21 or 22 dump solenoid short to B+")!!
+        assertFalse(valve.exactPair)
+        assertTrue(valve.component!!.contains("21 или 22"))
+        assertTrue(valve.source!!.endsWith("#page=110"))
+        assertNull(HaldexGen3DiagReference.lookup("Wheel sensor 3A or 3B continuity"))
+        assertNull(HaldexGen3DiagReference.lookup("EPRV 21 hold solenoid short circuit"))
+        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE,"Wheel sensor 2A or 2B continuity"))
+    }
     @Test fun onlyAdditionalDocumentedLabels() {
         assertEquals(4,HaldexGen3DiagReference.count)
         val labels=listOf("Brake apply solenoid unspecified fault","Excessive reservoir pressure","ECU shutdown FET","External TPMS")
