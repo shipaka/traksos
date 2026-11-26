@@ -6,24 +6,30 @@ data class SmartBoardComponent(val code: String,val titleRu: String,val source: 
 data class SmartBoardFaultType(val code: String,val titleRu: String,val source: String)
 data class SmartBoardMessage(val component: SmartBoardComponent?,val faultType: SmartBoardFaultType?)
 object SmartBoardReference {
-    const val SOURCE = "https://www.manualslib.com/manual/1267144/Wabco-Smartboard.html?page=16"
-    const val SOURCE_TYPES = "https://www.manualslib.com/manual/1267144/Wabco-Smartboard.html?page=18"
+    const val SOURCE = "https://www.wabco-customercentre.com/catalog/docs/8150101383.pdf"
+    const val SOURCE_TYPES = SOURCE+"#page=28"
+    internal fun componentSource(code:String,legacyD:Boolean=false):String = SOURCE+"#page="+when {
+        code in setOf("220","251","253","254") -> 27
+        legacyD || code.toInt()<=93 -> 25
+        code.toInt()<=165 -> 26
+        else -> 27
+    }
     private val shared = ('A'..'F').mapIndexed { i, letter ->
-        SmartBoardComponent("00"+(i+1),"Колёсный датчик "+letter,SOURCE)
+        SmartBoardComponent("00"+(i+1),"Колёсный датчик "+letter,componentSource("00"+(i+1)))
     } + listOf(
-        SmartBoardComponent("009","Модулятор прицепа: цепь управления клапанами",SOURCE),
-        SmartBoardComponent("069","Встроенный датчик осевой нагрузки",SOURCE),
-        SmartBoardComponent("075","Датчик износа тормозных накладок",SOURCE),
-        SmartBoardComponent("077","Внутренний датчик заданного давления",SOURCE),
-        SmartBoardComponent("078","Внешний датчик заданного давления",SOURCE),
-        SmartBoardComponent("088","Датчик бокового ускорения",SOURCE),
-        SmartBoardComponent("220","Связь тягача с прицепом",SOURCE_TYPES),
-        SmartBoardComponent("251","Электропитание",SOURCE_TYPES),
-        SmartBoardComponent("253","Настройки параметров",SOURCE_TYPES),
-        SmartBoardComponent("254","Модулятор прицепа",SOURCE_TYPES)
+        SmartBoardComponent("009","Модулятор прицепа: цепь управления клапанами",componentSource("009")),
+        SmartBoardComponent("069","Встроенный датчик осевой нагрузки",componentSource("069")),
+        SmartBoardComponent("075","Датчик износа тормозных накладок",componentSource("075")),
+        SmartBoardComponent("077","Внутренний датчик заданного давления",componentSource("077")),
+        SmartBoardComponent("078","Внешний датчик заданного давления",componentSource("078")),
+        SmartBoardComponent("088","Датчик бокового ускорения",componentSource("088")),
+        SmartBoardComponent("220","Связь тягача с прицепом",componentSource("220")),
+        SmartBoardComponent("251","Электропитание",componentSource("251")),
+        SmartBoardComponent("253","Настройки параметров",componentSource("253")),
+        SmartBoardComponent("254","Модулятор прицепа",componentSource("254"))
     )
     private fun components(vararg rows: Pair<String,String>) =
-        rows.map { SmartBoardComponent(it.first,it.second,SOURCE) }
+        rows.map { SmartBoardComponent(it.first,it.second,componentSource(it.first)) }
     private val d = (shared + components(
         "007" to "Модулятор прицепа",
         "010" to "Релейный клапан EBS/ABS",

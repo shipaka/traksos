@@ -24,6 +24,11 @@ class WabcoElexReferenceTest {
         val e=DisplayReferenceLookup.find(DisplayReferenceEdition.WABCO_E_OEM_EXACT,"002/05")!!
         assertTrue(e.exactPair)
         assertTrue(e.condition!!.contains("Обрыв"))
+        val a=WabcoEExactReference.lookup("001/07")!!
+        assertFalse(a.exactPair)
+        assertTrue(a.condition!!.contains("возможная причина"))
+        assertTrue(a.source!!.contains("8150101383.pdf#page=25"))
+        assertEquals(2,WabcoEExactReference.count)
         assertNull(WabcoEExactReference.lookup("003/05"))
         assertNull(WabcoEExactReference.lookup("144/01"))
     }

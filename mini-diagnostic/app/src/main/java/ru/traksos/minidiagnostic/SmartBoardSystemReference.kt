@@ -3,7 +3,6 @@ package ru.traksos.minidiagnostic
 // Independent documentation editions, never wire DTC mappings.
 object SmartBoardSystemReference {
     const val SYSTEM_SOURCE="https://www.wabco-customercentre.com/catalog/docs/8150101363.pdf"
-    private const val DRIVER_17="https://www.manualslib.com/manual/1267144/Wabco-Smartboard.html?page=17"
     private val driverD=mapOf(
         "076" to "Нет заданного значения / резервное торможение",
         "084" to "Электрический коммутационный выход",
@@ -22,7 +21,7 @@ object SmartBoardSystemReference {
         "108" to "Разъём GIO 7",
         "109" to "Датчик ABS / бит памяти",
         "110" to "Порт подсистем",
-        "111" to "Кнопка Bounce Control",
+        "111" to "Переключатель снятия напряжений в подвеске",
         "112" to "Переключатель автоматического опускания оси",
         "113" to "SmartBoard",
         "114" to "Питание диагностики",
@@ -63,7 +62,7 @@ object SmartBoardSystemReference {
         "159" to "Переключатель опускания",
         "160" to "Функция растормаживания",
         "163" to "Калибровка нагрузки оси",
-        "165" to "Датчик длины прицепа 1",
+        "165" to "Бесконтактный датчик длины прицепа 1",
         "167" to "Выход блокировки управляемой оси",
         "168" to "Переключатель блокировки управляемой оси",
         "169" to "Неверный PIN иммобилайзера",
@@ -77,7 +76,7 @@ object SmartBoardSystemReference {
         "184" to "CAN следующей системы Router/Repeater",
         "185" to "Переключатель отключения ECAS",
         "186" to "Переключатель нормального уровня 4",
-        "187" to "Переключатель управления погрузчиком",
+        "187" to "Переключатель управления вилочным погрузчиком",
         "188" to "Второй внешний датчик нагрузки C–D",
         "189" to "SafeStart",
         "190" to "Датчик давления SafeStart",
@@ -87,9 +86,9 @@ object SmartBoardSystemReference {
         "194" to "Температура тормозов",
         "195" to "eTASC задней оси",
         "196" to "eTASC передней оси",
-        "197" to "Одиночный блок ECAS 2",
+        "197" to "Моноблок ECAS 2",
         "198" to "Клапан ECAS передней оси",
-        "199" to "Переключатель ограниченного нормального уровня",
+        "199" to "Переключатель ограничения уровня движения",
         "200" to "Индикация ТО GIO",
         "201" to "Общий зуммер",
         "202" to "Общая контрольная лампа",
@@ -125,12 +124,7 @@ object SmartBoardSystemReference {
         "097" to "Настраиваемая функция 1"
     )
     fun driverExtras(d:Boolean):List<SmartBoardComponent> =(if(d) driverD else driverE).map { (code,name)->
-        val page=when {
-            d || code.toInt()<=111 -> SmartBoardReference.SOURCE
-            code.toInt()<=215 -> DRIVER_17
-            else -> SmartBoardReference.SOURCE_TYPES
-        }
-        SmartBoardComponent(code,name,page)
+        SmartBoardComponent(code,name,SmartBoardReference.componentSource(code,d))
     }
     private val oldD=mapOf(
         "220" to "Связь тягач–прицеп",

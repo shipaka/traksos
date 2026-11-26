@@ -4,7 +4,7 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_D("WABCO TEBS D · памятка водителя"),
     WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
     WABCO_E("WABCO TEBS E · памятка водителя"),
-    WABCO_E_OEM_EXACT("WABCO TEBS E · подтверждённый пример 002/05"),
+    WABCO_E_OEM_EXACT("WABCO TEBS E · заводские примеры 002/05 и 001/07"),
     WABCO_CAN_ROUTER("WABCO CAN Router / Repeater · отдельный блок"),
     WABCO_ELEX("WABCO ELEX · отдельный модуль расширения"),
     WABCO_E_HUMBAUR("WABCO TEBS E · пример Humbaur"),
