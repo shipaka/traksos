@@ -1,0 +1,117 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "scope": "Mack Anthem 2024 exhibit configuration versus all-new 2026 platform; family-level component facts not VIN-specific",
+  "sources": {
+    "tmc2024": "https://www.macktrucks.com/mack-news/2024/mack-trucks-features-the-mack-anthem-at-the-american-trucking-associations-technology-maintenance-council",
+    "mp8he": "https://www.macktrucks.com/powertrain/engines/mp8-he",
+    "cleartech": "https://www.macktrucks.com/parts-and-services/parts/mack-parts/exhaust-and-emissions/",
+    "scr": "https://www.macktrucks.com/powertrain-and-suspensions/engines/scr/",
+    "steering": "https://www.macktrucks.com/magazine/articles/2020/may/introducing-mack-command-steer-for-anthem-and-granite",
+    "mp13": "https://www.macktrucks.com/magazine/articles/2025/november/mack-anthem-powertrain-upgrades",
+    "production2026": "https://www.macktrucks.com/mack-news/2026/mack-trucks-begins-production-of-all-new-mack-anthem",
+    "maxride": "https://www.macktrucks.com/powertrain-and-suspensions/suspensions/maxride/maxride"
+  },
+  "source_method": "OEM HTML search/open in this session; no PDF or installation photos used",
+  "assets": [
+    {
+      "file": "anthem-2024-mp8he-energy.svg",
+      "sources": [
+        "tmc2024",
+        "mp8he"
+      ],
+      "fact": "MP8HE family energy recovery; mechanical return to crankshaft",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2024-mp8he-oil-filtration.svg",
+      "sources": [
+        "tmc2024",
+        "mp8he"
+      ],
+      "fact": "Two filters in updated family; no flow order asserted",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2024-mp8he-common-rail.svg",
+      "sources": [
+        "tmc2024",
+        "mp8he"
+      ],
+      "fact": "Direct injection control: pressure, timing, quantity; functional only",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2024-cleartech-one.svg",
+      "sources": [
+        "tmc2024",
+        "cleartech",
+        "scr"
+      ],
+      "fact": "DPF and SCR; conceptual DEF dosing, not internal geometry",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2024-command-steer.svg",
+      "sources": [
+        "tmc2024",
+        "steering"
+      ],
+      "fact": "Electric assistance to hydraulic steering; optional equipment in named sleeper exhibit",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2026-mp13-turbo-variants.svg",
+      "sources": [
+        "mp13",
+        "production2026"
+      ],
+      "fact": "Standard VGT vs HE turbo compound",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2026-mdrive-dynamic-overdrive.svg",
+      "sources": [
+        "mp13",
+        "production2026"
+      ],
+      "fact": "13-speed DOD, three modes; other gearbox variants exist",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2026-maxride-air-springs.svg",
+      "sources": [
+        "maxride"
+      ],
+      "fact": "New-platform suspension family: four or eight air springs; no universal Anthem applicability",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2026-protect-variants.svg",
+      "sources": [
+        "production2026"
+      ],
+      "fact": "Base collision warning, Pro blind spot warning and curtain airbags, Premier lane keeping",
+      "acceptance": "pending"
+    },
+    {
+      "file": "anthem-2026-uptime-connectivity.svg",
+      "sources": [
+        "production2026"
+      ],
+      "fact": "Service grouping, not network topology",
+      "acceptance": "pending"
+    }
+  ],
+  "checks": [
+    "10 SVGs fetched and structure/disclaimer/labels inspected",
+    "Four diagrams subsequently refined and fetched with exact readback"
+  ],
+  "limitations": [
+    "Generic SVG symbols, not photorealistic installation views",
+    "No exact placement, VIN applicability, wiring, routing, repair procedure or internal geometry confirmed",
+    "Family product pages can be revised; 2024 exhibit confirms named options, not all vehicle configurations",
+    "No independent technical or rendered visual review completed",
+    "Do not publish as verified until those checks pass"
+  ],
+  "accepted_count": 0
+}
