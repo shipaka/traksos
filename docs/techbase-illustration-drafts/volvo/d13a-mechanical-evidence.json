@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "engine": "D13A",
+  "vehicle_family_candidate": "Volvo FH/FM",
+  "source": {
+    "title": "Volvo Truck Corporation, Design and function D13A, Service Bulletin 200 281 01, February 2006",
+    "url": "https://www.scribd.com/document/600863296/D13A-D-F-200-281-1-8-06",
+    "access": "HTML text on third-party mirror; figures not inspected or copied",
+    "pages": [
+      5,
+      7,
+      11,
+      12,
+      14,
+      15,
+      16
+    ]
+  },
+  "assets": [
+    {
+      "file": "d13a-piston-liner.svg",
+      "pages": [
+        7,
+        11
+      ],
+      "scope": "Forged steel piston, oil cooling, two compression rings and sprung scraper ring, replaceable cast-iron liner, forged connecting rod."
+    },
+    {
+      "file": "d13a-valvetrain.svg",
+      "pages": [
+        5,
+        12
+      ],
+      "scope": "Overhead camshaft, three cams per cylinder, twin inlet and exhaust valves, floating bridges and central unit injector. Schematic unfolded view, VEB special profiles excluded."
+    },
+    {
+      "file": "d13a-rear-gear-drive.svg",
+      "pages": [
+        14,
+        15,
+        16
+      ],
+      "scope": "Rear timing gear drive, crankshaft, double and adjustable idlers, camshaft, ancillary branches and optional PTO. Branch group not precise gear mesh."
+    }
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "vin_applicability": "unknown",
+  "physical_geometry": "conceptual",
+  "render_review": "pending",
+  "expert_review": "pending",
+  "verified_count_increment": 0,
+  "limitations": "No OEM drawings copied; conceptual diagrams not dimensions, repair instructions or actual assembly topology; variant and physical photos required before expert acceptance."
+}
