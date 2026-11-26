@@ -1,0 +1,123 @@
+{
+  "id": "cojali-volvo-fh-fm-straight-deutsch-abs",
+  "make": "Volvo",
+  "models": [
+    "FH 2005–2012",
+    "FH12 2001–2005",
+    "FH16 2003–2006",
+    "FM12 2001–2005",
+    "FM 2005–2012",
+    "FM9 2001–2005",
+    "FMX (период не указан)"
+  ],
+  "system": "EBS/ABS",
+  "component": "wheel_speed_sensor",
+  "documentedVariant": "straight S+ Deutsch DT06-2S",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "hotspots": [
+    {
+      "id": "h-2260132",
+      "catalogueBrand": "COJALI",
+      "article": "2260132",
+      "revision": null,
+      "source": "https://www.cojaliparts.com/en/reference/4410323860/sensor-abs/2260132/",
+      "models": [
+        "FH 2005–2012",
+        "FH12 2001–2005",
+        "FH16 2003–2006",
+        "FM12 2001–2005",
+        "FM 2005–2012",
+        "FM9 2001–2005",
+        "FMX (период не указан)"
+      ],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "cableLengthAsPublished": "119 3/32″",
+        "connectorCode": "A",
+        "connector": "Deutsch DT06-2S",
+        "orientation": "straight"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410323860",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "VOLVO",
+          "article": "21247147",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "VOLVO",
+          "article": "20528660",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "VOLVO",
+          "article": "20509866",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260133",
+      "catalogueBrand": "COJALI",
+      "article": "2260133",
+      "revision": null,
+      "source": "https://www.cojaliparts.com/en/reference/4410323870/abs-sensor/2260133/",
+      "models": [
+        "FH 2005–2012",
+        "FH12 2001–2005",
+        "FH16 2003–2006",
+        "FM12 2001–2005",
+        "FM 2005–2012",
+        "FM9 2001–2005",
+        "FMX (период не указан)"
+      ],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "cableLengthAsPublished": "119 3/32″",
+        "connectorCode": "B",
+        "connector": "Deutsch DT06-2S",
+        "orientation": "straight"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410323870",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "VOLVO",
+          "article": "21247154",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "VOLVO",
+          "article": "20528661",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "VOLVO",
+          "article": "20509865",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    }
+  ],
+  "scope": "Сравнение вариантов по каталогу производителя. Не распиновка, не точная геометрия и не подтверждение взаимозаменяемости."
+}
