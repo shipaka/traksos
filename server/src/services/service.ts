@@ -461,48 +461,80 @@ export class ServiceCenters {
 
   // ——— Финансы рембазы ———
   /** Сводка, по месяцам и по каждому счёту: работы, скидка клиенту, комиссия, погашено баллами, к выплате, выплачено */
-  async money(user: AuthUser) {
+  async money(user: AuthUser, before: string | null = null) {
     const c = await this.mustMine(user);
-    const rows = await this.db.query<any>(
-      `select b.id, b.number, b.status, b.works, b.amount, b.discount, b.commission, b.points, b.invoiced_at, b.closed_at, b.paid_out_at, b.vehicle,
-              b.payment_required, b.client_fee, b.received_amount, b.refunded_amount,
-              coalesce(nullif(u.company_name,''), u.name, 'Клиент') as client_name, b.from_order_id is not null as from_order
-         from service_bookings b join users u on u.id=b.client_id
-        where b.center_id=$1 and b.amount is not null and b.status in ('invoiced','closed','disputed')
-        order by coalesce(b.invoiced_at, b.created_at) desc limit 300`, [c.id]);
-    const item = (b: any) => ({
-      id: b.id, number: b.number, status: b.status, works: b.works ?? [], vehicle: b.vehicle, client: b.client_name, fromOrder: b.from_order,
-      amount: b.amount, discount: b.discount, commission: b.commission, points: b.points ?? 0,
-      commissionFull: b.commission + (b.points ?? 0), payout: b.amount - b.commission,
-      invoicedAt: b.invoiced_at, closedAt: b.closed_at, paidOutAt: b.paid_out_at,
-      // Only boolean status is sent to service owner, not client fee or client invoice total.
-      state: b.paid_out_at ? 'paid'
-        : b.status === 'disputed' ? 'disputed'
-        : b.status === 'closed'
-          ? (!b.payment_required ||
-             b.received_amount-b.refunded_amount >= b.amount+b.client_fee-b.discount ? 'to_pay' : 'unpaid')
-          : 'awaiting',
-    });
-    const items = rows.map(item);
-    const sum = (f: (x: any) => boolean, k: string) => items.filter(f).reduce((s, x: any) => s + x[k], 0);
-    const months = new Map<string, any>();
-    for (const x of items.filter((i) => i.state !== 'awaiting' && i.state !== 'disputed' && i.state !== 'unpaid')) {
-      const m = new Date(new Date(x.closedAt ?? x.invoicedAt).getTime() + 3 * 3600_000).toISOString().slice(0, 7);
-      const r = months.get(m) ?? { month: m, count: 0, amount: 0, discount: 0, commission: 0, points: 0, payout: 0 };
-      r.count++; r.amount += x.amount; r.discount += x.discount; r.commission += x.commission; r.points += x.points; r.payout += x.payout;
-      months.set(m, r);
-    }
-    const fees = await this.settings.get('fees');
+    // One SQL snapshot for the full totals, monthly breakdown and bounded page.
+    // Preserve existing invoice state precedence and payout formula. This is
+    // a read model, not an authorization to pay or a bank reconciliation.
+    const data = await this.db.one<any>(
+      `with eligible as (
+        select b.id,b.number,b.status,b.works,b.amount,b.discount,b.commission,
+               coalesce(b.points,0) as points,b.invoiced_at,b.closed_at,b.paid_out_at,b.vehicle,
+               coalesce(nullif(u.company_name,''),u.name,'Клиент') as client_name,
+               b.from_order_id is not null as from_order,
+               coalesce(b.invoiced_at,b.created_at) as sort_at,
+               b.amount-b.commission as payout,
+               case when b.paid_out_at is not null then 'paid'
+                    when b.status='disputed' then 'disputed'
+                    when b.status='closed' then
+                      case when not b.payment_required or
+                        b.received_amount-b.refunded_amount >= b.amount+b.client_fee-b.discount
+                        then 'to_pay' else 'unpaid' end
+                    else 'awaiting' end as state
+          from service_bookings b join users u on u.id=b.client_id
+          join service_centers sc on sc.id=b.center_id
+          join users actor on actor.id=sc.owner_id
+         where b.center_id=$1 and sc.owner_id=$3 and actor.status='active'
+           and actor.deleted_at is null and 'service'=any(actor.roles)
+           and b.amount is not null and b.status in ('invoiced','closed','disputed')
+      ), anchor as (
+        select sort_at,id from eligible where id=$2::uuid
+      ), page as (
+        select * from eligible e
+         where $2::uuid is null or (e.sort_at,e.id)<(select sort_at,id from anchor)
+         order by sort_at desc,id desc limit 301
+      ), monthly as (
+        select to_char(coalesce(closed_at,invoiced_at) at time zone 'Europe/Moscow','YYYY-MM') as month,
+               count(*) as count,sum(amount) as amount,sum(discount) as discount,
+               sum(commission) as commission,sum(points) as points,sum(payout) as payout
+          from eligible where state in ('paid','to_pay')
+           and coalesce(closed_at,invoiced_at) is not null
+         group by 1
+      )
+      select
+        exists(select 1 from service_centers sc join users actor on actor.id=sc.owner_id
+          where sc.id=$1 and sc.owner_id=$3 and actor.status='active'
+            and actor.deleted_at is null and 'service'=any(actor.roles)) as authorized,
+        ($2::uuid is null or exists(select 1 from anchor)) as cursor_valid,
+        (select count(*)::int from eligible) as total_count,
+        (select count(*)::int from eligible where state in ('paid','to_pay')
+          and coalesce(closed_at,invoiced_at) is null) as undated_count,
+        (select jsonb_build_object(
+          'toPay',coalesce(sum(payout) filter(where state='to_pay'),0),
+          'awaiting',coalesce(sum(payout) filter(where state='awaiting'),0),
+          'unpaid',coalesce(sum(payout) filter(where state='unpaid'),0),
+          'disputed',coalesce(sum(payout) filter(where state='disputed'),0),
+          'paid',coalesce(sum(payout) filter(where state='paid'),0),
+          'points',coalesce(sum(points),0)) from eligible) as summary,
+        coalesce((select jsonb_agg(to_jsonb(m) order by month desc) from monthly m),'[]'::jsonb) as months,
+        coalesce((select jsonb_agg(to_jsonb(p) order by sort_at desc,id desc) from page p),'[]'::jsonb) as page`,
+      [c.id,before,user.id]);
+    if(!data?.authorized)throw forbidden();
+    if(!data.cursor_valid)throw bad('invalid_cursor','Страница счетов недоступна. Обновите список.');
+    const rows:any[]=data.page;
+    const hasMore=rows.length>300;
+    const items=rows.slice(0,300).map(b=>({
+      id:b.id,number:b.number,status:b.status,works:b.works??[],vehicle:b.vehicle,client:b.client_name,fromOrder:b.from_order,
+      amount:b.amount,discount:b.discount,commission:b.commission,points:b.points,
+      commissionFull:b.commission+b.points,payout:b.payout,
+      invoicedAt:b.invoiced_at,closedAt:b.closed_at,paidOutAt:b.paid_out_at,state:b.state,
+    }));
+    const fees=await this.settings.get('fees');
     return {
-      summary: {
-        toPay: sum((x) => x.state === 'to_pay', 'payout'), awaiting: sum((x) => x.state === 'awaiting', 'payout'),
-        unpaid: sum((x) => x.state === 'unpaid', 'payout'),
-        disputed: sum((x) => x.state === 'disputed', 'payout'), paid: sum((x) => x.state === 'paid', 'payout'),
-        points: sum(() => true, 'points'),
-      },
-      months: [...months.values()],
-      items,
-      rule: { pct: Math.min(5,fees.serviceCommissionPct), max: Math.min(500_000,fees.serviceCommissionMax ?? 500_000), referralPct: fees.serviceReferralDiscountPct },
+      summary:data.summary,months:data.months,items,
+      totalCount:data.total_count,hasMore,nextBefore:hasMore?items[items.length-1].id:null,
+      monthTimezone:'Europe/Moscow',undatedCount:data.undated_count,
+      rule:{pct:Math.min(5,fees.serviceCommissionPct),max:Math.min(500_000,fees.serviceCommissionMax??500_000),referralPct:fees.serviceReferralDiscountPct},
     };
   }
 

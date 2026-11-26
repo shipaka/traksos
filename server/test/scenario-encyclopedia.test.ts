@@ -165,3 +165,17 @@ test('calendar training separates pending proposals, reservations and actual ava
   for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
     assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
 });
+
+test('STO training distinguishes a page filter from the complete financial history',()=>{
+  const item=allowedScenario('service','sto-invoice-history');
+  assert.ok(item);
+  assert.equal(item.link,'/base/money');
+  assert.equal(item.steps.length,3);
+  const text=item.steps.map(step=>[step.situation,step.why,...step.choices.map(c=>c.feedback)].join(' ')).join(' ');
+  assert.match(text,/не ограничена текущей страницей/);
+  assert.match(text,/только к текущей странице/);
+  assert.match(text,/не является подтверждённым нулём/);
+  assert.match(text,/не заменяет сверку банковских документов/);
+  assert.ok(scenariosForRole('service','старые счета').some(s=>s.id===item.id));
+  for(const role of roles.filter(r=>r!=='service'))assert.equal(allowedScenario(role,item.id),null);
+});

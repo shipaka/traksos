@@ -1330,20 +1330,35 @@ const monthName = (m: string) => { const [y, mm] = m.split('-').map(Number); ret
 /** Финансы рембазы: сверху — сколько придёт и когда, ниже — по месяцам, потом — каждый счёт со своей разбивкой. */
 export function BaseMoney() {
   const { me } = useMe();
-  return <BaseMoneyPanel key={me?.id ?? 'guest'} />;
+  return <BaseMoneyPanel key={(me?.id ?? 'guest')+':'+[...(me?.roles??[])].sort().join(',')} />;
 }
 function BaseMoneyPanel() {
-  const m = useBaseLoad(() => baseGet('/api/base/money'), [], isBookingEvent);
+  // Each cursor identifies a separate private server snapshot; never merge
+  // invoices from different reads or compute financial totals in the browser.
+  const [trail,setTrail]=useState<(string|null)[]>([null]);
+  const before=trail[trail.length-1];
+  const m = useBaseLoad(() => baseGet('/api/base/money'+(before?'?before='+encodeURIComponent(before):'')), [before],
+    e=>isBookingEvent(e)||e.type==='connection_restored');
   const pts = useBaseLoad(() => baseGet('/api/me/referral'), [], (e) => e.type === 'points');
   const [filter, setFilter] = useState<'all' | 'to_pay' | 'unpaid' | 'awaiting' | 'paid' | 'disputed'>('all');
-  if (!m.data) return <main><StationLoading error={m.error} reload={m.reload} /></main>;
+  const first=()=>setTrail([null]);
+  const previous=()=>setTrail(old=>old===trail&&old.length>1?old.slice(0,-1):old);
+  if (!m.data) return <main><StationLoading error={m.error} reload={m.reload} />
+    {trail.length>1&&<div className="row"><button type="button" className="btn ghost small" onClick={previous}>Предыдущая страница</button>
+      <button type="button" className="btn ghost small" onClick={first}>К первым счетам</button></div>}
+  </main>;
   const { summary: s, months, items, rule } = m.data;
+  const paged=Number.isSafeInteger(m.data.totalCount)&&m.data.totalCount>=items.length&&typeof m.data.hasMore==='boolean';
+  const nextCursor=paged&&m.data.hasMore&&typeof m.data.nextBefore==='string'&&m.data.nextBefore&&
+    !trail.includes(m.data.nextBefore)?m.data.nextBefore:null;
+  const next=()=>{if(nextCursor)setTrail(old=>old===trail?[...old,nextCursor]:old);};
   const shown = items.filter((x: any) => filter === 'all' || x.state === filter);
   return (
     <main>
       <div>
         <h1>Финансы</h1>
         <div className="sub">Каждый счёт — с работами, комиссией и выплатой. Непонятно — задайте вопрос по счёту.</div>
+        {!paged&&<p className="note" role="status">Полнота финансовой истории не подтверждена текущей версией сервера.</p>}
       </div>
 
       <div className="card">
@@ -1372,6 +1387,7 @@ function BaseMoneyPanel() {
 
       {months.length > 0 && <details className="card">
         <summary><b>По месяцам</b></summary>
+        {paged&&<span className="note">По московскому времени. {m.data.undatedCount>0?`Без даты в разбивке: ${m.data.undatedCount} сч.`:""}</span>}
         <div className="stack" style={{ marginTop: 8 }}>
           {months.map((x: any) => (
             <details key={x.month} className="card flat" style={{ gap: 4 }}>
@@ -1387,11 +1403,12 @@ function BaseMoneyPanel() {
       </details>}
 
       <span className="label">Счета</span>
+      {paged&&<p className="note" role="status">Всего счетов: {m.data.totalCount} · страница {trail.length} · на странице: {items.length}. Фильтр применяется к текущей странице.</p>}
       <div className="scroll-x">
         {([['all', 'Все'], ['to_pay', 'К выплате'], ['unpaid', 'Ждут оплаты'], ['awaiting', 'Ждут сверки'], ['paid', 'Выплачено'], ['disputed', 'Споры']] as const).map(([k, n]) =>
           <button key={k} className="chip" aria-pressed={filter === k} onClick={() => setFilter(k)}>{n}</button>)}
       </div>
-      {!shown.length ? <div className="empty">{items.length ? 'Здесь пусто' : 'Счетов пока нет — появятся после «Выставить счёт»'}</div> : (
+      {!shown.length ? <div className="empty">{items.length ? 'На этой странице нет счетов с выбранным статусом' : paged&&m.data.totalCount===0 ? 'Счетов пока нет — появятся после «Выставить счёт»' : 'На этой странице счетов нет'}</div> : (
         <div className="stack">
           {shown.map((x: any) => (
             <details key={x.id} className="card" style={{ gap: 6 }}>
@@ -1420,6 +1437,12 @@ function BaseMoneyPanel() {
           ))}
         </div>
       )}
+      {(trail.length>1||nextCursor)&&<div className="row" aria-label="Страницы счетов">
+        {trail.length>1&&<><button type="button" className="btn ghost small" onClick={previous}>Предыдущая страница</button>
+          <button type="button" className="btn ghost small" onClick={first}>К первым счетам</button></>}
+        {nextCursor&&<button type="button" className="btn ghost small" onClick={next}>Более ранние счета</button>}
+      </div>}
+      {paged&&m.data.hasMore&&!nextCursor&&<p className="note" role="alert">Не удалось открыть следующую страницу. <button className="btn ghost small" type="button" onClick={m.reload}>Обновить счета</button></p>}
     </main>
   );
 }

@@ -219,6 +219,52 @@ try{
   await page.getByRole('heading',{name:'Финансы'}).waitFor();
   await page.screenshot({path:'e2e/shots/sto-reliability/sto-finance-390.png',fullPage:true});
 
+  // The existing finance screen must traverse older invoices without
+  // misrepresenting a page filter as a filter of all historical records.
+  const inv=(id,number,state)=>({id,number,state,status:state==='paid'?'closed':'invoiced',
+    works:[],vehicle:null,client:'Синтетический клиент',amount:10000,discount:0,
+    commission:500,commissionFull:500,points:0,payout:9500,invoicedAt:'2026-11-20T00:00:00Z'});
+  const pageOne={...money(200000),totalCount:301,hasMore:true,nextBefore:'cursor-A',monthTimezone:'Europe/Moscow',
+    items:[inv('new',7001,'awaiting')]};
+  const pageTwo={...money(200000),totalCount:301,hasMore:false,nextBefore:null,monthTimezone:'Europe/Moscow',
+    items:[inv('old',7002,'paid')]};
+  await page.evaluate(()=>window.__sto.listeners.forEach(fn=>fn({type:'booking'})));
+  await waitGet('/api/base/money',4);
+  const lastIndex=path=>page.evaluate(path=>window.__sto.pending.findLastIndex(x=>x.path===path),path);
+  await answer(await lastIndex('/api/base/money'),pageOne);
+  await page.getByText('Счёт №7001',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Выплачено',exact:true}).click();
+  await page.getByText('На этой странице нет счетов с выбранным статусом').waitFor();
+  await page.getByText(/Фильтр применяется к текущей странице/).waitFor();
+  // Two synchronous presses must advance only one cursor.
+  await page.getByRole('button',{name:'Более ранние счета'}).evaluate(el=>{el.click();el.click();});
+  const older='/api/base/money?before=cursor-A';
+  await waitGet(older);
+  await page.getByRole('status').filter({hasText:'Загрузка…'}).waitFor();
+  assert(await page.getByText('Счёт №7001',{exact:true}).count()===0,'Old page remained during new read');
+  await reject(await lastIndex(older),'Ошибка старой страницы');
+  await page.getByRole('alert').getByRole('button',{name:'Повторить загрузку'}).click();
+  await waitGet(older,2);
+  await answer(await lastIndex(older),pageTwo);
+  await page.getByText('Счёт №7002',{exact:true}).waitFor();
+  await page.getByText(/Всего счетов: 301 · страница 2/).waitFor();
+  assert(await page.getByRole('button',{name:'Более ранние счета'}).count()===0,'Final page offers a next cursor');
+  await page.getByRole('button',{name:'Предыдущая страница'}).click();
+  await waitGet('/api/base/money',5);
+  await answer(await lastIndex('/api/base/money'),pageOne);
+  await page.getByText(/Всего счетов: 301 · страница 1/).waitFor();
+  await page.getByRole('button',{name:'Все',exact:true}).click();
+  await page.getByText('Счёт №7001',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Более ранние счета'}).click();
+  await waitGet(older,3);
+  const staleFinance=await lastIndex(older);
+  // Route departure invalidates the pending read. The original account
+  // remains in use for the existing search-preference regression below.
+  await change('search');
+  await answer(staleFinance,pageTwo);
+  await page.getByRole('heading',{name:'Найти рембазу'}).waitFor();
+  assert(await page.getByText('Счёт №7002',{exact:true}).count()===0,'Late finance page leaked into another screen');
+
   // Search preferences are scoped by actual identity and fully validated.
   await change('search');
   await page.getByRole('heading',{name:'Найти рембазу'}).waitFor();
