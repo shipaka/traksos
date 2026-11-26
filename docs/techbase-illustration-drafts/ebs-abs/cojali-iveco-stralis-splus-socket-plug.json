@@ -1,0 +1,150 @@
+{
+  "id": "cojali-iveco-stralis-splus-socket-plug",
+  "make": "IVECO",
+  "models": [
+    "AD Stralis",
+    "AS Stralis",
+    "AT Stralis",
+    "Stralis",
+    "AD Trakker",
+    "AT Trakker",
+    "Eurocargo",
+    "Euromover",
+    "Eurostar",
+    "Eurotech",
+    "Eurotrakker",
+    "Powerstar"
+  ],
+  "system": "EBS/ABS",
+  "component": "wheel_speed_sensor",
+  "documentedVariant": "Прямые с гнездом и угловой со штекером · отдельные каталожные исполнения",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "hotspots": [
+    {
+      "id": "h-2261083",
+      "catalogueBrand": "COJALI",
+      "article": "2261083",
+      "revision": null,
+      "source": "https://www.cojaliparts.com/en/reference/4410323310/abs-sensor/2261083/",
+      "models": [
+        "AD Stralis",
+        "AS Stralis",
+        "AT Stralis",
+        "Stralis"
+      ],
+      "engines": [
+        "Cursor 8",
+        "Cursor 10",
+        "Cursor 13"
+      ],
+      "otherBindings": [],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "straight",
+        "connector": "Socket, 2 contacts",
+        "cableLengthAsPublished": "98 7/16 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410323310",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "IVECO",
+          "article": "41221297",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2261084",
+      "catalogueBrand": "COJALI",
+      "article": "2261084",
+      "revision": null,
+      "source": "https://www.cojaliparts.com/en/reference/4410323300/abs-sensor/2261084/",
+      "models": [
+        "AD Stralis",
+        "AS Stralis",
+        "AT Stralis",
+        "Stralis"
+      ],
+      "engines": [
+        "Cursor 8",
+        "Cursor 10",
+        "Cursor 13"
+      ],
+      "otherBindings": [],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "straight",
+        "connector": "Socket, 2 contacts",
+        "cableLengthAsPublished": "98 7/16 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410323300",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        },
+        {
+          "catalogueBrand": "IVECO",
+          "article": "41221296",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "h-2260022",
+      "catalogueBrand": "COJALI",
+      "article": "2260022",
+      "revision": null,
+      "source": "https://www.cojaliparts.com/en/reference/4410359232/abs-sensor/2260022/",
+      "models": [
+        "AD Stralis",
+        "AS Stralis",
+        "AT Stralis",
+        "Stralis",
+        "AD Trakker",
+        "AT Trakker",
+        "Eurocargo",
+        "Euromover",
+        "Eurostar",
+        "Eurotech",
+        "Eurotrakker",
+        "Powerstar"
+      ],
+      "engines": [
+        "Cursor 8",
+        "Cursor 10",
+        "Cursor 13"
+      ],
+      "otherBindings": [],
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null,
+      "technicalData": {
+        "orientation": "elbow",
+        "connector": "Plug, 2 contacts",
+        "cableLengthAsPublished": "59 1/16 inch"
+      },
+      "crossReferences": [
+        {
+          "catalogueBrand": "WABCO",
+          "article": "4410359232",
+          "relationship": "catalogue_cross_reference",
+          "vinFitment": "unverified"
+        }
+      ]
+    }
+  ],
+  "scope": "Условная геометрия, без распиновки, монтажной трассировки или точного VIN; каталожные применения не доказывают взаимозаменяемость."
+}
