@@ -1,0 +1,36 @@
+{
+  "id": "saf-pivot-bush-4177303500",
+  "manufacturer": "SAF",
+  "article": "4 177 3035 00",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-pivot-bush-4177303500.svg",
+  "nameRu": "Сайлентблок продольного рычага",
+  "type": "INTRA Heavy Duty",
+  "spec": {
+    "construction": "rubber with central metal sleeve",
+    "dimensions": "unknown"
+  },
+  "source": {
+    "url": "https://literature1.safholland.com/sites/damedit/literature/ServiceBulletin-55_en-AU.pdf",
+    "reference": "SB-55 2018-10 fig1 p1",
+    "textChecked": true,
+    "visualChecked": true,
+    "checked": "2026-11-26"
+  },
+  "related": [
+    {
+      "article": "4177302800",
+      "relation": "superseded in Australian INTRA maintenance manual SH-04 Rev E",
+      "source": "https://safholland.com/fileadmin/user_upload/Market_files/Australia/SH-04_Rev_E__-_Maintenance___Repair_Manual_-_Disc_Brake_Axles.pdf"
+    },
+    {
+      "article": "4177303500K",
+      "relation": "kit including one bush and P-5311-10ML lubricant"
+    }
+  ],
+  "limitations": [
+    "Conceptual original illustration, not exact CAD",
+    "No installation orientation, VIN, axle serial fitment or repair procedure",
+    "Rendered QA and expert acceptance pending"
+  ]
+}
