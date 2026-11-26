@@ -1,0 +1,27 @@
+{
+  "id": "bpw-wear-sensor-0580148920",
+  "manufacturer": "BPW",
+  "article": "05.801.48.92.0",
+  "nameRu": "Комплект контроля износа",
+  "family": "TS2 3709 / 4309",
+  "status": "functional_draft_expert_pending",
+  "illustration": "bpw-wear-sensor-0580148920.svg",
+  "sources": [
+    {
+      "url": "https://www.bpw.de/uploads/tx_szdownloadcenter/BPW-News-Aftermarket_AM03_New_repair_kits_for_ECO_Disc_trailer_disc_brake_TS2_74261901e.pdf",
+      "reference": "74261901e AM03/2019, p1",
+      "visualChecked": true
+    }
+  ],
+  "relatedDraftIds": [
+    "bpw-ts2-4309-caliper",
+    "bpw-pads-0980108730"
+  ],
+  "catalogueNotes": "Bulletin depicts a linkage assembly, associated mounting elements and cable. No electrical pinout, exact sensing principle or EBS connection asserted.",
+  "limitations": [
+    "Original schematic, not exact physical geometry or OEM drawing",
+    "No installation steps, pinout, repair limits or VIN-specific fitment",
+    "No rendered visual QA or expert acceptance"
+  ],
+  "watermark": "TrakSOS diagonal pattern"
+}
