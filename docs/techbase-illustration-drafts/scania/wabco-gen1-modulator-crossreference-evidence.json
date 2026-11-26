@@ -1,0 +1,150 @@
+{
+  "id": "scania-wabco-gen1-modulator-crossreference-evidence",
+  "status": "source_research_only",
+  "source_checked": true,
+  "expert_reviewed": false,
+  "rights_cleared": false,
+  "visual_ready": false,
+  "strict_count": 0,
+  "system": "EBS",
+  "component": "two-channel axle modulator, WABCO Gen1",
+  "relation": "manufacturer catalogue Replaces entry, not confirmed bidirectional interchangeability or vehicle fitment",
+  "deduplication": "Evidence for canonical WABCO manufacturer+article identity; join existing DAF/other-brand records instead of creating duplicate component cards. No new canonical card claimed.",
+  "items": [
+    {
+      "catalogueBrand": "WABCO",
+      "article": "4801030110",
+      "scania_crossreference": "1935128",
+      "application_catalogue": "4x2",
+      "type_catalogue": "4x2",
+      "catalogue_dimensions_mm": [
+        229,
+        179,
+        200
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en_US/4801030110",
+      "source_section": "Features and benefits; Replaces; Documents",
+      "drawing_identifiers": [
+        "4801030000_-_653_v_01",
+        "4801030000_-_653_v_02",
+        "4801030000_-_653_v_03"
+      ],
+      "drawing_visual_checked": false,
+      "model": null,
+      "generation": null,
+      "vin": null,
+      "mounting_location": null,
+      "physical_route": null,
+      "fitment": "unknown"
+    },
+    {
+      "catalogueBrand": "WABCO",
+      "article": "4801030220",
+      "scania_crossreference": "1935129",
+      "application_catalogue": null,
+      "type_catalogue": "drive axle 4x2, 6x2, 6x4",
+      "catalogue_dimensions_mm": [
+        230,
+        217,
+        200
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en/4801030220",
+      "source_section": "Features and benefits; Replaces; Documents",
+      "drawing_identifiers": [
+        "4801030200_-_653_g_02",
+        "4801030200____053_dascheck_h8_page-1---notset"
+      ],
+      "drawing_visual_checked": false,
+      "model": null,
+      "generation": null,
+      "vin": null,
+      "mounting_location": null,
+      "physical_route": null,
+      "fitment": "unknown"
+    },
+    {
+      "catalogueBrand": "WABCO",
+      "article": "4801030240",
+      "scania_crossreference": "1935130",
+      "application_catalogue": null,
+      "type_catalogue": "semitrailer tractor",
+      "catalogue_dimensions_mm": [
+        228,
+        217,
+        200
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en_IN/4801030240",
+      "source_section": "Features and benefits; Replaces; Documents",
+      "drawing_identifiers": [
+        "4801030200_-_653_g_02",
+        "4801030200____053_dascheck_h8_page-1---notset"
+      ],
+      "drawing_visual_checked": false,
+      "model": null,
+      "generation": null,
+      "vin": null,
+      "mounting_location": null,
+      "physical_route": null,
+      "fitment": "unknown"
+    },
+    {
+      "catalogueBrand": "WABCO",
+      "article": "4801030420",
+      "scania_crossreference": "1935132",
+      "application_catalogue": "4x2, 6x4, 6x2/4",
+      "type_catalogue": "6x2 with backup valve",
+      "catalogue_dimensions_mm": [
+        228,
+        179,
+        200
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en_US/4801030420",
+      "source_section": "Features and benefits; Replaces; Documents",
+      "drawing_identifiers": [
+        "4801030400_-_653_a_01",
+        "4801030400_-_653_a_02"
+      ],
+      "drawing_visual_checked": false,
+      "model": null,
+      "generation": null,
+      "vin": null,
+      "mounting_location": null,
+      "physical_route": null,
+      "fitment": "unknown"
+    },
+    {
+      "catalogueBrand": "WABCO",
+      "article": "4801030430",
+      "scania_crossreference": "1935133",
+      "application_catalogue": "4x2, 6x4, 6x2/4",
+      "type_catalogue": "4x2 without backup valve",
+      "catalogue_dimensions_mm": [
+        229,
+        179,
+        198
+      ],
+      "source": "https://www.wabco-customercentre.com/catalog/en_US/4801030430",
+      "source_section": "Features and benefits; Replaces; Documents",
+      "drawing_identifiers": [
+        "4801030400_-_653_a_01",
+        "4801030400_-_653_a_02"
+      ],
+      "drawing_visual_checked": false,
+      "model": null,
+      "generation": null,
+      "vin": null,
+      "mounting_location": null,
+      "physical_route": null,
+      "fitment": "unknown"
+    }
+  ],
+  "warnings": [
+    "WABCO component Gen1 is not a Scania vehicle generation or EBS ECU version.",
+    "General catalogue application and specific type fields may differ; retain both and resolve against VIN-specific OEM documentation before use.",
+    "Catalogue size is not a dimensioned mounting drawing. Drawing identifiers have been indexed, not visually inspected.",
+    "Ignore erroneous generic compressor subtitle and zero price placeholders; product title, article and Replaces fields identify the relevant evidence.",
+    "No order authorization or stock claim; catalogue explicitly flags 4801030110, 4801030420 and 4801030430 as no longer available. Other availability not evaluated.",
+    "Do not derive part geometry or physical chassis mounting from crossreferences. No OEM figure copied."
+  ],
+  "next": "Obtain matching catalogue outline drawings and vehicle-specific installation/location documents with authorization, reconcile existing canonical part records and confirm variant/VIN before rendering."
+}
