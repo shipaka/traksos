@@ -1,0 +1,505 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis",
+    "target_model": "440S46 and related AD/AS/AT family",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "id": "febi:35178",
+      "manufacturer": "febi",
+      "article": "35178",
+      "name": "Продольная рулевая тяга",
+      "system": "steering",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 11,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41298449"
+        }
+      ],
+      "details": {
+        "steering_side": [
+          "LHD",
+          "RHD"
+        ],
+        "fastener_type": "корончатые гайки и шплинты"
+      },
+      "note": "Не переносить на AS. Размеры не включены из-за отсутствия визуальной проверки таблицы.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:35189",
+      "manufacturer": "febi",
+      "article": "35189",
+      "name": "Продольная рулевая тяга",
+      "system": "steering",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 11,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "500397738"
+        }
+      ],
+      "details": {
+        "steering_side": [
+          "LHD"
+        ]
+      },
+      "note": "Не переносить на RHD. Конкретная ось и геометрия неизвестны.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:35188",
+      "manufacturer": "febi",
+      "article": "35188",
+      "name": "Поперечная рулевая тяга",
+      "system": "steering",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 11,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41042939"
+        }
+      ],
+      "details": {
+        "steering_side": [
+          "LHD",
+          "RHD"
+        ]
+      },
+      "note": "Отдельный артикул, не замена 28408 без проверки.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:28408",
+      "manufacturer": "febi",
+      "article": "28408",
+      "name": "Поперечная рулевая тяга",
+      "system": "steering",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 11,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41036943"
+        }
+      ],
+      "details": {
+        "steering_side": [
+          "LHD",
+          "RHD"
+        ]
+      },
+      "note": "Точная применимость по оси и VIN не подтверждена.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:02954",
+      "manufacturer": "febi",
+      "article": "02954",
+      "name": "Наконечник рулевой тяги, правая резьба",
+      "system": "steering",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 12,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "4802443"
+        }
+      ],
+      "details": {
+        "thread_direction": "RHT"
+      },
+      "note": "RHT обозначает направление резьбы, не правую сторону установки.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:02953",
+      "manufacturer": "febi",
+      "article": "02953",
+      "name": "Наконечник рулевой тяги, левая резьба",
+      "system": "steering",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 12,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "4802444"
+        }
+      ],
+      "details": {
+        "thread_direction": "LHT"
+      },
+      "note": "LHT обозначает направление резьбы, не левую сторону установки.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:28459",
+      "manufacturer": "febi",
+      "article": "28459",
+      "name": "Реактивная тяга с подшипником скольжения",
+      "system": "suspension",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 13,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "98472466"
+        }
+      ],
+      "details": {},
+      "note": "Конкретная ось не установлена; не маркировать как передняя.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:28519",
+      "manufacturer": "febi",
+      "article": "28519",
+      "name": "Реактивная тяга с подшипником скольжения",
+      "system": "suspension",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 13,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "42041107"
+        }
+      ],
+      "details": {},
+      "note": "Нет AS в проверенной строке.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "febi:23853",
+      "manufacturer": "febi",
+      "article": "23853",
+      "name": "Треугольная тяга подвески",
+      "system": "suspension",
+      "source": "https://konpart.de/wp-content/uploads/2024/11/FEBI-IVECO-Stralis-Catalog-2012-2013.pdf",
+      "edition": "2012/2013",
+      "printed_page": 13,
+      "visual_check": "failed: PDF 63047012 bytes exceeds tool limit; parsed text checked",
+      "scope": "historical_manufacturer_catalogue_family",
+      "applications": [
+        {
+          "family": "Stralis",
+          "cab_series": "AD"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AS"
+        },
+        {
+          "family": "Stralis",
+          "cab_series": "AT"
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41034479"
+        }
+      ],
+      "details": {},
+      "note": "Отдельная функциональная карточка, ось и крепления неизвестны.",
+      "vin_applicability": "unknown",
+      "axle_id": null,
+      "exact_mounting": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "id": "vaden:330.05.0007",
+      "manufacturer": "Vaden",
+      "article": "330.05.0007",
+      "name": "Гидравлический насос рулевого управления",
+      "system": "steering",
+      "source": "https://www.vadenoriginal.com/en/products/330050007-steering-pump-steering-pumps-steering",
+      "scope": "brand_crossreference_only",
+      "applications": [
+        {
+          "make": "IVECO",
+          "model": null
+        }
+      ],
+      "cross_references": [
+        {
+          "manufacturer": "IVECO",
+          "article": "41211093"
+        },
+        {
+          "manufacturer": "Bosch",
+          "article": "KS00000504"
+        },
+        {
+          "manufacturer": "ZF",
+          "article": "7688955505"
+        }
+      ],
+      "details": {
+        "catalogue_max_pressure_bar": 165,
+        "rotation_catalogue": "counter-clockwise",
+        "port_threads": [
+          "M26×1.5",
+          "M18×1.5"
+        ]
+      },
+      "note": "Параметры насоса не являются регулировочными величинами автомобиля. Нет модельной строки; точное направление наблюдения, назначение портов и применимость к Stralis не подтверждены.",
+      "vin_applicability": "unknown",
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "system_context": [
+    {
+      "id": "hydraulic_steering_principle",
+      "source": "https://aftermarket.zf.com/en/aftermarket-portal/our-portfolio/trucks-trailers-buses/products/steering-chassis-parts/",
+      "scope": "general commercial vehicle architecture, not OEM Stralis layout",
+      "description": "Рулевое колесо и колонка передают усилие рулевому механизму; гидравлическая помощь снижает усилие на руле. Продольная тяга передаёт движение, поперечная согласует поворот управляемых колёс."
+    }
+  ],
+  "diagnostic_cards": [
+    {
+      "id": "steering-heavy",
+      "title": "Возросшее усилие на руле",
+      "checks": [
+        "Безопасно прекратить эксплуатацию при нарушении управляемости.",
+        "На неподвижном автомобиле проверить внешние признаки утечки и состояние видимых соединений, затем передать специалисту для диагностики гидравлической и механической частей по OEM."
+      ],
+      "limits": "Не вскрывать контур под давлением; не использовать каталожный максимум насоса как целевое давление."
+    },
+    {
+      "id": "steering-play",
+      "title": "Люфт и неустойчивость управления",
+      "checks": [
+        "Зафиксировать симптом, исключить движение до квалифицированной проверки при опасном люфте.",
+        "Сверить исполнение оси, левый/правый руль, направление резьбы и оригинальный номер; проверять состояние шарниров и креплений по заводскому регламенту."
+      ],
+      "limits": "Не задавать универсальные допуски люфта, затяжки и углы установки колёс."
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-steering-mechanical-path",
+      "nodes": [
+        "рулевое колесо",
+        "колонка",
+        "рулевой механизм",
+        "сошка",
+        "продольная тяга",
+        "поворотные кулаки",
+        "поперечная тяга"
+      ],
+      "purpose": "Оригинальная принципиальная иллюстрация; не выдавать расположение и форму тяг за заводскую геометрию."
+    },
+    {
+      "id": "stralis-hydraulic-assist",
+      "nodes": [
+        "бачок",
+        "насос ГУР",
+        "рулевой механизм",
+        "возврат жидкости"
+      ],
+      "purpose": "Условный гидравлический контур. Артикул Vaden показан только как неподтверждённый кандидат, не как установленный узел."
+    },
+    {
+      "id": "stralis-tie-rod-thread-variants",
+      "nodes": [
+        "наконечник RHT",
+        "наконечник LHT",
+        "проверка маркировки"
+      ],
+      "purpose": "Показать различие направления резьбы без утверждения о стороне установки."
+    },
+    {
+      "id": "stralis-suspension-links",
+      "nodes": [
+        "реактивная тяга",
+        "треугольная тяга",
+        "связь моста и рамы"
+      ],
+      "purpose": "Пояснить функцию отдельных тяг; не маркировать конкретную ось и крепления без документации."
+    }
+  ],
+  "rights": "Оригинальные описания и отдельные каталожные факты. Иллюстрации и таблицы febi не копируются. Перед публикацией требуется правовая проверка.",
+  "release_gates": [
+    "global article dedup",
+    "current catalogue and OEM VIN/axle matching",
+    "febi PDF visual check",
+    "exact OEM steering geometry and service instructions",
+    "expert/legal review",
+    "actual illustrations",
+    "runtime integration/CI"
+  ],
+  "verified_illustrations_added": 0
+}
