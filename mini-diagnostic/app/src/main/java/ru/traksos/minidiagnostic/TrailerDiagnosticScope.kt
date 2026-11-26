@@ -12,12 +12,6 @@ object TrailerDiagnosticScope {
     val places=listOf(ConnectionPlace.FRONT,ConnectionPlace.SIDE,ConnectionPlace.DIRECT)
     private val modern=setOf("zf-tebs-e","zf-iebs","kb-g21","kb-g22","kb-itebs-x","haldex-eb3","haldex-eb4","haldex-abs4","vie-tebs","vie-tebs-subsystem","sorl-research","sorl-trailer-abs","kormee-research","ekran-ebpv")
     private val legacy=setOf("zf-vario-c","zf-vcs","kb-a18","kb-kb3ta","haldex-modal","haldex-modular","haldex-mgx")
-    private val archivedReferences=setOf(
-        DisplayReferenceEdition.VARIO_C_EXAMPLES,DisplayReferenceEdition.VCS_I_EXPERT,
-        DisplayReferenceEdition.VCS_II_FLASH,DisplayReferenceEdition.HALDEX_UABS_ACTIVE,
-        DisplayReferenceEdition.KNORR_KB4TA,DisplayReferenceEdition.SORL_ABS,
-        DisplayReferenceEdition.EKRAN_EBP,DisplayReferenceEdition.BENDIX_TABS6
-    )
     fun isPhysicalPlace(place:ConnectionPlace)=place in places
     fun priority(target:ResearchTarget):TrailerPriority=when {
         target.scope==ScopeGroup.FUTURE_MARKET -> TrailerPriority.OUTSIDE
@@ -26,5 +20,4 @@ object TrailerDiagnosticScope {
         else -> TrailerPriority.PRIMARY
     }
     fun prioritized(rows:List<ResearchTarget>)=rows.sortedBy { priority(it).ordinal }
-    fun isMainReference(edition:DisplayReferenceEdition)=edition !in archivedReferences
 }

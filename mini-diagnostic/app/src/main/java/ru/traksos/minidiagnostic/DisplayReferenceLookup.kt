@@ -6,60 +6,26 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_E("WABCO TEBS E · памятка водителя"),
     WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
-    VARIO_C_EXAMPLES("WABCO Vario C · примеры из учебного руководства"),
-    VCS_I_EXPERT("WABCO VCS I · экспертные световые коды"),
     WABCO_COMPACT_TESTER("WABCO Compact Tester II · три символа"),
-    VCS_II_FLASH("WABCO VCS II · мигающий код"),
     HALDEX_GEN1_2005("Haldex EB+ Gen1 · руководство 02.2005"),
     HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
     HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
-    HALDEX_UABS_ACTIVE("Haldex U-ABS · активные световые коды"),
-    EKRAN_EBP("Экран АБС-П / ЭБП · световые коды"),
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
-    KNORR_KB4TA("Knorr KB4TA / KB4TA D · световые коды"),
-    SORL_ABS("SORL ABS прицепа · световые коды"),
-    BENDIX_TABS6("Bendix TABS-6 Standard/Premium · 12 В · световые коды")
 }
 data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
 object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
-        if(edition==DisplayReferenceEdition.VARIO_C_EXAMPLES) {
-            val r=WabcoVarioExamples.lookup(s) ?: return null
-            return DisplayLookup(r.first,r.second,WabcoVarioExamples.SOURCE,false)
-        }
-        if(edition==DisplayReferenceEdition.BENDIX_TABS6) {
-            val r=BendixTabs6Reference.lookup(s) ?: return null
-            return DisplayLookup(r.component,r.condition,BendixTabs6Reference.SOURCE+" · стр. "+r.page,true)
-        }
-        if(edition==DisplayReferenceEdition.VCS_I_EXPERT) {
-            val r=WabcoVcsReference.lookup(s) ?: return null
-            return DisplayLookup(r.first,r.second,WabcoVcsReference.SOURCE,true)
-        }
         if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
         if(edition==DisplayReferenceEdition.KNORR_TEBS4) {
             val r=KnorrTebs4Reference.lookup(s) ?: return null
             return DisplayLookup(r.first,r.second,KnorrTebs4Reference.SOURCE,true)
         }
-        if(edition==DisplayReferenceEdition.KNORR_KB4TA || edition==DisplayReferenceEdition.SORL_ABS) {
-            val knorr=edition==DisplayReferenceEdition.KNORR_KB4TA
-            val r=(if(knorr) KnorrSorlReference.knorr(s) else KnorrSorlReference.sorl(s)) ?: return null
-            return DisplayLookup(r.first,r.second,if(knorr) KnorrSorlReference.KNORR_SOURCE else KnorrSorlReference.SORL_SOURCE,true)
-        }
         if(edition==DisplayReferenceEdition.HALDEX_MODAL_MODULAR) {
             val r=HaldexModalReference.lookup(s) ?: return null
             return DisplayLookup(r.first,r.second,HaldexModalReference.SOURCE,true)
-        }
-        if(edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE || edition==DisplayReferenceEdition.EKRAN_EBP) {
-            val haldex=edition==DisplayReferenceEdition.HALDEX_UABS_ACTIVE
-            val r=(if(haldex) AdditionalAbsReference.haldex(s) else AdditionalAbsReference.ekran(s)) ?: return null
-            return DisplayLookup(r.first,r.second,if(haldex) AdditionalAbsReference.HALDEX_SOURCE else AdditionalAbsReference.EKRAN_SOURCE,true)
-        }
-        if(edition==DisplayReferenceEdition.VCS_II_FLASH) {
-            val r=LegacyDisplayReference.vcsFlash(s) ?: return null
-            return DisplayLookup(r,"Текущая неисправность: тип не определяется по числу вспышек",LegacyDisplayReference.VCS_SOURCE,false)
         }
         if(edition==DisplayReferenceEdition.HALDEX_GEN1_2005) {
             val r=HaldexEarlyReference.lookup(s) ?: return null

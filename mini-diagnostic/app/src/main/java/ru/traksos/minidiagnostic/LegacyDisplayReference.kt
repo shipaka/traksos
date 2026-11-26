@@ -4,22 +4,6 @@ package ru.traksos.minidiagnostic
 object LegacyDisplayReference {
     const val VCS_SOURCE="https://www.wabco-customercentre.com/catalog/docs/8150100083.pdf"
     const val HALDEX_SOURCE="https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006300018_ru.pdf"
-    // WABCO 8150100083, annex 2, printed page 28. Code identifies component, not failure mode.
-    private val vcs=mapOf(
-        "3" to "Датчик колеса C",
-        "4" to "Датчик колеса D",
-        "5" to "Датчик колеса E",
-        "6" to "Датчик колеса F",
-        "7" to "Внешний модулятор RD (L)",
-        "9" to "Впускной клапан 2 внутреннего модулятора",
-        "10" to "Впускной клапан 1 внутреннего модулятора",
-        "11" to "Выпускной клапан внутреннего модулятора",
-        "14" to "Электропитание",
-        "15" to "Внутренняя неисправность ЭБУ",
-        "18" to "Цепи GenericIO"
-    )
-    fun vcsFlash(code:String):String?=vcs[code]
-    val vcsCount:Int get()=vcs.size
     // Haldex Gen3 installation guide, 2013, p105, Info Centre 1 text codes only.
     private val haldex=buildMap<String,Pair<String,String>> {
         for (sensor in listOf("1A","1B","2A","2B")) {

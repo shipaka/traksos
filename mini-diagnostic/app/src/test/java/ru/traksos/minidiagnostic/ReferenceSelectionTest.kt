@@ -7,7 +7,7 @@ class ReferenceSelectionTest {
     @Test fun onlyExplicitAssociations() {
         val documented=CoverageRoadmap.targets.filter { it.stage==ResearchStage.DISPLAY_REFERENCE_PARTIAL }.map { it.id }.toSet()
         assertEquals(documented,ReferenceSelection.targetIds)
-        assertEquals(19,documented.size)
+        assertEquals(10,documented.size)
         assertEquals(listOf(DisplayReferenceEdition.WABCO_E,DisplayReferenceEdition.WABCO_E_SYSTEM),ReferenceSelection.forTarget("zf-tebs-e"))
         assertEquals(listOf(DisplayReferenceEdition.HALDEX_GEN2_INFO1),ReferenceSelection.forTarget("haldex-eb2"))
         for(id in listOf(null,"unknown","zf-iebs","kb-g20","kb-g22","sorl-research","kormee-research","haldex-eb4","ekran-ebpv"))

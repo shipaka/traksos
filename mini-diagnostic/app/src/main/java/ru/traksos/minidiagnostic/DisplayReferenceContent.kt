@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DisplayReferenceContent(targetId:String?=null) {
     val target=targetId?.let(CoverageRoadmap::byId)
-    val suggested=ReferenceSelection.forTarget(targetId).filter(TrailerDiagnosticScope::isMainReference)
+    val suggested=ReferenceSelection.forTarget(targetId)
     var showAll by remember(targetId) { mutableStateOf(target==null) }
     var edition by remember(targetId) { mutableStateOf<DisplayReferenceEdition?>(null) }
     var code by remember { mutableStateOf("") }
@@ -25,8 +25,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
         }
         if(showAll) Text("Другие справочники — только отдельный ручной поиск, не данные выбранного блока.")
     }
-    Text("Справочники мигающих кодов вынесены из основного направления. Это не число ошибок, доступных при электронном чтении.",style=MaterialTheme.typography.bodySmall)
-    val visible=if(showAll) DisplayReferenceEdition.entries.filter(TrailerDiagnosticScope::isMainReference) else suggested
+    val visible=if(showAll) DisplayReferenceEdition.entries else suggested
     visible.forEach { e ->
         OutlinedButton(onClick={ edition=e; code="" },modifier=Modifier.fillMaxWidth()) {
             Text((if(edition==e) "✓ " else "")+e.title)
@@ -37,16 +36,8 @@ fun DisplayReferenceContent(targetId:String?=null) {
         val placeholder=when(e) {
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
             DisplayReferenceEdition.HALDEX_MODAL_MODULAR -> "Например 05, 91 или CF"
-            DisplayReferenceEdition.HALDEX_UABS_ACTIVE -> "Две цифры, например 01"
             DisplayReferenceEdition.KNORR_TEBS4 -> "Десятичный код, например 137"
-            DisplayReferenceEdition.KNORR_KB4TA -> "Две группы, например 2/4"
-            DisplayReferenceEdition.BENDIX_TABS6 -> "Две группы, например 2/4"
-            DisplayReferenceEdition.SORL_ABS -> "Например 3.1"
-            DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"
-            DisplayReferenceEdition.VARIO_C_EXAMPLES -> "Две группы ошибки, например 1/3"
-            DisplayReferenceEdition.VCS_I_EXPERT -> "Две группы, например 3/5"
             DisplayReferenceEdition.WABCO_COMPACT_TESTER -> "Три символа, например 411"
-            DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"
             DisplayReferenceEdition.HALDEX_GEN1_2005, DisplayReferenceEdition.HALDEX_GEN2_INFO1, DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
             else -> "Например 003/05"
         }

@@ -2,14 +2,6 @@ package ru.traksos.minidiagnostic
 import org.junit.Assert.*
 import org.junit.Test
 class WabcoLegacyExpansionTest {
-    @Test fun vcsExpertPairsAreExact() {
-        assertEquals(39,WabcoVcsReference.count)
-        assertEquals("Колёсный датчик H2 (c)",WabcoVcsReference.lookup("3/5")?.first)
-        assertEquals("Пониженное напряжение",WabcoVcsReference.lookup("14/4")?.second)
-        assertNull(WabcoVcsReference.lookup("3/5/2"))
-        assertNull(WabcoVcsReference.lookup("3/6"))
-        assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.VCS_II_FLASH,"3/5"))
-    }
     @Test fun compactFieldsAndCountAreSeparate() {
         assertEquals(39,WabcoCompactReference.fieldCount)
         val x=WabcoCompactReference.lookup("411")!!
