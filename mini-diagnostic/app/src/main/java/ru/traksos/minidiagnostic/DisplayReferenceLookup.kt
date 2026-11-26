@@ -1,8 +1,10 @@
 package ru.traksos.minidiagnostic
 
 enum class DisplayReferenceEdition(val title:String) {
-    WABCO_D("WABCO TEBS D · SmartBoard"),
-    WABCO_E("WABCO TEBS E · SmartBoard"),
+    WABCO_D("WABCO TEBS D · памятка водителя"),
+    WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
+    WABCO_E("WABCO TEBS E · памятка водителя"),
+    WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
     HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
@@ -50,6 +52,10 @@ object DisplayReferenceLookup {
             return DisplayLookup(r.component,r.condition,VieDisplayReference.DOCUMENT+" · "+r.section,true)
         }
         if(!Regex("[0-9]{3}/[0-9]{2}").matches(s)) return null
+        if(edition==DisplayReferenceEdition.WABCO_D_SYSTEM || edition==DisplayReferenceEdition.WABCO_E_SYSTEM) {
+            val (component,type)=s.split("/")
+            return SmartBoardSystemReference.find(edition==DisplayReferenceEdition.WABCO_D_SYSTEM,component,type)
+        }
         val family=if(edition==DisplayReferenceEdition.WABCO_D) EcuFamily.WABCO_TEBS_D else EcuFamily.WABCO_TEBS_E
         val (component,type)=s.split("/")
         val r=SmartBoardReference.decode(family,component,type)

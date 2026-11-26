@@ -36,7 +36,7 @@ object SmartBoardReference {
         "221" to "Питание датчиков модулятора 24 В",
         "232" to "Питание датчиков модулятора 5 В",
         "246" to "Выключатель тормозного клапана прицепа"
-    )).associateBy { it.code }
+    )+SmartBoardSystemReference.driverExtras(true)).associateBy { it.code }
     private val e = (shared + components(
         "007" to "Релейный клапан EBS/ABS: управление соленоидами",
         "010" to "Модулятор прицепа: управление соленоидами",
@@ -47,7 +47,7 @@ object SmartBoardReference {
         "080" to "Внутренний датчик управляющего давления",
         "081" to "Датчик тормозного давления оси C–D",
         "083" to "Переключатель 2 длины прицепа"
-    )).associateBy { it.code }
+    )+SmartBoardSystemReference.driverExtras(false)).associateBy { it.code }
     private val types = listOf(
         "00" to "Значение выше допустимого",
         "01" to "Значение ниже допустимого",
