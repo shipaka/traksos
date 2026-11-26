@@ -19,6 +19,7 @@ export function setToken(t: string | null) {
     store.set('traksos.offlineIdentity', null);
     try { sessionStorage.removeItem('traksos.pendingOrder'); } catch { /* unavailable */ }
     store.set('traksos.savedOrderDraft.v1', null);
+    try { sessionStorage.removeItem('traksos.prefill'); } catch { /* unavailable */ }
   }
   token = t;
   store.set('traksos.token', t);

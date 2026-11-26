@@ -116,7 +116,12 @@ export function createApp(d: Deps) {
   orders.payments = payments;
   const auction = new AuctionService(d.db, settings, notifier, orders, now, d.verifiedRoadEta);
   orders.auction = auction;
-  profiles.onUnavailable = async (userId) => orders.afterRelease(await orders.release(d.db, userId, null));
+  profiles.onUnavailable = async (userId) => {
+    // Release both invitations and bids atomically; Db.tx retries a fully
+    // rolled-back deadlock. Notifications and subsequent dispatch stay outside.
+    const released = await d.db.tx(q => orders.release(q, userId, null));
+    await orders.afterRelease(released);
+  };
   const chat = new ChatService(d.db, settings, notifier, orders);
   const trakbot = new TrakBotService(d.db);
   const driverAir = new DriverAirService(d.db, now);
