@@ -68,7 +68,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
                                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url))) }
                             },modifier=Modifier.fillMaxWidth()) { Text("Фото в каталоге производителя") }
                         }
-                        Text("Сверьте маркировку на корпусе. Внешнее сходство не подтверждает поколение или совместимость.",
+                        Text("Фото показывает один вариант исполнения. Сверьте маркировку на корпусе: внешнее сходство не подтверждает поколение или совместимость.",
                             fontSize=13.sp)
                         if(item.scope==ScopeGroup.FUTURE_MARKET)
                             Text("Другой рынок или интерфейс; подключение не предусмотрено.",color=MaterialTheme.colorScheme.error,fontSize=13.sp)
@@ -129,7 +129,7 @@ fun ModelPhoto(item:ResearchTarget,modifier:Modifier) {
     }
     Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant,RoundedCornerShape(10.dp)).padding(6.dp),
         contentAlignment=Alignment.Center) {
-        if(resource!=0) Image(painterResource(resource),item.model,Modifier.fillMaxSize(),contentScale=ContentScale.Fit)
+        if(resource!=0) Image(painterResource(resource),item.model+" · пример исполнения",Modifier.fillMaxSize(),contentScale=ContentScale.Fit)
         else Text("Фото\nне добавлено",fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign=androidx.compose.ui.text.style.TextAlign.Center)
     }
