@@ -10,7 +10,8 @@ permissions:
   contents: read
 concurrency:
   group: mini-diagnostic-${{ github.ref }}
-  cancel-in-progress: true
+  # Let the running Android test finish; GitHub retains only the newest pending run.
+  cancel-in-progress: false
 jobs:
   demo:
     runs-on: ubuntu-latest
@@ -29,6 +30,14 @@ jobs:
       - name: Test and assemble isolated debug APK
         working-directory: mini-diagnostic
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Preserve Android unit-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-diagnostic-unit-results
+          path: mini-diagnostic/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: traksos-mini-diagnostic-demo

@@ -11,12 +11,19 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun OfflineCaptureContent(targetId:String?) {
-    var canMode by remember { mutableStateOf(false) }
-    OutlinedButton(onClick={canMode=!canMode},modifier=Modifier.fillMaxWidth()) {
-        Text(if(canMode) "Ввод полного ответа UDS" else "Импорт выбранных кадров CAN (ISO-TP)")
+    var mode by remember { mutableStateOf("UDS") }
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+        listOf("UDS","CAN","KWP").forEach { item ->
+            if(mode==item) Button(onClick={},enabled=false,modifier=Modifier.weight(1f)) { Text(item) }
+            else OutlinedButton(onClick={mode=item},modifier=Modifier.weight(1f)) { Text(item) }
+        }
     }
-    if(canMode) {
+    if(mode=="CAN") {
         OfflineCanContent(targetId)
+        return
+    }
+    if(mode=="KWP") {
+        OfflineKwpContent(targetId)
         return
     }
     var input by remember { mutableStateOf("") }
