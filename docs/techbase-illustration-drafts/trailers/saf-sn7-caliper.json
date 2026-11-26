@@ -1,0 +1,40 @@
+{
+  "id": "saf-sn7-caliper",
+  "manufacturer": "SAF / Knorr-Bremse",
+  "family": "SN7",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-sn7-caliper.svg",
+  "articles": {
+    "right": "3 080 0030 01",
+    "left": "3 080 0031 01",
+    "disc": "4 079 0013 01",
+    "pads": "3 057 0077 00"
+  },
+  "functional": {
+    "tappets": 2
+  },
+  "sources": [
+    {
+      "url": "https://literature1.safholland.com/sites/damedit/literature/SAF-06c-SparesManual-SAFaxles-SuspensionAssemblies_en-AU.pdf",
+      "reference": "items 59,60,064",
+      "visualChecked": false,
+      "screenshotError": "timeout"
+    },
+    {
+      "url": "https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/V_JA4nrEI0EBhB_Y006471-G-EN-003-WEB.pdf",
+      "reference": "Knorr-Bremse service manual SN6/SN7/SK7 §5.2.9",
+      "visualChecked": false
+    }
+  ],
+  "additional": {
+    "axleExample": "SK RB 9022K",
+    "tappetKit": "3 434 3814 00",
+    "guideSealKit": "3 434 3812 00",
+    "padHolderKit": "3 434 3809 00"
+  },
+  "limitations": [
+    "Original conceptual graphic; not verified physical geometry or handedness depiction",
+    "No exact axle serial/VIN fitment, mounting or repair instructions",
+    "No rendered QA or expert acceptance; not published"
+  ]
+}
