@@ -74,6 +74,7 @@ private fun MiniApp() {
     var scanning by remember { mutableStateOf(false) }
     var historyOpen by remember { mutableStateOf(false) }
     var detail by remember { mutableIntStateOf(-1) }
+    var bleProbeOpen by remember { mutableStateOf(false) }
 
     fun now() = SystemClock.elapsedRealtime() - session.startedAt
     fun apply(desired: LightState) {
@@ -112,11 +113,13 @@ private fun MiniApp() {
         Splash()
         return
     }
+    if (bleProbeOpen) BenchBleDialog { bleProbeOpen = false }
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Brand(if (tab == 0) "Проверка освещения" else "Диагностика прицепа")
             Row(Modifier.fillMaxWidth().border(1.dp, if(state.connected) Green else Line, RoundedCornerShape(10.dp))
+                .clickable { off(); scanning = false; if (scan < 100) scan = 0; bleProbeOpen = true }
                 .padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(if (state.connected) "● Виртуальный адаптер" else "○ Демо отключено",
                     color = if(state.connected) Green else Muted, modifier = Modifier.weight(1f), fontSize = 13.sp)
