@@ -1,0 +1,111 @@
+{
+  "batch": "TECHBASE-EATON-ENDURANT-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "sources": [
+    {
+      "url": "https://www.eatoncummins.com/content/dam/eaton-cummins/products/endurant-xd/endurant-xd-series-automated-transmissions-TRIG0960.pdf",
+      "document": "TRIG0960",
+      "printedPages": [
+        3,
+        4,
+        6,
+        8
+      ],
+      "inspection": "Text and page screenshots verified; p4 clutch product photos, p6 two assembly views, p8 dimension drawing. p7 screenshot returned 403 and was not used."
+    },
+    {
+      "url": "https://www.eatoncummins.com/us/en-us/catalog/transmissions/endurant.html",
+      "inspection": "official HTML product specifications"
+    },
+    {
+      "url": "https://www.eatoncummins.com/mx/es-mx/products/transmissions/endurant-xd-vs-endurant-xd-pro-product-comparison.html",
+      "inspection": "official HTML comparison"
+    },
+    {
+      "url": "https://www.eatoncummins.com/us/en-us/company/news-releases/endurant-xd-series-raises-the-bar.html",
+      "inspection": "official release search excerpt, corroborated by TRIG0960"
+    }
+  ],
+  "assets": [
+    {
+      "name": "xd-clutch-variants.svg",
+      "facts": [
+        "430 mm single plate push-to-release, 254/285 mm damper variants and six exact part IDs, printed p4"
+      ],
+      "source": "https://www.eatoncummins.com/content/dam/eaton-cummins/products/endurant-xd/endurant-xd-series-automated-transmissions-TRIG0960.pdf",
+      "status": "HOLD",
+      "limitations": [
+        "Not a VIN-specific installation or dimensional drawing",
+        "Independent rendering and technical review pending",
+        "No exact installed-chassis photo verified"
+      ]
+    },
+    {
+      "name": "xd-pto.svg",
+      "facts": [
+        "bottom 8-bolt and rear 4-bolt PTO openings; input shaft driven; relative positions from printed p6"
+      ],
+      "source": "https://www.eatoncummins.com/content/dam/eaton-cummins/products/endurant-xd/endurant-xd-series-automated-transmissions-TRIG0960.pdf; https://www.eatoncummins.com/us/en-us/company/news-releases/endurant-xd-series-raises-the-bar.html",
+      "status": "HOLD",
+      "limitations": [
+        "Not a VIN-specific installation or dimensional drawing",
+        "Independent rendering and technical review pending",
+        "No exact installed-chassis photo verified"
+      ]
+    },
+    {
+      "name": "xd-mechatronics.svg",
+      "facts": [
+        "MTM/TCM on upper assembly, air fitting, output speed sensor harness; pneumatic gearbox/clutch actuators; p3/6 photos"
+      ],
+      "source": "https://www.eatoncummins.com/content/dam/eaton-cummins/products/endurant-xd/endurant-xd-series-automated-transmissions-TRIG0960.pdf",
+      "status": "HOLD",
+      "limitations": [
+        "Not a VIN-specific installation or dimensional drawing",
+        "Independent rendering and technical review pending",
+        "No exact installed-chassis photo verified"
+      ]
+    },
+    {
+      "name": "xd-temperature.svg",
+      "facts": [
+        "Oil continuous up to 121°C, 121–135°C <1% average and <=30 minutes consecutive; >135 prohibited; electrical/air component limit 105°C p4"
+      ],
+      "source": "https://www.eatoncummins.com/content/dam/eaton-cummins/products/endurant-xd/endurant-xd-series-automated-transmissions-TRIG0960.pdf",
+      "status": "HOLD",
+      "limitations": [
+        "Not a VIN-specific installation or dimensional drawing",
+        "Independent rendering and technical review pending",
+        "No exact installed-chassis photo verified"
+      ]
+    },
+    {
+      "name": "hd-ratios.svg",
+      "facts": [
+        "Official HD B and C forward gear ratios identical 1–11; 12th .77 only C"
+      ],
+      "source": "https://www.eatoncummins.com/us/en-us/catalog/transmissions/endurant.html",
+      "status": "HOLD",
+      "limitations": [
+        "Not a VIN-specific installation or dimensional drawing",
+        "Independent rendering and technical review pending",
+        "No exact installed-chassis photo verified"
+      ]
+    },
+    {
+      "name": "xd-vs-pro.svg",
+      "facts": [
+        "3/6 reverse; standard/extreme duty; torque up to 1850/2050 lb-ft; class D, multi-speed drivelines and split-shaft PTO distinction"
+      ],
+      "source": "https://www.eatoncummins.com/mx/es-mx/products/transmissions/endurant-xd-vs-endurant-xd-pro-product-comparison.html",
+      "status": "HOLD",
+      "limitations": [
+        "Not a VIN-specific installation or dimensional drawing",
+        "Independent rendering and technical review pending",
+        "No exact installed-chassis photo verified"
+      ]
+    }
+  ],
+  "rights": "Original functional vector diagrams; no OEM artwork embedded. Static watermark not ACL.",
+  "publication": "HOLD until rendered/technical review and specific application evidence; no vehicle installation photography claimed."
+}
