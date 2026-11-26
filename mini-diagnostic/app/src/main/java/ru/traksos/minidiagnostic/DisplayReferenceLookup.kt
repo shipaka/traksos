@@ -20,7 +20,7 @@ enum class DisplayReferenceEdition(val title:String) {
     KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
     KNORR_G2_TD2077("Knorr TEBS G2 · TD-2077 (предварительная сверка)"),
     KNORR_G22_PRESSURE("Knorr TEBS G2.2 · давление, бюллетень 2019"),
-    KNORR_G2_EXAMPLE("Knorr TEBS G2 · заводской пример ECUtalk 2019"),
+    KNORR_G2_EXAMPLE("Knorr TEBS G2 · заводские примеры ECUtalk / TIM G2"),
 }
 data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
 object DisplayReferenceLookup {

@@ -14,7 +14,7 @@ object ReferenceInventory {
         ReferenceCount("Knorr TEBS4",KnorrTebs4Reference.count),
         ReferenceCount("Haldex MODAL/MODULAR",HaldexModalReference.count),
         ReferenceCount("Haldex Gen3 DIAG+ additional",HaldexGen3DiagReference.count),
-        ReferenceCount("Knorr G2 OEM ECUtalk example",KnorrG2ExampleReference.count),
+        ReferenceCount("Knorr G2 OEM ECUtalk / TIM examples",KnorrG2ExampleReference.count),
         ReferenceCount("Knorr G2.2 pressure bulletin and TD-2077",KnorrG22PressureReference.count),
         ReferenceCount("Haldex EB+4.0 OEM and WABCO Humbaur observed examples",ModernDisplayExamples.count),
         ReferenceCount("WABCO TEBS E explicit OEM pair",WabcoEExactReference.count),
