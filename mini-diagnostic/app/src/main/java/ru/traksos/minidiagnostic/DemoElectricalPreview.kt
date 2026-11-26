@@ -22,7 +22,7 @@ object DemoElectricalPreview {
             DemoElectricalCase.NORMAL -> ElectricalPreview(24600,24200,true,0,null)
             DemoElectricalCase.SAG -> ElectricalPreview(17800,17200,false,4,"Просадка напряжения · в этом примере ответ блока не получен")
             DemoElectricalCase.NO_POWER -> ElectricalPreview(0,0,null,null,"Нет напряжения в точке измерения · причина не установлена")
-            DemoElectricalCase.NO_CAN -> ElectricalPreview(24600,24200,false,null,"Нет обмена CAN · причина не установлена")
+            DemoElectricalCase.NO_CAN -> ElectricalPreview(null,null,false,null,"Нет обмена CAN · причина не установлена")
             DemoElectricalCase.NO_MEASUREMENT -> ElectricalPreview(null,null,true,0,null)
         }
     }
