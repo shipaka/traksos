@@ -3,7 +3,14 @@ import org.junit.Assert.*
 import org.junit.Test
 class WabcoElexReferenceTest {
     @Test fun exactPairsAndSeparateAuxiliaryNamespace() {
-        assertEquals(59,WabcoElexReference.count)
+        assertEquals(198,WabcoElexReference.count)
+        assertEquals(WabcoElexReference.lookup("2944-09"),WabcoElexReference.lookup("4711309"))
+        assertTrue(WabcoElexReference.lookup("2944-09")!!.condition!!.contains("Нет связи"))
+        assertTrue(WabcoElexReference.lookup("4016-03")!!.condition!!.contains("Выше 30"))
+        assertTrue(WabcoElexReference.lookup("2182-12")!!.component!!.contains("противоречива"))
+        assertTrue(WabcoElexReference.lookup("2384-14")!!.source!!.contains("#page=38"))
+        for(code in listOf("4065-12","4066-12","4067-12","4068-12","4069-12","4088-12"))
+            assertNull(WabcoElexReference.lookup(code))
         val r=DisplayReferenceLookup.find(DisplayReferenceEdition.WABCO_ELEX,"1552-03")!!
         assertEquals(r,DisplayReferenceLookup.find(DisplayReferenceEdition.WABCO_ELEX,"2483503"))
         assertTrue(r.exactPair)
