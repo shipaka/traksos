@@ -97,6 +97,7 @@ jobs:
           node e2e/trakbot-android-compact.mjs
           node e2e/trakbot-session-techcodes-20261124.mjs
           node e2e/support-account-lifecycle-20261124.mjs
+          node e2e/notification-history-pagination.mjs
           node e2e/public-service-routing.mjs
           node e2e/legacy-guest-deeplinks.mjs
           node e2e/api-session-race.mjs

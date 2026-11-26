@@ -364,12 +364,27 @@ export function createApp(d: Deps) {
     });
     return { ok: true };
   });
-  r.get('/api/me/notifications', true, async (c: AuthedCtx) => ({
-    unread: (await d.db.one<{ n: number }>('select count(*)::int n from notifications where user_id=$1 and read_at is null', [c.user.id]))!.n,
-    items: await d.db.query(
+  r.get('/api/me/notifications', true, async (c: AuthedCtx) => {
+    // Stable descending keyset pagination; the cursor is only a boundary, never an identity.
+    const rawBefore = c.query.get('before');
+    const rawLimit = c.query.get('limit');
+    const validPositiveInteger = (raw: string) => /^[1-9][0-9]*$/.test(raw) && Number.isSafeInteger(Number(raw));
+    if (rawBefore !== null && (!validPositiveInteger(rawBefore) || Number(rawBefore) > 2147483647))
+      throw bad('bad_notification_cursor', 'Неверный курсор уведомлений');
+    if (rawLimit !== null && (!validPositiveInteger(rawLimit) || Number(rawLimit) > 100))
+      throw bad('bad_notification_limit', 'Размер страницы должен быть от 1 до 100');
+    const limit = rawLimit === null ? 100 : Number(rawLimit);
+    const before = rawBefore === null ? null : Number(rawBefore);
+    const unread = (await d.db.one<{ n: number }>(
+      'select count(*)::int n from notifications where user_id=$1 and read_at is null', [c.user.id]))!.n;
+    const rows = await d.db.query(
       `select id::int as id, kind, body, data, created_at, read_at, title
-         from notifications where user_id=$1 order by id desc limit 100`, [c.user.id]),
-  }));
+         from notifications where user_id=$1${before === null ? '' : ' and id < $3'}
+         order by id desc limit $2`,
+      before === null ? [c.user.id, limit + 1] : [c.user.id, limit + 1, before]);
+    const items = rows.slice(0, limit);
+    return { unread, items, nextBefore: rows.length > limit ? items[items.length - 1].id : null };
+  });
   r.post('/api/me/notifications/:id/read', true, async (c: AuthedCtx) => {
     const id=Number(c.params.id);
     if (!Number.isSafeInteger(id) || id<=0) throw bad('bad_notification_id','Неверный номер уведомления');

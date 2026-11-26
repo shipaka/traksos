@@ -107,8 +107,10 @@ test('support UI guard: real topics and 60-minute policy; unread state resets pe
   assert.match(code, /Повторить загрузку тем/);
   assert.match(code, /maxLength=\{2000\}/,
     'UI must match the server 2000-character limit');
-  assert.match(code, /setN\(0\)/,
-    'unread badge must clear immediately when the user identity changes');
+  assert.match(code, /setCount\(\{actor,n:0\}\)/,
+    'unread badge must reset when the user identity changes');
+  assert.match(code, /return count\.actor===actor\?count\.n:0/,
+    'badge must hide a previous actor count before the effect runs');
   assert.match(code, /generation/,
     'a stale previous-account response must not repopulate unread badges');
   assert.match(code, /\[me\?\.id\]/,
