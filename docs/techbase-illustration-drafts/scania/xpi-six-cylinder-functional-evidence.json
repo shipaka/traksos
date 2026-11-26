@@ -1,0 +1,329 @@
+{
+  "schema": "research-draft-v1",
+  "id": "scania-xpi-i6-functional-evidence",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "scope": {
+    "make": "Scania",
+    "family": "R (candidate family)",
+    "system": "XPI common rail",
+    "source_engine_layout": "inline six",
+    "specific_engine_code": null,
+    "production_year": null,
+    "vin": null,
+    "not_transferable_to": [
+      "DC09 I5",
+      "DC16 V8",
+      "Super variants without OEM verification",
+      "PDE",
+      "HPI"
+    ]
+  },
+  "sources": [
+    {
+      "id": "thesis",
+      "authors": [
+        "Marcus Akkila",
+        "Denis Ramsden"
+      ],
+      "title": "Filtrering av trycksvängningar i en railtrycksignal med IIR bandstoppfilter för bränslemängdsestimering",
+      "year": 2022,
+      "document_id": "TRITA-ITM-EX 2022:551",
+      "url": "https://www.diva-portal.org/smash/get/diva2%3A1737628/FULLTEXT01.pdf",
+      "scope": "Sections 2.2–2.2.3, printed pp10–13; research in collaboration with Scania",
+      "review": "PDF text and parsed figure descriptions inspected; screenshot attempts timed out; no OEM figures copied or redistribution rights assumed"
+    },
+    {
+      "id": "oem-r",
+      "url": "https://www.scania.com/uk/en/home/products/trucks/r-series/r-series-specifications.html",
+      "scope": "13-litre DC13 I6 XPI, 16-litre DC16 V8 XPI; not a chassis-specific workshop manual"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "tank",
+      "name": "Топливный бак",
+      "role": "Хранение топлива и приём обратного потока",
+      "evidence": "fig 2.2.1",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "supply",
+      "name": "Подкачивающий насос",
+      "role": "Подача топлива в низконапорный контур",
+      "evidence": "fig 2.2.2 #1",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "filter",
+      "name": "Фильтры с водоотделением",
+      "role": "Очистка перед высоконапорной частью",
+      "evidence": "fig 2.2.2 #2",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "meter",
+      "name": "Дозирующий клапан на входе",
+      "role": "Регулирование поступающего топлива",
+      "evidence": "fig 2.2.2 #3",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "hpp",
+      "name": "ТНВД",
+      "role": "Создание высокого давления",
+      "evidence": "fig 2.2.2 #4",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "rail",
+      "name": "Аккумулятор давления / рампа",
+      "role": "Общий запас топлива для впрыска",
+      "evidence": "fig 2.2.2 #5",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "rail_sensor",
+      "name": "Датчик давления рампы",
+      "role": "Измерение давления, обратная связь",
+      "evidence": "fig 2.2.2 #6; section 2.2.3",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "dump",
+      "name": "Механический клапан сброса",
+      "role": "Предусмотренный конструкцией контур сброса",
+      "evidence": "fig 2.2.2 #7",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "return",
+      "name": "Обратный коллектор",
+      "role": "Отвод возвратного топлива",
+      "evidence": "fig 2.2.2 #8",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "injectors",
+      "name": "Электронно управляемые форсунки",
+      "role": "Впрыск в цилиндры, шесть в описанном I6 примере",
+      "evidence": "fig 2.2.2 #9; section 2.2.1",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "ecu",
+      "name": "Блок управления двигателем",
+      "role": "Управление впрыском по электронным сигналам",
+      "evidence": "section 2.2.1; control conceptual",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "supply_sensor",
+      "name": "Датчик давления подачи",
+      "role": "Контроль подачи в исследовательской конфигурации",
+      "evidence": "fig 2.2.1",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    },
+    {
+      "id": "fuel_pt",
+      "name": "Датчик давления и температуры топлива",
+      "role": "Измерение параметров в исследовательской конфигурации",
+      "evidence": "fig 2.2.1",
+      "article": null,
+      "installation_location": null,
+      "vin_fitment": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "tank",
+      "to": "supply",
+      "type": "low_pressure_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "supply",
+      "to": "filter",
+      "type": "low_pressure_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "filter",
+      "to": "meter",
+      "type": "low_pressure_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "meter",
+      "to": "hpp",
+      "type": "metered_supply",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "hpp",
+      "to": "rail",
+      "type": "high_pressure_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "rail",
+      "to": "injectors",
+      "type": "high_pressure_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "rail",
+      "to": "rail_sensor",
+      "type": "pressure_measurement",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "rail",
+      "to": "dump",
+      "type": "pressure_relief_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "injectors",
+      "to": "return",
+      "type": "return_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "return",
+      "to": "tank",
+      "type": "return_function",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "rail_sensor",
+      "to": "ecu",
+      "type": "conceptual_feedback",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "ecu",
+      "to": "injectors",
+      "type": "conceptual_control",
+      "physical_route": null,
+      "verified_wiring": false
+    },
+    {
+      "from": "ecu",
+      "to": "meter",
+      "type": "conceptual_control",
+      "physical_route": null,
+      "verified_wiring": false
+    }
+  ],
+  "graph_warning": "Функциональная последовательность — авторское обобщение текста и подписей, не физическая трасса. Места ответвлений, точные связи датчиков подачи и давления/температуры, распиновка, конкретная версия насоса и аварийного клапана не подтверждены. Не выдавать за монтажную или ремонтную схему.",
+  "related_catalogue_record": {
+    "system": "intake_not_fuel_rail",
+    "manufacturer": "Cojali",
+    "article": "2260995",
+    "oem_main": "1862797",
+    "oem_cross_reference": "2131817",
+    "source": "https://www.cojaliparts.com/en/reference/1862797/boost-pressure-sensor/2260995/",
+    "specific_application_row": {
+      "vehicle": "truck",
+      "make": "Scania",
+      "series": "P,G,R,T",
+      "type": "EURO 6",
+      "model": "R",
+      "engine": "DC16 XPI"
+    },
+    "details": {
+      "connector": "LEAR 5-pin socket",
+      "cable_mm": 1225,
+      "range_bar": [
+        0,
+        5
+      ],
+      "supply_v": 5
+    },
+    "warning": "Датчик давления и температуры воздуха во впуске. Не датчик давления топливной рампы. Не присваивать к I6 DC13 без отдельного подтверждения.",
+    "vin_fitment": null
+  },
+  "diagnostic_context": [
+    {
+      "symptom": "Длительный запуск или остановка двигателя",
+      "possible_systems": [
+        "подача топлива",
+        "высоконапорная часть",
+        "электронное управление"
+      ],
+      "note": "Сравнить данные диагностики с OEM для конкретной версии. Не ставить диагноз по симптому."
+    },
+    {
+      "symptom": "Ошибка давления рампы",
+      "possible_systems": [
+        "измерение",
+        "подача",
+        "регулирование",
+        "обратный контур"
+      ],
+      "note": "Не подменять измерение давления топлива датчиком наддува; не использовать универсальные пределы."
+    }
+  ],
+  "safety": "Топливо под высоким давлением опасно. Не разъединять высоконапорные элементы при работающем двигателе или наличии остаточного давления. Только квалифицированный специалист по OEM-процедуре.",
+  "illustration_briefs": [
+    {
+      "id": "xpi-i6-main-flow",
+      "focus": "Показать основной функциональный путь, шесть форсунок только в I6 примере, обратный поток отдельно."
+    },
+    {
+      "id": "xpi-rail-control",
+      "focus": "Датчик давления рампы, ECU, дозирующий клапан, форсунки; отдельно обозначить механический сброс."
+    },
+    {
+      "id": "xpi-sensors-distinction",
+      "focus": "Различать датчик наддува (конкретный артикул DC16) и датчик рампы (номер неизвестен); не объединять I6/V8."
+    }
+  ],
+  "gates": {
+    "source_text_checked": true,
+    "source_screenshot": "failed_timeout",
+    "exact_model_fitment": "unknown",
+    "oem_parts_for_fuel_components": "missing",
+    "exact_geometry": "missing",
+    "expert_review": "pending",
+    "visual_assets": "not_created",
+    "runtime_import": "not_performed"
+  }
+}
