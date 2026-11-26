@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class DiagnosticRoutePolicyTest {
     private val fixture=RouteIdentity("fixture","TEST","HW1","SW1","TEST-CABLE",ConnectionPlace.DIRECT,ElectricalPath.K_LINE)
-    private val safe=BenchConditions(true,true,true,true,true,true)
+    private val safe=BenchConditions(true,true,true,true,true,true,sessionAuthenticated=true)
     @Test fun emptyProductionPolicyDeniesEveryRequest() {
         RouteAction.entries.forEach { assertEquals(RouteDecision.Denied(RouteDenial.UNKNOWN_ROUTE),DiagnosticRoutePolicy().evaluate(fixture,it,safe)) }
     }
@@ -21,6 +21,15 @@ class DiagnosticRoutePolicyTest {
             assertTrue(p.evaluate(fixture,RouteAction.READ,it) is RouteDecision.Denied)
         }
         assertEquals(RouteDecision.Denied(RouteDenial.CLEAR_NOT_CONFIRMED),p.evaluate(fixture,RouteAction.CLEAR,safe.copy(repairConfirmed=false)))
+    }
+    @Test fun authenticationIsMandatoryAndDefaultsToDenied() {
+        val p=DiagnosticRoutePolicy(listOf(VerifiedRoute(fixture,"synthetic",true,true)))
+        val unsigned=BenchConditions(true,true,true,true,true,true)
+        RouteAction.entries.forEach {
+            assertEquals(RouteDecision.Denied(RouteDenial.SESSION_NOT_AUTHENTICATED),p.evaluate(fixture,it,unsigned))
+            assertEquals(RouteDecision.Denied(RouteDenial.SESSION_NOT_AUTHENTICATED),
+                p.evaluate(fixture,it,safe.copy(sessionAuthenticated=false)))
+        }
     }
     @Test fun researchNeverAuthorizes() {
         assertEquals(14,CableResearch.rows.size)
