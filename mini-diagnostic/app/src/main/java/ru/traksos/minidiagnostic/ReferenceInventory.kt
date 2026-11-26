@@ -21,6 +21,8 @@ object ReferenceInventory {
         ReferenceCount("SORL trailer ABS electronic tester",SorlTrailerTesterReference.count),
         ReferenceCount("Haldex U-ABS Info Centre 2",HaldexUabsReference.count),
     )
+    // Independently documented fields by electronic-reader edition, not new unique DTCs.
+    fun electronicReaderComponentCount():Int=WabcoCodeReaderReference.componentCount
     fun total():Int=counts().sumOf { it.entries }
     // Preliminary secondary-source entries are not included in the established inventory.
     fun provisionalCount():Int=KnorrG2Td2077Reference.count+WabcoCdBulletinReference.count
