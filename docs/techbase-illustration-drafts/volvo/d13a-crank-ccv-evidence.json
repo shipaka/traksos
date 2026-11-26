@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "engine": "D13A",
+  "candidate_family": "Volvo FH/FM",
+  "sources": [
+    {
+      "title": "Volvo service bulletin 200 281 01, February 2006",
+      "url": "https://www.scribd.com/document/600863296/D13A-D-F-200-281-1-8-06",
+      "printed_pages": [
+        13,
+        14,
+        49,
+        50
+      ],
+      "review": "HTML text; source figures not inspected or copied"
+    },
+    {
+      "title": "Volvo D13A500 EU4SCR, fact sheet 2013-04-19",
+      "url": "https://stpi.it.volvo.com/STPIFiles/Volvo/FactSheet/D13A500%2C%20EU4SCR_Eng_01_1499925.pdf",
+      "page": 2,
+      "review": "PDF page visually checked; CCV-C optional and hydraulic dampers confirmed"
+    }
+  ],
+  "assets": [
+    {
+      "file": "d13a-crankshaft-flywheel.svg",
+      "scope": "7 main bearings, center thrust bearing, drilled lubrication paths with center exception, flywheel sensor grooves and replaceable ring gear."
+    },
+    {
+      "file": "d13a-viscous-damper.svg",
+      "scope": "Front flange hydraulic damper, inertia ring and viscous silicone oil, qualitative oscillations only."
+    },
+    {
+      "file": "d13a-crankcase-ventilation.svg",
+      "scope": "Compare open oil traps/outlet with optional closed centrifuge driven by engine oil, cleaned gas to turbo inlet, oil to sump."
+    }
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "vin_applicability": "unknown",
+  "geometry": "conceptual original vector",
+  "render_review": "pending",
+  "expert_review": "pending",
+  "verified_count_increment": 0,
+  "limitations": "No OEM figures copied; no exact component shape, part number, timing marks, assembly instructions, or pressure specifications. Need physical reference, render review and authorized model-specific technical review."
+}
