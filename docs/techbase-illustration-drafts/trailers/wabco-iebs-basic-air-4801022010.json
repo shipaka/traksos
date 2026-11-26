@@ -1,0 +1,77 @@
+{
+  "id": "wabco-iebs-basic-air-4801022010",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-iebs-basic-air-4801022010.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en_GB/4801022010",
+      "publisher": "ZF/WABCO",
+      "checked": "2026-11-26"
+    },
+    {
+      "url": "https://aftermarket.zf.com/en/aftermarket-portal/knowledge-hub/iebs-trailer-modulator/",
+      "publisher": "ZF",
+      "section": "Variants"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/e1_xx9387_075.pdf",
+      "publisher": "Kraftfahrt-Bundesamt",
+      "page": 2,
+      "approval": "E1*10R06/02*9387*02",
+      "textChecked": true,
+      "visualChecked": false,
+      "screenshotError": "404"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102523.pdf",
+      "publisher": "ZF/WABCO",
+      "section": "4.1",
+      "page": 88,
+      "textChecked": true,
+      "visualChecked": false
+    }
+  ],
+  "component": {
+    "manufacturer": "WABCO",
+    "article": "4801022010",
+    "nameRu": "Модулятор тормозной системы прицепа iEBS Basic Air",
+    "configuration": "2S/2M",
+    "voltageV": 24,
+    "maxOperatingPressureBar": 9,
+    "dimensionsMm": [
+      257,
+      220,
+      170
+    ],
+    "massKg": 5.34,
+    "temperatureC": [
+      -40,
+      65
+    ],
+    "protection": "IP 6K9K",
+    "gtin": "04057885109935"
+  },
+  "functionalContext": [
+    "two wheel-speed input channels",
+    "two brake modulation channels",
+    "CAN ISO 11992",
+    "lateral acceleration sensor for RSS",
+    "pneumatic distribution module PDM"
+  ],
+  "related": [
+    {
+      "article": "4410328080",
+      "role": "S+ wheel-speed sensor; iEBS family context; exact configuration fitment not verified"
+    },
+    {
+      "article": "4497330300",
+      "role": "3m wheel-speed sensor extension; family context; exact configuration fitment not verified"
+    }
+  ],
+  "limitations": [
+    "No exact chassis/model/year/VIN fitment verified",
+    "Diagram is functional not an OEM mounting drawing; port positions and physical geometry intentionally schematic",
+    "PDF screenshot unavailable; expert review and visual rendering pending",
+    "Do not equate iEBS Basic Air with TEBS E or Premium"
+  ]
+}
