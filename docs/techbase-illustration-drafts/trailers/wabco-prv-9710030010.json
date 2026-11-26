@@ -1,0 +1,60 @@
+{
+  "id": "wabco-prv-9710030010",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-prv-9710030010.svg",
+  "sources": [
+    {
+      "publisher": "ZF/WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/en/9710030010",
+      "checked": "2026-11-26"
+    },
+    {
+      "publisher": "ZF",
+      "url": "https://aftermarket.zf.com/en/aftermarket-portal/knowledge-hub/park-release-valve/",
+      "checked": "2026-11-26",
+      "controlPhotoVisuallyChecked": true
+    }
+  ],
+  "component": {
+    "article": "9710030010",
+    "nameRu": "Клапан управления стояночным тормозом PRV",
+    "systemFamily": "Trailer iEBS",
+    "maxOperatingPressureBar": 12,
+    "dimensionsMm": [
+      180,
+      110,
+      100
+    ],
+    "massKg": 0.515,
+    "temperatureC": [
+      -40,
+      65
+    ],
+    "gtin": "04057876222698",
+    "control": "one red control; three functional states",
+    "testConnection": false
+  },
+  "related": [
+    {
+      "article": "4801022010",
+      "relation": "iEBS family functional context, exact fitment unknown"
+    },
+    {
+      "article": "9710030030",
+      "relation": "distinct PRV variant, not assumed interchangeable"
+    },
+    {
+      "article": "9710030290",
+      "relation": "PRV variant with test connection, not assumed interchangeable"
+    },
+    {
+      "article": "9710029000",
+      "relation": "older PREV family, not equivalent"
+    }
+  ],
+  "limitations": [
+    "Illustration is conceptual; actual body geometry, control orientation, physical lines, exact chassis and VIN not verified",
+    "No installation, brake release or repair procedure",
+    "No expert approval or runtime catalogue publication"
+  ]
+}
