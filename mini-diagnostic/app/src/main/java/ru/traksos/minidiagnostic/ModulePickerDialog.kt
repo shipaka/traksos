@@ -26,6 +26,9 @@ import androidx.compose.ui.window.DialogProperties
 // Only an explicitly mapped model-specific local image may be shown as a photo.
 // No Internet permission or remote image loading is added to the bench app.
 private val modelPhotoSources=mapOf(
+    "haldex-eb1" to "https://www.haldex.com/en/europe/trailer-application-guide/ebs/eb-gen2gen1/eb-gen1-series/",
+    "sorl-trailer-abs" to "https://optipart.ru/product/sorl/35503100090/",
+    "sorl-research" to "https://optipart.ru/product/sorl/35682030050/",
     "zf-tebs-e" to "https://www.wabco-customercentre.com/catalog/en_GB/4801020300",
     "zf-tebs-c" to "https://www.wabco-customercentre.com/catalog/sv_SE/4801020000",
     "kb-itebs-x" to "https://newsroom.knorr-bremse.com/en/successful-launch-knorr-bremse-rolls-out-latest-generation-of-itebs-x-electronic-trailer-braking-system/",
@@ -66,7 +69,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
                         modelPhotoSources[item.id]?.let { url ->
                             OutlinedButton(onClick={
                                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url))) }
-                            },modifier=Modifier.fillMaxWidth()) { Text("Фото в каталоге производителя") }
+                            },modifier=Modifier.fillMaxWidth()) { Text("Открыть каталог") }
                         }
                         Text("Фото показывает один вариант исполнения. Сверьте маркировку на корпусе: внешнее сходство не подтверждает поколение или совместимость.",
                             fontSize=13.sp)
