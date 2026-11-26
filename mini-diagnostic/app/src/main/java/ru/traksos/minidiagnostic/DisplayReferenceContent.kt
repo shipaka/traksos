@@ -33,6 +33,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
     }
     edition?.let { e ->
         if(target!=null && e !in suggested) Text("Выбран другой справочник. Результат не относится автоматически к выбранному модулятору.",color=MaterialTheme.colorScheme.error)
+        if(e==DisplayReferenceEdition.HALDEX_UABS_INFO2) Text("Для полного набора функций Info Centre 2 производитель указывает ПО U-ABS A650 или новее. Это не подтверждение совместимости адаптера TrakSOS.")
         val placeholder=when(e) {
             DisplayReferenceEdition.HALDEX_UABS_INFO2 -> "Например Power Low Voltage"
             DisplayReferenceEdition.HALDEX_GEN3_DIAG -> "Например ECU shutdown FET"
