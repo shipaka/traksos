@@ -7,7 +7,7 @@ class InterfaceGuard {
 public:
     enum class Path : uint8_t { Off=0, Iso11992=1, KLine=2, Iso11898=3, WarningInput=4 };
     enum class State : uint8_t { Off, Break, Active, Latched };
-    struct Conditions { bool session; bool permit; bool cable; bool lightOff; bool hardwareOk; };
+    struct Conditions { bool session; bool permit; bool cable; bool lightOff; bool hardwareOk; bool authenticated; };
     static constexpr uint32_t breakMs=100; // virtual test value, not final electrical timing
     static constexpr uint32_t leaseMs=2000;
     bool select(Path path,uint32_t now,Conditions c) {
@@ -34,7 +34,7 @@ public:
     }
     void fault() { desired_=Path::Off; state_=State::Latched; }
     bool reset(Conditions c) {
-        if(state_!=State::Latched || !c.hardwareOk || c.session || c.permit || !c.lightOff) return false;
+        if(state_!=State::Latched || !c.hardwareOk || c.session || c.permit || c.authenticated || !c.lightOff) return false;
         state_=State::Off; desired_=Path::Off; return true;
     }
     State state() const { return state_; }
@@ -44,7 +44,7 @@ public:
     bool txAllowed() const { return state_==State::Active && desired_!=Path::WarningInput; }
 private:
     static bool known(Path p) { return p>=Path::Iso11992 && p<=Path::WarningInput; }
-    static bool safe(Conditions c) { return c.session && c.permit && c.cable && c.lightOff && c.hardwareOk; }
+    static bool safe(Conditions c) { return c.session && c.permit && c.cable && c.lightOff && c.hardwareOk && c.authenticated; }
     State state_=State::Off;
     Path desired_=Path::Off;
     uint32_t since_=0,last_=0;

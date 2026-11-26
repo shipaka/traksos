@@ -3,7 +3,7 @@
 using G=InterfaceGuard;
 int main() {
     G g;
-    const G::Conditions ok{true,true,true,true,true};
+    const G::Conditions ok{true,true,true,true,true,true};
     assert(g.enabledMask()==0 && !g.txAllowed());
     assert(g.select(G::Path::Iso11992,0,ok));
     g.tick(99,ok); assert(g.enabledMask()==0);
@@ -21,11 +21,25 @@ int main() {
     auto failure=ok; failure.hardwareOk=false;
     g.tick(4101,failure); assert(g.state()==G::State::Latched && g.enabledMask()==0);
     assert(!g.select(G::Path::KLine,4200,ok)); assert(!g.reset(ok));
-    assert(g.reset({false,false,false,true,true})); assert(g.enabledMask()==0);
+    assert(g.reset({false,false,false,true,true,false})); assert(g.enabledMask()==0);
     assert(!g.select(static_cast<G::Path>(255),4300,ok)); assert(g.enabledMask()==0);
     assert(g.select(G::Path::Iso11992,0xfffffff0u,ok));
     g.tick(0x54u,ok); assert(g.enabledMask()==1);
     g.stop(); assert(g.enabledMask()==0);
     auto lights=ok; lights.lightOff=false;
     assert(!g.select(G::Path::KLine,1,lights));
+    auto unauthorized=ok; unauthorized.authenticated=false;
+    assert(!g.select(G::Path::Iso11992,2,unauthorized));
+    assert(g.enabledMask()==0 && !g.txAllowed());
+    assert(g.select(G::Path::Iso11992,3,ok));
+    g.tick(103,ok); assert(g.txAllowed());
+    g.tick(104,unauthorized);
+    assert(g.enabledMask()==0 && !g.txAllowed());
+    assert(!g.renew(105,ok)); // authentication recovery cannot restart a path
+    assert(g.select(G::Path::KLine,106,ok));
+    assert(!g.renew(107,unauthorized));
+    assert(g.enabledMask()==0);
+    // An omitted authentication field is zero-initialized in an aggregate.
+    const G::Conditions defaultDeny{};
+    assert(!g.select(G::Path::Iso11992,108,defaultDeny));
 }

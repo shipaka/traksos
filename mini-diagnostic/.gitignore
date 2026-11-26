@@ -1,0 +1,16 @@
+.gradle/
+**/build/
+**/.pio/
+local.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.der
+.env*
+**/keystore.properties
+**/signing.properties
+**/private-keys/
+**/device-secrets/

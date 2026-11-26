@@ -3,6 +3,14 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+// Release signing material is provided only by a trusted local release environment.
+val signingNames = listOf("TRAKSOS_MINI_KEYSTORE", "TRAKSOS_MINI_STORE_PASSWORD",
+    "TRAKSOS_MINI_KEY_ALIAS", "TRAKSOS_MINI_KEY_PASSWORD")
+val signingValues = signingNames.map { providers.environmentVariable(it).orNull?.takeIf(String::isNotBlank) }
+val hasReleaseSigning = signingValues.all { it != null }
+require(hasReleaseSigning || signingValues.all { it == null }) {
+    "Incomplete Mini Diagnostic release signing environment"
+}
 android {
     namespace = "ru.traksos.minidiagnostic"
     compileSdk = 35
@@ -12,6 +20,23 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1-demo"
+    }
+    signingConfigs {
+        if (hasReleaseSigning) create("privateRelease") {
+            storeFile = file(signingValues[0]!!)
+            storePassword = signingValues[1]!!
+            keyAlias = signingValues[2]!!
+            keyPassword = signingValues[3]!!
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (hasReleaseSigning) signingConfig = signingConfigs.getByName("privateRelease")
+        }
     }
     buildFeatures { compose = true }
     compileOptions {
