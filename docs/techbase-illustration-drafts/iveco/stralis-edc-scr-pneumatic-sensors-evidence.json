@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis",
+    "target_model": "440S46",
+    "canonical_vehicle_id": null,
+    "note": "Источники подтверждают семейства/отдельные строки Cursor, не точный 440S46 или VIN. Не переносить на все Cursor 11."
+  },
+  "records": [
+    {
+      "id": "cojali:2269040",
+      "manufacturer": "Cojali",
+      "article": "2269040",
+      "reference": "5801777219",
+      "system": "scr",
+      "name": "Датчик NOx",
+      "source": "https://www.cojaliparts.com/en/reference/5801777219/nox-sensor/2269040/",
+      "catalogue_applications": [
+        "Stralis",
+        "Stralis II",
+        "Stralis Cursor 8",
+        "Stralis Cursor 10",
+        "Stralis Cursor 13"
+      ],
+      "technical_data": {
+        "cable_mm": 600,
+        "connector": "MCON 5 pin plug A",
+        "position": "каталог допускает до/после катализатора"
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "5801777219"
+        },
+        {
+          "make": "Continental",
+          "article": "5WK9 6720A"
+        }
+      ]
+    },
+    {
+      "id": "cojali:2269039",
+      "manufacturer": "Cojali",
+      "article": "2269039",
+      "reference": "5801754014",
+      "system": "scr",
+      "name": "Датчик NOx после катализатора",
+      "source": "https://www.cojaliparts.com/en/reference/5801754014/nox-sensor/2269039/",
+      "catalogue_applications": [
+        "Stralis",
+        "Stralis II",
+        "Stralis Cursor 8",
+        "Stralis Cursor 10",
+        "Stralis Cursor 13"
+      ],
+      "technical_data": {
+        "cable_mm": 900,
+        "connector": "MCON 5 pin plug A",
+        "position": "после катализатора"
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "5801754014"
+        },
+        {
+          "make": "Continental",
+          "article": "5WK9 6775A"
+        }
+      ]
+    },
+    {
+      "id": "cojali:2269024",
+      "manufacturer": "Cojali",
+      "article": "2269024",
+      "reference": "5801754015",
+      "system": "scr",
+      "name": "Датчик NOx после катализатора",
+      "source": "https://www.cojaliparts.com/en/reference/5801754015/nox-sensor/2269024/",
+      "catalogue_applications": [
+        "AD Stralis",
+        "AS Stralis",
+        "AT Stralis",
+        "Stralis Cursor 8",
+        "Stralis Cursor 10",
+        "Stralis Cursor 13"
+      ],
+      "technical_data": {
+        "cable_mm": 610,
+        "connector": "MCON 5 pin plug A",
+        "position": "после катализатора"
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "5801754015"
+        },
+        {
+          "make": "IVECO",
+          "article": "41271167"
+        },
+        {
+          "make": "IVECO",
+          "article": "5801424181"
+        },
+        {
+          "make": "IVECO",
+          "article": "42558451"
+        },
+        {
+          "make": "Continental",
+          "article": "5WK96615F"
+        }
+      ]
+    },
+    {
+      "id": "cojali:2260892",
+      "manufacturer": "Cojali",
+      "article": "2260892",
+      "reference": "5801455941",
+      "system": "scr",
+      "name": "Датчик температуры отработавших газов",
+      "source": "https://www.cojaliparts.com/en/reference/5801455941/exhaust-gas-temperature-sensor/2260892/",
+      "catalogue_applications": [
+        "Stralis",
+        "Stralis II"
+      ],
+      "technical_data": {
+        "cable_mm": 500,
+        "connector": "Bosch 2 pin plug",
+        "thread": "M14×1.5"
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "5801455941"
+        }
+      ]
+    },
+    {
+      "id": "cojali:2262652",
+      "manufacturer": "Cojali",
+      "article": "2262652",
+      "reference": "5801291814",
+      "system": "scr",
+      "name": "Датчик температуры отработавших газов",
+      "source": "https://www.cojaliparts.com/en/reference/5801291814/exhaust-gas-temperature-sensor/2262652/",
+      "catalogue_applications": [
+        "Stralis"
+      ],
+      "technical_data": {
+        "cable_in": 19.69,
+        "connector": "Bosch 2 pin plug",
+        "thread": "M14×1.5"
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "5801291814"
+        }
+      ]
+    },
+    {
+      "id": "cojali:2260408",
+      "manufacturer": "Cojali",
+      "article": "2260408",
+      "reference": "51274210113",
+      "system": "cooling",
+      "name": "Датчик температуры охлаждающей жидкости",
+      "source": "https://www.cojaliparts.com/en/reference/51274210113/temperature-sensor/2260408/",
+      "catalogue_applications": [
+        "Stralis AD 2002–2012",
+        "Stralis AD 2012–",
+        "Stralis AS 2002–2012",
+        "Stralis AS 2012–",
+        "Stralis AT 2002–2012",
+        "Stralis AT 2012–"
+      ],
+      "technical_data": {
+        "connector": "M27×1.5 plug",
+        "thread": "M16×1.5"
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "500306957"
+        },
+        {
+          "make": "Bosch",
+          "article": "0281002232"
+        },
+        {
+          "make": "MAN",
+          "article": "51274210113"
+        }
+      ],
+      "note": "Один канонический компонент; открытый конец периода каталога не задаёт конечный год."
+    },
+    {
+      "id": "cojali:2260520",
+      "manufacturer": "Cojali",
+      "article": "2260520",
+      "reference": "II39746F004",
+      "system": "pneumatic",
+      "name": "Датчик давления воздуха",
+      "source": "https://www.cojaliparts.com/en/reference/ii39746f004/pressure-sensor/2260520/",
+      "catalogue_applications": [
+        "AT Stralis",
+        "Stralis",
+        "Stralis Cursor 8",
+        "Stralis Cursor 10",
+        "Stralis Cursor 13",
+        "DAF XF 105",
+        "DAF XF 95",
+        "Mercedes-Benz Axor"
+      ],
+      "technical_data": {
+        "connector": "DIN 72585-7.1 plug A",
+        "range_bar": [
+          0,
+          16
+        ],
+        "offset_V": 1,
+        "sensitivity_mV_per_bar": 250,
+        "supply_V": 5
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "Knorr-Bremse",
+          "article": "II39746F004"
+        },
+        {
+          "make": "IVECO",
+          "article": "42548333"
+        },
+        {
+          "make": "IVECO",
+          "article": "42569265"
+        },
+        {
+          "make": "DAF",
+          "article": "1385733"
+        },
+        {
+          "make": "Mercedes-Benz",
+          "article": "A0004303807"
+        }
+      ],
+      "note": "Каталожные характеристики отдельного компонента, не допустимое рабочее давление контура и не схема подключения. Не подтверждает место установки или конкретный EBS ECU."
+    }
+  ],
+  "hold": [
+    {
+      "id": "cojali:2260729",
+      "manufacturer": "Cojali",
+      "article": "2260729",
+      "reference": "0281002420",
+      "system": "engine",
+      "name": "Датчик давления/температуры впуска",
+      "source": "https://www.cojaliparts.com/en/reference/0281002420/map-sensor-manifold-absolute-pressure/2260729/",
+      "catalogue_applications": [
+        "IVECO (только марка)"
+      ],
+      "technical_data": {
+        "range_bar": [
+          0,
+          6.5
+        ],
+        "connector": "Bosch 4 pin plug",
+        "supply_V": 5,
+        "offset_V": 0.8,
+        "sensitivity_mV_per_bar": 750
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "reason": "Нет строки Stralis или Cursor; не выдавать за применимый."
+    },
+    {
+      "id": "cojali:2260991",
+      "manufacturer": "Cojali",
+      "article": "2260991",
+      "reference": "0281002257",
+      "system": "engine",
+      "name": "Датчик давления/температуры впуска",
+      "source": "https://www.cojaliparts.com/en/reference/0281002257/map-sensor-manifold-absolute-pressure/2260991/",
+      "catalogue_applications": [],
+      "technical_data": {
+        "range_bar": [
+          0,
+          4
+        ],
+        "connector": [
+          "Bosch 4 pin plug",
+          "AMP 3 pin plug"
+        ],
+        "cable_mm": 120,
+        "supply_V": 5,
+        "offset_V": 1,
+        "sensitivity_mV_per_bar": 1100
+      },
+      "vin_applicability": "unknown",
+      "engine_code": null,
+      "exact_mounting": null,
+      "pinout": null,
+      "wire_colours": null,
+      "technical_review": "pending",
+      "publication": "hold",
+      "cross_refs": [
+        {
+          "make": "IVECO",
+          "article": "98496568"
+        },
+        {
+          "make": "IVECO",
+          "article": "5001858011"
+        },
+        {
+          "make": "IVECO",
+          "article": "42554567"
+        },
+        {
+          "make": "IVECO",
+          "article": "500360579"
+        }
+      ],
+      "reason": "Только перекрёстные номера IVECO, без модельной строки; не считать взаимозаменяемым с 2260729."
+    }
+  ],
+  "systems": [
+    {
+      "id": "iveco-stralis-as-edc7-uc31",
+      "family": "Stralis AS Euro 4/5/EEV, с 2007 по каталогу Jaltest",
+      "ecu": "EDC 7 UC31",
+      "injection": "UIS / насос-форсунки",
+      "source": "https://www.jaltest.com/en/coverage/1/2/974/%25F0%2593%25F0%25A0%25F0%25A3%25F0%2597%25F0%259E%25F0%2592%25F0%2598%25F0%259A/iveco/stralis-as-euro-45eev/",
+      "scope": "diagnostic_coverage_not_exact_vehicle_fitment"
+    },
+    {
+      "id": "iveco-stralis-xp-edc17-cv41",
+      "family": "Stralis XP / Hi-Way / Hi-Road / Hi-Street Euro 6, 2016–2020 по Jaltest",
+      "ecu": "EDC 17 CV41 + Denox 2.2",
+      "injection": "Common Rail",
+      "source": "https://www.jaltest.com/en/coverage/17/1/2/8294/truck/iveco/stralis-xphi-wayhi-roadhi-street-euro-6/",
+      "scope": "diagnostic_coverage_not_exact_vehicle_fitment"
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "iveco-edc7-vs-edc17",
+      "purpose": "Два отдельных функциональных тракта: UIS и Common Rail. Показать блок управления, датчики и исполнительные устройства; не изображать конкретную топологию жгута.",
+      "nodes": [
+        "питание и масса",
+        "EDC",
+        "датчики",
+        "исполнительные устройства",
+        "диагностическая связь"
+      ]
+    },
+    {
+      "id": "iveco-scr-nox-variant-cards",
+      "purpose": "Показать поток выхлопа и функцию измерения NOx до/после катализатора, сравнить три артикула, 600/900/610 мм. Не назначать конкретный датчик перед катализатором без OEM.",
+      "records": [
+        "cojali:2269040",
+        "cojali:2269039",
+        "cojali:2269024"
+      ]
+    },
+    {
+      "id": "iveco-egts-coolant",
+      "purpose": "Разнести датчики ОЖ и выхлопа на отдельные контуры; сравнить артикулы и резьбы. Место установки и направление проводки условны.",
+      "records": [
+        "cojali:2260892",
+        "cojali:2262652",
+        "cojali:2260408"
+      ]
+    },
+    {
+      "id": "iveco-pneumatic-pressure-feedback",
+      "purpose": "Функциональная связь воздушного контура, датчика давления и блока контроля; не рисовать физическое подключение или тормозную разводку.",
+      "records": [
+        "cojali:2260520"
+      ]
+    }
+  ],
+  "diagnostic_notes": [
+    "Считать идентификатор ECU, код двигателя, VIN, номер и ревизию компонента; сохранить DTC и условия его возникновения до удаления.",
+    "При NOx/EGT ошибках проверить по OEM документу назначение датчика и соответствующую позицию, целостность жгута, питание и связь; не менять компоненты по совпадению корпуса или разъёма.",
+    "При перегреве или предупреждении тормозного давления остановиться безопасно и руководствоваться инструкцией производителя. Не проводить дорожное испытание при неисправной тормозной системе.",
+    "Нет подтверждённых распиновок, цветов, конкретных DTC, порогов диагностики или процедуры ремонта; не подставлять универсальные значения."
+  ],
+  "watermark_requirement": "Будущие собственные опубликованные иллюстрации — по утверждённому стандарту TrakSOS из #278; этот пакет не содержит изображений.",
+  "rights": "Авторские описания и отдельные каталожные факты со ссылками; без копий фотографий и OEM схем. Юридическая и экспертная проверка до публикации.",
+  "release_gates": [
+    "global dedup",
+    "canonical vehicle mapping",
+    "VIN and ECU variant",
+    "OEM wiring and rights",
+    "actual visual",
+    "expert approval",
+    "runtime integration/CI"
+  ],
+  "verified_illustrations_added": 0
+}
