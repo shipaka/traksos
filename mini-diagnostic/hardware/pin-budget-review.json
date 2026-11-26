@@ -1,0 +1,123 @@
+{
+  "status": "REVIEW_ONLY_NOT_WIRING",
+  "board": "ESP32-DevKitC V4 ESP32-WROOM-32E (candidate)",
+  "pins": [
+    {
+      "gpio": 25,
+      "direction": "out",
+      "role": "LIGHT_LEFT"
+    },
+    {
+      "gpio": 26,
+      "direction": "out",
+      "role": "LIGHT_RIGHT"
+    },
+    {
+      "gpio": 27,
+      "direction": "out",
+      "role": "LIGHT_FOG"
+    },
+    {
+      "gpio": 32,
+      "direction": "out",
+      "role": "LIGHT_LEFT_SIDE"
+    },
+    {
+      "gpio": 33,
+      "direction": "out",
+      "role": "LIGHT_RIGHT_SIDE"
+    },
+    {
+      "gpio": 18,
+      "direction": "out",
+      "role": "LIGHT_STOP"
+    },
+    {
+      "gpio": 19,
+      "direction": "out",
+      "role": "LIGHT_REVERSE"
+    },
+    {
+      "gpio": 22,
+      "direction": "out",
+      "role": "TWAI_TX"
+    },
+    {
+      "gpio": 21,
+      "direction": "in",
+      "role": "TWAI_RX"
+    },
+    {
+      "gpio": 17,
+      "direction": "out",
+      "role": "K_UART_TX"
+    },
+    {
+      "gpio": 16,
+      "direction": "in",
+      "role": "K_UART_RX"
+    },
+    {
+      "gpio": 13,
+      "direction": "out",
+      "role": "PATH_SELECT_A"
+    },
+    {
+      "gpio": 14,
+      "direction": "out",
+      "role": "PATH_SELECT_B"
+    },
+    {
+      "gpio": 23,
+      "direction": "out",
+      "role": "DIAG_ENABLE_REQUEST"
+    },
+    {
+      "gpio": 4,
+      "direction": "out",
+      "role": "WATCHDOG_HEARTBEAT"
+    },
+    {
+      "gpio": 34,
+      "direction": "in",
+      "role": "WARNING_SENSE"
+    },
+    {
+      "gpio": 35,
+      "direction": "in",
+      "role": "INTERLOCK_FEEDBACK"
+    },
+    {
+      "gpio": 36,
+      "direction": "in",
+      "role": "SUPPLY_SENSE"
+    },
+    {
+      "gpio": 39,
+      "direction": "in",
+      "role": "FAULT_AGGREGATE"
+    }
+  ],
+  "reserved": [
+    0,
+    2,
+    5,
+    12,
+    15,
+    1,
+    3,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "limitations": [
+    "No unused general-purpose header GPIO in proposed budget",
+    "No individual feedback for seven light channels allocated",
+    "No ECU valve/electronics power enable or feedback allocated",
+    "All signal conditioning and independent watchdog/one-hot interlock require electrical design and validation",
+    "No production firmware may consume this file"
+  ]
+}
