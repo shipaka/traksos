@@ -6,6 +6,7 @@ const ORDER_ID='00000000-0000-4000-8000-000000000031';
 const PERF_ID='00000000-0000-4000-8000-000000000032';
 const CLIENT_ID='00000000-0000-4000-8000-000000000033';
 const KEY='emergency-first-11111111';
+const DRIVER_ID='00000000-0000-4000-8000-000000000034';
 
 function fixture() {
   const o:any={
@@ -14,11 +15,19 @@ function fixture() {
     call_out_amount:110000,amount_proposed_at:new Date('2026-11-18T11:00:00Z')
   };
   let closure:any=null;
+  const delegate={status:'active',deleted:false,linked:true};
+  const recipients:string[]=[];
   let msgCount=0,notificationCount=0,releaseCount=0,eventCount=0,modCount=0;
   const db:any={
     tx:async(fn:(q:any)=>Promise<any>)=>fn(db),
     one:async(sql:string,args:any[])=>{
       if(sql.startsWith('select * from orders where'))return o;
+      if(sql.includes('join vehicles v') && sql.includes("'driver'=any(u.roles)")) {
+        assert.match(sql,/u\.status='active'/);
+        assert.match(sql,/u\.deleted_at is null/);
+        assert.match(sql,/for share of u,v/);
+        return delegate.linked && delegate.status==='active' && !delegate.deleted ? {ok:1}:null;
+      }
       if(sql.startsWith('select * from order_unilateral_closures'))return closure;
       if(sql.startsWith('insert into order_unilateral_closures')){
         closure={order_id:ORDER_ID,performer_id:PERF_ID,request_key:args[2],
@@ -36,8 +45,8 @@ function fixture() {
       if(sql.startsWith('insert into mod_cases')){modCount++;return {id:'mod-case'};}
       return null;
     },
-    query:async(sql:string)=>{
-      if(sql.startsWith('insert into notifications'))notificationCount++;
+    query:async(sql:string,args:any[]=[])=>{
+      if(sql.startsWith('insert into notifications')){notificationCount++;recipients.push(args[0]);}
       if(sql.includes("line_status='online'"))releaseCount++;
       return [];
     }
@@ -56,7 +65,7 @@ function fixture() {
     note:'Клиент находится вне зоны связи, диагностика завершена',workFinished:true};
   const performer:any={id:PERF_ID,status:'active',roles:['master']};
   const client:any={id:CLIENT_ID,status:'active',roles:['client']};
-  return {o,db,closureService,data,performer,client,get closure(){return closure;},
+  return {o,db,closureService,data,performer,client,delegate,recipients,get closure(){return closure;},
     stats:()=>({msgCount,notificationCount,releaseCount,eventCount,modCount})};
 }
 
@@ -104,4 +113,21 @@ test('emergency dispute requires a customer and a specific reason',async()=>{
   await assert.rejects(f.closureService.disagree(f.performer,ORDER_ID,'Не согласен с результатом'),{code:'forbidden'});
   await assert.rejects(f.closureService.disagree(f.client,ORDER_ID,'нет'),{code:'reason_required'});
   assert.equal(f.closure.status,'pending_client');
+});
+
+
+test('emergency notices exclude inactive or deleted delegated drivers',async()=>{
+  for(const state of [{status:'active',deleted:false,linked:true},{status:'blocked',deleted:false,linked:true},{status:'active',deleted:true,linked:true},{status:'active',deleted:false,linked:false}]){
+    const f=fixture();
+    f.o.created_by=DRIVER_ID;
+    Object.assign(f.delegate,state);
+    await f.closureService.request(f.performer,ORDER_ID,f.data);
+    const allowed=state.status==='active'&&!state.deleted&&state.linked;
+    assert.deepEqual(f.recipients,allowed?[CLIENT_ID,DRIVER_ID]:[CLIENT_ID]);
+    if(!allowed){
+      await assert.rejects(f.closureService.disagree({id:DRIVER_ID,status:'active',roles:['driver']} as any,ORDER_ID,'Не согласен с результатом диагностики'),{code:'forbidden'});
+      assert.equal(f.closure.status,'pending_client');
+      assert.equal(f.stats().modCount,0);
+    }
+  }
 });
