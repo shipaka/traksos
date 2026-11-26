@@ -171,7 +171,6 @@ test('ledger-related support also writes its first message inside the same trans
   const db:any={
     one:async(sql:string)=>{
       calls.push('one:'+sql);
-      if(sql.includes('from ledger_entries'))return {id:41,order_id:null};
       throw Error('unexpected outer query '+sql);
     },
     tx:async(fn:any)=>{
@@ -181,9 +180,20 @@ test('ledger-related support also writes its first message inside the same trans
           if(sql.startsWith('insert into support_messages'))throw Error('simulated rollback');
           return [];
         },
-        one:async(sql:string)=>{
+        one:async(sql:string,args:unknown[])=>{
           calls.push('tx-one:'+sql);
-          if(sql.startsWith('select id from support_tickets'))return null;
+          if(sql.includes("from users where id=$1 and status='active' and deleted_at is null for share")){
+            assert.deepEqual(args,[user.id]);
+            return {...user,status:'active',owner_id:null};
+          }
+          if(sql.includes('from ledger_entries where id=$1 and performer_id=$2 for share')){
+            assert.deepEqual(args,[41,user.id]);
+            return {id:41,order_id:null};
+          }
+          if(sql.includes('from support_tickets where user_id=$1 and ledger_entry_id=$2') && sql.endsWith('for update')){
+            assert.deepEqual(args,[user.id,41,'open']);
+            return null;
+          }
           if(sql.includes('insert into support_tickets'))return {id:'ticket-1',number:57};
           throw Error('unexpected transaction query '+sql);
         },
@@ -262,10 +272,14 @@ test('HTTP/PG: private follow-up bypasses a former moderator and reaches active 
     const path='/api/support/'+id+'/messages';
     const body='Конфиденциальное уточнение по обращению';
     ok(await t.api('POST',path,{body},owner.token));
-    const recipients=await t.db.query<{user_id:string}>(`
-      select user_id from notifications where kind='support' and data->>'ticketId'=$1
-        and body=$2`,[id,body]);
+    const recipients=await t.db.query<{user_id:string;body:string}>(`
+      select user_id,body from notifications where kind='support' and data->>'ticketId'=$1
+        and title like 'Новое сообщение · №%'`,[id]);
     assert.deepEqual(recipients.map(row=>row.user_id),[admin.id]);
+    assert.equal(recipients[0].body,'Откройте личное обращение, чтобы прочитать сообщение.');
+    assert.ok(!recipients[0].body.includes(body),'private reply must remain inside the thread');
+    const thread=ok(await t.api('GET','/api/support/'+id,undefined,owner.token));
+    assert.equal(thread.messages.at(-1).body,body);
     assert.equal((await t.api('GET','/api/support/'+id,undefined,former.token)).status,403);
     ok(await t.api('POST',path,{body:'Новый ответ действующего сотрудника'},admin.token));
     const assigned=await t.db.one<{assignee_id:string}>(

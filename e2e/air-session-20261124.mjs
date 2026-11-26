@@ -4,6 +4,7 @@ import { build } from 'esbuild';
 import { chromium } from 'playwright';
 
 const apiStub = `
+  export function getToken(){return 'synthetic-'+window.__airIdentity?.id;}
   export function get(path) {
     if(path!=='/api/air/messages')throw Error('Unexpected GET: '+path);
     const queue=window.__airTest.gets;
@@ -25,6 +26,8 @@ const bundle=await build({
       import React,{useState} from 'react';
       import {createRoot} from 'react-dom/client';
       import {DriverAir} from './web/src/screens/driverAir.tsx';
+      import {takeAirDraft} from './web/src/airSupportDraft.ts';
+      window.__takeAirDraft=takeAirDraft;
       window.__airTest={gets:[],posts:[]};
       function Demo(){
         const [me,setMe]=useState({id:'owner-A',roles:['client']});
@@ -235,6 +238,16 @@ try{
     await page.getByRole('button',{name:'Отправить'}).count()===1,
     'Role downgrade did not load fresh server flags');
   assert(await page.evaluate(()=>window.__airPolls.size)===1,'Old account polling timer leaked after role change');
+  const privateText='@админ, синтетическое личное обращение';
+  await compose.fill(privateText);
+  await page.getByRole('button',{name:'Перейти в личную поддержку'}).click();
+  await page.waitForFunction(()=>location.hash==='#/support/new');
+  assert(await page.evaluate(()=>window.__airTest.posts.length)===3,'Private text must never hit public endpoint');
+  const handoff=await page.evaluate(()=>window.__takeAirDraft('staff-C','synthetic-staff-C'));
+  assert(handoff?.text===privateText && handoff.recipient==='admin','Private handoff lost original text or recipient');
+  await compose.fill('@модератор, второй черновик');
+  await page.getByRole('button',{name:'Перейти в личную поддержку'}).click();
+  assert(await page.evaluate(()=>window.__takeAirDraft('other','synthetic-other'))===null,'Foreign session received private draft');
   await page.evaluate(()=>window.__switchAirIdentity({id:'excluded-D',roles:['master']}));
   await page.getByRole('heading',{name:'Эфир водителей'}).waitFor();
   await page.waitForFunction(()=>window.__airPolls.size===0);
@@ -242,3 +255,6 @@ try{
   if(errors.length)throw Error('Chromium runtime errors: '+errors.join('; '));
   console.log('PASS DriverAir: out-of-order polls, offline+retry, no automatic POST replay, A/B identity isolation, staff permissions and uncertain-write reconciliation');
 } finally { await browser.close(); }
+
+// Run foreground and bounded-tail coverage in the existing CI entrypoint.
+await import('./air-foreground-regression.mjs');

@@ -1,7 +1,8 @@
 // Поддержка: список обращений, переписка, новое обращение (по заявке или без). Для сотрудников — то же, плюс «Закрыть».
 
 import { useEffect, useRef, useState } from 'react';
-import { get, post, fmtTime, fmtPhone, onEvent, rub } from '../api.ts';
+import { get, post, fmtTime, fmtPhone, onEvent, rub, getToken } from '../api.ts';
+import { takeAirDraft } from '../airSupportDraft.ts';
 
 const ENTRY_KIND: Record<string, string> = {
   earning: 'Начислено за заявку', payout: 'Выплата', adjustment: 'Корректировка', refund_charge: 'Удержание за возврат',
@@ -56,43 +57,68 @@ export function SupportNew() {
   const { me } = useMe();
   const orderId = new URLSearchParams(location.hash.split('?')[1] ?? '').get('order') ?? undefined;
   // Never carry a previous account's support draft into another identity.
-  return <SupportNewSession key={(me?.id ?? 'guest') + ':' + (orderId ?? '')} orderId={orderId} />;
+  return <SupportNewSession key={(me?.id ?? 'guest') + ':' + (orderId ?? '') + ':' + (getToken()??'')} orderId={orderId} owner={me?.id??'guest'} token={getToken()} />;
 }
 
-function SupportNewSession({ orderId }: { orderId?: string }) {
+function supportRequestKey() {
+  const bytes=crypto.getRandomValues(new Uint8Array(16));
+  bytes[6]=(bytes[6]&15)|64;
+  bytes[8]=(bytes[8]&63)|128;
+  const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');
+}
+
+function SupportNewSession({ orderId,owner,token }: { orderId?: string;owner:string;token:string|null }) {
   const alive = useSupportSessionAlive();
   const topics = useLoad(() => get('/api/support/topics'), []);
   const { busy, run } = useAction();
-  // Backend deduplicates order-linked tickets, but not standalone requests.
-  // A synchronous lock prevents two near-simultaneous taps making two tickets
-  // before React's busy state has had a chance to re-render the button.
+  // Retain the exact standalone request identity until its outcome is known.
+  // Do not create a new request merely because a response was lost.
   const sendingRef = useRef(false);
+  const requestKey=useRef<string|null>(null);
+  const [uncertain,setUncertain]=useState(false);
   const [topic, setTopic] = useState('');
   const [text, setText] = useState('');
+  const [recipient,setRecipient]=useState<'admin'|'moderator'|null>(null);
+  const loadedDraft=useRef(false);
+  useEffect(()=>{
+    if(loadedDraft.current)return;
+    loadedDraft.current=true;
+    const draft=takeAirDraft(owner,token);
+    if(draft&&!orderId&&token&&getToken()===token){
+      setText(draft.text);
+      setRecipient(draft.recipient);
+    }
+  },[owner,token,orderId]);
   return (
     <main>
       <Back to={orderId ? `order/${orderId}` : 'support'} />
       <h1>{orderId ? 'Позвать поддержку' : 'Написать в поддержку'}</h1>
+      {recipient && <p className="note" role="status">Личное обращение: вы указали {recipient==='admin'?'администратора':'модератора'}. Текст не опубликован в эфире. Выбранная роль получит уведомление в первую очередь; если таких доступных сотрудников нет, обращение попадёт к другим сотрудникам поддержки. Выберите тему и подтвердите отправку.</p>}
       {topics.error && <div className="stack" role="alert">
         <span className="note">Не удалось загрузить темы обращений: {topics.error}</span>
         <button type="button" className="btn ghost small" onClick={() => void topics.reload()}>Повторить загрузку тем</button>
       </div>}
       {!topics.data && !topics.error && <span className="note" role="status">Получаем доступные темы поддержки…</span>}
       <div className="row" role="group" aria-label="Тема обращения">{(topics.data ?? []).map((t: string) =>
-        <button type="button" key={t} className="chip" disabled={busy} aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
-      <textarea className="field" aria-label="Описание проблемы" maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
+        <button type="button" key={t} className="chip" disabled={busy||uncertain} aria-pressed={topic === t} onClick={() => setTopic(t)}>{t}</button>)}</div>
+      <textarea className="field" aria-label="Описание проблемы" disabled={busy||uncertain} maxLength={2000} placeholder="Что случилось — коротко" value={text} onChange={(e) => setText(e.target.value)} />
+      {uncertain && <p role="status" className="note">Ответ сервера не подтверждён. Повторите тот же запрос — новое обращение не создастся, если предыдущее уже зарегистрировано. Или проверьте список обращений.</p>}
       <button type="button" className="btn" disabled={busy || !topics.data?.includes(topic) || text.trim().length < 3} onClick={async () => {
         if (sendingRef.current) return;
+        if (!token || getToken()!==token) return;
         sendingRef.current = true;
         try {
+          if(!requestKey.current) requestKey.current=supportRequestKey();
           const r = await run(() => post('/api/support', {
-            topic, text: text.trim(), orderId
+            topic, text: text.trim(), orderId,
+            requestKey:requestKey.current,
+            ...(!orderId ? {requestedRole:recipient??undefined} : {})
           }), 'Обращение зарегистрировано');
-          if (r && alive.current) location.replace(`#/support/${r.id}`);
-          // If the mobile response was lost, do not erase the draft. The user
-          // can inspect the list before deliberately retrying a new ticket.
+          if (r && alive.current && getToken()===token) location.replace(`#/support/${r.id}`);
+          else if(alive.current && getToken()===token) setUncertain(true);
         } finally { sendingRef.current = false; }
-      }}>Отправить</button>
+      }}>{uncertain?'Повторить отправку':'Отправить'}</button>
     </main>
   );
 }
@@ -100,16 +126,18 @@ function SupportNewSession({ orderId }: { orderId?: string }) {
 export function SupportThread({ id }: { id: string }) {
   const { me, mode } = useMe();
   // Old GET/POST and sensitive drafts remain in an unmounted session only.
-  return <SupportThreadSession key={(me?.id ?? 'guest') + ':' + mode + ':' + id} id={id} />;
+  return <SupportThreadSession key={(me?.id ?? 'guest') + ':' + mode + ':' + id + ':' + (getToken()??'')} id={id} token={getToken()} />;
 }
 
-function SupportThreadSession({ id }: { id: string }) {
+function SupportThreadSession({ id,token }: { id: string;token:string|null }) {
   const alive = useSupportSessionAlive();
   const { me, mode } = useMe();
   const th = useLoad(() => get(`/api/support/${id}`), [id], (e) => e.type === 'support' && e.ticketId === id);
   const { busy, run } = useAction();
   const [text, setText] = useState('');
   const sendingRef = useRef(false);
+  const replyKey=useRef<string|null>(null);
+  const [uncertain,setUncertain]=useState(false);
   const closingRef = useRef(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => { box.current?.scrollTo(0, box.current.scrollHeight); }, [th.data?.messages.length]);
@@ -129,7 +157,7 @@ function SupportThreadSession({ id }: { id: string }) {
       <div className="between" style={{ alignItems: 'flex-start' }}>
         <div>
           <h1>№{t.number} · {t.topic}</h1>
-          <div className="sub">{fmtTime(t.createdAt)}{t.order ? ` · заявка №${t.order.number}` : ''}</div>
+          <div className="sub">{fmtTime(t.createdAt)}{t.order ? ` · заявка №${t.order.number}` : ''}{t.requestedRole ? ` · обращение к ${t.requestedRole==='admin'?'администратору':'модератору'}` : ''}</div>
         </div>
         <span className={`pill ${t.status === 'open' ? 'accent' : ''}`}>{t.status === 'open' ? 'Открыто' : 'Закрыто'}</span>
       </div>
@@ -158,27 +186,27 @@ function SupportThreadSession({ id }: { id: string }) {
             );
           })}
         </div>
-        {t.status === 'open' && (
+        {uncertain && <p className="note" role="status">Ответ сервера не подтверждён. Повторите то же сообщение без создания дубликата или проверьте переписку. После выхода из формы сначала проверьте историю.</p>}
+        {(t.status === 'open' || uncertain) && (
           <form className="compose" onSubmit={async (e) => {
             e.preventDefault();
-            if (sendingRef.current || closingRef.current || busy || !text.trim()) return;
+            if (sendingRef.current || closingRef.current || busy || !text.trim() || !token || getToken()!==token) return;
             sendingRef.current = true;
             try {
-              const posted = await run(() => post(`/api/support/${id}/messages`, { body: text }), null);
-              if (posted && alive.current) {
-                setText('');
-                void th.reload();
+              if(!replyKey.current) replyKey.current=supportRequestKey();
+              const posted = await run(() => post(`/api/support/${id}/messages`, { body: text, requestKey:replyKey.current }), null);
+              if (alive.current && getToken()===token) {
+                if(posted){setText('');replyKey.current=null;setUncertain(false);void th.reload();}
+                else setUncertain(true);
               }
-              // On an uncertain timeout the original draft remains visible;
-              // never auto-POST the same message a second time.
             } finally { sendingRef.current = false; }
           }}>
-            <input className="field" aria-label="Сообщение поддержке" placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} />
-            <button type="submit" className="btn small" disabled={busy || !text.trim()}>➤</button>
+            <input className="field" aria-label="Сообщение поддержке" disabled={busy||uncertain} placeholder="Сообщение" value={text} onChange={(e) => setText(e.target.value)} />
+            <button type="submit" className="btn small" disabled={busy || !text.trim()}>{uncertain?'Повторить':'➤'}</button>
           </form>
         )}
       </div>
-      {t.status === 'open' && <button type="button" className="btn ghost" disabled={busy} onClick={async () => {
+      {t.status === 'open' && <button type="button" className="btn ghost" disabled={busy||uncertain} onClick={async () => {
         if (closingRef.current || sendingRef.current || busy) return;
         closingRef.current = true;
         try {

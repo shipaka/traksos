@@ -15,7 +15,10 @@ async function filesUnder(dir) {
   return nested.flat();
 }
 const all = new Set(await filesUnder(src));
-const sources = new Map(await Promise.all([...all].map(async path =>
+// The pure staff-intent parser is intentionally shared by web and server.
+// Read the actual source and traverse its imports, not an unchecked exemption.
+const shared = new Set([resolve('server/src/domain/airIntent.ts')]);
+const sources = new Map(await Promise.all([...all, ...shared].map(async path =>
   [path, await readFile(path, 'utf8')])));
 const seen = new Set();
 const missing = [];
@@ -32,7 +35,7 @@ while (pending.length) {
     const target = resolve(dirname(path), name);
     const choices = [target, target + '.ts', target + '.tsx', target + '.css',
       join(target, 'index.ts'), join(target, 'index.tsx')];
-    const found = choices.find(candidate => all.has(candidate));
+    const found = choices.find(candidate => sources.has(candidate));
     if (found) pending.push(found);
     else if (/\.(ts|tsx|css)$/.test(name)) missing.push(relative(src, path) + ' -> ' + name);
   }
@@ -40,7 +43,8 @@ while (pending.length) {
 const unused = [...all].filter(path => !seen.has(path))
   .map(path => relative(src, path)).sort();
 const result = {
-  checked: all.size, reachable: seen.size,
+  checked: all.size, reachable: [...all].filter(path => seen.has(path)).length,
+  sharedModules: [...shared].filter(path => seen.has(path)).map(path => relative(resolve('.'), path)),
   candidateModules: unused.filter(path => !path.endsWith('.css')),
   candidateStyles: unused.filter(path => path.endsWith('.css')),
   missingImports: missing.sort()
@@ -51,7 +55,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
   const { appendFile } = await import('node:fs/promises');
   await appendFile(process.env.GITHUB_STEP_SUMMARY,
     '### UI source inventory\n' +
-    '- Reachable: ' + seen.size + '/' + all.size + '\n' +
+    '- Reachable: ' + result.reachable + '/' + all.size + '\n' +
     '- Potential orphan modules: ' + result.candidateModules.length + '\n' +
     '- Potential orphan styles: ' + result.candidateStyles.length + '\n');
 }
