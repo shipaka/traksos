@@ -27,9 +27,25 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.10.2
+      - name: Prepare reference photographs for private debug review
+        working-directory: mini-diagnostic
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/prepare_debug_module_photos.py
+      - name: Preserve photo preparation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-photo-review
+          path: mini-diagnostic/module-photo-review.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Test and assemble isolated debug APK
         working-directory: mini-diagnostic
         run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Verify photographs packaged in debug APK
+        working-directory: mini-diagnostic
+        run: python tools/prepare_debug_module_photos.py --verify-apk app/build/outputs/apk/debug/app-debug.apk
       - name: Compile minified unsigned release (no publishing keys)
         working-directory: mini-diagnostic
         run: gradle --no-daemon :app:assembleRelease
