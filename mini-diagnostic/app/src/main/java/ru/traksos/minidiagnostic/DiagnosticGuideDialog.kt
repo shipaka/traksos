@@ -15,6 +15,8 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
     var selected by remember { mutableStateOf<ConnectionPlace?>(null) }
     var showChecks by remember { mutableStateOf(false) }
     var showCables by remember { mutableStateOf(false) }
+    var showSystems by remember { mutableStateOf(false) }
+    var showReference by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     val entry=selected?.let(DiagnosticGuide::entry)
     AlertDialog(
@@ -23,7 +25,26 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
         text={
             Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                if(showCables) {
+                if(showReference) {
+                    DisplayReferenceContent()
+                } else if(showSystems) {
+                    Text("Системы и поколения",fontWeight=FontWeight.Bold)
+                    Text("Реестр разработки, не список поддержанных прибором блоков.",color=MaterialTheme.colorScheme.error)
+                    OutlinedTextField(value=search,onValueChange={ search=it.take(80) },
+                        label={ Text("Производитель или система") },singleLine=true,modifier=Modifier.fillMaxWidth())
+                    val rows=CoverageRoadmap.targets.filter { search.isBlank() || (it.maker+" "+it.model).contains(search.trim(),ignoreCase=true) }
+                    Text("Найдено: ${rows.size}",fontSize=12.sp)
+                    rows.forEach { row ->
+                        HorizontalDivider()
+                        Text(row.maker+" · "+row.model,fontWeight=FontWeight.Bold)
+                        Text(when(row.stage) {
+                            ResearchStage.DISPLAY_REFERENCE_PARTIAL -> "Частичный справочник отображаемых кодов"
+                            ResearchStage.SYSTEM_DOCUMENTED -> "Найдены сведения о системе"
+                            ResearchStage.CANDIDATE -> "Кандидат: требуется дополнительная проверка"
+                        },fontSize=12.sp)
+                        Text("Реальное чтение и очистка не подтверждены.",color=MaterialTheme.colorScheme.error,fontSize=12.sp)
+                    }
+                } else if(showCables) {
                     Text("Реестр кабелей и интерфейсов",fontWeight=FontWeight.Bold)
                     Text("Исследовательский список. Ни один кабель пока не разрешён для работы нашим прибором.",color=MaterialTheme.colorScheme.error)
                     OutlinedTextField(value=search,onValueChange={ search=it.take(80) },
@@ -42,6 +63,12 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
                     Text("Пока доступен только стендовый деморежим.",color=MaterialTheme.colorScheme.error)
                     OutlinedButton(onClick={ showCables=true; search="" },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
                         Text("Кабели по производителям")
+                    }
+                    OutlinedButton(onClick={ showSystems=true; search="" },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+                        Text("Системы и поколения")
+                    }
+                    OutlinedButton(onClick={ showReference=true },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+                        Text("Расшифровать код с дисплея")
                     }
                     ConnectionPlace.entries.forEach { place ->
                         OutlinedButton(onClick={ selected=place; showChecks=false },
@@ -72,6 +99,6 @@ fun DiagnosticGuideDialog(onClose:()->Unit) {
         },
         confirmButton={ TextButton(onClick=onClose) { Text("Закрыть") } },
         dismissButton={
-            if(entry!=null || showCables) TextButton(onClick={ selected=null; showChecks=false; showCables=false }) { Text("Назад") }
+            if(entry!=null || showCables || showSystems || showReference) TextButton(onClick={ selected=null; showChecks=false; showCables=false; showSystems=false; showReference=false }) { Text("Назад") }
         })
 }

@@ -53,6 +53,10 @@ object CoverageRoadmap {
             "https://sorl.ru/news/tehnicheskiy-seminar--tebs-ebs--ecas-sorl-tyagacha-i-avtobusa-ekaterinburg-19-24-october",ScopeGroup.INTERFACE_REVIEW,ResearchStage.SYSTEM_DOCUMENTED),
         target("sorl-trailer-abs","SORL","Trailer ABS (tester 36302900020)",
             "https://sorl.ru/manuals/rukovodstvo-dlya-diagnosticheskogo-oborudovaniya-sorl.pdf",ScopeGroup.INTERFACE_REVIEW),
+        target("ekran-ebp","Экран (Беларусь)","АБС-П / АБС-ПП, ЭБП",
+            "https://remkam.ru/absuchkam-34/",ScopeGroup.INTERFACE_REVIEW),
+        target("ekran-ebpv","Экран (Беларусь)","ЭБП-В АДЮИ.453633.024",
+            "https://b24truck.ru/files/catalog/Автокомпоненты/ekran.pdf",ScopeGroup.INTERFACE_REVIEW,ResearchStage.CANDIDATE),
         target("bendix-tabs6","Bendix","TABS-6","https://www.manualslib.com/manual/392710/bendix-tabs-6-trailer-abs-module.html",ScopeGroup.FUTURE_MARKET),
         target("haldex-plc","Haldex","PLC Select / PLC Plus","https://manualzz.com/doc/6303407/haldex-l30030-installation-and-service-manual",ScopeGroup.FUTURE_MARKET)
     )
