@@ -6,6 +6,9 @@ class HaldexUabsReferenceTest {
         assertEquals(30,HaldexUabsReference.count)
         val u=DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_UABS_INFO2,"Power Low Voltage")!!
         assertTrue(u.condition!!.contains("16 В"))
+        assertTrue(u.source!!.contains(HaldexUabsReference.SOURCE))
+        assertTrue(u.source!!.contains(HaldexUabsReference.SOURCE_EN))
+        assertEquals("A650",HaldexUabsReference.MIN_INFO_CENTRE_SOFTWARE)
         assertTrue(HaldexGen3DiagReference.lookup("Power low voltage")!!.condition!!.contains("8 В"))
         assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE,"Power Low Voltage"))
         assertNull(HaldexUabsReference.lookup("10"))
