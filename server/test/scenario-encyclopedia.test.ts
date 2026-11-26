@@ -165,3 +165,18 @@ test('calendar training separates pending proposals, reservations and actual ava
   for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
     assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
 });
+
+
+test('station admission course keeps existing repairs and verification separate',()=>{
+  const item=allowedScenario('service','station-admission-pause');
+  assert.ok(item);
+  assert.equal(item.steps.length,3);
+  assert.equal(item.link,'/help');
+  const text=item.steps.map(s=>s.why+' '+s.choices.filter(c=>c.recommended).map(c=>c.feedback).join(' ')).join(' ');
+  assert.match(text,/текущие записи и ремонты сохраняются/);
+  assert.match(text,/проверить фактический статус/);
+  assert.match(text,/не заменяет проверку СТО и график/);
+  assert.match(text,/не гарантирует свободное время/);
+  for(const role of ['owner','driver','master','tow','insurer','inspection','courier','moderator','admin'] as const)
+    assert.equal(allowedScenario(role,'station-admission-pause'),null);
+});

@@ -1309,6 +1309,9 @@ export function createApp(d: Deps) {
     closedDays: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60).optional(),
     paused: z.boolean().optional(),
   });
+  r.get('/api/base/availability', ['service'], (c: AuthedCtx) => centers.availability(c.user));
+  r.put('/api/base/availability', ['service'], (c: AuthedCtx) =>
+    centers.availability(c.user, parse(z.object({paused:z.boolean()}).strict(), c.body).paused));
   r.get('/api/base', true, (c: AuthedCtx) => centers.cabinet(c.user));
   r.put('/api/base', true, (c: AuthedCtx) => centers.save(c.user, parse(centerSchema, c.body)));
   r.post('/api/base/confirm-accepts', ['service'], (c: AuthedCtx) => centers.confirmAccepts(c.user));

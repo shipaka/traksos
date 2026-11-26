@@ -18,7 +18,7 @@ import {ApprovedEmptyScene} from '../approvedEmptyScene.tsx';
 import {VehicleModelPhoto} from '../vehicleVisual.tsx';
 import {OfferForm} from './search.tsx';
 import {OrderPhotoGallery, OrderPhotoCapture} from './orderPhotos.tsx';
-import {BaseHome, RequestCard} from './base.tsx';
+import {BaseHome, RequestCard, StationAvailability} from './base.tsx';
 import {native} from '../native.ts';
 import {ApprovedPcCourier} from './approvedPcCourier20261120.tsx';
 
@@ -542,7 +542,7 @@ function ServiceDesk(){
           <RequestCard key={selected.id} b={selected} onDone={data.reload}/></section>
        :<SelectedServiceCase key={selected.id} booking={selected}/>):<Pane title="Рабочий стол рембазы"><Empty>Выберите машину слева или откройте новые обращения.</Empty>
         <a href="#/base/inbox" className="approved-pc-primary">Входящие заявки</a></Pane>}
-      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><a className="approved-pc-small-link" href="#/base/me">Карточка СТО и приём →</a>
+      right={<><Calendar kind="service" items={[...expected,...buckets.repair]}/><Pane title="Управление"><StationAvailability/>
         <a className="approved-pc-small-link" href="#/base/money">Финансы СТО →</a></Pane><Bot message="Помогу с ремонтом, запчастями и заявками."/></>}/>}
   </main>;
 }

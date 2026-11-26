@@ -1,6 +1,6 @@
 // Рембаза (сервис-партнёр): кабинет сервиса и запись клиента в сервис.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { get, post, put, rub, fmtTime, onEvent } from '../api.ts';
+import { get, post, put, rub, fmtTime, onEvent, getToken } from '../api.ts';
 import { BRANDS, FEE_PURPOSE, PLACES } from '../dict.ts';
 import { useAction, useMe, go, Loading, Field, Back, RubInput } from '../ui.tsx';
 import { WorkerNotices } from './ops.tsx';
@@ -142,6 +142,64 @@ function InvoicePoints({ amount, value, onChange }: { amount: number | null; val
   );
 }
 
+export function StationAvailability(){
+  const {me}=useMe();
+  const token=getToken();
+  return <StationAvailabilitySession key={JSON.stringify([me?.id,token])} token={token}/>;
+}
+function StationAvailabilitySession({token}:{token:string|null}){
+  const state=useBaseLoad<{paused:boolean;verification:string;hours:string}>(
+    ()=>baseGet('/api/base/availability'),[token],
+    e=>e.type==='service_availability_changed'||e.type==='connection_restored');
+  const [open,setOpen]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState(false);
+  const pending=useRef(false),mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const current=()=>mounted.current&&getToken()===token;
+  useEffect(()=>{
+    const refresh=()=>{if(current()&&!pending.current)void state.reload();};
+    const visible=()=>{if(document.visibilityState==='visible')refresh();};
+    window.addEventListener('online',refresh);
+    document.addEventListener('visibilitychange',visible);
+    return()=>{window.removeEventListener('online',refresh);document.removeEventListener('visibilitychange',visible);};
+  },[state.reload,token]);
+  const confirmed=!state.loading&&!state.error&&typeof state.data?.paused==='boolean';
+  async function choose(paused:boolean){
+    if(!confirmed||pending.current||!current())return;
+    if(state.data!.paused===paused){setOpen(false);return;}
+    pending.current=true;setSaving(true);setError(false);
+    let failed=false;
+    try{await basePut('/api/base/availability',{paused});}
+    catch{failed=true;if(current())setError(true);}
+    finally{
+      if(current()){
+        await state.reload();
+        if(current()){setSaving(false);if(!failed)setOpen(false);}
+      }
+      pending.current=false;
+    }
+  }
+  return <div className="stack" aria-label="Доступность СТО для новых записей">
+    <button className="opt" type="button" disabled={!confirmed||saving} aria-expanded={open&&confirmed}
+      onClick={()=>{setOpen(v=>!v);setError(false);}}>
+      <span className={'dot '+(confirmed&&!state.data!.paused&&state.data!.verification==='approved'?'on':'')} aria-hidden="true"/>
+      Статус · {confirmed?(state.data!.paused?'Приём приостановлен':'Приём разрешён'):'Уточняется'} ⌄
+    </button>
+    {confirmed&&state.data!.verification!=='approved'&&<small>Приём клиентов доступен только после проверки СТО.</small>}
+    {confirmed&&<small>Часы работы: {state.data!.hours}. Запись зависит также от графика.</small>}
+    {state.error&&<div role="alert">Не удалось проверить статус. <button type="button" onClick={()=>void state.reload()}>Повторить</button></div>}
+    {saving&&<small role="status">Проверяем сохранённый статус…</small>}
+    {error&&<small role="alert">Не удалось подтвердить изменение. Проверьте статус и повторите при необходимости.</small>}
+    {open&&confirmed&&<div className="stack">
+      <button className="opt" type="button" disabled={saving} aria-pressed={!state.data!.paused} onClick={()=>void choose(false)}>Разрешить новые записи</button>
+      <button className="opt" type="button" disabled={saving} aria-pressed={state.data!.paused} onClick={()=>void choose(true)}>Приостановить приём</button>
+      <small>Текущие записи и ремонты сохраняются.</small>
+    </div>}
+    <a className="note" href="#/base/me">Настройки графика и приёма →</a>
+  </div>;
+}
+
 type StationTab = 'req' | 'cars' | 'expected' | 'ready' | 'done';
 export function BaseHome({ initialTab='req' }: { initialTab?: StationTab } = {}) {
   const { me } = useMe();
@@ -203,7 +261,7 @@ function BaseHomePanel({ initialTab }: { initialTab: StationTab }) {
           <a className="btn ghost small" href="#/support/new">Написать модератору</a>
         </div>
       )}
-      {center.paused && <div className="banner warn col"><b>Приём временно закрыт</b><span className="note">Клиенты видят «приём закрыт». Включить — в карточке сервиса.</span></div>}
+      <StationAvailability/>
       {center.closedToday && <div className="banner col"><b>Сегодня вы закрыты</b><span className="note">Записаться на сегодня нельзя — только на другие дни.</span></div>}
       {center.confirmDue && (
         <div className="card">
