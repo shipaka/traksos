@@ -69,7 +69,11 @@ private fun MiniApp() {
     var elapsed by remember { mutableLongStateOf(0L) }
     var message by remember { mutableStateOf("") }
     val prefs = remember { context.getSharedPreferences("mini_demo_history", 0) }
-    var history by remember { mutableStateOf(emptyList<String>()) }
+    var history by remember { mutableStateOf(emptyList<DemoReport>()) }
+    var legacyHistory by remember { mutableStateOf(emptyList<String>()) }
+    var currentReport by remember { mutableStateOf<DemoReport?>(null) }
+    var openedReport by remember { mutableStateOf<DemoReport?>(null) }
+    var openedLegacy by remember { mutableStateOf<String?>(null) }
     var scan by remember { mutableIntStateOf(0) }
     var scanning by remember { mutableStateOf(false) }
     var historyOpen by remember { mutableStateOf(false) }
@@ -78,7 +82,7 @@ private fun MiniApp() {
     var connectionGuideOpen by remember { mutableStateOf(false) }
     var modulePickerOpen by remember { mutableStateOf(false) }
     var manualTargetId by remember { mutableStateOf<String?>(null) }
-    var electricalCase by remember { mutableStateOf(DemoElectricalCase.NORMAL) }
+    var electricalCase by remember { mutableStateOf(DemoElectricalCase.NO_MEASUREMENT) }
     val electrical=DemoElectricalPreview.snapshot(state.connected,electricalCase)
     var electricalExpanded by remember { mutableStateOf(false) }
 
@@ -91,9 +95,11 @@ private fun MiniApp() {
     fun off() { state = session.allOff(now()).state }
     LaunchedEffect(Unit) {
         // Read local report index asynchronously. No artificial delay or network connection.
-        history = withContext(Dispatchers.IO) {
-            prefs.getString("reports", "").orEmpty().split("\n").filter { it.isNotBlank() }.take(50)
+        val saved = withContext(Dispatchers.IO) {
+            DemoReportCodec.decode(prefs.getString("reports_v2", "").orEmpty()) to
+                prefs.getString("reports", "").orEmpty().split("\n").filter { it.isNotBlank() }.take(50)
         }
+        history=saved.first; legacyHistory=saved.second
         ready = true
         var last = 0L
         while (true) {
@@ -110,9 +116,10 @@ private fun MiniApp() {
         else if (scanning) {
             // Explicitly demo-only scan. Never submits CAN requests.
             for (i in 1..20) { delay(90); scan = i * 5 }
-            history = (listOf(java.text.DateFormat.getDateTimeInstance().format(java.util.Date()) +
-                " · Демо · 2 примера ошибок") + history).take(50)
-            prefs.edit().putString("reports", history.joinToString("\n")).apply()
+            val report=DemoReports.make(java.util.UUID.randomUUID().toString(),System.currentTimeMillis(),manualTargetId,electrical)
+            currentReport=report
+            history=(listOf(report)+history).take(50)
+            prefs.edit().putString("reports_v2",DemoReportCodec.encode(history)).apply()
             scanning = false
         }
     }
@@ -120,6 +127,13 @@ private fun MiniApp() {
         Splash()
         return
     }
+    openedReport?.let { report -> AlertDialog(onDismissRequest={ openedReport=null },title={ Text("Отчёт диагностики") },
+        text={ Column(Modifier.heightIn(max=510.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            ReportContent(report)
+        } },confirmButton={ TextButton(onClick={ openedReport=null }){ Text("Закрыть") } }) }
+    openedLegacy?.let { old -> AlertDialog(onDismissRequest={ openedLegacy=null },title={ Text("Старая запись") },
+        text={ Text(old+"\n\nВ прежней версии сохранялись только дата и количество ошибок. Коды и расшифровки восстановить невозможно.") },
+        confirmButton={ TextButton(onClick={ openedLegacy=null }){ Text("Закрыть") } }) }
     if (bleProbeOpen) BenchBleDialog { bleProbeOpen = false }
     if (connectionGuideOpen) DiagnosticGuideDialog(manualTargetId) { connectionGuideOpen = false }
     if (modulePickerOpen) ModulePickerDialog(manualTargetId,
@@ -134,7 +148,7 @@ private fun MiniApp() {
                 .padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(if (state.connected) "● Виртуальный адаптер" else "○ Демо отключено",
                     color = if(state.connected) Green else Muted, modifier = Modifier.weight(1f), fontSize = 13.sp)
-                Text("24 В · ДЕМО (ном.)", color = Orange, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("ДЕМО", color = Orange, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             if (tab == 0) {
                 val lights = state.lights
@@ -227,12 +241,7 @@ private fun MiniApp() {
                             Text("$scan% · демонстрационный прогресс",color = Muted,fontSize = 12.sp)
                             OutlinedButton(onClick = { scanning = false; scan = 0 }) { Text("Отменить") }
                         } else {
-                            if(scan == 100) {
-                                Text("Демо завершено · 2 примера ошибок",fontWeight = FontWeight.Bold)
-                                DemoFault("Колесный датчик C","Пример: обрыв цепи · активная",Red,detail == 0) { detail = if(detail == 0) -1 else 0 }
-                                DemoFault("Колесный датчик D","Пример: отсутствие сигнала · сохранённая",Orange,detail == 1) { detail = if(detail == 1) -1 else 1 }
-                                Text("Это не результат проверки реального прицепа.",color = Muted,fontSize = 11.sp)
-                            }
+                            if(scan==100) currentReport?.let { ReportContent(it) }
                             if(chosen!=null || scan==100) Button(onClick = { scan = 0; detail = -1; scanning = true },enabled=electrical.canRunDemo,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                 Text(if(scan == 100) "Повторить демо" else "Начать демо-диагностику",fontWeight = FontWeight.Bold)
@@ -253,8 +262,24 @@ private fun MiniApp() {
                     Text(if(historyOpen) "Скрыть историю" else "История диагностики")
                 }
                 if(historyOpen) {
-                    if(history.isEmpty()) Text("Пока нет отчётов",color = Muted)
-                    else history.forEach { Text(it,modifier = Modifier.fillMaxWidth().padding(5.dp),fontSize = 12.sp) }
+                    if(history.isEmpty() && legacyHistory.isEmpty()) Text("Пока нет отчётов",color = Muted)
+                    history.forEach { report ->
+                        Card(Modifier.fillMaxWidth().clickable { openedReport=report },colors=CardDefaults.cardColors(containerColor=Panel)) {
+                            Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+                                    Text(report.maker+" · "+report.model,fontWeight=FontWeight.Bold)
+                                    Text(reportDate(report.dateMs),fontSize=12.sp,color=Muted)
+                                    Text("Демо · "+report.faults.size+" ошибок · "+report.faults.count{it.active}+" активных",fontSize=12.sp,color=Orange)
+                                }
+                                Text("›",fontSize=24.sp,color=Orange)
+                            }
+                        }
+                    }
+                    legacyHistory.forEach { old ->
+                        OutlinedButton(onClick={ openedLegacy=old },modifier=Modifier.fillMaxWidth()) {
+                            Text(old+" · старый формат",fontSize=12.sp)
+                        }
+                    }
                 }
             }
         }
@@ -264,6 +289,34 @@ private fun MiniApp() {
             NavTile("◎","Диагностика",tab == 1,Modifier.weight(1f)) { if(tab != 1) { off(); tab = 1 } }
         }
     }
+}
+
+private fun reportDate(ms:Long)=java.text.DateFormat.getDateTimeInstance().format(java.util.Date(ms))
+
+@Composable
+private fun ReportContent(report:DemoReport) {
+    Text("Найденный блок · ДЕМО",color=Orange,fontWeight=FontWeight.Bold,fontSize=12.sp)
+    Text(report.maker+" · "+report.model,fontSize=20.sp,fontWeight=FontWeight.Bold)
+    CoverageRoadmap.byId(report.targetId)?.let { ModelPhoto(it,Modifier.fillMaxWidth().height(110.dp)) }
+    report.examplePart?.let { Text("Пример номера детали: "+it,fontSize=13.sp) }
+    Text("Условный серийный номер: "+report.serial,fontSize=12.sp,color=Muted)
+    Text(reportDate(report.dateMs)+" · "+(if(report.automatic) "Автопоиск" else "Ручной поиск"),fontSize=12.sp,color=Muted)
+    Text("CAN: обмен в демо"+(report.canErrors?.let {" · ошибок CAN: "+it} ?: ""),fontSize=12.sp,color=Green)
+    report.supplyMv?.let { Text("Напряжение в демо: "+(it/1000f)+" В",fontSize=12.sp) }
+    report.minimumMv?.let { Text("Минимум: "+(it/1000f)+" В",fontSize=12.sp) }
+    HorizontalDivider(color=Line)
+    Text("Ошибки: "+report.faults.size,fontSize=17.sp,fontWeight=FontWeight.Bold)
+    report.faults.forEach { fault ->
+        Column(Modifier.fillMaxWidth().background(Graphite,RoundedCornerShape(10.dp)).padding(12.dp),
+            verticalArrangement=Arrangement.spacedBy(5.dp)) {
+            Text(fault.code,color=Orange,fontWeight=FontWeight.Bold,fontSize=15.sp)
+            Text(fault.component,fontWeight=FontWeight.Bold,fontSize=15.sp)
+            Text(if(fault.active) "Активная · ДЕМО" else "Сохранённая · ДЕМО",color=if(fault.active) Red else Muted,fontSize=12.sp)
+            Text(fault.description,fontSize=13.sp)
+            if(!fault.reference) Text("Условный код DEMO, не заводской DTC",color=Muted,fontSize=11.sp)
+        }
+    }
+    Text("Симуляция, не результат проверки реального прицепа.",fontSize=11.sp,color=Muted)
 }
 
 @Composable
@@ -279,31 +332,30 @@ private fun ElectricalStatusPanel(status:ElectricalPreview,scenario:DemoElectric
     Card(colors=CardDefaults.cardColors(containerColor=Panel),shape=RoundedCornerShape(14.dp)) {
         Column(Modifier.fillMaxWidth().padding(12.dp),verticalArrangement=Arrangement.spacedBy(9.dp)) {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-                Text("Питание и связь",fontSize=16.sp,fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f))
+                Text(if(status.supplyMv==null) "Связь CAN" else "Питание и связь",fontSize=16.sp,fontWeight=FontWeight.Bold,modifier=Modifier.weight(1f))
                 Text("ДЕМО",color=Orange,fontSize=11.sp,fontWeight=FontWeight.Bold)
             }
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                ElectricalMetric("Питание",volts(status.supplyMv),supplyColor,Modifier.weight(1f))
+                if(status.supplyMv!=null) ElectricalMetric("Питание",volts(status.supplyMv),supplyColor,Modifier.weight(1f))
                 ElectricalMetric("CAN",when(status.canTraffic) { true -> "Обмен"; false -> "Нет обмена"; null -> "—" },
                     stateColor(status.canTraffic),Modifier.weight(1f))
             }
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-                Text("Мин. "+volts(status.minimumMv),color=supplyColor,fontSize=12.sp)
+                if(status.minimumMv!=null) Text("Мин. "+volts(status.minimumMv),color=supplyColor,fontSize=12.sp)
                 Text("Ошибки CAN: "+(status.canErrors?.toString()?:"—"),color=Muted,fontSize=12.sp)
             }
             status.reason?.let { Text(it,color=Red,fontSize=12.sp,fontWeight=FontWeight.Bold) }
-            Text("Демо · напряжение только при наличии согласованного входа измерения",color=Muted,fontSize=11.sp)
             Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp)).clickable(onClick=onExpand).padding(vertical=5.dp),
                 verticalAlignment=Alignment.CenterVertically) {
-                Text("Демо-сценарий: "+scenario.title,color=Orange,fontSize=12.sp,modifier=Modifier.weight(1f))
+                Text("Демо-сценарий: "+(if(scenario==DemoElectricalCase.NO_MEASUREMENT) "Нормальный обмен" else scenario.title),color=Orange,fontSize=12.sp,modifier=Modifier.weight(1f))
                 Text(if(expanded) "▴" else "▾",color=Orange)
             }
             if(expanded) {
-                for(option in DemoElectricalCase.entries) {
+                for(option in listOf(DemoElectricalCase.NO_MEASUREMENT,DemoElectricalCase.NO_CAN)) {
                     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable { onScenario(option) }.padding(5.dp),
                         verticalAlignment=Alignment.CenterVertically) {
                         RadioButton(selected=option==scenario,onClick={ onScenario(option) })
-                        Text(option.title,fontSize=13.sp)
+                        Text(if(option==DemoElectricalCase.NO_MEASUREMENT) "Нормальный обмен" else option.title,fontSize=13.sp)
                     }
                 }
                 Text("При отсутствии ответа проверить питание, массу и соединения. Прибор не измеряет массу отдельно и не определяет обрыв конкретного провода CAN.",
