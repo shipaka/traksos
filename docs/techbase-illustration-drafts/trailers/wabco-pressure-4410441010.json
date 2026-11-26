@@ -1,0 +1,144 @@
+{
+  "id": "wabco-pressure-4410441010",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-pressure-4410441010.svg",
+  "sources": [
+    {
+      "publisher": "ZF/WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/en_GB/4410441010",
+      "checked": "2026-11-26"
+    },
+    {
+      "publisher": "ZF/WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102523.pdf",
+      "section": "4.2.10",
+      "printedPage": 112,
+      "textChecked": true,
+      "visualChecked": false,
+      "screenshotError": "83 MB size limit"
+    },
+    {
+      "publisher": "Autოსystems",
+      "url": "https://autosystems.com.ua/t/wabco-4410441010",
+      "visualReferenceOnly": true
+    },
+    {
+      "publisher": "KRONE",
+      "url": "https://www.krone-trailerparts.com/running-gear/brake-and-air-systems/valves-couplings/drucksensor-1",
+      "relationship": "listed WABCO OE article"
+    }
+  ],
+  "component": {
+    "article": "4410441010",
+    "nameRu": "Внешний датчик давления",
+    "type": "piezoresistive",
+    "measuringRangeBar": [
+      0,
+      10
+    ],
+    "maxOperatingPressureBar": 16,
+    "voltageV": 24,
+    "thread": "M16 x 1.5",
+    "dimensionsMm": [
+      55,
+      29,
+      30
+    ],
+    "massKg": 0.035,
+    "temperatureC": [
+      -40,
+      80
+    ],
+    "protection": [
+      "IP6K7",
+      "IP6K9K"
+    ],
+    "version": "without sealing",
+    "electricalConnector": "Bayonet DIN 72585 A1-3.1-Sn/K2"
+  },
+  "system": {
+    "family": "iEBS",
+    "function": "optional external demand pressure measurement for towing vehicles without CAN brake demand",
+    "location": "front trailer control line per section 4.2.10; actual bracket/routing unknown",
+    "electricalPath": [
+      "sensor",
+      "449425 cable family",
+      "iEBS GIO 1 or CAN Router/Repeater"
+    ],
+    "relatedVariant": "4410441020 different sealing; no automatic interchange"
+  },
+  "crossReferences": [
+    {
+      "make": "KRONE",
+      "article": "5058105400",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KRONE",
+      "article": "5810540",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KRONE",
+      "article": "5058105401",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KÖGEL",
+      "article": "337322",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "KÖGEL",
+      "article": "337549",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "052702",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "053406",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "1098402",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHWARZMÜLLER",
+      "article": "38109",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "SCHWARZMÜLLER",
+      "article": "83614",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "TIRSAN",
+      "article": "21151103050",
+      "relationship": "manufacturer catalogue replacement reference",
+      "exactModelYearVin": "unknown"
+    }
+  ],
+  "limitations": [
+    "Original conceptual visual based on external reference photos; not exact CAD or OEM drawing",
+    "Maximum operating pressure refers to sensor only, not allowable system pressure",
+    "No pin assignments, repair or installation procedure",
+    "Exact model/year/VIN, physical routing and expert acceptance unknown"
+  ]
+}
