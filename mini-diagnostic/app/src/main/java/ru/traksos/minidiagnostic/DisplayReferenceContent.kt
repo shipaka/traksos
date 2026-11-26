@@ -26,10 +26,10 @@ fun DisplayReferenceContent() {
             DisplayReferenceEdition.SORL_ABS -> "Например 3.1"
             DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"
             DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"
-            DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
+            DisplayReferenceEdition.HALDEX_GEN2_INFO1, DisplayReferenceEdition.HALDEX_GEN3_INFO1 -> "Например S1A CONT"
             else -> "Например 003/05"
         }
-        OutlinedTextField(value=code,onValueChange={ code=it.take(16) },modifier=Modifier.fillMaxWidth(),
+        OutlinedTextField(value=code,onValueChange={ code=it.take(64) },modifier=Modifier.fillMaxWidth(),
             label={ Text(placeholder) },singleLine=true)
         val r=DisplayReferenceLookup.find(e,code)
         if(code.isNotBlank()) {

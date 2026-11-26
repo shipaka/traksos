@@ -5,6 +5,7 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_E("WABCO TEBS E · SmartBoard"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
+    HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
     HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
     HALDEX_UABS_ACTIVE("Haldex U-ABS · активные световые коды"),
     EKRAN_EBP("Экран АБС-П / ЭБП · световые коды"),
@@ -29,6 +30,10 @@ object DisplayReferenceLookup {
         if(edition==DisplayReferenceEdition.VCS_II_FLASH) {
             val r=LegacyDisplayReference.vcsFlash(s) ?: return null
             return DisplayLookup(r,"Текущая неисправность: тип не определяется по числу вспышек",LegacyDisplayReference.VCS_SOURCE,false)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_GEN2_INFO1) {
+            val r=HaldexExpandedReference.gen2(s) ?: return null
+            return DisplayLookup(r.first,r.second,HaldexExpandedReference.GEN2_SOURCE,true)
         }
         if(edition==DisplayReferenceEdition.HALDEX_GEN3_INFO1) {
             val r=LegacyDisplayReference.haldexInfo1(s) ?: return null

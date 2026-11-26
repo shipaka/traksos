@@ -37,7 +37,7 @@ object CoverageRoadmap {
         target("kb-kb4ta","Knorr-Bremse","KB4-TA",KnorrSorlReference.KNORR_SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("kb-kb4ta-d","Knorr-Bremse","KB4-TA D",KnorrSorlReference.KNORR_SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-eb1","Haldex","EB+ Gen1",HALDEX,ScopeGroup.INTERFACE_REVIEW),
-        target("haldex-eb2","Haldex","EB+ Gen2",HALDEX),
+        target("haldex-eb2","Haldex","EB+ Gen2",HaldexExpandedReference.GEN2_SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-eb3","Haldex","EB+ Gen3",LegacyDisplayReference.HALDEX_SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("haldex-eb4","Haldex","EB+ 4.0",HALDEX),
         target("haldex-uabs","Haldex","U-ABS",AdditionalAbsReference.HALDEX_SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),

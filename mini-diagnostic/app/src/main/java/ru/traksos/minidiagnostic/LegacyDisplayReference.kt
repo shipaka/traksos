@@ -3,7 +3,7 @@ package ru.traksos.minidiagnostic
 // Independent manual reference namespaces, never a raw wire decoder.
 object LegacyDisplayReference {
     const val VCS_SOURCE="https://www.wabco-customercentre.com/catalog/docs/8150100083.pdf"
-    const val HALDEX_SOURCE="https://www.manualslib.com/manual/1181878/Haldex-EbPlus-Gen3.html?page=105"
+    const val HALDEX_SOURCE="https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006300018_ru.pdf"
     // WABCO 8150100083, annex 2, printed page 28. Code identifies component, not failure mode.
     private val vcs=mapOf(
         "3" to "Датчик колеса C",
@@ -33,6 +33,6 @@ object LegacyDisplayReference {
         put("LAT ACC SC","Датчик бокового ускорения" to "Короткое замыкание")
         put("LAT ACC SIGNAL","Датчик бокового ускорения" to "Нарушение сигнала")
     }
-    fun haldexInfo1(code:String):Pair<String,String>?=haldex[code]
-    val haldexCount:Int get()=haldex.size
+    fun haldexInfo1(code:String):Pair<String,String>?=haldex[code] ?: HaldexExpandedReference.gen3(code)
+    val haldexCount:Int get()=haldex.size+HaldexExpandedReference.gen3Count
 }

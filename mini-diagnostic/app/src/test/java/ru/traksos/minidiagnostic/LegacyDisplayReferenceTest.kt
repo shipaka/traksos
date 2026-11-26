@@ -11,7 +11,7 @@ class LegacyDisplayReferenceTest {
         assertNull(DisplayReferenceLookup.find(DisplayReferenceEdition.VCS_II_FLASH,"003/05"))
     }
     @Test fun haldexTextCodesDoNotMixWithOtherSystems() {
-        assertEquals(17,LegacyDisplayReference.haldexCount)
+        assertEquals(72,LegacyDisplayReference.haldexCount)
         val r=DisplayReferenceLookup.find(DisplayReferenceEdition.HALDEX_GEN3_INFO1,"S1A CONT")!!
         assertEquals("Датчик колеса 1A",r.component)
         assertEquals("Нарушение электрической цепи",r.condition)
