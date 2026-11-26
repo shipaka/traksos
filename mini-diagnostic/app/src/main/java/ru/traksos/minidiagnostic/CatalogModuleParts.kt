@@ -4,6 +4,15 @@ package ru.traksos.minidiagnostic
 data class CatalogModulePart(val number:String,val targetId:String,val variant:String,val source:String)
 object CatalogModuleParts {
     private val rows=listOf(
+        CatalogModulePart("K055342","kb-g22","Standard 2S/2M · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/OYLAJ4o5I0EBhB_Y136107-007-EN-WEB3.pdf#page=4"),
+        CatalogModulePart("K055352","kb-g22","Standard 2S/2M · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/OYLAJ4o5I0EBhB_Y136107-007-EN-WEB3.pdf#page=4"),
+        CatalogModulePart("K055362","kb-g22","Standard 2S/2M · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/OYLAJ4o5I0EBhB_Y136107-007-EN-WEB3.pdf#page=4"),
+        CatalogModulePart("K055369","kb-g22","Standard 2S/2M · базовый номер","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/OYLAJ4o5I0EBhB_Y136107-007-EN-WEB3.pdf#page=4"),
+        CatalogModulePart("ES2090","kb-g22","Standard 2S/2M · обозначение типа","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/OYLAJ4o5I0EBhB_Y136107-007-EN-WEB3.pdf#page=4"),
+        CatalogModulePart("4801020300","zf-tebs-e","TEBS E · 24 В без PEM","https://www.wabco-customercentre.com/catalog/en_US/4801020300"),
+        CatalogModulePart("4801020320","zf-tebs-e","TEBS E · 24 В без PEM","https://www.wabco-customercentre.com/catalog/en_US/4801020320"),
+        CatalogModulePart("4801020620","zf-tebs-e","TEBS E · Premium без PEM","https://www.wabco-customercentre.com/catalog/en_US/4801020620"),
+        CatalogModulePart("4801020800","zf-tebs-e","TEBS E · Multivoltage без PEM","https://www.wabco-customercentre.com/catalog/en_US/4801020800"),
         CatalogModulePart("364564001","haldex-uabs","Premium · модулятор в сборе; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
         CatalogModulePart("364569001","haldex-uabs","Premium · отдельный ЭБУ; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
         CatalogModulePart("364565001","haldex-uabs","Standard · модулятор в сборе; CAN по документации","https://www.haldex.com/globalassets/europe/61.-documents/abs-system/006300022_gb.pdf#page=8"),
