@@ -1,0 +1,109 @@
+{
+  "batch": "TECHBASE-JOST-SENSOR-LUBRICATION-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "source_review": [
+    {
+      "key": "sensor",
+      "url": "https://www.jost-world.com/corporate/mediacenter/press-releases/press-releases-listing/jost-at-automechanika-dubai-2025-smart-safe-and-sustain-able-solutions-for-the-future-of-transport/",
+      "inspection": "Official HTML text opened and facts checked; image links not visually inspected; no installation documentation verified"
+    },
+    {
+      "key": "camera",
+      "url": "https://www.jost-world.com/corporate/mediacenter/press-releases/press-releases-listing/automechanika-2024-jost-presents-innovative-products-for-the-future-of-the-commercial-vehicle-industry/",
+      "inspection": "Official HTML text opened and facts checked; image links not visually inspected; no installation documentation verified"
+    },
+    {
+      "key": "lube",
+      "url": "https://www.jost-world.com/en/products/jost/lubetronic.html",
+      "inspection": "Official HTML text opened and facts checked; image links not visually inspected; no installation documentation verified"
+    },
+    {
+      "key": "kks",
+      "url": "https://www.jost-world.com/corporate/mediacenter/press-releases/press-releases-listing/the-next-evolution-of-the-kks-automatic-coupling-system-the-kks-u-connector/",
+      "inspection": "Official HTML text opened and facts checked; image links not visually inspected; no installation documentation verified"
+    },
+    {
+      "key": "kits",
+      "url": "https://www.jost-world.com/en/products/jost-truckstop.html",
+      "inspection": "Official HTML text opened and facts checked; image links not visually inspected; no installation documentation verified"
+    }
+  ],
+  "records": [
+    {
+      "name": "jsk37c-sensor-functions.svg",
+      "scope": "JSK 37C demonstration 2025",
+      "facts": [
+        "Lock status, kingpin position, handle/latch position, skid plate contact; visual/acoustic remote feedback; no sensor count inferred"
+      ],
+      "source": "https://www.jost-world.com/corporate/mediacenter/press-releases/press-releases-listing/jost-at-automechanika-dubai-2025-smart-safe-and-sustain-able-solutions-for-the-future-of-transport/",
+      "status": "HOLD",
+      "limits": [
+        "No exact serial applicability or installation geometry",
+        "No verified installed component photographs",
+        "Independent visual-render and technical review pending"
+      ]
+    },
+    {
+      "name": "jsk42-king-pin-finder.svg",
+      "scope": "JSK42 with King Pin Finder shown 2024",
+      "facts": [
+        "Camera integrated into fifth wheel, live image in cab when reversing, helps assess approach and height"
+      ],
+      "source": "https://www.jost-world.com/corporate/mediacenter/press-releases/press-releases-listing/automechanika-2024-jost-presents-innovative-products-for-the-future-of-the-commercial-vehicle-industry/",
+      "status": "HOLD",
+      "limits": [
+        "No exact serial applicability or installation geometry",
+        "No verified installed component photographs",
+        "Independent visual-render and technical review pending"
+      ]
+    },
+    {
+      "name": "lubetronic-1point-5point.svg",
+      "scope": "5Point / 1Point W series",
+      "facts": [
+        "5Point plate and lock jaw; 1Point lock jaw only for lined low-maintenance fifth wheels; nominal lubricant supply 1 vs 3 years, LED level"
+      ],
+      "source": "https://www.jost-world.com/en/products/jost/lubetronic.html",
+      "status": "HOLD",
+      "limits": [
+        "No exact serial applicability or installation geometry",
+        "No verified installed component photographs",
+        "Independent visual-render and technical review pending"
+      ]
+    },
+    {
+      "name": "kks42-system.svg",
+      "scope": "KKS 42 / KKS-U 2023",
+      "facts": [
+        "KKS 42, E-Drive, sensors, LubeTronic, remote, ISO 13044-2 connector; KKS-U wedge/spring/cable box under trailer"
+      ],
+      "source": "https://www.jost-world.com/corporate/mediacenter/press-releases/press-releases-listing/the-next-evolution-of-the-kks-automatic-coupling-system-the-kks-u-connector/",
+      "status": "HOLD",
+      "limits": [
+        "No exact serial applicability or installation geometry",
+        "No verified installed component photographs",
+        "Independent visual-render and technical review pending"
+      ]
+    },
+    {
+      "name": "jsk-bearing-kit-matrix.svg",
+      "scope": "JOST C/E/K/C1/G1 kit listing",
+      "facts": [
+        "C | SK2121-69 | JSK 37 C / CZ",
+        "E | SK3121-61 | JSK 37 E / EW / EA / ER / ERW / ME140 / ME140W",
+        "K | SKE001370220 | JSK 42 K0–K6 / JSK 40 K9 / MK 140 / MK 162",
+        "C1 | SK2421-78 | JSK 38 C / CZ",
+        "G1 | SK2521-76 | JSK 38 G / GZ"
+      ],
+      "source": "https://www.jost-world.com/en/products/jost-truckstop.html",
+      "status": "HOLD",
+      "limits": [
+        "No exact serial applicability or installation geometry",
+        "No verified installed component photographs",
+        "Independent visual-render and technical review pending"
+      ]
+    }
+  ],
+  "rights": "Original SVG diagrams; no OEM pictures embedded. Watermark not runtime protection.",
+  "publication": "HOLD until technical and rendered visual review; not counted as accepted. Existing generic trailer kingpin and landing gear untouched."
+}
