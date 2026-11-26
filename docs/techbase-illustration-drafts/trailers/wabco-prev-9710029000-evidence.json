@@ -1,0 +1,119 @@
+{
+  "id": "wabco-prev-9710029000",
+  "status": "evidence_verified_visual_draft_pending_expert",
+  "sources": [
+    {
+      "publisher": "ZF/WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/en/9710029000",
+      "checked": "2026-11-26"
+    },
+    {
+      "publisher": "WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150100343.pdf",
+      "printedPages": [
+        163,
+        164
+      ],
+      "visuallyChecked": true
+    },
+    {
+      "publisher": "WABCO",
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150100203.pdf",
+      "section": "3.2",
+      "visuallyChecked": false
+    }
+  ],
+  "component": {
+    "article": "9710029000",
+    "nameRu": "Клапан аварийного растормаживания PREV",
+    "compatibleSystemFamilies": [
+      "Trailer EBS D",
+      "Trailer EBS E"
+    ],
+    "nominalOperatingPressureBar": 8.5,
+    "briefMaximumPressureBar": 10,
+    "dimensionsMm": [
+      174,
+      172,
+      137
+    ],
+    "massKg": 1.57,
+    "temperatureC": [
+      -40,
+      65
+    ],
+    "version": "without test connection, with plate 9710021034",
+    "controls": [
+      {
+        "color": "red",
+        "roleRu": "Управление стояночным тормозом"
+      },
+      {
+        "color": "black",
+        "roleRu": "Растормаживание рабочего тормоза"
+      }
+    ],
+    "visualReference": "Metallic compact body, two protruding black/red controls, mounting bracket, not an electronic ECU."
+  },
+  "systemContext": {
+    "reference": "8150100343 p163",
+    "variant": "2S/2M example",
+    "relatedComponents": [
+      "TEBS E modulator",
+      "air reservoir",
+      "overload protection valve",
+      "wheel speed sensors",
+      "ISO 7638 electrical supply",
+      "service and supply pneumatic lines"
+    ],
+    "physicalMounting": "unknown"
+  },
+  "crossReferences": [
+    {
+      "make": "KRONE",
+      "article": "5817911",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "KRONE",
+      "article": "58179110",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "KOGEL",
+      "article": "361687",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "KOGEL",
+      "article": "22361687",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "SCHMITZ CARGOBULL",
+      "article": "1060744",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "SCANIA",
+      "article": "1738468",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "VAN HOOL",
+      "article": "10950969",
+      "modelYearVinFitment": "unknown"
+    },
+    {
+      "make": "KÄSSBOHRER",
+      "article": "21150110052",
+      "modelYearVinFitment": "unknown"
+    }
+  ],
+  "limitations": [
+    "OEM photograph and dimensional drawing used as evidence, not copied into repository",
+    "Visual approximation requires specialist review; no installation or repair instruction",
+    "Exact vehicle chassis, model year, port routing and VIN not verified",
+    "Evidence JSON is not a finished illustration"
+  ]
+}
