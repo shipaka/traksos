@@ -1,0 +1,97 @@
+package ru.traksos.minidiagnostic
+
+enum class DisplayReferenceEdition(val title:String) {
+    WABCO_VCS2_READER("WABCO VCS II · электронный Code Reader 2019"),
+    WABCO_D_READER("WABCO TEBS D · электронный Code Reader 2019"),
+    WABCO_E_READER("WABCO TEBS E · электронный Code Reader 2019"),
+    WABCO_CD_BULLETIN("WABCO TEBS C1–D · бюллетень 4007de0 (предварительно)"),
+    WABCO_D("WABCO TEBS D · памятка водителя"),
+    WABCO_D_SYSTEM("WABCO TEBS D · руководство 8150101363"),
+    WABCO_E("WABCO TEBS E · памятка водителя"),
+    WABCO_E_OEM_EXACT("WABCO TEBS E · заводские примеры 002/05 и 001/07"),
+    WABCO_CAN_ROUTER("WABCO CAN Router / Repeater · отдельный блок"),
+    WABCO_ELEX("WABCO ELEX · отдельный модуль расширения"),
+    WABCO_E_HUMBAUR("WABCO TEBS E · пример Humbaur"),
+    WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
+    SORL_ABS_TESTER_36302900020("SORL ABS прицепа · электронный тестер 36302900020"),
+    VIE_101("VIE / ТСР TEBS · V1.01"),
+    WABCO_COMPACT_TESTER("WABCO Compact Tester II · три символа"),
+    HALDEX_GEN1_2005("Haldex EB+ Gen1 · руководство 02.2005"),
+    HALDEX_GEN2_INFO1("Haldex EB+ Gen2 · Info Centre 1"),
+    HALDEX_GEN3_INFO1("Haldex EB+ Gen3 · Info Centre 1"),
+    HALDEX_EB4_DIAG_EXAMPLE("Haldex EB+ 4.0 · DIAG++ (таблица 2025)"),
+    HALDEX_SOFT_DOCKING_GEN3("Haldex EB+ Gen3 · Soft Docking"),
+    HALDEX_TPMS2("Haldex TPMS 2.0 · отдельный RCU (примеры 2025)"),
+    HALDEX_CAN_HUB("Haldex EB+ CAN Hub · бюллетень 2025"),
+    HALDEX_UABS_INFO2("Haldex U-ABS · Info Centre 2"),
+    HALDEX_GEN3_DIAG("Haldex EB+ Gen3 · DIAG+ / Info Centre 2"),
+    HALDEX_MODAL_MODULAR("Haldex MODAL / MODULAR · DDU/TODD"),
+    KNORR_TEBS4("Knorr TEBS4 · ECUtalk 3.3"),
+    KNORR_G2_TD2077("Knorr TEBS G2 · TD-2077 (предварительная сверка)"),
+    KNORR_G22_PRESSURE("Knorr TEBS G2.2 · давление, бюллетень 2019"),
+    KNORR_G2_EXAMPLE("Knorr TEBS G2 · заводские примеры ECUtalk / TIM G2"),
+}
+data class DisplayLookup(val component:String?,val condition:String?,val source:String?,val exactPair:Boolean)
+object DisplayReferenceLookup {
+    // Manual display-only lookup: no automatic identification, status inference or bus access.
+    fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
+        val s=code.trim()
+        if(edition in setOf(DisplayReferenceEdition.WABCO_VCS2_READER,DisplayReferenceEdition.WABCO_D_READER,DisplayReferenceEdition.WABCO_E_READER)) return WabcoCodeReaderReference.lookup(edition,s)
+        if(edition==DisplayReferenceEdition.SORL_ABS_TESTER_36302900020) return SorlTrailerTesterReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_CD_BULLETIN) return WabcoCdBulletinReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_E_OEM_EXACT) return WabcoEExactReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_CAN_ROUTER) return WabcoRouterReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)
+        if(edition==DisplayReferenceEdition.WABCO_E_HUMBAUR) return ModernDisplayExamples.wabcoE(s)
+        if(edition==DisplayReferenceEdition.HALDEX_SOFT_DOCKING_GEN3) return HaldexAuxReference.softDocking(s)
+        if(edition==DisplayReferenceEdition.HALDEX_TPMS2) return HaldexTpms2Reference.lookup(s)
+        if(edition==DisplayReferenceEdition.HALDEX_CAN_HUB) return HaldexAuxReference.canHub(s)
+        if(edition==DisplayReferenceEdition.HALDEX_EB4_DIAG_EXAMPLE) return ModernDisplayExamples.haldex4(s)
+        if(edition==DisplayReferenceEdition.WABCO_COMPACT_TESTER) return WabcoCompactReference.lookup(s)
+        if(edition==DisplayReferenceEdition.KNORR_G2_TD2077) return KnorrG2Td2077Reference.lookup(s)
+        if(edition==DisplayReferenceEdition.KNORR_G22_PRESSURE) return KnorrG22PressureReference.lookup(s)
+        if(edition==DisplayReferenceEdition.KNORR_G2_EXAMPLE) return KnorrG2ExampleReference.lookup(s)
+        if(edition==DisplayReferenceEdition.KNORR_TEBS4) {
+            val r=KnorrTebs4Reference.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,KnorrTebs4Reference.SOURCE,true)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_MODAL_MODULAR) {
+            val r=HaldexModalReference.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,HaldexModalReference.SOURCE,true)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_GEN1_2005) {
+            val r=HaldexEarlyReference.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,HaldexEarlyReference.SOURCE,true)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_GEN2_INFO1) {
+            val r=HaldexExpandedReference.gen2(s) ?: return null
+            return DisplayLookup(r.first,r.second,HaldexExpandedReference.GEN2_SOURCE,true)
+        }
+        if(edition==DisplayReferenceEdition.HALDEX_UABS_INFO2) return HaldexUabsReference.lookup(s)
+        if(edition==DisplayReferenceEdition.HALDEX_GEN3_DIAG) return HaldexGen3DiagReference.lookup(s)
+        if(edition==DisplayReferenceEdition.HALDEX_GEN3_INFO1) {
+            val r=LegacyDisplayReference.haldexInfo1(s) ?: return null
+            return DisplayLookup(r.first,r.second,LegacyDisplayReference.HALDEX_SOURCE,true)
+        }
+        if(edition==DisplayReferenceEdition.VIE_101) {
+            if(!Regex("[0-9]{1,3}/[0-9]{1,2}").matches(s)) return null
+            return VieDisplayReference.detailedLookup(s)
+        }
+        if(!Regex("[0-9]{3}/[0-9]{2}").matches(s)) return null
+        if(edition==DisplayReferenceEdition.WABCO_D_SYSTEM || edition==DisplayReferenceEdition.WABCO_E_SYSTEM) {
+            val (component,type)=s.split("/")
+            return SmartBoardSystemReference.find(edition==DisplayReferenceEdition.WABCO_D_SYSTEM,component,type)
+        }
+        val family=when(edition) {
+            DisplayReferenceEdition.WABCO_D -> EcuFamily.WABCO_TEBS_D
+            DisplayReferenceEdition.WABCO_E -> EcuFamily.WABCO_TEBS_E
+            else -> return null
+        }
+        val (component,type)=s.split("/")
+        val r=SmartBoardReference.decode(family,component,type)
+        if(r.component==null && r.faultType==null) return null
+        // These are independent display fields; never claim the combination is a documented DTC.
+        return DisplayLookup(r.component?.titleRu,r.faultType?.titleRu,
+            listOfNotNull(r.component?.source,r.faultType?.source).distinct().joinToString("\n"),false)
+    }
+}

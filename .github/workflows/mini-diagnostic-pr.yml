@@ -1,0 +1,116 @@
+name: Mini Diagnostic Android demo
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - 'mini-diagnostic/**'
+      - '.github/workflows/mini-diagnostic-pr.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mini-diagnostic-${{ github.ref }}
+  # Let the running Android test finish; GitHub retains only the newest pending run.
+  cancel-in-progress: false
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - name: Prepare reference photographs for private debug review
+        working-directory: mini-diagnostic
+        run: |
+          python -m pip install Pillow==11.3.0
+          python tools/prepare_debug_module_photos.py
+      - name: Preserve photo preparation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-photo-review
+          path: mini-diagnostic/module-photo-review.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Test and assemble isolated debug APK
+        working-directory: mini-diagnostic
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Verify photographs packaged in debug APK
+        working-directory: mini-diagnostic
+        run: python tools/prepare_debug_module_photos.py --verify-apk app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-diagnostic-demo
+          path: mini-diagnostic/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+      - name: Compile minified unsigned release (no publishing keys)
+        working-directory: mini-diagnostic
+        run: gradle --no-daemon :app:assembleRelease
+      - name: Inspect the actual release APK manifest
+        working-directory: mini-diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/apk_security_review.py app/build/outputs/apk/release/app-release-unsigned.apk --output apk-security-review.json
+      - name: Preserve release security review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-apk-security-review
+          path: mini-diagnostic/apk-security-review.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Preserve Android unit-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-diagnostic-unit-results
+          path: mini-diagnostic/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 7
+  bench-firmware:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned tool
+        run: python -m pip install platformio==6.1.18
+      - name: Test offline CAN trace inspector and review-only pin budget
+        working-directory: mini-diagnostic
+        run: python -m unittest discover -s tools -p 'test_*.py'
+      - name: Test portable firmware state machine
+        working-directory: mini-diagnostic/firmware
+        run: |
+          g++ -std=c++11 -Wall -Wextra -Werror -pedantic -Iinclude tools/test_bench_engine.cpp -o /tmp/traksos-bench-tests
+          /tmp/traksos-bench-tests
+          g++ -std=c++11 -Wall -Wextra -Werror -pedantic -Iinclude tools/test_interface_guard.cpp -o /tmp/traksos-interface-tests
+          /tmp/traksos-interface-tests
+      - name: Build USB-only BLE bench firmware
+        working-directory: mini-diagnostic/firmware
+        run: pio run -e esp32_bench_ble
+      - name: Package full factory image and Windows flash helper
+        working-directory: mini-diagnostic/firmware
+        run: |
+          python -m pip install esptool==4.8.1
+          python tools/package_bench.py
+          python -m unittest discover -s tools -p 'test_*.py'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-esp32-bench-ble
+          path: mini-diagnostic/firmware/dist/
+          if-no-files-found: error
+          retention-days: 7
