@@ -28,6 +28,7 @@ fun DisplayReferenceContent() {
             DisplayReferenceEdition.BENDIX_TABS6 -> "Две группы, например 2/4"
             DisplayReferenceEdition.SORL_ABS -> "Например 3.1"
             DisplayReferenceEdition.EKRAN_EBP -> "Две группы, например 1/3"
+            DisplayReferenceEdition.VARIO_C_EXAMPLES -> "Две группы ошибки, например 1/3"
             DisplayReferenceEdition.VCS_I_EXPERT -> "Две группы, например 3/5"
             DisplayReferenceEdition.WABCO_COMPACT_TESTER -> "Три символа, например 411"
             DisplayReferenceEdition.VCS_II_FLASH -> "Число вспышек, например 3"

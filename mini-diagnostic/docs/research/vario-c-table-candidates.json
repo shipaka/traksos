@@ -1,0 +1,157 @@
+{
+  "status": "QUARANTINED_NOT_FOR_RUNTIME",
+  "document": "WABCO Trailer ABS Training",
+  "printedPage": 36,
+  "sources": [
+    "https://studylib.net/doc/18267640/trailer-abs-training---inform.wabco",
+    "https://manualzz.com/doc/23290383/wabco-trailer-abs-manual"
+  ],
+  "evidence": "Two HTML transcriptions of the same document; not independent manufacturer evidence. Original image not reviewed. Excludes zero and later misaligned groups.",
+  "rows": [
+    {
+      "code": "1/2",
+      "component": "Датчик колеса B",
+      "condition": "Скачки сигнала скорости / биение ротора"
+    },
+    {
+      "code": "1/3",
+      "component": "Датчик колеса B",
+      "condition": "Нарушение зазора"
+    },
+    {
+      "code": "1/4",
+      "component": "Датчик колеса B",
+      "condition": "Обрыв, КЗ или утечка на массу"
+    },
+    {
+      "code": "1/5",
+      "component": "Датчик колеса D",
+      "condition": "Скачки сигнала скорости / биение ротора"
+    },
+    {
+      "code": "1/6",
+      "component": "Датчик колеса D",
+      "condition": "Нарушение зазора"
+    },
+    {
+      "code": "1/7",
+      "component": "Датчик колеса D",
+      "condition": "Обрыв, КЗ или утечка на массу"
+    },
+    {
+      "code": "1/8",
+      "component": "Датчик колеса A",
+      "condition": "Скачки сигнала скорости / биение ротора"
+    },
+    {
+      "code": "1/9",
+      "component": "Датчик колеса A",
+      "condition": "Нарушение зазора"
+    },
+    {
+      "code": "1/10",
+      "component": "Датчик колеса A",
+      "condition": "Обрыв, КЗ или утечка на массу"
+    },
+    {
+      "code": "1/11",
+      "component": "Датчик колеса C",
+      "condition": "Скачки сигнала скорости / биение ротора"
+    },
+    {
+      "code": "1/12",
+      "component": "Датчик колеса C",
+      "condition": "Нарушение зазора"
+    },
+    {
+      "code": "1/13",
+      "component": "Датчик колеса C",
+      "condition": "Обрыв, КЗ или утечка на массу"
+    },
+    {
+      "code": "1/14",
+      "component": "Датчик колеса F",
+      "condition": "Скачки сигнала скорости / биение ротора"
+    },
+    {
+      "code": "1/15",
+      "component": "Датчик колеса F",
+      "condition": "Нарушение зазора"
+    },
+    {
+      "code": "2/1",
+      "component": "Датчик колеса E",
+      "condition": "Скачки сигнала скорости / биение ротора"
+    },
+    {
+      "code": "2/2",
+      "component": "Датчик колеса E",
+      "condition": "Нарушение зазора"
+    },
+    {
+      "code": "2/3",
+      "component": "Датчик колеса E",
+      "condition": "Обрыв, КЗ или утечка на массу"
+    },
+    {
+      "code": "2/4",
+      "component": "Модулятор A · впускной клапан",
+      "condition": "Обрыв цепи"
+    },
+    {
+      "code": "2/5",
+      "component": "Модулятор A · выпускной клапан",
+      "condition": "Обрыв цепи"
+    },
+    {
+      "code": "2/6",
+      "component": "Модулятор B · впускной клапан",
+      "condition": "Обрыв цепи"
+    },
+    {
+      "code": "2/7",
+      "component": "Модулятор B · выпускной клапан",
+      "condition": "Обрыв цепи"
+    },
+    {
+      "code": "2/8",
+      "component": "Модулятор C · впускной клапан",
+      "condition": "Обрыв цепи"
+    },
+    {
+      "code": "2/9",
+      "component": "Модулятор C · выпускной клапан",
+      "condition": "Обрыв цепи"
+    },
+    {
+      "code": "2/10",
+      "component": "Модулятор A · впускной клапан",
+      "condition": "КЗ на массу"
+    },
+    {
+      "code": "2/11",
+      "component": "Модулятор A · выпускной клапан",
+      "condition": "КЗ на массу"
+    },
+    {
+      "code": "2/12",
+      "component": "Модулятор B · впускной клапан",
+      "condition": "КЗ на массу"
+    },
+    {
+      "code": "2/13",
+      "component": "Модулятор B · выпускной клапан",
+      "condition": "КЗ на массу"
+    },
+    {
+      "code": "2/14",
+      "component": "Модулятор C · впускной клапан",
+      "condition": "КЗ на массу"
+    },
+    {
+      "code": "2/15",
+      "component": "Модулятор C · выпускной клапан",
+      "condition": "КЗ на массу"
+    }
+  ]
+}

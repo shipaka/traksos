@@ -6,6 +6,7 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_E("WABCO TEBS E · памятка водителя"),
     WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
+    VARIO_C_EXAMPLES("WABCO Vario C · примеры из учебного руководства"),
     VCS_I_EXPERT("WABCO VCS I · экспертные световые коды"),
     WABCO_COMPACT_TESTER("WABCO Compact Tester II · три символа"),
     VCS_II_FLASH("WABCO VCS II · мигающий код"),
@@ -24,6 +25,10 @@ object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.VARIO_C_EXAMPLES) {
+            val r=WabcoVarioExamples.lookup(s) ?: return null
+            return DisplayLookup(r.first,r.second,WabcoVarioExamples.SOURCE,false)
+        }
         if(edition==DisplayReferenceEdition.BENDIX_TABS6) {
             val r=BendixTabs6Reference.lookup(s) ?: return null
             return DisplayLookup(r.component,r.condition,BendixTabs6Reference.SOURCE+" · стр. "+r.page,true)

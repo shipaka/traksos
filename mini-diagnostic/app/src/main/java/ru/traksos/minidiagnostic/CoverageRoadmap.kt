@@ -24,7 +24,7 @@ object CoverageRoadmap {
         target("zf-tebs-d","WABCO / ZF","TEBS D",SmartBoardReference.SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("zf-tebs-e","WABCO / ZF","TEBS E",SmartBoardReference.SOURCE,stage=ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("zf-iebs","WABCO / ZF","iEBS",ZF_IEBS),
-        target("zf-vario-c","WABCO / ZF","Vario C",WabcoCompactReference.SOURCE,ScopeGroup.INTERFACE_REVIEW),
+        target("zf-vario-c","WABCO / ZF","Vario C",WabcoVarioExamples.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("zf-vcs","WABCO / ZF","VCS I",WabcoVcsReference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("zf-vcs-ii","WABCO / ZF","VCS II",LegacyDisplayReference.VCS_SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("zf-tcs-i","WABCO / ZF","TCS I",WabcoCompactReference.SOURCE,ScopeGroup.FUTURE_MARKET),

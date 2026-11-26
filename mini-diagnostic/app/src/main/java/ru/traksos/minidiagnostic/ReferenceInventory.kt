@@ -9,6 +9,7 @@ object ReferenceInventory {
         ReferenceCount("WABCO SmartBoard system D/E components",SmartBoardSystemReference.systemComponentCount),
         ReferenceCount("VIE",VieDisplayReference.count),
         ReferenceCount("VCS II",LegacyDisplayReference.vcsCount),
+        ReferenceCount("Vario C examples",WabcoVarioExamples.count),
         ReferenceCount("VCS I",WabcoVcsReference.count),
         ReferenceCount("Haldex Gen3",LegacyDisplayReference.haldexCount),
         ReferenceCount("Haldex Gen2",HaldexExpandedReference.gen2Count),
