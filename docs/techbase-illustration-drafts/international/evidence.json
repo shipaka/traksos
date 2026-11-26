@@ -1,0 +1,109 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "scope": "International LT/RH S13 2024 specification; announced EPA 2027 changes kept separate",
+  "review_date": "2026-11-26",
+  "sources": {
+    "spec": "https://www.international.com/-/media/project/tratongroup/international/international/brochures-and-collateral/s13/pm_int-s13-spec-sheet-ltandrh-2024-9-23-2.pdf?rev=258bea50c1c04d018062001073660cce",
+    "aftertreatment": "https://www.international.com/our-company/stories/2022/s13integrated-dual-stage-aftertreatment",
+    "t14": "https://www.international.com/our-company/stories/2026/t14-transmission-built-for-the-jobsite",
+    "powertrain": "https://www.international.com/products/trucks/features/engines-and-powertrains/s13-integrated"
+  },
+  "source_method": "Official LT/RH PDF physical pages 1–2 screenshots inspected including annotated manufacturer powertrain renderings; OEM HTML inspected for dual DEF, T14 and regulatory changes.",
+  "assets": [
+    {
+      "file": "lt-s13-engine.svg",
+      "sources": [
+        "spec"
+      ],
+      "fact": "Inline 6, 12.74 L, DOHC, four valves, 23:1, fixed geometry",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-fuel.svg",
+      "sources": [
+        "spec"
+      ],
+      "fact": "1800 bar Common Rail; generic functional sequence",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-cooling.svg",
+      "sources": [
+        "spec"
+      ],
+      "fact": "Low displacement water pump, six or nine blade fan",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-oil.svg",
+      "sources": [
+        "spec"
+      ],
+      "fact": "Cartridge oil filter and aluminium sump",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-compressor.svg",
+      "sources": [
+        "spec"
+      ],
+      "fact": "Three compressor variants: single iron, twin aluminium, twin aluminium clutched",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-dual-def.svg",
+      "sources": [
+        "aftertreatment",
+        "powertrain"
+      ],
+      "fact": "DEF injection downstream of turbo and inside aftertreatment; no DOC, no active DPF regen",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-t14-reverse.svg",
+      "sources": [
+        "spec",
+        "t14"
+      ],
+      "fact": "14-speed single countershaft, planetary reverse principle",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-t14-eca.svg",
+      "sources": [
+        "powertrain",
+        "t14"
+      ],
+      "fact": "Electronic clutch actuator without drawing from air system",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-t14-oil-level.svg",
+      "sources": [
+        "t14"
+      ],
+      "fact": "Variable Oil Level Upper Reservoir",
+      "acceptance": "pending"
+    },
+    {
+      "file": "lt-s13-epa-comparison.svg",
+      "sources": [
+        "powertrain"
+      ],
+      "fact": "2024 external EGR yes, no cooler; announced 2027 external EGR removed, VVT/VVB, 24 V powertrain architecture and no electronically heated catalyst",
+      "acceptance": "pending"
+    }
+  ],
+  "checks": [
+    "10 SVGs fetched and structure and labels inspected",
+    "Escaped markup defect in compressor corrected, ECA disc count removed, cooling and fuel labels refined; four revised files exact readback verified."
+  ],
+  "limitations": [
+    "Manufacturer renderings are not proof of installed chassis geometry.",
+    "Original simplified SVG symbols, not photorealistic or exact mounting views.",
+    "No VIN fitment, wiring, physical routing, service procedures or independent technical and rendered visual acceptance.",
+    "Do not infer that external EGR is completely absent in EPA 2024: OEM states no EGR in normal operation and no cooler, but external EGR use yes in 2024 comparison.",
+    "EPA 2027 is an announced configuration, not present fitment."
+  ],
+  "accepted_count": 0
+}
