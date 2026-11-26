@@ -42,7 +42,7 @@ object DemoReports {
             if(d?.exactPair!=true || d.component==null || d.condition==null) null
             else DemoReportFault(e.code,d.component,d.condition,false,true)
         }.ifEmpty { synthetic }
-        val faults=candidates.shuffled(random).take(random.nextInt(1,minOf(3,candidates.size)+1))
+        val faults=candidates.shuffled(random).take(random.nextInt(minOf(2,candidates.size),minOf(3,candidates.size)+1))
             .mapIndexed { i,f -> f.copy(active=i==0 || random.nextBoolean()) }
         return DemoReport(id,dateMs,target.id,target.maker,target.model,sampleParts[target.id],
             "DEMO-"+id.take(8),targetId==null,electrical.canErrors,electrical.supplyMv,electrical.minimumMv,faults)
