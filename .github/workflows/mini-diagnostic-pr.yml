@@ -1,0 +1,37 @@
+name: Mini Diagnostic Android demo
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - 'mini-diagnostic/**'
+      - '.github/workflows/mini-diagnostic-pr.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mini-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - name: Test and assemble isolated debug APK
+        working-directory: mini-diagnostic
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: traksos-mini-diagnostic-demo
+          path: mini-diagnostic/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
