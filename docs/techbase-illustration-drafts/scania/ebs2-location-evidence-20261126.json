@@ -1,0 +1,90 @@
+{
+  "schema": "techbase-source-evidence/v1",
+  "id": "scania-ebs2-location-evidence-20261126",
+  "status": "research_only_not_render_ready",
+  "manufacturer": "Scania",
+  "system": "EBS",
+  "source": {
+    "title": "EBS troubleshooting, 10:04-08, Issue 1 en",
+    "copyright": "Scania CV AB 1999",
+    "url": "https://www.truckspares365.co.uk/hub/wp-content/uploads/2022/08/100408en-1.pdf",
+    "alternate": "https://www.truckspares365.co.uk/hub/wp-content/uploads/2022/08/100408en.pdf",
+    "provenance": "OEM-authored document on third-party host; redistribution rights and authenticity not independently cleared; do not copy drawing"
+  },
+  "variants": [
+    {
+      "variant": "2.0",
+      "location_page": 60,
+      "circuit_pages": [
+        62,
+        65
+      ],
+      "visual_checked": false,
+      "note": "Location section exists; page image retrieval failed. Physical locations not accepted."
+    },
+    {
+      "variant": "2.1",
+      "location_page": 66,
+      "circuit_pages": [
+        68,
+        73
+      ],
+      "visual_checked": false,
+      "note": "Text identifies E43 as controller; screenshot unavailable, physical location not accepted."
+    },
+    {
+      "variant": "2.2",
+      "location_page": 74,
+      "component_list_pages": [
+        74,
+        75
+      ],
+      "circuit_pages": [
+        76,
+        80
+      ],
+      "visual_checked": true,
+      "figure": "115 221",
+      "observations": [
+        {
+          "component_code": "E43",
+          "role": "EBS controller",
+          "location": "Cab, forward interior zone as indicated by leader on page 74; exact bracket/side not established",
+          "scope": "Illustrated configuration only"
+        },
+        {
+          "component_code": "C92",
+          "role": "Trailer ABS connection",
+          "location": "Rear chassis end in illustrated configuration",
+          "scope": "Illustrated configuration only"
+        }
+      ],
+      "note": "Figure shows cab and chassis, not actual harness routing. Do not infer model, axle formula, year span or other variants from sketch."
+    }
+  ],
+  "oem_access": {
+    "rmi": "https://www.scania.com/group/en/home/products-and-services/services/rmi/scania-rmi-portal.html",
+    "integration_rights": "https://www.scania.com/group/en/home/products-and-services/services/rmi/specific-rmi.html",
+    "requirement": "Obtain exact chassis-specific workshop information, authorized use, OEM part numbers and independent expert review."
+  },
+  "fitment": {
+    "model": null,
+    "generation": null,
+    "year_range": null,
+    "chassis_range": null,
+    "axle_configuration": null,
+    "status": "unknown"
+  },
+  "routing": {
+    "electrical": "unknown",
+    "pneumatic": "unknown"
+  },
+  "source_checked": "partial",
+  "expert_reviewed": false,
+  "rights_cleared": false,
+  "article_ids": [],
+  "visual_ready": false,
+  "strict_count_delta": 0,
+  "visual_count_delta": 0,
+  "release_gate": "No mounting image, purchase recommendation or runtime publication until exact fitment, physical layout, article identity, render and rights checks pass."
+}
