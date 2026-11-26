@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(111,CatalogModuleParts.count)
+        assertEquals(131,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -14,6 +14,32 @@ class CatalogModulePartsTest {
         assertTrue(CatalogModuleParts.find("820 007 XXX").isEmpty())
         assertTrue(CatalogModuleParts.find("950800304").isEmpty())
         assertTrue(CatalogModuleParts.find("820028001").isEmpty())
+    }
+    @Test fun g2FamiliesAndSharedTypeAreNotConflated() {
+        assertEquals("kb-g20",CatalogModuleParts.find("K019300").single().targetId)
+        assertEquals("kb-g20",CatalogModuleParts.find("K019302").single().targetId)
+        assertEquals("kb-g20",CatalogModuleParts.find("K019309").single().targetId)
+        assertEquals("kb-g20",CatalogModuleParts.find("K019340").single().targetId)
+        assertEquals("kb-g20",CatalogModuleParts.find("K019342").single().targetId)
+        assertEquals("kb-g20",CatalogModuleParts.find("K019349").single().targetId)
+        assertEquals("kb-g21",CatalogModuleParts.find("K019310").single().targetId)
+        assertEquals("kb-g21",CatalogModuleParts.find("K019312").single().targetId)
+        assertEquals("kb-g21",CatalogModuleParts.find("K019319").single().targetId)
+        assertEquals("kb-g21",CatalogModuleParts.find("K019350").single().targetId)
+        assertEquals("kb-g21",CatalogModuleParts.find("K019352").single().targetId)
+        assertEquals("kb-g21",CatalogModuleParts.find("K019359").single().targetId)
+        assertEquals("kb-g22",CatalogModuleParts.find("K055332").single().targetId)
+        assertEquals("kb-g22",CatalogModuleParts.find("K055372").single().targetId)
+        assertEquals("kb-g22",CatalogModuleParts.find("K055379").single().targetId)
+        assertEquals("kb-g22",CatalogModuleParts.find("K110612").single().targetId)
+        assertEquals("kb-g22",CatalogModuleParts.find("K110619").single().targetId)
+        assertEquals("kb-g22",CatalogModuleParts.find("ES2095").single().targetId)
+        assertEquals(setOf("kb-g20","kb-g21"),ModuleSearch.find("ES2060").map { it.id }.toSet())
+        assertTrue(CatalogModuleParts.find("ES2090").single().variant.contains("Standard Plus"))
+        assertTrue(CatalogModuleParts.partDidCandidates("ES2060").isEmpty())
+        assertEquals(listOf("kb-g22"),CatalogModuleParts.partDidCandidates("K110619V04N50"))
+        assertTrue(CatalogModuleParts.find("K110613").isEmpty())
+        assertTrue(CatalogModuleParts.find("K021940").isEmpty())
     }
     @Test fun exactG22AndWabcoEModelAssociations() {
         for(number in listOf("K055342","K055352","K055362","K055369","ES2090")) {
