@@ -1,0 +1,146 @@
+{
+  "status": "DRAFT_EXPERT_PENDING",
+  "date": "2026-11-26",
+  "sources": {
+    "d": {
+      "url": "https://trucks.tatamotors.com/assets/trucks/files/brochures/2023-10/Prima-5530.s-leaflet.pdf",
+      "verification": "PDF parsed technical specification lines 18–41; page 2 screenshot returned HTTP 403"
+    },
+    "g": {
+      "url": "https://trucks.tatamotors.com/assets/trucks/files/brochures/2025-06/LNG%20Range%20Brochure.pdf?VersionId=Nm1p9gah70dPpD_6AG39vUF0b6nEYcE5",
+      "verification": "PDF parsed lines 157–193; screenshot 403. Conflicting emissions/power entries not used."
+    },
+    "r": {
+      "url": "https://tatatrucks.tatamotors.com/tatatrucks-campaign/pdf/Prima-2830.K-9-8-m3-RMC-REPTO-Leafelt.pdf",
+      "verification": "PDF physical page 2 screenshot inspected; key value features parsed text only"
+    }
+  },
+  "illustrations": [
+    {
+      "file": "prima-5530-diesel-clutch.svg",
+      "model": "PRIMA 5530.S 6×4 · BS6 Phase 2",
+      "title": "Однодисковое сухое сцепление",
+      "source": "d",
+      "section": "Technical specifications, CLUTCH",
+      "claims": [
+        "Номинал диска 430 мм; сухое фрикционное сцепление с одним диском.",
+        "Условное осевое представление, не разрез конкретного узла или ремонтный размер."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-5530-g1150-dd.svg",
+      "model": "PRIMA 5530.S 6×4 · BS6 Phase 2",
+      "title": "Коробка Tata G1150 9 DD",
+      "source": "d",
+      "section": "Technical specifications, TRANSMISSION",
+      "claims": [
+        "Девятиступенчатая G1150 DD. DD — обозначение прямой передачи в спецификации.",
+        "Номера передач показаны условно: внутреннее зацепление и схема выбора не установлены."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-5530-diesel-tank.svg",
+      "model": "PRIMA 5530.S 6×4 · BS6 Phase 2",
+      "title": "Один или два дизельных бака",
+      "source": "d",
+      "section": "Technical specifications, FUEL TANK CAPACITY",
+      "claims": [
+        "Заводская листовка: основной бак 365 л; двойной вариант 365 + 192 л.",
+        "Условные ёмкости; топливозабор, переключение и сторона рамы не подтверждены."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-5530-lng-tanks.svg",
+      "model": "PRIMA 5530.S 4×2 · LNG BS6 P2",
+      "title": "Криогенные баки LNG",
+      "source": "g",
+      "section": "5530.S 4×2 LNG: specifications and value features",
+      "claims": [
+        "Предусмотрены 450 л или два бака по 450 л.",
+        "Не монтажная схема: магистрали, арматура, давление и сторона установки не показаны."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-5530-front-rear-suspension.svg",
+      "model": "PRIMA 5530.S 6×4 · BS6 Phase 2",
+      "title": "Подвеска тягача 6×4",
+      "source": "d",
+      "section": "Technical specifications, FRONT/REAR SUSPENSION",
+      "claims": [
+        "Передняя — параболическая рессора с резиновой втулкой; задняя — Bell crank / Bogie.",
+        "Изображения условны; геометрия балансиров и установка не восстановлены."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-5530-lng-suspension.svg",
+      "model": "PRIMA 5530.S 4×2 · LNG BS6 P2",
+      "title": "Рессорная подвеска 4×2",
+      "source": "g",
+      "section": "5530.S 4×2 LNG: SUSPENSION",
+      "claims": [
+        "Передняя — параболическая с резиновой втулкой, задняя — полуэллиптическая рессора.",
+        "Количество листов и размеры рессор не установлены; графика функциональная."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-2830-repto-differential-lock.svg",
+      "model": "PRIMA 2830.K · RMC REPTO · BS6",
+      "title": "Задний мост и блокировка дифференциала",
+      "source": "r",
+      "section": "Technical specifications, Rear Axle",
+      "claims": [
+        "Одноступенчатый редуктор и блокировка дифференциала заявлены для RMC REPTO.",
+        "Показаны функции, а не внутреннее устройство или алгоритм включения блокировки."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-2830-repto-hub.svg",
+      "model": "PRIMA 2830.K · RMC REPTO · BS6",
+      "title": "Ступичный модуль THU",
+      "source": "r",
+      "section": "Key value features, Truck Hub Unit",
+      "claims": [
+        "THU — единый подшипниковый узел без периодического добавления смазки по листовке.",
+        "Схема назначения; не показываются реальное количество рядов и порядок разборки."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-2830-repto-frame.svg",
+      "model": "PRIMA 2830.K · RMC REPTO · BS6",
+      "title": "Рама RMC с поперечинами",
+      "source": "r",
+      "section": "Technical specifications, Frame",
+      "claims": [
+        "Специальная рама RMC с клёпаными или болтовыми поперечинами.",
+        "Вид сверху условный; количество, шаг и крепёж не являются монтажными данными."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    },
+    {
+      "file": "prima-2830-repto-scr.svg",
+      "model": "PRIMA 2830.K · RMC REPTO · BS6",
+      "title": "Очистка выхлопа SCR",
+      "source": "r",
+      "section": "Technical specifications, Engine and Emission",
+      "claims": [
+        "Cummins ISBe 6.7 BS6 с SCR. Функция — снижение выбросов оксидов азота.",
+        "Схема не устанавливает наличие иных модулей, порядок нейтрализации и положение датчиков."
+      ],
+      "scope": "functional illustration, not actual geometry/installation or repair instructions"
+    }
+  ],
+  "limits": [
+    "No installed photos or independent render/technical QA.",
+    "No VIN-specific fitment. Model-market differences retained.",
+    "No production acceptance, CI or deployment."
+  ],
+  "accepted": false
+}
