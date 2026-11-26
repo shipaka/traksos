@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 from can_trace import inspect, MAX_BYTES
+from bench_uds import identity_review, dtc_review
 
 SCHEMA = "traksos.bench-evidence.v1"
 MAX_MANIFEST = 64 * 1024
@@ -86,7 +87,7 @@ def inventory(root):
         files.append({"name": path.name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
     return files
 
-def check(root):
+def check(root, uds_review=False):
     root = directory(root)
     raw = read_regular(root / "manifest.json", MAX_MANIFEST)
     m = json.loads(raw.decode("utf-8"), object_pairs_hook=strict_object,
@@ -139,6 +140,8 @@ def check(root):
         reject("FILE_SET_MISMATCH")
     summaries = []
     findings = []
+    uds_summaries = []
+    uds_kinds = set()
     for f in actual:
         row = expected[f["name"]]
         if f["sha256"] != row["sha256"] or f["bytes"] != row["bytes"]:
@@ -155,6 +158,20 @@ def check(root):
                     findings.append("CAN_TRACE_NOT_CLEAN:" + row["name"])
             except ValueError as exc:
                 findings.append("CAN_TRACE_REJECTED:" + row["name"] + ":" + str(exc))
+        elif uds_review and row["kind"] in ("identity_responses", "dtc_responses"):
+            kind = row["kind"]
+            if kind in uds_kinds:
+                findings.append("UDS_DUPLICATE_KIND:" + kind)
+            uds_kinds.add(kind)
+            try:
+                summary = identity_review(data) if kind == "identity_responses" else dtc_review(data)
+                uds_summaries.append({"name": row["name"], "summary": summary})
+                if kind == "identity_responses" and summary["missing_fields"]:
+                    findings.append("UDS_IDENTITY_INCOMPLETE:" + row["name"])
+                if kind == "dtc_responses" and not summary["counts_match"]:
+                    findings.append("UDS_COUNT_LIST_DIFFER:" + row["name"])
+            except ValueError as exc:
+                findings.append("UDS_REJECTED:" + row["name"] + ":" + str(exc))
         elif row["kind"] != "label_photo":
             try:
                 txt = data.decode("utf-8")
@@ -185,6 +202,8 @@ def check(root):
         "manifest_sha256": hashlib.sha256(raw).hexdigest(),
         "files": actual,
         "can_summaries": summaries,
+        "uds_review_requested": uds_review,
+        "uds_summaries": uds_summaries,
         "findings": findings,
         "structurally_ready_for_manual_review": not findings,
         "physical_source_verified": False,
@@ -197,12 +216,15 @@ def main(argv=None):
     p.add_argument("action", choices=("inventory", "check"))
     p.add_argument("folder", type=Path)
     p.add_argument("--output", type=Path)
+    p.add_argument("--uds-review", action="store_true", help="Explicitly check strict complete UDS identity and count/list PDU files")
     a = p.parse_args(argv)
     try:
         root = directory(a.folder)
         if a.output and (a.output.resolve() == root.resolve() or root.resolve() in a.output.resolve().parents):
             reject("OUTPUT_MUST_BE_OUTSIDE_EVIDENCE_FOLDER")
-        result = inventory(root) if a.action == "inventory" else check(root)
+        if a.uds_review and a.action != "check":
+            reject("UDS_REVIEW_REQUIRES_CHECK")
+        result = inventory(root) if a.action == "inventory" else check(root, uds_review=a.uds_review)
         report = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
         if a.output:
             with a.output.open("x", encoding="utf-8") as dst:

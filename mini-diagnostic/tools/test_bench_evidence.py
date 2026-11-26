@@ -35,6 +35,33 @@ class BenchEvidenceTest(unittest.TestCase):
     def write(self):
         (self.root / "manifest.json").write_text(json.dumps(self.m), encoding="utf-8")
 
+    def replace_capture(self, name, data):
+        (self.root/name).write_bytes(data)
+        row=next(r for r in self.m["files"] if r["name"]==name)
+        row.update(bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+        self.write()
+
+    def test_explicit_uds_review_does_not_authenticate(self):
+        self.m["origin"]="manual_bench"
+        self.replace_capture("identity.txt", b"F187: 62 F1 87 31\nF18A: 62 F1 8A AA\nF191: 62 F1 91 11\nF189: 62 F1 89 22\n")
+        self.replace_capture("dtc.txt", b"MASK: 49\nCOUNT: 59 01 49 03 00 01\nLIST: 59 02 49 AB CD EF 09\n")
+        r=check(self.root, uds_review=True)
+        self.assertTrue(r["structurally_ready_for_manual_review"])
+        self.assertTrue(r["uds_review_requested"])
+        self.assertEqual(2,len(r["uds_summaries"]))
+        self.assertFalse(r["physical_source_verified"])
+        self.assertFalse(r["profile_approved"])
+        self.replace_capture("dtc.txt", b"MASK: 49\nCOUNT: 590149030002\nLIST: 590249ABCDEF09\n")
+        self.assertIn("UDS_COUNT_LIST_DIFFER:dtc.txt",check(self.root,True)["findings"])
+        self.replace_capture("identity.txt", b"F187: 62 F1 87 31\nF187: 62 F1 87 32\n")
+        self.assertIn("UDS_REJECTED:identity.txt:CONFLICTING_IDENTITY",check(self.root,True)["findings"])
+
+    def test_uds_review_rejects_unstructured_text(self):
+        result=check(self.root,True)
+        self.assertFalse(result["structurally_ready_for_manual_review"])
+        self.assertTrue(any(x.startswith("UDS_REJECTED:identity.txt:") for x in result["findings"]))
+        self.assertTrue(any(x.startswith("UDS_REJECTED:dtc.txt:") for x in result["findings"]))
+
     def test_synthetic_never_ready(self):
         r=check(self.root)
         self.assertFalse(r["structurally_ready_for_manual_review"])
