@@ -1,0 +1,45 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "vehicle": [
+    "Renault Trucks T",
+    "Renault Trucks T High"
+  ],
+  "source_date": "2021-11-17",
+  "source": "https://www.renault-trucks.com/en/newsroom/press-releases/10-fuel-savings-new-generation-renault-trucks-engines",
+  "source_sections": [
+    "Optimal efficiency of the new DE11 and DE13 engines",
+    "Turbo Compound technology for a more powerful and fuel-efficient engine",
+    "A new gearbox for faster shifting"
+  ],
+  "assets": [
+    {
+      "file": "de13-tc-energy.svg",
+      "kind": "original functional SVG",
+      "review": "pending",
+      "vin_verified": false
+    },
+    {
+      "file": "de13-wave-piston.svg",
+      "kind": "original functional SVG",
+      "review": "pending",
+      "vin_verified": false
+    },
+    {
+      "file": "de13-optidriver-2021.svg",
+      "kind": "original functional SVG",
+      "review": "pending",
+      "vin_verified": false
+    }
+  ],
+  "limitations": [
+    "No OEM geometry or physical installation coordinates",
+    "Wave Piston illustration shows a generic combustion chamber, not actual patented bowl geometry",
+    "Optidriver links are conceptual and do not represent CAN wiring",
+    "DE13 TC is an option; applicability must be checked by configuration",
+    "Not a repair procedure; no parts numbers or numerical service specifications"
+  ],
+  "checks": [
+    "source claims checked against OEM release",
+    "independent visual and technical acceptance pending"
+  ]
+}
