@@ -1,0 +1,297 @@
+{
+  "schema": "research-draft-v1",
+  "id": "renault-premium-route-hr460-dxi11-filtration",
+  "language": "ru",
+  "status": "SOURCE_RESEARCH_ONLY",
+  "publication_allowed": false,
+  "vehicle": {
+    "make": "Renault Trucks",
+    "family_catalogue": "Premium Distribution/Route",
+    "model_catalogue": "HR 460 DXi",
+    "engine": "DXi 11 Euro 4/5",
+    "displacement_cc": 10800,
+    "power_kw_catalogue": 339,
+    "power_hp_catalogue": 460,
+    "catalogue_start": "2009-06",
+    "catalogue_end": null,
+    "vin": null,
+    "canonical_vehicle_id": null
+  },
+  "cards": [
+    {
+      "article": "WDK 11 102/24",
+      "manufacturer": "MANN-FILTER",
+      "system": "fuel",
+      "name": "Топливный фильтр увеличенного ресурса",
+      "source": {
+        "url": "https://www.mann-filter.com/en/catalog/search-results/product.html/wdk11102/24_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Long-life filter",
+      "details": {
+        "diameter_mm": 108,
+        "height_mm": 262,
+        "thread": "M32x1.5",
+        "gtin": "4011558077372"
+      },
+      "role": "Очистка топлива; конкретный сервисный интервал определяет OEM, не обозначение Long-life.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "WK 11 001 x",
+      "manufacturer": "MANN-FILTER",
+      "system": "fuel",
+      "name": "Водоотделитель, длинное исполнение",
+      "source": {
+        "url": "https://www.mann-filter.com/en/catalog/search-results/product.html/wk11001x_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Long version",
+      "details": {
+        "height_mm": 158,
+        "diameter_mm": 108,
+        "exit_thread": "1-14 UNS",
+        "gtin": "4011558016616"
+      },
+      "role": "Отделение воды и загрязнений из топлива.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "WK 11 074 z",
+      "manufacturer": "MANN-FILTER",
+      "system": "fuel",
+      "name": "Водоотделитель, короткое исполнение",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/wk11074z_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Short version",
+      "details": {
+        "height_mm": 130,
+        "diameter_mm": 108
+      },
+      "role": "Альтернативный вариант по конфигурации; не утверждается взаимозаменяемость.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "W 11 025",
+      "manufacturer": "MANN-FILTER",
+      "system": "lubrication",
+      "name": "Масляный фильтр",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/w11025_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Required quantity: 2 Piece",
+      "details": {
+        "catalogue_quantity": 2
+      },
+      "role": "Основная группа масляных фильтров; схема протока и расположение требуют OEM.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "WP 11 102/3",
+      "manufacturer": "MANN-FILTER",
+      "system": "lubrication",
+      "name": "Масляный фильтр вторичного потока",
+      "source": {
+        "url": "https://www.mann-filter.com/us-en/catalog/search-results/product.html/wp11102/3_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Secondary flow",
+      "details": {
+        "diameter_mm": 108,
+        "height_mm": 261,
+        "thread": "1 3/8-16 UN",
+        "gtin": "4011558021689"
+      },
+      "role": "Очистка масла во вторичном потоке; не заменяет автоматически другие масляные фильтры.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "WP 11 121",
+      "manufacturer": "MANN-FILTER",
+      "system": "lubrication",
+      "name": "Масляный фильтр вторичного потока, другой вариант",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/wp11121_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Secondary flow",
+      "details": {
+        "diameter_mm": 108,
+        "height_mm": 261,
+        "thread": "1 1/8-16 UN-2B",
+        "gtin": "4011558892166"
+      },
+      "role": "Одинаковые наружные размеры с WP 11 102/3 не означают одинаковую резьбу или применимость.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "C 31 1410",
+      "manufacturer": "MANN-FILTER",
+      "system": "intake",
+      "name": "Воздушный фильтр двигателя",
+      "source": {
+        "url": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/c311410_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": null,
+      "details": {},
+      "role": "Фильтрация воздуха на впуске; не салонный фильтр.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "CF 1800",
+      "manufacturer": "MANN-FILTER",
+      "system": "intake",
+      "name": "Вторичный элемент воздушной очистки",
+      "source": {
+        "url": "https://www.mann-filter.com/uk-en/catalogue/search-results/product.html/cf1800_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": null,
+      "details": {},
+      "role": "Вторичный элемент; наличие и сочетание с основным элементом уточняются по корпусу и OEM.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    },
+    {
+      "article": "CU 2101",
+      "manufacturer": "MANN-FILTER",
+      "system": "cab_hvac",
+      "name": "Салонный фильтр",
+      "source": {
+        "url": "https://www.mann-filter.com/uk-en/catalogue/search-results/product.html/cu2101_mann-filter.html",
+        "section": "RENAULT TRUCKS (RVI) > Premium Distribution/Route > HR 460 DXi",
+        "accessed": "2026-11-26"
+      },
+      "application_condition": "Cabin filter catalogue note from 05/06; HR460 vehicle row from 06/09",
+      "details": {},
+      "role": "Очистка воздуха салона, отдельная система от впуска двигателя.",
+      "fitment_status": "manufacturer_catalogue_model_match_only",
+      "vin_fitment": null,
+      "installed_location": null
+    }
+  ],
+  "selection_rules": [
+    {
+      "group": "fuel-water-separator",
+      "articles": [
+        "WK 11 001 x",
+        "WK 11 074 z"
+      ],
+      "relationship": "catalogue alternatives with different height; actual fitment unknown",
+      "selection": "Сверить OE, корпус, размер и VIN; не считать оба обязательными."
+    },
+    {
+      "group": "oil-secondary",
+      "articles": [
+        "WP 11 102/3",
+        "WP 11 121"
+      ],
+      "relationship": "different thread sizes; not interchangeable on evidence available",
+      "selection": "Не подбирать по одному диаметру/высоте."
+    },
+    {
+      "group": "oil-main",
+      "articles": [
+        "W 11 025"
+      ],
+      "relationship": "catalogue quantity 2",
+      "selection": "Количество относится к конкретной строке HR460; не переносить на другие модели."
+    }
+  ],
+  "illustration_briefs": [
+    {
+      "system": "fuel",
+      "components": [
+        "бак",
+        "водоотделитель — два варианта",
+        "топливный фильтр",
+        "насос",
+        "система подачи топлива двигателя"
+      ],
+      "requirements": "Показать назначение деталей и условность выбора исполнения. Точный порядок, датчики, магистрали и крепления только по OEM."
+    },
+    {
+      "system": "lubrication",
+      "components": [
+        "поддон",
+        "масляный насос",
+        "два W 11 025 по каталогу",
+        "вторичный фильтр — два варианта",
+        "двигатель"
+      ],
+      "requirements": "Различить функции и резьбы. Не рисовать последовательную/параллельную схему или байпас без первоисточника."
+    },
+    {
+      "system": "intake",
+      "components": [
+        "воздухозаборник",
+        "C 31 1410",
+        "CF 1800",
+        "турбокомпрессор",
+        "двигатель"
+      ],
+      "requirements": "Уточнить корпус фильтра и компоновку, не придумывать расположение датчиков и трассы."
+    },
+    {
+      "system": "cab_hvac",
+      "components": [
+        "CU 2101",
+        "вентилятор отопителя",
+        "воздуховоды кабины"
+      ],
+      "requirements": "Независимая система; расположение и доступ уточнить по варианту кабины."
+    }
+  ],
+  "diagnostic_context": [
+    {
+      "symptom": "Потеря тяги",
+      "note": "Проверить историю ТО и данные диагностического прибора; фильтры лишь возможная причина, не диагноз."
+    },
+    {
+      "symptom": "Сигнал низкого давления масла",
+      "note": "Безопасно прекратить эксплуатацию и следовать инструкции OEM; не считать замену фильтров достаточным ремонтом."
+    },
+    {
+      "symptom": "Слабый обдув кабины",
+      "note": "Отдельно проверить салонную фильтрацию и систему HVAC, не путать с впуском двигателя."
+    }
+  ],
+  "gates": {
+    "source_model_rows": "checked",
+    "source_dimensions": "partial_only_where_recorded",
+    "oem_circuit": "missing",
+    "oem_location": "missing",
+    "vin": "unknown",
+    "image_rights": "not_established",
+    "expert_review": "pending",
+    "runtime_import": "not_performed"
+  },
+  "handoff": "Не считать 9 записей девятью новыми уникальными иллюстрациями. Проверить глобальные артикулы на дубли, связать с canonical vehicle ID и получить OEM документы; не публиковать как руководство по ремонту."
+}
