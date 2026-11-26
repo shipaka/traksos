@@ -83,8 +83,12 @@ object HaldexEb4DiagReference {
             "В TPMS 1.0 возможны отсутствие связи с приёмником RCU или активное предупреждение о превышении настроенного порога давления либо температуры. Проверить фактическое давление и температуру шин, наличие и подключение RCU; сообщение само по себе не доказывает отказ приёмника. См. также стр. 36 руководства.",GUIDE+"#page=41",true)
     )
     fun lookup(code:String):DisplayLookup? {
-        named[code]?.let { return it }
-        val r=byCode[code] ?: byLabel[code] ?: fullNames[code]?.let { byCode[it] } ?: return null
+        val key=code.trim()
+        named[key]?.let { return it }
+        // Only the explicit two-digit prefixed display format, not raw UDS or decimal input.
+        val hex=if(Regex("0[xX][0-9a-fA-F]{2}").matches(key))
+            "0x"+key.substring(2).uppercase(java.util.Locale.ROOT) else key
+        val r=byCode[hex] ?: byLabel[key] ?: fullNames[key]?.let { byCode[it] } ?: return null
         return DisplayLookup(r.component,r.condition,SOURCE+" · DIAG++ "+r.code,true)
     }
     val count get()=rows.size+named.size
