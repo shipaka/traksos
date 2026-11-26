@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(93,CatalogModuleParts.count)
+        assertEquals(102,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -14,6 +14,17 @@ class CatalogModulePartsTest {
         assertTrue(CatalogModuleParts.find("820 007 XXX").isEmpty())
         assertTrue(CatalogModuleParts.find("950800304").isEmpty())
         assertTrue(CatalogModuleParts.find("820028001").isEmpty())
+    }
+    @Test fun uabsVariantsDistinguishElectronicCapabilityAndServiceKits() {
+        for(number in listOf("364564001","364569001","364565001","364570001","364566001","364571001","950364824","950364825","950364826")) {
+            assertEquals("haldex-uabs",CatalogModuleParts.find(number).single().targetId)
+            assertEquals("haldex-uabs",ModuleSearch.find(number).single().id)
+        }
+        for(number in listOf("364566001","364571001","950364826"))
+            assertTrue(CatalogModuleParts.find(number).single().variant.contains("CAN-диагностики нет"))
+        assertTrue(CatalogModuleParts.find("950 364 824").single().variant.contains("комплект"))
+        assertTrue(CatalogModuleParts.find("364564002").isEmpty())
+        assertTrue(CatalogModuleParts.find("950364820").isEmpty())
     }
     @Test fun modernHaldexExactNumbersOnly() {
         for(number in listOf("842005001","842005011","842006001","842015001","842015011","842001001","842001011","842002001","842011001","842011121","842011811","842011401","842003001","842003011","842004001","842013001","842013011","842013131","942015001","942011001","942011121","942011811","942011401","942013131","841001001","823034001","810023001")) {
