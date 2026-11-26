@@ -26,7 +26,7 @@ SOURCES = {
     "kb_g21": ("G2.1, MTW 189022", "https://d1mv2b9v99cq0i.cloudfront.net/eyJidWNrZXQiOiJ3ZWItbmluamEtaW1hZ2VzIiwia2V5IjoibW9kdHJhbnNuelwvaW1hZ2VzXC9wcm9kaW1nXC8yNDg1OF8xLmpwZyIsImVkaXRzIjp7InJlc2l6ZSI6eyJ3aWR0aCI6MTIwMCwiaGVpZ2h0Ijo2MzAsImZpdCI6Imluc2lkZSIsIndpdGhvdXRFbmxhcmdlbWVudCI6dHJ1ZX19LCJ2ZXJzaW9uIjoiMzBmMzM2NzFlYjVlY2M2NTgwMjI2YWQxOTU3MDA1YTM0Nzg2ZGFkMiJ9", "https://www.mtw.co.nz/product/24858-knorr-bremse-g2-1-tebs-ecu"),
     "kb_tebs4": ("II39782N50 / ES2053", "https://trucktrailerspares.com.au/cdn/shop/files/II39782N5020EBS20Trailer20Module20ES2053-600x600-1_1200x1200.jpg?v=1722425338", "https://trucktrailerspares.com.au/products/knorr-bremse-ebs-trailer-module-ii39782n50-es2053"),
     "haldex_eb2": ("EB+ Generation 2, installation guide", "https://data.manualslib.fr/product-images/856/509520/haldex-eb-generation-2.jpg", "https://www.manualslib.fr/manual/509520/Haldex-Ebplus-Generation-2.html"),
-    "zf_vcs_ii": ("4005000700 VCS II", "https://static.elektroda.pl/attach/vcs_ii_400_500_070_0_01____1704.jpeg", "https://www.wabco-customercentre.com/catalog/en_IN/4005000700"),
+    "zf_vcs_ii": ("4005000700 VCS II Standard 2S/2M", "https://www.trucksystems.de/media/image/product/9293/lg/wabco-abs-elektronik-vcs2-4005000700-400-500-070-0.jpg", "https://www.trucksystems.de/Wabco-ABS-Elektronik-VCS2-4005000700-400-500-070-0"),
     "vie_tebs": ("VIE TEBS family, revision not identified", "https://static.tildacdn.com/tild3237-6465-4133-b535-366233353862/IMG_2593.png", "https://alger-truckdiag.ru/tebsevstebsvie"),
 
     "zf_tebs_d": ("4801020140", "https://perimpecas.com.br/fotos/384046.jpg", "https://www.wabco-customercentre.com/catalog/en_US/4801020140"),
