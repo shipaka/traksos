@@ -1,0 +1,72 @@
+{
+  "id": "mann-cf1940-volvo-fh460",
+  "make": "Volvo",
+  "models": [
+    "FH 460"
+  ],
+  "documentedVariant": "FH / FH Classic D13C-460; FH II D13C/K-460",
+  "bindings": [
+    {
+      "make": "Volvo",
+      "models": [
+        "FH 460"
+      ],
+      "engine": "D13C-460",
+      "from": "2009-04",
+      "to": null,
+      "variant": "FH / FH Classic"
+    },
+    {
+      "make": "Volvo",
+      "models": [
+        "FH 460"
+      ],
+      "engine": "D13C-460, D13K-460 E6",
+      "from": "2013-01",
+      "to": null,
+      "variant": "FH II"
+    },
+    {
+      "make": "Renault Trucks",
+      "models": [
+        "T 440",
+        "T 480",
+        "T 520"
+      ],
+      "engine": "DTI13 Euro 6",
+      "from": "2013-06",
+      "to": null,
+      "variant": "MANN+HUMMEL"
+    }
+  ],
+  "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/cf1940_mann-filter.html",
+  "sourceCheckedOn": "2026-11-26",
+  "rights": "original_illustration",
+  "status": "source_checked_expert_pending",
+  "fitment": "catalogue_application_vin_unverified",
+  "hotspots": [
+    {
+      "id": "h-kit",
+      "article": "CF 1940",
+      "name": "Volvo FH 460 — вторичный воздушный фильтр",
+      "relationship": "catalogue_product",
+      "catalogueBrand": "MANN-FILTER",
+      "revision": null,
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/cf1940_mann-filter.html",
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null
+    },
+    {
+      "id": "h-component-1",
+      "article": "C 33 1460/1",
+      "name": "Основной элемент по каталогу",
+      "relationship": "catalogue_linked_component",
+      "catalogueBrand": "MANN-FILTER",
+      "revision": null,
+      "source": "https://www.mann-filter.com/mea-en/catalogue/search-results/product.html/cf1940_mann-filter.html",
+      "fitment": "catalogue_application_vin_unverified",
+      "shopProductId": null
+    }
+  ],
+  "scope": "Условный вид без подтверждения точной геометрии, размещения на машине и пригодности к конкретному VIN; компоненты комплекта не считать самостоятельной подтверждённой применимостью."
+}
