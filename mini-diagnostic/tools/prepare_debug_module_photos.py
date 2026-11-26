@@ -16,6 +16,10 @@ from PIL import Image, ImageOps
 # Additional sources must be visually reviewed; unavailable images are not replaced with other models.
 # Never reuse a photograph for another generation.
 SOURCES = {
+    # Official SORL catalog 35503100090 shows KORMEE cast into the cover and
+    # SORL identification on the rear label. This is the listed TABS+RSS
+    # assembly, not evidence for every KORMEE TEBS generation.
+    "sorl_trailer_abs": ("SORL 35503100090 TABS+RSS 4S/2M, KORMEE-marked housing", "https://sorl.ru/img/prods/47518/tmb/35503100090.webp?v5=", "https://sorl.ru/catalog/35503100090"),
     "haldex_eb1": ("EB+ Gen1 2M main assembly, official small catalog image", "https://www.haldex.com/globalassets/europe/3.-trailer-application-guide/trailer-guide/xq_img/image79.jpg", "https://www.haldex.com/en/europe/trailer-application-guide/ebs/eb-gen2gen1/eb-gen1-series/"),
     "haldex_uabs": ("364564001 U-ABS Premium assembly", "https://www.trucksystems.de/media/image/product/35145/lg/haldex-abs-ventileinheit-premium-uabs-364564001.jpg", "https://www.trucksystems.de/Haldex-ABS-Ventileinheit-Premium-UABS-364564001"),
     "kb_g20": ("K019349V02N50, G2.0 Standard", "https://landwirtschaft.rw.net/medias/940Wx705H-K019349V02N50.webp?context=bWFzdGVyfHJhaWZmZWlzZW5BZ3Jhcnw4NTY0MnxpbWFnZS93ZWJwfGNtRnBabVpsYVhObGJrRm5jbUZ5TDJobFpTOW9OR1V2TVRBd05UWTBPRE0zT1Rrd056QXVkMlZpY0F8ODUxMzdlM2Q4OWRmODk2YzljZDVkODRlMGI5OWE5ODgzMmY4MGE1ZjZiZTBmNzhkOTE5YzU4YjY4MGQ5ODQ3NA", "https://landwirtschaft.rw.net/KNORR-Bremse-TEBS-G20-Standard-Anhaengermodul/p/826K019349V02N50"),
