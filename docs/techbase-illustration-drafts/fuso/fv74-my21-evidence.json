@@ -1,0 +1,115 @@
+{
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "model": "FUSO Shogun FV74 510 6x4 prime mover MY21 (Australia)",
+  "codes": [
+    "FV74VJR9VFAA-MY21",
+    "FV74VJR9VFAB-MY21"
+  ],
+  "source": {
+    "url": "https://www.fuso.com.au/siteassets/media/documents/spec-sheets/shogun/shogun-fv74-510-prime-mover.pdf",
+    "valid_from": "2021-08-12",
+    "physical_pages_reviewed": [
+      2,
+      3,
+      4
+    ],
+    "method": "parsed text and page screenshots"
+  },
+  "assets": [
+    {
+      "name": "fv74-my21-engine.svg",
+      "sections": [
+        "Engine"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-fuel.svg",
+      "sections": [
+        "Fuel",
+        "Engine"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-boost.svg",
+      "sections": [
+        "Engine"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-emissions.svg",
+      "sections": [
+        "Engine",
+        "Fuel"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-cooling.svg",
+      "sections": [
+        "Cooling"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-electrical.svg",
+      "sections": [
+        "Electrical"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-clutch-amt.svg",
+      "sections": [
+        "Clutch",
+        "Transmission"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-tandem-drive.svg",
+      "sections": [
+        "Propeller Shaft",
+        "Rear Axle",
+        "Options"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-suspension.svg",
+      "sections": [
+        "Front Suspension",
+        "Rear Suspension"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    },
+    {
+      "name": "fv74-my21-braking.svg",
+      "sections": [
+        "Brakes"
+      ],
+      "kind": "original schematic vector illustration",
+      "review": "pending"
+    }
+  ],
+  "limitations": [
+    "Not OEM geometry, service instructions, exact placement, wiring, or VIN fitment. No component photos or exact installation evidence acquired.",
+    "Generic component shapes and arrows are not proof of installation; diagrams remain draft until technical and rendered-visual review.",
+    "MY21, not current 530/6R30 or later safety suite. No inferred interchangeability.",
+    "Fuel depiction does not specify high-pressure pump arrangement or pressure booster internals.",
+    "Brake illustration conceptual, not for repair or measurement."
+  ],
+  "readback": "10 SVGs fetched from branch, all have SVG opening/closing tags and draft disclaimer; text labels inspected. No rendering or expert signoff.",
+  "accepted_count": 0
+}
