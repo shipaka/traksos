@@ -5,6 +5,9 @@ import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.*
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -393,94 +396,8 @@ private fun Splash() {
 }
 
 @Composable
-private fun TrailerLighting(outputs: Set<Channel>) {
-    // Neutral illustration drawn from independent segments, not masks over a lit photograph.
-    // Each visible lamp is always present; only its light emission changes.
-    @Composable fun level(ch:Channel)=animateFloatAsState(
-        targetValue=if(ch in outputs) 1f else 0f,
-        animationSpec=tween(120),label=ch.name).value
-    val left=level(Channel.LEFT); val right=level(Channel.RIGHT)
-    val ls=level(Channel.LEFT_SIDE); val rs=level(Channel.RIGHT_SIDE)
-    val stop=level(Channel.STOP); val fog=level(Channel.FOG); val rev=level(Channel.REVERSE)
-    val plate=maxOf(ls,rs)
-    Column(Modifier.fillMaxWidth().background(Color(0xFF151D26),RoundedCornerShape(16.dp))
-        .border(1.dp,Line,RoundedCornerShape(16.dp)).padding(12.dp),
-        verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-            Text("ВИД СЗАДИ",color=Muted,fontSize=11.sp,fontWeight=FontWeight.Bold)
-            Text(if(outputs.isEmpty()) "Свет выключен" else "Активные фонари",color=if(outputs.isEmpty()) Muted else Orange,fontSize=11.sp)
-        }
-        Canvas(Modifier.fillMaxWidth().aspectRatio(1.43f)) {
-            fun point(x:Float,y:Float)=Offset(size.width*x,size.height*y)
-            fun rect(x:Float,y:Float,w:Float,h:Float,c:Color,r:Float=.012f) {
-                drawRoundRect(c,point(x,y),androidx.compose.ui.geometry.Size(size.width*w,size.height*h),
-                    androidx.compose.ui.geometry.CornerRadius(size.width*r))
-            }
-            fun lamp(x:Float,y:Float,w:Float,h:Float,c:Color,a:Float) {
-                rect(x,y,w,h,androidx.compose.ui.graphics.lerp(c.copy(alpha=.23f),c,a),.008f)
-                if(a>0f) {
-                    val center=point(x+w/2,y+h/2)
-                    val radius=size.width*w*.85f
-                    drawCircle(Brush.radialGradient(listOf(c.copy(alpha=.24f*a),Color.Transparent),center=center,radius=radius),radius,center)
-                    rect(x+.008f,y+.005f,w-.016f,h-.010f,c.copy(alpha=.88f*a),.006f)
-                }
-            }
-            // Door frame, hinges, metal door panels, tyres and bumper.
-            rect(.19f,.035f,.62f,.67f,Color(0xFF84909C),.022f)
-            rect(.206f,.055f,.588f,.627f,Color(0xFF37424D),.012f)
-            rect(.219f,.073f,.274f,.59f,Color(0xFF56636E),.008f)
-            rect(.507f,.073f,.274f,.59f,Color(0xFF56636E),.008f)
-            for(x in listOf(.254f,.447f,.553f,.746f)) {
-                rect(x,.085f,.012f,.56f,Color(0xFFABB5BE),.003f)
-                for(y in listOf(.11f,.39f,.62f)) rect(x-.019f,y,.05f,.018f,Color(0xFF252F38),.003f)
-            }
-            rect(.46f,.48f,.08f,.019f,Color(0xFFD0D6DC),.003f)
-            for(x in listOf(.205f,.685f)) {
-                rect(x,.72f,.11f,.23f,Color(0xFF080B10),.02f)
-                rect(x+.026f,.76f,.055f,.16f,Color(0xFF262D36),.012f)
-            }
-            rect(.155f,.697f,.69f,.17f,Color(0xFF343F49),.015f)
-            for(x in listOf(.17f,.655f)) rect(x,.713f,.175f,.133f,Color(0xFF171D23),.012f)
-            val amber=Color(0xFFFFA52B); val red=Color(0xFFFF4548); val white=Color(0xFFFFF2D6)
-            // Left/right tail lamps, separate stop and indicator sections.
-            lamp(.18f,.725f,.15f,.031f,amber,left)
-            lamp(.67f,.725f,.15f,.031f,amber,right)
-            lamp(.18f,.767f,.15f,.025f,red,ls*.76f)
-            lamp(.67f,.767f,.15f,.025f,red,rs*.76f)
-            lamp(.18f,.802f,.15f,.031f,red,stop)
-            lamp(.67f,.802f,.15f,.031f,red,stop)
-            // Central registration plate and independent number illumination.
-            rect(.433f,.775f,.134f,.062f,androidx.compose.ui.graphics.lerp(Color(0xFF68717A),Color(0xFFFFF3C8),plate),.005f)
-            lamp(.441f,.752f,.118f,.018f,white,plate)
-            lamp(.352f,.798f,.065f,.038f,red,fog)
-            lamp(.583f,.798f,.065f,.038f,white,rev)
-            // Upper clearance lamps.
-            lamp(.216f,.045f,.046f,.018f,red,ls)
-            lamp(.738f,.045f,.046f,.018f,red,rs)
-            // Red reflective tape remains reflective, not a light.
-            for(x in listOf(.24f,.32f,.58f,.66f)) rect(x,.625f,.067f,.016f,Color(0xFF97494C),.001f)
-        }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            SideMarkers("Левый борт",ls,Modifier.weight(1f))
-            SideMarkers("Правый борт",rs,Modifier.weight(1f))
-        }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-            Text("Задние габариты",color=if(ls+rs>0f) Orange else Muted,fontSize=11.sp)
-            Text("Подсветка номера",color=if(plate>0f) Orange else Muted,fontSize=11.sp)
-        }
-    }
-}
-
-@Composable
-private fun SideMarkers(label:String,level:Float,modifier:Modifier) {
-    Column(modifier.background(Graphite,RoundedCornerShape(9.dp)).padding(8.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
-        Text(label,color=if(level>0f) Orange else Muted,fontSize=11.sp)
-        Canvas(Modifier.fillMaxWidth().height(15.dp)) {
-            val c=androidx.compose.ui.graphics.lerp(Color(0xFF594733),Color(0xFFFFAD32),level)
-            drawLine(Color(0xFF687582),Offset(0f,size.height/2),Offset(size.width,size.height/2),strokeWidth=2f)
-            for(i in 0..4) drawCircle(c, size.height*.27f,Offset(size.width*(.1f+.2f*i),size.height/2))
-        }
-    }
+private fun TrailerLighting(outputs:Set<Channel>) {
+    TrailerScene(outputs)
 }
 
 @Composable
@@ -494,13 +411,16 @@ private fun Group(name:String,content:@Composable RowScope.()->Unit) {
 
 @Composable
 private fun Tile(icon:String,label:String,active:Boolean,enabled:Boolean,modifier:Modifier=Modifier,glow:Boolean=active,onClick:()->Unit) {
-    val edge = if(active) Orange.copy(alpha=if(glow) 1f else .55f) else Line
-    val bg = if(active) Color(0xFF58351B).copy(alpha=if(glow) 1f else .65f) else Color(0xFF171E26)
-    Column(modifier.heightIn(min=60.dp).clip(RoundedCornerShape(9.dp)).background(bg).border(1.dp,edge,RoundedCornerShape(9.dp))
-        .clickable(enabled=enabled,onClick=onClick).padding(horizontal=3.dp,vertical=7.dp),
+    val edge by animateColorAsState(if(active) Orange.copy(alpha=if(glow) 1f else .55f) else Line, tween(140),label="edge")
+    val bg by animateColorAsState(if(active) Color(0xFF58351B).copy(alpha=if(glow) 1f else .65f) else Color(0xFF171E26),tween(140),label="tile")
+    val source=remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val scale by animateFloatAsState(if(pressed) .96f else 1f,tween(120),label="press")
+    Column(modifier.heightIn(min=70.dp).scale(scale).clip(RoundedCornerShape(14.dp)).background(Brush.verticalGradient(listOf(bg,Graphite))).border(1.dp,edge,RoundedCornerShape(14.dp))
+        .clickable(interactionSource=source,indication=null,enabled=enabled,onClick=onClick).padding(horizontal=5.dp,vertical=10.dp),
         horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
-        Text(icon,color=if(active) Orange else Muted,fontSize=21.sp,fontWeight=FontWeight.Bold)
-        Text(label,color=if(enabled) Color.White else Muted,fontSize=11.sp,textAlign=TextAlign.Center,lineHeight=13.sp)
+        Text(icon,color=if(active) Orange else Muted,fontSize=25.sp,fontWeight=FontWeight.Bold)
+        Text(label,color=if(enabled) Color.White else Muted,fontSize=12.sp,textAlign=TextAlign.Center,lineHeight=15.sp)
     }
 }
 
