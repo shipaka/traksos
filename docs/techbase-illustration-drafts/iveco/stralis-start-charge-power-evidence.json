@@ -1,0 +1,491 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis",
+    "target_model": "440S46",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "id": "as-pl:a0136",
+      "manufacturer": "AS-PL",
+      "article": "A0136",
+      "system": "charging",
+      "name": "Генератор",
+      "oe": {
+        "manufacturer": "Bosch",
+        "article": "0123525502"
+      },
+      "source": "https://as-pl.com/en/p/A0136",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AT440S46TFP",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3AE3681Y/AT440S46TFP",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AT440S46TFP",
+          "engine": "F3GFE611B",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3GFE611B/AT440S46TFP",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP MY16",
+          "engine": "F3GFE611E",
+          "catalogue_from": "2016-06",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3GFE611E/AS440S46TFP%C2%A0MY16",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tpu/A0136/13",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP MY16",
+          "engine": "F3GFL611E",
+          "catalogue_from": "2016-06",
+          "source": "https://as-pl.com/en/tpu/A0136/13",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis I",
+          "model": "AS 440S46",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2009-12",
+          "source": "https://as-pl.com/en/tpu/A0136/10",
+          "scope": "explicit_article_application"
+        }
+      ],
+      "spec": {
+        "voltage_catalogue_V": 24,
+        "current_A": 90,
+        "size_A_mm": 90,
+        "size_B_mm": 58,
+        "pulley_grooves": 12,
+        "pulley_diameter_mm": 69,
+        "plug_code": "PL_3314"
+      },
+      "catalogue_crossrefs": [
+        {
+          "manufacturer": "IVECO",
+          "article": "2995980"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "2998644"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "2998646"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "500315943"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504028095"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504114397"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504349338"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504349350"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802122271"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802879829"
+        }
+      ],
+      "note": "Параметр 24 В обозначает класс изделия, не уставку зарядного напряжения. PL_3314 — код разъёма, не распиновка.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "wiring": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "as-pl:a01140s",
+      "manufacturer": "AS-PL",
+      "article": "A01140S",
+      "system": "charging",
+      "name": "Генератор",
+      "oe": {
+        "manufacturer": "Bosch",
+        "article": "0124655583"
+      },
+      "source": "https://as-pl.com/en/p/A01140S",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP MY16",
+          "engine": "F3GFE611E",
+          "catalogue_from": "2016-06",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3GFE611E/AS440S46TFP%C2%A0MY16",
+          "scope": "catalogue_component_candidate"
+        }
+      ],
+      "spec": {
+        "voltage_catalogue_V": 24,
+        "current_A": 115,
+        "size_A_mm": 112,
+        "size_B_mm": 80,
+        "pulley_grooves": 12,
+        "pulley_diameter_mm": 69,
+        "plug_code": "PL_5000",
+        "com_id": 20
+      },
+      "catalogue_crossrefs": [
+        {
+          "manufacturer": "IVECO",
+          "article": "500061440"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5801703906"
+        }
+      ],
+      "note": "COM ID 20 — каталожная маркировка, не доказательство конкретного протокола или контактов автомобиля; не замена A0136 по совпадению напряжения.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "wiring": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "as-pl:s5175",
+      "manufacturer": "AS-PL",
+      "article": "S5175",
+      "system": "starting",
+      "name": "Стартер",
+      "oe": {
+        "manufacturer": "Mitsubishi",
+        "article": "M9T61671"
+      },
+      "source": "https://as-pl.com/en/p/S5175",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AT440S46TFP",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3AE3681Y/AT440S46TFP",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP MY16",
+          "engine": "F3GFE611E",
+          "catalogue_from": "2016-06",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3GFE611E/AS440S46TFP%C2%A0MY16",
+          "scope": "catalogue_component_candidate"
+        }
+      ],
+      "spec": {
+        "voltage_V": 24,
+        "power_kW": 5.5,
+        "teeth": 12,
+        "rotation_catalogue": "CW",
+        "size_A_mm": 92,
+        "size_B_mm": 48,
+        "mount_holes": 3,
+        "length_mm": 318
+      },
+      "catalogue_crossrefs": [
+        {
+          "manufacturer": "IVECO",
+          "article": "2995372"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "2995373"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "42498715"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504042667"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5801973143"
+        }
+      ],
+      "note": "Модельный каталог также содержит 5,0 кВт с тем же OE-ориентиром; мощность и вылет не считать взаимозаменяемыми. Направление наблюдения для CW уточнять.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "wiring": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "as-pl:s6005",
+      "manufacturer": "AS-PL",
+      "article": "S6005",
+      "system": "starting",
+      "name": "Стартер",
+      "oe": {
+        "manufacturer": "Denso",
+        "article": "DSN940",
+        "relation": "catalogue_reference"
+      },
+      "source": "https://as-pl.com/en/p/S6005",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AT440S46TFP",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3AE3681Y/AT440S46TFP",
+          "scope": "catalogue_component_candidate"
+        }
+      ],
+      "spec": {
+        "voltage_V": 24,
+        "power_kW": 5.5,
+        "teeth": 10,
+        "rotation_catalogue": "CW",
+        "size_A_mm": 92,
+        "size_B_mm": 49,
+        "mount_holes": 3,
+        "length_mm": 317,
+        "wet_clutch_catalogue": true
+      },
+      "catalogue_crossrefs": [
+        {
+          "manufacturer": "IVECO",
+          "article": "2995988"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "504106753"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5801710983"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "99486046"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802899063"
+        },
+        {
+          "manufacturer": "IVECO",
+          "article": "5802918519"
+        }
+      ],
+      "note": "В модельной выдаче обозначен альтернативой Denso DSN940. Не переносить на XP и не заменять 12-зубый стартер по равной мощности.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "wiring": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "id": "bosch:0123525508",
+      "manufacturer": "Bosch",
+      "article": "0123525508",
+      "name": "Генератор, OE-ориентир",
+      "system": "charging",
+      "source": "https://as-pl.com/en/u/0123525508",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AT440S46TFP",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3AE3681Y/AT440S46TFP",
+          "scope": "catalogue_component_candidate"
+        }
+      ],
+      "catalogue_observation": {
+        "voltage_V": 24,
+        "current_A": 90,
+        "pulley_grooves": 10
+      },
+      "reason": "Отдельный OE-ориентир; точное исполнение и фирменная карточка не проверены. Не объединять с 12-ручейковым вариантом.",
+      "vin_applicability": "unknown",
+      "publication": "hold"
+    },
+    {
+      "id": "mitsubishi:m9t69371",
+      "manufacturer": "Mitsubishi",
+      "article": "M9T69371",
+      "name": "Стартер, OE-ориентир",
+      "system": "starting",
+      "source": "https://as-pl.com/en/u/M9T69371",
+      "applications": [
+        {
+          "family": "Stralis II",
+          "model": "AT440S46TFP",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-09",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3AE3681Y/AT440S46TFP",
+          "scope": "catalogue_component_candidate"
+        },
+        {
+          "family": "Stralis II",
+          "model": "AS440S46TFP MY16",
+          "engine": "F3GFE611E",
+          "catalogue_from": "2016-06",
+          "source": "https://as-pl.com/en/tcar/IVECO/STRALIS_II/F3GFE611E/AS440S46TFP%C2%A0MY16",
+          "scope": "catalogue_component_candidate"
+        }
+      ],
+      "catalogue_observation": {
+        "voltage_V": 24,
+        "power_kW": 5.5,
+        "teeth": 12
+      },
+      "reason": "Каталожное упоминание отдельно от S5175; глобальная проверка дублирования и точная применимость ожидаются. Не считать дополнительным утверждённым заменителем.",
+      "vin_applicability": "unknown",
+      "publication": "hold"
+    }
+  ],
+  "context": [
+    {
+      "id": "iveco-stralis-at440s42tp-eev-electrics",
+      "scope": "adjacent_model_only_not_440s46",
+      "model": "AT440S42T/P EEV",
+      "source": "https://www.iveco.com/bulgaria/collections/technical_sheets/Documents/stralis/Artic/AT/4x2/AT440S42TP_EEV.pdf",
+      "visual_check": "PDF screenshot page index 1 returned 404; parsed section Electrics reviewed",
+      "spec": {
+        "system_V": 24,
+        "earth": "negative",
+        "alternator_V": 28,
+        "alternator_A": 90,
+        "starter_V": 24,
+        "starter_kW": 5.5,
+        "battery_count": 2,
+        "battery_each_V": 12,
+        "battery_each_Ah": 220,
+        "isolation_switch": "electronically controlled",
+        "can_lines": 4
+      },
+      "note": "Заводская спецификация соседней модели 420 л.с., не подтверждает ёмкость АКБ, схему предохранителей или комплектацию 440S46."
+    },
+    {
+      "id": "iveco-stralis-xp-smart-charge",
+      "scope": "oem_named_variants_only",
+      "model": "480XP / 570XP",
+      "source": "https://www.iveco.com/uk/discover-iveco/press-room/Press-Releases/2016/New-Stralis-the-TCO2-Champion",
+      "description": "Производитель описывает рекуперативное управление генератором и интеллектуальный контроль АКБ для указанных вариантов.",
+      "note": "Не переносить автоматически на 460XP. Не связывать A01140S с данной системой только по COM ID."
+    }
+  ],
+  "diagnostic_cards": [
+    {
+      "id": "stralis-no-crank",
+      "title": "Стартер не проворачивает двигатель",
+      "steps": [
+        "обеспечить неподвижность автомобиля и безопасную зону работ",
+        "зафиксировать сообщение панели и условия отказа",
+        "по OEM проверить состояние АКБ, штатную цепь разрешения запуска и силовые соединения",
+        "не замыкать контакты стартера и не обходить блокировки"
+      ],
+      "limits": "Нет подтверждённых контрольных напряжений под нагрузкой или пинов для конкретной версии."
+    },
+    {
+      "id": "stralis-charge-warning",
+      "title": "Предупреждение зарядной системы",
+      "steps": [
+        "зафиксировать ошибки и режим работы",
+        "на выключенном двигателе осмотреть привод и соединения",
+        "определить установленный регулятор и штатный способ проверки по OEM"
+      ],
+      "limits": "Не снимать клемму АКБ при работающем двигателе. Не принимать 24 В в карточке генератора за норму зарядки."
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-start-functional",
+      "nodes": [
+        "АКБ",
+        "штатное разрешение запуска",
+        "тяговое реле",
+        "стартер",
+        "маховик"
+      ],
+      "purpose": "Условная силовая и управляющая ветви, без физической разводки; раздельные 10 и 12 зубьев."
+    },
+    {
+      "id": "stralis-alternator-variants",
+      "nodes": [
+        "ременной привод",
+        "генератор",
+        "регулятор",
+        "бортовая сеть",
+        "АКБ"
+      ],
+      "purpose": "Сравнить 90/115 А, код разъёма, размеры; не назначать контакты и тип протокола."
+    },
+    {
+      "id": "stralis-battery-bank",
+      "nodes": [
+        "АКБ 1",
+        "АКБ 2",
+        "штатное отключение питания",
+        "распределение"
+      ],
+      "purpose": "Функциональная схема последовательной пары 12 В для 24 В, ёмкость 220 А·ч только в указанном примере 420 EEV. Не монтажная инструкция."
+    },
+    {
+      "id": "stralis-power-distribution",
+      "nodes": [
+        "источник питания",
+        "силовое распределение",
+        "защита ветвей",
+        "реле и контроллеры",
+        "потребители"
+      ],
+      "purpose": "Системная карта; позиции, номера и номиналы предохранителей остаются неизвестными до подтверждения OEM для конкретного VIN."
+    }
+  ],
+  "rights": "Самостоятельные описания, отдельные факты, ссылки. Без копирования фотографий или электрических схем. Защита собственных будущих иллюстраций TrakSOS по #278.",
+  "release_gates": [
+    "global dedup",
+    "canonical vehicle mapping",
+    "VIN and installed OE",
+    "OEM fuse and relay map",
+    "verified wiring and rights",
+    "expert review",
+    "visual creation",
+    "runtime/CI"
+  ],
+  "verified_illustrations_added": 0
+}
