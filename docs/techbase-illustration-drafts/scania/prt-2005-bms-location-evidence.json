@@ -1,0 +1,68 @@
+{
+  "schema": "techbase-source-evidence/v1",
+  "id": "scania-prt-2005-bms-location-evidence",
+  "manufacturer": "Scania",
+  "status": "research_only_not_render_ready",
+  "source": {
+    "title": "Electrical system in P, R, T series: Introduction and general troubleshooting",
+    "document": "16:07-01",
+    "issue": "3 en",
+    "copyright": "Scania CV AB 2005",
+    "url": "https://manuals.plus/m/224675c60eae821dc64aaf3c3dc75e8f0be7fc80be0bfa4bb32137635621efc8.pdf",
+    "provenance": "OEM-authored manual on third-party host; rights not cleared; no copied imagery"
+  },
+  "observations": [
+    {
+      "series": "P",
+      "scope": "basic launch configuration only",
+      "page": 11,
+      "visual_checked": true,
+      "figure_type": "physical overview of cab ECU locations",
+      "component": "BMS",
+      "callout": 16,
+      "location": "Front cab electronics cluster behind forward panel, as indicated by leader line; exact bracket and side not confirmed",
+      "note": "Manual expressly limits layout by cab and equipment configuration. Not a VIN-specific installation."
+    },
+    {
+      "series": "R",
+      "scope": "basic launch configuration only",
+      "page": 66,
+      "visual_checked": true,
+      "figure_type": "logical CAN topology",
+      "component": "BMS",
+      "logical_connection": "red CAN bus",
+      "physical_location": null,
+      "note": "This is a block diagram, not a cab installation drawing. Do not transfer P cab location to R."
+    },
+    {
+      "series": "T",
+      "physical_location": null,
+      "status": "not_verified"
+    }
+  ],
+  "fitment": {
+    "cab_type": null,
+    "year_range": null,
+    "chassis_range": null,
+    "axle_configuration": null,
+    "ebs_version": null,
+    "status": "unknown"
+  },
+  "articles": [],
+  "routing": {
+    "electrical": "unknown physical route",
+    "pneumatic": "unknown"
+  },
+  "source_checked": "partial",
+  "expert_reviewed": false,
+  "rights_cleared": false,
+  "visual_ready": false,
+  "strict_count_delta": 0,
+  "visual_count_delta": 0,
+  "next_steps": [
+    "Obtain chassis-specific installation and part information via Scania SWS/RMI",
+    "Cross-check cab and chassis configuration, BMS hardware identity and mounting, wheel sensors and modulators",
+    "Create original realistic asset only after verification; no copying source figure"
+  ],
+  "oem_access": "https://www.scania.com/group/en/home/products-and-services/services/rmi/information-package.html/1000"
+}
