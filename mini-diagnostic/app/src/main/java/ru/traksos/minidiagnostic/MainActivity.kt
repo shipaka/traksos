@@ -214,7 +214,7 @@ private fun MiniApp() {
                 Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
                     Column(Modifier.padding(14.dp),verticalArrangement = Arrangement.spacedBy(9.dp)) {
                         Text("Диагностика системы тормозов",fontSize = 18.sp,fontWeight = FontWeight.Bold)
-                        Text("ДЕМО — реальные модуляторы не подключены",color = Orange,fontSize = 12.sp)
+                        Text("Демонстрационный режим",color = Orange,fontSize = 12.sp)
                         val chosen = manualTargetId?.let(CoverageRoadmap::byId)
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                             Button(onClick={
@@ -240,11 +240,14 @@ private fun MiniApp() {
                         }
                         if(scanning) {
                             Text(when { scan < 25 -> "Подключение симулятора"; scan < 60 -> "Идентификация (демо)"; else -> "Чтение примеров ошибок" })
-                            LinearProgressIndicator(progress = { scan / 100f },modifier = Modifier.fillMaxWidth(),color = Orange)
+                            val progress by animateFloatAsState(scan / 100f,tween(140),label="scan-progress")
+                            LinearProgressIndicator(progress = { progress },modifier = Modifier.fillMaxWidth(),color = Orange)
                             Text("$scan% · демонстрационный прогресс",color = Muted,fontSize = 12.sp)
                             OutlinedButton(onClick = { scanning = false; scan = 0 }) { Text("Отменить") }
                         } else {
-                            if(scan==100) currentReport?.let { ReportContent(it) }
+                            androidx.compose.animation.AnimatedVisibility(visible=scan==100 && currentReport!=null) {
+                                Column(verticalArrangement=Arrangement.spacedBy(9.dp)) { currentReport?.let { ReportContent(it) } }
+                            }
                             if(chosen!=null || scan==100) Button(onClick = { scan = 0; detail = -1; scanning = true },enabled=electrical.canRunDemo,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                 Text(if(scan == 100) "Повторить демо" else "Начать демо-диагностику",fontWeight = FontWeight.Bold)
@@ -294,6 +297,16 @@ private fun MiniApp() {
     }
 }
 
+private fun demoCheckAdvice(component:String):String {
+    val c=component.lowercase(java.util.Locale.ROOT)
+    return when {
+        "колес" in c || "колёс" in c || "abs" in c -> "Проверить разъём и проводку датчика, его сигнал, зазор и импульсное кольцо по документации."
+        "давлен" in c && "клапан" !in c -> "Проверить фактическое давление и уточнить, внешний датчик или встроенный. Не считать один код доказательством поломки."
+        "питан" in c || "can" in c -> "Проверить питание, массу, разъёмы и связь штатным оборудованием."
+        else -> "Сохранить отчёт и передать на проверку специалисту по тормозной системе. Не заменять блок по одному коду."
+    }
+}
+
 private fun reportDate(ms:Long)=java.text.DateFormat.getDateTimeInstance().format(java.util.Date(ms))
 
 @Composable
@@ -303,20 +316,34 @@ private fun ReportContent(report:DemoReport) {
     CoverageRoadmap.byId(report.targetId)?.let { ModelPhoto(it,Modifier.fillMaxWidth().height(110.dp)) }
     report.examplePart?.let { Text("Пример номера детали: "+it,fontSize=13.sp) }
     Text("Условный серийный номер: "+report.serial,fontSize=12.sp,color=Muted)
+    Text("ПО: демонстрационная версия · ответ симулятора получен",fontSize=12.sp,color=Green)
     Text(reportDate(report.dateMs)+" · "+(if(report.automatic) "Автопоиск" else "Ручной поиск"),fontSize=12.sp,color=Muted)
     Text("CAN: обмен в демо"+(report.canErrors?.let {" · ошибок CAN: "+it} ?: ""),fontSize=12.sp,color=Green)
     report.supplyMv?.let { Text("Напряжение в демо: "+(it/1000f)+" В",fontSize=12.sp) }
     report.minimumMv?.let { Text("Минимум: "+(it/1000f)+" В",fontSize=12.sp) }
     HorizontalDivider(color=Line)
     Text("Ошибки: "+report.faults.size,fontSize=17.sp,fontWeight=FontWeight.Bold)
-    report.faults.forEach { fault ->
-        Column(Modifier.fillMaxWidth().background(Graphite,RoundedCornerShape(10.dp)).padding(12.dp),
+    var expandedFault by remember(report.id) { mutableStateOf<String?>(null) }
+    report.faults.sortedByDescending { it.active }.forEach { fault ->
+        val expanded=expandedFault==fault.code
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Graphite).clickable { expandedFault=if(expanded) null else fault.code }.padding(12.dp),
             verticalArrangement=Arrangement.spacedBy(5.dp)) {
-            Text(fault.code,color=Orange,fontWeight=FontWeight.Bold,fontSize=15.sp)
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                Text(fault.code,color=Orange,fontWeight=FontWeight.Bold,fontSize=15.sp,modifier=Modifier.weight(1f))
+                Text(if(expanded) "▴" else "▾",color=Orange)
+            }
             Text(fault.component,fontWeight=FontWeight.Bold,fontSize=15.sp)
             Text(if(fault.active) "Активная · ДЕМО" else "Сохранённая · ДЕМО",color=if(fault.active) Red else Muted,fontSize=12.sp)
             Text(fault.description,fontSize=13.sp)
             if(!fault.reference) Text("Условный код DEMO, не заводской DTC",color=Muted,fontSize=11.sp)
+            androidx.compose.animation.AnimatedVisibility(visible=expanded) {
+                Column(verticalArrangement=Arrangement.spacedBy(5.dp)) {
+                    HorizontalDivider(color=Line)
+                    Text("Что проверить",fontWeight=FontWeight.Bold,fontSize=13.sp)
+                    Text(demoCheckAdvice(fault.component),fontSize=12.sp,color=Muted)
+                    Text(if(fault.reference) "Справочный код, статус смоделирован." else "Учебный сценарий, не заводской код.",fontSize=11.sp,color=Muted)
+                }
+            }
         }
     }
     Text("Симуляция, не результат проверки реального прицепа.",fontSize=11.sp,color=Muted)
