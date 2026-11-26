@@ -1,0 +1,54 @@
+{
+  "id": "scania-ebs5-2007-two-front-axles-evidence",
+  "status": "source_research_only",
+  "system": "EBS5/BMS",
+  "manufacturer": "Scania",
+  "document_year": 2007,
+  "configuration": "two front axles (documented variant)",
+  "model": null,
+  "generation": null,
+  "vin_range": null,
+  "source_checked": true,
+  "expert_reviewed": false,
+  "rights_cleared": false,
+  "visual_ready": false,
+  "strict_count": 0,
+  "sources": [
+    {
+      "publisher": "Scania CV AB",
+      "host": "third-party mirror",
+      "document": "16:75-15",
+      "edition": "1.2 en-GB",
+      "sheet": 7,
+      "url": "https://www.truckspares365.co.uk/hub/wp-content/uploads/2022/08/EBS-2-front-axles.pdf",
+      "inspection": "PDF first page visually checked; two front axles explicitly stated.",
+      "finding": "Separate left and right front axle sensor groups connect to respective pressure-control modules. E43.C and instrument-panel frame connector appear in the electrical diagram; the physical ECU bracket and harness routing are not established."
+    },
+    {
+      "publisher": "Scania CV AB",
+      "host": "third-party mirror",
+      "document": "16:75-09",
+      "edition": "2.1 en-GB",
+      "sheet": 1,
+      "url": "https://www.truckspares365.co.uk/hub/wp-content/uploads/2022/08/EBS-1.pdf",
+      "inspection": "PDF first page visually checked.",
+      "finding": "Separate general EBS5 circuit document. Do not assume it is the sheet 1 referenced by 16:75-15 unless the complete matching document set confirms that."
+    }
+  ],
+  "validation_rules": [
+    "Do not illustrate a one-front-axle layout for this two-front-axle variant.",
+    "Electrical topology is not physical geometry or harness routing.",
+    "Document/drawing identifiers and circuit component labels are not orderable article numbers.",
+    "Do not trust OCR/parsed component descriptions where they conflict with the drawing; resolve using the original matching component list.",
+    "Do not reproduce restricted OEM drawings; secure authorized source access and review before publication."
+  ],
+  "unresolved": [
+    "Specific model and chassis applicability",
+    "Cab and frame dimensions",
+    "ECU location and mounting bracket",
+    "Exact module installation and harness routes",
+    "Orderable articles and part geometry",
+    "Authorized source and technical review"
+  ],
+  "next": "Obtain matching VIN-specific location, components, pneumatic circuit, chassis geometry and catalogue documentation before creating the full-system visual."
+}
