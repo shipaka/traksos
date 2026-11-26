@@ -32,7 +32,36 @@ object HaldexEb4DiagReference {
     )
     private val byCode=rows.associateBy { it.code }
     private val byLabel=rows.associateBy { it.label }
-    init { require(byCode.size==rows.size && byLabel.size==rows.size) }
+    // Full Name column of the same 22 visible rows on page 29, not additional faults.
+    private val fullNames=mapOf(
+        "Wheel sensor 1A continuity" to "0x01",
+        "Wheel sensor 1A signal integrity" to "0x03",
+        "Wheel sensor 1A output level" to "0x04",
+        "Wheel sensor 1B continuity" to "0x09",
+        "Wheel sensor 1B signal integrity" to "0x0B",
+        "Wheel sensor 1B output level" to "0x0C",
+        "Wheel sensor 2A continuity" to "0x11",
+        "Wheel sensor 2A signal integrity" to "0x13",
+        "Wheel sensor 2A output level" to "0x14",
+        "Wheel sensor 2B continuity" to "0x19",
+        "Wheel sensor 2B signal integrity" to "0x1B",
+        "Wheel sensor 2B output level" to "0x1C",
+        "Wheel sensor A (slave 1) continuity" to "0x21",
+        "Wheel sensor A (slave 1) signal integrity" to "0x23",
+        "Wheel sensor A (slave 1) output level" to "0x24",
+        "Wheel sensor B (slave 1) continuity" to "0x29",
+        "Wheel sensor B (slave 1) signal integrity" to "0x2B",
+        "Wheel sensor B (slave 1) output level" to "0x2C",
+        "Wheel sensor A (slave 2) continuity" to "0x31",
+        "Wheel sensor A (slave 2) signal integrity" to "0x33",
+        "Wheel sensor A (slave 2) output level" to "0x34",
+        "Wheel sensor B (slave 2) continuity" to "0x39"
+    )
+    init {
+        require(byCode.size==rows.size && byLabel.size==rows.size)
+        require(fullNames.size==rows.size && fullNames.values.toSet()==byCode.keys)
+    }
+    val fullNameCount get()=fullNames.size
     private const val GUIDE="https://www.haldex.com/globalassets/europe/61.-documents/ebs-system/006300056_en.pdf"
     // Extended DTC screenshot, p.26: exact visible names, no numeric identifiers.
     // The guide covers EBS and ABS 4.0; manual reference only, no ECU-specific raw mapping.
@@ -55,7 +84,7 @@ object HaldexEb4DiagReference {
     )
     fun lookup(code:String):DisplayLookup? {
         named[code]?.let { return it }
-        val r=byCode[code] ?: byLabel[code] ?: return null
+        val r=byCode[code] ?: byLabel[code] ?: fullNames[code]?.let { byCode[it] } ?: return null
         return DisplayLookup(r.component,r.condition,SOURCE+" · DIAG++ "+r.code,true)
     }
     val count get()=rows.size+named.size
