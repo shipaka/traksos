@@ -1,0 +1,75 @@
+{
+  "id": "wabco-tristop-9253801010",
+  "manufacturer": "WABCO",
+  "article": "9253801010",
+  "nameRu": "TRISTOP D — энергоаккумулятор",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-tristop-9253801010.svg",
+  "spec": {
+    "type": "20/24",
+    "strokeCatalogueInches": 2.52,
+    "massKg": 7,
+    "port11Thread": "M16 x 1.5",
+    "port12Thread": "M16 x 1.5"
+  },
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en_US/9253801010",
+      "textChecked": true
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/cylinder-parts_trailer_en.pdf",
+      "page": 1,
+      "visualChecked": true
+    }
+  ],
+  "crossReferences": [
+    {
+      "make": "BPW",
+      "article": "05.444.44.01.0",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "BPW",
+      "article": "05.444.44.02.0",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "SAF",
+      "article": "4 454 1079 30",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "SAF",
+      "article": "4 454 1078 30",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "Knorr",
+      "article": "BS 7400",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "Knorr",
+      "article": "BS 7401",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "Haldex",
+      "article": "135 202 4004",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    },
+    {
+      "make": "Haldex",
+      "article": "346 187 001",
+      "relation": "manufacturer listed replacement reference; VIN not established"
+    }
+  ],
+  "watermark": "TrakSOS diagonal pattern",
+  "limitations": [
+    "Original approximate geometry, no confirmed exact ports or routing",
+    "No disassembly, repair, installation or VIN-specific applicability",
+    "Component pressure ratings not system limits",
+    "Expert and rendered QA pending"
+  ]
+}
