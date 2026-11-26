@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "source_research_only",
+  "vehicle": {
+    "make": "IVECO",
+    "family": "Stralis Hi-Way",
+    "target_model": "460 / 440S46 family",
+    "canonical_vehicle_id": null
+  },
+  "specialization_tags": [
+    "fuel_system"
+  ],
+  "records": [
+    {
+      "id": "bosch:0414703008",
+      "manufacturer": "Bosch",
+      "article": "0 414 703 008",
+      "exchange_reference": "0 986 441 026",
+      "name": "Насос-форсунка UIS",
+      "system": "fuel_uis",
+      "bindings": [
+        {
+          "family": "Stralis Hi-Way 460",
+          "engine": "F3AE3681Y",
+          "catalogue_from": "2012-07",
+          "condition": null,
+          "power_kw": 338,
+          "vin_applicability": "unknown"
+        }
+      ],
+      "source": "https://www.boschaftermarket.com/xrm/media/images/country_specific/it/xx_pdfs_28/catalogs/diesel.pdf",
+      "source_section": "UIS / Stralis Hi-Way 460",
+      "scope": "manufacturer_catalogue_text_engine_rows",
+      "visual_check": "PDF screenshot failed: 11678244 bytes exceeds limit",
+      "note": "Не путать с форсункой Common Rail; не назначать регулировку или ремонт без документации двигателя.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "bosch:0445020195",
+      "manufacturer": "Bosch",
+      "article": "0 445 020 195",
+      "exchange_reference": "0 986 437 512",
+      "name": "ТНВД Common Rail",
+      "system": "fuel_cr",
+      "bindings": [
+        {
+          "family": "Stralis Hi-Way 460",
+          "engine": "F3GFE611B",
+          "catalogue_from": "2013-07",
+          "condition": null,
+          "power_kw": 338,
+          "vin_applicability": "unknown"
+        },
+        {
+          "family": "Stralis Hi-Way 460",
+          "engine": "F3GFE611E",
+          "catalogue_from": "2016-08",
+          "condition": null,
+          "power_kw": 338,
+          "vin_applicability": "unknown"
+        }
+      ],
+      "source": "https://www.boschaftermarket.com/xrm/media/images/country_specific/it/xx_pdfs_28/catalogs/diesel.pdf",
+      "source_section": "CR high pressure pump / Stralis Hi-Way 460",
+      "scope": "manufacturer_catalogue_text_engine_rows",
+      "visual_check": "PDF screenshot failed: 11678244 bytes exceeds limit",
+      "note": "Один компонент с двумя привязками; заводской номер установленного насоса требуется сверить.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "bosch:0445124015",
+      "manufacturer": "Bosch",
+      "article": "0 445 124 015",
+      "exchange_reference": "0 986 435 663",
+      "name": "Форсунка Common Rail",
+      "system": "fuel_cr",
+      "bindings": [
+        {
+          "family": "Stralis Hi-Way 460",
+          "engine": "F3GFE611B",
+          "catalogue_from": "2013-07",
+          "condition": "Mot.-Nr. →F3G39797 (до F3G39797 включительно)",
+          "power_kw": 338,
+          "vin_applicability": "unknown"
+        }
+      ],
+      "source": "https://www.boschaftermarket.com/xrm/media/images/country_specific/it/xx_pdfs_28/catalogs/diesel.pdf",
+      "source_section": "CR injector / Stralis Hi-Way 460",
+      "scope": "manufacturer_catalogue_text_engine_rows",
+      "visual_check": "PDF screenshot failed: 11678244 bytes exceeds limit",
+      "note": "Не распространять автоматически на F3GFE611E; вторичный поставщик указывает этот двигатель, но требуется полная актуальная таблица Bosch.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "bosch:0445124036",
+      "manufacturer": "Bosch",
+      "article": "0 445 124 036",
+      "exchange_reference": "0 986 435 674",
+      "name": "Форсунка Common Rail",
+      "system": "fuel_cr",
+      "bindings": [
+        {
+          "family": "Stralis Hi-Way 460",
+          "engine": "F3GFE611B",
+          "catalogue_from": "2013-07",
+          "condition": "Mot.-Nr. F3G39798→ (от F3G39798 включительно)",
+          "power_kw": 338,
+          "vin_applicability": "unknown"
+        },
+        {
+          "family": "Stralis Hi-Way 460",
+          "engine": "F3GFE611E",
+          "catalogue_from": "2016-08",
+          "condition": "В каталоге есть основная строка и строка от F3G39798; ранняя строка требует визуальной проверки.",
+          "power_kw": 338,
+          "vin_applicability": "unknown"
+        }
+      ],
+      "source": "https://www.boschaftermarket.com/xrm/media/images/country_specific/it/xx_pdfs_28/catalogs/diesel.pdf",
+      "source_section": "CR injector / Stralis Hi-Way 460",
+      "scope": "manufacturer_catalogue_text_engine_rows",
+      "visual_check": "PDF screenshot failed: 11678244 bytes exceeds limit",
+      "note": "Не трактовать число 4 в соседней колонке таблицы как число форсунок: заголовок и смысл колонки визуально не проверены.",
+      "vin_applicability": "unknown",
+      "exact_mounting": null,
+      "pinout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "id": "bosch:0445124015:xp-fitment",
+      "canonical_component_id": "bosch:0445124015",
+      "kind": "fitment_question_not_new_component",
+      "source": "https://www.merlindiesel.com/product/bosch-0-445-124-015-common-rail-injector/",
+      "reason": "Вторичный каталог указывает F3GFE611E; основная строка Bosch 2019/20 указывает 0445124036. Нужна полная визуальная проверка ранней строки, актуальная OEM применимость и номер двигателя.",
+      "publication": "hold"
+    }
+  ],
+  "existing_links": [
+    {
+      "file": "stralis-440s46-filter-variants-evidence.json",
+      "note": "Фильтры и водоотделители — уже созданные узлы, не дублировать."
+    },
+    {
+      "file": "stralis-edc-scr-pneumatic-sensors-evidence.json",
+      "note": "EDC7 и EDC17 — существующие записи, связать после канонической идентификации."
+    }
+  ],
+  "diagnostic_cards": [
+    {
+      "id": "stralis-fuel-no-start",
+      "title": "Двигатель вращается, но не запускается",
+      "checks": [
+        "Определить код двигателя и тип системы впрыска, сохранить ошибки и данные диагностики.",
+        "Проверить признаки недостаточной подачи топлива и наличие воды или воздуха по процедурам производителя; не считать неисправность насоса или форсунки доказанной только по симптому."
+      ],
+      "limits": "Не разгерметизировать магистрали высокого давления, не проверять струю руками; точные параметры только из OEM."
+    },
+    {
+      "id": "stralis-fuel-uneven-running",
+      "title": "Неравномерная работа и потеря мощности",
+      "checks": [
+        "Сопоставить ошибки, условия появления, признаки проблемы подачи топлива, электрики и механической части.",
+        "Испытания форсунок проводить на подходящем стенде квалифицированным специалистом."
+      ],
+      "limits": "Нормы коррекций, обратного слива, давление, кодирование и моменты затяжки не подтверждены."
+    }
+  ],
+  "visual_briefs": [
+    {
+      "id": "stralis-uis-fuel-path",
+      "nodes": [
+        "бак",
+        "фильтрация",
+        "подача",
+        "насос-форсунка",
+        "цилиндр"
+      ],
+      "purpose": "Показать концептуальный тракт UIS; привод и управление условные, точных трубок нет."
+    },
+    {
+      "id": "stralis-common-rail-path",
+      "nodes": [
+        "бак",
+        "предварительная фильтрация",
+        "ТНВД",
+        "рампа",
+        "форсунки",
+        "возврат"
+      ],
+      "purpose": "Функциональное различие общей рампы и UIS. Не копировать OEM рисунки."
+    },
+    {
+      "id": "stralis-injector-serial-variants",
+      "nodes": [
+        "код двигателя",
+        "номер двигателя",
+        "артикул",
+        "проверка OEM"
+      ],
+      "purpose": "Сравнение границы F3G39797/39798 для F3GFE611B, не выводить аналогичную границу для неизвестных двигателей."
+    },
+    {
+      "id": "stralis-fuel-no-start-diagnosis",
+      "nodes": [
+        "симптом",
+        "идентификация системы",
+        "данные диагностики",
+        "проверка подачи",
+        "решение специалиста"
+      ],
+      "purpose": "Без конкретных давлений, опасных процедур и выдуманных пинов."
+    }
+  ],
+  "supporting_sources": [
+    {
+      "source": "https://www.boschaftermarket.com/gb/en/parts/products/diesel-systems/",
+      "scope": "общий принцип UIS/Common Rail"
+    }
+  ],
+  "rights": "Оригинальные формулировки и ограниченные факты каталога, без копирования таблиц и изображений. Собственные иллюстрации по стандарту TrakSOS.",
+  "release_gates": [
+    "global dedup",
+    "OEM/VIN and engine serial",
+    "visual check of Bosch table",
+    "technical/legal review",
+    "actual illustrations",
+    "runtime ACL and CI"
+  ],
+  "verified_illustrations_added": 0
+}
