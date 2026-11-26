@@ -51,14 +51,14 @@ object CoverageRoadmap {
         target("vie-tebs-subsystem","VIE / ТСР","TEBS without CAN 24 module",VieDisplayReference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("kormee-research","Ruili KORMEE","TEBS (exact ECU model pending)",
             "https://patents.google.com/patent/CN115959098B/en",ScopeGroup.INTERFACE_REVIEW,ResearchStage.CANDIDATE),
-        target("sorl-research","SORL","Trailer TEBS (exact ECU model pending)",
+        target("sorl-research","SORL","Trailer TEBS (35682030050 — supplier catalog)",
             "https://sorl.ru/news/tehnicheskiy-seminar--tebs-ebs--ecas-sorl-tyagacha-i-avtobusa-ekaterinburg-19-24-october",ScopeGroup.INTERFACE_REVIEW,ResearchStage.SYSTEM_DOCUMENTED),
-        target("sorl-trailer-abs","SORL","Trailer ABS (tester 36302900020)",
+        target("sorl-trailer-abs","SORL","Trailer ABS / TABS+RSS (tester 36302900020)",
             "https://sorl.ru/manuals/rukovodstvo-dlya-diagnosticheskogo-oborudovaniya-sorl.pdf",ScopeGroup.INTERFACE_REVIEW),
         target("ekran-ebp","Экран (Беларусь)","АБС-П, ЭБП",
             "https://b24truck.ru/files/catalog/Автокомпоненты/ekran.pdf",ScopeGroup.INTERFACE_REVIEW),
         target("ekran-ebpv","Экран (Беларусь)","ЭБП-В АДЮИ.453633.024",
-            "https://b24truck.ru/files/catalog/Автокомпоненты/ekran.pdf",ScopeGroup.INTERFACE_REVIEW,ResearchStage.CANDIDATE),
+            "https://b24truck.ru/files/catalog/%D0%90%D0%B2%D1%82%D0%BE%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D1%8B/ekran.pdf",ScopeGroup.INTERFACE_REVIEW,ResearchStage.SYSTEM_DOCUMENTED),
         target("bendix-tabs6","Bendix","TABS-6 Standard/Premium","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/hdTZdpMPI0EBhB_SD-13-4767_US_004.pdf",ScopeGroup.FUTURE_MARKET),
         target("haldex-plc","Haldex","PLC Select / PLC Plus","https://manualzz.com/doc/6303407/haldex-l30030-installation-and-service-manual",ScopeGroup.FUTURE_MARKET)
     )

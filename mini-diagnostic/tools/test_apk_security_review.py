@@ -19,6 +19,12 @@ class ApkReviewTest(unittest.TestCase):
         self.assertIn("allowBackup", inspect_manifest(BASE.replace('allowBackup="false"', 'allowBackup="true"')))
         self.assertIn("EXPORTED_COMPONENTS", inspect_manifest(BASE.replace('android:exported="false"', 'android:exported="true"')))
         self.assertTrue(any(e.startswith("IMPLICIT_EXPORTED:") for e in inspect_manifest(BASE.replace(' android:exported="false"', ""))))
+    def test_export_diagnostics_fail_closed(self):
+        receiver = '<receiver android:name="androidx.profileinstaller.ProfileInstallReceiver" android:exported="true" android:permission="android.permission.DUMP"/>'
+        result = inspect_manifest(BASE.replace("</application>", receiver + "</application>"))
+        self.assertIn("EXPORTED_COMPONENTS", result)
+        self.assertIn("EXPORTED_COMPONENT:receiver:androidx.profileinstaller.ProfileInstallReceiver", result)
+        self.assertIn("EXPORTED_COMPONENTS", inspect_manifest(BASE.replace('android:exported="true"', 'android:exported="false"')))
     def test_unexpected_permission_and_sdk(self):
         self.assertIn("UNEXPECTED_PERMISSION:android.permission.INTERNET", inspect_manifest(BASE.replace("BLUETOOTH_CONNECT", "INTERNET")))
         self.assertIn("SDK_POLICY", inspect_manifest(BASE.replace('targetSdkVersion="35"', 'targetSdkVersion="34"')))

@@ -88,6 +88,17 @@ object CatalogModuleParts {
         CatalogModulePart("ES2031","kb-itebs-x","ECO · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("ES2033","kb-itebs-x","PLUS · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf"),
         CatalogModulePart("ES2035","kb-itebs-x","LAC · тип блока","https://n0c357rmy1njbuit2friqwu.blob.core.windows.net/documents/THDArDW7I0EBhB_Y425339-000-EN_WEB.pdf")
+,
+        CatalogModulePart("4801020630","vie-tebs","ТСР · CAN 24 только при подтверждённой ревизии","https://vbsauto.ru/wp-content/uploads/2025/10/TEBS_%D0%A2%D0%A1%D0%90.pdf"),
+        CatalogModulePart("4801020630","vie-tebs-subsystem","ТСР · SUBSYSTEM; наличие CAN 24 не установлено по номеру","https://vbsauto.ru/wp-content/uploads/2025/10/TEBS_%D0%A2%D0%A1%D0%90.pdf"),
+        CatalogModulePart("4801020630","zf-tebs-e","WABCO Premium с PEM · отдельно сверить марку","https://www.wabco-customercentre.com/catalog/en_GB/4801020630"),
+        CatalogModulePart("4801020640","vie-tebs","ТСР · CAN 24 только при подтверждённой ревизии","https://vbsauto.ru/wp-content/uploads/2025/10/TEBS_%D0%A2%D0%A1%D0%90.pdf"),
+        CatalogModulePart("4801020640","vie-tebs-subsystem","ТСР · SUBSYSTEM; наличие CAN 24 не установлено по номеру","https://vbsauto.ru/wp-content/uploads/2025/10/TEBS_%D0%A2%D0%A1%D0%90.pdf"),
+        CatalogModulePart("4801020640","zf-tebs-e","WABCO Premium с PEM · отдельно сверить марку","https://www.wabco-customercentre.com/catalog/en_GB/4801020640"),
+        CatalogModulePart("АДЮИ.453633.005","ekran-ebp","ЭБП · АБС-П","https://b24truck.ru/files/catalog/%D0%90%D0%B2%D1%82%D0%BE%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D1%8B/ekran.pdf"),
+        CatalogModulePart("АДЮИ.453633.024","ekran-ebpv","ЭБП-В · включая 4S/4M","https://b24truck.ru/files/catalog/%D0%90%D0%B2%D1%82%D0%BE%D0%BA%D0%BE%D0%BC%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%82%D1%8B/ekran.pdf"),
+        CatalogModulePart("35503100090","sorl-trailer-abs","TABS+RSS 4S/2M · отдельная конфигурация","https://sorl.ru/categories/upravlenie-tormoznoy-sistemoy"),
+        CatalogModulePart("35682030050","sorl-research","ЭБУ TEBS 2S/2M, 4S/2M · каталог дистрибьютора, OEM-проверка нужна","https://optipart.ru/product/sorl/35682030050/")
     )
     init {
         check(rows.map { it.number to it.targetId }.distinct().size==rows.size)
@@ -100,8 +111,12 @@ object CatalogModuleParts {
         if(Regex("K[0-9]{6}(V[0-9]{2}N[0-9]{2})?").matches(label))
             return label.take(7)
         if(Regex("ES[0-9]{4}").matches(label)) return label
+        if(Regex("АДЮИ[. ]?453633[. ]?[0-9]{3}").matches(label)) {
+            val digits=label.filter { it in '0'..'9' }
+            return "АДЮИ."+digits.take(6)+"."+digits.takeLast(3)
+        }
         if(input.any { it !in '0'..'9' && it!=' ' && it!='-' })return null
-        return input.filter { it in '0'..'9' }.takeIf { it.length in 9..10 }
+        return input.filter { it in '0'..'9' }.takeIf { it.length in 9..11 }
     }
     fun find(input:String):List<CatalogModulePart> {
         val number=normalized(input) ?: return emptyList()

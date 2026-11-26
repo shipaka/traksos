@@ -69,6 +69,7 @@ def inspect_manifest(xml):
     if len(exported) != 1 or exported[0][0] != "activity" or exported[0][1] not in (
             ".MainActivity", PACKAGE + ".MainActivity"):
         errors.append("EXPORTED_COMPONENTS")
+        errors.extend("EXPORTED_COMPONENT:" + tag + ":" + name for tag, name in exported)
     return errors
 
 def verify_signer_output(output, expected):

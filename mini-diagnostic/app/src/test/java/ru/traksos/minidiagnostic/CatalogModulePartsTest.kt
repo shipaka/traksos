@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(83,CatalogModuleParts.count)
+        assertEquals(93,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -40,6 +40,20 @@ class CatalogModulePartsTest {
             assertTrue(CatalogModuleParts.find(number).isEmpty())
         for(q in listOf("iTEBS X ECO","iTEBS X PLUS","iTEBS X LAC","айтебс икс"))
             assertEquals("kb-itebs-x",ModuleSearch.find(q).first().id)
+    }
+    @Test fun russianAndChineseCatalogMatchesDoNotGuessBrandOrBus() {
+        for(number in listOf("4801020630","480 102 064 0")) {
+            assertEquals(setOf("zf-tebs-e","vie-tebs","vie-tebs-subsystem"),ModuleSearch.find(number).map { it.id }.toSet())
+            assertEquals(3,CatalogModuleParts.find(number).size)
+        }
+        assertEquals("ekran-ebp",ModuleSearch.find("АДЮИ.453633.005").single().id)
+        assertEquals("ekran-ebpv",CatalogModuleParts.find("адюи 453633 024").single().targetId)
+        assertEquals("sorl-trailer-abs",ModuleSearch.find("35503100090").single().id)
+        assertEquals("sorl-research",ModuleSearch.find("35682030050").single().id)
+        assertTrue(CatalogModuleParts.find("35682030020").isEmpty())
+        assertTrue(CatalogModuleParts.find("АДЮИ.453766.011").isEmpty())
+        assertTrue(CatalogModuleParts.find("АДЮИ.453633.024-01").isEmpty())
+        assertTrue(CatalogModuleParts.find("4801020699").isEmpty())
     }
     @Test fun sharedSlaveNumbersRemainAmbiguous() {
         for(number in listOf("810011001","812011001")) {
