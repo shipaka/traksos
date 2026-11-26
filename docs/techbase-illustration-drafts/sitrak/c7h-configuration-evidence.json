@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "configuration_evidence_only",
+  "vehicle": {
+    "make": "SITRAK",
+    "model": "C7H",
+    "configuration": "ZZ4186V361HE",
+    "drive": "4x2",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "id": "sitrak-c7h-mc1348",
+      "system": "engine",
+      "name": "MC13.48-50",
+      "facts": {
+        "power_hp": 480,
+        "torque_Nm": 2300,
+        "displacement_l": 12.419,
+        "emissions": "Euro 5"
+      },
+      "source": "https://sitrak.ru/tech/sitrak/c7h/",
+      "scope": "official_family_context",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-mc1354",
+      "system": "engine",
+      "name": "MC13.54-50",
+      "facts": {
+        "power_hp": 540,
+        "torque_Nm": 2500,
+        "note": "Другой двигатель семейства, не подтверждён на 4x2 ZZ4186V361HE."
+      },
+      "source": "https://sitrak.ru/tech/sitrak/c7h/",
+      "scope": "official_family_context",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-mt13",
+      "system": "engine",
+      "name": "MT13.46.51",
+      "facts": {
+        "fuel": "природный газ",
+        "note": "Отдельная конфигурация, не дизель."
+      },
+      "source": "https://sitrak.ru/tech/sitrak/c7h/",
+      "scope": "official_family_context",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-hw",
+      "system": "gearbox",
+      "name": "HW25716XAL",
+      "facts": {
+        "retarder": "гидравлический"
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-traxon",
+      "system": "gearbox",
+      "name": "ZF TraXon ZF12TX2621TD",
+      "facts": {
+        "forward_gears": 12,
+        "reverse_gears": 4,
+        "note": "Альтернативное исполнение, требуется табличка."
+      },
+      "source": "https://rusitrak.ru/catalog_sitrak/",
+      "scope": "dealer_configuration",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-clutch",
+      "system": "clutch",
+      "name": "430PULL",
+      "facts": {
+        "type": "однодисковое сухое",
+        "actuation": "гидравлическое с пневмоусилителем"
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-axle",
+      "system": "axle",
+      "name": "VPD71DS и MCY13JES",
+      "facts": {
+        "front_axle": "VPD71DS",
+        "rear_axle": "MCY13JES",
+        "rear_ratio": 2.85
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-brake",
+      "system": "brakes",
+      "name": "Дисковые тормоза и EBS/ESC",
+      "facts": {
+        "front": "disc",
+        "rear": "disc",
+        "ecu": null
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-susp",
+      "system": "suspension",
+      "name": "Подвеска шасси",
+      "facts": {
+        "front": "рессоры",
+        "rear": "пневматическая"
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-fuel",
+      "system": "fuel",
+      "name": "Система высокого давления",
+      "facts": {
+        "pump_article": null,
+        "injector_article": null
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "sitrak-c7h-cab",
+      "system": "cabin",
+      "name": "Независимый обогрев кабины",
+      "facts": {
+        "cab": "G7S-E",
+        "air_conditioner": true,
+        "heater": true
+      },
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "scope": "distributor_configuration_text",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "field": "gearbox_selection",
+      "sources": [
+        "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+        "https://rusitrak.ru/catalog_sitrak/",
+        "https://kurganscan.ru/upload/iblock/e7c/zqd8kgeb00xp3oyesit4hrho19auf2uf/sitrak_c7h_max_4kh2_adr.pdf"
+      ],
+      "rule": "Разные КПП у разных комплектаций. Проверить фактический номер агрегата; не подбирать запчасти по одной модели тягача."
+    },
+    {
+      "field": "component_interchange",
+      "rule": "Лицензионное происхождение двигателя не доказывает взаимозаменяемость с MAN D26; нужны точные номера, ревизии и OEM данные."
+    }
+  ],
+  "visual_briefs": [
+    "MC13: двигатель, наддув, охлаждение",
+    "HW и TraXon: разные исполнения трансмиссии",
+    "Передняя и задняя оси, EBS и пневмоподвеска",
+    "Система подачи топлива: функциональный тракт без точных артикулов"
+  ],
+  "source_checks": [
+    {
+      "source": "https://sitrak.ru/tech/sitrak/c7h/",
+      "visual": "HTML text"
+    },
+    {
+      "source": "https://sinotrukvostok.ru/assets/uploads/files/167-sedelnyy-tyagach-sitrak-c7h-4h2-pnevmo-akpp-retarder-s-s-amt-adr.pdf",
+      "pdf_page_indices": [
+        4,
+        5
+      ],
+      "visual": "failed size limit; extracted text reviewed"
+    },
+    {
+      "source": "https://kurganscan.ru/upload/iblock/e7c/zqd8kgeb00xp3oyesit4hrho19auf2uf/sitrak_c7h_max_4kh2_adr.pdf",
+      "pdf_page_indices": [
+        0
+      ],
+      "visual": "failed 404; extracted text reviewed"
+    },
+    {
+      "source": "https://rusitrak.ru/catalog_sitrak/",
+      "visual": "HTML text"
+    }
+  ],
+  "rights": "Самостоятельные краткие описания, ссылки; не копировать оригинальные изображения и схемы.",
+  "release_gates": [
+    "canonical vehicle/aggregate ID",
+    "VIN and actual equipment",
+    "part catalogue and revisions",
+    "OEM routing/pinout and rights",
+    "expert review",
+    "actual visual creation and review",
+    "runtime integration/CI"
+  ],
+  "verified_illustrations_added": 0
+}
