@@ -38,11 +38,12 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
                     Text("Реестр разработки, не список поддержанных прибором блоков.",color=MaterialTheme.colorScheme.error)
                     OutlinedTextField(value=search,onValueChange={ search=it.take(80) },
                         label={ Text("Производитель или система") },singleLine=true,modifier=Modifier.fillMaxWidth())
-                    val rows=ModuleSearch.find(search)
+                    val rows=TrailerDiagnosticScope.prioritized(ModuleSearch.find(search))
                     Text("Найдено: ${rows.size}",fontSize=12.sp)
                     rows.forEach { row ->
                         HorizontalDivider()
                         Text(row.maker+" · "+row.model,fontWeight=FontWeight.Bold)
+                        Text(TrailerDiagnosticScope.priority(row).title,fontSize=12.sp)
                         Text(when(row.stage) {
                             ResearchStage.DISPLAY_REFERENCE_PARTIAL -> "Частичный справочник отображаемых кодов"
                             ResearchStage.SYSTEM_DOCUMENTED -> "Найдены сведения о системе"
@@ -55,7 +56,7 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
                     Text("Исследовательский список. Ни один кабель пока не разрешён для работы нашим прибором.",color=MaterialTheme.colorScheme.error)
                     OutlinedTextField(value=search,onValueChange={ search=it.take(80) },
                         label={ Text("Производитель или модель") },singleLine=true,modifier=Modifier.fillMaxWidth())
-                    val rows=CableResearch.search(search)
+                    val rows=CableResearch.search(search).filter { TrailerDiagnosticScope.isPhysicalPlace(it.place) }
                     Text("Найдено: ${rows.size}",fontSize=12.sp)
                     rows.forEach { row ->
                         HorizontalDivider()
@@ -65,7 +66,7 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
                         Text("Не проверено на приборе",color=MaterialTheme.colorScheme.error,fontSize=12.sp)
                     }
                 } else if(entry==null) {
-                    Text("Выберите место подключения. Справка работает без интернета и не активирует прибор.")
+                    Text("Только ABS/EBS прицепа: передняя розетка, боковая розетка или порт самого блока. Приоритет 2005–2026; старые системы 1990–2004 исследуются во вторую очередь.")
                     Text("Пока доступен только стендовый деморежим.",color=MaterialTheme.colorScheme.error)
                     OutlinedButton(onClick={ showCables=true; search="" },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
                         Text("Кабели по производителям")
@@ -82,7 +83,7 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
                     OutlinedButton(onClick={ showIdentity=true },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
                         Text("Разобрать идентификационные ответы ЭБУ")
                     }
-                    ConnectionPlace.entries.forEach { place ->
+                    (TrailerDiagnosticScope.places+ConnectionPlace.UNKNOWN).forEach { place ->
                         OutlinedButton(onClick={ selected=place; showChecks=false },
                             modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(place.title) }
                     }

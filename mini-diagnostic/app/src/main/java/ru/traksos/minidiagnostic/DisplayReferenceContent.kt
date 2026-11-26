@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DisplayReferenceContent(targetId:String?=null) {
     val target=targetId?.let(CoverageRoadmap::byId)
-    val suggested=ReferenceSelection.forTarget(targetId)
+    val suggested=ReferenceSelection.forTarget(targetId).filter(TrailerDiagnosticScope::isMainReference)
     var showAll by remember(targetId) { mutableStateOf(target==null) }
     var edition by remember(targetId) { mutableStateOf<DisplayReferenceEdition?>(null) }
     var code by remember { mutableStateOf("") }
@@ -25,7 +25,8 @@ fun DisplayReferenceContent(targetId:String?=null) {
         }
         if(showAll) Text("Другие справочники — только отдельный ручной поиск, не данные выбранного блока.")
     }
-    val visible=if(showAll) DisplayReferenceEdition.entries else suggested
+    Text("Справочники мигающих кодов вынесены из основного направления. Это не число ошибок, доступных при электронном чтении.",style=MaterialTheme.typography.bodySmall)
+    val visible=if(showAll) DisplayReferenceEdition.entries.filter(TrailerDiagnosticScope::isMainReference) else suggested
     visible.forEach { e ->
         OutlinedButton(onClick={ edition=e; code="" },modifier=Modifier.fillMaxWidth()) {
             Text((if(edition==e) "✓ " else "")+e.title)

@@ -21,7 +21,8 @@ class DiagnosticRoutePolicy(verified:List<VerifiedRoute> = emptyList()) {
         require(verified.all {
             val r=it.identity
             listOf(r.targetId,r.partNumber,r.hardwareRevision,r.softwareVersion,r.cableId,it.evidenceId).all { s->s.isNotBlank() } &&
-                r.place!=ConnectionPlace.UNKNOWN &&
+                TrailerDiagnosticScope.isPhysicalPlace(r.place) &&
+                r.path!=ElectricalPath.WARNING_INPUT &&
                 r.path in DiagnosticGuide.entry(r.place).possiblePaths &&
                 (!it.clearValidated || it.readValidated) &&
                 (r.path!=ElectricalPath.WARNING_INPUT || !it.clearValidated)

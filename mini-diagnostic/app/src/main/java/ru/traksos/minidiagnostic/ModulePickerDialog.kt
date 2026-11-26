@@ -15,7 +15,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
     var query by remember { mutableStateOf("") }
     var manufacturer by remember { mutableStateOf<String?>(null) }
     val all=remember(query) { ModuleSearch.find(query) }
-    val visible=all.filter { manufacturer==null || it.maker==manufacturer }
+    val visible=all.filter { manufacturer==null || it.maker==manufacturer }.let { if(query.isBlank()) TrailerDiagnosticScope.prioritized(it) else it }
     AlertDialog(onDismissRequest=onClose,title={ Text("Выбор модулятора") },text={
         Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
             Button(onClick={ onSelect(null) },modifier=Modifier.fillMaxWidth()) { Text("Автоматический поиск"+if(currentId==null) " ✓" else "") }
@@ -49,6 +49,7 @@ fun ModulePickerDialog(currentId:String?,onSelect:(String?)->Unit,onClose:()->Un
                                 ResearchStage.SYSTEM_DOCUMENTED -> "Есть сведения о системе"
                                 ResearchStage.CANDIDATE -> "Требуется документация"
                             },fontSize=11.sp)
+                            Text(TrailerDiagnosticScope.priority(row).title,fontSize=11.sp)
                             CatalogModuleParts.find(query).filter { it.targetId==row.id }.forEach { part ->
                                 Text(part.variant,fontSize=11.sp)
                             }
