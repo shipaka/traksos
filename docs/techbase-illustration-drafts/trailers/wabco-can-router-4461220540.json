@@ -1,0 +1,78 @@
+{
+  "id": "wabco-can-router-4461220540",
+  "article": "4461220540",
+  "manufacturer": "WABCO",
+  "status": "functional_draft_expert_pending",
+  "illustration": "wabco-can-router-4461220540.svg",
+  "sources": [
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/en/4461220540",
+      "note": "Catalogue title says Repeater, but Comments and electrical connection fields and manuals classify as Router"
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150101763.pdf",
+      "printedPages": [
+        9,
+        10
+      ],
+      "visualChecked": true
+    },
+    {
+      "url": "https://www.wabco-customercentre.com/catalog/docs/8150102523.pdf",
+      "printedPage": 85,
+      "textChecked": true,
+      "visualChecked": false
+    }
+  ],
+  "type": "Router",
+  "ports": {
+    "Z": "male",
+    "X1": "male",
+    "X2": "male",
+    "Y": "female"
+  },
+  "spec": {
+    "voltageV": [
+      12,
+      24
+    ],
+    "massKg": 1.164,
+    "temperatureC": [
+      -40,
+      65
+    ],
+    "protection": [
+      "IP6K7",
+      "IP6K9K"
+    ],
+    "catalogueSizeMm": [
+      830,
+      115,
+      75
+    ]
+  },
+  "crossReferences": [
+    {
+      "make": "FAYMONVILLE",
+      "article": "229829",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "GOLDHOFER",
+      "article": "172327",
+      "exactModelYearVin": "unknown"
+    },
+    {
+      "make": "NOOTEBOOM",
+      "article": "5017949",
+      "exactModelYearVin": "unknown"
+    }
+  ],
+  "context": "Two-modulator TEBS E1 flatbed example; Y sensor signal forwarded via X1 only. iEBS variant table also identifies router; exact application not verified.",
+  "relatedArticle": "4410441010",
+  "limitations": [
+    "Approximate illustrative geometry only",
+    "No pinout, physical routing, exact model year or VIN fitment",
+    "No rendered preview or specialist acceptance; not published"
+  ]
+}
