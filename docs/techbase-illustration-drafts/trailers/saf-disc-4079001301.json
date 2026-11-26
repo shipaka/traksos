@@ -1,0 +1,45 @@
+{
+  "id": "saf-disc-4079001301",
+  "manufacturer": "SAF",
+  "article": "4 079 0013 01",
+  "family": "SK RB 9022K INTRADISC",
+  "status": "functional_draft_expert_pending",
+  "illustration": "saf-disc-4079001301.svg",
+  "spec": {
+    "diameterMm": 430,
+    "thicknessMm": null,
+    "hubFamily": "INTEGRAL"
+  },
+  "source": {
+    "url": "https://literature1.safholland.com/sites/damedit/literature/SAF-06c-SparesManual-SAFaxles-SuspensionAssemblies_en-AU.pdf",
+    "reference": "SAF-06c p18 item 29",
+    "textChecked": true,
+    "visualChecked": false,
+    "screenshotError": "timeout",
+    "checked": "2026-11-26"
+  },
+  "related": [
+    {
+      "article": "3 307 3030 01",
+      "role": "hub unit INTEGRAL 10x335 PCD"
+    },
+    {
+      "article": "3 080 0030 01",
+      "role": "Knorr SN7 RH caliper"
+    },
+    {
+      "article": "3 080 0031 01",
+      "role": "Knorr SN7 LH caliper"
+    },
+    {
+      "article": "3 057 0077 00",
+      "role": "lining kit"
+    }
+  ],
+  "limitations": [
+    "Original conceptual illustration, not an exact depiction of this article",
+    "Hole count/geometry shown schematically, not verified; no exact mounting or wear limit inferred",
+    "No automatic interchange based on diameter; axle serial and VIN applicability unknown",
+    "Rendered QA and expert acceptance pending"
+  ]
+}
