@@ -18,4 +18,6 @@ object ReferenceInventory {
         ReferenceCount("Knorr G2.2 pressure bulletin and TD-2077",KnorrG22PressureReference.count),
     )
     fun total():Int=counts().sumOf { it.entries }
+    // Preliminary secondary-source entries are not included in the established inventory.
+    fun provisionalCount():Int=KnorrG2Td2077Reference.count
 }

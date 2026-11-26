@@ -10,5 +10,6 @@ class ReferenceInventoryTest {
         assertEquals(listOf(168,125,41,72,73,71,125,52,4,1,3),rows.map { it.entries })
         assertEquals(293,rows.take(2).sumOf { it.entries })
         assertEquals(442,rows.drop(2).sumOf { it.entries })
+        assertEquals(58,ReferenceInventory.provisionalCount())
     }
 }
