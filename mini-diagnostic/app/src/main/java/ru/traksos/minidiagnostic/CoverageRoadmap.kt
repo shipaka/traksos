@@ -26,7 +26,7 @@ object CoverageRoadmap {
         target("zf-iebs","WABCO / ZF","iEBS",ZF_IEBS),
         target("zf-vario-c","WABCO / ZF","Vario C",ZF_ABS,ScopeGroup.INTERFACE_REVIEW),
         target("zf-vcs","WABCO / ZF","VCS I",ZF_ABS,ScopeGroup.INTERFACE_REVIEW),
-        target("zf-vcs-ii","WABCO / ZF","VCS II",LegacyDisplayReference.VCS_SOURCE,ScopeGroup.INTERFACE_REVIEW),
+        target("zf-vcs-ii","WABCO / ZF","VCS II",WabcoCodeReaderReference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("zf-tcs-i","WABCO / ZF","TCS I",WabcoCompactReference.SOURCE,ScopeGroup.FUTURE_MARKET),
         target("zf-tcs-ii","WABCO / ZF","TCS II",WabcoCompactReference.SOURCE,ScopeGroup.FUTURE_MARKET),
         target("kb-tebs4","Knorr-Bremse","TEBS4",KnorrTebs4Reference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
