@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-26",
+  "scope": "configuration_evidence_only",
+  "rights": "Самостоятельные краткие описания, ссылки; не копировать оригинальные изображения и схемы.",
+  "release_gates": [
+    "canonical vehicle/aggregate ID",
+    "VIN and actual equipment",
+    "part catalogue and revisions",
+    "OEM routing/pinout and rights",
+    "expert review",
+    "actual visual creation and review",
+    "runtime integration/CI"
+  ],
+  "verified_illustrations_added": 0,
+  "vehicle": {
+    "make": "КАМАЗ",
+    "model": "54901",
+    "generation": "К5",
+    "configuration": "54901-70014-СА",
+    "drive": "4x2",
+    "canonical_vehicle_id": null
+  },
+  "records": [
+    {
+      "id": "kamaz-k5-r6",
+      "system": "engine",
+      "name": "Дизель Р6 910.52-460",
+      "facts": {
+        "cylinders": 6,
+        "displacement_l": 12.97,
+        "net_power_kw": 338,
+        "net_torque_Nm": 2400,
+        "emissions": "Euro 5",
+        "note": "Полезная мощность и момент из таблицы, не путать с другими публикуемыми значениями."
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-charge-air",
+      "system": "boost",
+      "name": "Турбонаддув и охлаждение воздуха",
+      "facts": {
+        "intercooling": true,
+        "turbo_article": null
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-scr",
+      "system": "scr",
+      "name": "Нейтрализация выхлопа",
+      "facts": {
+        "reagent": "AdBlue",
+        "ecu": null
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-fast",
+      "system": "gearbox",
+      "name": "Fast Gear F12JZ24DD",
+      "facts": {
+        "forward_gears": 12,
+        "type": "AMT"
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-mfz",
+      "system": "clutch",
+      "name": "MFZ 430 / ConAct",
+      "facts": {
+        "single_disc": true,
+        "actuation": "пневматическая"
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-hdz",
+      "system": "axle",
+      "name": "Задний мост Hande HDZ",
+      "facts": {
+        "final_drive": "гипоидная",
+        "ratio": null
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-ecas",
+      "system": "suspension",
+      "name": "Задняя пневмоподвеска / ECAS",
+      "facts": {
+        "front_axle_make": "КАМАЗ",
+        "ecu": null
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-ebs",
+      "system": "brakes",
+      "name": "EBS, ESP, ASR",
+      "facts": {
+        "front": "disc",
+        "rear": "disc",
+        "ecu": null
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-electric",
+      "system": "electrical",
+      "name": "Питание и зарядка",
+      "facts": {
+        "system_V": 24,
+        "battery_count": 2,
+        "battery_unit_V": 12,
+        "battery_unit_Ah": 240,
+        "alternator_kW": 3
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-cabin",
+      "system": "cabin",
+      "name": "Отопление и климат",
+      "facts": {
+        "cab_suspension": "четырёхточечная пружинная",
+        "independent_heater": true,
+        "air_conditioner": true
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    },
+    {
+      "id": "kamaz-k5-coupling",
+      "system": "coupling",
+      "name": "Седельно-сцепное устройство",
+      "facts": {
+        "kingpin_mm": 50.8,
+        "listed_makes": [
+          "Jost",
+          "Orlandi",
+          "SAF-Holland"
+        ]
+      },
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "scope": "configuration_only",
+      "vin_applicability": "unknown",
+      "article": null,
+      "exact_layout": null,
+      "expert_review": "pending",
+      "publication": "hold"
+    }
+  ],
+  "hold": [
+    {
+      "field": "engine_power",
+      "sources": [
+        {
+          "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+          "value": "338 кВт полезная / 460 л.с."
+        },
+        {
+          "source": "https://mintrans.gov.ru/press-center/branch-news/5045",
+          "value": "482 л.с."
+        }
+      ],
+      "rule": "Не объединять как одну норму измерения без OEM подтверждения."
+    },
+    {
+      "field": "final_drive_ratio",
+      "sources": [
+        {
+          "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+          "value": "3.313 в комплектации, 2.278 в таблице"
+        },
+        {
+          "source": "https://kamaz.kz/avto/tyagach/54901/",
+          "value": "2.313 в комплектации, 2.278 в таблице"
+        }
+      ],
+      "rule": "Не выбирать передаточное число до сверки фактического моста."
+    },
+    {
+      "field": "fuel_capacity",
+      "sources": [
+        {
+          "source": "https://kamaz.kz/avto/tyagach/54901/",
+          "value": "700+600 и 800+600 в разных разделах"
+        }
+      ],
+      "rule": "Не подставлять ёмкость без сверки баков."
+    }
+  ],
+  "visual_briefs": [
+    "Р6: принцип работы турбонаддува",
+    "Fast Gear и ConAct: функциональная связь",
+    "EBS и ECAS: раздельные контуры",
+    "Питание 24 В, батареи, генератор"
+  ],
+  "source_checks": [
+    {
+      "source": "https://kamaz.kz/avto/tyagach/54901/54901.pdf",
+      "pdf_page_indices": [
+        1,
+        2
+      ],
+      "visual": "checked"
+    },
+    {
+      "source": "https://kamaz.kz/avto/tyagach/54901/",
+      "visual": "HTML text"
+    },
+    {
+      "source": "https://mintrans.gov.ru/press-center/branch-news/5045",
+      "visual": "HTML text"
+    }
+  ]
+}
