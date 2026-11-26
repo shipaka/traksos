@@ -18,6 +18,7 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
     var showSystems by remember { mutableStateOf(false) }
     var showReference by remember { mutableStateOf(false) }
     var showImport by remember { mutableStateOf(false) }
+    var showIdentity by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     val entry=selected?.let(DiagnosticGuide::entry)
     AlertDialog(
@@ -26,7 +27,9 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
         text={
             Column(Modifier.heightIn(max=480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                if(showImport) {
+                if(showIdentity) {
+                    OfflineIdentityContent(targetId)
+                } else if(showImport) {
                     OfflineCaptureContent(targetId)
                 } else if(showReference) {
                     DisplayReferenceContent(targetId)
@@ -76,6 +79,9 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
                     OutlinedButton(onClick={ showImport=true },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
                         Text("Разобрать записанный ответ ЭБУ")
                     }
+                    OutlinedButton(onClick={ showIdentity=true },modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) {
+                        Text("Разобрать идентификационные ответы ЭБУ")
+                    }
                     ConnectionPlace.entries.forEach { place ->
                         OutlinedButton(onClick={ selected=place; showChecks=false },
                             modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(place.title) }
@@ -105,6 +111,6 @@ fun DiagnosticGuideDialog(targetId:String?=null,onClose:()->Unit) {
         },
         confirmButton={ TextButton(onClick=onClose) { Text("Закрыть") } },
         dismissButton={
-            if(entry!=null || showCables || showSystems || showReference || showImport) TextButton(onClick={ selected=null; showChecks=false; showCables=false; showSystems=false; showReference=false; showImport=false }) { Text("Назад") }
+            if(entry!=null || showCables || showSystems || showReference || showImport || showIdentity) TextButton(onClick={ selected=null; showChecks=false; showCables=false; showSystems=false; showReference=false; showImport=false; showIdentity=false }) { Text("Назад") }
         })
 }
