@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(102,CatalogModuleParts.count)
+        assertEquals(111,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -14,6 +14,19 @@ class CatalogModulePartsTest {
         assertTrue(CatalogModuleParts.find("820 007 XXX").isEmpty())
         assertTrue(CatalogModuleParts.find("950800304").isEmpty())
         assertTrue(CatalogModuleParts.find("820028001").isEmpty())
+    }
+    @Test fun exactG22AndWabcoEModelAssociations() {
+        for(number in listOf("K055342","K055352","K055362","K055369","ES2090")) {
+            assertEquals("kb-g22",CatalogModuleParts.find(number).single().targetId)
+            assertEquals("kb-g22",ModuleSearch.find(number).single().id)
+        }
+        for(number in listOf("4801020300","4801020320","4801020620","4801020800")) {
+            assertEquals("zf-tebs-e",CatalogModuleParts.find(number).single().targetId)
+            assertEquals("zf-tebs-e",ModuleSearch.find(number).single().id)
+        }
+        assertTrue(CatalogModuleParts.find("K055343").isEmpty())
+        assertEquals(CatalogModuleParts.find("K055342"),CatalogModuleParts.find("K055342V02N99"))
+        assertTrue(CatalogModuleParts.partDidCandidates("ES2090").isEmpty())
     }
     @Test fun uabsVariantsDistinguishElectronicCapabilityAndServiceKits() {
         for(number in listOf("364564001","364569001","364565001","364570001","364566001","364571001","950364824","950364825","950364826")) {
