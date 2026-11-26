@@ -1,0 +1,187 @@
+{
+  "batch": "TECHBASE-ZF-VOITH-AUX-BRAKING-20261126",
+  "status": "DRAFT_ASSETS_EXPERT_PENDING",
+  "sources": [
+    {
+      "url": "https://www.zf.com/public/org/TransmissionE-MobilityDrivelineSystemsforTrucksVans_72596.pdf",
+      "inspection": "PDF screenshots printed pp16–18 (zero-based 15–17) checked"
+    },
+    {
+      "url": "https://aftermarket.zf.com/en/aftermarket-portal/knowledge-hub/calibrating-conact/",
+      "inspection": "HTML technical description + module photo inspected"
+    },
+    {
+      "url": "https://aftermarket.zf.com/media/master/product-images/clutches/sx-conact-module-perspective-un_bs_d_xl_6.jpg?v=3023126428",
+      "inspection": "module product photo, no exact chassis placement"
+    },
+    {
+      "url": "https://www.zf.com/products/en/cv/products_72771.html",
+      "inspection": "HTML checked"
+    },
+    {
+      "url": "https://www.voith.com/corp-en/news-room/press-releases-110461.html",
+      "inspection": "HTML checked"
+    },
+    {
+      "url": "https://www.voith.com/corp-en/news-room/press-releases/2021-11-10-vt-voith-to-supply-retarders-for-turkish-truck-manufacturer.html",
+      "inspection": "HTML and integrated assembly image inspected"
+    },
+    {
+      "url": "https://www.voith.com/corp-en/Ford-Otosan_ECOTORQ-Transmission.png",
+      "inspection": "OEM assembly render checked; not chassis photograph"
+    },
+    {
+      "url": "https://www.voith.com/corp-en/news-room/press-releases-39472.html",
+      "inspection": "HTML checked"
+    }
+  ],
+  "assets": [
+    {
+      "path": "zf/traxon-intarder.svg",
+      "source": "https://www.zf.com/public/org/TransmissionE-MobilityDrivelineSystemsforTrucksVans_72596.pdf",
+      "facts": [
+        "Retarder rear unit, control unit, oil/water heat exchanger; catalog length 1170/1202/1257 mm; 82kg additional, 10L additional capacity"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "zf/ecosplit-intarder.svg",
+      "source": "https://www.zf.com/public/org/TransmissionE-MobilityDrivelineSystemsforTrucksVans_72596.pdf",
+      "facts": [
+        "Ecosplit retarder rear unit and oil/water heat exchanger; 1318mm length; +70kg and +10L"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "zf/conact-functional.svg",
+      "source": "https://aftermarket.zf.com/en/aftermarket-portal/knowledge-hub/calibrating-conact/",
+      "facts": [
+        "Concentric push-type pneumatic release cylinder, travel sensor, electro-pneumatic valve, CAN-derived release position; calibration required"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "zf/traxon2-control.svg",
+      "source": "https://www.zf.com/products/en/cv/products_72771.html",
+      "facts": [
+        "Updated in-house ECU, next-gen microprocessor, security, shift actuators, FOTA and software features"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "voith/vr115ct-ecotorq.svg",
+      "source": "https://www.voith.com/corp-en/news-room/press-releases/2021-11-10-vt-voith-to-supply-retarders-for-turkish-truck-manufacturer.html",
+      "facts": [
+        "Integrated VR115 CT output-side; step-up gear connects to cardan shaft; self-contained oil supply; Ford 16-speed 2021"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "voith/aquatarder-pwr-swr.svg",
+      "source": "https://www.voith.com/corp-en/news-room/press-releases-39472.html",
+      "facts": [
+        "Primary PWR up to 610kW combined; secondary SWR up to 750kW combined; engine coolant working medium"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "voith/eco-swr.svg",
+      "source": "https://www.voith.com/corp-en/news-room/press-releases-110461.html",
+      "facts": [
+        "Disconnectable when idling; coolant as working medium; designed for trucks and buses"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    },
+    {
+      "path": "voith/viab-functional.svg",
+      "source": "https://www.voith.com/corp-en/news-room/press-releases-110461.html",
+      "facts": [
+        "Fill-regulated hydrodynamic fluid coupling as main component; start-up and braking system"
+      ],
+      "status": "HOLD",
+      "limitations": [
+        "Symbolic, not actual geometry or exact chassis placement",
+        "Independent rendered visual and technical review pending",
+        "VIN/part fitment and installed-chassis evidence not established"
+      ]
+    }
+  ],
+  "qa": [
+    {
+      "name": "zf/traxon-intarder.svg",
+      "exact": true,
+      "sha": "dea62c5e3d24071741e300effdbb9cd662e8cbfc"
+    },
+    {
+      "name": "zf/ecosplit-intarder.svg",
+      "exact": true,
+      "sha": "4b60c41ae8d008d74fef0a4e23d307f7254acc96"
+    },
+    {
+      "name": "zf/conact-functional.svg",
+      "exact": true,
+      "sha": "e39eacb71e1e43bdad234eaa0b330614a2c8fd76"
+    },
+    {
+      "name": "zf/traxon2-control.svg",
+      "exact": true,
+      "sha": "4dba735ccfa401fbb6c7f4e46a231904891afd2e"
+    },
+    {
+      "name": "voith/vr115ct-ecotorq.svg",
+      "exact": true,
+      "sha": "7ad7de53bba76cde53f1f27ca836adc7ab76488b"
+    },
+    {
+      "name": "voith/aquatarder-pwr-swr.svg",
+      "exact": true,
+      "sha": "04ec3d8efa7bb47e9da42ff4b7ef3d9ae5895681"
+    },
+    {
+      "name": "voith/eco-swr.svg",
+      "exact": true,
+      "sha": "c7d360ab683f8fa48d9bbb4e2b3bda738a74378a"
+    },
+    {
+      "name": "voith/viab-functional.svg",
+      "exact": true,
+      "sha": "fe0306321ee135f3e764b6e38735e5669778c05a"
+    }
+  ],
+  "rights": "Original functional SVGs; no embedded OEM images; watermark not ACL. Publication HOLD."
+}
