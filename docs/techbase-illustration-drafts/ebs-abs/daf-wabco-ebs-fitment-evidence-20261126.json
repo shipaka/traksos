@@ -1,0 +1,67 @@
+{
+  "schema": "techbase.source-evidence.v1",
+  "date": "2026-11-26",
+  "status": "source_research_only",
+  "vehicle": {
+    "make": "DAF",
+    "model": null,
+    "generation": null,
+    "vinRange": null
+  },
+  "system": "EBS",
+  "catalogueEvidence": {
+    "manufacturer": "WABCO (ZF)",
+    "url": "https://aftermarket.zf.com/media/master/downloads/wabco_product_catalogue_en.pdf",
+    "locator": "Find 480 103 041 0 in EBS truck modulator table, preceding printed page 125",
+    "validation": "Parsed manufacturer PDF text only; screenshot failed due to file-size limit. Page image and component geometry not verified.",
+    "candidates": [
+      {
+        "article": "4801030410",
+        "configuration": "4x2",
+        "backupValve": true
+      },
+      {
+        "article": "4801030420",
+        "configuration": "6x2",
+        "backupValve": true
+      },
+      {
+        "article": "4801030430",
+        "configuration": "4x2",
+        "backupValve": false
+      }
+    ],
+    "scope": "Manufacturer-level application and configuration only; no exact XF/CF generation, VIN or on-vehicle mounting established."
+  },
+  "oemEvidence": [
+    {
+      "url": "https://rmi.daf.com/en/standard-navigation/retrieve-information-packages/workshop-procedures",
+      "finding": "Workshop procedures require VIN-identified vehicle."
+    },
+    {
+      "url": "https://rmi.daf.com/en/standard-navigation/vehicle-identification/vin",
+      "finding": "Vehicle-specific RMI requires authenticated PACCAR.net access."
+    },
+    {
+      "url": "https://rmi.daf.com/en/standard-navigation/rmi-selection-methodes/select-information-type",
+      "finding": "Access path for specific information types."
+    }
+  ],
+  "missing": [
+    "VIN-specific EBS variant",
+    "vehicle generation and axle configuration",
+    "ECU and modulator physical positions",
+    "wire and pneumatic line routing",
+    "exact application verification",
+    "illustration reproduction rights",
+    "expert review"
+  ],
+  "strictCountDelta": 0,
+  "visualReadyDelta": 0,
+  "sourceChecked": "partial",
+  "expertReviewed": false,
+  "rightsCleared": false,
+  "fitment": "unknown",
+  "deployment": "not_deployed",
+  "next": "Use a licensed DAF RMI VIN-specific procedure and diagram; verify article against VIN before original realistic visual and hotspots. Do not use generic source as mounting evidence."
+}
