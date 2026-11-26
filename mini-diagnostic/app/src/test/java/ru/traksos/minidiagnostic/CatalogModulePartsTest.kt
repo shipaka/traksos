@@ -3,7 +3,7 @@ import org.junit.Assert.*
 import org.junit.Test
 class CatalogModulePartsTest {
     @Test fun exactCatalogNumbers() {
-        assertEquals(131,CatalogModuleParts.count)
+        assertEquals(136,CatalogModuleParts.count)
         assertEquals("Standard",CatalogModuleParts.find("480 102 302 0").single().variant)
         assertEquals("Premium",CatalogModuleParts.find("4801024150").single().variant)
         assertEquals("zf-iebs",ModuleSearch.find("4801021050").single().id)
@@ -14,6 +14,14 @@ class CatalogModulePartsTest {
         assertTrue(CatalogModuleParts.find("820 007 XXX").isEmpty())
         assertTrue(CatalogModuleParts.find("950800304").isEmpty())
         assertTrue(CatalogModuleParts.find("820028001").isEmpty())
+    }
+    @Test fun originalTebsCNumbersDoNotResolveToTebsD() {
+        for(number in listOf("4801020000","4801020010","4801020020","4801020040","4801020050")) {
+            assertEquals("zf-tebs-c",CatalogModuleParts.find(number).single().targetId)
+            assertEquals("zf-tebs-c",ModuleSearch.find(number).single().id)
+        }
+        assertEquals("zf-tebs-c",ModuleSearch.find("480 102 000 0").single().id)
+        assertTrue(CatalogModuleParts.find("4801020099").isEmpty())
     }
     @Test fun g2FamiliesAndSharedTypeAreNotConflated() {
         assertEquals("kb-g20",CatalogModuleParts.find("K019300").single().targetId)
