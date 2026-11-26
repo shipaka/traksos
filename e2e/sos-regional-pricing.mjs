@@ -22,7 +22,43 @@ try{
     try{
       await ctx.addInitScript(t=>localStorage.setItem('traksos.token',t),token);
       const page=await ctx.newPage();
+      await ctx.addInitScript(() => {
+        window.__gpsCalls = 0;
+        navigator.geolocation.getCurrentPosition = (ok, fail) => {
+          window.__gpsCalls++;
+          if (window.__gpsDenied) fail({code:1,message:'denied'});
+          else ok({coords:{latitude:55.75,longitude:37.62,accuracy:25}});
+        };
+      });
+      await page.goto(BASE+'/#/sos');
+      await page.getByRole('button',{name:'Определить GPS устройства'}).waitFor();
+      assert.equal(await page.evaluate(()=>window.__gpsCalls),0,'SOS must not request GPS on mount');
+      await page.evaluate(()=>{window.__gpsDenied=true;});
+      await page.getByRole('button',{name:'Определить GPS устройства'}).click();
+      await page.getByText('GPS недоступен. Укажите адрес машины вручную.').waitFor();
+      await page.evaluate(()=>{window.__gpsDenied=false;});
+      await page.getByRole('button',{name:'Определить GPS устройства'}).click();
+      await page.getByText(/Это не адрес машины и не тарифная зона/).waitFor();
+      assert.equal(await page.evaluate(()=>window.__gpsCalls),2);
+      await page.getByRole('button',{name:'Изменить',exact:true}).click();
+      await page.getByRole('textbox',{name:'Адрес машины'}).fill('Тосно, учебная стоянка');
+      await page.getByRole('button',{name:'OK',exact:true}).click();
+      await page.getByText('Тосно, учебная стоянка',{exact:true}).waitFor();
+      await page.getByRole('button',{name:/Выездной мастер/}).click();
+      await page.getByRole('link',{name:/Электрик/}).click();
+      await page.getByText('Регион местонахождения машины').waitFor();
+      assert.equal(await page.locator('#f-where input.field').first().inputValue(),'Тосно, учебная стоянка');
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('traksos.prefill')),null,'address is one-use');
+      assert.equal(await page.evaluate(()=>window.__gpsCalls),2,'no automatic GPS transfer to truck');
+      await page.evaluate(()=>sessionStorage.setItem('traksos.prefill',JSON.stringify({version:1,userId:'foreign-fixture',address:'FOREIGN TRUCK'})));
       await page.goto(BASE+'/#/new/electric');
+      await page.reload();
+      await page.getByText('Регион местонахождения машины').waitFor();
+      assert.equal(await page.locator('#f-where input.field').first().inputValue(),'','foreign account prefill rejected');
+      await page.evaluate(()=>sessionStorage.setItem('traksos.prefill',JSON.stringify({address:'LEGACY UNOWNED'})));
+      await page.reload();
+      await page.getByText('Регион местонахождения машины').waitFor();
+      assert.equal(await page.locator('#f-where input.field').first().inputValue(),'','legacy unowned prefill rejected');
       await page.getByText('Регион местонахождения машины').waitFor();
       assert.equal(await page.locator('#f-agree').count(),0,
         'no default Petersburg price before region confirmation');
