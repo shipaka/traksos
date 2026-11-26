@@ -13,6 +13,7 @@ object ReferenceSelection {
         "haldex-eb3" to listOf(DisplayReferenceEdition.HALDEX_GEN3_INFO1,DisplayReferenceEdition.HALDEX_GEN3_DIAG),
         "haldex-modal" to listOf(DisplayReferenceEdition.HALDEX_MODAL_MODULAR),
         "haldex-modular" to listOf(DisplayReferenceEdition.HALDEX_MODAL_MODULAR),
+        "sorl-trailer-abs" to listOf(DisplayReferenceEdition.SORL_ABS_TESTER_36302900020),
         "vie-tebs" to listOf(DisplayReferenceEdition.VIE_101),
         "vie-tebs-subsystem" to listOf(DisplayReferenceEdition.VIE_101),
     )

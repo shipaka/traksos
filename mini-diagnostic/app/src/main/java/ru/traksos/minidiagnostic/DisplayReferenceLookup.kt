@@ -9,6 +9,7 @@ enum class DisplayReferenceEdition(val title:String) {
     WABCO_ELEX("WABCO ELEX · отдельный модуль расширения"),
     WABCO_E_HUMBAUR("WABCO TEBS E · пример Humbaur"),
     WABCO_E_SYSTEM("WABCO TEBS E · руководство 8150101363"),
+    SORL_ABS_TESTER_36302900020("SORL ABS прицепа · электронный тестер 36302900020"),
     VIE_101("VIE / ТСР TEBS · V1.01"),
     WABCO_COMPACT_TESTER("WABCO Compact Tester II · три символа"),
     HALDEX_GEN1_2005("Haldex EB+ Gen1 · руководство 02.2005"),
@@ -29,6 +30,7 @@ object DisplayReferenceLookup {
     // Manual display-only lookup: no automatic identification, status inference or bus access.
     fun find(edition:DisplayReferenceEdition,code:String):DisplayLookup? {
         val s=code.trim()
+        if(edition==DisplayReferenceEdition.SORL_ABS_TESTER_36302900020) return SorlTrailerTesterReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_E_OEM_EXACT) return WabcoEExactReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_CAN_ROUTER) return WabcoRouterReference.lookup(s)
         if(edition==DisplayReferenceEdition.WABCO_ELEX) return WabcoElexReference.lookup(s)

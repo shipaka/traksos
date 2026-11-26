@@ -18,6 +18,7 @@ object ReferenceInventory {
         ReferenceCount("Knorr G2.2 pressure bulletin and TD-2077",KnorrG22PressureReference.count),
         ReferenceCount("Haldex EB+4.0 DIAG++ and WABCO Humbaur reference",ModernDisplayExamples.count),
         ReferenceCount("WABCO TEBS E explicit OEM pair",WabcoEExactReference.count),
+        ReferenceCount("SORL trailer ABS electronic tester",SorlTrailerTesterReference.count),
     )
     fun total():Int=counts().sumOf { it.entries }
     // Preliminary secondary-source entries are not included in the established inventory.

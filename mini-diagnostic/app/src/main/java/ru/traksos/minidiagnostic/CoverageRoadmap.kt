@@ -54,7 +54,7 @@ object CoverageRoadmap {
         target("sorl-research","SORL","Trailer TEBS (35682030050 — supplier catalog)",
             "https://sorl.ru/news/tehnicheskiy-seminar--tebs-ebs--ecas-sorl-tyagacha-i-avtobusa-ekaterinburg-19-24-october",ScopeGroup.INTERFACE_REVIEW,ResearchStage.SYSTEM_DOCUMENTED),
         target("sorl-trailer-abs","SORL","Trailer ABS / TABS+RSS (tester 36302900020)",
-            "https://sorl.ru/manuals/rukovodstvo-dlya-diagnosticheskogo-oborudovaniya-sorl.pdf",ScopeGroup.INTERFACE_REVIEW),
+            SorlTrailerTesterReference.SOURCE,ScopeGroup.INTERFACE_REVIEW,ResearchStage.DISPLAY_REFERENCE_PARTIAL),
         target("ekran-ebp","Экран (Беларусь)","АБС-П, ЭБП",
             "https://b24truck.ru/files/catalog/Автокомпоненты/ekran.pdf",ScopeGroup.INTERFACE_REVIEW),
         target("ekran-ebpv","Экран (Беларусь)","ЭБП-В АДЮИ.453633.024",
