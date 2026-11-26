@@ -24,8 +24,9 @@ export class UnilateralClosures {
       join users u on u.id=o.created_by
       join vehicles v on v.owner_id=u.owner_id and v.driver_id=u.id
       where o.id=$1 and o.created_by=$2 and u.owner_id=o.client_id
-        and 'driver'=any(u.roles) and (o.vehicle_id is null or v.id=o.vehicle_id)
-      limit 1 for share of v`, [order.id, order.created_by]);
+        and 'driver'=any(u.roles) and u.status='active' and u.deleted_at is null
+        and (o.vehicle_id is null or v.id=o.vehicle_id)
+      limit 1 for share of u,v`, [order.id, order.created_by]);
     return linked ? [order.client_id,order.created_by] : [order.client_id];
   }
 
@@ -233,6 +234,7 @@ export class UnilateralClosures {
         const linked=await q.one<{ok:number}>(`select 1 as ok from users u join vehicles v
           on v.owner_id=u.owner_id and v.driver_id=u.id
           where u.id=$1 and u.owner_id=$2 and 'driver'=any(u.roles)
+            and u.status='active' and u.deleted_at is null
             and ($3::uuid is null or v.id=$3)
           limit 1 for share of u,v`,[user.id,o.client_id,o.vehicle_id]);
         if(!linked)throw forbidden('Вы больше не закреплены за машиной этой заявки');
