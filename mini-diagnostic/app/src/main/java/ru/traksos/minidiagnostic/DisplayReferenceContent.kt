@@ -34,6 +34,7 @@ fun DisplayReferenceContent(targetId:String?=null) {
     edition?.let { e ->
         if(target!=null && e !in suggested) Text("Выбран другой справочник. Результат не относится автоматически к выбранному модулятору.",color=MaterialTheme.colorScheme.error)
         val placeholder=when(e) {
+            DisplayReferenceEdition.HALDEX_UABS_INFO2 -> "Например Power Low Voltage"
             DisplayReferenceEdition.HALDEX_GEN3_DIAG -> "Например ECU shutdown FET"
             DisplayReferenceEdition.SORL_ABS_TESTER_36302900020 -> "Номер с текстом, например 3.1 Нет Д №1"
             DisplayReferenceEdition.VIE_101 -> "Например 5/5"
