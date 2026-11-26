@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "engine": "D13A",
+  "vehicle_family_candidate": "Volvo FH / FM",
+  "source": {
+    "title": "Volvo Truck Corporation, Design and function D13A, bulletin 200 281 01, 2.06",
+    "url": "https://www.scribd.com/document/600863296/D13A-D-F-200-281-1-8-06",
+    "access": "HTML text on third-party mirror; OEM figures not reproduced",
+    "pages": [
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ]
+  },
+  "assets": [
+    {
+      "path": "d13a-oil-circuit.svg",
+      "pages": [
+        20,
+        22,
+        25
+      ],
+      "scope": "Oil feed through pump/cooler/full-flow filters, main gallery and separate piston cooling circuit. Bypass filtered oil joins piston cooling flow."
+    },
+    {
+      "path": "d13a-fuel-feed.svg",
+      "pages": [
+        26,
+        27,
+        28,
+        29
+      ],
+      "scope": "Tank to EECU cooler, prefilter, feed pump, main filter and cylinder head; return via overflow to suction and vent to tank."
+    },
+    {
+      "path": "d13a-e3-injector-control.svg",
+      "pages": [
+        26,
+        30
+      ],
+      "scope": "Cam/rocker driven E3 injector with two electronically controlled valves; cycle overview."
+    }
+  ],
+  "status": "DRAFT_ASSET_EXPERT_PENDING",
+  "expert_review": "pending",
+  "render_review": "pending",
+  "vin_applicability": "unknown",
+  "verified_count_increment": 0,
+  "limitations": "Functional original SVG diagrams only. No exact scale, pinout, ports, chassis routing, OEM figure replication, repair instruction or all-D13 compatibility. Physical reference and authorized OEM confirmation required."
+}
