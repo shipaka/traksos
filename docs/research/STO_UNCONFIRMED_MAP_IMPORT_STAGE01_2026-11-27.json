@@ -32,7 +32,26 @@
       ],
       "rule": "Authenticated users; one current report per user and physical site, timestamped; one negative report does not hide point, establish closure or change partner status. Repeated independent reports go to moderator; permanent closure only with sufficient evidence. No public voter identity."
     },
-    "notes": "Existing approved iconography preserved; no live availability, warranty, paid booking or partnership implied. Legal audit records retained but no longer a blocking prerequisite. No raw research notes in public UI."
+    "notes": "Existing approved iconography preserved; no live availability, warranty, paid booking or partnership implied. Legal audit records retained but no longer a blocking prerequisite. No raw research notes in public UI.",
+    "direct_call": {
+      "scope": "non_partner_candidate and all unaffiliated directory listings, regardless of legal verification or community feedback",
+      "web": "Native tel: link using validated public business number",
+      "android": "ACTION_DIAL with tel: URI; user confirms call in system dialer; no CALL_PHONE permission required",
+      "partner_flow": "unchanged; existing partner request telephony stays separate",
+      "excluded": [
+        "platform telephony API",
+        "proxy or masked numbers",
+        "call recording",
+        "automatic service request",
+        "commission",
+        "payment",
+        "call tracking beyond an optional anonymized directory click metric, not a call completion"
+      ],
+      "public_label": "Позвонить напрямую",
+      "notice": "Звонок напрямую в организацию. TrakSOS не участвует в оказании услуги.",
+      "missing_number": "Hide or disable call action; never route to platform number.",
+      "validation": "Accept only normalized public business phone +7 followed by 10 digits; reject arbitrary URI/special dial sequences."
+    }
   },
   "metrics": {
     "source_records": 471,
@@ -77,7 +96,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-pavlovsky-posad",
@@ -112,7 +133,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-domodedovo",
@@ -147,7 +170,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-tula",
@@ -182,7 +207,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-tver",
@@ -217,7 +244,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-smolensk",
@@ -252,7 +281,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-ryazan",
@@ -287,7 +318,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-kaluga",
@@ -322,7 +355,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-voronezh",
@@ -357,7 +392,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-belgorod",
@@ -392,7 +429,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-koryazhma",
@@ -427,7 +466,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-velsk",
@@ -462,7 +503,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-vologda",
@@ -497,7 +540,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-armavir",
@@ -532,7 +577,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-kirov",
@@ -567,7 +614,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-saratov",
@@ -602,7 +651,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-dzerzhinsk",
@@ -637,7 +688,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-samara",
@@ -672,7 +725,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-kazan",
@@ -707,7 +762,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-novotroitsk",
@@ -742,7 +799,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-ufa",
@@ -777,7 +836,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-sovetsky",
@@ -812,7 +873,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-berezovsky",
@@ -847,7 +910,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-surgut",
@@ -882,7 +947,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-chelyabinsk",
@@ -917,7 +984,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-krasnoyarsk",
@@ -952,7 +1021,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-norilsk",
@@ -987,7 +1058,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-bratsk",
@@ -1022,7 +1095,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-belovo",
@@ -1057,7 +1132,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-chita",
@@ -1092,7 +1169,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-khabarovsk",
@@ -1127,7 +1206,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-blagoveshchensk",
@@ -1162,7 +1243,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:fngroup-magadan",
@@ -1197,7 +1280,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001008658"
     },
     {
       "id": "32:retruck-nn",
@@ -1232,7 +1317,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312353707"
     },
     {
       "id": "32:retruck-dzerzhinsk",
@@ -1267,7 +1354,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312353707"
     },
     {
       "id": "32:retruck-krasnodar",
@@ -1302,7 +1391,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78612043040"
     },
     {
       "id": "32:retruck-nevinnomyssk",
@@ -1337,7 +1428,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78655494501"
     },
     {
       "id": "32:retruck-balashikha",
@@ -1372,7 +1465,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951059505"
     },
     {
       "id": "32:retruck-stavropol",
@@ -1407,7 +1502,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78652977275"
     },
     {
       "id": "32:retruck-yaroslavl",
@@ -1442,7 +1539,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74852609870"
     },
     {
       "id": "32:retruck-volgograd",
@@ -1477,7 +1576,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78442203035"
     },
     {
       "id": "32:retruck-rostov",
@@ -1512,7 +1613,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79281785455"
     },
     {
       "id": "32:gts-zelenograd",
@@ -1547,7 +1650,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957396201"
     },
     {
       "id": "32:gts-domodedovo",
@@ -1582,7 +1687,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957300711"
     },
     {
       "id": "32:gts-pushkino",
@@ -1617,7 +1724,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74965000100"
     },
     {
       "id": "32:gts-chulkovo",
@@ -1652,7 +1761,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74959880706"
     },
     {
       "id": "32:gts-solnechnogorsk",
@@ -1687,7 +1798,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956428646"
     },
     {
       "id": "32:gts-pervouralsk",
@@ -1722,7 +1835,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73432871551"
     },
     {
       "id": "32:gts-afipsky",
@@ -1757,7 +1872,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78612056070"
     },
     {
       "id": "32:gts-ekad",
@@ -1792,7 +1909,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73432786007"
     },
     {
       "id": "32:gts-aksay",
@@ -1827,7 +1946,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78632017766"
     },
     {
       "id": "32:ztsever-kultury",
@@ -1862,7 +1983,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78127021716"
     },
     {
       "id": "32:vkr-arctic",
@@ -1897,7 +2020,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78182609009"
     },
     {
       "id": "32:zt-arctic",
@@ -1932,7 +2057,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78182457027"
     },
     {
       "id": "32:ztsever-syktyvkar",
@@ -1967,7 +2094,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78212255234"
     },
     {
       "id": "32:ztsever-velsk",
@@ -2002,7 +2131,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78182494794"
     },
     {
       "id": "32:bomond-bratsk",
@@ -2037,7 +2168,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79016678543"
     },
     {
       "id": "32:dalnoboyshik-barnaul",
@@ -2072,7 +2205,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:dalnoboyshik-novosibirsk",
@@ -2107,7 +2242,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:dalnoboyshik-kemerovo",
@@ -2142,7 +2279,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:dalnoboyshik-tomsk",
@@ -2177,7 +2316,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:dalnoboyshik-biysk",
@@ -2212,7 +2353,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:dalnoboyshik-rubtsovsk",
@@ -2247,7 +2390,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:dalnoboyshik-novokuznetsk",
@@ -2282,7 +2427,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852570695"
     },
     {
       "id": "32:sotrans-krasny-bor",
@@ -2318,7 +2465,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002221482"
     },
     {
       "id": "32:sotrans-parnas",
@@ -2354,7 +2503,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002228952"
     },
     {
       "id": "32:sotrans-elabuga",
@@ -2390,7 +2541,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005502455"
     },
     {
       "id": "32:sotrans-shelehov",
@@ -2426,7 +2579,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79213704624"
     },
     {
       "id": "32:sotrans-rechitsy",
@@ -2462,7 +2617,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79216954484"
     },
     {
       "id": "32:mtbr-shushary",
@@ -2498,7 +2655,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78124495252"
     },
     {
       "id": "32:cargo-technic-fedorovskoe",
@@ -2536,7 +2695,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79111196595"
     },
     {
       "id": "32:tservice-fedorovskoe",
@@ -2574,7 +2735,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79215918454"
     },
     {
       "id": "32:furgonservice-sofiyskaya",
@@ -2609,7 +2772,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129294692"
     },
     {
       "id": "32:scania-shushary185",
@@ -2644,7 +2809,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78126128090"
     },
     {
       "id": "32:beltruckcenter",
@@ -2680,7 +2847,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74722202320"
     },
     {
       "id": "32:transit-v-smolensk",
@@ -2716,7 +2885,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74812302740"
     },
     {
       "id": "32:autocenter-volzhsky",
@@ -2752,7 +2923,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78443531515"
     },
     {
       "id": "33:irsa-spb",
@@ -2791,7 +2964,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79319547100"
     },
     {
       "id": "33:axis-bugry",
@@ -2826,7 +3001,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78122073737"
     },
     {
       "id": "33:baw-shushary",
@@ -2861,7 +3038,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78123395499"
     },
     {
       "id": "33:alliance-dolgoprudny",
@@ -2896,7 +3075,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951411414"
     },
     {
       "id": "33:alliance-mytishchi",
@@ -2931,7 +3112,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951411414"
     },
     {
       "id": "33:alliance-balashikha",
@@ -2966,7 +3149,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951411414"
     },
     {
       "id": "33:alliance-mkad32",
@@ -3001,7 +3186,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951411414"
     },
     {
       "id": "33:iteco-belozerki",
@@ -3036,7 +3223,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79063475607"
     },
     {
       "id": "33:iteco-semiоzerskoe",
@@ -3071,7 +3260,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79061207197"
     },
     {
       "id": "33:iteco-uspenka",
@@ -3106,7 +3297,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79612100285"
     },
     {
       "id": "33:iteco-plastunovskaya",
@@ -3141,7 +3334,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79628764059"
     },
     {
       "id": "33:iteco-ob",
@@ -3176,7 +3371,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79039350230"
     },
     {
       "id": "33:iteco-m5",
@@ -3211,7 +3408,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79649565138"
     },
     {
       "id": "33:iteco-alekseevka",
@@ -3246,7 +3445,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79606202127"
     },
     {
       "id": "33:iteco-lipetsk",
@@ -3281,7 +3482,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79038678331"
     },
     {
       "id": "33:retruck-kinel",
@@ -3316,7 +3519,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78462115112"
     },
     {
       "id": "33:retruck-voronezh",
@@ -3351,7 +3556,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74732119690"
     },
     {
       "id": "33:rumos-tver",
@@ -3386,7 +3593,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74822360360"
     },
     {
       "id": "33:ryazanscan-turlatovo",
@@ -3421,7 +3630,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74912500010"
     },
     {
       "id": "33:serpri-varshavskoe",
@@ -3456,7 +3667,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957127132"
     },
     {
       "id": "33:serpri-ganusovo",
@@ -3491,7 +3704,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957125654"
     },
     {
       "id": "33:sinorusservice-moskovsky",
@@ -3526,7 +3741,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74954450090"
     },
     {
       "id": "33:tvtrans-tolyatti",
@@ -3561,7 +3778,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002224550"
     },
     {
       "id": "33:truckservice68",
@@ -3596,7 +3815,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74752735380"
     },
     {
       "id": "33:rba-syktyvkar",
@@ -3631,7 +3852,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78212250800"
     },
     {
       "id": "33:privolzhie-transservice",
@@ -3666,7 +3889,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003330644"
     },
     {
       "id": "33:tyumenscan",
@@ -3701,7 +3926,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007075114"
     },
     {
       "id": "33:grifon-mayakovskogo",
@@ -3736,7 +3963,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78633030077"
     },
     {
       "id": "33:sibscan-berezovka",
@@ -3771,7 +4000,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912287090"
     },
     {
       "id": "33:lidertruck-chelny",
@@ -3806,7 +4037,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78552911700"
     },
     {
       "id": "33:borovichi-truck",
@@ -3841,7 +4074,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79212044700"
     },
     {
       "id": "33:vologdascan",
@@ -3876,7 +4111,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78172519191"
     },
     {
       "id": "33:khabavtopritsep",
@@ -3911,7 +4148,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212418202"
     },
     {
       "id": "33:altaiscan",
@@ -3946,7 +4185,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852555860"
     },
     {
       "id": "33:tverstroymash",
@@ -3981,7 +4222,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74822736600"
     },
     {
       "id": "33:sibtruckscan",
@@ -4016,7 +4259,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833635600"
     },
     {
       "id": "33:tiropaneftrans",
@@ -4051,7 +4296,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78313278650"
     },
     {
       "id": "33:arhscan",
@@ -4086,7 +4333,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78182295555"
     },
     {
       "id": "33:service-trans-vologda",
@@ -4121,7 +4370,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78172539310"
     },
     {
       "id": "33:kazanshintorg",
@@ -4156,7 +4407,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003331700"
     },
     {
       "id": "33:tarna-novosibirsk",
@@ -4191,7 +4444,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833430954"
     },
     {
       "id": "33:baikalavtotruck",
@@ -4226,7 +4481,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003335015"
     },
     {
       "id": "33:grunwald-khimki",
@@ -4261,7 +4518,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007007622"
     },
     {
       "id": "33:detail-novosibirsk",
@@ -4296,7 +4555,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833632473"
     },
     {
       "id": "33:transinvest-dzerzhinsk",
@@ -4331,7 +4592,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312282726"
     },
     {
       "id": "33:tor-service-novgorod",
@@ -4366,7 +4629,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78162948614"
     },
     {
       "id": "33:wlako",
@@ -4401,7 +4666,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78482699820"
     },
     {
       "id": "33:tehnologia-ivanteevka",
@@ -4436,7 +4703,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74952120504"
     },
     {
       "id": "33:unit-chemodanovka",
@@ -4471,7 +4740,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78412280008"
     },
     {
       "id": "33:translogistic-tula",
@@ -4506,7 +4777,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79997755525"
     },
     {
       "id": "33:forsauto-artem",
@@ -4541,7 +4814,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79147038349"
     },
     {
       "id": "33:atlant-shcherbinka",
@@ -4576,7 +4851,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74996535673"
     },
     {
       "id": "33:united-lozhki",
@@ -4611,7 +4888,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74953089999"
     },
     {
       "id": "33:tomskscan",
@@ -4646,7 +4925,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73822905600"
     },
     {
       "id": "33:komitrak",
@@ -4681,7 +4962,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78212400777"
     },
     {
       "id": "33:sto-privolzhie",
@@ -4716,7 +4999,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312809898"
     },
     {
       "id": "33:mantehno",
@@ -4751,7 +5036,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78314669332"
     },
     {
       "id": "33:autoflot-perm",
@@ -4786,7 +5073,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73422501105"
     },
     {
       "id": "33:orenscan",
@@ -4821,7 +5110,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73532505818"
     },
     {
       "id": "33:golfstream-dubki",
@@ -4856,7 +5147,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78452746666"
     },
     {
       "id": "33:remex-surgut",
@@ -4891,7 +5184,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73462550203"
     },
     {
       "id": "33:novex-berezovsky",
@@ -4926,7 +5221,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73432887566"
     },
     {
       "id": "33:continent-auto-berezovsky",
@@ -4961,7 +5258,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73432287007"
     },
     {
       "id": "33:man-poletaevo",
@@ -4996,7 +5295,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73512110444"
     },
     {
       "id": "33:autotrak-chelyabinsk",
@@ -5031,7 +5332,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73517298433"
     },
     {
       "id": "33:proton-magnitogorsk",
@@ -5066,7 +5369,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002343838"
     },
     {
       "id": "33:mahina-krasnoyarsk",
@@ -5101,7 +5406,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912204445"
     },
     {
       "id": "33:mahina-irkutsk",
@@ -5136,7 +5443,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952798338"
     },
     {
       "id": "33:nikalid-irkutsk",
@@ -5171,7 +5480,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952447409"
     },
     {
       "id": "33:autotrak-novokuznetsk",
@@ -5206,7 +5517,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73843705005"
     },
     {
       "id": "33:transit-belovo",
@@ -5241,7 +5554,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73845297413"
     },
     {
       "id": "33:transit-chigiri",
@@ -5276,7 +5591,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74162209820"
     },
     {
       "id": "33:dvscan-chigiri",
@@ -5311,7 +5628,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74162496990"
     },
     {
       "id": "33:dvscan-khabarovsk",
@@ -5346,7 +5665,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212761417"
     },
     {
       "id": "33:buryatscan",
@@ -5381,7 +5702,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005507227"
     },
     {
       "id": "33:chitascan",
@@ -5416,7 +5739,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002228778"
     },
     {
       "id": "33:ktt-moskovsky",
@@ -5451,7 +5776,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74950320020"
     },
     {
       "id": "33:aaa-kuznetsy",
@@ -5486,7 +5813,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957777736"
     },
     {
       "id": "33:biznestruck-rekino",
@@ -5521,7 +5850,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005007514"
     },
     {
       "id": "34:granat-south",
@@ -5557,7 +5888,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78123345016"
     },
     {
       "id": "34:granat-north",
@@ -5593,7 +5926,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78124490589"
     },
     {
       "id": "34:bao-spb",
@@ -5629,7 +5964,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78001016203"
     },
     {
       "id": "34:obukhovo-autocenter",
@@ -5665,7 +6002,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78127030505"
     },
     {
       "id": "34:radar-volkhonskoe",
@@ -5703,7 +6042,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78126359392"
     },
     {
       "id": "34:pobeda-kirovsk",
@@ -5739,7 +6080,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79119217007"
     },
     {
       "id": "34:vertikal-fedorovskoe",
@@ -5775,7 +6118,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78123894545"
     },
     {
       "id": "34:bolshegruz-spb",
@@ -5811,7 +6156,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78126794822"
     },
     {
       "id": "34:pitertruckcenter-spb",
@@ -5847,7 +6194,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78126032333"
     },
     {
       "id": "34:gruzservice-annolovo",
@@ -5883,7 +6232,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129702725"
     },
     {
       "id": "34:gruzavtoservice-mebelny",
@@ -5919,7 +6270,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78124014584"
     },
     {
       "id": "34:tehnobalt-krasnoeselo",
@@ -5955,7 +6308,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78126550906"
     },
     {
       "id": "34:yarkamp-shchedrino",
@@ -5991,7 +6346,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74852205860"
     },
     {
       "id": "34:fpk-chelyabinsk",
@@ -6027,7 +6384,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73517010053"
     },
     {
       "id": "34:avtodom-mirny",
@@ -6063,7 +6422,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73513267326"
     },
     {
       "id": "34:ssk-blagoveshchensk",
@@ -6099,7 +6460,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79145578070"
     },
     {
       "id": "34:avtolider-saratov",
@@ -6135,7 +6498,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79172114590"
     },
     {
       "id": "34:avtomotors-surgut",
@@ -6171,7 +6536,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79224201890"
     },
     {
       "id": "34:avtoresurs-malaya-elanka",
@@ -6207,7 +6574,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952285030"
     },
     {
       "id": "34:asiaspetsmash-ob",
@@ -6243,7 +6612,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79130060555"
     },
     {
       "id": "34:tehvostok-krasnoyarsk",
@@ -6279,7 +6650,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79233392275"
     },
     {
       "id": "34:gruzavto-mb-otradnoe",
@@ -6315,7 +6688,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79507624264"
     },
     {
       "id": "34:deltascan-novonikolaevsky",
@@ -6351,7 +6726,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002221869"
     },
     {
       "id": "34:eastlineseven-salaryevo",
@@ -6387,7 +6764,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957406747"
     },
     {
       "id": "34:komtrans-solontsy",
@@ -6423,7 +6802,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912141102"
     },
     {
       "id": "34:megatrans-lopatino",
@@ -6459,7 +6840,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79370678498"
     },
     {
       "id": "34:mehanika-vologda",
@@ -6495,7 +6878,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78172580072"
     },
     {
       "id": "34:nbr-podolsk",
@@ -6531,7 +6916,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957278767"
     },
     {
       "id": "34:rta-ekaterinburg",
@@ -6567,7 +6954,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002001315"
     },
     {
       "id": "34:rusimportlider-nsk",
@@ -6603,7 +6992,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79059046816"
     },
     {
       "id": "34:sinoway-ekad",
@@ -6639,7 +7030,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003335087"
     },
     {
       "id": "34:spetsavtotehnika-bataysk",
@@ -6675,7 +7068,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002509933"
     },
     {
       "id": "34:sac-magnitogorsk",
@@ -6711,7 +7106,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79193226213"
     },
     {
       "id": "34:specmash-khabarovsk",
@@ -6747,7 +7144,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212254415"
     },
     {
       "id": "34:spectehpostavka-chel",
@@ -6783,7 +7182,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002347478"
     },
     {
       "id": "34:stroytehimport-sargazy",
@@ -6819,7 +7220,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79661110174"
     },
     {
       "id": "34:agat-larina",
@@ -6855,7 +7258,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312000000"
     },
     {
       "id": "34:ttm-gorki",
@@ -6891,7 +7296,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74959567165"
     },
     {
       "id": "34:ural-specmash-surgut",
@@ -6927,7 +7334,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79128191221"
     },
     {
       "id": "34:shacman-chesnokovka",
@@ -6963,7 +7372,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007755329"
     },
     {
       "id": "34:shacman-tyumen",
@@ -6999,7 +7410,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73452901110"
     },
     {
       "id": "34:stc-novorossiysk",
@@ -7035,7 +7448,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79064337541"
     },
     {
       "id": "34:arsenal-kabanovo",
@@ -7071,7 +7486,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74964184804"
     },
     {
       "id": "34:tehavtodrom-ramon",
@@ -7107,7 +7524,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79805555528"
     },
     {
       "id": "34:mk-artem",
@@ -7143,7 +7562,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78047007818"
     },
     {
       "id": "34:velmo-izhevsk",
@@ -7179,7 +7600,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78006004108"
     },
     {
       "id": "34:avtoalliance-mashkovo",
@@ -7215,7 +7638,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007000595"
     },
     {
       "id": "34:interline-nsk",
@@ -7251,7 +7676,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79134693999"
     },
     {
       "id": "34:orion-chita",
@@ -7287,7 +7714,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002343808"
     },
     {
       "id": "34:dokadizel-kemerovo",
@@ -7323,7 +7752,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73842345242"
     },
     {
       "id": "34:kubanmaz-krasnodar",
@@ -7359,7 +7790,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78612002974"
     },
     {
       "id": "34:rba-solontsy",
@@ -7395,7 +7828,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912268888"
     },
     {
       "id": "34:stservice-lobnya",
@@ -7431,7 +7866,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79160287933"
     },
     {
       "id": "34:mazagat-mytishchi",
@@ -7467,7 +7904,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956601020"
     },
     {
       "id": "34:tehinkom-podolsk",
@@ -7503,7 +7942,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74967555227"
     },
     {
       "id": "34:rba-podolsk",
@@ -7539,7 +7980,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74955657805"
     },
     {
       "id": "34:remkapital-kola",
@@ -7575,7 +8018,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79212736351"
     },
     {
       "id": "34:rba-novy-sad",
@@ -7611,7 +8056,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78612018711"
     },
     {
       "id": "34:avtotehkom-graivoron",
@@ -7647,7 +8094,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74953800628"
     },
     {
       "id": "34:luidor-larina",
@@ -7683,7 +8132,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312561111"
     },
     {
       "id": "34:kamtehservice-chelny",
@@ -7719,7 +8170,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78552357755"
     },
     {
       "id": "34:rba-pervouralsk",
@@ -7755,7 +8208,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73433890748"
     },
     {
       "id": "34:navigator-verhnerusskoe",
@@ -7791,7 +8246,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78652516516"
     },
     {
       "id": "34:tverkamaz",
@@ -7827,7 +8284,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74822783530"
     },
     {
       "id": "34:npatp-nizhnevartovsk",
@@ -7863,7 +8322,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73466333250"
     },
     {
       "id": "34:sibpromavto-miass",
@@ -7899,7 +8360,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73519070147"
     },
     {
       "id": "34:karat-grozny",
@@ -7935,7 +8398,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79280004153"
     },
     {
       "id": "35:vinauto-gruzovoy17",
@@ -7970,7 +8435,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79111700220"
     },
     {
       "id": "35:mydiesel-vitebskaya",
@@ -8005,7 +8472,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79657907256"
     },
     {
       "id": "35:gsk-plus-novikova",
@@ -8040,7 +8509,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79992202070"
     },
     {
       "id": "35:rusmobil-tsvetochnaya",
@@ -8075,7 +8546,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78127037676"
     },
     {
       "id": "35:remiko78-shushary",
@@ -8110,7 +8583,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79119992948"
     },
     {
       "id": "35:petroavtotrans-predportovy",
@@ -8145,7 +8620,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79990309463"
     },
     {
       "id": "35:avtoline-shushary",
@@ -8180,7 +8657,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79626998525"
     },
     {
       "id": "35:skummi-tokkari",
@@ -8215,7 +8694,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79213201659"
     },
     {
       "id": "35:eurotrucks-yanino",
@@ -8250,7 +8731,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79523961476"
     },
     {
       "id": "35:vidauto-volkovka",
@@ -8285,7 +8768,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79657530243"
     },
     {
       "id": "35:trustline-pargolovo",
@@ -8320,7 +8805,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78123335560"
     },
     {
       "id": "35:mbs-ekaterininsky",
@@ -8355,7 +8842,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78122209805"
     },
     {
       "id": "35:spbremtrans-avtomobilnaya",
@@ -8390,7 +8879,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79811080003"
     },
     {
       "id": "35:avtofurgon-staropanovo",
@@ -8425,7 +8916,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79052121026"
     },
     {
       "id": "35:scantrans-elektropultovtsev",
@@ -8460,7 +8953,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129701722"
     },
     {
       "id": "35:m10-shushary",
@@ -8495,7 +8990,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79117273729"
     },
     {
       "id": "35:lorrybalt-petroslavyanka",
@@ -8530,7 +9027,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79643432700"
     },
     {
       "id": "35:remair-sofiyskaya",
@@ -8565,7 +9064,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79119307711"
     },
     {
       "id": "35:rvs-shushary",
@@ -8600,7 +9101,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129069491"
     },
     {
       "id": "35:uservice-pushkin",
@@ -8635,7 +9138,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78004441700"
     },
     {
       "id": "35:specbaza2-sofiyskaya",
@@ -8670,7 +9175,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129711711"
     },
     {
       "id": "35:remzonov-shushary",
@@ -8705,7 +9212,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79633004433"
     },
     {
       "id": "35:pirga-kubinskaya",
@@ -8740,7 +9249,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79219166510"
     },
     {
       "id": "35:faw-trackcenter-putevoy",
@@ -8776,7 +9287,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956613040"
     },
     {
       "id": "35:faw-trackcenter-pavlovskoe",
@@ -8812,7 +9325,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956613040"
     },
     {
       "id": "35:faw-trackcenter-krasnodarskaya",
@@ -8848,7 +9363,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956613040"
     },
     {
       "id": "35:faw-trackcenter-shushary",
@@ -8884,7 +9401,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956613040"
     },
     {
       "id": "35:faw-nsk-dunaevskogo",
@@ -8919,7 +9438,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833638670"
     },
     {
       "id": "35:faw-penza-druzhby",
@@ -8954,7 +9475,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78412205564"
     },
     {
       "id": "35:faw-ramon-zone2",
@@ -8989,7 +9512,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74732334827"
     },
     {
       "id": "35:primtrak-artem",
@@ -9024,7 +9549,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74232790297"
     },
     {
       "id": "35:ivsib-druzhino",
@@ -9059,7 +9586,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73812777700"
     },
     {
       "id": "35:sto-krasny-sulin-kolhoznaya",
@@ -9094,7 +9623,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79198770613"
     },
     {
       "id": "35:sto-krasny-sulin-magnitogorskaya",
@@ -9129,7 +9660,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79094114181"
     },
     {
       "id": "35:truckcenter-lipetsk",
@@ -9164,7 +9697,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79103578607"
     },
     {
       "id": "35:motormaster-kazan",
@@ -9199,7 +9734,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79872956557"
     },
     {
       "id": "35:promstroyservice-nsk",
@@ -9234,7 +9771,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833092222"
     },
     {
       "id": "35:saratovtruck-storozhevka",
@@ -9269,7 +9808,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78452323333"
     },
     {
       "id": "35:kreiseravto-ramon",
@@ -9304,7 +9845,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79103459091"
     },
     {
       "id": "35:alfacenter-nn",
@@ -9339,7 +9882,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79524763318"
     },
     {
       "id": "35:skcpt-pyatigorsk",
@@ -9374,7 +9919,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78652692902"
     },
     {
       "id": "35:vologdascan-kirov-avtotransportny",
@@ -9409,7 +9956,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005114141"
     },
     {
       "id": "35:tsc-avtosila-kemerovo",
@@ -9444,7 +9993,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73842451500"
     },
     {
       "id": "35:rba-molzhaninovo",
@@ -9479,7 +10030,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-magistralnaya",
@@ -9514,7 +10067,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-entuziastov",
@@ -9549,7 +10104,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-vyborgskaya",
@@ -9584,7 +10141,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-dmitrovskoe100",
@@ -9619,7 +10178,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-samara-bereza",
@@ -9654,7 +10215,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-ufa-centralnaya",
@@ -9689,7 +10252,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:rba-chel-troitsky",
@@ -9724,7 +10289,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005118505"
     },
     {
       "id": "35:tomsktruckcenter",
@@ -9759,7 +10326,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73822903903"
     },
     {
       "id": "35:mtbr-simferopolskoe",
@@ -9794,7 +10363,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74959692514"
     },
     {
       "id": "35:klevertruck-chelny",
@@ -9829,7 +10400,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005557007"
     },
     {
       "id": "35:truckrelax-kemerovo",
@@ -9864,7 +10437,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73842447788"
     },
     {
       "id": "35:avtomagistral-chel",
@@ -9899,7 +10474,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003331727"
     },
     {
       "id": "35:yurto-truck-krasnodar",
@@ -9934,7 +10511,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78612559376"
     },
     {
       "id": "35:avtomagistral-miass",
@@ -9969,7 +10548,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003331727"
     },
     {
       "id": "35:scan-southeast-chernomorsky",
@@ -10004,7 +10585,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78616667710"
     },
     {
       "id": "35:scan-southeast-aksay",
@@ -10039,7 +10622,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78633035456"
     },
     {
       "id": "35:firstkilometer-druzhino",
@@ -10074,7 +10659,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73812356453"
     },
     {
       "id": "35:gustechncenter",
@@ -10109,7 +10696,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79620898197"
     },
     {
       "id": "35:truckpro-teplichny",
@@ -10144,7 +10733,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912880505"
     },
     {
       "id": "35:navlya-truck-bryansk",
@@ -10179,7 +10770,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74832405406"
     },
     {
       "id": "35:specservice-khabarovsk",
@@ -10214,7 +10807,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212408365"
     },
     {
       "id": "35:autocomfort-kirov",
@@ -10249,7 +10844,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79229910252"
     },
     {
       "id": "35:majortruck-pavlovskaya",
@@ -10284,7 +10881,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74991165432"
     },
     {
       "id": "35:gruztehnika-pskov",
@@ -10319,7 +10918,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78112751244"
     },
     {
       "id": "35:tambovscan-kriusha",
@@ -10354,7 +10955,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79106505050"
     },
     {
       "id": "35:barlaks-nsk",
@@ -10389,7 +10992,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833104041"
     },
     {
       "id": "35:regionaltehnika-ukhta",
@@ -10424,7 +11029,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78216741543"
     },
     {
       "id": "35:autoresurs-kursk",
@@ -10459,7 +11066,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74712221215"
     },
     {
       "id": "35:spectehservice-mesker",
@@ -10494,7 +11103,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79015699999"
     },
     {
       "id": "35:autologistika-pikino",
@@ -10529,7 +11140,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957304487"
     },
     {
       "id": "35:stroykomplekt-istok",
@@ -10564,7 +11177,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005001214"
     },
     {
       "id": "35:stroykomplekt-tyumen",
@@ -10599,7 +11214,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005001215"
     },
     {
       "id": "35:stroykomplekt-surgut",
@@ -10634,7 +11251,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005001216"
     },
     {
       "id": "35:stroykomplekt-urengoy",
@@ -10669,7 +11288,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005001217"
     },
     {
       "id": "35:stroykomplekt-chel",
@@ -10704,7 +11325,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005001218"
     },
     {
       "id": "35:vologdascan-cherepovets",
@@ -10739,7 +11362,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005114141"
     },
     {
       "id": "35:vologdascan-petrozavodsk",
@@ -10774,7 +11399,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005114141"
     },
     {
       "id": "35:vologdascan-kotlas",
@@ -10809,7 +11436,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005114141"
     },
     {
       "id": "35:tulascan",
@@ -10844,7 +11473,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74872711211"
     },
     {
       "id": "35:simbirsktruck",
@@ -10879,7 +11510,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78422686262"
     },
     {
       "id": "35:bolshegruz-kotelniki",
@@ -10914,7 +11547,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956402416"
     },
     {
       "id": "35:euroclimate-mayakovskogo",
@@ -10949,7 +11584,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78004442042"
     },
     {
       "id": "36:leon-kt-vitebsky",
@@ -10985,7 +11622,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79632424163"
     },
     {
       "id": "36:profi-truck-sertolovo",
@@ -11020,7 +11659,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79315760014"
     },
     {
       "id": "36:poehali-lesnoe",
@@ -11055,7 +11696,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79112999754"
     },
     {
       "id": "36:geometria-parnas",
@@ -11090,7 +11733,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78126432870"
     },
     {
       "id": "36:rai-vsevolozhsk",
@@ -11125,7 +11770,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78127770709"
     },
     {
       "id": "36:rai-sertolovo",
@@ -11160,7 +11807,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78123355475"
     },
     {
       "id": "36:dc-sever-arkhangelsk",
@@ -11195,7 +11844,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007750888"
     },
     {
       "id": "36:transavtokomplekt-belgorod",
@@ -11230,7 +11881,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005056521"
     },
     {
       "id": "36:fredservice-vologda",
@@ -11265,7 +11918,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005505464"
     },
     {
       "id": "36:briglogistik-volgograd",
@@ -11300,7 +11955,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79053978889"
     },
     {
       "id": "36:plaza-izhevsk",
@@ -11335,7 +11992,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73412321000"
     },
     {
       "id": "36:novoscan-iskitim",
@@ -11370,7 +12029,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73834392050"
     },
     {
       "id": "36:dc-stolitsa-mkad85",
@@ -11405,7 +12066,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002349141"
     },
     {
       "id": "36:sp-start-chelny",
@@ -11440,7 +12103,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002225990"
     },
     {
       "id": "36:hropal-nevinnomyssk",
@@ -11475,7 +12140,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79188895393"
     },
     {
       "id": "36:autosistema-nestyukovo",
@@ -11510,7 +12177,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73422147010"
     },
     {
       "id": "36:dc-povolzhye-perm",
@@ -11545,7 +12214,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007750888"
     },
     {
       "id": "36:arsenal-penza",
@@ -11580,7 +12251,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78412509681"
     },
     {
       "id": "36:transservice-topolevo",
@@ -11615,7 +12288,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212529268"
     },
     {
       "id": "36:hropal-nadezhda",
@@ -11650,7 +12325,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78652298282"
     },
     {
       "id": "36:dc-samara-mira",
@@ -11685,7 +12362,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007750888"
     },
     {
       "id": "36:dc-ufa-dema",
@@ -11720,7 +12399,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007750888"
     },
     {
       "id": "36:git-service-ulyanovsk",
@@ -11755,7 +12436,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78422240888"
     },
     {
       "id": "36:dc-yar-aviatorov",
@@ -11790,7 +12473,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007750888"
     },
     {
       "id": "36:dayun-balakovo",
@@ -11825,7 +12510,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79271444427"
     },
     {
       "id": "36:rts-ekb",
@@ -11860,7 +12547,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73432168673"
     },
     {
       "id": "36:tselaya-fura-mamony",
@@ -11895,7 +12584,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73812913301"
     },
     {
       "id": "36:gazmarket-kemerovo",
@@ -11930,7 +12621,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73842670520"
     },
     {
       "id": "36:metan-garant-kazinka",
@@ -11965,7 +12658,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79191608899"
     },
     {
       "id": "36:tselaya-fura-omsk",
@@ -12000,7 +12695,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73812913301"
     },
     {
       "id": "36:tselaya-fura-troitskoe",
@@ -12035,7 +12732,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73812913301"
     },
     {
       "id": "36:sindikat-tomsk",
@@ -12070,7 +12769,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73822331911"
     },
     {
       "id": "36:tc-progress-chel",
@@ -12105,7 +12806,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79026099933"
     },
     {
       "id": "36:dv-avtocenter-vladivostok",
@@ -12141,7 +12844,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74232464144"
     },
     {
       "id": "36:ttm-ryazan-197",
@@ -12177,7 +12882,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74912241051"
     },
     {
       "id": "36:alena-arena-rassvet",
@@ -12213,7 +12920,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78632103332"
     },
     {
       "id": "36:hit-motors-perm",
@@ -12249,7 +12958,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73422945744"
     },
     {
       "id": "36:comtranscenter-nn",
@@ -12285,7 +12996,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78314230707"
     },
     {
       "id": "36:ttm-bryansk",
@@ -12321,7 +13034,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74832445064"
     },
     {
       "id": "36:vologdatrakservice",
@@ -12357,7 +13072,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002505351"
     },
     {
       "id": "36:siberian-transport-house",
@@ -12393,7 +13110,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833090808"
     },
     {
       "id": "36:sias-bulatnikovo",
@@ -12428,7 +13147,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007754071"
     },
     {
       "id": "36:gas36-dzerzhinsk3v",
@@ -12463,7 +13184,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78313350641"
     },
     {
       "id": "36:gas36-dzerzhinsk51a",
@@ -12498,7 +13221,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78313350641"
     },
     {
       "id": "36:gas36-ramon",
@@ -12533,7 +13258,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002220933"
     },
     {
       "id": "36:voronezh-truck-service",
@@ -12568,7 +13295,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79805345263"
     },
     {
       "id": "36:mbv-vologda-service",
@@ -12603,7 +13332,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78172700008"
     },
     {
       "id": "36:trucktransservice-nn",
@@ -12638,7 +13369,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312748585"
     },
     {
       "id": "36:tachographtruckservice-volgograd",
@@ -12673,7 +13406,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78004447134"
     },
     {
       "id": "36:ttm-volgograd",
@@ -12709,7 +13444,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78442613615"
     },
     {
       "id": "36:service-avto-trucks-aksay",
@@ -12744,7 +13481,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79045051010"
     },
     {
       "id": "36:arena-rostov-dovatora",
@@ -12779,7 +13518,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78632103332"
     },
     {
       "id": "36:uraltransclimate-chel",
@@ -12815,7 +13556,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002006447"
     },
     {
       "id": "36:baikalit-vdovina",
@@ -12850,7 +13593,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952718609"
     },
     {
       "id": "36:komavtobaikal-mamony",
@@ -12885,7 +13630,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952500656"
     },
     {
       "id": "36:trial-m-solontsy",
@@ -12920,7 +13667,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912424269"
     },
     {
       "id": "36:tomavto-kuzovlevsky",
@@ -12955,7 +13704,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73822586242"
     },
     {
       "id": "36:truckmechanika-nadezhda",
@@ -12990,7 +13741,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002222157"
     },
     {
       "id": "36:basdv-vladivostok",
@@ -13025,7 +13778,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74232688040"
     },
     {
       "id": "36:basdv-khabarovsk",
@@ -13060,7 +13815,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212402949"
     },
     {
       "id": "37:lat-melnichnaya",
@@ -13095,7 +13852,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78124269522"
     },
     {
       "id": "37:ask-yablonovka",
@@ -13130,7 +13889,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79219394460"
     },
     {
       "id": "37:orion-shushary2b",
@@ -13165,7 +13926,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129850975"
     },
     {
       "id": "37:green-truck-lyubotinsky",
@@ -13200,7 +13963,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79046020882"
     },
     {
       "id": "37:dafspb-moskovskoe160",
@@ -13235,7 +14000,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78129535939"
     },
     {
       "id": "37:cpt-shushary",
@@ -13270,7 +14037,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78124164084"
     },
     {
       "id": "37:avtmotors-chernayagryaz",
@@ -13305,7 +14074,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74999409047"
     },
     {
       "id": "37:veles-suponevo",
@@ -13340,7 +14111,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74832770330"
     },
     {
       "id": "37:grand-profi-vladimir",
@@ -13375,7 +14148,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74922771310"
     },
     {
       "id": "37:komavto-rzhavka",
@@ -13410,7 +14185,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79681999356"
     },
     {
       "id": "37:komavto-samara",
@@ -13445,7 +14222,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78462192939"
     },
     {
       "id": "37:delfo-kazan",
@@ -13480,7 +14259,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78432393685"
     },
     {
       "id": "37:s-avto-zorinsky",
@@ -13515,7 +14296,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78452777000"
     },
     {
       "id": "37:privolzhie-penza",
@@ -13550,7 +14333,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78312808514"
     },
     {
       "id": "37:motoravto-kirov",
@@ -13585,7 +14370,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78332520001"
     },
     {
       "id": "37:motoravto-lipetsk",
@@ -13620,7 +14407,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74742260000"
     },
     {
       "id": "37:avtograd-kaliningrad",
@@ -13655,7 +14444,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74012565060"
     },
     {
       "id": "37:vostoktransavto-shevtsovoy",
@@ -13690,7 +14481,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73832001070"
     },
     {
       "id": "37:bigmachine-barnaul",
@@ -13725,7 +14518,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007001509"
     },
     {
       "id": "37:variator-chel",
@@ -13760,7 +14555,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73517000229"
     },
     {
       "id": "37:avtostolitsa-ural",
@@ -13795,7 +14592,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73433806666"
     },
     {
       "id": "37:euroasia-tyumen",
@@ -13830,7 +14629,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73452221222"
     },
     {
       "id": "37:molniya-chel",
@@ -13865,7 +14666,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73512180111"
     },
     {
       "id": "37:transit-don",
@@ -13900,7 +14703,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79286210005"
     },
     {
       "id": "37:avt-kuban",
@@ -13935,7 +14740,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79162478780"
     },
     {
       "id": "37:ptk-vladivostok",
@@ -13970,7 +14777,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79842019333"
     },
     {
       "id": "37:service-blag-theatralnaya181",
@@ -14005,7 +14814,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74162496088"
     },
     {
       "id": "37:dlts-khabarovsk",
@@ -14040,7 +14851,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74212479901"
     },
     {
       "id": "37:avtocenter-nn-81",
@@ -14075,7 +14888,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78313397442"
     },
     {
       "id": "37:doka-voronezh",
@@ -14110,7 +14925,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79003086703"
     },
     {
       "id": "37:inrosavto-samara",
@@ -14145,7 +14962,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78462140057"
     },
     {
       "id": "37:radar-lada-ivanovo",
@@ -14180,7 +14999,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74932591535"
     },
     {
       "id": "37:sofit-nn",
@@ -14215,7 +15036,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79534154066"
     },
     {
       "id": "37:tehnologiya-perm",
@@ -14250,7 +15073,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73422048883"
     },
     {
       "id": "37:hropal-stavropol",
@@ -14285,7 +15110,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79383025096"
     },
     {
       "id": "37:yuzhuralauto-ufa",
@@ -14320,7 +15147,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79674561779"
     },
     {
       "id": "37:automash-mb-lubercy",
@@ -14355,7 +15184,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74957870070"
     },
     {
       "id": "37:jac-center-krasnoyarsk",
@@ -14390,7 +15221,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912190807"
     },
     {
       "id": "37:aaa-petushkova",
@@ -14425,7 +15258,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951524545"
     },
     {
       "id": "37:surgutdrive",
@@ -14460,7 +15295,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73462511465"
     },
     {
       "id": "37:sumotori-mamony",
@@ -14495,7 +15332,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952799671"
     },
     {
       "id": "37:standard-truck-lyubertsy",
@@ -14530,7 +15369,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74997537553"
     },
     {
       "id": "37:malkom-tambov",
@@ -14565,7 +15406,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74752432030"
     },
     {
       "id": "37:cargoservice-volgograd",
@@ -14600,7 +15443,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79297876818"
     },
     {
       "id": "37:tds-bataysk",
@@ -14635,7 +15480,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78633226500"
     },
     {
       "id": "37:avtopoezd-pribrezhnoe",
@@ -14670,7 +15517,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79062111313"
     },
     {
       "id": "37:overkon-novozhivotinnoe",
@@ -14705,7 +15554,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74733004747"
     },
     {
       "id": "37:neo-truck-lubercy",
@@ -14740,7 +15591,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951500110"
     },
     {
       "id": "37:nevi-balobanovo",
@@ -14775,7 +15628,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79251509882"
     },
     {
       "id": "37:klever-novonikolaevsky",
@@ -14810,7 +15665,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79274025344"
     },
     {
       "id": "37:comtrans-vtorchermeta",
@@ -14845,7 +15702,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007071664"
     },
     {
       "id": "37:meridian-krasnokamsk",
@@ -14880,7 +15739,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73422543440"
     },
     {
       "id": "37:master-truck-igumenka",
@@ -14915,7 +15776,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73512111180"
     },
     {
       "id": "37:tm-service-nn",
@@ -14950,7 +15813,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79058680474"
     },
     {
       "id": "37:vaer-dobrun",
@@ -14985,7 +15850,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005553060"
     },
     {
       "id": "37:vaer-obraztsovo",
@@ -15020,7 +15887,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005553060"
     },
     {
       "id": "37:komtruck-kuzmino",
@@ -15055,7 +15924,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74951362415"
     },
     {
       "id": "37:mbtruck-ryazan",
@@ -15090,7 +15961,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74912703300"
     },
     {
       "id": "37:skanezh-kursk",
@@ -15125,7 +15998,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79606939007"
     },
     {
       "id": "37:skanezh-voronezh",
@@ -15160,7 +16035,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74732070077"
     },
     {
       "id": "37:tehnologiya-m8",
@@ -15195,7 +16072,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78004441309"
     },
     {
       "id": "37:kamtrans-pavlovsk",
@@ -15230,7 +16109,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79803410044"
     },
     {
       "id": "37:truckplatform-lubercy",
@@ -15265,7 +16146,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79037223762"
     },
     {
       "id": "37:flagman-kazinka",
@@ -15300,7 +16183,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79038643844"
     },
     {
       "id": "37:yartruck-prom12",
@@ -15335,7 +16220,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79106630303"
     },
     {
       "id": "37:volgogradscan-volzhsky",
@@ -15370,7 +16257,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79275362922"
     },
     {
       "id": "37:svservice-krasnodar",
@@ -15405,7 +16294,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79385356368"
     },
     {
       "id": "37:alfascan-ufa",
@@ -15440,7 +16331,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78008053408"
     },
     {
       "id": "37:baltrans-saratov",
@@ -15475,7 +16368,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78452799993"
     },
     {
       "id": "37:zhiguliskan",
@@ -15510,7 +16405,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78482714163"
     },
     {
       "id": "37:normoteh-podberezy",
@@ -15545,7 +16442,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78332227790"
     },
     {
       "id": "37:original-service-ulyanovsk",
@@ -15580,7 +16479,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79082120912"
     },
     {
       "id": "37:penzatruck-austrina",
@@ -15615,7 +16516,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78412450515"
     },
     {
       "id": "37:samarascan-mehzavod",
@@ -15650,7 +16553,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78462772163"
     },
     {
       "id": "37:svservice-samara",
@@ -15685,7 +16590,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79277723878"
     },
     {
       "id": "37:ekaterinburgscan",
@@ -15720,7 +16627,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73433824196"
     },
     {
       "id": "37:ets-trade-tyumen",
@@ -15755,7 +16664,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73452393909"
     },
     {
       "id": "37:kurganscan-vvedenskoe",
@@ -15790,7 +16701,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79824242888"
     },
     {
       "id": "37:svservice-chel",
@@ -15825,7 +16738,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79376594662"
     },
     {
       "id": "37:autotrade-barnaul",
@@ -15860,7 +16775,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78007005756"
     },
     {
       "id": "37:dsc-barnaul",
@@ -15895,7 +16812,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73852995050"
     },
     {
       "id": "37:importspecteh-krasnoyarsk",
@@ -15930,7 +16849,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79135326506"
     },
     {
       "id": "37:rtk-novoaltaysk",
@@ -15965,7 +16886,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79617228833"
     },
     {
       "id": "37:sayanscan-chernogorsk",
@@ -16000,7 +16923,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79130587707"
     },
     {
       "id": "37:svservice-krasnoyarsk",
@@ -16035,7 +16960,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79231079718"
     },
     {
       "id": "37:svservice-nsk",
@@ -16070,7 +16997,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78005339227"
     },
     {
       "id": "37:traksibservice-krasnoyarsk",
@@ -16105,7 +17034,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73912851061"
     },
     {
       "id": "37:unittruck-irkutsk",
@@ -16140,7 +17071,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73952640333"
     },
     {
       "id": "37:alania-gizel",
@@ -16175,7 +17108,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79397015541"
     },
     {
       "id": "37:kavminscan-georgievsk",
@@ -16210,7 +17145,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78003021373"
     },
     {
       "id": "37:vts-velsk",
@@ -16245,7 +17182,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78002505441"
     },
     {
       "id": "37:tpas-vologda-rubtsovo",
@@ -16280,7 +17219,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79535070180"
     },
     {
       "id": "37:gruzovoy-uzlovaya",
@@ -16315,7 +17256,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79066308277"
     },
     {
       "id": "37:hts-shestovo",
@@ -16350,7 +17293,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+74956443788"
     },
     {
       "id": "37:vostruck-voskresensk",
@@ -16385,7 +17330,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+79651855518"
     },
     {
       "id": "37:btc-ekb",
@@ -16420,7 +17367,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73432478438"
     },
     {
       "id": "37:btc-samara",
@@ -16455,7 +17404,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+78462115834"
     },
     {
       "id": "37:btc-nsk",
@@ -16490,7 +17441,9 @@
         "working": 0,
         "not_working": 0,
         "last_report_at": null
-      }
+      },
+      "call_mode": "direct_dial",
+      "call_uri": "tel:+73833884971"
     }
   ],
   "held": [
