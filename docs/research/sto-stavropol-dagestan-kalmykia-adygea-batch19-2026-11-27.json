@@ -1,0 +1,347 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach. Directory-only records require stronger evidence.",
+  "records": [
+    {
+      "id": "aks-stavropol",
+      "name": "Автокрансервис",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, ул. 1-я Промышленная, 30",
+      "country": "Россия",
+      "phone": "+7 8652 56-15-44",
+      "email": "aks-stv@bk.ru",
+      "hours": "пн–пт 07:30–16:30",
+      "services": [
+        "тягачи",
+        "прицепы",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "сварка",
+        "выездной ремонт",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://aks-stv.ru/"
+      ],
+      "notes": "Доп. +7 8652 56-03-66, +7 961 477-66-44.",
+      "operator_group": "aks-stv",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sarmat-stavropol",
+      "name": "Сармат",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, ул. Коломийцева, 6Б",
+      "country": "Россия",
+      "phone": "+7 968 266-88-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ДВС",
+        "диагностика",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://sarmat-sto.ru/"
+      ],
+      "notes": "Доп. +7 968 266-88-77. Сайт указывает будни 09:00–18:00 в шапке, круглосуточно в описании; уточнить.",
+      "operator_group": "sarmat-sto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "cabover-donskoe",
+      "name": "Кабовер — сервис",
+      "region": "Ставропольский край",
+      "address": "с. Донское, ул. Придорожная, 5",
+      "country": "Россия",
+      "phone": "8 800 250-29-75",
+      "email": "info@cabover.ru",
+      "hours": "пн–пт 08:00–18:00, сб 08:00–14:00",
+      "services": [
+        "тягачи Volvo Scania Foton MAN",
+        "прицепы Schmitz Kögel",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.cabover.ru/contacts.html"
+      ],
+      "notes": "Общий номер офиса, запросить прямую приемку СТО. Номер мойки не считать номером ремонтного цеха.",
+      "operator_group": "cabover",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-minvody",
+      "name": "FNGROUP — Минеральные Воды",
+      "region": "Ставропольский край",
+      "address": "Минеральные Воды, Советская ул., 18",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": "office@fngroup.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "сервис грузовой техники"
+      ],
+      "source_urls": [
+        "https://fngroup.ru/contacts/stavropolskiy-kray/",
+        "https://fngroup.ru/contacts/"
+      ],
+      "notes": "Общая линия сети; уточнить работы конкретного филиала.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transcom-takhtamukay",
+      "name": "Транском-Сервис",
+      "region": "Республика Адыгея",
+      "address": "аул Тахтамукай, ул. Совмена, 77/5",
+      "country": "Россия",
+      "phone": "+7 988 367-69-20",
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "грузовики",
+        "ТО",
+        "капремонт"
+      ],
+      "source_urls": [
+        "https://transcom-srv.ru/kontakty/index.html",
+        "https://transcom-srv.ru/"
+      ],
+      "notes": "Номер записи на ремонт; адрес на странице назван пунктом техосмотра, расположение ремзоны уточнить.",
+      "operator_group": "transcom-srv",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "a146-takhtamukay",
+      "name": "Грузовое СТО А-146",
+      "region": "Республика Адыгея",
+      "address": "Тахтамукайский район, А-146, 27-й км, 38",
+      "country": "Россия",
+      "phone": "+7 999 080-80-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "редукторы",
+        "пневматика",
+        "электрика",
+        "сварка",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://xn----146-5velhts1fbcvvqj.xn--p1ai/"
+      ],
+      "notes": "Доп. +7 999 090-90-90, оба опубликованы на сайте, фактическая доступность не подтверждена.",
+      "operator_group": "a146",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-adygea",
+      "name": "FNGROUP — Адыгея",
+      "region": "Республика Адыгея",
+      "address": "Теучежский район, Южный объезд Краснодара, км 1+400 м справа, западнее аула Тугургой",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": "office@fngroup.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "шиномонтаж",
+        "отопители",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://fngroup.ru/contacts/respublika-adygeya/"
+      ],
+      "notes": "Общая линия сети, отдельная площадка.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-makhachkala",
+      "name": "FNGROUP — Махачкала",
+      "region": "Республика Дагестан",
+      "address": "Махачкала, Юго-восточная промзона, ул. Производственная, 67, территория ООО Аквамаг",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": "office@fngroup.ru",
+      "hours": "пн–пт 08:00–18:00",
+      "services": [
+        "сервис грузовой техники"
+      ],
+      "source_urls": [
+        "https://fngroup.ru/contacts/makhachkala/",
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общая линия сети, перечень работ филиала уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamaz-workshop-makhachkala",
+      "name": "Автомастерская грузовых автомобилей — Амет-Хана Султана",
+      "region": "Республика Дагестан",
+      "address": "Махачкала, просп. Амет-Хана Султана, 35Б/84",
+      "country": "Россия",
+      "phone": "+7 928 520-01-95",
+      "email": null,
+      "hours": "ежедневно 09:00–17:00 (справочник)",
+      "services": [
+        "КАМАЗ",
+        "грузовая ходовая"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-dagestan/mahachkala-gorodskoj-okrug-mahachkala/card-4174588-avtomasterskaya-po-remontu-gruzovyih-avtomobilej"
+      ],
+      "notes": "Доп. +7 928 543-76-17. Только справочник, без сайта и отзывов; не публиковать без подтверждения. Координаты из справочника.",
+      "operator_group": "workshop-35b84",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 42.899201,
+      "longitude": 47.533362,
+      "coordinate_source": "https://urbanplaces.su/ru_respublika-dagestan/mahachkala-gorodskoj-okrug-mahachkala/card-4174588-avtomasterskaya-po-remontu-gruzovyih-avtomobilej",
+      "publication_ready": false
+    },
+    {
+      "id": "lantsinov-elista",
+      "name": "ИП Ланцинов — грузовой ремонт",
+      "region": "Республика Калмыкия",
+      "address": "Элиста, Северная промышленная зона-2",
+      "country": "Россия",
+      "phone": "+7 922 739-39-29",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (справочник)",
+      "services": [
+        "грузовые автомобили"
+      ],
+      "source_urls": [
+        "https://elista.spravker.ru/avtoservisy-avtotehcentry/ip-lantsinov-iu-v.htm",
+        "https://elista.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Номер опубликован как контакт предприятия. Адрес неполный; собственный сайт не установлен, работу и специализацию уточнить.",
+      "operator_group": "lantsinov-elista",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtotehservis-elista",
+      "name": "АвтоТехСервис",
+      "region": "Республика Калмыкия",
+      "address": "Элиста, ул. В.И. Ленина, 12",
+      "country": "Россия",
+      "phone": "+7 961 547-22-22",
+      "email": null,
+      "hours": "пн–пт 08:00–16:00, сб 08:00–14:00 (справочник)",
+      "services": [
+        "обслуживание грузовиков (по справочнику)"
+      ],
+      "source_urls": [
+        "https://elista.spravker.ru/avtoservisy-avtotehcentry/avtoservis-5.htm",
+        "https://elista.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 961 399-77-88. Только справочник, тяжёлые тягачи и текущий статус уточнить.",
+      "operator_group": "avtotehservis-elista",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    }
+  ]
+}
