@@ -12,7 +12,7 @@ const sections = [
   ['dispatch','Распределение'],['demand','Проблемные заявки'],
   ['support','Обращения'],['registry','Единая база'],['search','Поиск'],['people','Все люди'],
   ['access','Регистрация и доступы'],
-  ['verify','Проверка'],['bases','Рембазы'],['ecu','Стационарные ЭБУ'],['vehicleServices','Страхование и ТО'],
+  ['verify','Проверка'],['bases','Рембазы'],['stoDirectory','Справочник СТО'],['ecu','Стационарные ЭБУ'],['vehicleServices','Страхование и ТО'],
   ['serviceFinance','Счета и выплаты СТО'],['payments','Деньги'],['offers','Оферты'],
   ['announcements','Объявления и комиссии'],['stats','Статистика'],
   ['flagged','Подозрительное'],['diagnostics','Журнал ошибок'],['settings','Настройки'],
@@ -104,6 +104,18 @@ try {
         const search = page.getByRole('searchbox',{name:'Найти заявку по номеру, имени или месту'});
         await search.fill('Тестовый поиск');
         if(await search.inputValue() !== 'Тестовый поиск') throw Error('Dispatcher search cannot be edited');
+      }
+      if(id==='stoDirectory') {
+        const workspace=page.locator('.sto-admin-directory');
+        await workspace.getByRole('button',{name:'Добавить СТО',exact:true}).waitFor();
+        await workspace.locator('.sto-admin-site').first().waitFor();
+        await workspace.getByRole('button',{name:'Добавить СТО',exact:true}).click();
+        await workspace.getByRole('heading',{name:'Новая карточка'}).waitFor();
+        await workspace.getByRole('button',{name:'Отмена',exact:true}).click();
+        await workspace.getByText('Массовое определение координат',{exact:true}).click();
+        await workspace.getByRole('button',{name:'Выгрузить адреса JSON'}).waitFor();
+        await checkLayout('STO directory actions');
+        await page.screenshot({path:'e2e/shots/admin-ux/sto-directory-'+width+'.png',fullPage:true});
       }
       if(id==='ecu') {
         await page.getByText('Проверка стационарных точек ЭБУ',{exact:true}).waitFor();
