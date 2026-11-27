@@ -1,0 +1,530 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted name and address comparison against audit B/C and records 32–49,51–61. Not a full normalized global audit.",
+  "records": [
+    {
+      "id": "b62-signal",
+      "name": "Сигналдортранс",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Трубный проезд, 37",
+      "country": "Россия",
+      "phone": "+7 8552 39-62-37",
+      "additional_phones": [
+        "+7 8552 39-70-84",
+        "+7 8552 53-77-48",
+        "+7 937 577-70-90"
+      ],
+      "email": "info@signaldortrans.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "ремонт автобусов"
+      ],
+      "source_urls": [
+        "https://signaldortrans.ru/page6.html"
+      ],
+      "notes": "Круглосуточный телефон не равен круглосуточному ремонту.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-tst",
+      "name": "ТехСервисТрейлер",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Индустриальный проезд, 31",
+      "country": "Россия",
+      "phone": "+7 8552 53-75-37",
+      "additional_phones": [
+        "+7 8552 53-72-63",
+        "+7 919 681-05-64"
+      ],
+      "email": "tst@kamtent.ru",
+      "hours": "08:00–17:00; перерыв 12:00–13:00; дни не указаны",
+      "services": [
+        "ремонт тентов",
+        "сдвижные крыши",
+        "ворота и борта полуприцепов",
+        "сварка каркасов"
+      ],
+      "source_urls": [
+        "https://xn--80adfjjn8b.xn--p1ai/servisnoe-obsluzhivanie/"
+      ],
+      "notes": "Специализированный ремонт надстроек.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-truckeuro",
+      "name": "ТракЕвроСервис",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт, 23",
+      "country": "Россия",
+      "phone": "+7 8552 47-30-05",
+      "additional_phones": [
+        "+7 900 327-34-30",
+        "+7 927 447-10-41"
+      ],
+      "email": "dgok91@mail.ru",
+      "hours": "Пн–Пт 08:30–17:30; Сб 09:00–14:00",
+      "services": [
+        "ремонт грузовиков",
+        "ДВС, МКПП, ходовая",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-tatarstan/naberezhnyie-chelnyi-gorodskoj-okrug-naberezhnyie-chelnyi/card-1388709-trakevroservis"
+      ],
+      "notes": "В справочнике другая мастерская по тому же адресу; проверить оператора и отдельность боксов.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-rek",
+      "name": "РЭК",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Трубный проезд, 65А",
+      "country": "Россия",
+      "phone": "+7 906 111-40-94",
+      "additional_phones": [
+        "+7 917 253-57-17"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт пневмоподвески",
+        "замена колодок",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://orgzz.ru/naberezhnye_chelny/co/rek/4540192"
+      ],
+      "notes": "Уточнить юридическое название.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-chebtrak",
+      "name": "ЧебТракСервис",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, Лапсарский проезд, 9",
+      "country": "Россия",
+      "phone": "+7 919 658-63-21",
+      "additional_phones": [
+        "+7 962 599-95-67"
+      ],
+      "email": null,
+      "hours": "Пн–Сб 09:00–20:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт двигателей и трансмиссии"
+      ],
+      "source_urls": [
+        "https://cheboksary.spravka.city/company/chebtrakservis"
+      ],
+      "notes": "Номера опубликованы в карточке в ссылках WhatsApp.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-rembaza",
+      "name": "РемБаза",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, Лапсарский проезд, 11/1",
+      "country": "Россия",
+      "phone": "+7 900 333-39-01",
+      "additional_phones": [
+        "+7 902 328-09-08"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–18:00",
+      "services": [
+        "ремонт грузовиков",
+        "кузовные работы",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://totadres.ru/cheboksary/org/rembaza/3704539"
+      ],
+      "notes": "Проверить точный въезд.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-milya",
+      "name": "Миля",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, Лапсарский проезд, 11/2",
+      "country": "Россия",
+      "phone": "+7 962 321-54-54",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 08:00–18:00",
+      "services": [
+        "грузовой ремонт",
+        "ходовая часть"
+      ],
+      "source_urls": [
+        "https://cheboksary.spravka.city/company/milya-59"
+      ],
+      "notes": "Номер указан в ссылке WhatsApp. Соседняя РемБаза имеет другой адрес и номер.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-autodiesel",
+      "name": "Авто-Дизель",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, Монтажный проезд, 6",
+      "country": "Россия",
+      "phone": "+7 8352 22-03-33",
+      "additional_phones": [],
+      "email": "disel5301@mail.ru",
+      "hours": "Пн–Пт 08:00–17:00",
+      "services": [
+        "грузовой ремонт",
+        "топливная аппаратура",
+        "электрика",
+        "ДВС"
+      ],
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Справочник указывает сайт auto-dizel21.ru; актуальность контакта проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-autostart",
+      "name": "Автостарт",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, проезд Машиностроителей, 1Ш",
+      "country": "Россия",
+      "phone": "+7 917 667-99-69",
+      "additional_phones": [],
+      "email": "info@ast121.ru",
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой ремонт",
+        "диагностика",
+        "подвеска"
+      ],
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Профиль конкретных марок уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-autotrak",
+      "name": "Автотраксервис",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, Канашское шоссе, 5, корп. 1",
+      "country": "Россия",
+      "phone": "+7 8352 32-55-01",
+      "additional_phones": [],
+      "email": "ats325501@mail.ru",
+      "hours": "Пн–Пт 08:00–18:00",
+      "services": [
+        "грузовой ремонт",
+        "ДВС",
+        "отопление и кондиционеры",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Размеры и марки обслуживаемой техники уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-grand",
+      "name": "ГрандАвто",
+      "region": "Чувашская Республика",
+      "address": "Чебоксары, ул. Шоршелская, 10/1",
+      "country": "Россия",
+      "phone": "+7 927 854-66-30",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "ремонт грузовиков"
+      ],
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "notes": "Круглосуточность не подтверждена.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b62-m7-808",
+      "name": "Грузовой автосервис — М7, 808-й км",
+      "region": "Республика Татарстан",
+      "address": "Казань, М7, 808-й км, 2",
+      "country": "Россия",
+      "phone": "+7 843 290-93-87",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис (справочник)"
+      ],
+      "source_urls": [
+        "https://www.bizkontakte.com/грузовой-автосервис_12C-8-843-290-93-87"
+      ],
+      "notes": "Точное название оператора, фактический профиль и график уточнить; низкая уверенность.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "КамаТрансНефть",
+      "address": "Набережные Челны, пр. Мусы Джалиля, 5",
+      "phone": "+7 8552 70-77-75",
+      "email": "wktn@mail.ru",
+      "source_urls": [
+        "https://kamatransneft.ru/services/service-center"
+      ],
+      "reason": "Указан общий адрес организации, отдельный ремонтный въезд проверить."
+    },
+    {
+      "name": "АвтоРемЗавод",
+      "address": "Казань, Беломорская, 69А",
+      "source_urls": [
+        "https://arz-kzn.ru/"
+      ],
+      "reason": "Совпадает адрес с Делфо batch37, не считать новым."
+    },
+    {
+      "name": "МСЕРВИС",
+      "address": "Набережные Челны, Мензелинский тракт, 52А, офис 606",
+      "phone": "+7 8552 25-00-45",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-tatarstan/naberezhnyie-chelnyi-gorodskoj-okrug-naberezhnyie-chelnyi/card-1388830-mservis"
+      ],
+      "reason": "Офис, не подтверждена ремонтная площадка."
+    },
+    {
+      "name": "ГТЛ Сервис",
+      "address": "Казань, Тэцевская, 3, корп. 1",
+      "phone": "+7 980 976-76-12",
+      "source_urls": [
+        "https://gtl-servis.clients.site/"
+      ],
+      "reason": "Источник найден, дополнительная проверка совпадений по адресу и телефону еще не выполнена."
+    },
+    {
+      "name": "Вездеход / 37АвтоСервис",
+      "address": "Казань, Тихорецкая, 19",
+      "phone": "+7 919 629-57-03",
+      "email": "a37kazan@yandex.ru",
+      "source_urls": [
+        "https://37avto-service.com/"
+      ],
+      "reason": "Источник найден, дополнительная проверка совпадений по адресу и телефону еще не выполнена."
+    },
+    {
+      "name": "АвтоКом",
+      "address": "Чебоксары, Тепличная, 2, корп. 3",
+      "phone": "+7 8352 36-36-88",
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/cheboksary/"
+      ],
+      "reason": "Уточнить отдельность от Дорисс-Скан, Тепличная 2, batch08."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Спец Транс Ресурс",
+      "batch": 8,
+      "source_urls": [
+        "https://str116.ru/"
+      ]
+    },
+    {
+      "name": "Магистраль",
+      "batch": 8,
+      "source_urls": [
+        "https://magistral-ru.ru/gruzovoj-service",
+        "https://89278464444.ru/services/freight-car-service/"
+      ],
+      "reason": "Совпадает адрес двух брендов; не добавлять отдельную карточку."
+    },
+    {
+      "name": "Дорисс-Скан",
+      "batch": 8,
+      "source_urls": [
+        "https://scan21.ru/"
+      ]
+    },
+    {
+      "name": "Рембат — Набережные Челны",
+      "batch": 8,
+      "source_urls": [
+        "https://rembat24.ru/"
+      ]
+    }
+  ]
+}
