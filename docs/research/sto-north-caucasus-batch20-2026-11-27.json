@@ -1,0 +1,271 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, exact coordinates, source reuse rights, duplicates and admin approval. Directory-only candidates require stronger evidence. No calls or official FNS extracts. No automatic outreach.",
+  "records": [
+    {
+      "id": "truckcentr-vladikavkaz",
+      "name": "Truck Центр",
+      "region": "Республика Северная Осетия — Алания",
+      "address": "Владикавказ, Гизельское шоссе, 50",
+      "country": "Россия",
+      "phone": "+7 928 072-90-09",
+      "email": "truckcentr@inbox.ru",
+      "hours": "ежедневно, часы не указаны",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ABS/EBS",
+        "оси",
+        "пневматика",
+        "ДВС",
+        "КПП",
+        "отопители"
+      ],
+      "source_urls": [
+        "https://truck-centr.ru/"
+      ],
+      "notes": "Доп. +7 8672 62-05-55. Другие адреса сети не включены: ремонтные посты не подтверждены.",
+      "operator_group": "truckcentr-vladikavkaz",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamaz-centre-grozny",
+      "name": "КАМАЗ Центр",
+      "region": "Чеченская Республика",
+      "address": "Грозный, ул. Екатерины Батаевой, 35",
+      "country": "Россия",
+      "phone": "+7 938 993-36-36",
+      "email": "kamazchr@yandex.ru",
+      "hours": null,
+      "services": [
+        "КАМАЗ",
+        "грузовой сервис"
+      ],
+      "source_urls": [
+        "https://kamaz-chr.ru/",
+        "https://tzacom.ru/guarantee/service-centers/dealers-of-jsc-kamaz/"
+      ],
+      "notes": "Сайт и каталог ТЗА совпадают по адресу и email. Доп. телефоны каталога требуют уточнения. Номер приемки и текущий дилерский статус не проверены.",
+      "operator_group": "kamaz-centre-grozny",
+      "evidence": "first_party_and_manufacturer",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transagro-nalchik",
+      "name": "Трансагросервис",
+      "region": "Кабардино-Балкарская Республика",
+      "address": "Нальчик, 3-й Промышленный проезд, 12",
+      "country": "Россия",
+      "phone": "+7 8662 96-20-12",
+      "email": null,
+      "hours": "пн–сб 08:00–17:00 (справочник)",
+      "services": [
+        "грузовые автомобили (категория справочника)"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_kabardino-balkarskaya-respublika/nalchik-gorodskoj-okrug-nalchik/category-remont-gruzovyih-avtomobilej",
+        "https://nalchik.yaspravka.com/transagroservis/"
+      ],
+      "notes": "Доп. +7 8662 96-21-10. Совпадение телефона и адреса в справочниках, прием тягачей и актуальность уточнить.",
+      "operator_group": "transagro-nalchik",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "shacman-nazran",
+      "name": "Шакман-Сервис",
+      "region": "Республика Ингушетия",
+      "address": "Назрань, Насыр-Кортский административный округ, ул. Пионерская, 1А",
+      "country": "Россия",
+      "phone": "+7 928 099-38-35",
+      "email": null,
+      "hours": "ежедневно 09:00–20:00 (справочник)",
+      "services": [
+        "грузовой сервис",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://ingush.auto2.info/nazran/shakman-servis-605958/",
+        "https://nazran.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Номер и адрес совпадают в двух справочниках. Уточнить профиль ремонта и работу.",
+      "operator_group": "shacman-nazran",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transsnab-cherkessk",
+      "name": "Трансснаб — сервисный центр",
+      "region": "Карачаево-Черкесская Республика",
+      "address": "Черкесск, Пятигорское шоссе, 19Б",
+      "country": "Россия",
+      "phone": "+7 928 925-23-10",
+      "email": "info@transsnab-tpc.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "капитальный ремонт",
+        "диагностика",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.transsnab-tpc.ru/",
+        "https://transsnab-tpc.ru/service-center/"
+      ],
+      "notes": "Номера непосредственно отдела сервиса: также +7 928 925-29-30, +7 8782 21-56-24 и +7 8782 21-55-32. Официальные страницы доступны в поисковом индексе, прямое открытие главной страницы завершилось тайм-аутом.",
+      "operator_group": "transsnab-cherkessk",
+      "evidence": "first_party_search_index",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kardanbalans-vladikavkaz",
+      "name": "КарданБаланс",
+      "region": "Республика Северная Осетия — Алания",
+      "address": "Владикавказ, ул. Ставропольская, 2Б",
+      "country": "Россия",
+      "phone": "8 800 555-50-37",
+      "email": "info@kardanbalans.ru",
+      "hours": "ежедневно 09:00–19:00 (сайт)",
+      "services": [
+        "ремонт карданных валов грузовиков"
+      ],
+      "source_urls": [
+        "https://vladikavkaz.kardanbalans.ru/contacts/",
+        "https://vladikavkaz.kardanbalans.ru/"
+      ],
+      "notes": "Общая линия сети. Узкая специализация, не универсальное СТО.",
+      "operator_group": "kardanbalans",
+      "evidence": "first_party_search_index",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vianor-nalchik",
+      "name": "Vianor — шинный центр",
+      "region": "Кабардино-Балкарская Республика",
+      "address": "Нальчик, ул. Идарова, 37",
+      "country": "Россия",
+      "phone": "+7 8662 96-62-66",
+      "email": null,
+      "hours": "ежедневно 08:00–18:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (категория справочника)"
+      ],
+      "source_urls": [
+        "https://nalchik.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/nalchik/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Проверить актуальное название оператора, размер обслуживаемых колес и график. Не универсальное СТО.",
+      "operator_group": "vianor-nalchik",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "diag-saykhanova-grozny",
+      "name": "Мастерская по автодиагностике",
+      "region": "Чеченская Республика",
+      "address": "Грозный, ул. Сайханова, 192А",
+      "country": "Россия",
+      "phone": "+7 928 746-27-42",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика",
+        "грузовые автомобили (категория справочника)"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_chechenskaya-respublika/groznyij-gorodskoj-okrug-groznyij/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Нет независимого подтверждения грузового профиля или работы; не публиковать до уточнения.",
+      "operator_group": "diag-saykhanova-grozny",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "imperia-nazran",
+      "name": "Империя",
+      "region": "Республика Ингушетия",
+      "address": "Назрань, Кабардинский пер., 1",
+      "country": "Россия",
+      "phone": "+7 929 886-66-60",
+      "email": null,
+      "hours": "ежедневно 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой ремонт (категория справочника)"
+      ],
+      "source_urls": [
+        "https://nazran.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 988 819-09-09. Проверить прием тяжелых тягачей, текущую работу и название.",
+      "operator_group": "imperia-nazran",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
