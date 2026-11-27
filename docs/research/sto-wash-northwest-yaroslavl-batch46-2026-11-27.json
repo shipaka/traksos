@@ -1,0 +1,367 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; no production import",
+  "publication_gate": "Confirm actual operation, heavy vehicle scope, legal operator, contacts, coordinates, reuse rights, dedup and approval. No calls or FNS checks.",
+  "records": [
+    {
+      "id": "b46-parnas-gmk",
+      "name": "Парнас — грузовой моечный комплекс",
+      "region": "Санкт-Петербург",
+      "address": "просп. Культуры, 42, лит. Е",
+      "country": "Россия",
+      "phone": "+7 931 201-90-01",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовая мойка",
+        "мойка двигателя и днища"
+      ],
+      "source_urls": [
+        "https://2sp.me/ru/sankt-peterburg_1657688494/company/xxl-gruzovaya-avtomoyka"
+      ],
+      "notes": "Справочник указывает gmk24.ru; проверить действующего оператора и высоту ворот.",
+      "operator_group": "parnas-gmk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-vostok-koltushi",
+      "name": "Восток сервис",
+      "region": "Ленинградская область",
+      "address": "Колтуши, Колтушское шоссе, 125А",
+      "country": "Россия",
+      "phone": "+7 904 557-69-93",
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ремонт грузовиков Shacman и КАМАЗ"
+      ],
+      "source_urls": [
+        "https://totadres.ru/koltushi/org/vostok_servis/5107751"
+      ],
+      "notes": "Дополнительный телефон +7 981 912-98-58. Шиномонтаж по тому же адресу не считать отдельным без проверки.",
+      "operator_group": "vostok-koltushi",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-a-group-devyatkino",
+      "name": "A-group",
+      "region": "Ленинградская область",
+      "address": "д. Новое Девяткино, Главная ул., 101",
+      "country": "Россия",
+      "phone": "+7 921 954-22-32",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовой ремонт (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/a-group/5156078"
+      ],
+      "notes": "Точный перечень услуг и тяжелый профиль не подтверждены.",
+      "operator_group": "a-group-devyatkino",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-sto-pesochnaya4",
+      "name": "СТО — Песочная",
+      "region": "Ленинградская область",
+      "address": "Приозерск, Песочная ул., 4",
+      "country": "Россия",
+      "phone": "+7 953 343-77-13",
+      "email": null,
+      "hours": "пн–пт 10:00–19:00, перерыв 13:00–14:00",
+      "services": [
+        "грузовой автосервис (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Мойка указана, грузовой профиль мойки не подтвержден.",
+      "operator_group": "sto-pesochnaya4",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-genstar-larionovo",
+      "name": "Генстар",
+      "region": "Ленинградская область",
+      "address": "пос. Ларионово, Школьная ул., 1Б",
+      "country": "Россия",
+      "phone": "+7 921 342-99-74",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, перерыв 13:00–14:00",
+      "services": [
+        "обслуживание грузовиков (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить типы обслуживаемых ТС.",
+      "operator_group": "genstar-larionovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-sto-rus-priozersk",
+      "name": "СТО-Русь",
+      "region": "Ленинградская область",
+      "address": "Приозерск, Песочная ул., 16",
+      "country": "Россия",
+      "phone": "+7 921 992-04-05",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "ремонт тягачей (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Дублирующая карточка шиномонтажа по тому же адресу не добавлена.",
+      "operator_group": "sto-rus-priozersk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-wash-pozharskogo",
+      "name": "Грузовая мойка и шиномонтаж",
+      "region": "Ярославская область",
+      "address": "Ярославль, ул. Пожарского, 68",
+      "country": "Россия",
+      "phone": "+7 4852 58-67-67",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовая мойка",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://yar.auto2.info/yaroslavl/gruzovaya-moyka-510887/",
+        "https://yar.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Второй телефон +7 910 973-80-11. Графики в справочниках различаются, проверить. Координаты источника 57.5626, 39.8983.",
+      "operator_group": "wash-pozharskogo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-formula-yar",
+      "name": "Формула",
+      "region": "Ярославская область",
+      "address": "Ярославль, Базовая ул., 3",
+      "country": "Россия",
+      "phone": "+7 4852 20-01-01",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "мойка грузовиков (справочник)"
+      ],
+      "source_urls": [
+        "https://yar.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Габариты и прием автопоездов уточнить. Доп. +7 4852 69-57-96.",
+      "operator_group": "formula-yar",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-amg-yar",
+      "name": "АМГ-Сервис",
+      "region": "Ярославская область",
+      "address": "Ярославль, ул. Нефтяников, 11Б",
+      "country": "Россия",
+      "phone": "+7 960 534-29-59",
+      "email": null,
+      "hours": "вт–вс 09:00–20:00",
+      "services": [
+        "грузовая мойка (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://yar.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Уточнить габариты и оператора.",
+      "operator_group": "amg-yar",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b46-truckbus-nagorny",
+      "name": "Truck&BusService",
+      "region": "Ярославская область",
+      "address": "пос. Нагорный, Дорожная ул., 10",
+      "country": "Россия",
+      "phone": "+7 930 122-22-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой сервис (профиль уточнить)",
+        "портальная грузовая мойка"
+      ],
+      "source_urls": [
+        "https://yar.spravker.ru/gruzovye-avtomoiki/",
+        "https://www.truckandbusservice.ru/wash/"
+      ],
+      "notes": "Сайт https://www.truckandbusservice.ru/wash/ в поисковой выдаче заявляет мойку автопоездов и телефон +7 902 333-29-49, страница не открылась полностью; сверить адрес, телефон и отдельный график мойки.",
+      "operator_group": "truckbus-nagorny",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    }
+  ],
+  "proposed_enrichments": [
+    {
+      "target": "b44-clean-fresh-pargolovo",
+      "source": "https://cleanandfresh.me/moika-gruzovaya",
+      "note": "First-party page confirms washing tractor+trailer and corporate paperwork; address Ленинградская 99А conflicts with 99Б in batch44; reconcile, not a new point. VAT unknown."
+    },
+    {
+      "target": "b43-tehmoika-gruzovoy",
+      "source": "https://tehmoika.com/moyka-gruzovykh-avtomobiley/",
+      "note": "First-party page corroborates truck wash in Obukhovo; reconcile address and contact before publication."
+    },
+    {
+      "target": "amg-sofiyskaya",
+      "source": "https://imperija-sofijskaja-ulitsa.clients.site/",
+      "note": "Business profile confirms repair, wash, tires; do not use placeholder prices."
+    },
+    {
+      "target": "Фёдоровское, Почтовая 20А",
+      "source": "https://t-service-spb.ru/",
+      "additional_source": "https://rting.ru/leningradskaya_oblast/co/avto_alyans/2669912",
+      "note": "T-Service and Auto Alliance same address; resolve operator, not a new point."
+    }
+  ],
+  "excluded_exact_matches": [
+    {
+      "id": "avtodizel-sinyavino",
+      "existing": "avtodizel-sinyavino"
+    }
+  ],
+  "review_notes": [
+    "Exact match on name/phone/address in retrieved batches only; full national dedup pending.",
+    "Failed previous batch reads: []",
+    "Directory-only and snippet evidence are not confirmation of active operation. Do not count wash-only or specialist mixed sites toward verified repair goal. JAC network contact addresses on wash page held until per-site washing capability established."
+  ]
+}
