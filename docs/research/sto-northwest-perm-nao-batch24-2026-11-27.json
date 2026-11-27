@@ -1,0 +1,171 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify actual operation, legal operator, truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "eurotransavto-krasny-bor",
+      "name": "Евротрансавто",
+      "region": "Ленинградская область",
+      "address": "Красный Бор, ул. Полевая, 5",
+      "country": "Россия",
+      "phone": "+7 812 449-60-50",
+      "email": "ETA@eurotransavto.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовые автомобили",
+        "полуприцепы",
+        "двигатели",
+        "тормоза",
+        "электрика",
+        "шиномонтаж",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://eurotransavto.ru/",
+        "https://eurotransavto.ru/contacts"
+      ],
+      "notes": "Доп. +7 901 372-58-48. Сайт подтверждает Красный Бор, одноименная карточка в Кингисеппе не подтверждена как тот же оператор.",
+      "operator_group": "eurotransavto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sitrak159-gorny",
+      "name": "Грузовой сервис SITRAK",
+      "region": "Пермский край",
+      "address": "пос. Горный, Берёзовый пер., 5",
+      "country": "Россия",
+      "phone": "+7 922 300-33-22",
+      "email": "info@man159.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "SITRAK",
+        "MAN",
+        "грузовики",
+        "прицепы",
+        "WABCO",
+        "KNORR",
+        "HALDEX",
+        "двигатели",
+        "КПП",
+        "соосность"
+      ],
+      "source_urls": [
+        "https://www.sitrak159.ru/service/"
+      ],
+      "notes": "Телефон сервиса и запчастей; ИНН 5906855967 опубликован предприятием, не сверялся с ФНС.",
+      "operator_group": "sitrak159",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "interkamaz-perm",
+      "name": "ИнтерКАМАЗ",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Верхне-Муллинская, 134",
+      "country": "Россия",
+      "phone": "+7 342 273-00-15",
+      "email": "info@interkamaz.ru",
+      "hours": null,
+      "services": [
+        "сервис грузовых автомобилей КАМАЗ"
+      ],
+      "source_urls": [
+        "https://interkamaz.ru/contacts/"
+      ],
+      "notes": "Номер мастеров-приемщиков. Общий +7 342 214-74-12. График сервиса на странице различается: 08–21 и 09–21, уточнить.",
+      "operator_group": "interkamaz",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autoelectric-spb",
+      "name": "AutoElectric-SPb",
+      "region": "Санкт-Петербург",
+      "address": "Шушары (точный адрес не опубликован); зона выезда Санкт-Петербург и Ленинградская область",
+      "country": "Россия",
+      "phone": "+7 812 904-71-01",
+      "email": "avel.c@yandex.ru",
+      "hours": null,
+      "services": [
+        "выездной ремонт",
+        "грузовые автомобили",
+        "полуприцепы",
+        "электрика",
+        "пневматика",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://autoelectric-spb.ru/gruzovaya-pomocsh-na-doroge.html",
+        "https://autoelectric-spb.ru/gruzovoi-avtoservis.html",
+        "https://autoelectric-spb.ru/contact.html"
+      ],
+      "notes": "Доп. +7 952 366-71-43. Выездная помощь заявлена 24/7, в том числе Кингисепп и Усть-Луга. Стационарный адрес и оператор уточнить; до этого не создавать точку карты.",
+      "operator_group": "autoelectric-spb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "atp83-naryan-mar",
+      "name": "МУП Нарьян-Марское АТП",
+      "region": "Ненецкий автономный округ",
+      "address": "Нарьян-Мар, ул. Юбилейная, 22",
+      "country": "Россия",
+      "phone": "+7 81853 4-48-00",
+      "email": "nmatp83@yandex.ru",
+      "hours": null,
+      "services": [
+        "шиномонтаж большегрузного транспорта",
+        "ремонт двигателей",
+        "замена агрегатов",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://atp83.ru/avtoservis/",
+        "https://atp83.ru/",
+        "https://adm-nmar.ru/vlast/munitsipalnye-uchrezhdeniya-i-predpriyatiya/"
+      ],
+      "notes": "Общий рабочий телефон предприятия, не прямая приемка. Муниципальный статус и автосервис подтверждаются администрацией. Прием внешних тяжелых тягачей на все виды ремонта уточнить.",
+      "operator_group": "atp83",
+      "evidence": "first_party_and_municipal",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
