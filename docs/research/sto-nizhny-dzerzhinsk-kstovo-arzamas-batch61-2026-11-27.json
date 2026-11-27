@@ -1,0 +1,359 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted city/name comparison against batch50 compact indexes B/C (1–31) and record arrays 32–49,51–60; full normalized global review pending.",
+  "records": [
+    {
+      "id": "b61-mehservice-dz",
+      "name": "Мехсервис",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, просп. Ленина, 107Б",
+      "country": "Россия",
+      "phone": "+7 986 178-85-72",
+      "additional_phones": [
+        "+7 910 870-11-72"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт ДВС и КПП",
+        "ремонт рам и подвески",
+        "ремонт прицепов и полуприцепов",
+        "автоэлектрика"
+      ],
+      "source_urls": [
+        "https://mehservice.com/"
+      ],
+      "road": "М7",
+      "notes": "ООО Партс-Трейд указано на сайте. Проверить реквизиты.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b61-avtolux-dz",
+      "name": "Автолюкс НН — Дзержинск",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, М7, 384-й км, 1/1",
+      "country": "Россия",
+      "phone": "+7 903 605-00-07",
+      "additional_phones": [
+        "+7 831 285-85-34"
+      ],
+      "email": "info@автолюкснн.рф",
+      "hours": "08:00–20:00 (дни не указаны)",
+      "services": [
+        "ремонт коммерческой техники"
+      ],
+      "source_urls": [
+        "https://xn--80aeydlad0af6j.xn--p1ai/"
+      ],
+      "road": "М7",
+      "notes": "ИНН 5258156925 и ОГРН 1235200032968 заявлены на сайте. Круглосуточная эвакуация не означает круглосуточный ремонт.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "avtolux-nn"
+    },
+    {
+      "id": "b61-avtolux-kstovo",
+      "name": "Автолюкс НН — Кстово",
+      "region": "Нижегородская область",
+      "address": "Кстово, Промышленный район, микрорайон Восточный",
+      "country": "Россия",
+      "phone": "+7 903 605-00-08",
+      "additional_phones": [
+        "+7 831 280-85-34"
+      ],
+      "email": "info@автолюкснн.рф",
+      "hours": "08:00–20:00 (дни не указаны)",
+      "services": [
+        "ремонт коммерческой техники",
+        "пропарка автоцистерн и танк-контейнеров"
+      ],
+      "source_urls": [
+        "https://xn--80aeydlad0af6j.xn--p1ai/"
+      ],
+      "road": "подъезды к М7",
+      "notes": "Номер здания и координаты въезда уточнить. Общая почта оператора.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "avtolux-nn"
+    },
+    {
+      "id": "b61-asc-dz-lenina",
+      "name": "АвтоЦентр-НН — Ленина",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, просп. Ленина, 108Б",
+      "country": "Россия",
+      "phone": "+7 951 907-62-16",
+      "additional_phones": [
+        "+7 920 250-30-66",
+        "+7 920 027-79-90"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт ходовой",
+        "ремонт двигателей",
+        "ремонт форсунок"
+      ],
+      "source_urls": [
+        "https://asc-nn.ru/"
+      ],
+      "road": "М7",
+      "notes": "Сайт прямо выделяет две территории; Игумново уже в batch37. Проверить часы и условия приема.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "asc-nn"
+    },
+    {
+      "id": "b61-retruck-kstovo",
+      "name": "Ретрак — Кстово",
+      "region": "Нижегородская область",
+      "address": "Кстово, ул. Магистральная, 1",
+      "country": "Россия",
+      "phone": "+7 831 280-32-34 доб. 4",
+      "additional_phones": [],
+      "email": "kstovo@retruck-service.ru",
+      "hours": "ежедневно 08:00–20:00 (страница сети)",
+      "services": [
+        "кузовной ремонт коммерческого транспорта"
+      ],
+      "source_urls": [
+        "https://retruckservice.ru/nn"
+      ],
+      "road": "подъезды к М7",
+      "notes": "Филиал кузовного ремонта; профиль работ конкретной станции уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "retruck"
+    },
+    {
+      "id": "b61-kom-avto-arz",
+      "name": "Ком-Авто",
+      "region": "Нижегородская область",
+      "address": "Арзамас, ул. Калинина, 58",
+      "country": "Россия",
+      "phone": "+7 920 014-00-62",
+      "additional_phones": [],
+      "email": "Kom-avto52@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей и полуприцепов",
+        "двигатели, КПП, ходовая",
+        "грузовой шиномонтаж",
+        "выездной ремонт"
+      ],
+      "source_urls": [
+        "https://kom-avto.ru/contacts",
+        "https://kom-avto.ru/truckrepairs",
+        "https://arzamas.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "подъезды к М12, Р158",
+      "notes": "На сайте офис 108; въезд в ремонтный цех подтвердить. Не использовать номер перевозок как сервисный.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b61-garantia-arz",
+      "name": "Гарантия",
+      "region": "Нижегородская область",
+      "address": "Арзамас, ул. Калинина, 68М",
+      "country": "Россия",
+      "phone": "+7 930 292-77-72",
+      "additional_phones": [
+        "+7 83147 9-54-95"
+      ],
+      "email": "Garantia-PSG@yandex.ru",
+      "hours": null,
+      "services": [
+        "ТО и ремонт грузовых автомобилей и автобусов",
+        "ремонт двигателей"
+      ],
+      "source_urls": [
+        "https://garantia-arz.ru/",
+        "https://psg-apz.ru/autoservice/",
+        "https://arzamas.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "подъезды к М12, Р158",
+      "notes": "Проверить прием тяжелых сцепок, график и оператора.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "НижБел",
+      "address": "Дзержинск, Восточная промзона, 1к2",
+      "phone": "+7 831 274-69-34",
+      "additional_phones": [
+        "+7 961 638-75-38"
+      ],
+      "source_urls": [
+        "https://nizhbel.ru/company/directions/remont-i-to-gruzovogo-transporta/"
+      ],
+      "reason": "Совпадает номер сервиса с batch39 Нижний Новгород, Береговая 17А. Проверить переезд или отдельный филиал."
+    },
+    {
+      "name": "Макларен",
+      "address": "Арзамасский округ, Р158, 102-й км",
+      "phone": "+7 930 716-79-88",
+      "source_urls": [
+        "https://arzamas.spravker.ru/remont-pritsepov/",
+        "https://arzamas.spravker.ru/remont-spetstekhniki/"
+      ],
+      "reason": "Справочник, грузовой профиль и точный въезд требуют подтверждения."
+    },
+    {
+      "name": "СервисАрз",
+      "address": "Арзамас, ул. Ленина, 115Г",
+      "phone": "+7 930 812-22-12",
+      "source_urls": [
+        "https://arzamas.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Подтвердить прием тяжелых полуприцепов."
+    },
+    {
+      "name": "Реалавто",
+      "address": "рп Шатки, ул. 1 Мая, 15",
+      "phone": "+7 930 676-00-00",
+      "source_urls": [
+        "https://arzamas.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Подтвердить грузовой профиль."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Тиропанефтранс",
+      "batch": 33,
+      "address": "Дзержинск, Игумновское шоссе, 4А",
+      "additional_phones": [
+        "+7 920 013-95-94",
+        "+7 831 283-01-02"
+      ],
+      "email": "service@tnt-nn.ru",
+      "source_urls": [
+        "https://www.tnt-nn.ru/repair/"
+      ]
+    },
+    {
+      "name": "Ретрак Сервис — Дзержинск",
+      "batch": 32,
+      "additional_phones": [
+        "+7 952 782-77-19"
+      ],
+      "email": "servisdz@retruck-service.ru",
+      "source_urls": [
+        "https://retruckservice.ru/"
+      ]
+    },
+    {
+      "name": "Грузовой автосервис — Столбищенская",
+      "batch": 27,
+      "phone": "+7 930 071-00-01",
+      "source_urls": [
+        "https://kstovo.spravker.ru/avtoservisy-avtotehcentry/gruzovoj-avtoservis1.htm"
+      ]
+    },
+    {
+      "name": "АвтоЦентр-НН — Игумново",
+      "batch": 37,
+      "source_urls": [
+        "https://asc-nn.ru/"
+      ],
+      "reason": "Не добавлять повторно."
+    }
+  ]
+}
