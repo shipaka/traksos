@@ -1,0 +1,350 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted city and name comparison against audit B/C and record arrays 32–49,51–62. Full normalized global audit pending; duplicate same-phone listings in Mamadysh consolidated.",
+  "records": [
+    {
+      "id": "b63-avtoregion",
+      "name": "АвтоРегион",
+      "region": "Республика Татарстан",
+      "address": "Нижнекамск, ул. Чистопольская, 50",
+      "country": "Россия",
+      "phone": "+7 8555 49-99-66",
+      "additional_phones": [
+        "+7 917 920-69-69",
+        "+7 917 290-69-69"
+      ],
+      "email": null,
+      "hours": "08:00–18:00 (сайт; дни не указаны)",
+      "services": [
+        "ремонт тягачей, прицепов и полуприцепов",
+        "диагностика грузовой и специальной техники",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://avtoregionservis.ru/contacts/",
+        "https://avtoregionservis.ru/services/remont-i-diagnostika/"
+      ],
+      "notes": "Адрес Первопроходцев, 5 на сайте указан также для склада и легкового шиномонтажа; не считать второй грузовой СТО.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-trackenergy",
+      "name": "Трак Энерджи",
+      "region": "Республика Татарстан",
+      "address": "Елабуга, М7, 1037-й км, 1",
+      "country": "Россия",
+      "phone": "+7 917 220-38-78",
+      "additional_phones": [
+        "+7 987 292-28-53"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовиков"
+      ],
+      "source_urls": [
+        "https://elabuga.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Режим работы и перечень ремонта подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-elabuga-fuel",
+      "name": "Ремонт форсунок и ТНВД",
+      "region": "Республика Татарстан",
+      "address": "Елабуга, Набережно-Челнинское шоссе, 4А",
+      "country": "Россия",
+      "phone": "+7 987 415-10-06",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 08:00–17:00; Сб 08:00–14:00",
+      "services": [
+        "ремонт топливной аппаратуры грузовиков (категория справочника)"
+      ],
+      "source_urls": [
+        "https://elabuga.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Агрегатная мастерская; подтвердить профиль и юридическое название. Возможны другие названия по тому же адресу.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-akvarius",
+      "name": "Аквариус",
+      "region": "Республика Татарстан",
+      "address": "Елабуга, Окружное шоссе, 7Б",
+      "country": "Россия",
+      "phone": "+7 85557 2-68-40",
+      "additional_phones": [
+        "+7 917 870-83-03"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "шиномонтаж",
+        "ремонт ходовой"
+      ],
+      "source_urls": [
+        "https://asktel.ru/elabuga/remont_dvigatelya/akvarius/",
+        "https://elabuga.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить габариты принимаемых автомобилей, режим и действующего оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-mamadysh-gorkogo",
+      "name": "Грузовой автосервис",
+      "region": "Республика Татарстан",
+      "address": "Мамадыш, ул. Максима Горького, 124",
+      "country": "Россия",
+      "phone": "+7 927 494-90-59",
+      "additional_phones": [
+        "+7 927 245-11-48"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 08:00–18:00; Сб 08:00–13:00",
+      "services": [
+        "грузовой автосервис"
+      ],
+      "source_urls": [
+        "https://mamadysh.spravker.ru/avtoservisy-avtotehcentry/"
+      ],
+      "notes": "Две карточки справочника с одинаковым телефоном объединены.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-nizhnekamsk-central",
+      "name": "Грузовой Автосервис",
+      "region": "Республика Татарстан",
+      "address": "Нижнекамск, пос. Строителей, ул. Центральная, 49И",
+      "country": "Россия",
+      "phone": "+7 987 002-35-55",
+      "additional_phones": [
+        "+7 906 331-15-55"
+      ],
+      "email": null,
+      "hours": "ежедневно 07:00–19:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://nizhnekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить название оператора и возможное совпадение с RiXX.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-nizhnekamsk-patp",
+      "name": "РТК ПАТП-1",
+      "region": "Республика Татарстан",
+      "address": "Нижнекамск, ул. Первопроходцев, 21",
+      "country": "Россия",
+      "phone": "+7 917 293-16-24",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 07:00–19:00",
+      "services": [
+        "ремонт тягачей (категория справочника)",
+        "автомойка"
+      ],
+      "source_urls": [
+        "https://nizhnekamsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием сторонних грузовых автомобилей и грузовые габариты мойки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b63-rn-almet",
+      "name": "РН-Сервис",
+      "region": "Республика Татарстан",
+      "address": "Альметьевск, Объездной тракт, 23/22",
+      "country": "Россия",
+      "phone": "+7 917 394-50-41",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–17:00 (справочник)",
+      "services": [
+        "ремонт грузовиков, автобусов и спецтехники",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://almetevsk.gdeservisy.ru/gruzovoy-autoservis-rn-servis"
+      ],
+      "notes": "Подтвердить действующее предприятие; справочник содержит ссылку на rn-service.com.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "СТО, шиномонтаж грузовой",
+      "address": "Мамадышский район, Отарское сельское поселение",
+      "phone": "+7 967 374-87-73",
+      "source_urls": [
+        "https://mamadysh.spravker.ru/avtoservisy-avtotehcentry/"
+      ],
+      "reason": "Нет точного адреса и координат."
+    },
+    {
+      "name": "Иртэк",
+      "address": "Альметьевск, ул. Маяковского, 118Б",
+      "phone": "+7 939 106-71-17",
+      "additional_phones": [
+        "+7 8553 26-11-17"
+      ],
+      "source_urls": [
+        "https://almetevsk.spravker.ru/gruzovye-avtoelektriki/"
+      ],
+      "reason": "В справочнике заявлена грузовая автоэлектрика и спецтехника; подтвердить профиль тяжелых тягачей."
+    },
+    {
+      "name": "Реммонтажсервис",
+      "addresses": [
+        "Альметьевск, ул. Жуковского, 7",
+        "Альметьевск, ул. Грибоедова, 4",
+        "Альметьевск, ул. Индустриальная, 21, стр. 1"
+      ],
+      "phones": [
+        "+7 917 874-25-49",
+        "+7 8553 36-96-00",
+        "+7 8553 40-55-15"
+      ],
+      "source_urls": [
+        "https://almetevsk.spravker.ru/gruzovye-avtoelektriki/"
+      ],
+      "reason": "Разные адреса одной организации; уточнить ремонтные площадки и прием сторонних грузовиков."
+    },
+    {
+      "name": "RiXX центр",
+      "source_urls": [
+        "https://yandex.com/maps/org/rixx_tsentr_gruzovoy_servis/8761813070/"
+      ],
+      "reason": "Отзывы подтверждают грузовой профиль, но точные контактные данные в полученном источнике не установлены."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "СОТРАНС — Елабуга",
+      "batch": 32,
+      "reason": "Уже имеется."
+    },
+    {
+      "name": "Сервисный центр-3",
+      "batch": 39,
+      "reason": "Уже имеется."
+    }
+  ]
+}
