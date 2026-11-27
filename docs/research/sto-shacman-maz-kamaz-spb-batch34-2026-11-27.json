@@ -1,0 +1,1893 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "granat-south",
+      "name": "Гранат — Юг",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 2",
+      "country": "Россия",
+      "phone": "+7 812 334-50-16",
+      "email": "service@granat.spb.ru",
+      "hours": "ежедневно 08:00–20:00 (источник)",
+      "services": [
+        "КАМАЗ",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://kamaz-k5.ru/contacs"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "granat",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "granat-north",
+      "name": "Гранат / ПарнасАвтоКомплекс — Север",
+      "region": "Санкт-Петербург",
+      "address": "ул. Домостроительная, 15, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 449-05-89",
+      "email": "service@pac-sto.ru",
+      "hours": "ежедневно 08:00–20:00 (источник)",
+      "services": [
+        "КАМАЗ",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://kamaz-k5.ru/contacs"
+      ],
+      "notes": "Сайт ПарнасАвтоКомплекс указывает дом 17, лит. А; сайт Граната различает ремонт (15) и продажи (17). Проверить въезд. Не создавать две точки. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "granat",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bao-spb",
+      "name": "Балтийское Акционерное Общество",
+      "region": "Санкт-Петербург",
+      "address": "Октябрьская наб., 108, корп. 1, лит. Э",
+      "country": "Россия",
+      "phone": "+7 800 101-62-03",
+      "email": "zao-bao@zao-bao.ru",
+      "hours": "ежедневно 09:00–21:00 (источник)",
+      "services": [
+        "КАМАЗ",
+        "ремонт грузовиков и прицепов"
+      ],
+      "source_urls": [
+        "https://kamaz.zao-bao.ru/kontakty"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "bao-spb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "obukhovo-autocenter",
+      "name": "Автоцентр Обухово / Техинком Питер",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой проезд, 27, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 703-05-05",
+      "email": "info@kc-o.ru",
+      "hours": null,
+      "services": [
+        "КАМАЗ",
+        "ремонт грузовиков и прицепов"
+      ],
+      "source_urls": [
+        "https://tehinkom-piter.ru/kontakty/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "obukhovo-autocenter",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "radar-volkhonskoe",
+      "name": "Радар",
+      "region": "Санкт-Петербург",
+      "address": "Волхонское шоссе, 113",
+      "country": "Россия",
+      "phone": "+7 812 635-93-92",
+      "email": "radar-spb@mail.ru",
+      "hours": "пн–пт 09:00–17:00 (источник)",
+      "services": [
+        "ремонт рам",
+        "прицепов",
+        "фургонов",
+        "ходовой"
+      ],
+      "source_urls": [
+        "https://radar-spb.ru/"
+      ],
+      "notes": "ИНН 7807244939 опубликован на сайте, не проверен ФНС. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "radar-volkhonskoe",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pobeda-kirovsk",
+      "name": "Победа",
+      "region": "Ленинградская область",
+      "address": "Кировск, ул. Победы, 24Г",
+      "country": "Россия",
+      "phone": "+7 911 921-70-07",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 (источник)",
+      "services": [
+        "грузовой шиномонтаж",
+        "прицепы"
+      ],
+      "source_urls": [
+        "https://avtoservicekirovsk.ru/gruzovoj-shinomontazh"
+      ],
+      "notes": "Для тяжёлых ТС подтверждён шиномонтаж, не универсальный ремонт. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "pobeda-kirovsk",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vertikal-fedorovskoe",
+      "name": "ГК Вертикаль",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, Фёдоровское, ул. Монолитная, 8",
+      "country": "Россия",
+      "phone": "+7 812 389-45-45",
+      "email": "sc@gkvertikal.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "vertikal-fedorovskoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bolshegruz-spb",
+      "name": "ГК Большегруз",
+      "region": "Санкт-Петербург",
+      "address": "Московское шоссе, 13Д",
+      "country": "Россия",
+      "phone": "+7 812 679-48-22",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman-srg.ru/services/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "bolshegruz-spb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pitertruckcenter-spb",
+      "name": "Питертракцентр",
+      "region": "Санкт-Петербург",
+      "address": "ул. Магнитогорская, 17",
+      "country": "Россия",
+      "phone": "+7 812 603-23-33",
+      "email": null,
+      "hours": "08:00–20:00 (источник)",
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "pitertruckcenter",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzservice-annolovo",
+      "name": "Груз-Сервис",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, д. Аннолово, ИндустриПарк Фёдоровское, 1-й Вертикальный проезд, участок 1",
+      "country": "Россия",
+      "phone": "+7 812 970-27-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "gruzservice-annolovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzavtoservice-mebelny",
+      "name": "ГрузАвтоСервис",
+      "region": "Санкт-Петербург",
+      "address": "Мебельный проезд, 10, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 401-45-84",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "gruzavtoservice-mebelny",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehnobalt-krasnoeselo",
+      "name": "Технобалт",
+      "region": "Санкт-Петербург",
+      "address": "Красное Село, пр. Ленина, 13, корп. 1, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 655-09-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "tehnobalt-krasnoeselo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "yarkamp-shchedrino",
+      "name": "ЯрКамп-Сервис",
+      "region": "Ярославская область",
+      "address": "Ярославский район, пос. Щедрино, ул. Московская, стр. 6А",
+      "country": "Россия",
+      "phone": "+7 4852 20-58-60",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00 (источник)",
+      "services": [
+        "КАМАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://spb.yarkamp-kamaz.ru/contacts"
+      ],
+      "notes": "Офисы продаж в СПб и Москве не считаются отдельными СТО. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "yarkamp-shchedrino",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fpk-chelyabinsk",
+      "name": "ФПК-МСК",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Линейная, 96",
+      "country": "Россия",
+      "phone": "+7 351 701-00-53",
+      "email": "service@fpk-msk.ru",
+      "hours": "пн–пт 08:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "fpk-chelyabinsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtodom-mirny",
+      "name": "Автодом-Сервис",
+      "region": "Челябинская область",
+      "address": "Красноармейский район, пос. Мирный, территория СТО 31 км, д. 1",
+      "country": "Россия",
+      "phone": "+7 351 326-73-26",
+      "email": "info@avtodom74.ru",
+      "hours": "пн–пт 08:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": "ТС-Моторс по тому же адресу в списке дилера, не считать второй точкой без уточнения. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "avtodom-mirny",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ssk-blagoveshchensk",
+      "name": "ССК",
+      "region": "Амурская область",
+      "address": "Благовещенск, ул. Пограничная, 80",
+      "country": "Россия",
+      "phone": "+7 914 557-80-70",
+      "email": "zau@tsblg.ru",
+      "hours": "пн–пт 08:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "ssk-blagoveshchensk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtolider-saratov",
+      "name": "Автолидер",
+      "region": "Саратовская область",
+      "address": "Саратов, ул. Чапаева, 11/13",
+      "country": "Россия",
+      "phone": "+7 917 211-45-90",
+      "email": "autolider2011@yandex.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "avtolider-saratov",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtomotors-surgut",
+      "name": "Автомоторс",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Сосновая, 70/1",
+      "country": "Россия",
+      "phone": "+7 922 420-18-90",
+      "email": null,
+      "hours": "пн–сб 09:00–19:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": "В списке дилера альтернативное название Энергия ГмбХ; один адрес. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "avtomotors-surgut",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtoresurs-malaya-elanka",
+      "name": "Авторесурс",
+      "region": "Иркутская область",
+      "address": "д. Малая Еланка, ул. Пролетарская, 1Б",
+      "country": "Россия",
+      "phone": "+7 3952 28-50-30",
+      "email": "info@avtoban38.ru",
+      "hours": "ежедневно 09:00–20:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "avtoresurs-malaya-elanka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "asiaspetsmash-ob",
+      "name": "АзияСпецМаш",
+      "region": "Новосибирская область",
+      "address": "Обь, пр. Мозжерина, 5",
+      "country": "Россия",
+      "phone": "+7 913 006-05-55",
+      "email": "service@asiaspetsmash.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "asiaspetsmash-ob",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehvostok-krasnoyarsk",
+      "name": "ГК Техника Востока",
+      "region": "Красноярский край",
+      "address": "Красноярск, пр. Котельникова, 15/2",
+      "country": "Россия",
+      "phone": "+7 923 339-22-75",
+      "email": "ads@tehvostok.ru",
+      "hours": null,
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "tehvostok-krasnoyarsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzavto-mb-otradnoe",
+      "name": "ГрузАвто-МБ",
+      "region": "Воронежская область",
+      "address": "Новоусманский район, пос. Отрадное, ул. Автодорожная, 7/6",
+      "country": "Россия",
+      "phone": "+7 950 762-42-64",
+      "email": "master@mb-gruzauto36.com",
+      "hours": "ежедневно 09:00–20:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "gruzavto-mb-otradnoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "deltascan-novonikolaevsky",
+      "name": "Дельтаскан",
+      "region": "Республика Татарстан",
+      "address": "пос. Новониколаевский, М-7, 797-й км, ул. Центральная, 1Б",
+      "country": "Россия",
+      "phone": "+7 800 222-18-69",
+      "email": "service.kazan@alfascan.ru",
+      "hours": "круглосуточно (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "deltascan-novonikolaevsky",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eastlineseven-salaryevo",
+      "name": "Истлайнсевен",
+      "region": "Москва",
+      "address": "ул. Адмирала Корнилова, 61, терминал Саларьево",
+      "country": "Россия",
+      "phone": "+7 495 740-67-47",
+      "email": "service@eastlineseven.ru",
+      "hours": "ежедневно 09:00–21:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "eastlineseven-salaryevo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "komtrans-solontsy",
+      "name": "Комтранс Групп",
+      "region": "Красноярский край",
+      "address": "Емельяновский район, пос. Солонцы, автодорога Байкал, 802-й км, 13/5",
+      "country": "Россия",
+      "phone": "+7 391 214-11-02",
+      "email": "shacman-master@komtrans24.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "komtrans-solontsy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "megatrans-lopatino",
+      "name": "МегаТранс",
+      "region": "Самарская область",
+      "address": "Волжский район, с.п. Лопатино, территория Промпарка, здание 3",
+      "country": "Россия",
+      "phone": "+7 937 067-84-98",
+      "email": "info@megat.ru",
+      "hours": "пн–пт 08:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": "Дилер указывает иной адрес в Самаре; проверить действующий въезд, второй адрес не считать. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "megatrans-lopatino",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mehanika-vologda",
+      "name": "Механика",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Гиляровского, 50",
+      "country": "Россия",
+      "phone": "+7 8172 58-00-72",
+      "email": "meh35@bk.ru",
+      "hours": "пн–пт 08:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "mehanika-vologda",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nbr-podolsk",
+      "name": "НБР",
+      "region": "Московская область",
+      "address": "Подольск, пос. Подольской машинно-строительной станции, ул. Промышленная, 1Б",
+      "country": "Россия",
+      "phone": "+7 495 727-87-67",
+      "email": "info@nbru.ru",
+      "hours": "ежедневно 09:00–21:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "nbr-podolsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rta-ekaterinburg",
+      "name": "РТА",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. Раевского, 11В",
+      "country": "Россия",
+      "phone": "+7 800 200-13-15",
+      "email": "info@rta.su",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "rta-ekaterinburg",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rusimportlider-nsk",
+      "name": "РусИмпортЛидер",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Толмачёвская, 17/3",
+      "country": "Россия",
+      "phone": "+7 905 904-68-16",
+      "email": "rusimportlider@gmail.com",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "rusimportlider-nsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sinoway-ekad",
+      "name": "Синовэй Трак Сервис",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ЕКАД, 3-й км, стр. 8",
+      "country": "Россия",
+      "phone": "8 800 333-50-87",
+      "email": "service@sinoway.ru",
+      "hours": "ежедневно 09:00–21:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "sinoway-ekad",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "spetsavtotehnika-bataysk",
+      "name": "Спецавтотехника",
+      "region": "Ростовская область",
+      "address": "Батайск, Восточное шоссе, 6Д",
+      "country": "Россия",
+      "phone": "8 800 250-99-33",
+      "email": "spavtoteh_sto@mail.ru",
+      "hours": "пн–пт 08:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "spetsavtotehnika-bataysk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sac-magnitogorsk",
+      "name": "Спецавтоцентр",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. Вокзальная, 7",
+      "country": "Россия",
+      "phone": "+7 919 322-62-13",
+      "email": "sacentr@mail.ru",
+      "hours": "пн–пт 09:00–21:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "sac-magnitogorsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "specmash-khabarovsk",
+      "name": "Спецмаш",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, Камышовый пер., 15",
+      "country": "Россия",
+      "phone": "+7 4212 25-44-15",
+      "email": "Data42@mail.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": "Номер у дилера отличается; сверить. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "specmash-khabarovsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "spectehpostavka-chel",
+      "name": "Спецтехпоставка",
+      "region": "Челябинская область",
+      "address": "Челябинск, Свердловский тракт, 3Р",
+      "country": "Россия",
+      "phone": "8 800 234-74-78",
+      "email": "spectp74@yandex.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "spectehpostavka-chel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stroytehimport-sargazy",
+      "name": "Стройтехимпорт",
+      "region": "Челябинская область",
+      "address": "Сосновский район, Саргазинское с.п., а/д Москва–Челябинск, ул. Асфальтовая, участок 7",
+      "country": "Россия",
+      "phone": "+7 966 111-01-74",
+      "email": "info@shacman.org",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": "Для навигатора Челябинск, ул. Асфальтная, 3/3. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "stroytehimport-sargazy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "agat-larina",
+      "name": "Техника для бизнеса",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Ларина, 23Г",
+      "country": "Россия",
+      "phone": "+7 831 200-00-00",
+      "email": "feedback@agatgroup.com",
+      "hours": "ежедневно 08:00–20:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "agat-larina",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ttm-gorki",
+      "name": "ТТМ-Центр",
+      "region": "Московская область",
+      "address": "Ленинский округ, д. Горки, Каширское шоссе, вл. 28",
+      "country": "Россия",
+      "phone": "+7 495 956-71-65",
+      "email": "remont@ttm-c.ru",
+      "hours": "ежедневно 08:30–20:30 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "ttm-gorki",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ural-specmash-surgut",
+      "name": "Урал-Спецмаш",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Рационализаторов, 27, соор. 6",
+      "country": "Россия",
+      "phone": "+7 912 819-12-21",
+      "email": "warranty@ural-specmash.ru",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "ural-specmash-surgut",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "shacman-chesnokovka",
+      "name": "Шакман Центр",
+      "region": "Республика Башкортостан",
+      "address": "Уфимский район, с. Чесноковка, ул. Карьерная, 2А",
+      "country": "Россия",
+      "phone": "8 800 775-53-29",
+      "email": "STO-UFA@SHACMAN-CENTR.RU",
+      "hours": null,
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "shacman-chesnokovka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "shacman-tyumen",
+      "name": "Шакман-Центр Сервис",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Тимофея Чаркова, 11, стр. 8",
+      "country": "Россия",
+      "phone": "+7 3452 90-11-10",
+      "email": "g_sto901110@mail.ru",
+      "hours": "пн–пт 08:30–17:30 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "shacman-tyumen",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stc-novorossiysk",
+      "name": "Южная транспортная компания",
+      "region": "Краснодарский край",
+      "address": "Новороссийск, Сухумское шоссе, 125",
+      "country": "Россия",
+      "phone": "+7 906 433-75-41",
+      "email": "stoshacman-ru55@stc-93.com",
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "stc-novorossiysk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "arsenal-kabanovo",
+      "name": "Арсенал-Сервис",
+      "region": "Московская область",
+      "address": "Орехово-Зуевский округ, д. Кабаново, 89А",
+      "country": "Россия",
+      "phone": "+7 496 418-48-04",
+      "email": "oooarsenalservis@mail.ru",
+      "hours": "пн–пт 09:00–17:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "arsenal-kabanovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehavtodrom-ramon",
+      "name": "Техавтодром",
+      "region": "Воронежская область",
+      "address": "Рамонский район, Айдаровское с.п., территория Промышленная, зона 5, 12",
+      "country": "Россия",
+      "phone": "+7 980 555-55-28",
+      "email": "texautodrom2024@yandex.ru",
+      "hours": "пн–пт 08:00–20:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman.ru/service/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "tehavtodrom-ramon",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mk-artem",
+      "name": "МК",
+      "region": "Приморский край",
+      "address": "Артём, ул. Уткинская, 30",
+      "country": "Россия",
+      "phone": "+7 804 700-78-18",
+      "email": null,
+      "hours": "пн–пт 08:00–22:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman-srg.ru/services/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "mk-artem",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "velmo-izhevsk",
+      "name": "Вэлмо Рус",
+      "region": "Удмуртская Республика",
+      "address": "Ижевск, ул. Гагарина, 104, корп. 1",
+      "country": "Россия",
+      "phone": "8 800 600-41-08",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman-srg.ru/services/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "velmo-izhevsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtoalliance-mashkovo",
+      "name": "АвтоАльянс",
+      "region": "Московская область",
+      "address": "Люберецкий округ, д. Машково, Ново-Марусинский проезд, 4",
+      "country": "Россия",
+      "phone": "8 800 700-05-95",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman-srg.ru/services/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "avtoalliance-mashkovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "interline-nsk",
+      "name": "Интерлайн Авто",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Толмачёвская, 39",
+      "country": "Россия",
+      "phone": "+7 913 469-39-99",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman-srg.ru/services/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "interline-nsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "orion-chita",
+      "name": "Орион",
+      "region": "Забайкальский край",
+      "address": "Чита, Романовский тракт, 38Г, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 234-38-08",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (источник)",
+      "services": [
+        "SHACMAN",
+        "ремонт и ТО"
+      ],
+      "source_urls": [
+        "https://shacman-srg.ru/services/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "orion-chita",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dokadizel-kemerovo",
+      "name": "Докадизель",
+      "region": "Кемеровская область",
+      "address": "Кемерово, Коксовый пер., 10",
+      "country": "Россия",
+      "phone": "+7 3842 34-52-42",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "dokadizel-kemerovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kubanmaz-krasnodar",
+      "name": "КубаньМАЗсервис",
+      "region": "Краснодарский край",
+      "address": "Краснодар, ул. Тополиная, 19",
+      "country": "Россия",
+      "phone": "+7 861 200-29-74",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "kubanmaz-krasnodar",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-solontsy",
+      "name": "РБА-МБ",
+      "region": "Красноярский край",
+      "address": "Емельяновский район, пос. Солонцы, пр. Котельникова, 9Б",
+      "country": "Россия",
+      "phone": "+7 391 226-88-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stservice-lobnya",
+      "name": "СТ Сервис",
+      "region": "Московская область",
+      "address": "Лобня, ул. Гагарина, 6А",
+      "country": "Россия",
+      "phone": "+7 916 028-79-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "stservice-lobnya",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mazagat-mytishchi",
+      "name": "МАЗ Сервис Агат",
+      "region": "Московская область",
+      "address": "Мытищи, ул. Академика Каргина, 35А",
+      "country": "Россия",
+      "phone": "+7 495 660-10-20",
+      "email": null,
+      "hours": "08:00–21:00 (источник)",
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "mazagat-mytishchi",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehinkom-podolsk",
+      "name": "ТСК Техинком",
+      "region": "Московская область",
+      "address": "Подольск, Домодедовское шоссе, 7",
+      "country": "Россия",
+      "phone": "+7 496 755-52-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "tehinkom-podolsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-podolsk",
+      "name": "РБА-МБ — Подольск",
+      "region": "Московская область",
+      "address": "М-2, 36-й км, д. 10, стр. 2",
+      "country": "Россия",
+      "phone": "+7 495 565-78-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remkapital-kola",
+      "name": "РемКапитал",
+      "region": "Мурманская область",
+      "address": "Кола, Кильдинское шоссе, 2",
+      "country": "Россия",
+      "phone": "+7 921 273-63-51",
+      "email": null,
+      "hours": "09:00–18:00 (источник)",
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "remkapital-kola",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-novy-sad",
+      "name": "РБА-МБ — Новый Сад",
+      "region": "Республика Адыгея",
+      "address": "Тахтамукайский район, х. Новый Сад, ул. Дружбы, 27Б",
+      "country": "Россия",
+      "phone": "+7 861 201-87-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtotehkom-graivoron",
+      "name": "Автотехком Сервис",
+      "region": "Москва",
+      "address": "2-й Грайвороновский проезд, 32А",
+      "country": "Россия",
+      "phone": "+7 495 380-06-28",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "avtotehkom-graivoron",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "luidor-larina",
+      "name": "Луидор-Гарант",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Ларина, 12, корп. Б",
+      "country": "Россия",
+      "phone": "+7 831 256-11-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "luidor",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamtehservice-chelny",
+      "name": "КамТехСервис",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, ул. Р. Беляева, 1/2",
+      "country": "Россия",
+      "phone": "+7 8552 35-77-55",
+      "email": null,
+      "hours": "08:00–17:00 (источник)",
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "kamtehservice-chelny",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-pervouralsk",
+      "name": "РБА-МБ — Первоуральск",
+      "region": "Свердловская область",
+      "address": "а/д Пермь–Екатеринбург, 332-й км, вл. 1, стр. 1",
+      "country": "Россия",
+      "phone": "+7 343 389-07-48",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": "Добавочный 402. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "navigator-verhnerusskoe",
+      "name": "Навигатор Плюс",
+      "region": "Ставропольский край",
+      "address": "Шпаковский район, с. Верхнерусское, ул. Батайская, 24А",
+      "country": "Россия",
+      "phone": "+7 8652 51-65-16",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "navigator-verhnerusskoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tverkamaz",
+      "name": "Тверь КАМАЗ Центр",
+      "region": "Тверская область",
+      "address": "Тверь, ул. Паши Савельевой, 41",
+      "country": "Россия",
+      "phone": "+7 4822 78-35-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "tverkamaz",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "npatp-nizhnevartovsk",
+      "name": "НПАТП-1",
+      "region": "ХМАО — Югра",
+      "address": "Нижневартовск, ул. 9П, 28",
+      "country": "Россия",
+      "phone": "+7 3466 33-32-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": "Проверить прием сторонних ТС. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "npatp-nizhnevartovsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sibpromavto-miass",
+      "name": "СибПромАвто",
+      "region": "Челябинская область",
+      "address": "Миасс, Гаражный пер., 2",
+      "country": "Россия",
+      "phone": "+7 3519 07-01-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": "Номер источника +7 (351) 907-01-47; формат требует уточнения. Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "sibpromavto-miass",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "karat-grozny",
+      "name": "Карат ЛТД",
+      "region": "Чеченская Республика",
+      "address": "Грозный, ул. Э.Э. Исмаилова, 19А",
+      "country": "Россия",
+      "phone": "+7 928 000-41-53",
+      "email": null,
+      "hours": null,
+      "services": [
+        "МАЗ",
+        "сервис"
+      ],
+      "source_urls": [
+        "https://maz-rus.com/contacts/"
+      ],
+      "notes": " Проверить действующего оператора и ремонтный адрес перед публикацией.",
+      "operator_group": "karat-grozny",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Compared eight previous priority and network batches; nationwide fuzzy dedup still pending.",
+    "Skipped Nara Avto Trans and Remex already recorded, office-only RTS and sales-only Yarkamp SPb/Moscow. HeavyTruckService Moscow at same address as Sinorusservice batch33; excluded. Forstruck Ulan-Ude near BaikalAvtoTruck, not included pending physical site clarification. SHACMAN Belarus excluded.",
+    "MAZ distributor directory includes diverse businesses; confirm actual truck service and reception before publication. Phone and email collected as publicly listed business contacts, no verification by call or FNS.",
+    "Granat North: operator sources list workshop 15 and sales office 17; one candidate only."
+  ]
+}
