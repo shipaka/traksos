@@ -1,0 +1,410 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify actual operation, legal operator, exact coordinates and access, reuse rights, duplicate sites and admin approval. No calls or official FNS extracts. No automatic outreach. Aggregates-only workshop must not be shown as full truck service.",
+  "records": [
+    {
+      "id": "trakservis52-nizhny",
+      "name": "Трак-Сервис 52",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Ларина, 15",
+      "country": "Россия",
+      "phone": "+7 999 075-31-44",
+      "email": "trucks52@ya.ru",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "ДВС",
+        "КПП",
+        "пневматика",
+        "электрика",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://trs52.ru/"
+      ],
+      "notes": "Дополнительный телефон +7 831 466-16-99; указан также как факс. КАМАЗ, МАЗ, УРАЛ, ПАЗ, ЗИЛ, ГАЗ.",
+      "operator_group": "trakservis52",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sofit-fedoseenko",
+      "name": "Софит-Сервис — Федосеенко",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Федосеенко, 41",
+      "country": "Россия",
+      "phone": "+7 953 415-40-66",
+      "email": "sofit-avto@mail.ru",
+      "hours": null,
+      "services": [
+        "азиатские грузовики"
+      ],
+      "source_urls": [
+        "https://sofit-servis.ru/"
+      ],
+      "notes": "Отдельный телефон и адрес азиатского направления, одна компания с площадкой на Московском шоссе.",
+      "operator_group": "sofit",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sofit-moskovskoe",
+      "name": "Софит-Сервис — Московское шоссе",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Московское шоссе, 302В",
+      "country": "Россия",
+      "phone": "+7 996 019-15-65",
+      "email": "sofit-avto@mail.ru",
+      "hours": null,
+      "services": [
+        "европейские грузовики",
+        "полуприцепы",
+        "пневматика",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://sofit-servis.ru/"
+      ],
+      "notes": "Отдельная площадка для европейской техники и полуприцепов.",
+      "operator_group": "sofit",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "regionservis52",
+      "name": "Регион Сервис",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Коновалова, 7",
+      "country": "Россия",
+      "phone": "+7 904 041-36-67",
+      "email": null,
+      "hours": "пн–пт 08:00–20:00",
+      "services": [
+        "европейские и китайские грузовики",
+        "ДВС",
+        "КПП",
+        "ходовая",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://regionservis52.ru/avtoservis/"
+      ],
+      "notes": "Прямой опубликованный телефон грузового сервиса.",
+      "operator_group": "regionservis52",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bastrak-nizhny",
+      "name": "Бас-Трак Сервис",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Коминтерна, 51",
+      "country": "Россия",
+      "phone": "+7 908 747-17-17",
+      "email": "info@bustrak-service.ru",
+      "hours": "пн–пт 08:00–18:00",
+      "services": [
+        "грузовики",
+        "автобусы",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://bustrak-service.ru/"
+      ],
+      "notes": "На сайте заявлены работы с юридическими лицами и НДС, 7 смотровых ям и 10 ремонтных мест; данные не подтверждены независимо.",
+      "operator_group": "bastrak",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckmaster33",
+      "name": "TruckMaster33",
+      "region": "Владимирская область",
+      "address": "Владимир, ул. Куйбышева, 24Л",
+      "country": "Россия",
+      "phone": "+7 4922 47-24-25",
+      "email": "info@truckmaster33.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://truckmaster33.ru/kontaktyi",
+        "https://truckmaster33.ru/uslugi"
+      ],
+      "notes": "Доп. 8 800 100-33-01; ООО ТФК, ИНН 3328437679 по собственному сайту, не сверено с ФНС.",
+      "operator_group": "truckmaster33",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehnar33",
+      "name": "Технарь",
+      "region": "Владимирская область",
+      "address": "Владимир, ул. Куйбышева, 4",
+      "country": "Россия",
+      "phone": "+7 900 482-05-63",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "сварка",
+        "радиаторы"
+      ],
+      "source_urls": [
+        "https://tehnar33.ru/"
+      ],
+      "notes": "Смешанный профиль, работа с тяжелыми грузовиками прямо заявлена.",
+      "operator_group": "tehnar33",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ats33-demidovo",
+      "name": "АвтоТрансСервис",
+      "region": "Владимирская область",
+      "address": "д. Демидово, 2Е",
+      "country": "Россия",
+      "phone": "+7 961 253-10-10",
+      "email": "avtotransservis33@mail.ru",
+      "hours": "пн–сб 09:00–19:00, вс выходной",
+      "services": [
+        "грузовики",
+        "электрика",
+        "ДВС",
+        "КПП",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://ats33.ru/"
+      ],
+      "notes": "Телефон сервиса с 08:00 до 20:00; доп. +7 910 177-19-99. Район/координаты уточнить.",
+      "operator_group": "ats33",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scania-auto-pro-ivanovo",
+      "name": "Scania Auto Pro",
+      "region": "Ивановская область",
+      "address": "Иваново, ул. Весенняя, 2",
+      "country": "Россия",
+      "phone": "+7 909 999-38-37",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики Scania",
+        "ремонт",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://s-ap.su/"
+      ],
+      "notes": "Доп. 8 800 222-37-97; ИНН 3700026384 указан на сайте.",
+      "operator_group": "scania-auto-pro",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transspecservis-ivanovo",
+      "name": "ТрансСпецСервис",
+      "region": "Ивановская область",
+      "address": "Иваново, ул. Лежневская, 158Г",
+      "country": "Россия",
+      "phone": "+7 915 828-05-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "полуприцепы",
+        "пневматика",
+        "электрика",
+        "ДВС",
+        "КПП",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://tss37.ru/"
+      ],
+      "notes": "Доп. телефон +7 906 513-16-13; часы приема уточнить.",
+      "operator_group": "tss37",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autocomtrans-ivanovo",
+      "name": "АвтоКомТранс — ремонтная зона",
+      "region": "Ивановская область",
+      "address": "Иваново, пер. Торфяной, 67Б",
+      "country": "Россия",
+      "phone": "+7 4932 26-33-66",
+      "email": "ivanovo2@autocomtrans.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "электрика",
+        "топливная аппаратура",
+        "ДВС",
+        "пневматика"
+      ],
+      "source_urls": [
+        "https://autocomtrans.ru/kontakty/",
+        "https://autocomtrans.ru/gruzovoy-remont/"
+      ],
+      "notes": "Именно ремонтная зона, не главный офис на Станкостроителей, 24. Номер отдела обслуживания клиентов +7 915 831-07-66; общий email info@autocomtrans.ru.",
+      "operator_group": "autocomtrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autocomtrans-kostroma",
+      "name": "АвтоКомТранс — Кострома",
+      "region": "Костромская область",
+      "address": "Кострома, ул. 2-я Волжская, 3А",
+      "country": "Россия",
+      "phone": "+7 4942 42-72-41",
+      "email": "info@autocomtrans.ru",
+      "hours": null,
+      "services": [
+        "восстановление ДВС",
+        "механическая обработка деталей",
+        "запчасти коммерческой техники"
+      ],
+      "source_urls": [
+        "https://autocomtrans.ru/kontakty/"
+      ],
+      "notes": "Телефон/факс, техспециалист +7 915 901-02-66; профиль агрегатный, прием целого тягача не подтвержден. Один оператор с Иваново.",
+      "operator_group": "autocomtrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "reys-expert-kostroma",
+      "name": "РейсЭксперт",
+      "region": "Костромская область",
+      "address": "Кострома, ул. Галичская, 116",
+      "country": "Россия",
+      "phone": "+7 4942 22-22-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "ТО",
+        "прицепы"
+      ],
+      "source_urls": [
+        "https://reys-expert.ru/",
+        "https://reys-expert.ru/contacts",
+        "https://reys-expert.ru/services"
+      ],
+      "notes": "Контактная страница и актуальные акции до 30.11.2026; график уточнить. Не объединять с Рейс44 без сверки.",
+      "operator_group": "reys-expert",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
