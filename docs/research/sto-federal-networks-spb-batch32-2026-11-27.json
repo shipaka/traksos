@@ -1,0 +1,2167 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. Manufacturer directories require confirmation of actual operator and right to reuse. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "fngroup-moscow-dmitrov",
+      "name": "FNGROUP — Москва",
+      "region": "Москва",
+      "address": "Дмитровское шоссе, 163",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-pavlovsky-posad",
+      "name": "FNGROUP — Павловский Посад",
+      "region": "Московская область",
+      "address": "Павлово-Посадский округ, д. Заозерье, 42Б",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-domodedovo",
+      "name": "FNGROUP — Домодедово",
+      "region": "Московская область",
+      "address": "Ленинский городской округ, промзона Пуговичино, вл. 8",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-tula",
+      "name": "FNGROUP — Тула",
+      "region": "Тульская область",
+      "address": "Ленинский район, пос. Иншинский, 41",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-tver",
+      "name": "FNGROUP — Тверь",
+      "region": "Тверская область",
+      "address": "Тверь, пос. Новое Власьево, 10, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-smolensk",
+      "name": "FNGROUP — Смоленск",
+      "region": "Смоленская область",
+      "address": "Смоленский район, с. Ольша, Садовый пер., 1В",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-ryazan",
+      "name": "FNGROUP — Рязань",
+      "region": "Рязанская область",
+      "address": "Рязань, Куйбышевское шоссе, 37В",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-kaluga",
+      "name": "FNGROUP — Калуга",
+      "region": "Калужская область",
+      "address": "Калуга, ул. Болдина, 81, корп. 1, кв. 1",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-voronezh",
+      "name": "FNGROUP — Воронеж",
+      "region": "Воронежская область",
+      "address": "Новоусманский район, с. Бабяково, Совхозная ул., 9/1",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-belgorod",
+      "name": "FNGROUP — Белгород",
+      "region": "Белгородская область",
+      "address": "Белгородский район, рп. Северный, Транспортная ул., 1Б",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-koryazhma",
+      "name": "FNGROUP — Коряжма",
+      "region": "Архангельская область",
+      "address": "Коряжма, ул. имени Дыбцына, 22/3",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "ежедневно 08:30–20:30 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-velsk",
+      "name": "FNGROUP — Вельск",
+      "region": "Архангельская область",
+      "address": "Вельск, Тракторная ул., 80, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–чт 09:00–18:00, пт 09:00–16:45 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-vologda",
+      "name": "FNGROUP — Вологда",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Ильюшина, 32",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–чт 09:00–18:00, пт 09:00–16:45 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-armavir",
+      "name": "FNGROUP — Армавир",
+      "region": "Краснодарский край",
+      "address": "Армавир, Новороссийская ул., 2/4",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-kirov",
+      "name": "FNGROUP — Киров",
+      "region": "Кировская область",
+      "address": "Киров, Техническая ул., 17Г",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-saratov",
+      "name": "FNGROUP — Саратов",
+      "region": "Саратовская область",
+      "address": "Саратов, просп. Строителей, 35",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-dzerzhinsk",
+      "name": "FNGROUP — Дзержинск",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Игумновское шоссе, 3К",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–чт 09:00–18:00, пт 09:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-samara",
+      "name": "FNGROUP — Самара",
+      "region": "Самарская область",
+      "address": "Самара, Заводское шоссе, 15А",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–чт 09:00–18:00, пт 09:00–16:45 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-kazan",
+      "name": "FNGROUP — Казань",
+      "region": "Республика Татарстан",
+      "address": "Зеленодольский район, М-7 Волга, 788-й км, 4",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-novotroitsk",
+      "name": "FNGROUP — Новотроицк",
+      "region": "Оренбургская область",
+      "address": "Новотроицк, Зелёная ул., 85А",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-ufa",
+      "name": "FNGROUP — Уфа",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, Сельская Богородская ул., 59",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-sovetsky",
+      "name": "FNGROUP — Советский",
+      "region": "ХМАО — Югра",
+      "address": "Советский, Южная промышленная зона",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-berezovsky",
+      "name": "FNGROUP — Берёзовский",
+      "region": "Свердловская область",
+      "address": "Берёзовский, Западная Промзона, 29А",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–чт 09:00–18:00, пт 09:00–17:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-surgut",
+      "name": "FNGROUP — Сургут",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Энергостроителей, 10/13",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-chelyabinsk",
+      "name": "FNGROUP — Челябинск",
+      "region": "Челябинская область",
+      "address": "Челябинск, Линейная ул., 98Б",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-krasnoyarsk",
+      "name": "FNGROUP — Красноярск",
+      "region": "Красноярский край",
+      "address": "Красноярск, Караульная ул., 25, стр. 4",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-norilsk",
+      "name": "FNGROUP — Норильск",
+      "region": "Красноярский край",
+      "address": "Норильск, ул. Нансена, 77",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-bratsk",
+      "name": "FNGROUP — Братск",
+      "region": "Иркутская область",
+      "address": "Братск, квартал Промбаза, 1",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-belovo",
+      "name": "FNGROUP — Белово",
+      "region": "Кемеровская область",
+      "address": "Белово, ул. Громовой, 17",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-chita",
+      "name": "FNGROUP — Чита",
+      "region": "Забайкальский край",
+      "address": "Чита, Геодезическая ул., 64, стр. 2",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-khabarovsk",
+      "name": "FNGROUP — Хабаровск",
+      "region": "Хабаровский край",
+      "address": "Хабаровский район, с. Ильинка, Гаражный пер., 1",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-blagoveshchensk",
+      "name": "FNGROUP — Благовещенск",
+      "region": "Амурская область",
+      "address": "Благовещенск, Северная ул., 165",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-magadan",
+      "name": "FNGROUP — Магадан",
+      "region": "Магаданская область",
+      "address": "Магадан, Марчеканский пер., 36",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "ремонт и ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон сети; прямой контакт и фактический ремонтный адрес уточнить.",
+      "operator_group": "fngroup",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-nn",
+      "name": "Ретрак Сервис — Нижний Новгород",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Окская гавань, 3, корп. 9",
+      "country": "Россия",
+      "phone": "+7 831 235-37-07",
+      "email": "retruck-centr@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-dzerzhinsk",
+      "name": "Ретрак Сервис — Дзержинск",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, ул. Лермонтова, 2/1",
+      "country": "Россия",
+      "phone": "+7 831 235-37-07",
+      "email": "servisdz@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-krasnodar",
+      "name": "Ретрак Сервис — Краснодар",
+      "region": "Краснодарский край",
+      "address": "Краснодар, пос. Победитель, 7",
+      "country": "Россия",
+      "phone": "+7 861 204-30-40",
+      "email": "krasnodar@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-nevinnomyssk",
+      "name": "Ретрак Сервис — Невинномысск",
+      "region": "Ставропольский край",
+      "address": "Невинномысск, Комбинатская ул., 4Б",
+      "country": "Россия",
+      "phone": "+7 865 549-45-01",
+      "email": "krasnodar@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-balashikha",
+      "name": "Ретрак Сервис — Балашиха",
+      "region": "Московская область",
+      "address": "Балашиха, д. Чёрное, Проектная ул., 78",
+      "country": "Россия",
+      "phone": "+7 495 105-95-05",
+      "email": "balashiha@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-stavropol",
+      "name": "Ретрак Сервис — Ставрополь",
+      "region": "Ставропольский край",
+      "address": "с. Надежда, Ставропольская ул., 83",
+      "country": "Россия",
+      "phone": "+7 865 297-72-75",
+      "email": "stavropol@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-yaroslavl",
+      "name": "Ретрак Сервис — Ярославль",
+      "region": "Ярославская область",
+      "address": "Ярославль, промзона Декабристов, 2",
+      "country": "Россия",
+      "phone": "+7 485 260-98-70",
+      "email": "yaroslavl@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-volgograd",
+      "name": "Ретрак Сервис — Волгоград",
+      "region": "Волгоградская область",
+      "address": "Волгоград, пос. ПМС-152, Широкая ул., 5",
+      "country": "Россия",
+      "phone": "+7 844 220-30-35",
+      "email": "volgograd@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-rostov",
+      "name": "Ретрак Сервис — Ростов-на-Дону",
+      "region": "Ростовская область",
+      "address": "Аксайский район, пос. Красный, Промышленная ул., 12",
+      "country": "Россия",
+      "phone": "+7 928 178-54-55",
+      "email": "rostov-na-donu@retruck-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакт из списка производителя; сверить с сайтом оператора.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-zelenograd",
+      "name": "Глобал Трак Сервис — Зеленоград",
+      "region": "Москва",
+      "address": "Зеленоград, просп. Генерала Алексеева, 42, стр. 1",
+      "country": "Россия",
+      "phone": "+7 495 739-62-01",
+      "email": "master@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-domodedovo",
+      "name": "Глобал Трак Сервис — Домодедово",
+      "region": "Московская область",
+      "address": "Домодедово, Белые Столбы, вл. Склады, 104, стр. 38",
+      "country": "Россия",
+      "phone": "+7 495 730-07-11",
+      "email": "priemka-domodedovo@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-pushkino",
+      "name": "Глобал Трак Сервис — Пушкино",
+      "region": "Московская область",
+      "address": "Пушкино, территория 33-й км М8 Холмогоры, вл. 1",
+      "country": "Россия",
+      "phone": "+7 496 500-01-00",
+      "email": "pushkino-buh@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-chulkovo",
+      "name": "Глобал Трак Сервис — Чулково",
+      "region": "Московская область",
+      "address": "Раменский округ, с. Михайловская Слобода, Шоссейная ул., 50",
+      "country": "Россия",
+      "phone": "+7 495 988-07-06",
+      "email": "priemka-chulkovo@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-solnechnogorsk",
+      "name": "Глобал Трак Сервис — Солнечногорск",
+      "region": "Московская область",
+      "address": "Солнечногорск, Ленинградское шоссе, 62-й км, вл. 1",
+      "country": "Россия",
+      "phone": "+7 495 642-86-46",
+      "email": "master@man-chulkovo.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-pervouralsk",
+      "name": "Глобал Трак Сервис — Первоуральск",
+      "region": "Свердловская область",
+      "address": "Первоуральский округ, Ново-Московский тракт, 25-й км, 3",
+      "country": "Россия",
+      "phone": "+7 343 287-15-51",
+      "email": "office@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-shushary",
+      "name": "Глобал Трак Сервис — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Поселковая ул., 21",
+      "country": "Россия",
+      "phone": null,
+      "email": "Shushary-priemka@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "В списке производителя указан телефон свердловской станции; не переносить ошибочный номер. Уточнить прямой телефон.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-afipsky",
+      "name": "Глобал Трак Сервис — Афипский",
+      "region": "Краснодарский край",
+      "address": "Северский район, пгт Афипский, Магистральная ул., 14",
+      "country": "Россия",
+      "phone": "+7 861 205-60-70",
+      "email": "Krasnodar-priemka@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-ekad",
+      "name": "Глобал Трак Сервис — Екатеринбург",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, 1 км ЕКАД, 5",
+      "country": "Россия",
+      "phone": "+7 343 278-60-07",
+      "email": "remont@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-aksay",
+      "name": "Глобал Трак Сервис — Аксай",
+      "region": "Ростовская область",
+      "address": "Аксай, Аксайский просп., 13Б",
+      "country": "Россия",
+      "phone": "+7 863 201-77-66",
+      "email": "rostov-priemka@gt-service.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Контакты производителя; актуальность и местоположение сверить.",
+      "operator_group": "gts",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ztsever-kultury",
+      "name": "ЗТ Север / ВКР",
+      "region": "Санкт-Петербург",
+      "address": "просп. Культуры, 40",
+      "country": "Россия",
+      "phone": "+7 812 702-17-16",
+      "email": "service@ztsever.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "ВКР и ЗТ Север указаны по одному адресу; одна кандидатная точка до уточнения, дополнительный контакт +7 812 449-13-80.",
+      "operator_group": "ztsever",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vkr-arctic",
+      "name": "ВКР Арктика",
+      "region": "Архангельская область",
+      "address": "Архангельск, ул. Ленина, 29",
+      "country": "Россия",
+      "phone": "+7 8182 60-90-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Проверить актуальный профиль.",
+      "operator_group": "vkr-arctic",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "zt-arctic",
+      "name": "ЗТ Арктика",
+      "region": "Архангельская область",
+      "address": "Архангельск, ул. Адмирала Макарова, 9, корп. 3",
+      "country": "Россия",
+      "phone": "+7 8182 45-70-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Проверить актуальный профиль.",
+      "operator_group": "zt-arctic",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ztsever-syktyvkar",
+      "name": "ЗТ Север",
+      "region": "Республика Коми",
+      "address": "Сыктывкар, 1-я Промышленная ул., 30/1",
+      "country": "Россия",
+      "phone": "+7 8212 25-52-34",
+      "email": "info@zt-sever.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Проверить актуальный профиль.",
+      "operator_group": "ztsever",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ztsever-velsk",
+      "name": "ЗТ Север",
+      "region": "Архангельская область",
+      "address": "Вельск, ул. Горького, 1, стр. 11",
+      "country": "Россия",
+      "phone": "+7 8182 49-47-94",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Проверить актуальный профиль.",
+      "operator_group": "ztsever",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nara-avto",
+      "name": "Нара Авто Транс",
+      "region": "Московская область",
+      "address": "Наро-Фоминск, ул. Маршала Жукова Г.К., стр. 172",
+      "country": "Россия",
+      "phone": "+7 495 741-32-32 доб. 560",
+      "email": "service@naraavto.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Проверить актуальный профиль.",
+      "operator_group": "nara-avto",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bomond-bratsk",
+      "name": "Бомонд",
+      "region": "Иркутская область",
+      "address": "Братск, проезд Строитель, 20",
+      "country": "Россия",
+      "phone": "+7 901 667-85-43",
+      "email": "sto-bomond@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Проверить актуальный профиль.",
+      "operator_group": "bomond-bratsk",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-barnaul",
+      "name": "Дальнобойщик — Барнаул",
+      "region": "Алтайский край",
+      "address": "Барнаул, Власихинская ул., 144А",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-novosibirsk",
+      "name": "Дальнобойщик — Новосибирск",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, Толмачёвская ул., 2/4",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-kemerovo",
+      "name": "Дальнобойщик — Кемерово",
+      "region": "Кемеровская область",
+      "address": "Кемерово, Заводская ул., 47",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-tomsk",
+      "name": "Дальнобойщик — Томск",
+      "region": "Томская область",
+      "address": "Томск, Ракетная ул., 6Б",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-biysk",
+      "name": "Дальнобойщик — Бийск",
+      "region": "Алтайский край",
+      "address": "Бийск, Яминская ул., 40/4",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-rubtsovsk",
+      "name": "Дальнобойщик — Рубцовск",
+      "region": "Алтайский край",
+      "address": "Рубцовск, Сельмашская ул., 02",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-novokuznetsk",
+      "name": "Дальнобойщик — Новокузнецк",
+      "region": "Кемеровская область",
+      "address": "Новокузнецк, ул. Димитрова, 8",
+      "country": "Россия",
+      "phone": "+7 3852 57-06-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники"
+      ],
+      "source_urls": [
+        "https://v-trailer.ru/service"
+      ],
+      "notes": "Общий телефон из списка производителя; подтвердить наличие ремонтной зоны и прямой контакт.",
+      "operator_group": "dalnoboyshik-siberia",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sotrans-krasny-bor",
+      "name": "СОТРАНС — Красный Бор",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, пгт Красный Бор, Промышленная ул., 3",
+      "country": "Россия",
+      "phone": "8 800 222-14-82",
+      "email": "service@sotrans.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://tc.sotrans.ru/contacts"
+      ],
+      "notes": "ИНН оператора 4716034632 опубликован на сайте, не проверен ФНС.",
+      "operator_group": "sotrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "inn_candidate": "4716034632"
+    },
+    {
+      "id": "sotrans-parnas",
+      "name": "СОТРАНС — Парнас",
+      "region": "Санкт-Петербург",
+      "address": "Парнас, Верхняя ул., 16, лит. А",
+      "country": "Россия",
+      "phone": "8 800 222-89-52",
+      "email": "spb@tc-sotrans.ru",
+      "hours": "ежедневно 09:00–22:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://tc.sotrans.ru/contacts"
+      ],
+      "notes": "ИНН оператора 4716034632 опубликован на сайте, не проверен ФНС.",
+      "operator_group": "sotrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "inn_candidate": "4716034632"
+    },
+    {
+      "id": "sotrans-elabuga",
+      "name": "СОТРАНС — Елабуга",
+      "region": "Республика Татарстан",
+      "address": "Елабужский район, М7, 1023-й км",
+      "country": "Россия",
+      "phone": "8 800 550-24-55",
+      "email": null,
+      "hours": "ежедневно 09:00–22:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://tc.sotrans.ru/contacts"
+      ],
+      "notes": "ИНН оператора 4716034632 опубликован на сайте, не проверен ФНС.",
+      "operator_group": "sotrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "inn_candidate": "4716034632"
+    },
+    {
+      "id": "sotrans-shelehov",
+      "name": "СОТРАНС — Шелехов",
+      "region": "Иркутская область",
+      "address": "Шелехов, ул. Ивана Кочубея, 56Б",
+      "country": "Россия",
+      "phone": "+7 921 370-46-24",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://tc.sotrans.ru/contacts"
+      ],
+      "notes": "ИНН оператора 4716034632 опубликован на сайте, не проверен ФНС.",
+      "operator_group": "sotrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "inn_candidate": "4716034632"
+    },
+    {
+      "id": "sotrans-rechitsy",
+      "name": "СОТРАНС — Речицы",
+      "region": "Московская область",
+      "address": "Раменский округ, с. Речицы, Совхозная ул., 45",
+      "country": "Россия",
+      "phone": "+7 921 695-44-84",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://tc.sotrans.ru/contacts"
+      ],
+      "notes": "ИНН оператора 4716034632 опубликован на сайте, не проверен ФНС.",
+      "operator_group": "sotrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "inn_candidate": "4716034632"
+    },
+    {
+      "id": "mtbr-shushary",
+      "name": "МТБР — Санкт-Петербург",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 181, корп. 2, стр. 1",
+      "country": "Россия",
+      "phone": "+7 812 449-52-52",
+      "email": "info@man-spb.ru",
+      "hours": "ежедневно 08:00–21:00",
+      "services": [
+        "ремонт грузовиков MAN",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://man-spb.ru/contacts/"
+      ],
+      "notes": "Собственный сайт, координаты переведены из градусов/минут/секунд.",
+      "operator_group": "mtbr",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 59.771946388888885,
+      "longitude": 30.455233333333332,
+      "publication_ready": false
+    },
+    {
+      "id": "cargo-technic-fedorovskoe",
+      "name": "Карго Техник",
+      "region": "Ленинградская область",
+      "address": "пос. Фёдоровское, Почтовая ул., 51",
+      "country": "Россия",
+      "phone": "+7 911 119-65-95",
+      "email": "cargotechnic@mail.ru",
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "КПП",
+        "редукторы",
+        "ходовая",
+        "ДВС"
+      ],
+      "source_urls": [
+        "https://cargotechnic.ru/"
+      ],
+      "notes": "Доп. +7 911 987-24-16.",
+      "operator_group": "cargo-technic-fedorovskoe",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tservice-fedorovskoe",
+      "name": "Т-Сервис",
+      "region": "Ленинградская область",
+      "address": "пос. Фёдоровское, Почтовая ул., 20А",
+      "country": "Россия",
+      "phone": "+7 921 591-84-54",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тягачи",
+        "прицепы",
+        "агрегаты",
+        "кузов"
+      ],
+      "source_urls": [
+        "https://t-service-spb.ru/"
+      ],
+      "notes": "Координаты с сайта. Возможное прежнее название Автоэнергия — не дублировать.",
+      "operator_group": "tservice-fedorovskoe",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 59.663862,
+      "longitude": 30.540923,
+      "publication_ready": false
+    },
+    {
+      "id": "furgonservice-sofiyskaya",
+      "name": "СТО Фургон-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Софийская ул., 127, корп. 6",
+      "country": "Россия",
+      "phone": "+7 812 929-46-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт надстроек и изотермических фургонов"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Адрес производителя может быть старым: каталог показывает Ям-Ижора, 2-я Ленинградская, 28. Не создавать вторую точку до сверки.",
+      "operator_group": "furgonservice-spb",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scania-shushary185",
+      "name": "Скания Русь — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 185",
+      "country": "Россия",
+      "phone": "+7 812 612-80-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовиков и полуприцепов"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Историческое название в списке производителя; подтвердить действующего оператора.",
+      "operator_group": "scania",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "beltruckcenter",
+      "name": "БелТракЦентр",
+      "region": "Белгородская область",
+      "address": "Белгород, ул. Константина Заслонова, 90",
+      "country": "Россия",
+      "phone": "+7 4722 20-23-20",
+      "email": null,
+      "hours": null,
+      "services": [
+        "КАМАЗ",
+        "прицепы"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Проверить актуальность.",
+      "operator_group": "beltruckcenter",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transit-v-smolensk",
+      "name": "Транзит-В",
+      "region": "Смоленская область",
+      "address": "Смоленск, ул. Лавочкина, 105",
+      "country": "Россия",
+      "phone": "8 4812 30-27-40",
+      "email": "man_tranzit.sml@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовики MAN",
+        "полуприцепы"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Проверить актуальность.",
+      "operator_group": "transit-v-smolensk",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autocenter-volzhsky",
+      "name": "Автоцентр",
+      "region": "Волгоградская область",
+      "address": "Волжский, ул. Пушкина, 117Г",
+      "country": "Россия",
+      "phone": "+7 8443 53-15-15",
+      "email": "info@vostok-3.ru",
+      "hours": null,
+      "services": [
+        "IVECO",
+        "полуприцепы"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Проверить актуальность.",
+      "operator_group": "autocenter-volzhsky",
+      "evidence": "manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "review_notes": [
+    "Compared prior batches by network names and known addresses, not full fuzzy cross-catalog dedup. Candidate count is not verified unique physical sites.",
+    "FNGROUP previous sites Shushary, Sertolovo, Novgorod, Arkhangelsk, Petrozavodsk, Adygea, Mineralnye Vody, Makhachkala skipped; HUB office excluded.",
+    "GTS Vyborg and Gorelovo already recorded; manufacturer source provides extra contacts for those, not duplicated.",
+    "Potential shared locations with differently named operators must be resolved before publishing. Shared network contacts not unique recipients."
+  ]
+}
