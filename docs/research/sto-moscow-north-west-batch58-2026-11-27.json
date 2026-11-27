@@ -1,0 +1,281 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted names, phones and address fragments against batch50 compact indexes B/C and record arrays 32–49,51–57. No exact match identified for these five candidates; review notes preserve nearby operators and same-address listings. Full global normalized audit pending.",
+  "records": [
+    {
+      "id": "b58-born-rekino",
+      "name": "БорнТракСервис",
+      "region": "Московская область",
+      "address": "Солнечногорский округ, д. Рекино-Кресты, промзона № 1, стр. 1А",
+      "country": "Россия",
+      "phone": "+7 925 015-78-69",
+      "additional_phones": [],
+      "email": "info@born-truck.ru",
+      "hours": "09:00–21:00 (дни не указаны)",
+      "services": [
+        "грузовой сервис",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://www.born-truck.ru/contacts/"
+      ],
+      "road": "М10",
+      "notes": "Сервисный адрес отличен от отдела продаж (д. 100); по адресу отдела продаж уже есть БизнесТрак в batch33. Уточнить отдельность оператора и сервисного участка.",
+      "evidence": "business_first_party_web_presence",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b58-sitrak-solnechnogorsk",
+      "name": "SITRAK СЕРВИС / ООО ТСЕРВИС",
+      "region": "Московская область",
+      "address": "Солнечногорск, Промышленная ул., стр. 5",
+      "country": "Россия",
+      "phone": "+7 903 257-92-57",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ремонт прицепов"
+      ],
+      "source_urls": [
+        "https://tservice63.clients.site/"
+      ],
+      "road": "М10",
+      "notes": "ИНН 5044117478, ОГРН 1195081083889 указаны в профиле, статус официального дилера заявлен предприятием; проверить отдельно.",
+      "evidence": "business_first_party_web_presence",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b58-gruzovik-naro",
+      "name": "Грузовик сервис",
+      "region": "Московская область",
+      "address": "Наро-Фоминск, Тургеневский тупик, 1",
+      "country": "Россия",
+      "phone": "+7 995 577-58-40",
+      "additional_phones": [
+        "+7 968 711-48-48"
+      ],
+      "email": null,
+      "hours": "Пн–Сб 09:00–19:00",
+      "services": [
+        "ремонт грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://naro-fominsk.spravker.ru/avtomobilnyie-gruzoperevozki/gruzovoj-avtoservis.htm"
+      ],
+      "road": "М3",
+      "notes": "Профиль и прием тяжелых тягачей уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b58-xvk-darna",
+      "name": "XVK-Truckservice",
+      "region": "Московская область",
+      "address": "Истринский округ, с. Дарна, 45А",
+      "country": "Россия",
+      "phone": "+7 901 751-42-03",
+      "additional_phones": [
+        "+7 926 250-30-30"
+      ],
+      "email": null,
+      "hours": "Пн–Сб 10:00–19:00",
+      "services": [
+        "грузовой автосервис"
+      ],
+      "source_urls": [
+        "https://istra.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М9",
+      "notes": "В справочнике также РемАвто по адресу 45А: возможный псевдоним; не считать отдельным объектом.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b58-istrascan",
+      "name": "ИстраСкан",
+      "region": "Московская область",
+      "address": "Истринский округ, пос. Октябрьской Фабрики, 26",
+      "country": "Россия",
+      "phone": "+7 495 197-67-57",
+      "additional_phones": [
+        "+7 916 968-22-15"
+      ],
+      "email": "Belscan1@mail.ru",
+      "hours": "ежедневно 09:00–20:00 (по публикации оператора)",
+      "services": [
+        "ремонт Scania",
+        "ДВС и КПП",
+        "электрика",
+        "пневмосистема",
+        "кузовные и стапельные работы"
+      ],
+      "source_urls": [
+        "https://istrascan.ru/contact-us-3/",
+        "https://rutube.ru/video/8fbf86d723caeabfa88387c0ccfb3424/"
+      ],
+      "road": "М9",
+      "notes": "В справочнике также ГрузДеталь по тому же адресу; не добавлять отдельно до проверки.",
+      "evidence": "business_first_party_web_presence",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Фура44",
+      "addresses": [
+        "Наро-Фоминск, ул. Погодина, вл. 93А, корп. 1",
+        "Наро-Фоминск, ул. Погодина, 101, стр. 1"
+      ],
+      "phone": "+7 985 336-89-29",
+      "email": "edikpol@yandex.ru",
+      "source_urls": [
+        "https://naro-fominsk.spravka.city/company/fura44",
+        "https://avtoservis-gid.ru/komp/fura44-naro-fominsk/"
+      ],
+      "reason": "Два адреса, уточнить актуальный въезд; не учитывать в новом основном массиве."
+    },
+    {
+      "name": "Трак-Ком Сервис / А108 Волоколамка",
+      "address": "Клинский округ, д. Коноплино, 37",
+      "phone": "+7 495 108-53-64",
+      "latitude": 56.277138,
+      "longitude": 36.677485,
+      "source_urls": [
+        "https://serviceklin.com/"
+      ],
+      "reason": "Дополнительный адрес на сайте общей сети; уточнить наличие ремонта именно на этой площадке, а не только других услуг комплекса."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "ГрузТехРем",
+      "batch": 6,
+      "phone": "+7 906 780-86-31",
+      "email": "service@green-day.su",
+      "latitude": 56.320797,
+      "longitude": 36.733448,
+      "legal_name": "ООО ГРИНДЭЙ",
+      "inn": "2124043000",
+      "ogrn": "1162130067516",
+      "hours": "Пн–Пт 09:00–18:00; вне графика по согласованию",
+      "source_urls": [
+        "https://gruztexrem.ru/kontakty"
+      ],
+      "reason": "Точный дубль; обогащение реквизитами и координатами из сайта, не считать круглосуточным ремонтом."
+    },
+    {
+      "name": "Трак-Ком Сервис",
+      "batch": 6,
+      "phone": "+7 495 108-53-64",
+      "latitude": 56.350439,
+      "longitude": 36.752453,
+      "source_urls": [
+        "https://serviceklin.com/"
+      ],
+      "reason": "Точный дубль основной площадки на Дурыманова."
+    },
+    {
+      "name": "Мастер Трак",
+      "batch": 29,
+      "phone": "+7 969 179-78-78",
+      "email": "remontscania@gmail.com",
+      "additional_emails": [
+        "info@remontscania.ru"
+      ],
+      "source_urls": [
+        "https://www.matruck.ru/"
+      ],
+      "reason": "Точный дубль."
+    },
+    {
+      "name": "ЦТО",
+      "batch": 29,
+      "phone": "+7 495 477-52-40",
+      "email": "info@c-to.ru",
+      "source_urls": [
+        "https://c-to.ru/"
+      ],
+      "reason": "Точный дубль."
+    },
+    {
+      "name": "Нара Авто Транс",
+      "batch": 32,
+      "phone": "+7 495 741-32-32",
+      "email": "service@naraavto.ru",
+      "hours": "ежедневно 08:00–22:00; круглосуточный прием груженых машин заявлен отдельно",
+      "source_urls": [
+        "https://naraavto.ru/directions/"
+      ],
+      "reason": "Точный дубль; не смешивать прием и часы выполнения ремонта."
+    }
+  ]
+}
