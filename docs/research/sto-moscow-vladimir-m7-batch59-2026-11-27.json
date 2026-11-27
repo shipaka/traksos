@@ -1,0 +1,660 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted city/address/name search across compact indexes B/C and batches 32–49,51–58. No exact candidate match found in this pass. Full normalized phone/address audit remains pending.",
+  "records": [
+    {
+      "id": "b59-ldsv",
+      "name": "ЛДСВ",
+      "region": "Московская область",
+      "address": "д. Долгое Лёдово, ул. Луговая, 28, стр. 3",
+      "country": "Россия",
+      "phone": "+7 925 854-69-54",
+      "additional_phones": [
+        "+7 925 735-32-72"
+      ],
+      "email": "ldsv.ru@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт тягачей",
+        "ремонт полуприцепов",
+        "ремонт осей и тормозов",
+        "автономные отопители"
+      ],
+      "source_urls": [
+        "https://ldsv.ru/kontacty/",
+        "https://ldsv.ru/o-kompanii/"
+      ],
+      "road": "Щёлковское шоссе",
+      "notes": "На сайте противоречие: 09:00–19:00 в шапке и 09:00–21:00 в контактах. График не определён.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-sbservice",
+      "name": "СБСервис",
+      "region": "Московская область",
+      "address": "Ногинск, шоссе Энтузиастов, 64Б",
+      "country": "Россия",
+      "phone": "+7 926 080-93-93",
+      "additional_phones": [
+        "+7 926 080-93-92",
+        "+7 495 973-58-65",
+        "+7 926 080-93-91"
+      ],
+      "email": "sbs@live.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ремонт прицепов (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://www.orgpage.ru/noginsk/ooo-sbservis-849939.html",
+        "https://noginsk.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "М7",
+      "notes": "Проверить действующего оператора и контакт.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-peksha-tent",
+      "name": "Тент",
+      "region": "Владимирская область",
+      "address": "д. Пекша, ул. Совхозная, 23",
+      "country": "Россия",
+      "phone": "+7 915 777-47-15",
+      "additional_phones": [
+        "+7 920 628-96-65",
+        "+7 915 777-47-78"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 08:00–17:00",
+      "services": [
+        "грузовой автосервис (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "Конкретные работы с тентами и грузовыми прицепами уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-pokrov-tyagach",
+      "name": "Тягач",
+      "region": "Владимирская область",
+      "address": "Петушинский район, Покров, 17К-11, 1-й км",
+      "country": "Россия",
+      "phone": "+7 906 610-54-04",
+      "additional_phones": [
+        "+7 905 648-55-70",
+        "+7 905 056-32-08"
+      ],
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "ремонт тягачей",
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://pokrov1.esbd.ru/autoservice/avtotehcentr_4194",
+        "https://petushki.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "М7",
+      "notes": "Второй источник указывает ул. Октябрьская, 149. Один телефон; до выяснения считать одним кандидатом, не публиковать.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-petushki-express",
+      "name": "Экспресс",
+      "region": "Владимирская область",
+      "address": "Петушки, ул. Вокзальная, 66",
+      "country": "Россия",
+      "phone": "+7 900 477-01-12",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00",
+      "services": [
+        "грузовой автосервис (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "Проверить размеры принимаемого транспорта.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-leonovo-sprint",
+      "name": "Спринт",
+      "region": "Владимирская область",
+      "address": "д. Леоново, 12",
+      "country": "Россия",
+      "phone": "+7 910 178-10-80",
+      "additional_phones": [
+        "+7 915 763-54-34"
+      ],
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "ремонт коммерческого транспорта (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "Грузовой профиль и круглосуточность требуют проверки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-old-petushki",
+      "name": "Автосервис — Шоссейная",
+      "region": "Владимирская область",
+      "address": "д. Старые Петушки, ул. Шоссейная, 154Б",
+      "country": "Россия",
+      "phone": "+7 916 470-83-37",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–23:00",
+      "services": [
+        "ремонт грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "Уточнить название оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-radius33",
+      "name": "Радиус33",
+      "region": "Владимирская область",
+      "address": "д. Новое Аннино, ул. Шоссейная, 10А",
+      "country": "Россия",
+      "phone": "+7 910 775-99-69",
+      "additional_phones": [
+        "+7 920 922-01-82",
+        "+7 910 774-76-62"
+      ],
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "ремонт коммерческого транспорта (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "На том же адресе карточка «М-7» без телефона; не считать отдельной площадкой.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-petushki-baza",
+      "name": "База",
+      "region": "Владимирская область",
+      "address": "Петушки, ул. Озёрная, 42",
+      "country": "Россия",
+      "phone": "+7 915 768-99-15",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00; перерыв 13:00–14:00",
+      "services": [
+        "ремонт грузовых автомобилей и сельхозтехники (справочник)"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "Уточнить специализацию и доступность для сторонних клиентов.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-petushki-lenina",
+      "name": "Шиномонтаж — Ленина",
+      "region": "Владимирская область",
+      "address": "Петушки, ул. Ленина, 9А",
+      "country": "Россия",
+      "phone": "+7 999 613-23-34",
+      "additional_phones": [
+        "+7 910 172-44-54"
+      ],
+      "email": null,
+      "hours": "Пн–Сб 08:00–19:00; Вс 08:00–18:00",
+      "services": [
+        "ремонт тягачей (справочник)",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М7",
+      "notes": "Грузовой размер шин уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-ivanor",
+      "name": "Ivanor",
+      "region": "Московская область",
+      "address": "Егорьевск, Коломенское шоссе, 3А",
+      "country": "Россия",
+      "phone": "+7 495 927-59-35",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Проверить грузовой профиль именно филиала.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-eurodiski",
+      "name": "Евро-Диски",
+      "region": "Московская область",
+      "address": "Егорьевск, ул. Крестьянская, 7",
+      "country": "Россия",
+      "phone": "+7 495 126-51-87",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Размеры колес уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-procarwash",
+      "name": "Pro_carwash_egk",
+      "region": "Московская область",
+      "address": "Егорьевск, ул. Советская, 2",
+      "country": "Россия",
+      "phone": "+7 915 248-32-88",
+      "additional_phones": [
+        "+7 916 296-63-49"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Габариты принимаемых машин и возможность грузовой мойки отдельно уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-express",
+      "name": "Express Machine",
+      "region": "Московская область",
+      "address": "Егорьевск, ул. Советская, 93",
+      "country": "Россия",
+      "phone": "+7 931 102-35-80",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Грузовой профиль и график проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-fauto",
+      "name": "Ф-Авто",
+      "region": "Московская область",
+      "address": "Егорьевск, ул. Меланжистов, 3Б",
+      "country": "Россия",
+      "phone": "+7 926 195-93-73",
+      "additional_phones": [
+        "+7 965 418-76-48"
+      ],
+      "email": null,
+      "hours": "Пн–Сб 09:00–20:00; Вс 10:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Грузовой профиль проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-avtomoto",
+      "name": "Авто мото сервис",
+      "region": "Московская область",
+      "address": "Егорьевск, ул. Александра Невского, 1Б, стр. 1",
+      "country": "Россия",
+      "phone": "+7 965 324-76-66",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Сб 09:00–18:00",
+      "services": [
+        "ремонт полуприцепов (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Приём тяжёлых полуприцепов требует проверки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b59-egorievsk-mill",
+      "name": "Автосервис — Мельничная",
+      "region": "Московская область",
+      "address": "Егорьевск, ул. Мельничная, 49/54",
+      "country": "Россия",
+      "phone": "+7 916 805-22-22",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт полуприцепов (справочник)"
+      ],
+      "source_urls": [
+        "https://egorevsk.spravker.ru/remont-pritsepov/"
+      ],
+      "road": "восток Московской области",
+      "notes": "Название и грузовой профиль уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Re: Mont / Автосервис",
+      "addresses": [
+        "Егорьевск, просп. Ленина, 20",
+        "Егорьевск, ул. Нечаевская, 22/10"
+      ],
+      "phone": "+7 915 354-33-60",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Один номер и два адреса; проверить действующее место."
+    },
+    {
+      "name": "АвтоРазбор № 1 / Ваш Автосервис",
+      "address": "Петушки, ул. Красноармейская, 141",
+      "phones": [
+        "+7 910 775-35-85",
+        "+7 917 989-21-21"
+      ],
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Две организации на одном адресе; проверить ремонтную зону и отдельность."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "FNGROUP — Павловский Посад",
+      "batch": 32,
+      "address": "д. Заозерье, 42Б",
+      "phone": "8 800 100-86-58",
+      "email": "office@fngroup.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "source_urls": [
+        "https://fngroup.ru/contacts/pavlovskiy-posad/"
+      ],
+      "reason": "Уже имеется, не добавлять повторно."
+    }
+  ]
+}
