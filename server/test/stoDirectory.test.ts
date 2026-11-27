@@ -28,3 +28,17 @@ test('independent directory import, review, feedback, edit and hide',async()=>{
  ok(await t.api('PUT','/api/admin/sto-directory/'+id,{revision:2,site:{...site,lat:60}},admin.token));
  assert.deepEqual(ok(await t.api('GET','/api/public/sto-directory')).points,[]);
 });
+
+test('geocode batch only changes matching missing-GPS drafts; never publishes or overwrites',async()=>{
+ const draft={...site,id:'directory:geocode-test',lat:null,lng:null};
+ ok(await t.api('POST','/api/admin/sto-directory/import',[draft],admin.token));
+ const result={id:draft.id,revision:1,address:draft.address,matchedAddress:draft.address,lat:59.9,lng:30.3,accuracy:'building',source:'https://example.com/geo',reuseAllowed:true};
+ assert.equal((await t.api('POST','/api/admin/sto-directory/geocode-results',[result],client.token)).status,403);
+ assert.equal((await t.api('POST','/api/admin/sto-directory/geocode-results',[{...result,accuracy:'city'}],admin.token)).status,400);
+ assert.equal(ok(await t.api('POST','/api/admin/sto-directory/geocode-results',[{...result,address:'Другой адрес'}],admin.token)).skipped,1);
+ assert.equal(ok(await t.api('POST','/api/admin/sto-directory/geocode-results',[result],admin.token)).saved,1);
+ assert.equal(ok(await t.api('POST','/api/admin/sto-directory/geocode-results',[result],admin.token)).skipped,1);
+ const row=await t.db.one<any>('select state,location_checked,geocode_accuracy from sto_directory_sites where id=$1',[draft.id]);
+ assert.equal(row?.state,'draft');assert.equal(row?.location_checked,false);assert.equal(row?.geocode_accuracy,'building');
+ assert.deepEqual(ok(await t.api('GET','/api/public/sto-directory')).points,[]);
+});

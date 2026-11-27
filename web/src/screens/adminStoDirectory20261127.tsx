@@ -4,7 +4,7 @@ import './adminStoDirectory20261127.css';
 type Category='sto'|'tyre'|'wash'|'refrigeration'|'trailer';
 type Status='draft'|'published'|'hidden';
 type Site={id:string;name:string;address:string;phone:string;category:Category;lat:number|null;lng:number|null;services:string[];hours:string|null;source:string};
-type Item=Site&{state:Status;revision:number;source_reuse_checked:boolean;location_checked:boolean;working_reports:number;not_working_reports:number};
+type Item=Site&{state:Status;revision:number;source_reuse_checked:boolean;location_checked:boolean;working_reports:number;not_working_reports:number;geocode_source?:string|null;geocode_accuracy?:string|null;geocode_matched_address?:string|null};
 const categories:Record<Category,string>={sto:'Грузовое СТО',tyre:'Шиномонтаж',wash:'Мойка',refrigeration:'Рефрижераторы',trailer:'Прицепы'};
 const states:Record<Status,string>={draft:'Черновик',published:'На карте',hidden:'Скрыто'};
 const root='/api/admin/sto-directory';
@@ -41,6 +41,7 @@ function ReviewCard({item,onSaved,onEdit}:{item:Item;onSaved:()=>void;onEdit:()=
  <div className="sto-admin-site-head"><div><b>{item.name}</b><small>{item.address}</small></div><span>{states[item.state]}</span></div>
  <p>{categories[item.category]} · {item.phone}</p><small>{item.services.join(' · ')}</small>
  <p>{item.lat===null||item.lng===null?'Координаты не определены':item.lat+', '+item.lng}</p>
+ {item.geocode_source&&<small>Геокодер: {item.geocode_accuracy} · {item.geocode_matched_address} · {item.geocode_source}</small>}
  <a href={/^https?:\/\//i.test(item.source)?item.source:undefined} target="_blank" rel="noopener noreferrer">Источник сведений</a>
  <p>Отзывы: работает — {item.working_reports}; не работает — {item.not_working_reports}</p>
  <label><input type="checkbox" checked={source} disabled={busy} onChange={e=>setSource(e.target.checked)}/> Источник и право использования проверены</label>
@@ -51,6 +52,22 @@ function ReviewCard({item,onSaved,onEdit}:{item:Item;onSaved:()=>void;onEdit:()=
  <button className="btn ghost small" disabled={busy} onClick={()=>void review('hidden')}>Скрыть</button>
  <button className="btn ghost small" disabled={busy} onClick={onEdit}>Изменить</button>
  </div></article>;
+}
+function GeocodeTools({onSaved}:{onSaved:()=>void}){
+ const [busy,setBusy]=useState(false),[note,setNote]=useState('');const lock=useRef(false);
+ async function exportQueue(){if(lock.current)return;lock.current=true;setBusy(true);setNote('');
+  try{const all:{id:string;address:string;revision:number}[]=[];let cursor='';
+   for(let i=0;i<100;i++){const r=await get<{items:typeof all}>(root+'/geocode-queue?limit=100&after='+encodeURIComponent(cursor));all.push(...r.items);if(r.items.length<100)break;cursor=r.items[r.items.length-1].id;if(i===99)throw Error('Очередь больше 10 000 строк. Требуется пакетный экспорт.');}
+   const url=URL.createObjectURL(new Blob([JSON.stringify(all,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='sto-geocode-queue.json';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);setNote('Выгружено адресов: '+all.length);
+  }catch(e){setNote(message(e));}finally{lock.current=false;setBusy(false);}
+ }
+ async function importFile(file:File|undefined){if(!file||lock.current)return;lock.current=true;setBusy(true);setNote('');
+  let saved=0,skipped=0;try{if(file.size>5_000_000)throw Error('Файл больше 5 МБ');const rows=JSON.parse(await file.text());if(!Array.isArray(rows)||rows.length<1||rows.length>10000)throw Error('Нужен JSON-массив до 10 000 строк');if(new Set(rows.map(p=>p?.id)).size!==rows.length)throw Error('Повтор ID в файле');
+   for(let i=0;i<rows.length;i+=100){const r=await post<{saved:number;skipped:number}>(root+'/geocode-results',rows.slice(i,i+100));saved+=r.saved;skipped+=r.skipped;}
+   setNote('Сохранено: '+saved+'. Пропущено (изменённые/неподходящие карточки): '+skipped+'. Публикации нет.');
+  }catch(e){setNote('Сохранено до ошибки: '+saved+'. '+message(e));}finally{onSaved();lock.current=false;setBusy(false);}
+ }
+ return <details className="card stack"><summary>Массовое определение координат</summary><p className="note">Выгрузите адреса для разрешённого к коммерческому хранению геокодера. В JSON-результате сохраните id, revision, address и добавьте matchedAddress, lat, lng, accuracy (entrance, building или parcel), source (URL) и reuseAllowed: true. Не используйте центры городов. Импорт не публикует точки.</p><button className="btn ghost" disabled={busy} onClick={()=>void exportQueue()}>Выгрузить адреса JSON</button><label className="stack">Импорт результата JSON<input type="file" className="field" accept=".json,application/json" disabled={busy} onChange={e=>{const file=e.target.files?.[0];e.target.value='';void importFile(file);}}/></label>{note&&<p role="status">{note}</p>}</details>;
 }
 const initial={q:'',state:'',category:'',missingGps:false};
 export function AdminStoDirectory(){
@@ -69,6 +86,7 @@ export function AdminStoDirectory(){
  <label className="stack">Специализация<select className="field" value={draft.category} onChange={e=>setDraft(d=>({...d,category:e.target.value}))}><option value="">Все</option>{Object.entries(categories).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
  <label><input type="checkbox" checked={draft.missingGps} onChange={e=>setDraft(d=>({...d,missingGps:e.target.checked}))}/> Только без GPS</label>
  <button className="btn" type="submit">Найти</button><button className="btn ghost" type="button" onClick={()=>setEdit(null)}>Добавить СТО</button></form>
+ <GeocodeTools onSaved={()=>reload(v=>v+1)}/>
  {edit!==undefined&&<Editor key={edit?.id??'new'} item={edit} onSaved={saved} onCancel={()=>setEdit(undefined)}/>}
  {loading&&<p role="status">Загружаем справочник…</p>}{error&&<p className="banner bad" role="alert">{error} <button className="btn ghost small" onClick={()=>reload(v=>v+1)}>Повторить</button></p>}
  {!loading&&!error&&items.length===0&&<p>Карточек по этим условиям нет.</p>}

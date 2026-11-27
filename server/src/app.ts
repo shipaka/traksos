@@ -185,6 +185,12 @@ export function createApp(d: Deps) {
     const category=parse(z.enum(['','sto','tyre','wash','refrigeration','trailer']),c.query.get('category')??'');
     return stoDirectory.adminList(after,limit,search,state,category,c.query.get('missingGps')==='1');
   });
+  r.get('/api/admin/sto-directory/geocode-queue', ['admin'], (c:AuthedCtx) => {
+    const after=parse(z.string().max(120),c.query.get('after')??'');
+    const limit=parse(z.coerce.number().int().min(1).max(100),c.query.get('limit')??100);
+    return stoDirectory.geocodeQueue(after,limit);
+  });
+  r.post('/api/admin/sto-directory/geocode-results', ['admin'], (c:AuthedCtx) => stoDirectory.importGeocodes(c.body));
   r.post('/api/admin/sto-directory/import', ['admin'], (c:AuthedCtx) => stoDirectory.create(c.body));
   r.put('/api/admin/sto-directory/:id', ['admin'], (c:AuthedCtx) => stoDirectory.edit(c.params.id,c.body));
   r.put('/api/admin/sto-directory/:id/review', ['admin'], (c:AuthedCtx) => stoDirectory.review(c.params.id,c.user,c.body));

@@ -31,6 +31,30 @@ export class StoDirectory {
    and ($4='' or s.state=$4) and ($5='' or s.category=$5)
    and ($6=false or s.lat is null) order by s.id limit $2`,[after,limit,search,state,category,missingGps])};
  }
+ async geocodeQueue(after:string,limit:number){
+  return {items:await this.db.query(`select id,address,revision from sto_directory_sites where state='draft' and lat is null and id>$1 order by id limit $2`,[after,limit])};
+ }
+ async importGeocodes(body:unknown){
+  const rows=parse(z.array(z.object({
+   id:siteId,revision:z.number().int().positive(),address:z.string().min(5).max(400),
+   matchedAddress:z.string().trim().min(5).max(400),lat:z.number().finite().min(-85).max(85),
+   lng:z.number().finite().min(-180).max(180),accuracy:z.enum(['entrance','building','parcel']),
+   source:z.string().url().max(1000).refine(s=>/^https?:\/\//i.test(s)),
+   reuseAllowed:z.literal(true)
+  }).strict().refine(p=>!(p.lat===0&&p.lng===0))).min(1).max(100),body);
+  if(new Set(rows.map(p=>p.id)).size!==rows.length)throw bad('duplicate_id');
+  return this.db.tx(async q=>{
+   const result:{id:string;status:'saved'|'skipped'}[]=[];
+   for(const p of [...rows].sort((a,b)=>a.id.localeCompare(b.id))){
+    const saved=await q.one(`update sto_directory_sites set lat=$4,lng=$5,geocode_source=$6,geocode_accuracy=$7,
+      geocode_matched_address=$8,geocoded_at=now(),location_checked=false,revision=revision+1,updated_at=now()
+      where id=$1 and revision=$2 and address=$3 and state='draft' and lat is null and lng is null returning id`,
+      [p.id,p.revision,p.address,p.lat,p.lng,p.source,p.accuracy,p.matchedAddress]);
+    result.push({id:p.id,status:saved?'saved':'skipped'});
+   }
+   return {saved:result.filter(p=>p.status==='saved').length,skipped:result.filter(p=>p.status==='skipped').length,result};
+  });
+ }
  async create(body:unknown){
   const rows=parse(z.array(input).min(1).max(100),body);
   if(new Set(rows.map(p=>p.id)).size!==rows.length)throw bad('duplicate_id','Повтор идентификатора в пакете');
@@ -52,7 +76,7 @@ export class StoDirectory {
    if(current.revision!==p.revision)throw conflict('stale_revision','Карточка уже изменена');
    const x=p.site;
    return q.one(`update sto_directory_sites set name=$2,address=$3,phone=$4,category=$5,lat=$6,lng=$7,services=$8::jsonb,hours=$9,source=$10,
-      state='draft',source_reuse_checked=false,location_checked=false,reviewed_by=null,reviewed_at=null,revision=revision+1,updated_at=now()
+      state='draft',source_reuse_checked=false,location_checked=false,reviewed_by=null,reviewed_at=null,geocode_source=null,geocode_accuracy=null,geocoded_at=null,geocode_matched_address=null,revision=revision+1,updated_at=now()
       where id=$1 returning id,state,revision`,[key,x.name,x.address,x.phone,x.category,x.lat,x.lng,JSON.stringify(x.services),x.hours,x.source]);
   });
  }
