@@ -1,0 +1,265 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted review of compact indexes B/C and batches 13,32,42,74 by names/addresses and relevant phones; no matches found. Full cross-batch audit pending. No telephone calls, legal, coordinate or actual operation verification. Weak directory-only generic truck listings held in review_only.",
+  "records": [
+    {
+      "id": "b75-nerchinsk-tire",
+      "name": "Шиномонтаж и дископрав",
+      "region": "Забайкальский край",
+      "address": "Нерчинск, ул. Октябрьская, 148Б",
+      "country": "Россия",
+      "phone": "+7 914 469-29-21",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по картографической карточке",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт дисков"
+      ],
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Грузовой+шиномонтаж+Нерчинск+Октябрьская+148Б&query_place_id=ChIJA44lBXZszV0RIUYKwBKDcN4"
+      ],
+      "notes": "Грузовой профиль явно указан в названии карточки; график, въезд, оснастку подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b75-skovorodino-dalnoboy",
+      "name": "Дальнобойщик",
+      "region": "Амурская область",
+      "address": "Сковородино, ул. Партизанская, 35А",
+      "country": "Россия",
+      "phone": "+7 924 342-20-23",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://blagoveshensk.spravker.ru/gorod-skovorodino/org/dalnoboishchik.htm",
+        "https://skovorodino.jsprav.ru/avto-moto/shinomontazhdalnobojschik/"
+      ],
+      "notes": "Два каталога совпадают по телефону и адресу. Выезд и ремонт тягачей уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b75-amurskoe-r297",
+      "name": "Шиномонтажная мастерская",
+      "region": "Амурская область",
+      "address": "с. Амурское, Р-297, 1536-й км, 2",
+      "country": "Россия",
+      "phone": "+7 914 579-81-50",
+      "additional_phones": [
+        "+7 924 342-10-00"
+      ],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж",
+        "выездной шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/amurskaya_oblast/org/shinomontazhnaya_masterskaya/4527871"
+      ],
+      "notes": "Прямо указаны выезд и грузовой профиль. Проверить фактический график и точный въезд.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b75-mogocha-grass",
+      "name": "Grass",
+      "region": "Забайкальский край",
+      "address": "Могоча, ул. Плясова, 1",
+      "country": "Россия",
+      "phone": "+7 914 463-55-91",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 10:00–20:00",
+      "services": [
+        "грузовая автомойка"
+      ],
+      "source_urls": [
+        "https://mogocha.jsprav.ru/avtomojki/grass/"
+      ],
+      "notes": "Грузовая мойка указана в видах деятельности каталога; размеры бокса и текущая работа не подтверждены. Не считать ремонт подтвержденным.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Автосервис",
+      "region": "Забайкальский край",
+      "address": "Могоча, ул. Чапаева, 24",
+      "phone": "+7 914 492-78-65",
+      "hours": null,
+      "source_urls": [
+        "https://mogocha.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://mogocha.jsprav.ru/avtoservisyi-avtotehtsentryi/avtoservis/"
+      ],
+      "reason": "Справочник относит к грузовым сервисам, индивидуальная карточка не уточняет тяжелые машины. Отзыв 2024; низкая уверенность, обязательна проверка профиля."
+    },
+    {
+      "name": "Автосервис",
+      "region": "Забайкальский край",
+      "address": "Могоча, ул. Промышленная, 5Е",
+      "phone": "+7 914 132-01-10",
+      "hours": "ежедневно 10:00–20:00, перерыв 13:00–14:00",
+      "source_urls": [
+        "https://mogocha.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://mogocha.jsprav.ru/avtoservisyi-avtotehtsentryi/avtoservis-1/"
+      ],
+      "reason": "Низкая уверенность: рубрика грузового ремонта, тяжелая оснастка не доказана. До подтверждения не публиковать."
+    },
+    {
+      "name": "Pit-Stop грузовой автосервис",
+      "address": "пгт Чернышевск",
+      "phone": "+7 924 509-13-12",
+      "source_urls": [
+        "https://avtoservis-gid.ru/komp/pit-stop-gruzovoj-avtoservis-shinomontazh-avtotovary-chernyshevsk/"
+      ],
+      "reason": "Явно грузовой профиль, но нет точного адреса. Не объединять с одноименным сервисом без проверки."
+    },
+    {
+      "name": "Pit-Stop",
+      "address": "Чернышевск, Амурский пер., 1",
+      "phone": "+7 996 312-09-50",
+      "source_urls": [
+        "https://avtoservis-gid.ru/komp/pit-stop-chernyshevsk/"
+      ],
+      "reason": "Грузовой профиль и связь с Pit-Stop +7 924 509-13-12 не доказаны."
+    },
+    {
+      "name": "TOP GEAR",
+      "address": "Могоча, ул. Погодаева, 16",
+      "phone": "+7 914 483-74-18",
+      "source_urls": [
+        "https://mogocha.jsprav.ru/shinomontazh/top-gear/"
+      ],
+      "reason": "Грузовая оснастка не доказана; R22 не равнозначно грузовому колесу."
+    },
+    {
+      "name": "Грузовой, легковой шиномонтаж",
+      "address": "Дарасун",
+      "phone": "+7 995 553-22-50",
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Грузовой+легковой+шиномонтаж+Дарасун&query_place_id=ChIJD1eKfd5ZyV0R-bwDYpx2bPY"
+      ],
+      "reason": "Грузовой профиль явно назван, нет точного адреса."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Сковородино, ул. Победы, 13Б",
+      "source_urls": [
+        "https://blagoveshensk.spravker.ru/gorod-skovorodino/shinomontazh/shinomontazh.htm"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтаж СТО",
+      "address": "Сковородино, ул. Сковородина, 121",
+      "phone": "+7 924 448-99-13",
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Шиномонтаж+СТО+Сковородино+121&query_place_id=ChIJOUT3JNW6J1wR-NZX6sYuhY0"
+      ],
+      "reason": "Грузовой профиль не доказан."
+    },
+    {
+      "name": "Японец",
+      "address": "Сковородино, ул. Красноармейская, 32",
+      "phone": "+7 914 381-35-05",
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Японец+Сковородино&query_place_id=ChIJ1_CnB1O7J1wRMI7hexUFpzQ"
+      ],
+      "reason": "СТО и шиномонтаж, тяжелый грузовой профиль не установлен."
+    },
+    {
+      "name": "Автосервис",
+      "address": "Магдагачи, ул. Карла Маркса, 45, средний бокс",
+      "phone": "+7 914 570-07-68",
+      "source_urls": [
+        "https://totadres.ru/amurskaya_oblast/org/avtoservis/5040640"
+      ],
+      "reason": "Собственная рубрика услуг не подтверждает грузовой ремонт."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Магдагачи",
+      "phone": "+7 914 605-91-56",
+      "source_urls": [
+        "https://totadres.ru/amurskaya_oblast/org/shinomontazhnaya_masterskaya/6011413"
+      ],
+      "reason": "Нет точного адреса, грузовой профиль неизвестен."
+    },
+    {
+      "name": "Магазин шин",
+      "address": "Магдагачи",
+      "phone": "+7 924 345-27-47",
+      "source_urls": [
+        "https://glav-auto.ru/services/ru/magdagachi"
+      ],
+      "reason": "Нет точного адреса и доказательств грузового шиномонтажа."
+    }
+  ],
+  "existing_record_reviews": []
+}
