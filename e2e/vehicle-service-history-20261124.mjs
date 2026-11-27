@@ -176,3 +176,6 @@ try{
   assert(jsErrors.length===0,'Real React runtime errors: '+jsErrors.join('; '));
   console.log('PASS: private vehicle service history isolated; retry, renewal and form reset work');
 }finally{await browser.close();}
+
+// Exercise the shared model-photo load state in the existing browser CI entrypoint.
+await import('./vehicle-photo-load-state-20261127.mjs');
