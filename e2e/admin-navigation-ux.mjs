@@ -58,6 +58,9 @@ try {
       if(geometry.mainWidth < 200)throw Error(width+'px, '+label+': inaccessible workspace '+JSON.stringify(geometry));
       if(jsErrors.length)throw Error(width+'px, '+label+': JavaScript error '+jsErrors.join('; '));
     };
+    // A normal admin navigation must never silently enter a client sandbox.
+    if(await page.locator('.desktop-nav a[href*="/admin/test-center/client"], .admin-navigation a[href*="/admin/test-center"]').count())
+      throw Error('Duplicate or implicit sandbox link in ordinary admin navigation');
     await checkLayout('dashboard');
     await page.screenshot({path:'e2e/shots/admin-ux/initial-'+width+'.png',fullPage:true});
     await openNav();
@@ -70,6 +73,12 @@ try {
     await navigation.getByRole('button',{name:'Страхование и ТО',exact:true}).click();
     await page.waitForURL(/#\/admin\/section\/vehicleServices$/);
     await page.locator('.admin-stage-head h2').getByText('Страхование и ТО',{exact:true}).waitFor();
+    await page.getByRole('link',{name:'Управлять регистрацией страховых агентов'}).click();
+    await page.waitForURL(/#\/admin\/section\/access$/);
+    await page.getByRole('heading',{name:'Зарегистрировать человека вручную'}).waitFor();
+    await page.getByRole('region',{name:'Допуск страховых агентов'}).waitFor();
+    await page.goBack();
+    await page.waitForURL(/#\/admin\/section\/vehicleServices$/);
     await checkLayout('insurance after search');
     await page.screenshot({path:'e2e/shots/admin-ux/insurance-'+width+'.png',fullPage:true});
     // Every control must navigate to its own deep-linkable section, not a single text strip.
@@ -166,6 +175,8 @@ try {
     // Refresh must retain the selected section. Going back to a section should work too.
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('.admin-stage-head h2').getByText('Настройки',{exact:true}).waitFor();
+    if(await page.getByText('Страховые агенты',{exact:true}).count() || await page.getByRole('region',{name:'Допуск страховых агентов'}).count())
+      throw Error('Partner registration controls duplicated inside settings');
     // The empty API response must render a branded, actionable state, not a blank panel.
     await page.route('**/api/admin/orders',route=>route.fulfill({status:200,json:[]}));
     await page.goto(BASE+'/#/admin/section/orders');

@@ -106,6 +106,7 @@ export function vehicleReferencePhoto(
 export function vehicleFamilyReferencePhoto(
   brand?:string|null,model?:string|null,year?:number|string|null
 ):VehiclePhoto|null {
+  if(typeof year==='string'&&!/^\d{4}$/.test(year.trim()))return null;
   const y=(typeof year==='number'||typeof year==='string')?Number(year):NaN;
   if(canonicalVehicleBrand(brand)!=='scania'||key(model)!=='r'||!Number.isInteger(y)||y<2016||y>2025)
     return null;

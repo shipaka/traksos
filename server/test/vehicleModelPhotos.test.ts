@@ -107,3 +107,26 @@ test('generic Scania R cards may use an explicitly labelled family example only 
     ['Scania','R',2026],['Scania','R',null],['Scania','R',2019.5],['Volvo','R',2020],['Scania','R520',2020]
   ] as const) assert.equal(vehicleFamilyReferencePhoto(brand,model,year),null);
 });
+
+test('supplied malformed model years never masquerade as absent or valid years',()=>{
+  const malformed=[0,1899,2101,2010.5,NaN,Infinity,'unknown','2010.0','2.01e3','0x7da','2010xyz','201','02010'] as const;
+  for(const year of malformed){
+    for(const [brand,model] of [['Renault','Premium'],['DAF','XF105'],['MAN','TGX']] as const)
+      assert.equal(vehicleReferencePhoto(brand,model,year),null,brand+' '+model+' invalid year '+year);
+  }
+  for(const year of [undefined,null,'','  '] as const){
+    assert.ok(vehicleReferencePhoto('Renault','Premium',year));
+    assert.ok(vehicleReferencePhoto('DAF','XF105',year));
+    assert.equal(vehicleReferencePhoto('MAN','TGX',year),null);
+  }
+  assert.ok(vehicleReferencePhoto('Renault','Premium',' 2010 '));
+  assert.ok(vehicleReferencePhoto('MAN','TGX','2014'));
+});
+
+test('family examples require a canonical four-digit year, not a numeric coercion',()=>{
+  for(const year of ['2.02e3','0x7e4','2020.0','02020','+2020','2020xyz',2020.5,NaN,Infinity,'',null] as const)
+    assert.equal(vehicleFamilyReferencePhoto('Scania','R',year),null,'invalid family year '+year);
+  assert.ok(vehicleFamilyReferencePhoto('Scania','R',' 2020 '));
+  assert.ok(vehicleFamilyReferencePhoto('Scania','R',2016));
+  assert.ok(vehicleFamilyReferencePhoto('Scania','R',2025));
+});

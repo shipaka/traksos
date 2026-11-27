@@ -145,3 +145,17 @@ test('insurer and inspection partner contracts use different financial explanati
     assert.doesNotMatch(contract.body,/10 500.*сервисный сбор/);
   }
 });
+
+
+test('referral history guidance distinguishes list count from reward entitlement and contract terms',()=>{
+  for(const role of ['owner','driver','master','tow','service','insurer','inspection','moderator','admin'] as const){
+    const guide=financeGuide(defaultSettings,role);
+    assert.match(guide.referralHistoryNote,/общее количество.*100 записей/);
+    assert.match(guide.referralHistoryNote,/Новые регистрации могут сдвигать страницы/);
+    assert.match(guide.referralHistoryNote,/последние 50 операций/);
+    assert.match(guide.referralHistoryNote,/не гарантируют начисление/);
+  }
+  for(const audience of ['client','performer','insurer','inspection'] as const){
+    assert.doesNotMatch(contractEconomyAnnex(defaultSettings,audience),/Новые регистрации могут сдвигать страницы/);
+  }
+});
