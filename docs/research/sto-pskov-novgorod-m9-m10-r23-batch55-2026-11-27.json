@@ -1,0 +1,599 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Place-name review against compact indexes B/C (1–31) and records 32–49,51–54. No matching physical sites for these 15 found by targeted pass. Full normalized cross-region phone/address audit not performed. Network phone may be shared.",
+  "records": [
+    {
+      "id": "b55-sebezh-roga",
+      "name": "СТО Рога и Копыта",
+      "region": "Псковская область",
+      "address": "Себеж, ул. В. Марго, 58А",
+      "country": "Россия",
+      "phone": "+7 911 363-98-51",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; Сб 10:00–16:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://pskov.spravker.ru/gorod-opochka/gruzovoi-shinomontazh/",
+        "https://sebezh.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-opochka-mehanizatorov",
+      "name": "Станция технического обслуживания",
+      "region": "Псковская область",
+      "address": "Опочка, ул. Механизаторов, 11",
+      "country": "Россия",
+      "phone": "+7 911 362-39-97",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://pskov.spravker.ru/gorod-opochka/gruzovoi-shinomontazh/",
+        "https://opochka.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "road": "Р23",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-porkhov-autoclinic",
+      "name": "АвтоКлиника",
+      "region": "Псковская область",
+      "address": "Порхов, ул. Профсоюзная, 16Б",
+      "country": "Россия",
+      "phone": "+7 81134 2-44-44",
+      "additional_phones": [
+        "+7 960 225-08-09"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://pskov.spravker.ru/gorod-porkhov/gruzovoi-shinomontazh/"
+      ],
+      "road": "региональная сеть",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-luki-agroshintorg",
+      "name": "АгроШинТорг",
+      "region": "Псковская область",
+      "address": "Великие Луки, Октябрьский просп., 77",
+      "country": "Россия",
+      "phone": "+7 81153 6-51-51",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; Сб–Вс 09:00–17:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://luki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-luki-4tochki",
+      "name": "4Точки",
+      "region": "Псковская область",
+      "address": "Великие Луки, пер. Пушкина, 4",
+      "country": "Россия",
+      "phone": "+7 81153 3-85-71",
+      "additional_phones": [
+        "8 800 100-17-41"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-luki-asta",
+      "name": "Аста",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. 3-й Ударной Армии, 66",
+      "country": "Россия",
+      "phone": "+7 81153 7-82-30",
+      "additional_phones": [
+        "+7 911 697-20-00"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 08:00–19:00; Сб–Вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-luki-ivanor-october",
+      "name": "Ivanor",
+      "region": "Псковская область",
+      "address": "Великие Луки, Октябрьский просп., 138Б",
+      "country": "Россия",
+      "phone": "+7 81153 6-57-51",
+      "additional_phones": [
+        "8 800 250-33-60"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-luki-ivanor-civic",
+      "name": "Ivanor",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. Гражданская, 11А",
+      "country": "Россия",
+      "phone": "+7 911 380-33-24",
+      "additional_phones": [
+        "8 800 250-33-60"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 09:00–20:00; Сб–Вс 09:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-luki-industrial",
+      "name": "Шиномонтаж — Промышленная",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. Промышленная, 4",
+      "country": "Россия",
+      "phone": "+7 900 994-40-44",
+      "additional_phones": [
+        "+7 921 503-33-07",
+        "+7 953 230-01-11"
+      ],
+      "email": null,
+      "hours": "Пн–Сб 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М9",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-borovichi-autoliga",
+      "name": "Автолига-сервис",
+      "region": "Новгородская область",
+      "address": "Боровичи, мкр. Раздолье 1-е, 25",
+      "country": "Россия",
+      "phone": "+7 81664 9-82-50",
+      "additional_phones": [
+        "+7 921 707-25-45",
+        "8 800 301-04-42"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт коммерческих автомобилей"
+      ],
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "подъезд к М10/М11",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-borovichi-doctor",
+      "name": "Доктор шин",
+      "region": "Новгородская область",
+      "address": "Боровичи, ул. Совхозная, 89",
+      "country": "Россия",
+      "phone": "+7 921 696-94-54",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/borovichi/avto/gruzovoj-shinomontazh/"
+      ],
+      "road": "подъезд к М10/М11",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-borovichi-authoritet",
+      "name": "Авторитет",
+      "region": "Новгородская область",
+      "address": "Боровичи, ул. Парковая, 6А",
+      "country": "Россия",
+      "phone": "+7 950 684-88-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–19:00; перерыв 13:00–14:00",
+      "services": [
+        "грузовой ремонт (по справочнику)"
+      ],
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "подъезд к М10/М11",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-borovichi-autostandard",
+      "name": "Автостандарт",
+      "region": "Новгородская область",
+      "address": "Боровичи, ул. Сушанская, 25А",
+      "country": "Россия",
+      "phone": "+7 921 201-89-88",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; перерыв 13:00–14:00",
+      "services": [
+        "грузовой ремонт (по справочнику)"
+      ],
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "подъезд к М10/М11",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-m10-remtent",
+      "name": "Рем Тент 24",
+      "region": "Новгородская область",
+      "address": "Валдайский район, М10, 368-й км",
+      "country": "Россия",
+      "phone": "+7 904 010-97-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://valdai.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М10",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b55-m10-1001shina",
+      "name": "1001 Шина",
+      "region": "Новгородская область",
+      "address": "Крестецкий район, М10, 422-й км",
+      "country": "Россия",
+      "phone": "+7 911 636-61-06",
+      "additional_phones": [
+        "+7 812 561-98-32"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://valdai.spravker.ru/gruzovoi-shinomontazh/",
+        "https://1001shina.ds78.ru/contacts/"
+      ],
+      "road": "М10",
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "ИП Лобанов А. П.",
+      "address": "Великие Луки, ул. Гастелло, 21",
+      "phone": "+7 911 354-63-37",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Совпадает адрес с Автоколонна №1121 batch28."
+    },
+    {
+      "name": "Грузовой и легковой шиномонтаж",
+      "address": "Великие Луки, Октябрьский просп., 136А",
+      "phone": "+7 911 382-46-60",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Рядом с грузовым развалом по адресу 136 (batch28); проверить отдельность."
+    },
+    {
+      "name": "Завод КТСервис",
+      "address": "Боровичи, ул. Советская, 130",
+      "phone": "8 800 100-47-46",
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Тот же оператор, что КТсервис batch41, проверить отдельную сервисную площадку и профиль."
+    },
+    {
+      "name": "Выездной шиномонтаж",
+      "address": "Валдайский район, с. Зимогорье, 2",
+      "phone": "+7 906 202-88-16",
+      "source_urls": [
+        "https://valdai.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Выездной сервис: стационарная площадка не подтверждена."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Truck M10",
+      "batch": 25,
+      "source_urls": [
+        "https://valdai.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Телефон совпадает; адрес уточнить, не считать новым."
+    },
+    {
+      "name": "Трак Поинт",
+      "batch": 28,
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Адрес и телефон совпадают; не считать новым."
+    }
+  ]
+}
