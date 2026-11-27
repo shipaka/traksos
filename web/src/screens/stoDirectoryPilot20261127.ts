@@ -3,6 +3,7 @@
 // Keep only locations with source-reported coordinates from the business or its manufacturer/distributor, address and public business contact.
 // Further additions require deduplication and a reviewed source; never guess GPS.
 // Draft pilot only: replace static seed with moderated directory API before bulk rollout.
+import { regionalPilotPoints } from './stoRegionalPilot20261127.ts';
 import { refrigerationPilotPoints } from './stoRefrigerationPilot20261127.ts';
 export type MapServiceCategory = 'sto'|'tyre'|'wash'|'refrigeration'|'trailer';
 export type DirectoryPoint = {
@@ -12,6 +13,7 @@ export type DirectoryPoint = {
 };
 export const directoryPoints: readonly DirectoryPoint[] = [
   ...refrigerationPilotPoints,
+  ...regionalPilotPoints,
   {id:'directory:mtbr-shushary',kind:'service',directory:true,name:'МТБР — Санкт-Петербург',
     lat:59.771946388888885,lng:30.455233333333332,
     address:'Санкт-Петербург, Шушары, Московское шоссе, 181, корп. 2, стр. 1',

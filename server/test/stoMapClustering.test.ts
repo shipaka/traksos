@@ -37,3 +37,10 @@ test('refrigeration pilot uses explicit source category and unique physical poin
   assert.ok(rows.some(p=>p.address.includes('Ленинградская область')));
   assert.ok(rows.some(p=>p.address.includes('Приморский край')));
 });
+
+test('regional candidates have explicit category and distinct location',()=>{
+  const rows=directoryPoints.filter(p=>p.source==='https://ks-omsk.ru/kontakty/');
+  assert.equal(rows.length,2);assert.ok(rows.every(p=>p.category==='tyre'&&p.directory));
+  assert.notEqual(rows[0].lat,rows[1].lat);
+  assert.equal(new Set(directoryPoints.map(p=>p.lat+':'+p.lng)).size,directoryPoints.length);
+});

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geographicCenter, mustExpandCluster, clusterScreenPoints, fitRussiaView } from './partnerNetworkGeometry20261123.ts';
-import { directoryPoints, directDirectoryDial, type DirectoryPoint } from './stoDirectoryPilot20261127.ts';
+import { directoryPoints, directDirectoryDial, type DirectoryPoint, type MapServiceCategory } from './stoDirectoryPilot20261127.ts';
 import { StoMapPinIcon, mapCategoryLabel } from './stoMapPinIcon20261127.tsx';
 import './partnerNetworkMap20261123.css';
 
@@ -73,6 +73,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
   // Expose an explicit retry after a transient API failure; no fake pins.
   const [retryCount,setRetryCount]=useState(0);
+  const [categoryFilter,setCategoryFilter]=useState<MapServiceCategory|'all'>('all');
   const [selected,setSelected]=useState<PartnerPoint|null>(null);
   const [expandedCluster,setExpandedCluster]=useState<Cluster|null>(null);
   const clusterTrigger=useRef<HTMLButtonElement|null>(null);
@@ -220,7 +221,8 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
     return ()=>{ob?.disconnect();window.removeEventListener('resize',update);};
   },[]);
   const tiles=useMemo(()=>tileSet(view,size.width,size.height),[view,size]);
-  const clusters=useMemo(()=>clusterPoints(points,view,size.width,size.height),[points,view,size]);
+  const visiblePoints=useMemo(()=>categoryFilter==='all'?points:points.filter(p=>p.directory?(p.category??'sto')===categoryFilter:categoryFilter==='sto'),[points,categoryFilter]);
+  const clusters=useMemo(()=>clusterPoints(visiblePoints,view,size.width,size.height),[visiblePoints,view,size]);
   function pan(px:number,py:number){
     setView(v=>{
       const p=world(v.lat,v.lng,v.zoom);
@@ -289,6 +291,11 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           <button type="button" aria-label="Показать Санкт-Петербург и область" onClick={()=>{setView({lat:59.86,lng:30.47,zoom:10});setSelected(null);setExpandedCluster(null);}}>СПб / ЛО</button>
           <button type="button" aria-label="Показать Россию" onClick={()=>{setView(fitRussiaView(size.width,size.height));setSelected(null);setExpandedCluster(null);}}>Россия</button>
         </div>
+        <div className="tr-network-filter" onPointerDown={event=>event.stopPropagation()}>
+          <label htmlFor="sto-category-filter">Услуги</label><select id="sto-category-filter" value={categoryFilter} onChange={event=>{setCategoryFilter(event.target.value as MapServiceCategory|'all');setSelected(null);setExpandedCluster(null);}}>
+            <option value="all">Все СТО ({points.length})</option>{Object.entries(mapCategoryLabel).map(([key,label])=><option key={key} value={key}>{label}</option>)}
+          </select>
+        </div>
         {clusters.map(cluster=><button key={cluster.key} type="button"
           className={'tr-network-marker'+(cluster.members.length>1?' is-cluster':'')+markerClass(cluster.members)}
           style={{left:cluster.x,top:cluster.y}}
@@ -342,6 +349,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           <small>Координаты опубликованы с согласия СТО. Наличие свободного времени уточняется при обращении.</small>
           <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a></>}
         </aside>}
+        {state==='ready'&&categoryFilter!=='all'&&visiblePoints.length===0&&<div className="tr-network-notice" role="status">Пока нет площадок этой специализации с координатами. Выберите другой вид услуг.</div>}
         {state!=='ready'&&<div className="tr-network-notice" role="status">
           <span>{state==='loading'?'Получаем подтверждённые точки партнёров…'
             :'Данные партнёров временно недоступны. Сторонний справочник доступен отдельно.'}</span>
