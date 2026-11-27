@@ -1,0 +1,279 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only",
+  "publication_gate": "Confirm operation, public customer access, truck dimensions, actual services, operator, coordinates, hours, VAT, duplicates and approval. No production publication.",
+  "records": [
+    {
+      "id": "b44-atp-avtomobilnaya8v",
+      "name": "АТП — грузовая мойка",
+      "region": "Санкт-Петербург",
+      "address": "ул. Автомобильная, 8, лит. В",
+      "country": "Россия",
+      "phone": "+7 937 944-94-08",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "мойка тягачей, прицепов, цистерн, спецтехники",
+        "химчистка кабин"
+      ],
+      "source_urls": [
+        "https://avtomoyka-atp15.ru/truck"
+      ],
+      "notes": "Высота ворот 5,5 м. Соседний адрес Автомобильная 8Д — легковая мойка; не включать. Проверить отдельность от СПб РемТранс по адресу 8.",
+      "operator_group": "atp-avtomobilnaya8v",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "entrance_height_m": 5.5
+    },
+    {
+      "id": "b44-maks-utkina-zavod",
+      "name": "Макс",
+      "region": "Ленинградская область",
+      "address": "Свердловское городское поселение, промзона Уткина Заводь, 1А",
+      "country": "Россия",
+      "phone": "+7 921 900-33-73",
+      "email": null,
+      "hours": "24/7 (по справочнику)",
+      "services": [
+        "грузовая мойка",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://spb.auto2.info/sankt-peterburg/maks-179888/"
+      ],
+      "notes": "Дополнительный источник https://vyvoz.org/sankt-peterburg/14636-avtomoyka-maks.html; проверить актуальный адрес и номер. Не считать универсальным ремонтом.",
+      "operator_group": "maks-utkina-zavod",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b44-clean-fresh-pargolovo",
+      "name": "Clean&Fresh",
+      "region": "Санкт-Петербург",
+      "address": "Парголово, Ленинградская ул., 99, лит. Б",
+      "country": "Россия",
+      "phone": "+7 932 505-25-06",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "мойка коммерческого транспорта"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "В источнике услуга мойки грузового эвакуатора; прием длинных автопоездов и габариты не подтверждены. Доп. +7 812 942-87-07.",
+      "operator_group": "clean-fresh-pargolovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b44-balkansky-wash",
+      "name": "Автоцентр Балканский",
+      "region": "Санкт-Петербург",
+      "address": "Малая Балканская ул., 59, корп. 1",
+      "country": "Россия",
+      "phone": "+7 812 701-54-01",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовая мойка (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Проверить возможность приема тягачей и автопоездов. Доп. +7 952 205-44-44.",
+      "operator_group": "balkansky-wash",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b44-h2o-profi-kommuny",
+      "name": "H2O Profi",
+      "region": "Санкт-Петербург",
+      "address": "ул. Коммуны, 14",
+      "country": "Россия",
+      "phone": "+7 901 315-46-43",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "мойка коммерческого транспорта (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Прием тяжелых тягачей не подтвержден; до подтверждения не публиковать.",
+      "operator_group": "h2o-profi-kommuny",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b44-dln-truck-bolshaya-izhora",
+      "name": "ДЛН Трак Сервис",
+      "region": "Ленинградская область",
+      "address": "Большая Ижора, Приморское шоссе, 53, лит. А",
+      "country": "Россия",
+      "phone": "8 800 222-66-85",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "грузовой шиномонтаж",
+        "грузовая мойка",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/dln-logistik/482366"
+      ],
+      "notes": "Одна многопрофильная площадка. ИНН 4725008283 по стороннему справочнику https://fbc.ru/inn/4725008283/ ; ФНС не проверена.",
+      "operator_group": "dln-truck-bolshaya-izhora",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b44-planeta-sto62-biryulino",
+      "name": "Планета СТО62",
+      "region": "Тверская область",
+      "address": "д. Бирюлино, стр. 1, трасса М-10, 162 км + 800 м",
+      "country": "Россия",
+      "phone": "+7 919 050-14-82",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис",
+        "грузовой шиномонтаж",
+        "тахографы",
+        "диагностика",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://planetasto62.ru/gruzovaia_moika_avtomobiliei"
+      ],
+      "notes": "Телефон мойки +7 910 649-01-00; график мойки ежедневно 08:00–22:00, общий график ремонта не установлен.",
+      "operator_group": "planeta-sto62-biryulino",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "service_hours": {
+        "truck_wash": "ежедневно 08:00–22:00"
+      }
+    }
+  ],
+  "excluded_exact_matches": [
+    {
+      "id": "tosno-sto44g",
+      "existing": "sto-gruzovoy-tehniki-tosno"
+    }
+  ],
+  "hold_for_review": [
+    {
+      "name": "Империя",
+      "address": "Шушары, Московское шоссе 165",
+      "phone": "+7 969 724-25-55",
+      "source": "https://stoimperiya.ru/",
+      "reason": "same base address as AutoBull; verify independent operator and entrance before separate point",
+      "hours": "24/7"
+    },
+    {
+      "name": "Авто-Тех-Сервис",
+      "address": "Видное, д. Калиновка, 4с5",
+      "phone": "+7 925 754-11-46",
+      "source": "https://gruzzmoika.ru/",
+      "reason": "same telephone as batch43 Мойка СПА at another address; reconcile current service location"
+    },
+    {
+      "name": "ЕХП-Экострой",
+      "phone": "+7 906 554-56-29",
+      "source": "https://www.ehp-ecostroy.ru/uslugi/evakuacziya-gruzovyix-avtomobilej/gruzovoj-servis/",
+      "reason": "repair confirmed on site, precise workshop address not yet established"
+    }
+  ],
+  "review_notes": [
+    "Only facts visible in fetched public pages included. Directory category alone does not establish heavy truck capability. Hours are claims, not live availability.",
+    "Cross-check restricted to retrieved batches; failed: []",
+    "Wash-only candidates excluded from repair target. Mixed specialist sites not automatically universal repair. No phone calls, FNS or outreach."
+  ]
+}
