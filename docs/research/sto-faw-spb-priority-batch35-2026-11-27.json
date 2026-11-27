@@ -1,0 +1,2342 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "vinauto-gruzovoy17",
+      "name": "Винавто",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой пр., 17",
+      "country": "Россия",
+      "phone": "+7 911 170-02-20",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "vinauto-gruzovoy17",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mydiesel-vitebskaya",
+      "name": "MyDiesel24",
+      "region": "Санкт-Петербург",
+      "address": "Витебская Сортировочная ул., 2, корп. 1",
+      "country": "Россия",
+      "phone": "+7 965 790-72-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "mydiesel-vitebskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gsk-plus-novikova",
+      "name": "ГСК Плюс",
+      "region": "Санкт-Петербург",
+      "address": "ул. Маршала Новикова, 40В",
+      "country": "Россия",
+      "phone": "+7 999 220-20-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "gsk-plus-novikova",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rusmobil-tsvetochnaya",
+      "name": "Русмобиль",
+      "region": "Санкт-Петербург",
+      "address": "Цветочная ул., 16",
+      "country": "Россия",
+      "phone": "+7 812 703-76-76",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusmobil-tsvetochnaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remiko78-shushary",
+      "name": "Ремико78",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1А8",
+      "country": "Россия",
+      "phone": "+7 911 999-29-48",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "remiko78-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "petroavtotrans-predportovy",
+      "name": "Петроавтотранс",
+      "region": "Санкт-Петербург",
+      "address": "6-й Предпортовый пр., 10Б",
+      "country": "Россия",
+      "phone": "+7 999 030-94-63",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "По этому же адресу BusServiceTeam; один кандидат до проверки. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "petroavtotrans-predportovy",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtoline-shushary",
+      "name": "Автолайн",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 233",
+      "country": "Россия",
+      "phone": "+7 962 699-85-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить адрес: необычная нумерация. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "avtoline-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "skummi-tokkari",
+      "name": "Скумми-Сервис",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, д. Токкари",
+      "country": "Россия",
+      "phone": "+7 921 320-16-59",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный въезд не указан. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "skummi-tokkari",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eurotrucks-yanino",
+      "name": "Евротракс",
+      "region": "Ленинградская область",
+      "address": "Янино-1, Кольцевая ул., 1В",
+      "country": "Россия",
+      "phone": "+7 952 396-14-76",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "eurotrucks-yanino",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vidauto-volkovka",
+      "name": "ViD Auto",
+      "region": "Санкт-Петербург",
+      "address": "наб. реки Волковки, 15",
+      "country": "Россия",
+      "phone": "+7 965 753-02-43",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "vidauto-volkovka",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "trustline-pargolovo",
+      "name": "Траст Лайн Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Парголово, Выборгское ш., 212, корп. 8",
+      "country": "Россия",
+      "phone": "+7 812 333-55-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "trustline-pargolovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mbs-ekaterininsky",
+      "name": "МБС сервис",
+      "region": "Санкт-Петербург",
+      "address": "Екатерининский просп., 1Ж",
+      "country": "Россия",
+      "phone": "+7 812 220-98-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "mbs-ekaterininsky",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "spbremtrans-avtomobilnaya",
+      "name": "СПб РемТранс",
+      "region": "Санкт-Петербург",
+      "address": "Автомобильная ул., 8",
+      "country": "Россия",
+      "phone": "+7 981 108-00-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "spbremtrans-avtomobilnaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtofurgon-staropanovo",
+      "name": "Автофургон",
+      "region": "Санкт-Петербург",
+      "address": "Старо-Паново, Рабочая ул., 12",
+      "country": "Россия",
+      "phone": "+7 905 212-10-26",
+      "email": "servis@avtofurgon.ru",
+      "hours": null,
+      "services": [
+        "ремонт фургонов и надстроек"
+      ],
+      "source_urls": [
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "Ремонт фургонов и надстроек; также справочник грузовых СТО. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "avtofurgon-staropanovo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scantrans-elektropultovtsev",
+      "name": "СканТрансСервис",
+      "region": "Санкт-Петербург",
+      "address": "ул. Электропультовцев, 7АИ",
+      "country": "Россия",
+      "phone": "+7 812 970-17-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "scantrans-elektropultovtsev",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "m10-shushary",
+      "name": "М10",
+      "region": "Санкт-Петербург",
+      "address": "Московское ш., 15АГ",
+      "country": "Россия",
+      "phone": "+7 911 727-37-29",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "m10-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lorrybalt-petroslavyanka",
+      "name": "Лорри Балт",
+      "region": "Санкт-Петербург",
+      "address": "дорога на Петро-Славянку, 7Ч",
+      "country": "Россия",
+      "phone": "+7 964 343-27-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "lorrybalt-petroslavyanka",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remair-sofiyskaya",
+      "name": "РемЭйр",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 6",
+      "country": "Россия",
+      "phone": "+7 911 930-77-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "remair-sofiyskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rvs-shushary",
+      "name": "РВС Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское ш., 249",
+      "country": "Россия",
+      "phone": "+7 812 906-94-91",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rvs-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "uservice-pushkin",
+      "name": "Ю-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Автомобильная ул., 4",
+      "country": "Россия",
+      "phone": "8 800 444-17-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "uservice-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "specbaza2-sofiyskaya",
+      "name": "Специализированная автомобильная база № 2",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 8, корп. 2",
+      "country": "Россия",
+      "phone": "+7 812 971-17-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Проверить прием сторонних ТС. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "specbaza2-sofiyskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remzonov-shushary",
+      "name": "Ремзонов",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 3А",
+      "country": "Россия",
+      "phone": "+7 963 300-44-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "remzonov-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pirga-kubinskaya",
+      "name": "Пирга",
+      "region": "Санкт-Петербург",
+      "address": "Кубинская ул., 87В",
+      "country": "Россия",
+      "phone": "+7 921 916-65-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "pirga-kubinskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-trackcenter-putevoy",
+      "name": "Трак Центр — Путевой",
+      "region": "Москва",
+      "address": "Путевой проезд, 15",
+      "country": "Россия",
+      "phone": "+7 495 661-30-40",
+      "email": "service@faw-rus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://faw-rus.ru/service",
+        "https://faw-rus.ru/contact"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-trackcenter",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-trackcenter-pavlovskoe",
+      "name": "Трак Центр — Павловское",
+      "region": "Московская область",
+      "address": "д. Павловское, Вокзальная ул., 21, стр. 9",
+      "country": "Россия",
+      "phone": "+7 495 661-30-40",
+      "email": "service@faw-rus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://faw-rus.ru/service",
+        "https://faw-rus.ru/contact"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-trackcenter",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-trackcenter-krasnodarskaya",
+      "name": "Трак Центр — Домодедово",
+      "region": "Московская область",
+      "address": "Домодедово, Краснодарская ул., 11",
+      "country": "Россия",
+      "phone": "+7 495 661-30-40",
+      "email": "service@faw-rus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://faw-rus.ru/service",
+        "https://faw-rus.ru/contact"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-trackcenter",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-trackcenter-shushary",
+      "name": "Трак Центр — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1БЕ",
+      "country": "Россия",
+      "phone": "+7 495 661-30-40",
+      "email": "service@faw-rus.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://faw-rus.ru/service",
+        "https://faw-rus.ru/contact"
+      ],
+      "notes": "Общий телефон техцентров; отдельный адрес от СовАвто 1Б лит. А; проверить физическую самостоятельность. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-trackcenter",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-nsk-dunaevskogo",
+      "name": "Сервис FAW — Дунаевского",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Дунаевского, 16/1",
+      "country": "Россия",
+      "phone": "+7 383 363-86-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Юридическое название не указано в списке; уточнить. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-nsk-dunaevskogo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-penza-druzhby",
+      "name": "Сервис FAW — Дружбы",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Дружбы, 10",
+      "country": "Россия",
+      "phone": "+7 8412 20-55-64",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Юридическое название не указано. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-penza-druzhby",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "faw-ramon-zone2",
+      "name": "Сервис FAW — Рамонь",
+      "region": "Воронежская область",
+      "address": "Рамонский район, промышленная зона 2, 6",
+      "country": "Россия",
+      "phone": "+7 473 233-48-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Уточнить оператора. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "faw-ramon-zone2",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "primtrak-artem",
+      "name": "Прим Трак",
+      "region": "Приморский край",
+      "address": "Артём, ул. Гагарина, 57",
+      "country": "Россия",
+      "phone": "+7 423 279-02-97",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "primtrak-artem",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ivsib-druzhino",
+      "name": "ИВСИБ",
+      "region": "Омская область",
+      "address": "с. Дружино, ул. Тюкалинская, стр. 2",
+      "country": "Россия",
+      "phone": "+7 3812 77-77-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "ivsib-druzhino",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sto-krasny-sulin-kolhoznaya",
+      "name": "СТО грузовых машин — Колхозная",
+      "region": "Ростовская область",
+      "address": "Красный Сулин, ул. Колхозная, 132",
+      "country": "Россия",
+      "phone": "+7 919 877-06-13",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "sto-krasny-sulin-kolhoznaya",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sto-krasny-sulin-magnitogorskaya",
+      "name": "СТО — Магнитогорская",
+      "region": "Ростовская область",
+      "address": "Красный Сулин, ул. Магнитогорская, 195",
+      "country": "Россия",
+      "phone": "+7 909 411-41-81",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "sto-krasny-sulin-magnitogorskaya",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckcenter-lipetsk",
+      "name": "Трак Центр Липецк",
+      "region": "Липецкая область",
+      "address": "Липецк, ул. Юношеская, 46А",
+      "country": "Россия",
+      "phone": "+7 910 357-86-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "truckcenter-lipetsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "motormaster-kazan",
+      "name": "Мотор Мастер",
+      "region": "Республика Татарстан",
+      "address": "Казань, ул. Лебедева, 20",
+      "country": "Россия",
+      "phone": "+7 987 295-65-57",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "motormaster-kazan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "promstroyservice-nsk",
+      "name": "ПромСтройСервис",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, 1-е Мочищенское шоссе, 17",
+      "country": "Россия",
+      "phone": "+7 383 309-22-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "promstroyservice-nsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "saratovtruck-storozhevka",
+      "name": "Саратов Трак Сервис",
+      "region": "Саратовская область",
+      "address": "с. Сторожевка, ул. Цветочная, 3А",
+      "country": "Россия",
+      "phone": "+7 8452 32-33-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "saratovtruck-storozhevka",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kreiseravto-ramon",
+      "name": "КрейсерАвто",
+      "region": "Воронежская область",
+      "address": "Рамонский район, территория Промышленная, зона 4, ул. Промышленная, стр. 3",
+      "country": "Россия",
+      "phone": "+7 910 345-90-91",
+      "email": "lss.kreiser-avto@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "kreiseravto-ramon",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alfacenter-nn",
+      "name": "Альфацентр",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Московское шоссе, 298",
+      "country": "Россия",
+      "phone": "+7 952 476-33-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://parts-faw.ru/services/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "alfacenter-nn",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "skcpt-pyatigorsk",
+      "name": "Северо-Кавказский Центр Погрузочной Техники",
+      "region": "Ставропольский край",
+      "address": "Пятигорск, пос. Горячеводский, Гребенская ул., 4",
+      "country": "Россия",
+      "phone": "+7 8652 69-29-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "skcpt-pyatigorsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vologdascan-kirov-avtotransportny",
+      "name": "ВологдаСкан — Киров",
+      "region": "Кировская область",
+      "address": "Киров, Автотранспортный пер., 4, корп. 7",
+      "country": "Россия",
+      "phone": "8 800 511-41-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "vologdascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tsc-avtosila-kemerovo",
+      "name": "ТСК Автосила",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Красноармейская, 3",
+      "country": "Россия",
+      "phone": "+7 3842 45-15-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "tsc-avtosila-kemerovo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-molzhaninovo",
+      "name": "Русбизнесавто — Молжаниново",
+      "region": "Москва",
+      "address": "Молжаниновский район, ул. Комсомольская, 3А, стр. 2",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-magistralnaya",
+      "name": "Русбизнесавто — Магистральная",
+      "region": "Москва",
+      "address": "2-я Магистральная ул., 14Г, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-entuziastov",
+      "name": "Русбизнесавто — Энтузиастов",
+      "region": "Москва",
+      "address": "шоссе Энтузиастов, 56, стр. 32",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-vyborgskaya",
+      "name": "Русбизнесавто — Выборгская",
+      "region": "Москва",
+      "address": "ул. Выборгская, 22, стр. 3",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-dmitrovskoe100",
+      "name": "Русбизнесавто — Дмитровское",
+      "region": "Москва",
+      "address": "Дмитровское шоссе, 100, корп. 2",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-samara-bereza",
+      "name": "Русбизнесавто — Берёза",
+      "region": "Самарская область",
+      "address": "Самара, пос. Берёза, 51",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-ufa-centralnaya",
+      "name": "Русбизнесавто — Уфа",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, ул. Центральная, 19",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-chel-troitsky",
+      "name": "Русбизнесавто — Челябинск",
+      "region": "Челябинская область",
+      "address": "Челябинск, Троицкий тракт, 12",
+      "country": "Россия",
+      "phone": "8 800 511-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "rusbusinessauto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tomsktruckcenter",
+      "name": "ТомскТракЦентр",
+      "region": "Томская область",
+      "address": "Томск, 1-й Мостовой пер., 5",
+      "country": "Россия",
+      "phone": "+7 3822 903-903",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "tomsktruckcenter",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mtbr-simferopolskoe",
+      "name": "МТБР — Москва",
+      "region": "Москва",
+      "address": "Симферопольское шоссе, 22, стр. 9",
+      "country": "Россия",
+      "phone": "+7 495 969-25-14",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "mtbr",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "klevertruck-chelny",
+      "name": "Клевер Трак",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Казанский просп., 148",
+      "country": "Россия",
+      "phone": "8 800 555-70-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "klever-truck",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckrelax-kemerovo",
+      "name": "Truck Relax / Алекс Трак Сервис",
+      "region": "Кемеровская область",
+      "address": "Кемерово, Р255, 297-й км, 2",
+      "country": "Россия",
+      "phone": "+7 3842 44-77-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Два названия с одним адресом и номером — одна запись. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "truckrelax-kemerovo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtomagistral-chel",
+      "name": "Автомагистраль",
+      "region": "Челябинская область",
+      "address": "Челябинск, Свердловский просп., 7",
+      "country": "Россия",
+      "phone": "8 800 333-17-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "avtomagistral",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "yurto-truck-krasnodar",
+      "name": "Юрто-Трак",
+      "region": "Краснодарский край",
+      "address": "Краснодар, Ростовское шоссе, 47, лит. Ж, пом. 7",
+      "country": "Россия",
+      "phone": "+7 861 255-93-76",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "yurto-truck-krasnodar",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtomagistral-miass",
+      "name": "Автомагистраль / Трак Сервис",
+      "region": "Челябинская область",
+      "address": "Миасс, ул. 60 лет Октября, 19",
+      "country": "Россия",
+      "phone": "8 800 333-17-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Два названия в списке, одна точка. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "avtomagistral",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scan-southeast-chernomorsky",
+      "name": "Скан-Юго-Восток",
+      "region": "Краснодарский край",
+      "address": "пгт Черноморский, ул. Дзержинского, 1",
+      "country": "Россия",
+      "phone": "+7 86166 6-77-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "scan-southeast",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scan-southeast-aksay",
+      "name": "Скан-Юго-Восток — Аксай",
+      "region": "Ростовская область",
+      "address": "Аксай, ул. Промышленная, 1А",
+      "country": "Россия",
+      "phone": "+7 863 303-54-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "scan-southeast",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "firstkilometer-druzhino",
+      "name": "Первый километр",
+      "region": "Омская область",
+      "address": "с. Дружино, ул. Придорожная, 63Б",
+      "country": "Россия",
+      "phone": "+7 3812 35-64-53",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "firstkilometer-druzhino",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gustechncenter",
+      "name": "Гус Техцентр",
+      "region": "Владимирская область",
+      "address": "Гусь-Хрустальный, ул. Транспортная, 41А",
+      "country": "Россия",
+      "phone": "+7 962 089-81-97",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "gustechncenter",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckpro-teplichny",
+      "name": "Трак Про",
+      "region": "Республика Хакасия",
+      "address": "пос. Тепличный, ул. Ленина, 1/1",
+      "country": "Россия",
+      "phone": "+7 391 288-05-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "truckpro-teplichny",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "navlya-truck-bryansk",
+      "name": "Навля Трак Центр",
+      "region": "Брянская область",
+      "address": "Брянск, ул. Красноармейская, 115",
+      "country": "Россия",
+      "phone": "+7 4832 405-406",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "navlya-truck-bryansk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "specservice-khabarovsk",
+      "name": "СпецСервис / АмурСтройТехника",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Зелёная, 3А/4",
+      "country": "Россия",
+      "phone": "+7 4212 408-365",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Второе название по тому же адресу исключено. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "specservice-khabarovsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autocomfort-kirov",
+      "name": "Автокомфорт",
+      "region": "Кировская область",
+      "address": "Киров, ул. Дзержинского, 118/1",
+      "country": "Россия",
+      "phone": "+7 922 991-02-52",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "autocomfort-kirov",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "majortruck-pavlovskaya",
+      "name": "Мэйджор Трак Центр",
+      "region": "Московская область",
+      "address": "с. Павловская Слобода, ул. Ленина, вл. 79",
+      "country": "Россия",
+      "phone": "+7 499 116-54-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "majortruck-pavlovskaya",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruztehnika-pskov",
+      "name": "Грузтехника",
+      "region": "Псковская область",
+      "address": "Псков, ул. Леона Поземского, 125В",
+      "country": "Россия",
+      "phone": "+7 8112 75-12-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "В источнике опечатка в названии улицы («Роземскова»), сверить. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "gruztehnika-pskov",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tambovscan-kriusha",
+      "name": "ТамбовСкан / Липецккомтранс",
+      "region": "Тамбовская область",
+      "address": "с. Красная Криуша, М6 Каспий, 427-й км, АЗС Prestige Oil",
+      "country": "Россия",
+      "phone": "+7 910 650-50-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Два названия с одинаковым адресом и телефоном. Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "tambovscan-kriusha",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "barlaks-nsk",
+      "name": "Барлакс",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, просп. Дзержинского, 89",
+      "country": "Россия",
+      "phone": "+7 383 310-40-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "barlaks-nsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "regionaltehnika-ukhta",
+      "name": "Региональная техника",
+      "region": "Республика Коми",
+      "address": "Ухта, ул. Моторная, 1/9",
+      "country": "Россия",
+      "phone": "+7 8216 74-15-43",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "regionaltehnika-ukhta",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autoresurs-kursk",
+      "name": "ТД Авто Ресурс",
+      "region": "Курская область",
+      "address": "Курск, 2-й Московский проезд, 9В, корп. Б1, Б",
+      "country": "Россия",
+      "phone": "+7 4712 22-12-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "autoresurs-kursk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "spectehservice-mesker",
+      "name": "СпецТехСервис",
+      "region": "Чеченская Республика",
+      "address": "с. Мескер-Юрт, Шоссейная ул., 2",
+      "country": "Россия",
+      "phone": "+7 901 569-99-99",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "spectehservice-mesker",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autologistika-pikino",
+      "name": "Автологистика-транс",
+      "region": "Московская область",
+      "address": "Химки, д. Пикино, Транспортная ул., стр. 1",
+      "country": "Россия",
+      "phone": "+7 495 730-44-87",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "autologistika-pikino",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stroykomplekt-istok",
+      "name": "Стройкомплект — Большой Исток",
+      "region": "Свердловская область",
+      "address": "пос. Большой Исток, ул. Свердлова, 42А",
+      "country": "Россия",
+      "phone": "8 800 500-12-14",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "stroykomplekt",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stroykomplekt-tyumen",
+      "name": "Стройкомплект — Тюмень",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Чекистов, 40",
+      "country": "Россия",
+      "phone": "8 800 500-12-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "stroykomplekt",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stroykomplekt-surgut",
+      "name": "Стройкомплект — Сургут",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Рационализаторов, 12",
+      "country": "Россия",
+      "phone": "8 800 500-12-16",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "stroykomplekt",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stroykomplekt-urengoy",
+      "name": "Стройкомплект — Новый Уренгой",
+      "region": "ЯНАО",
+      "address": "Новый Уренгой, ул. Северное кольцо, стр. 2/5",
+      "country": "Россия",
+      "phone": "8 800 500-12-17",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "stroykomplekt",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stroykomplekt-chel",
+      "name": "Стройкомплект — Челябинск",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Мастеровая, 7А",
+      "country": "Россия",
+      "phone": "8 800 500-12-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "stroykomplekt",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vologdascan-cherepovets",
+      "name": "ВологдаСкан — Череповец",
+      "region": "Вологодская область",
+      "address": "Череповец, просп. Победы, 1",
+      "country": "Россия",
+      "phone": "8 800 511-41-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "vologdascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vologdascan-petrozavodsk",
+      "name": "ВологдаСкан — Петрозаводск",
+      "region": "Республика Карелия",
+      "address": "Петрозаводск, ул. Заводская, 2",
+      "country": "Россия",
+      "phone": "8 800 511-41-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "vologdascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vologdascan-kotlas",
+      "name": "ВологдаСкан — Котлас",
+      "region": "Архангельская область",
+      "address": "Котлас, Промышленный тупик, 3",
+      "country": "Россия",
+      "phone": "8 800 511-41-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "vologdascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tulascan",
+      "name": "Туласкан",
+      "region": "Тульская область",
+      "address": "Тула, Одоевское шоссе, 95",
+      "country": "Россия",
+      "phone": "+7 4872 71-12-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "tulascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "simbirsktruck",
+      "name": "СимбирскТракСервис",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, Московское шоссе, 14С",
+      "country": "Россия",
+      "phone": "+7 8422 68-62-62",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "simbirsktruck",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bolshegruz-kotelniki",
+      "name": "АК Большегруз",
+      "region": "Московская область",
+      "address": "Котельники, Новорязанское шоссе, 6",
+      "country": "Россия",
+      "phone": "+7 495 640-24-16",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "bolshegruz-kotelniki",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "euroclimate-mayakovskogo",
+      "name": "Евроклимат",
+      "region": "Ростовская область",
+      "address": "х. Маяковского, ул. Заводская, 34А",
+      "country": "Россия",
+      "phone": "8 800 444-20-42",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО FAW"
+      ],
+      "source_urls": [
+        "https://www.service-faw.ru/j6/"
+      ],
+      "notes": "Фактический прием, профиль и ремонтный адрес требуют проверки; не опубликовано.",
+      "operator_group": "euroclimate-mayakovskogo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Checked eight priority/network batches for exact matches; fuzzy cross-regional dedup pending.",
+    "Skipped known locations: MTBR Shushary, GTS Zelenograd, Ural-Spetsmash Surgut, Vostok Korkinskaya, Konig Roshchino, Interpartner Izhevsk, MAN Poletaevo, GTS/RBA Podolsk, Nara Avto Trans, VologdaScan Vologda/Arkhangelsk; FAW names may be historical aliases.",
+    "Potential overlap: RBA/Track Center Varshavskoe 129/2 (not included), Leon/Industria Dvizheniya Vitebsky 3 (not included), Terra Truck Shushary Lenina 23/FNGROUP (not included).",
+    "MAYER list indicates TPAS Badaevsky 9 at same address as BAV batch33; verify operator before publishing. GTS Shushary Poselkovaya 21 direct number +7 812 775-28-00; enrich earlier batch32.",
+    "Not all directory entries independently confirm heavy truck service, and common network numbers not unique recipients."
+  ]
+}
