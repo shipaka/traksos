@@ -1,0 +1,386 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "avtotrak-suponevo",
+      "name": "АвтоТрак",
+      "region": "Брянская область",
+      "address": "с. Супонево, ул. Ленина, 141",
+      "country": "Россия",
+      "phone": "+7 961 003-81-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "сход-развал",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://avtotrak32.ru/"
+      ],
+      "notes": "Отдельный шиномонтаж +7 910 034-43-33.",
+      "operator_group": "avtotrak32",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sovavto-sven",
+      "name": "СовАвто-Сервис",
+      "region": "Брянская область",
+      "address": "пос. Свень, ул. Соборная, 21",
+      "country": "Россия",
+      "phone": "+7 961 004-05-42",
+      "email": "stz@sta.bryansk.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "топливные системы",
+        "WABCO",
+        "KNORR",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://sta.bryansk.ru/kontakty/",
+        "https://sta.bryansk.ru/uslugi/servisnyj-czentr/"
+      ],
+      "notes": "Стол заказов +7 4832 63-93-93, диагностика +7 920 868-53-55, прицепы +7 910 299-73-01. Адрес юридический и почтовый на сайте; въезд в ремзону уточнить.",
+      "operator_group": "sovavto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "agrozapchast-suponevo",
+      "name": "АгроЗапчасть",
+      "region": "Брянская область",
+      "address": "с. Супонево, ул. Ленина, 131Б",
+      "country": "Россия",
+      "phone": "+7 4832 300-032",
+      "email": "agroms32@agroms.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "спецтехника",
+        "ДВС",
+        "КПП",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://www.agroms.ru/",
+        "https://agroms.ru/services/"
+      ],
+      "notes": "Общий телефон предприятия, запросить приемку.",
+      "operator_group": "agroms",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "uf46-kursk",
+      "name": "У Француза",
+      "region": "Курская область",
+      "address": "Курск, ул. Кирпичная, 21В",
+      "country": "Россия",
+      "phone": "+7 960 674-90-00",
+      "email": "info@uf46.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "дизельные двигатели",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://uf46.ru/"
+      ],
+      "notes": "Номер мастера-приемщика с сайта.",
+      "operator_group": "uf46",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "furgon46-kursk",
+      "name": "Фургон Сервис",
+      "region": "Курская область",
+      "address": "Курск, ул. Магистральная, 11",
+      "country": "Россия",
+      "phone": "+7 951 322-83-38",
+      "email": "tent46@mail.ru",
+      "hours": null,
+      "services": [
+        "полуприцепы",
+        "фургоны",
+        "тенты",
+        "кузовные работы",
+        "электрика фургонов"
+      ],
+      "source_urls": [
+        "https://furgon-service46.ru/"
+      ],
+      "notes": "Специализированный кузовной сервис, не универсальное СТО.",
+      "operator_group": "furgon46",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "amk-shacman-kursk",
+      "name": "SHACMAN РФ — АМККОМТРАНС",
+      "region": "Курская область",
+      "address": "Курск, ул. 50 лет Октября, 124Д",
+      "country": "Россия",
+      "phone": "+7 4712 36-02-57",
+      "email": "stoshacman@bk.ru",
+      "hours": null,
+      "services": [
+        "SHACMAN",
+        "КПП",
+        "мосты",
+        "ходовая",
+        "выездная диагностика"
+      ],
+      "source_urls": [
+        "https://shacmanrf.ru/servis-shacman-rf/"
+      ],
+      "notes": "Доп. корпоративная почта amkcomtrans@bk.ru.",
+      "operator_group": "amkcomtrans",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalsto-severny",
+      "name": "Дальнобойщик — Северный",
+      "region": "Белгородская область",
+      "address": "пос. Северный, ул. Берёзовая, 3, стр. 4",
+      "country": "Россия",
+      "phone": "+7 920 586-83-74",
+      "email": "dalnoboyshick31sto@yandex.ru",
+      "hours": "ежедневно 09:00–18:00 (сайт)",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "электрика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://dalsto.ru/",
+        "https://car.ms/autoservices/truck-service/belgorod/"
+      ],
+      "notes": "Номер совпадает с карточкой карты. В справочнике оператор Дальнобойщик-Камион на том же адресе с другим номером; уточнить оператора. Общие контакты двух филиалов, не дублировать обращения.",
+      "operator_group": "dalsto31",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalsto-belgorod",
+      "name": "Дальнобойщик — Белгород",
+      "region": "Белгородская область",
+      "address": "Белгород, ул. Константина Заслонова, 52",
+      "country": "Россия",
+      "phone": "+7 920 586-83-74",
+      "email": "dalnoboyshick31sto@yandex.ru",
+      "hours": "ежедневно 09:00–18:00 (сайт)",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ТО",
+        "ремонт"
+      ],
+      "source_urls": [
+        "https://dalsto.ru/",
+        "https://car.ms/autoservices/truck-service/belgorod/"
+      ],
+      "notes": "Общий телефон сети, прямой номер и корпус уточнить; справочник указывает 52 к2 и другое название/телефон, не создавать дубли.",
+      "operator_group": "dalsto31",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "goodtrucks-severny",
+      "name": "ГудТракс",
+      "region": "Белгородская область",
+      "address": "пос. Северный, ул. Транспортная, 14",
+      "country": "Россия",
+      "phone": "+7 4722 77-88-00",
+      "email": "info@goodtrucks31.ru",
+      "hours": "09:00–21:00 (BPW)",
+      "services": [
+        "прицепная техника",
+        "грузовой сервис"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/",
+        "https://manac-tsr.ru/service/"
+      ],
+      "notes": "Собственный сайт вернул 502; телефон подтвержден каталогом BPW и карточкой карты. Доп. +7 919 228-55-08.",
+      "operator_group": "goodtrucks31",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "reftransservice-streletskoe",
+      "name": "РефТрансСервис",
+      "region": "Белгородская область",
+      "address": "с. Стрелецкое, пер. Королёва, 35",
+      "country": "Россия",
+      "phone": "+7 4722 37-41-88",
+      "email": "info@rts31.ru",
+      "hours": "пн–пт 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой сервис",
+        "рефрижераторы",
+        "отопители",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://car.ms/autoservices/truck-service/belgorod/",
+        "https://bel.auto2.info/belgorod/reftransservis-430000/"
+      ],
+      "notes": "Собственный сайт недоступен. Другой справочник указывает +7 905 170-01-53; уточнить действующий номер и населенный пункт.",
+      "operator_group": "reftrans31",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "volgotehsnab-astrakhan",
+      "name": "Волготехснаб-Каспий",
+      "region": "Астраханская область",
+      "address": "Астрахань, Фунтовское шоссе, 9Б",
+      "country": "Россия",
+      "phone": "+7 8512 21-30-00",
+      "email": "ast-sto@volteh.ru",
+      "hours": "пн–пт 08:00–12:00, 13:00–17:00 (справочник)",
+      "services": [
+        "КАМАЗ",
+        "МАЗ",
+        "грузовой ремонт",
+        "рамы",
+        "полуприцепы"
+      ],
+      "source_urls": [
+        "https://www.maz.ru/sevice/centry/",
+        "https://www.vts-k.ru/services/kuzovnoy_remont/434/",
+        "https://car.ms/autoservices/truck-service/astrakhan/"
+      ],
+      "notes": "Номер подтвержден каталогом МАЗ. Сайт сервиса вернул 403, профиль по индексу и справочнику. По адресу есть другой оператор Регион, не добавлен без уточнения.",
+      "operator_group": "volgotehsnab-kaspiy",
+      "evidence": "manufacturer_network_and_first_party_index",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "neys-yug-solyanka",
+      "name": "Нейс-Юг",
+      "region": "Астраханская область",
+      "address": "с. Солянка, ул. Элистинская, 10",
+      "country": "Россия",
+      "phone": "+7 8512 20-10-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ходовая",
+        "топливная аппаратура"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_astrahanskaya-oblast/narimanovskij-rajon-s-solyanka/card-3999289-nejs-yug",
+        "https://astrahan.jsprav.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Телефон совпадает с карточкой карты, адрес также указан как Р-22, 1383-й км; уточнить въезд и часы (источники расходятся). Доп. 8 800 500-03-90. Не подтвержден текущий дилерский статус.",
+      "operator_group": "neys-yug",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
