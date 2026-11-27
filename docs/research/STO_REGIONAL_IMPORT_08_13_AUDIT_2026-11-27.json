@@ -1,0 +1,1445 @@
+{
+  "schema": "sto-regional-import-audit-v1",
+  "previous_drafts": 1224,
+  "source_rows": 86,
+  "added_drafts": 80,
+  "held_count": 6,
+  "expected_drafts": 1304,
+  "source_coordinates": 47,
+  "missing_coordinates": 1257,
+  "byCategory": {
+    "sto": 61,
+    "trailer": 16,
+    "tyre": 3
+  },
+  "totalByCategory": {
+    "sto": 814,
+    "tyre": 269,
+    "refrigeration": 24,
+    "trailer": 154,
+    "wash": 43
+  },
+  "byBatch": {
+    "sto-tatarstan-chuvashia-mari-el-kirov-batch08": {
+      "input": 14,
+      "added": 11,
+      "held": 3
+    },
+    "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09": {
+      "input": 15,
+      "added": 15,
+      "held": 0
+    },
+    "sto-chelyabinsk-kurgan-tyumen-omsk-batch10": {
+      "input": 15,
+      "added": 15,
+      "held": 0
+    },
+    "sto-novosibirsk-tomsk-kemerovo-altai-batch11": {
+      "input": 12,
+      "added": 12,
+      "held": 0
+    },
+    "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12": {
+      "input": 15,
+      "added": 13,
+      "held": 2
+    },
+    "sto-zabaykalsky-amur-khabarovsk-primorye-batch13": {
+      "input": 15,
+      "added": 14,
+      "held": 1
+    }
+  },
+  "byRegion": {
+    "Республика Татарстан": 4,
+    "Чувашская Республика": 2,
+    "Республика Марий Эл": 2,
+    "Кировская область": 3,
+    "Республика Башкортостан": 5,
+    "Удмуртская Республика": 3,
+    "Пермский край": 3,
+    "Свердловская область": 4,
+    "Челябинская область": 3,
+    "Курганская область": 2,
+    "Тюменская область": 6,
+    "Омская область": 4,
+    "Новосибирская область": 5,
+    "Томская область": 2,
+    "Кемеровская область": 3,
+    "Алтайский край": 2,
+    "Красноярский край": 3,
+    "Республика Хакасия": 2,
+    "Иркутская область": 5,
+    "Республика Бурятия": 3,
+    "Забайкальский край": 2,
+    "Амурская область": 1,
+    "Хабаровский край": 5,
+    "Приморский край": 6
+  },
+  "held": [
+    {
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "clevertruck-chelny",
+      "name": "Клевер Трак — Набережные Челны",
+      "address": "Республика Татарстан, Набережные Челны, Казанский просп., 148",
+      "phone": "+79270308844",
+      "reason": "shared_address_review",
+      "existing": "directory:research-35-klevertruck-chelny"
+    },
+    {
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "clevertruck-kazan",
+      "name": "Клевер Трак — Казань",
+      "address": "Республика Татарстан, Зеленодольский район, пос. Новониколаевский, ул. Центральная, 5",
+      "phone": "+79274025344",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-37-klever-novonikolaevsky"
+    },
+    {
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "zz8-kirov",
+      "name": "ZZ8 — автотехцентр",
+      "address": "Кировская область, Киров, Заготзерновский проезд, 8/1",
+      "phone": "+79229428800",
+      "reason": "duplicate_id",
+      "existing": null
+    },
+    {
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "sto124-krasnoyarsk",
+      "name": "СТО124",
+      "address": "Красноярский край, Красноярск, ГК Автокемпинг, 805 км трассы М53",
+      "phone": "+73912801522",
+      "reason": "duplicate_id",
+      "existing": null
+    },
+    {
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "tehavtocentr-abakan",
+      "name": "Техавтоцентр — Абакан",
+      "address": "Республика Хакасия, Абакан, Нижняя Согра, ул. Толстого, 75, к. 1",
+      "phone": null,
+      "reason": "incomplete_or_invalid",
+      "existing": null
+    },
+    {
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "mbtruck-zab",
+      "name": "МБ Трак Забайкалье",
+      "address": "Забайкальский край, Чита, Геодезическая ул., 64, стр. 2",
+      "phone": "+73022245443",
+      "reason": "shared_address_review",
+      "existing": "directory:research-32-fngroup-chita"
+    }
+  ],
+  "provenance": [
+    {
+      "id": "directory:research-gruzovoi116-chelny",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "gruzovoi116-chelny",
+      "name": "Грузовой 116",
+      "address": "Республика Татарстан, Набережные Челны, ул. Промышленная, 53А",
+      "phone": "+79274177766",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://gruzovoi116.ru/"
+      ],
+      "notes": "Доп. номер +7 909 312-35-55 опубликован предприятием. График уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-str116-chelny",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "str116-chelny",
+      "name": "Спец Транс Ресурс",
+      "address": "Республика Татарстан, Набережные Челны, Производственный проезд, 48",
+      "phone": "+79061241913",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://str116.ru/"
+      ],
+      "notes": "Доп. +7 917 933-21-31. На сайте есть явно шаблонные отзывы, их не использовали как доказательство работы.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gts-naberezhnye-morkvashi",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "gts-naberezhnye-morkvashi",
+      "name": "Глобал Трак Сервис — Казань",
+      "address": "Республика Татарстан, Верхнеуслонский район, с. Набережные Моркваши, Двориков проезд, 5",
+      "phone": "+79172542397",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://grunwald.ru/contacts/"
+      ],
+      "notes": "Точка и номер указаны производителем прицепов. Другой оператор в том же списке с тем же адресом не добавлен, чтобы избежать дубля.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rembat-chelny",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "rembat-chelny",
+      "name": "Рембат / Казань-Шинторг — Набережные Челны",
+      "address": "Республика Татарстан, Набережные Челны, Мензелинский тракт, 112А (1055 км М-7)",
+      "phone": "+78552409409",
+      "evidence": "manufacturer_network_and_first_party_index",
+      "source_urls": [
+        "https://mayercargo.ru/dealers-map/",
+        "https://chelny.rembat24.ru/",
+        "https://chelny.kazan-shintorg.com/contacts/"
+      ],
+      "notes": "Номер из сети MAYER; собственные страницы индексируются, но прямое открытие не удалось. Email из поискового индекса, уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-magistral-chirshkasy",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "magistral-chirshkasy",
+      "name": "Магистраль — Чиршкасы",
+      "address": "Чувашская Республика, Чебоксарский район, д. Чиршкасы, ул. Куйбышева, 1Б",
+      "phone": "+78007700646",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://magistral-ru.ru/gruzovoj-service",
+        "https://89278464444.ru/services/freight-car-service/"
+      ],
+      "notes": "СпецТехЭвакуатор указывает тот же адрес и другой номер +7 900 333-22-55; не считать отдельной точкой до сверки. Сайт заявляет круглосуточность, график приёмки уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-doriss-scan-kugesi",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "doriss-scan-kugesi",
+      "name": "Дорисс-Скан",
+      "address": "Чувашская Республика, Чебоксарский район, пос. Кугеси, ул. Тепличная, 2",
+      "phone": "+78354023407",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://scan21.ru/"
+      ],
+      "notes": "Доп. +7 83540 2-32-37; ИНН 2116499640 и ОГРН 1112135000340 по собственному сайту, не сверены с ФНС.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-63kolesa-yoshkar-ola",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "63kolesa-yoshkar-ola",
+      "name": "63 КОЛЕСА — шинный центр",
+      "address": "Республика Марий Эл, Йошкар-Ола, Кокшайский проезд, 32",
+      "phone": "+78362314545",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://ntyre12.ru/avtoservis"
+      ],
+      "notes": "Подтверждён стационарный грузовой шиномонтаж; не полноценное СТО.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-technogroup-yoshkar-ola",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "technogroup-yoshkar-ola",
+      "name": "Техно-Групп — сервисный центр",
+      "address": "Республика Марий Эл, Йошкар-Ола, ул. Прохорова, 39, к. 1",
+      "phone": "+79177003050",
+      "evidence": "manufacturer_network_and_directory",
+      "source_urls": [
+        "https://www.itrbus.ru/kontakty/",
+        "https://mariy-el.spravochnika.ru/org/id-1618226"
+      ],
+      "notes": "Номер из списка сервисных станций ИТР; справочник даёт +7 8362 31-43-43. Возможность приёма тяжёлых тягачей уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gemma-kirov",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "gemma-kirov",
+      "name": "КАМАЗ-центр Гемма",
+      "address": "Кировская область, Киров, ул. Производственная, 50А",
+      "phone": "+78332222111",
+      "evidence": "first_party_and_manufacturer",
+      "source_urls": [
+        "https://kamaz43.ru/",
+        "https://tzacom.ru/guarantee/service-centers/dealers-of-jsc-kamaz/"
+      ],
+      "notes": "Общий контакт центра; отдельную линию СТО и адрес ремонтного поста уточнить.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-yaris-kirov",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "yaris-kirov",
+      "name": "Ярис",
+      "address": "Кировская область, Киров, ул. Северное Кольцо, 22А",
+      "phone": "+78332361424",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.servis-yaris.ru/",
+        "https://kamaz-kirov.ru/about_us/service/"
+      ],
+      "notes": "Сервис заявляет работу без выходных; точные часы уточнить. Отдельная площадка от Геммы.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtokomfort-kirov",
+      "source_file": "sto-tatarstan-chuvashia-mari-el-kirov-batch08-2026-11-27.json",
+      "source_id": "avtokomfort-kirov",
+      "name": "Автокомфорт — грузовой сервис",
+      "address": "Кировская область, Киров, ул. Дзержинского, 118/1 (карта); главный офис 118/2",
+      "phone": "+78332446611",
+      "evidence": "first_party_and_map",
+      "source_urls": [
+        "https://akomfort.tech/service/"
+      ],
+      "notes": "Адрес ремонтного корпуса 118/1 из карточки карты, официальный сайт указывает главный офис 118/2. Требуется уточнение въезда. Общий номер 8 800 250-44-66.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-ats-ufa",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "ats-ufa",
+      "name": "АТС",
+      "address": "Республика Башкортостан, Уфа, ул. Федоровская, 5",
+      "phone": "+78002227991",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://atsrb.ru/"
+      ],
+      "notes": "Сайт описывает прием крупнотоннажной техники; часы уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-eurodetal-pridorozhny",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "eurodetal-pridorozhny",
+      "name": "Евродеталь-Сервис — Придорожный",
+      "address": "Республика Башкортостан, Уфимский район, мкр. Придорожный, ул. Анатолия Локотченко, 14",
+      "phone": "+78005500802",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://ufatruck.ru/contacts/",
+        "https://ufatruck.ru/"
+      ],
+      "notes": "Общий номер двух площадок, заявлен 24/7; не означает круглосуточную работу ремонтных постов.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-eurodetal-industrial",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "eurodetal-industrial",
+      "name": "Евродеталь-Сервис — Индустриальный парк",
+      "address": "Республика Башкортостан, Уфимский район, мкр. Индустриальный парк, 1",
+      "phone": "+78005500802",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://ufatruck.ru/contacts/",
+        "https://ufatruck.ru/"
+      ],
+      "notes": "Второй адрес с контактной страницы; услуги конкретного филиала и въезд уточнить. Общая линия с Придорожным.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtosnab-ufa",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "avtosnab-ufa",
+      "name": "Автоснаб",
+      "address": "Республика Башкортостан, Уфа, Малая Перевалочная ул., 1, к. 3",
+      "phone": "+79033112284",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truck-ufa.ru/kontakty",
+        "https://truck-ufa.ru/"
+      ],
+      "notes": "Доп. рабочий номер +7 917 424-80-87. График не опубликован.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-transmarket-ufa",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "transmarket-ufa",
+      "name": "Трансмаркет",
+      "address": "Республика Башкортостан, Уфа, мкр. Дёма, ул. Крайняя, 4",
+      "phone": "+79173610428",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://tm-autoservice.ru/"
+      ],
+      "notes": "Адрес ремонтной площадки, не магазина на Кирова. Сайт указывает близость М-5.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-izhts",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "izhts",
+      "name": "Ижевск Трак Сервис",
+      "address": "Удмуртская Республика, Ижевск, ул. Пойма, 36",
+      "phone": "+73412220040",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://izhts.ru/"
+      ],
+      "notes": "Доп. телефон +7 950 153-51-66. Прием заявок 7 дней в неделю, часы ремонтной зоны не установлены.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-lidertruck-izhevsk",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "lidertruck-izhevsk",
+      "name": "Лидер Трак",
+      "address": "Удмуртская Республика, Ижевск, ул. Автозаводская, 5Б",
+      "phone": "+73412916950",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://furacenter.ru/",
+        "https://furacenter.ru/gruzovoj-avtoservis-v-izhevske/"
+      ],
+      "notes": "Доп. телефон +7 982 125-41-56 с отдельной страницы; на ней часы 08:00–20:00, уточнить. Общая почта info@furacenter.ru.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-interpartner-izhevsk",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "interpartner-izhevsk",
+      "name": "Интерпартнер — грузовой сервис",
+      "address": "Удмуртская Республика, Ижевск, ул. Гагарина, 81А, литер В",
+      "phone": "+73412630036",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://service.interpartner.ru/cargo/"
+      ],
+      "notes": "Телефон записи на ремонт, опубликован на сайте грузового направления.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-tranzit-kondratovo",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "tranzit-kondratovo",
+      "name": "Транзит-СТО",
+      "address": "Пермский край, д. Кондратово, ул. Камская, 47",
+      "phone": "+73422021590",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://tranzitsto.ru/",
+        "https://tranzitsto.ru/kontakt/",
+        "https://help-tel.ru/perm-city/avtoservis/remont-gruzovikh-avtomobiley/open-78590",
+        "https://perm.auto2.info/perm/avtoservisy/remont-vebasto/"
+      ],
+      "notes": "Телефон записи с сайта, доп. +7 342 225-20-60. Адрес по двум справочникам, точный въезд уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-trak59-perm",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "trak59-perm",
+      "name": "Трак59",
+      "address": "Пермский край, Пермь, шоссе Космонавтов, 316А, к. 1",
+      "phone": "+73422576885",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://motorts.ru/"
+      ],
+      "notes": "Главный профиль — ремонт агрегатов; прием целого тягача уточнить. Не считать универсальным СТО автоматически.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-parmatruck-ustinovo",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "parmatruck-ustinovo",
+      "name": "Парма-Трак",
+      "address": "Пермский край, д. Устиново, ул. Школьная, 17Б",
+      "phone": "+73422061206",
+      "evidence": "first_party_with_address_conflict",
+      "source_urls": [
+        "https://parmatruck.ru/about/",
+        "https://perm.big-book-avto.ru/company/712342/"
+      ],
+      "notes": "Официальная страница указывает Устиново, справочник — Героев Хасана 105Ш к160, Пермь. Возможно переезд; прежний адрес не добавлять, подтвердить перед публикацией.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-lion-ekad",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "lion-ekad",
+      "name": "ЛИОН — Автотехцентр ЕКАД",
+      "address": "Свердловская область, Екатеринбург, 5-й Южный проезд ЕКАД, стр. 1И",
+      "phone": "+79000384066",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://atc-ekad.ru/"
+      ],
+      "notes": "Выездного ремонта нет по FAQ; заявлена организация эвакуации до СТО.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-ivekaservis",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "ivekaservis",
+      "name": "Ив-ЕкаСервис",
+      "address": "Свердловская область, Екатеринбург, Кольцово, ул. Бахчиванджи, 2А/6",
+      "phone": "+73433173355",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://iv-ekaservis.ru/"
+      ],
+      "notes": "Доп. номер +7 922 188-33-55. Шаблонный email Info@contact.ru на странице не использован.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-trucksun-ekb",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "trucksun-ekb",
+      "name": "TruckSun — Екатеринбург",
+      "address": "Свердловская область, Екатеринбург, ул. Труда, 9А, к. 1/2/3",
+      "phone": "+79292124888",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://trucksun.ru/contacts"
+      ],
+      "notes": "Прямые линии сервиса: +7 992 005-88-44 и +7 929 212-08-88. Магазин на Промышленном проезде не добавлен.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-box96-sredneuralsk",
+      "source_file": "sto-bashkortostan-udmurtia-perm-sverdlovsk-batch09-2026-11-27.json",
+      "source_id": "box96-sredneuralsk",
+      "name": "BOX96",
+      "address": "Свердловская область, Среднеуральск, ул. Металлистов, 23",
+      "phone": "+79226080095",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://box96.ru/services/",
+        "https://urbanplaces.su/ru_sverdlovskaya-oblast/sredneuralsk-gorodskoj-okrug-sredneuralsk/card-70000001027431706-box96"
+      ],
+      "notes": "Телефон и профиль с сайта, адрес из справочника с совпадающим номером; сайт услуг индексирован давно, статус и часы уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-first-truck-chelyabinsk",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "first-truck-chelyabinsk",
+      "name": "Первый грузовой автосервис",
+      "address": "Челябинская область, Челябинск, ул. Заболотная, 18/5",
+      "phone": "+79292711307",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn--1-dtbcql2abm1a.xn--p1ai/"
+      ],
+      "notes": "Контакт и адрес опубликованы на сайте.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-angar19-chelyabinsk",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "angar19-chelyabinsk",
+      "name": "Ангар 19",
+      "address": "Челябинская область, Челябинск, ул. Хлебозаводская, 3, к. 2",
+      "phone": "+79822901380",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://angargruz19.ru/"
+      ],
+      "notes": "Сайт указывает тот же номер для Telegram и MAX; доставляемость сообщений не проверена.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-alliance-chelyabinsk",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "alliance-chelyabinsk",
+      "name": "Альянс-Групп",
+      "address": "Челябинская область, Челябинск, ул. Енисейская, 74",
+      "phone": "+79090697474",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://tehalliance.group/"
+      ],
+      "notes": "Отдельно интересен опыт газовых двигателей; часы и текущее наличие специалистов уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gruzovoi45-kurgan",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "gruzovoi45-kurgan",
+      "name": "Грузовой45",
+      "address": "Курганская область, Курган, Омская ул., 168",
+      "phone": "+73522222888",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn--45-dlcdun7abo4a.xn--p1ai/"
+      ],
+      "notes": "Доп. телефон СТО +7 912 835-00-82; эвакуатор +7 982 654-73-76 и +7 3522 422-911. Доп. email gruzovoi-service@yandex.ru.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kamazcenter-kurgan",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "kamazcenter-kurgan",
+      "name": "КАМАЗЦЕНТР-КУРГАН",
+      "address": "Курганская область, Курган, ул. Дзержинского, 68",
+      "phone": "+73522640806",
+      "evidence": "first_party_and_manufacturer",
+      "source_urls": [
+        "https://kamaz45.ru/sotrudniki/",
+        "https://tzacom.ru/guarantee/service-centers/dealers-of-jsc-kamaz/"
+      ],
+      "notes": "Номер сервисного подразделения. Инженер по гарантии +7 3522 54-11-54. Юр. оператор ремонтной площадки уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-telega72-tyumen",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "telega72-tyumen",
+      "name": "TELEGA",
+      "address": "Тюменская область, Тюмень, ул. Барнаульская, 102",
+      "phone": "+73452216777",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://telega72.ru/"
+      ],
+      "notes": "Доп. номера +7 958 149-51-34, +7 922 261-39-50. На сайте присутствует посторонний шаблон формы; не использовать как доказательство актуальности работы.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-truckservice72-tyumen",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "truckservice72-tyumen",
+      "name": "Траксервис72",
+      "address": "Тюменская область, Тюмень, Старый Тобольский тракт, 1-й км, 25, стр. 5/4",
+      "phone": "+73452999762",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truck-service72.ru/"
+      ],
+      "notes": "Телефон СТО, не магазина запчастей; доп. +7 904 499-97-62.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rontruck-tyumen",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "rontruck-tyumen",
+      "name": "Рон Трак Сервис",
+      "address": "Тюменская область, Тюмень, ул. Чекистов, 30, стр. 19",
+      "phone": "+79324730303",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rontruck.ru/"
+      ],
+      "notes": "Экстренная помощь заявлена 24/7, отдельно от обычного графика СТО. ИНН 7203568867 опубликован компанией, не проверен по ФНС.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-avtograd-trucks-tyumen",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "avtograd-trucks-tyumen",
+      "name": "Автоград Trucks",
+      "address": "Тюменская область, Тюмень, ул. Республики, 260, стр. 1",
+      "phone": "+73452596960",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://trucks.agrad.ru/"
+      ],
+      "notes": "Контакты грузового подразделения.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-agl-tyumen",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "agl-tyumen",
+      "name": "AGL-Сервис",
+      "address": "Тюменская область, Тюмень, ул. Энтузиастов, 33",
+      "phone": "+73452600323",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://agl-servis.ru/"
+      ],
+      "notes": "Доп. 8 800 222-17-08. Выездной ремонт заявлен для клиентов с договором на обслуживание; не считать общедоступным.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gruzovik-service-tyumen",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "gruzovik-service-tyumen",
+      "name": "Грузовик-Сервис",
+      "address": "Тюменская область, Тюмень, ул. Ямская, 105, стр. 3",
+      "phone": "+79323216015",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://g-sto72.ru/"
+      ],
+      "notes": "Доп. +7 3452 616-015. Часы противоречат друг другу (пн–пт 08:00–18:00 и ежедневно 09:00–18:00); уточнить. Техподдержка заявлена 24/7.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-nilsonauto-omsk",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "nilsonauto-omsk",
+      "name": "Нильсон Авто",
+      "address": "Омская область, Омск, ул. 10 лет Октября, 203/2",
+      "phone": "+79024601100",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://service.nilsonauto.ru/"
+      ],
+      "notes": "Профиль включает малотоннажный и среднетоннажный транспорт; возможность приема тяжёлых тягачей и полуприцепов уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-eurosibtruck-omsk",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "eurosibtruck-omsk",
+      "name": "Евросибтрак",
+      "address": "Омская область, Омск, ул. 22 Декабря, 83",
+      "phone": "+73812217715",
+      "evidence": "first_party_and_manufacturer",
+      "source_urls": [
+        "https://eurosib55.ru/service/",
+        "https://support.bpw-ost.ru/all-contacts/",
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Сайт заявляет выездной сервис 24/7; актуальность графика стационарного СТО уточнить. Доп. email info@eurosib55.ru.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-mtrucks-druzhino",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "mtrucks-druzhino",
+      "name": "М-Тракс",
+      "address": "Омская область, Омский район, с. Дружино, ул. Придорожная, 61А",
+      "phone": "+73812356455",
+      "evidence": "first_party_and_manufacturer",
+      "source_urls": [
+        "https://sitrak-omsk.ru/",
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Номер отдела сервиса. В каталоге Kögel адрес 61 без литеры А; уточнить въезд. ИНН 5528201508 по сайту.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-grinavto-omsk",
+      "source_file": "sto-chelyabinsk-kurgan-tyumen-omsk-batch10-2026-11-27.json",
+      "source_id": "grinavto-omsk",
+      "name": "ГРИНАВТО",
+      "address": "Омская область, Омск, ул. 2-я Солнечная, 35Д",
+      "phone": "+73812729020",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Номер и адрес опубликованы в сервисном каталоге производителя Kögel; дополнительный 8 800 333-01-01. Собственный сайт отдельно не проверен.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-trucklab-nsk",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "trucklab-nsk",
+      "name": "Truck Lab",
+      "address": "Новосибирская область, Новосибирск, ул. Большая, 228, к. 1",
+      "phone": "+79133712276",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://trucklab.ru/"
+      ],
+      "notes": "Доп. телефон +7 913 711-52-80. Ремонт КПП и редукторов выполняют партнёры; не считать собственным агрегатным цехом.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-gruzovoz-nsk",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "gruzovoz-nsk",
+      "name": "Грузовоз",
+      "address": "Новосибирская область, Новосибирск, ул. Ивана Титкова, 20",
+      "phone": "+73833670857",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://gruzovoz.co/contact/"
+      ],
+      "notes": "MAN, Scania, Mercedes. Доп. +7 923 733-83-31.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-nord-service-ob",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "nord-service-ob",
+      "name": "Норд Сервис",
+      "address": "Новосибирская область, Обь, ул. Путейцев, 24",
+      "phone": "+79139172937",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.nord-service54.ru/"
+      ],
+      "notes": "Фактический адрес в Оби, а не в Новосибирске. Контакт и график опубликованы на сайте.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-eurospec-nsk",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "eurospec-nsk",
+      "name": "ЕвроСпец",
+      "address": "Новосибирская область, Новосибирск, ул. Чекалина, 4А",
+      "phone": "+73832092111",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://eurospec.su/"
+      ],
+      "notes": "Специализированный кузовной профиль; полный перечень слесарных работ уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-btc-krasny-vostok",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "btc-krasny-vostok",
+      "name": "Бизнес Трак Центр — Новосибирск",
+      "address": "Новосибирская область, пос. Красный Восток, ул. Советская, 26/1",
+      "phone": "+73433191101",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://btc-u.ru/nsk/"
+      ],
+      "notes": "Номер общий сетевой, код Екатеринбурга; запросить прямой телефон филиала. Заезд с Ордынского шоссе.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-nts-tomsk",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "nts-tomsk",
+      "name": "НТС",
+      "address": "Томская область, Томск, ул. Вилюйская, 52/11",
+      "phone": "+79234227772",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sto-nts.ru/"
+      ],
+      "notes": "Доп. +7 903 955-77-72; ИНН 7000006164 опубликован компанией. Второй фактический адрес Иркутский тракт 63/1 требует уточнения профиля, не добавлен как отдельное СТО.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-masterservis-tomsk",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "masterservis-tomsk",
+      "name": "Мастер Сервис",
+      "address": "Томская область, Томск, Мостовой переулок, 2А, стр. 1",
+      "phone": "+79138063273",
+      "evidence": "business_hosted_page",
+      "source_urls": [
+        "https://master-servis-remont-gruzovyh.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; не независимое подтверждение актуальности. График уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-truckrelax-kemerovo",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "truckrelax-kemerovo",
+      "name": "Трак Релакс",
+      "address": "Кемеровская область, Кемеровский муниципальный округ, территория Северный Пост, 3",
+      "phone": "+73842447788",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truckrelax.ru/"
+      ],
+      "notes": "Круглосуточная эвакуация заявлена отдельно от стационарного графика.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-nztruck-metallploshchadka",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "nztruck-metallploshchadka",
+      "name": "NZ Truck — сервис грузовых тягачей",
+      "address": "Кемеровская область, Кемеровский район, пос. Металлплощадка, ул. Воскресенская, 5",
+      "phone": "+79030703735",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.nz-truck.ru/uslugi-servisa/"
+      ],
+      "notes": "Прямой номер записи именно на грузовую площадку, не малотоннажную СТО Нова.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kmpk-kemerovo",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "kmpk-kemerovo",
+      "name": "КМПК — Кемерово",
+      "address": "Кемеровская область, Кемерово, просп. Кузнецкий, 127/6",
+      "phone": "+73842377111",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.kmpk.ru/about/contacts/"
+      ],
+      "notes": "Общая линия грузового направления; дополнительная линия сервиса +7 900 103-80-00. Конкретный ремонтный пост и профиль уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-altai-asko-trans",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "altai-asko-trans",
+      "name": "Алтай-Аско-Транс",
+      "address": "Алтайский край, Барнаул, Павловский тракт, 200Ф",
+      "phone": "+73852500202",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://altaiaskotrans.ru/contacts/",
+        "https://altaiaskotrans.ru/"
+      ],
+      "notes": "Доп. телефоны записи +7 963 521-23-03 и +7 962 790-18-79. ИНН 2222048840 опубликован компанией, не проверен в ФНС.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-truckmaster-barnaul",
+      "source_file": "sto-novosibirsk-tomsk-kemerovo-altai-batch11-2026-11-27.json",
+      "source_id": "truckmaster-barnaul",
+      "name": "Трак-Мастер",
+      "address": "Алтайский край, Барнаул, ул. Власихинская, 194",
+      "phone": "+73852504017",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truckmaster.ru/barnaul/contacts/"
+      ],
+      "notes": "Прямой номер автосервиса, не магазина. Цех ГБЦ: Власихинская 194А, +7 3852 50-78-95. Прием тяжёлых тягачей уточнить. ИНН 2222827476 по сайту.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kgm124-krasnoyarsk",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "kgm124-krasnoyarsk",
+      "name": "КГМ124",
+      "address": "Красноярский край, Красноярск, ул. 2-я Брянская, 49",
+      "phone": "+79029805222",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://kgm124.ru/kontakty/",
+        "https://kgm124.ru/"
+      ],
+      "notes": "Доп. +7 950 992-60-30.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-sto124-boguchany",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "sto124-boguchany",
+      "name": "СТО124 — Богучаны",
+      "address": "Красноярский край, 9-й км автодороги Богучаны–Кодинск",
+      "phone": "+73912801522",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn--124-redog.xn--p1ai/news/14/",
+        "https://xn--124-redog.xn--p1ai/contacts/"
+      ],
+      "notes": "Новость от 03.07.2026 сообщает об открытии в июне 2026. Общий контакт сети, прямой номер и въезд уточнить.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-trucksto-krasnoyarsk",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "trucksto-krasnoyarsk",
+      "name": "Целая фура",
+      "address": "Красноярский край, Красноярск, ул. Пограничников, 2Л",
+      "phone": "+78003334969",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://trucksto.ru/filialy/krasnoyarsk/"
+      ],
+      "notes": "Общий номер сети; ремонт холодильного оборудования Carrier и Thermo King заявлен на сайте.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kamss-abakan",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "kamss-abakan",
+      "name": "КАМСС-сервис",
+      "address": "Республика Хакасия, Абакан, ул. Советская, 182М",
+      "phone": "+73902202603",
+      "evidence": "first_party_and_directory",
+      "source_urls": [
+        "https://kamss.ru/contacts/",
+        "https://abakan.auto2.info/abakan/kamss-servis-157589/"
+      ],
+      "notes": "Доп. +7 3902 20-26-02. Возможность приема целого тягача уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-cardone-abakan",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "cardone-abakan",
+      "name": "CarDone",
+      "address": "Республика Хакасия, Абакан, ул. Игарская, 21Е",
+      "phone": "+79235923033",
+      "evidence": "directory_crosscheck",
+      "source_urls": [
+        "https://abakan.spravka.city/company/cardone-3",
+        "https://car.ms/autoservices/truck-service/abakan/"
+      ],
+      "notes": "Номер опубликован в разделе связи с бизнесом; дополнительно +7 983 261-63-00. Только справочники, профиль и работу подтвердить до публикации.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-oktan-irkutsk",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "oktan-irkutsk",
+      "name": "Октан",
+      "address": "Иркутская область, Иркутск, ул. Трактовая, 9",
+      "phone": "+73952326545",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://oktan-remont.ru/"
+      ],
+      "notes": "Сайт АО Октан; профиль капремонта, условия срочного приема уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-dieseltreyd-irkutsk",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "dieseltreyd-irkutsk",
+      "name": "Дизель-Трейд",
+      "address": "Иркутская область, Иркутск, ул. Полярная, 211",
+      "phone": "+73952618461",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://dieseltreyd.ru/uslugi"
+      ],
+      "notes": "Доп. +7 3952 74-96-74.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-traklider-vdovina",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "traklider-vdovina",
+      "name": "Трак-Лидер",
+      "address": "Иркутская область, Иркутский район, заимка Вдовина, ул. Дорожная, 1В",
+      "phone": "+78001015545",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn--80aidkjg6agk.xn--p1ai/gruzovoe-sto"
+      ],
+      "notes": "Эвакуация 24/7 заявлена отдельно от стационарного графика.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-stolica-irkutsk",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "stolica-irkutsk",
+      "name": "СТО Столица",
+      "address": "Иркутская область, Иркутск, ул. Ширямова, 40",
+      "phone": "+73952621844",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://truck-service38.ru/"
+      ],
+      "notes": "Доп. +7 902 513-18-44. ИНН 3849086204 опубликован компанией, не проверен в ФНС.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-shacman-mamony",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "shacman-mamony",
+      "name": "Шакман-Рус — сервис",
+      "address": "Иркутская область, с. Мамоны, ул. Центральная, 44",
+      "phone": "+73952434240",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://shacman-rus.ru/contacts/"
+      ],
+      "notes": "Общий номер компании. Улан-Удэ и Чита на странице указаны как офисы, не добавлены в качестве СТО.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-premier-trak-ulanude",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "premier-trak-ulanude",
+      "name": "Премьер Трак",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Кабанская, 51/4",
+      "phone": "+79240101313",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn----8sbna1aitidbv0j.xn--p1ai/"
+      ],
+      "notes": "Контакт и график с собственного сайта.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-kamaz-buryatia",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "kamaz-buryatia",
+      "name": "Бурятский КАМАЗ Центр",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Дальнегурульбинская, 5А",
+      "phone": "+73012224433",
+      "evidence": "manufacturer_network",
+      "source_urls": [
+        "https://uralaz.ru/dealers/",
+        "https://tv-dubl.ru/katalog-organizacii/spravochnik-organizacij-avtotovary/katalog-organizacij-remont-gruzovyh-avtomobiley.html"
+      ],
+      "notes": "Сервисный центр указан в каталоге производителя Урал. Доп. +7 3012 22-44-46, +7 902 166-04-38. График уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-jupiter-trak-ulanude",
+      "source_file": "sto-krasnoyarsk-khakassia-irkutsk-buryatia-batch12-2026-11-27.json",
+      "source_id": "jupiter-trak-ulanude",
+      "name": "ЮпитерТрак",
+      "address": "Республика Бурятия, Улан-Удэ, ул. Бабушкина, 198Б",
+      "phone": "+73012575003",
+      "evidence": "directory_only",
+      "source_urls": [
+        "https://ulan-ude.gdeservisy.ru/gruzovoy-autoservis-yupitertrak-2"
+      ],
+      "notes": "Доп. +7 3012 37-30-07; только справочник, часы и прием тяжёлых грузовиков уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rig-chita",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "rig-chita",
+      "name": "RIG Service",
+      "address": "Забайкальский край, Чита, ул. Беговая, 2",
+      "phone": "+79294805577",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rigservice.ru/"
+      ],
+      "notes": "Отдельный номер Volvo +7 924 272-05-95; основной для Scania, MAN, SITRAK, DAF. 15 постов заявлены компанией.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-pritsepplus-chita",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "pritsepplus-chita",
+      "name": "Прицеп+",
+      "address": "Забайкальский край, Чита, Кутузовский проезд, 6",
+      "phone": "+79242784477",
+      "evidence": "business_hosted_page",
+      "source_urls": [
+        "https://pritsep.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; актуальные часы уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-amurtruck-blagoveshchensk",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "amurtruck-blagoveshchensk",
+      "name": "АмурТрак",
+      "address": "Амурская область, Благовещенск, ул. Театральная, 430А",
+      "phone": "+79246711313",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://amur-truck.ru/contacts/shops/"
+      ],
+      "notes": "Номер и адрес именно СТО, не магазина на Театральной 164.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-runauto-khabarovsk",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "runauto-khabarovsk",
+      "name": "RUN AUTO",
+      "address": "Хабаровский край, Хабаровск, ул. Промышленная, 1, стр. 1",
+      "phone": "+74212240302",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://run-auto.ru/"
+      ],
+      "notes": "Прямой номер грузового цеха; рабочий WhatsApp +7 914 159-03-02. Ограничение высоты 4 м.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-dvservice-topolevo",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "dvservice-topolevo",
+      "name": "ДВ Сервис — Тополево",
+      "address": "Хабаровский край, с. Тополево, ул. Центральная, 2С",
+      "phone": "+74212932172",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://dvservice.pro/"
+      ],
+      "notes": "Общая линия двух адресов, доп. +7 924 106-35-08; ИНН 2723179280 по сайту.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-rustransauto-khabarovsk",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "rustransauto-khabarovsk",
+      "name": "Рустрансавто",
+      "address": "Хабаровский край, Хабаровск, ул. Целинная, 2Г",
+      "phone": "+79243090707",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://rusautodv.ru/"
+      ],
+      "notes": "Российская техника, в том числе Урал и КАМАЗ.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-vts-khabarovsk",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "vts-khabarovsk",
+      "name": "Восток Трак Сервис",
+      "address": "Хабаровский край, Хабаровск, ул. Трёхгорная, 177А",
+      "phone": "+79997927895",
+      "evidence": "first_party_search_index",
+      "source_urls": [
+        "https://sto-vts.ru/contacts/",
+        "https://sto-vts.ru/services/"
+      ],
+      "notes": "Рабочий номер администратора; прямое открытие контактов не удалось, сведения сверены по индексированным страницам собственного сайта.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-tehservise-khabarovsk",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "tehservise-khabarovsk",
+      "name": "Техсервис — Павла Морозова",
+      "address": "Хабаровский край, Хабаровск, ул. Павла Морозова, 65",
+      "phone": "+79143108500",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://www.tehservise.ru/"
+      ],
+      "notes": "На сайте заявлены 10 ремонтных постов; номер записи.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-dvservice-artem",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "dvservice-artem",
+      "name": "ДВ Сервис — Артём",
+      "address": "Приморский край, Артём, ул. Вокзальная, 109Д",
+      "phone": "+74212932172",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://dvservice.pro/"
+      ],
+      "notes": "Отдельный адрес на сайте сети; общий номер с Тополево, конкретный профиль площадки и прямой контакт уточнить.",
+      "timezone": null,
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-cgo125-steklozavodsky",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "cgo125-steklozavodsky",
+      "name": "Центр грузового обслуживания",
+      "address": "Приморский край, пос. Стеклозаводский, ул. Заводская, 2",
+      "phone": "+79242562222",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://cgo125.ru/"
+      ],
+      "notes": "Доп. номер грузового сервиса +7 924 498-11-11; район Кипарисово. Круглосуточная мойка не означает круглосуточное СТО.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-sumotori-artem",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "sumotori-artem",
+      "name": "Техцентр Сумотори",
+      "address": "Приморский край, Артём, ул. 1-я Рабочая, 91",
+      "phone": "+74232600200",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://service.sumotori.ru/"
+      ],
+      "notes": "Доп. номера +7 914 792-14-70 и +7 914 791-68-64; FAW, SITRAK, HOWO.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-mika-vladivostok",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "mika-vladivostok",
+      "name": "МИКА",
+      "address": "Приморский край, Владивосток, ул. Бородинская, 61",
+      "phone": "+74232688040",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://mikaservice.ru/"
+      ],
+      "notes": "Ремонт японских малотоннажных/среднетоннажных грузовиков; сход-развал заявлен для всех типов грузовиков. Прием тяжелого тягача на прочие работы уточнить.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-autoliga-vladivostok",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "autoliga-vladivostok",
+      "name": "АвтоЛига — грузовое СТО",
+      "address": "Приморский край, Владивосток, ул. Днепровская, 115",
+      "phone": "+74232016616",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://al-vl.ru/kontakti"
+      ],
+      "notes": "Прямой номер грузового СТО, не легкового цеха на Народном проспекте.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-autoliga-ussuriysk",
+      "source_file": "sto-zabaykalsky-amur-khabarovsk-primorye-batch13-2026-11-27.json",
+      "source_id": "autoliga-ussuriysk",
+      "name": "АвтоЛига — Уссурийск",
+      "address": "Приморский край, Уссурийск, ул. Тургенева, 113",
+      "phone": "+74234243174",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://al-vl.ru/kontakti"
+      ],
+      "notes": "Смешанный профиль; прием тяжелого тягача уточнить. Отдельный филиал.",
+      "timezone": null,
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Coordinates and activity not independently verified; conservative duplicate screening is not exhaustive."
+}
