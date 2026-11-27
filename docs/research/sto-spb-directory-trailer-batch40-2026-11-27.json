@@ -1,0 +1,1662 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, heavy truck capability, coordinates, reuse rights, duplicates and admin approval. Historic directory entries require current corroboration. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "b40-nevkom",
+      "name": "01А Невком",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 233, лит. Ж",
+      "country": "Россия",
+      "phone": "+7 812 746-45-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "nevkom",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-bosch-stempel",
+      "name": "BOSH-Дизель Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 941-93-83",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "bosch-stempel",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-finikor",
+      "name": "FINIKOR",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 8, корп. 3",
+      "country": "Россия",
+      "phone": "+7 812 240-24-29",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "finikor",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-masterturbo",
+      "name": "MasterTurbo",
+      "region": "Санкт-Петербург",
+      "address": "Михайловский пер., 1",
+      "country": "Россия",
+      "phone": "+7 812 407-37-36",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "masterturbo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-solexauto",
+      "name": "Solexauto",
+      "region": "Санкт-Петербург",
+      "address": "Колпино, Колпинская ул., 8",
+      "country": "Россия",
+      "phone": "+7 812 448-04-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "solexauto",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-avtodok-irinovsky",
+      "name": "Автодок",
+      "region": "Санкт-Петербург",
+      "address": "Ириновский пр., 1",
+      "country": "Россия",
+      "phone": "+7 812 922-63-23",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "avtodok-irinovsky",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-avtospec-yanino",
+      "name": "Автоспецсервис — Янино",
+      "region": "Ленинградская область",
+      "address": "Янино-1, Новая ул., 17",
+      "country": "Россия",
+      "phone": "+7 812 400-26-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "avtospec-yanino",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-avtostroyservice",
+      "name": "Автостройсервис",
+      "region": "Санкт-Петербург",
+      "address": "ул. Бехтерева, 4",
+      "country": "Россия",
+      "phone": "+7 812 412-81-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "avtostroyservice",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-avtohaus",
+      "name": "Автохаус",
+      "region": "Санкт-Петербург",
+      "address": "пр. Александровской Фермы, 17",
+      "country": "Россия",
+      "phone": "+7 905 209-04-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "avtohaus",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-bars-lithovskaya",
+      "name": "Барс Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Литовская ул., 16",
+      "country": "Россия",
+      "phone": "+7 812 922-35-36",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "bars-lithovskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-gruzovik-govorova",
+      "name": "Грузовик-СПб",
+      "region": "Санкт-Петербург",
+      "address": "ул. Маршала Говорова, 37А",
+      "country": "Россия",
+      "phone": "+7 812 339-45-53",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=2"
+      ],
+      "notes": "Профиль тахографов, уточнить перечень работ. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "gruzovik-govorova",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-dvigatel-vitebsky",
+      "name": "Двигатель",
+      "region": "Санкт-Петербург",
+      "address": "Витебский пр., 9",
+      "country": "Россия",
+      "phone": "+7 812 388-11-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=2"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "dvigatel-vitebsky",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-dieselauto-sabirovskaya",
+      "name": "Дизель-Авто",
+      "region": "Санкт-Петербург",
+      "address": "Сабировская ул., 41",
+      "country": "Россия",
+      "phone": "+7 812 934-70-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "dieselauto-sabirovskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-dizelmaster-moskovskoe",
+      "name": "Дизель-Мастер",
+      "region": "Санкт-Петербург",
+      "address": "Московское шоссе, 13, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 373-98-48",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "dizelmaster-moskovskoe",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-dizelavtoservice-sofiyskaya",
+      "name": "ДизельАвтоСервис",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 76",
+      "country": "Россия",
+      "phone": "+7 812 907-31-54",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "dizelavtoservice-sofiyskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-doroga-avto",
+      "name": "Дорога-Авто / К-Мастер",
+      "region": "Санкт-Петербург",
+      "address": "пр. Девятого Января, 19",
+      "country": "Россия",
+      "phone": "+7 812 706-98-16",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "notes": "Две вывески по одному адресу: К-Мастер +7 812 772-39-14 (страница 5); один кандидат. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "doroga-avto",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-es-trans",
+      "name": "ЕС Транс / Пит-Стоп",
+      "region": "Санкт-Петербург",
+      "address": "Полюстровский пр., 50",
+      "country": "Россия",
+      "phone": "+7 812 336-25-59",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "notes": "Пит-Стоп по тому же адресу; не считать отдельно. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "es-trans",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-kardanresurs",
+      "name": "Карданресурс",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 3",
+      "country": "Россия",
+      "phone": "+7 812 244-15-36",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "kardanresurs",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-kvs-auto",
+      "name": "КВС-Авто",
+      "region": "Санкт-Петербург",
+      "address": "Октябрьская наб., 32",
+      "country": "Россия",
+      "phone": "+7 812 324-53-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "kvs-auto",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-lakon",
+      "name": "Лакон",
+      "region": "Санкт-Петербург",
+      "address": "ул. Ватутина, 17",
+      "country": "Россия",
+      "phone": "+7 812 542-18-82",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "lakon",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-mvravto",
+      "name": "МВРАвто",
+      "region": "Ленинградская область",
+      "address": "Янино-1, Кольцевая ул., 1А",
+      "country": "Россия",
+      "phone": "+7 812 953-82-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Соседний адрес Евротракс 1В; проверить независимость. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "mvravto",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-mvs-auto",
+      "name": "МВС-Авто",
+      "region": "Санкт-Петербург",
+      "address": "Хрустальная ул., 27",
+      "country": "Россия",
+      "phone": "+7 812 980-96-69",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "mvs-auto",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-mehzelenstroy",
+      "name": "Мехзеленстрой-СПб",
+      "region": "Санкт-Петербург",
+      "address": "Парголово, Донецкая ул., 4",
+      "country": "Россия",
+      "phone": "+7 911 000-85-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "mehzelenstroy",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-mosdesignmash",
+      "name": "Мосдизайнмаш",
+      "region": "Санкт-Петербург",
+      "address": "Красное Село, Привокзальная ул., 2, лит. Д",
+      "country": "Россия",
+      "phone": "+7 812 914-68-95",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "mosdesignmash",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-newtech-sofiyskaya",
+      "name": "Новые технологии",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 96",
+      "country": "Россия",
+      "phone": "+7 812 925-46-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "newtech-sofiyskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-olimp-gruzovoy",
+      "name": "Олимп",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой проезд, 15",
+      "country": "Россия",
+      "phone": "+7 905 215-79-04",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "olimp-gruzovoy",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-osanna-voroshilova",
+      "name": "Осанна-Сервис-Авто",
+      "region": "Санкт-Петербург",
+      "address": "ул. Ворошилова, 2",
+      "country": "Россия",
+      "phone": "+7 812 929-10-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "osanna-voroshilova",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-petrodor",
+      "name": "Петродор",
+      "region": "Санкт-Петербург",
+      "address": "2-й Верхний пер., 4, корп. 3",
+      "country": "Россия",
+      "phone": "+7 921 920-33-89",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "petrodor",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-pnevmotechcenter",
+      "name": "Пневмотехцентр",
+      "region": "Санкт-Петербург",
+      "address": "пр. Большевиков, 52, корп. 6",
+      "country": "Россия",
+      "phone": "+7 981 944-04-40",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "pnevmotechcenter",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-primula",
+      "name": "Примула Valvoline",
+      "region": "Санкт-Петербург",
+      "address": "ул. Седова, 3",
+      "country": "Россия",
+      "phone": "+7 812 365-46-46",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "primula",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-ra-kronstadt",
+      "name": "РА",
+      "region": "Санкт-Петербург",
+      "address": "Кронштадт, ул. Восстания, 7Б",
+      "country": "Россия",
+      "phone": "+7 812 311-53-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "ra-kronstadt",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-remzona-yamizh",
+      "name": "Ремзона Ям-Ижора",
+      "region": "Ленинградская область",
+      "address": "д. Ям-Ижора, Московское шоссе",
+      "country": "Россия",
+      "phone": "+7 812 645-70-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "notes": "Точный номер здания отсутствует. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "remzona-yamizh",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-remtehmontazh",
+      "name": "РемТехМонтаж",
+      "region": "Санкт-Петербург",
+      "address": "Горелово, Аннинское шоссе, 28В",
+      "country": "Россия",
+      "phone": "+7 812 746-00-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "remtehmontazh",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-rikavto",
+      "name": "Рикавто",
+      "region": "Санкт-Петербург",
+      "address": "Литовская ул., 17, лит. А",
+      "country": "Россия",
+      "phone": "+7 911 177-44-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "rikavto",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-starter-planernaya",
+      "name": "Стартер",
+      "region": "Санкт-Петербург",
+      "address": "Планерная ул., 15, сек. 29",
+      "country": "Россия",
+      "phone": "+7 921 966-45-36",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "starter-planernaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-sto-gaz-shkapina",
+      "name": "СТО ГАЗ",
+      "region": "Санкт-Петербург",
+      "address": "ул. Шкапина, 51",
+      "country": "Россия",
+      "phone": "+7 812 252-78-64",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "notes": "Уточнить обслуживание тяжёлых машин. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "sto-gaz-shkapina",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-truckempire",
+      "name": "Трак Эмпайр",
+      "region": "Санкт-Петербург",
+      "address": "Колпино, Финляндская ул., 38",
+      "country": "Россия",
+      "phone": "+7 812 926-00-53",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "truckempire",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-truckautoservice",
+      "name": "Трак-Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1Б, лит. Ж",
+      "country": "Россия",
+      "phone": "+7 812 380-19-48",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "truckautoservice",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-truckinservice",
+      "name": "Тракинсервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 8, стоянка Матеп",
+      "country": "Россия",
+      "phone": "+7 952 356-94-67",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "truckinservice",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-ttservice",
+      "name": "ТТ Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Металлострой, Ефремовский проезд, 4",
+      "country": "Россия",
+      "phone": "+7 901 372-66-76",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой автосервис по справочнику, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "ttservice",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-autospec-dieselcenter",
+      "name": "Автоспецсервис — Дизель Центр",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 10В",
+      "country": "Россия",
+      "phone": "8 800 555-23-75",
+      "email": "info@diesel-center.ru",
+      "hours": null,
+      "services": [
+        "дизельная топливная аппаратура грузовых ТС"
+      ],
+      "source_urls": [
+        "https://diesel-center.ru/contacts/"
+      ],
+      "notes": "Собственная ремзона для тягачей, топливная аппаратура. Пн–пт 09:30–20:00, сб–вс 10:00–18:00. Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "autospec-dieselcenter",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-serviceavto-kirovsk",
+      "name": "Сервисавто",
+      "region": "Ленинградская область",
+      "address": "Кировск, ул. Песочная, 4",
+      "country": "Россия",
+      "phone": "+7 812 974-56-65",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "serviceavto-kirovsk",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-adampolis",
+      "name": "Адамполис+М",
+      "region": "Москва",
+      "address": "ул. Рябиновая, 28А, стр. 3",
+      "country": "Россия",
+      "phone": "+7 495 980-91-28",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "adampolis",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-azr-balashikha",
+      "name": "АЗР Автомобиль – звезда Руси",
+      "region": "Московская область",
+      "address": "Балашиха, ул. Западная, 7",
+      "country": "Россия",
+      "phone": "+7 495 521-81-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "azr-balashikha",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-ilaravto",
+      "name": "Иларавто",
+      "region": "Московская область",
+      "address": "Алтуфьевское шоссе, 85-й км МКАД, пос. Вешки",
+      "country": "Россия",
+      "phone": "+7 495 785-62-64",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "ilaravto",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-germes-nsk",
+      "name": "Гермес",
+      "region": "Новосибирская область",
+      "address": "ул. Малыгина, 13/1",
+      "country": "Россия",
+      "phone": "+7 383 356-61-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "germes-nsk",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-kmpk-kemerovo",
+      "name": "КМПК",
+      "region": "Кемеровская область",
+      "address": "Кузнецкий просп., 127А",
+      "country": "Россия",
+      "phone": "+7 3842 28-69-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "kmpk-kemerovo",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-zmz-transservice",
+      "name": "ЗМЗ-Транссервис",
+      "region": "Нижегородская область",
+      "address": "Заволжье, ул. Лесозаводская, 37",
+      "country": "Россия",
+      "phone": "+7 83161 37-638",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "zmz-transservice",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-axel-k",
+      "name": "Аксель-К",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, Старомарьевское шоссе, 19",
+      "country": "Россия",
+      "phone": "+7 8652 28-31-28",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тормозные системы Knorr-Bremse"
+      ],
+      "source_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "axel-k",
+      "evidence": "historical_manufacturer_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-refika-mokshan",
+      "name": "Рефика Сервис",
+      "region": "Пензенская область",
+      "address": "рп Мокшан, ул. Строителей, 14А",
+      "country": "Россия",
+      "phone": "+7 8412 50-93-74",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "refika-mokshan",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-tkcenter-meshkovo",
+      "name": "ТК-Центр",
+      "region": "Московская область",
+      "address": "д. Мешково, 2, стр. 2",
+      "country": "Россия",
+      "phone": "+7 985 189-68-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "tkcenter-meshkovo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-rba-shevyrevka",
+      "name": "РБА-МБ — Шевыревка",
+      "region": "Саратовская область",
+      "address": "д. Шевыревка, ул. Мира, 27А",
+      "country": "Россия",
+      "phone": "+7 8452 90-09-08",
+      "email": "service@saratov.rbauto.ru",
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-alfascan-chirshkasy",
+      "name": "АльфаСкан — Чиршкасы",
+      "region": "Чувашская Республика",
+      "address": "с. Чиршкасы, ул. 11-й Пятилетки, 7, корп. 18",
+      "country": "Россия",
+      "phone": "8 800 775-76-66",
+      "email": "cheboksary@alfascan.ru",
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "alfascan-chirshkasy",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-eurotruck-rogachevka",
+      "name": "Евротрак Центр Черноземье",
+      "region": "Воронежская область",
+      "address": "с. Рогачевка, ул. Мира, 46",
+      "country": "Россия",
+      "phone": "+7 4732 00-73-73",
+      "email": "man_service@mail.ru",
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "eurotruck-rogachevka",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-ivanovo-kamazcenter",
+      "name": "Ивановский автоцентр КАМАЗ",
+      "region": "Ивановская область",
+      "address": "Иваново, ул. 13-я Березниковская, 1А",
+      "country": "Россия",
+      "phone": "+7 4932 95-55-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "ivanovo-kamazcenter",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-lipetskkomtrans",
+      "name": "Липецккомтранс",
+      "region": "Липецкая область",
+      "address": "Липецк, ул. Ковалева, 127А",
+      "country": "Россия",
+      "phone": "+7 4742 35-82-22",
+      "email": "info@scanlipetsk.ru",
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "lipetskkomtrans",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-rnitc-lipetsk",
+      "name": "РНИТЦ-Сервис",
+      "region": "Липецкая область",
+      "address": "Липецк, ул. Подгоренская, вл. 4",
+      "country": "Россия",
+      "phone": "+7 903 699-54-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "rnitc-lipetsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-kamres-poltavskaya",
+      "name": "Камавторесурс",
+      "region": "Краснодарский край",
+      "address": "ст. Полтавская, ул. Л. Толстого, 4",
+      "country": "Россия",
+      "phone": "+7 918 492-09-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "kamres-poltavskaya",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-pnevmocenter-dinskaya",
+      "name": "СТО Пневмоцентр",
+      "region": "Краснодарский край",
+      "address": "ст. Динская, ул. Шевченко, 92/1",
+      "country": "Россия",
+      "phone": "+7 918 453-53-50",
+      "email": "pnevmo-krd@yandex.ru",
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "pnevmocenter-dinskaya",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-rba-osinovo",
+      "name": "РБА-МБ — Осиновское",
+      "region": "Республика Татарстан",
+      "address": "Зеленодольский район, площадка Ферромоторс, зд. 2",
+      "country": "Россия",
+      "phone": "+7 843 212-11-73",
+      "email": "service.kazan@rbauto.ru",
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b40-delovye-mashiny-perm",
+      "name": "Деловые машины",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Фоминская, 25Б",
+      "country": "Россия",
+      "phone": "+7 342 259-03-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание грузовых надстроек по каталогу производителя"
+      ],
+      "source_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "notes": "Актуальность бизнеса, тяжёлый транспорт, телефон и адрес требуют подтверждения.",
+      "operator_group": "delovye-mashiny-perm",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Allinform pages 1–8 consulted; many listings may be old. Do not treat directory crawl date as date of last business update.",
+    "Two uncertain sites withheld (Gruz-Service Metallostroy same phone as Annolovo; SNV-Service same base address as Osanna). Known aliases excluded manually (DAV Piter, Triа, Nevakam/ViD, Diesel Express/Vinauto, ParkAvtoKompleks, MAN Service/Goodwill, etc.).",
+    "Prior records matched against 13 priority/network batches by exact normalized address or name+phone; nationwide fuzzy match remains pending.",
+    "Official Diesel Center source confirms workshop and current contact. All other entries not independently verified by phone or FNS."
+  ]
+}
