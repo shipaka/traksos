@@ -92,6 +92,13 @@ try{
  const page=await ctx.newPage();
  const assertMasterClean=watchPageErrors(page);
  let stepStatus='accepted';
+ // Synthetic account rating, not an order/performer profile rating.
+ await page.route(url=>url.pathname==='/api/me',async route=>{
+   if(route.request().method()!=='GET')return route.continue();
+   const response=await route.fetch();
+   const account=await response.json();
+   await route.fulfill({response,json:{...account,rating:4.82,rating_count:12}});
+ });
  await page.route(url=>url.pathname==='/api/orders'&&url.searchParams.get('as')==='performer',
    route=>route.fulfill(json([order])));
  await page.route(url=>url.pathname==='/api/orders/'+id,
@@ -115,6 +122,9 @@ try{
      limits:{usual:100000,floor:75000,ceil:125000},my_price:null}])));
  await open(page,master.token,master.mode,'#/work');
  await assertFullBleedCabinetBanner(page,'master');
+ const ownRating=page.getByRole('link',{name:'Мой рейтинг: ★ 4,8 · 12 оценок'});
+ await ownRating.waitFor({state:'visible'});
+ assert.equal(await ownRating.getAttribute('href'),'#/work/me/level');
  assert(await page.locator('.approved-pc-performer-case').count()===1,'Active job not opened');
  assert(await page.getByRole('button',{name:'Выехал'}).count()===1,'Correct first status action missing');
  assert(await page.locator('.approved-pc-techbook').count()===1,'TechBase book not on vehicle photo');

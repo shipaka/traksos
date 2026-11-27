@@ -157,6 +157,14 @@ try {
     if(mode==='performer'){
       const desk=page.locator('.and19-performer');
       await desk.waitFor({state:'visible'});
+      const ratingResponse=await fetch(BASE+'/api/me',{headers:{authorization:'Bearer '+token}});
+      if(!ratingResponse.ok)throw Error(role+': own rating profile unavailable');
+      const account=await ratingResponse.json();
+      const ratingLink=desk.locator('.and19-metrics a[href="#/work/me/level"]');
+      const ratingText=await ratingLink.locator('strong').innerText();
+      if(account.rating_count===0&&ratingText!=='Пока нет оценок')throw Error(role+': missing no-ratings state');
+      if(account.rating_count>0&&Number.isFinite(account.rating)&&!ratingText.includes(account.rating.toFixed(1).replace('.',',')+' · '+account.rating_count+' '))
+        throw Error(role+': rating is not from current account');
       if(!await desk.locator('.and19-line button').count())throw Error(role+': availability control missing');
       if(!await desk.locator('a[href="#/work/jobs"]').count())throw Error(role+': jobs path missing');
     }
