@@ -1,0 +1,3501 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "vbs-argamak",
+      "name": "Аргамак-Сервис",
+      "region": "Москва",
+      "address": "ул. Маршала Воробьёва, 8",
+      "country": "Россия",
+      "phone": "+7 495 111-30-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "argamak",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-technodom-aprelevka",
+      "name": "Технодом",
+      "region": "Московская область",
+      "address": "Апрелевка, ул. Горького, 34А",
+      "country": "Россия",
+      "phone": "+7 800 234-11-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "technodom-aprelevka",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-mark-balashikha",
+      "name": "МАРК",
+      "region": "Московская область",
+      "address": "Балашиха, ул. Станция Стройка, вл. 5",
+      "country": "Россия",
+      "phone": "+7 495 025-42-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "mark-balashikha",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamcenter-besedy",
+      "name": "Камцентр",
+      "region": "Московская область",
+      "address": "с. Беседы, Промышленный проезд, вл. 8, стр. 1",
+      "country": "Россия",
+      "phone": "+7 495 663-68-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kamcenter-besedy",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtofurgon-dolgoprudny",
+      "name": "Автофургон — Долгопрудный",
+      "region": "Московская область",
+      "address": "Долгопрудный, ул. Жуковского, 12",
+      "country": "Россия",
+      "phone": "+7 495 248-15-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtofurgon-domodedovo",
+      "name": "Автофургон — Домодедово",
+      "region": "Московская область",
+      "address": "Домодедово, ул. Заборье, 2Б, стр. 3",
+      "country": "Россия",
+      "phone": "+7 495 154-40-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-businessauto-dolmatovo",
+      "name": "Бизнес-Авто",
+      "region": "Московская область",
+      "address": "с. Долматово, ул. Дорожная, вл. Дорожное, 1",
+      "country": "Россия",
+      "phone": "+7 499 380-73-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "businessauto-dolmatovo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-agroresource-konstantinovo",
+      "name": "Агроресурс",
+      "region": "Московская область",
+      "address": "пос. госплемзавода Константиново, Объездное шоссе, стр. 3",
+      "country": "Россия",
+      "phone": "+7 495 240-84-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "agroresource-konstantinovo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-autobusservice-likino",
+      "name": "Автобуссервис",
+      "region": "Московская область",
+      "address": "Ликино-Дулёво, ул. Советская, 41",
+      "country": "Россия",
+      "phone": "+7 915 089-99-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "autobusservice-likino",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-nadezhny-kontakt-zhilino",
+      "name": "Надёжный контакт",
+      "region": "Московская область",
+      "address": "пос. Жилино-1, Новорязанское шоссе, 27-й км, 2/11",
+      "country": "Россия",
+      "phone": "+7 495 660-30-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "nadezhny-kontakt-zhilino",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-komdoravto-altufyevo",
+      "name": "Комдоравто",
+      "region": "Московская область",
+      "address": "Мытищинский округ, ТПЗ Алтуфьево, Автомобильный проезд, вл. 1, стр. 9",
+      "country": "Россия",
+      "phone": "+7 499 558-07-17",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "komdoravto-altufyevo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-ttm-mytishchi",
+      "name": "ТТМ Центр — Мытищи",
+      "region": "Московская область",
+      "address": "Мытищи, ул. Веры Волошиной, 12",
+      "country": "Россия",
+      "phone": "+7 916 061-55-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "ttm-center",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-vector-narofominsk",
+      "name": "Вектор",
+      "region": "Московская область",
+      "address": "Наро-Фоминск, ул. Володарского, 137А",
+      "country": "Россия",
+      "phone": "+7 901 761-97-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "vector-narofominsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-afbt-noginsk",
+      "name": "АФБТ",
+      "region": "Московская область",
+      "address": "Ногинск, автодорога М-7 Волга, 22, стр. 1, пом. 1",
+      "country": "Россия",
+      "phone": "+7 495 445-64-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "afbt-noginsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-regiontechcenter-tolbino",
+      "name": "РегионТехЦентр / Спутник",
+      "region": "Московская область",
+      "address": "д. Большое Толбино, ул. Дорожная, 3, стр. 1",
+      "country": "Россия",
+      "phone": "+7 919 778-64-67",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "regiontechcenter-tolbino",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-mbk-pro-sosnovybor",
+      "name": "МБК про",
+      "region": "Московская область",
+      "address": "Раменский округ, Сосновый Бор, 1, корп. 7",
+      "country": "Россия",
+      "phone": "+7 901 385-88-57",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "mbk-pro-sosnovybor",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-truckholding-chashnikovo",
+      "name": "ТракХолдинг",
+      "region": "Московская область",
+      "address": "д. Чашниково, индустриальный парк Чашниково, стр. 8/1",
+      "country": "Россия",
+      "phone": "+7 495 138-75-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "truckholding-chashnikovo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-tservice-gorki",
+      "name": "Т-Сервис",
+      "region": "Московская область",
+      "address": "Горки Ленинские, Каширское шоссе, 31-й км, 37",
+      "country": "Россия",
+      "phone": "+7 929 583-23-34",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "tservice-gorki",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtoremfors-mikhnevo",
+      "name": "Авторемфорс",
+      "region": "Московская область",
+      "address": "Ступинский округ, с. Константиновское, промзона Михнево М4, 80",
+      "country": "Россия",
+      "phone": "+7 495 120-31-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtoremfors-mikhnevo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-partneragro-kulikovsky",
+      "name": "Партнер Агро",
+      "region": "Орловская область",
+      "address": "пос. Куликовский, ул. Совхозная, 2А, стр. 2",
+      "country": "Россия",
+      "phone": "+7 930 770-05-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "partneragro-kulikovsky",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-ttm-ryazan-south",
+      "name": "ТТМ Центр — Южный промузел",
+      "region": "Рязанская область",
+      "address": "Рязань, Южный промышленный узел, 28",
+      "country": "Россия",
+      "phone": "+7 4912 24-12-91",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "ttm-center",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtotechcenter-tambov",
+      "name": "Автотехцентр",
+      "region": "Тамбовская область",
+      "address": "Тамбов, ул. Авиационная, 143А",
+      "country": "Россия",
+      "phone": "+7 800 222-49-19",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtotechcenter-tambov",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-baranka-yaroslavl",
+      "name": "СТО Баранка",
+      "region": "Ярославская область",
+      "address": "Ярославль, ул. Гагарина, 62А, лит. АА1",
+      "country": "Россия",
+      "phone": "+7 4852 59-42-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "baranka-yaroslavl",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-truckmotors-yaroslavl",
+      "name": "ТракМоторс",
+      "region": "Ярославская область",
+      "address": "Ярославль, ул. Декабристов, 5",
+      "country": "Россия",
+      "phone": "+7 4852 59-41-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "truckmotors-yaroslavl",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-techcenter-kirov",
+      "name": "СК Техцентр",
+      "region": "Кировская область",
+      "address": "Киров, ул. Производственная, 25/2",
+      "country": "Россия",
+      "phone": "+7 8332 51-38-51",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "techcenter-kirov",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-ostrov-sokrovishch",
+      "name": "Остров сокровищ",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, пгт Лесная Поляна, 17",
+      "country": "Россия",
+      "phone": "+7 831 410-43-74",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "ostrov-sokrovishch",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-iteco-kudma",
+      "name": "ИТЕКО Ресурс — Кудьма",
+      "region": "Нижегородская область",
+      "address": "пос. Кудьма, ул. Индустриальная, 7",
+      "country": "Россия",
+      "phone": "+7 920 025-31-29",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "iteco-kudma",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamazcenter-nn",
+      "name": "КАМАЗ Центр НН",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Федосеенко, 49Г",
+      "country": "Россия",
+      "phone": "+7 910 006-02-83",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "kamazcenter-nn",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-revolution-nn",
+      "name": "Революция",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Федосеенко, 54А",
+      "country": "Россия",
+      "phone": "+7 904 060-99-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "revolution-nn",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-nizhbel",
+      "name": "НижБел",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Береговая, 17А",
+      "country": "Россия",
+      "phone": "+7 831 274-69-34",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "nizhbel",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-saraauto-novotroitsk",
+      "name": "Сара Авто",
+      "region": "Оренбургская область",
+      "address": "Новотроицк, ул. Заводская, 40, лит. В9",
+      "country": "Россия",
+      "phone": "+7 961 943-36-91",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "saraauto-novotroitsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-orentrans-kamaz",
+      "name": "Орентранс-КАМАЗ",
+      "region": "Оренбургская область",
+      "address": "Оренбург, ул. Авторемонтная, 5",
+      "country": "Россия",
+      "phone": "+7 3532 90-00-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "orentrans-kamaz",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-truckservice-orenburg",
+      "name": "Трак Сервис",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Загородное шоссе, 15/1",
+      "country": "Россия",
+      "phone": "+7 3532 50-77-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "truckservice-orenburg",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-truckexpert-perm",
+      "name": "Трак Эксперт",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Промышленная, 111, корп. 4",
+      "country": "Россия",
+      "phone": "+7 342 215-99-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "truckexpert-perm",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-liverpool-ferma",
+      "name": "Ливерпуль",
+      "region": "Пермский край",
+      "address": "пос. Ферма, ул. Железнодорожная, 13",
+      "country": "Россия",
+      "phone": "+7 342 211-13-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "liverpool-ferma",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-perm-rempred",
+      "name": "Пермское ремонтное предприятие",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Верхнемуллинская, 96",
+      "country": "Россия",
+      "phone": "+7 963 859-94-08",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "perm-rempred",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-transline-sterlitamak",
+      "name": "ТрансЛайн",
+      "region": "Республика Башкортостан",
+      "address": "Стерлитамак, ул. Степная, 142",
+      "country": "Россия",
+      "phone": "+7 962 519-99-99",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "transline-sterlitamak",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-uraltranshim",
+      "name": "УралТрансХим",
+      "region": "Республика Башкортостан",
+      "address": "Стерлитамак, Раевский тракт, 1Т",
+      "country": "Россия",
+      "phone": "+7 987 591-56-64",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "uraltranshim",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-soyuzservice-zhukovo",
+      "name": "Союз-Сервис",
+      "region": "Республика Башкортостан",
+      "address": "с. Жуково, ул. Садовая, 2/1",
+      "country": "Россия",
+      "phone": "+7 962 579-90-89",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "soyuzservice-zhukovo",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-trak12-yoshkarola",
+      "name": "Трак12",
+      "region": "Республика Марий Эл",
+      "address": "Йошкар-Ола, ул. Крылова, 55",
+      "country": "Россия",
+      "phone": "+7 937 939-61-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "trak12-yoshkarola",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-sc3-almetyevsk",
+      "name": "Сервисный центр-3",
+      "region": "Республика Татарстан",
+      "address": "Альметьевск, ул. Полевая, 17/3",
+      "country": "Россия",
+      "phone": "+7 8553 38-26-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "sc3-almetyevsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-mtz-alabuga",
+      "name": "МТЗ-Татарстан",
+      "region": "Республика Татарстан",
+      "address": "Елабужский район, промплощадка Алабуга, ул. Ш-2, 2/5",
+      "country": "Россия",
+      "phone": "+7 800 550-00-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "mtz-alabuga",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamautocenter-zelenodolsk",
+      "name": "Камавтоцентр",
+      "region": "Республика Татарстан",
+      "address": "Зеленодольск, ул. Столичная, 30",
+      "country": "Россия",
+      "phone": "+7 843 212-35-01",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kamautocenter-zelenodolsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtodor-motors",
+      "name": "Автодор-Моторс",
+      "region": "Республика Татарстан",
+      "address": "Казань, ул. Автосервисная, 19",
+      "country": "Россия",
+      "phone": "+7 800 700-12-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "avtodor-motors",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-oregon-biektau",
+      "name": "Орегон",
+      "region": "Республика Татарстан",
+      "address": "Высокогорский район, промзона Биектау М7, зд. 1",
+      "country": "Россия",
+      "phone": "+7 843 209-01-29",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "oregon-biektau",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-alfascan-chelny",
+      "name": "Альфаскан Челны",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт, 114/2",
+      "country": "Россия",
+      "phone": "+7 962 567-57-57",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "alfascan-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtofurgon-chelny",
+      "name": "Автофургон — Набережные Челны",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, ул. Старосармановская, 21Б",
+      "country": "Россия",
+      "phone": "+7 926 175-99-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-soyuzregion-chelny",
+      "name": "Союз Регион",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, ул. Металлургическая, 27/2",
+      "country": "Россия",
+      "phone": "+7 8552 44-37-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "soyuzregion-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-integralservice-chelny",
+      "name": "Интеграл-Сервис",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, проезд Тозелеш, 40",
+      "country": "Россия",
+      "phone": "+7 967 779-08-43",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "integralservice-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamavtokomplekt-chelny",
+      "name": "Камавтокомплект Трак",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт, 32",
+      "country": "Россия",
+      "phone": "+7 8552 92-69-26",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kamavtokomplekt-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kaminterauto",
+      "name": "КамИнтерАвто",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Арматурный проезд, 51",
+      "country": "Россия",
+      "phone": "+7 965 600-90-24",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kaminterauto",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kitautoservice-chelny",
+      "name": "Китавто Сервис",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, ул. Промышленная, 6",
+      "country": "Россия",
+      "phone": "+7 903 313-01-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kitautoservice-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-raritek-chelny",
+      "name": "Техцентр РариТЭК",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Казанский проспект, 252",
+      "country": "Россия",
+      "phone": "+7 917 281-88-37",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "raritek-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-korib-chelny",
+      "name": "Кориб",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Индустриальный проезд, 55",
+      "country": "Россия",
+      "phone": "+7 8552 91-16-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "korib-chelny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtospecvolga",
+      "name": "АвтоСпецВолга",
+      "region": "Самарская область",
+      "address": "Самара, ул. Грозненская, 65",
+      "country": "Россия",
+      "phone": "+7 800 201-05-66",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtospecvolga",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-prac-kamaz-samara",
+      "name": "ПРАЦ КАМАЗ",
+      "region": "Самарская область",
+      "address": "Самара, Ракитовское шоссе, 2",
+      "country": "Россия",
+      "phone": "+7 800 550-62-86",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "prac-kamaz-samara",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-perspektiva-samara",
+      "name": "ГК Перспектива",
+      "region": "Самарская область",
+      "address": "Самара, просп. Кирова, 10Б",
+      "country": "Россия",
+      "phone": "+7 846 231-09-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "perspektiva-samara",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamazcenter-saratov",
+      "name": "Саратовский автоцентр КАМАЗ",
+      "region": "Саратовская область",
+      "address": "Саратов, промузел Зоринский-2, 2Н, стр. 1",
+      "country": "Россия",
+      "phone": "+7 8452 25-19-19",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "kamazcenter-saratov",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamavtokomplekt-izhevsk",
+      "name": "Камавтокомплект — Ижевск",
+      "region": "Удмуртская Республика",
+      "address": "Завьяловский район, Мартьяновский квартал, 1",
+      "country": "Россия",
+      "phone": "+7 3412 97-01-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kamavtokomplekt-izhevsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtomobilist-ulyanovsk",
+      "name": "Автомобилист",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, ул. Автомобилистов, 8А",
+      "country": "Россия",
+      "phone": "+7 8422 38-00-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtomobilist-ulyanovsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-rba-cheboksary",
+      "name": "РБА-МБ — Чебоксары",
+      "region": "Чувашская Республика",
+      "address": "д. Шобашкаркасы, ул. Три Дуба, 4, корп. А",
+      "country": "Россия",
+      "phone": "+7 8352 24-23-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-vtorresurs-cherepovets",
+      "name": "Вторресурс77",
+      "region": "Вологодская область",
+      "address": "Череповец, ул. Краснодонцев, 3",
+      "country": "Россия",
+      "phone": "+7 911 518-00-71",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "vtorresurs-cherepovets",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-eurotechnic-poddubnoe",
+      "name": "Евро Техник",
+      "region": "Калининградская область",
+      "address": "пос. Поддубное, ул. Архитектора Владимира Мазурика, 1",
+      "country": "Россия",
+      "phone": "+7 906 238-66-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "eurotechnic-poddubnoe",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kardanbalt",
+      "name": "Карданбалт",
+      "region": "Калининградская область",
+      "address": "пос. Малое Исаково, ул. Гурьевская, 2В, стр. 1",
+      "country": "Россия",
+      "phone": "+7 4012 79-59-79",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kardanbalt",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-pneumotruck-laskino",
+      "name": "Пневмо-траксервис",
+      "region": "Калининградская область",
+      "address": "пос. Ласкино, ул. Полевая, 10А",
+      "country": "Россия",
+      "phone": "+7 906 213-67-37",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "pneumotruck-laskino",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-technotruck-druzhny",
+      "name": "Технотрак",
+      "region": "Калининградская область",
+      "address": "пос. Дружный, ул. Строительная, 9Д",
+      "country": "Россия",
+      "phone": "+7 981 459-11-11",
+      "email": "technotruck39@mail.ru",
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/",
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "technotruck-druzhny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-sts-milarin",
+      "name": "СТС / Миларин",
+      "region": "Санкт-Петербург",
+      "address": "Красное Село, ул. Свободы, 63",
+      "country": "Россия",
+      "phone": "+7 909 590-99-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "sts-milarin",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamaz-dinskaya",
+      "name": "Краснодарский автоцентр КАМАЗ",
+      "region": "Краснодарский край",
+      "address": "ст. Динская, ул. Красная, 125",
+      "country": "Россия",
+      "phone": "+7 861 204-00-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "kamaz-dinskaya",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtofurgon-krasnodar",
+      "name": "Автофургон — Краснодар",
+      "region": "Краснодарский край",
+      "address": "пос. Дружелюбный, ул. Железнодорожная, 2Б, стр. 15",
+      "country": "Россия",
+      "phone": "+7 861 288-88-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-tekar-karlamarxa",
+      "name": "ТЭКАР Сервис",
+      "region": "Краснодарский край",
+      "address": "х. Карла Маркса, ул. Белевцы, 74А/1",
+      "country": "Россия",
+      "phone": "+7 918 687-22-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "tekar-karlamarxa",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-magellan-industrialny",
+      "name": "Магеллан-Сервис",
+      "region": "Краснодарский край",
+      "address": "пос. Индустриальный, ул. Солнечная, 1Б",
+      "country": "Россия",
+      "phone": "+7 918 133-31-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "magellan-industrialny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-novorossiysk-avtoterminal",
+      "name": "Новороссийский Автотерминал",
+      "region": "Краснодарский край",
+      "address": "с. Владимировка, автодорога Новороссийск — Керченский пролив, 10-й км, 7",
+      "country": "Россия",
+      "phone": "+7 988 314-79-26",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "novorossiysk-avtoterminal",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-percheron-novorossiysk",
+      "name": "Першерон",
+      "region": "Краснодарский край",
+      "address": "Новороссийск, ул. Мефодиевская, 155",
+      "country": "Россия",
+      "phone": "+7 903 457-59-99",
+      "email": "percheron2014@gmail.com",
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/",
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "percheron-novorossiysk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-scan-southeast-slavyansk",
+      "name": "Скан-Юго-Восток — Славянск",
+      "region": "Краснодарский край",
+      "address": "Славянск-на-Кубани, Маевское шоссе, 1/7",
+      "country": "Россия",
+      "phone": "+7 861 203-45-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "scan-southeast-slavyansk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-autoforum-muskatny",
+      "name": "Автофорум — Мускатный",
+      "region": "Ростовская область",
+      "address": "пос. Мускатный, ул. Луговая, 30/1",
+      "country": "Россия",
+      "phone": "+7 800 500-17-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "autoforum-muskatny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-rba-rostov-krasny",
+      "name": "РБА-МБ — Красный",
+      "region": "Ростовская область",
+      "address": "пос. Красный, ул. Промышленная, 1",
+      "country": "Россия",
+      "phone": "+7 863 285-02-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtomobilist3-aksay",
+      "name": "Автомобилист-3",
+      "region": "Ростовская область",
+      "address": "Аксай, ул. Промышленная, 4А",
+      "country": "Россия",
+      "phone": "+7 863 265-87-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtomobilist3-aksay",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-region61-aksay",
+      "name": "Регион 61 — Аксай",
+      "region": "Ростовская область",
+      "address": "Аксай, ул. Западная, 37",
+      "country": "Россия",
+      "phone": "+7 800 222-32-61",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "region61-aksay",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-rba-minvody",
+      "name": "РБА-МБ — Минеральные Воды",
+      "region": "Ставропольский край",
+      "address": "Минераловодский округ, Р-217 Кавказ, 345-й км, 1/2",
+      "country": "Россия",
+      "phone": "+7 800 551-33-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-autocenter29-kurgan",
+      "name": "Автоцентр-29",
+      "region": "Курганская область",
+      "address": "Курган, просп. Маршала Голикова, 29Б",
+      "country": "Россия",
+      "phone": "+7 3522 54-15-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "autocenter29-kurgan",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-uraltruck-aramil",
+      "name": "Уралтраксервис",
+      "region": "Свердловская область",
+      "address": "пос. Первомайский, территория Автодорожная, 5",
+      "country": "Россия",
+      "phone": "+7 343 363-97-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "uraltruck-aramil",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-berezovsky-trailerfactory",
+      "name": "Березовский завод автоприцепов",
+      "region": "Свердловская область",
+      "address": "Берёзовский, ул. Клары Цеткин, 69А",
+      "country": "Россия",
+      "phone": "+7 343 288-35-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "berezovsky-trailerfactory",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-autoport96",
+      "name": "Автопорт 96",
+      "region": "Свердловская область",
+      "address": "Берёзовский, пос. Ленинский, стр. 44В",
+      "country": "Россия",
+      "phone": "+7 343 226-43-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "autoport96",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtofurgon-ekb",
+      "name": "Автофургон — Екатеринбург",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. Альпинистов, 77, стр. 3",
+      "country": "Россия",
+      "phone": "+7 343 288-00-31",
+      "email": "service-ekat@avtofurgon.ru",
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/",
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-ptor-gorny-shchit",
+      "name": "ПТОР-66",
+      "region": "Свердловская область",
+      "address": "с. Горный Щит, 10-я Самородная ул., 5, база 16",
+      "country": "Россия",
+      "phone": "+7 922 737-04-08",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "ptor-gorny-shchit",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-uraltechcenter",
+      "name": "Уралтехцентр",
+      "region": "Свердловская область",
+      "address": "Берёзовский, пос. Ленинский, 29/1",
+      "country": "Россия",
+      "phone": "+7 919 369-56-62",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "uraltechcenter",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-temirtex-revda",
+      "name": "Темир-Текс",
+      "region": "Свердловская область",
+      "address": "Ревда, ул. Клубная, 8, стр. 1",
+      "country": "Россия",
+      "phone": "+7 343 973-70-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "temirtex-revda",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-euroasia-truck-moskovsky",
+      "name": "ЕвроАзия-Трак",
+      "region": "Тюменская область",
+      "address": "пос. Московский, ул. Северная, 39А",
+      "country": "Россия",
+      "phone": "+7 3452 68-11-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "euroasia-truck-moskovsky",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-tyumenremtechpred2",
+      "name": "Тюменьремтехпред 2",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Авторемонтная, 8, стр. 6",
+      "country": "Россия",
+      "phone": "+7 3452 68-94-49",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "tyumenremtechpred2",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-atlantauto-tyumen",
+      "name": "АтлантАвто",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Щербакова, 137",
+      "country": "Россия",
+      "phone": "+7 3452 38-58-69",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "atlantauto-tyumen",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-diagnostic-nizhnevartovsk",
+      "name": "Диагностический центр",
+      "region": "ХМАО — Югра",
+      "address": "Нижневартовск, ул. Индустриальная, 29, стр. 20",
+      "country": "Россия",
+      "phone": "+7 982 201-35-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "diagnostic-nizhnevartovsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-novotech-surgut",
+      "name": "Новотех-Сервис",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Сосновая, 35",
+      "country": "Россия",
+      "phone": "+7 3462 77-42-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "novotech-surgut",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-polytrans-surgut",
+      "name": "Политранс Сургут",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Монтажная, 6",
+      "country": "Россия",
+      "phone": "+7 3462 47-02-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "polytrans",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-komtrans-chel-kulibina",
+      "name": "Комтранс",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Кулибина, 3/4",
+      "country": "Россия",
+      "phone": "+7 351 247-50-51",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "komtrans-chel-kulibina",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-bovid-truck",
+      "name": "БОВИД ТРАК",
+      "region": "Челябинская область",
+      "address": "Челябинск, Троицкий тракт, 66",
+      "country": "Россия",
+      "phone": "+7 351 217-44-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "bovid-truck",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-ltrans-chel",
+      "name": "Л-Транс Челябинск",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Механическая, 14, корп. 1",
+      "country": "Россия",
+      "phone": "+7 351 216-01-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "ltrans-chel",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-uralkam",
+      "name": "Уралкам",
+      "region": "Челябинская область",
+      "address": "Челябинск, шоссе Металлургов, 21П",
+      "country": "Россия",
+      "phone": "+7 351 735-40-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "uralkam",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-polytrans-yuzhnouralsk",
+      "name": "Политранс Южноуральск",
+      "region": "Челябинская область",
+      "address": "Южноуральск, ул. Заводская, 7",
+      "country": "Россия",
+      "phone": "+7 351 344-22-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "polytrans",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-specpribor-barnaul",
+      "name": "СпецПрибор",
+      "region": "Алтайский край",
+      "address": "Барнаул, ул. Заринская, 14, лит. А1",
+      "country": "Россия",
+      "phone": "+7 3852 50-42-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "specpribor-barnaul",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kamazcenter-barnaul",
+      "name": "Барнаульский автоцентр КАМАЗ",
+      "region": "Алтайский край",
+      "address": "Барнаул, ул. Мамонтова, 301А",
+      "country": "Россия",
+      "phone": "+7 3852 50-00-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kamazcenter-barnaul",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-autocomplex-biysk",
+      "name": "Автокомплекс",
+      "region": "Алтайский край",
+      "address": "Бийск, ул. Ефима Мамонтова, 1",
+      "country": "Россия",
+      "phone": "+7 3854 25-51-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "autocomplex-biysk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-baikalautotruck-bratsk",
+      "name": "Байкал-АвтоТрак-Сервис — Братск",
+      "region": "Иркутская область",
+      "address": "Братск, пос. Строитель, 91",
+      "country": "Россия",
+      "phone": "+7 904 151-34-94",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "baikalautotruck",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-baikalautotruck-irkutsk",
+      "name": "Байкал-АвтоТрак-Сервис — Иркутск",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Блюхера, 12А",
+      "country": "Россия",
+      "phone": "+7 3952 70-75-16",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "baikalautotruck",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-techcenter-severny",
+      "name": "Техцентр Северный",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Трактовая, 13, корп. А",
+      "country": "Россия",
+      "phone": "+7 3952 71-77-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "techcenter-severny",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-tyagachexpert-mamony",
+      "name": "Тягач-Эксперт",
+      "region": "Иркутская область",
+      "address": "с. Мамоны, ул. Центральная, 38",
+      "country": "Россия",
+      "phone": "+7 984 273-33-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "tyagachexpert-mamony",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-evolution-machines",
+      "name": "Эволюционные Машины",
+      "region": "Кемеровская область",
+      "address": "Кемерово, Кузнецкий проспект, 141А",
+      "country": "Россия",
+      "phone": "+7 3842 78-02-62",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "evolution-machines",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-gts-krasnoyarsk",
+      "name": "Глобал Трак Сервис — Красноярск",
+      "region": "Красноярский край",
+      "address": "Красноярск, Северное шоссе, 17Д/17",
+      "country": "Россия",
+      "phone": "+7 391 228-74-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "gts-krasnoyarsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-eurofura-krasnoyarsk",
+      "name": "Еврофура",
+      "region": "Красноярский край",
+      "address": "Красноярск, ул. Маерчака, 128",
+      "country": "Россия",
+      "phone": "+7 391 221-02-51",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "eurofura-krasnoyarsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-avtofurgon-krasnoyarsk",
+      "name": "Автофургон — Красноярск",
+      "region": "Красноярский край",
+      "address": "Красноярск, Кубековская промзона, 4Д/2",
+      "country": "Россия",
+      "phone": "+7 391 269-99-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-techavtocenter-krasnoyarsk",
+      "name": "Техавтоцентр",
+      "region": "Красноярский край",
+      "address": "Красноярск, 2-я Брянская ул., 18А",
+      "country": "Россия",
+      "phone": "+7 391 255-52-28",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "techavtocenter-krasnoyarsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-orionmotors-solontsy",
+      "name": "Орион-Моторс",
+      "region": "Красноярский край",
+      "address": "пос. Солонцы, просп. Котельникова, 16, стр. 1",
+      "country": "Россия",
+      "phone": "+7 391 216-77-89",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "orionmotors-solontsy",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-experttruck-solontsy",
+      "name": "Эксперт Трак Сервис",
+      "region": "Красноярский край",
+      "address": "пос. Солонцы, Торговый квартал, стр. 8, склад 1",
+      "country": "Россия",
+      "phone": "+7 391 228-90-28",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "experttruck-solontsy",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-flagman-nsk",
+      "name": "Флагман",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, Северный проезд (Кировский), 9/1, пом. 1",
+      "country": "Россия",
+      "phone": "+7 800 500-07-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "flagman-nsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-sibautoresource",
+      "name": "Сибавторесурс",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Большая, 254/8",
+      "country": "Россия",
+      "phone": "+7 383 209-20-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. В источнике ограничение «только ПАО КАМАЗ» для указанной услуги.",
+      "operator_group": "sibautoresource",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-siberian-maz-center",
+      "name": "Сибирский Технический Центр МАЗ",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Станционная, 60Г",
+      "country": "Россия",
+      "phone": "+7 384 263-22-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "siberian-maz-center",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-gruzovoz-nsk",
+      "name": "Грузовоз",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, производственно-складская зона, 19",
+      "country": "Россия",
+      "phone": "+7 923 194-83-84",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "gruzovoz-nsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-sibirtruck-ob",
+      "name": "Сибирь Трак Сервис — Обь",
+      "region": "Новосибирская область",
+      "address": "Обь, ул. Большая, 1",
+      "country": "Россия",
+      "phone": "+7 913 063-86-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "sibirtruck-ob",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kurilotrans-troitskoe",
+      "name": "КурилоТрансавто — Троицкое",
+      "region": "Омская область",
+      "address": "с. Троицкое, ул. Омская, 14А",
+      "country": "Россия",
+      "phone": "+7 381 752-85-85",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kurilotrans",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-kurilotrans-krasnyyar",
+      "name": "КурилоТрансавто — Красный Яр",
+      "region": "Омская область",
+      "address": "рп Красный Яр, ул. Дорожная, 19В",
+      "country": "Россия",
+      "phone": "+7 381 752-85-85",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "kurilotrans",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-omskdiesel",
+      "name": "Омскдизель",
+      "region": "Омская область",
+      "address": "Омск, ул. Волгоградская, 88",
+      "country": "Россия",
+      "phone": "+7 3812 63-33-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "omskdiesel",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-techmaster-svetly",
+      "name": "Техмастер",
+      "region": "Омская область",
+      "address": "пос. Светлый, 502/5",
+      "country": "Россия",
+      "phone": "+7 913 651-80-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "techmaster-svetly",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-dalnoboy-abakan",
+      "name": "Дальнобойщик — Абакан",
+      "region": "Республика Хакасия",
+      "address": "Абакан, 1-й Промышленный район, 2",
+      "country": "Россия",
+      "phone": "+7 3902 20-23-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "dalnoboy-abakan",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-mservice-tomsk",
+      "name": "М-Сервис",
+      "region": "Томская область",
+      "address": "Томск, ул. Мостовая, 18/1, стр. 2",
+      "country": "Россия",
+      "phone": "+7 3822 90-30-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "mservice-tomsk",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-chitakamaz",
+      "name": "Читакамазсервис",
+      "region": "Забайкальский край",
+      "address": "Чита, Солдатский тупик, 8",
+      "country": "Россия",
+      "phone": "+7 800 301-43-40",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "chitakamaz",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-magadan-truck-center",
+      "name": "Магадан Truck центр",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Гагарина, 47",
+      "country": "Россия",
+      "phone": "+7 4132 65-70-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "magadan-truck-center",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-renaissance-artem",
+      "name": "Ренессанс Групп — Артём",
+      "region": "Приморский край",
+      "address": "Артём, ул. Орджоникидзе, 15",
+      "country": "Россия",
+      "phone": "+7 423 246-34-39",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "renaissance",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-renaissance-mikhaylovka",
+      "name": "Ренессанс Групп — Михайловка",
+      "region": "Приморский край",
+      "address": "с. Михайловка, ул. Паровозная, 37",
+      "country": "Россия",
+      "phone": "+7 924 127-45-39",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "renaissance",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-ptk-artem",
+      "name": "ПТК — Артём",
+      "region": "Приморский край",
+      "address": "Артём, ул. Гагарина, 51",
+      "country": "Россия",
+      "phone": "+7 423 279-09-14",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "ptk-artem",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vbs-sonictrans-mirnoe",
+      "name": "Сониктранс",
+      "region": "Хабаровский край",
+      "address": "с. Мирное, Солнечный пер., 6",
+      "country": "Россия",
+      "phone": "+7 924 408-16-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика и обслуживание тормозных систем грузовой и прицепной техники (TEBS; ABS по перечню)"
+      ],
+      "source_urls": [
+        "https://vbsauto.ru/servisnaja-set/"
+      ],
+      "notes": "Профиль по сервисному каталогу ВБС; наличие других работ, доступ сторонних ТС, ограничения по маркам, юридический оператор и координаты требуют проверки. ",
+      "operator_group": "sonictrans-mirnoe",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "VBS directory read on 2026-11-27; MAYER cross-source for three emails. Exact matching against nine previous priority/network batches only. Remaining fuzzy nationwide dedup pending.",
+    "Vostok Trak Balobanovo 15Г omitted (NEVI batch37 same address). Avtofurgon Domodedovo 2Б стр.3 near Scan-Yugo-Vostok 2Б batch38; verify distinct workshop. Komdoravto Altufyevo near DC Stolitsa; verify distinct. KuriloTrans same network phone but distinct addresses.",
+    "Existing CPT Shushary 233 lit Р1, GTS Shushary phone +7 812 775-28-00, TPA S Badaevsky 9 conflicting address, Komitrak 127 vs 125, Granat North Domostroitelnaya 17, VBS lists additional contacts; retain as enrichment, not new entries.",
+    "TEBS directory is specialized; do not imply full repair or availability. Some service stations restrict work to KAMAZ, verify per-source. No independent calls or FNS."
+  ]
+}
