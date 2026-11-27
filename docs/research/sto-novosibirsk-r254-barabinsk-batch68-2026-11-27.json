@@ -1,0 +1,210 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "No matches for Barabinsk and four direct phones in compact audit B/C and batches 11 and 67. Full normalized audit across all batches pending; earlier broad comparison timed out. No legal, phone, location, or operating-status verification.",
+  "records": [
+    {
+      "id": "b68-r254-1151-tire",
+      "name": "Автомагазин и грузовой шиномонтаж",
+      "region": "Новосибирская область",
+      "address": "Барабинский район, Р-254 Иртыш, 1151-й км, 1",
+      "country": "Россия",
+      "phone": "+7 913 000-40-02",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "автозапчасти"
+      ],
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Проверить точный въезд, фактический оператор и возможность обслуживания фур.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novosibirsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b68-sibir-koleso-barabinsk",
+      "name": "Сибирь Колесо",
+      "region": "Новосибирская область",
+      "address": "Барабинск, ул. Ермака, 20",
+      "country": "Россия",
+      "phone": "+7 913 005-48-84",
+      "additional_phones": [
+        "+7 383 388-55-32",
+        "+7 800 775-10-50"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб–вс 09:00–16:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "шины"
+      ],
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.sibirkoleso.ru/service/",
+        "https://barabinsk.sibirkoleso.ru/stocks/shinomontazh-v-podarok/"
+      ],
+      "notes": "Сайт сети указывает грузовые и Газели; предельный размер колеса и филиальный график подтвердить. Общий 800 — контакт сети.",
+      "evidence": "first_party_and_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novosibirsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b68-avtotehnik",
+      "name": "Автотехник",
+      "region": "Новосибирская область",
+      "address": "Барабинск, пер. Гутова, 20",
+      "country": "Россия",
+      "phone": "+7 913 710-46-07",
+      "additional_phones": [
+        "+7 913 715-74-80"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.spravker.ru/remont-bokovykh-porezov-shin/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; конкретное оборудование и ремонт тягачей уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novosibirsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b68-cardan",
+      "name": "СТО Cardan",
+      "region": "Новосибирская область",
+      "address": "Барабинск, ул. Деповская, 24",
+      "country": "Россия",
+      "phone": "+7 913 388-97-63",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.jsprav.ru/remont-shin/"
+      ],
+      "notes": "Также указан как автомойка, но грузовую мойку и ремонт карданов не считать подтверждёнными.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novosibirsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Колёса Даром — Барабинск",
+      "address": "Барабинск, ул. Луначарского, 13А",
+      "phone": "+7 800 250-98-60",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.kolesa-darom.ru/"
+      ],
+      "reason": "Общий номер сети; подтвердить грузовой шиномонтаж именно в филиале."
+    },
+    {
+      "name": "Форсаж",
+      "address": "Барабинск, ул. Калинина, 58",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет опубликованного телефона в изученном источнике; круглосуточность не подтверждена."
+    },
+    {
+      "name": "Ланта / ЛС",
+      "address": "Барабинский район, Р-254, 1155-й км, 3",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://barabinsk.jsprav.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Возможный дубль на одном адресе, телефон отсутствует."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Барабинск, ул. Ермака, 58А",
+      "source_urls": [
+        "https://barabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Каргат, ул. Советская, 168",
+      "source_urls": [
+        "https://kargat.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Нет телефона и достаточного подтверждения грузового профиля."
+    },
+    {
+      "name": "СТО и шиномонтаж",
+      "address": "Чулым, ул. Рабочая",
+      "source_urls": [
+        "https://kargat.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Нет точного адреса и телефона; сравнить с Рабочей, 82."
+    }
+  ],
+  "existing_record_reviews": []
+}
