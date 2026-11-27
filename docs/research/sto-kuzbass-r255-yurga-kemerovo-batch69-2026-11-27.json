@@ -1,0 +1,388 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Compared compact indexes B/C, batch 11 and batches 32,34,42,48 by address, region and contact. Full normalized audit remains pending. Distinct physical branches, not counts of services. No calls or legal/coordinate verification.",
+  "records": [
+    {
+      "id": "b69-carpro",
+      "name": "CarPro servis",
+      "region": "Кемеровская область",
+      "address": "Юрга, ул. Шоссейная, 52",
+      "country": "Россия",
+      "phone": "+7 960 907-20-60",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gorod-iurga/ustanovka-avtomobilnoi-ratsii/"
+      ],
+      "notes": "Грузовой профиль по картографической карточке CarPro servise Грузовой шиномонтаж, ID ChIJV2V3f-ZBJ0MRLoly1UrN3AY; справочник подтверждает телефон и адрес. Размеры колес уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-yurga-58a",
+      "name": "Грузовой и легковой шиномонтаж",
+      "region": "Кемеровская область",
+      "address": "Юрга, ул. Шоссейная, 58А",
+      "country": "Россия",
+      "phone": "+7 923 534-35-34",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/yurga",
+        "https://yurga.spravka.city/shinomontazh"
+      ],
+      "notes": "Телефон также в картографической карточке ChIJNRLprRVBJ0MRrfZDWofTH_g. График из карты, уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-agat-mv",
+      "name": "АГАТ / МВ Трак Кемерово",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Терешковой, 41А, к. 2",
+      "country": "Россия",
+      "phone": "+7 3842 44-74-07",
+      "additional_phones": [
+        "+7 3842 49-29-90"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт прицепов",
+        "ремонт рам и кабин",
+        "ДВС",
+        "КПП",
+        "топливная аппаратура",
+        "электрика",
+        "грузовая мойка",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mb-kemerovo.ru/o-kompanii",
+        "https://agatkem.ru/",
+        "https://totadres.ru/kemerovo/org/agat/1892029"
+      ],
+      "notes": "Официальный сайт описывает единый комплекс. Адрес дилера 41/5, его контакт 49-29-90; не считать отдельной ремонтной точкой без подтверждения. Основной телефон из карточки ChIJHaZmcLcJ2EIRYdVBnSqrdm4. ИНН 4205385207 заявлен для ООО МВ Трак, не проверен в ФНС.",
+      "evidence": "first_party_and_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-kvadrat-nahimova",
+      "name": "Квадрат",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Нахимова, 218/1",
+      "country": "Россия",
+      "phone": "+7 900 055-11-55",
+      "additional_phones": [
+        "+7 3842 90-06-46"
+      ],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов"
+      ],
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://urbanplaces.su/ru_kemerovskaya-oblast---kuzbass/kemerovskij-gorodskoj-okrug-kemerovo/card-70000001027631635-kvadrat",
+        "https://yandex.com/maps/org/kvadrat/128696914418/"
+      ],
+      "notes": "В источниках 218 и 218/1; точный въезд подтвердить. График не проверен звонком.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-kvadrat-sib",
+      "name": "Квадрат",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Сибиряков-Гвардейцев, 106",
+      "country": "Россия",
+      "phone": "+7 951 576-06-60",
+      "additional_phones": [
+        "+7 3842 90-06-36",
+        "+7 3842 76-90-60"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Отдельный адрес и номер; подтвердить грузовую оснастку филиала.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-avtoprofi",
+      "name": "СТО AvtoProfi",
+      "region": "Кемеровская область",
+      "address": "Кемерово, 2-я Рябинская ул., 25",
+      "country": "Россия",
+      "phone": "+7 983 220-50-50",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Не подтверждены прием тягачей, перечень работ и круглосуточная доступность.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-truck-service",
+      "name": "Truck-Сервис",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Заводская, 1А",
+      "country": "Россия",
+      "phone": "+7 900 050-60-60",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по картографической карточке",
+      "services": [
+        "ремонт грузовиков"
+      ],
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Truck-Сервис+Кемерово+Заводская+1А&query_place_id=ChIJJUGBKagM2EIRZgvSalMCGss"
+      ],
+      "notes": "Источник: картографическая карточка ChIJJUGBKagM2EIRZgvSalMCGss. Специализации, график и оператор требуют проверки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b69-traffik",
+      "name": "Траффик",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Сахалинская, 38",
+      "country": "Россия",
+      "phone": "+7 3842 39-31-10",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков",
+        "ремонт спецтехники",
+        "автоэлектрика",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://asktel.ru/kemerovo/avtoservis/traffik/",
+        "https://www.google.com/maps/search/?api=1&query=Траффик+Кемерово+Сахалинская+38&query_place_id=ChIJYUPoiAwM2EIR4-_PFYSrF-E"
+      ],
+      "notes": "Номер из картографической карточки; справочник обновлен в 2019, старые номера и email только в очереди проверки. Действующий бизнес не подтвержден.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "ТУР",
+      "address": "Юрга, ул. Шоссейная, 36А/6",
+      "source_urls": [
+        "https://finder.work/vacancies/36391957"
+      ],
+      "reason": "Вакансия сентября 2026 подтверждает ремонт грузовиков и прицепов, но неизвестно, обслуживают ли сторонних клиентов; нет телефона."
+    },
+    {
+      "name": "Сибирь Колесо",
+      "address": "Юрга, ул. Московская, 100В",
+      "source_urls": [
+        "https://yurga.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/sibir-koleso/",
+        "https://doublestar.ru/buy"
+      ],
+      "reason": "Уточнить местный телефон, адрес 100В/100Б и грузовой шиномонтаж, не только продажу шин."
+    },
+    {
+      "name": "Грузовой шиномонтаж Р-255",
+      "address": "Юргинский округ, Р-255, 150-й км",
+      "source_urls": [
+        "https://yurga.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "reason": "Нет телефона и точного въезда."
+    },
+    {
+      "name": "Автосервис грузовых автомобилей",
+      "address": "Топки, ул. Цемзаводская, 26",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/topki"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Технарь",
+      "address": "Кемерово, ул. Зейская, 69",
+      "phone": "+7 923 533-49-99",
+      "source_urls": [
+        "https://www.youtube.com/channel/UCMaQ0tSPgpMMghjrS0EW4KQ",
+        "https://kemerovo.spravka.city/company/tehnar-24"
+      ],
+      "reason": "Телефон менеджера по запчастям, не для ремонта; найти актуальный общий контакт, разные источники расходятся."
+    },
+    {
+      "name": "Траффик — исторические контакты",
+      "address": "Кемерово, Сахалинская, 38",
+      "phone": "+7 3842 76-88-55",
+      "additional_phones": [
+        "+7 904 376-88-55",
+        "+7 903 907-84-89"
+      ],
+      "email": "autotraffik@yandex.ru",
+      "source_urls": [
+        "https://asktel.ru/kemerovo/avtoservis/traffik/"
+      ],
+      "reason": "Данные обновлены 11.10.2019; не включать в актуальную рассылку."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Трак Релакс",
+      "batch": 11,
+      "address": "Р-255, 297-й км",
+      "phone": "+7 3842 44-77-88",
+      "notes": "Картографическая карточка подтверждает альтернативное описание адреса, не отдельная площадка."
+    },
+    {
+      "name": "ТФК КАМАЗ — Кемерово",
+      "batch": 42,
+      "address": "Терешковой, 76",
+      "source_urls": [
+        "https://kemerovo.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Не дублировать."
+    },
+    {
+      "name": "Дальнобойщик — Кемерово",
+      "batch": 32,
+      "address": "Заводская, 47",
+      "notes": "Не дублировать."
+    }
+  ]
+}
