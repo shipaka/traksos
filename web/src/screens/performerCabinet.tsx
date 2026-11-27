@@ -1,3 +1,4 @@
+import {InnInput,validInnLength} from '../innInput.tsx';
 // Кабинет исполнителя по разделам: профиль — отдельно, фильтр заявок — отдельно, деньги — отдельно.
 // Каждый раздел — своя короткая страница со своей кнопкой «Сохранить», ничего не листается до конца.
 
@@ -95,7 +96,9 @@ function PerformerOnboarding() {
   const [inn, setInn] = useState('');
   const isTow = kind === 'tow';
   const isEcu = kind === 'ecu';
+  const taxIncomplete=!!(taxStatus||inn)&&(!taxStatus||!validInnLength(inn,true));
   async function save() {
+    if(taxIncomplete)return;
     const cleanCar = { brand: car.brand.trim(), color: car.color.trim(), plate: car.plate.trim().toUpperCase() };
     const hasCar = !isEcu && !!cleanCar.brand && !!cleanCar.plate;
     const body: any = { kind, name: name.trim() || undefined, taxStatus: taxStatus || null, inn: inn || null,
@@ -135,7 +138,7 @@ function PerformerOnboarding() {
         <div className="step-head"><span className="step-n">{isEcu ? 2 : isTow ? 3 : 4}</span><b>Налоговый статус</b></div>
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
       </div>
-      <button className="btn" disabled={busy || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — добровольная проверка</button>
+      <button className="btn" disabled={busy || taxIncomplete || !name || (!isTow && !isEcu && !spec.length)} onClick={save}>Дальше — добровольная проверка</button>
     </main>
   );
 }
@@ -348,7 +351,7 @@ function TaxInputs({ taxStatus, inn, onChange }: { taxStatus: string; inn: strin
         <button type="button" className="seg" aria-pressed={taxStatus === 'self_employed'} onClick={() => onChange('self_employed', inn)}>Самозанятый</button>
         <button type="button" className="seg" aria-pressed={taxStatus === 'ip'} onClick={() => onChange('ip', inn)}>ИП</button>
       </div>
-      <input className="field" inputMode="numeric" placeholder="ИНН, 12 цифр" maxLength={12} value={inn} onChange={(e) => onChange(taxStatus, e.target.value.replace(/\D/g, ''))} />
+      <InnInput personal value={inn} placeholder="ИНН, 12 цифр" onChange={v=>onChange(taxStatus,v)} />
     </>
   );
 }
@@ -372,7 +375,7 @@ function TaxSectionForUser() {
         <TaxInputs taxStatus={taxStatus} inn={inn} onChange={(t, i) => { setTax(t); setInn(i); }} />
         <span className="note">Новые платные заказы будут доступны после подключения проверенного банковского расчёта. Чеки, НПД и отчёты оформляются по фактически подтверждённым операциям и условиям договора; история прежних расчётов сохраняется.</span>
       </div>
-      <button className="btn" disabled={busy || !taxStatus || inn.length !== 12} onClick={() => save({ taxStatus, inn })}>Сохранить</button>
+      <button className="btn" disabled={busy || !taxStatus || !validInnLength(inn,true)} onClick={() => save({ taxStatus, inn })}>Сохранить</button>
     </main>
   );
 }

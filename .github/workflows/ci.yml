@@ -133,6 +133,7 @@ jobs:
           # Verified production private-read hook, real customer account-switch UI and order chat.
           node e2e/client-private-read-20261124.mjs
           node e2e/client-account-switch-20261124.mjs
+          node e2e/inn-profile-input.mjs
           node e2e/client-order-chat-20261124.mjs
           node e2e/performer-request-settings.mjs e2e/shots
           # Real performer React profile: same-route account isolation, schedule/finance and form contracts.

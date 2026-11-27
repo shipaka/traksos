@@ -6,6 +6,7 @@ import { BookingRows, BookingList, isOpenBooking } from './base.tsx';
 import { DriverRules } from './fleet.tsx';
 import { VehicleServiceApplication, VehicleServiceHistory } from './vehicleServices.tsx';
 import { native } from '../native.ts';
+import {InnInput,validInnLength} from '../innInput.tsx';
 import { saveNewOrderDraft, readNewOrderDraft, clearNewOrderDraft, type SavedNewOrderDraft } from '../orderDraft.ts';
 import { insurancePresentation, isOpenInsuranceRequest } from '../insurancePresentation.ts';
 import { VehiclePhotoLink } from '../vehicleVisual.tsx';
@@ -1390,6 +1391,10 @@ function ProfileForAccount() {
   if (!me) return null;
   const isPerformer = me.roles.some((r) => r === 'master' || r === 'tow');
   const isCustomer = me.roles.some((r) => r === 'client' || r === 'driver');
+  const canEditCompany=!me.owner_id&&!me.roles.includes('driver');
+  // Legacy unchanged identifiers do not block unrelated personal edits.
+  const innChanged=canEditCompany&&inn!==(me.company_inn??'');
+  const innInvalid=innChanged&&!!inn&&!validInnLength(inn,false);
   return (
     <main className="account-profile-page">
       <h1>Профиль</h1>
@@ -1418,16 +1423,17 @@ function ProfileForAccount() {
       </div>
       <form className="stack" onSubmit={async (e) => {
         e.preventDefault();
-        if (await run(() => (patchMe({ name, companyName: company || null, companyInn: inn || null })), 'Сохранено')) reload();
+        if(innInvalid)return;
+        if (await run(() => (patchMe({ name, ...(canEditCompany?{companyName:company||null,...(innChanged?{companyInn:inn||null}:{})}:{}) })), 'Сохранено')) reload();
       }}>
         <Field label="Имя"><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         {!me.owner_id && !me.roles.includes('driver') && (
           <>
             <Field label="Компания · если работаете от юрлица"><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
-            <Field label="ИНН компании" hint="Для счетов и закрывающих документов по ЭДО"><input className="field" inputMode="numeric" value={inn} onChange={(e) => setInn(e.target.value.replace(/\D/g, ''))} /></Field>
+            <Field label="ИНН компании" hint="Для счетов и закрывающих документов по ЭДО"><InnInput value={inn} onChange={setInn} /></Field>
           </>
         )}
-        <button className="btn" disabled={busy}>Сохранить</button>
+        <button className="btn" disabled={busy||innInvalid}>Сохранить</button>
       </form>
       <div className="card stack">
         <b>Безопасность аккаунта</b>
