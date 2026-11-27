@@ -1,0 +1,390 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "hdac-kaluga",
+      "name": "Сервисный центр HD-AC",
+      "region": "Калужская область",
+      "address": "Калуга, ул. Московская, 289, корп. 7",
+      "country": "Россия",
+      "phone": "+7 4842 57-00-75",
+      "email": "sckalugafaw@yandex.ru",
+      "hours": "ежедневно 08:30–20:30",
+      "services": [
+        "МАЗ",
+        "УРАЛ",
+        "FAW",
+        "Hyundai",
+        "тягачи",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://hd-ac.ru/"
+      ],
+      "notes": "Данные с сайта предприятия. Доп. email kamaz@kaluga.ru.",
+      "operator_group": "hdac-kaluga",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autokontinent40-kaluga",
+      "name": "Автоконтинент 40",
+      "region": "Калужская область",
+      "address": "Калуга, Грабцевский проезд, 8",
+      "country": "Россия",
+      "phone": "+7 4842 27-84-84",
+      "email": "autokontinent40@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ТО",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://truckavto.com/"
+      ],
+      "notes": "Доп. телефон приемки +7 930 841-55-22.",
+      "operator_group": "autokontinent40-kaluga",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "efura-kaluga",
+      "name": "Еврофура",
+      "region": "Калужская область",
+      "address": "Калуга, Грабцевское шоссе, 22",
+      "country": "Россия",
+      "phone": "+7 910 512-32-75",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "WABCO",
+        "дизельная аппаратура",
+        "отопители"
+      ],
+      "source_urls": [
+        "https://efura.ru/contacts",
+        "https://efura.ru/"
+      ],
+      "notes": "Доп. телефон записи +7 4842 777-575.",
+      "operator_group": "efura-kaluga",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "globalavto-tula",
+      "name": "ГлобалАвто",
+      "region": "Тульская область",
+      "address": "Щёкинский район, д. Пироговка-Ульяновка, 2А",
+      "country": "Россия",
+      "phone": "+7 915 684-47-74",
+      "email": "Globalavto71@bk.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ABS",
+        "электрика",
+        "пневматика",
+        "КПП"
+      ],
+      "source_urls": [
+        "https://globalavto71.ru/"
+      ],
+      "notes": "Номер именно сервиса, не отдела запчастей.",
+      "operator_group": "globalavto-tula",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ngservice-barsuki",
+      "name": "НерудГрупп Сервис",
+      "region": "Тульская область",
+      "address": "пос. Барсуки, ул. Песочная, 35",
+      "country": "Россия",
+      "phone": "+7 905 116-95-27",
+      "email": "ngservice71@gmail.com",
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "ДВС",
+        "КПП",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://ngservice71.ru/"
+      ],
+      "notes": "Эвакуация: +7 961 261-69-00.",
+      "operator_group": "ngservice-barsuki",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "atlservice-barsuki",
+      "name": "АТЛ Сервис",
+      "region": "Тульская область",
+      "address": "пос. Барсуки, ул. Мелиоративная, 1",
+      "country": "Россия",
+      "phone": "+7 906 622-55-84",
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "тенты",
+        "электрика",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://atltransservice.ru/"
+      ],
+      "notes": "Тот же номер для грузовой эвакуации.",
+      "operator_group": "atlservice-barsuki",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ostavto-ryazan",
+      "name": "ОСТ-АВТО",
+      "region": "Рязанская область",
+      "address": "Рязань, ул. Связи, 25, стр. 2",
+      "country": "Россия",
+      "phone": "+7 961 130-88-70",
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ABS/EBS",
+        "WABCO",
+        "Knorr-Bremse",
+        "Haldex",
+        "ДВС",
+        "КПП"
+      ],
+      "source_urls": [
+        "https://ostavto.ru/"
+      ],
+      "notes": "Сайт заявляет ремонт тормозных и пневматических систем прицепов.",
+      "operator_group": "ostavto-ryazan",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtomet-ryazan",
+      "name": "АвтоМет",
+      "region": "Рязанская область",
+      "address": "Рязань, 195-й км окружной дороги М-5 Урал, стр. 2",
+      "country": "Россия",
+      "phone": "+7 915 590-72-65",
+      "email": "Office@avtomet-r.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовики",
+        "тягачи",
+        "полуприцепы",
+        "самосвалы",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://avtomet-r.ru/",
+        "https://avtomet-r.ru/services/remont-gruzovyh-avtomobilej/"
+      ],
+      "notes": "Прямой номер сервиса; доп. +7 4912 92-55-55.",
+      "operator_group": "avtomet-ryazan",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bat62-ryazan",
+      "name": "BAT62",
+      "region": "Рязанская область",
+      "address": "Рязань, станция Лесок, 25",
+      "country": "Россия",
+      "phone": "8 804 700-12-87",
+      "email": null,
+      "hours": "пн–пт 08:00–20:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "электрика",
+        "двигатели",
+        "выездной ремонт",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://bat62.ru/"
+      ],
+      "notes": "Выездная помощь заявлена предприятием; график выезда уточнить.",
+      "operator_group": "bat62-ryazan",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtotransremont-orel",
+      "name": "Автотрансремонт",
+      "region": "Орловская область",
+      "address": "Орёл, Новосильское шоссе, 11, офис 1",
+      "country": "Россия",
+      "phone": "+7 919 269-21-77",
+      "email": "avtotransremont@yandex.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "ДВС",
+        "КПП",
+        "ТНВД",
+        "сварка",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://avtotransremont.ru/"
+      ],
+      "notes": "Доп. телефоны +7 910 305-10-88, +7 910 748-40-01, +7 4862 48-40-01. Въезд в ремонтную зону уточнить.",
+      "operator_group": "avtotransremont-orel",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lider-nikulichi",
+      "name": "Лидер",
+      "region": "Орловская область",
+      "address": "Орловский район, д. Никуличи, ул. Наугорская, 27",
+      "country": "Россия",
+      "phone": "+7 919 269-77-77",
+      "email": "vstour@mail.ru",
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "грузовики",
+        "спецтехника"
+      ],
+      "source_urls": [
+        "https://lider-ts.ru/kontakty/",
+        "https://lider-ts.ru/"
+      ],
+      "notes": "Данные с сайта предприятия.",
+      "operator_group": "lider-nikulichi",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "servicecentrum-orel",
+      "name": "Сервисный центр Centrum",
+      "region": "Орловская область",
+      "address": "Орёл, Московское шоссе, 173",
+      "country": "Россия",
+      "phone": "+7 920 088-80-11",
+      "email": "info@service-centrum.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "автобусы",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://service-centrum.ru/"
+      ],
+      "notes": "Телефон именно ремонта; +7 920 088-80-22 относится к запчастям.",
+      "operator_group": "servicecentrum-orel",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
