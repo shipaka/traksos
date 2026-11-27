@@ -1,0 +1,2660 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm operation, legal operator, heavy truck capability, precise coordinates, rights to reuse, duplicates and admin approval. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "lat-melnichnaya",
+      "name": "ГРС ЛАТ",
+      "region": "Санкт-Петербург",
+      "address": "Мельничная ул., 21А",
+      "country": "Россия",
+      "phone": "+7 812 426-95-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://latservice.ru/"
+      ],
+      "notes": "Ремонт коммерческих грузовиков, диагностика, ТО; уточнить прием тяжелых тягачей. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "lat-melnichnaya",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ask-yablonovka",
+      "name": "АСК",
+      "region": "Санкт-Петербург",
+      "address": "Большая Яблоновка, 56",
+      "country": "Россия",
+      "phone": "+7 921 939-44-60",
+      "email": "asc-spb@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и прицепов"
+      ],
+      "source_urls": [
+        "https://service-ask.ru/"
+      ],
+      "notes": "ДВС, КПП, электрика, грузовики, прицепы. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "ask-yablonovka",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "orion-shushary2b",
+      "name": "Орион",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 2Б",
+      "country": "Россия",
+      "phone": "+7 812 985-09-75",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Соседний адрес Гранат, Ленина 2; подтвердить отдельную площадку. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "orion-shushary2b",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "green-truck-lyubotinsky",
+      "name": "Грин-Трак СПб",
+      "region": "Санкт-Петербург",
+      "address": "Люботинский просп., 7, лит. А, пом. 44",
+      "country": "Россия",
+      "phone": "+7 904 602-08-82",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Адрес помещения из перечня СТО, проверить ремонтную площадку. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "green-truck-lyubotinsky",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dafspb-moskovskoe160",
+      "name": "ДАФСПБ",
+      "region": "Санкт-Петербург",
+      "address": "Московское шоссе, 160, корп. 6",
+      "country": "Россия",
+      "phone": "+7 812 953-59-39",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Ориентир Ленсоветовская дорога, 12; одна запись. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "dafspb-moskovskoe160",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "cpt-shushary",
+      "name": "Центр прицепной техники",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары (номер здания в перечне не указан)",
+      "country": "Россия",
+      "phone": "+7 812 416-40-84",
+      "email": "info@stgroup-cpt.ru",
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Уточнить физический адрес по https://www.stgroup-cpt.ru/ до публикации. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "cpt-shushary",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtmotors-chernayagryaz",
+      "name": "АВТ Моторс",
+      "region": "Московская область",
+      "address": "д. Чёрная Грязь, Спортивная ул., 65, корп. 1",
+      "country": "Россия",
+      "phone": "+7 499 940-90-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "avtmotors-chernayagryaz",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "veles-suponevo",
+      "name": "ТЭК Велес",
+      "region": "Брянская область",
+      "address": "с. Супонево, Шоссейная ул., 16Г",
+      "country": "Россия",
+      "phone": "+7 4832 770-330",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "veles-suponevo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "grand-profi-vladimir",
+      "name": "Гранд Профи",
+      "region": "Владимирская область",
+      "address": "Владимир, ул. Куйбышева, 34А",
+      "country": "Россия",
+      "phone": "+7 4922 77-13-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "grand-profi-vladimir",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "komavto-rzhavka",
+      "name": "КомАвто — Нижний Новгород",
+      "region": "Нижегородская область",
+      "address": "д. Ржавка, промзона, 12",
+      "country": "Россия",
+      "phone": "+7 968 199-93-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "komavto",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "komavto-samara",
+      "name": "КомАвто — Самара",
+      "region": "Самарская область",
+      "address": "Самара, Московское шоссе, 20-й км, 33",
+      "country": "Россия",
+      "phone": "+7 846 219-29-39",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "komavto",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "delfo-kazan",
+      "name": "Делфо",
+      "region": "Республика Татарстан",
+      "address": "Казань, Беломорская ул., 69А",
+      "country": "Россия",
+      "phone": "+7 843 239-36-85",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "delfo-kazan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "s-avto-zorinsky",
+      "name": "С-Авто",
+      "region": "Саратовская область",
+      "address": "пос. Зоринский, 1, корп. 11",
+      "country": "Россия",
+      "phone": "+7 8452 77-70-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "s-avto-zorinsky",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "privolzhie-penza",
+      "name": "Приволжье-ТрансСервис НН — Пенза",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Аустрина, 164Б",
+      "country": "Россия",
+      "phone": "+7 831 280-85-14",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "privolzhie-transservice",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "motoravto-kirov",
+      "name": "Моторавто — Киров",
+      "region": "Кировская область",
+      "address": "Киров, Советский тракт, 44",
+      "country": "Россия",
+      "phone": "+7 8332 52-00-01",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "motoravto",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "motoravto-lipetsk",
+      "name": "Моторавто — Липецк",
+      "region": "Липецкая область",
+      "address": "Липецк, Ангарская ул., вл. 31Г",
+      "country": "Россия",
+      "phone": "+7 4742 26-00-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "motoravto",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtograd-kaliningrad",
+      "name": "Автоцентр Автоград",
+      "region": "Калининградская область",
+      "address": "Калининград, Большая Окружная ул., 9",
+      "country": "Россия",
+      "phone": "+7 4012 56-50-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "avtograd-kaliningrad",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vostoktransavto-shevtsovoy",
+      "name": "Восток ТрансАвто / ТК Комтранс",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Шевцовой, 2",
+      "country": "Россия",
+      "phone": "+7 383 200-10-70",
+      "email": "service-trucks@vta-nsk.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Два оператора по одному адресу в списке JAC; одна точка до уточнения; доп. +7 383 255-16-97. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "vostoktransavto-shevtsovoy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bigmachine-barnaul",
+      "name": "БигМашин",
+      "region": "Алтайский край",
+      "address": "Барнаул, Павловский тракт, 200Г",
+      "country": "Россия",
+      "phone": "8 800 700-15-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "bigmachine-barnaul",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "variator-chel",
+      "name": "Вариатор-Авто",
+      "region": "Челябинская область",
+      "address": "Челябинск, Троицкий тракт, 25И",
+      "country": "Россия",
+      "phone": "+7 3517 000-229",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Добавочный 105; формат и действительность номера проверить. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "variator-chel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtostolitsa-ural",
+      "name": "Автомобильная Столица Урала",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Березовский тракт, 9",
+      "country": "Россия",
+      "phone": "+7 343 380-66-66",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "avtostolitsa-ural",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "euroasia-tyumen",
+      "name": "ЕвроАзия-Сервис",
+      "region": "Тюменская область",
+      "address": "Тюмень, Авторемонтная ул., 10А",
+      "country": "Россия",
+      "phone": "+7 3452 22-12-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "euroasia-tyumen",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "molniya-chel",
+      "name": "СТО Молния / Техносервис",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Дарвина, 2В",
+      "country": "Россия",
+      "phone": "+7 351 218-01-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "molniya-chel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transit-don",
+      "name": "Транзит-Дон",
+      "region": "Ростовская область",
+      "address": "Аксайский район, М-4 Дон, 1084-й км, 1",
+      "country": "Россия",
+      "phone": "+7 928 621-00-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "transit-don",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avt-kuban",
+      "name": "АВТ Кубань",
+      "region": "Краснодарский край",
+      "address": "Краснодар, Новороссийская ул., 15",
+      "country": "Россия",
+      "phone": "+7 916 247-87-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "avt-kuban",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ptk-vladivostok",
+      "name": "ПТК",
+      "region": "Приморский край",
+      "address": "Владивосток, Заводской пер., 13Г",
+      "country": "Россия",
+      "phone": "+7 984 201-93-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "ptk-vladivostok",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "service-blag-theatralnaya181",
+      "name": "Сервис JAC — Театральная",
+      "region": "Амурская область",
+      "address": "Благовещенск, Театральная ул., 181/1",
+      "country": "Россия",
+      "phone": "+7 4162 49-60-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "ИП в списке производителя; уточнить вывеску. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "service-blag-theatralnaya181",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dlts-khabarovsk",
+      "name": "ДЛТС",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, Трёхгорная ул., 135",
+      "country": "Россия",
+      "phone": "+7 4212 479-901",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Соседняя станция ДВ Скан, дом 131; проверить независимость. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "dlts-khabarovsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtocenter-nn-81",
+      "name": "АвтоЦентр-НН",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Автозаводское шоссе, 81, корп. 6",
+      "country": "Россия",
+      "phone": "+7 831 339-74-42",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "avtocenter-nn-81",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "doka-voronezh",
+      "name": "Дока",
+      "region": "Воронежская область",
+      "address": "Воронеж, Монтажный проезд, 16",
+      "country": "Россия",
+      "phone": "+7 900 308-67-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "doka-voronezh",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "inrosavto-samara",
+      "name": "ИНРОСАВТО",
+      "region": "Самарская область",
+      "address": "Самара, Физкультурная ул., 147В",
+      "country": "Россия",
+      "phone": "+7 846 214-00-57",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "inrosavto-samara",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "radar-lada-ivanovo",
+      "name": "Радар Лада",
+      "region": "Ивановская область",
+      "address": "Иваново, ул. Полка Нормандия-Неман, 7",
+      "country": "Россия",
+      "phone": "+7 4932 59-15-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Подтвердить обслуживание крупнотоннажных машин. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "radar-lada-ivanovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sofit-nn",
+      "name": "Софит-Сервис / Софит-Центр Поволжье",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Федосеенко, 41",
+      "country": "Россия",
+      "phone": "+7 953 415-40-66",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Два названия, одинаковый адрес и телефон. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sofit-nn",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehnologiya-perm",
+      "name": "Технология",
+      "region": "Пермский край",
+      "address": "Пермь, Усольская ул., 5А",
+      "country": "Россия",
+      "phone": "+7 342 204-88-83",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "tehnologiya-perm",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hropal-stavropol",
+      "name": "Хропаль-Авто — Ставрополь",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, Старомарьевское шоссе, 86/2",
+      "country": "Россия",
+      "phone": "+7 938 302-50-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "hropal-auto",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "yuzhuralauto-ufa",
+      "name": "ЮжУралАвто",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, Индустриальное шоссе, 1/1",
+      "country": "Россия",
+      "phone": "+7 967 456-17-79",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "yuzhuralauto-ufa",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "automash-mb-lubercy",
+      "name": "АвтоМАШ-МБ",
+      "region": "Московская область",
+      "address": "Люберцы, Новорязанское шоссе, 11",
+      "country": "Россия",
+      "phone": "+7 495 787-00-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "automash-mb-lubercy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "jac-center-krasnoyarsk",
+      "name": "ДЖАК-ЦЕНТР КРАСНОЯРСК",
+      "region": "Красноярский край",
+      "address": "Красноярск, ул. Маерчака, 105Г",
+      "country": "Россия",
+      "phone": "+7 391 219-08-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "jac-center-krasnoyarsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "aaa-petushkova",
+      "name": "ААА Траксервис — Москва",
+      "region": "Москва",
+      "address": "ул. Василия Петушкова, 3, стр. 1",
+      "country": "Россия",
+      "phone": "+7 495 152-45-45",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "aaa-truckservice",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "surgutdrive",
+      "name": "Сургутдрайв",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Профсоюзов, 59",
+      "country": "Россия",
+      "phone": "+7 3462 51-14-65",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "surgutdrive",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sumotori-mamony",
+      "name": "Сумотори-Сибирь",
+      "region": "Иркутская область",
+      "address": "с. Мамоны, Центральная ул., 41",
+      "country": "Россия",
+      "phone": "+7 3952 79-96-71",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sumotori-mamony",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "standard-truck-lyubertsy",
+      "name": "Стандард Трак Сервисиз",
+      "region": "Московская область",
+      "address": "Люберцы, Котельнический проезд, 23В",
+      "country": "Россия",
+      "phone": "+7 499 753-75-53",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "standard-truck-lyubertsy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "malkom-tambov",
+      "name": "МАЛКОМ",
+      "region": "Тамбовская область",
+      "address": "д. Крутые Выселки, Промышленная ул., стр. 28",
+      "country": "Россия",
+      "phone": "+7 4752 43-20-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "malkom-tambov",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "cargoservice-volgograd",
+      "name": "КаргоСервис",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Шурухина, 45Б",
+      "country": "Россия",
+      "phone": "+7 929 787-68-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "cargoservice-volgograd",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tds-bataysk",
+      "name": "ТДС",
+      "region": "Ростовская область",
+      "address": "Батайск, ул. 1-й Пятилетки, 69",
+      "country": "Россия",
+      "phone": "+7 863 322-65-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "tds-bataysk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtopoezd-pribrezhnoe",
+      "name": "Автопоезд — Калининград",
+      "region": "Калининградская область",
+      "address": "пос. Прибрежное, Васильковая ул., 28",
+      "country": "Россия",
+      "phone": "+7 906 211-13-13",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "avtopoezd-pribrezhnoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "overkon-novozhivotinnoe",
+      "name": "ОВЕРКОН",
+      "region": "Воронежская область",
+      "address": "Рамонский район, территория Новоживотинное, 52/6",
+      "country": "Россия",
+      "phone": "+7 473 300-47-47",
+      "email": "sales@overkon.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "overkon-novozhivotinnoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "neo-truck-lubercy",
+      "name": "НЕО ТРАК",
+      "region": "Московская область",
+      "address": "Люберцы, Котельнический проезд, 12А, лит. 3",
+      "country": "Россия",
+      "phone": "+7 495 150-01-10",
+      "email": "sales@neotruck.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "neo-truck-lubercy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nevi-balobanovo",
+      "name": "НЕВИ ГРУПП",
+      "region": "Московская область",
+      "address": "с. Балобаново, ул. Будённого, 15Г",
+      "country": "Россия",
+      "phone": "+7 925 150-98-82",
+      "email": "kt@nevigroup.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "nevi-balobanovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "klever-novonikolaevsky",
+      "name": "КЛЕВЕР ТРАК КАЗАНЬ",
+      "region": "Республика Татарстан",
+      "address": "пос. Новониколаевский, Центральная ул., 5",
+      "country": "Россия",
+      "phone": "+7 927 402-53-44",
+      "email": "info@clever-truck.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "klever-truck",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "comtrans-vtorchermeta",
+      "name": "КОМТРАНС",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Вторчермета, 1Д, пом. П3",
+      "country": "Россия",
+      "phone": "8 800 707-16-64",
+      "email": "sale@comtrans-mbm.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "comtrans-vtorchermeta",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "meridian-krasnokamsk",
+      "name": "Меридиан",
+      "region": "Пермский край",
+      "address": "Краснокамск, Промышленная ул., 4А",
+      "country": "Россия",
+      "phone": "+7 342 254-34-40",
+      "email": "info@volvoperm.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "meridian-krasnokamsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "master-truck-igumenka",
+      "name": "Мастер Трак Сервис",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Игуменка, 183",
+      "country": "Россия",
+      "phone": "+7 351 211-11-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "master-truck-igumenka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tm-service-nn",
+      "name": "ТМ Сервис — Московское шоссе",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Московское шоссе, 352А",
+      "country": "Россия",
+      "phone": "+7 905 868-04-74",
+      "email": "servicenn@mirtm.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО JAC"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/service"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "tm-service-nn",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vaer-dobrun",
+      "name": "Ваер Сервис — Добрунь",
+      "region": "Брянская область",
+      "address": "д. Добрунь, Шоссейная ул., 17А",
+      "country": "Россия",
+      "phone": "8 800 555-30-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "vaer-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vaer-obraztsovo",
+      "name": "Ваер Сервис — Образцово",
+      "region": "Орловская область",
+      "address": "д. Образцово, Овражная ул., 3",
+      "country": "Россия",
+      "phone": "8 800 555-30-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "vaer-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "komtruck-kuzmino",
+      "name": "КомТракСервис",
+      "region": "Московская область",
+      "address": "д. Кузьмино-Фильчаково, промзона, 8/2",
+      "country": "Россия",
+      "phone": "+7 495 136-24-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "komtruck-kuzmino",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mbtruck-ryazan",
+      "name": "МБ Трак Сервис",
+      "region": "Рязанская область",
+      "address": "Рязань, Куйбышевское шоссе, 52",
+      "country": "Россия",
+      "phone": "+7 4912 70-33-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "mbtruck-ryazan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "skanezh-kursk",
+      "name": "Сканеж — Курск",
+      "region": "Курская область",
+      "address": "Курск, 2-й Московский проезд, 7Е",
+      "country": "Россия",
+      "phone": "+7 960 693-90-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Источник пишет «Моковский», адрес сверить. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "skanezh",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "skanezh-voronezh",
+      "name": "Сканеж — Воронеж",
+      "region": "Воронежская область",
+      "address": "Айдаровское с.п., 6-я Промышленная зона, 7",
+      "country": "Россия",
+      "phone": "+7 473 207-00-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "skanezh",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehnologiya-m8",
+      "name": "Технология Движения — М8",
+      "region": "Московская область",
+      "address": "Пушкинский округ, М-8, 51-й км, 1",
+      "country": "Россия",
+      "phone": "8 800 444-13-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "tehnologia-ivanteevka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamtrans-pavlovsk",
+      "name": "ТК КАМТРАНС",
+      "region": "Воронежская область",
+      "address": "Павловск, Транспортная ул., 5А",
+      "country": "Россия",
+      "phone": "+7 980 341-00-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "kamtrans-pavlovsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckplatform-lubercy",
+      "name": "Трак Платформа",
+      "region": "Московская область",
+      "address": "Люберцы, Дальняя ул., 37",
+      "country": "Россия",
+      "phone": "+7 903 722-37-62",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "truckplatform-lubercy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "flagman-kazinka",
+      "name": "Флагман-Сервис",
+      "region": "Липецкая область",
+      "address": "с. Казинка, ул. Ленина, 72",
+      "country": "Россия",
+      "phone": "+7 903 864-38-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "flagman-kazinka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "yartruck-prom12",
+      "name": "ЯрТракСервис",
+      "region": "Ярославская область",
+      "address": "Ярославль, Промышленная ул., 12А",
+      "country": "Россия",
+      "phone": "+7 910 663-03-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "yartruck-prom12",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "volgogradscan-volzhsky",
+      "name": "ВолгоградСкан",
+      "region": "Волгоградская область",
+      "address": "Волжский, ул. 6-я Автодорога, 29",
+      "country": "Россия",
+      "phone": "+7 927 536-29-22",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "volgogradscan-volzhsky",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "svservice-krasnodar",
+      "name": "СВ-Сервис — Краснодар",
+      "region": "Краснодарский край",
+      "address": "пос. Победитель, Кубанская ул., 48/1",
+      "country": "Россия",
+      "phone": "+7 938 535-63-68",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sv-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alfascan-ufa",
+      "name": "АльфаСкан — Уфа",
+      "region": "Республика Башкортостан",
+      "address": "Уфимский район, ул. Анатолия Локотченко, 2В",
+      "country": "Россия",
+      "phone": "8 800 805-34-08",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "alfascan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "baltrans-saratov",
+      "name": "Балтранс",
+      "region": "Саратовская область",
+      "address": "Саратов, х. Бартоломеевский, территория Балтранс, 3",
+      "country": "Россия",
+      "phone": "+7 8452 79-99-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "baltrans-saratov",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "zhiguliskan",
+      "name": "ЖигулиСкан",
+      "region": "Самарская область",
+      "address": "Жигулёвск, М-5, 960-й км, 3",
+      "country": "Россия",
+      "phone": "+7 8482 71-41-63",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "zhiguliskan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "normoteh-podberezy",
+      "name": "Нормотех",
+      "region": "Кировская область",
+      "address": "д. Подберёзы, 87",
+      "country": "Россия",
+      "phone": "+7 8332 22-77-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "normoteh-podberezy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "original-service-ulyanovsk",
+      "name": "Оригинал-Сервис",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, Московское шоссе, 5В",
+      "country": "Россия",
+      "phone": "+7 908 212-09-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "original-service-ulyanovsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "penzatruck-austrina",
+      "name": "ПензаТракСервис",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Аустрина, 3Е",
+      "country": "Россия",
+      "phone": "+7 8412 45-05-15",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "penzatruck-austrina",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "samarascan-mehzavod",
+      "name": "Самара-Скан",
+      "region": "Самарская область",
+      "address": "Самара, пос. Мехзавод, Московское шоссе, 22-й км, 27",
+      "country": "Россия",
+      "phone": "+7 846 277-21-63",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "samarascan-mehzavod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "svservice-samara",
+      "name": "СВ-Сервис — Самара",
+      "region": "Самарская область",
+      "address": "Самара, Демократическая ул., 63А",
+      "country": "Россия",
+      "phone": "+7 927 772-38-78",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sv-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ekaterinburgscan",
+      "name": "ЕкатеринбургСкан",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Шефская ул., 3А/1А",
+      "country": "Россия",
+      "phone": "+7 343 382-41-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Соседний адрес Уралэкосервистранс 3А; сверить площадки. Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "ekaterinburgscan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ets-trade-tyumen",
+      "name": "ЕТС Трейд",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Тимофея Чаркова, 8Г",
+      "country": "Россия",
+      "phone": "+7 3452 39-39-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "ets-trade",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kurganscan-vvedenskoe",
+      "name": "КурганСкан",
+      "region": "Курганская область",
+      "address": "с. Введенское, Сибирская ул., 1",
+      "country": "Россия",
+      "phone": "+7 982 424-28-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "kurganscan-vvedenskoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "svservice-chel",
+      "name": "СВ-Сервис — Челябинск",
+      "region": "Челябинская область",
+      "address": "Челябинск, 2-я Дальняя ул., 7",
+      "country": "Россия",
+      "phone": "+7 937 659-46-62",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sv-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autotrade-barnaul",
+      "name": "Автотрейд",
+      "region": "Алтайский край",
+      "address": "Барнаул, просп. Энергетиков, 36А",
+      "country": "Россия",
+      "phone": "8 800 700-57-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "autotrade-barnaul",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dsc-barnaul",
+      "name": "ДСЦ",
+      "region": "Алтайский край",
+      "address": "Барнаул, Трактовая ул., 11Б",
+      "country": "Россия",
+      "phone": "+7 3852 99-50-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "dsc-barnaul",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "importspecteh-krasnoyarsk",
+      "name": "ИмпортСпецТех",
+      "region": "Красноярский край",
+      "address": "Красноярск, Северное шоссе, 37Г",
+      "country": "Россия",
+      "phone": "+7 913 532-65-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "importspecteh-krasnoyarsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rtk-novoaltaysk",
+      "name": "РТК",
+      "region": "Алтайский край",
+      "address": "Новоалтайск, Дорожная ул., 74/15",
+      "country": "Россия",
+      "phone": "+7 961 722-88-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "rtk-novoaltaysk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sayanscan-chernogorsk",
+      "name": "СаянСкан",
+      "region": "Республика Хакасия",
+      "address": "Черногорск, ул. Энергетиков, 10А, лит. В",
+      "country": "Россия",
+      "phone": "+7 913 058-77-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sayanscan-chernogorsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "svservice-krasnoyarsk",
+      "name": "СВ-Сервис — Красноярск",
+      "region": "Красноярский край",
+      "address": "Красноярск, Кубековская промзона, 4Д/1",
+      "country": "Россия",
+      "phone": "+7 923 107-97-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sv-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "svservice-nsk",
+      "name": "СВ-Сервис — Новосибирск",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, Старое шоссе, 65/1",
+      "country": "Россия",
+      "phone": "8 800 533-92-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "sv-service",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "traksibservice-krasnoyarsk",
+      "name": "ТракСибСервис",
+      "region": "Красноярский край",
+      "address": "Красноярск, проезд Связистов, 33, стр. 1",
+      "country": "Россия",
+      "phone": "+7 391 285-10-61",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "traksibservice-krasnoyarsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "unittruck-irkutsk",
+      "name": "ЮнитТрак",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Пушкина, 25",
+      "country": "Россия",
+      "phone": "+7 3952 64-03-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "unittruck-irkutsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alania-gizel",
+      "name": "Алания ТракЦентр",
+      "region": "Республика Северная Осетия — Алания",
+      "address": "с. Гизель, Гизельское шоссе, 3-й км",
+      "country": "Россия",
+      "phone": "+7 939 701-55-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "alania-gizel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kavminscan-georgievsk",
+      "name": "КавМинСкан",
+      "region": "Ставропольский край",
+      "address": "Георгиевск, ул. Ленина, 31/1",
+      "country": "Россия",
+      "phone": "8 800 302-13-73",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовой техники по каталогу ГРОСС"
+      ],
+      "source_urls": [
+        "https://msk.gkgross.ru/servis/servisnye-centry/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "kavminscan-georgievsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vts-velsk",
+      "name": "ВологдаТракСервис — Вельск",
+      "region": "Архангельская область",
+      "address": "Вельск, пер. Макаренко, 12",
+      "country": "Россия",
+      "phone": "8 800 250-54-41",
+      "email": "velsk@vts35.ru",
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "vologdatrakservice",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tpas-vologda-rubtsovo",
+      "name": "ТехПортАвтоСервис — Вологда",
+      "region": "Вологодская область",
+      "address": "пос. Рубцово, 101",
+      "country": "Россия",
+      "phone": "+7 953 507-01-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "tpas",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzovoy-uzlovaya",
+      "name": "Грузовой",
+      "region": "Тульская область",
+      "address": "Узловая, пос. Брусянский, пер. Пушкина, 8А",
+      "country": "Россия",
+      "phone": "+7 906 630-82-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "gruzovoy-uzlovaya",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hts-shestovo",
+      "name": "ХТС",
+      "region": "Московская область",
+      "address": "д. Шестово, 22М",
+      "country": "Россия",
+      "phone": "+7 495 644-37-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "hts-shestovo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vostruck-voskresensk",
+      "name": "Вострак Моторс",
+      "region": "Московская область",
+      "address": "Воскресенск, д. Ратмирово, Набережная ул., 6",
+      "country": "Россия",
+      "phone": "+7 965 185-55-18",
+      "email": "info@vostruck.ru",
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "vostruck-voskresensk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "btc-ekb",
+      "name": "Бизнес Трак Центр — Екатеринбург",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Перспективная ул., 3",
+      "country": "Россия",
+      "phone": "+7 343 247-84-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "btc",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "btc-samara",
+      "name": "Бизнес Трак Центр — Самара",
+      "region": "Самарская область",
+      "address": "Самара, Балтийский проезд, 8",
+      "country": "Россия",
+      "phone": "+7 846 211-58-34",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "btc",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "btc-nsk",
+      "name": "Бизнес Трак Центр — Новосибирск",
+      "region": "Новосибирская область",
+      "address": "пос. Красный Восток, Советская ул., 26/1",
+      "country": "Россия",
+      "phone": "+7 383 388-49-71",
+      "email": null,
+      "hours": null,
+      "services": [
+        "обслуживание прицепной техники"
+      ],
+      "source_urls": [
+        "https://guttrailer.com/servisnye-stancii/"
+      ],
+      "notes": "Проверить действующий оператор, точность адреса, специализацию и контакт до публикации.",
+      "operator_group": "btc",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Compared eight earlier priority/network batches for exact matches; full national fuzzy dedup still pending.",
+    "Omitted known JAC aliases at existing sites: Forward (Dakar), IV-Service, Pitertruckcenter, Axis, Terra Truck/Lengo, Grunwald Khimki, Transservice Topolevo, KomAvtoBaikal, Avtomet, Rumos, TV Trans, Klever Chelny, Nara Avto Trans. GROSS sales-only entries omitted; invalid 8 000 numbers omitted.",
+    "Potential overlaps: Tpas, Gruzovye Rezervy/Tselaya Fura, VTS, nearby repair yards, JAC medium-duty vs heavy-duty. Resolve before map placement. No legal or phone confirmation. Only published business contacts copied; sales email is not proof of consent for ads."
+  ]
+}
