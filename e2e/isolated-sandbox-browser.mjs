@@ -759,13 +759,13 @@ try{
       const servicePage=await serviceContext.newPage();
       await servicePage.goto(base+'/#/sandbox-enter?ticket='+
         encodeURIComponent(issueSandboxTicket('service',secret,Date.now())),{waitUntil:'domcontentloaded'});
-      await servicePage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
+      await servicePage.waitForFunction(()=>!location.hash.startsWith('#/sandbox-enter') && localStorage.getItem('traksos.token')?.length>30,
         null,{timeout:20000});
       serviceToken=await servicePage.evaluate(()=>localStorage.getItem('traksos.token'));
       const adminPage=await adminContext.newPage();
       await adminPage.goto(base+'/#/sandbox-enter?ticket='+
         encodeURIComponent(issueSandboxTicket('admin',secret,Date.now())),{waitUntil:'domcontentloaded'});
-      await adminPage.waitForFunction(()=>localStorage.getItem('traksos.token')?.length>30,
+      await adminPage.waitForFunction(()=>!location.hash.startsWith('#/sandbox-enter') && localStorage.getItem('traksos.token')?.length>30,
         null,{timeout:20000});
       const adminToken=await adminPage.evaluate(()=>localStorage.getItem('traksos.token'));
       const station=await serviceContext.request.get(base+'/api/base',{

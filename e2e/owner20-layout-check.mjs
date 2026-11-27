@@ -255,6 +255,8 @@ try {
      // A transient failure must be recoverable without closing the map,
      // reloading 617, waiting a full minute, or inventing a partner pin.
      let calls=0;
+     // Independently loaded directory: explicitly empty only in this retry probe.
+     await page.route('**/api/public/sto-directory',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({source:'independent_directory',points:[]})}));
      await page.route('**/api/public/partner-map',async route=>{
        calls++;
        await route.fulfill({status:calls===1?503:200,
@@ -277,6 +279,7 @@ try {
         !await network.getByText('Пока нет СТО, разрешивших показывать').count())
        throw Error('Explicit map retry did not recover honestly without synthetic pins');
      await page.unroute('**/api/public/partner-map');
+     await page.unroute('**/api/public/sto-directory');
    }
    // Interaction-only DOM probe, not a fake partner or a map screenshot:
    // the pan handler must not capture pointer events from actual links nested

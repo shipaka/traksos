@@ -315,7 +315,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           style={{left:cluster.x,top:cluster.y}}
           aria-label={cluster.members.length>1
             ?'Показать '+cluster.members.length+' СТО поблизости'
-            :'СТО '+cluster.members[0].name+(cluster.members[0].directory?' · сторонняя':' · партнёр')}
+            :'СТО '+cluster.members[0].name+(cluster.members[0].directory?' · сторонняя':'')}
           title={cluster.members.length>1
             ?'СТО: '+cluster.members.length+' · партнёров: '+cluster.members.filter(p=>!p.directory).length:cluster.members[0].name}
           onClick={event=>{
@@ -374,7 +374,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
             onClick={()=>setRetryCount(n=>n+1)}>Повторить загрузку</button>}
         </div>}
         {state==='ready'&&points.length===0&&<div className="tr-network-notice" role="status">
-          Пока нет опубликованных площадок в справочнике или подтверждённых партнёров.
+          Пока нет СТО, разрешивших показывать проверенное местоположение, и опубликованных сторонних площадок.
           Мы расширяем партнёрскую сеть; декоративные точки за реальные не выдаём.
         </div>}
         <div className="tr-network-attribution">Карта © OpenStreetMap contributors ·
