@@ -1,0 +1,479 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach. Possible duplicate addresses in Vylgort require verification.",
+  "records": [
+    {
+      "id": "avtotrans-syktyvkar",
+      "name": "Автотранс",
+      "region": "Республика Коми",
+      "address": "Сыктывкар, ул. Лесопарковая, 26",
+      "country": "Россия",
+      "phone": "+7 909 122-07-77",
+      "email": "avtotrans-tk@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "полуприцепы",
+        "оси BPW SAF ROR",
+        "КПП",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://avtotrans11.ru/",
+        "https://avtotrans11.ru/contact/"
+      ],
+      "notes": "Доп. +7 909 122-67-77.",
+      "operator_group": "avtotrans11",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lps-vylgort-service",
+      "name": "Леспромсервис — ремонтный цех",
+      "region": "Республика Коми",
+      "address": "с. Выльгорт, Сысольское шоссе, 3А",
+      "country": "Россия",
+      "phone": "+7 8212 72-03-68",
+      "email": null,
+      "hours": "будни 08:00–17:00",
+      "services": [
+        "ремонт и ТО техники"
+      ],
+      "source_urls": [
+        "https://lpskomi.ru/contacts/"
+      ],
+      "notes": "Доп. +7 8212 568-566; конкретный перечень грузовых работ уточнить. Связанные предприятия Леспромсервис/Автопромсервис группировать для переговоров.",
+      "operator_group": "lpskomi",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lps-vylgort-body",
+      "name": "Леспромсервис — кузовной цех",
+      "region": "Республика Коми",
+      "address": "с. Выльгорт, Сысольское шоссе, стр. 29",
+      "country": "Россия",
+      "phone": "+7 8212 48-04-04 доб. 310",
+      "email": "mkc@lpskomi.ru",
+      "hours": "пн–пт 08:30–17:30, обед 12:00–13:00",
+      "services": [
+        "кузовной ремонт грузовой техники"
+      ],
+      "source_urls": [
+        "https://lpskomi.ru/contacts/"
+      ],
+      "notes": "С Автопромсервисом совпадает общий номер и почта кузовного подразделения; до публикации сверить, являются ли адреса отдельными въездами одной площадки. Не дублировать коммерческие предложения.",
+      "operator_group": "lpskomi",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eskidan-ukhta",
+      "name": "СТО Скидан",
+      "region": "Республика Коми",
+      "address": "Ухта, ул. Транспортная, 1",
+      "country": "Россия",
+      "phone": "+7 912 947-67-32",
+      "email": "eskidan@mail.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовики",
+        "спецтехника",
+        "электрика",
+        "ДВС",
+        "агрегаты",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://eskidan-sto.ru/"
+      ],
+      "notes": "Доп. +7 988 500-80-56. Смешанный профиль; предельный тоннаж уточнить.",
+      "operator_group": "eskidan",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "aps-vylgort",
+      "name": "Автопромсервис",
+      "region": "Республика Коми",
+      "address": "с. Выльгорт, Сысольское шоссе, 3В",
+      "country": "Россия",
+      "phone": "+7 8212 48-04-04",
+      "email": "sto@lpskomi.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "SITRAK",
+        "Foton",
+        "кузовной ремонт",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://apskomi.ru/",
+        "https://apskomi.ru/contacts"
+      ],
+      "notes": "Доп. приемка +7 912 865-24-76. Общий номер совпадает с кузовным цехом Леспромсервиса, адрес отличается; возможный дубль площадки проверять до публикации.",
+      "operator_group": "lpskomi",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamaz-yakutsk",
+      "name": "Якутский автоцентр КАМАЗ",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. Челюскина, 37/6",
+      "country": "Россия",
+      "phone": "+7 914 102-91-53",
+      "email": "autocenter@kamaz49.ru",
+      "hours": null,
+      "services": [
+        "КАМАЗ",
+        "ДВС",
+        "топливная аппаратура",
+        "электрика",
+        "тормоза",
+        "выездной ремонт"
+      ],
+      "source_urls": [
+        "https://kamazsakha.ru/service/uslugi",
+        "https://kamazsakha.ru/o-kompanii/kontakty"
+      ],
+      "notes": "Мастер-приемщик; доп. +7 4112 44-93-29 доб. 340/341/342. График на сайте противоречив: сервис ежедневно 08–20, в подвале будни 09–18, уточнить.",
+      "operator_group": "kamaz49",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eurotrak-yakutsk",
+      "name": "ЕвроТракСервис",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. Очиченко, 41А",
+      "country": "Россия",
+      "phone": "+7 4112 23-90-39",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, сб 10:00–16:00 (справочник)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "DAF",
+        "MAN",
+        "Scania"
+      ],
+      "source_urls": [
+        "https://totadres.ru/yakutsk/org/evrotrakservis/5205279"
+      ],
+      "notes": "Доп. +7 924 896-75-73. Только справочник, требуется подтверждение.",
+      "operator_group": "eurotrak-yakutsk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "raritek-neryungri",
+      "name": "РариТЭК — Нерюнгри",
+      "region": "Республика Саха (Якутия)",
+      "address": "Нерюнгри, ул. Северная, 13",
+      "country": "Россия",
+      "phone": "+7 41147 9-95-00",
+      "email": "vostok@raritek.ru",
+      "hours": null,
+      "services": [
+        "КАМАЗ",
+        "ТО",
+        "грузовой ремонт",
+        "выездные работы"
+      ],
+      "source_urls": [
+        "https://raritek.ru/kamaz/contacts/",
+        "https://raritek.ru/kamaz/service-center/neryungr/service-warranty/"
+      ],
+      "notes": "Приемная сервисного центра; доп. 8 800 333-25-52 доб. 2004. Разные часы на странице, уточнить. Магазин в Якутске не добавлен.",
+      "operator_group": "raritek",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remsd-surgut",
+      "name": "РемСД",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургут, ул. Домостроителей, 13",
+      "country": "Россия",
+      "phone": "+7 922 448-88-22",
+      "email": "info@remsd.ru",
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "грузовики",
+        "тягачи",
+        "полуприцепы",
+        "тралы",
+        "спецтехника",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://remsd.ru/",
+        "https://remsd.ru/kontakty/"
+      ],
+      "notes": "Прямая запись на ремонт. Приемная +7 3462 550-001; ИНН 8602166417 по сайту, ФНС не проверена.",
+      "operator_group": "remsd",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "agp-surgut",
+      "name": "Всё для полуприцепов",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургут, ул. Индустриальная, 4п",
+      "country": "Россия",
+      "phone": "+7 922 253-17-77",
+      "email": "i@agp-co.ru",
+      "hours": null,
+      "services": [
+        "полуприцепы",
+        "оси",
+        "тормоза",
+        "ABS",
+        "электрика",
+        "пневматика",
+        "грузовики"
+      ],
+      "source_urls": [
+        "https://agp-co.ru/",
+        "https://agp-co.ru/uslugi-po-remontu-pritsepnoy-i-polupritsepnoy-tekhniki/default.htm"
+      ],
+      "notes": "Другие адреса сети не добавлены: сайт явно подтверждает СТО в Сургуте, ремонтные посты остальных филиалов не установлены.",
+      "operator_group": "agp-co",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "trucksun-surgut",
+      "name": "TruckSun — Сургут",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургут, ул. Индустриальная, 16",
+      "country": "Россия",
+      "phone": "+7 922 778-57-00",
+      "email": "surgut@trucksun.ru",
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "грузовой ремонт",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://trucksun.ru/regions/surgut"
+      ],
+      "notes": "Общий номер филиала; конкретные специализации уточнить. Одна сеть с ранее собранными филиалами.",
+      "operator_group": "trucksun",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stotrack-solnechny",
+      "name": "STOTRACK",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургутский район, пос. Солнечный, БПО",
+      "country": "Россия",
+      "phone": "+7 3462 90-29-09",
+      "email": "stotrack@mail.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "спецтехника",
+        "ДВС",
+        "оси",
+        "сварка",
+        "металлообработка"
+      ],
+      "source_urls": [
+        "https://gruzovoiservissurgut.com/"
+      ],
+      "notes": "Доп. +7 922 793-54-01. Номер строения и точный въезд уточнить.",
+      "operator_group": "stotrack",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "solutions-novy-urengoy",
+      "name": "Сервисные решения",
+      "region": "Ямало-Ненецкий автономный округ",
+      "address": "Новый Уренгой, ул. Магистральная, 40, Западная промзона, панель Е, бокс 1",
+      "country": "Россия",
+      "phone": "+7 919 550-72-35",
+      "email": "solutions.sr@yandex.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "автобусы",
+        "ремонт",
+        "техосмотр"
+      ],
+      "source_urls": [
+        "https://nu-truckservice.ru/"
+      ],
+      "notes": "Сайт заявляет ремонт наряду с техосмотром; доступность ремонтного поста уточнить.",
+      "operator_group": "solutions-nu",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ngservis-novy-urengoy",
+      "name": "НГ-Сервис КАМАЗ",
+      "region": "Ямало-Ненецкий автономный округ",
+      "address": "Новый Уренгой, ул. Магистральная, 46Б",
+      "country": "Россия",
+      "phone": "+7 922 056-22-33",
+      "email": "sto-adm@ng-servis.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "КАМАЗ",
+        "УРАЛ",
+        "агрегаты",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://ng-servis.ru/service/ng-servis-kamaz-novyi-urengoi/"
+      ],
+      "notes": "Номер мастера-приемщика; общий +7 3494 24-55-35.",
+      "operator_group": "ng-servis",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ets-novy-urengoy",
+      "name": "ЕТС — Новый Уренгой",
+      "region": "Ямало-Ненецкий автономный округ",
+      "address": "Новый Уренгой, ул. Таёжная, 141/1",
+      "country": "Россия",
+      "phone": "+7 3494 91-31-36",
+      "email": "servis@etsltd.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "КПП ZF",
+        "ДВС",
+        "диагностика",
+        "DAF",
+        "MAN",
+        "Scania",
+        "SITRAK"
+      ],
+      "source_urls": [
+        "https://novyy-urengoy.ets-servise.ru/"
+      ],
+      "notes": "Перечень работ и часы конкретного филиала уточнить.",
+      "operator_group": "ets",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
