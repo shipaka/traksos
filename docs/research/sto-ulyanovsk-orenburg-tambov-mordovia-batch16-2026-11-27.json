@@ -1,0 +1,511 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify actual operation, legal operator, truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach; obtain appropriate permission.",
+  "records": [
+    {
+      "id": "gts-ulyanovsk",
+      "name": "ГТС-Сервис",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, Московское шоссе, 60",
+      "country": "Россия",
+      "phone": "+7 8422 73-23-73",
+      "email": "732373@bk.ru",
+      "hours": "ежедневно 08:30–20:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "полуприцепы",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://gts-parts.ru/автосервис/"
+      ],
+      "notes": "Доп. рабочий номер +7 905 349-23-73.",
+      "operator_group": "gts-ulyanovsk",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "samarascan-ulyanovsk",
+      "name": "Самара-Скан — Ульяновск",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, просп. Аполлона Сысцова, 10",
+      "country": "Россия",
+      "phone": "+7 927 826-27-88",
+      "email": "info_ul@samarascan.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "тягачи",
+        "самосвалы",
+        "SITRAK",
+        "кузовной ремонт",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://centr-sany.ru/ulyanovsk/service/sitrak/",
+        "https://centr-sany.ru/ulyanovsk/service/sany/"
+      ],
+      "notes": "Прямой номер отдела сервиса; заявлены 16 постов.",
+      "operator_group": "samarascan",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "unikom-ulyanovsk",
+      "name": "УникомТракСервис",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, Московское шоссе, 14С",
+      "country": "Россия",
+      "phone": "+7 8422 68-62-62",
+      "email": "haa@unikomlc.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "редукторы",
+        "форсунки",
+        "ходовая",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://auto-unikom.ru/servis/",
+        "https://auto-unikom.ru/contact-us/"
+      ],
+      "notes": "Мастер-приёмщик +7 927 984-28-38; горячая линия 8 800 555-41-66.",
+      "operator_group": "unikom",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "veselkin-haldex-ulyanovsk",
+      "name": "ИП Весёлкин — Haldex",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, ул. Герасимова, 10К",
+      "country": "Россия",
+      "phone": "+7 903 320-32-71",
+      "email": null,
+      "hours": "будни 09:00–18:00, воскресенье выходной; субботу уточнить",
+      "services": [
+        "ABS",
+        "тормозные системы Haldex",
+        "передвижная мастерская"
+      ],
+      "source_urls": [
+        "https://www.haldex-pts.ru/rus/servis-centr/?city=ulyanovsk"
+      ],
+      "notes": "Профильный сервис из списка дистрибьютора, не универсальное СТО.",
+      "operator_group": "veselkin-haldex",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "geosystem-ulyanovsk",
+      "name": "ГЕОСистем",
+      "region": "Ульяновская область",
+      "address": "Ульяновск, Лесной проезд, 8А",
+      "country": "Россия",
+      "phone": "+7 8422 240-888",
+      "email": "mail@geo-s.net",
+      "hours": null,
+      "services": [
+        "ABS",
+        "EBS",
+        "Haldex",
+        "передвижная мастерская"
+      ],
+      "source_urls": [
+        "https://www.haldex-pts.ru/rus/servis-centr/?city=ulyanovsk"
+      ],
+      "notes": "Профильный сервис из списка дистрибьютора; часы и текущее обслуживание уточнить.",
+      "operator_group": "geosystem",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eurotruck-orenburg",
+      "name": "Euro Truck",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Загородное шоссе, 3/4",
+      "country": "Россия",
+      "phone": "+7 909 608-02-40",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "сход-развал",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://euro-truck.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; график уточнить.",
+      "operator_group": "eurotruck-orenburg",
+      "evidence": "business_hosted_page",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzexpert-orsk",
+      "name": "Грузовой Эксперт",
+      "region": "Оренбургская область",
+      "address": "Орск, ул. Союзная, 9А",
+      "country": "Россия",
+      "phone": "+7 3537 33-99-66",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "полуприцепы",
+        "электрика",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://gruzovoj-ekspert.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; часы и тоннаж уточнить.",
+      "operator_group": "gruzexpert-orsk",
+      "evidence": "business_hosted_page",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "orenscan-orenburg",
+      "name": "Оренбург-СканСервис",
+      "region": "Оренбургская область",
+      "address": "Оренбург, ул. Лесозащитная, 18",
+      "country": "Россия",
+      "phone": "+7 3532 30-00-86",
+      "email": "oss@orenscan.ru",
+      "hours": "ежедневно 09:00–21:00 (каталог BPW)",
+      "services": [
+        "грузовики",
+        "прицепная техника",
+        "BPW"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/",
+        "https://orenscan.ru/"
+      ],
+      "notes": "Доп. +7 922 554-46-31, +7 922 886-05-42. Собственная страница не открылась, телефон подтверждён каталогом BPW.",
+      "operator_group": "orenscan",
+      "evidence": "manufacturer_network_and_first_party_index",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tambovmaz-zeleny-gay",
+      "name": "ТамбовМАЗсервис",
+      "region": "Тамбовская область",
+      "address": "Мичуринский район, пос. Зелёный Гай, ул. Автозаводская, 2А",
+      "country": "Россия",
+      "phone": "+7 47545 2-49-50",
+      "email": "maz68@inbox.ru",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовые автомобили",
+        "ремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://xn--68-dlcduhap7as7a4c.xn--p1ai/контакты/"
+      ],
+      "notes": "Доп. +7 910 750-03-62.",
+      "operator_group": "tambovmaz",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "azimut-kamaz-tambov",
+      "name": "КАМАЗ-Центр Азимут",
+      "region": "Тамбовская область",
+      "address": "Тамбов, бульвар Строителей, 5Л",
+      "country": "Россия",
+      "phone": "+7 4752 50-14-15",
+      "email": "info@avtogaz68.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "КАМАЗ",
+        "диагностика",
+        "ТО",
+        "грузовой ремонт"
+      ],
+      "source_urls": [
+        "https://sto.kamaz-tambov.ru/contacts/"
+      ],
+      "notes": "ООО Азимут-Гарантия по сайту; номер с официальной страницы предпочтительнее отличающегося в справочнике.",
+      "operator_group": "azimut-tambov",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckcenter68-otrog",
+      "name": "Трак Центр Тамбов",
+      "region": "Тамбовская область",
+      "address": "Тамбовский район, д. Отрог, 1",
+      "country": "Россия",
+      "phone": "+7 915 665-00-00",
+      "email": "truckcentertambov@ya.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "FAW",
+        "диагностика",
+        "шиномонтаж",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://truckcenter68.ru/",
+        "https://car.ms/autoservices/truck-service/tambov/"
+      ],
+      "notes": "Прямой номер автосервиса с собственного сайта. Справочник указывает Отрог, 2 и +7 4752 45-99-99; email из справочника, уточнить адрес въезда.",
+      "operator_group": "truckcenter68",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamaz-avtotehcentr-tambov",
+      "name": "Автотехцентр — КАМАЗ",
+      "region": "Тамбовская область",
+      "address": "Тамбов, ул. Авиационная, 143А",
+      "country": "Россия",
+      "phone": "8 800 222-49-19",
+      "email": "avtocentr.68@yandex.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "КАМАЗ",
+        "КПП ZF",
+        "ДВС Cummins",
+        "редукторы",
+        "капремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://remgruzovik.ru/"
+      ],
+      "notes": "Общий номер предприятия, запросить прямую приемку.",
+      "operator_group": "avtotehcentr68",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "teko-tambov",
+      "name": "ТЭКО-Сервис — ремонтная площадка",
+      "region": "Тамбовская область",
+      "address": "Тамбов, проезд Монтажников, 2А/1",
+      "country": "Россия",
+      "phone": "+7 915 881-01-01",
+      "email": null,
+      "hours": "ежедневно 07:00–19:00 (справочник)",
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "топливная аппаратура",
+        "пневматика",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://www.tekoservice.ru/",
+        "https://car.ms/autoservices/truck-service/tambov/"
+      ],
+      "notes": "На сайте компании заявлен грузовой ремонт; адрес и телефон ремзоны из справочника. Основной бизнес — вывоз отходов, прием сторонних клиентов уточнить.",
+      "operator_group": "teko",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "luidor-kamaz-saransk",
+      "name": "КАМАЗ-Центр Луидор",
+      "region": "Республика Мордовия",
+      "address": "Саранск, ул. Пролетарская, 142А",
+      "country": "Россия",
+      "phone": "+7 8342 22-65-87",
+      "email": "RmSto@luidor.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "КАМАЗ",
+        "ДВС",
+        "тормоза",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://sto.saransk-kamaz.ru/contacts/",
+        "https://sto.saransk-kamaz.ru/uslugi/",
+        "https://sto.luidor-rm.ru/contacts/"
+      ],
+      "notes": "По тому же адресу опубликован другой номер сервиса +7 8342 37-03-99; не создавать дубль.",
+      "operator_group": "luidor",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fred13-saransk",
+      "name": "Грузовой автосервис FRED13",
+      "region": "Республика Мордовия",
+      "address": "Саранск, ул. 2-я Промышленная, 10А",
+      "country": "Россия",
+      "phone": "+7 904 721-24-14",
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовики",
+        "подвеска",
+        "КПП",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://fred13.ru/",
+        "https://mestam.info/ru/saransk/mesto/5529250-gruzovoi-avtoservis-promishlennaya-2-ya-10a",
+        "https://car.ms/autoservices/truck-service/saransk/"
+      ],
+      "notes": "Сайт не открылся напрямую; профиль из индекса, телефон и адрес совпадают в двух справочниках.",
+      "operator_group": "fred13",
+      "evidence": "first_party_index_and_directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "astertrans-saransk",
+      "name": "Астертранс",
+      "region": "Республика Мордовия",
+      "address": "Саранск, ул. Строительная, 36, стр. 13 (справочник)",
+      "country": "Россия",
+      "phone": "+7 8342 29-19-91",
+      "email": "astertrans@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "топливные системы",
+        "электрика",
+        "тормоза"
+      ],
+      "source_urls": [
+        "https://astertrans.com/uslugi-avtoservisa/",
+        "https://car.ms/autoservices/truck-service/saransk/"
+      ],
+      "notes": "Телефон корпоративного отдела с сайта. Сайт указывает адрес магазина 34, стр. 4; адрес ремонтной площадки уточнить до публикации.",
+      "operator_group": "astertrans",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
