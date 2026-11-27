@@ -1,0 +1,279 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "country": "Россия",
+  "publication_gate": "Verify exact coordinates and access, operating status and legal operator, data reuse rights, catalog deduplication and admin review. No calls or official FNS extracts. Never represent as partners.",
+  "records": [
+    {
+      "id": "remzona47-fedorovskoe",
+      "name": "Ремзона47",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, Фёдоровское, ул. Почтовая, 17",
+      "phone": "+7 911 224-18-68",
+      "hours": "ежедневно 09:00–21:00 (сайт)",
+      "services": [
+        "ремонт грузовиков",
+        "прицепы",
+        "КПП",
+        "пневматика",
+        "диагностика"
+      ],
+      "brands": [
+        "Scania",
+        "Volvo"
+      ],
+      "source_urls": [
+        "https://remzona47.ru/",
+        "https://remzona47.ru/about_us",
+        "https://remzona47.ru/pnevmosistema/pnevmosistema-diagnostika",
+        "https://remzona47.ru/kpp-gruzovikov-scania-remont"
+      ],
+      "notes": "Собственный сайт, адрес и телефон опубликованы; отдельная точка от ТРИА. М10.",
+      "evidence": "first_party",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-vyborg",
+      "name": "Глобал Трак Сервис Выборг",
+      "region": "Ленинградская область",
+      "address": "Выборг, микрорайон Калининский, ул. Рубероидная, 20",
+      "phone": "+7 812 702-26-32",
+      "hours": null,
+      "services": [
+        "ремонт прицепной техники",
+        "грузовой сервис"
+      ],
+      "brands": [
+        "Grunwald",
+        "V-Trailer"
+      ],
+      "source_urls": [
+        "https://grunwald.ru/contacts/",
+        "https://v-trailer.ru/service",
+        "https://www.rusprofile.ru/id/1288825",
+        "https://www.klerk.ru/tool/ocompany/1044700874580/"
+      ],
+      "notes": "Две сети производителей подтверждают адрес и телефон; сторонние реестры указывают действующее ООО Глобал Трак Сервис Альянс (ИНН 4704055998); связь актуального юрлица с точкой уточнить. А181.",
+      "inn": "4704055998",
+      "evidence": "manufacturer_network_and_registry_aggregator",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hobbyauto-truck-vyborg",
+      "name": "Хобби-Авто Truck",
+      "region": "Ленинградская область",
+      "address": "Выборг, Ленинградское шоссе, 76",
+      "phone": "+7 921 576-60-98",
+      "hours": "ежедневно 10:00–20:00 (сайт)",
+      "services": [
+        "грузовое СТО"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://hobbyauto-sto.ru/",
+        "https://tvgram.ru/vyborggo/24213"
+      ],
+      "notes": "На сайте выделена приемка СТО-TRUCK; не путать с площадкой на Ленинградском шоссе 62. А181.",
+      "evidence": "first_party",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtodizel-sinyavino",
+      "name": "Автодизель",
+      "region": "Ленинградская область",
+      "address": "Кировский район, Синявино, ул. Восточная, 14, помещ. 2 (юридический адрес)",
+      "phone": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей (справочные сведения)"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://companies.rbc.ru/id/1137847410370-ooo-avtodizel/",
+        "https://automotobike.ru/companies/gorodskoj-pos-sinyavino/",
+        "https://b2b.house/company/OOO-AVTODIZEL_2cfac2d1-41fa-4ba9-9047-ceee575fb583/"
+      ],
+      "notes": "ИНН 7816572975, ОКВЭД 45.20.2; адрес в справочнике 14/1, точку въезда и действующий статус уточнить, прямого подтверждения работы нет. Р21.",
+      "inn": "7816572975",
+      "evidence": "directory_and_registry_aggregator",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sto-gruzovoy-tehniki-tosno",
+      "name": "СТО грузовой техники",
+      "region": "Ленинградская область",
+      "address": "Тосно, Московское шоссе, 44Г",
+      "phone": "+7 911 949-54-86",
+      "hours": null,
+      "services": [
+        "грузовой ремонт"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://avtoservis-gid.ru/komp/sto-gruzovoj-tehniki-tosno/",
+        "https://totadres.ru/leningradskaya_oblast/remont_gruzovyh_avtomobiley"
+      ],
+      "notes": "Только справочные данные; часы в источниках отличаются, не публиковать до уточнения. М10.",
+      "evidence": "directory_only",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tc-vostok-korkinskaya",
+      "name": "Технический центр Восток",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, коммунально-складская зона Коркинская, 1-й проезд, 1",
+      "phone": "+7 812 490-77-77",
+      "hours": null,
+      "services": [
+        "ремонт грузовиков",
+        "прицепы",
+        "полуприцепы",
+        "диагностика",
+        "капремонт",
+        "правка рам и кабин",
+        "эвакуация"
+      ],
+      "brands": [
+        "КАМАЗ"
+      ],
+      "source_urls": [
+        "https://tc-v.ru/services/service_info/"
+      ],
+      "notes": "Официальный сайт перечисляет профиль, адрес и телефоны приемки. Восточные подъезды к СПб.",
+      "evidence": "first_party",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-sertolovo",
+      "name": "FNGROUP — Новое Сертолово",
+      "region": "Ленинградская область",
+      "address": "Сертолово, Индустриальная ул., 1, корп. 1, помещ. 80",
+      "phone": "8 800 100-86-58",
+      "hours": "пн–чт 09:00–18:00, пт 09:00–17:00, сб–вс выходной (сайт)",
+      "services": [
+        "ТО и ремонт грузовиков"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://fngroup.ru/trucks_service/"
+      ],
+      "notes": "Площадка перечислена на официальной странице грузового сервиса. Выборгское направление.",
+      "evidence": "first_party",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-shushary",
+      "name": "FNGROUP — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "Пушкинский район, пос. Шушары, ул. Ленина, 23",
+      "phone": "8 800 100-86-58",
+      "hours": "ежедневно 09:00–21:00 (сайт)",
+      "services": [
+        "ТО и ремонт грузовиков"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://fngroup.ru/trucks_service/"
+      ],
+      "notes": "Отдельная площадка от Нового Сертолово; общий номер сети. М10/М11.",
+      "evidence": "first_party",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "petromaster-kingisepp",
+      "name": "ПетроМастер — ТСЦ Кингисепп",
+      "region": "Ленинградская область",
+      "address": "Кингисепп, Крикковское шоссе, 67",
+      "phone": null,
+      "hours": null,
+      "services": [
+        "грузовые шины",
+        "шинный центр",
+        "AdBlue"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://petromaster.ru/product/gruzovaya_shina_315_80r22_5_20_westlake_cr960a_th_157_154k_m_s_44834/",
+        "https://petromaster.ru/services/gruzovoy_shinomontazh",
+        "https://petromaster.ru/services/adblue",
+        "https://spravbiz.ru/kingisepp/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Официальный сайт указывает Крикковское шоссе 67, справочник — А180 130-й км; возможно разные площадки, не объединять без проверки. Филиальный перечень услуг шиномонтажа уточнить. Не заявлять полное СТО. А180.",
+      "evidence": "first_party_with_address_conflict",
+      "country": "Россия",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
