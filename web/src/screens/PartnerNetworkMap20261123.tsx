@@ -1,11 +1,23 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geographicCenter, mustExpandCluster } from './partnerNetworkGeometry20261123.ts';
+import { directoryPoints, directDirectoryDial, type DirectoryPoint } from './stoDirectoryPilot20261127.ts';
+import { TrakServiceIcon } from '../trakServiceIcon.tsx';
 import './partnerNetworkMap20261123.css';
 
-type PartnerPoint={id:string;kind:'service';name:string;lat:number;lng:number};
+type VerifiedPoint={id:string;kind:'service';name:string;lat:number;lng:number;directory?:false};
+type PartnerPoint=VerifiedPoint|DirectoryPoint;
+// The independent source list must never be interpreted as verified opt-in data.
+function combinePoints(verified:VerifiedPoint[]):PartnerPoint[]{
+  const normalized=(name:string)=>name.toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+  return [...verified,...directoryPoints.filter(d=>!verified.some(p=>p.id===d.id || (normalized(p.name)===normalized(d.name)&&Math.abs(p.lat-d.lat)<.001&&Math.abs(p.lng-d.lng)<.001)))];
+}
+function markerClass(members:PartnerPoint[]){
+  const count=members.filter(p=>!p.directory).length;
+  return count===0?' is-directory':count===members.length?' is-verified':' is-mixed';
+}
 function samePartner(a:PartnerPoint,b:PartnerPoint){
   return a.id===b.id && a.kind===b.kind && a.name===b.name &&
-    a.lat===b.lat && a.lng===b.lng;
+    a.lat===b.lat && a.lng===b.lng && a.directory===b.directory;
 }
 type View={lat:number;lng:number;zoom:number};
 type Cluster={key:string;x:number;y:number;members:PartnerPoint[]};
@@ -48,7 +60,7 @@ function tileSet(view:View,width:number,height:number){
 }
 function clusterPoints(points:PartnerPoint[],v:View,width:number,height:number):Cluster[]{
   const buckets=new Map<string,Cluster>();
-  const cell=54;
+  const cell=v.zoom<=4?90:v.zoom<=7?72:54;
   for(const p of points){
     const pos=pointInViewport(p,v,width,height);
     if(pos.x< -35||pos.x>width+35||pos.y< -35||pos.y>height+35)continue;
@@ -63,7 +75,7 @@ function clusterPoints(points:PartnerPoint[],v:View,width:number,height:number):
 export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const [view,setView]=useState<View>({lat:60,lng:93,zoom:3});
   const [size,setSize]=useState({width:850,height:490});
-  const [points,setPoints]=useState<PartnerPoint[]>([]);
+  const [points,setPoints]=useState<PartnerPoint[]>(()=>combinePoints([]));
   const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
   // Expose an explicit retry after a transient API failure; no fake pins.
   const [retryCount,setRetryCount]=useState(0);
@@ -150,18 +162,19 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           const data=await res.json();
           if(data?.source!=='verified_stationary_opt_in' || !Array.isArray(data?.points))
             throw Error('public map contract mismatch');
-          const safe:PartnerPoint[]=data.points.filter((p:any)=>
+          const safe:VerifiedPoint[]=data.points.filter((p:any)=>
             p.kind==='service'&&typeof p.name==='string'&&
             typeof p.id==='string'&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&
-            Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0));
+            Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0)).map((p:any)=>({id:p.id,kind:'service',name:p.name,lat:p.lat,lng:p.lng}));
+          const combined=combinePoints(safe);
           if(controller.signal.aborted)return;
-          setPoints(safe);
+          setPoints(combined);
           // Keep React state identity when verified data did not change.
           // Replacing the selected object on every focus/interval refresh
           // would re-focus its close button while the user clicks a link.
           setSelected(old=>{
             if(!old)return null;
-            const fresh=safe.find(p=>p.id===old.id);
+            const fresh=combined.find(p=>p.id===old.id);
             if(!fresh){
               revokedPanelFocus.current=true; // consent was withdrawn
               return null;
@@ -170,7 +183,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           });
           setExpandedCluster(old=>{
             if(!old)return null;
-            const members=old.members.map(p=>safe.find(next=>next.id===p.id))
+            const members=old.members.map(p=>combined.find(next=>next.id===p.id))
               .filter((p):p is PartnerPoint=>!!p);
             if(members.length!==old.members.length){
               revokedPanelFocus.current=true; // one or more partners revoked consent
@@ -182,8 +195,8 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
         }).catch(()=>{
           if(controller.signal.aborted)return;
           setState('error');
-          setPoints([]);
-          setSelected(null);
+          setPoints(combinePoints([]));
+          setSelected(old=>old?.directory?old:null);
           setExpandedCluster(null);
         });
     };
@@ -231,11 +244,11 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
       aria-modal="true" aria-labelledby="tr-network-title">
       <header className="tr-network-heading">
         <div><b id="tr-network-title">Карта партнёров TrakSOS</b>
-          <small>Только подтвердившие адрес СТО, добровольно разрешившие публикацию</small></div>
+          <small>Подтверждённые партнёры и независимый справочник СТО</small></div>
         <button type="button" className="tr-network-close" ref={closeRef} onClick={onClose}
           aria-label="Закрыть карту">✕ <span>Закрыть</span></button>
       </header>
-      <div className="tr-network-viewport" ref={surface} aria-label="Интерактивная карта подтверждённых партнёров"
+      <div className="tr-network-viewport" ref={surface} aria-label="Интерактивная карта СТО"
         onPointerDown={event=>{
           // Capturing a pointer for panning must never steal a click from
           // the verified partner's login link, zoom buttons or detail panels.
@@ -278,16 +291,17 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
         <div className="tr-network-zoom" aria-label="Масштаб карты">
           <button type="button" aria-label="Приблизить карту" disabled={view.zoom===MAX_ZOOM} onClick={()=>zoom(1)}>+</button>
           <button type="button" aria-label="Отдалить карту" disabled={view.zoom===MIN_ZOOM} onClick={()=>zoom(-1)}>−</button>
+          <button type="button" aria-label="Показать Санкт-Петербург и область" onClick={()=>{setView({lat:59.86,lng:30.47,zoom:10});setSelected(null);setExpandedCluster(null);}}>СПб / ЛО</button>
           <button type="button" aria-label="Показать Россию" onClick={()=>{setView({lat:60,lng:93,zoom:3});setSelected(null);setExpandedCluster(null);}}>Россия</button>
         </div>
         {clusters.map(cluster=><button key={cluster.key} type="button"
-          className={'tr-network-marker'+(cluster.members.length>1?' is-cluster':'')}
+          className={'tr-network-marker'+(cluster.members.length>1?' is-cluster':'')+markerClass(cluster.members)}
           style={{left:cluster.x,top:cluster.y}}
           aria-label={cluster.members.length>1
-            ?'Показать '+cluster.members.length+' партнёров поблизости'
-            :'СТО '+cluster.members[0].name}
+            ?'Показать '+cluster.members.length+' СТО поблизости'
+            :'СТО '+cluster.members[0].name+(cluster.members[0].directory?' · сторонняя':' · партнёр')}
           title={cluster.members.length>1
-            ?'Проверенных СТО: '+cluster.members.length:cluster.members[0].name}
+            ?'СТО: '+cluster.members.length+' · партнёров: '+cluster.members.filter(p=>!p.directory).length:cluster.members[0].name}
           onClick={event=>{
             if(cluster.members.length>1){
               if(mustExpandCluster(cluster.members,view.zoom,MAX_ZOOM)){
@@ -305,10 +319,10 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
               setExpandedCluster(null);
               setSelected(cluster.members[0]);
             }
-          }}>{cluster.members.length>1?cluster.members.length:'●'}</button>)}
+          }}>{cluster.members.length>1?<span>{cluster.members.length}</span>:cluster.members[0].directory?<TrakServiceIcon kind="sto" size={30}/>:'●'}</button>)}
         {expandedCluster&&<aside className="tr-network-cluster-list"
           role="group" aria-label="Выбрать СТО из группы">
-          <div className="tr-network-cluster-head"><b>Партнёры в одной точке ({expandedCluster.members.length})</b>
+          <div className="tr-network-cluster-head"><b>СТО в одной точке ({expandedCluster.members.length})</b>
             <button type="button" aria-label="Скрыть список партнёров" onClick={()=>{
               setExpandedCluster(null);
               restoreMarkerFocus(clusterTrigger.current);
@@ -318,18 +332,24 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
               ref={index===0?firstClusterOption:undefined}
               onClick={()=>{selectedTrigger.current=clusterTrigger.current;
                 setExpandedCluster(null);setSelected(p);}}>
-              СТО {p.name}</button>)}
+              СТО {p.name} · {p.directory?'Сторонняя организация':'Партнёр'}</button>)}
           </div>
         </aside>}
-        {selected&&<aside className="tr-network-partner" aria-label="Карточка партнёра">
+        {selected&&<aside className="tr-network-partner" aria-label={selected.directory?"Карточка стороннего СТО":"Карточка партнёра"}>
           <button type="button" ref={selectedDismiss} className="tr-network-dismiss" onClick={dismissSelected} aria-label="Скрыть карточку">✕</button>
-          <b>{selected.name}</b><span>Проверенная стационарная СТО · партнёр сети</span>
+          <b>{selected.name}</b>{selected.directory?<>
+            <span>Сторонняя организация · не подтверждена</span>
+            <small>{selected.address}</small><small>{selected.services.join(' · ')}</small>
+            {selected.hours&&<small>График: {selected.hours}; уточните по телефону.</small>}
+            <small>Актуальность не подтверждена. TrakSOS не участвует в оказании услуги.</small>
+            {directDirectoryDial(selected.phone)&&<a href={directDirectoryDial(selected.phone)}>Позвонить напрямую: {selected.phone}</a>}
+          </>:<><span>Проверенная стационарная СТО · партнёр сети</span>
           <small>Координаты опубликованы с согласия СТО. Наличие свободного времени уточняется при обращении.</small>
-          <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a>
+          <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a></>}
         </aside>}
         {state!=='ready'&&<div className="tr-network-notice" role="status">
           <span>{state==='loading'?'Получаем подтверждённые точки партнёров…'
-            :'Данные сети временно недоступны. Не подставляем демонстрационные точки.'}</span>
+            :'Данные партнёров временно недоступны. Сторонний справочник доступен отдельно.'}</span>
           {state==='error'&&<button type="button" className="tr-network-retry"
             onClick={()=>setRetryCount(n=>n+1)}>Повторить загрузку</button>}
         </div>}
@@ -338,7 +358,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           Мы расширяем партнёрскую сеть; декоративные точки за реальные не выдаём.
         </div>}
         <div className="tr-network-attribution">Карта © OpenStreetMap contributors ·
-          <span>жёлтые точки: подтверждённые СТО, не текущий GPS мастеров</span></div>
+          <span>жёлтые — партнёры · серые — сторонние · двухцветные — смешанные группы</span></div>
       </div>
     </section>
   </div>;
