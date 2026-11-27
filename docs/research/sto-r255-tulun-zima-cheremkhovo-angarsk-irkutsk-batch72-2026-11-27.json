@@ -1,0 +1,646 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted review of compact indexes B/C and batches 32–34,42,48,71 by region, address and name. Full normalized audit pending. No calls, legal status, current availability or coordinate verification. Directory categories are leads rather than proof of heavy-truck capability.",
+  "records": [
+    {
+      "id": "b72-tulun-avtomag",
+      "name": "АвтоМаг",
+      "region": "Иркутская область",
+      "address": "Тулун, ул. Ленина, 29А",
+      "country": "Россия",
+      "phone": "+7 950 136-88-84",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль по справочникам, проверить прием тяжелых колес.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-tulun-bomond",
+      "name": "Бомонд",
+      "region": "Иркутская область",
+      "address": "Тулун, ул. Нововолодарского, 20А",
+      "country": "Россия",
+      "phone": "+7 901 631-18-90",
+      "additional_phones": [
+        "+7 3953 26-40-40"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "грузовые шины"
+      ],
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Отдельный адрес от филиалов в Братске из пакетов 32/48. Второй номер проверить на принадлежность филиалу.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-tulun-shina",
+      "name": "Тулуншина",
+      "region": "Иркутская область",
+      "address": "Тулун, Песочный пер., 1",
+      "country": "Россия",
+      "phone": "+7 916 178-25-78",
+      "additional_phones": [
+        "+7 968 070-22-90"
+      ],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "График и местное присутствие оператора уточнить; номера опубликованы в каталоге.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-tulun-truda",
+      "name": "Шиномонтаж",
+      "region": "Иркутская область",
+      "address": "Тулун, ул. Труда, 21",
+      "country": "Россия",
+      "phone": "+7 904 147-44-40",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Наличие мойки в рубриках не подтверждает мойку фур.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-tulun-autobox",
+      "name": "Auto Box",
+      "region": "Иркутская область",
+      "address": "Тулун, ул. Гидролизная, 37А",
+      "country": "Россия",
+      "phone": "+7 984 270-38-88",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/",
+        "https://tulun.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Размеры колес и прием фур уточнить; грузовая мойка не подтверждена.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-tulun-autolux",
+      "name": "Автолюкс",
+      "region": "Иркутская область",
+      "address": "Тулун, ул. Гоголя, 37Б",
+      "country": "Россия",
+      "phone": "+7 964 284-11-11",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "компьютерная диагностика грузовых автомобилей и спецтехники"
+      ],
+      "source_urls": [
+        "https://tulun.yaspravka.com/sto-avtolyuks/"
+      ],
+      "notes": "Отзывы 2019–2020; текущую работу и тяжелый ремонт не подтверждают. Приоритет повторной проверки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-kuytun-r255",
+      "name": "Шиномонтажная мастерская",
+      "region": "Иркутская область",
+      "address": "р. п. Куйтун, Р-255, 1560-й км, 3",
+      "country": "Россия",
+      "phone": "+7 908 647-77-66",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж",
+        "выездной шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/irkutskaya_oblast/org/shinomontazhnaya_masterskaya/4516018"
+      ],
+      "notes": "Точный въезд и фактическую круглосуточность проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-cheremkhovo-pitstop",
+      "name": "Pit-stop",
+      "region": "Иркутская область",
+      "address": "Черемхово, ул. 2-я Красноармейская, 5",
+      "country": "Россия",
+      "phone": "+7 904 153-03-03",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт двигателей",
+        "автоэлектрика",
+        "диагностика",
+        "сварка",
+        "обслуживание грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://spravbiz.ru/cheremhovo/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://yandex.com/maps/org/pit_stop/210805992509/"
+      ],
+      "notes": "Карта указывает грузовые автомобили и замену масла для них; объем ремонта тягачей уточнить. Не путать с Pit stop Мариинска.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-cheremkhovo-ntyre",
+      "name": "N-Tyre",
+      "region": "Иркутская область",
+      "address": "Черемхово, ул. Первомайская, 203",
+      "country": "Россия",
+      "phone": "+7 904 125-77-75",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://spravbiz.ru/cheremhovo/avto/gruzovoj-shinomontazh/",
+        "https://servicesauto.ru/cheremhovo/avtotehtsentr-n-tyre-che.htm"
+      ],
+      "notes": "Грузовая рубрика в одном источнике, другой источник перечисляет преимущественно легковые марки; тяжелую оснастку уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-angarsk-254",
+      "name": "Грузовой автосервис 950000",
+      "region": "Иркутская область",
+      "address": "Ангарск, 254-й квартал, 2",
+      "country": "Россия",
+      "phone": "+7 3955 95-00-00 доб. 2",
+      "additional_phones": [
+        "+7 950 075-35-45"
+      ],
+      "email": "sto950000@mail.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "грузовой шиномонтаж",
+        "сварка",
+        "дизель",
+        "электрика",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://totadres.ru/angarsk/org/gruzovoy_avtoservis/6020396",
+        "https://angarsk.spravka.city/company/gruzovoj-avtoservis"
+      ],
+      "notes": "Каталог также указывает прицепы; уточнить ремонт полуприцепов.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-angarsk-dis",
+      "name": "Дис трак сервис",
+      "region": "Иркутская область",
+      "address": "Ангарск, 272-й квартал, стр. 17",
+      "country": "Россия",
+      "phone": "+7 924 993-99-33",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "ремонт грузовиков",
+        "дизель",
+        "КПП",
+        "турбины",
+        "электрика",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://angarsk.spravka.city/company/dis-trak-servis"
+      ],
+      "notes": "Полный телефон опубликован как контакт WhatsApp компании. Сайт dis-truck.ru указан, но недоступен при проверке.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-angarsk-titan",
+      "name": "Титан",
+      "region": "Иркутская область",
+      "address": "Ангарск, 254-й квартал, стр. 1/1, 4/1, бокс 69",
+      "country": "Россия",
+      "phone": "+7 924 711-55-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 10:00–19:00; сб 10:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "сварка",
+        "кузовной ремонт",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://angarsk.spravka.city/company/titan-402"
+      ],
+      "notes": "Отличается от СТО 950000 адресом и контактом; проверить точную площадку и независимость.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-angarsk-kmarx",
+      "name": "Грузовой автосервис",
+      "region": "Иркутская область",
+      "address": "Ангарск, просп. Карла Маркса, 97/5",
+      "country": "Россия",
+      "phone": "+7 950 116-26-66",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–17:00",
+      "services": [
+        "ремонт грузовиков",
+        "пневмоподвеска",
+        "кузовной ремонт",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://rting.ru/angarsk/co/gruzovoj_avtoservis/486426"
+      ],
+      "notes": "Грузовой профиль указан в карточке; уточнить операторов и виды принимаемых тягачей.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-angarsk-micro17",
+      "name": "Грузовой, автосервис",
+      "region": "Иркутская область",
+      "address": "Ангарск, 17-й микрорайон, 23/5",
+      "country": "Россия",
+      "phone": "+7 902 764-99-06",
+      "additional_phones": [
+        "+7 950 083-26-61"
+      ],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "ремонт дизельных двигателей",
+        "грузовой автосервис"
+      ],
+      "source_urls": [
+        "https://2sp.me/ru/angarsk/company/gruzovoy-avtoservis-5"
+      ],
+      "notes": "Профиль и адрес из справочника; уточнить размеры техники и работу с прицепами.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b72-irkutsk-irkuttrak",
+      "name": "Иркут Трак Сервис",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Ракитная, 15",
+      "country": "Россия",
+      "phone": "+7 3952 767-120",
+      "additional_phones": [
+        "+7 902 577-74-68"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "ТО грузовиков и полуприцепов",
+        "ремонт дизелей",
+        "КПП",
+        "топливная аппаратура",
+        "электрика",
+        "тормозные системы",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.sibavto.com/services/gruzovoy-servisnyy-tsentr-irkut-trak-servis/"
+      ],
+      "notes": "Собственный сайт ГК ЧТЗ-сервис; обслуживание автопарков по договору. Проверить юридического оператора площадки и совпадения с другими карточками группы.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "У Михалыча",
+      "address": "Тулун, Чекалина, 24",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шины и диски",
+      "address": "Тулун, Юбилейная, 4",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Тулун, Трактовая, 30А",
+      "source_urls": [
+        "https://tulun.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Зиминский район, Ухтуйское муниципальное образование",
+      "source_urls": [
+        "https://zima.jsprav.ru/podkachka-shin/"
+      ],
+      "reason": "Нет точного адреса, телефона, грузовой профиль неизвестен."
+    },
+    {
+      "name": "Автомойка",
+      "address": "Зиминский район, Ухтуйское муниципальное образование",
+      "source_urls": [
+        "https://zima.jsprav.ru/podkachka-shin/"
+      ],
+      "reason": "Грузовая рубрика, но нет телефона и точного адреса."
+    },
+    {
+      "name": "МБУ Автоцентр",
+      "address": "с. Рысево, Российская, 5",
+      "source_urls": [
+        "https://spravbiz.ru/cheremhovo/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Номер скрыт, подтвердить полный контакт и коммерческий прием."
+    },
+    {
+      "name": "Автокомплекс На Декабрьских",
+      "address": "Черемхово, Декабрьских Событий, 18",
+      "phone": "+7 950 051-55-55",
+      "source_urls": [
+        "https://spravbiz.ru/cheremhovo/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://irkutsk.spravker.ru/gorod-cheremkhovo/podkachka-shin/"
+      ],
+      "reason": "Телефон относится к мойке на том же адресе; принадлежность СТО и грузовая мойка не подтверждены."
+    },
+    {
+      "name": "VIP",
+      "address": "Черемхово, Октябрьский пр., 24",
+      "source_urls": [
+        "https://irkutsk.spravker.ru/gorod-cheremkhovo/podkachka-shin/"
+      ],
+      "reason": "Рубрика грузовых моек, нет телефона."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Росшина — Иркутск",
+      "batch": 42,
+      "address": "Иркутск, ул. Набережная Иркута, 1, стр. 5",
+      "phone": "+7 3952 58-00-00",
+      "email": "irkutsk@rostyre.com",
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/328558/"
+      ],
+      "notes": "Официальный сайт подтверждает адрес, контакт, ежедневный график 09:00–18:00 и ремонт грузовых шин; не дублировать."
+    }
+  ]
+}
