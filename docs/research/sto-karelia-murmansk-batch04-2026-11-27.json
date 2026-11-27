@@ -1,0 +1,296 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; mandatory public business phone; not production import",
+  "publication_gate": "Confirm actual operation, truck capability, legal operator and coordinates, review source reuse rights, deduplicate and approve before publishing. No calls or official FNS extracts. No automatic outreach.",
+  "records": [
+    {
+      "id": "ats-petrozavodsk",
+      "name": "АТС Сервис",
+      "region": "Республика Карелия",
+      "address": "Петрозаводск, Новосулажгорская ул., 23, стр. 2",
+      "country": "Россия",
+      "phone": "+7 921 012-96-00",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовики",
+        "автобусы",
+        "полуприцепы",
+        "электрика",
+        "диагностика",
+        "КПП",
+        "двигатели",
+        "топливная аппаратура",
+        "выездной ремонт",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://atsservis.ru/"
+      ],
+      "notes": "Телефон по Петрозаводску, дополнительный номер по России +7 927 251-10-40; круглосуточная эвакуация заявлена отдельно от часов СТО.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ms-truck-petrozavodsk",
+      "name": "МС Трак — Петрозаводск",
+      "region": "Республика Карелия",
+      "address": "Петрозаводск, Новосулажгорская ул., 19, стр. 4",
+      "country": "Россия",
+      "phone": "+7 921 700-48-46",
+      "email": "Service@ms-truck.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой сервис SITRAK",
+        "сервис ГАЗ",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://ms-truck.ru/contact/"
+      ],
+      "notes": "Прямой номер отдела сервиса SITRAK; общий номер +7 8142 44-55-50.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ms-truck-segezha",
+      "name": "МС Трак — Сегежа",
+      "region": "Республика Карелия",
+      "address": "Сегежа, ул. Мелентьевой, 1А",
+      "country": "Россия",
+      "phone": "+7 921 019-54-68",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "сервис грузовой техники"
+      ],
+      "source_urls": [
+        "https://ms-truck.ru/contact/"
+      ],
+      "notes": "Номер филиала; конкретный перечень работ уточнить. Единая сеть с МС Трак Петрозаводск.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tpas-petrozavodsk",
+      "name": "ТехПортАвтоСервис — Петрозаводск",
+      "region": "Республика Карелия",
+      "address": "Петрозаводск, Пограничная ул., 20",
+      "country": "Россия",
+      "phone": "+7 8142 77-99-51",
+      "email": "tpas-ptz@tpas.ru",
+      "hours": "ежедневно 08:00–21:00",
+      "services": [
+        "грузовой ремонт",
+        "электрика",
+        "тормоза",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://trucks-tpas.ru/sto-petrozavodsk/"
+      ],
+      "notes": "Дополнительные номера +7 8142 77-99-52 и +7 8142 77-99-53. Не объединять с иной площадкой сети без сверки.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-petrozavodsk",
+      "name": "FNGROUP — Петрозаводск",
+      "region": "Республика Карелия",
+      "address": "Петрозаводск, Шуйское шоссе, 8Б",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": "office@fngroup.ru",
+      "hours": "пн–чт 09:00–18:00, пт 09:00–16:45",
+      "services": [
+        "обслуживание грузовой техники",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://fngroup.ru/contacts/petrozavodsk/",
+        "https://www.fngroup.ru/trucks_service/"
+      ],
+      "notes": "Общий телефон и почта сети, не отдельный контакт приемки. При переговорах дедуплицировать сеть.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "varyag-murmansk",
+      "name": "Варяг Центр",
+      "region": "Мурманская область",
+      "address": "Мурманск, Промышленная ул., 33, корп. 1",
+      "country": "Россия",
+      "phone": "+7 921 160-19-61",
+      "email": "sto@kamaz51.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "пневматика",
+        "тормоза",
+        "КПП",
+        "двигатели",
+        "рефрижераторы",
+        "гидроборты",
+        "топливная аппаратура"
+      ],
+      "source_urls": [
+        "https://vz51.ru/"
+      ],
+      "notes": "Номер мастера-приемщика опубликован предприятием; ИНН 5190024503 опубликован самим предприятием, не сверялся с ФНС.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tpas-kola",
+      "name": "ТехПортАвтоСервис — Мурманск",
+      "region": "Мурманская область",
+      "address": "Кольский район, Кола, дорога Кола–Мурмаши, 5-й км, д. 4",
+      "country": "Россия",
+      "phone": "+7 921 046-51-51",
+      "email": "mmk@tpas.ru",
+      "hours": "ежедневно 08:00–21:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "диагностика",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://trucks-tpas.ru/sto-murmansk/"
+      ],
+      "notes": "Официальная страница СТО сети, отдельная площадка.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autopriyut-kola",
+      "name": "АвтоПриют Мурманск",
+      "region": "Мурманская область",
+      "address": "Кольский район, Кола, проезд Автомобилистов, зд. 5",
+      "country": "Россия",
+      "phone": "8 800 222-26-86",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ТО",
+        "ремонт",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/service/repair-program/"
+      ],
+      "notes": "Номер сервиса и адрес в сети производителя КАМАЗ Компас; не смешивать с другим адресом в справочнике.",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-lokomotivnaya-kandalaksha",
+      "name": "Шиномонтаж Грузовой",
+      "region": "Мурманская область",
+      "address": "Кандалакша, Локомотивная ул., 31",
+      "country": "Россия",
+      "phone": "+7 911 342-42-56",
+      "email": null,
+      "hours": "пн–пт 10:00–20:00, сб–вс 12:00–17:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (по справочнику)"
+      ],
+      "source_urls": [
+        "https://kandalaksha.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Дополнительный опубликованный номер +7 921 031-01-44. Только справочник, тяжёлый грузовой профиль и действующий статус требуют звонка.",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "forsazh-kandalaksha",
+      "name": "СТО Форсаж",
+      "region": "Мурманская область",
+      "address": "Кандалакша, Локомотивная ул., 25",
+      "country": "Россия",
+      "phone": "+7 906 291-46-77",
+      "email": null,
+      "hours": "ежедневно 10:00–18:00 (справочник)",
+      "services": [
+        "грузовой ремонт (по справочнику)"
+      ],
+      "source_urls": [
+        "https://kandalaksha.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Только справочник, конкретные грузовые работы и действующий статус уточнить.",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
