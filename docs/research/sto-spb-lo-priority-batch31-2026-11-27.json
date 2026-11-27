@@ -1,0 +1,383 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. Directory records require stronger evidence. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "7detalei-shushary",
+      "name": "7Деталей",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1",
+      "country": "Россия",
+      "phone": "+7 812 509-37-80",
+      "email": "sto@7detalei.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "пневматика",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://www.7detalei-sto.ru/"
+      ],
+      "notes": "Рядом с СовАвто (1Б), отдельные название и контакты; уточнить въезд.",
+      "operator_group": "7detalei-shushary",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "unitedservice-poselkovaya",
+      "name": "ЮнайтедСервис — Поселковая",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Поселковая, 7",
+      "country": "Россия",
+      "phone": "+7 812 740-58-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "диагностика",
+        "двигатели",
+        "трансмиссия"
+      ],
+      "source_urls": [
+        "https://united24service.ru/",
+        "https://grunwald.ru/contacts/"
+      ],
+      "notes": "Доп. 8 800 555-60-50, общий номер двух станций.",
+      "operator_group": "unitedservice-spb",
+      "evidence": "first_party_and_manufacturer",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "unitedservice-badaevskiy19",
+      "name": "ЮнайтедСервис — 3-й Бадаевский",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, 3-й Бадаевский проезд, 19, стр. 2",
+      "country": "Россия",
+      "phone": "+7 812 740-58-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "диагностика",
+        "двигатели",
+        "трансмиссия"
+      ],
+      "source_urls": [
+        "https://united24service.ru/"
+      ],
+      "notes": "Второй физический адрес по сайту. Общий телефон сети.",
+      "operator_group": "unitedservice-spb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autobull-moskovskoe165",
+      "name": "АвтоБулл — станция 1",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 165",
+      "country": "Россия",
+      "phone": "+7 812 325-70-70",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (сайт)",
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "кузов",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://autobull.ru/",
+        "https://autobull.ru/autobull"
+      ],
+      "notes": "Доп. +7 812 200-85-00. Единый оператор двух станций.",
+      "operator_group": "autobull-spb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autobull-moskovskoe271",
+      "name": "АвтоБулл — станция 2",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 271",
+      "country": "Россия",
+      "phone": "+7 812 325-70-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовые автомобили"
+      ],
+      "source_urls": [
+        "https://autobull.ru/"
+      ],
+      "notes": "На карте по этому адресу также Аларм-Тракс, +7 812 320-11-33; не создавать отдельный дубль до проверки оператора. Общий телефон АвтоБулл.",
+      "operator_group": "autobull-spb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "terra-truck-shushary",
+      "name": "Терра Трак",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 15, лит. В",
+      "country": "Россия",
+      "phone": "+7 812 456-26-26",
+      "email": null,
+      "hours": null,
+      "services": [
+        "DAF",
+        "грузовики",
+        "агрегатный ремонт",
+        "прицепы"
+      ],
+      "source_urls": [
+        "https://www.orgpage.ru/sankt-peterburg/terra-truck-torgovo-servisnaya-2308080.html",
+        "https://sankt-peterburg.spravochnika.ru/org/id-429073"
+      ],
+      "notes": "Справочник указывает сайт terratruck.ru; подтвердить актуальность статуса и точный въезд. Вариант 15А не считать новой точкой.",
+      "operator_group": "terra-truck-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzavto-moskovskoe233z",
+      "name": "Груз Авто Сервис Центр",
+      "region": "Санкт-Петербург",
+      "address": "пос. Ленсоветовский, Московское шоссе, 233, лит. З",
+      "country": "Россия",
+      "phone": "+7 812 333-50-81",
+      "email": "info@gruzavto.ru",
+      "hours": null,
+      "services": [
+        "грузовые иномарки",
+        "ДВС",
+        "ходовая",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://asktel.ru/sankt-peterburg/avtoservis/gruz_avto/",
+        "https://spb.spravka.city/company/gruz-avto-zapasnye-chasti"
+      ],
+      "notes": "Телефон из карточки карты; справочник дополнительно +7 812 333-50-82. Сайт gruzavto.ru. Не путать с ИВ-Сервис (лит. А).",
+      "operator_group": "gruzavto-moskovskoe233z",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "av-service-bronevaya",
+      "name": "АВ-сервис",
+      "region": "Санкт-Петербург",
+      "address": "Броневая ул., 6ВЕ",
+      "country": "Россия",
+      "phone": "+7 931 363-01-01",
+      "email": "info@av-service.ru",
+      "hours": "ежедневно 08:00–20:00 (карта)",
+      "services": [
+        "грузовой ремонт",
+        "кузов",
+        "рефрижераторы",
+        "гидравлика"
+      ],
+      "source_urls": [
+        "https://spb.auto2.info/sankt-peterburg/av-servis-180561/",
+        "https://www.rusprofile.ru/id/11291808",
+        "https://yandex.com/maps/org/av_servis/34732427985/",
+        "https://xn--g1aohn.xn--24-6kci4amthgkj1f.xn--80asehdb/%D1%81%D0%B0%D0%BD%D0%BA%D1%82-%D0%BF%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3/%D0%BE%D1%80%D0%B3%D0%B0%D0%BD%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F_%D0%90%D0%92-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81-%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D0%B2%D0%BE%D0%B9-%D0%B0%D0%B2%D1%82%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81"
+      ],
+      "notes": "Предварительный ИНН из Rusprofile 7810719205, не проверен ФНС. Почта из справочника.",
+      "operator_group": "av-service-bronevaya",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fram-service-shushary",
+      "name": "Фрам-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 82, корп. 2",
+      "country": "Россия",
+      "phone": "+7 812 425-33-11",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 (карта)",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://yandex.com/maps/org/fram_servis/193458796908/",
+        "https://pushkin.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 958 419-79-27. Уточнить фактический подъезд.",
+      "operator_group": "fram-service-shushary",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "park-service-shushary",
+      "name": "Парк-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 233, корп. 2, стр. 2",
+      "country": "Россия",
+      "phone": "+7 921 795-93-97",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (карта)",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "выездной ремонт"
+      ],
+      "source_urls": [
+        "https://spravbiz.ru/kolpino/avto/vyezdnoi-remont-gruzovikov/"
+      ],
+      "notes": "Полный телефон из карточки карты, адрес отличается от ИВ-Сервиса и Груз Авто. Уточнить независимость площадок.",
+      "operator_group": "park-service-shushary",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzsto-devyatogo21b",
+      "name": "Грузовое СТО — Обухово",
+      "region": "Санкт-Петербург",
+      "address": "просп. Девятого Января, 21Б",
+      "country": "Россия",
+      "phone": "+7 981 736-10-63",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (карта)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_sankt-peterburg/sankt-peterburg/metro-obuhovo?page=5",
+        "https://spb.spravker.ru/remont-avtoelektriki/metro-obuhovo/"
+      ],
+      "notes": "Доп. +7 911 165-69-94. Уточнить юридическое название.",
+      "operator_group": "gruzsto-devyatogo21b",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-gorelovo",
+      "name": "GTS Service — Горелово",
+      "region": "Ленинградская область",
+      "address": "Ломоносовский район, Виллозское поселение, южная часть промзоны Горелово, Волхонское шоссе, 5",
+      "country": "Россия",
+      "phone": "+7 812 250-71-08",
+      "email": null,
+      "hours": "ежедневно 08:00–21:00 (справочник)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://spb.auto2.info/sankt-peterburg/gts-service-352669/"
+      ],
+      "notes": "Другой номер в карте +7 812 223-90-82. Координаты справочника, уточнить. Возможная связь с Глобал Трак Сервис Выборг, проверить оператор.",
+      "operator_group": "gts-gorelovo",
+      "evidence": "directory_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 59.7938,
+      "longitude": 30.1777,
+      "publication_ready": false
+    }
+  ],
+  "review_notes": [
+    "ГСЦ, Кондратенко 3С, +7 812 602-69-69, order@service-gruzovoy.ru (https://service-gruzovoy.ru/) совпадает по адресу с Дакар-Авто batch29; не считать новой точкой до проверки.",
+    "ДВС-Тех-Сервис batch30: карта указывает Московское шоссе 201В, а не Софийскую; проверить адрес.",
+    "Ремзона47 batch02: сайт https://remzona47.ru/ публикует email viktor.rakovich@mail.ru; обогатить существующую запись при сверке, не создавать дубль."
+  ]
+}
