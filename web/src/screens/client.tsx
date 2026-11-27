@@ -534,13 +534,16 @@ function NewOrderForAccount({service}:{service:string}) {
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState] = useState<'idle' | 'wait' | 'ok' | 'fail'>('idle');
   const [method, setMethod] = useState<'cash' | 'online' | 'invoice'>('online');
-  const [est, setEst] = useState<any>(null);
+  const [estimateResult, setEst] = useState<{ key: string; price: any } | null>(null);
   const [destination, setDestination] = useState(prefill.destination ?? '');
   const [cargo, setCargo] = useState<'tractor' | 'semitrailer' | 'coupling' | 'truck12' | 'bus' | 'special'>('tractor');
   const [loaded, setLoaded] = useState<'empty' | 'loaded' | 'adr'>('empty');
   const [driverOnSite, setDriverOnSite] = useState(true);
   const isTow = service === 'tow';
   const isConsult = service === 'consult';
+  // Never treat a quote for previous form inputs as current, even before effect cleanup.
+  const estimateKey = JSON.stringify([scope, service, tier, regionId, zoneId, night, group, address, geo?.lat, geo?.lng]);
+  const est = estimateResult?.key === estimateKey ? estimateResult.price : null;
 
   useEffect(() => {
     if (pricing.data && night === null) setNight(pricing.data.nightNow);
@@ -574,19 +577,20 @@ function NewOrderForAccount({service}:{service:string}) {
     // A delayed response must never restore an older SPb estimate.
     let active = true;
     setEst(null);
+    setAgree(false);
     setCoverageError('');
     if (night === null || (!isConsult && (!regionId || regionId === 'other' || !zoneId))) return;
     const timer = window.setTimeout(() => {
       post('/api/pricing/estimate', {
         service, tier, regionId: regionId || undefined, zoneId: zoneId || 'phone',
         night, group, address: address || undefined, lat: geo?.lat, lng: geo?.lng,
-      }).then(price => { if (active) setEst(price); })
+      }).then(price => { if (active) setEst({ key: estimateKey, price }); })
         .catch(error => {
           if (active) { setEst(null); setCoverageError(error?.message || 'Не удалось проверить регион и тарифную зону'); }
         });
     }, 250);
     return () => { active = false; window.clearTimeout(timer); };
-  }, [service, tier, regionId, zoneId, night, group, address, geo?.lat, geo?.lng]);
+  }, [estimateKey]);
 
   function locate() {
     if (!navigator.geolocation) return setGeoState('fail');
@@ -699,6 +703,8 @@ function NewOrderForAccount({service}:{service:string}) {
     !!parallelWith && (!parallelSource.data || !parallelAgree || !!me?.owner_id) &&
       {id:'f-agree',name:'отдельное согласие владельца на второй выезд'},
   ].filter(Boolean) as { id: string; name: string }[];
+  // The same blocking conditions drive the stage indicator and final CallBar.
+  const stageComplete = (id: string) => !missing.some(item => item.id === id);
 
   if (!pricing.data) return <main>
     <Back to="" />
@@ -790,7 +796,7 @@ function NewOrderForAccount({service}:{service:string}) {
         <span className="note">{need.what ? '✓ Хватит, чтобы специалист понял задачу' : `Хотя бы пару слов — ещё ${MIN_WHAT - description.trim().length} симв.`}</span>
       </Step>
 
-      <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={need.where} missing={tried && !need.where}>
+      <Step n={3} id="f-where" title={isTow ? 'Откуда забрать' : 'Где машина'} req done={stageComplete('f-where')} missing={tried && !stageComplete('f-where')}>
         <input className="field" placeholder="Адрес: регион, населённый пункт, улица или км трассы" value={address} onChange={(e) => setAddress(e.target.value)} />
         <div className="row">
           <button type="button" className="chip" onClick={locate} disabled={geoState === 'wait'}>
@@ -941,14 +947,14 @@ function NewOrderForAccount({service}:{service:string}) {
         </Step>
       )}
 
-      {regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" done>
+      {regionId !== 'other' && <Step n={isTow ? 5 : 6} id="f-pay" title="Оплата" req done={stageComplete('f-pay')} missing={tried && !stageComplete('f-pay')}>
         <div className="grid2">
           {methods?.cash && <button type="button" className="seg" aria-pressed={method === 'cash'} onClick={() => setMethod('cash')}>Исторический тестовый способ</button>}
           <button type="button" className="seg" aria-pressed={method === 'online'} disabled={!methods?.online} onClick={() => setMethod('online')}>СБП / карта</button>
         </div>
         {methods?.invoice && <button type="button" className="seg" aria-pressed={method === 'invoice'} onClick={() => setMethod('invoice')}>Счёт на компанию</button>}
-        {!methods?.online && <span className="note">Новые платные заявки временно недоступны, пока банк не подключён. Наличную оплату TrakSOS не предлагает.</span>}
-        {method === 'online' && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
+        {!methods?.online && !methods?.invoice && !methods?.cash && <span className="note" role="alert">Новые платные заявки временно недоступны, пока банк не подключён. Наличную оплату TrakSOS не предлагает.</span>}
+        {method === 'online' && methods?.online && <span className="note">Выезд оплачивается сейчас и замораживается. Мастеру деньги уйдут после того, как вы подтвердите работу.</span>}
       </Step>}
 
       {est && (
