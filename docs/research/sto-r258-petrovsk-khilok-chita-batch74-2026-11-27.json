@@ -1,0 +1,412 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted review of compact indexes B/C and batches 13,32–37,41–44,47–49. Full normalized cross-batch audit pending. Directory categories are leads, not proof of heavy-truck capability. No calls, official legal checks, coordinate verification or live availability confirmation.",
+  "records": [
+    {
+      "id": "b74-pit-stop",
+      "name": "Pit-stop",
+      "region": "Забайкальский край",
+      "address": "Чита, ул. Рахова, 149",
+      "country": "Россия",
+      "phone": "+7 914 143-99-93",
+      "additional_phones": [
+        "+7 914 503-11-75"
+      ],
+      "email": null,
+      "hours": "ежедневно, круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://chita.spravker.ru/org/pit-stop.htm"
+      ],
+      "notes": "Рубрики справочника, наличие грузового оборудования и фактический график уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b74-entuziastov",
+      "name": "Шиномонтаж",
+      "region": "Забайкальский край",
+      "address": "Чита, ул. Энтузиастов, 42",
+      "country": "Россия",
+      "phone": "+7 924 298-19-26",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно, круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://chita.spravker.ru/org/shinomontazh22.htm"
+      ],
+      "notes": "Проверить максимальный размер колес и прием тяжелых тягачей.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b74-kochetkova",
+      "name": "Шиномонтаж",
+      "region": "Забайкальский край",
+      "address": "Чита, ул. Кочеткова, 60",
+      "country": "Россия",
+      "phone": "+7 914 521-12-60",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": "Круглосуточная рубрика без явного графика: не маркировать 24/7.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b74-ugdan",
+      "name": "Шиномонтажная мастерская",
+      "region": "Забайкальский край",
+      "address": "с. Угдан, ул. Набережная, 15Е",
+      "country": "Россия",
+      "phone": "+7 924 818-81-89",
+      "additional_phones": [
+        "+7 914 450-81-89"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://chita.spravker.ru/org/shinomontazhnaya-masterskaya6.htm"
+      ],
+      "notes": "Уточнить фактический график, оборудование и въезд.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b74-oktyabr",
+      "name": "Октябрь",
+      "region": "Забайкальский край",
+      "address": "Чита, ул. Геодезическая, 2Б",
+      "country": "Россия",
+      "phone": "+7 924 273-60-60",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 10:00–20:00 по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": "Несмотря на рубрику 24 часа, опубликован дневной график. Грузовая мойка не подтверждена.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b74-gruz-standart",
+      "name": "Грузовой стандарт",
+      "region": "Забайкальский край",
+      "address": "Чита, 1-я Новопроточная ул., 4, стр. 1",
+      "country": "Россия",
+      "phone": "+7 3022 21-21-44",
+      "additional_phones": [
+        "+7 914 430-22-33"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб 10:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://rting.ru/chita/co/gruzovoj_standart/308131"
+      ],
+      "notes": "В справочнике есть соседний корпус 5 под тем же названием: не считать отдельно до уточнения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b74-cargo-wash",
+      "name": "ГрузоваяМойка",
+      "region": "Забайкальский край",
+      "address": "Чита, Автомобильный проезд, 40, стр. 3",
+      "country": "Россия",
+      "phone": "+7 924 514-55-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по картографической карточке",
+      "services": [
+        "грузовая автомойка"
+      ],
+      "source_urls": [
+        "https://yandex.com/maps/org/gruzovayamoyka/55888828860/",
+        "https://gruzovajamojka.clients.site/"
+      ],
+      "notes": "Картографическая карточка содержит отметку проверки владельцем, не равнозначную проверке TrakSOS. Есть отзывы 2025 года. Фактическую работу и габариты бокса уточнить.",
+      "evidence": "owner_confirmed_map_and_business_site",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Chita",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Спектр",
+      "address": "Петровск-Забайкальский, ул. Островского, 67",
+      "phone": "+7 914 447-35-41",
+      "additional_phones": [
+        "+7 924 377-14-15"
+      ],
+      "source_urls": [
+        "https://petrovsk-zabaykalskiy.spravka.city/company/spektr-963",
+        "https://yandex.com/maps/org/spektr/117351256532/"
+      ],
+      "reason": "Опубликованные контакты мессенджеров СТО; грузовой профиль не подтвержден."
+    },
+    {
+      "name": "Автомиг",
+      "address": "Петровск-Забайкальский",
+      "phone": "+7 914 133-61-21",
+      "additional_phones": [
+        "+7 996 313-74-88"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petrovsk-zabaykalskiy/org/avtomig/5114673"
+      ],
+      "reason": "Нет точного адреса и подтверждения грузового профиля."
+    },
+    {
+      "name": "Автосервис",
+      "address": "Хилок, ул. Ямаровская, 15А",
+      "source_urls": [
+        "https://hilok.jsprav.ru/avto-moto/"
+      ],
+      "reason": "Не найден телефон и доказательство приема тяжелых грузовиков."
+    },
+    {
+      "name": "Автосервис",
+      "address": "Хилок, ул. Амбонская",
+      "source_urls": [
+        "https://hilok.jsprav.ru/zamena-podveski/"
+      ],
+      "reason": "Нет точного адреса и подтверждения тяжелого грузового профиля."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Хилок, ул. Октябрьская",
+      "source_urls": [
+        "https://hilok.jsprav.ru/avtoservisyi-avtotehtsentryi/"
+      ],
+      "reason": "Точный адрес, контакты и грузовая оснастка требуют уточнения."
+    },
+    {
+      "name": "ПетроМастер",
+      "address": "Чита, Ивановский проезд, 2А / 1А",
+      "phone": "+7 924 479-22-60",
+      "additional_phones": [
+        "8 800 333-77-70",
+        "8 800 350-11-98"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/",
+        "https://urbanplaces.su/ru_zabajkalskij-kraj/chita-gorodskoj-okrug-chita/card-2655787-petromaster"
+      ],
+      "reason": "Расхождение адресов: уточнить фактический въезд и филиал."
+    },
+    {
+      "name": "ДокКар",
+      "address": "Чита, ул. Кирова, 75А",
+      "phone": "+7 924 505-44-44",
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "reason": "Грузовой профиль только в рубрике; проверить оснащение и график."
+    },
+    {
+      "name": "Восточные ворота",
+      "address": "Чита, ул. Бабушкина, 1В",
+      "phone": "+7 914 365-85-15",
+      "additional_phones": [
+        "+7 914 522-74-44"
+      ],
+      "source_urls": [
+        "https://chita.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "reason": "Грузовая рубрика и график 09–21, есть отрицательный отзыв; уточнить работу с фурами."
+    },
+    {
+      "name": "Шакман-Рус",
+      "address": "Чита, ул. Шилова, 99Г",
+      "phone": "+7 3022 38-37-54",
+      "source_urls": [
+        "https://chita.big-book-avto.ru/remont-pricepov-furgonov/",
+        "https://mestam.info/ru/chita/prodaja-gruzovih-avtomobilei"
+      ],
+      "reason": "Есть рубрика сервиса, но другой источник указывает офис на пятом этаже; требуется физический адрес ремонтной площадки."
+    },
+    {
+      "name": "Рем-Дизель",
+      "address": "Чита, ул. Заозёрная, 4",
+      "phone": "+7 914 520-24-48",
+      "additional_phones": [
+        "+7 914 472-66-50"
+      ],
+      "email": "remdizel@mail.ru",
+      "source_urls": [
+        "https://asktel.ru/chita/remont_gruzovyh_avtomobilej/"
+      ],
+      "reason": "Один каталог, актуальность и тяжелый профиль не подтверждены."
+    },
+    {
+      "name": "ЧитаКАМАЗсервис",
+      "address": "Чита, ул. Курнатовского, 82",
+      "phone": "+7 3022 31-79-74",
+      "email": "chitakamazservice@mail.ru",
+      "source_urls": [
+        "https://asktel.ru/chita/remont_gruzovyh_avtomobilej/"
+      ],
+      "reason": "Уточнить действующий статус и фактическую ремонтную площадку."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "ЧитаРефСервис",
+      "batch": 41,
+      "address": "Чита, пр. Энергостроителей, 2, стр. 4",
+      "additional_phones": [
+        "+7 924 502-20-00"
+      ],
+      "email": "office@kamaref.ru",
+      "source_urls": [
+        "https://chita.big-book-avto.ru/remont-pricepov-furgonov/",
+        "https://chita.jsprav.ru/avtoservisyi-avtotehtsentryi/chitarefservis/",
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Дополнительный местный контакт, не новая площадка. SuperSnow указывает 24/7 сервис, каталог 10–21; уточнить."
+    },
+    {
+      "name": "RIG Service",
+      "batch": 13,
+      "additional_phones": [
+        "8 800 550-92-07"
+      ],
+      "source_urls": [
+        "https://chita.big-book-avto.ru/remont-pricepov-furgonov/",
+        "https://rigservice.ru/"
+      ],
+      "notes": "Дополнительный контакт из справочника. Адрес на Чайковского 27 с другим номером не считать новой ремонтной площадкой до подтверждения."
+    },
+    {
+      "name": "МБ Трак Забайкалье / FNGROUP Чита",
+      "batch": 13,
+      "possible_duplicate_batch": 32,
+      "address": "Чита, ул. Геодезическая, 64, стр. 2",
+      "notes": "Один адрес у двух ранее внесенных карточек. Проверить фактическую независимость площадок; не считать автоматически двумя."
+    }
+  ]
+}
