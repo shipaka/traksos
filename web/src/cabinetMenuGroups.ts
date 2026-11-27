@@ -35,6 +35,8 @@ export function groupCabinetMenu(account:CabinetMenuLink[],help:CabinetMenuLink[
     else if(isFinance(path))finance.push(entry);
     else if(isSettings(path))settings.push(entry);
     else if(isWorkTool(path))tools.push(entry);
+    // Air is an operational workspace, even when Shell also lists it in Help.
+    else if(path==='/air')work.push(entry);
     else if(helpPaths.has(path))guidance.push(entry);
     else work.push(entry);
   }
