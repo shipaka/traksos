@@ -22,11 +22,14 @@ export class StoDirectory {
     order by id limit 10000`);
   return {source:'independent_directory',points};
  }
- async adminList(after:string,limit:number){
+ async adminList(after:string,limit:number,search='',state='',category='',missingGps=false){
   return {items:await this.db.query(`select s.*, 
    (select count(*)::int from sto_directory_feedback f join users u on u.id=f.user_id where f.site_id=s.id and f.verdict='working' and u.deleted_at is null and u.status='active') as working_reports,
    (select count(*)::int from sto_directory_feedback f join users u on u.id=f.user_id where f.site_id=s.id and f.verdict='not_working' and u.deleted_at is null and u.status='active') as not_working_reports
-   from sto_directory_sites s where s.id>$1 order by s.id limit $2`,[after,limit])};
+   from sto_directory_sites s where s.id>$1
+   and ($3='' or strpos(lower(s.name||' '||s.address||' '||s.phone),lower($3))>0)
+   and ($4='' or s.state=$4) and ($5='' or s.category=$5)
+   and ($6=false or s.lat is null) order by s.id limit $2`,[after,limit,search,state,category,missingGps])};
  }
  async create(body:unknown){
   const rows=parse(z.array(input).min(1).max(100),body);

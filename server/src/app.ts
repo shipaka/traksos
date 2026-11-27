@@ -180,7 +180,10 @@ export function createApp(d: Deps) {
     const after=c.query.get('after')??'';
     const limit=parse(z.coerce.number().int().min(1).max(200),c.query.get('limit')??100);
     if(after.length>120)throw bad('invalid_cursor');
-    return stoDirectory.adminList(after,limit);
+    const search=parse(z.string().max(200),c.query.get('q')??'');
+    const state=parse(z.enum(['','draft','published','hidden']),c.query.get('state')??'');
+    const category=parse(z.enum(['','sto','tyre','wash','refrigeration','trailer']),c.query.get('category')??'');
+    return stoDirectory.adminList(after,limit,search,state,category,c.query.get('missingGps')==='1');
   });
   r.post('/api/admin/sto-directory/import', ['admin'], (c:AuthedCtx) => stoDirectory.create(c.body));
   r.put('/api/admin/sto-directory/:id', ['admin'], (c:AuthedCtx) => stoDirectory.edit(c.params.id,c.body));
