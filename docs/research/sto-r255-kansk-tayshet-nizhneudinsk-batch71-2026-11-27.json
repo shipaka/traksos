@@ -1,0 +1,727 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison with compact audit B/C and batches 32–34 and 70. Full normalized audit pending. One operator with uncertain branches at nearby addresses not multiplied. Directory classifications are leads, not confirmation of heavy-truck capability; no calls, legal or coordinate verification.",
+  "records": [
+    {
+      "id": "b71-kubekovo",
+      "name": "СибСканСервис — Кубеково",
+      "region": "Красноярский край",
+      "address": "Красноярск, Кубековская промышленная зона, 26А/2",
+      "country": "Россия",
+      "phone": "+7 391 986-94-36",
+      "additional_phones": [
+        "+7 950 407-61-67"
+      ],
+      "email": "sitrak@str-k.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовой техники",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://sitrak-krsk.ru/service"
+      ],
+      "notes": "Контакт отдела сервиса, доб. 1. Общая почта оператора. Услуги сети не считать гарантированными в каждом филиале.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-berezovka-solnechnaya",
+      "name": "Грузовой автосервис",
+      "region": "Красноярский край",
+      "address": "пгт Берёзовка, ул. Солнечная, 22Б",
+      "country": "Россия",
+      "phone": "+7 923 020-73-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб 09:00–14:00 по записи",
+      "services": [
+        "ремонт грузовиков",
+        "ходовая",
+        "дизель",
+        "автоэлектрика"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_krasnoyarskij-kraj/berezovskij-rajon-pgt-berezovka/card-2315686-gruzovoj-avtoservis"
+      ],
+      "notes": "Координаты источника 56.025859, 93.094003; проверить въезд и оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-weld",
+      "name": "Сварочные работы",
+      "region": "Красноярский край",
+      "address": "Канск, СО Дымок, ул. Центральная, 4",
+      "country": "Россия",
+      "phone": "+7 902 964-85-40",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–20:00",
+      "services": [
+        "ремонт тягачей",
+        "сварка",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "На том же адресе другая карточка шиномонтажа +7 960 763-70-68; проверить операторов, не считать отдельным объектом.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-shinka",
+      "name": "Шинка Канск",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Урицкого, 7",
+      "country": "Россия",
+      "phone": "+7 913 524-34-26",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/ilanskij/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Картографический график до 20:00; уточнить прием тяжелых колес.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-ivanor",
+      "name": "Ivanor",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Гаражная, 1",
+      "country": "Россия",
+      "phone": "+7 39161 3-18-18",
+      "additional_phones": [
+        "8 800 250-33-60",
+        "8 800 222-85-49"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб–вс 09:00–16:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить грузовую оснастку филиала, общие 800 — номера сети.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-avtomag",
+      "name": "АвтоМаг",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Красная Иланка, 1",
+      "country": "Россия",
+      "phone": "+7 39161 3-52-22",
+      "additional_phones": [
+        "+7 983 147-93-66",
+        "+7 913 556-94-15",
+        "+7 983 163-43-03",
+        "+7 913 584-84-04",
+        "+7 39161 2-64-00"
+      ],
+      "email": null,
+      "hours": "пн–сб 08:00–19:00; вс 08:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить назначение телефонов, G Energy на том же адресе не считать отдельной точкой.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-redarmy",
+      "name": "СТО / Шиномонтаж",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Красной Армии, 5/3",
+      "country": "Россия",
+      "phone": "+7 983 501-94-45",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00 по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/ilanskij/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Карта указывает до 19:00; уточнить прием фур.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-body",
+      "name": "Центр кузовного ремонта",
+      "region": "Красноярский край",
+      "address": "Канск, пос. Ремзавода, 26/1",
+      "country": "Россия",
+      "phone": "+7 913 047-07-07",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, перерыв 13:00–14:00",
+      "services": [
+        "ремонт коммерческого транспорта",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Размер ремонтируемых ТС уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-remzona",
+      "name": "РемЗона 24",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Московская, 69А",
+      "country": "Россия",
+      "phone": "+7 933 334-57-77",
+      "additional_phones": [
+        "+7 953 849-17-77",
+        "+7 39161 9-17-77"
+      ],
+      "email": "kansk789@icloud.com",
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "ремонт коммерческого транспорта"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://xn----7sbbgarwrb3aezleee.xn--p1ai/contacts/"
+      ],
+      "notes": "Официальный сайт указывает Московская 69 и Залесная 2 стр. 1. Второй адрес не считать отдельно до проверки; уточнить прием тяжелых тягачей и график.",
+      "evidence": "first_party_and_directory",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-rotor",
+      "name": "Автокомплекс Ротор",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Магистральная, 30А",
+      "country": "Россия",
+      "phone": "+7 902 959-59-57",
+      "additional_phones": [
+        "+7 950 972-79-72",
+        "+7 902 972-93-33",
+        "+7 39161 2-07-84"
+      ],
+      "email": null,
+      "hours": "пн–сб 08:00–20:00; вс 09:00–20:00",
+      "services": [
+        "ремонт грузовиков"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Шиномонтаж с другим телефоном на этом адресе не считать отдельно до уточнения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-angar",
+      "name": "Ангар",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Герцена, 13А",
+      "country": "Россия",
+      "phone": "+7 913 035-09-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить профиль и размеры ТС.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-drive",
+      "name": "DriveAvto",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Кайтымская, 160, стр. 1",
+      "country": "Россия",
+      "phone": "+7 923 330-47-58",
+      "additional_phones": [
+        "+7 953 593-92-13"
+      ],
+      "email": null,
+      "hours": "ежедневно 10:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием тягачей.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-anod",
+      "name": "Анод+",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Магистральная, 100, стр. 2",
+      "country": "Россия",
+      "phone": "+7 913 565-58-86",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт коммерческих автомобилей"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Возможная связь с шиномонтажом Магистральная 100; не считать дополнительной точкой.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-kansk-budy",
+      "name": "Шиномонтаж",
+      "region": "Красноярский край",
+      "address": "Канск, ул. Николая Буды, 92",
+      "country": "Россия",
+      "phone": "+7 913 176-83-74",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить прием тяжелых колес.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-tayshet-gruzserv",
+      "name": "Грузсервис",
+      "region": "Иркутская область",
+      "address": "Тайшет, ул. Индустриальная, 1-30Н",
+      "country": "Россия",
+      "phone": "+7 914 000-52-85",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 10:00–18:00 по справочнику",
+      "services": [
+        "ремонт тягачей",
+        "дизельный ремонт"
+      ],
+      "source_urls": [
+        "https://irk.auto2.info/tayshet/gruzservis-438203/",
+        "https://tajshet.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "notes": "Карта подтверждает телефон и адрес (ChIJbatuLSD14FwRJs3lp_X7KTE). Справочник содержит широкий список услуг, ремонт прицепов и рефрижераторов требуют прямого подтверждения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-tayshet-tire",
+      "name": "Шиномонтаж",
+      "region": "Иркутская область",
+      "address": "Тайшет, ул. 50 лет ВЛКСМ, 36",
+      "country": "Россия",
+      "phone": "+7 950 084-74-04",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://taishet.spravker.ru/shinomontazh/shinomontazh-2.htm",
+        "https://tajshet.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "notes": "Грузовой профиль по рубрикам каталогов, размеры колес неизвестны.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b71-nizhneudinsk-magistral",
+      "name": "Магистраль",
+      "region": "Иркутская область",
+      "address": "Нижнеудинск, ул. Красноармейская, 45",
+      "country": "Россия",
+      "phone": "+7 908 645-78-88",
+      "additional_phones": [
+        "+7 950 056-70-00"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–00:00 по справочнику",
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://nizhneudinsk.spravker.ru/avtomoiki/"
+      ],
+      "notes": "Телефон +7 950 056-70-00 также на Красноармейской 43; считать одним комплексом до уточнения. Габариты бокса и грузовой профиль проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "АвтоТрансСиб",
+      "address": "Берёзовка, Трактовая, 9/3; Полевая, 1А/3",
+      "phone": "+7 391 292-99-34",
+      "additional_phones": [
+        "+7 391 292-99-36"
+      ],
+      "email": "trans-sib@bk.ru",
+      "source_urls": [
+        "https://asktel.ru/krasnoyarsk/tyuning/avtotranssib/",
+        "https://asktel.ru/krasnoyarsk/tyuning/avtotranssib_2/"
+      ],
+      "reason": "Контакты обновлены в 2020 г.; подтвердить действующее предприятие и отдельность филиалов."
+    },
+    {
+      "name": "Автоцентр 555",
+      "address": "Канск, Революции, 22",
+      "phone": "+7 39161 3-00-05",
+      "source_urls": [
+        "https://kansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Есть отзыв о недоступности телефона; подтвердить грузовой профиль и действующий контакт."
+    },
+    {
+      "name": "Техавтоцентр / СТО грузовых автомобилей",
+      "address": "Канск, Залесная, 2",
+      "phone": "+7 908 211-56-32",
+      "additional_phones": [
+        "+7 391 613-46-73"
+      ],
+      "source_urls": [
+        "https://xn----7sbbgarwrb3aezleee.xn--p1ai/contacts/",
+        "https://www.google.com/maps/search/?api=1&query=СТО+грузовых+автомобилей+Канск&query_place_id=ChIJP1AQn4zR3lwRl6B60FiKwkg"
+      ],
+      "reason": "На близком адресе РемЗона; проверить независимость и оператора."
+    },
+    {
+      "name": "Перекресток",
+      "address": "Иланский, Алгасинский пер., 27Б / 28Б / 6А",
+      "phone": "+7 950 410-75-05",
+      "source_urls": [
+        "https://spravbiz.ru/ilanskij/avto/gruzovoj-shinomontazh/"
+      ],
+      "reason": "Несколько адресов с тем же началом телефона; уточнить точный въезд, не считать несколько объектов."
+    },
+    {
+      "name": "Avtoservis138",
+      "address": "Тайшет, 50 лет ВЛКСМ, 88/7, пом. 1",
+      "source_urls": [
+        "https://tajshet.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Нет опубликованного телефона в просмотренном источнике."
+    },
+    {
+      "name": "ТехСервис",
+      "address": "Нижнеудинск, Некрасова, 44",
+      "source_urls": [
+        "https://nizhneudinsk.jsprav.ru/avtoservisyi-avtotehtsentryi/sto-24/"
+      ],
+      "reason": "Нет телефона; проверить круглосуточный грузовой профиль."
+    },
+    {
+      "name": "Автомойка",
+      "address": "Нижнеудинск, Некрасова, 24",
+      "source_urls": [
+        "https://nizhneudinsk.spravker.ru/avtomoiki/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Автомойка",
+      "address": "Нижнеудинск, Масловского, 67",
+      "source_urls": [
+        "https://nizhneudinsk.spravker.ru/avtomoiki/"
+      ],
+      "reason": "Нет телефона; шиномонтаж на том же адресе не считать отдельной точкой."
+    },
+    {
+      "name": "Автомойка",
+      "address": "Нижнеудинск, квартал Междуречье",
+      "source_urls": [
+        "https://nizhneudinsk.spravker.ru/avtomoiki/"
+      ],
+      "reason": "Нет точного адреса и телефона."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "СибСканСервис — Берёзовка",
+      "batch": 33,
+      "address": "пгт Берёзовка, квартал 6, здание 2/5",
+      "phone": "+7 391 228-70-90",
+      "additional_phones": [
+        "+7 983 617-61-28"
+      ],
+      "email": "sitrak@str-k.ru",
+      "source_urls": [
+        "https://sitrak-krsk.ru/service"
+      ],
+      "notes": "Официальный адрес отличается от ранее внесенного описания. Телефон сервиса доб. 2; кузовной ремонт отдельный контакт. Не дублировать."
+    }
+  ]
+}
