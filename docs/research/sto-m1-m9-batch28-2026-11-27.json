@@ -1,0 +1,311 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. Directory records require stronger evidence. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "bv-service-odintsovo",
+      "name": "БВ СЕРВИС",
+      "region": "Московская область",
+      "address": "Одинцово, ул. Внуковская, 9",
+      "country": "Россия",
+      "phone": "+7 495 204-19-49",
+      "email": null,
+      "hours": "ежедневно 08:00–22:00 (сайт)",
+      "services": [
+        "грузовые автомобили",
+        "тягачи",
+        "прицепы и полуприцепы",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://bvts.ru/contacts",
+        "https://bvts.ru/"
+      ],
+      "notes": "М-1. Телефон круглосуточный, сайт публикует GPS; координаты сверить с въездом.",
+      "operator_group": "bv-service",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.656607,
+      "longitude": 37.283858,
+      "publication_ready": false
+    },
+    {
+      "id": "danko-trans-vyazma",
+      "name": "Данко-Транс",
+      "region": "Смоленская область",
+      "address": "Вязьма, Сычёвское шоссе, 79",
+      "country": "Россия",
+      "phone": "+7 951 706-70-60",
+      "email": null,
+      "hours": "круглосуточно (сайт)",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "тормоза",
+        "трансмиссия",
+        "сварка",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://evakuator-smol.ru/sto-vyazma",
+        "https://viazma.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Прямая запись в СТО, доп. +7 910 727-04-04. М-1.",
+      "operator_group": "danko-trans-vyazma",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "talan-vyazma",
+      "name": "Талан",
+      "region": "Смоленская область",
+      "address": "Вязьма, ул. Панино, 26Б",
+      "country": "Россия",
+      "phone": "+7 900 223-93-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт (справочник)",
+        "ТО (справочник)"
+      ],
+      "source_urls": [
+        "https://viazma.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/",
+        "https://vyazma.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "notes": "Доп. +7 964 617-15-33. Также название АвтоТалант по тому же адресу; не создавать дубль. Уточнить прием тяжелых тягачей.",
+      "operator_group": "talan-vyazma",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzservice-rzhev-ostashkov95",
+      "name": "Грузовой Автосервис",
+      "region": "Тверская область",
+      "address": "Ржев, Осташковское шоссе, 95",
+      "country": "Россия",
+      "phone": "+7 915 717-76-51",
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "пневматика",
+        "электрика",
+        "рамы"
+      ],
+      "source_urls": [
+        "https://rzhev.spravker.ru/avtoservisy-avtotehcentry/gruzovoj-avtoservis.htm"
+      ],
+      "notes": "Подробное описание услуг в справочнике; актуальность и оператора подтвердить. М-9.",
+      "operator_group": "gruzservice-rzhev-ostashkov95",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckpoint-torchilovo",
+      "name": "Трак Поинт",
+      "region": "Псковская область",
+      "address": "д. Торчилово, ул. Загородная, 43А",
+      "country": "Россия",
+      "phone": "+7 911 890-55-55",
+      "email": null,
+      "hours": "ежедневно 09:00–20:00 (справочник)",
+      "services": [
+        "тягачи (справочник)",
+        "балансировка",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Район Великих Лук, М-9; уточнить действующий оператор и объем работ.",
+      "operator_group": "truckpoint-torchilovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "razval-velikie-luki-136",
+      "name": "Грузовой Развал-Схождение",
+      "region": "Псковская область",
+      "address": "Великие Луки, Октябрьский проспект, 136",
+      "country": "Россия",
+      "phone": "+7 911 696-41-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой развал-схождение"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://www.shodrazval-gid.ru/adresa/velikie-luki/"
+      ],
+      "notes": "Доп. +7 911 696-27-27. Часы двух справочников расходятся; не утверждать график.",
+      "operator_group": "razval-velikie-luki-136",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "resurs-avto-velikie-luki",
+      "name": "Ресурс Авто",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. Печорская, 19",
+      "country": "Россия",
+      "phone": "+7 911 889-77-34",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (справочник)",
+      "services": [
+        "коммерческий транспорт (справочник)",
+        "прицепы (справочник)"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/velikie-luki/avto/remont-pritsepov/",
+        "https://velikie-luki.yp.ru/list/avtotransport_gruzovye_perevozki/"
+      ],
+      "notes": "Также указан как перевозчик; уточнить прием сторонних машин и ремонт тяжелых ТС.",
+      "operator_group": "resurs-avto-velikie-luki",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autokolonna1121-velikie-luki",
+      "name": "Автоколонна № 1121",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. Гастелло, 21",
+      "country": "Россия",
+      "phone": "+7 911 388-28-58",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (справочник)",
+      "services": [
+        "обслуживание грузовиков (справочник)"
+      ],
+      "source_urls": [
+        "https://luki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://luki.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 911 359-85-13. Проверить обслуживание сторонних машин; соседняя карточка Гастелло 21А может быть связана, не добавлена отдельно.",
+      "operator_group": "autokolonna1121-velikie-luki",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "shinaservice67-yartsevo-vostochnaya",
+      "name": "Шина-сервис67",
+      "region": "Смоленская область",
+      "address": "Ярцево, ул. Восточная, 5",
+      "country": "Россия",
+      "phone": "+7 910 712-61-45",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт грузовиков (справочник)"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/vyezdnye-gruzovye-avtoservisy/",
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://e-avtozapis.ru/tochka/yartsevo"
+      ],
+      "notes": "Доп. +7 48143 3-62-92. Одна из двух точек одного бренда; не дублировать оператора для коммерческих предложений.",
+      "operator_group": "shinaservice67",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "shinaservice67-yartsevo-kuznetsova",
+      "name": "Шина-Сервис67",
+      "region": "Смоленская область",
+      "address": "Ярцево, ул. Кузнецова, 56",
+      "country": "Россия",
+      "phone": "+7 910 711-25-55",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт грузовиков (справочник)"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/vyezdnye-gruzovye-avtoservisy/",
+        "https://yartsevo.jsprav.ru/gruzovoj-shinomontazh/",
+        "https://e-avtozapis.ru/tochka/yartsevo"
+      ],
+      "notes": "Доп. +7 48143 7-22-33. В другом каталоге 56 стр. 2. Оператор общий предварительно, подтвердить.",
+      "operator_group": "shinaservice67",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
