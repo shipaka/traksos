@@ -1,0 +1,1439 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison with compact indexes B/C and batches 21,22,32–34,48. Full audit pending. Third-party public source evidence; no calls, legal or coordinate verification. No false partner status. Cities without adequate evidence remain gaps.",
+  "records": [
+    {
+      "id": "b80-armros",
+      "name": "Армрос",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Ленина, 441А",
+      "country": "Россия",
+      "phone": "+7 4242 30-00-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–00:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-interra-mira",
+      "name": "Интерра",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, просп. Мира, 7Б/3",
+      "country": "Россия",
+      "phone": "+7 4242 39-88-27",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой развал-схождение"
+      ],
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-drive",
+      "name": "Драйв",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Украинская, 37/3",
+      "country": "Россия",
+      "phone": "+7 984 131-85-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-shinych-mira",
+      "name": "Шиныч",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, просп. Мира, 2В/1",
+      "country": "Россия",
+      "phone": "+7 4242 46-23-50",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 08:30–18:30; сб 10:00–18:00; вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-shiny-darom",
+      "name": "Шины Даром",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Железнодорожная, 168/4, к. 1",
+      "country": "Россия",
+      "phone": "+7 924 497-13-13",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "выездной шиномонтаж"
+      ],
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-interra-ukr",
+      "name": "Интерра",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Украинская, 56А",
+      "country": "Россия",
+      "phone": "+7 4242 49-07-39",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой развал-схождение"
+      ],
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-shinych-rail",
+      "name": "Шиныч",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Железнодорожная, 165/1",
+      "country": "Россия",
+      "phone": "+7 4242 46-23-47",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб 09:00–18:00; вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/yuzhno-sahalinsk/org/shinych/2387068"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Sakhalin",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-magistral",
+      "name": "Магистраль",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Вулканная, 32, к. 1",
+      "country": "Россия",
+      "phone": "+7 963 833-60-33",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов"
+      ],
+      "source_urls": [
+        "https://petropavlovsk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/magistral/5973689"
+      ],
+      "notes": "Доп. источник https://totadres.ru/petropavlovsk-kamchatskiy/org/magistral/5973689 Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-rybakov",
+      "name": "Шиномонтажная мастерская",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, просп. Рыбаков, 46А",
+      "country": "Россия",
+      "phone": "+7 902 461-42-25",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/shinomontazh_na_dachnoy/2535182"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-kavkaz",
+      "name": "Шиномонтажная мастерская",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Кавказская, 7А, стр. 2",
+      "country": "Россия",
+      "phone": "+7 914 789-75-05",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/shinomontazhnaya_masterskaya/2538184"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-bridgestone",
+      "name": "BridgeStone`s",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Пограничная, 46Б",
+      "country": "Россия",
+      "phone": "+7 4152 351-222",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/bridgestone_s/5998031"
+      ],
+      "notes": "Соседний шинный центр 46А не учитывать отдельно до уточнения. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-dalnyaya",
+      "name": "Шиномонтажная мастерская",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Дальняя, 1, к. 8",
+      "country": "Россия",
+      "phone": "+7 963 831-80-23",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/shinomontazhnaya_masterskaya/2532820"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-shinoremont41",
+      "name": "Shinoremont 41",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Приморская, 96, стр. 1",
+      "country": "Россия",
+      "phone": "+7 924 782-49-68",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 10:00–18:00; сб 10:00–15:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/shinoremont_41/5972678"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-avtogrand",
+      "name": "АвтоГрандСервис",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Дальневосточная, 5",
+      "country": "Россия",
+      "phone": "+7 4152 40-00-36",
+      "additional_phones": [
+        "+7 963 830-00-31"
+      ],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/avtograndservis/5014843"
+      ],
+      "notes": "Одна площадка; тяжелый кузовной ремонт не подтвержден. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-pobedy",
+      "name": "Шиномонтажная мастерская",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, просп. Победы, 22В",
+      "country": "Россия",
+      "phone": "+7 909 890-90-09",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–21:00; сб–вс 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/petropavlovsk-kamchatskiy/org/shinomontazhnaya_masterskaya/2530744"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-elizovo-center",
+      "name": "Центр",
+      "region": "Камчатский край",
+      "address": "Елизово, ул. Магистральная, 8А",
+      "country": "Россия",
+      "phone": "+7 914 788-83-87",
+      "additional_phones": [
+        "+7 963 832-62-82"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_kamchatskij-kraj/elizovskij-rajon-elizovo/card-2561428-tsentr"
+      ],
+      "notes": "Координаты опубликованы 53.179515, 158.401187; въезд не проверен. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-1000",
+      "name": "1000 размеров",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, Елизовское шоссе, 3-13",
+      "country": "Россия",
+      "phone": "+7 4152 450-100",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб–вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_kamchatskij-kraj/petropavlovsk-kamchatskij-gorodskoj-okrug-petropavlovsk-kamchatskij/card-2561411-1000-razmerov"
+      ],
+      "notes": "Опубликованы координаты 53.073091, 158.580368; въезд не проверен. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Kamchatka",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-hunter",
+      "name": "Hunter",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Речная, 10",
+      "country": "Россия",
+      "phone": "+7 4132 21-20-11",
+      "additional_phones": [
+        "+7 924 858-20-11"
+      ],
+      "email": null,
+      "hours": "пн–пт 10:00–19:00; сб 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://magadan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Речная 10, стр. 2 — возможный повтор. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Magadan",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-storm",
+      "name": "Штормавто",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Речная, 81",
+      "country": "Россия",
+      "phone": "+7 909 804-55-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://magadan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Magadan",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-versta",
+      "name": "Верста",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Кольцевая, 30",
+      "country": "Россия",
+      "phone": "+7 914 031-56-66",
+      "additional_phones": [
+        "+7 914 031-56-07"
+      ],
+      "email": null,
+      "hours": "пн–пт 10:00–19:00; сб 10:00–18:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт спецтехники"
+      ],
+      "source_urls": [
+        "https://magadan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Magadan",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-electric",
+      "name": "Грузовой автоэлектрик-диагност",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Речная, 25А",
+      "country": "Россия",
+      "phone": "+7 908 924-40-51",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовая автоэлектрика (название карточки)"
+      ],
+      "source_urls": [
+        "https://magadan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить стационарный прием, соседние сервисы на Речной 25 и точный профиль. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Magadan",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-truck-service",
+      "name": "Грузовой сервис",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Защитников Донбасса, 48",
+      "country": "Россия",
+      "phone": "+7 961 063-00-04",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых машин"
+      ],
+      "source_urls": [
+        "https://perevozka24.com/magadan-49/ts-rent_remont-spectehniki-853054"
+      ],
+      "notes": "Адрес стоянки из объявления, подтвердить наличие ремонтного бокса. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Magadan",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-truckpoint",
+      "name": "Truck Point",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. 3-я Набережная, 11",
+      "country": "Россия",
+      "phone": "+7 4112 20-49-83",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00; вс 10:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://iakutsk.spravker.ru/shinomontazh/"
+      ],
+      "notes": "Штормавто Набережная 15/2 имеет тот же номер; проверить связь. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-yokohama",
+      "name": "Йокохама Трак",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, Хатын-Юряхское шоссе, 100",
+      "country": "Россия",
+      "phone": "+7 926 790-41-12",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 10:00–19:00; вс 11:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://spravbiz.ru/yakutsk/avto/gruzovoj-shinomontazh/",
+        "https://iakutsk.spravker.ru/shinomontazh/"
+      ],
+      "notes": "Номер совпадает с Йокохама на 104; не считать второй площадкой. Телефон и график также в https://iakutsk.spravker.ru/shinomontazh/ Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-pokrov",
+      "name": "Легковой и грузовой шиномонтаж",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, Покровское шоссе, 7-й км, 5Г",
+      "country": "Россия",
+      "phone": "+7 903 198-21-27",
+      "additional_phones": [
+        "+7 985 574-65-46"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://iakutsk.spravker.ru/shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-quest",
+      "name": "Шины-Квест",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. Пилотов, 11",
+      "country": "Россия",
+      "phone": "+7 914 300-23-13",
+      "additional_phones": [
+        "+7 914 110-70-40"
+      ],
+      "email": null,
+      "hours": "пн–сб 10:00–19:00; вс 11:00–17:00",
+      "services": [
+        "шинный сервис",
+        "грузовой ремонт (рубрика)"
+      ],
+      "source_urls": [
+        "https://iakutsk.spravker.ru/shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-kardan",
+      "name": "КарданБаланс",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. Можайского, 62/3",
+      "country": "Россия",
+      "phone": "8 800 555-50-37",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "обслуживание грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://iakutsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Общий номер сети, отдельный физический адрес; уточнить виды работ. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-smdv",
+      "name": "Современные Машины Дальний Восток",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, Базовый пер., 12А",
+      "country": "Россия",
+      "phone": "+7 914 208-31-11",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой ремонт",
+        "ремонт ДВС",
+        "ТО спецтехники"
+      ],
+      "source_urls": [
+        "https://iakutsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-aldan-tire",
+      "name": "Шиномонтаж",
+      "region": "Республика Саха (Якутия)",
+      "address": "Алдан, ул. Тарабукина, 70",
+      "country": "Россия",
+      "phone": "+7 924 869-45-45",
+      "additional_phones": [
+        "+7 924 760-45-45"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб–вс 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://aldan.spravker.ru/shinomontazh/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-avtoapteka",
+      "name": "Автоаптека",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Нюйская, 138",
+      "country": "Россия",
+      "phone": "+7 914 254-34-72",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "ремонт тягачей",
+        "диагностика дизеля"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-autopartner",
+      "name": "АвтоПартнер",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Победы, 115/4",
+      "country": "Россия",
+      "phone": "+7 984 110-87-71",
+      "additional_phones": [
+        "+7 914 245-50-00"
+      ],
+      "email": null,
+      "hours": "пн–сб 10:00–19:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Две карточки одного адреса объединены; Транспортная 2/1 отдельно не включена. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-autodom",
+      "name": "АЦ АвтоДОМ",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Победы, 73/2",
+      "country": "Россия",
+      "phone": "+7 916 757-03-18",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; перерыв 12:30–14:00",
+      "services": [
+        "обслуживание и ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-abs",
+      "name": "СТО АБС",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Монтажная, 1",
+      "country": "Россия",
+      "phone": "+7 924 760-62-33",
+      "additional_phones": [
+        "+7 914 295-16-63"
+      ],
+      "email": null,
+      "hours": "пн–сб 10:00–19:00; перерыв 13:00–14:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-uritskogo",
+      "name": "Автосервис",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Урицкого, 1В",
+      "country": "Россия",
+      "phone": "+7 924 878-77-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "диагностика дизеля"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "График в источнике выглядит ошибочным; оставить неизвестным. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-vodnikov",
+      "name": "Ремонт автомобилей на Водников",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Водников, 23/1",
+      "country": "Россия",
+      "phone": "+7 924 364-21-42",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 12:00–20:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-alyans",
+      "name": "Альянс",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Победы, 99В",
+      "country": "Россия",
+      "phone": "+7 924 598-99-92",
+      "additional_phones": [
+        "+7 914 264-86-06",
+        "+7 914 820-20-49"
+      ],
+      "email": null,
+      "hours": "пн–пт 10:00–18:00",
+      "services": [
+        "ремонт тягачей (рубрика)"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-pob103",
+      "name": "Грузовой шиномонтаж",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Победы, 103",
+      "country": "Россия",
+      "phone": "+7 924 766-00-02",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b80-lensk-obj",
+      "name": "Грузовой шиномонтаж",
+      "region": "Республика Саха (Якутия)",
+      "address": "Ленск, ул. Объездная, 5А",
+      "country": "Россия",
+      "phone": "+7 924 461-66-88",
+      "additional_phones": [
+        "+7 924 364-81-04"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://lensk.spravka-region.ru/shinomontazh/gruzovoy-shinomontazh-69"
+      ],
+      "notes": "Координаты источника 60.734714,114.945076; не проверены. Проверить текущий статус, тяжелую оснастку и контакт. Справочные сведения не означают подтвержденную специализацию.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yakutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Интерра",
+      "address": "Южно-Сахалинск, Ленина, 591",
+      "phone": "+7 4242 51-15-11",
+      "source_urls": [
+        "https://yuzhno-sakhalinsk.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "reason": "Индивидуальная карточка не указывает грузовую специализацию, в отличие от двух других филиалов."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Корсаков, Портовая, 24А",
+      "source_urls": [
+        "https://mestam.info/ru/korsakov/mesto/2172473-shinomontajnaya-masterskaya-portovaya-24a"
+      ],
+      "reason": "Нет телефона и тяжелого профиля."
+    },
+    {
+      "name": "САДЦ Корсаков / Холмск",
+      "source_urls": [
+        "https://to65.ru/contacts",
+        "https://to65.ru/"
+      ],
+      "reason": "Техосмотр и общие услуги сети не подтверждают грузовой ремонт на каждом филиале."
+    },
+    {
+      "name": "Continental",
+      "address": "Петропавловск-Камчатский, Тундровая, 1/7",
+      "phone": "+7 985 267-40-39",
+      "source_urls": [
+        "https://petropavlovsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Общая грузовая рубрика, подтвердить реальную специализацию."
+    },
+    {
+      "name": "Миля",
+      "address": "Магадан, Кожзаводская, 12",
+      "phone": "+7 4132 63-21-28",
+      "source_urls": [
+        "https://magadan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Проверить отдельность от БайкалАвтоТрак, Кожзаводская 12/1, пакет 48."
+    },
+    {
+      "name": "Блеск",
+      "address": "Магадан, Кольцевая, 29",
+      "phone": "+7 4132 66-01-10",
+      "source_urls": [
+        "https://perevozka24.com/magadan-49/ts-rent_remont-spectehniki-845020"
+      ],
+      "reason": "Уточнить прием тяжелых тягачей и габариты мойки."
+    },
+    {
+      "name": "Шинсервис",
+      "address": "пгт Серебряный Бор, Нерюнгринский район",
+      "phone": "+7 924 662-99-33",
+      "source_urls": [
+        "https://neriungri.spravker.ru/shinomontazh/"
+      ],
+      "reason": "Нет номера дома, источник давний."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Ленск, ул. Фурманова",
+      "phone": "+7 924 591-00-09",
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Нет точного номера дома."
+    },
+    {
+      "name": "Автопартнёр",
+      "address": "Ленск, ул. Транспортная, 2/1",
+      "source_urls": [
+        "https://lensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Нет номера, проверить связь с Победы 115/4."
+    },
+    {
+      "name": "Штормавто",
+      "address": "Якутск, Набережная, 15/2",
+      "phone": "+7 4112 20-49-83",
+      "source_urls": [
+        "https://iakutsk.spravker.ru/shinomontazh/"
+      ],
+      "reason": "Совпадает телефон Truck Point на 3-й Набережной 11."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "ЕвроТракСервис",
+      "batch": 21,
+      "address": "Якутск, ул. Очиченко, 41/41А",
+      "additional_phones": [
+        "+7 4112 23-94-20"
+      ],
+      "source_urls": [
+        "https://iakutsk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://totadres.ru/yakutsk/org/evrotrakservis/5205279"
+      ],
+      "notes": "Уточнить принадлежность контакта и адрес, не новая площадка."
+    }
+  ]
+}
