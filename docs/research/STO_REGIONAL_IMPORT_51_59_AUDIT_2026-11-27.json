@@ -1,0 +1,1363 @@
+{
+  "schema": "sto-regional-import-audit-v1",
+  "previous_drafts": 1058,
+  "source_rows": 79,
+  "added_drafts": 77,
+  "held_count": 2,
+  "expected_drafts": 1135,
+  "source_coordinates": 47,
+  "missing_coordinates": 1088,
+  "byCategory": {
+    "tyre": 30,
+    "sto": 44,
+    "trailer": 3
+  },
+  "totalByCategory": {
+    "sto": 684,
+    "tyre": 252,
+    "refrigeration": 24,
+    "trailer": 134,
+    "wash": 41
+  },
+  "byBatch": {
+    "sto-driveline-hydraulics-northwest-batch51": {
+      "input": 8,
+      "added": 7,
+      "held": 1
+    },
+    "sto-diesel-transmission-electrical-spb-batch52": {
+      "input": 4,
+      "added": 4,
+      "held": 0
+    },
+    "sto-leningrad-regional-gaps-batch53": {
+      "input": 3,
+      "added": 3,
+      "held": 0
+    },
+    "sto-karelia-a121-r21-batch54": {
+      "input": 5,
+      "added": 5,
+      "held": 0
+    },
+    "sto-pskov-novgorod-m9-m10-r23-batch55": {
+      "input": 15,
+      "added": 15,
+      "held": 0
+    },
+    "sto-tver-smolensk-m1-m9-m10-batch56": {
+      "input": 14,
+      "added": 14,
+      "held": 0
+    },
+    "sto-moscow-east-south-batch57": {
+      "input": 8,
+      "added": 7,
+      "held": 1
+    },
+    "sto-moscow-north-west-batch58": {
+      "input": 5,
+      "added": 5,
+      "held": 0
+    },
+    "sto-moscow-vladimir-m7-batch59": {
+      "input": 17,
+      "added": 17,
+      "held": 0
+    }
+  },
+  "byRegion": {
+    "Санкт-Петербург": 8,
+    "Архангельская область": 1,
+    "Мурманская область": 1,
+    "Псковская область": 10,
+    "Ленинградская область": 3,
+    "Республика Карелия": 5,
+    "Новгородская область": 6,
+    "Тверская область": 9,
+    "Смоленская область": 5,
+    "Московская область": 21,
+    "Владимирская область": 8
+  },
+  "held": [
+    {
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanservis-novgorod",
+      "name": "Кардан Сервис",
+      "address": "Новгородская область, Великий Новгород, ул. Державина, 21А",
+      "phone": "+79212110662",
+      "reason": "same_phone_and_name_review_address",
+      "existing": "directory:research-b51-kardanservis-pskov"
+    },
+    {
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-kts-chekhov",
+      "name": "КТС",
+      "address": "Московская область, Чеховский округ, территориальный отдел Баранцевский",
+      "phone": "+79775453344",
+      "reason": "duplicate_id",
+      "existing": null
+    }
+  ],
+  "provenance": [
+    {
+      "id": "directory:research-b51-kardanservis-spb",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanservis-spb",
+      "name": "Кардан Сервис",
+      "address": "Санкт-Петербург, Санкт-Петербург, Республиканская ул., 20",
+      "phone": "+78129613969",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Единая сеть; общий производственный телефон +7 921 959-69-84; возможность приема тягачей целиком уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b51-kardanservis-arkhangelsk",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanservis-arkhangelsk",
+      "name": "Кардан Сервис",
+      "address": "Архангельская область, Архангельск, Дачная ул., 56/1",
+      "phone": "+79212497866",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Филиал сети; оснащение и прием целого тягача уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b51-kardanservis-murmansk",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanservis-murmansk",
+      "name": "Кардан Сервис",
+      "address": "Мурманская область, Мурманск, Автопарковый проезд, 12",
+      "phone": "+78152788178",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Филиал сети; оснащение и прием целого тягача уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b51-kardanservis-pskov",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanservis-pskov",
+      "name": "Кардан Сервис",
+      "address": "Псковская область, Псков, Алмазная ул., 8",
+      "phone": "+79212110662",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Номер записи общий с Великим Новгородом; филиал отдельный.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b51-kardanbalans-shushary",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanbalans-shushary",
+      "name": "КарданБаланс",
+      "address": "Санкт-Петербург, пос. Шушары, ул. Ленина, 1",
+      "phone": "+78123855946",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://spb.kardanbalans.ru/contacts/",
+        "https://spb.kardanbalans.ru/"
+      ],
+      "notes": "Сеть уже есть в базе во Владикавказе (batch20); отдельная площадка; единый номер 8 800 555-50-37.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b51-kardanfix-spb",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-kardanfix-spb",
+      "name": "Кардан-фикс",
+      "address": "Санкт-Петербург, Санкт-Петербург, Автобусная ул., 5",
+      "phone": "+78124149441",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://kardan-fix.ru/uslugi/remont-kardannyh-valov/gruzovye-avtomobili.html"
+      ],
+      "notes": "Дополнительный опубликованный телефон +7 812 984-76-74; график и деятельность требуют проверки.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b51-artmax-pushkin",
+      "source_file": "sto-driveline-hydraulics-northwest-batch51-2026-11-27.json",
+      "source_id": "b51-artmax-pushkin",
+      "name": "АРТМАКС",
+      "address": "Санкт-Петербург, Пушкин, Красносельское шоссе, 14/28Р",
+      "phone": "+79111002070",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://gidrobort-spb.ru/"
+      ],
+      "notes": "Специализированная ремонтная площадка; второй телефон для клиентов +7 931 367-96-36.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b52-comtran-fuchika",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "source_id": "b52-comtran-fuchika",
+      "name": "КОМТРАН",
+      "address": "Санкт-Петербург, Санкт-Петербург, ул. Фучика, 8",
+      "phone": "+78126605988",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://comtran.ru/contact.html",
+        "https://comtran.ru/remont-tnvd.html"
+      ],
+      "notes": "Основной контакт указан в подвале сайта. Прием целого тягача уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b52-sp-transmission",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "source_id": "b52-sp-transmission",
+      "name": "СП Трансмишн",
+      "address": "Санкт-Петербург, Санкт-Петербург, Южное шоссе, 37, корп. 1Б",
+      "phone": "+79219618848",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://spectransmission.ru/"
+      ],
+      "notes": "Дополнительный телефон +7 812 401-40-10; возможность приема автомобиля целиком уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b52-starter-mitrofanevskoe",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "source_id": "b52-starter-mitrofanevskoe",
+      "name": "Стартеры и Генераторы — Митрофаньевское",
+      "address": "Санкт-Петербург, Санкт-Петербург, Митрофаньевское шоссе, 5Е",
+      "phone": "+78123091007",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://starter-remont.ru/"
+      ],
+      "notes": "Агрегатная мастерская. Второй филиал на Лужской; на сайте есть старые акции, актуальность работы уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b52-starter-luzhskaya",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "source_id": "b52-starter-luzhskaya",
+      "name": "Стартеры и Генераторы — Лужская",
+      "address": "Санкт-Петербург, Санкт-Петербург, ул. Лужская, 3",
+      "phone": "+78122421677",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://starter-remont.ru/"
+      ],
+      "notes": "Отдельный филиал. Прием целого грузовика не подтвержден; актуальность работы уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b53-germes-vyborg",
+      "source_file": "sto-leningrad-regional-gaps-batch53-2026-11-27.json",
+      "source_id": "b53-germes-vyborg",
+      "name": "Гермес",
+      "address": "Ленинградская область, Выборг, ул. Кузнечная, 4",
+      "phone": "+79968858967",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://spravbiz.ru/vyiborg/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://vyborg.spravker.ru/tekhnicheskoe-obsluzhivanie-avtomobilia/"
+      ],
+      "notes": "Другой автосервис указан по тому же адресу в справочнике; уточнить отдельность площадки, оснащение и актуальность приема грузовиков.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b53-tire-priozersk-vyborgskaya",
+      "source_file": "sto-leningrad-regional-gaps-batch53-2026-11-27.json",
+      "source_id": "b53-tire-priozersk-vyborgskaya",
+      "name": "Шиномонтаж — Выборгская",
+      "address": "Ленинградская область, Приозерск, Выборгская ул., 31, корп. 2",
+      "phone": "+79052040700",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/priozersk/avto/gruzovoj-shinomontazh/",
+        "https://gdeshinomontagh.ru/komp/shinomontazh-priozersk/"
+      ],
+      "notes": "Несколько карточек по одному адресу объединены. Размеры обслуживаемых колес и график уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b53-priozersk-mayakovskogo",
+      "source_file": "sto-leningrad-regional-gaps-batch53-2026-11-27.json",
+      "source_id": "b53-priozersk-mayakovskogo",
+      "name": "Автосервис — Маяковского",
+      "address": "Ленинградская область, Приозерск, ул. Маяковского, 25",
+      "phone": "+79317111474",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://priozersk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Юридическое название и возможность приема тяжелых тягачей/полуприцепов уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b54-sortavala-region10",
+      "source_file": "sto-karelia-a121-r21-batch54-2026-11-27.json",
+      "source_id": "b54-sortavala-region10",
+      "name": "10-й Регион",
+      "address": "Республика Карелия, Сортавала, Выборгское шоссе, 62",
+      "phone": "+78143047030",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://sortavala.spravker.ru/avtozapchasti/10-region1.htm"
+      ],
+      "notes": "Проверить прием тягачей и полуприцепов; адрес совпадает с карточкой УАЗ в справочнике.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b54-sortavala-pit-stop",
+      "source_file": "sto-karelia-a121-r21-batch54-2026-11-27.json",
+      "source_id": "b54-sortavala-pit-stop",
+      "name": "Pit Stop",
+      "address": "Республика Карелия, Сортавала, Выборгское шоссе, 60",
+      "phone": "+79215269206",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://sortavala.spravker.ru/avtomoiki/pit-stop.htm"
+      ],
+      "notes": "Список услуг справочника очень широкий; оборудование для грузовых колес нужно подтвердить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b54-segezha-asta",
+      "source_file": "sto-karelia-a121-r21-batch54-2026-11-27.json",
+      "source_id": "b54-segezha-asta",
+      "name": "Аста",
+      "address": "Республика Карелия, Сегежа, ул. Спиридонова, 24",
+      "phone": "+78143144775",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://segezha.spravker.ru/smazochnyie-materialyi/asta.htm"
+      ],
+      "notes": "Основное название в справочнике — магазин автозапчастей; наличие собственной ремонтной зоны не подтверждено.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b54-belomorsk-zavodskaya",
+      "source_file": "sto-karelia-a121-r21-batch54-2026-11-27.json",
+      "source_id": "b54-belomorsk-zavodskaya",
+      "name": "Шиномонтаж — Заводская сторона",
+      "address": "Республика Карелия, Беломорск, район Заводская Сторона",
+      "phone": "+79535328406",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belomorsk.spravker.ru/shinomontazh/shinomontazh.htm",
+        "https://segezha.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Номер здания неизвестен; не публиковать до получения точной точки.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b54-medvezhegorsk-chkalova",
+      "source_file": "sto-karelia-a121-r21-batch54-2026-11-27.json",
+      "source_id": "b54-medvezhegorsk-chkalova",
+      "name": "Шиномонтаж — Чкалова",
+      "address": "Республика Карелия, Медвежьегорск, ул. Чкалова",
+      "phone": "+79214604480",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://medvezhegorsk.spravker.ru/org/shinomontazh3.htm",
+        "https://segezha.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Номер здания неизвестен; круглосуточность не подтверждена.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-sebezh-roga",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-sebezh-roga",
+      "name": "СТО Рога и Копыта",
+      "address": "Псковская область, Себеж, ул. В. Марго, 58А",
+      "phone": "+79113639851",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://pskov.spravker.ru/gorod-opochka/gruzovoi-shinomontazh/",
+        "https://sebezh.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-opochka-mehanizatorov",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-opochka-mehanizatorov",
+      "name": "Станция технического обслуживания",
+      "address": "Псковская область, Опочка, ул. Механизаторов, 11",
+      "phone": "+79113623997",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://pskov.spravker.ru/gorod-opochka/gruzovoi-shinomontazh/",
+        "https://opochka.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-porkhov-autoclinic",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-porkhov-autoclinic",
+      "name": "АвтоКлиника",
+      "address": "Псковская область, Порхов, ул. Профсоюзная, 16Б",
+      "phone": "+78113424444",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://pskov.spravker.ru/gorod-porkhov/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-luki-agroshintorg",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-luki-agroshintorg",
+      "name": "АгроШинТорг",
+      "address": "Псковская область, Великие Луки, Октябрьский просп., 77",
+      "phone": "+78115365151",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://luki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-luki-4tochki",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-luki-4tochki",
+      "name": "4Точки",
+      "address": "Псковская область, Великие Луки, пер. Пушкина, 4",
+      "phone": "+78115338571",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-luki-asta",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-luki-asta",
+      "name": "Аста",
+      "address": "Псковская область, Великие Луки, ул. 3-й Ударной Армии, 66",
+      "phone": "+78115378230",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-luki-ivanor-october",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-luki-ivanor-october",
+      "name": "Ivanor",
+      "address": "Псковская область, Великие Луки, Октябрьский просп., 138Б",
+      "phone": "+78115365751",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-luki-ivanor-civic",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-luki-ivanor-civic",
+      "name": "Ivanor",
+      "address": "Псковская область, Великие Луки, ул. Гражданская, 11А",
+      "phone": "+79113803324",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-luki-industrial",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-luki-industrial",
+      "name": "Шиномонтаж — Промышленная",
+      "address": "Псковская область, Великие Луки, ул. Промышленная, 4",
+      "phone": "+79009944044",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://luki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-borovichi-autoliga",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-borovichi-autoliga",
+      "name": "Автолига-сервис",
+      "address": "Новгородская область, Боровичи, мкр. Раздолье 1-е, 25",
+      "phone": "+78166498250",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-borovichi-doctor",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-borovichi-doctor",
+      "name": "Доктор шин",
+      "address": "Новгородская область, Боровичи, ул. Совхозная, 89",
+      "phone": "+79216969454",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/borovichi/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-borovichi-authoritet",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-borovichi-authoritet",
+      "name": "Авторитет",
+      "address": "Новгородская область, Боровичи, ул. Парковая, 6А",
+      "phone": "+79506848899",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-borovichi-autostandard",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-borovichi-autostandard",
+      "name": "Автостандарт",
+      "address": "Новгородская область, Боровичи, ул. Сушанская, 25А",
+      "phone": "+79212018988",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://vnovgorod.spravker.ru/gorod-borovichi/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-m10-remtent",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-m10-remtent",
+      "name": "Рем Тент 24",
+      "address": "Новгородская область, Валдайский район, М10, 368-й км",
+      "phone": "+79040109777",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://valdai.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b55-m10-1001shina",
+      "source_file": "sto-pskov-novgorod-m9-m10-r23-batch55-2026-11-27.json",
+      "source_id": "b55-m10-1001shina",
+      "name": "1001 Шина",
+      "address": "Новгородская область, Крестецкий район, М10, 422-й км",
+      "phone": "+79116366106",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://valdai.spravker.ru/gruzovoi-shinomontazh/",
+        "https://1001shina.ds78.ru/contacts/"
+      ],
+      "notes": "Грузовой профиль заявлен в справочнике; фактическую возможность приема тяжелого транспорта, юридическое лицо и график проверить. Для сетей сверить физическую площадку и оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-rzhev-t69",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-rzhev-t69",
+      "name": "Грузовой Т-69",
+      "address": "Тверская область, Ржев, ул. Никиты Головни, 33А",
+      "phone": "+79157451505",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-rzhev-moscow-riga",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-rzhev-moscow-riga",
+      "name": "Автотехцентр Москва-Рига",
+      "address": "Тверская область, Ржевский округ, М9, 224-й км",
+      "phone": "+79806233111",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-rzhev-tire-leningradskoe",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-rzhev-tire-leningradskoe",
+      "name": "Шиномонтаж 24 часа",
+      "address": "Тверская область, Ржев, Ленинградское шоссе, 1А",
+      "phone": "+79956700149",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-rzhev-autostop",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-rzhev-autostop",
+      "name": "АвтоСтопService",
+      "address": "Тверская область, Ржев, ул. Калинина, 36Б",
+      "phone": "+79105301051",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-rzhev-autoplus",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-rzhev-autoplus",
+      "name": "АвтоПлюс",
+      "address": "Тверская область, Ржев, ул. Декабристов, 2",
+      "phone": "+79105390897",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://tver.auto2.info/rzhev/avtoplyus-82418/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-volochek-ivanor",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-volochek-ivanor",
+      "name": "Ivanor",
+      "address": "Тверская область, Вышний Волочёк, Московское шоссе, 18/88",
+      "phone": "+79301651595",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-volochek-petromaster305",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-volochek-petromaster305",
+      "name": "ПетроМастер / Cordiant Professional",
+      "address": "Тверская область, Вышневолоцкий округ, М10, 305-й км, 10",
+      "phone": "+79000100636",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-volochek-petromaster70",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-volochek-petromaster70",
+      "name": "ПетроМастер / Кронштадт",
+      "address": "Тверская область, Вышний Волочёк, Московское шоссе, 70А",
+      "phone": "+79157037548",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-volochek-exclusive",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-volochek-exclusive",
+      "name": "Эксклюзив",
+      "address": "Тверская область, Вышневолоцкий округ, д. Холохоленка",
+      "phone": "+79206942905",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-yartsevo-m1-338",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-yartsevo-m1-338",
+      "name": "Шиномонтаж — М1, 338-й км",
+      "address": "Смоленская область, Ярцево, М1, 338-й км",
+      "phone": "+79056968700",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-yartsevo-khalturina",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-yartsevo-khalturina",
+      "name": "Шиномонтаж — Халтурина",
+      "address": "Смоленская область, Ярцево, ул. Халтурина, 61",
+      "phone": "+74814374942",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-yartsevo-shina",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-yartsevo-shina",
+      "name": "Ярцево Шина",
+      "address": "Смоленская область, Ярцево, ул. Лесная, 33",
+      "phone": "+74814331310",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-safonovo-autoshinservice",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-safonovo-autoshinservice",
+      "name": "Автошинсервис",
+      "address": "Смоленская область, Сафоново, ул. Горняцкая, 18А",
+      "phone": "+79092592024",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://smolensk.spravker.ru/gorod-safonovo/shinomontazh/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b56-safonovo-m1-296",
+      "source_file": "sto-tver-smolensk-m1-m9-m10-batch56-2026-11-27.json",
+      "source_id": "b56-safonovo-m1-296",
+      "name": "Шиномонтаж — М1, 296-й км",
+      "address": "Смоленская область, Сафоновский район, М1, 296-й км",
+      "phone": "+79646161811",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://smolensk.spravker.ru/gorod-safonovo/shinomontazh/"
+      ],
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-gruzrem-noginsk",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-gruzrem-noginsk",
+      "name": "ГрузРемСервис",
+      "address": "Московская область, Ногинск, 1-й Кардолентный проезд, 5, завод РТИ",
+      "phone": "+79035975221",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://www.gruz-rem.ru/contacts/"
+      ],
+      "notes": "Одна площадка; Электросталь указана как зона обслуживания.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-autotranskonnect-noginsk",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-autotranskonnect-noginsk",
+      "name": "АвтоТрансКоннект",
+      "address": "Московская область, Ногинск, 5-я Доможировская ул., 51",
+      "phone": "+74954874350",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://autotranskonnect.ru/"
+      ],
+      "notes": "В одном блоке сайта номер дома 5, в контактах и подвале 51; проверить фактический адрес.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-vtruck-elektrostal",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-vtruck-elektrostal",
+      "name": "В-Трак",
+      "address": "Московская область, Электросталь, ул. Красная, 15с2",
+      "phone": "+79850055825",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://v-truck.ru/remont-gruzovogo-transporta.html"
+      ],
+      "notes": "ИНН 7731327565 и ОГРН 1167746842108 заявлены сайтом; проверка ФНС не выполнена.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-atruck-voskresensk",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-atruck-voskresensk",
+      "name": "А-Трак — Воскресенск",
+      "address": "Московская область, Воскресенский округ, д. Степанщино, ул. Центральная, 55А",
+      "phone": "+79260063636",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://a-truck.pro/"
+      ],
+      "notes": "Отдельный филиал сети.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-servisgarant-bronnitsy",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-servisgarant-bronnitsy",
+      "name": "Сервисгарант / Вольво Сервис",
+      "address": "Московская область, Бронницы, ул. Южная, 4А",
+      "phone": "+74959179279",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://servisgarant.ru/"
+      ],
+      "notes": "Уточнить график и действующее юридическое лицо.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-ate-mikhnevo",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-ate-mikhnevo",
+      "name": "АТЕ",
+      "address": "Московская область, с. Константиновское, промзона Михнево М4, участок 71А",
+      "phone": "+74956696524",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://www.ateservis.ru/"
+      ],
+      "notes": "На сайте в описании упомянут Чехов, но контакты указывают Михнево; не создавать вторую точку. В batch39 Авторемфорс на участке 80 той же промзоны, проверить отдельность.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b57-asktrans-bronnitsy",
+      "source_file": "sto-moscow-east-south-batch57-2026-11-27.json",
+      "source_id": "b57-asktrans-bronnitsy",
+      "name": "Транссервис / ASK TRANSSERVISE",
+      "address": "Московская область, Бронницы, Каширское шоссе, 2",
+      "phone": "+79258626591",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://bronnicy.spravmer.ru/transservis-bronnicy/"
+      ],
+      "notes": "Контакты из стороннего справочника; уточнить конкретный бокс, на адресе несколько организаций.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b58-born-rekino",
+      "source_file": "sto-moscow-north-west-batch58-2026-11-27.json",
+      "source_id": "b58-born-rekino",
+      "name": "БорнТракСервис",
+      "address": "Московская область, Солнечногорский округ, д. Рекино-Кресты, промзона № 1, стр. 1А",
+      "phone": "+79250157869",
+      "evidence": "business_first_party_web_presence",
+      "source_urls": [
+        "https://www.born-truck.ru/contacts/"
+      ],
+      "notes": "Сервисный адрес отличен от отдела продаж (д. 100); по адресу отдела продаж уже есть БизнесТрак в batch33. Уточнить отдельность оператора и сервисного участка.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b58-sitrak-solnechnogorsk",
+      "source_file": "sto-moscow-north-west-batch58-2026-11-27.json",
+      "source_id": "b58-sitrak-solnechnogorsk",
+      "name": "SITRAK СЕРВИС / ООО ТСЕРВИС",
+      "address": "Московская область, Солнечногорск, Промышленная ул., стр. 5",
+      "phone": "+79032579257",
+      "evidence": "business_first_party_web_presence",
+      "source_urls": [
+        "https://tservice63.clients.site/"
+      ],
+      "notes": "ИНН 5044117478, ОГРН 1195081083889 указаны в профиле, статус официального дилера заявлен предприятием; проверить отдельно.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b58-gruzovik-naro",
+      "source_file": "sto-moscow-north-west-batch58-2026-11-27.json",
+      "source_id": "b58-gruzovik-naro",
+      "name": "Грузовик сервис",
+      "address": "Московская область, Наро-Фоминск, Тургеневский тупик, 1",
+      "phone": "+79955775840",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://naro-fominsk.spravker.ru/avtomobilnyie-gruzoperevozki/gruzovoj-avtoservis.htm"
+      ],
+      "notes": "Профиль и прием тяжелых тягачей уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b58-xvk-darna",
+      "source_file": "sto-moscow-north-west-batch58-2026-11-27.json",
+      "source_id": "b58-xvk-darna",
+      "name": "XVK-Truckservice",
+      "address": "Московская область, Истринский округ, с. Дарна, 45А",
+      "phone": "+79017514203",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://istra.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "В справочнике также РемАвто по адресу 45А: возможный псевдоним; не считать отдельным объектом.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b58-istrascan",
+      "source_file": "sto-moscow-north-west-batch58-2026-11-27.json",
+      "source_id": "b58-istrascan",
+      "name": "ИстраСкан",
+      "address": "Московская область, Истринский округ, пос. Октябрьской Фабрики, 26",
+      "phone": "+74951976757",
+      "evidence": "business_first_party_web_presence",
+      "source_urls": [
+        "https://istrascan.ru/contact-us-3/",
+        "https://rutube.ru/video/8fbf86d723caeabfa88387c0ccfb3424/"
+      ],
+      "notes": "В справочнике также ГрузДеталь по тому же адресу; не добавлять отдельно до проверки.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-ldsv",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-ldsv",
+      "name": "ЛДСВ",
+      "address": "Московская область, д. Долгое Лёдово, ул. Луговая, 28, стр. 3",
+      "phone": "+79258546954",
+      "evidence": "business_first_party_website",
+      "source_urls": [
+        "https://ldsv.ru/kontacty/",
+        "https://ldsv.ru/o-kompanii/"
+      ],
+      "notes": "На сайте противоречие: 09:00–19:00 в шапке и 09:00–21:00 в контактах. График не определён.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-sbservice",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-sbservice",
+      "name": "СБСервис",
+      "address": "Московская область, Ногинск, шоссе Энтузиастов, 64Б",
+      "phone": "+79260809393",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://www.orgpage.ru/noginsk/ooo-sbservis-849939.html",
+        "https://noginsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Проверить действующего оператора и контакт.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-peksha-tent",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-peksha-tent",
+      "name": "Тент",
+      "address": "Владимирская область, д. Пекша, ул. Совхозная, 23",
+      "phone": "+79157774715",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Конкретные работы с тентами и грузовыми прицепами уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-pokrov-tyagach",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-pokrov-tyagach",
+      "name": "Тягач",
+      "address": "Владимирская область, Петушинский район, Покров, 17К-11, 1-й км",
+      "phone": "+79066105404",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://pokrov1.esbd.ru/autoservice/avtotehcentr_4194",
+        "https://petushki.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Второй источник указывает ул. Октябрьская, 149. Один телефон; до выяснения считать одним кандидатом, не публиковать.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-petushki-express",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-petushki-express",
+      "name": "Экспресс",
+      "address": "Владимирская область, Петушки, ул. Вокзальная, 66",
+      "phone": "+79004770112",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Проверить размеры принимаемого транспорта.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-leonovo-sprint",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-leonovo-sprint",
+      "name": "Спринт",
+      "address": "Владимирская область, д. Леоново, 12",
+      "phone": "+79101781080",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовой профиль и круглосуточность требуют проверки.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-old-petushki",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-old-petushki",
+      "name": "Автосервис — Шоссейная",
+      "address": "Владимирская область, д. Старые Петушки, ул. Шоссейная, 154Б",
+      "phone": "+79164708337",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить название оператора.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-radius33",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-radius33",
+      "name": "Радиус33",
+      "address": "Владимирская область, д. Новое Аннино, ул. Шоссейная, 10А",
+      "phone": "+79107759969",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "На том же адресе карточка «М-7» без телефона; не считать отдельной площадкой.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-petushki-baza",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-petushki-baza",
+      "name": "База",
+      "address": "Владимирская область, Петушки, ул. Озёрная, 42",
+      "phone": "+79157689915",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить специализацию и доступность для сторонних клиентов.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-petushki-lenina",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-petushki-lenina",
+      "name": "Шиномонтаж — Ленина",
+      "address": "Владимирская область, Петушки, ул. Ленина, 9А",
+      "phone": "+79996132334",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://petushki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовой размер шин уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-ivanor",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-ivanor",
+      "name": "Ivanor",
+      "address": "Московская область, Егорьевск, Коломенское шоссе, 3А",
+      "phone": "+74959275935",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить грузовой профиль именно филиала.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-eurodiski",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-eurodiski",
+      "name": "Евро-Диски",
+      "address": "Московская область, Егорьевск, ул. Крестьянская, 7",
+      "phone": "+74951265187",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Размеры колес уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-procarwash",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-procarwash",
+      "name": "Pro_carwash_egk",
+      "address": "Московская область, Егорьевск, ул. Советская, 2",
+      "phone": "+79152483288",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Габариты принимаемых машин и возможность грузовой мойки отдельно уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-express",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-express",
+      "name": "Express Machine",
+      "address": "Московская область, Егорьевск, ул. Советская, 93",
+      "phone": "+79311023580",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль и график проверить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-fauto",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-fauto",
+      "name": "Ф-Авто",
+      "address": "Московская область, Егорьевск, ул. Меланжистов, 3Б",
+      "phone": "+79261959373",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль проверить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-avtomoto",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-avtomoto",
+      "name": "Авто мото сервис",
+      "address": "Московская область, Егорьевск, ул. Александра Невского, 1Б, стр. 1",
+      "phone": "+79653247666",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Приём тяжёлых полуприцепов требует проверки.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b59-egorievsk-mill",
+      "source_file": "sto-moscow-vladimir-m7-batch59-2026-11-27.json",
+      "source_id": "b59-egorievsk-mill",
+      "name": "Автосервис — Мельничная",
+      "address": "Московская область, Егорьевск, ул. Мельничная, 49/54",
+      "phone": "+79168052222",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://egorevsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Название и грузовой профиль уточнить.",
+      "timezone": "Europe/Moscow",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Coordinates and activity not independently verified; conservative duplicate screening is not exhaustive."
+}
