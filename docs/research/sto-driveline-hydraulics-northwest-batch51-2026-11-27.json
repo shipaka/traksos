@@ -1,0 +1,306 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Compared names, addresses and relevant keywords against batch50 compact indexes for batches 1–31 and record arrays in batches 32–49. No exact candidate match found by this pass; normalized-address and legal-operator review still required. Shared phones do not prove same physical site.",
+  "records": [
+    {
+      "id": "b51-kardanservis-spb",
+      "name": "Кардан Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Республиканская ул., 20",
+      "country": "Россия",
+      "phone": "+7 812 961-39-69",
+      "email": "info@kardanservis.ru",
+      "hours": "ежедневно 10:00–21:00",
+      "services": [
+        "ремонт карданных валов грузовых автомобилей",
+        "балансировка карданных валов"
+      ],
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Единая сеть; общий производственный телефон +7 921 959-69-84; возможность приема тягачей целиком уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanservis",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-kardanservis-arkhangelsk",
+      "name": "Кардан Сервис",
+      "region": "Архангельская область",
+      "address": "Архангельск, Дачная ул., 56/1",
+      "country": "Россия",
+      "phone": "+7 921 249-78-66",
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ремонт карданных валов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Филиал сети; оснащение и прием целого тягача уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanservis",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-kardanservis-murmansk",
+      "name": "Кардан Сервис",
+      "region": "Мурманская область",
+      "address": "Мурманск, Автопарковый проезд, 12",
+      "country": "Россия",
+      "phone": "+7 8152 78-81-78",
+      "email": null,
+      "hours": "Пн–Сб 10:00–20:00; Вс закрыто",
+      "services": [
+        "ремонт карданных валов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Филиал сети; оснащение и прием целого тягача уточнить.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanservis",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-kardanservis-pskov",
+      "name": "Кардан Сервис",
+      "region": "Псковская область",
+      "address": "Псков, Алмазная ул., 8",
+      "country": "Россия",
+      "phone": "+7 921 211-06-62",
+      "email": null,
+      "hours": "ежедневно 10:00–21:00",
+      "services": [
+        "ремонт карданных валов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Номер записи общий с Великим Новгородом; филиал отдельный.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanservis",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-kardanservis-novgorod",
+      "name": "Кардан Сервис",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, ул. Державина, 21А",
+      "country": "Россия",
+      "phone": "+7 921 211-06-62",
+      "email": null,
+      "hours": "ежедневно 10:00–21:00",
+      "services": [
+        "ремонт карданных валов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kardanservis.ru/",
+        "https://kardanservis.ru/install"
+      ],
+      "notes": "Номер записи общий с Псковом; филиал отдельный.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanservis",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-kardanbalans-shushary",
+      "name": "КарданБаланс",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1",
+      "country": "Россия",
+      "phone": "+7 812 385-59-46",
+      "email": "info@kardanbalans.ru",
+      "hours": "Пн–Пт 09:00–19:00; Сб–Вс закрыто",
+      "services": [
+        "ремонт и балансировка карданных валов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://spb.kardanbalans.ru/contacts/",
+        "https://spb.kardanbalans.ru/"
+      ],
+      "notes": "Сеть уже есть в базе во Владикавказе (batch20); отдельная площадка; единый номер 8 800 555-50-37.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanbalans",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-kardanfix-spb",
+      "name": "Кардан-фикс",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Автобусная ул., 5",
+      "country": "Россия",
+      "phone": "+7 812 414-94-41",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и балансировка карданных валов грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://kardan-fix.ru/uslugi/remont-kardannyh-valov/gruzovye-avtomobili.html"
+      ],
+      "notes": "Дополнительный опубликованный телефон +7 812 984-76-74; график и деятельность требуют проверки.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "kardanfix",
+      "possible_matches": []
+    },
+    {
+      "id": "b51-artmax-pushkin",
+      "name": "АРТМАКС",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Красносельское шоссе, 14/28Р",
+      "country": "Россия",
+      "phone": "+7 911 100-20-70",
+      "email": "artmaxspb21@yandex.ru",
+      "hours": "Пн–Пт 09:00–17:00; обед 13:00–13:30",
+      "services": [
+        "ремонт гидробортов",
+        "ремонт КМУ",
+        "ремонт гидроцилиндров",
+        "ремонт эвакуаторов"
+      ],
+      "source_urls": [
+        "https://gidrobort-spb.ru/"
+      ],
+      "notes": "Специализированная ремонтная площадка; второй телефон для клиентов +7 931 367-96-36.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "operator_key": "artmax",
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "ПРОФУРГОН",
+      "region": "Санкт-Петербург",
+      "address": "ул. Электропультовцев, 7АИ",
+      "phone": "+7 911 244-27-55",
+      "services": [
+        "ремонт гидробортов",
+        "ремонт гидравлики"
+      ],
+      "hours": "ежедневно 10:00–20:00",
+      "source_urls": [
+        "https://profurgon.pro/contacts"
+      ],
+      "possible_match": {
+        "batch": 35,
+        "name": "СканТрансСервис",
+        "address": "ул. Электропультовцев, 7АИ",
+        "phone": "+7 812 970-17-22"
+      },
+      "reason": "Совпадающий физический адрес, разные названия и телефоны; проверить отдельные боксы или единую площадку. Не включать в счетчик новых физических точек.",
+      "publication_ready": false
+    }
+  ]
+}
