@@ -1,0 +1,356 @@
+{
+  "schema": "sto-legal-audit-stage03-v1",
+  "date": "2026-11-27",
+  "mode": "audit_only",
+  "parent": "docs/research/STO_LEGAL_AUDIT_STAGE02_2026-11-27.json",
+  "metrics": {
+    "cards_with_identifiers": 9,
+    "distinct_operators": 7,
+    "third_party_active_operators": 6,
+    "unresolved_cards": 6,
+    "checksum_failures": 0,
+    "fns_confirmed": 0,
+    "publication_ready": 0
+  },
+  "official_access": {
+    "url": "https://egrul.nalog.ru/",
+    "attempt": "Official search form returned; direct query https://egrul.nalog.ru/index.html?inn=7819018959 failed in web reader. No individual official results.",
+    "bulk_options": [
+      "https://www.nalog.gov.ru/rn77/service/egrip2/",
+      "https://www.nalog.gov.ru/rn77/service/egrip2/access_order/"
+    ],
+    "notes": "Need actual extracts or authorized official registry access; no bypass and no inference from search form."
+  },
+  "records": [
+    {
+      "legal_name": "ООО АМГ СЕРВИС",
+      "inn": "7805816482",
+      "registration_number": "1247800067877",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "sources": [
+        "https://amg-truck.ru/privacy-policy/",
+        "https://amg-truck.ru/",
+        "https://b2b.house/company/OOO-AMG-SERVIS_4b4ff6c2-5cb1-4523-99f2-d38130e2bb39/"
+      ],
+      "notes": "Сайт называет именно ООО АМГ СЕРВИС; рядом зарегистрированы другие ООО АМГ и АМГ Экспресс, не смешивать.",
+      "record_id": "amg-sofiyskaya",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "АМГ-Сервис",
+      "address": "Софийская ул., 149, стр. 3",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ИП Шашин Антон Юрьевич",
+      "inn": "470806496140",
+      "registration_number": "320470400085107",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "primary_okved": "45.20",
+      "sources": [
+        "https://www.7detalei-sto.ru/contacts/",
+        "https://www.tbank.ru/business/contractor/ogrn-date/2020-12-17/8/"
+      ],
+      "notes": "Сайт связывает реквизиты с адресом и телефоном. Координаты сайта 59.812057, 30.399848 сохранены как непроверенные; не публиковать автоматически.",
+      "record_id": "7detalei-shushary",
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "name": "7Деталей",
+      "address": "пос. Шушары, ул. Ленина, 1",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО АВТОКОНСТАНТА 78",
+      "inn": "7838107080",
+      "registration_number": "1227800099196",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "third_party_status_date": "2026-10-15",
+      "sources": [
+        "https://gruzovoy-kompleks.ru/politika-konfidentsialnosti/",
+        "https://gruzovoy-kompleks.ru/",
+        "https://xfirm.ru/company/7838107080",
+        "https://check.tochka.com/company/1227800099196/"
+      ],
+      "notes": "Собственная политика связывает ОГРН; ИНН совпадает в независимых источниках. Юридический адрес отличается от мастерской.",
+      "record_id": "autoconstanta78",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "АвтоКонстанта 78",
+      "address": "пос. Шушары, Ленсоветовская дорога, 6, стр. 1",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО СКАНТРАК",
+      "inn": "7811263028",
+      "registration_number": "1157847429222",
+      "operator_match": "strong",
+      "third_party_status": "not_established",
+      "primary_okved": "45.20",
+      "sources": [
+        "https://scantruck.spb.ru/kontakty",
+        "https://companies.rbc.ru/id/1157847429222-ooo-skantrak/"
+      ],
+      "notes": "Сайт разделяет адрес СТО и юридический адрес. Явного индивидуального актуального статуса не получено.",
+      "record_id": "scantruck-upper5",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "СканТрак",
+      "address": "5-й Верхний проезд, 15",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО ДИСКАВЕРИ",
+      "inn": "7819018959",
+      "registration_number": "1027808911008",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "primary_okved": "45.20",
+      "sources": [
+        "https://discado.ru/kontact",
+        "https://firmoteka.ru/7819018959",
+        "https://otc.ru/organization/all/1027808911008/"
+      ],
+      "notes": "Название и полный адрес совпадают с реестровыми данными.",
+      "record_id": "discado-pushkin",
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "name": "Дискавери / DISCADO",
+      "address": "Пушкин, Промышленная ул., 17, лит. З",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО ЮНАЙТЕДСЕРВИС",
+      "inn": "7820314215",
+      "registration_number": "1089847116039",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "sources": [
+        "https://united24service.ru/rekvizity/",
+        "https://united24service.ru/?manufacturer=EATON",
+        "https://companies.rbc.ru/alphabetical-catalog/companies/ju-n/5/",
+        "https://xfirm.ru/company/7820314215"
+      ],
+      "notes": "Один оператор, две площадки по сайту. Не считать дублем на основании общего ИНН; фактический прием каждой проверить отдельно.",
+      "record_id": "unitedservice-poselkovaya",
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "name": "ЮнайтедСервис — Поселковая",
+      "address": "пос. Шушары, ул. Поселковая, 7",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО ЮНАЙТЕДСЕРВИС",
+      "inn": "7820314215",
+      "registration_number": "1089847116039",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "sources": [
+        "https://united24service.ru/rekvizity/",
+        "https://united24service.ru/?manufacturer=EATON",
+        "https://companies.rbc.ru/alphabetical-catalog/companies/ju-n/5/",
+        "https://xfirm.ru/company/7820314215"
+      ],
+      "notes": "Один оператор, две площадки по сайту. Не считать дублем на основании общего ИНН; фактический прием каждой проверить отдельно.",
+      "record_id": "unitedservice-badaevskiy19",
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "name": "ЮнайтедСервис — 3-й Бадаевский",
+      "address": "пос. Шушары, 3-й Бадаевский проезд, 19, стр. 2",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО АВТОБУЛЛ",
+      "inn": "7820314470",
+      "registration_number": "1089847142219",
+      "operator_match": "preliminary",
+      "third_party_status": "active_reported",
+      "third_party_status_date": "2026-11-13",
+      "sources": [
+        "https://autobull.ru/contacts/",
+        "https://autobull.ru/assets/manager/other/%D0%A0%D0%B5%D0%BA%D0%B2%D0%B8%D0%B7%D0%B8%D1%82%D1%8B%20%D0%9E%D0%9E%D0%9E%20%D0%90%D0%B2%D1%82%D0%BE%D0%91%D1%83%D0%BB%D0%BB.pdf",
+        "https://check.tochka.com/company/1089847142219/"
+      ],
+      "notes": "Две СТО указаны на сайте, но отдельные файлы реквизитов для каждой станции необходимо сравнить перед окончательной привязкой.",
+      "record_id": "autobull-moskovskoe165",
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "name": "АвтоБулл — станция 1",
+      "address": "пос. Шушары, Московское шоссе, 165",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "legal_name": "ООО АВТОБУЛЛ",
+      "inn": "7820314470",
+      "registration_number": "1089847142219",
+      "operator_match": "preliminary",
+      "third_party_status": "active_reported",
+      "third_party_status_date": "2026-11-13",
+      "sources": [
+        "https://autobull.ru/contacts/",
+        "https://autobull.ru/assets/manager/other/%D0%A0%D0%B5%D0%BA%D0%B2%D0%B8%D0%B7%D0%B8%D1%82%D1%8B%20%D0%9E%D0%9E%D0%9E%20%D0%90%D0%B2%D1%82%D0%BE%D0%91%D1%83%D0%BB%D0%BB.pdf",
+        "https://check.tochka.com/company/1089847142219/"
+      ],
+      "notes": "Две СТО указаны на сайте, но отдельные файлы реквизитов для каждой станции необходимо сравнить перед окончательной привязкой.",
+      "record_id": "autobull-moskovskoe271",
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "name": "АвтоБулл — станция 2",
+      "address": "пос. Шушары, Московское шоссе, 271",
+      "inn_checksum_valid": true,
+      "registration_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_checked_at": null,
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "site_operating_status": "pending",
+      "coordinates_verified": false,
+      "phone_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    }
+  ],
+  "unresolved": [
+    {
+      "record_id": "remtrans-blagodatnaya",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "РемТрансСервис — Благодатная",
+      "source_urls": [
+        "https://svarka-pravka.ru/"
+      ],
+      "reason": "По доступным материалам не удалось однозначно сопоставить юридические реквизиты; не угадывать по названию.",
+      "fns_status": "pending",
+      "publication_ready": false
+    },
+    {
+      "record_id": "remtrans-gruzovoy",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "РемТрансСервис — Грузовой проезд",
+      "source_urls": [
+        "https://svarka-pravka.ru/"
+      ],
+      "reason": "По доступным материалам не удалось однозначно сопоставить юридические реквизиты; не угадывать по названию.",
+      "fns_status": "pending",
+      "publication_ready": false
+    },
+    {
+      "record_id": "transmissia-novosaratovka",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "Трансмиссия — грузовой автосервис",
+      "source_urls": [
+        "https://rem-transmissia.ru/"
+      ],
+      "reason": "По доступным материалам не удалось однозначно сопоставить юридические реквизиты; не угадывать по названию.",
+      "fns_status": "pending",
+      "publication_ready": false
+    },
+    {
+      "record_id": "spesremont-fedorovskoe",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "Спецремонт — Фёдоровское",
+      "source_urls": [
+        "https://spesremont.ru/"
+      ],
+      "reason": "По доступным материалам не удалось однозначно сопоставить юридические реквизиты; не угадывать по названию.",
+      "fns_status": "pending",
+      "publication_ready": false
+    },
+    {
+      "record_id": "transhub-bolshie-kolpany",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "ТрансХаб",
+      "source_urls": [
+        "https://trans-hub.ru/",
+        "https://gatchina.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "reason": "По доступным материалам не удалось однозначно сопоставить юридические реквизиты; не угадывать по названию.",
+      "fns_status": "pending",
+      "publication_ready": false
+    },
+    {
+      "record_id": "b52-comtran-fuchika",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "name": "КОМТРАН",
+      "source_urls": [
+        "https://comtran.ru/contact.html",
+        "https://comtran.ru/remont-tnvd.html"
+      ],
+      "reason": "По доступным материалам не удалось однозначно сопоставить юридические реквизиты; не угадывать по названию.",
+      "fns_status": "pending",
+      "publication_ready": false
+    }
+  ],
+  "policy": "Existing records only; no outreach, new cards or map publishing. Separate business identity, registry status and location verification. Third-party reported status not official proof."
+}
