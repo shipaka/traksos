@@ -1,0 +1,241 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted place and phone search in compact indexes B/C (1–31) and records 32–49, 51–53; no exact matches for these five candidates found in this pass. Full normalized cross-batch audit pending.",
+  "records": [
+    {
+      "id": "b54-sortavala-region10",
+      "name": "10-й Регион",
+      "address": "Сортавала, Выборгское шоссе, 62",
+      "phone": "+7 81430 4-70-30",
+      "additional_phones": [
+        "+7 921 226-26-10"
+      ],
+      "hours": "Пн–Пт 09:00–19:00; Сб–Вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (справочник)",
+        "ремонт грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://sortavala.spravker.ru/avtozapchasti/10-region1.htm"
+      ],
+      "notes": "Проверить прием тягачей и полуприцепов; адрес совпадает с карточкой УАЗ в справочнике.",
+      "site_kind_candidate": "specialist_mixed",
+      "road": "А121",
+      "region": "Республика Карелия",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b54-sortavala-pit-stop",
+      "name": "Pit Stop",
+      "address": "Сортавала, Выборгское шоссе, 60",
+      "phone": "+7 921 526-92-06",
+      "additional_phones": [],
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://sortavala.spravker.ru/avtomoiki/pit-stop.htm"
+      ],
+      "notes": "Список услуг справочника очень широкий; оборудование для грузовых колес нужно подтвердить.",
+      "site_kind_candidate": "tire_service",
+      "road": "А121",
+      "region": "Республика Карелия",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b54-segezha-asta",
+      "name": "Аста",
+      "address": "Сегежа, ул. Спиридонова, 24",
+      "phone": "+7 81431 4-47-75",
+      "additional_phones": [],
+      "hours": "Пн–Пт 09:00–19:00; Сб–Вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (справочник)",
+        "ремонт грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://segezha.spravker.ru/smazochnyie-materialyi/asta.htm"
+      ],
+      "notes": "Основное название в справочнике — магазин автозапчастей; наличие собственной ремонтной зоны не подтверждено.",
+      "site_kind_candidate": "specialist_mixed",
+      "road": "Р21",
+      "region": "Республика Карелия",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b54-belomorsk-zavodskaya",
+      "name": "Шиномонтаж — Заводская сторона",
+      "address": "Беломорск, район Заводская Сторона",
+      "phone": "+7 953 532-84-06",
+      "additional_phones": [],
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://belomorsk.spravker.ru/shinomontazh/shinomontazh.htm",
+        "https://segezha.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Номер здания неизвестен; не публиковать до получения точной точки.",
+      "site_kind_candidate": "tire_service",
+      "road": "подъезд к Р21",
+      "region": "Республика Карелия",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b54-medvezhegorsk-chkalova",
+      "name": "Шиномонтаж — Чкалова",
+      "address": "Медвежьегорск, ул. Чкалова",
+      "phone": "+7 921 460-44-80",
+      "additional_phones": [],
+      "hours": "круглосуточно (по справочнику)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://medvezhegorsk.spravker.ru/org/shinomontazh3.htm",
+        "https://segezha.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Номер здания неизвестен; круглосуточность не подтверждена.",
+      "site_kind_candidate": "tire_service",
+      "road": "Р21",
+      "region": "Республика Карелия",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Урал-Авто",
+      "address": "Волосово, ул. Строителей, 11",
+      "phone": "+7 911 918-65-68",
+      "region": "Ленинградская область",
+      "source_urls": [
+        "https://spravbiz.ru/volosovo/company-ural-avto/",
+        "https://yandex.com/maps/org/ural_avto/84443499735/",
+        "https://check.tochka.com/region/volosovo/"
+      ],
+      "reason": "Справочник заявляет грузовой шиномонтаж, но найдено сообщение о ликвидации одноименного ООО в 2018 году; действующего оператора нужно установить. Не считать новой активной точкой."
+    },
+    {
+      "name": "Автосервис Хелюля",
+      "address": "Хелюля, Сортавальское шоссе, 64",
+      "phone": "+7 921 628-26-28",
+      "source_urls": [
+        "https://karelia.auto2.info/petrozavodsk/avtoservis-moyka-shinomontazh-zapchasti-dlya-inomarok-437730/"
+      ],
+      "reason": "Коммерческий транспорт и прицепы в перечне, но тяжелые грузовики не подтверждены."
+    },
+    {
+      "name": "Шиномонтаж Сегежа",
+      "address": "Сегежа, ул. Спиридонова",
+      "phone": "+7 909 570-95-40",
+      "source_urls": [
+        "https://segezha.spravker.ru/shinomontazh/shinomontazh-5.htm"
+      ],
+      "reason": "Нет номера здания; проверить отличие от Аста."
+    },
+    {
+      "name": "Рогатино",
+      "address": "д. Рогатино, 51А",
+      "phone": null,
+      "source_urls": [
+        "https://spravbiz.ru/volosovo/company-d9d760b1-023e-4e0e-846d-275a629e0f0a/"
+      ],
+      "reason": "Номер телефона в источнике скрыт частично; не добавлять в основной массив."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Грузовой шиномонтаж и автомойка",
+      "batch": 25,
+      "address": "Лодейное Поле, Северный проезд, 1",
+      "phone": "+7 960 261-06-33",
+      "alternative_address": "Республиканский тракт, 11, корп. 1",
+      "additional_phones": [
+        "+7 921 905-35-10"
+      ],
+      "source_urls": [
+        "https://lodejnoe-pole.spravmer.ru/avtomobili/"
+      ],
+      "reason": "Один телефон в двух карточках с разными адресами; уточнить переезд или отдельный филиал. Не считать новой точкой."
+    }
+  ]
+}
