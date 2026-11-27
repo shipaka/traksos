@@ -1,0 +1,1631 @@
+{
+  "schema": "sto-directory-audit-v1",
+  "date": "2026-11-27",
+  "scope": "batches 17–31 only",
+  "metrics": {
+    "files": 15,
+    "records": 172,
+    "phone_present": 172,
+    "email_present": 77,
+    "spb_lo": 35,
+    "publication_ready": 0,
+    "kind": {
+      "legacy_unclassified": 172
+    },
+    "exact_address_groups": 0,
+    "address_rows": 0,
+    "shared_phone_groups": 6,
+    "phone_rows": 19
+  },
+  "failed": [],
+  "files": [
+    {
+      "name": "sto-kaluga-tula-ryazan-orel-batch17",
+      "count": 12
+    },
+    {
+      "name": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "count": 12
+    },
+    {
+      "name": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "count": 11
+    },
+    {
+      "name": "sto-north-caucasus-batch20",
+      "count": 9
+    },
+    {
+      "name": "sto-komi-yakutia-khmao-yanao-batch21",
+      "count": 15
+    },
+    {
+      "name": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "count": 8
+    },
+    {
+      "name": "sto-kaliningrad-eao-batch23",
+      "count": 15
+    },
+    {
+      "name": "sto-northwest-perm-nao-batch24",
+      "count": 5
+    },
+    {
+      "name": "sto-m10-r21-a180-batch25",
+      "count": 6
+    },
+    {
+      "name": "sto-m4-m5-batch26",
+      "count": 11
+    },
+    {
+      "name": "sto-m7-m8-m12-batch27",
+      "count": 13
+    },
+    {
+      "name": "sto-m1-m9-batch28",
+      "count": 10
+    },
+    {
+      "name": "sto-moscow-spb-priority-batch29",
+      "count": 21
+    },
+    {
+      "name": "sto-spb-lo-priority-batch30",
+      "count": 12
+    },
+    {
+      "name": "sto-spb-lo-priority-batch31",
+      "count": 12
+    }
+  ],
+  "exact_address_review": [],
+  "shared_phone_review": [
+    [
+      {
+        "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+        "id": "dalsto-severny",
+        "name": "Дальнобойщик — Северный",
+        "region": "Белгородская область",
+        "address": "пос. Северный, ул. Берёзовая, 3, стр. 4",
+        "phone": "+7 920 586-83-74"
+      },
+      {
+        "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+        "id": "dalsto-belgorod",
+        "name": "Дальнобойщик — Белгород",
+        "region": "Белгородская область",
+        "address": "Белгород, ул. Константина Заслонова, 52",
+        "phone": "+7 920 586-83-74"
+      }
+    ],
+    [
+      {
+        "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+        "id": "fngroup-minvody",
+        "name": "FNGROUP — Минеральные Воды",
+        "region": "Ставропольский край",
+        "address": "Минеральные Воды, Советская ул., 18",
+        "phone": "8 800 100-86-58"
+      },
+      {
+        "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+        "id": "fngroup-adygea",
+        "name": "FNGROUP — Адыгея",
+        "region": "Республика Адыгея",
+        "address": "Теучежский район, Южный объезд Краснодара, км 1+400 м справа, западнее аула Тугургой",
+        "phone": "8 800 100-86-58"
+      },
+      {
+        "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+        "id": "fngroup-makhachkala",
+        "name": "FNGROUP — Махачкала",
+        "region": "Республика Дагестан",
+        "address": "Махачкала, Юго-восточная промзона, ул. Производственная, 67, территория ООО Аквамаг",
+        "phone": "8 800 100-86-58"
+      }
+    ],
+    [
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-altuf",
+        "name": "Дакар-Авто — Алтуфьево",
+        "region": "Москва",
+        "address": "Москва, Алтуфьевское шоссе, 27",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-ochakovo",
+        "name": "Дакар-Авто — Очаково",
+        "region": "Москва",
+        "address": "Москва, Очаковское шоссе, 44",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-lobnya",
+        "name": "Дакар-Авто — Лобня",
+        "region": "Московская область",
+        "address": "Лобня, Букинское шоссе, 39",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-schelkovo",
+        "name": "Дакар-Авто — Щёлково",
+        "region": "Московская область",
+        "address": "Щёлково, ул. Заречная, 109В, стр. 2",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-nekras",
+        "name": "Дакар-Авто — Некрасовский",
+        "region": "Московская область",
+        "address": "Дмитровский округ, рп. Некрасовский, мкр. Строителей, 20Д",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-chekhov",
+        "name": "Дакар-Авто — Чехов",
+        "region": "Московская область",
+        "address": "Чехов-1, ул. Восточная, вл. 1",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-podolsk",
+        "name": "Дакар-Авто — Подольск",
+        "region": "Московская область",
+        "address": "Подольский округ, с. Сынково, 25А",
+        "phone": "+7 495 125-00-11"
+      },
+      {
+        "file": "sto-moscow-spb-priority-batch29",
+        "id": "dakar-khimki",
+        "name": "Дакар-Авто — Химки",
+        "region": "Московская область",
+        "address": "Химки, Малый проезд, 2",
+        "phone": "+7 495 125-00-11"
+      }
+    ],
+    [
+      {
+        "file": "sto-spb-lo-priority-batch30",
+        "id": "remtrans-blagodatnaya",
+        "name": "РемТрансСервис — Благодатная",
+        "region": "Санкт-Петербург",
+        "address": "Благодатная ул., 65Ж",
+        "phone": "+7 931 393-65-39"
+      },
+      {
+        "file": "sto-spb-lo-priority-batch30",
+        "id": "remtrans-gruzovoy",
+        "name": "РемТрансСервис — Грузовой проезд",
+        "region": "Санкт-Петербург",
+        "address": "Грузовой проезд, 13Г1 (в тексте сайта также 13Ж)",
+        "phone": "+7 931 393-65-39"
+      }
+    ],
+    [
+      {
+        "file": "sto-spb-lo-priority-batch31",
+        "id": "unitedservice-poselkovaya",
+        "name": "ЮнайтедСервис — Поселковая",
+        "region": "Санкт-Петербург",
+        "address": "пос. Шушары, ул. Поселковая, 7",
+        "phone": "+7 812 740-58-35"
+      },
+      {
+        "file": "sto-spb-lo-priority-batch31",
+        "id": "unitedservice-badaevskiy19",
+        "name": "ЮнайтедСервис — 3-й Бадаевский",
+        "region": "Санкт-Петербург",
+        "address": "пос. Шушары, 3-й Бадаевский проезд, 19, стр. 2",
+        "phone": "+7 812 740-58-35"
+      }
+    ],
+    [
+      {
+        "file": "sto-spb-lo-priority-batch31",
+        "id": "autobull-moskovskoe165",
+        "name": "АвтоБулл — станция 1",
+        "region": "Санкт-Петербург",
+        "address": "пос. Шушары, Московское шоссе, 165",
+        "phone": "+7 812 325-70-70"
+      },
+      {
+        "file": "sto-spb-lo-priority-batch31",
+        "id": "autobull-moskovskoe271",
+        "name": "АвтоБулл — станция 2",
+        "region": "Санкт-Петербург",
+        "address": "пос. Шушары, Московское шоссе, 271",
+        "phone": "+7 812 325-70-70"
+      }
+    ]
+  ],
+  "compact_index": [
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "hdac-kaluga",
+      "name": "Сервисный центр HD-AC",
+      "region": "Калужская область",
+      "address": "Калуга, ул. Московская, 289, корп. 7",
+      "phone": "+7 4842 57-00-75"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "autokontinent40-kaluga",
+      "name": "Автоконтинент 40",
+      "region": "Калужская область",
+      "address": "Калуга, Грабцевский проезд, 8",
+      "phone": "+7 4842 27-84-84"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "efura-kaluga",
+      "name": "Еврофура",
+      "region": "Калужская область",
+      "address": "Калуга, Грабцевское шоссе, 22",
+      "phone": "+7 910 512-32-75"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "globalavto-tula",
+      "name": "ГлобалАвто",
+      "region": "Тульская область",
+      "address": "Щёкинский район, д. Пироговка-Ульяновка, 2А",
+      "phone": "+7 915 684-47-74"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "ngservice-barsuki",
+      "name": "НерудГрупп Сервис",
+      "region": "Тульская область",
+      "address": "пос. Барсуки, ул. Песочная, 35",
+      "phone": "+7 905 116-95-27"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "atlservice-barsuki",
+      "name": "АТЛ Сервис",
+      "region": "Тульская область",
+      "address": "пос. Барсуки, ул. Мелиоративная, 1",
+      "phone": "+7 906 622-55-84"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "ostavto-ryazan",
+      "name": "ОСТ-АВТО",
+      "region": "Рязанская область",
+      "address": "Рязань, ул. Связи, 25, стр. 2",
+      "phone": "+7 961 130-88-70"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "avtomet-ryazan",
+      "name": "АвтоМет",
+      "region": "Рязанская область",
+      "address": "Рязань, 195-й км окружной дороги М-5 Урал, стр. 2",
+      "phone": "+7 915 590-72-65"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "bat62-ryazan",
+      "name": "BAT62",
+      "region": "Рязанская область",
+      "address": "Рязань, станция Лесок, 25",
+      "phone": "8 804 700-12-87"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "avtotransremont-orel",
+      "name": "Автотрансремонт",
+      "region": "Орловская область",
+      "address": "Орёл, Новосильское шоссе, 11, офис 1",
+      "phone": "+7 919 269-21-77"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "lider-nikulichi",
+      "name": "Лидер",
+      "region": "Орловская область",
+      "address": "Орловский район, д. Никуличи, ул. Наугорская, 27",
+      "phone": "+7 919 269-77-77"
+    },
+    {
+      "file": "sto-kaluga-tula-ryazan-orel-batch17",
+      "id": "servicecentrum-orel",
+      "name": "Сервисный центр Centrum",
+      "region": "Орловская область",
+      "address": "Орёл, Московское шоссе, 173",
+      "phone": "+7 920 088-80-11"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "avtotrak-suponevo",
+      "name": "АвтоТрак",
+      "region": "Брянская область",
+      "address": "с. Супонево, ул. Ленина, 141",
+      "phone": "+7 961 003-81-93"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "sovavto-sven",
+      "name": "СовАвто-Сервис",
+      "region": "Брянская область",
+      "address": "пос. Свень, ул. Соборная, 21",
+      "phone": "+7 961 004-05-42"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "agrozapchast-suponevo",
+      "name": "АгроЗапчасть",
+      "region": "Брянская область",
+      "address": "с. Супонево, ул. Ленина, 131Б",
+      "phone": "+7 4832 300-032"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "uf46-kursk",
+      "name": "У Француза",
+      "region": "Курская область",
+      "address": "Курск, ул. Кирпичная, 21В",
+      "phone": "+7 960 674-90-00"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "furgon46-kursk",
+      "name": "Фургон Сервис",
+      "region": "Курская область",
+      "address": "Курск, ул. Магистральная, 11",
+      "phone": "+7 951 322-83-38"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "amk-shacman-kursk",
+      "name": "SHACMAN РФ — АМККОМТРАНС",
+      "region": "Курская область",
+      "address": "Курск, ул. 50 лет Октября, 124Д",
+      "phone": "+7 4712 36-02-57"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "dalsto-severny",
+      "name": "Дальнобойщик — Северный",
+      "region": "Белгородская область",
+      "address": "пос. Северный, ул. Берёзовая, 3, стр. 4",
+      "phone": "+7 920 586-83-74"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "dalsto-belgorod",
+      "name": "Дальнобойщик — Белгород",
+      "region": "Белгородская область",
+      "address": "Белгород, ул. Константина Заслонова, 52",
+      "phone": "+7 920 586-83-74"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "goodtrucks-severny",
+      "name": "ГудТракс",
+      "region": "Белгородская область",
+      "address": "пос. Северный, ул. Транспортная, 14",
+      "phone": "+7 4722 77-88-00"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "reftransservice-streletskoe",
+      "name": "РефТрансСервис",
+      "region": "Белгородская область",
+      "address": "с. Стрелецкое, пер. Королёва, 35",
+      "phone": "+7 4722 37-41-88"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "volgotehsnab-astrakhan",
+      "name": "Волготехснаб-Каспий",
+      "region": "Астраханская область",
+      "address": "Астрахань, Фунтовское шоссе, 9Б",
+      "phone": "+7 8512 21-30-00"
+    },
+    {
+      "file": "sto-bryansk-kursk-belgorod-astrakhan-batch18",
+      "id": "neys-yug-solyanka",
+      "name": "Нейс-Юг",
+      "region": "Астраханская область",
+      "address": "с. Солянка, ул. Элистинская, 10",
+      "phone": "+7 8512 20-10-18"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "aks-stavropol",
+      "name": "Автокрансервис",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, ул. 1-я Промышленная, 30",
+      "phone": "+7 8652 56-15-44"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "sarmat-stavropol",
+      "name": "Сармат",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, ул. Коломийцева, 6Б",
+      "phone": "+7 968 266-88-11"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "cabover-donskoe",
+      "name": "Кабовер — сервис",
+      "region": "Ставропольский край",
+      "address": "с. Донское, ул. Придорожная, 5",
+      "phone": "8 800 250-29-75"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "fngroup-minvody",
+      "name": "FNGROUP — Минеральные Воды",
+      "region": "Ставропольский край",
+      "address": "Минеральные Воды, Советская ул., 18",
+      "phone": "8 800 100-86-58"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "transcom-takhtamukay",
+      "name": "Транском-Сервис",
+      "region": "Республика Адыгея",
+      "address": "аул Тахтамукай, ул. Совмена, 77/5",
+      "phone": "+7 988 367-69-20"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "a146-takhtamukay",
+      "name": "Грузовое СТО А-146",
+      "region": "Республика Адыгея",
+      "address": "Тахтамукайский район, А-146, 27-й км, 38",
+      "phone": "+7 999 080-80-80"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "fngroup-adygea",
+      "name": "FNGROUP — Адыгея",
+      "region": "Республика Адыгея",
+      "address": "Теучежский район, Южный объезд Краснодара, км 1+400 м справа, западнее аула Тугургой",
+      "phone": "8 800 100-86-58"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "fngroup-makhachkala",
+      "name": "FNGROUP — Махачкала",
+      "region": "Республика Дагестан",
+      "address": "Махачкала, Юго-восточная промзона, ул. Производственная, 67, территория ООО Аквамаг",
+      "phone": "8 800 100-86-58"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "kamaz-workshop-makhachkala",
+      "name": "Автомастерская грузовых автомобилей — Амет-Хана Султана",
+      "region": "Республика Дагестан",
+      "address": "Махачкала, просп. Амет-Хана Султана, 35Б/84",
+      "phone": "+7 928 520-01-95"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "lantsinov-elista",
+      "name": "ИП Ланцинов — грузовой ремонт",
+      "region": "Республика Калмыкия",
+      "address": "Элиста, Северная промышленная зона-2",
+      "phone": "+7 922 739-39-29"
+    },
+    {
+      "file": "sto-stavropol-dagestan-kalmykia-adygea-batch19",
+      "id": "avtotehservis-elista",
+      "name": "АвтоТехСервис",
+      "region": "Республика Калмыкия",
+      "address": "Элиста, ул. В.И. Ленина, 12",
+      "phone": "+7 961 547-22-22"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "truckcentr-vladikavkaz",
+      "name": "Truck Центр",
+      "region": "Республика Северная Осетия — Алания",
+      "address": "Владикавказ, Гизельское шоссе, 50",
+      "phone": "+7 928 072-90-09"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "kamaz-centre-grozny",
+      "name": "КАМАЗ Центр",
+      "region": "Чеченская Республика",
+      "address": "Грозный, ул. Екатерины Батаевой, 35",
+      "phone": "+7 938 993-36-36"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "transagro-nalchik",
+      "name": "Трансагросервис",
+      "region": "Кабардино-Балкарская Республика",
+      "address": "Нальчик, 3-й Промышленный проезд, 12",
+      "phone": "+7 8662 96-20-12"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "shacman-nazran",
+      "name": "Шакман-Сервис",
+      "region": "Республика Ингушетия",
+      "address": "Назрань, Насыр-Кортский административный округ, ул. Пионерская, 1А",
+      "phone": "+7 928 099-38-35"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "transsnab-cherkessk",
+      "name": "Трансснаб — сервисный центр",
+      "region": "Карачаево-Черкесская Республика",
+      "address": "Черкесск, Пятигорское шоссе, 19Б",
+      "phone": "+7 928 925-23-10"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "kardanbalans-vladikavkaz",
+      "name": "КарданБаланс",
+      "region": "Республика Северная Осетия — Алания",
+      "address": "Владикавказ, ул. Ставропольская, 2Б",
+      "phone": "8 800 555-50-37"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "vianor-nalchik",
+      "name": "Vianor — шинный центр",
+      "region": "Кабардино-Балкарская Республика",
+      "address": "Нальчик, ул. Идарова, 37",
+      "phone": "+7 8662 96-62-66"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "diag-saykhanova-grozny",
+      "name": "Мастерская по автодиагностике",
+      "region": "Чеченская Республика",
+      "address": "Грозный, ул. Сайханова, 192А",
+      "phone": "+7 928 746-27-42"
+    },
+    {
+      "file": "sto-north-caucasus-batch20",
+      "id": "imperia-nazran",
+      "name": "Империя",
+      "region": "Республика Ингушетия",
+      "address": "Назрань, Кабардинский пер., 1",
+      "phone": "+7 929 886-66-60"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "avtotrans-syktyvkar",
+      "name": "Автотранс",
+      "region": "Республика Коми",
+      "address": "Сыктывкар, ул. Лесопарковая, 26",
+      "phone": "+7 909 122-07-77"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "lps-vylgort-service",
+      "name": "Леспромсервис — ремонтный цех",
+      "region": "Республика Коми",
+      "address": "с. Выльгорт, Сысольское шоссе, 3А",
+      "phone": "+7 8212 72-03-68"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "lps-vylgort-body",
+      "name": "Леспромсервис — кузовной цех",
+      "region": "Республика Коми",
+      "address": "с. Выльгорт, Сысольское шоссе, стр. 29",
+      "phone": "+7 8212 48-04-04 доб. 310"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "eskidan-ukhta",
+      "name": "СТО Скидан",
+      "region": "Республика Коми",
+      "address": "Ухта, ул. Транспортная, 1",
+      "phone": "+7 912 947-67-32"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "aps-vylgort",
+      "name": "Автопромсервис",
+      "region": "Республика Коми",
+      "address": "с. Выльгорт, Сысольское шоссе, 3В",
+      "phone": "+7 8212 48-04-04"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "kamaz-yakutsk",
+      "name": "Якутский автоцентр КАМАЗ",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. Челюскина, 37/6",
+      "phone": "+7 914 102-91-53"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "eurotrak-yakutsk",
+      "name": "ЕвроТракСервис",
+      "region": "Республика Саха (Якутия)",
+      "address": "Якутск, ул. Очиченко, 41А",
+      "phone": "+7 4112 23-90-39"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "raritek-neryungri",
+      "name": "РариТЭК — Нерюнгри",
+      "region": "Республика Саха (Якутия)",
+      "address": "Нерюнгри, ул. Северная, 13",
+      "phone": "+7 41147 9-95-00"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "remsd-surgut",
+      "name": "РемСД",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургут, ул. Домостроителей, 13",
+      "phone": "+7 922 448-88-22"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "agp-surgut",
+      "name": "Всё для полуприцепов",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургут, ул. Индустриальная, 4п",
+      "phone": "+7 922 253-17-77"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "trucksun-surgut",
+      "name": "TruckSun — Сургут",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургут, ул. Индустриальная, 16",
+      "phone": "+7 922 778-57-00"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "stotrack-solnechny",
+      "name": "STOTRACK",
+      "region": "Ханты-Мансийский автономный округ — Югра",
+      "address": "Сургутский район, пос. Солнечный, БПО",
+      "phone": "+7 3462 90-29-09"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "solutions-novy-urengoy",
+      "name": "Сервисные решения",
+      "region": "Ямало-Ненецкий автономный округ",
+      "address": "Новый Уренгой, ул. Магистральная, 40, Западная промзона, панель Е, бокс 1",
+      "phone": "+7 919 550-72-35"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "ngservis-novy-urengoy",
+      "name": "НГ-Сервис КАМАЗ",
+      "region": "Ямало-Ненецкий автономный округ",
+      "address": "Новый Уренгой, ул. Магистральная, 46Б",
+      "phone": "+7 922 056-22-33"
+    },
+    {
+      "file": "sto-komi-yakutia-khmao-yanao-batch21",
+      "id": "ets-novy-urengoy",
+      "name": "ЕТС — Новый Уренгой",
+      "region": "Ямало-Ненецкий автономный округ",
+      "address": "Новый Уренгой, ул. Таёжная, 141/1",
+      "phone": "+7 3494 91-31-36"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "kamaz-magadan",
+      "name": "Магаданский автоцентр КАМАЗ",
+      "region": "Магаданская область",
+      "address": "Магадан, Марчеканское шоссе, 44",
+      "phone": "+7 4132 226-624"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "gts-magadan",
+      "name": "Глобал Трак Сервис",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Транспортная, 3, стр. 1",
+      "phone": "+7 965 424-98-00"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "sakhgruzservis",
+      "name": "СахГрузСервис",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Шлакоблочная, 34А/2",
+      "phone": "+7 4242 72-79-60"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "hino-sakhalin",
+      "name": "Сахалин-Запчастьсервис",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Шлакоблочная, 37",
+      "phone": "+7 4242 505-740"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "gruzsto-zaozernaya",
+      "name": "Грузовое СТО",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Заозёрная, 37/1",
+      "phone": "+7 4152 33-38-33"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "avtoreal17-kyzyl",
+      "name": "Автореал17rus",
+      "region": "Республика Тыва",
+      "address": "Кызыл, ул. Магистральная, 7",
+      "phone": "+7 923 385-77-77"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "bastion-kyzyl",
+      "name": "БастиОН — шиномонтаж",
+      "region": "Республика Тыва",
+      "address": "Кызыл, ул. Калинина, 144",
+      "phone": "+7 923 540-33-33"
+    },
+    {
+      "file": "sto-magadan-sakhalin-kamchatka-tyva-altai-batch22",
+      "id": "tyre-podgornaya-mayma",
+      "name": "Шиномонтажная мастерская",
+      "region": "Республика Алтай",
+      "address": "с. Майма, ул. Подгорная, 2/2",
+      "phone": "+7 913 696-87-97"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "ds-truck-maloelesnoe",
+      "name": "ДС Трак",
+      "region": "Калининградская область",
+      "address": "пос. Малое Лесное, ул. Морская, 24А",
+      "phone": "+7 962 261-79-72"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "baltpart-kaliningrad",
+      "name": "Балт-Парт",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Магистральная, 3",
+      "phone": "+7 981 471-05-68"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "autocom-energetikov",
+      "name": "АвтоКом — Энергетиков",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Энергетиков, 9",
+      "phone": "+7 908 290-36-90"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "autocom-guryevsk",
+      "name": "АвтоКом — Гурьевск",
+      "region": "Калининградская область",
+      "address": "Гурьевск, ул. Западная, 1",
+      "phone": "+7 911 472-11-43"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "lorry-poddubnoe",
+      "name": "Лорри Сервис Плюс",
+      "region": "Калининградская область",
+      "address": "пос. Поддубное, ул. Берлинская, 1",
+      "phone": "+7 4012 30-64-70"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "technik-kng-dorozhnoe",
+      "name": "Техник КНГ — Дорожное",
+      "region": "Калининградская область",
+      "address": "пос. Дорожное, Датский проезд, 3А",
+      "phone": "+7 4012 38-66-03"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "technik-kng-kaliningrad",
+      "name": "Техник КНГ — Калининград",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Дзержинского, 244",
+      "phone": "+7 4012 38-66-02"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "konig-north",
+      "name": "КёнигТракСервис — Север",
+      "region": "Калининградская область",
+      "address": "пос. Малое Исаково, ул. Мелиоративная, 7",
+      "phone": "+7 4012 597-123"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "konig-south",
+      "name": "КёнигТракСервис — Юг",
+      "region": "Калининградская область",
+      "address": "пос. Рощино, ул. Сельская, 2",
+      "phone": "+7 4012 635-135 доб. 1"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "euroservice-kholmogorovka",
+      "name": "Евросервис",
+      "region": "Калининградская область",
+      "address": "пос. Холмогоровка, ул. Новостроевская, 23",
+      "phone": "+7 4012 31-00-60"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "olimp-birobidzhan",
+      "name": "Олимп",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Шолом-Алейхема, 124",
+      "phone": "+7 924 642-66-66"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "stormauto-birobidzhan",
+      "name": "Штормавто — Поул Позишн",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Советская, 123Б",
+      "phone": "+7 924 640-44-54"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "tyre-sovetskaya125",
+      "name": "Шиномонтажный комплекс",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Советская, 125",
+      "phone": "+7 924 151-61-88"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "tyre-pionerskaya66b",
+      "name": "Шиномонтаж",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Пионерская, 66Б",
+      "phone": "+7 914 818-20-11"
+    },
+    {
+      "file": "sto-kaliningrad-eao-batch23",
+      "id": "kolyana-r297",
+      "name": "У Коляна — шиномонтаж",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджанский район, Р-297 Амур, 1972-й км",
+      "phone": "+7 924 643-04-44"
+    },
+    {
+      "file": "sto-northwest-perm-nao-batch24",
+      "id": "eurotransavto-krasny-bor",
+      "name": "Евротрансавто",
+      "region": "Ленинградская область",
+      "address": "Красный Бор, ул. Полевая, 5",
+      "phone": "+7 812 449-60-50"
+    },
+    {
+      "file": "sto-northwest-perm-nao-batch24",
+      "id": "sitrak159-gorny",
+      "name": "Грузовой сервис SITRAK",
+      "region": "Пермский край",
+      "address": "пос. Горный, Берёзовый пер., 5",
+      "phone": "+7 922 300-33-22"
+    },
+    {
+      "file": "sto-northwest-perm-nao-batch24",
+      "id": "interkamaz-perm",
+      "name": "ИнтерКАМАЗ",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Верхне-Муллинская, 134",
+      "phone": "+7 342 273-00-15"
+    },
+    {
+      "file": "sto-northwest-perm-nao-batch24",
+      "id": "autoelectric-spb",
+      "name": "AutoElectric-SPb",
+      "region": "Санкт-Петербург",
+      "address": "Шушары (точный адрес не опубликован); зона выезда Санкт-Петербург и Ленинградская область",
+      "phone": "+7 812 904-71-01"
+    },
+    {
+      "file": "sto-northwest-perm-nao-batch24",
+      "id": "atp83-naryan-mar",
+      "name": "МУП Нарьян-Марское АТП",
+      "region": "Ненецкий автономный округ",
+      "address": "Нарьян-Мар, ул. Юбилейная, 22",
+      "phone": "+7 81853 4-48-00"
+    },
+    {
+      "file": "sto-m10-r21-a180-batch25",
+      "id": "asta-kola",
+      "name": "АСТА / Cordiant Professional — Кола",
+      "region": "Мурманская область",
+      "address": "Кола, пр. Миронова, 10",
+      "phone": "+7 81553 3-23-42"
+    },
+    {
+      "file": "sto-m10-r21-a180-batch25",
+      "id": "tyre-lodeynoe-severny",
+      "name": "Грузовой шиномонтаж и автомойка",
+      "region": "Ленинградская область",
+      "address": "Лодейное Поле, Северный проезд, 1",
+      "phone": "+7 960 261-06-33"
+    },
+    {
+      "file": "sto-m10-r21-a180-batch25",
+      "id": "trucksdoctor-volochek",
+      "name": "Trucks Doctor",
+      "region": "Тверская область",
+      "address": "Вышний Волочёк, пос. Газовый, 4А",
+      "phone": "+7 919 054-48-34"
+    },
+    {
+      "file": "sto-m10-r21-a180-batch25",
+      "id": "truckrepair-volochek105",
+      "name": "Ремонт грузовых автомобилей — Московское шоссе",
+      "region": "Тверская область",
+      "address": "Вышний Волочёк, Московское шоссе, 105",
+      "phone": "+7 915 718-10-00"
+    },
+    {
+      "file": "sto-m10-r21-a180-batch25",
+      "id": "truckm10-valdai",
+      "name": "Truck M10",
+      "region": "Новгородская область",
+      "address": "Валдай, М-10, 389-й км; адрес расходится: Выскодно 2, 11Б (индекс сайта), Выскодно 1, 1 (справочник)",
+      "phone": "+7 911 242-42-40"
+    },
+    {
+      "file": "sto-m10-r21-a180-batch25",
+      "id": "homservice-maly-lutsk",
+      "name": "Hom Service",
+      "region": "Ленинградская область",
+      "address": "Кингисеппский район, д. Малый Луцк",
+      "phone": "+7 965 001-20-15"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "truck136-losevo",
+      "name": "Truck136",
+      "region": "Воронежская область",
+      "address": "с. Лосево, просп. Революции, 57",
+      "phone": "+7 910 738-00-11"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "alfa-don-pavlovsk",
+      "name": "Альфа Дон",
+      "region": "Воронежская область",
+      "address": "Павловск, ул. Строительная, 42А",
+      "phone": "8 800 100-72-20"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "sto-galkino-m4",
+      "name": "Грузовой сервис Галкино",
+      "region": "Воронежская область",
+      "address": "Рамонский район, с. Галкино, ул. Дорожная, 29, М-4 480-й км",
+      "phone": "+7 903 850-82-63"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "truckservice-syzran",
+      "name": "Truck Service",
+      "region": "Самарская область",
+      "address": "Сызрань, ул. Гаражная, 48",
+      "phone": "+7 987 959-00-06"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "volvo63-syzran",
+      "name": "Volvo 63",
+      "region": "Самарская область",
+      "address": "Сызрань, ул. Кадровая, 16",
+      "phone": "+7 927 212-48-92"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "sokol-kuznetsk",
+      "name": "Сокол",
+      "region": "Пензенская область",
+      "address": "Кузнецк, ул. Стекловская, 102",
+      "phone": "+7 927 368-40-00"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "motorservice-kuznetsk",
+      "name": "Моторсервис",
+      "region": "Пензенская область",
+      "address": "Кузнецк, ул. Октябрьская, 3Г",
+      "phone": "+7 927 364-63-89"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "u-andreya-m5",
+      "name": "У Андрея",
+      "region": "Челябинская область",
+      "address": "Ашинский район, М-5 Урал, 1595-й км",
+      "phone": "+7 919 327-01-00"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "stodorog-ustkatav",
+      "name": "СтоДорог",
+      "region": "Челябинская область",
+      "address": "Усть-Катав, ул. Строителей, 23",
+      "phone": "+7 919 337-65-27"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "ref-m5-785",
+      "name": "Ремонт рефрижераторов и отопителей — М-5",
+      "region": "Ульяновская область",
+      "address": "Николаевский район, М-5 Урал, 785-й км",
+      "phone": "+7 951 298-08-98"
+    },
+    {
+      "file": "sto-m4-m5-batch26",
+      "id": "truckservice-elets-lomonosova",
+      "name": "Грузовой автосервис — Ломоносова",
+      "region": "Липецкая область",
+      "address": "Елец, ул. Ломоносова, 21",
+      "phone": "+7 915 552-05-38"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "nrtp-vyazniki",
+      "name": "Нововязниковское РТП",
+      "region": "Владимирская область",
+      "address": "Вязники, ул. Механизаторов, 90А",
+      "phone": "+7 920 902-28-69"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "tehpomosh-nn-m7",
+      "name": "Техпомощь НН",
+      "region": "Владимирская область",
+      "address": "Гороховецкий район, М-7 Волга, 332-й км",
+      "phone": "+7 920 292-56-01"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "avtopartner-m7",
+      "name": "Автопартнер",
+      "region": "Владимирская область",
+      "address": "Гороховецкий район, М-7 Волга, 331-й км",
+      "phone": "+7 920 905-25-87"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "pmk-gorokhovets",
+      "name": "Автосервис ПМК",
+      "region": "Владимирская область",
+      "address": "Гороховец, ул. Гагарина, 36",
+      "phone": "+7 920 913-30-53"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "truckservice-kstovo-stolbishchenskaya",
+      "name": "Грузовой автосервис",
+      "region": "Нижегородская область",
+      "address": "Кстово, ул. Столбищенская, 2",
+      "phone": "+7 930 071-00-01"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "7truckservice-kstovo",
+      "name": "7ТракСервис",
+      "region": "Нижегородская область",
+      "address": "Кстово, ул. 1 Мая, 129",
+      "phone": "+7 920 070-30-02"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "danilov-atp",
+      "name": "Даниловское АТП",
+      "region": "Ярославская область",
+      "address": "Данилов, ул. Ярославская, 79",
+      "phone": "+7 906 635-80-11"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "nptrans-yaroslavl",
+      "name": "НП-ТРАНС",
+      "region": "Ярославская область",
+      "address": "Ярославль, Московское шоссе, 9-й км, стр. 6 (строение по справочнику)",
+      "phone": "+7 910 978-94-91"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "remzona-zeleny-bor",
+      "name": "RemZona",
+      "region": "Архангельская область",
+      "address": "Вельский район, пос. Зелёный Бор",
+      "phone": "+7 900 911-32-47"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "avtospas-velsk",
+      "name": "Автоспас",
+      "region": "Архангельская область",
+      "address": "Вельск, ул. Тракторная, 18А",
+      "phone": "+7 900 918-69-69"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "avtokam-murom",
+      "name": "Автокам",
+      "region": "Владимирская область",
+      "address": "Муром, Берёзовый проезд, 7",
+      "phone": "+7 920 901-85-87"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "dalnoboyshik-murom",
+      "name": "Дальнобойщик",
+      "region": "Владимирская область",
+      "address": "Муром, Меленковское шоссе, 23Б",
+      "phone": "+7 920 925-92-52"
+    },
+    {
+      "file": "sto-m7-m8-m12-batch27",
+      "id": "truckservice-arzamas-kalinina",
+      "name": "Автосервис грузовых автомобилей",
+      "region": "Нижегородская область",
+      "address": "Арзамас, ул. Калинина, 66",
+      "phone": "+7 967 711-16-66"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "bv-service-odintsovo",
+      "name": "БВ СЕРВИС",
+      "region": "Московская область",
+      "address": "Одинцово, ул. Внуковская, 9",
+      "phone": "+7 495 204-19-49"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "danko-trans-vyazma",
+      "name": "Данко-Транс",
+      "region": "Смоленская область",
+      "address": "Вязьма, Сычёвское шоссе, 79",
+      "phone": "+7 951 706-70-60"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "talan-vyazma",
+      "name": "Талан",
+      "region": "Смоленская область",
+      "address": "Вязьма, ул. Панино, 26Б",
+      "phone": "+7 900 223-93-93"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "gruzservice-rzhev-ostashkov95",
+      "name": "Грузовой Автосервис",
+      "region": "Тверская область",
+      "address": "Ржев, Осташковское шоссе, 95",
+      "phone": "+7 915 717-76-51"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "truckpoint-torchilovo",
+      "name": "Трак Поинт",
+      "region": "Псковская область",
+      "address": "д. Торчилово, ул. Загородная, 43А",
+      "phone": "+7 911 890-55-55"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "razval-velikie-luki-136",
+      "name": "Грузовой Развал-Схождение",
+      "region": "Псковская область",
+      "address": "Великие Луки, Октябрьский проспект, 136",
+      "phone": "+7 911 696-41-11"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "resurs-avto-velikie-luki",
+      "name": "Ресурс Авто",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. Печорская, 19",
+      "phone": "+7 911 889-77-34"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "autokolonna1121-velikie-luki",
+      "name": "Автоколонна № 1121",
+      "region": "Псковская область",
+      "address": "Великие Луки, ул. Гастелло, 21",
+      "phone": "+7 911 388-28-58"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "shinaservice67-yartsevo-vostochnaya",
+      "name": "Шина-сервис67",
+      "region": "Смоленская область",
+      "address": "Ярцево, ул. Восточная, 5",
+      "phone": "+7 910 712-61-45"
+    },
+    {
+      "file": "sto-m1-m9-batch28",
+      "id": "shinaservice67-yartsevo-kuznetsova",
+      "name": "Шина-Сервис67",
+      "region": "Смоленская область",
+      "address": "Ярцево, ул. Кузнецова, 56",
+      "phone": "+7 910 711-25-55"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-altuf",
+      "name": "Дакар-Авто — Алтуфьево",
+      "region": "Москва",
+      "address": "Москва, Алтуфьевское шоссе, 27",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-ochakovo",
+      "name": "Дакар-Авто — Очаково",
+      "region": "Москва",
+      "address": "Москва, Очаковское шоссе, 44",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-lobnya",
+      "name": "Дакар-Авто — Лобня",
+      "region": "Московская область",
+      "address": "Лобня, Букинское шоссе, 39",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-schelkovo",
+      "name": "Дакар-Авто — Щёлково",
+      "region": "Московская область",
+      "address": "Щёлково, ул. Заречная, 109В, стр. 2",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-nekras",
+      "name": "Дакар-Авто — Некрасовский",
+      "region": "Московская область",
+      "address": "Дмитровский округ, рп. Некрасовский, мкр. Строителей, 20Д",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-chekhov",
+      "name": "Дакар-Авто — Чехов",
+      "region": "Московская область",
+      "address": "Чехов-1, ул. Восточная, вл. 1",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-podolsk",
+      "name": "Дакар-Авто — Подольск",
+      "region": "Московская область",
+      "address": "Подольский округ, с. Сынково, 25А",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-khimki",
+      "name": "Дакар-Авто — Химки",
+      "region": "Московская область",
+      "address": "Химки, Малый проезд, 2",
+      "phone": "+7 495 125-00-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "dakar-spb",
+      "name": "Дакар-Авто — Санкт-Петербург",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, ул. Кондратенко, 3С",
+      "phone": "+7 812 603-68-88"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "tpas-moskovskoe",
+      "name": "ТехПортАвтоСервис — Московское шоссе",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Московское шоссе, 179, к. 1, стр. 1",
+      "phone": "+7 921 365-05-49"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "tpas-shushary",
+      "name": "ТехПортАвтоСервис — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, пос. Шушары, 2-й Бадаевский проезд, 3, к. 1",
+      "phone": "+7 931 317-21-56"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "tpas-pesochny",
+      "name": "ТехПортАвтоСервис — Песочный",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, пос. Песочный, ул. Ленинградская, 99, лит. А",
+      "phone": "+7 921 590-04-11"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "sovavto-shushary",
+      "name": "Центр Автосервис СовАвто",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1Б, лит. А",
+      "phone": "+7 812 600-43-60"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "ivservice-shushary",
+      "name": "ИВ-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 233, лит. А",
+      "phone": "+7 812 640-64-64"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "mastertruck-solnechnogorsk",
+      "name": "Мастер Трак",
+      "region": "Московская область",
+      "address": "Солнечногорск, промзона Рекинцо, стр. 1",
+      "phone": "+7 969 179-78-78"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "cto-durykino",
+      "name": "Центр технического обслуживания (ЦТО)",
+      "region": "Московская область",
+      "address": "д. Дурыкино, ул. Деревенская, 3П",
+      "phone": "+7 495 477-52-40"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "man-sheremetyevo-khimki",
+      "name": "Центр MAN Шереметьево",
+      "region": "Московская область",
+      "address": "Химки, Вашутинское шоссе, 34/1",
+      "phone": "+7 926 384-41-39"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "sas1-podolsk",
+      "name": "САС №1",
+      "region": "Московская область",
+      "address": "Подольск, проспект Юных Ленинцев, 59А",
+      "phone": "+7 985 905-83-18"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "truckfurservice-ryazanovskoe",
+      "name": "TRUCKFURservice",
+      "region": "Москва",
+      "address": "Москва, Рязановское шоссе, 10, стр. 5",
+      "phone": "+7 985 577-33-33"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "spec-trans-rzhavki",
+      "name": "СпецТрансСервис",
+      "region": "Московская область",
+      "address": "Солнечногорский округ, рп. Ржавки, к. 1А",
+      "phone": "+7 903 108-33-32"
+    },
+    {
+      "file": "sto-moscow-spb-priority-batch29",
+      "id": "spesremont-shushary",
+      "name": "Спецремонт — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 187",
+      "phone": "+7 812 509-25-53"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "amg-sofiyskaya",
+      "name": "АМГ-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 149, стр. 3",
+      "phone": "+7 812 565-34-46"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "autoconstanta78",
+      "name": "АвтоКонстанта 78",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Ленсоветовская дорога, 6, стр. 1",
+      "phone": "+7 911 205-85-86"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "transmissia-novosaratovka",
+      "name": "Трансмиссия — грузовой автосервис",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, д. Новосаратовка, 40",
+      "phone": "+7 812 425-64-71"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "remtrans-blagodatnaya",
+      "name": "РемТрансСервис — Благодатная",
+      "region": "Санкт-Петербург",
+      "address": "Благодатная ул., 65Ж",
+      "phone": "+7 931 393-65-39"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "remtrans-gruzovoy",
+      "name": "РемТрансСервис — Грузовой проезд",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой проезд, 13Г1 (в тексте сайта также 13Ж)",
+      "phone": "+7 931 393-65-39"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "scantruck-upper5",
+      "name": "СканТрак",
+      "region": "Санкт-Петербург",
+      "address": "5-й Верхний проезд, 15",
+      "phone": "+7 921 784-76-66"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "transhub-bolshie-kolpany",
+      "name": "ТрансХаб",
+      "region": "Ленинградская область",
+      "address": "Гатчинский округ, д. Большие Колпаны, Киевское шоссе, 53 км, 2, к. 1",
+      "phone": "+7 921 300-66-45"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "spesremont-fedorovskoe",
+      "name": "Спецремонт — Фёдоровское",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, гп. Фёдоровское, Промышленная ул., 14",
+      "phone": "+7 812 507-61-97"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "tosnotrak-moskovskoe2",
+      "name": "ТосноТракСервис",
+      "region": "Ленинградская область",
+      "address": "Тосно, Московское шоссе, 2",
+      "phone": "+7 921 634-66-42"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "dvs-tech-sofiyskaya",
+      "name": "ДВС-Тех-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 201В",
+      "phone": "+7 911 782-88-01"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "cto-gatchina-krasnoselskoe",
+      "name": "ЦТО — Гатчина",
+      "region": "Ленинградская область",
+      "address": "Гатчина, Красносельское шоссе, 7",
+      "phone": "+7 911 274-05-79"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch30",
+      "id": "gruztechservice-gatchina",
+      "name": "ГрузТехСервис",
+      "region": "Ленинградская область",
+      "address": "Гатчина, ул. 120-й Гатчинской Дивизии, промзона 2",
+      "phone": "+7 81371 9-43-44"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "7detalei-shushary",
+      "name": "7Деталей",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1",
+      "phone": "+7 812 509-37-80"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "unitedservice-poselkovaya",
+      "name": "ЮнайтедСервис — Поселковая",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Поселковая, 7",
+      "phone": "+7 812 740-58-35"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "unitedservice-badaevskiy19",
+      "name": "ЮнайтедСервис — 3-й Бадаевский",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, 3-й Бадаевский проезд, 19, стр. 2",
+      "phone": "+7 812 740-58-35"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "autobull-moskovskoe165",
+      "name": "АвтоБулл — станция 1",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 165",
+      "phone": "+7 812 325-70-70"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "autobull-moskovskoe271",
+      "name": "АвтоБулл — станция 2",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 271",
+      "phone": "+7 812 325-70-70"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "terra-truck-shushary",
+      "name": "Терра Трак",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 15, лит. В",
+      "phone": "+7 812 456-26-26"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "gruzavto-moskovskoe233z",
+      "name": "Груз Авто Сервис Центр",
+      "region": "Санкт-Петербург",
+      "address": "пос. Ленсоветовский, Московское шоссе, 233, лит. З",
+      "phone": "+7 812 333-50-81"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "av-service-bronevaya",
+      "name": "АВ-сервис",
+      "region": "Санкт-Петербург",
+      "address": "Броневая ул., 6ВЕ",
+      "phone": "+7 931 363-01-01"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "fram-service-shushary",
+      "name": "Фрам-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 82, корп. 2",
+      "phone": "+7 812 425-33-11"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "park-service-shushary",
+      "name": "Парк-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 233, корп. 2, стр. 2",
+      "phone": "+7 921 795-93-97"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "gruzsto-devyatogo21b",
+      "name": "Грузовое СТО — Обухово",
+      "region": "Санкт-Петербург",
+      "address": "просп. Девятого Января, 21Б",
+      "phone": "+7 981 736-10-63"
+    },
+    {
+      "file": "sto-spb-lo-priority-batch31",
+      "id": "gts-gorelovo",
+      "name": "GTS Service — Горелово",
+      "region": "Ленинградская область",
+      "address": "Ломоносовский район, Виллозское поселение, южная часть промзоны Горелово, Волхонское шоссе, 5",
+      "phone": "+7 812 250-71-08"
+    }
+  ],
+  "notes": [
+    "Stored data audit only; source claims not independently validated. No auto-merge, full cross-block dedup still needed. No phone calls, FNS, VAT or publication."
+  ]
+}
