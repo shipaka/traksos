@@ -1,0 +1,242 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, heavy truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automated outreach. Directory candidates require stronger evidence.",
+  "records": [
+    {
+      "id": "kamaz-magadan",
+      "name": "Магаданский автоцентр КАМАЗ",
+      "region": "Магаданская область",
+      "address": "Магадан, Марчеканское шоссе, 44",
+      "country": "Россия",
+      "phone": "+7 4132 226-624",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, обед 13:00–14:00 (общий график)",
+      "services": [
+        "сервис КАМАЗ",
+        "грузовые автомобили"
+      ],
+      "source_urls": [
+        "https://kamaz49.ru/o-kompanii/kontakty"
+      ],
+      "notes": "Прямой телефон сервиса в подвале сайта. Общая приемная +7 4132 226-622.",
+      "operator_group": "kamaz49",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-magadan",
+      "name": "Глобал Трак Сервис",
+      "region": "Магаданская область",
+      "address": "Магадан, ул. Транспортная, 3, стр. 1",
+      "country": "Россия",
+      "phone": "+7 965 424-98-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "тягово-сцепные устройства"
+      ],
+      "source_urls": [
+        "https://magadan.jsprav.ru/avtoservisyi-avtotehtsentryi/global-trak-servis/",
+        "https://truck-and-bus.ru/news/company_news/42631/"
+      ],
+      "notes": "Телефон по справочнику, профиль по новости об открытии 2022 года. Актуальность филиала и телефона проверить: источники давние, текущий официальный контакт не найден.",
+      "operator_group": "global-truck-service",
+      "evidence": "directory_and_historical_trade_press",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sakhgruzservis",
+      "name": "СахГрузСервис",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Шлакоблочная, 34А/2",
+      "country": "Россия",
+      "phone": "+7 4242 72-79-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "запчасти грузовиков",
+        "грузовой ремонт (категория справочника)"
+      ],
+      "source_urls": [
+        "https://yuzhnosakhalinsk.2rus.org/sakhgruzservis/",
+        "https://spravkainform.ru/russia/yuzhno-sahalinsk/zapchasti-dlya-gruzovogo-avtotransporta/sahgruzservis",
+        "https://spravkainform.ru/russia/yuzhno-sahalinsk/remont-gruzovogo-avtotransporta"
+      ],
+      "notes": "Адреса 34А, 34А/2, 34В в справочниках; уточнить ремонтную площадку, не только магазин. Доп. номера +7 4242 61-00-30 и +7 4242 27-05-00 по справочнику.",
+      "operator_group": "sakhgruzservis",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hino-sakhalin",
+      "name": "Сахалин-Запчастьсервис",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Шлакоблочная, 37",
+      "country": "Россия",
+      "phone": "+7 4242 505-740",
+      "email": "info@hino-sakhalin.ru",
+      "hours": "ежедневно 08:00–20:00 (общий график)",
+      "services": [
+        "грузовики HINO",
+        "ДВС",
+        "трансмиссия",
+        "пневматика",
+        "тормоза",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://hino-sakhalin.ru/service",
+        "https://hino-sakhalin.ru/contacts"
+      ],
+      "notes": "Отдел гарантии и сервиса; доп. +7 4242 27-60-20. Прием европейских тягачей уточнить.",
+      "operator_group": "hino-sakhalin",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzsto-zaozernaya",
+      "name": "Грузовое СТО",
+      "region": "Камчатский край",
+      "address": "Петропавловск-Камчатский, ул. Заозёрная, 37/1",
+      "country": "Россия",
+      "phone": "+7 4152 33-38-33",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой ремонт",
+        "АКПП"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_kamchatskij-kraj/petropavlovsk-kamchatskij-gorodskoj-okrug-petropavlovsk-kamchatskij/card-70000001082519690-gruzovoe-sto"
+      ],
+      "notes": "Справочник; сайт отсутствует, подтвердить работу и тоннаж.",
+      "operator_group": "gruzsto-zaozernaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtoreal17-kyzyl",
+      "name": "Автореал17rus",
+      "region": "Республика Тыва",
+      "address": "Кызыл, ул. Магистральная, 7",
+      "country": "Россия",
+      "phone": "+7 923 385-77-77",
+      "email": null,
+      "hours": "пн–сб 10:00–18:00, обед 12:00–12:30 (справочник)",
+      "services": [
+        "ремонт грузовых автомобилей и двигателей (категория справочника)"
+      ],
+      "source_urls": [
+        "https://kyzyl.spravker.ru/remont-dvigatelei-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/kyizyil/company-avtoreal17rus/"
+      ],
+      "notes": "Доп. +7 923 261-25-35. Проверить реальный профиль тяжелых тягачей.",
+      "operator_group": "avtoreal17",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bastion-kyzyl",
+      "name": "БастиОН — шиномонтаж",
+      "region": "Республика Тыва",
+      "address": "Кызыл, ул. Калинина, 144",
+      "country": "Россия",
+      "phone": "+7 923 540-33-33",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://kyzyl.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/kyizyil/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "notes": "Тот же телефон указан на Московской 24, второй адрес не добавлять без подтверждения; источник шиномонтажа старый.",
+      "operator_group": "bastion-kyzyl",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-podgornaya-mayma",
+      "name": "Шиномонтажная мастерская",
+      "region": "Республика Алтай",
+      "address": "с. Майма, ул. Подгорная, 2/2",
+      "country": "Россия",
+      "phone": "+7 913 696-87-97",
+      "email": null,
+      "hours": "ежедневно 08:00–19:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов",
+        "правка дисков"
+      ],
+      "source_urls": [
+        "https://rting.ru/respublika_altay/co/shinomontazhnaya_masterskaya/476475"
+      ],
+      "notes": "Только справочник; качество и размеры обслуживаемых колес не подтверждены.",
+      "operator_group": "tyre-podgornaya-mayma",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
