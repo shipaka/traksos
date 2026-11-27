@@ -1,0 +1,1335 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted review against compact audit B/C and batches 09,32–34,37,42,48. Full cross-batch comparison pending; source pages retrieved in this turn. First-party and directory claims distinguished, all publication gates closed. No phone calls, legal or coordinate verification.",
+  "records": [
+    {
+      "id": "b82-nt-dvor",
+      "name": "Грузовой двор-НТ",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Фестивальная, 5Г",
+      "country": "Россия",
+      "phone": "+7 3435 23-04-05",
+      "additional_phones": [
+        "+7 3435 23-04-06"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 09:00–16:00",
+      "services": [
+        "ремонт грузовиков",
+        "диагностика",
+        "ремонт дизелей"
+      ],
+      "source_urls": [
+        "https://gruzovoi-dvor.ru/",
+        "https://spravkainform.ru/russia/nizhniy-tagil/remont-i-obsluzhivanie-avtotransporta/gruzovoy-dvor-nt"
+      ],
+      "notes": "Телефон и адрес из справочника; собственный сайт не отдал читаемый текст при открытии, поисковый индекс указывает ремонт прицепов. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "directory_and_first_party",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-rembaza",
+      "name": "РемБаза НТ",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Краснознамённая, 77А",
+      "country": "Россия",
+      "phone": "+7 952 137-05-78",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "диагностика",
+        "ремонт спецтехники"
+      ],
+      "source_urls": [
+        "https://rgm-nt.ru/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-remavto",
+      "name": "РемАвто 196",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Индустриальная, 20А/1",
+      "country": "Россия",
+      "phone": "+7 904 168-55-39",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "дизели",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_sverdlovskaya-oblast/nizhnij-tagil-gorodskoj-okrug-nizhnij-tagil/card-3559664-remavto-196"
+      ],
+      "notes": "Координаты справочника 57.916968, 59.991496 не проверены. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-trikot",
+      "name": "Ремонт грузовых автомобилей и спецтехники",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Трикотажников, 19",
+      "country": "Россия",
+      "phone": "+7 929 221-01-91",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "ДВС",
+        "КПП",
+        "сварка",
+        "рамы"
+      ],
+      "source_urls": [
+        "https://nizhniy-tagil.moyaspravka.ru/company/remont-gruzovyh-avtomobiley-i-spectehniki-avtoservis-po-remontu-gruzovoy-i-kommercheskoy-i-spec-tehn"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-bereg",
+      "name": "Грузовая шиномонтажная мастерская",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Береговая-Краснокаменская, 31Б",
+      "country": "Россия",
+      "phone": "+7 3435 46-75-69",
+      "additional_phones": [
+        "+7 950 204-31-69"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб–вс 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/nijnii-tagil/mesto/1395581-gruzovaya-shinomontajnaya-masterskaya-beregovaya-krasnokamenskaya-31b-1-etaj",
+        "https://nizhnii-tagil.spravker.ru/shinomontazh/gruzovaya-shinomontazhnaya-masterskaya.htm"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-east19",
+      "name": "Шиномонтажная мастерская для грузовых и легковых автомобилей",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, Восточное шоссе, 19Б",
+      "country": "Россия",
+      "phone": "+7 967 636-16-76",
+      "additional_phones": [
+        "+7 905 802-28-01"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://spravkainform.ru/russia/nizhniy-tagil/shinomontazhnaya-masterskaya/shinomontazhnaya-masterskaya-dlya-gruzovyh-i-legkovyh-avtomobiley"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-global",
+      "name": "Глобал",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Краснознамённая, 134",
+      "country": "Россия",
+      "phone": "+7 904 987-73-32",
+      "additional_phones": [
+        "+7 912 038-23-00",
+        "+7 965 517-90-06",
+        "+7 912 655-61-49"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-rotor",
+      "name": "Ротор",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Челюскинцев, 2, стр. 1",
+      "country": "Россия",
+      "phone": "+7 3435 21-20-11",
+      "additional_phones": [
+        "+7 912 689-48-88",
+        "+7 922 183-20-11"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб–вс 10:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-bit",
+      "name": "Bit Транс",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, Свердловское шоссе, 7",
+      "country": "Россия",
+      "phone": "+7 919 387-23-30",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-east17",
+      "name": "Шиномонтажная мастерская",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, Восточное шоссе, 17А",
+      "country": "Россия",
+      "phone": "+7 3435 46-50-06",
+      "additional_phones": [
+        "+7 950 648-19-15"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-yunost",
+      "name": "Шиномонтаж",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Юности, 47А, стр. 1",
+      "country": "Россия",
+      "phone": "+7 912 036-86-81",
+      "additional_phones": [
+        "+7 922 208-15-54"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Совпадает второй номер с ул. Зари, 19; второй адрес на проверку. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-partner",
+      "name": "Автопартнер",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, Черноисточинское шоссе, 70",
+      "country": "Россия",
+      "phone": "+7 3435 23-07-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "График в источнике неполный. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-nt-dor",
+      "name": "Дорсервис-НТ",
+      "region": "Свердловская область",
+      "address": "Нижний Тагил, ул. Кирова, 18",
+      "country": "Россия",
+      "phone": "+7 965 502-36-72",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Мойка в смежной рубрике, грузовые габариты не доказаны. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ek-ak",
+      "name": "Автоколонна 1212",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. Завокзальная, 30",
+      "country": "Россия",
+      "phone": "+7 343 217-07-12",
+      "additional_phones": [],
+      "email": "mail@ak1212.ru",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт прицепов и полуприцепов"
+      ],
+      "source_urls": [
+        "https://ak1212.ru/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ek-protrak",
+      "name": "ПРОТРАК",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. 10-я Самородная, 5",
+      "country": "Россия",
+      "phone": "8 800 511-58-20",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "диагностика",
+        "ДВС",
+        "пневматика",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://protrak.ru/",
+        "https://protrak.ru/faq/"
+      ],
+      "notes": "Общий телефон сети, не прямой номер бокса. Другие адреса магазинов не считать СТО. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ek-azimut",
+      "name": "Азимут-СТО",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, территория Ново-Свердловская ТЭЦ, 1В/4",
+      "country": "Россия",
+      "phone": "+7 343 385-82-29",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "рефрижераторы",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://azimut-sto.clients.site/"
+      ],
+      "notes": "Сайт указывает ИНН 6670509524; ФНС не проверена. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ek-rado",
+      "name": "РАДО",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, территория Ново-Свердловская ТЭЦ, 14, стр. 1",
+      "country": "Россия",
+      "phone": "+7 919 361-11-46",
+      "additional_phones": [
+        "+7 912 295-00-00",
+        "+7 982 671-44-46"
+      ],
+      "email": null,
+      "hours": "круглосуточно по сайту",
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "грузовой эвакуатор"
+      ],
+      "source_urls": [
+        "https://tk-rado.ru/услуги/грузовой-автосервис/",
+        "https://tk-rado.ru/контакты/"
+      ],
+      "notes": "Основной телефон — опубликованный рабочий контакт руководителя СТО. ИНН 6671052150 указан на сайте; статус не проверен. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ek-ufs",
+      "name": "УралФотонСервис",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. Монтажников, 22",
+      "country": "Россия",
+      "phone": "8 800 222-62-50",
+      "additional_phones": [],
+      "email": "service@trans-ek.ru",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "ремонт мало- и среднетоннажных грузовиков"
+      ],
+      "source_urls": [
+        "https://ufs-ek.ru/"
+      ],
+      "notes": "Не заявлять ремонт магистральных тягачей. Соседний шиномонтаж 22А из пакета 48 — другой вид услуг; проверить независимость. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ek-uraldiesel",
+      "name": "УралДизель",
+      "region": "Свердловская область",
+      "address": "Берёзовский, Западная промзона, 25-7",
+      "country": "Россия",
+      "phone": "8 800 222-13-51",
+      "additional_phones": [
+        "+7 982 694-55-77"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 10:00–15:00",
+      "services": [
+        "ремонт тягачей и полуприцепов",
+        "ремонт агрегатов",
+        "автоэлектрика",
+        "грузовой эвакуатор"
+      ],
+      "source_urls": [
+        "https://uraldiesel.ru/gruzovoy-avtoservis/"
+      ],
+      "notes": "Дополнительный номер — эвакуация 24/7, не круглосуточность СТО. График общего контакта. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-perm-eurofura",
+      "name": "Еврофура",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Промышленная, 97Б/1",
+      "country": "Россия",
+      "phone": "+7 982 490-00-06",
+      "additional_phones": [
+        "+7 982 490-00-12"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ремонт тягачей и полуприцепов",
+        "пневматика",
+        "электрика",
+        "оси",
+        "тормоза"
+      ],
+      "source_urls": [
+        "https://totadres.ru/perm/org/tir/1089206",
+        "https://evrofura-promyshlennaja-ulitsa.clients.site/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "directory_and_first_party",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-perm-trakmotors",
+      "name": "ТракМоторсПермь",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Фоминская, 43, к. 1",
+      "country": "Россия",
+      "phone": "+7 342 238-61-11",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "электрика",
+        "КПП",
+        "ДВС",
+        "ГУР",
+        "редукторы"
+      ],
+      "source_urls": [
+        "https://trakmotorsperm.clients.site/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-perm-eurotire",
+      "name": "Еврошиномонтаж",
+      "region": "Пермский край",
+      "address": "Пермь, шоссе Космонавтов, 316/5",
+      "country": "Россия",
+      "phone": "+7 342 298-75-52",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт шин",
+        "вулканизация"
+      ],
+      "source_urls": [
+        "https://shin59.ru/"
+      ],
+      "notes": "Мойка колес, не мойка грузовиков; Трак59 на 316А к.1 — соседний адрес, независимость проверить. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-perm-beushka",
+      "name": "Бэушка",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Космонавта Леонова, 84Д",
+      "country": "Россия",
+      "phone": "+7 919 499-06-07",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов"
+      ],
+      "source_urls": [
+        "https://totadres.ru/perm/org/beushka/4518085"
+      ],
+      "notes": "Низкие отзывы; качество не подтверждено. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-stoavto",
+      "name": "Стоавто",
+      "region": "Пермский край",
+      "address": "Березники, Чуртанское шоссе, 27",
+      "country": "Россия",
+      "phone": "+7 3424 43-16-15",
+      "additional_phones": [
+        "+7 919 473-45-40"
+      ],
+      "email": null,
+      "hours": "вт–сб 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-garage",
+      "name": "Алло Гараж",
+      "region": "Пермский край",
+      "address": "Березники, ул. Циренщикова, 9А",
+      "country": "Россия",
+      "phone": "+7 904 846-70-08",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "ремонт коммерческих автомобилей (рубрика)",
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-shintorg",
+      "name": "Шинторг",
+      "region": "Пермский край",
+      "address": "Березники, просп. Ленина, 82А",
+      "country": "Россия",
+      "phone": "+7 912 981-11-12",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-avtocomfort",
+      "name": "Автокомфорт",
+      "region": "Пермский край",
+      "address": "Березники, ул. Сухановская, 1Г",
+      "country": "Россия",
+      "phone": "+7 982 456-32-43",
+      "additional_phones": [
+        "+7 951 940-66-62"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-norma",
+      "name": "Норма",
+      "region": "Пермский край",
+      "address": "Березники, ул. Ермака, 64А",
+      "country": "Россия",
+      "phone": "+7 982 454-25-29",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 10:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-okolitsa",
+      "name": "Околица",
+      "region": "Пермский край",
+      "address": "Березники, ул. Свердлова, 105",
+      "country": "Россия",
+      "phone": "+7 912 059-40-89",
+      "additional_phones": [
+        "+7 909 100-44-22"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-gruzimport",
+      "name": "Грузавтоимпорт",
+      "region": "Пермский край",
+      "address": "Березники, ул. Березниковская, 101",
+      "country": "Россия",
+      "phone": "+7 3424 20-10-05",
+      "additional_phones": [
+        "+7 3424 28-36-00",
+        "+7 3424 28-36-35"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб–вс 09:00–18:00",
+      "services": [
+        "ремонт коммерческого транспорта (рубрика)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-ber-gaz",
+      "name": "Gaz-avto",
+      "region": "Пермский край",
+      "address": "Березники, ул. Калинина, 18А",
+      "country": "Россия",
+      "phone": "+7 950 469-12-10",
+      "additional_phones": [
+        "+7 3424 43-12-08"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить класс техники, возможно малотоннажные ГАЗ. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-sol-garage",
+      "name": "Алло Гараж",
+      "region": "Пермский край",
+      "address": "Соликамск, ул. Карналлитовая, 115",
+      "country": "Россия",
+      "phone": "+7 982 439-85-68",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "ремонт полуприцепов (рубрика)"
+      ],
+      "source_urls": [
+        "https://solikamsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Справочник содержит отрицательный отзыв; грузовую специализацию подтвердить отдельно. Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-sol-pobedy",
+      "name": "Автосервис",
+      "region": "Пермский край",
+      "address": "Соликамск, ул. 20-летия Победы, 92А",
+      "country": "Россия",
+      "phone": "+7 919 442-22-20",
+      "additional_phones": [
+        "+7 34253 9-06-66"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб 11:00–16:00",
+      "services": [
+        "ремонт полуприцепов (рубрика)"
+      ],
+      "source_urls": [
+        "https://solikamsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b82-sol-shosse",
+      "name": "Автосервис",
+      "region": "Пермский край",
+      "address": "Соликамск, Соликамское шоссе, 2В/4",
+      "country": "Россия",
+      "phone": "+7 902 634-72-68",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 10:00–19:00",
+      "services": [
+        "ремонт грузовых прицепов (рубрика)"
+      ],
+      "source_urls": [
+        "https://solikamsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": " Телефон, действующий бизнес и фактический прием тяжелой техники не проверены звонком. Каталожная рубрика не доказательство оснащения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Спецшина — Соликамск",
+      "phone": "+7 343 344-01-01",
+      "source_urls": [
+        "https://solikamsk.specshina-ural.ru/"
+      ],
+      "reason": "Сайт регионализирован, фактически указан адрес Берёзовский, ЦОФ-5. Не считать филиалом Соликамска."
+    },
+    {
+      "name": "Gut Gans 24/7 / Автосфера",
+      "address": "Соликамск, Лесной Посёлок, 12Б / Всеобуча, 121Б",
+      "phone": "+7 951 931-56-74",
+      "source_urls": [
+        "https://solikamsk.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Совпадает телефон, разные графики; 24/7 в названии не доказательство."
+    },
+    {
+      "name": "IvanAvtoBox / IvanBox",
+      "address": "Соликамск, Калийная, 177Г / 20-летия Победы, 7",
+      "phone": "+7 961 758-28-28",
+      "source_urls": [
+        "https://solikamsk.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Совпадает телефон, уточнить текущую площадку."
+    },
+    {
+      "name": "Алло гараж / MatCar",
+      "address": "Соликамск, Калийная, 177В / Всеобуча, 121Б",
+      "phone": "+7 904 841-94-59",
+      "source_urls": [
+        "https://solikamsk.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Совпадающий номер, не добавлять до проверки."
+    },
+    {
+      "name": "Грузовой Шиномонтаж",
+      "address": "муниципальное образование Березники",
+      "phone": "+7 950 445-64-52",
+      "additional_phones": [
+        "+7 919 476-70-22"
+      ],
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет точного адреса."
+    },
+    {
+      "name": "Автобаза-Пермь",
+      "address": "Пермь, шоссе Космонавтов, 310А (автопарк)",
+      "phone": "+7 342 247-81-59",
+      "email": "yura.permski@mail.ru",
+      "source_urls": [
+        "https://avtobaza-prm.ru/remont-specztehniki/"
+      ],
+      "reason": "Сайт подтверждает грузовой ремонт, но уточнить, выполняется ли сторонний ремонт именно на этой площадке, а не по другому адресу."
+    },
+    {
+      "name": "Автомоё",
+      "address": "Березники, ул. Мира, 39",
+      "phone": "+7 3424 21-30-00",
+      "source_urls": [
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Повтор карточек, неодинаковый график; тяжелый профиль не установлен."
+    },
+    {
+      "name": "Avto Max / Хром",
+      "address": "Березники, ул. Свободы, 40",
+      "phone": "+7 909 107-20-20",
+      "source_urls": [
+        "https://berezniki.spravker.ru/gruzovoi-shinomontazh/",
+        "https://berezniki.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Один адрес, разные названия и номера; проверить независимость."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Нижний Тагил, ул. Зари, 19",
+      "phone": "+7 922 208-15-54",
+      "source_urls": [
+        "https://nizhnii-tagil.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Совпадает номер с ул. Юности, 47А."
+    }
+  ],
+  "existing_record_reviews": []
+}
