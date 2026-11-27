@@ -1,0 +1,358 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted name/domain/address/phone searches in compact indexes B/C (1–31) and record arrays 32–49,51–56; additional address checks for southern sites in indexes and batches32–40. No exact match identified for eight candidates; full normalized global audit pending.",
+  "records": [
+    {
+      "id": "b57-gruzrem-noginsk",
+      "name": "ГрузРемСервис",
+      "region": "Московская область",
+      "address": "Ногинск, 1-й Кардолентный проезд, 5, завод РТИ",
+      "country": "Россия",
+      "phone": "+7 903 597-52-21",
+      "additional_phones": [
+        "+7 916 188-27-54"
+      ],
+      "email": "contacts@gruz-rem.ru",
+      "hours": "круглосуточно (по сайту)",
+      "services": [
+        "ремонт грузовых автомобилей",
+        "эвакуация грузовиков",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.gruz-rem.ru/contacts/"
+      ],
+      "road": "М7",
+      "notes": "Одна площадка; Электросталь указана как зона обслуживания.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-autotranskonnect-noginsk",
+      "name": "АвтоТрансКоннект",
+      "region": "Московская область",
+      "address": "Ногинск, 5-я Доможировская ул., 51",
+      "country": "Россия",
+      "phone": "+7 495 487-43-50",
+      "additional_phones": [],
+      "email": "autotranskonnect@mail.ru",
+      "hours": "Пн–Сб 08:30–18:00; Вс выходной",
+      "services": [
+        "ремонт тягачей и полуприцепов",
+        "диагностика",
+        "ремонт ДВС, трансмиссии и тормозов",
+        "мойка"
+      ],
+      "source_urls": [
+        "https://autotranskonnect.ru/"
+      ],
+      "road": "М7",
+      "notes": "В одном блоке сайта номер дома 5, в контактах и подвале 51; проверить фактический адрес.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-vtruck-elektrostal",
+      "name": "В-Трак",
+      "region": "Московская область",
+      "address": "Электросталь, ул. Красная, 15с2",
+      "country": "Россия",
+      "phone": "+7 985 005-58-25",
+      "additional_phones": [],
+      "email": "master@v-truck.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовиков",
+        "ДВС и КПП",
+        "грузовой шиномонтаж",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://v-truck.ru/remont-gruzovogo-transporta.html"
+      ],
+      "road": "М7",
+      "notes": "ИНН 7731327565 и ОГРН 1167746842108 заявлены сайтом; проверка ФНС не выполнена.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-kts-chekhov",
+      "name": "КТС",
+      "region": "Московская область",
+      "address": "Чеховский округ, территориальный отдел Баранцевский",
+      "country": "Россия",
+      "phone": "+7 977 545-33-44",
+      "additional_phones": [
+        "+7 495 136-24-15"
+      ],
+      "email": "info@kts77.ru",
+      "hours": "09:00–21:00 (дни не указаны)",
+      "services": [
+        "ТО и ремонт грузовых автомобилей",
+        "ремонт полуприцепов",
+        "электрика",
+        "ремонт рефрижераторов"
+      ],
+      "source_urls": [
+        "https://kts77.ru/"
+      ],
+      "road": "юг Московской области",
+      "notes": "Координаты опубликованы оператором, точность и проезд не проверены; номер здания не установлен.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.135484,
+      "longitude": 37.516621,
+      "coordinate_source": "https://kts77.ru/",
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-atruck-voskresensk",
+      "name": "А-Трак — Воскресенск",
+      "region": "Московская область",
+      "address": "Воскресенский округ, д. Степанщино, ул. Центральная, 55А",
+      "country": "Россия",
+      "phone": "+7 926 006-36-36",
+      "additional_phones": [],
+      "email": "info@a-truck.pro",
+      "hours": "Пн–Сб 09:00–19:00",
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "ABS/EBS",
+        "ДВС, КПП, мосты",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://a-truck.pro/"
+      ],
+      "road": "М5",
+      "notes": "Отдельный филиал сети.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-servisgarant-bronnitsy",
+      "name": "Сервисгарант / Вольво Сервис",
+      "region": "Московская область",
+      "address": "Бронницы, ул. Южная, 4А",
+      "country": "Россия",
+      "phone": "+7 495 917-92-79",
+      "additional_phones": [],
+      "email": "servisgarant-521878-bwa1@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и прицепов",
+        "диагностика",
+        "ДВС, КПП, тормоза"
+      ],
+      "source_urls": [
+        "https://servisgarant.ru/"
+      ],
+      "road": "А107/М5",
+      "notes": "Уточнить график и действующее юридическое лицо.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-ate-mikhnevo",
+      "name": "АТЕ",
+      "region": "Московская область",
+      "address": "с. Константиновское, промзона Михнево М4, участок 71А",
+      "country": "Россия",
+      "phone": "+7 495 669-65-24",
+      "additional_phones": [
+        "+7 926 217-97-73"
+      ],
+      "email": "ateservis@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт американских и европейских грузовиков",
+        "ремонт двигателей",
+        "ремонт прицепов и полуприцепов"
+      ],
+      "source_urls": [
+        "https://www.ateservis.ru/"
+      ],
+      "road": "М4",
+      "notes": "На сайте в описании упомянут Чехов, но контакты указывают Михнево; не создавать вторую точку. В batch39 Авторемфорс на участке 80 той же промзоны, проверить отдельность.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b57-asktrans-bronnitsy",
+      "name": "Транссервис / ASK TRANSSERVISE",
+      "region": "Московская область",
+      "address": "Бронницы, Каширское шоссе, 2",
+      "country": "Россия",
+      "phone": "+7 925 862-65-91",
+      "additional_phones": [
+        "+7 926 445-05-50"
+      ],
+      "email": "info@asktrans.ru",
+      "hours": "Пн–Пт 08:00–17:00; перерыв 12:00–13:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт тягачей и полуприцепов"
+      ],
+      "source_urls": [
+        "https://bronnicy.spravmer.ru/transservis-bronnicy/"
+      ],
+      "road": "А107/М5",
+      "notes": "Контакты из стороннего справочника; уточнить конкретный бокс, на адресе несколько организаций.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "А-Трак — Бронницы",
+      "address": "с. Ганусово, 1 км а/д Панино-Малино, 9",
+      "phone": "+7 926 733-84-84",
+      "email": "info@a-truck.pro",
+      "source_urls": [
+        "https://a-truck.pro/"
+      ],
+      "reason": "В batch33 есть Серпри-Авто — Ганусово, промзона А107; проверить физическую отдельность и операторов."
+    },
+    {
+      "name": "Механизм.Про",
+      "phone": "+7 910 256-36-37",
+      "email": "info@mexanizm.pro",
+      "source_urls": [
+        "https://mexanizm.pro/"
+      ],
+      "reason": "Актуальная главная заявляет выездной формат, юридический офис Липецк; прежняя СТО в Чехове не подтверждена. Кандидат для отдельного реестра выездных специалистов."
+    },
+    {
+      "name": "Е30-Центр",
+      "address": "Бронницы, ул. Строительная, 17 (справочник)",
+      "email": "info@e30centr.ru",
+      "phone": null,
+      "source_urls": [
+        "https://e30centr.ru/uslugi-kompanii/sto/",
+        "https://avtoservis-gid.ru/komp/e30-tsentr-bronnitsy/"
+      ],
+      "reason": "Сайт при открытии вернул 502; телефон не подтвержден. Уточнить юридический статус и действующий сервис."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "ЛорриТрак",
+      "batch": 6,
+      "phone": "+7 495 015-55-75",
+      "source_urls": [
+        "https://lorrytruck.ru/"
+      ],
+      "reason": "Существующая площадка Домодедово; страницы для Чехова описывают маршрут к ней, не отдельную СТО."
+    }
+  ]
+}
