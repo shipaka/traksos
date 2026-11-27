@@ -95,19 +95,35 @@ try{
         const menu=page.locator('.tr-mobile-menu-page');
         await menu.waitFor({state:'visible'});
         const groups=menu.locator('details.tr-mobile-menu-section');
-        assert.equal(await groups.count(),4,'mobile menu must have four semantic sections');
-        assert.equal(await groups.nth(0).evaluate(e=>e.open),true,
-          'quick actions should be visible first');
-        for(const i of [1,2,3])assert.equal(await groups.nth(i).evaluate(e=>e.open),false,
-          'secondary mobile groups must stay collapsed until requested');
-        await groups.nth(3).locator('summary').click();
-        assert.ok(await groups.nth(3).getByRole('link',{name:/Профиль и настройки/}).isVisible(),
+        const expected=['Быстрый доступ','Разделы кабинета','Финансы','Помощь','Документы','Аккаунт и настройки'];
+        assert.deepEqual(await groups.locator('summary').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label'))),
+          expected,'mobile master menu must contain exactly the six intended groups in order');
+        const section=name=>groups.filter({has:page.locator('summary[aria-label="'+name+'"]')});
+        for(const name of expected)
+          assert.equal(await section(name).evaluate(e=>e.open),name==='Быстрый доступ',
+            name+': incorrect initial disclosure state');
+        const account=section('Аккаунт и настройки');
+        await account.locator('summary').click();
+        assert.ok(await account.getByRole('link',{name:/Профиль и настройки/}).isVisible(),
           'account settings must open on tap');
-        assert.ok(await groups.nth(3).getByRole('button',{name:'Выйти из аккаунта'}).isVisible(),
+        assert.ok(await account.getByRole('button',{name:'Выйти из аккаунта'}).isVisible(),
           'logout must remain accessible inside the account menu');
-        await groups.nth(1).locator('summary').click();
-        assert.ok(await groups.nth(1).getByRole('navigation',{name:'Разделы кабинета'}).isVisible(),
+        assert.ok(await account.locator('a[href="#/work/me/schedule"]').isVisible(),
+          'work schedule must be available in settings');
+        const work=section('Разделы кабинета');
+        await work.locator('summary').click();
+        assert.ok(await work.getByRole('navigation',{name:'Разделы кабинета'}).isVisible(),
           'work sections must expand on tap');
+        for(const [name,hrefs] of [
+          ['Финансы',['#/work/me/tax','#/work/me/money']],
+          ['Помощь',['#/help']],
+          ['Документы',['#/offer/privacy','#/rules']]
+        ]){
+          const target=section(name);
+          await target.locator('summary').click();
+          for(const href of hrefs)assert.ok(await target.locator('a[href="'+href+'"]').isVisible(),
+            name+': missing destination '+href);
+        }
         await page.screenshot({path:OUT+'/menu-accordion-phone.png'});
       }
     } finally {await context.close();}

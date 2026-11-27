@@ -605,6 +605,7 @@ expect(liveOrderUi.includes("ptab === 'vehicle'") &&
 // the approved home language: a real menu, real role routes and restrained
 // animation. Source checks supplement, not replace, actual APK screenshots.
 const mobileRoleMenu = await read('web/src/mobileRoleMenu.tsx');
+const cabinetMenuGroups = await read('web/src/cabinetMenuGroups.ts');
 const innerAndroidStyle = await read('web/src/androidInternalSections20261120.css');
 const androidRealScreens = await read('e2e/android-approved-real-screens.mjs');
 const mobileMenuBlock = shell.slice(shell.indexOf('const mobileTabs:'),shell.indexOf('const accountLinks:'));
@@ -618,8 +619,18 @@ expect((mobileMenuBlock.match(/\['\/menu', 'menu', 'Меню'\]/g)??[]).length =
   shell.includes("onLogout={safeLogout}") &&
   !shell.includes("mobileTabs.length > 0 && !(route[0] === 'work'") &&
   mobileRoleMenu.includes('quick.filter') &&
-  mobileRoleMenu.includes('uniqueEntries(account') &&
-  mobileRoleMenu.includes('uniqueEntries(help') &&
+  mobileRoleMenu.includes('groupCabinetMenu(account,help,') &&
+  mobileRoleMenu.includes('uniqueEntries(groups.work') &&
+  mobileRoleMenu.includes('uniqueEntries(groups.guidance') &&
+  mobileRoleMenu.includes('uniqueEntries(groups.documents') &&
+  mobileRoleMenu.includes('title="Помощь"') &&
+  mobileRoleMenu.includes('title="Документы"') &&
+  cabinetMenuGroups.includes("path.startsWith('/offer/')") &&
+  cabinetMenuGroups.includes("path==='/work/docs'") &&
+  cabinetMenuGroups.includes('seen.has(path)') &&
+  androidRealScreens.includes('summary[aria-label="Помощь"]') &&
+  androidRealScreens.includes('summary[aria-label="Документы"]') &&
+  androidRealScreens.includes('duplicate destinations in mobile Menu sections') &&
   mobileRoleMenu.includes('tr-mobile-menu-logout'),
   'All seven Android roles have a real accessible menu and section/account/help actions, including settings and documents');
 expect(shell.includes("import './androidInternalSections20261120.css';") &&
