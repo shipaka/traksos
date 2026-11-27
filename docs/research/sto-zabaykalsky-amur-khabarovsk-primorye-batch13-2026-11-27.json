@@ -1,0 +1,467 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm current operation, legal operator, heavy truck capability, coordinates, source reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automatic outreach.",
+  "records": [
+    {
+      "id": "rig-chita",
+      "name": "RIG Service",
+      "region": "Забайкальский край",
+      "address": "Чита, ул. Беговая, 2",
+      "country": "Россия",
+      "phone": "+7 929 480-55-77",
+      "email": null,
+      "hours": "пн–пт 09:00–19:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "электрика",
+        "WABCO",
+        "отопители",
+        "ДВС"
+      ],
+      "source_urls": [
+        "https://rigservice.ru/"
+      ],
+      "notes": "Отдельный номер Volvo +7 924 272-05-95; основной для Scania, MAN, SITRAK, DAF. 15 постов заявлены компанией.",
+      "operator_group": "rigservice",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pritsepplus-chita",
+      "name": "Прицеп+",
+      "region": "Забайкальский край",
+      "address": "Чита, Кутузовский проезд, 6",
+      "country": "Россия",
+      "phone": "+7 924 278-44-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "тягачи",
+        "прицепы",
+        "полуприцепы",
+        "сварка",
+        "соосность"
+      ],
+      "source_urls": [
+        "https://pritsep.clients.site/"
+      ],
+      "notes": "Публичная бизнес-страница на платформе Яндекса; актуальные часы уточнить.",
+      "operator_group": "pritsepplus",
+      "evidence": "business_hosted_page",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mbtruck-zab",
+      "name": "МБ Трак Забайкалье",
+      "region": "Забайкальский край",
+      "address": "Чита, Геодезическая ул., 64, стр. 2",
+      "country": "Россия",
+      "phone": "+7 3022 24-54-43",
+      "email": null,
+      "hours": null,
+      "services": [
+        "SITRAK",
+        "HOWO",
+        "грузовики",
+        "диагностика",
+        "кузовной ремонт",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://mbtruck-zab.ru/"
+      ],
+      "notes": "Общий телефон 8 800 770-04-43. ИНН 7536178479 опубликован компанией; адрес строения в справочнике отличается, уточнить.",
+      "operator_group": "mbtruck-zab",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "amurtruck-blagoveshchensk",
+      "name": "АмурТрак",
+      "region": "Амурская область",
+      "address": "Благовещенск, ул. Театральная, 430А",
+      "country": "Россия",
+      "phone": "+7 924 671-13-13",
+      "email": "89246711313@mail.ru",
+      "hours": "пн–пт 08:30–19:00, сб 09:00–15:00",
+      "services": [
+        "грузовой ремонт",
+        "ходовая",
+        "тормозные системы"
+      ],
+      "source_urls": [
+        "https://amur-truck.ru/contacts/shops/"
+      ],
+      "notes": "Номер и адрес именно СТО, не магазина на Театральной 164.",
+      "operator_group": "amurtruck",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "runauto-khabarovsk",
+      "name": "RUN AUTO",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Промышленная, 1, стр. 1",
+      "country": "Россия",
+      "phone": "+7 4212 240-302",
+      "email": "run_auto@bk.ru",
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "грузовики",
+        "спецтехника",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://run-auto.ru/"
+      ],
+      "notes": "Прямой номер грузового цеха; рабочий WhatsApp +7 914 159-03-02. Ограничение высоты 4 м.",
+      "operator_group": "runauto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dvservice-topolevo",
+      "name": "ДВ Сервис — Тополево",
+      "region": "Хабаровский край",
+      "address": "с. Тополево, ул. Центральная, 2С",
+      "country": "Россия",
+      "phone": "+7 4212 93-21-72",
+      "email": "sto@dvservice.pro",
+      "hours": "ежедневно 09:00–18:00 (сайт сети)",
+      "services": [
+        "грузовики",
+        "электрика",
+        "пневматика",
+        "тормоза",
+        "агрегаты",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://dvservice.pro/"
+      ],
+      "notes": "Общая линия двух адресов, доп. +7 924 106-35-08; ИНН 2723179280 по сайту.",
+      "operator_group": "dvservice",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rustransauto-khabarovsk",
+      "name": "Рустрансавто",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Целинная, 2Г",
+      "country": "Россия",
+      "phone": "+7 924 309-07-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "прицепы",
+        "ДВС",
+        "КПП",
+        "рамы",
+        "электрика",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://rusautodv.ru/"
+      ],
+      "notes": "Российская техника, в том числе Урал и КАМАЗ.",
+      "operator_group": "rustransauto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vts-khabarovsk",
+      "name": "Восток Трак Сервис",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Трёхгорная, 177А",
+      "country": "Россия",
+      "phone": "+7 999 792-78-95",
+      "email": "info@sto-vts.ru",
+      "hours": "пн–пт 09:00–19:00 (индекс сайта)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "рамы",
+        "топливная аппаратура",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://sto-vts.ru/contacts/",
+        "https://sto-vts.ru/services/"
+      ],
+      "notes": "Рабочий номер администратора; прямое открытие контактов не удалось, сведения сверены по индексированным страницам собственного сайта.",
+      "operator_group": "vts",
+      "evidence": "first_party_search_index",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehservise-khabarovsk",
+      "name": "Техсервис — Павла Морозова",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Павла Морозова, 65",
+      "country": "Россия",
+      "phone": "+7 914 310-85-00",
+      "email": "petrov@kht.tsgroup.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "тягачи",
+        "самосвалы",
+        "прицепы",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://www.tehservise.ru/"
+      ],
+      "notes": "На сайте заявлены 10 ремонтных постов; номер записи.",
+      "operator_group": "tehservise",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dvservice-artem",
+      "name": "ДВ Сервис — Артём",
+      "region": "Приморский край",
+      "address": "Артём, ул. Вокзальная, 109Д",
+      "country": "Россия",
+      "phone": "+7 4212 93-21-72",
+      "email": "sto@dvservice.pro",
+      "hours": "ежедневно 09:00–18:00 (сайт сети)",
+      "services": [
+        "грузовой ремонт",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://dvservice.pro/"
+      ],
+      "notes": "Отдельный адрес на сайте сети; общий номер с Тополево, конкретный профиль площадки и прямой контакт уточнить.",
+      "operator_group": "dvservice",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "cgo125-steklozavodsky",
+      "name": "Центр грузового обслуживания",
+      "region": "Приморский край",
+      "address": "пос. Стеклозаводский, ул. Заводская, 2",
+      "country": "Россия",
+      "phone": "+7 924 256-22-22",
+      "email": "client-cgo@yandex.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "шиномонтаж",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://cgo125.ru/"
+      ],
+      "notes": "Доп. номер грузового сервиса +7 924 498-11-11; район Кипарисово. Круглосуточная мойка не означает круглосуточное СТО.",
+      "operator_group": "cgo125",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sumotori-artem",
+      "name": "Техцентр Сумотори",
+      "region": "Приморский край",
+      "address": "Артём, ул. 1-я Рабочая, 91",
+      "country": "Россия",
+      "phone": "+7 423 260-02-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "шиномонтаж",
+        "прицепы",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://service.sumotori.ru/"
+      ],
+      "notes": "Доп. номера +7 914 792-14-70 и +7 914 791-68-64; FAW, SITRAK, HOWO.",
+      "operator_group": "sumotori",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mika-vladivostok",
+      "name": "МИКА",
+      "region": "Приморский край",
+      "address": "Владивосток, ул. Бородинская, 61",
+      "country": "Россия",
+      "phone": "+7 423 268-80-40",
+      "email": "master@mikaservice.ru",
+      "hours": null,
+      "services": [
+        "японские грузовики",
+        "автобусы",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "сход-развал"
+      ],
+      "source_urls": [
+        "https://mikaservice.ru/"
+      ],
+      "notes": "Ремонт японских малотоннажных/среднетоннажных грузовиков; сход-развал заявлен для всех типов грузовиков. Прием тяжелого тягача на прочие работы уточнить.",
+      "operator_group": "mika",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autoliga-vladivostok",
+      "name": "АвтоЛига — грузовое СТО",
+      "region": "Приморский край",
+      "address": "Владивосток, ул. Днепровская, 115",
+      "country": "Россия",
+      "phone": "+7 423 201-66-16",
+      "email": "service.dnepr@al-vl.ru",
+      "hours": null,
+      "services": [
+        "грузовой сервис"
+      ],
+      "source_urls": [
+        "https://al-vl.ru/kontakti"
+      ],
+      "notes": "Прямой номер грузового СТО, не легкового цеха на Народном проспекте.",
+      "operator_group": "autoliga",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autoliga-ussuriysk",
+      "name": "АвтоЛига — Уссурийск",
+      "region": "Приморский край",
+      "address": "Уссурийск, ул. Тургенева, 113",
+      "country": "Россия",
+      "phone": "+7 4234 24-31-74",
+      "email": "ussur@al-vl.ru",
+      "hours": null,
+      "services": [
+        "грузовой сервис",
+        "легковой сервис"
+      ],
+      "source_urls": [
+        "https://al-vl.ru/kontakti"
+      ],
+      "notes": "Смешанный профиль; прием тяжелого тягача уточнить. Отдельный филиал.",
+      "operator_group": "autoliga",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
