@@ -1,0 +1,367 @@
+{
+  "schema": "sto-regional-import-audit-v1",
+  "previous_drafts": 1135,
+  "source_rows": 20,
+  "added_drafts": 20,
+  "held_count": 0,
+  "expected_drafts": 1155,
+  "source_coordinates": 47,
+  "missing_coordinates": 1108,
+  "byCategory": {
+    "tyre": 10,
+    "wash": 2,
+    "sto": 8
+  },
+  "totalByCategory": {
+    "sto": 692,
+    "tyre": 262,
+    "refrigeration": 24,
+    "trailer": 134,
+    "wash": 43
+  },
+  "byBatch": {
+    "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76": {
+      "input": 12,
+      "added": 12,
+      "held": 0
+    },
+    "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77": {
+      "input": 8,
+      "added": 8,
+      "held": 0
+    }
+  },
+  "byRegion": {
+    "Амурская область": 12,
+    "Еврейская автономная область": 4,
+    "Хабаровский край": 4
+  },
+  "held": [],
+  "provenance": [
+    {
+      "id": "directory:research-b76-shim-pushkina",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-shim-pushkina",
+      "name": "Шиномонтаж",
+      "address": "Амурская область, Шимановск, ул. Пушкина, 15А",
+      "phone": "+79031310461",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://shimanovsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль по рубрике справочника, прием тяжелых колес проверить.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-shim-plehanova",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-shim-plehanova",
+      "name": "Шиномонтаж",
+      "address": "Амурская область, Шимановск, ул. Плеханова, 41А",
+      "phone": "+79638091720",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://shimanovsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://shimanovsk.jsprav.ru/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Фактический режим и оборудование не проверены.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-svob-grime",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-svob-grime",
+      "name": "Grime Gorilla",
+      "address": "Амурская область, Свободный, ул. Ленина, 13",
+      "phone": "+79140485122",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_amurskaya-oblast/svobodnyij-gorodskoj-okrug-svobodnyij/category-avtomojki"
+      ],
+      "notes": "Тот же телефон у автокомплекса Южный, Амурская 37/1; независимость площадок уточнить.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-svob-21",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-svob-21",
+      "name": "21 век",
+      "address": "Амурская область, Свободный, ул. Маяковского, 31",
+      "phone": "+79143950585",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://blizko.pro/ru/svobodnyy_1667742485/firm/21-vek-avtomoyka",
+        "https://urbanplaces.su/ru_amurskaya-oblast/svobodnyij-gorodskoj-okrug-svobodnyij/category-avtomojki"
+      ],
+      "notes": "Два источника совпадают по адресу и номеру; габариты бокса подтвердить.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-belo-max",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-belo-max",
+      "name": "Автоцентр Макс",
+      "address": "Амурская область, Белогорск, ул. Кирова, 306",
+      "phone": "+79143975444",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belogorsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить размеры колес и назначение дополнительных телефонов.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-belo-express",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-belo-express",
+      "name": "Автокомплекс Экспресс",
+      "address": "Амурская область, Белогорск, ул. Кирова, 180",
+      "phone": "+79145973937",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belogorsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль по каталогу; тяжелую оснастку проверить.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-belo-storm",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-belo-storm",
+      "name": "Штормавто",
+      "address": "Амурская область, Белогорск, ул. Набережная, 179",
+      "phone": "+74164125353",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belogorsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Прием тягачей уточнить.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-belo-ivanor",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-belo-ivanor",
+      "name": "Ivanor",
+      "address": "Амурская область, Белогорск, ул. 9 Мая, 2А",
+      "phone": "+74164120808",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belogorsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "800 — общие контакты сети; тяжелые колеса подтвердить в филиале.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "network_or_shared",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-belo-lux",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-belo-lux",
+      "name": "Шиномонтаж",
+      "address": "Амурская область, Белогорск, ул. Розы Люксембург, 10",
+      "phone": "+79145684725",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belogorsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить оператора и размеры колес.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-belo-shatun",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-belo-shatun",
+      "name": "Шатун",
+      "address": "Амурская область, Белогорск, ул. Кирова, 277",
+      "phone": "+79145575500",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://belogorsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Тяжелую оснастку проверить.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-blag-hitauto",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-blag-hitauto",
+      "name": "Хитавто — грузовой автосервис",
+      "address": "Амурская область, Благовещенск, ул. Тополиная, 3",
+      "phone": "+74162469333",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://blagoveshensk-2.spravmer.ru/gruzovoj-avtoservis-hitavto-blagoveshensk/",
+        "https://servicesauto.ru/blagoveschensk/"
+      ],
+      "notes": "Контакты совпадают в двух справочниках; услуги из описания сайта в каталоге. Проверить действующий статус.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b76-blag-stroy",
+      "source_file": "sto-r297-shimanovsk-svobodny-belogorsk-blagoveshchensk-batch76-2026-11-27.json",
+      "source_id": "b76-blag-stroy",
+      "name": "СтройТех-ДВ",
+      "address": "Амурская область, Благовещенск, ул. Пограничная, 124/1Б",
+      "phone": "+79143974892",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://urbanplaces.su/ru_amurskaya-oblast/blagoveschensk-gorodskoj-okrug-blagoveschensk/card-2186221-strojteh-dv"
+      ],
+      "notes": "Координаты источника 50.336958, 127.591879; верификация въезда не выполнена.",
+      "timezone": "Asia/Yakutsk",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-biro-pole",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-biro-pole",
+      "name": "Pole Position",
+      "address": "Еврейская автономная область, Биробиджан, ул. Шолом-Алейхема, 78",
+      "phone": "+79145422099",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Другой адрес и номер по сравнению с Штормавто на Советской 123Б; проверить отдельность филиала и грузовую оснастку.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-biro-cabby",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-biro-cabby",
+      "name": "Cabby",
+      "address": "Еврейская автономная область, Биробиджан, ул. Пионерская, 37",
+      "phone": "+79990615074",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить фактический профиль и габариты колес.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-biro-hunter",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-biro-hunter",
+      "name": "Хантер",
+      "address": "Еврейская автономная область, Биробиджан, ул. Шолом-Алейхема, 52Б",
+      "phone": "+79141642090",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://birobijan.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Прием тяжелых грузовиков не доказан; проверить оборудование.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-biro-autostolitsa",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-biro-autostolitsa",
+      "name": "АвтоСТОлица",
+      "address": "Еврейская автономная область, Биробиджан, ул. Пионерская, 62Г",
+      "phone": "+79246412223",
+      "evidence": "third_party_business_directory",
+      "source_urls": [
+        "https://birobijan.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием магистральных тягачей; соседние адреса 62Р/66Б не объединять автоматически.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-khab-shell",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-khab-shell",
+      "name": "Шелл Сервис",
+      "address": "Хабаровский край, Хабаровск, ул. Тихоокеанская, 53",
+      "phone": "+74212691143",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://xn--27-mlcya9e.xn--p1ai/",
+        "https://xn--27-mlcya9e.xn--p1ai/uslugi/gruzovoy-ceh"
+      ],
+      "notes": "Собственный сайт; 27 постов всего по комплексу, не число грузовых постов. Грузовую мойку и эвакуацию фур уточнить.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-topolevo-box",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-topolevo-box",
+      "name": "Грузовой бокс",
+      "address": "Хабаровский край, с. Тополево, ул. Перспективная, 1",
+      "phone": "+79147728800",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://remontgruzovikov-dv.ru/"
+      ],
+      "notes": "Сайт указывает ООО АВТОРОДЕО, ИНН 2720058537; статус ФНС не проверен. Отличается от ДВ Сервис и Транссервис по адресу.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-khab-sonikauto",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-khab-sonikauto",
+      "name": "SONIKAUTO",
+      "address": "Хабаровский край, Хабаровск, Воронежское шоссе, 178",
+      "phone": "+79144104000",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://sonik-auto.ru/pages/2"
+      ],
+      "notes": "Второй номер — мойка; сайт заявляет круглосуточность мойки, не всего ремонта. Бокс 30 м, ворота 4×4,4 м. Одна площадка с несколькими услугами.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    },
+    {
+      "id": "directory:research-b77-mirnoe-soniktrans",
+      "source_file": "sto-r297-arhara-obluche-birobidzhan-khabarovsk-batch77-2026-11-27.json",
+      "source_id": "b77-mirnoe-soniktrans",
+      "name": "Сониктранс",
+      "address": "Хабаровский край, Хабаровский район, с. Мирное, пер. Солнечный, 6",
+      "phone": "+78005117386",
+      "evidence": "first_party",
+      "source_urls": [
+        "https://soniktrans.ru/service-and-spare-parts/"
+      ],
+      "notes": "Контакты сети общие, почта сервиса. Другой филиал в Комсомольске-на-Амуре оставить на следующий пакет.",
+      "timezone": "Asia/Vladivostok",
+      "phone_kind": "unverified",
+      "possible_matches": []
+    }
+  ],
+  "notes": "Draft only. Coordinates and activity not independently verified; conservative duplicate screening is not exhaustive."
+}
