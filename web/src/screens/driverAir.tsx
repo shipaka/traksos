@@ -33,6 +33,7 @@ function AirRoom({owner,token}:{owner:string;token:string|null}) {
   const logRef = useRef<HTMLDivElement>(null);
   const keepAtBottom = useRef(true);
   const lastTailId = useRef<string|null>(null);
+  const readingAnchor = useRef<{id:string;offset:number;top:number}|null>(null);
 
   useEffect(()=>{
     let live=true;
@@ -101,13 +102,21 @@ function AirRoom({owner,token}:{owner:string;token:string|null}) {
     // the same tail as a fresh render, even when no message ID changed.
     if(!air){lastTailId.current=null;return;}
     const tailId=air.messages[air.messages.length-1]?.id??null;
-    if(tailId!==lastTailId.current) {
-      lastTailId.current=tailId;
-      // Follow new messages only if the user is already reading near the end;
-      // scrolling the whole page would interrupt someone reading old messages.
-      if(keepAtBottom.current && logRef.current)
-        logRef.current.scrollTop=logRef.current.scrollHeight;
+    const log=logRef.current;
+    if(!log)return;
+    if(keepAtBottom.current) {
+      // Follow the end only while the reader is already near it.
+      if(tailId!==lastTailId.current)log.scrollTop=log.scrollHeight;
+    } else if(readingAnchor.current && air.messages.length) {
+      // Restore the visible row after an offline/foreground refresh or a
+      // bounded snapshot shift. Never retain stale message contents.
+      const {id,offset,top}=readingAnchor.current;
+      const row=Array.from(log.querySelectorAll<HTMLElement>('[data-air-message-id]'))
+        .find(el=>el.dataset.airMessageId===id);
+      if(row)log.scrollTop+=row.getBoundingClientRect().top-log.getBoundingClientRect().top-offset;
+      else log.scrollTop=Math.min(top,Math.max(0,log.scrollHeight-log.clientHeight));
     }
+    lastTailId.current=tailId;
   },[air]);
 
   // A lost write response may still mean the server committed the action.
@@ -171,12 +180,20 @@ function AirRoom({owner,token}:{owner:string;token:string|null}) {
         onScroll={event=>{
           if(!air)return; // An empty placeholder is not a user scroll intent.
           const el=event.currentTarget;
+          if(!air.messages.length)return;
           keepAtBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<96;
+          if(keepAtBottom.current){readingAnchor.current=null;return;}
+          const bounds=el.getBoundingClientRect();
+          const row=Array.from(el.querySelectorAll<HTMLElement>('[data-air-message-id]'))
+            .find(node=>node.getBoundingClientRect().bottom>bounds.top);
+          if(row?.dataset.airMessageId)readingAnchor.current={
+            id:row.dataset.airMessageId,offset:row.getBoundingClientRect().top-bounds.top,top:el.scrollTop
+          };
         }}
         style={{height:'min(53vh,520px)',minHeight:260,overflowY:'auto'}}>
         {!air && <div className="empty">{loading ? 'Загружаю сообщения…' : 'Сообщения пока недоступны.'}</div>}
         {air && !air.messages.length && <div className="empty">{air.canPost ? 'Эфир открыт. Начни разговор — например, расскажи, как проходит рейс.' : 'Сообщений пока нет.'}</div>}
-        {air?.messages.map(item=><div key={item.id} className="card flat" style={{margin:'8px 0',padding:12}}>
+        {air?.messages.map(item=><div key={item.id} data-air-message-id={item.id} className="card flat" style={{margin:'8px 0',padding:12}}>
           <div className="between" style={{gap:10}}>
             <b>{item.author}</b>
             <span className="note">{new Date(item.createdAt).toLocaleString('ru-RU',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'})}</span>
