@@ -1,0 +1,1445 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "records": [
+    {
+      "id": "b49-wash-1",
+      "name": "Портальная мойка — КАМАЗ Центр Екатеринбург",
+      "region": "Свердловская область",
+      "address": "Берёзовский, Кольцевая 4К3",
+      "country": "Россия",
+      "phone": "+7 343 380-60-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "портальная мойка автопоездов"
+      ],
+      "source_urls": [
+        "https://portalnaja-mojka.clients.site/"
+      ],
+      "notes": "ИНН 6678098570 заявлен в профиле; проверить связь с существующей СТО.",
+      "evidence": "business_first_party_profile",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": null,
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b49-wash-2",
+      "name": "ШинаВсем",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, проезд Горнистов 1",
+      "country": "Россия",
+      "phone": "+7 343 301-22-02",
+      "email": "info@shinavsem.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://shinavsem.ru/services/avtomoyka/"
+      ],
+      "notes": "Мойка сцепок 17–19 м заявлена; шиномонтаж на этой площадке уточнить.",
+      "evidence": "business_first_party_profile",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": null,
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b49-wash-3",
+      "name": "Автомойка для грузовых и легковых автомобилей",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Федосеенко 51Б",
+      "country": "Россия",
+      "phone": "+7 831 415-40-35",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовая мойка",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/nizhniy_novgorod/org/avtomoyka_dlya_gruzovyh_i_legkovyh_avtomobiley/898095"
+      ],
+      "notes": "Сторонний справочник, проверить оператора и высоту ворот.",
+      "evidence": "directory_only",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": null,
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b49-wash-4",
+      "name": "Мега-мойка",
+      "region": "Республика Татарстан",
+      "address": "Казань, 2-я Тихорецкая 10Б",
+      "country": "Россия",
+      "phone": "+7 960 081-28-12",
+      "email": null,
+      "hours": "ежедневно 07:00–23:00",
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://orgzz.ru/kazan/co/delfin/567810"
+      ],
+      "notes": "Сторонний справочник; второй номер +7 987 296-65-40.",
+      "evidence": "directory_only",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": null,
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "manufacturer_review_queue": [
+    {
+      "id": "kogel49-1",
+      "name": "Атлант-Сервис",
+      "region": "Москва",
+      "address": "Щербинка, Южная 10",
+      "phone": "+7 499 653-56-73",
+      "email": null,
+      "specialty_claim": "ремонт полуприцепов; изотермические кузова",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "atlant-shcherbinka",
+          "name": "Атлант-Сервис",
+          "address": "Щербинка, ул. Южная, 10",
+          "phone": "+7 499 653-56-73"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-2",
+      "name": "Скания Русь",
+      "region": "Московская область",
+      "address": "Ногинск, территория Ногинск-Технопарк",
+      "phone": "+7 495 787-50-07",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-3",
+      "name": "Бренор",
+      "region": "Московская область",
+      "address": "Домодедово, д. Ярлыково, владение Легат",
+      "phone": "+7 495 115-19-90",
+      "email": null,
+      "specialty_claim": "ремонт полуприцепов; надстройки; изотермические кузова",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "b48-83",
+          "name": "Легат-сервис",
+          "address": "Домодедово, д. Ярлыково, владение Легат",
+          "phone": "+7 915 297-06-61"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-4",
+      "name": "Скания Русь",
+      "region": "Московская область",
+      "address": "Голицыно, Минское шоссе 43 км, вл. 1 корп. 1",
+      "phone": "+7 495 787-50-01",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "scania-golitsyno",
+          "name": "Скания Сервис — Голицыно",
+          "address": "Одинцовский округ, 43-й км Минского шоссе, вл. 1, корп. 1",
+          "phone": "+7 495 787-50-01"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-5",
+      "name": "Юнайтед Трак Сервисиз",
+      "region": "Московская область",
+      "address": "Солнечногорский район, д. Ложки, дорога Ложки-Поварово-Пятница",
+      "phone": "+7 495 308-99-99",
+      "email": "info@mb-uts.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "united-lozhki",
+          "name": "Юнайтед Трак Сервисиз",
+          "address": "Солнечногорский округ, д. Ложки, стр. 200",
+          "phone": "+7 495 308-99-99"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-6",
+      "name": "Транзит-В",
+      "region": "Смоленская область",
+      "address": "Смоленск, Лавочкина 105",
+      "phone": "+7 4812 30-27-40",
+      "email": "man_tranzit.sml@mail.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "transit-v-smolensk",
+          "name": "Транзит-В",
+          "address": "Смоленск, ул. Лавочкина, 105",
+          "phone": "8 4812 30-27-40"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-7",
+      "name": "АйТракс",
+      "region": "Республика Татарстан",
+      "address": "пос. Новониколаевский, Центральная 1А",
+      "phone": "8 800 600-08-80",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-8",
+      "name": "Компания Альфа",
+      "region": "Республика Татарстан",
+      "address": "пос. Новониколаевский, Центральная 1Б, М7 797 км",
+      "phone": "8 800 775-14-44",
+      "email": "service.kazan@alfascan.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "alfa-chelny-profilnaya",
+          "name": "Компания Альфа",
+          "address": "Набережные Челны, промзона БСИ, Профильная ул., 32",
+          "phone": "+7 8552 77-82-82"
+        },
+        {
+          "id": "b48-74",
+          "name": "Компания Альфа",
+          "address": "с. Бетьки, Новая 3-17",
+          "phone": "+7 962 567-03-46"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-9",
+      "name": "Камавтокомплект Трак",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт 32",
+      "phone": "+7 8552 926-926",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-kamavtokomplekt-chelny",
+          "name": "Камавтокомплект Трак",
+          "address": "Набережные Челны, Мензелинский тракт, 32",
+          "phone": "+7 8552 92-69-26"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-10",
+      "name": "Компания Альфа",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт 114/2",
+      "phone": "8 800 222-18-69",
+      "email": "service.chelny@alfascan.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "deltascan-novonikolaevsky",
+          "name": "Дельтаскан",
+          "address": "пос. Новониколаевский, М-7, 797-й км, ул. Центральная, 1Б",
+          "phone": "+7 800 222-18-69"
+        },
+        {
+          "id": "alfa-chelny-profilnaya",
+          "name": "Компания Альфа",
+          "address": "Набережные Челны, промзона БСИ, Профильная ул., 32",
+          "phone": "+7 8552 77-82-82"
+        },
+        {
+          "id": "vbs-alfascan-chelny",
+          "name": "Альфаскан Челны",
+          "address": "Набережные Челны, Мензелинский тракт, 114/2",
+          "phone": "+7 962 567-57-57"
+        },
+        {
+          "id": "b48-74",
+          "name": "Компания Альфа",
+          "address": "с. Бетьки, Новая 3-17",
+          "phone": "+7 962 567-03-46"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-11",
+      "name": "АвтоЛидер-Восток",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, М5 1491 км + 600 м",
+      "phone": "+7 347 293-41-58",
+      "email": "autolider-vostok@mail.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-12",
+      "name": "Компания Альфа",
+      "region": "Республика Башкортостан",
+      "address": "Авдонский с/с, А. Локотченко 2, М5 1449 км",
+      "phone": "8 800 222-18-69",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-13",
+      "name": "МБ Тракс СПб",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе 289 стр. 1",
+      "phone": "+7 812 677-03-78",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-14",
+      "name": "Фургон-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Софийская 127 корп. 6",
+      "phone": "+7 812 929-46-92",
+      "email": null,
+      "specialty_claim": "ремонт надстроек; изотермические кузова",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "furgonservice-sofiyskaya",
+          "name": "СТО Фургон-Сервис",
+          "address": "пос. Шушары, Софийская ул., 127, корп. 6",
+          "phone": "+7 812 929-46-92"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-15",
+      "name": "ТЦ Восток",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, Коркинская зона, 1-й проезд 1",
+      "phone": "+7 812 490-77-77",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-16",
+      "name": "Техцентры СОТРАНС Юг",
+      "region": "Ленинградская область",
+      "address": "Красный Бор, Промышленная 3",
+      "phone": "+7 812 495-43-20",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-17",
+      "name": "Совавто Центр Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Ленина 1Б",
+      "phone": "+7 812 600-43-60",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "sovavto-shushary",
+          "name": "Центр Автосервис СовАвто",
+          "address": "пос. Шушары, ул. Ленина, 1Б, лит. А",
+          "phone": "+7 812 600-43-60"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-18",
+      "name": "Техцентры СОТРАНС Север",
+      "region": "Санкт-Петербург",
+      "address": "Парнас, Верхняя 16 лит. А",
+      "phone": "+7 812 448-06-25",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-19",
+      "name": "ИВ-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе 233А",
+      "phone": "+7 812 640-64-64",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "ivservice-shushary",
+          "name": "ИВ-Сервис",
+          "address": "пос. Шушары, Московское шоссе, 233, лит. А",
+          "phone": "+7 812 640-64-64"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-20",
+      "name": "Скания Русь",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе 185",
+      "phone": "+7 812 612-80-90",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "scania-shushary185",
+          "name": "Скания Русь — Шушары",
+          "address": "пос. Шушары, Московское шоссе, 185",
+          "phone": "+7 812 612-80-90"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-21",
+      "name": "БелТракЦентр",
+      "region": "Белгородская область",
+      "address": "Белгород, Константина Заслонова 90",
+      "phone": "+7 4722 20-23-20",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "beltruckcenter",
+          "name": "БелТракЦентр",
+          "address": "Белгород, ул. Константина Заслонова, 90",
+          "phone": "+7 4722 20-23-20"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-22",
+      "name": "Компания Альфа",
+      "region": "Брянская область",
+      "address": "Супонево, Ленина 131Б",
+      "phone": "8 800 222-18-69",
+      "email": "bryansk@alfascan.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-23",
+      "name": "Автоцентр",
+      "region": "Волгоградская область",
+      "address": "Волжский, Пушкина 117Г",
+      "phone": "+7 8443 53-15-15",
+      "email": "info@vostok-3.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "autocenter-volzhsky",
+          "name": "Автоцентр",
+          "address": "Волжский, ул. Пушкина, 117Г",
+          "phone": "+7 8443 53-15-15"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-24",
+      "name": "ВолгаАвтоТрейд",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Гумрак, Моторная 34",
+      "phone": "+7 8442 43-04-30",
+      "email": "info@vat34.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "volgaavtotrade",
+          "name": "ВолгаАвтоТрейд",
+          "address": "Волгоград, Моторная ул., 34",
+          "phone": "+7 8442 430-430"
+        },
+        {
+          "id": "vat34-volgograd",
+          "name": "ВолгаАвтоТрейд",
+          "address": "Волгоград, ул. Моторная, 34",
+          "phone": "+7 927 505-97-79"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-25",
+      "name": "ТахографТракСервис",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Костюченко 4/1",
+      "phone": "+7 8442 35-40-35",
+      "email": "service@tksm.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "tachographtruckservice-volgograd",
+          "name": "ТахографТракСервис",
+          "address": "Волгоград, ул. Костюченко, 4",
+          "phone": "8 800 444-71-34"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-26",
+      "name": "ВологдаТракСервис",
+      "region": "Вологодская область",
+      "address": "Вологда, Окружное шоссе 9Б",
+      "phone": "+7 8172 51-01-01",
+      "email": "inbox@man-vologda.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vologdatrakservice",
+          "name": "ВологдаТракСервис",
+          "address": "Вологда, Окружное шоссе, 9Б",
+          "phone": "8 800 250-53-51"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-27",
+      "name": "МБ Вологда",
+      "region": "Вологодская область",
+      "address": "Вологда, Старое шоссе 5 офис 5",
+      "phone": "+7 8172 70-00-08",
+      "email": "info@mercedes35.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "mbv-vologda-service",
+          "name": "МБВ Сервис",
+          "address": "Вологда, Старое шоссе, 5А",
+          "phone": "+7 8172 70-00-08"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-28",
+      "name": "ГрузАвто-36",
+      "region": "Воронежская область",
+      "address": "М4 Дон 519 км",
+      "phone": "+7 473 233-22-00",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-29",
+      "name": "МАН-Вектор",
+      "region": "Воронежская область",
+      "address": "Воронеж, проспект Патриотов 57Д",
+      "phone": "+7 473 207-56-61",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-30",
+      "name": "Сканеж",
+      "region": "Воронежская область",
+      "address": "Айдаровское с.п., Промышленная уч. 7, М4 484 км + 640 м",
+      "phone": "+7 473 207-00-77",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-31",
+      "name": "Лорри Сервис плюс",
+      "region": "Калининградская область",
+      "address": "пос. Поддубное, Берлинская 1",
+      "phone": "+7 4012 30-64-70",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-32",
+      "name": "Техник КНГ",
+      "region": "Калининградская область",
+      "address": "пос. Дорожное, Датский проезд 3А; Калининград, Дзержинского 244",
+      "phone": "+7 4012 38-66-03",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-33",
+      "name": "Фургонмастер",
+      "region": "Краснодарский край",
+      "address": "ст. Калининская, Степная, трасса Тимашевск-Славянск 29 км",
+      "phone": "+7 928 458-70-07",
+      "email": "furgonmaster@mail.ru",
+      "specialty_claim": "ремонт полуприцепов; изотермические кузова",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-34",
+      "name": "Юрто-Трак",
+      "region": "Краснодарский край",
+      "address": "Краснодар, Ростовское шоссе 47",
+      "phone": "+7 861 225-93-75",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-35",
+      "name": "Краснодар-Скан",
+      "region": "Краснодарский край",
+      "address": "пгт Черноморский, Дзержинского 1",
+      "phone": "+7 86166 67-710",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-36",
+      "name": "Першерон",
+      "region": "Краснодарский край",
+      "address": "Новороссийск, Железнодорожная петля 8",
+      "phone": "+7 903 457-59-99",
+      "email": "percheron2014@gmail.com",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-percheron-novorossiysk",
+          "name": "Першерон",
+          "address": "Новороссийск, ул. Мефодиевская, 155",
+          "phone": "+7 903 457-59-99"
+        },
+        {
+          "id": "b48-87",
+          "name": "Першерон",
+          "address": "Новороссийск, Железнодорожная петля 8 парк А",
+          "phone": "+7 918 234-47-69"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-37",
+      "name": "МАНТЕХНО",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Шапошникова 15",
+      "phone": "+7 831 466-93-32",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "mantehno",
+          "name": "Мантехно",
+          "address": "Нижний Новгород, ул. Шапошникова, 15",
+          "phone": "+7 831 466-93-32"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-38",
+      "name": "Транссервис",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Кузбасская 1 лит. ЖЖ1 офис 403",
+      "phone": "+7 831 212-38-38",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-39",
+      "name": "Транссервис",
+      "region": "Республика Мордовия",
+      "address": "с. Лямбирь, Октябрьская 105А",
+      "phone": "+7 8342 54-60-60",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-40",
+      "name": "Промтранс",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, Магистральная 11/13",
+      "phone": "+7 921 731-89-86",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-41",
+      "name": "Фургон Центр",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, Варшавская 5",
+      "phone": "+7 383 212-67-75",
+      "email": null,
+      "specialty_claim": "ремонт надстроек; изотермические кузова",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-42",
+      "name": "СолексАвто-Сибирь",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, Петухова 47/1",
+      "phone": "+7 383 335-75-55",
+      "email": "info@daf-nsk.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-43",
+      "name": "Курилотрансавто",
+      "region": "Омская область",
+      "address": "с. Троицкое, Омская 14; с. Красный Яр, Дорожная 19",
+      "phone": "+7 913 669-55-55",
+      "email": "kurilotransavto@yandex.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-44",
+      "name": "ГРИНАВТО",
+      "region": "Омская область",
+      "address": "Омск, 2-я Солнечная 35Д",
+      "phone": "+7 3812 72-90-20",
+      "email": "planning@grinavto.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-45",
+      "name": "Евросибтрак",
+      "region": "Омская область",
+      "address": "Омск, 22 Декабря 83",
+      "phone": "+7 3812 21-77-14",
+      "email": "info@eurosib55.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-46",
+      "name": "М-Тракс",
+      "region": "Омская область",
+      "address": "с. Дружино, Придорожная 61",
+      "phone": "+7 3812 356-455",
+      "email": "service@m-trucks.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-47",
+      "name": "Компания Альфа",
+      "region": "Пермский край",
+      "address": "с. Фролы, Р242 5 км, территория ЛИС",
+      "phone": "8 800 222-18-69",
+      "email": "perm@alfascan.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-48",
+      "name": "Форсавто",
+      "region": "Приморский край",
+      "address": "Дальнегорск, Заречье 40 бокс 8; Артём, Урбанского 2Б",
+      "phone": "+7 423 200-06-21",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "forsauto-artem",
+          "name": "Форсавто",
+          "address": "Артём, ул. Урбанского, 2Б",
+          "phone": "+7 914 703-83-49"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-49",
+      "name": "Камавтокомплект-Ижевск",
+      "region": "Удмуртская Республика",
+      "address": "д. Старое Мартьяново, Мартьяновский квартал 1",
+      "phone": "+7 3412 97-01-02",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-kamavtokomplekt-izhevsk",
+          "name": "Камавтокомплект — Ижевск",
+          "address": "Завьяловский район, Мартьяновский квартал, 1",
+          "phone": "+7 3412 97-01-02"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-50",
+      "name": "Ижевск Трак Сервис",
+      "region": "Удмуртская Республика",
+      "address": "Ижевск, Пойма 36 зд. 1 офис 3",
+      "phone": "+7 3412 22-00-40",
+      "email": "info@izhts.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-51",
+      "name": "Компания Альфа",
+      "region": "Удмуртская Республика",
+      "address": "с. Юськи, Р320 150 км",
+      "phone": "8 800 222-18-69",
+      "email": "service.izhevsk@alfascan.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-52",
+      "name": "РостовТракСервис",
+      "region": "Ростовская область",
+      "address": "х. Маяковского, Заводская 45",
+      "phone": "+7 863 308-85-37",
+      "email": "service@rts-rv.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-53",
+      "name": "ИП Комогоров",
+      "region": "Ростовская область",
+      "address": "Аксай, Ленина 69",
+      "phone": "+7 918 551-13-25",
+      "email": "avk161@mail.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-54",
+      "name": "СЦ Регион 61",
+      "region": "Ростовская область",
+      "address": "Аксай, Западная 37",
+      "phone": "8 800 222-32-61",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-region61-aksay",
+          "name": "Регион 61 — Аксай",
+          "address": "Аксай, ул. Западная, 37",
+          "phone": "+7 800 222-32-61"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-55",
+      "name": "АвтоФорум",
+      "region": "Ростовская область",
+      "address": "Аксай, Западная 33",
+      "phone": "8 800 500-17-98",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-autoforum-muskatny",
+          "name": "Автофорум — Мускатный",
+          "address": "пос. Мускатный, ул. Луговая, 30/1",
+          "phone": "+7 800 500-17-98"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-56",
+      "name": "Трак Сервис Рязань",
+      "region": "Рязанская область",
+      "address": "Рязань, Куйбышевское шоссе 52А офис 2",
+      "phone": "+7 4912 706-600",
+      "email": "info@truck62.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-57",
+      "name": "Влако-Сервис",
+      "region": "Самарская область",
+      "address": "Тольятти, Хрящевское шоссе 11",
+      "phone": "+7 8482 69-80-80",
+      "email": "reception@wlako.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "wlako",
+          "name": "Влако-Сервис",
+          "address": "Тольятти, Хрящевское шоссе, вл. 11",
+          "phone": "+7 8482 69-98-20"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-58",
+      "name": "Самара-Скан-Сервис",
+      "region": "Самарская область",
+      "address": "Самара, Московское шоссе 22 км кварт. 27",
+      "phone": "+7 846 226-51-58",
+      "email": "info@samarascan.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-59",
+      "name": "Гольфстрим Сервис",
+      "region": "Саратовская область",
+      "address": "пос. Дубки, 1 км севернее",
+      "phone": "+7 8452 74-80-45",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-60",
+      "name": "Балтранс",
+      "region": "Саратовская область",
+      "address": "пос. Расково, хут. Бартоломей",
+      "phone": "+7 8452 79-99-93",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-61",
+      "name": "ЕкатеринбургСкан",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Шефская 3А лит. 1А",
+      "phone": "+7 343 304-28-04",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-62",
+      "name": "Уралтраксервис",
+      "region": "Свердловская область",
+      "address": "Сысертский район, пос. Первомайский, 1 км севернее",
+      "phone": "8 800 100-10-96",
+      "email": "service@urts.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-uraltruck-aramil",
+          "name": "Уралтраксервис",
+          "address": "пос. Первомайский, территория Автодорожная, 5",
+          "phone": "+7 343 363-97-93"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-63",
+      "name": "Стройкомплект",
+      "region": "Свердловская область",
+      "address": "пос. Большой Исток, Свердлова 42А",
+      "phone": "+7 343 311-12-11",
+      "email": "info@skl.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-64",
+      "name": "Термо Кинг Стикс",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Суходольская 200Е",
+      "phone": "+7 343 216-00-73",
+      "email": null,
+      "specialty_claim": "ремонт полуприцепов; изотермические кузова; Thermo King",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "b41-stix-ekb",
+          "name": "Термо Кинг Стикс",
+          "address": "Екатеринбург, ул. Суходольская, 200, пом. 1",
+          "phone": "+7 343 343-05-08 доб. 112"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-65",
+      "name": "Уралэкосервистранс",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, Шефская 3А",
+      "phone": "+7 343 345-25-32",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "b48-77",
+          "name": "УРАЛЭКОСЕРВИСТРАНС",
+          "address": "Екатеринбург, Шефская 3А",
+          "phone": "+7 912 290-27-15"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-66",
+      "name": "Кавказ Автосервис",
+      "region": "Ставропольский край",
+      "address": "Минеральные Воды, Советская 18",
+      "phone": "+7 962 440-04-36",
+      "email": "order@kasmw.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-67",
+      "name": "Кавминводыавто-Сервис",
+      "region": "Ставропольский край",
+      "address": "Пятигорск, Скачки, Промзона 2",
+      "phone": "+7 8793 97-55-97",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-68",
+      "name": "Тверьстроймаш",
+      "region": "Тверская область",
+      "address": "Тверь, Старицкое шоссе 30",
+      "phone": "+7 4822 735-735",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "tverstroymash",
+          "name": "Тверьстроймаш",
+          "address": "Тверь, Старицкое шоссе, 30",
+          "phone": "+7 4822 73-66-00"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-69",
+      "name": "ТюменьСкан",
+      "region": "Тюменская область",
+      "address": "Тюменский район, Екатеринбург-Тюмень 301 км №1",
+      "phone": "+7 3452 42-60-62",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "tyumenscan",
+          "name": "ТюменьСкан",
+          "address": "Тюменский район, а/д Екатеринбург–Тюмень, 301-й км, 1, стр. 1",
+          "phone": "8 800 707-51-14"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-70",
+      "name": "БОВИД ТРАК",
+      "region": "Челябинская область",
+      "address": "Челябинск, Линейная 98",
+      "phone": "+7 351 220-01-10",
+      "email": "2200110@bovid.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "vbs-bovid-truck",
+          "name": "БОВИД ТРАК",
+          "address": "Челябинск, Троицкий тракт, 66",
+          "phone": "+7 351 217-44-10"
+        },
+        {
+          "id": "b48-76",
+          "name": "БАВ-Движение",
+          "address": "Челябинск, Линейная 98",
+          "phone": "+7 922 726-32-27"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-71",
+      "name": "МАН Центр Челябинск",
+      "region": "Челябинская область",
+      "address": "Полетаево II, Садовая 40",
+      "phone": "+7 351 211-00-05",
+      "email": null,
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [
+        {
+          "id": "man-poletaevo",
+          "name": "МАН Центр Челябинск",
+          "address": "Сосновский район, Полетаево II, ул. Садовая, 40",
+          "phone": "+7 351 211-04-44"
+        }
+      ],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    },
+    {
+      "id": "kogel49-72",
+      "name": "АвтоЦентр",
+      "region": "Ярославская область",
+      "address": "Ярославль, проспект Октября 87А",
+      "phone": "+7 4852 67-27-38",
+      "email": "man@post76.ru",
+      "specialty_claim": "listed as Kögel service station; actual scope to verify",
+      "source_url": "https://koegel-trailer.ru/servis",
+      "source_accessed": "2026-11-27",
+      "possible_matches": [],
+      "status": "review_only_not_counted",
+      "publication_ready": false
+    }
+  ],
+  "proposed_enrichments": [
+    {
+      "target": "gruzovoz-nsk",
+      "source": "https://gruzovoz.co/service/gruzovaja-avtomojka/",
+      "address": "Новосибирск, Ивана Титкова 20",
+      "phone": "+7 383 367-08-57",
+      "proposed_service": "грузовая мойка",
+      "hours_claim": "ежедневно 09:00–20:00"
+    },
+    {
+      "target": "b48-32",
+      "source": "https://surgutdrive.ru/services/gruzovaya-avtomoyka/",
+      "address": "Сургут, Профсоюзов 59",
+      "phone": "+7 3462 50-01-33",
+      "email": "info@surgutdrive.ru",
+      "proposed_service": "грузовая мойка",
+      "hours_claim": "ежедневно 09:00–21:00"
+    }
+  ],
+  "hold_for_review": [
+    {
+      "name": "Avs163",
+      "address": "Самара, Карла Маркса 526",
+      "phone": "+7 927 898-74-88",
+      "source": "https://avs-163.clients.site/",
+      "note": "Совпадает с адресом Самара-Ком-Транс из глобального перечня Foton; проверить отдельность площадки."
+    }
+  ],
+  "review_notes": [
+    "Kögel entries are review claims, not new locations; multi-address entries retained as one claim until branch contacts resolved. Directory does not guarantee active operation, brand authorization or repair scope today.",
+    "Comparison by region plus exact normalized name/address or telephone against 870 records; not comprehensive dedup. Shared phone not proof of same location. Failed reads: []",
+    "No FNS/telephone confirmation, no coordinates, no VAT inference. Previous cumulative 1405 has not been independently recounted; previous source claims require independent review before publication."
+  ]
+}
