@@ -1,0 +1,1447 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm operation, legal operator, truck type and scope, coordinates, reuse rights, duplicates and admin approval. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "b42-mbk-aksay",
+      "name": "Мир больших колёс — Аксай",
+      "region": "Ростовская область",
+      "address": "Аксай, ул. Западная, 33",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-bataysk",
+      "name": "Мир больших колёс — Батайск",
+      "region": "Ростовская область",
+      "address": "Батайск, Самарское шоссе, 3Г",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-shakhty",
+      "name": "Мир больших колёс — Шахты",
+      "region": "Ростовская область",
+      "address": "Шахты, ул. Майская, 39Д",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-volgograd-domostroiteley",
+      "name": "Мир больших колёс — Волгоград",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Домостроителей, 13А",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–пт 08:00–20:00; сб–вс 08:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-volgograd-dovzhenko",
+      "name": "Мир больших колёс — Волгоград — Довженко",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Довженко, 30",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-volzhsky",
+      "name": "Мир больших колёс — Волжский",
+      "region": "Волгоградская область",
+      "address": "Волжский, ул. Горького, 102",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-krasnodar",
+      "name": "Мир больших колёс — Краснодар",
+      "region": "Краснодарский край",
+      "address": "Краснодар, ул. Восточный обход, 14",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "круглосуточно",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-novotitarovskaya",
+      "name": "Мир больших колёс — Новотитаровская",
+      "region": "Краснодарский край",
+      "address": "ст. Новотитаровская, ул. Крайняя, 2/1",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–пт 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-kropotkin",
+      "name": "Мир больших колёс — Кропоткин",
+      "region": "Краснодарский край",
+      "address": "Кропоткин, ул. Загородная, 47",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-krymsk",
+      "name": "Мир больших колёс — Крымск",
+      "region": "Краснодарский край",
+      "address": "Крымск, ул. Торговая, 4",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-kanevskaya",
+      "name": "Мир больших колёс — Каневская",
+      "region": "Краснодарский край",
+      "address": "ст. Каневская, ул. Широкая, 236Б",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-podolsk",
+      "name": "Мир больших колёс — Подольск",
+      "region": "Московская область",
+      "address": "г.о. Подольск, д. Стрелково, 33А",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–пт 08:00–20:00; сб–вс 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-khimki",
+      "name": "Мир больших колёс — Химки",
+      "region": "Московская область",
+      "address": "Химки, мкр. Подрезково, квартал Кирилловка, 55Г",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–сб 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-berezovsky",
+      "name": "Мир больших колёс — Берёзовский",
+      "region": "Свердловская область",
+      "address": "Берёзовский, пос. ЦОФ, 12",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "пн–сб 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-kochubeevskoe",
+      "name": "Мир больших колёс — Кочубеевское",
+      "region": "Ставропольский край",
+      "address": "с. Кочубеевское, ул. Торговая, 37Б",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-stavropol",
+      "name": "Мир больших колёс — Верхнерусское",
+      "region": "Ставропольский край",
+      "address": "с. Верхнерусское, ул. Батайская, 35",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-mbk-nn",
+      "name": "Мир больших колёс — Нижний Новгород",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Федосеенко, 63Д",
+      "country": "Россия",
+      "phone": "8 800 555-40-51",
+      "email": "info@mbk-global.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mbk-global.com/centers/"
+      ],
+      "notes": "Общий телефон и почта сети, не прямой контакт филиала. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "mbk-global",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-irkutsk",
+      "name": "Росшина — Иркутск",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Набережная Иркута, 1, стр. 5",
+      "country": "Россия",
+      "phone": "+7 3952 58-00-00",
+      "email": "irkutsk@rostyre.com",
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-chita",
+      "name": "Росшина — Чита",
+      "region": "Забайкальский край",
+      "address": "Чита, ул. Недорезова, 1Г",
+      "country": "Россия",
+      "phone": "+7 3022 24-56-05",
+      "email": "chita@rostyre.com",
+      "hours": "пн–пт 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-kanevskaya",
+      "name": "Росшина — Каневская",
+      "region": "Краснодарский край",
+      "address": "ст. Каневская, ул. Широкая, 236А",
+      "country": "Россия",
+      "phone": "+7 861 205-46-62",
+      "email": "kanevskaya@rostyre.com",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": "Рядом с МБК 236Б, проверить самостоятельность входа. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-kupavna",
+      "name": "Росшина — Купавна",
+      "region": "Московская область",
+      "address": "Богородский округ, М-7 Волга, 34-й км, 3",
+      "country": "Россия",
+      "phone": "+7 910 403-16-16",
+      "email": "kupavna@rostyre.com",
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-nn",
+      "name": "Росшина — Нижний Новгород",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Федосеенко, 54/2, склад 6",
+      "country": "Россия",
+      "phone": "+7 831 266-41-64",
+      "email": "nn@rostyre.com",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-penza",
+      "name": "Росшина — Пенза",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Аустрина, 63, лит. К5",
+      "country": "Россия",
+      "phone": "+7 8412 23-48-76",
+      "email": "penza@rostyre.com",
+      "hours": "пн–пт 08:30–17:30",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-ryazan",
+      "name": "Росшина — Рязань",
+      "region": "Рязанская область",
+      "address": "Рязань, Окружная дорога, 197-й км, 1",
+      "country": "Россия",
+      "phone": "+7 4912 43-42-08",
+      "email": "ryazan@rostyre.com",
+      "hours": "пн–пт 08:00–20:00; сб 09:00–18:00; вс 09:00–16:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-selyatino",
+      "name": "Росшина — Селятино",
+      "region": "Московская область",
+      "address": "Наро-Фоминский округ, пос. Калининец, ул. Фабричная",
+      "country": "Россия",
+      "phone": "+7 499 460-55-36",
+      "email": "moscow@rostyre.com",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": "Номер здания отсутствует; проверить въезд. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-ulanude",
+      "name": "Росшина — Улан-Удэ",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, просп. Автомобилистов, 1А",
+      "country": "Россия",
+      "phone": "+7 3012 70-70-00",
+      "email": "ulan-ude@rostyre.com",
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-rostyre-petrozavodsk",
+      "name": "Росшина — Петрозаводск",
+      "region": "Республика Карелия",
+      "address": "Петрозаводск, ул. Новосулажгорская, 6",
+      "country": "Россия",
+      "phone": "+7 8142 67-00-32",
+      "email": "petrozavodsk@rostyre.com",
+      "hours": "пн–пт 09:00–19:00; сб–вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "rostyre",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-1001-lensovetovsky",
+      "name": "1001 Шина — lensovetovsky",
+      "region": "Санкт-Петербург",
+      "address": "пос. Ленсоветовский, Московское шоссе, 235, лит. Л",
+      "country": "Россия",
+      "phone": "+7 812 640-24-84 доб. 100",
+      "email": null,
+      "hours": "круглосуточно",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.1001shina.ru/uslugi/avtoparkam/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "1001shina",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-1001-kultury",
+      "name": "1001 Шина — kultury",
+      "region": "Санкт-Петербург",
+      "address": "просп. Культуры, 61",
+      "country": "Россия",
+      "phone": "+7 909 589-01-33",
+      "email": null,
+      "hours": "круглосуточно",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.1001shina.ru/uslugi/avtoparkam/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "1001shina",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-1001-badaevsky",
+      "name": "1001 Шина — badaevsky",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, 1-й Бадаевский проезд, 2",
+      "country": "Россия",
+      "phone": "+7 968 192-09-36",
+      "email": null,
+      "hours": "круглосуточно",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.1001shina.ru/uslugi/avtoparkam/"
+      ],
+      "notes": " Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "1001shina",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-autoweb",
+      "name": "AutoWeb",
+      "region": "Санкт-Петербург",
+      "address": "Таллинское шоссе, 204А",
+      "country": "Россия",
+      "phone": "+7 911 924-99-55",
+      "email": "9249955@mail.ru",
+      "hours": "приём круглосуточно",
+      "services": [
+        "ремонт грузовиков и прицепов; грузовой шиномонтаж; выездной ремонт"
+      ],
+      "source_urls": [
+        "https://autowebs.ru/"
+      ],
+      "notes": "График ремонтных работ на сайте указан неодинаково; уточнить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "autoweb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-binar-planar-optikov",
+      "name": "Установочный центр Бинар/Планар",
+      "region": "Санкт-Петербург",
+      "address": "ул. Оптиков, 4, корп. 2",
+      "country": "Россия",
+      "phone": "+7 931 109-28-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и установка автономных отопителей и подогревателей"
+      ],
+      "source_urls": [
+        "https://binar-planar-spb.ru/"
+      ],
+      "notes": "Приём тяжелых ТС и место парковки уточнить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "binar-planar-optikov",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-tfk-kemerovo",
+      "name": "ТФК КАМАЗ — Кемерово",
+      "region": "Кемеровская область",
+      "address": "Кемерово, ул. Терешковой, 76",
+      "country": "Россия",
+      "phone": "+7 3842 31-94-47",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "tfk-kamaz",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-yarkamp-kostroma",
+      "name": "ЯрКамп-Сервис — Кострома",
+      "region": "Костромская область",
+      "address": "Кострома, ул. Московская, 110",
+      "country": "Россия",
+      "phone": "+7 4942 77-08-80",
+      "email": "service@gaz44.pro",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "yarkamp",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autoreforma",
+      "name": "Автореформа",
+      "region": "Краснодарский край",
+      "address": "ст. Старокорсунская, ул. Справная, 5",
+      "country": "Россия",
+      "phone": "+7 918 650-14-44",
+      "email": "autoreforma@bk.ru",
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-autoreforma",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-techtruck",
+      "name": "Тех Трак",
+      "region": "Краснодарский край",
+      "address": "Краснодар, ул. Демуса М.Н., 50, пом. 13",
+      "country": "Россия",
+      "phone": "+7 928 280-34-77",
+      "email": "techtruck@mail.ru",
+      "hours": "ежедневно 08:00–17:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-techtruck",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autofurgon-mitino",
+      "name": "Автофургон — Митино",
+      "region": "Московская область",
+      "address": "Красногорский район, коммунальная зона, Пятницкое шоссе, 6-й км, вл. 5, стр. 2",
+      "country": "Россия",
+      "phone": "+7 495 230-11-11",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "avtofurgon",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-komavtoservice",
+      "name": "Комавтосервис",
+      "region": "Москва",
+      "address": "Ступинский проезд, 6, стр. 1",
+      "country": "Россия",
+      "phone": "+7 495 799-51-11",
+      "email": null,
+      "hours": "пн–пт 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-komavtoservice",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autopriyut-podolsk",
+      "name": "АвтоПриют — Подольск",
+      "region": "Московская область",
+      "address": "Подольск, мкр. Климовск, ул. Заводская, 2, корп. 38",
+      "country": "Россия",
+      "phone": "+7 925 789-10-32",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "autopriyut",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autobau-elagino",
+      "name": "ТЦ Автобау",
+      "region": "Московская область",
+      "address": "Наро-Фоминский район, д. Елагино, ул. Индивидуальная, стр. 3",
+      "country": "Россия",
+      "phone": "+7 499 506-94-72",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-autobau-elagino",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-tfk-chelny",
+      "name": "ТФК КАМАЗ — Набережные Челны",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт, 20/2",
+      "country": "Россия",
+      "phone": "+7 8552 91-97-57",
+      "email": null,
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "tfk-kamaz",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-tfk-nn",
+      "name": "ТФК КАМАЗ — Нижний Новгород",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, Московское шоссе, 477, корп. 1",
+      "country": "Россия",
+      "phone": "+7 831 299-98-90",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "tfk-kamaz",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-tsc-nn",
+      "name": "ТСЦ-НН",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Шапошникова, 15Д",
+      "country": "Россия",
+      "phone": "+7 831 429-00-92",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-tsc-nn",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-kamazcenter-krasny-mys",
+      "name": "КАМАЗ Центр НН — Красный Мыс",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, территория Красный Мыс — Гнилицкие Дворики, 1",
+      "country": "Россия",
+      "phone": "+7 831 260-12-52",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "kamazcenter-nn",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autopriyut-samara",
+      "name": "АвтоПриют — Самара",
+      "region": "Самарская область",
+      "address": "Самара, ул. Воинская, 11",
+      "country": "Россия",
+      "phone": "+7 929 501-63-26",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "autopriyut",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autopriyut-stavropol",
+      "name": "АвтоПриют — Михайловск",
+      "region": "Ставропольский край",
+      "address": "Михайловск, ул. Ленина, 1А/2",
+      "country": "Россия",
+      "phone": "+7 925 202-23-69",
+      "email": "stavropol@autopriyut.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "autopriyut",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-asterion-tyumen",
+      "name": "Астерион",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Беляева, 35",
+      "country": "Россия",
+      "phone": "+7 3452 500-528",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-asterion-tyumen",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-serviceauto-ulanude",
+      "name": "Сервис-Авто+",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Кабанская, 52",
+      "country": "Россия",
+      "phone": "+7 3012 37-20-88",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-serviceauto-ulanude",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-autocenter21",
+      "name": "Автоцентр 21",
+      "region": "Чувашская Республика",
+      "address": "пос. Кугеси, ул. Механизаторов, 13",
+      "country": "Россия",
+      "phone": "+7 8352 62-35-09",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-autocenter21",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-importparts-chel",
+      "name": "Импорт Партс Челябинск",
+      "region": "Челябинская область",
+      "address": "Челябинск, Троицкий тракт, 15",
+      "country": "Россия",
+      "phone": "+7 351 200-22-10",
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб 09:00–17:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-importparts-chel",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-sakhalin-zapchastservice",
+      "name": "Сахалин-запчастьсервис",
+      "region": "Сахалинская область",
+      "address": "Южно-Сахалинск, ул. Шлакоблочная, 37",
+      "country": "Россия",
+      "phone": "+7 4242 28-33-00",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-sakhalin-zapchastservice",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-yarpart",
+      "name": "ЯрПарт",
+      "region": "Ярославская область",
+      "address": "пос. Щедрино, ул. Московская, 15",
+      "country": "Россия",
+      "phone": "+7 4852 67-27-35",
+      "email": "info@post76.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-yarpart",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b42-comp-mbtruck-saratov",
+      "name": "МБ Трак Саратов",
+      "region": "Саратовская область",
+      "address": "с. Сторожевка, ул. Цветочная, 18Б",
+      "country": "Россия",
+      "phone": "+7 8452 93-99-99",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО и ремонт КАМАЗ Компас"
+      ],
+      "source_urls": [
+        "https://compasstrucks.ru/distribution/dealers/"
+      ],
+      "notes": "Среднетоннажный профиль подтвержден перечнем; прием тяжелых тягачей проверить. Контакты опубликованы источником; актуальность, юридический оператор и география требуют подтверждения.",
+      "operator_group": "comp-mbtruck-saratov",
+      "evidence": "manufacturer_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "MBK: Shushary Moskovskoe 109k5 explicitly no tire fitting; Nevinnomyssk temporarily closed; excluded. Shushary Moskovskoe 165 same base address as Autobull batch31, retain as possible enrichment with shared phone 8 800 555-40-51, not new physical site.",
+    "Rostyre sales-only stores and warehouses excluded. Neighboring Kanevskaya 236A/236B verify separately.",
+    "Compass: existing Pitertruckcenter, IV-Service, Vostok, Granat, BAO, AutoFurgon SPb and multiple other known sites not re-added. Enrich Pitertruckcenter email service@iveco-ptc.spb.ru, BAO direct service +7 812 309-23-03 ext 1. Exact matching limited to fetched batches; medium-duty scope is not assumed equivalent to heavy-truck service.",
+    "Cross-batch read failures: []",
+    "Previously reported total 1192 is cumulative reporting, not independently recounted; do not treat as verified unique active sites."
+  ]
+}
