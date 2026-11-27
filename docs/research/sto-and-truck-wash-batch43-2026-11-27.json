@@ -1,0 +1,659 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, service scope, coordinates, reuse rights, duplicates and admin approval. No calls, outreach or FNS extracts.",
+  "records": [
+    {
+      "id": "b43-autorosta-lipetsk",
+      "name": "Автороста — Липецк",
+      "region": "Липецкая область",
+      "address": "Липецк, Промышленный проезд, стр. 4, корп. 5",
+      "country": "Россия",
+      "phone": "+7 919 167-01-01",
+      "email": "auto-rosta@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка",
+        "мойка автоцистерн (уточнить тип обработки)"
+      ],
+      "source_urls": [
+        "https://autorosta.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "autorosta",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-autorosta-vygonichi",
+      "name": "Автороста — Выгоничи",
+      "region": "Брянская область",
+      "address": "пос. Выгоничи, ул. Новобрянская, 9",
+      "country": "Россия",
+      "phone": "+7 920 098-05-25",
+      "email": "auto-rosta@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка",
+        "мойка автоцистерн (уточнить тип обработки)"
+      ],
+      "source_urls": [
+        "https://autorosta.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "autorosta",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-autorosta-ramon",
+      "name": "Автороста — М4",
+      "region": "Воронежская область",
+      "address": "Рамонский район, М-4 Дон, 486-й км, за АЗС Дон",
+      "country": "Россия",
+      "phone": "+7 953 286-99-44",
+      "email": "auto-rosta@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка",
+        "мойка автоцистерн (уточнить тип обработки)"
+      ],
+      "source_urls": [
+        "https://autorosta.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "autorosta",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-moika-spa-kotelniki",
+      "name": "Мойка СПА",
+      "region": "Московская область",
+      "address": "Котельники, Новорязанское шоссе, 6",
+      "country": "Россия",
+      "phone": "+7 925 754-11-46",
+      "email": "ats-77@bk.ru",
+      "hours": "24/7",
+      "services": [
+        "мойка фур, самосвалов, автобусов"
+      ],
+      "source_urls": [
+        "https://moika-spa.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "moika-spa-kotelniki",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-moika24-mkad16",
+      "name": "Мойка 24",
+      "region": "Москва",
+      "address": "МКАД, 16-й км, внешняя сторона",
+      "country": "Россия",
+      "phone": "+7 495 532-47-31",
+      "email": null,
+      "hours": null,
+      "services": [
+        "мойка тягачей, полуприцепов и длинномерных фур"
+      ],
+      "source_urls": [
+        "https://moika24.online/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "moika24-mkad16",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-tehmoika-gruzovoy",
+      "name": "Техмойка",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой проезд, 13М",
+      "country": "Россия",
+      "phone": "+7 812 407-10-90",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовая мойка",
+        "габариты уточнить"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "tehmoika-gruzovoy",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-parcentr-elizarova",
+      "name": "Parcentr",
+      "region": "Санкт-Петербург",
+      "address": "просп. Елизарова, 34Б",
+      "country": "Россия",
+      "phone": "+7 812 948-47-48",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "мойка грузовой спецтехники",
+        "прием автопоездов уточнить"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "parcentr-elizarova",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-stobalt-chugunnaya",
+      "name": "Стобалт",
+      "region": "Санкт-Петербург",
+      "address": "Чугунная ул., 20АБ",
+      "country": "Россия",
+      "phone": "+7 812 947-09-64",
+      "email": null,
+      "hours": "ежедневно 10:00–20:00",
+      "services": [
+        "грузовая мойка",
+        "габариты уточнить"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "stobalt-chugunnaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-chisty-element",
+      "name": "Чистый Элемент",
+      "region": "Санкт-Петербург",
+      "address": "Краснопутиловская ул., 65",
+      "country": "Россия",
+      "phone": "+7 911 727-27-19",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовая мойка",
+        "габариты уточнить"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "chisty-element",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-element-avtovskaya",
+      "name": "Автоцентр-Элемент",
+      "region": "Санкт-Петербург",
+      "address": "Автовская ул., 35А",
+      "country": "Россия",
+      "phone": "+7 812 928-18-80",
+      "email": null,
+      "hours": "ежедневно 10:00–21:00",
+      "services": [
+        "грузовая мойка",
+        "габариты уточнить"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "element-avtovskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-atlant-gatchina",
+      "name": "Атлант-Авто",
+      "region": "Ленинградская область",
+      "address": "Гатчина, Киевская ул., 17Б",
+      "country": "Россия",
+      "phone": "+7 921 939-70-18",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовая мойка",
+        "габариты уточнить"
+      ],
+      "source_urls": [
+        "https://gatchina.spravker.ru/gruzovye-avtomoiki/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "atlant-gatchina",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-avtoreanimacia",
+      "name": "Автореанимация",
+      "region": "Санкт-Петербург",
+      "address": "ул. Бехтерева, 2",
+      "country": "Россия",
+      "phone": "+7 906 270-15-17",
+      "email": "avtoreanimacia@yandex.ru",
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "кузовной ремонт",
+        "рамы",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://avtoreanimacia.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "avtoreanimacia",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-izhora",
+      "name": "Ижора-автосервис",
+      "region": "Ленинградская область",
+      "address": "Ям-Ижора, Ленинградская ул., 9В",
+      "country": "Россия",
+      "phone": "+7 931 348-20-67",
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб–вс 10:00–18:00",
+      "services": [
+        "ремонт коммерческого транспорта",
+        "грузовой шиномонтаж",
+        "прием тяжелых тягачей уточнить"
+      ],
+      "source_urls": [
+        "https://remontsto.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "izhora",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "vat_note": "Сайт заявляет расчеты с НДС и без НДС; ставка и налоговый статус не подтверждены."
+    },
+    {
+      "id": "b43-autopiramida",
+      "name": "Автопирамида",
+      "region": "Ленинградская область",
+      "address": "Ям-Ижора, Ленинградская ул., 53А",
+      "country": "Россия",
+      "phone": "+7 962 695-67-92",
+      "email": "s89626956792@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт фургонов и гидробортов"
+      ],
+      "source_urls": [
+        "https://autopiramida.ru/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "autopiramida",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-belauto",
+      "name": "БелАвто",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, проезд Энергетиков, 6, корп. 2, стр. 5",
+      "country": "Россия",
+      "phone": "+7 8162 60-70-60",
+      "email": "belkomauto@mail.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт грузовиков, прицепов и спецтехники"
+      ],
+      "source_urls": [
+        "https://belauto.ru/contacts/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "belauto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-mv-avto",
+      "name": "МВ-Авто",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, ул. Рабочая, 34/6",
+      "country": "Россия",
+      "phone": "+7 911 600-16-28",
+      "email": "mvm-translogistic53@mail.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ремонт грузовиков и спецтехники",
+        "эвакуация",
+        "выездной ремонт"
+      ],
+      "source_urls": [
+        "https://mv-avto.com/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "mv-avto",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b43-novgruzservice",
+      "name": "Новгрузсервис",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, Рабочая ул., 57, корп. 1",
+      "country": "Россия",
+      "phone": "+7 960 208-63-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт коммерческого транспорта и прицепов"
+      ],
+      "source_urls": [
+        "https://nov.auto2.info/velikiy-novgorod/novgruzservis-570662/"
+      ],
+      "notes": "Сведения опубликованы источником; прием фур, фактическая деятельность, координаты и право публикации требуют проверки.",
+      "operator_group": "novgruzservice",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    }
+  ],
+  "proposed_enrichments": [
+    {
+      "target": "autobull-moskovskoe165",
+      "source": "https://pushkin.jsprav.ru/avtomojki/autobull-gruzovaia-avtomoika/",
+      "proposed_service": "грузовая мойка",
+      "hours_claim": "24/7",
+      "note": "directory evidence; no extra point"
+    },
+    {
+      "target": "trustline-pargolovo",
+      "source": "https://spb.spravker.ru/gruzovye-avtomoiki/",
+      "proposed_service": "грузовая мойка",
+      "note": "directory evidence; no extra point"
+    },
+    {
+      "target": "bao-spb",
+      "source": "https://spb.spravker.ru/gruzovye-avtomoiki/",
+      "proposed_service": "грузовая мойка",
+      "note": "directory evidence; no extra point"
+    },
+    {
+      "target": "МБ Тракс СПб, Московское шоссе 289 стр.1",
+      "source": "https://spbmb.ru/services/dopolnitelnye-servisnye-uslugi/kruglosutochnaya-gruzovaya-moyka/",
+      "proposed_service": "грузовая мойка",
+      "hours_claim": "24/7",
+      "note": "first party; no extra point"
+    },
+    {
+      "target": "faw-trackcenter-putevoy",
+      "source": "https://spb.bbus-service.ru/kontakty/",
+      "proposed_service": "грузовая мойка",
+      "phone": "+7 499 322-22-78",
+      "hours_claim": "24/7",
+      "note": "operator alias BusinessBus; service-specific hours, not all repair"
+    },
+    {
+      "target": "faw-trackcenter-pavlovskoe",
+      "source": "https://spb.bbus-service.ru/kontakty/",
+      "proposed_service": "автомойка",
+      "phone": "+7 499 444-36-38",
+      "hours_claim": "24/7",
+      "note": "heavy truck wash capability to confirm; no extra point"
+    },
+    {
+      "target": "transhub-bolshie-kolpany",
+      "source": "https://gatchina.spravker.ru/gruzovye-avtomoiki/",
+      "proposed_service": "грузовая мойка",
+      "phone": "+7 999 008-16-42",
+      "hours_claim": "24/7",
+      "note": "confirm same physical entrance; no extra point"
+    },
+    {
+      "target": "avto-trak-parnas",
+      "source": "https://autotruck.spb.ru/",
+      "phone": "+7 981 805-40-00",
+      "email": "artautotrak@mail.ru",
+      "note": "first party reconfirmation"
+    },
+    {
+      "target": "rs-truck-novosergievka",
+      "source": "https://rstruck.ru/contacts/",
+      "phone": "+7 911 976-45-35",
+      "email": "info@rstruck.ru",
+      "note": "workshop address confirmed by contact page; footer conflicts, avoid extra point"
+    },
+    {
+      "target": "trucksp-vsevolozhsk",
+      "source": "https://truckspb.ru/kontakty",
+      "phone": "+7 812 220-02-22",
+      "email": "info@truckspb.ru",
+      "note": "first party reconfirmation"
+    },
+    {
+      "target": "remzona47-fedorovskoe",
+      "source": "https://remzona47.ru/about_us",
+      "note": "old address Ям-Ижора may duplicate b40-remzona-yamizh; site says moved, review prior candidate; no new point"
+    }
+  ],
+  "excluded_exact_matches": [
+    {
+      "candidate": "transservice-pskov",
+      "existing": "transservice-pskov",
+      "reason": "matching phone/address/name; review rather than new count"
+    }
+  ],
+  "review_notes": [
+    "Wash candidates separate from repair counts; wash-only status provisional until scope verified. A multi-profile site with a wash is a single map marker; service-specific schedules must not imply other services are open.",
+    "Existing candidate comparison limited to retrieved regional files. Failed reads: [\"sto-spb-lo-batch03\"]",
+    "No VAT rate inferred from prices or corporate status. All candidates unconfirmed and no nighttime glow. Prior reported 1245 is not independently recounted or unique repair count."
+  ]
+}
