@@ -1,0 +1,327 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted city, name, phone and address comparison against compact indexes B/C (1–31) and batches 32–49,51–66. Full normalized audit pending.",
+  "records": [
+    {
+      "id": "b67-star-trucks",
+      "name": "Star trucks",
+      "region": "Тюменская область",
+      "address": "Ялуторовск, ул. Революции, 184, стр. 2",
+      "country": "Россия",
+      "phone": "+7 952 672-82-92",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei",
+        "https://mestam.info/ru/yalutorovsk/mesto/5423428-star-trucks-revolyucii-184-st2"
+      ],
+      "notes": "Уточнить график и прием полуприцепов.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b67-detali-mashin",
+      "name": "Детали машин",
+      "region": "Тюменская область",
+      "address": "Ялуторовск, ул. Лизы Чайкиной, 48, стр. 1/2, 1 этаж",
+      "country": "Россия",
+      "phone": "+7 950 495-04-50",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Уточнить действующего оператора и виды работ.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b67-yalutorovsk-sto",
+      "name": "Грузовое СТО Ялуторовск",
+      "region": "Тюменская область",
+      "address": "Ялуторовск, ул. Лизы Чайкиной, 50, стр. 4",
+      "country": "Россия",
+      "phone": "+7 922 005-97-97",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Отдельный адрес и номер; проверить физическую отдельность от соседней СТО.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b67-ishim-sto",
+      "name": "СТО-грузовик",
+      "region": "Тюменская область",
+      "address": "Ишимский район, с. Стрехнино, квартал ЗАО Заря, 4",
+      "country": "Россия",
+      "phone": "+7 982 942-02-02",
+      "additional_phones": [
+        "+7 34551 5-80-69",
+        "+7 902 815-63-44",
+        "+7 919 935-11-36"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "кузовной ремонт",
+        "техническое обслуживание"
+      ],
+      "source_urls": [
+        "https://ishim.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://ishim.avto-kray.ru/company/avtoservis-avtotekhtsentr/sto-gruzovik-241327"
+      ],
+      "notes": "Два справочника: совпадает основной телефон, графики различаются (ежедневно либо Пн–Пт 09–18). Уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b67-ks-troitskoe",
+      "name": "КС-Сибирь — Троицкое",
+      "region": "Омская область",
+      "address": "с. Троицкое, ул. Автотранспортная, 5В",
+      "country": "Россия",
+      "phone": "+7 965 878-27-83",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "балансировка",
+        "ремонт шин"
+      ],
+      "source_urls": [
+        "https://ks-omsk.ru/kontakty/",
+        "https://ks-omsk.ru/"
+      ],
+      "notes": "Сайт в контактах указывает Пн–Пт 09–18, Сб 10–17, Вс выходной; в FAQ только Пн–Пт. График требует согласования.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 54.869842,
+      "longitude": 73.282043,
+      "coordinate_source": "https://ks-omsk.ru/kontakty/",
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Omsk",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "ks-sibir-omsk"
+    },
+    {
+      "id": "b67-ks-druzhino",
+      "name": "КС-Сибирь — Дружино",
+      "region": "Омская область",
+      "address": "с. Дружино, ул. Придорожная, стр. 62",
+      "country": "Россия",
+      "phone": "+7 913 976-52-05",
+      "additional_phones": [
+        "+7 3812 40-41-62"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; Сб 10:00–17:00; Вс выходной (сайт)",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт шин",
+        "балансировка"
+      ],
+      "source_urls": [
+        "https://ks-omsk.ru/kontakty/"
+      ],
+      "notes": "Отдельная площадка по сайту; телефон совпадает с офисным, но указан для филиала.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.014179,
+      "longitude": 73.158141,
+      "coordinate_source": "https://ks-omsk.ru/kontakty/",
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Omsk",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "ks-sibir-omsk"
+    }
+  ],
+  "review_only": [
+    {
+      "name": "АвтоСити — Ялуторовск",
+      "address": "Ялуторовск, Оболенского, 84",
+      "phone": "+7 34535 3-70-27",
+      "source_urls": [
+        "https://mestam.info/ru/yalutorovsk/remont-gruzovih-avtomobilei"
+      ],
+      "reason": "Грузовой профиль филиала требует подтверждения."
+    },
+    {
+      "name": "РЕМавто",
+      "address": "Ишим, Полины Осипенко, 35/11",
+      "phone": "+7 995 772-74-10",
+      "source_urls": [
+        "https://ishim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Уточнить прием тяжелых грузовиков, а не только легкого коммерческого транспорта."
+    },
+    {
+      "name": "Грузовой и легковой шиномонтаж",
+      "phone": "+7 982 961-10-07",
+      "source_urls": [
+        "https://ishim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Точный адрес отсутствует."
+    },
+    {
+      "name": "Дорожная сеть",
+      "address": "Р402, 568-й км, 2",
+      "source_urls": [
+        "https://omsk24.su/mesto/shinomontazhnaya-masterskaya-svoya-koleya-84328"
+      ],
+      "reason": "Страница не загрузилась, номер телефона не установлен."
+    },
+    {
+      "name": "ПетроМастер — Крутинка",
+      "source_urls": [
+        "https://gdeshinomontagh.ru/komp/petromaster-krutinka/"
+      ],
+      "reason": "Точный адрес и телефон пока не установлены."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "TELEGA",
+      "batch": 10,
+      "email": "telegaservice@yandex.ru",
+      "additional_phones": [
+        "+7 958 149-51-34",
+        "+7 922 261-39-50"
+      ],
+      "source_urls": [
+        "https://telega72.ru/"
+      ]
+    },
+    {
+      "name": "Траксервис72",
+      "batch": 10,
+      "email": "info@truck-service72.ru",
+      "source_urls": [
+        "https://truck-service72.ru/"
+      ]
+    },
+    {
+      "name": "Рон Трак Сервис",
+      "batch": 10,
+      "hours": "сервис ежедневно 09–19; мойка и экстренная помощь 24/7",
+      "source_urls": [
+        "https://rontruck.ru/"
+      ]
+    },
+    {
+      "name": "Автоград Trucks",
+      "batch": 10,
+      "email": "avtogradtrucks@agrad.ru",
+      "source_urls": [
+        "https://trucks.agrad.ru/"
+      ]
+    },
+    {
+      "name": "AGL-Сервис",
+      "batch": 10,
+      "source_urls": [
+        "https://agl-servis.ru/contacts/"
+      ]
+    },
+    {
+      "name": "Грузовик-Сервис",
+      "batch": 10,
+      "email": "g-sto72@mail.ru",
+      "source_urls": [
+        "https://g-sto72.ru/"
+      ],
+      "reason": "Графики в разных разделах сайта расходятся."
+    }
+  ]
+}
