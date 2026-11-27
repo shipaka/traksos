@@ -193,3 +193,5 @@
 .tr-network-filter select{min-width:0;max-width:100%;background:#203b4b;color:#fff;border:1px solid #8399a6;border-radius:6px;padding:6px;min-height:34px;font:inherit}
 .tr-network-viewport:has(.tr-network-filter) .tr-network-partner{top:65px}
 @media(max-width:699px){.tr-network-filter{right:8px;top:8px;gap:4px}.tr-network-filter label{display:none}.tr-network-viewport:has(.tr-network-filter) .tr-network-partner{top:auto}}
+
+.tr-network-feedback{display:flex;gap:6px;flex-wrap:wrap}.tr-network-feedback button{min-height:44px;flex:1;padding:8px;border:1px solid #8399a6;border-radius:8px;background:#203b4b;color:#fff;font-weight:700;cursor:pointer}.tr-network-feedback button:disabled{opacity:.55;cursor:wait}

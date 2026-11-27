@@ -1,13 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geographicCenter, mustExpandCluster, clusterScreenPoints, fitRussiaView } from './partnerNetworkGeometry20261123.ts';
-import { directoryPoints, directDirectoryDial, type DirectoryPoint, type MapServiceCategory } from './stoDirectoryPilot20261127.ts';
+import { directDirectoryDial, type DirectoryPoint, type MapServiceCategory } from './stoDirectoryPilot20261127.ts';
+import { put, getToken, API_URL } from '../api.ts';
 import { StoMapPinIcon, mapCategoryLabel } from './stoMapPinIcon20261127.tsx';
 import './partnerNetworkMap20261123.css';
 
 type VerifiedPoint={id:string;kind:'service';name:string;lat:number;lng:number;directory?:false};
 type PartnerPoint=VerifiedPoint|DirectoryPoint;
 // The independent source list must never be interpreted as verified opt-in data.
-function combinePoints(verified:VerifiedPoint[]):PartnerPoint[]{
+function combinePoints(verified:VerifiedPoint[],directoryPoints:DirectoryPoint[]):PartnerPoint[]{
   const normalized=(name:string)=>name.toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
   return [...verified,...directoryPoints.filter(d=>!verified.some(p=>p.id===d.id || (normalized(p.name)===normalized(d.name)&&Math.abs(p.lat-d.lat)<.001&&Math.abs(p.lng-d.lng)<.001)))];
 }
@@ -17,7 +18,8 @@ function markerClass(members:PartnerPoint[]){
 }
 function samePartner(a:PartnerPoint,b:PartnerPoint){
   return a.id===b.id && a.kind===b.kind && a.name===b.name &&
-    a.lat===b.lat && a.lng===b.lng && a.directory===b.directory;
+    a.lat===b.lat && a.lng===b.lng && a.directory===b.directory &&
+    (!a.directory||!b.directory||JSON.stringify(a)===JSON.stringify(b));
 }
 type View={lat:number;lng:number;zoom:number};
 type Cluster={key:string;x:number;y:number;members:PartnerPoint[]};
@@ -69,11 +71,20 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
   const [view,setView]=useState<View>(()=>fitRussiaView(850,490));
   const initialFit=useRef(true);
   const [size,setSize]=useState({width:850,height:490});
-  const [points,setPoints]=useState<PartnerPoint[]>(()=>combinePoints([]));
+  const [points,setPoints]=useState<PartnerPoint[]>([]);
   const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
   // Expose an explicit retry after a transient API failure; no fake pins.
   const [retryCount,setRetryCount]=useState(0);
   const [categoryFilter,setCategoryFilter]=useState<MapServiceCategory|'all'>('all');
+  const [feedback,setFeedback]=useState<{id:string;message:string;busy:boolean}|null>(null);
+  const feedbackLock=useRef(false);
+  async function report(id:string,verdict:'working'|'not_working'){
+    if(feedbackLock.current)return;
+    feedbackLock.current=true;setFeedback({id,message:'Отправляем…',busy:true});
+    try{await put('/api/sto-directory/'+encodeURIComponent(id)+'/feedback',{verdict});setFeedback({id,message:'Спасибо! Сообщение сохранено для проверки.',busy:false});}
+    catch(e){setFeedback({id,message:e instanceof Error?e.message:'Не удалось отправить сообщение.',busy:false});}
+    finally{feedbackLock.current=false;}
+  }
   const [selected,setSelected]=useState<PartnerPoint|null>(null);
   const [expandedCluster,setExpandedCluster]=useState<Cluster|null>(null);
   const clusterTrigger=useRef<HTMLButtonElement|null>(null);
@@ -130,7 +141,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
       }
       if(event.key==='Tab' && modal.current){
         const nodes=[...modal.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]),a[href],input:not([disabled]),[tabindex="0"]'
+          'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),[tabindex="0"]'
         )].filter(node=>node.getClientRects().length);
         if(!nodes.length)return;
         const first=nodes[0],last=nodes[nodes.length-1];
@@ -151,17 +162,20 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
       current?.abort();
       const controller=new AbortController();
       current=controller;
-      fetch('/api/public/partner-map',{cache:'no-store',signal:controller.signal})
-        .then(async res=>{
-          if(!res.ok)throw Error('http '+res.status);
-          const data=await res.json();
-          if(data?.source!=='verified_stationary_opt_in' || !Array.isArray(data?.points))
-            throw Error('public map contract mismatch');
-          const safe:VerifiedPoint[]=data.points.filter((p:any)=>
-            p.kind==='service'&&typeof p.name==='string'&&
-            typeof p.id==='string'&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&
-            Math.abs(p.lat)<=90&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0)).map((p:any)=>({id:p.id,kind:'service',name:p.name,lat:p.lat,lng:p.lng}));
-          const combined=combinePoints(safe);
+      const load=async(path:string,source:string)=>{
+        const res=await fetch(API_URL+path,{cache:'no-store',signal:controller.signal});
+        if(!res.ok)throw Error('http '+res.status);
+        const data=await res.json();
+        if(data?.source!==source||!Array.isArray(data.points))throw Error('public map contract mismatch');
+        return data.points as any[];
+      };
+      Promise.allSettled([load('/api/public/partner-map','verified_stationary_opt_in'),load('/api/public/sto-directory','independent_directory')])
+        .then(([partners,directory])=>{
+          const valid=(p:any)=>p&&p.kind==='service'&&typeof p.name==='string'&&typeof p.id==='string'&&Number.isFinite(p.lat)&&Number.isFinite(p.lng)&&Math.abs(p.lat)<=85&&Math.abs(p.lng)<=180&&!(p.lat===0&&p.lng===0);
+          const safe:VerifiedPoint[]=partners.status==='fulfilled'?partners.value.filter(valid).map(p=>({id:p.id,kind:'service',name:p.name,lat:p.lat,lng:p.lng})):[];
+          const independent:DirectoryPoint[]=directory.status==='fulfilled'?directory.value.filter(p=>valid(p)&&p.directory===true&&p.id.startsWith('directory:')&&typeof p.address==='string'&&typeof p.phone==='string'&&Array.isArray(p.services)&&p.services.every((x:unknown)=>typeof x==='string')&&typeof p.source==='string'&&Object.hasOwn(mapCategoryLabel,p.category)).map(p=>({id:p.id,kind:'service',directory:true,name:p.name,lat:p.lat,lng:p.lng,address:p.address,phone:p.phone,services:p.services,source:p.source,category:p.category,...(typeof p.hours==='string'?{hours:p.hours}:{})})):[];
+          const combined=combinePoints(safe,independent);
+          const complete=partners.status==='fulfilled'&&directory.status==='fulfilled';
           if(controller.signal.aborted)return;
           setPoints(combined);
           // Keep React state identity when verified data did not change.
@@ -186,12 +200,12 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
             }
             return members.every((p,i)=>samePartner(p,old.members[i])) ? old : {...old,members};
           });
-          setState('ready');
+          setState(complete?'ready':'error');
         }).catch(()=>{
           if(controller.signal.aborted)return;
           setState('error');
-          setPoints(combinePoints([]));
-          setSelected(old=>old?.directory?old:null);
+          setPoints([]);
+          setSelected(null);
           setExpandedCluster(null);
         });
     };
@@ -345,6 +359,9 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
             {selected.hours&&<small>График: {selected.hours}; уточните по телефону.</small>}
             <small>Актуальность не подтверждена. TrakSOS не участвует в оказании услуги.</small>
             {directDirectoryDial(selected.phone)&&<a href={directDirectoryDial(selected.phone)}>Позвонить напрямую: {selected.phone}</a>}
+            <small>Информация актуальна?</small>
+            {getToken()?<div className="tr-network-feedback"><button type="button" disabled={!!feedback?.busy} onClick={()=>void report(selected.id,'working')}>Работает</button><button type="button" disabled={!!feedback?.busy} onClick={()=>void report(selected.id,'not_working')}>Не работает</button></div>:<a href="#/login" onClick={onClose}>Войти, чтобы сообщить об актуальности</a>}
+            {feedback?.id===selected.id&&<small role="status">{feedback.message}</small>}
           </>:<><span>Проверенная стационарная СТО · партнёр сети</span>
           <small>Координаты опубликованы с согласия СТО. Наличие свободного времени уточняется при обращении.</small>
           <a href="#/login" onClick={onClose}>Войти для выбора сервиса</a></>}
@@ -352,12 +369,12 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
         {state==='ready'&&categoryFilter!=='all'&&visiblePoints.length===0&&<div className="tr-network-notice" role="status">Пока нет площадок этой специализации с координатами. Выберите другой вид услуг.</div>}
         {state!=='ready'&&<div className="tr-network-notice" role="status">
           <span>{state==='loading'?'Получаем подтверждённые точки партнёров…'
-            :'Данные партнёров временно недоступны. Сторонний справочник доступен отдельно.'}</span>
+            :'Часть данных карты временно недоступна. Показаны только полученные точки.'}</span>
           {state==='error'&&<button type="button" className="tr-network-retry"
             onClick={()=>setRetryCount(n=>n+1)}>Повторить загрузку</button>}
         </div>}
         {state==='ready'&&points.length===0&&<div className="tr-network-notice" role="status">
-          Пока нет СТО, разрешивших показывать проверенное местоположение на публичной карте.
+          Пока нет опубликованных площадок в справочнике или подтверждённых партнёров.
           Мы расширяем партнёрскую сеть; декоративные точки за реальные не выдаём.
         </div>}
         <div className="tr-network-attribution">Карта © OpenStreetMap contributors ·

@@ -39,6 +39,20 @@ export class StoDirectory {
    return {inserted,existing:rows.length-inserted};
   });
  }
+ async edit(id:string,body:unknown){
+  const key=parse(siteId,id);
+  const p=parse(z.object({revision:z.number().int().positive(),site:input}).strict(),body);
+  if(p.site.id!==key)throw bad('id_mismatch');
+  return this.db.tx(async q=>{
+   const current=await q.one<{revision:number}>('select revision from sto_directory_sites where id=$1 for update',[key]);
+   if(!current)throw notFound();
+   if(current.revision!==p.revision)throw conflict('stale_revision','Карточка уже изменена');
+   const x=p.site;
+   return q.one(`update sto_directory_sites set name=$2,address=$3,phone=$4,category=$5,lat=$6,lng=$7,services=$8::jsonb,hours=$9,source=$10,
+      state='draft',source_reuse_checked=false,location_checked=false,reviewed_by=null,reviewed_at=null,revision=revision+1,updated_at=now()
+      where id=$1 returning id,state,revision`,[key,x.name,x.address,x.phone,x.category,x.lat,x.lng,JSON.stringify(x.services),x.hours,x.source]);
+  });
+ }
  async review(id:string,user:AuthUser,body:unknown){
   const key=parse(siteId,id),p=parse(review,body);
   return this.db.tx(async q=>{

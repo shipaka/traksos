@@ -183,6 +183,7 @@ export function createApp(d: Deps) {
     return stoDirectory.adminList(after,limit);
   });
   r.post('/api/admin/sto-directory/import', ['admin'], (c:AuthedCtx) => stoDirectory.create(c.body));
+  r.put('/api/admin/sto-directory/:id', ['admin'], (c:AuthedCtx) => stoDirectory.edit(c.params.id,c.body));
   r.put('/api/admin/sto-directory/:id/review', ['admin'], (c:AuthedCtx) => stoDirectory.review(c.params.id,c.user,c.body));
   r.put('/api/sto-directory/:id/feedback', true, (c:AuthedCtx) => stoDirectory.feedback(c.params.id,c.user,c.body));
   r.put('/api/service/public-map', ['service'], (c: AuthedCtx) => {
