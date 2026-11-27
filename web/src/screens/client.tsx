@@ -212,7 +212,7 @@ function ClientHomeForAccount() {
 }
 
 /** Direction-first SOS workflow is the single active customer help entry point. */
-export function Sos() {
+export function Sos({returnToAir=false}:{returnToAir?:boolean}={}) {
   const [direction, setDirection] = useState<'master' | 'tow' | 'service' | null>(null);
   const options = [
     { id: 'master', name: 'Выездной мастер', icon: '⚡', detail: 'Электрик, диагност, пневматика, отопители, шиномонтаж' },
@@ -229,7 +229,7 @@ export function Sos() {
   const chosen = options.find((item) => item.id === direction);
   return (
     <main className="client-sos-directions">
-      <Back to="" />
+      {returnToAir ? <a href="#/air" className="btn ghost small" style={{minHeight:48}}>← Вернуться в Эфир</a> : <Back to="" />}
       <div className="client-sos-intro">
         <span className="label">TRAKSOS · СРОЧНАЯ ПОМОЩЬ</span>
         <h1>Помощь в дороге</h1>

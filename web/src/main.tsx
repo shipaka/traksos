@@ -99,6 +99,7 @@ import { EconomicsPage } from './screens/economicsGuide.tsx';
 import { ScenarioLesson } from './screens/scenarioEncyclopedia.tsx';
 import { TrakBotChat, TechCodes } from './screens/trakbot.tsx';
 import { DriverAir } from './screens/driverAir.tsx';
+import { hasAirSosDraft } from './airSupportDraft.ts';
 import { TrakBotDock } from './trakbotDock.tsx';
 import { TrakAppPhone } from './trakAppPhone.tsx';
 import { APPROVED_VISUALS } from './approvedVisuals.ts';
@@ -431,7 +432,7 @@ function App() {
       ? (me.performer?.kind === 'ecu' ? <Work /> : <PerformerHub />)
       : <ApprovedPcDesk role={desktopRole} fallback={effMode === 'courier' ? <CourierDesk /> : effMode === 'insurer' ? <InsurerCabinet /> : effMode === 'inspection' ? <InsurerCabinet inspectionOnly /> : effMode === 'service' ? <BaseHome /> : effMode === 'performer' ? <Work /> : effMode === 'admin' && isAdmin ? <Admin /> : effMode === 'moderator' && isModerator ? <ModeratorDesk /> : <Home />} />; break;
     case 'login': screen = <UnavailableRole label="Вы уже вошли в TrakSOS" />; break;
-    case 'sos': screen = isCustomer ? <Sos /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
+    case 'sos': screen = isCustomer ? <Sos returnToAir={hasAirSosDraft(me.id,getToken(),[...me.roles].sort().join(','))} /> : <main><div className="empty">Для вызова SOS нужен клиентский аккаунт</div></main>; break;
     case 'new': screen = !isCustomer ? <main><div className="empty">Для заказа нужен клиентский аккаунт</div></main> : b === 'ecu' ? <main className="stack"><h1>Ремонт электронных блоков ЭБУ</h1><p>Специалист принимает блок в стационарной мастерской. Передайте техническое заключение из ранее оформленной консультации или выездной заявки: это бесплатно, и диагностика согласуется отдельно.</p><a className="btn" href="#/orders">Открыть мои заявки и заключения</a></main> : b === 'consult' ? <Consult /> : <NewOrder service={b ?? 'electric'} />; break;
     case 'order': screen = effMode === 'performer' && isPerformer && b
       ? <PerformerOrderWindow id={b} initialTab={(['order','client','finance','chat','history','vehicle'].includes(route[2] ?? '') ? route[2] as 'order'|'client'|'finance'|'chat'|'history'|'vehicle' : 'order')} />

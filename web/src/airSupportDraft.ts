@@ -16,6 +16,10 @@ let sosPending:({owner:string;token:string;roleKey:string;context:AirSosContext}
 export function stageAirSosDraft(owner:string,token:string,roleKey:string,context:AirSosContext){
   sosPending={owner,token,roleKey,context};
 }
+// SOS can inspect the existence of its own return context, never the message text.
+export function hasAirSosDraft(owner:string,token:string|null,roleKey:string):boolean{
+  return !!sosPending&&!!token&&sosPending.owner===owner&&sosPending.token===token&&sosPending.roleKey===roleKey;
+}
 export function takeAirSosDraft(owner:string,token:string|null,roleKey:string){
   const saved=sosPending;
   sosPending=null;
