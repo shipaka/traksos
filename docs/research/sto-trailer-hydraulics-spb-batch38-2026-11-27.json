@@ -1,0 +1,1879 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm operation, legal operator, heavy truck capability, precise coordinates, rights to reuse, duplicates and admin approval. Older distributor listings particularly require reconfirmation. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "discado-pushkin",
+      "name": "Дискавери / DISCADO",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Промышленная ул., 17, лит. З",
+      "country": "Россия",
+      "phone": "8 800 550-43-51",
+      "email": null,
+      "hours": null,
+      "services": [
+        "DAF, SITRAK, HOWO, полуприцепы"
+      ],
+      "source_urls": [
+        "https://discado.ru/kontact"
+      ],
+      "notes": "Сайт также публикует прямые номера приемки +7 921 950-00-45 и +7 921 091-50-00. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "discado-pushkin",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "parts-pushkin",
+      "name": "Parts-pushkin.ru",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Сапёрная ул., 67В",
+      "country": "Россия",
+      "phone": "+7 981 101-22-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовое ТО по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Пушкинский и Хорошие-шины.рф на том же адресе; одна кандидатная точка до сверки. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "parts-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vash-vybor-pushkin",
+      "name": "СТО ВашВыбор",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Удаловская ул., 19, корп. 2",
+      "country": "Россия",
+      "phone": "+7 952 277-77-04",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт тягачей по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "vash-vybor-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ros-avtoservice-pushkin",
+      "name": "Рос-Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Промышленная ул., 19",
+      "country": "Россия",
+      "phone": "+7 812 941-48-49",
+      "email": null,
+      "hours": null,
+      "services": [
+        "коммерческий транспорт"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Не путать с ТРИА в Фёдоровском на одноименной улице; подтвердить город и ремонтный адрес. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "ros-avtoservice-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mavinta-shushary",
+      "name": "Мавинта",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, 1-й Бадаевский проезд, 9А",
+      "country": "Россия",
+      "phone": "+7 960 058-59-63",
+      "email": null,
+      "hours": null,
+      "services": [
+        "коммерческий транспорт"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "mavinta-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nerzhavey-pushkin",
+      "name": "Не ржавей!",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Колпинское шоссе, 101",
+      "country": "Россия",
+      "phone": "+7 929 177-97-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовое обслуживание по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный профиль и прием тяжелых машин уточнить. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "nerzhavey-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "starterpro-pushkin",
+      "name": "СтартерПро",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, территория Павильон Урицкого, 1БИ",
+      "country": "Россия",
+      "phone": "+7 812 903-79-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "ЭнергоМаш рядом (1Б); проверить принадлежность и специализацию. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "starterpro-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "exclusive-shushary231",
+      "name": "Эксклюзив",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 231, корп. 5В",
+      "country": "Россия",
+      "phone": "+7 812 305-31-42",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой сервис по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 931 250-33-75. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "exclusive-shushary231",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "petromaster-shushary",
+      "name": "ПетроМастер — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 231, корп. 2У",
+      "country": "Россия",
+      "phone": "+7 812 244-40-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой сервис по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Общий контакт сети, уточнить профиль площадки. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "petromaster",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "petromaster-pushkin",
+      "name": "ПетроМастер — Пушкин",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Красносельское шоссе, 235",
+      "country": "Россия",
+      "phone": "+7 812 244-40-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой сервис по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Общий контакт сети, уточнить профиль площадки. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "petromaster",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hydrotech-fedorovskoe",
+      "name": "ГидравликТехСервис",
+      "region": "Ленинградская область",
+      "address": "Фёдоровское, Шоссейная ул., 2Г, корп. 8",
+      "country": "Россия",
+      "phone": "+7 812 240-76-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Рядом с историческим адресом ТРИА, подтвердить отдельный въезд. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "hydrotech-fedorovskoe",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtonomki-shushary",
+      "name": "Автономки",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Железнодорожная ул., 9Б",
+      "country": "Россия",
+      "phone": "+7 921 659-90-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "специализированный сервис, профиль уточнить"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "avtonomki-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "bodry-pushkin",
+      "name": "Бодрый Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Сетевая ул., 10Б",
+      "country": "Россия",
+      "phone": "+7 981 859-23-45",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовое обслуживание по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 920 692-11-10. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "bodry-pushkin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtosputnik-shushary",
+      "name": "Авто Спутник",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 167",
+      "country": "Россия",
+      "phone": "+7 812 640-33-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовое обслуживание по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "avtosputnik-shushary",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "harper-fedorovskoe",
+      "name": "ХарПер",
+      "region": "Ленинградская область",
+      "address": "Фёдоровское, 1-й Восточный проезд, 1",
+      "country": "Россия",
+      "phone": "+7 931 211-17-19",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовое обслуживание по справочнику"
+      ],
+      "source_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить ремонтный профиль. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "harper-fedorovskoe",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "goodwill-pushkin",
+      "name": "Гудвил Холдинг",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Автомобильная ул., 4, лит. А3",
+      "country": "Россия",
+      "phone": "+7 812 324-52-46",
+      "email": "disp@truck.ru",
+      "hours": null,
+      "services": [
+        "тягачи, прицепы, двигатели, КПП, электрика, кузов"
+      ],
+      "source_urls": [
+        "https://www.truck.ru/service"
+      ],
+      "notes": "Сайт подтверждает адрес сервиса; Ю-Сервис batch35 на ул. Автомобильной 4, проверить возможный общий адрес. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "goodwill-pushkin",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "navlya-prom6",
+      "name": "Навля Трак Центр — Навля",
+      "region": "Брянская область",
+      "address": "пгт Навля, Промышленная ул., 6",
+      "country": "Россия",
+      "phone": "+7 48342 51-03-55",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Отдельный адрес от Брянска, batch35. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "navlya-truck",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sumotori-artem",
+      "name": "Техцентр Сумотори",
+      "region": "Приморский край",
+      "address": "Артём, Угловое, 1-я Рабочая ул., 91",
+      "country": "Россия",
+      "phone": "+7 4232 30-20-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "sumotori-artem",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "serauto-kazan-m7",
+      "name": "СЭР-Авто",
+      "region": "Республика Татарстан",
+      "address": "М7 Москва–Уфа, 813-й км",
+      "country": "Россия",
+      "phone": "+7 843 227-27-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "serauto-kazan-m7",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "volvotruck-kaluga",
+      "name": "Вольво Трак Центр Калуга",
+      "region": "Калужская область",
+      "address": "Калуга, Тульское шоссе, 18",
+      "country": "Россия",
+      "phone": "+7 4842 71-46-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Историческое название; проверить актуального оператора. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "volvotruck-kaluga",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kamtruckservice-kamyshin",
+      "name": "КамТраксервис",
+      "region": "Волгоградская область",
+      "address": "Камышин, промзона, район завода СМИ",
+      "country": "Россия",
+      "phone": "+7 84457 5-45-20",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Точный въезд уточнить. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "kamtruckservice-kamyshin",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtokubem-krasnodar",
+      "name": "АвтоКубЭМ",
+      "region": "Краснодарский край",
+      "address": "Краснодар, Большевистская ул., 324",
+      "country": "Россия",
+      "phone": "+7 861 225-87-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "avtokubem-krasnodar",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "eniseytruck-krasnoyarsk",
+      "name": "Енисей Трак Сервис",
+      "region": "Красноярский край",
+      "address": "Красноярск, Рейдовая ул., 58А",
+      "country": "Россия",
+      "phone": "+7 391 295-87-01",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "eniseytruck-krasnoyarsk",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lidertruck-metallurgicheskaya",
+      "name": "ЛидерТрак — Металлургическая",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Металлургическая ул., 49",
+      "country": "Россия",
+      "phone": "+7 8552 44-35-93",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Отдельный адрес от Казанского проспекта; проверить действующий филиал. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "lidertruck-chelny",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "berestauto-nevinnomyssk",
+      "name": "БерестАвтоСервис",
+      "region": "Ставропольский край",
+      "address": "Невинномысск, Пятигорское шоссе, 3А",
+      "country": "Россия",
+      "phone": "+7 86554 6-70-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "berestauto-nevinnomyssk",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rtk-tallzhino",
+      "name": "Ремонтно-Техническая Компания",
+      "region": "Кемеровская область",
+      "address": "Новокузнецкий район, станция Тальжино, Советская ул., 1",
+      "country": "Россия",
+      "phone": "+7 3843 99-37-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "rtk-tallzhino",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sibtruck-omsk209",
+      "name": "Сибирь Трак Сервис — Омск",
+      "region": "Омская область",
+      "address": "Омск, ул. 10 лет Октября, 209",
+      "country": "Россия",
+      "phone": "+7 3812 58-58-85",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси прицепов, гидравлика"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "sibtruck-omsk209",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ivsib-omsk46e",
+      "name": "Ивсиб — Омск",
+      "region": "Омская область",
+      "address": "Омск, 2-я Солнечная ул., 46Е",
+      "country": "Россия",
+      "phone": "+7 3812 33-12-58",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Отличается от адреса Дружино, подтвердить филиал. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "ivsib-druzhino",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "clubauto-orel",
+      "name": "Клубавто-центр",
+      "region": "Орловская область",
+      "address": "Орёл, Московское шоссе, 175А",
+      "country": "Россия",
+      "phone": "+7 4862 75-70-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "clubauto-orel",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "orentruck",
+      "name": "ОРЕНТРАК",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Шоссейная ул., 30",
+      "country": "Россия",
+      "phone": "+7 3532 52-60-52",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "orentruck",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "unipart-krasny-kolos",
+      "name": "Юнипарт-Сервис",
+      "region": "Ростовская область",
+      "address": "Аксайский район, пос. Красный Колос, Новостроевская ул., 7",
+      "country": "Россия",
+      "phone": "+7 863 206-11-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "unipart-krasny-kolos",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "neis-leninakan",
+      "name": "Нейс Юг",
+      "region": "Ростовская область",
+      "address": "Мясниковский район, х. Ленинакан, Солнечная ул., 7А",
+      "country": "Россия",
+      "phone": "+7 863 303-00-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "В другом разделе того же источника указан 7Б; проверить вход. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "neis-leninakan",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rusavto-ryazan",
+      "name": "РУСАВТО",
+      "region": "Рязанская область",
+      "address": "Рязань, ул. Есенина, 1Б",
+      "country": "Россия",
+      "phone": "+7 4912 95-55-40",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "rusavto-ryazan",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mirgruzovikov-pridorozhny",
+      "name": "Мир Грузовиков",
+      "region": "Самарская область",
+      "address": "Волжский район, пос. Придорожный, ГГ1",
+      "country": "Россия",
+      "phone": "+7 846 979-81-91",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "mirgruzovikov-pridorozhny",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sochitruck-kiparisovaya",
+      "name": "Сочи Трак Сервис",
+      "region": "Краснодарский край",
+      "address": "Сочи, Кипарисовая ул., 4",
+      "country": "Россия",
+      "phone": "+7 862 227-07-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "sochitruck-kiparisovaya",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehservice-engineering-surgut",
+      "name": "Техсервис-Инжиниринг",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, Сосновая ул., 57",
+      "country": "Россия",
+      "phone": "+7 3462 55-56-31",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "tehservice-engineering-surgut",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "udacha-novospasskoe",
+      "name": "Удача Трак Сервис",
+      "region": "Ульяновская область",
+      "address": "рп Новоспасское, ул. Гагарина, 58",
+      "country": "Россия",
+      "phone": "+7 84238 2-30-08",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "udacha-novospasskoe",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehtrans-ufa",
+      "name": "Техтранс",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, Майкопская ул., 5, АТП-3",
+      "country": "Россия",
+      "phone": "+7 347 271-53-55",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "tehtrans-ufa",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ferro-khabarovsk-pobedy",
+      "name": "Ферронордик Машины",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Победы, 67Б",
+      "country": "Россия",
+      "phone": "+7 4212 40-07-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Историческое название; проверить оператора. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "ferro-khabarovsk-pobedy",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mastertruck-kremenkul",
+      "name": "Мастер Трак Сервис — Кременкуль",
+      "region": "Челябинская область",
+      "address": "пос. Кременкуль, Уральский тракт, 1",
+      "country": "Россия",
+      "phone": "+7 351 724-30-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика прицепов"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Проверить отдельную площадку от ул. Игуменка. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "mastertruck-kremenkul",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "altavto-barnaul",
+      "name": "Алтавто",
+      "region": "Алтайский край",
+      "address": "Барнаул, Звёздная ул., 2",
+      "country": "Россия",
+      "phone": "+7 3852 22-32-31",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "altavto-barnaul",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "argosscan-gubkin",
+      "name": "Аргос Скан",
+      "region": "Белгородская область",
+      "address": "Губкин, промзона Южные Коробки, Транспортная ул., 6Б",
+      "country": "Россия",
+      "phone": "+7 915 562-49-71",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "argosscan-gubkin",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "volgaavtotrade",
+      "name": "ВолгаАвтоТрейд",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Моторная ул., 34",
+      "country": "Россия",
+      "phone": "+7 8442 430-430",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "volgaavtotrade",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pktrucks-panteleevka",
+      "name": "ПКТракс-Сервис",
+      "region": "Калужская область",
+      "address": "Жуковский район, д. Пантелеевка, 2",
+      "country": "Россия",
+      "phone": "+7 901 995-58-35",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "pktrucks-panteleevka",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hydrotehavto-churilkovo",
+      "name": "СТО Гидротехавто",
+      "region": "Московская область",
+      "address": "Домодедовский округ, пос. Чурилково, 7",
+      "country": "Россия",
+      "phone": "+7 910 401-94-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "hydrotehavto-churilkovo",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hyva-podolsk",
+      "name": "Хива Русланд",
+      "region": "Московская область",
+      "address": "Подольск, Станционная ул., 22",
+      "country": "Россия",
+      "phone": "+7 495 988-10-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Проверить наличие ремонтной зоны. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "hyva-podolsk",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autosystems-pererva",
+      "name": "Автосистемы",
+      "region": "Москва",
+      "address": "ул. Перерва, 19, стр. 1",
+      "country": "Россия",
+      "phone": "+7 495 662-80-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "autosystems-pererva",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truck-trailer-shushary",
+      "name": "Трак энд Трейлер",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1, лит. И",
+      "country": "Россия",
+      "phone": "+7 921 953-41-52",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Уточнить самостоятельность площадки и оператора. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "truck-trailer-shushary",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "hydroservice-saratov",
+      "name": "Гидросервис",
+      "region": "Саратовская область",
+      "address": "Саратов, Вольский тракт, 1",
+      "country": "Россия",
+      "phone": "+7 8452 32-70-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "hydroservice-saratov",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mobilehydro-chel",
+      "name": "Мобильная Гидравлика",
+      "region": "Челябинская область",
+      "address": "Челябинск, Новосельская ул., 31А, 5",
+      "country": "Россия",
+      "phone": "+7 912 790-61-24",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гидравлика HYVA"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "mobilehydro-chel",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "quattro-zheleznodorozhny",
+      "name": "Кваттро-Сервис",
+      "region": "Московская область",
+      "address": "Балашиха, мкр. Железнодорожный, Автозаводская ул., 36",
+      "country": "Россия",
+      "phone": "+7 495 225-77-45",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси SAF"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "quattro-zheleznodorozhny",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scania-golitsyno",
+      "name": "Скания Сервис — Голицыно",
+      "region": "Московская область",
+      "address": "Одинцовский округ, 43-й км Минского шоссе, вл. 1, корп. 1",
+      "country": "Россия",
+      "phone": "+7 495 787-50-01",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси SAF, BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Историческое название; проверить оператора. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "scania-golitsyno",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "scan-southeast-vostryakovo",
+      "name": "Скан-Юго-Восток — Домодедово",
+      "region": "Московская область",
+      "address": "Домодедово, мкр. Востряково, ул. Заборье, 2Б",
+      "country": "Россия",
+      "phone": "+7 495 730-88-75",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Отдельный филиал. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "scan-southeast",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "murmanscan",
+      "name": "МурманСкан",
+      "region": "Мурманская область",
+      "address": "Мурманск, Домостроительная ул., 18",
+      "country": "Россия",
+      "phone": "+7 8152 55-43-45",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "murmanscan",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alfa-chelny-profilnaya",
+      "name": "Компания Альфа",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, промзона БСИ, Профильная ул., 32",
+      "country": "Россия",
+      "phone": "+7 8552 77-82-82",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси SAF, BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "alfa-chelny-profilnaya",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "commercial-transport-chel",
+      "name": "Коммерческий Транспорт",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Артёма, 187/1",
+      "country": "Россия",
+      "phone": "+7 351 772-44-96",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси SAF"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "commercial-transport-chel",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pitstop-yaroslavl",
+      "name": "ПитСтоп",
+      "region": "Ярославская область",
+      "address": "Ярославль, Магистральная ул., 28",
+      "country": "Россия",
+      "phone": "+7 4852 67-05-49",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси SAF, BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "pitstop-yaroslavl",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckstar-volzhsky",
+      "name": "ТракСтар",
+      "region": "Волгоградская область",
+      "address": "Волжский, ул. Автодорога №6, стр. 33А",
+      "country": "Россия",
+      "phone": "+7 8443 21-60-23",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "truckstar-volzhsky",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "zubr-volgograd",
+      "name": "Зубр",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Краснополянская ул., 23",
+      "country": "Россия",
+      "phone": "+7 8442 98-98-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "zubr-volgograd",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "technotrans-kurgan",
+      "name": "НПФ Технотранс",
+      "region": "Курганская область",
+      "address": "Курган, ул. Дзержинского, 6А",
+      "country": "Россия",
+      "phone": "+7 3522 48-73-21",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "technotrans-kurgan",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "korpus-t-balashikha",
+      "name": "Корпус Т",
+      "region": "Московская область",
+      "address": "Балашиха, Кучинское шоссе, вл. 2",
+      "country": "Россия",
+      "phone": "+7 985 233-41-64",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "korpus-t-balashikha",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "volvo-lubercy14",
+      "name": "Вольво Трак Сервис / Восток Трак Сервис",
+      "region": "Московская область",
+      "address": "Люберцы, Котельнический проезд, 14",
+      "country": "Россия",
+      "phone": "+7 495 225-55-75",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Два исторических названия одного адреса; проверить оператора. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "volvo-lubercy14",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "yugnovotech-novorossiysk",
+      "name": "Юг-Новотех",
+      "region": "Краснодарский край",
+      "address": "Новороссийск, ул. Железнодорожная петля, 1",
+      "country": "Россия",
+      "phone": "+7 8617 60-73-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "yugnovotech-novorossiysk",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "atp7-penza",
+      "name": "АТП-7",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Металлистов, 7А",
+      "country": "Россия",
+      "phone": "+7 8412 32-13-23",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Уточнить прием сторонних ТС. Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "atp7-penza",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "velikan-rostov",
+      "name": "Великан-Ростов Сервис",
+      "region": "Ростовская область",
+      "address": "1-й км автодороги Ростов–Новошахтинск, стр. 5/7",
+      "country": "Россия",
+      "phone": "+7 863 203-77-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "velikan-rostov",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ikartruck-saratov",
+      "name": "Икар-Трак",
+      "region": "Саратовская область",
+      "address": "Саратов, ул. Аэропорт, 20",
+      "country": "Россия",
+      "phone": "+7 8452 55-79-55",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "ikartruck-saratov",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "termez-surgut",
+      "name": "УРЦ Термез",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, Нижневартовское шоссе, 4",
+      "country": "Россия",
+      "phone": "+7 3462 21-21-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "termez-surgut",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pritsepservice-tver",
+      "name": "ПрицепСервис",
+      "region": "Тверская область",
+      "address": "Тверь, ул. Коняевская, 7",
+      "country": "Россия",
+      "phone": "+7 905 603-85-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "pritsepservice-tver",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "premiera-tolyatti",
+      "name": "Премьера Центр",
+      "region": "Самарская область",
+      "address": "Тольятти, Революционная ул., 82",
+      "country": "Россия",
+      "phone": "+7 8482 34-81-67",
+      "email": null,
+      "hours": null,
+      "services": [
+        "оси BPW"
+      ],
+      "source_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "notes": "Наличие контакта в открытом источнике не подтверждает действующий бизнес; проверить перед публикацией.",
+      "operator_group": "premiera-tolyatti",
+      "evidence": "historical_distributor_service_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Ten prior priority/network batches read and exact address/ID/name+phone comparisons performed. Full fuzzy and cross-region comparisons pending.",
+    "Avoided known shared addresses and aliases: SP Start/Ev rokar (Chelny Promyshlennaya 68), Sotrans Parnas/Nord Scan, GTS/FNGROUP, IV-service, Tpas, Autobull, Grunwald, Terra Truck, Scania Shushary, Nevi Balobanovo, Tarna and SibirTrakService Novosibirsk Troll eynaya 85.",
+    "Existing batch37 CPT Shushary: directory https://urbanplaces.su/ru_sankt-peterburg/sankt-peterburg/card-70000001022707155-tsentr-pritsepnoi-tekhniki lists Moskovskoe shosse 233 lit R. Verify and enrich, not another record.",
+    "Goodwill vs U-Service Automotive 4 potentially same physical complex; confirm independently before counting distinct locations.",
+    "No personal names from older directory recorded. Public business phone is not permission for advertising."
+  ]
+}
