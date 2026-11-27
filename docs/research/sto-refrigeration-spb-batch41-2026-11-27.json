@@ -1,0 +1,2091 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, service scope, coordinates, reuse rights, duplicates and admin approval.",
+  "records": [
+    {
+      "id": "b41-mholod-angarsk",
+      "name": "М-Холод",
+      "region": "Иркутская область",
+      "address": "Ангарск, 77-й квартал, стр. 11",
+      "country": "Россия",
+      "phone": "+7 3952 58-33-88",
+      "email": "ang@mholod.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "mholod-angarsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-uralref-aramil",
+      "name": "УралРеф",
+      "region": "Свердловская область",
+      "address": "Арамиль, ул. Трудовая, стр. 20",
+      "country": "Россия",
+      "phone": "+7 993 524-09-70",
+      "email": "info@uralref.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "uralref-aramil",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-ryad-barnaul",
+      "name": "РЯД",
+      "region": "Алтайский край",
+      "address": "Барнаул, ул. Новосибирская, 48Б",
+      "country": "Россия",
+      "phone": "+7 960 966-22-36",
+      "email": "ref@holod22.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "ryad-barnaul",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-megaholod-vladimir",
+      "name": "Мегахолод — Владимир",
+      "region": "Владимирская область",
+      "address": "М7, Южный обход Владимира, 17 км, у гостиницы Уют",
+      "country": "Россия",
+      "phone": "8 800 550-75-57",
+      "email": "megaholod-vladimir@bk.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "megaholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-refvolga",
+      "name": "Реф-Волга",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Автомагистральная, 41, пом. 7",
+      "country": "Россия",
+      "phone": "+7 8442 98-08-61",
+      "email": "info@ref-volga.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "refvolga",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-trak-vlg",
+      "name": "Трак ВЛГ",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Краснополянская, стр. 33",
+      "country": "Россия",
+      "phone": "+7 968 286-47-51",
+      "email": "service.volgotrans@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "trak-vlg",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-snezha-vologda",
+      "name": "ГК Холод / Снежа",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Граничная, 32, стр. 4",
+      "country": "Россия",
+      "phone": "+7 921 142-01-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "snezha-vologda",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-remtransholod-voronezh",
+      "name": "РемТрансХолод",
+      "region": "Воронежская область",
+      "address": "Воронеж, ул. Землячки, 17",
+      "country": "Россия",
+      "phone": "+7 960 125-65-90",
+      "email": "holod36ss@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "remtransholod-voronezh",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-stix-ekb",
+      "name": "Термо Кинг Стикс",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. Суходольская, 200, пом. 1",
+      "country": "Россия",
+      "phone": "+7 343 343-05-08 доб. 112",
+      "email": "service@tkstix.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "stix-ekb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-rtas-pervouralsk",
+      "name": "РефТрансАвтоСервис",
+      "region": "Свердловская область",
+      "address": "пос. Новоалексеевское, ул. 8 Марта, 52",
+      "country": "Россия",
+      "phone": "+7 922 137-80-84",
+      "email": "rtas2023@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "rtas-pervouralsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-mavinta-golitsyno",
+      "name": "Мавинта — Голицыно",
+      "region": "Московская область",
+      "address": "Минское шоссе, 43-й км, стр. 2",
+      "country": "Россия",
+      "phone": "8 800 505-48-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "mavinta",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-refservice-irkutsk",
+      "name": "РефСервис",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Толевая, стр. 4Л",
+      "country": "Россия",
+      "phone": "+7 902 569-38-20",
+      "email": "irkutsk_ref_servise@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "refservice-irkutsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-nf-motors",
+      "name": "НФ-Моторс",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Яблочная, 3Д, стр. 1",
+      "country": "Россия",
+      "phone": "+7 906 237-74-55",
+      "email": "service@nf-motors.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "nf-motors",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-termit-dorozhnoe",
+      "name": "Термит",
+      "region": "Калининградская область",
+      "address": "пос. Дорожное, ул. Берлинское шоссе, 2",
+      "country": "Россия",
+      "phone": "+7 4012 555-150",
+      "email": "termit555150@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "termit-dorozhnoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-yugfrost-krasnodar",
+      "name": "Юг-Фрост",
+      "region": "Краснодарский край",
+      "address": "Краснодар, автодорога Краснодар–Кропоткин, 1-й км, въезд со стороны АЗС Роснефть",
+      "country": "Россия",
+      "phone": "+7 918 011-14-00",
+      "email": "info@yug-frost.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "yugfrost-krasnodar",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-arctic-krasnoyarsk",
+      "name": "Арктик",
+      "region": "Красноярский край",
+      "address": "Красноярск, ул. 2-я Брянская, 59Ж, пом. 1",
+      "country": "Россия",
+      "phone": "+7 913 833-75-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "arctic-krasnoyarsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-sclimat-kursk",
+      "name": "С-Климат / РефТрансКлимат",
+      "region": "Курская область",
+      "address": "Курск, ул. 3-я Агрегатная, 23К",
+      "country": "Россия",
+      "phone": "+7 960 683-60-10",
+      "email": "reftransklimat@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "sclimat-kursk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-flagman-kazinka-oct",
+      "name": "Флагман-Сервис",
+      "region": "Липецкая область",
+      "address": "с. Казинка, ул. Октябрьская, 60",
+      "country": "Россия",
+      "phone": "+7 4742 370-555 доб. 202",
+      "email": "info@man-lipetsk.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "flagman-kazinka-oct",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-promholod-oct",
+      "name": "ТОО Промхолод",
+      "region": "Московская область",
+      "address": "пос. Октябрьский, ул. Фабричная, 9, стр. 1",
+      "country": "Россия",
+      "phone": "+7 916 171-62-54",
+      "email": "ref@promholod.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "promholod-oct",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-servisholod-mahachkala",
+      "name": "Сервис Холод",
+      "region": "Республика Дагестан",
+      "address": "Махачкала, ул. Хаджи Булача, 21",
+      "country": "Россия",
+      "phone": "+7 967 931-79-29",
+      "email": "servis.kholod@bk.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "servisholod-mahachkala",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-avtoholod-mytishchi",
+      "name": "Автохолод-М — Север",
+      "region": "Московская область",
+      "address": "Мытищи, Ярославский проезд, 120Г",
+      "country": "Россия",
+      "phone": "+7 929 921-32-30",
+      "email": "sto-ahm@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "avtoholod-mytishchi",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-megaholod-m7",
+      "name": "Мегахолод — М7",
+      "region": "Нижегородская область",
+      "address": "М7, 384-й км, стоянка Санта-Мария",
+      "country": "Россия",
+      "phone": "+7 986 740-41-59",
+      "email": "megaxolod-nn@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "megaholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-megaholod-larina",
+      "name": "Мегахолод — Ларина",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Ларина, 17",
+      "country": "Россия",
+      "phone": "+7 986 740-41-72",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "megaholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-mavinta-ob",
+      "name": "Мавинта — Обь",
+      "region": "Новосибирская область",
+      "address": "Обь, Омский тракт, 3",
+      "country": "Россия",
+      "phone": "8 800 350-91-62 доб. 2, 8",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "mavinta",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-planar-sibir",
+      "name": "Планар-Сибирь",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Малыгина, 5",
+      "country": "Россия",
+      "phone": "8 800 700-91-88 доб. 2",
+      "email": "info@планар-сибирь.рф",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "planar-sibir",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-mavinta-noginsk",
+      "name": "Мавинта — Ногинск",
+      "region": "Московская область",
+      "address": "Ногинск, территория Ногинск-Технопарк, 2А",
+      "country": "Россия",
+      "phone": "8 800 350-91-62 доб. 1, 8",
+      "email": "noginsk@mavinta.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "mavinta",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-orentransholod",
+      "name": "Оренбург Трансхолод",
+      "region": "Оренбургская область",
+      "address": "Оренбург, 3-й Донгузский проезд, 62",
+      "country": "Россия",
+      "phone": "+7 922 839-07-07",
+      "email": "serviceburg_56@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "orentransholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-orenref",
+      "name": "Оренреф",
+      "region": "Оренбургская область",
+      "address": "Оренбург, ул. Терешковой, 301",
+      "country": "Россия",
+      "phone": "+7 3532 242-241",
+      "email": "orenref56@gmail.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "orenref",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-permholod",
+      "name": "Пермторгмонтаж-Т / Вектор",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Светлогорская, 16",
+      "country": "Россия",
+      "phone": "+7 964 190-22-07",
+      "email": "dau@ptm-t.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "permholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-avtom-podolsk",
+      "name": "Авто-М",
+      "region": "Московская область",
+      "address": "Подольск, Домодедовское шоссе, 20И",
+      "country": "Россия",
+      "phone": "+7 499 322-99-83",
+      "email": "service@auto-mo.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "avtom-podolsk",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-eltron-reutov",
+      "name": "Элтрон",
+      "region": "Московская область",
+      "address": "Реутов, ул. Транспортная, 11Т",
+      "country": "Россия",
+      "phone": "+7 495 197-77-35",
+      "email": "eltron2019@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "eltron-reutov",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-m5-valy",
+      "name": "М5",
+      "region": "Самарская область",
+      "address": "с. Валы, ул. Советская, 61А",
+      "country": "Россия",
+      "phone": "8 800 201-54-75",
+      "email": "info@rus163m5.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "m5-valy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-refmaster-saratov",
+      "name": "Рефмастер",
+      "region": "Саратовская область",
+      "address": "Саратов, ул. Пионерская, 32",
+      "country": "Россия",
+      "phone": "+7 8452 47-41-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "refmaster-saratov",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-bts-olsha",
+      "name": "БТС",
+      "region": "Смоленская область",
+      "address": "с. Ольша, М1, 395-й км, 3",
+      "country": "Россия",
+      "phone": "+7 4812 250-555",
+      "email": "info@tc-bts.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "bts-olsha",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-holod66",
+      "name": "Холод-66",
+      "region": "Смоленская область",
+      "address": "Смоленск, ул. Смольянинова, 7А",
+      "country": "Россия",
+      "phone": "+7 920 331-11-31",
+      "email": "avto-holod66@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "holod66",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-rator-sochi",
+      "name": "Ратор",
+      "region": "Краснодарский край",
+      "address": "Сочи, ул. Кипарисовая, 12",
+      "country": "Россия",
+      "phone": "+7 862 555-27-95",
+      "email": "info@yug-ac.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "rator-sochi",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-transholod-surgut",
+      "name": "Трансхолод-С",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, Нефтеюганское шоссе, 10",
+      "country": "Россия",
+      "phone": "+7 982 146-00-94",
+      "email": "supersnow.trans@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "transholod-surgut",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-friga-tolyatti",
+      "name": "Фрига-Авто / WERNOX",
+      "region": "Самарская область",
+      "address": "Тольятти, Южное шоссе, 22",
+      "country": "Россия",
+      "phone": "+7 902 373-88-32",
+      "email": "service@wernox.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "friga-tolyatti",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-holodservice-tula",
+      "name": "Холод-Сервис",
+      "region": "Тульская область",
+      "address": "Тула, Ханинский проезд, 8А",
+      "country": "Россия",
+      "phone": "+7 950 916-41-11",
+      "email": "mail@holod-service.pro",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "holodservice-tula",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-avhol-tula",
+      "name": "Авхол",
+      "region": "Тульская область",
+      "address": "Тула, Венёвское шоссе, 13",
+      "country": "Россия",
+      "phone": "+7 4872 79-03-36",
+      "email": "office@avhol.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "avhol-tula",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-thermotop-tyumen",
+      "name": "Термо Топ Тюмень",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Камчатская, 194, стр. 4",
+      "country": "Россия",
+      "phone": "+7 3452 500-395 доб. 1",
+      "email": "sto@gct72.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "thermotop-tyumen",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-sawin-chel",
+      "name": "Савин Групп",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Енисейская, 55Б",
+      "country": "Россия",
+      "phone": "+7 351 701-31-08",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "sawin-chel",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-chitaref",
+      "name": "ЧитаРефСервис",
+      "region": "Забайкальский край",
+      "address": "Чита, пос. Энергетиков, пр. Энергостроителей, 2",
+      "country": "Россия",
+      "phone": "8 800 700-85-98",
+      "email": "office@kamaref.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "chitaref",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-avtoholod21",
+      "name": "Автохолод 21",
+      "region": "Чувашская Республика",
+      "address": "д. Шобашкаркасы, ул. Промышленная, 1",
+      "country": "Россия",
+      "phone": "+7 8352 212-313",
+      "email": "hydronic@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "avtoholod21",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-reftver",
+      "name": "РефТверь",
+      "region": "Тверская область",
+      "address": "Тверь, ул. Вагжанова, 11",
+      "country": "Россия",
+      "phone": "+7 930 161-45-31",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://supersnow.ru/servis/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "reftver",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-atlantic-artem",
+      "name": "Атлантик — Артём",
+      "region": "Приморский край",
+      "address": "Артём, ул. Западная, 20",
+      "country": "Россия",
+      "phone": "+7 914 197-87-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "atlantic",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 43.359097,
+      "longitude": 132.147101,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-arktika-astrakhan",
+      "name": "Арктика",
+      "region": "Астраханская область",
+      "address": "Приволжский район, Кулаковский промузел, ул. Рождественского, 18Е",
+      "country": "Россия",
+      "phone": "+7 8512 71-80-13",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "arktika-astrakhan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 46.321026,
+      "longitude": 48.063434,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-ksauto-novosadovy",
+      "name": "КС-Авто",
+      "region": "Белгородская область",
+      "address": "пос. Новосадовый, ул. Солнечная, 1Д",
+      "country": "Россия",
+      "phone": "+7 4722 37-37-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "ksauto-novosadovy",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 50.652038,
+      "longitude": 36.683443,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-holodtrans-suponevo",
+      "name": "Холодтранс",
+      "region": "Брянская область",
+      "address": "с. Супонево, ул. Шоссейная, 44Ж",
+      "country": "Россия",
+      "phone": "+7 930 735-80-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "holodtrans-suponevo",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 53.21255,
+      "longitude": 34.296797,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-avto34-gorodishche",
+      "name": "Авто 34 РУС — Городище",
+      "region": "Волгоградская область",
+      "address": "рп Городище, Производственный проезд, 17",
+      "country": "Россия",
+      "phone": "+7 988 003-30-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "avto34",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 48.813856,
+      "longitude": 44.523378,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-avto34-elektrolesovskaya",
+      "name": "Авто 34 РУС — Электролесовская",
+      "region": "Волгоградская область",
+      "address": "Волгоград, ул. Электролесовская, 15",
+      "country": "Россия",
+      "phone": "+7 8442 98-12-77",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "avto34",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 48.666818,
+      "longitude": 44.455764,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-transholod-ekb",
+      "name": "ТрансХолод",
+      "region": "Свердловская область",
+      "address": "Екатеринбург, ул. Бахчиванджи, 2А",
+      "country": "Россия",
+      "phone": "+7 343 317-99-20",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "transholod-ekb",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 56.757974,
+      "longitude": 60.795733,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-krial-yuski",
+      "name": "Криал-Авто",
+      "region": "Удмуртская Республика",
+      "address": "с. Юськи, Юськинская промзона, 2",
+      "country": "Россия",
+      "phone": "+7 3412 56-13-49",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "krial-yuski",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 56.6589,
+      "longitude": 53.10541,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-holod-kazan",
+      "name": "Холод Казань",
+      "region": "Республика Татарстан",
+      "address": "пос. Новониколаевский, ул. Овражная, 3",
+      "country": "Россия",
+      "phone": "+7 905 317-34-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "holod-kazan",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.898472,
+      "longitude": 48.965837,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-siv-krasnodar",
+      "name": "СИВ Трансхолод — Краснодар",
+      "region": "Краснодарский край",
+      "address": "Восточный обход Краснодара, 5/2",
+      "country": "Россия",
+      "phone": "+7 928 270-58-31",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "siv-krasnodar",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 44.954228,
+      "longitude": 39.121327,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-kurgantransholod",
+      "name": "Кургантрансхолод",
+      "region": "Курганская область",
+      "address": "Курган, ул. Омская, 134",
+      "country": "Россия",
+      "phone": "+7 3522 54-57-54",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "kurgantransholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.469887,
+      "longitude": 65.374976,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-termosfera",
+      "name": "ТермоСфера",
+      "region": "Московская область",
+      "address": "с. Петровское, вл. 4, стр. 6, трасса А107",
+      "country": "Россия",
+      "phone": "+7 915 055-16-13",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "termosfera",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.528416,
+      "longitude": 36.981673,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-transholod-nn",
+      "name": "Транс-Холод",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, д. Ближнее Константиново, ул. Полевая, 8, пом. 2",
+      "country": "Россия",
+      "phone": "+7 831 469-50-18",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "transholod-nn",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 56.23501,
+      "longitude": 44.005645,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-refsib",
+      "name": "Реф Сиб Сервис",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Дукача, 8Б",
+      "country": "Россия",
+      "phone": "+7 383 284-07-47",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "refsib",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.004432,
+      "longitude": 82.786832,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-rio-penza",
+      "name": "РИО / Ника",
+      "region": "Пензенская область",
+      "address": "Пенза, просп. Победы, 75А, корп. 1",
+      "country": "Россия",
+      "phone": "+7 8412 39-17-17",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "rio-penza",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 53.233635,
+      "longitude": 44.952245,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-translider-samara",
+      "name": "Транс Лидер",
+      "region": "Самарская область",
+      "address": "Самара, пос. Спутник, ул. Придорожная, 21",
+      "country": "Россия",
+      "phone": "+7 846 979-17-01",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "translider-samara",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 53.259407,
+      "longitude": 50.416903,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-resize-fedorovskoe",
+      "name": "Ре-Сайз",
+      "region": "Ленинградская область",
+      "address": "Фёдоровское, ул. Почтовая, 23",
+      "country": "Россия",
+      "phone": "+7 921 099-95-45",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "resize-fedorovskoe",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 59.661902,
+      "longitude": 30.546636,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-reftrans-shushary",
+      "name": "РефТранс",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1, корп. 2, лит. А",
+      "country": "Россия",
+      "phone": "+7 921 944-04-11",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "reftrans-shushary",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 59.811419,
+      "longitude": 30.394749,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-refsar-polchaninovka",
+      "name": "Рефсар",
+      "region": "Саратовская область",
+      "address": "с. Полчаниновка, Московское шоссе, 1",
+      "country": "Россия",
+      "phone": "+7 927 622-00-34",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "refsar-polchaninovka",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 51.855585,
+      "longitude": 45.602383,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-tyumtermotrans-surgut",
+      "name": "Тюмтермотранс — Сургут",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, Нефтеюганское шоссе, 8, стр. 17",
+      "country": "Россия",
+      "phone": "+7 912 815-15-56",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "tyumtermotrans",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 61.271779,
+      "longitude": 73.386825,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-tyumtermotrans-tyumen",
+      "name": "Тюмтермотранс — Тюмень",
+      "region": "Тюменская область",
+      "address": "Старый Тобольский тракт, 2-й км, 4, стр. 11",
+      "country": "Россия",
+      "phone": "+7 912 221-98-88",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "tyumtermotrans",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 57.101027,
+      "longitude": 65.692063,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-rektorg-ufa",
+      "name": "Ректорг-Плюс",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, автодорога Самара–Уфа–Челябинск, 1475 км",
+      "country": "Россия",
+      "phone": "+7 347 229-40-25",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "rektorg-ufa",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 54.650521,
+      "longitude": 56.07841,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-atlantic-khabarovsk",
+      "name": "Атлантик — Хабаровск",
+      "region": "Хабаровский край",
+      "address": "с. Ильинка, Солнечный пер., 2",
+      "country": "Россия",
+      "phone": "+7 914 408-00-58",
+      "email": "info@atlantic-khv.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "atlantic",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 48.369003,
+      "longitude": 135.127603,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-yuzhuraltransholod",
+      "name": "ЮжУралТрансХолод",
+      "region": "Челябинская область",
+      "address": "Сосновский район, обход Челябинска, 14-й км, участок 1",
+      "country": "Россия",
+      "phone": "+7 922 728-40-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО транспортных холодильных установок"
+      ],
+      "source_urls": [
+        "https://sivtrans.ru/diller-service/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "yuzhuraltransholod",
+      "evidence": "manufacturer_or_distributor_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 54.993366,
+      "longitude": 61.175713,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-rusrefservice",
+      "name": "РусРефСервис",
+      "region": "Ленинградская область",
+      "address": "Фёдоровское, Ресурсная ул., 11",
+      "country": "Россия",
+      "phone": "8 800 444-02-10",
+      "email": "rusrefservice@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт холодильных установок"
+      ],
+      "source_urls": [
+        "https://rusrefservice.ru/"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "rusrefservice",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-respect-luga",
+      "name": "Респект",
+      "region": "Ленинградская область",
+      "address": "Луга, ул. Победы, 21А",
+      "country": "Россия",
+      "phone": "+7 911 848-00-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт по рубрике справочника; профиль уточнить"
+      ],
+      "source_urls": [
+        "https://totadres.ru/luga/org/respekt/3632760"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "respect-luga",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-greenbox-kingisepp",
+      "name": "Зелёный бокс",
+      "region": "Ленинградская область",
+      "address": "Кингисепп, ул. Дорожников, 41",
+      "country": "Россия",
+      "phone": "+7 999 986-09-99",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт по справочнику"
+      ],
+      "source_urls": [
+        "https://totadres.ru/kingisepp/org/zelenyy_boks/3332336"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "greenbox-kingisepp",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-transauto-otradnoe",
+      "name": "Transauto-Parts",
+      "region": "Ленинградская область",
+      "address": "Отрадное, Ленинградское шоссе, 93",
+      "country": "Россия",
+      "phone": "+7 812 507-99-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://totadres.ru/otradnoe/org/transauto-parts/6045579"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "transauto-otradnoe",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-specbrat-yanino",
+      "name": "Спецбрат",
+      "region": "Ленинградская область",
+      "address": "Янино-1, Индустриальный проезд, 2А",
+      "country": "Россия",
+      "phone": "+7 812 983-66-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков"
+      ],
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/specbrat/5507118"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "specbrat-yanino",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-furor-novosele",
+      "name": "ФурорАвто",
+      "region": "Ленинградская область",
+      "address": "Новоселье, Красносельское шоссе, 1Е",
+      "country": "Россия",
+      "phone": "+7 911 270-84-19",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/furoravto/5994272"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "furor-novosele",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-ktservice-vaiyalovo",
+      "name": "КТсервис",
+      "region": "Ленинградская область",
+      "address": "д. Вайялово, 11",
+      "country": "Россия",
+      "phone": "8 800 100-47-46",
+      "email": null,
+      "hours": null,
+      "services": [
+        "турбины и карданные валы грузовиков"
+      ],
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/ktservis/5118933"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "ktservice-vaiyalovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "b41-remzona-lagolovo",
+      "name": "Remzona",
+      "region": "Ленинградская область",
+      "address": "д. Лаголово, автодорога Анташи–Ропша–Красное Село, 29 км, 1",
+      "country": "Россия",
+      "phone": "+7 911 000-01-51",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://totadres.ru/leningradskaya_oblast/org/remzona/606198"
+      ],
+      "notes": "Проверить оператора, специализацию, въезд и контакты. Координаты при наличии опубликованы источником и не подтверждены независимо.",
+      "operator_group": "remzona-lagolovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "review_notes": [
+    "SuperSnow and Carrier directories read directly. Known prior records such as Varyag, Refika, Avtosputnik, United Lozhki, Euroclimate, Mavinta Kazan/Chelny omitted manually. Cross-batch automated exact matching not completed due to connector timeout; all records require national dedup, including possible nearby workshops at Golitsyno, Olsha, Shushary, Bakhchivandzhi, Kazinka.",
+    "Specialist refrigeration and tire repair stations must not be presented as universal truck repair. No phone calls, FNS checks or outreach."
+  ]
+}
