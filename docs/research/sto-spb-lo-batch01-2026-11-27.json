@@ -1,0 +1,298 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "country": "Россия",
+  "publication_gate": "Verify coordinates, current operator/status, source reuse, catalog deduplication and admin review before publication. No calls or FNS official extracts obtained. Never represent as partners.",
+  "records": [
+    {
+      "id": "mb-trucks-spb",
+      "name": "МБ Тракс СПб",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 289, стр. 1",
+      "country": "Россия",
+      "phone": "+7 812 677-03-78",
+      "hours": "24/7",
+      "services": [
+        "грузовые автомобили",
+        "прицепы и полуприцепы",
+        "тормозные системы",
+        "КПП ZF Traxon"
+      ],
+      "brands": [
+        "Mercedes-Benz",
+        "КАМАЗ",
+        "SITRAK",
+        "HOWO"
+      ],
+      "source_urls": [
+        "https://spbmb.ru/contacts/",
+        "https://spbmb.ru/timetable/"
+      ],
+      "notes": "Публичные контакты и заявленный круглосуточный сервис на сайте; есть карточка на карте.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avto-trak-parnas",
+      "name": "Авто Трак",
+      "region": "Санкт-Петербург",
+      "address": "ул. Домостроительная, 1, к. 5",
+      "country": "Россия",
+      "phone": "+7 981 805-40-00",
+      "hours": null,
+      "services": [
+        "диагностика",
+        "ходовая",
+        "тормоза",
+        "рулевое управление",
+        "двигатель",
+        "трансмиссия"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://autotruck.spb.ru/"
+      ],
+      "notes": "Публичная форма записи и описание ремонта грузовиков.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "baltkam-kolpino",
+      "name": "БалтКам Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Колпино, ул. Севастьянова, 24Д",
+      "country": "Россия",
+      "phone": "+7 812 775-05-66",
+      "hours": null,
+      "services": [
+        "электрика",
+        "диагностика",
+        "двигатели",
+        "КПП",
+        "пневмоподвеска",
+        "полуприцепы",
+        "шиномонтаж на территории"
+      ],
+      "brands": [
+        "КАМАЗ-5490",
+        "европейские грузовики"
+      ],
+      "source_urls": [
+        "https://www.baltkam.ru/sto"
+      ],
+      "notes": "Использован именно адрес ремонтной зоны в Колпино, а не другой адрес компании.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tria-fedorovskoe",
+      "name": "ТРИА Северо-Запад",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, гп. Федоровское, ул. Промышленная, 19",
+      "country": "Россия",
+      "phone": "+7 812 305-03-05",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "самосвалы",
+        "прицепы",
+        "рефрижераторы",
+        "автономные отопители",
+        "шиномонтаж",
+        "эвакуация",
+        "диагностика"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://tctria.ru/"
+      ],
+      "notes": "Сайт с перечнем услуг и адресом ремонтной площадки.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rs-truck-novosergievka",
+      "name": "РС Трак Сервис",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, д. Новосергиевка, Грузовой проезд, 23",
+      "country": "Россия",
+      "phone": "+7 911 976-45-35",
+      "hours": "ежедневно 09:00–21:00 (по основной секции контактов)",
+      "services": [
+        "ремонт грузовиков",
+        "самосвалы",
+        "техническое обслуживание"
+      ],
+      "brands": [
+        "КАМАЗ",
+        "УРАЛ",
+        "Shacman",
+        "FAW",
+        "HOWO"
+      ],
+      "source_urls": [
+        "https://rstruck.ru/contacts/",
+        "https://xfirm.ru/company/7811789357",
+        "https://b2b.house/company/OOO-RS-TRAK-SERVIS_bc9e87ad-e297-4dfb-ae1f-772807f50468/"
+      ],
+      "notes": "ИНН 7811789357; сторонние сведения о деятельности в 2025. На сайте также другой адрес и график в подвале — уточнить перед публикацией.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "trucksp-vsevolozhsk",
+      "name": "Трак СП",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, Свердловское городское поселение, промрайон Центральное отделение, здание 27Б",
+      "country": "Россия",
+      "phone": "+7 812 220-02-22",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт спецтехники",
+        "ТО"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://truckspb.ru/kontakty"
+      ],
+      "notes": "Доступна контактная страница сайта.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tis-lagolovo",
+      "name": "ТИС Групп",
+      "region": "Ленинградская область",
+      "address": "Ломоносовский район, д. Лаголово, ул. Парковая, 4, стр. 1",
+      "country": "Россия",
+      "phone": "+7 931 350-50-05",
+      "hours": "пн–пт 09:00–18:00 (опубликовано)",
+      "services": [
+        "диагностика",
+        "электрика",
+        "двигатель",
+        "КПП",
+        "пневматика прицепов",
+        "ABS/EBS Wabco",
+        "шиномонтаж",
+        "сварка"
+      ],
+      "brands": [
+        "Volvo",
+        "Mercedes"
+      ],
+      "source_urls": [
+        "https://tis-remont.ru/"
+      ],
+      "notes": "График и перечень работ опубликованы на сайте.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truck78-novosergievka",
+      "name": "Трак78",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, д. Новосергиевка, 5",
+      "country": "Россия",
+      "phone": "+7 812 507-87-80",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "двигатели",
+        "ходовая",
+        "ТО",
+        "диагностика",
+        "прицепы"
+      ],
+      "brands": [],
+      "source_urls": [
+        "https://truck78.ru/",
+        "https://companies.rbc.ru/id/1197847170223-obschestvo-s-ogranichennoj-otvetstvennostyu-megalit/"
+      ],
+      "notes": "На сайте ООО МЕГАЛИТ, ИНН 7813637825; в стороннем реестре основной ОКВЭД аренда недвижимости, проверить фактического оператора СТО.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "techservice-shushary",
+      "name": "ТехСервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Новгородский проспект, 24, к. 2",
+      "country": "Россия",
+      "phone": "+7 812 309-01-00",
+      "hours": null,
+      "services": [
+        "пневматика",
+        "тормоза",
+        "суппорты",
+        "электрика",
+        "прицепы",
+        "сварка"
+      ],
+      "brands": [
+        "КАМАЗ"
+      ],
+      "source_urls": [
+        "https://techservice-shushary.ru/"
+      ],
+      "notes": "Сайт указывает обновление 26.10.2026; описаны услуги и контакты.",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
