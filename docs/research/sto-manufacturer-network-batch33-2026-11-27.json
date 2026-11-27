@@ -1,0 +1,2154 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "irsa-spb",
+      "name": "ИРСА",
+      "region": "Санкт-Петербург",
+      "address": "ул. Заповедная, 51А",
+      "country": "Россия",
+      "phone": "+7 931 954-71-00",
+      "email": "postmaster@remzona-irsa.ru",
+      "hours": null,
+      "services": [
+        "грузовые автомобили",
+        "двигатели",
+        "подвеска",
+        "тормоза",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://remzona-irsa.ru/"
+      ],
+      "notes": "Координаты с сайта Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "irsa-spb",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 60.047703,
+      "longitude": 30.25074,
+      "publication_ready": false
+    },
+    {
+      "id": "axis-bugry",
+      "name": "Эксис Тракс",
+      "region": "Ленинградская область",
+      "address": "пос. Бугры, ул. Торговая, 13, к. 1, пом. 42",
+      "country": "Россия",
+      "phone": "+7 812 207-37-37",
+      "email": "corporate@axis-trucks.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "axis-bugry",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "baw-shushary",
+      "name": "БАВ-Движение",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, 2-й Бадаевский проезд, 9, лит. А",
+      "country": "Россия",
+      "phone": "+7 812 339-54-99",
+      "email": "spb2@bawm.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Уточнить действующего оператора, соседняя станция ТПАС имеет другой адрес. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "baw-shushary",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alliance-dolgoprudny",
+      "name": "Альянс Тракс — Север",
+      "region": "Московская область",
+      "address": "Долгопрудный, Лихачевский проезд, 16",
+      "country": "Россия",
+      "phone": "+7 495 141-14-14",
+      "email": "info@alliance-trucks.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.alliance-trucks.ru/contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "alliance-trucks",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alliance-mytishchi",
+      "name": "Альянс Тракс — Северо-восток",
+      "region": "Московская область",
+      "address": "Мытищи, ул. Медицинская, 4А",
+      "country": "Россия",
+      "phone": "+7 495 141-14-14",
+      "email": "info@alliance-trucks.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.alliance-trucks.ru/contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "alliance-trucks",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alliance-balashikha",
+      "name": "Альянс Тракс — Восток",
+      "region": "Московская область",
+      "address": "Балашиха, Западная промзона, шоссе Энтузиастов, 2",
+      "country": "Россия",
+      "phone": "+7 495 141-14-14",
+      "email": "info@alliance-trucks.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.alliance-trucks.ru/contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "alliance-trucks",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alliance-mkad32",
+      "name": "Альянс Тракс — Юг",
+      "region": "Москва",
+      "address": "МКАД, 32-й км, внешняя сторона, АГМ ТРАКТ",
+      "country": "Россия",
+      "phone": "+7 495 141-14-14",
+      "email": "info@alliance-trucks.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.alliance-trucks.ru/contacts/"
+      ],
+      "notes": "В разных блоках страницы номера сервисных центров 2 и 4/5; сверить въезд. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "alliance-trucks",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-belozerki",
+      "name": "ИТЕКО Ресурс — Белозёрки",
+      "region": "Самарская область",
+      "address": "с. Белозёрки, ул. Сосновая, 1А",
+      "country": "Россия",
+      "phone": "+7 906 347-56-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-semiоzerskoe",
+      "name": "ИТЕКО Ресурс — Высокогорский район",
+      "region": "Республика Татарстан",
+      "address": "Высокогорский район, Семиозерское с. п., промзона, 7/1",
+      "country": "Россия",
+      "phone": "+7 906 120-71-97",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-uspenka",
+      "name": "ИТЕКО Ресурс — Успенка",
+      "region": "Тюменская область",
+      "address": "с. Успенка, ул. Садовая, 74",
+      "country": "Россия",
+      "phone": "+7 961 210-02-85",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-plastunovskaya",
+      "name": "ИТЕКО Ресурс — Пластуновская",
+      "region": "Краснодарский край",
+      "address": "ст. Пластуновская, ул. Ленина, 227/2, к. 1",
+      "country": "Россия",
+      "phone": "+7 962 876-40-59",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-ob",
+      "name": "ИТЕКО Ресурс — Обь",
+      "region": "Новосибирская область",
+      "address": "Обь, ул. Октябрьская, 8/1",
+      "country": "Россия",
+      "phone": "+7 903 935-02-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-m5",
+      "name": "ИТЕКО Ресурс — М5",
+      "region": "Республика Башкортостан",
+      "address": "Иглинский район, трасса М5, 1491-й км, 10, стр. 3",
+      "country": "Россия",
+      "phone": "+7 964 956-51-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-alekseevka",
+      "name": "ИТЕКО Ресурс — Алексеевка",
+      "region": "Белгородская область",
+      "address": "Алексеевка, ул. Кирова, 6",
+      "country": "Россия",
+      "phone": "+7 960 620-21-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "iteco-lipetsk",
+      "name": "ИТЕКО Ресурс — Липецк",
+      "region": "Липецкая область",
+      "address": "Липецк, а/д Орёл–Тамбов, 299-й км, вл. 2В",
+      "country": "Россия",
+      "phone": "+7 903 867-83-31",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Общий номер сети 8 800 600-84-48. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "iteco-resource",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-kinel",
+      "name": "Ретрак Юг — Кинель",
+      "region": "Самарская область",
+      "address": "пгт Алексеевка, 27-й км автодороги Самара–Бугуруслан",
+      "country": "Россия",
+      "phone": "+7 846 211-51-12",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "retruck-voronezh",
+      "name": "Ретрак Юг — Воронеж",
+      "region": "Воронежская область",
+      "address": "Новоусманский район, 23-й км автодороги Воронеж–Тамбов",
+      "country": "Россия",
+      "phone": "+7 473 211-96-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "retruck-service",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rumos-tver",
+      "name": "РУМОС-Комтранс",
+      "region": "Тверская область",
+      "address": "Калининский округ, а/д Москва–Санкт-Петербург, 165-й км, 1",
+      "country": "Россия",
+      "phone": "+7 4822 36-03-60",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Добавочный 347. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "rumos-tver",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ryazanscan-turlatovo",
+      "name": "РязаньСкан",
+      "region": "Рязанская область",
+      "address": "д. Турлатово, ул. Солнечная, 50",
+      "country": "Россия",
+      "phone": "+7 4912 50-00-10",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "ryazanscan-turlatovo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "serpri-varshavskoe",
+      "name": "Серпри-Авто — Варшавское шоссе",
+      "region": "Москва",
+      "address": "Варшавское шоссе, вл. 248, стр. 11",
+      "country": "Россия",
+      "phone": "+7 495 712-71-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "serpri-avto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "serpri-ganusovo",
+      "name": "Серпри-Авто — Ганусово",
+      "region": "Московская область",
+      "address": "с. Ганусово, промзона А107",
+      "country": "Россия",
+      "phone": "+7 495 712-56-54",
+      "email": "serpri-avto@bk.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "serpri-avto",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sinorusservice-moskovsky",
+      "name": "Синоруссервис",
+      "region": "Москва",
+      "address": "г. Московский, 1-й микрорайон, вл. 6",
+      "country": "Россия",
+      "phone": "+7 495 445-00-90",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "sinorusservice-moskovsky",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tvtrans-tolyatti",
+      "name": "ТВ Транс",
+      "region": "Самарская область",
+      "address": "Тольятти, ул. Коммунальная, 7",
+      "country": "Россия",
+      "phone": "8 800 222-45-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tvtrans-tolyatti",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckservice68",
+      "name": "Траксервис68",
+      "region": "Тамбовская область",
+      "address": "с. Стрельцы, ул. Комплекс Мотель, 2Б",
+      "country": "Россия",
+      "phone": "+7 4752 73-53-80",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "truckservice68",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rba-syktyvkar",
+      "name": "РБА-МБ — Сыктывкар",
+      "region": "Республика Коми",
+      "address": "Сыктывкар, ул. Колхозная, 42/6",
+      "country": "Россия",
+      "phone": "+7 8212 25-08-00",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://tonar.info/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "rba-mb",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "privolzhie-transservice",
+      "name": "Приволжье-ТрансСервис НН",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Московское шоссе, 8",
+      "country": "Россия",
+      "phone": "8 800 333-06-44",
+      "email": "info@daf-nn.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "privolzhie-transservice",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyumenscan",
+      "name": "ТюменьСкан",
+      "region": "Тюменская область",
+      "address": "Тюменский район, а/д Екатеринбург–Тюмень, 301-й км, 1, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 707-51-14",
+      "email": "info@scania72.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tyumenscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "grifon-mayakovskogo",
+      "name": "Грифон",
+      "region": "Ростовская область",
+      "address": "х. Маяковского, ул. Заводская, 49",
+      "country": "Россия",
+      "phone": "+7 863 303-00-77",
+      "email": "service@mb-grifon.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "grifon-mayakovskogo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sibscan-berezovka",
+      "name": "СибСканСервис",
+      "region": "Красноярский край",
+      "address": "пгт Берёзовка, 1-й км а/д Красноярск–Железногорск, 3",
+      "country": "Россия",
+      "phone": "+7 391 228-70-90",
+      "email": "sss.p1@str-k.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "sibscan-berezovka",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lidertruck-chelny",
+      "name": "ЛидерТрак",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Казанский просп., 163А",
+      "country": "Россия",
+      "phone": "+7 8552 91-17-00",
+      "email": "service@lt-volvo.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "lidertruck-chelny",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "borovichi-truck",
+      "name": "Боровичи Трак Сервис",
+      "region": "Новгородская область",
+      "address": "Боровичи, ул. Лядова, 8Ж",
+      "country": "Россия",
+      "phone": "+7 921 204-47-00",
+      "email": "info@volvo-ts.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "borovichi-truck",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vologdascan",
+      "name": "ВологдаСкан",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Гагарина, 83А",
+      "country": "Россия",
+      "phone": "+7 8172 51-91-91",
+      "email": "inbox@vologdascan.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "vologdascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "khabavtopritsep",
+      "name": "ХабАвтоПрицеп",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Горького, 61А",
+      "country": "Россия",
+      "phone": "+7 4212 41-82-02",
+      "email": "418202@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "khabavtopritsep",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "altaiscan",
+      "name": "АлтайСкан",
+      "region": "Алтайский край",
+      "address": "Барнаул, Южный проезд, 45В",
+      "country": "Россия",
+      "phone": "+7 3852 55-58-60",
+      "email": "scania@altaiscan.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "altaiscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tverstroymash",
+      "name": "Тверьстроймаш",
+      "region": "Тверская область",
+      "address": "Тверь, Старицкое шоссе, 30",
+      "country": "Россия",
+      "phone": "+7 4822 73-66-00",
+      "email": "info@tverstroymash.ru",
+      "hours": null,
+      "services": [
+        "обслуживание полуприцепов Тверьстроймаш"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Ограниченная специализация: техника Тверьстроймаш. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tverstroymash",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sibtruckscan",
+      "name": "СибТракСкан",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Толмачёвская, 33/3, к. 1",
+      "country": "Россия",
+      "phone": "+7 383 363-56-00",
+      "email": "scania@sibscan.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "sibtruckscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tiropaneftrans",
+      "name": "Тиропанефтранс",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Игумновское шоссе, 4А",
+      "country": "Россия",
+      "phone": "+7 8313 27-86-50",
+      "email": "service@tnt-nn.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tiropaneftrans",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "arhscan",
+      "name": "АрхСкан",
+      "region": "Архангельская область",
+      "address": "Архангельск, ул. Доковская, 37, к. 2",
+      "country": "Россия",
+      "phone": "+7 8182 29-55-55",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "arhscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "service-trans-vologda",
+      "name": "Сервис-Транс",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Гагарина, 90",
+      "country": "Россия",
+      "phone": "+7 8172 53-93-10",
+      "email": "info@str35.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "service-trans-vologda",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kazanshintorg",
+      "name": "Казань-Шинторг",
+      "region": "Республика Татарстан",
+      "address": "Казань, М7, 812-й км, комплекс Транзит",
+      "country": "Россия",
+      "phone": "8 800 333-17-00",
+      "email": "info@kazan-shintorg.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "kazanshintorg",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tarna-novosibirsk",
+      "name": "Тарна",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Троллейная, 85",
+      "country": "Россия",
+      "phone": "+7 383 343-09-54",
+      "email": "priemka@tarna-llc.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tarna-novosibirsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "baikalavtotruck",
+      "name": "БайкалАвтоТрак",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Автотранспортная, 21",
+      "country": "Россия",
+      "phone": "8 800 333-50-15",
+      "email": "baikal-volvo@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "baikalavtotruck",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "grunwald-khimki",
+      "name": "Грюнвальд",
+      "region": "Московская область",
+      "address": "Химки, кв-л Клязьма, 1Б, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 700-76-22",
+      "email": "service@grunwald.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "grunwald-khimki",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "detail-novosibirsk",
+      "name": "Деталь",
+      "region": "Новосибирская область",
+      "address": "Новосибирск, ул. Малыгина, 11/1, к. 1",
+      "country": "Россия",
+      "phone": "+7 383 363-24-73",
+      "email": "service@steelnsk.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "detail-novosibirsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transinvest-dzerzhinsk",
+      "name": "Трансинвест",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, пос. Строителей, 43",
+      "country": "Россия",
+      "phone": "+7 831 228-27-26",
+      "email": "sto@transinvest-nn.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "transinvest-dzerzhinsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tor-service-novgorod",
+      "name": "Тор Сервис",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, проезд Энергетиков, 10",
+      "country": "Россия",
+      "phone": "+7 8162 94-86-14",
+      "email": "remont@gallax.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tor-service-novgorod",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "wlako",
+      "name": "Влако-Сервис",
+      "region": "Самарская область",
+      "address": "Тольятти, Хрящевское шоссе, вл. 11",
+      "country": "Россия",
+      "phone": "+7 8482 69-98-20",
+      "email": "ppo@wlako.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "wlako",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehnologia-ivanteevka",
+      "name": "Технология Движения",
+      "region": "Московская область",
+      "address": "Ивантеевка, ул. Заводская, 14Б",
+      "country": "Россия",
+      "phone": "+7 495 212-05-04",
+      "email": "9757770@bk.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tehnologia-ivanteevka",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "unit-chemodanovka",
+      "name": "ЮНИТ",
+      "region": "Пензенская область",
+      "address": "с. Чемодановка, ул. Восточная, 4",
+      "country": "Россия",
+      "phone": "+7 8412 28-00-08",
+      "email": "garage@standart.pro",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "unit-chemodanovka",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "translogistic-tula",
+      "name": "ТрансЛогистик",
+      "region": "Тульская область",
+      "address": "Тула, ул. Новотульская, 12",
+      "country": "Россия",
+      "phone": "+7 999 775-55-25",
+      "email": "megakom71@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "translogistic-tula",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "forsauto-artem",
+      "name": "Форсавто",
+      "region": "Приморский край",
+      "address": "Артём, ул. Урбанского, 2Б",
+      "country": "Россия",
+      "phone": "+7 914 703-83-49",
+      "email": "info@forsauto.com",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "forsauto-artem",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "atlant-shcherbinka",
+      "name": "Атлант-Сервис",
+      "region": "Москва",
+      "address": "Щербинка, ул. Южная, 10",
+      "country": "Россия",
+      "phone": "+7 499 653-56-73",
+      "email": "as6535673@yandex.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "atlant-shcherbinka",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "united-lozhki",
+      "name": "Юнайтед Трак Сервисиз",
+      "region": "Московская область",
+      "address": "Солнечногорский округ, д. Ложки, стр. 200",
+      "country": "Россия",
+      "phone": "+7 495 308-99-99",
+      "email": "info@utstruck.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "united-lozhki",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tomskscan",
+      "name": "ТомскСкан",
+      "region": "Томская область",
+      "address": "Томск, ул. Александра Угрюмова, 15/3",
+      "country": "Россия",
+      "phone": "+7 3822 90-56-00",
+      "email": "scania@tomskscan.ru",
+      "hours": null,
+      "services": [
+        "ремонт и ТО прицепной техники"
+      ],
+      "source_urls": [
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "tomskscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "komitrak",
+      "name": "Комитрак",
+      "region": "Республика Коми",
+      "address": "Сыктывкар, ул. Колхозная, 125",
+      "country": "Россия",
+      "phone": "+7 8212 400-777",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "komitrak",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sto-privolzhie",
+      "name": "СТО Приволжье",
+      "region": "Нижегородская область",
+      "address": "Дзержинск, Московское шоссе, 46",
+      "country": "Россия",
+      "phone": "+7 831 280-98-98",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "sto-privolzhie",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mantehno",
+      "name": "Мантехно",
+      "region": "Нижегородская область",
+      "address": "Нижний Новгород, ул. Шапошникова, 15",
+      "country": "Россия",
+      "phone": "+7 831 466-93-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "mantehno",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autoflot-perm",
+      "name": "Авто Флот",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Воронежская, 41, к. 1",
+      "country": "Россия",
+      "phone": "+7 342 250-11-05",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "autoflot-perm",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "orenscan",
+      "name": "Оренбург-СканСервис",
+      "region": "Оренбургская область",
+      "address": "Оренбург, ул. Лесозащитная, 18",
+      "country": "Россия",
+      "phone": "+7 3532 505-818",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "orenscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "golfstream-dubki",
+      "name": "Гольфстрим Сервис М",
+      "region": "Саратовская область",
+      "address": "пос. Дубки, ул. Центральная, 23Б",
+      "country": "Россия",
+      "phone": "+7 8452 74-66-66",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "golfstream-dubki",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remex-surgut",
+      "name": "Ремэкс",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, ул. Рационализаторов, 14",
+      "country": "Россия",
+      "phone": "+7 3462 55-02-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "remex-surgut",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "novex-berezovsky",
+      "name": "Новэкс К.Э.",
+      "region": "Свердловская область",
+      "address": "Берёзовский, Режевской тракт, 15-й км, 6",
+      "country": "Россия",
+      "phone": "+7 343 288-75-66",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "novex-berezovsky",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "continent-auto-berezovsky",
+      "name": "КонтинентАвто",
+      "region": "Свердловская область",
+      "address": "Берёзовский, ул. Кольцевая, 4К",
+      "country": "Россия",
+      "phone": "+7 343 228-70-07",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "continent-auto-berezovsky",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "man-poletaevo",
+      "name": "МАН Центр Челябинск",
+      "region": "Челябинская область",
+      "address": "Сосновский район, Полетаево II, ул. Садовая, 40",
+      "country": "Россия",
+      "phone": "+7 351 211-04-44",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Тонар указывает по тому же адресу ГТС Екатеринбург — одна запись до сверки. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "man-poletaevo",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autotrak-chelyabinsk",
+      "name": "Компания Автотрак",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. 2-я Потребительская, 6",
+      "country": "Россия",
+      "phone": "+7 351 729-84-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "avtotrak",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "proton-magnitogorsk",
+      "name": "Протон",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, просп. Сиреневый, 1Ж",
+      "country": "Россия",
+      "phone": "8 800 234-38-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "proton-magnitogorsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mahina-krasnoyarsk",
+      "name": "Махина — Красноярск",
+      "region": "Красноярский край",
+      "address": "Красноярск, Енисейский тракт, 10-й км, 3/10",
+      "country": "Россия",
+      "phone": "+7 391 220-44-45",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "mahina",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mahina-irkutsk",
+      "name": "Махина — Иркутск",
+      "region": "Иркутская область",
+      "address": "Иркутск, станция Горка, 5, к. 8",
+      "country": "Россия",
+      "phone": "+7 3952 79-83-38",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "mahina",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nikalid-irkutsk",
+      "name": "Никалид",
+      "region": "Иркутская область",
+      "address": "Иркутск, ул. Тухачевского, 3",
+      "country": "Россия",
+      "phone": "+7 3952 44-74-09",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "nikalid-irkutsk",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autotrak-novokuznetsk",
+      "name": "Компания Автотрак",
+      "region": "Кемеровская область",
+      "address": "Новокузнецк, ул. Промстроевская, 44, к. 1",
+      "country": "Россия",
+      "phone": "+7 3843 705-005",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "avtotrak",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transit-belovo",
+      "name": "Транзит",
+      "region": "Кемеровская область",
+      "address": "Белово, мкр. Технологический, 14",
+      "country": "Россия",
+      "phone": "+7 3845 297-413",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "transit",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "transit-chigiri",
+      "name": "Транзит",
+      "region": "Амурская область",
+      "address": "с. Чигири, Новотроицкое шоссе, 4-й км, 10, стр. 1",
+      "country": "Россия",
+      "phone": "+7 4162 209-820",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "transit",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dvscan-chigiri",
+      "name": "ДВ Скан",
+      "region": "Амурская область",
+      "address": "с. Чигири, ул. Центральная, лит. 31",
+      "country": "Россия",
+      "phone": "+7 4162 496-990",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "dvscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dvscan-khabarovsk",
+      "name": "ДВ Скан",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Трёхгорная, 131",
+      "country": "Россия",
+      "phone": "+7 4212 761-417",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Тонар указывает РБА-МБ на том же адресе, не добавлять отдельно. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "dvscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "buryatscan",
+      "name": "Бурятскансервис",
+      "region": "Республика Бурятия",
+      "address": "Иволгинский район, местность Баруун-Нуга, 9, стр. 1",
+      "country": "Россия",
+      "phone": "8 800 550-72-27",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "buryatscan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "chitascan",
+      "name": "Читаскансервис",
+      "region": "Забайкальский край",
+      "address": "Чита, Батальонный проезд, 11",
+      "country": "Россия",
+      "phone": "8 800 222-87-78",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Добавочный 803. Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "chitascan",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ktt-moskovsky",
+      "name": "КТЦ",
+      "region": "Москва",
+      "address": "г. Московский, ул. Солнечная, 2",
+      "country": "Россия",
+      "phone": "+7 495 032-00-20",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "ktt-moskovsky",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "aaa-kuznetsy",
+      "name": "ААА Траксервис",
+      "region": "Московская область",
+      "address": "Павлово-Посадский район, д. Кузнецы, 58Д",
+      "country": "Россия",
+      "phone": "+7 495 777-77-36",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "aaa-kuznetsy",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "biznestruck-rekino",
+      "name": "БизнесТрак",
+      "region": "Московская область",
+      "address": "Солнечногорск, д. Рекино-Кресты, 100",
+      "country": "Россия",
+      "phone": "8 800 500-75-14",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.sitrak-rus.com/service"
+      ],
+      "notes": "Контакты опубликованы в источнике; фактический прием и юридический оператор требуют проверки.",
+      "operator_group": "biznestruck-rekino",
+      "evidence": "manufacturer_or_supplier_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Source lists may reflect historical brand names; not independently confirmed. No live-map import.",
+    "Compared eight existing batches containing SPb/Moscow and network candidates; full fuzzy comparison against all other regional batches pending.",
+    "Existing Шушары Московское шоссе 185 (batch32) listed as Компания Автотрак by SITRAK; 181/2 as МАН Трак энд Бас РУС, already recorded; do not create duplicate.",
+    "ЗвездаТрак на Культуры 40 может совпадать с ЗТ Север / ВКР batch32; не включен.",
+    "ЮнайтедСервис Шушары Поселковая 7: BPW publishes service@united24.ru — enrich existing batch31, not another point.",
+    "Existing СовАвто, ИВ-Сервис, МБ Тракс, ТПАС, СОТРАНС, GTS Выборг/Горелово omitted as already known."
+  ]
+}
