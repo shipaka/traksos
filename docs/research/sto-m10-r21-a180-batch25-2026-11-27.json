@@ -1,0 +1,184 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm operation, exact entrance, truck capability, legal operator, coordinates, reuse rights, duplicates and admin approval. No calls or official FNS extracts. No automatic outreach.",
+  "records": [
+    {
+      "id": "asta-kola",
+      "name": "АСТА / Cordiant Professional — Кола",
+      "region": "Мурманская область",
+      "address": "Кола, пр. Миронова, 10",
+      "country": "Россия",
+      "phone": "+7 81553 3-23-42",
+      "email": null,
+      "hours": "пн–пт 09:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.astaworld.ru/shops/asta_zapchasti_kola_mironova_10"
+      ],
+      "notes": "Доп. +7 81553 3-23-15. Координаты с сайта, независимо не сверены. Р-21.",
+      "operator_group": "asta",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 68.877783,
+      "longitude": 33.02649,
+      "coordinate_source": "https://www.astaworld.ru/shops/asta_zapchasti_kola_mironova_10",
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-lodeynoe-severny",
+      "name": "Грузовой шиномонтаж и автомойка",
+      "region": "Ленинградская область",
+      "address": "Лодейное Поле, Северный проезд, 1",
+      "country": "Россия",
+      "phone": "+7 960 261-06-33",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "мойка"
+      ],
+      "source_urls": [
+        "https://lodejnoe-pole.spravmer.ru/avtomobili/"
+      ],
+      "notes": "Тот же телефон в справочнике указан по адресу Республиканский тракт, 11, корп. 1; проверить переезд или филиал, не создавать отдельный дубль. Р-21.",
+      "operator_group": "tyre-lodeynoe",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "trucksdoctor-volochek",
+      "name": "Trucks Doctor",
+      "region": "Тверская область",
+      "address": "Вышний Волочёк, пос. Газовый, 4А",
+      "country": "Россия",
+      "phone": "+7 919 054-48-34",
+      "email": null,
+      "hours": "пн–сб 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://volochek.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://volochek.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 910 640-32-52; точный перечень работ уточнить. М-10.",
+      "operator_group": "trucksdoctor",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckrepair-volochek105",
+      "name": "Ремонт грузовых автомобилей — Московское шоссе",
+      "region": "Тверская область",
+      "address": "Вышний Волочёк, Московское шоссе, 105",
+      "country": "Россия",
+      "phone": "+7 915 718-10-00",
+      "email": null,
+      "hours": "пн–сб круглосуточно (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://volochek.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://volochek.spravker.ru/avtotekhpomoshch/remont-gruzovykh-avtomobilei.htm"
+      ],
+      "notes": "Доп. +7 919 063-55-12. Рядом другой сервис 105Б, не объединять и не дублировать до проверки. М-10.",
+      "operator_group": "truckrepair105",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckm10-valdai",
+      "name": "Truck M10",
+      "region": "Новгородская область",
+      "address": "Валдай, М-10, 389-й км; адрес расходится: Выскодно 2, 11Б (индекс сайта), Выскодно 1, 1 (справочник)",
+      "country": "Россия",
+      "phone": "+7 911 242-42-40",
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовой ремонт",
+        "техпомощь (заявлены в индексе сайта)"
+      ],
+      "source_urls": [
+        "https://truckm10.com/page74034857.html",
+        "https://valdai.spravker.ru/avtoservisy-avtotehcentry/",
+        "https://valdaj.jsprav.ru/magazinyi-avtozapchastej-i-avtotovarov/truck-m10/"
+      ],
+      "notes": "Доп. +7 921 200-09-09 и +7 981 702-09-85; сайт не открылся (502), адрес и телефон уточнить до публикации. М-10.",
+      "operator_group": "truckm10",
+      "evidence": "first_party_index_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "homservice-maly-lutsk",
+      "name": "Hom Service",
+      "region": "Ленинградская область",
+      "address": "Кингисеппский район, д. Малый Луцк",
+      "country": "Россия",
+      "phone": "+7 965 001-20-15",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, сб 09:00–16:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт прицепов (категории справочников)"
+      ],
+      "source_urls": [
+        "https://spravbiz.ru/kingisepp/company-hom-service-1/",
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "notes": "Смешанный профиль; тяжелые тягачи, точный въезд и актуальность уточнить. А-180.",
+      "operator_group": "homservice",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    }
+  ]
+}
