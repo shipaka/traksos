@@ -1,0 +1,474 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted review of compact indexes B/C and batches 32–34,48,77 by city and name. Full cross-batch audit pending. Public source evidence only; no calls, legal or coordinates verification. Weak generic directory profiles held in review_only; no confirmed port-town coverage.",
+  "records": [
+    {
+      "id": "b78-soniktrans",
+      "name": "Сониктранс / К-Сервис",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, Северное шоссе, 4/4",
+      "country": "Россия",
+      "phone": "8 800 600-00-91",
+      "additional_phones": [],
+      "email": "sc@kamazdv.ru",
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "ДВС",
+        "КПП",
+        "ТНВД",
+        "гидравлика",
+        "электрика"
+      ],
+      "source_urls": [
+        "https://soniktrans.ru/k-service/",
+        "https://soniktrans.ru/contacts/"
+      ],
+      "notes": "Общий контакт сети; отдельная площадка от Мирного (пакет 77). Не считать соседнюю карточку КАМАЗ сервис 4/3 самостоятельной без уточнения.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-stozhary",
+      "name": "ПТК Стожары",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, Северное шоссе, 155",
+      "country": "Россия",
+      "phone": "+7 909 888-48-58",
+      "additional_phones": [
+        "+7 999 086-52-72"
+      ],
+      "email": "Stozhary@list.ru",
+      "hours": "ежедневно 08:30–19:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "горячая вулканизация",
+        "ремонт грузовых шин"
+      ],
+      "source_urls": [
+        "https://stozhary-shina.ru/"
+      ],
+      "notes": "Прием шин на ремонт круглосуточный, сам шиномонтаж ночью не работает. Использовать офисный и торговый контакты.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-motor",
+      "name": "Мотор",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, ул. Кирова, 54/7",
+      "country": "Россия",
+      "phone": "+7 4217 30-22-33",
+      "additional_phones": [
+        "+7 963 820-22-33"
+      ],
+      "email": "motor@motor-kms.ru",
+      "hours": "пн–пт 09:00–18:00; сб 10:00–17:00",
+      "services": [
+        "ремонт грузовой и специализированной техники",
+        "электрооборудование",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://motor-kms.ru/"
+      ],
+      "notes": "ИНН 2703096300 указан на сайте; ФНС не проверена. Мойку Эко КМС на том же адресе не учитывать отдельно без проверки.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-shinakms",
+      "name": "Shinakms",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, ул. Литейная, 4/3",
+      "country": "Россия",
+      "phone": "+7 999 794-28-50",
+      "additional_phones": [],
+      "email": "12den09@gmail.com",
+      "hours": null,
+      "services": [
+        "грузовой и легковой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravka.city/company/shinakms"
+      ],
+      "notes": "Телефон опубликован как деловой контакт мессенджера. Не восстанавливать скрытые номера.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-center-tire",
+      "name": "Центр грузового шиномонтажа",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, Магистральное шоссе, 12Г",
+      "country": "Россия",
+      "phone": "+7 4217 51-00-05",
+      "additional_phones": [
+        "+7 909 899-37-20"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов и дисков"
+      ],
+      "source_urls": [
+        "https://spravkainform.ru/russia/komsomolsk-na-amure/centr-gruzovogo-shinomontazha-105499843"
+      ],
+      "notes": "Не смешивать с легковой мастерской на 12А. Фактический режим проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-specservice",
+      "name": "СпецСервис",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, Северное шоссе, 54/2",
+      "country": "Россия",
+      "phone": "+7 4217 25-74-55",
+      "additional_phones": [
+        "+7 914 176-24-00",
+        "+7 924 412-66-00",
+        "+7 924 412-73-00",
+        "+7 924 412-75-00"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт спецтехники"
+      ],
+      "source_urls": [
+        "https://totadres.ru/komsomolsk-na-amure/org/specservis/2577925"
+      ],
+      "notes": "Каталог называет FAW, Hino, HOWO, Hyundai, Daewoo. Уточнить назначение дополнительных номеров.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-kardanbalans",
+      "name": "КарданБаланс",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, ул. Вокзальная, 10/4Б",
+      "country": "Россия",
+      "phone": "8 800 555-50-37",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 по справочнику",
+      "services": [
+        "ремонт карданных валов грузовиков",
+        "балансировка карданов"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.kardanbalans.ru/",
+        "https://spravbiz.ru/komsomolsk-na-amure/company-kardanbalans/",
+        "https://komsomolsk-na-amure.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Общий телефон сети, фактическую оснастку филиала подтвердить.",
+      "evidence": "first_party_and_directory",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-lesnaya",
+      "name": "Автокомплекс на Лесной",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, ул. Лесная, 32",
+      "country": "Россия",
+      "phone": "+7 962 298-55-55",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовая автомойка"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/avtomoiki/",
+        "https://komsomolsk-na-amure.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Ремонт полуприцепов указан в рубрике другого каталога; не считать доказанным. Круглосуточность и габариты мойки проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-avtocenter",
+      "name": "Автоцентр",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, ул. Вокзальная, 34",
+      "country": "Россия",
+      "phone": "+7 962 297-14-82",
+      "additional_phones": [
+        "+7 914 177-10-33",
+        "+7 962 286-32-60",
+        "+7 924 414-55-54",
+        "+7 924 112-43-88"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовая автомойка (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/avtomoiki/"
+      ],
+      "notes": "Уточнить размеры бокса и назначение номеров.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b78-4kolesa",
+      "name": "4 Колеса",
+      "region": "Хабаровский край",
+      "address": "Комсомольск-на-Амуре, ул. Димитрова, 11/2",
+      "country": "Россия",
+      "phone": "+7 924 920-03-36",
+      "additional_phones": [
+        "+7 4217 34-03-36"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб 09:00–18:00; вс 09:00–17:00",
+      "services": [
+        "грузовая автомойка (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/avtomoiki/"
+      ],
+      "notes": "Проверить прием тягачей с полуприцепом.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "МойCar",
+      "address": "Ванино, дорога Советская Гавань — Ванино — Монгохто, 37",
+      "phone": "+7 924 417-40-20",
+      "source_urls": [
+        "https://vanino.cataloxy.ru/firms/avtomoyka-i-shinomontazh-moycar.3192352_c.htm"
+      ],
+      "reason": "Адрес, телефон и график 09–22 опубликованы; грузовой профиль не установлен."
+    },
+    {
+      "name": "Автосервис",
+      "address": "Советская Гавань, Набережная, 31А",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/sovetskaya-gavan"
+      ],
+      "reason": "Нет подтвержденного контакта и грузового профиля."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Советская Гавань, ул. 15 Погибших Партизан, 87В",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/sovetskaya-gavan"
+      ],
+      "reason": "Нет опубликованного телефона и подтверждения грузовой оснастки."
+    },
+    {
+      "name": "Кроун",
+      "address": "Комсомольск-на-Амуре",
+      "source_urls": [
+        "https://transteh.net/kroun-sto/"
+      ],
+      "reason": "Сведения о грузовом ремонте опубликованы более десяти лет назад; актуальные контакты и адрес не установлены."
+    },
+    {
+      "name": "Техника Дальний Восток",
+      "address": "Комсомольск-на-Амуре, Северное шоссе, 157/2А",
+      "phone": "+7 914 163-85-83",
+      "additional_phones": [
+        "+7 914 164-08-53",
+        "+7 914 169-88-53"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Рубрика ремонта прицепов и спецтехники; требуется подтверждение приемки магистральных грузовиков. Альтернативный адрес Юбилейная, 20 с совпадающим телефоном."
+    },
+    {
+      "name": "КорАвто",
+      "address": "Комсомольск-на-Амуре, Северное шоссе, 3",
+      "phone": "+7 924 114-39-19",
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Рубрика ремонта полуприцепов недостаточна; уточнить специализацию."
+    },
+    {
+      "name": "Дизельный сервис Delphi",
+      "address": "Комсомольск-на-Амуре, ул. Ленинградская, 107/3",
+      "phone": "+7 909 847-42-38",
+      "additional_phones": [
+        "+7 962 286-26-12"
+      ],
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Уточнить прием грузовой топливной аппаратуры и действующую авторизацию."
+    },
+    {
+      "name": "КАМАЗ сервис",
+      "address": "Комсомольск-на-Амуре, Северное шоссе, 4, корп. 3",
+      "phone": "8 800 511-73-86",
+      "source_urls": [
+        "https://komsomolsk-na-amure.spravker.ru/remont-pritsepov/"
+      ],
+      "reason": "Вероятная связь с Сониктранс на 4/4; не считать второй точкой до проверки."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Сониктранс — Мирное",
+      "batch": 77,
+      "additional_phones": [
+        "8 800 600-00-91"
+      ],
+      "email": "sc@kamazdv.ru",
+      "source_urls": [
+        "https://soniktrans.ru/contacts/"
+      ],
+      "notes": "Уточнен общий телефон сети; не новая площадка."
+    }
+  ]
+}
