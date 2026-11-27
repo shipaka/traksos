@@ -1,0 +1,974 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison against B/C indexes and batches 10,32–37,39,42,43,48,65–67. Full normalized cross-batch audit pending. Public sources accessed in current turn; business directory category entries are provisional leads, not verified truck capacity. No calls, legal status or coordinate verification.",
+  "records": [
+    {
+      "id": "b83-ch-ecoplus",
+      "name": "Экоплюс",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Нефтебазовая, 1/3",
+      "country": "Россия",
+      "phone": "+7 900 099-36-11",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт полуприцепов",
+        "ABS/EBS",
+        "пневматика",
+        "тормозные суппорты",
+        "электрика",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://ecoplus-service.ru/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-ch-shina4",
+      "name": "Shina4mashina.ru",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Дарвина, 18/1",
+      "country": "Россия",
+      "phone": "+7 351 214-23-33",
+      "additional_phones": [
+        "+7 951 126-82-62"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-ch-urbanvil",
+      "name": "Урбанвил",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Хлебозаводская, 7/4",
+      "country": "Россия",
+      "phone": "+7 968 636-50-93",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-ch-overload",
+      "name": "Overload",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Горелова, 12, корп. 1",
+      "country": "Россия",
+      "phone": "8 800 707-21-22",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)",
+        "ремонт коммерческих автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-ch-roskar",
+      "name": "Роскар",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Игуменка, 153",
+      "country": "Россия",
+      "phone": "8 800 550-07-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 08:00–20:00; сб 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Общий телефон сети, проверить филиал. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-specshina",
+      "name": "Спецшина",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. Кирова, 71",
+      "country": "Россия",
+      "phone": "+7 3519 58-06-10",
+      "additional_phones": [
+        "+7 912 081-01-56",
+        "+7 912 805-00-72",
+        "+7 912 805-45-73",
+        "+7 982 294-73-21"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов"
+      ],
+      "source_urls": [
+        "https://totadres.ru/magnitogorsk/org/specshina/4529298",
+        "https://mestam.info/ru/magnitogorsk/dlya-gruzovih-avtomobilei"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-shinomon",
+      "name": "Шиномон",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. 50-летия Магнитки, 78",
+      "country": "Россия",
+      "phone": "+7 909 096-74-72",
+      "additional_phones": [],
+      "email": "shinomon_mgk@mail.ru",
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/magnitogorsk/mesto/6148001-shinomon-50-letiya-magnitki-78"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-kardan",
+      "name": "Кардан-М",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. 9 Мая, 11А",
+      "country": "Россия",
+      "phone": "+7 3519 47-47-44",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт и балансировка карданных валов"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/magnitogorsk/dlya-gruzovih-avtomobilei"
+      ],
+      "notes": "Уточнить прием грузовых карданов на данной площадке. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-serviceavto",
+      "name": "ServiceAvtoGruz",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, Белорецкое шоссе, 9Б, бокс 3",
+      "country": "Россия",
+      "phone": "+7 982 326-54-26",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой сервис (рубрика)"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/magnitogorsk/dlya-gruzovih-avtomobilei"
+      ],
+      "notes": "Проверить независимость от соседних шинных центров. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-peschanaya",
+      "name": "Грузовой ремонт Магнитогорск",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. Песчаная, 30/1",
+      "country": "Россия",
+      "phone": "+7 912 307-06-73",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/magnitogorsk/dlya-gruzovih-avtomobilei"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-eurotruck",
+      "name": "Евро-truck",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. Кирова, 100/1",
+      "country": "Россия",
+      "phone": "+7 3519 58-48-88",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков (рубрика)",
+        "ремонт прицепов (рубрика)"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/magnitogorsk/dlya-gruzovih-avtomobilei",
+        "https://magnitogorsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-mg-4tochki",
+      "name": "4Точки",
+      "region": "Челябинская область",
+      "address": "Магнитогорск, ул. Кирова, 88",
+      "country": "Россия",
+      "phone": "+7 3519 45-09-88",
+      "additional_phones": [
+        "8 800 100-17-41"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб–вс 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://magnitogorsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-kg-zip",
+      "name": "Зипшина",
+      "region": "Курганская область",
+      "address": "Курган, ул. Омская, 74К/1",
+      "country": "Россия",
+      "phone": "+7 3522 67-21-29",
+      "additional_phones": [
+        "+7 992 429-75-39"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов"
+      ],
+      "source_urls": [
+        "https://totadres.ru/kurgan/org/zipshina/2446382"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-kg-zt",
+      "name": "ZT Retread",
+      "region": "Курганская область",
+      "address": "Курган, ул. Омская, 74А, корп. 1",
+      "country": "Россия",
+      "phone": "+7 908 009-34-29",
+      "additional_phones": [
+        "8 800 100-87-39"
+      ],
+      "email": "info@ztcom.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "обслуживание грузовых автомобилей (рубрика)",
+        "ремонт спецтехники (рубрика)"
+      ],
+      "source_urls": [
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://car.ms/autoservices/truck-service/kurgan/"
+      ],
+      "notes": "Уточнить конкретные работы и отдельность от соседней Зипшины. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-kg-tandem",
+      "name": "Тандем-К",
+      "region": "Курганская область",
+      "address": "Курган, ул. Омская, 140, стр. 6",
+      "country": "Россия",
+      "phone": "+7 3522 54-57-11",
+      "additional_phones": [
+        "+7 3522 54-55-70",
+        "+7 3522 54-55-73",
+        "+7 908 003-91-93"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "ремонт коммерческого транспорта (рубрика)"
+      ],
+      "source_urls": [
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://car.ms/autoservices/truck-service/kurgan/"
+      ],
+      "notes": "Не смешивать с магазином запчастей на Омской, 145. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-kg-roskar",
+      "name": "Роскар",
+      "region": "Курганская область",
+      "address": "Курган, ул. Бурова-Петрова, 120Б",
+      "country": "Россия",
+      "phone": "8 800 550-07-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовой сервис (рубрика)"
+      ],
+      "source_urls": [
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Общий телефон сети; отличающийся адрес. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-rostyre",
+      "name": "Росшина",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Камчатская, 194, стр. 4",
+      "country": "Россия",
+      "phone": "+7 3452 57-70-07",
+      "additional_phones": [],
+      "email": "tyumen@rostyre.com",
+      "hours": "пн–пт 08:30–17:30",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт шин",
+        "балансировка"
+      ],
+      "source_urls": [
+        "https://rostyre.com/contacts/all_stores/167727/"
+      ],
+      "notes": "Сайт указывает размер колес 16–48 дюймов. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-sobkon",
+      "name": "Собкон / возможный алиас РегионТрансСервис",
+      "region": "Тюменская область",
+      "address": "Тюмень, Велижанский тракт, 5-й км, 2, к. 1, стр. 4",
+      "country": "Россия",
+      "phone": "+7 904 493-48-88",
+      "additional_phones": [
+        "+7 922 043-93-53",
+        "+7 982 936-18-58"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:30–20:30",
+      "services": [
+        "ремонт грузовиков",
+        "грузовой шиномонтаж",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://totadres.ru/tyumen/org/sobkon/5988381",
+        "https://urbanplaces.su/ru_tyumenskaya-oblast/tyumen-gorodskoj-okrug-tyumen/card-3601951-regiontransservis"
+      ],
+      "notes": "Один адрес с РегионТрансСервис, не считать двумя; второй источник не открылся, авторизация DongFeng не проверена. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-osg",
+      "name": "ОСГ",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Щербакова, 213Г",
+      "country": "Россия",
+      "phone": "+7 932 321-33-18",
+      "additional_phones": [
+        "+7 964 259-68-16",
+        "+7 3452 61-33-18",
+        "+7 932 479-68-37"
+      ],
+      "email": null,
+      "hours": "круглосуточно по каталогу",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://tumen.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-parusa",
+      "name": "Паруса",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Мельникайте, 106А",
+      "country": "Россия",
+      "phone": "+7 3452 28-32-83",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по каталогу",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://tumen.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-avtomag",
+      "name": "Автомаг",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Дамбовская, 5",
+      "country": "Россия",
+      "phone": "+7 3452 21-57-07",
+      "additional_phones": [
+        "+7 3452 69-61-59",
+        "+7 3452 69-61-61",
+        "+7 3452 69-61-71"
+      ],
+      "email": null,
+      "hours": "круглосуточно по каталогу",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://tumen.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-zoya",
+      "name": "Шиномонтажная мастерская",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Зои Космодемьянской, 9",
+      "country": "Россия",
+      "phone": "+7 3452 61-31-71",
+      "additional_phones": [
+        "+7 964 703-19-33"
+      ],
+      "email": null,
+      "hours": "круглосуточно по каталогу",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://tumen.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": " Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b83-tm-mont",
+      "name": "Шиномонтаж",
+      "region": "Тюменская область",
+      "address": "Тюмень, ул. Монтажников, 17/3",
+      "country": "Россия",
+      "phone": "+7 3452 61-88-44",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 10:00–22:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://tumen.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": "Рубрика 24/7 противоречит графику; не маркировать круглосуточным. Проверить телефон, действующий бизнес, координаты и прием тяжелой техники. Рубрика справочника не подтверждает оснащение.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "АвтоЧина Партс",
+      "address": "Челябинск, Валдайская, 17",
+      "phone": "+7 912 326-72-56",
+      "source_urls": [
+        "https://avtochina-parts.clients.site/"
+      ],
+      "reason": "Соседний адрес ЛуидорГарантия (17Б), проверить отдельность."
+    },
+    {
+      "name": "МагИнтерСервис",
+      "address": "Магнитогорск, Западное шоссе, 13",
+      "phone": "+7 3519 46-04-60",
+      "additional_phones": [
+        "+7 902 604-63-77"
+      ],
+      "email": "maginterservis@rambler.ru",
+      "source_urls": [
+        "https://asktel.ru/magnitogorsk/remont_gruzovyh_avtomobilej/maginterservis/"
+      ],
+      "reason": "Сведения обновлены в 2020 году, требуется актуализация."
+    },
+    {
+      "name": "ПетроМастер / Мастер Шин",
+      "address": "Магнитогорск, Белорецкое шоссе, 9/9А",
+      "source_urls": [
+        "https://urbanplaces.su/ru_chelyabinskaya-oblast/magnitogorskij-gorodskoj-okrug-magnitogorsk/card-3522905-petromaster",
+        "https://magnitogorsk.spravker.ru/org/master-shin2.htm"
+      ],
+      "reason": "Первый источник не открылся; проверить текущий филиал и телефон."
+    },
+    {
+      "name": "ГрузТрансАвто",
+      "address": "Челябинск, Троицкий тракт, 70/2",
+      "phone": "+7 351 700-07-08",
+      "additional_phones": [
+        "+7 922 757-22-22",
+        "+7 932 016-22-22"
+      ],
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Общие номера ПетроМастер; проверить независимость площадки и предыдущие пакеты."
+    },
+    {
+      "name": "Газ на ваш авто",
+      "address": "Курган, Дзержинского, 41/1",
+      "phone": "+7 912 970-82-50",
+      "source_urls": [
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "ГБО; тяжелый профиль не установлен."
+    },
+    {
+      "name": "Авто-доктор",
+      "address": "Курган, Ястржембского, 1А",
+      "phone": "+7 3522 55-05-45",
+      "source_urls": [
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Круглосуточность заявлена, но грузовая оснастка не доказана."
+    },
+    {
+      "name": "Астарта",
+      "address": "Курган, Некрасова, 22К7",
+      "phone": "+7 908 007-73-73",
+      "source_urls": [
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Только рубрика грузового ремонта, необходимо индивидуальное подтверждение."
+    },
+    {
+      "name": "Витаир",
+      "address": "Тюмень, Гилёвская Роща, 2А",
+      "source_urls": [
+        "https://tumen.spravker.ru/avtoservisy-avtotehcentry/gruzovoe-sto-vitair.htm"
+      ],
+      "reason": "Профиль ремонта прицепов указан, телефон в источнике отсутствует."
+    },
+    {
+      "name": "Шиномонтаж Мыс",
+      "address": "Тюмень, Судоремонтная улица",
+      "phone": "+7 922 262-23-99",
+      "additional_phones": [
+        "+7 919 937-77-79"
+      ],
+      "source_urls": [
+        "https://tumen.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет номера дома."
+    },
+    {
+      "name": "Шиноф.ру",
+      "address": "Челябинск, просп. Ленина, 2А, корп. 1",
+      "phone": "+7 922 011-17-77",
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Уточнить прием тяжелых колес."
+    },
+    {
+      "name": "Автофедерация",
+      "address": "Челябинск, Ворошилова, 16А",
+      "phone": "+7 351 215-29-99",
+      "source_urls": [
+        "https://chelyabinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Грузовая рубрика без независимого подтверждения."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "БОВИД ТРАК / FNGROUP",
+      "batch": 39,
+      "possible_duplicate_batch": 32,
+      "address": "Челябинск, Линейная, 98Б",
+      "source_urls": [
+        "https://www.bovidtruck.ru/",
+        "https://bovidtruck.ru/company/"
+      ],
+      "notes": "Сайт БОВИД сейчас указывает Линейную 98Б, в пакете 39 Троицкий тракт 66. Совпадает адрес FNGROUP, проверить перенос/операторов."
+    },
+    {
+      "name": "Первый грузовой автосервис",
+      "batch": 10,
+      "additional_phones": [
+        "+7 351 216-14-27"
+      ],
+      "source_urls": [
+        "https://chelyabinsk.cataloxy.ru/firms/1%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D0%B2%D0%BE%D0%B9.%D1%80%D1%84.htm"
+      ],
+      "notes": "Дополнительный контакт справочника, не новая площадка."
+    }
+  ]
+}
