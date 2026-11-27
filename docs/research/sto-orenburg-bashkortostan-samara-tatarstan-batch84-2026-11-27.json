@@ -1,0 +1,1123 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison with batches 08,09,15,16,32–34,39,62–64; not complete. Some directories have stale crawl dates. All records provisional and require independent verification of phones, active business, coordinates and actual heavy truck acceptance.",
+  "records": [
+    {
+      "id": "b84-or-aurora",
+      "name": "Аврора Авто Cordiant Professional",
+      "region": "Оренбургская область",
+      "address": "Оренбург, 1-й Донгузский проезд, 23/2",
+      "country": "Россия",
+      "phone": "+7 3532 99-56-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 08:30–17:30, перерыв 13:00–14:00; сб 10:00–15:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-or-pirelli",
+      "name": "Pirelli",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Загородное шоссе, 50",
+      "country": "Россия",
+      "phone": "+7 3532 20-05-51",
+      "additional_phones": [
+        "+7 903 360-05-51",
+        "+7 906 834-34-59",
+        "+7 903 390-73-18"
+      ],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00; вс 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-or-master",
+      "name": "Мастер Шин",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Шоссейная, 32/1",
+      "country": "Россия",
+      "phone": "+7 3532 45-65-55",
+      "additional_phones": [
+        "+7 932 536-69-04",
+        "+7 932 536-69-06",
+        "+7 932 536-69-05"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб–вс 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-or-kolobox",
+      "name": "Kolobox",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Шевченко, 221",
+      "country": "Россия",
+      "phone": "+7 3532 58-88-82",
+      "additional_phones": [
+        "+7 901 095-88-82",
+        "+7 922 858-88-82",
+        "+7 3532 58-88-83"
+      ],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00; вс 10:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-or-azbuka",
+      "name": "Азбука Шин",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Монтажников, 28",
+      "country": "Россия",
+      "phone": "+7 967 375-37-18",
+      "additional_phones": [
+        "+7 960 058-40-55"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-or-oren",
+      "name": "Ореншина",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Терешковой, 150",
+      "country": "Россия",
+      "phone": "+7 3532 42-84-84",
+      "additional_phones": [
+        "+7 3532 64-80-40"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-or-avtonadezh",
+      "name": "Автонадежность",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Базовая, 19, корп. 3",
+      "country": "Россия",
+      "phone": "+7 3532 92-03-70",
+      "additional_phones": [
+        "+7 922 621-99-85",
+        "+7 922 625-03-70",
+        "+7 3532 63-43-53"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "выездной грузовой ремонт (рубрика)"
+      ],
+      "source_urls": [
+        "https://orenburg.spravker.ru/vyezdnye-gruzovye-avtoservisy/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-orsk-groz",
+      "name": "Грузовой шиномонтаж",
+      "region": "Оренбургская область",
+      "address": "Орск, Грозненская, 11",
+      "country": "Россия",
+      "phone": "+7 905 848-19-61",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-orsk-ivan",
+      "name": "Ivanor",
+      "region": "Оренбургская область",
+      "address": "Орск, Новосибирская, 86А",
+      "country": "Россия",
+      "phone": "+7 3537 21-78-21",
+      "additional_phones": [
+        "8 800 250-33-60"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб–вс 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-orsk-elis",
+      "name": "Шиномонтаж",
+      "region": "Оренбургская область",
+      "address": "Орск, Елисеевская, 19",
+      "country": "Россия",
+      "phone": "+7 3537 30-41-66",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://orsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-orsk-ttt",
+      "name": "ТТТ",
+      "region": "Оренбургская область",
+      "address": "Орск, Елшанская, 110А",
+      "country": "Россия",
+      "phone": "+7 961 927-32-52",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 10:00–20:00",
+      "services": [
+        "ремонт полуприцепов (рубрика)"
+      ],
+      "source_urls": [
+        "https://orsk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-st-prof",
+      "name": "Грузовой автосервис",
+      "region": "Республика Башкортостан",
+      "address": "Стерлитамак, Профсоюзная, 17Б, стр. 3",
+      "country": "Россия",
+      "phone": "+7 917 768-29-51",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "ремонт грузовиков DAF, Freightliner, Isuzu, Iveco, MAN"
+      ],
+      "source_urls": [
+        "https://totadres.ru/sterlitamak/org/gruzovoy_avtoservis/5159705"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-st-mag",
+      "name": "Магистраль",
+      "region": "Республика Башкортостан",
+      "address": "Стерлитамак, Западная, 12Б/1",
+      "country": "Россия",
+      "phone": "+7 917 763-00-74",
+      "additional_phones": [
+        "+7 937 158-02-07"
+      ],
+      "email": "markelov-scania@mail.ru",
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой ремонт",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/sterlitamak/mesto/6385042-magistral-zapadnaya-12b-1-1-etaj"
+      ],
+      "notes": "Адрес Элеваторная 1 с частично совпадающим телефоном оставить на уточнение. Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-st-avtoshin",
+      "name": "АвтоШинторг",
+      "region": "Республика Башкортостан",
+      "address": "Стерлитамак, Черноморская, 29Б",
+      "country": "Россия",
+      "phone": "+7 937 838-18-38",
+      "additional_phones": [
+        "+7 937 838-28-38"
+      ],
+      "email": null,
+      "hours": "ежедневно 10:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://sterlitamak.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-st-discount",
+      "name": "Автодисконт",
+      "region": "Республика Башкортостан",
+      "address": "Стерлитамак, Элеваторная, 39",
+      "country": "Россия",
+      "phone": "+7 3473 43-68-53",
+      "additional_phones": [
+        "+7 347 200-06-02"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб 10:00–19:00; вс 11:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://sterlitamak.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-sam-shin1",
+      "name": "Шиноремонт — станция 1",
+      "region": "Самарская область",
+      "address": "Самара, Красноглинское шоссе, 5Б",
+      "country": "Россия",
+      "phone": "+7 846 312-74-25",
+      "additional_phones": [
+        "+7 927 000-67-28"
+      ],
+      "email": "samara-shinoremont@mail.ru",
+      "hours": "пн–сб 09:00–23:00; вс 10:00–23:00",
+      "services": [
+        "ремонт грузовых шин",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://shinoremont-samara.ru/contacts/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Samara",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-sam-shin2",
+      "name": "Шиноремонт — станция 2",
+      "region": "Самарская область",
+      "address": "Красноярский район, Новосемейкино, Обводная дорога Самары, 8-й км, 5",
+      "country": "Россия",
+      "phone": "+7 927 003-16-40",
+      "additional_phones": [
+        "+7 927 000-67-28"
+      ],
+      "email": "samara-shinoremont@mail.ru",
+      "hours": "пн–сб 09:00–23:00; вс 10:00–23:00",
+      "services": [
+        "ремонт грузовых шин",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://shinoremont-samara.ru/contacts/"
+      ],
+      "notes": "Отдельная станция прямо указана на сайте сети. Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Samara",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-tlt-gruz",
+      "name": "Грузовой Сервис Тольятти",
+      "region": "Самарская область",
+      "address": "Тольятти, Обводное шоссе, 9В, стр. 2",
+      "country": "Россия",
+      "phone": "+7 8482 611-333",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт тягачей и прицепов",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/tolyatti/mesto/1869786-gruzovoi-servis-tolyatti-obvodnoe-shosse-9v-st2",
+        "https://truck-samara.ru/"
+      ],
+      "notes": "Профиль также указан на https://truck-samara.ru/ Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Samara",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-tlt-rembaza",
+      "name": "Рембаза",
+      "region": "Самарская область",
+      "address": "Тольятти, Транспортная, 11, стр. 1",
+      "country": "Россия",
+      "phone": "+7 906 337-84-34",
+      "additional_phones": [
+        "+7 927 023-33-38"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт прицепов",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://samara.auto2.info/tolyatti/rembaza-564324/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Samara",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-nc-ktn",
+      "name": "Каматранснефть — сервисный центр",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Тэцовский проезд, 23",
+      "country": "Россия",
+      "phone": "+7 927 402-59-59",
+      "additional_phones": [
+        "+7 8552 70-77-75"
+      ],
+      "email": "wktn@mail.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и прицепов",
+        "ДВС",
+        "КПП",
+        "газовые двигатели"
+      ],
+      "source_urls": [
+        "https://kamatransneft.ru/services/service-center"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-nc-spets",
+      "name": "СпецРемКам",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Индустриальный проезд, 39",
+      "country": "Россия",
+      "phone": "+7 8552 92-08-00",
+      "additional_phones": [
+        "+7 8552 92-18-00",
+        "+7 960 070-99-59"
+      ],
+      "email": "ooo.pkfsrk@mail.ru",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "ремонт КАМАЗ и УРАЛ",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-tatarstan/naberezhnyie-chelnyi-gorodskoj-okrug-naberezhnyie-chelnyi/card-4081915443526302-spetsremkam"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-nc-avest",
+      "name": "АВЕСТ",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Производственный проезд, 44/1",
+      "country": "Россия",
+      "phone": "+7 927 439-67-21",
+      "additional_phones": [
+        "+7 937 287-11-11"
+      ],
+      "email": "info@a-vest.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "балансировка"
+      ],
+      "source_urls": [
+        "https://a-vest.ru/service"
+      ],
+      "notes": "Заявки круглосуточно, станция 08–20. Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-nc-shin",
+      "name": "Шинсервис-НЧ",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Металлургическая, 49",
+      "country": "Россия",
+      "phone": "+7 8552 92-30-22",
+      "additional_phones": [
+        "+7 917 266-30-91"
+      ],
+      "email": null,
+      "hours": "пн–сб 08:00–17:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-tatarstan/naberezhnyie-chelnyi-gorodskoj-okrug-naberezhnyie-chelnyi/card-1388706-shinservis-nch"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-nc-center",
+      "name": "Центршин",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Казанский проспект, 215/1",
+      "country": "Россия",
+      "phone": "+7 8552 253-153",
+      "additional_phones": [
+        "+7 8552 25-36-00",
+        "+7 8552 25-34-00"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://nn.centershin.ru/shinomontazh-gruzovoy/",
+        "https://chelny.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Дополнительные контакты из https://chelny.spravker.ru/gruzovoi-shinomontazh/ Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "first_party_and_directory",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-nc-dil",
+      "name": "Дилижанс",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Магистральная, 2",
+      "country": "Россия",
+      "phone": "+7 927 048-05-08",
+      "additional_phones": [
+        "+7 927 048-37-07"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–17:30; сб 08:00–14:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://chelny.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-k-kapsen",
+      "name": "Kapsen",
+      "region": "Республика Татарстан",
+      "address": "Казань, Беломорская, 69/17",
+      "country": "Россия",
+      "phone": "8 800 250-79-94",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://kapsentyres.org/service.html"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-k-tat",
+      "name": "Татшинсервис",
+      "region": "Республика Татарстан",
+      "address": "Казань, Магистральная, 100, корп. 6",
+      "country": "Россия",
+      "phone": "+7 939 339-95-85",
+      "additional_phones": [
+        "+7 987 232-02-55"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт порезов",
+        "правка дисков"
+      ],
+      "source_urls": [
+        "https://rting.ru/kazan/co/tatshinservis/691670"
+      ],
+      "notes": " Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b84-k-12",
+      "name": "12 Колесо",
+      "region": "Республика Татарстан",
+      "address": "Зеленодольский район, М-7, 790-й км, 1А",
+      "country": "Россия",
+      "phone": "+7 927 038-07-37",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 07:00–23:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://kazan.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "notes": "График не 24/7, несмотря на рубрику. Телефон, актуальность, фактическая оснастка и координаты не проверены. Каталожная рубрика не доказательство специализации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Шиномонтаж 4х24 / N-Tyre",
+      "address": "Самара, Московское шоссе, 23-й км, 26",
+      "phone": "+7 927 721-43-25",
+      "source_urls": [
+        "https://samara.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "reason": "Одинаковые адрес и номер, график расходится."
+    },
+    {
+      "name": "Автосервис на Элеваторной",
+      "address": "Стерлитамак, Элеваторная, 1",
+      "source_urls": [
+        "https://sterlitamak.spravka.city/company/gruzovoy-avtoservis-37"
+      ],
+      "reason": "Частично скрытый номер совпадает с Магистралью, проверить адрес."
+    },
+    {
+      "name": "Pirelli",
+      "address": "Орск, Новосибирская, 115Б",
+      "phone": "+7 3537 25-33-60",
+      "source_urls": [
+        "https://orsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Негативный отзыв о безопасности колес; уточнить качество и актуальность."
+    },
+    {
+      "name": "СТО Молния",
+      "address": "Оренбург, Техническая, 5",
+      "phone": "+7 3532 32-32-56",
+      "source_urls": [
+        "https://orenburg.spravker.ru/vyezdnye-gruzovye-avtoservisy/"
+      ],
+      "reason": "Проверить в сетевых пакетах."
+    },
+    {
+      "name": "BUSTER116 / выездной шиномонтаж",
+      "address": "Казань, Ямашева, 71А",
+      "phone": "+7 919 639-21-90",
+      "source_urls": [
+        "https://kazan.spravker.ru/kruglosutochnyi-gruzovoi-shinomontazh/"
+      ],
+      "reason": "Две карточки по одному адресу; установить стационарность и грузовой профиль."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Спец Транс Ресурс",
+      "batch": 8,
+      "additional_phones": [
+        "+7 917 933-21-31"
+      ],
+      "source_urls": [
+        "https://str116.ru/"
+      ],
+      "notes": "Второй номер с сайта."
+    },
+    {
+      "name": "Сигналдортранс",
+      "batch": 62,
+      "additional_phones": [
+        "+7 8552 39-70-84",
+        "+7 8552 53-77-48",
+        "+7 927 488-80-85",
+        "+7 937 577-70-90"
+      ],
+      "email": "info@signaldortrans.ru",
+      "source_urls": [
+        "https://signaldortrans.ru/page6.html"
+      ],
+      "notes": "Последний номер указан как круглосуточный; график станции не подтвержден."
+    },
+    {
+      "name": "ТехСервисТрейлер",
+      "batch": 62,
+      "additional_phones": [
+        "+7 8552 53-72-63",
+        "+7 919 681-05-64"
+      ],
+      "email": "tst@kamtent.ru",
+      "source_urls": [
+        "https://xn--80adfjjn8b.xn--p1ai/servisnoe-obsluzhivanie/"
+      ],
+      "notes": "Уточнение контактов."
+    },
+    {
+      "name": "РЭК",
+      "batch": 62,
+      "additional_phones": [
+        "+7 917 253-57-17"
+      ],
+      "source_urls": [
+        "https://orgzz.ru/naberezhnye_chelny/co/rek/4540192"
+      ],
+      "notes": "Второй телефон."
+    }
+  ]
+}
