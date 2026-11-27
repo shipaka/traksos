@@ -1,0 +1,681 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison with compact audit B/C and batches 32–34,42,48. Full normalized audit pending. No calls, legal, coordinates or actual hours verification. Directory categories are leads, not proof of heavy-truck capability.",
+  "records": [
+    {
+      "id": "b73-slyudyanka-sep",
+      "name": "СЭП",
+      "region": "Иркутская область",
+      "address": "Слюдянка, Амбулаторная ул., 8А",
+      "country": "Россия",
+      "phone": "+7 902 576-86-68",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовой профиль указан в рубрике, подтвердить размеры колес и график.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-slyudyanka-shin",
+      "name": "ШинСервис",
+      "region": "Иркутская область",
+      "address": "Слюдянка, ул. Перевальская, 5Б/5",
+      "country": "Россия",
+      "phone": "+7 902 177-40-13",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00, перерыв 13:00–14:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить прием тяжелых колес.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-sotnikovo-sindikat",
+      "name": "Sindikat",
+      "region": "Республика Бурятия",
+      "address": "с. Сотниково, ул. Магистральная, 1",
+      "country": "Россия",
+      "phone": "+7 966 764-07-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "Тот же номер на Трактовой, 132; отдельность площадок не подтверждена, не удваивать.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-sotnikovo-partizan",
+      "name": "Шиномонтаж",
+      "region": "Республика Бурятия",
+      "address": "с. Сотниково, ул. Партизанская, 88",
+      "country": "Россия",
+      "phone": "+7 989 933-00-01",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "выездной шиномонтаж"
+      ],
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "Размер колес и график проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-pugacheva",
+      "name": "СТО грузовых автомобилей",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Пугачёва, 53А",
+      "country": "Россия",
+      "phone": "+7 3012 61-99-55",
+      "additional_phones": [
+        "+7 914 631-33-55"
+      ],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт МКПП"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej",
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/card-2604932-sto-gruzovyih-avtomobilej"
+      ],
+      "notes": "Пугачёва, 53А/1 с тем же номером не считать отдельной точкой.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-avtotransport38-1",
+      "name": "СТО по ремонту грузовой техники",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Автотранспортная, 38А, к. 1",
+      "country": "Россия",
+      "phone": "+7 924 555-78-78",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "ремонт грузовиков",
+        "ходовая",
+        "МКПП"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/ulan-ude/mesto/6358454-sto-po-remontu-gruzovoi-tehniki-avtotransportnaya-38a-k1"
+      ],
+      "notes": "Соседний корпус 2 имеет другую карточку и телефон; независимость операторов проверить до публикации.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-avtotransport29",
+      "name": "Шиномонтажная мастерская грузовых автомобилей",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Автотранспортная, 29, к. 1",
+      "country": "Россия",
+      "phone": "+7 924 392-55-85",
+      "additional_phones": [],
+      "email": "asia-trak@mail.ru",
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/ulan-ude/mesto/6358620-shinomontajnaya-masterskaya-gruzovih-avtomobilei-avtotransportnaya-29-k1"
+      ],
+      "notes": "Филиал 38Б указан в источнике, но отдельность и контакты не подтверждены.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-avtodizel",
+      "name": "Автодизель",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Ботаническая, 30Е",
+      "country": "Россия",
+      "phone": "+7 902 168-83-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт дизелей",
+        "МКПП",
+        "ходовая"
+      ],
+      "source_urls": [
+        "https://ulan-ude.spravka.city/company/avtodizel-46"
+      ],
+      "notes": "Телефон опубликован как деловой контакт мессенджера, голосовые звонки не проверены.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-komtrans",
+      "name": "Komtrans service / XCMG",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. 502-й километр, 160Б",
+      "country": "Россия",
+      "phone": "+7 924 451-63-93",
+      "additional_phones": [
+        "+7 924 352-88-76"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, перерыв 12:00–13:00",
+      "services": [
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://ulan-ude.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Справочная рубрика, уточнить прием магистральных полуприцепов и профиль спецтехники.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-tehass",
+      "name": "ТехАСС",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Лимонова, 2Б/5",
+      "country": "Россия",
+      "phone": "+7 3012 70-09-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Уточнить услуги и график.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-radiator",
+      "name": "Компания по ремонту радиаторов",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Трактовая, 16",
+      "country": "Россия",
+      "phone": "+7 3012 65-02-02",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "ремонт радиаторов"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Уточнить типы радиаторов и режим работы.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-atoz",
+      "name": "СТО от А до Я",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Трактовая, 36",
+      "country": "Россия",
+      "phone": "+7 914 832-94-90",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Подтвердить работу с тяжелыми тягачами.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-maxpower",
+      "name": "MaxPower Service",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Залесная, 246",
+      "country": "Россия",
+      "phone": "+7 3012 57-37-37",
+      "additional_phones": [
+        "+7 924 011-01-31"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "сварка",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej",
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "Точный профиль и габариты обслуживаемой техники уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-avtomig",
+      "name": "Автомиг",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Трактовая, 9А",
+      "country": "Россия",
+      "phone": "+7 3012 24-24-84",
+      "additional_phones": [
+        "+7 902 534-24-84"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/",
+        "https://bur.auto2.info/ulan-ude/avtomig-155386/"
+      ],
+      "notes": "На этом же адресе Техмаш с другим номером; отдельную карточку пока не добавлять.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-avtomaster",
+      "name": "АвтоМастер",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Тулаева, 252/2",
+      "country": "Россия",
+      "phone": "+7 914 635-35-40",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "notes": "График и тяжелый профиль уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b73-uu-godzilla",
+      "name": "Godzilla",
+      "region": "Республика Бурятия",
+      "address": "Улан-Удэ, ул. Жердева, 10А, к. 2",
+      "country": "Россия",
+      "phone": "+7 902 562-27-71",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Уточнить услуги, график и действующий статус.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Irkutsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Байкальск, Р-258, 147-й км, 4",
+      "phone": "+7 914 933-44-00",
+      "source_urls": [
+        "https://urbanplaces.su/ru_irkutskaya-oblast/slyudyanskij-rajon-bajkalsk/card-70000001044576560-shinomontazhnaia-masterskaia",
+        "https://bajkalsk.jsprav.ru/vyiezdnoj-shinomontazh/"
+      ],
+      "reason": "Адрес и телефон опубликованы, тяжелый грузовой профиль требует дополнительного доказательства."
+    },
+    {
+      "name": "Эвакуатор Байкальск",
+      "address": "Байкальск, ул. Железнодорожная, 1",
+      "phone": "+7 902 576-85-17",
+      "source_urls": [
+        "https://irkutsk.spravker.ru/gorod-baikalsk/vyezdnoi-shinomontazh/"
+      ],
+      "reason": "Грузоподъемность не подтверждена."
+    },
+    {
+      "name": "Шиномонтаж 24 часа",
+      "address": "Слюдянка, ул. Бабушкина, 24А",
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/",
+        "https://2sp.me/ru/slyudyanka_1653818596/company/shinomontajnaya-masterskaya-636"
+      ],
+      "reason": "Нет номера телефона, график противоречив."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Култук, ул. Кирова, 75",
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Култук, ул. Кирова, 186",
+      "source_urls": [
+        "https://sliudianka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Кабанский район, Р-258, 353-й км, 1А",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/s-kabansk"
+      ],
+      "reason": "Нет телефона и подтверждения грузовой оснастки."
+    },
+    {
+      "name": "Xprofy",
+      "address": "Кабанский район, Р-258, 356-й км, 86",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/s-kabansk"
+      ],
+      "reason": "Нет телефона и подтверждения грузового профиля."
+    },
+    {
+      "name": "Sindikat — альтернативный адрес",
+      "address": "с. Сотниково, ул. Трактовая, 132",
+      "phone": "+7 966 764-07-77",
+      "source_urls": [
+        "https://ulan-ude.big-book-avto.ru/gruzovoy-shinomontazh/"
+      ],
+      "reason": "Совпадает номер с Магистральной, 1."
+    },
+    {
+      "name": "Трак Сервис",
+      "address": "Улан-Удэ, ул. Автотранспортная, 38А, к. 2",
+      "phone": "+7 902 169-44-44",
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/category-remont-gruzovyih-avtomobilej"
+      ],
+      "reason": "Ремонт грузовиков и полуприцепов указан, проверить независимость от соседней СТО и Азия Трак."
+    },
+    {
+      "name": "Сарма",
+      "address": "Улан-Удэ, ул. Автотранспортная, 21А/2",
+      "phone": "+7 3012 20-44-95",
+      "additional_phones": [
+        "8 800 333-58-89",
+        "+7 924 777-45-54"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_respublika-buryatiya/ulan-ude-gorodskoj-okrug-ulan-ude/card-2605112-sarma"
+      ],
+      "reason": "Соседний адрес ранее внесенного БайкалАвтоТрак, проверить независимость и текущий статус."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "ЮпитерТрак",
+      "batch": 12,
+      "additional_phones": [
+        "+7 3012 37-30-07"
+      ],
+      "source_urls": [
+        "https://ulan-ude.gdeservisy.ru/gruzovoy-autoservis-yupitertrak-2"
+      ],
+      "notes": "Дополнительный опубликованный контакт, не новая площадка."
+    }
+  ]
+}
