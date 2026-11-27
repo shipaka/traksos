@@ -1,0 +1,594 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted place/name search in compact indexes B/C (1–31) and records 32–49,51–55. Not a full global normalized-address and phone audit. Merged apparent duplicate aliases within this batch; verify separate operators before publication.",
+  "records": [
+    {
+      "id": "b56-rzhev-t69",
+      "name": "Грузовой Т-69",
+      "region": "Тверская область",
+      "address": "Ржев, ул. Никиты Головни, 33А",
+      "country": "Россия",
+      "phone": "+7 915 745-15-05",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "road": "М9",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-rzhev-moscow-riga",
+      "name": "Автотехцентр Москва-Рига",
+      "region": "Тверская область",
+      "address": "Ржевский округ, М9, 224-й км",
+      "country": "Россия",
+      "phone": "+7 980 623-31-11",
+      "additional_phones": [
+        "+7 48232 3-31-11",
+        "+7 904 002-32-22"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–21:00",
+      "services": [
+        "ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "road": "М9",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-rzhev-tire-leningradskoe",
+      "name": "Шиномонтаж 24 часа",
+      "region": "Тверская область",
+      "address": "Ржев, Ленинградское шоссе, 1А",
+      "country": "Россия",
+      "phone": "+7 995 670-01-49",
+      "additional_phones": [
+        "+7 909 269-94-44"
+      ],
+      "email": null,
+      "hours": "круглосуточно (по справочнику)",
+      "services": [
+        "шиномонтаж",
+        "ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "road": "М9",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-rzhev-autostop",
+      "name": "АвтоСтопService",
+      "region": "Тверская область",
+      "address": "Ржев, ул. Калинина, 36Б",
+      "country": "Россия",
+      "phone": "+7 910 530-10-51",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–20:00; Сб–Вс 09:00–18:00",
+      "services": [
+        "ТО грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "road": "М9",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-rzhev-autoplus",
+      "name": "АвтоПлюс",
+      "region": "Тверская область",
+      "address": "Ржев, ул. Декабристов, 2",
+      "country": "Россия",
+      "phone": "+7 910 539-08-97",
+      "additional_phones": [
+        "+7 919 060-65-95"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://tver.auto2.info/rzhev/avtoplyus-82418/"
+      ],
+      "road": "М9",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-volochek-ivanor",
+      "name": "Ivanor",
+      "region": "Тверская область",
+      "address": "Вышний Волочёк, Московское шоссе, 18/88",
+      "country": "Россия",
+      "phone": "+7 930 165-15-95",
+      "additional_phones": [
+        "+7 920 176-26-27",
+        "8 800 250-33-60"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 09:00–19:00; Сб 09:00–17:00; Вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М10",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-volochek-petromaster305",
+      "name": "ПетроМастер / Cordiant Professional",
+      "region": "Тверская область",
+      "address": "Вышневолоцкий округ, М10, 305-й км, 10",
+      "country": "Россия",
+      "phone": "+7 900 010-06-36",
+      "additional_phones": [
+        "+7 900 010-05-92",
+        "8 800 350-11-98"
+      ],
+      "email": null,
+      "hours": "круглосуточно (по справочнику)",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М10",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-volochek-petromaster70",
+      "name": "ПетроМастер / Кронштадт",
+      "region": "Тверская область",
+      "address": "Вышний Волочёк, Московское шоссе, 70А",
+      "country": "Россия",
+      "phone": "+7 915 703-75-48",
+      "additional_phones": [
+        "+7 915 704-08-22",
+        "+7 915 736-10-06",
+        "8 800 333-77-70"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М10",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-volochek-exclusive",
+      "name": "Эксклюзив",
+      "region": "Тверская область",
+      "address": "Вышневолоцкий округ, д. Холохоленка",
+      "country": "Россия",
+      "phone": "+7 920 694-29-05",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно (по справочнику)",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М10",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-yartsevo-m1-338",
+      "name": "Шиномонтаж — М1, 338-й км",
+      "region": "Смоленская область",
+      "address": "Ярцево, М1, 338-й км",
+      "country": "Россия",
+      "phone": "+7 905 696-87-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М1",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-yartsevo-khalturina",
+      "name": "Шиномонтаж — Халтурина",
+      "region": "Смоленская область",
+      "address": "Ярцево, ул. Халтурина, 61",
+      "country": "Россия",
+      "phone": "+7 48143 7-49-42",
+      "additional_phones": [
+        "+7 905 163-75-84"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М1",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-yartsevo-shina",
+      "name": "Ярцево Шина",
+      "region": "Смоленская область",
+      "address": "Ярцево, ул. Лесная, 33",
+      "country": "Россия",
+      "phone": "+7 48143 3-13-10",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "ремонт тягачей (справочник)"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М1",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-safonovo-autoshinservice",
+      "name": "Автошинсервис",
+      "region": "Смоленская область",
+      "address": "Сафоново, ул. Горняцкая, 18А",
+      "country": "Россия",
+      "phone": "+7 909 259-20-24",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:30–19:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://smolensk.spravker.ru/gorod-safonovo/shinomontazh/"
+      ],
+      "road": "М1",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b56-safonovo-m1-296",
+      "name": "Шиномонтаж — М1, 296-й км",
+      "region": "Смоленская область",
+      "address": "Сафоновский район, М1, 296-й км",
+      "country": "Россия",
+      "phone": "+7 964 616-18-11",
+      "additional_phones": [
+        "+7 952 992-11-18"
+      ],
+      "email": null,
+      "hours": "круглосуточно (по справочнику)",
+      "services": [
+        "шиномонтаж",
+        "ремонт грузовых автомобилей (справочник)"
+      ],
+      "source_urls": [
+        "https://smolensk.spravker.ru/gorod-safonovo/shinomontazh/"
+      ],
+      "road": "М1",
+      "notes": "Публичная карточка справочника; фактический прием тяжелых грузовиков, график и действующего оператора проверить. Для адресов без здания уточнить координаты.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Бибика 67",
+      "addresses": [
+        "Ярцево, ул. Восточная, 1А",
+        "Ярцево, ул. Луначарского, 9"
+      ],
+      "phone": "+7 919 040-85-10",
+      "source_urls": [
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Один телефон, два адреса; проверить действующую площадку."
+    },
+    {
+      "name": "Каменка 359 / Шиномонтаж №1",
+      "address": "Кардымовский район, д. Каменка",
+      "phones": [
+        "+7 999 224-43-23",
+        "+7 960 586-48-19"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Возможны две мастерские одного комплекса, уточнить координаты и отдельность."
+    },
+    {
+      "name": "БСД",
+      "addresses": [
+        "Сафоновский район, М1, 296-й км",
+        "Сафоновский район, М1, 297-й км"
+      ],
+      "phones": [
+        "+7 952 531-07-57",
+        "+7 910 712-28-29"
+      ],
+      "source_urls": [
+        "https://smolensk.spravker.ru/gorod-safonovo/shinomontazh/"
+      ],
+      "reason": "Расхождение адреса и неподтвержденный грузовой профиль."
+    },
+    {
+      "name": "ЕвроРепар / Норд-Авто",
+      "address": "Ржев, Осташковское шоссе, 12, стр. 1",
+      "phones": [
+        "8 804 333-89-59",
+        "8 800 533-95-19"
+      ],
+      "source_urls": [
+        "https://rzhev.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Общий адрес, грузовой профиль требует отдельного подтверждения."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Ремонт грузовых автомобилей — Московское шоссе",
+      "batch": 25,
+      "address": "Вышний Волочёк, Московское шоссе, 105",
+      "phone": "+7 915 718-10-00",
+      "source_urls": [
+        "https://volochek.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Точный дубль."
+    },
+    {
+      "name": "Шина-сервис67",
+      "batch": 28,
+      "addresses": [
+        "Ярцево, ул. Восточная, 5",
+        "Ярцево, ул. Кузнецова, 56"
+      ],
+      "phones": [
+        "+7 910 712-61-45",
+        "+7 910 711-25-55"
+      ],
+      "source_urls": [
+        "https://iartsevo.spravker.ru/gruzovoi-shinomontazh/",
+        "https://iartsevo.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Два ранее учтенных филиала."
+    }
+  ]
+}
