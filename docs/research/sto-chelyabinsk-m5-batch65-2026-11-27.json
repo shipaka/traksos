@@ -1,0 +1,543 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted place/name/phone comparison against audit B/C (1–31) and records 32–49,51–64; full normalized global audit not completed.",
+  "records": [
+    {
+      "id": "b65-sim-gaidara",
+      "name": "Автосервис — Гайдара",
+      "region": "Челябинская область",
+      "address": "Сим, ул. Гайдара, 30А",
+      "country": "Россия",
+      "phone": "+7 922 700-19-16",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ремонт грузовых автомобилей (категория справочника)"
+      ],
+      "source_urls": [
+        "https://sim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Две карточки по адресу объединены; прием тяжелых грузовиков уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-satka-petromaster",
+      "name": "ПетроМастер — ТСЦ Сатка",
+      "region": "Челябинская область",
+      "address": "Саткинский район, М5, 1705-й км, ТехПОСТ",
+      "country": "Россия",
+      "phone": "+7 982 360-01-74",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "шиномонтаж спецтехники"
+      ],
+      "source_urls": [
+        "https://nerudas.ru/karernaya-tekhnika-i-oborudovanie/gruzovoj-shinomontazh/17059-tsc-satka",
+        "https://petromaster.ru/services/gruzovoy_shinomontazh"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Локальный контакт в отраслевом справочнике обновлен 08.05.2024; актуальность проверить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 55.064784,
+      "longitude": 59.166946,
+      "coordinate_source": "https://nerudas.ru/karernaya-tekhnika-i-oborudovanie/gruzovoj-shinomontazh/17059-tsc-satka",
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-satka-vlksm",
+      "name": "Шиномонтаж — 50 лет ВЛКСМ",
+      "region": "Челябинская область",
+      "address": "Сатка, ул. 50 лет ВЛКСМ, 2Б",
+      "country": "Россия",
+      "phone": "+7 35161 3-41-91",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 08:00–17:00; перерыв 12:00–13:00",
+      "services": [
+        "грузовой шиномонтаж (категория справочника)"
+      ],
+      "source_urls": [
+        "https://satka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Название оператора и размеры шин уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-satka-ivanor",
+      "name": "Ivanor",
+      "region": "Челябинская область",
+      "address": "Сатка, ул. Орджоникидзе, 13А",
+      "country": "Россия",
+      "phone": "+7 904 814-01-00",
+      "additional_phones": [
+        "8 800 250-33-60"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (категория справочника)"
+      ],
+      "source_urls": [
+        "https://satka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Два варианта адреса 13 и 13А с одним телефоном; объединены. Часы работы расходятся.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-zlat-truck",
+      "name": "TRUCK",
+      "region": "Челябинская область",
+      "address": "Златоуст, ул. Шоссейная, 4",
+      "country": "Россия",
+      "phone": "+7 908 705-81-11",
+      "additional_phones": [
+        "+7 908 705-71-11"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–22:00 (справочник)",
+      "services": [
+        "грузовой ремонт",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://zlatoust.avto-kray.ru/company/shinomontag/truck-avtoservis-217170",
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei",
+        "https://zlatoust.spravker.ru/ustanovka-i-remont-dopolnitelnogo-oborudovaniia/"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Последовательность цифр телефона отличается по источникам; основной указан в двух справочниках, оба требуют проверки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-zlat-rembaza",
+      "name": "Рембаза74",
+      "region": "Челябинская область",
+      "address": "Златоуст, ул. Панфилова, 18А",
+      "country": "Россия",
+      "phone": "+7 900 074-33-73",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei",
+        "https://spravkainform.ru/russia/zlatoust/remont-gruzovogo-avtotransporta"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "График и оператор уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-zlat-elektro",
+      "name": "Zlatelektro174",
+      "region": "Челябинская область",
+      "address": "Златоуст, ул. 30 лет Победы, 15",
+      "country": "Россия",
+      "phone": "+7 919 321-26-69",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей (категория справочника)"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Специализацию по автоэлектрике и приём тяжелых машин подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-zlat-body",
+      "name": "Злат-Авто",
+      "region": "Челябинская область",
+      "address": "Златоуст, 5-я Нижне-Вокзальная ул., 1Б/3А",
+      "country": "Россия",
+      "phone": "+7 912 773-22-77",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "кузовной ремонт",
+        "покраска",
+        "грузовой ремонт (категория справочника)"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Габариты грузового бокса уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-miass-avto",
+      "name": "Миасс-Авто",
+      "region": "Челябинская область",
+      "address": "Миасс, Тургоякское шоссе, 5/17",
+      "country": "Россия",
+      "phone": "+7 351 751-07-51",
+      "additional_phones": [
+        "+7 3513 28-98-30",
+        "+7 922 751-07-51"
+      ],
+      "email": "service@miass-avto.ru",
+      "hours": null,
+      "services": [
+        "сервис грузовых автомобилей",
+        "техническое обслуживание"
+      ],
+      "source_urls": [
+        "https://service.miass-avto.ru/",
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "На сайте указан основной сервисный телефон; дополнительные из справочника. РусСпецАвто по тому же адресу не считать отдельно без подтверждения.",
+      "evidence": "business_first_party_website",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-miass-uralgruz",
+      "name": "УралГрузСервис",
+      "region": "Челябинская область",
+      "address": "Миасс, Динамовское шоссе, 7/11",
+      "country": "Россия",
+      "phone": "+7 908 826-37-09",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00",
+      "services": [
+        "ремонт грузовиков"
+      ],
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://miass.spravka.city/company/uralgruzservis"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "График и прием тягачей уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-miass-uralauto",
+      "name": "УралАвто",
+      "region": "Челябинская область",
+      "address": "Миасс, Тургоякское шоссе, 13/23",
+      "country": "Россия",
+      "phone": "+7 351 700-88-36",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; перерыв 12:30–13:30",
+      "services": [
+        "ремонт грузовиков"
+      ],
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://spravkainform.ru/russia/miass/remont-i-obsluzhivanie-avtotransporta/uralavto"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Проверить актуальный график и марки.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b65-miass-elevator",
+      "name": "Автосервис грузовых автомобилей",
+      "region": "Челябинская область",
+      "address": "Миасс, ул. Элеваторная, 15",
+      "country": "Россия",
+      "phone": "+7 912 317-27-74",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://miass.big-book-avto.ru/avtoservisy/"
+      ],
+      "road": "М5 или подъезд к М5",
+      "notes": "Название и действующего оператора уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Pit-stop 5D",
+      "addresses": [
+        "Аша, Гагарина, 138",
+        "М5, 1558-й км, 1Б",
+        "М5, 1553-й км"
+      ],
+      "phone": "+7 919 127-37-92",
+      "source_urls": [
+        "https://asha.spravker.ru/shinomontazh/"
+      ],
+      "reason": "Shared telephone across three addresses; confirm location and number of physical workshops."
+    },
+    {
+      "name": "Zlat Pit Stop",
+      "addresses": [
+        "Златоуст, Гагарина 3-й микрорайон, 32В",
+        "Златоуст, Гагарина 3-й микрорайон, 44, бокс 3"
+      ],
+      "phone": "+7 912 771-01-39",
+      "email": "info@zlatpitstop.ru",
+      "source_urls": [
+        "https://mestam.info/ru/zlatoust/remont-gruzovih-avtomobilei",
+        "https://zlatpitstop.ru/contacts/"
+      ],
+      "reason": "First-party website identifies parts shop at 44, not repair at 32В; confirm operational workshop before counting."
+    },
+    {
+      "name": "У Сергея",
+      "phone": "+7 908 078-91-11",
+      "source_urls": [
+        "https://sim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "No exact address."
+    },
+    {
+      "name": "Диагностика",
+      "phone": "+7 982 304-33-80",
+      "source_urls": [
+        "https://sim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "No exact address."
+    },
+    {
+      "name": "MS-Сервис",
+      "addresses": [
+        "Миасс, Объездная дорога, 6/4",
+        "Миасс, Боровая, 7"
+      ],
+      "phone": "+7 995 680-20-13",
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Shared phone and two addresses; confirm active site and truck profile."
+    },
+    {
+      "name": "Сибпромавто",
+      "address": "Миасс, Лихачева, 22",
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Same brand in batch34 at Garage lane 2; branch identity needs review."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "У Андрея",
+      "batch": 26,
+      "phone": "+7 919 327-01-00",
+      "additional_phones": [
+        "+7 982 274-16-07"
+      ],
+      "source_urls": [
+        "https://sim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Existing site."
+    },
+    {
+      "name": "Автомагистраль",
+      "batch": 35,
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Existing site."
+    },
+    {
+      "name": "НТЦ Мега-М",
+      "batch": 48,
+      "source_urls": [
+        "https://miass.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Existing site at same address."
+    }
+  ]
+}
