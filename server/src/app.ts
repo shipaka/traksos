@@ -45,6 +45,7 @@ import { OpsService } from './services/ops.ts';
 import { OnsiteService } from './services/onsite.ts';
 import { ServiceCenters } from './services/service.ts';
 import { PublicPartnerMap } from './services/publicPartnerMap.ts';
+import { StoDirectory } from './services/stoDirectory.ts';
 import { FleetService } from './services/fleet.ts';
 import { clientCalendar, performerCalendar } from './services/clientCalendar.ts';
 import { VehicleServiceRequests } from './services/vehicleServiceRequests.ts';
@@ -142,6 +143,7 @@ export function createApp(d: Deps) {
   orders.ops = ops;
   const centers = new ServiceCenters(d.db, notifier, settings, support, now);
   const publicPartnerMap = new PublicPartnerMap(d.db);
+  const stoDirectory = new StoDirectory(d.db);
   const referral = new ReferralService(d.db, settings, notifier, now);
   referral.ledger = payments.ledger.bind(payments);
   orders.referral = referral;
@@ -173,6 +175,16 @@ export function createApp(d: Deps) {
   // Public network coverage is opt-in, stationary-only and actually verified.
   // All existing entries default to private; no current mobile performer GPS.
   r.get('/api/public/partner-map', false, () => publicPartnerMap.list());
+  r.get('/api/public/sto-directory', false, () => stoDirectory.publicList());
+  r.get('/api/admin/sto-directory', ['admin'], (c:AuthedCtx) => {
+    const after=c.query.get('after')??'';
+    const limit=parse(z.coerce.number().int().min(1).max(200),c.query.get('limit')??100);
+    if(after.length>120)throw bad('invalid_cursor');
+    return stoDirectory.adminList(after,limit);
+  });
+  r.post('/api/admin/sto-directory/import', ['admin'], (c:AuthedCtx) => stoDirectory.create(c.body));
+  r.put('/api/admin/sto-directory/:id/review', ['admin'], (c:AuthedCtx) => stoDirectory.review(c.params.id,c.user,c.body));
+  r.put('/api/sto-directory/:id/feedback', true, (c:AuthedCtx) => stoDirectory.feedback(c.params.id,c.user,c.body));
   r.put('/api/service/public-map', ['service'], (c: AuthedCtx) => {
     const b = parse(z.object({ enabled:z.boolean() }), c.body);
     return publicPartnerMap.visibility(c.user,b.enabled);
