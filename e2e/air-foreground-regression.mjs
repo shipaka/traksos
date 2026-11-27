@@ -90,6 +90,21 @@ try{
   await log.getByText('Хвост при чтении старых сообщений',{exact:true}).waitFor();
   assert.ok(await gap()>96,'New tail moved an older-message reader to the bottom');
 
+  // Read from the middle, not the top: clearing the DOM must restore the
+  // actual visible message and its position, not merely avoid the bottom.
+  await log.evaluate(el=>{
+    el.scrollTop=Math.floor((el.scrollHeight-el.clientHeight)/2);
+    el.dispatchEvent(new Event('scroll'));
+  });
+  const readingPosition=()=>log.evaluate(el=>{
+    const top=el.getBoundingClientRect().top;
+    const row=Array.from(el.querySelectorAll('[data-air-message-id]'))
+      .find(node=>node.getBoundingClientRect().bottom>top);
+    return {id:row?.dataset.airMessageId,offset:row?.getBoundingClientRect().top-top,scroll:el.scrollTop};
+  });
+  const beforeSuspend=await readingPosition();
+  assert.ok(beforeSuspend.scroll>0 && await gap()>96);
+  assert.ok(beforeSuspend.id);
   // Suspend a pending poll, resume immediately without waiting another 12s,
   // resolve the newer response first, then release the obsolete permissions.
   await page.clock.fastForward(12000);
@@ -102,6 +117,9 @@ try{
   await waitCount(5);
   await answer(4,snapshot('fresh','Свежий снимок',false));
   await log.getByText('Свежий снимок',{exact:true}).waitFor();
+  const afterResume=await readingPosition();
+  assert.equal(afterResume.id,beforeSuspend.id,'Foreground refresh lost the visible message');
+  assert.ok(Math.abs(afterResume.offset-beforeSuspend.offset)<2,'Foreground refresh lost reading offset');
   await answer(3,snapshot('obsolete','Устаревший снимок',true));
   await page.clock.runFor(50);
   assert.equal(await log.getByText('Устаревший снимок',{exact:true}).count(),0);
@@ -131,5 +149,5 @@ try{
   await log.getByText('После восстановления связи',{exact:true}).waitFor();
   await waitBottom();
   assert.deepEqual(errors,[]);
-  console.log('PASS Air: bounded tail, reading position, foreground generation, offline/reconnect, same-tail rehydration');
+  console.log('PASS Air: bounded tail, middle-reading anchor, foreground generation, offline/reconnect, same-tail rehydration');
 }finally{await browser.close();}
