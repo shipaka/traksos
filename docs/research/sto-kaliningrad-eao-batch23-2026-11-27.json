@@ -1,0 +1,445 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify operation, legal operator, coordinates, source reuse rights, heavy truck capability, deduplication and admin approval. No calls or official FNS extracts. No automatic outreach.",
+  "records": [
+    {
+      "id": "ds-truck-maloelesnoe",
+      "name": "ДС Трак",
+      "region": "Калининградская область",
+      "address": "пос. Малое Лесное, ул. Морская, 24А",
+      "country": "Россия",
+      "phone": "+7 962 261-79-72",
+      "email": "DSTrucks@yandex.ru",
+      "hours": "пн–пт 10:00–19:00, сб 10:00–15:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "электрика",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://dstruck.ru/about"
+      ],
+      "notes": "Доп. +7 4012 978-558.",
+      "operator_group": "ds-truck",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "baltpart-kaliningrad",
+      "name": "Балт-Парт",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Магистральная, 3",
+      "country": "Россия",
+      "phone": "+7 981 471-05-68",
+      "email": "balt-part@yandex.ru",
+      "hours": "пн–пт 08:00–17:00, сб 08:00–15:00",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "ДВС",
+        "КПП",
+        "тормоза",
+        "соосность",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://balt-part.ru/kompaniya/"
+      ],
+      "notes": "Общий телефон сайта, уточнить приемку.",
+      "operator_group": "balt-part",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autocom-energetikov",
+      "name": "АвтоКом — Энергетиков",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Энергетиков, 9",
+      "country": "Россия",
+      "phone": "+7 908 290-36-90",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, сб 09:00–15:00",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "агрегаты",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://autocom39.ru/",
+        "https://autocom39.ru/kontakty"
+      ],
+      "notes": "Номер площадки с официальных контактов.",
+      "operator_group": "autocom39",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autocom-guryevsk",
+      "name": "АвтоКом — Гурьевск",
+      "region": "Калининградская область",
+      "address": "Гурьевск, ул. Западная, 1",
+      "country": "Россия",
+      "phone": "+7 911 472-11-43",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00, сб 09:00–15:00",
+      "services": [
+        "грузовой ремонт",
+        "полуприцепы"
+      ],
+      "source_urls": [
+        "https://autocom39.ru/kontakty"
+      ],
+      "notes": "Доп. +7 921 100-57-88. Магазины сети не добавлены.",
+      "operator_group": "autocom39",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "lorry-poddubnoe",
+      "name": "Лорри Сервис Плюс",
+      "region": "Калининградская область",
+      "address": "пос. Поддубное, ул. Берлинская, 1",
+      "country": "Россия",
+      "phone": "+7 4012 30-64-70",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Контакт каталога производителя. Другие карточки того же адреса не дублировать.",
+      "operator_group": "lorry-group",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "technik-kng-dorozhnoe",
+      "name": "Техник КНГ — Дорожное",
+      "region": "Калининградская область",
+      "address": "пос. Дорожное, Датский проезд, 3А",
+      "country": "Россия",
+      "phone": "+7 4012 38-66-03",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Номер сервисной станции 1 в каталоге Kögel; соответствие номера адресу уточнить.",
+      "operator_group": "technik-kng",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "technik-kng-kaliningrad",
+      "name": "Техник КНГ — Калининград",
+      "region": "Калининградская область",
+      "address": "Калининград, ул. Дзержинского, 244",
+      "country": "Россия",
+      "phone": "+7 4012 38-66-02",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт полуприцепов"
+      ],
+      "source_urls": [
+        "https://koegel-trailer.ru/servis"
+      ],
+      "notes": "Номер станции 2 из каталога; соответствие номера адресу уточнить. Один оператор с Дорожным.",
+      "operator_group": "technik-kng",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "konig-north",
+      "name": "КёнигТракСервис — Север",
+      "region": "Калининградская область",
+      "address": "пос. Малое Исаково, ул. Мелиоративная, 7",
+      "country": "Россия",
+      "phone": "+7 4012 597-123",
+      "email": "info@mankts.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "спецтехника",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://www.mankts.ru/contacts.php",
+        "https://www.mankts.ru/service.php"
+      ],
+      "notes": "Общий отдел эвакуации +7 931 602-03-73.",
+      "operator_group": "mankts",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "konig-south",
+      "name": "КёнигТракСервис — Юг",
+      "region": "Калининградская область",
+      "address": "пос. Рощино, ул. Сельская, 2",
+      "country": "Россия",
+      "phone": "+7 4012 635-135 доб. 1",
+      "email": "service@mankts.ru",
+      "hours": null,
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "спецтехника",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://www.mankts.ru/contacts.php",
+        "https://www.mankts.ru/service.php"
+      ],
+      "notes": "Номер отдела сервиса; общий отдел эвакуации +7 931 602-03-73.",
+      "operator_group": "mankts",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "euroservice-kholmogorovka",
+      "name": "Евросервис",
+      "region": "Калининградская область",
+      "address": "пос. Холмогоровка, ул. Новостроевская, 23",
+      "country": "Россия",
+      "phone": "+7 4012 31-00-60",
+      "email": null,
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "грузовики",
+        "Foton",
+        "ГАЗ",
+        "Carrier",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://www.eu-service.ru/"
+      ],
+      "notes": "На главной заявлен выездной сервис 24/7; страница контактов вернула 502, адрес и телефон на главной.",
+      "operator_group": "eu-service",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "olimp-birobidzhan",
+      "name": "Олимп",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Шолом-Алейхема, 124",
+      "country": "Россия",
+      "phone": "+7 924 642-66-66",
+      "email": null,
+      "hours": "пн–сб 09:00–18:00 (справочник)",
+      "services": [
+        "грузовые шины",
+        "шиномонтаж (требует подтверждения размеров)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/",
+        "https://livebir.ru/avtosiervis/"
+      ],
+      "notes": "Доп. +7 42622 2-42-02. Публикация 2021 года подтверждает контакт и грузовые шины; не универсальное грузовое СТО.",
+      "operator_group": "olimp-eao",
+      "evidence": "directory_and_older_media",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stormauto-birobidzhan",
+      "name": "Штормавто — Поул Позишн",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Советская, 123Б",
+      "country": "Россия",
+      "phone": "+7 924 640-44-54",
+      "email": null,
+      "hours": "пн–пт 09:00–20:00, сб 09:00–19:00, вс 10:00–19:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/birobidzhan/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Доп. +7 914 640-44-54. Проверить размер колес и актуальность.",
+      "operator_group": "stormauto",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-sovetskaya125",
+      "name": "Шиномонтажный комплекс",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Советская, 125",
+      "country": "Россия",
+      "phone": "+7 924 151-61-88",
+      "email": null,
+      "hours": "ежедневно 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/birobidzhan/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Проверить действующую площадку и размеры колес.",
+      "operator_group": "tyre-sovetskaya125",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-pionerskaya66b",
+      "name": "Шиномонтаж",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Пионерская, 66Б",
+      "country": "Россия",
+      "phone": "+7 914 818-20-11",
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить работу, тяжелые колеса и график.",
+      "operator_group": "tyre-pionerskaya66b",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "kolyana-r297",
+      "name": "У Коляна — шиномонтаж",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджанский район, Р-297 Амур, 1972-й км",
+      "country": "Россия",
+      "phone": "+7 924 643-04-44",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (справочник)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/",
+        "https://spravbiz.ru/birobidzhan/avto/gruzovoj-shinomontazh/"
+      ],
+      "notes": "Придорожная точка, точный въезд и действующий статус уточнить.",
+      "operator_group": "kolyana-r297",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
