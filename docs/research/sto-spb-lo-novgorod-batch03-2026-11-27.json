@@ -1,0 +1,266 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; published business contacts, not production import",
+  "publication_gate": "Confirm business operation, exact coordinates, heavy truck specialization, source reuse permission, deduplication and admin review. Obtain appropriate permission for commercial messaging; no automated outreach.",
+  "records": [
+    {
+      "id": "belauto-novgorod",
+      "name": "БелАвто",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, проезд Энергетиков, 6, к. 2, стр. 5",
+      "country": "Россия",
+      "phone": "+7 8162 60-70-60",
+      "email": "belkomauto@mail.ru",
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "грузовые автомобили",
+        "прицепы и полуприцепы",
+        "спецтехника",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://belauto.ru/contacts/",
+        "https://belauto.ru/"
+      ],
+      "notes": "ИНН 5321204478 опубликован самим предприятием; корпоративные мессенджеры также на сайте.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "mv-auto-novgorod",
+      "name": "МВ-Авто",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, ул. Рабочая, 34/6",
+      "country": "Россия",
+      "phone": "+7 911 600-16-28",
+      "email": "mvm-translogistic53@mail.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "ремонт грузовиков",
+        "агрегатный ремонт",
+        "эвакуация",
+        "выездной сервис",
+        "спецтехника"
+      ],
+      "source_urls": [
+        "https://mv-avto.com/"
+      ],
+      "notes": "Номер именно автосервиса; адрес с собственного сайта, не из стороннего справочника.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "autoref53-novgorod",
+      "name": "АвтоРеф53",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, Большая Санкт-Петербургская ул., 107В",
+      "country": "Россия",
+      "phone": "+7 921 737-70-00",
+      "email": "autoref53@mail.ru",
+      "hours": "пн–сб 09:00–21:00, вс выходной (сайт)",
+      "services": [
+        "грузовики",
+        "рефрижераторы",
+        "прицепы",
+        "спецтехника",
+        "токарные работы"
+      ],
+      "source_urls": [
+        "https://autoref53.ru/"
+      ],
+      "notes": "Сайт предлагает обслуживание автопарков по договору. График на карте отличается, уточнить.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "fngroup-novgorod",
+      "name": "FNGROUP — Великий Новгород",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, ул. Рабочая, 19",
+      "country": "Россия",
+      "phone": "8 800 100-86-58",
+      "email": "office@fngroup.ru",
+      "hours": "пн–чт 09:00–18:00, пт 09:00–16:45",
+      "services": [
+        "сервис грузовой техники",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://fngroup.ru/contacts/velikiy-novgorod/"
+      ],
+      "notes": "Общий номер и почта сети, другие филиалы есть в batch02; считать отдельной площадкой, а при переговорах объединять по сети.",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "promtrans-novgorod",
+      "name": "Промтранс / NBI Transport-Service",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, ул. Магистральная, 11/13",
+      "country": "Россия",
+      "phone": "+7 8162 96-30-30",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей",
+        "прицепы",
+        "ТО",
+        "диагностика",
+        "тахографы"
+      ],
+      "source_urls": [
+        "https://nbi.gkto.ru/",
+        "https://spravkainform.ru/russia/velikiy-novgorod/zapchasti-dlya-gruzovogo-avtotransporta/promtrans"
+      ],
+      "notes": "ИНН 5321095500 опубликован на странице ПТО. Номер также указан для техосмотра, уточнить контакт грузовой приемки и текущий профиль.",
+      "evidence": "operator_listing_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckprime-novgorod",
+      "name": "Truck Prime / Красные ворота",
+      "region": "Новгородская область",
+      "address": "Великий Новгород, Большая Санкт-Петербургская ул., 173",
+      "country": "Россия",
+      "phone": "+7 911 634-47-77",
+      "email": null,
+      "hours": "ежедневно 09:00–22:00 (справочник)",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "агрегатный ремонт",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://velikij-novgorod.spravmer.ru/avtoservis-krasnye-vorota-velikij-novgorod/",
+        "https://spravkainform.ru/russia/velikiy-novgorod/shinomontazhnaya-masterskaya/krasnye-vorota"
+      ],
+      "notes": "Два справочника совпадают по телефону. Точный корпус и текущий профиль уточнить. Не считать опубликованный номер проверенным звонком.",
+      "evidence": "directory_crosscheck",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-kolkhozny-volkhov",
+      "name": "Шиномонтаж — Колхозный переулок",
+      "region": "Ленинградская область",
+      "address": "Волхов, Колхозный пер., 1",
+      "country": "Россия",
+      "phone": "+7 921 914-52-83",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (по справочнику)"
+      ],
+      "source_urls": [
+        "https://spravker.ru/volhov/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Только справочник; подтвердить работу с колесами тяжелых грузовиков до публикации.",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tyre-kalinina-volkhov",
+      "name": "Шиномонтаж — Калинина 39",
+      "region": "Ленинградская область",
+      "address": "Волхов, ул. Калинина, 39",
+      "country": "Россия",
+      "phone": "+7 981 777-20-40",
+      "email": null,
+      "hours": "ежедневно 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (по справочнику)"
+      ],
+      "source_urls": [
+        "https://spravker.ru/volhov/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Только справочник; профиль и размер обслуживаемых колес уточнить.",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtosfera-volkhov",
+      "name": "Автосфера",
+      "region": "Ленинградская область",
+      "address": "Волхов, ул. Калинина, 46",
+      "country": "Россия",
+      "phone": "+7 950 000-03-67",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (справочник)",
+      "services": [
+        "грузовой шиномонтаж (по справочнику)",
+        "мойка"
+      ],
+      "source_urls": [
+        "https://spravker.ru/volhov/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Второй публичный рабочий номер +7 950 000-03-68. Профиль тяжелых грузовиков подтвердить звонком.",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
