@@ -1,0 +1,390 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Confirm actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. Directory records require stronger evidence. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "nrtp-vyazniki",
+      "name": "Нововязниковское РТП",
+      "region": "Владимирская область",
+      "address": "Вязники, ул. Механизаторов, 90А",
+      "country": "Россия",
+      "phone": "+7 920 902-28-69",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00 (справочник)",
+      "services": [
+        "КАМАЗ",
+        "грузовой ремонт",
+        "диагностика",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://nrtp-kamaz33.ru/",
+        "https://nrtp-kamaz33.ru/service.html",
+        "https://viazniki.spravker.ru/remont-pnevmosistemy-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Профиль с сайта, телефон из справочника и карточки карты; адрес карты 90 без А, уточнить въезд. М-7.",
+      "operator_group": "nrtp-vyazniki",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tehpomosh-nn-m7",
+      "name": "Техпомощь НН",
+      "region": "Владимирская область",
+      "address": "Гороховецкий район, М-7 Волга, 332-й км",
+      "country": "Россия",
+      "phone": "+7 920 292-56-01",
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://gorokhovets.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Проверить реальный грузовой профиль и точный въезд.",
+      "operator_group": "tehpomosh-nn-m7",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtopartner-m7",
+      "name": "Автопартнер",
+      "region": "Владимирская область",
+      "address": "Гороховецкий район, М-7 Волга, 331-й км",
+      "country": "Россия",
+      "phone": "+7 920 905-25-87",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://gorokhovets.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить профиль, часы и действующий статус.",
+      "operator_group": "avtopartner-m7",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "pmk-gorokhovets",
+      "name": "Автосервис ПМК",
+      "region": "Владимирская область",
+      "address": "Гороховец, ул. Гагарина, 36",
+      "country": "Россия",
+      "phone": "+7 920 913-30-53",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00 (справочник)",
+      "services": [
+        "ремонт тягачей (справочник)"
+      ],
+      "source_urls": [
+        "https://gorokhovets.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 920 034-59-12. Грузовой профиль требует подтверждения.",
+      "operator_group": "pmk-gorokhovets",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckservice-kstovo-stolbishchenskaya",
+      "name": "Грузовой автосервис",
+      "region": "Нижегородская область",
+      "address": "Кстово, ул. Столбищенская, 2",
+      "country": "Россия",
+      "phone": "+7 930 071-00-01",
+      "email": null,
+      "hours": "пн–пт 09:00–20:00 (справочник)",
+      "services": [
+        "грузовики",
+        "полуприцепы"
+      ],
+      "source_urls": [
+        "https://kstovo.spravker.ru/avtoservisy-avtotehcentry/gruzovoj-avtoservis1.htm"
+      ],
+      "notes": "Описание сервиса в справочнике, единственный видимый отзыв 2017 года. Проверить актуальность и оператора: в справочнике по тому же адресу Луидор Гарант.",
+      "operator_group": "truckservice-kstovo-stolbishchenskaya",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "7truckservice-kstovo",
+      "name": "7ТракСервис",
+      "region": "Нижегородская область",
+      "address": "Кстово, ул. 1 Мая, 129",
+      "country": "Россия",
+      "phone": "+7 920 070-30-02",
+      "email": "7truckservis@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "двигатели",
+        "трансмиссия",
+        "электрика",
+        "тормоза"
+      ],
+      "source_urls": [
+        "https://asktel.ru/kstovo/avtoservis/7truckservice/",
+        "https://uslugi.yandex.ru/profile/7trakservis-275496"
+      ],
+      "notes": "Доп. +7 905 866-80-76. Собственный сайт 7sts.ru не открылся. Адрес и телефон из старого справочника; грузовой профиль по бизнес-профилю, подтвердить работу.",
+      "operator_group": "7truckservice-kstovo",
+      "evidence": "directory_and_business_profile",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "danilov-atp",
+      "name": "Даниловское АТП",
+      "region": "Ярославская область",
+      "address": "Данилов, ул. Ярославская, 79",
+      "country": "Россия",
+      "phone": "+7 906 635-80-11",
+      "email": null,
+      "hours": "рабочие дни 08:00–17:00, обед 12:00–13:00 (сайт)",
+      "services": [
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "электрика",
+        "ходовая",
+        "кузов",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://www.danilov-atp.ru/service/show/7-tehnicheskoe-obsluzhivanie-i-remont-gruzovyh-avtomobilej-i-avtobusov/"
+      ],
+      "notes": "Прямой контакт консультации по ремонту; доп. +7 48538 5-24-07. Адрес подтверждается карточкой карты. М-8.",
+      "operator_group": "danilov-atp",
+      "evidence": "first_party_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "nptrans-yaroslavl",
+      "name": "НП-ТРАНС",
+      "region": "Ярославская область",
+      "address": "Ярославль, Московское шоссе, 9-й км, стр. 6 (строение по справочнику)",
+      "country": "Россия",
+      "phone": "+7 910 978-94-91",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовики",
+        "КПП",
+        "электроника",
+        "полуприцепы"
+      ],
+      "source_urls": [
+        "https://www.nptrans.ru/index.php/kontakty",
+        "https://www.nptrans.ru/",
+        "https://mir76.ru/firms/np_trans_gruzovoy_avtoservis/"
+      ],
+      "notes": "Прямой сервис +7 4852 44-55-43; электроника +7 920 657-12-52. Сайт содержит две пары близких, но разных GPS-координат; не выбирать до сверки. График сайта и справочника различается.",
+      "operator_group": "nptrans-yaroslavl",
+      "evidence": "first_party_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "remzona-zeleny-bor",
+      "name": "RemZona",
+      "region": "Архангельская область",
+      "address": "Вельский район, пос. Зелёный Бор",
+      "country": "Россия",
+      "phone": "+7 900 911-32-47",
+      "email": null,
+      "hours": "ежедневно 08:00–22:00, обед 12:00–13:00 (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://arhangelsk.spravker.ru/gorod-velsk/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный адрес, подъезд и специализация требуют подтверждения. Район М-8.",
+      "operator_group": "remzona-zeleny-bor",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtospas-velsk",
+      "name": "Автоспас",
+      "region": "Архангельская область",
+      "address": "Вельск, ул. Тракторная, 18А",
+      "country": "Россия",
+      "phone": "+7 900 918-69-69",
+      "email": null,
+      "hours": "круглосуточно (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://arhangelsk.spravker.ru/gorod-velsk/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить работы, фактический график и прием тягачей. М-8.",
+      "operator_group": "avtospas-velsk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "avtokam-murom",
+      "name": "Автокам",
+      "region": "Владимирская область",
+      "address": "Муром, Берёзовый проезд, 7",
+      "country": "Россия",
+      "phone": "+7 920 901-85-87",
+      "email": null,
+      "hours": "ежедневно 08:00–20:00 (справочник)",
+      "services": [
+        "грузовой сервис",
+        "ТО",
+        "ремонт"
+      ],
+      "source_urls": [
+        "https://avtokam33.ru/kontakty.html",
+        "https://www.avtokam33.ru/",
+        "https://murom.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 49234 4-18-53. Страница контактов не открылась напрямую, индекс сайта и справочник совпадают. Район М-12.",
+      "operator_group": "avtokam-murom",
+      "evidence": "first_party_index_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "dalnoboyshik-murom",
+      "name": "Дальнобойщик",
+      "region": "Владимирская область",
+      "address": "Муром, Меленковское шоссе, 23Б",
+      "country": "Россия",
+      "phone": "+7 920 925-92-52",
+      "email": "sirius81@mail.ru",
+      "hours": "пн–пт 09:00–17:00, сб 09:00–14:00 (сайт)",
+      "services": [
+        "тягачи",
+        "полуприцепы",
+        "оси BPW SAF ROR",
+        "шиномонтаж",
+        "ремонт крыш"
+      ],
+      "source_urls": [
+        "https://gruzo-remont.ru/",
+        "https://murom.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 919 004-29-55 и +7 919 019-44-18. В справочнике ПетроМастер на 23А с совпадающими телефонами; не создавать дубль. Район М-12.",
+      "operator_group": "dalnoboyshik-murom",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckservice-arzamas-kalinina",
+      "name": "Автосервис грузовых автомобилей",
+      "region": "Нижегородская область",
+      "address": "Арзамас, ул. Калинина, 66",
+      "country": "Россия",
+      "phone": "+7 967 711-16-66",
+      "email": null,
+      "hours": "пн–пт 08:00–18:00, сб 08:00–14:00 (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://arzamas.spravker.ru/shinomontazh/avtoservis-gruzovyih-avtomobilej.htm"
+      ],
+      "notes": "Уточнить оператора, перечень работ и прием тяжелых тягачей. Район М-12/Р-158.",
+      "operator_group": "truckservice-arzamas-kalinina",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
