@@ -1,0 +1,418 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison of compact B/C audit and batches 23,32–37,43,47–49. Full normalized audit pending. Four Biribidzhan records based on directory categories only; require stronger truck evidence. No calls, legal or coordinate verification. Exclude repeated RUN AUTO, Rustransavto and Vostok Trak Service. Do not count mobile-only leads as physical stations.",
+  "records": [
+    {
+      "id": "b77-biro-pole",
+      "name": "Pole Position",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Шолом-Алейхема, 78",
+      "country": "Россия",
+      "phone": "+7 914 542-20-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–20:00; сб 09:00–19:00; вс 10:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Другой адрес и номер по сравнению с Штормавто на Советской 123Б; проверить отдельность филиала и грузовую оснастку.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-biro-cabby",
+      "name": "Cabby",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Пионерская, 37",
+      "country": "Россия",
+      "phone": "+7 999 061-50-74",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Проверить фактический профиль и габариты колес.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-biro-hunter",
+      "name": "Хантер",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Шолом-Алейхема, 52Б",
+      "country": "Россия",
+      "phone": "+7 914 164-20-90",
+      "additional_phones": [
+        "+7 924 642-39-97"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 10:00–16:00",
+      "services": [
+        "диагностика грузовых автомобилей (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Прием тяжелых грузовиков не доказан; проверить оборудование.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-biro-autostolitsa",
+      "name": "АвтоСТОлица",
+      "region": "Еврейская автономная область",
+      "address": "Биробиджан, ул. Пионерская, 62Г",
+      "country": "Россия",
+      "phone": "+7 924 641-22-23",
+      "additional_phones": [
+        "+7 42622 2-60-60",
+        "+7 924 641-85-18"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб 09:00–16:00; перерыв 13:00–14:00",
+      "services": [
+        "диагностика грузовых автомобилей (рубрика справочника)"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить прием магистральных тягачей; соседние адреса 62Р/66Б не объединять автоматически.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-khab-shell",
+      "name": "Шелл Сервис",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Тихоокеанская, 53",
+      "country": "Россия",
+      "phone": "+7 4212 69-11-43",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ТО и ремонт грузовиков",
+        "грузовой шиномонтаж",
+        "ремонт спецтехники"
+      ],
+      "source_urls": [
+        "https://xn--27-mlcya9e.xn--p1ai/",
+        "https://xn--27-mlcya9e.xn--p1ai/uslugi/gruzovoy-ceh"
+      ],
+      "notes": "Собственный сайт; 27 постов всего по комплексу, не число грузовых постов. Грузовую мойку и эвакуацию фур уточнить.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-topolevo-box",
+      "name": "Грузовой бокс",
+      "region": "Хабаровский край",
+      "address": "с. Тополево, ул. Перспективная, 1",
+      "country": "Россия",
+      "phone": "+7 914 772-88-00",
+      "additional_phones": [
+        "+7 4212 25-88-00"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "ремонт грузовиков и прицепов",
+        "двигатели",
+        "рулевое управление",
+        "ступицы",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://remontgruzovikov-dv.ru/"
+      ],
+      "notes": "Сайт указывает ООО АВТОРОДЕО, ИНН 2720058537; статус ФНС не проверен. Отличается от ДВ Сервис и Транссервис по адресу.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-khab-sonikauto",
+      "name": "SONIKAUTO",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, Воронежское шоссе, 178",
+      "country": "Россия",
+      "phone": "+7 914 410-40-00",
+      "additional_phones": [
+        "+7 914 411-30-00"
+      ],
+      "email": "sales@sonik-auto.ru",
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и полуприцепов",
+        "КПП",
+        "ТНВД",
+        "автоэлектрика",
+        "выездной сервис",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://sonik-auto.ru/pages/2"
+      ],
+      "notes": "Второй номер — мойка; сайт заявляет круглосуточность мойки, не всего ремонта. Бокс 30 м, ворота 4×4,4 м. Одна площадка с несколькими услугами.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b77-mirnoe-soniktrans",
+      "name": "Сониктранс",
+      "region": "Хабаровский край",
+      "address": "Хабаровский район, с. Мирное, пер. Солнечный, 6",
+      "country": "Россия",
+      "phone": "8 800 511-73-86",
+      "additional_phones": [
+        "+7 924 311-60-20"
+      ],
+      "email": "sc@kamazdv.ru",
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт спецтехники",
+        "выездной сервис"
+      ],
+      "source_urls": [
+        "https://soniktrans.ru/service-and-spare-parts/"
+      ],
+      "notes": "Контакты сети общие, почта сервиса. Другой филиал в Комсомольске-на-Амуре оставить на следующий пакет.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Престиж",
+      "address": "Облучье, ул. Партизанская, 10",
+      "phone": "+7 914 015-55-55",
+      "source_urls": [
+        "https://obluche.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://obluche.spravker.ru/remont-mototekhniki/"
+      ],
+      "reason": "Номер опубликован, каталог относит к грузовым СТО, но индивидуальный профиль и прием тяжелых машин не доказаны."
+    },
+    {
+      "name": "Автосервис",
+      "address": "Облучье, ул. Районная, 92",
+      "source_urls": [
+        "https://obluche.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Нет телефона и доказательства грузовой оснастки."
+    },
+    {
+      "name": "Айк",
+      "address": "Облучье, ул. Ключевая, 98",
+      "source_urls": [
+        "https://obluche.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Нет телефона, грузовой профиль не подтвержден."
+    },
+    {
+      "name": "Автосервис",
+      "address": "Облучье, ул. Ключевая, 128",
+      "source_urls": [
+        "https://obluche.jsprav.ru/tsentryi-po-remontu-gruzovyih-avtomobilej/"
+      ],
+      "reason": "Нет телефона и доказательства приема фур."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Облучье, ул. Ключевая, 102",
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/obluche"
+      ],
+      "reason": "Нет телефона и подтверждения грузового профиля."
+    },
+    {
+      "name": "ООО Шофёры",
+      "address": "Архара (регион выдачи агрегатора, не подтвержденный адрес)",
+      "source_urls": [
+        "https://uslugi.yandex.ru/11373-arhara/category/remont-avto/shinomontazh-gruzovyh-avtomobilej--4881"
+      ],
+      "reason": "Нет подтвержденной физической площадки в Архаре и прямого делового номера."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Биробиджан, ул. Техническая, 29",
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Автомойка и шиномонтаж",
+      "address": "Биробиджан, ул. Миллера, 17Г",
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона; грузовой профиль мойки не подтвержден."
+    },
+    {
+      "name": "Evrasia avtotrio",
+      "address": "Хабаровск, ул. Шкотова, 13/1",
+      "phone": "+7 914 179-36-62",
+      "additional_phones": [
+        "8 800 250-01-20"
+      ],
+      "email": "evrasia.avtotrio@mail.ru",
+      "source_urls": [
+        "https://urbanplaces.su/ru_habarovskij-kraj/habarovsk-gorodskoj-okrug-habarovsk/card-70000001061092925-evrasia-avtotrio"
+      ],
+      "reason": "Выездной грузовой ремонт 24/7 заявлен в каталоге; уточнить, является ли адрес стационарной ремонтной площадкой или офисом."
+    },
+    {
+      "name": "Кузовной грузовой госпиталь",
+      "address": "Хабаровск",
+      "source_urls": [
+        "https://xn--b1adjlawbcpso.xn--p1ai/"
+      ],
+      "reason": "Заявлен ремонт кабин, рам и прицепов, сайт при открытии 502; точные контакты не получены."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Олимп",
+      "batch": 23,
+      "additional_phones": [
+        "+7 42622 2-42-02"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Дополнительный контакт, не новая площадка."
+    },
+    {
+      "name": "Штормавто — Поул Позишн",
+      "batch": 23,
+      "additional_phones": [
+        "+7 914 640-44-54"
+      ],
+      "source_urls": [
+        "https://birobijan.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Дополнительный контакт, не новая площадка."
+    }
+  ]
+}
