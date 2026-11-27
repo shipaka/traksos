@@ -1,0 +1,625 @@
+{
+  "schema": "sto-legal-audit-stage04-v1",
+  "date": "2026-11-27",
+  "mode": "audit_only",
+  "parent": "docs/research/STO_LEGAL_AUDIT_STAGE03_2026-11-27.json",
+  "metrics": {
+    "existing_queue": 192,
+    "reviewed_current_stage": 8,
+    "strong_matches_current_stage": 1,
+    "ambiguous_current_stage": 4,
+    "unidentified_current_stage": 3,
+    "unique_inn_queue": 29,
+    "linked_cards_with_candidate_inn": 30,
+    "invalid_registration_numbers": 0,
+    "fns_confirmed": 0,
+    "publication_ready": 0
+  },
+  "records": [
+    {
+      "legal_name": "ООО СП ТРАНСМИШН",
+      "inn": "7816373183",
+      "registration_number": "1057812457416",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "primary_okved": "45.20",
+      "sources": [
+        "https://spectransmission.ru/kontaktyi.html",
+        "https://companies.rbc.ru/okved/45.20/23/",
+        "https://xfirm.ru/company/7816373183"
+      ],
+      "notes": "Both identifiers published by operator, workshop and registry addresses correspond. Third-party catalog reports active; official FNS extract not retrieved.",
+      "record_id": "b52-sp-transmission",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "name": "СП Трансмишн",
+      "address": "Санкт-Петербург, Южное шоссе, 37, корп. 1Б",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "needs_review",
+      "candidates": [
+        {
+          "legal_name": "ООО ГУДВИЛ ЗАПЧАСТИ",
+          "inn": "7820321290",
+          "registration_number": "1107847129720"
+        },
+        {
+          "legal_name": "ООО ГУДВИЛ ХОЛДИНГ",
+          "inn": "7820300501",
+          "registration_number": "1047855030101"
+        }
+      ],
+      "sources": [
+        "https://www.gwindustrial.ru/legal",
+        "https://www.truck.ru/page/o-kompanii",
+        "https://companies.rbc.ru/id/1047855030101-ooo-obschestvo-s-ogranichennoj-otvetstvennostyu-gudvil-holding/"
+      ],
+      "notes": "Same address, competing legal names; public site footer even contains a conflicting OGRN 1103847129720. Do not assign until actual repair contracting entity established.",
+      "record_id": "goodwill-pushkin",
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "name": "Гудвил Холдинг",
+      "address": "Пушкин, Автомобильная ул., 4, лит. А3",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "needs_review",
+      "candidates": [
+        {
+          "legal_name": "ООО ТРАНСХАБ",
+          "inn": "7810843562",
+          "registration_number": "1117847434781"
+        },
+        {
+          "legal_name": "ООО ТРАНСХАБ-СЕРВИС",
+          "inn": "4705090265",
+          "registration_number": "1214700005684",
+          "third_party_status": "active_reported",
+          "third_party_status_date": "2026-07-14"
+        }
+      ],
+      "sources": [
+        "https://trans-hub.ru/",
+        "https://www.rusprofile.ru/id/5880952",
+        "https://companies.rbc.ru/id/1214700005684-obschestvo-s-ogranichennoj-otvetstvennostyu-transhab-servis/",
+        "https://reputation.ru/ogrn/1214700005684"
+      ],
+      "notes": "Website verifies advertised repair complex, but two potential operators at address; service company shares domain email, not sufficient to establish contracting entity.",
+      "record_id": "transhub-bolshie-kolpany",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "ТрансХаб",
+      "address": "Гатчинский округ, д. Большие Колпаны, Киевское шоссе, 53 км, 2, к. 1",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "needs_review",
+      "candidates": [
+        {
+          "legal_name": "ООО КСАВТОСТАРТ",
+          "inn": "7810539121",
+          "registration_number": "1087847006521"
+        }
+      ],
+      "sources": [
+        "https://starter-remont.ru/contacts/",
+        "https://firmalyze.ru/inn/7810539121"
+      ],
+      "notes": "Both branches listed by site with distinct business phones. Third party associates domain with company; own site retrieved without legal identifiers. Not sufficient to assign operator.",
+      "record_id": "b52-starter-mitrofanevskoe",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "name": "Стартеры и Генераторы — Митрофаньевское",
+      "address": "Санкт-Петербург, Митрофаньевское шоссе, 5Е",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "needs_review",
+      "candidates": [
+        {
+          "legal_name": "ООО КСАВТОСТАРТ",
+          "inn": "7810539121",
+          "registration_number": "1087847006521"
+        }
+      ],
+      "sources": [
+        "https://starter-remont.ru/contacts/",
+        "https://firmalyze.ru/inn/7810539121"
+      ],
+      "notes": "Both branches listed by site with distinct business phones. Third party associates domain with company; own site retrieved without legal identifiers. Not sufficient to assign operator.",
+      "record_id": "b52-starter-luzhskaya",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "name": "Стартеры и Генераторы — Лужская",
+      "address": "Санкт-Петербург, ул. Лужская, 3",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "not_established",
+      "sources": [
+        "https://comtran.ru/contact.html",
+        "https://comtran.ru/remont-tnvd.html"
+      ],
+      "notes": "Address and diesel repair profile confirmed on own site, legal operator not established.",
+      "record_id": "b52-comtran-fuchika",
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "name": "КОМТРАН",
+      "address": "Санкт-Петербург, ул. Фучика, 8",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "not_established",
+      "sources": [
+        "https://www.svarka-pravka.ru/map/"
+      ],
+      "notes": "Website identifies repair profile and Blagodatnaya address; operator and second location not established from retrieved page.",
+      "record_id": "remtrans-blagodatnaya",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "РемТрансСервис — Благодатная",
+      "address": "Благодатная ул., 65Ж",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "operator_match": "not_established",
+      "sources": [
+        "https://www.svarka-pravka.ru/map/"
+      ],
+      "notes": "Website identifies repair profile and Blagodatnaya address; operator and second location not established from retrieved page.",
+      "record_id": "remtrans-gruzovoy",
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "name": "РемТрансСервис — Грузовой проезд",
+      "address": "Грузовой проезд, 13Г1 (в тексте сайта также 13Ж)",
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    }
+  ],
+  "official_access": {
+    "individual_url": "https://egrul.nalog.ru/",
+    "integration_url": "https://www.nalog.gov.ru/rn77/service/egrip2/access_order/",
+    "result": "Public search form accessible, no individual extract obtained. Registry connector search yielded no matching provider.",
+    "annual_subscription_rub_per_registry": 150000,
+    "snapshot_rub_per_registry": 50000,
+    "update_rub_per_registry": 5000,
+    "decision": "No purchases or access requests made. Prefer individual free extracts for one-time review; paid access requires user authorization."
+  },
+  "registry_queue": [
+    {
+      "inn": "2703096300",
+      "registration_number": "1182724005991",
+      "legal_name": "ООО МОТОР",
+      "linked_cards": [
+        {
+          "record_id": "b78-motor",
+          "operator_match": "pending"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "2720058537",
+      "registration_number": "1182724004540",
+      "legal_name": "ООО АВТОРОДЕО",
+      "linked_cards": [
+        {
+          "record_id": "b77-topolevo-box",
+          "operator_match": "needs_review"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "4703081890",
+      "registration_number": "1054700108990",
+      "legal_name": "ООО ТЦ ВОСТОК",
+      "linked_cards": [
+        {
+          "record_id": "tc-vostok-korkinskaya",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "4704055998",
+      "registration_number": "1044700874580",
+      "legal_name": "ООО ГЛОБАЛ ТРАК СЕРВИС АЛЬЯНС",
+      "linked_cards": [
+        {
+          "record_id": "gts-vyborg",
+          "operator_match": "needs_review"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "4705090265",
+      "registration_number": "1214700005684",
+      "legal_name": "ООО ТРАНСХАБ-СЕРВИС",
+      "linked_cards": [
+        {
+          "record_id": "transhub-bolshie-kolpany",
+          "operator_match": "candidate_only"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "470806496140",
+      "registration_number": "320470400085107",
+      "legal_name": "ИП Шашин Антон Юрьевич",
+      "linked_cards": [
+        {
+          "record_id": "7detalei-shushary",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "4716040379",
+      "registration_number": "1154716000295",
+      "legal_name": "ООО ТРИА СЕВЕРО-ЗАПАД",
+      "linked_cards": [
+        {
+          "record_id": "tria-fedorovskoe",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "5321095500",
+      "registration_number": "1045300260367",
+      "legal_name": "ООО ПРОМТРАНС",
+      "linked_cards": [
+        {
+          "record_id": "promtrans-novgorod",
+          "operator_match": "pending"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "5321204478",
+      "registration_number": "1205300004260",
+      "legal_name": "ООО БЕЛАВТО",
+      "linked_cards": [
+        {
+          "record_id": "belauto-novgorod",
+          "operator_match": "pending"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "6670509524",
+      "registration_number": null,
+      "legal_name": null,
+      "linked_cards": [
+        {
+          "record_id": "b82-ek-azimut",
+          "operator_match": "pending"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "6671052150",
+      "registration_number": null,
+      "legal_name": null,
+      "linked_cards": [
+        {
+          "record_id": "b82-ek-rado",
+          "operator_match": "pending"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7802671743",
+      "registration_number": "1187847212013",
+      "legal_name": "ООО АРТАВТО ТРАК",
+      "linked_cards": [
+        {
+          "record_id": "avto-trak-parnas",
+          "operator_match": "preliminary"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7805816482",
+      "registration_number": "1247800067877",
+      "legal_name": "ООО АМГ СЕРВИС",
+      "linked_cards": [
+        {
+          "record_id": "amg-sofiyskaya",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7806627745",
+      "registration_number": "1257800034073",
+      "legal_name": "ООО ТРАК СП",
+      "linked_cards": [
+        {
+          "record_id": "trucksp-vsevolozhsk",
+          "operator_match": "needs_review"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7810539121",
+      "registration_number": "1087847006521",
+      "legal_name": "ООО КСАВТОСТАРТ",
+      "linked_cards": [
+        {
+          "record_id": "b52-starter-mitrofanevskoe",
+          "operator_match": "candidate_only"
+        },
+        {
+          "record_id": "b52-starter-luzhskaya",
+          "operator_match": "candidate_only"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7810843562",
+      "registration_number": "1117847434781",
+      "legal_name": "ООО ТРАНСХАБ",
+      "linked_cards": [
+        {
+          "record_id": "transhub-bolshie-kolpany",
+          "operator_match": "candidate_only"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7811103031",
+      "registration_number": "1037825001653",
+      "legal_name": "ООО БАЛТКАМ СЕРВИС",
+      "linked_cards": [
+        {
+          "record_id": "baltkam-kolpino",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7811263028",
+      "registration_number": "1157847429222",
+      "legal_name": "ООО СКАНТРАК",
+      "linked_cards": [
+        {
+          "record_id": "scantruck-upper5",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7811789357",
+      "registration_number": "1237800080066",
+      "legal_name": "ООО РС ТРАК СЕРВИС",
+      "linked_cards": [
+        {
+          "record_id": "rs-truck-novosergievka",
+          "operator_match": "pending"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7813637825",
+      "registration_number": "1197847170223",
+      "legal_name": "ООО МЕГАЛИТ",
+      "linked_cards": [
+        {
+          "record_id": "truck78-novosergievka",
+          "operator_match": "needs_review"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7816373183",
+      "registration_number": "1057812457416",
+      "legal_name": "ООО СП ТРАНСМИШН",
+      "linked_cards": [
+        {
+          "record_id": "b52-sp-transmission",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7816572975",
+      "registration_number": "1137847410370",
+      "legal_name": "ООО АВТОДИЗЕЛЬ",
+      "linked_cards": [
+        {
+          "record_id": "avtodizel-sinyavino",
+          "operator_match": "needs_review"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7819018959",
+      "registration_number": "1027808911008",
+      "legal_name": "ООО ДИСКАВЕРИ",
+      "linked_cards": [
+        {
+          "record_id": "discado-pushkin",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7820300501",
+      "registration_number": "1047855030101",
+      "legal_name": "ООО ГУДВИЛ ХОЛДИНГ",
+      "linked_cards": [
+        {
+          "record_id": "goodwill-pushkin",
+          "operator_match": "candidate_only"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7820314215",
+      "registration_number": "1089847116039",
+      "legal_name": "ООО ЮНАЙТЕДСЕРВИС",
+      "linked_cards": [
+        {
+          "record_id": "unitedservice-poselkovaya",
+          "operator_match": "strong"
+        },
+        {
+          "record_id": "unitedservice-badaevskiy19",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7820314470",
+      "registration_number": "1089847142219",
+      "legal_name": "ООО АВТОБУЛЛ",
+      "linked_cards": [
+        {
+          "record_id": "autobull-moskovskoe165",
+          "operator_match": "preliminary"
+        },
+        {
+          "record_id": "autobull-moskovskoe271",
+          "operator_match": "preliminary"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7820321290",
+      "registration_number": "1107847129720",
+      "legal_name": "ООО ГУДВИЛ ЗАПЧАСТИ",
+      "linked_cards": [
+        {
+          "record_id": "goodwill-pushkin",
+          "operator_match": "candidate_only"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7825127120",
+      "registration_number": "1037843022579",
+      "legal_name": "ООО МБ ТРАКС СПБ",
+      "linked_cards": [
+        {
+          "record_id": "mb-trucks-spb",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    },
+    {
+      "inn": "7838107080",
+      "registration_number": "1227800099196",
+      "legal_name": "ООО АВТОКОНСТАНТА 78",
+      "linked_cards": [
+        {
+          "record_id": "autoconstanta78",
+          "operator_match": "strong"
+        }
+      ],
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "publication_ready": false
+    }
+  ],
+  "policy": "Unique INN is the unit of registry verification, location is separate. Candidate-only links cannot establish operator identity. Never import an official active status without actual official evidence. No map publishing or new organizations."
+}
