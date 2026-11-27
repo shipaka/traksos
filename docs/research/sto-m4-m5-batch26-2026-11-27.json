@@ -1,0 +1,322 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify actual operation, legal operator, truck capability, coordinates, reuse rights, duplicates and admin approval. Directory records require stronger evidence. No calls or FNS extracts. No automated outreach.",
+  "records": [
+    {
+      "id": "truck136-losevo",
+      "name": "Truck136",
+      "region": "Воронежская область",
+      "address": "с. Лосево, просп. Революции, 57",
+      "country": "Россия",
+      "phone": "+7 910 738-00-11",
+      "email": null,
+      "hours": "круглосуточно (заявлено сайтом)",
+      "services": [
+        "тягачи",
+        "прицепы",
+        "выездной ремонт",
+        "электрика",
+        "шиномонтаж",
+        "ДВС",
+        "КПП"
+      ],
+      "source_urls": [
+        "https://truck136.ru/"
+      ],
+      "notes": "М-4. Собственный сайт, приемка и выезд по региону заявлены круглосуточно.",
+      "operator_group": "truck136-losevo",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "alfa-don-pavlovsk",
+      "name": "Альфа Дон",
+      "region": "Воронежская область",
+      "address": "Павловск, ул. Строительная, 42А",
+      "country": "Россия",
+      "phone": "8 800 100-72-20",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "шиномонтаж",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://alfa-don.clients.site/"
+      ],
+      "notes": "М-4. Бизнес-страница Яндекса; уточнить часы и непосредственный номер СТО.",
+      "operator_group": "alfa-don-pavlovsk",
+      "evidence": "business_hosted_page",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sto-galkino-m4",
+      "name": "Грузовой сервис Галкино",
+      "region": "Воронежская область",
+      "address": "Рамонский район, с. Галкино, ул. Дорожная, 29, М-4 480-й км",
+      "country": "Россия",
+      "phone": "+7 903 850-82-63",
+      "email": null,
+      "hours": "ежедневно 09:00–24:00",
+      "services": [
+        "тягачи",
+        "прицепы",
+        "американские, европейские, китайские грузовики",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://sto-galkino.ru/",
+        "https://sto-galkino.ru/kontakty.html"
+      ],
+      "notes": "Доп. +7 920 423-15-40. Почта не видна в открытом тексте страницы.",
+      "operator_group": "sto-galkino-m4",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckservice-syzran",
+      "name": "Truck Service",
+      "region": "Самарская область",
+      "address": "Сызрань, ул. Гаражная, 48",
+      "country": "Россия",
+      "phone": "+7 987 959-00-06",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_samarskaya-oblast/syizran-gorodskoj-okrug-syizran/category-remont-gruzovyih-avtomobilej",
+        "https://sizran.esbd.ru/autoservice"
+      ],
+      "notes": "На том же адресе справочники указывают М5-Сервис/придорожный комплекс, оператор и въезд не установлены; не добавлять второй объект до проверки.",
+      "operator_group": "truckservice-syzran",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "volvo63-syzran",
+      "name": "Volvo 63",
+      "region": "Самарская область",
+      "address": "Сызрань, ул. Кадровая, 16",
+      "country": "Россия",
+      "phone": "+7 927 212-48-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://urbanplaces.su/ru_samarskaya-oblast/syizran-gorodskoj-okrug-syizran/category-remont-gruzovyih-avtomobilej"
+      ],
+      "notes": "Название не подтверждает официальный дилерский статус; уточнить работы.",
+      "operator_group": "volvo63-syzran",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sokol-kuznetsk",
+      "name": "Сокол",
+      "region": "Пензенская область",
+      "address": "Кузнецк, ул. Стекловская, 102",
+      "country": "Россия",
+      "phone": "+7 927 368-40-00",
+      "email": null,
+      "hours": "пн–пт 09:00–17:00, перерыв 13:00–14:00, сб 09:00–13:00 (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://kuznetsk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://avtoservis-gid.ru/komp/sokol-kuznetsk/"
+      ],
+      "notes": "М-5. Тоннаж и перечень работ уточнить.",
+      "operator_group": "sokol-kuznetsk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "motorservice-kuznetsk",
+      "name": "Моторсервис",
+      "region": "Пензенская область",
+      "address": "Кузнецк, ул. Октябрьская, 3Г",
+      "country": "Россия",
+      "phone": "+7 927 364-63-89",
+      "email": null,
+      "hours": "пн–пт 08:00–17:00 (справочник)",
+      "services": [
+        "ремонт тягачей (справочник)"
+      ],
+      "source_urls": [
+        "https://kuznetsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить профиль и прием тяжелых тягачей.",
+      "operator_group": "motorservice-kuznetsk",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "u-andreya-m5",
+      "name": "У Андрея",
+      "region": "Челябинская область",
+      "address": "Ашинский район, М-5 Урал, 1595-й км",
+      "country": "Россия",
+      "phone": "+7 919 327-01-00",
+      "email": null,
+      "hours": "пн–сб 09:00–18:00 (справочник)",
+      "services": [
+        "грузовой ремонт (справочник)"
+      ],
+      "source_urls": [
+        "https://sim.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 982 274-16-07. Точный въезд уточнить.",
+      "operator_group": "u-andreya-m5",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "stodorog-ustkatav",
+      "name": "СтоДорог",
+      "region": "Челябинская область",
+      "address": "Усть-Катав, ул. Строителей, 23",
+      "country": "Россия",
+      "phone": "+7 919 337-65-27",
+      "email": null,
+      "hours": "ежедневно 09:00–19:00 (справочник)",
+      "services": [
+        "обслуживание грузовиков (справочник)"
+      ],
+      "source_urls": [
+        "https://ust-katav.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 999 581-24-06. Проверить профиль.",
+      "operator_group": "stodorog-ustkatav",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "ref-m5-785",
+      "name": "Ремонт рефрижераторов и отопителей — М-5",
+      "region": "Ульяновская область",
+      "address": "Николаевский район, М-5 Урал, 785-й км",
+      "country": "Россия",
+      "phone": "+7 951 298-08-98",
+      "email": null,
+      "hours": "ежедневно 09:00–20:00 (справочник)",
+      "services": [
+        "рефрижераторы",
+        "кондиционеры",
+        "автономные отопители (справочник)"
+      ],
+      "source_urls": [
+        "https://kuznetsk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Доп. +7 987 510-95-96. Специализированная мастерская, не универсальное СТО.",
+      "operator_group": "ref-m5-785",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "truckservice-elets-lomonosova",
+      "name": "Грузовой автосервис — Ломоносова",
+      "region": "Липецкая область",
+      "address": "Елец, ул. Ломоносова, 21",
+      "country": "Россия",
+      "phone": "+7 915 552-05-38",
+      "email": null,
+      "hours": "пн–сб круглосуточно (справочник)",
+      "services": [
+        "грузовой ремонт",
+        "выездная помощь (справочник)"
+      ],
+      "source_urls": [
+        "https://elets.spravker.ru/vyezdnye-gruzovye-avtoservisy/"
+      ],
+      "notes": "Доп. +7 904 290-01-81, +7 919 254-06-64. Подтвердить график и профиль.",
+      "operator_group": "truckservice-elets-lomonosova",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
