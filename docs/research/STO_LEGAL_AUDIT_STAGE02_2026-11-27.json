@@ -1,0 +1,3281 @@
+{
+  "schema": "sto-legal-audit-stage02-v1",
+  "date": "2026-11-27",
+  "mode": "audit_only",
+  "parent": "docs/research/STO_LEGAL_AUDIT_STAGE01_2026-11-27.json",
+  "official_access": {
+    "url": "https://egrul.nalog.ru/",
+    "result": "Official search form accessible via read-only web; no individual extract obtained; direct runtime DNS lookup failed. Do not treat third-party information as direct FNS verification.",
+    "integration_info": "https://www.nalog.gov.ru/rn77/service/egrip2/access_order/"
+  },
+  "metrics": {
+    "new_queue": 161,
+    "prior_queue": 31,
+    "total_queue": 192,
+    "researched_prior_records": 8,
+    "new_identifier_candidates": 6,
+    "strong_operator_matches": 4,
+    "third_party_active_reports": 4,
+    "exact_normalized_address_groups": 0,
+    "invalid_prior_identifiers": 0,
+    "fns_confirmed": 0,
+    "publication_ready": 0
+  },
+  "updates_to_stage01": [
+    {
+      "record_id": "mb-trucks-spb",
+      "legal_name": "ООО МБ ТРАКС СПБ",
+      "inn": "7825127120",
+      "ogrn": "1037843022579",
+      "primary_okved": "45.20",
+      "operator_match": "strong",
+      "third_party_status": "not_established",
+      "urls": [
+        "https://spbmb.ru/company/requisites/",
+        "https://companies.rbc.ru/id/1037843022579-ooo-mb-traks-spb/"
+      ],
+      "note": "Own site confirms legal and actual address, identifiers and corporate contacts; RBC reports main OKVED. No official FNS extract obtained.",
+      "source_file": "sto-spb-lo-batch01-2026-11-27.json",
+      "inn_checksum_valid": true,
+      "ogrn_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "avto-trak-parnas",
+      "legal_name": "ООО АРТАВТО ТРАК",
+      "inn": "7802671743",
+      "ogrn": "1187847212013",
+      "operator_match": "preliminary",
+      "third_party_status": "active_reported",
+      "urls": [
+        "https://autotruck.spb.ru/contact/",
+        "https://check.tochka.com/date/27-07-2018/",
+        "https://xfirm.ru/company/7802671743"
+      ],
+      "note": "Site names operator and workshop, bank index reports active entity; legal address differs from workshop; site has conflicting hours.",
+      "source_file": "sto-spb-lo-batch01-2026-11-27.json",
+      "inn_checksum_valid": true,
+      "ogrn_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "baltkam-kolpino",
+      "legal_name": "ООО БАЛТКАМ СЕРВИС",
+      "inn": "7811103031",
+      "ogrn": "1037825001653",
+      "primary_okved": "45.31.1",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "third_party_status_date": "2026-11-14",
+      "urls": [
+        "https://www.baltkam.ru/sto",
+        "https://check.tochka.com/company/1037825001653/",
+        "https://companies.rbc.ru/id/1037825001653-ooo-baltkam-evropejskie-avto-zapchasti/",
+        "https://xfirm.ru/company/7811103031"
+      ],
+      "note": "Same operator and address; third-party source mentions notice of intent to apply for bankruptcy of a debtor; this wording alone does not establish that Baltkam Service itself is in bankruptcy. Check notice role and current status separately.",
+      "risk_review": true,
+      "source_file": "sto-spb-lo-batch01-2026-11-27.json",
+      "inn_checksum_valid": true,
+      "ogrn_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "tria-fedorovskoe",
+      "legal_name": "ООО ТРИА СЕВЕРО-ЗАПАД",
+      "inn": "4716040379",
+      "ogrn": "1154716000295",
+      "primary_okved": "45.20.2",
+      "operator_match": "strong",
+      "third_party_status": "not_established",
+      "urls": [
+        "https://saby.ru/profile/4716040379-471601001",
+        "https://companies.rbc.ru/id/1154716000295-ooo-tria-severo-zapad/",
+        "https://fedorovskoe.rabota.ru/company/tria-severo-zapad1/"
+      ],
+      "note": "Address, name and domain agree; financial data for 2025 are not a current official legal status.",
+      "source_file": "sto-spb-lo-batch01-2026-11-27.json",
+      "inn_checksum_valid": true,
+      "ogrn_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "trucksp-vsevolozhsk",
+      "legal_name": "ООО ТРАК СП",
+      "inn": "7806627745",
+      "ogrn": "1257800034073",
+      "primary_okved": "45.20",
+      "operator_match": "needs_review",
+      "third_party_status": "active_reported",
+      "third_party_status_date": "2026-11-27",
+      "urls": [
+        "https://truckspb.ru/kontakty",
+        "https://xfirm.ru/company/7806627745"
+      ],
+      "note": "Same brand and repair profile but legal address differs, domain/email not exact match; registered 2025 while website existed earlier. Do not bind operator until confirmed.",
+      "source_file": "sto-spb-lo-batch01-2026-11-27.json",
+      "inn_checksum_valid": true,
+      "ogrn_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "tc-vostok-korkinskaya",
+      "legal_name": "ООО ТЦ ВОСТОК",
+      "inn": "4703081890",
+      "ogrn": "1054700108990",
+      "operator_match": "strong",
+      "third_party_status": "active_reported",
+      "urls": [
+        "https://tc-v.ru/contacts/",
+        "https://tcv-parts.ru/kontakty",
+        "https://check.tochka.com/date/11-11-2005/"
+      ],
+      "note": "Operator site publishes identifiers and matching legal/actual addresses; bank index reports active. No official FNS extract.",
+      "source_file": "sto-spb-lo-batch02-2026-11-27.json",
+      "inn_checksum_valid": true,
+      "ogrn_checksum_valid": true,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "tis-lagolovo",
+      "operator_match": "not_established",
+      "third_party_status": "not_established",
+      "urls": [
+        "https://tis-remont.ru/",
+        "https://www.upfox.ru/company/tis-grupp-1127847543383"
+      ],
+      "note": "Similar company name is not sufficient; website does not show identifiers in retrieved text. Do not assign.",
+      "source_file": "sto-spb-lo-batch01-2026-11-27.json",
+      "inn_checksum_valid": null,
+      "ogrn_checksum_valid": null,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    },
+    {
+      "record_id": "remzona47-fedorovskoe",
+      "operator_match": "not_established",
+      "third_party_status": "not_established",
+      "urls": [
+        "https://remzona47.ru/",
+        "https://remzona47.ru/about_us"
+      ],
+      "note": "Workshop and repair service identified; operator not established in retrieved text.",
+      "source_file": "sto-spb-lo-batch02-2026-11-27.json",
+      "inn_checksum_valid": null,
+      "ogrn_checksum_valid": null,
+      "fns_status": "pending",
+      "fns_extract_ref": null,
+      "fns_checked_at": null,
+      "legal_status_verified": false,
+      "publication_ready": false
+    }
+  ],
+  "new_queue": [
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "amg-sofiyskaya",
+      "name": "АМГ-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 149, стр. 3",
+      "phone": "+7 812 565-34-46",
+      "operator_group": "amg-sofiyskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://amg-truck.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "autoconstanta78",
+      "name": "АвтоКонстанта 78",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Ленсоветовская дорога, 6, стр. 1",
+      "phone": "+7 911 205-85-86",
+      "operator_group": "autoconstanta78",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://gruzovoy-kompleks.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "transmissia-novosaratovka",
+      "name": "Трансмиссия — грузовой автосервис",
+      "region": "Ленинградская область",
+      "address": "Всеволожский район, д. Новосаратовка, 40",
+      "phone": "+7 812 425-64-71",
+      "operator_group": "transmissia-novosaratovka",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://rem-transmissia.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "remtrans-blagodatnaya",
+      "name": "РемТрансСервис — Благодатная",
+      "region": "Санкт-Петербург",
+      "address": "Благодатная ул., 65Ж",
+      "phone": "+7 931 393-65-39",
+      "operator_group": "remtransservice-spb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://svarka-pravka.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "remtrans-gruzovoy",
+      "name": "РемТрансСервис — Грузовой проезд",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой проезд, 13Г1 (в тексте сайта также 13Ж)",
+      "phone": "+7 931 393-65-39",
+      "operator_group": "remtransservice-spb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://svarka-pravka.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "scantruck-upper5",
+      "name": "СканТрак",
+      "region": "Санкт-Петербург",
+      "address": "5-й Верхний проезд, 15",
+      "phone": "+7 921 784-76-66",
+      "operator_group": "scantruck-upper5",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://scantruck.spb.ru/o-kompanii",
+        "https://scantruck.spb.ru/kontakty"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "transhub-bolshie-kolpany",
+      "name": "ТрансХаб",
+      "region": "Ленинградская область",
+      "address": "Гатчинский округ, д. Большие Колпаны, Киевское шоссе, 53 км, 2, к. 1",
+      "phone": "+7 921 300-66-45",
+      "operator_group": "transhub-bolshie-kolpany",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://trans-hub.ru/",
+        "https://gatchina.spravker.ru/tekhnicheskoe-obsluzhivanie-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "first_party_and_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "spesremont-fedorovskoe",
+      "name": "Спецремонт — Фёдоровское",
+      "region": "Ленинградская область",
+      "address": "Тосненский район, гп. Фёдоровское, Промышленная ул., 14",
+      "phone": "+7 812 507-61-97",
+      "operator_group": "spesremont",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://spesremont.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "tosnotrak-moskovskoe2",
+      "name": "ТосноТракСервис",
+      "region": "Ленинградская область",
+      "address": "Тосно, Московское шоссе, 2",
+      "phone": "+7 921 634-66-42",
+      "operator_group": "tosnotrak-moskovskoe2",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://urbanplaces.su/ru_leningradskaya-oblast/tosnenskij-rajon-tosno/card-1935033-tosnotrakservis"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "dvs-tech-sofiyskaya",
+      "name": "ДВС-Тех-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 201В",
+      "phone": "+7 911 782-88-01",
+      "operator_group": "dvs-tech-sofiyskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://urbanplaces.su/ru_sankt-peterburg/sankt-peterburg/card-1933867-dvs-teh-servis"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "cto-gatchina-krasnoselskoe",
+      "name": "ЦТО — Гатчина",
+      "region": "Ленинградская область",
+      "address": "Гатчина, Красносельское шоссе, 7",
+      "phone": "+7 911 274-05-79",
+      "operator_group": "cto-gatchina-krasnoselskoe",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://xn--g1aohn.xn--24-6kci4amthgkj1f.xn--80asehdb/%D0%B3%D0%B0%D1%82%D1%87%D0%B8%D0%BD%D0%B0/%D0%BE%D1%80%D0%B3%D0%B0%D0%BD%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F_%D0%A6%D1%82%D0%BE-%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D0%B2%D0%BE%D0%B9-%D0%B0%D0%B2%D1%82%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch30-2026-11-27.json",
+      "record_id": "gruztechservice-gatchina",
+      "name": "ГрузТехСервис",
+      "region": "Ленинградская область",
+      "address": "Гатчина, ул. 120-й Гатчинской Дивизии, промзона 2",
+      "phone": "+7 81371 9-43-44",
+      "operator_group": "gruztechservice-gatchina",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://kartagtn.ru/avtoservisy-gatchina",
+        "https://gatchina.yaspravka.com/gruztekhservis/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "7detalei-shushary",
+      "name": "7Деталей",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Ленина, 1",
+      "phone": "+7 812 509-37-80",
+      "operator_group": "7detalei-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.7detalei-sto.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "unitedservice-poselkovaya",
+      "name": "ЮнайтедСервис — Поселковая",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, ул. Поселковая, 7",
+      "phone": "+7 812 740-58-35",
+      "operator_group": "unitedservice-spb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://united24service.ru/",
+        "https://grunwald.ru/contacts/"
+      ],
+      "source_evidence": "first_party_and_manufacturer",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "unitedservice-badaevskiy19",
+      "name": "ЮнайтедСервис — 3-й Бадаевский",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, 3-й Бадаевский проезд, 19, стр. 2",
+      "phone": "+7 812 740-58-35",
+      "operator_group": "unitedservice-spb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://united24service.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "autobull-moskovskoe165",
+      "name": "АвтоБулл — станция 1",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 165",
+      "phone": "+7 812 325-70-70",
+      "operator_group": "autobull-spb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://autobull.ru/",
+        "https://autobull.ru/autobull"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "autobull-moskovskoe271",
+      "name": "АвтоБулл — станция 2",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 271",
+      "phone": "+7 812 325-70-70",
+      "operator_group": "autobull-spb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://autobull.ru/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "terra-truck-shushary",
+      "name": "Терра Трак",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 15, лит. В",
+      "phone": "+7 812 456-26-26",
+      "operator_group": "terra-truck-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.orgpage.ru/sankt-peterburg/terra-truck-torgovo-servisnaya-2308080.html",
+        "https://sankt-peterburg.spravochnika.ru/org/id-429073"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "gruzavto-moskovskoe233z",
+      "name": "Груз Авто Сервис Центр",
+      "region": "Санкт-Петербург",
+      "address": "пос. Ленсоветовский, Московское шоссе, 233, лит. З",
+      "phone": "+7 812 333-50-81",
+      "operator_group": "gruzavto-moskovskoe233z",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://asktel.ru/sankt-peterburg/avtoservis/gruz_avto/",
+        "https://spb.spravka.city/company/gruz-avto-zapasnye-chasti"
+      ],
+      "source_evidence": "directory_and_map",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "av-service-bronevaya",
+      "name": "АВ-сервис",
+      "region": "Санкт-Петербург",
+      "address": "Броневая ул., 6ВЕ",
+      "phone": "+7 931 363-01-01",
+      "operator_group": "av-service-bronevaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://spb.auto2.info/sankt-peterburg/av-servis-180561/",
+        "https://www.rusprofile.ru/id/11291808",
+        "https://yandex.com/maps/org/av_servis/34732427985/",
+        "https://xn--g1aohn.xn--24-6kci4amthgkj1f.xn--80asehdb/%D1%81%D0%B0%D0%BD%D0%BA%D1%82-%D0%BF%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3/%D0%BE%D1%80%D0%B3%D0%B0%D0%BD%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F_%D0%90%D0%92-%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81-%D0%B3%D1%80%D1%83%D0%B7%D0%BE%D0%B2%D0%BE%D0%B9-%D0%B0%D0%B2%D1%82%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81"
+      ],
+      "source_evidence": "directory_and_map",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "fram-service-shushary",
+      "name": "Фрам-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 82, корп. 2",
+      "phone": "+7 812 425-33-11",
+      "operator_group": "fram-service-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://yandex.com/maps/org/fram_servis/193458796908/",
+        "https://pushkin.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_and_map",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "park-service-shushary",
+      "name": "Парк-Сервис",
+      "region": "Санкт-Петербург",
+      "address": "пос. Шушары, Московское шоссе, 233, корп. 2, стр. 2",
+      "phone": "+7 921 795-93-97",
+      "operator_group": "park-service-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://spravbiz.ru/kolpino/avto/vyezdnoi-remont-gruzovikov/"
+      ],
+      "source_evidence": "directory_and_map",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "gruzsto-devyatogo21b",
+      "name": "Грузовое СТО — Обухово",
+      "region": "Санкт-Петербург",
+      "address": "просп. Девятого Января, 21Б",
+      "phone": "+7 981 736-10-63",
+      "operator_group": "gruzsto-devyatogo21b",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://urbanplaces.su/ru_sankt-peterburg/sankt-peterburg/metro-obuhovo?page=5",
+        "https://spb.spravker.ru/remont-avtoelektriki/metro-obuhovo/"
+      ],
+      "source_evidence": "directory_and_map",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-lo-priority-batch31-2026-11-27.json",
+      "record_id": "gts-gorelovo",
+      "name": "GTS Service — Горелово",
+      "region": "Ленинградская область",
+      "address": "Ломоносовский район, Виллозское поселение, южная часть промзоны Горелово, Волхонское шоссе, 5",
+      "phone": "+7 812 250-71-08",
+      "operator_group": "gts-gorelovo",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://spb.auto2.info/sankt-peterburg/gts-service-352669/"
+      ],
+      "source_evidence": "directory_and_map",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "discado-pushkin",
+      "name": "Дискавери / DISCADO",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Промышленная ул., 17, лит. З",
+      "phone": "8 800 550-43-51",
+      "operator_group": "discado-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://discado.ru/kontact"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "parts-pushkin",
+      "name": "Parts-pushkin.ru",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Сапёрная ул., 67В",
+      "phone": "+7 981 101-22-33",
+      "operator_group": "parts-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "vash-vybor-pushkin",
+      "name": "СТО ВашВыбор",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Удаловская ул., 19, корп. 2",
+      "phone": "+7 952 277-77-04",
+      "operator_group": "vash-vybor-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "ros-avtoservice-pushkin",
+      "name": "Рос-Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Промышленная ул., 19",
+      "phone": "+7 812 941-48-49",
+      "operator_group": "ros-avtoservice-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "mavinta-shushary",
+      "name": "Мавинта",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, 1-й Бадаевский проезд, 9А",
+      "phone": "+7 960 058-59-63",
+      "operator_group": "mavinta-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "nerzhavey-pushkin",
+      "name": "Не ржавей!",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Колпинское шоссе, 101",
+      "phone": "+7 929 177-97-92",
+      "operator_group": "nerzhavey-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "starterpro-pushkin",
+      "name": "СтартерПро",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, территория Павильон Урицкого, 1БИ",
+      "phone": "+7 812 903-79-02",
+      "operator_group": "starterpro-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "exclusive-shushary231",
+      "name": "Эксклюзив",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 231, корп. 5В",
+      "phone": "+7 812 305-31-42",
+      "operator_group": "exclusive-shushary231",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "petromaster-shushary",
+      "name": "ПетроМастер — Шушары",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 231, корп. 2У",
+      "phone": "+7 812 244-40-56",
+      "operator_group": "petromaster",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "petromaster-pushkin",
+      "name": "ПетроМастер — Пушкин",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Красносельское шоссе, 235",
+      "phone": "+7 812 244-40-56",
+      "operator_group": "petromaster",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "hydrotech-fedorovskoe",
+      "name": "ГидравликТехСервис",
+      "region": "Ленинградская область",
+      "address": "Фёдоровское, Шоссейная ул., 2Г, корп. 8",
+      "phone": "+7 812 240-76-25",
+      "operator_group": "hydrotech-fedorovskoe",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "avtonomki-shushary",
+      "name": "Автономки",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Железнодорожная ул., 9Б",
+      "phone": "+7 921 659-90-12",
+      "operator_group": "avtonomki-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "bodry-pushkin",
+      "name": "Бодрый Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Сетевая ул., 10Б",
+      "phone": "+7 981 859-23-45",
+      "operator_group": "bodry-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "avtosputnik-shushary",
+      "name": "Авто Спутник",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 167",
+      "phone": "+7 812 640-33-70",
+      "operator_group": "avtosputnik-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "harper-fedorovskoe",
+      "name": "ХарПер",
+      "region": "Ленинградская область",
+      "address": "Фёдоровское, 1-й Восточный проезд, 1",
+      "phone": "+7 931 211-17-19",
+      "operator_group": "harper-fedorovskoe",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://pushkin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "goodwill-pushkin",
+      "name": "Гудвил Холдинг",
+      "region": "Санкт-Петербург",
+      "address": "Пушкин, Автомобильная ул., 4, лит. А3",
+      "phone": "+7 812 324-52-46",
+      "operator_group": "goodwill-pushkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.truck.ru/service"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "navlya-prom6",
+      "name": "Навля Трак Центр — Навля",
+      "region": "Брянская область",
+      "address": "пгт Навля, Промышленная ул., 6",
+      "phone": "+7 48342 51-03-55",
+      "operator_group": "navlya-truck",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "sumotori-artem",
+      "name": "Техцентр Сумотори",
+      "region": "Приморский край",
+      "address": "Артём, Угловое, 1-я Рабочая ул., 91",
+      "phone": "+7 4232 30-20-06",
+      "operator_group": "sumotori-artem",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "serauto-kazan-m7",
+      "name": "СЭР-Авто",
+      "region": "Республика Татарстан",
+      "address": "М7 Москва–Уфа, 813-й км",
+      "phone": "+7 843 227-27-00",
+      "operator_group": "serauto-kazan-m7",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "volvotruck-kaluga",
+      "name": "Вольво Трак Центр Калуга",
+      "region": "Калужская область",
+      "address": "Калуга, Тульское шоссе, 18",
+      "phone": "+7 4842 71-46-00",
+      "operator_group": "volvotruck-kaluga",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "kamtruckservice-kamyshin",
+      "name": "КамТраксервис",
+      "region": "Волгоградская область",
+      "address": "Камышин, промзона, район завода СМИ",
+      "phone": "+7 84457 5-45-20",
+      "operator_group": "kamtruckservice-kamyshin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "avtokubem-krasnodar",
+      "name": "АвтоКубЭМ",
+      "region": "Краснодарский край",
+      "address": "Краснодар, Большевистская ул., 324",
+      "phone": "+7 861 225-87-90",
+      "operator_group": "avtokubem-krasnodar",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "eniseytruck-krasnoyarsk",
+      "name": "Енисей Трак Сервис",
+      "region": "Красноярский край",
+      "address": "Красноярск, Рейдовая ул., 58А",
+      "phone": "+7 391 295-87-01",
+      "operator_group": "eniseytruck-krasnoyarsk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "lidertruck-metallurgicheskaya",
+      "name": "ЛидерТрак — Металлургическая",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Металлургическая ул., 49",
+      "phone": "+7 8552 44-35-93",
+      "operator_group": "lidertruck-chelny",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "berestauto-nevinnomyssk",
+      "name": "БерестАвтоСервис",
+      "region": "Ставропольский край",
+      "address": "Невинномысск, Пятигорское шоссе, 3А",
+      "phone": "+7 86554 6-70-10",
+      "operator_group": "berestauto-nevinnomyssk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "rtk-tallzhino",
+      "name": "Ремонтно-Техническая Компания",
+      "region": "Кемеровская область",
+      "address": "Новокузнецкий район, станция Тальжино, Советская ул., 1",
+      "phone": "+7 3843 99-37-77",
+      "operator_group": "rtk-tallzhino",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "sibtruck-omsk209",
+      "name": "Сибирь Трак Сервис — Омск",
+      "region": "Омская область",
+      "address": "Омск, ул. 10 лет Октября, 209",
+      "phone": "+7 3812 58-58-85",
+      "operator_group": "sibtruck-omsk209",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "ivsib-omsk46e",
+      "name": "Ивсиб — Омск",
+      "region": "Омская область",
+      "address": "Омск, 2-я Солнечная ул., 46Е",
+      "phone": "+7 3812 33-12-58",
+      "operator_group": "ivsib-druzhino",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "clubauto-orel",
+      "name": "Клубавто-центр",
+      "region": "Орловская область",
+      "address": "Орёл, Московское шоссе, 175А",
+      "phone": "+7 4862 75-70-12",
+      "operator_group": "clubauto-orel",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "orentruck",
+      "name": "ОРЕНТРАК",
+      "region": "Оренбургская область",
+      "address": "Оренбург, Шоссейная ул., 30",
+      "phone": "+7 3532 52-60-52",
+      "operator_group": "orentruck",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "unipart-krasny-kolos",
+      "name": "Юнипарт-Сервис",
+      "region": "Ростовская область",
+      "address": "Аксайский район, пос. Красный Колос, Новостроевская ул., 7",
+      "phone": "+7 863 206-11-27",
+      "operator_group": "unipart-krasny-kolos",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "neis-leninakan",
+      "name": "Нейс Юг",
+      "region": "Ростовская область",
+      "address": "Мясниковский район, х. Ленинакан, Солнечная ул., 7А",
+      "phone": "+7 863 303-00-90",
+      "operator_group": "neis-leninakan",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "rusavto-ryazan",
+      "name": "РУСАВТО",
+      "region": "Рязанская область",
+      "address": "Рязань, ул. Есенина, 1Б",
+      "phone": "+7 4912 95-55-40",
+      "operator_group": "rusavto-ryazan",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "mirgruzovikov-pridorozhny",
+      "name": "Мир Грузовиков",
+      "region": "Самарская область",
+      "address": "Волжский район, пос. Придорожный, ГГ1",
+      "phone": "+7 846 979-81-91",
+      "operator_group": "mirgruzovikov-pridorozhny",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "sochitruck-kiparisovaya",
+      "name": "Сочи Трак Сервис",
+      "region": "Краснодарский край",
+      "address": "Сочи, Кипарисовая ул., 4",
+      "phone": "+7 862 227-07-77",
+      "operator_group": "sochitruck-kiparisovaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "tehservice-engineering-surgut",
+      "name": "Техсервис-Инжиниринг",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, Сосновая ул., 57",
+      "phone": "+7 3462 55-56-31",
+      "operator_group": "tehservice-engineering-surgut",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "udacha-novospasskoe",
+      "name": "Удача Трак Сервис",
+      "region": "Ульяновская область",
+      "address": "рп Новоспасское, ул. Гагарина, 58",
+      "phone": "+7 84238 2-30-08",
+      "operator_group": "udacha-novospasskoe",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "tehtrans-ufa",
+      "name": "Техтранс",
+      "region": "Республика Башкортостан",
+      "address": "Уфа, Майкопская ул., 5, АТП-3",
+      "phone": "+7 347 271-53-55",
+      "operator_group": "tehtrans-ufa",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "ferro-khabarovsk-pobedy",
+      "name": "Ферронордик Машины",
+      "region": "Хабаровский край",
+      "address": "Хабаровск, ул. Победы, 67Б",
+      "phone": "+7 4212 40-07-10",
+      "operator_group": "ferro-khabarovsk-pobedy",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "mastertruck-kremenkul",
+      "name": "Мастер Трак Сервис — Кременкуль",
+      "region": "Челябинская область",
+      "address": "пос. Кременкуль, Уральский тракт, 1",
+      "phone": "+7 351 724-30-00",
+      "operator_group": "mastertruck-kremenkul",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "altavto-barnaul",
+      "name": "Алтавто",
+      "region": "Алтайский край",
+      "address": "Барнаул, Звёздная ул., 2",
+      "phone": "+7 3852 22-32-31",
+      "operator_group": "altavto-barnaul",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "argosscan-gubkin",
+      "name": "Аргос Скан",
+      "region": "Белгородская область",
+      "address": "Губкин, промзона Южные Коробки, Транспортная ул., 6Б",
+      "phone": "+7 915 562-49-71",
+      "operator_group": "argosscan-gubkin",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "volgaavtotrade",
+      "name": "ВолгаАвтоТрейд",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Моторная ул., 34",
+      "phone": "+7 8442 430-430",
+      "operator_group": "volgaavtotrade",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "pktrucks-panteleevka",
+      "name": "ПКТракс-Сервис",
+      "region": "Калужская область",
+      "address": "Жуковский район, д. Пантелеевка, 2",
+      "phone": "+7 901 995-58-35",
+      "operator_group": "pktrucks-panteleevka",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "hydrotehavto-churilkovo",
+      "name": "СТО Гидротехавто",
+      "region": "Московская область",
+      "address": "Домодедовский округ, пос. Чурилково, 7",
+      "phone": "+7 910 401-94-92",
+      "operator_group": "hydrotehavto-churilkovo",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "hyva-podolsk",
+      "name": "Хива Русланд",
+      "region": "Московская область",
+      "address": "Подольск, Станционная ул., 22",
+      "phone": "+7 495 988-10-96",
+      "operator_group": "hyva-podolsk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "autosystems-pererva",
+      "name": "Автосистемы",
+      "region": "Москва",
+      "address": "ул. Перерва, 19, стр. 1",
+      "phone": "+7 495 662-80-09",
+      "operator_group": "autosystems-pererva",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "truck-trailer-shushary",
+      "name": "Трак энд Трейлер",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1, лит. И",
+      "phone": "+7 921 953-41-52",
+      "operator_group": "truck-trailer-shushary",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "hydroservice-saratov",
+      "name": "Гидросервис",
+      "region": "Саратовская область",
+      "address": "Саратов, Вольский тракт, 1",
+      "phone": "+7 8452 32-70-30",
+      "operator_group": "hydroservice-saratov",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "mobilehydro-chel",
+      "name": "Мобильная Гидравлика",
+      "region": "Челябинская область",
+      "address": "Челябинск, Новосельская ул., 31А, 5",
+      "phone": "+7 912 790-61-24",
+      "operator_group": "mobilehydro-chel",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "quattro-zheleznodorozhny",
+      "name": "Кваттро-Сервис",
+      "region": "Московская область",
+      "address": "Балашиха, мкр. Железнодорожный, Автозаводская ул., 36",
+      "phone": "+7 495 225-77-45",
+      "operator_group": "quattro-zheleznodorozhny",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "scania-golitsyno",
+      "name": "Скания Сервис — Голицыно",
+      "region": "Московская область",
+      "address": "Одинцовский округ, 43-й км Минского шоссе, вл. 1, корп. 1",
+      "phone": "+7 495 787-50-01",
+      "operator_group": "scania-golitsyno",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "scan-southeast-vostryakovo",
+      "name": "Скан-Юго-Восток — Домодедово",
+      "region": "Московская область",
+      "address": "Домодедово, мкр. Востряково, ул. Заборье, 2Б",
+      "phone": "+7 495 730-88-75",
+      "operator_group": "scan-southeast",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "murmanscan",
+      "name": "МурманСкан",
+      "region": "Мурманская область",
+      "address": "Мурманск, Домостроительная ул., 18",
+      "phone": "+7 8152 55-43-45",
+      "operator_group": "murmanscan",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "alfa-chelny-profilnaya",
+      "name": "Компания Альфа",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, промзона БСИ, Профильная ул., 32",
+      "phone": "+7 8552 77-82-82",
+      "operator_group": "alfa-chelny-profilnaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "commercial-transport-chel",
+      "name": "Коммерческий Транспорт",
+      "region": "Челябинская область",
+      "address": "Челябинск, ул. Артёма, 187/1",
+      "phone": "+7 351 772-44-96",
+      "operator_group": "commercial-transport-chel",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "pitstop-yaroslavl",
+      "name": "ПитСтоп",
+      "region": "Ярославская область",
+      "address": "Ярославль, Магистральная ул., 28",
+      "phone": "+7 4852 67-05-49",
+      "operator_group": "pitstop-yaroslavl",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "truckstar-volzhsky",
+      "name": "ТракСтар",
+      "region": "Волгоградская область",
+      "address": "Волжский, ул. Автодорога №6, стр. 33А",
+      "phone": "+7 8443 21-60-23",
+      "operator_group": "truckstar-volzhsky",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "zubr-volgograd",
+      "name": "Зубр",
+      "region": "Волгоградская область",
+      "address": "Волгоград, Краснополянская ул., 23",
+      "phone": "+7 8442 98-98-60",
+      "operator_group": "zubr-volgograd",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "technotrans-kurgan",
+      "name": "НПФ Технотранс",
+      "region": "Курганская область",
+      "address": "Курган, ул. Дзержинского, 6А",
+      "phone": "+7 3522 48-73-21",
+      "operator_group": "technotrans-kurgan",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "korpus-t-balashikha",
+      "name": "Корпус Т",
+      "region": "Московская область",
+      "address": "Балашиха, Кучинское шоссе, вл. 2",
+      "phone": "+7 985 233-41-64",
+      "operator_group": "korpus-t-balashikha",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "volvo-lubercy14",
+      "name": "Вольво Трак Сервис / Восток Трак Сервис",
+      "region": "Московская область",
+      "address": "Люберцы, Котельнический проезд, 14",
+      "phone": "+7 495 225-55-75",
+      "operator_group": "volvo-lubercy14",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "yugnovotech-novorossiysk",
+      "name": "Юг-Новотех",
+      "region": "Краснодарский край",
+      "address": "Новороссийск, ул. Железнодорожная петля, 1",
+      "phone": "+7 8617 60-73-12",
+      "operator_group": "yugnovotech-novorossiysk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "atp7-penza",
+      "name": "АТП-7",
+      "region": "Пензенская область",
+      "address": "Пенза, ул. Металлистов, 7А",
+      "phone": "+7 8412 32-13-23",
+      "operator_group": "atp7-penza",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "velikan-rostov",
+      "name": "Великан-Ростов Сервис",
+      "region": "Ростовская область",
+      "address": "1-й км автодороги Ростов–Новошахтинск, стр. 5/7",
+      "phone": "+7 863 203-77-98",
+      "operator_group": "velikan-rostov",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "ikartruck-saratov",
+      "name": "Икар-Трак",
+      "region": "Саратовская область",
+      "address": "Саратов, ул. Аэропорт, 20",
+      "phone": "+7 8452 55-79-55",
+      "operator_group": "ikartruck-saratov",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "termez-surgut",
+      "name": "УРЦ Термез",
+      "region": "ХМАО — Югра",
+      "address": "Сургут, Нижневартовское шоссе, 4",
+      "phone": "+7 3462 21-21-92",
+      "operator_group": "termez-surgut",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "pritsepservice-tver",
+      "name": "ПрицепСервис",
+      "region": "Тверская область",
+      "address": "Тверь, ул. Коняевская, 7",
+      "phone": "+7 905 603-85-25",
+      "operator_group": "pritsepservice-tver",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-trailer-hydraulics-spb-batch38-2026-11-27.json",
+      "record_id": "premiera-tolyatti",
+      "name": "Премьера Центр",
+      "region": "Самарская область",
+      "address": "Тольятти, Революционная ул., 82",
+      "phone": "+7 8482 34-81-67",
+      "operator_group": "premiera-tolyatti",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://bodex.moscow/servis"
+      ],
+      "source_evidence": "historical_distributor_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-nevkom",
+      "name": "01А Невком",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, Московское шоссе, 233, лит. Ж",
+      "phone": "+7 812 746-45-33",
+      "operator_group": "nevkom",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-bosch-stempel",
+      "name": "BOSH-Дизель Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1, лит. А",
+      "phone": "+7 812 941-93-83",
+      "operator_group": "bosch-stempel",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-finikor",
+      "name": "FINIKOR",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 8, корп. 3",
+      "phone": "+7 812 240-24-29",
+      "operator_group": "finikor",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-masterturbo",
+      "name": "MasterTurbo",
+      "region": "Санкт-Петербург",
+      "address": "Михайловский пер., 1",
+      "phone": "+7 812 407-37-36",
+      "operator_group": "masterturbo",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-solexauto",
+      "name": "Solexauto",
+      "region": "Санкт-Петербург",
+      "address": "Колпино, Колпинская ул., 8",
+      "phone": "+7 812 448-04-09",
+      "operator_group": "solexauto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-avtodok-irinovsky",
+      "name": "Автодок",
+      "region": "Санкт-Петербург",
+      "address": "Ириновский пр., 1",
+      "phone": "+7 812 922-63-23",
+      "operator_group": "avtodok-irinovsky",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-avtospec-yanino",
+      "name": "Автоспецсервис — Янино",
+      "region": "Ленинградская область",
+      "address": "Янино-1, Новая ул., 17",
+      "phone": "+7 812 400-26-06",
+      "operator_group": "avtospec-yanino",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-avtostroyservice",
+      "name": "Автостройсервис",
+      "region": "Санкт-Петербург",
+      "address": "ул. Бехтерева, 4",
+      "phone": "+7 812 412-81-05",
+      "operator_group": "avtostroyservice",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-avtohaus",
+      "name": "Автохаус",
+      "region": "Санкт-Петербург",
+      "address": "пр. Александровской Фермы, 17",
+      "phone": "+7 905 209-04-06",
+      "operator_group": "avtohaus",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-bars-lithovskaya",
+      "name": "Барс Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Литовская ул., 16",
+      "phone": "+7 812 922-35-36",
+      "operator_group": "bars-lithovskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=1"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-gruzovik-govorova",
+      "name": "Грузовик-СПб",
+      "region": "Санкт-Петербург",
+      "address": "ул. Маршала Говорова, 37А",
+      "phone": "+7 812 339-45-53",
+      "operator_group": "gruzovik-govorova",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=2"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-dvigatel-vitebsky",
+      "name": "Двигатель",
+      "region": "Санкт-Петербург",
+      "address": "Витебский пр., 9",
+      "phone": "+7 812 388-11-30",
+      "operator_group": "dvigatel-vitebsky",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=2"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-dieselauto-sabirovskaya",
+      "name": "Дизель-Авто",
+      "region": "Санкт-Петербург",
+      "address": "Сабировская ул., 41",
+      "phone": "+7 812 934-70-32",
+      "operator_group": "dieselauto-sabirovskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-dizelmaster-moskovskoe",
+      "name": "Дизель-Мастер",
+      "region": "Санкт-Петербург",
+      "address": "Московское шоссе, 13, лит. А",
+      "phone": "+7 812 373-98-48",
+      "operator_group": "dizelmaster-moskovskoe",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-dizelavtoservice-sofiyskaya",
+      "name": "ДизельАвтоСервис",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 76",
+      "phone": "+7 812 907-31-54",
+      "operator_group": "dizelavtoservice-sofiyskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-doroga-avto",
+      "name": "Дорога-Авто / К-Мастер",
+      "region": "Санкт-Петербург",
+      "address": "пр. Девятого Января, 19",
+      "phone": "+7 812 706-98-16",
+      "operator_group": "doroga-avto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-es-trans",
+      "name": "ЕС Транс / Пит-Стоп",
+      "region": "Санкт-Петербург",
+      "address": "Полюстровский пр., 50",
+      "phone": "+7 812 336-25-59",
+      "operator_group": "es-trans",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=3"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-kardanresurs",
+      "name": "Карданресурс",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 3",
+      "phone": "+7 812 244-15-36",
+      "operator_group": "kardanresurs",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-kvs-auto",
+      "name": "КВС-Авто",
+      "region": "Санкт-Петербург",
+      "address": "Октябрьская наб., 32",
+      "phone": "+7 812 324-53-12",
+      "operator_group": "kvs-auto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-lakon",
+      "name": "Лакон",
+      "region": "Санкт-Петербург",
+      "address": "ул. Ватутина, 17",
+      "phone": "+7 812 542-18-82",
+      "operator_group": "lakon",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-mvravto",
+      "name": "МВРАвто",
+      "region": "Ленинградская область",
+      "address": "Янино-1, Кольцевая ул., 1А",
+      "phone": "+7 812 953-82-60",
+      "operator_group": "mvravto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-mvs-auto",
+      "name": "МВС-Авто",
+      "region": "Санкт-Петербург",
+      "address": "Хрустальная ул., 27",
+      "phone": "+7 812 980-96-69",
+      "operator_group": "mvs-auto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-mehzelenstroy",
+      "name": "Мехзеленстрой-СПб",
+      "region": "Санкт-Петербург",
+      "address": "Парголово, Донецкая ул., 4",
+      "phone": "+7 911 000-85-05",
+      "operator_group": "mehzelenstroy",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-mosdesignmash",
+      "name": "Мосдизайнмаш",
+      "region": "Санкт-Петербург",
+      "address": "Красное Село, Привокзальная ул., 2, лит. Д",
+      "phone": "+7 812 914-68-95",
+      "operator_group": "mosdesignmash",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=4"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-newtech-sofiyskaya",
+      "name": "Новые технологии",
+      "region": "Санкт-Петербург",
+      "address": "Софийская ул., 96",
+      "phone": "+7 812 925-46-10",
+      "operator_group": "newtech-sofiyskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-olimp-gruzovoy",
+      "name": "Олимп",
+      "region": "Санкт-Петербург",
+      "address": "Грузовой проезд, 15",
+      "phone": "+7 905 215-79-04",
+      "operator_group": "olimp-gruzovoy",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-osanna-voroshilova",
+      "name": "Осанна-Сервис-Авто",
+      "region": "Санкт-Петербург",
+      "address": "ул. Ворошилова, 2",
+      "phone": "+7 812 929-10-96",
+      "operator_group": "osanna-voroshilova",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-petrodor",
+      "name": "Петродор",
+      "region": "Санкт-Петербург",
+      "address": "2-й Верхний пер., 4, корп. 3",
+      "phone": "+7 921 920-33-89",
+      "operator_group": "petrodor",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-pnevmotechcenter",
+      "name": "Пневмотехцентр",
+      "region": "Санкт-Петербург",
+      "address": "пр. Большевиков, 52, корп. 6",
+      "phone": "+7 981 944-04-40",
+      "operator_group": "pnevmotechcenter",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-primula",
+      "name": "Примула Valvoline",
+      "region": "Санкт-Петербург",
+      "address": "ул. Седова, 3",
+      "phone": "+7 812 365-46-46",
+      "operator_group": "primula",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-ra-kronstadt",
+      "name": "РА",
+      "region": "Санкт-Петербург",
+      "address": "Кронштадт, ул. Восстания, 7Б",
+      "phone": "+7 812 311-53-98",
+      "operator_group": "ra-kronstadt",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=5"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-remzona-yamizh",
+      "name": "Ремзона Ям-Ижора",
+      "region": "Ленинградская область",
+      "address": "д. Ям-Ижора, Московское шоссе",
+      "phone": "+7 812 645-70-70",
+      "operator_group": "remzona-yamizh",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-remtehmontazh",
+      "name": "РемТехМонтаж",
+      "region": "Санкт-Петербург",
+      "address": "Горелово, Аннинское шоссе, 28В",
+      "phone": "+7 812 746-00-88",
+      "operator_group": "remtehmontazh",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-rikavto",
+      "name": "Рикавто",
+      "region": "Санкт-Петербург",
+      "address": "Литовская ул., 17, лит. А",
+      "phone": "+7 911 177-44-07",
+      "operator_group": "rikavto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-starter-planernaya",
+      "name": "Стартер",
+      "region": "Санкт-Петербург",
+      "address": "Планерная ул., 15, сек. 29",
+      "phone": "+7 921 966-45-36",
+      "operator_group": "starter-planernaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-sto-gaz-shkapina",
+      "name": "СТО ГАЗ",
+      "region": "Санкт-Петербург",
+      "address": "ул. Шкапина, 51",
+      "phone": "+7 812 252-78-64",
+      "operator_group": "sto-gaz-shkapina",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=6"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-truckempire",
+      "name": "Трак Эмпайр",
+      "region": "Санкт-Петербург",
+      "address": "Колпино, Финляндская ул., 38",
+      "phone": "+7 812 926-00-53",
+      "operator_group": "truckempire",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-truckautoservice",
+      "name": "Трак-Автосервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 1Б, лит. Ж",
+      "phone": "+7 812 380-19-48",
+      "operator_group": "truckautoservice",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-truckinservice",
+      "name": "Тракинсервис",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 8, стоянка Матеп",
+      "phone": "+7 952 356-94-67",
+      "operator_group": "truckinservice",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-ttservice",
+      "name": "ТТ Сервис",
+      "region": "Санкт-Петербург",
+      "address": "Металлострой, Ефремовский проезд, 4",
+      "phone": "+7 901 372-66-76",
+      "operator_group": "ttservice",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://www.allinform.ru/spb/Avtomobili_gruzovye_avtoservisy?page=7"
+      ],
+      "source_evidence": "directory_only",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-autospec-dieselcenter",
+      "name": "Автоспецсервис — Дизель Центр",
+      "region": "Санкт-Петербург",
+      "address": "Шушары, ул. Ленина, 10В",
+      "phone": "8 800 555-23-75",
+      "operator_group": "autospec-dieselcenter",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://diesel-center.ru/contacts/"
+      ],
+      "source_evidence": "first_party",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-serviceavto-kirovsk",
+      "name": "Сервисавто",
+      "region": "Ленинградская область",
+      "address": "Кировск, ул. Песочная, 4",
+      "phone": "+7 812 974-56-65",
+      "operator_group": "serviceavto-kirovsk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-adampolis",
+      "name": "Адамполис+М",
+      "region": "Москва",
+      "address": "ул. Рябиновая, 28А, стр. 3",
+      "phone": "+7 495 980-91-28",
+      "operator_group": "adampolis",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-azr-balashikha",
+      "name": "АЗР Автомобиль – звезда Руси",
+      "region": "Московская область",
+      "address": "Балашиха, ул. Западная, 7",
+      "phone": "+7 495 521-81-92",
+      "operator_group": "azr-balashikha",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-ilaravto",
+      "name": "Иларавто",
+      "region": "Московская область",
+      "address": "Алтуфьевское шоссе, 85-й км МКАД, пос. Вешки",
+      "phone": "+7 495 785-62-64",
+      "operator_group": "ilaravto",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-germes-nsk",
+      "name": "Гермес",
+      "region": "Новосибирская область",
+      "address": "ул. Малыгина, 13/1",
+      "phone": "+7 383 356-61-50",
+      "operator_group": "germes-nsk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-kmpk-kemerovo",
+      "name": "КМПК",
+      "region": "Кемеровская область",
+      "address": "Кузнецкий просп., 127А",
+      "phone": "+7 3842 28-69-70",
+      "operator_group": "kmpk-kemerovo",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-zmz-transservice",
+      "name": "ЗМЗ-Транссервис",
+      "region": "Нижегородская область",
+      "address": "Заволжье, ул. Лесозаводская, 37",
+      "phone": "+7 83161 37-638",
+      "operator_group": "zmz-transservice",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-axel-k",
+      "name": "Аксель-К",
+      "region": "Ставропольский край",
+      "address": "Ставрополь, Старомарьевское шоссе, 19",
+      "phone": "+7 8652 28-31-28",
+      "operator_group": "axel-k",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://sp-prizep.ru/stoknorr.php"
+      ],
+      "source_evidence": "historical_manufacturer_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-refika-mokshan",
+      "name": "Рефика Сервис",
+      "region": "Пензенская область",
+      "address": "рп Мокшан, ул. Строителей, 14А",
+      "phone": "+7 8412 50-93-74",
+      "operator_group": "refika-mokshan",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-tkcenter-meshkovo",
+      "name": "ТК-Центр",
+      "region": "Московская область",
+      "address": "д. Мешково, 2, стр. 2",
+      "phone": "+7 985 189-68-12",
+      "operator_group": "tkcenter-meshkovo",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-rba-shevyrevka",
+      "name": "РБА-МБ — Шевыревка",
+      "region": "Саратовская область",
+      "address": "д. Шевыревка, ул. Мира, 27А",
+      "phone": "+7 8452 90-09-08",
+      "operator_group": "rba-mb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-alfascan-chirshkasy",
+      "name": "АльфаСкан — Чиршкасы",
+      "region": "Чувашская Республика",
+      "address": "с. Чиршкасы, ул. 11-й Пятилетки, 7, корп. 18",
+      "phone": "8 800 775-76-66",
+      "operator_group": "alfascan-chirshkasy",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-eurotruck-rogachevka",
+      "name": "Евротрак Центр Черноземье",
+      "region": "Воронежская область",
+      "address": "с. Рогачевка, ул. Мира, 46",
+      "phone": "+7 4732 00-73-73",
+      "operator_group": "eurotruck-rogachevka",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-ivanovo-kamazcenter",
+      "name": "Ивановский автоцентр КАМАЗ",
+      "region": "Ивановская область",
+      "address": "Иваново, ул. 13-я Березниковская, 1А",
+      "phone": "+7 4932 95-55-22",
+      "operator_group": "ivanovo-kamazcenter",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-lipetskkomtrans",
+      "name": "Липецккомтранс",
+      "region": "Липецкая область",
+      "address": "Липецк, ул. Ковалева, 127А",
+      "phone": "+7 4742 35-82-22",
+      "operator_group": "lipetskkomtrans",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-rnitc-lipetsk",
+      "name": "РНИТЦ-Сервис",
+      "region": "Липецкая область",
+      "address": "Липецк, ул. Подгоренская, вл. 4",
+      "phone": "+7 903 699-54-27",
+      "operator_group": "rnitc-lipetsk",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-kamres-poltavskaya",
+      "name": "Камавторесурс",
+      "region": "Краснодарский край",
+      "address": "ст. Полтавская, ул. Л. Толстого, 4",
+      "phone": "+7 918 492-09-98",
+      "operator_group": "kamres-poltavskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-pnevmocenter-dinskaya",
+      "name": "СТО Пневмоцентр",
+      "region": "Краснодарский край",
+      "address": "ст. Динская, ул. Шевченко, 92/1",
+      "phone": "+7 918 453-53-50",
+      "operator_group": "pnevmocenter-dinskaya",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-rba-osinovo",
+      "name": "РБА-МБ — Осиновское",
+      "region": "Республика Татарстан",
+      "address": "Зеленодольский район, площадка Ферромоторс, зд. 2",
+      "phone": "+7 843 212-11-73",
+      "operator_group": "rba-mb",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-spb-directory-trailer-batch40-2026-11-27.json",
+      "record_id": "b40-delovye-mashiny-perm",
+      "name": "Деловые машины",
+      "region": "Пермский край",
+      "address": "Пермь, ул. Фоминская, 25Б",
+      "phone": "+7 342 259-03-25",
+      "operator_group": "delovye-mashiny-perm",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://krasnodar.avtofurgon.ru/company/dealers-map/"
+      ],
+      "source_evidence": "manufacturer_service_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "record_id": "b52-comtran-fuchika",
+      "name": "КОМТРАН",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, ул. Фучика, 8",
+      "phone": "+7 812 660-59-88",
+      "operator_group": "comtran",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://comtran.ru/contact.html",
+        "https://comtran.ru/remont-tnvd.html"
+      ],
+      "source_evidence": "business_first_party_website",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "record_id": "b52-sp-transmission",
+      "name": "СП Трансмишн",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Южное шоссе, 37, корп. 1Б",
+      "phone": "+7 921 961-88-48",
+      "operator_group": "sp-transmission",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://spectransmission.ru/"
+      ],
+      "source_evidence": "business_first_party_website",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "record_id": "b52-starter-mitrofanevskoe",
+      "name": "Стартеры и Генераторы — Митрофаньевское",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, Митрофаньевское шоссе, 5Е",
+      "phone": "+7 812 309-10-07",
+      "operator_group": "starter-remont",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://starter-remont.ru/"
+      ],
+      "source_evidence": "business_first_party_website",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-diesel-transmission-electrical-spb-batch52-2026-11-27.json",
+      "record_id": "b52-starter-luzhskaya",
+      "name": "Стартеры и Генераторы — Лужская",
+      "region": "Санкт-Петербург",
+      "address": "Санкт-Петербург, ул. Лужская, 3",
+      "phone": "+7 812 242-16-77",
+      "operator_group": "starter-remont",
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://starter-remont.ru/"
+      ],
+      "source_evidence": "business_first_party_website",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-leningrad-regional-gaps-batch53-2026-11-27.json",
+      "record_id": "b53-germes-vyborg",
+      "name": "Гермес",
+      "region": "Ленинградская область",
+      "address": "Выборг, ул. Кузнечная, 4",
+      "phone": "+7 996 885-89-67",
+      "operator_group": null,
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://spravbiz.ru/vyiborg/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://vyborg.spravker.ru/tekhnicheskoe-obsluzhivanie-avtomobilia/"
+      ],
+      "source_evidence": "third_party_business_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-leningrad-regional-gaps-batch53-2026-11-27.json",
+      "record_id": "b53-tire-priozersk-vyborgskaya",
+      "name": "Шиномонтаж — Выборгская",
+      "region": "Ленинградская область",
+      "address": "Приозерск, Выборгская ул., 31, корп. 2",
+      "phone": "+7 905 204-07-00",
+      "operator_group": null,
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/priozersk/avto/gruzovoj-shinomontazh/",
+        "https://gdeshinomontagh.ru/komp/shinomontazh-priozersk/"
+      ],
+      "source_evidence": "third_party_business_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    },
+    {
+      "source_file": "sto-leningrad-regional-gaps-batch53-2026-11-27.json",
+      "record_id": "b53-priozersk-mayakovskogo",
+      "name": "Автосервис — Маяковского",
+      "region": "Ленинградская область",
+      "address": "Приозерск, ул. Маяковского, 25",
+      "phone": "+7 931 711-14-74",
+      "operator_group": null,
+      "inn": null,
+      "identity_status": "operator_not_identified",
+      "evidence_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://priozersk.spravker.ru/remont-pritsepov/"
+      ],
+      "source_evidence": "third_party_business_directory",
+      "fns_status": "pending",
+      "legal_status_verified": false,
+      "publication_ready": false,
+      "partner_status": "non_partner_candidate"
+    }
+  ],
+  "duplicate_address_review": [],
+  "prior_identifier_checksum_review": [],
+  "policy": "Original data unchanged. No new candidate collection. No map publication. One INN can cover many service sites; only bind to a proven operator. Checksum is format only; legal status requires fresh official evidence."
+}
