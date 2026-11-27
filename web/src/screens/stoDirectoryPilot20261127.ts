@@ -1,14 +1,17 @@
 // Independent public business directory, not platform partners.
 // Source facts reviewed on 2026-11-27; no calls, FNS or live availability confirmed.
-// Keep only locations with first-party coordinates, address and business contact.
+// Keep only locations with source-reported coordinates from the business or its manufacturer/distributor, address and public business contact.
 // Further additions require deduplication and a reviewed source; never guess GPS.
 // Draft pilot only: replace static seed with moderated directory API before bulk rollout.
+import { refrigerationPilotPoints } from './stoRefrigerationPilot20261127.ts';
+export type MapServiceCategory = 'sto'|'tyre'|'wash'|'refrigeration'|'trailer';
 export type DirectoryPoint = {
   id: string; kind: 'service'; name: string; lat: number; lng: number;
   directory: true; address: string; phone: string; services: string[];
-  hours?: string; source: string; category?: 'sto'|'tyre'|'wash'|'refrigeration'|'trailer';
+  hours?: string; source: string; category?: MapServiceCategory;
 };
 export const directoryPoints: readonly DirectoryPoint[] = [
+  ...refrigerationPilotPoints,
   {id:'directory:mtbr-shushary',kind:'service',directory:true,name:'МТБР — Санкт-Петербург',
     lat:59.771946388888885,lng:30.455233333333332,
     address:'Санкт-Петербург, Шушары, Московское шоссе, 181, корп. 2, стр. 1',

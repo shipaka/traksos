@@ -28,3 +28,12 @@ test('directory entries stay unverified and direct dialing rejects other URI sch
   for(const p of directoryPoints){assert.equal(p.directory,true);assert.ok(p.id.startsWith('directory:'));assert.match(directDirectoryDial(p.phone)??'',/^tel:\+7\d{10}$/);}
   for(const invalid of ['javascript:alert(1)','+71234567890#','*100#','+71234567890;ext=1'])assert.equal(directDirectoryDial(invalid),undefined);
 });
+
+test('refrigeration pilot uses explicit source category and unique physical points',()=>{
+  const rows=directoryPoints.filter(p=>p.category==='refrigeration');
+  assert.equal(rows.length,24);
+  assert.equal(new Set(rows.map(p=>p.lat+':'+p.lng)).size,rows.length);
+  assert.ok(rows.every(p=>p.directory&&p.source==='https://sivtrans.ru/diller-service/'));
+  assert.ok(rows.some(p=>p.address.includes('Ленинградская область')));
+  assert.ok(rows.some(p=>p.address.includes('Приморский край')));
+});

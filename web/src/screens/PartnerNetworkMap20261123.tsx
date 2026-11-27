@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geographicCenter, mustExpandCluster, clusterScreenPoints, fitRussiaView } from './partnerNetworkGeometry20261123.ts';
 import { directoryPoints, directDirectoryDial, type DirectoryPoint } from './stoDirectoryPilot20261127.ts';
-import { TrakServiceIcon } from '../trakServiceIcon.tsx';
+import { StoMapPinIcon, mapCategoryLabel } from './stoMapPinIcon20261127.tsx';
 import './partnerNetworkMap20261123.css';
 
 type VerifiedPoint={id:string;kind:'service';name:string;lat:number;lng:number;directory?:false};
@@ -314,7 +314,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
               setExpandedCluster(null);
               setSelected(cluster.members[0]);
             }
-          }}>{cluster.members.length>1?<span>{cluster.members.length}</span>:cluster.members[0].directory?<TrakServiceIcon kind="sto" size={30}/>:'●'}</button>)}
+          }}>{cluster.members.length>1?<span>{cluster.members.length}</span>:<StoMapPinIcon category={cluster.members[0].directory?cluster.members[0].category??'sto':'sto'}/>}</button>)}
         {expandedCluster&&<aside className="tr-network-cluster-list"
           role="group" aria-label="Выбрать СТО из группы">
           <div className="tr-network-cluster-head"><b>СТО в группе ({expandedCluster.members.length})</b>
@@ -334,7 +334,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           <button type="button" ref={selectedDismiss} className="tr-network-dismiss" onClick={dismissSelected} aria-label="Скрыть карточку">✕</button>
           <b>{selected.name}</b>{selected.directory?<>
             <span>Сторонняя организация · не подтверждена</span>
-            <small>{selected.address}</small><small>{selected.services.join(' · ')}</small>
+            <small>{mapCategoryLabel[selected.category??'sto']}</small><small>{selected.address}</small><small>{selected.services.join(' · ')}</small>
             {selected.hours&&<small>График: {selected.hours}; уточните по телефону.</small>}
             <small>Актуальность не подтверждена. TrakSOS не участвует в оказании услуги.</small>
             {directDirectoryDial(selected.phone)&&<a href={directDirectoryDial(selected.phone)}>Позвонить напрямую: {selected.phone}</a>}
@@ -353,7 +353,7 @@ export function PartnerNetworkMap({onClose}:{onClose:()=>void}){
           Мы расширяем партнёрскую сеть; декоративные точки за реальные не выдаём.
         </div>}
         <div className="tr-network-attribution">Карта © OpenStreetMap contributors ·
-          <span>жёлтые — партнёры · серые — сторонние · двухцветные — смешанные группы</span></div>
+          <span>зелёные — партнёры (не статус работы) · серые — сторонние · двухцветные — смешанные группы</span></div>
       </div>
     </section>
   </div>;
