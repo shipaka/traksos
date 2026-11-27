@@ -1,0 +1,1314 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison against compact audit B/C and batches 32–37,42,48; full normalized audit pending. Source pages inspected on 2026-11-27. Third-party category listings are leads, not proof of heavy-truck acceptance or ongoing business. No calls, legal checks, coordinate verification. Some source listings may be stale.",
+  "records": [
+    {
+      "id": "b79-dal-automaster",
+      "name": "Автомастер",
+      "region": "Приморский край",
+      "address": "Дальнереченск, Промышленная, 10А",
+      "country": "Россия",
+      "phone": "+7 908 969-17-36",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://dalnerechensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-sp-tire",
+      "name": "Шиномонтаж",
+      "region": "Приморский край",
+      "address": "Спасск-Дальний, Пригородный пер., 2",
+      "country": "Россия",
+      "phone": "+7 914 719-76-91",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://spassk-dalnii.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-uss-regul",
+      "name": "Регул",
+      "region": "Приморский край",
+      "address": "Уссурийск, Краснознамённая, 238",
+      "country": "Россия",
+      "phone": "+7 914 960-30-99",
+      "additional_phones": [
+        "+7 924 127-13-03",
+        "+7 924 427-77-80"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://rting.ru/ussurijsk/co/regul/5743311"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-uss-arden",
+      "name": "Арден",
+      "region": "Приморский край",
+      "address": "Уссурийск, Новоникольское шоссе, 2В",
+      "country": "Россия",
+      "phone": "+7 4234 37-18-37",
+      "additional_phones": [
+        "+7 914 711-18-37"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб–вс 09:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://ussuriisk.spravker.ru/shinomontazh/arden.htm"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-uss-rezerv",
+      "name": "Компания по ремонту грузовых автомобилей",
+      "region": "Приморский край",
+      "address": "Уссурийск, Резервная, 4А",
+      "country": "Россия",
+      "phone": "+7 4234 37-86-82",
+      "additional_phones": [],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://mestam.info/ru/ussuriisk/mesto/1995012-kompaniya-po-remontu-gruzovih-avtomobilei-rezervnaya-4a-1-etaj"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-ren-mikh",
+      "name": "Ренессанс Групп",
+      "region": "Приморский край",
+      "address": "с. Михайловка, Паровозная, 37",
+      "country": "Россия",
+      "phone": "+7 924 005-60-32",
+      "additional_phones": [
+        "+7 924 127-51-62"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и прицепов",
+        "грузовая мойка",
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://rgprim.ru/about/"
+      ],
+      "notes": "Парковка круглосуточная, ремонтный график не установлен. Второй номер — запчасти. Профиль указан на сайте оператора.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-ren-art",
+      "name": "Ренессанс Групп",
+      "region": "Приморский край",
+      "address": "Артём, Орджоникидзе, 17А",
+      "country": "Россия",
+      "phone": "+7 924 730-16-60",
+      "additional_phones": [
+        "+7 924 731-99-33"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков и прицепов",
+        "кузовной ремонт",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://rgprim.ru/about/"
+      ],
+      "notes": "Сайт указывает 15 ремонтных постов; отдельный филиал. Второй номер — запчасти. Профиль указан на сайте оператора.",
+      "evidence": "first_party",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-art-ptk",
+      "name": "ПТК",
+      "region": "Приморский край",
+      "address": "Артём, Гагарина, 51",
+      "country": "Россия",
+      "phone": "+7 914 070-40-23",
+      "additional_phones": [
+        "+7 423 279-09-14",
+        "+7 914 703-25-22",
+        "+7 984 189-34-32"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:30–19:00; сб 09:00–16:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Карточка Сервис-центр на том же адресе имеет общий номер, не учитывать отдельно; ПТК Владивосток — другой адрес. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-art-dfdv",
+      "name": "ДФДВ-Трак",
+      "region": "Приморский край",
+      "address": "Артём, Шоссейный пер., 2",
+      "country": "Россия",
+      "phone": "+7 995 280-55-33",
+      "additional_phones": [
+        "+7 423 279-55-33"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-kne-kvadrat",
+      "name": "Квадрат",
+      "region": "Приморский край",
+      "address": "с. Кневичи, 3-я ул., 14/3",
+      "country": "Россия",
+      "phone": "+7 914 723-27-88",
+      "additional_phones": [
+        "+7 423 207-71-17"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-art-box89",
+      "name": "АвтоБокс 89",
+      "region": "Приморский край",
+      "address": "Артём, Репина, 2, стр. 5",
+      "country": "Россия",
+      "phone": "+7 908 449-40-11",
+      "additional_phones": [
+        "+7 962 336-72-13"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-art-tracksun",
+      "name": "ТракСан",
+      "region": "Приморский край",
+      "address": "Артём, Вахрушева, 6",
+      "country": "Россия",
+      "phone": "+7 922 014-93-78",
+      "additional_phones": [
+        "+7 922 014-94-15"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт коммерческого транспорта",
+        "выездной шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-art-rba",
+      "name": "Русбизнесавто",
+      "region": "Приморский край",
+      "address": "Артём, Севская, 40",
+      "country": "Россия",
+      "phone": "+7 917 584-63-75",
+      "additional_phones": [
+        "8 800 551-93-66"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; перерыв 13:00–14:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Заводской пер. 19 с тем же номером — проверить, не считать второй точкой. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-art-autodiz",
+      "name": "АвтоДиз",
+      "region": "Приморский край",
+      "address": "Артём, Дежнёва, 60А",
+      "country": "Россия",
+      "phone": "+7 914 725-79-07",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 10:00–20:00; сб 10:00–18:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nad-r370",
+      "name": "Автосервис",
+      "region": "Приморский край",
+      "address": "Надеждинский район, А-370, 726-й км, 8А, стр. 2",
+      "country": "Россия",
+      "phone": "+7 914 650-41-14",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "ремонт грузовых автомобилей (рубрика)"
+      ],
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Грузовая рубрика; точное название и въезд проверить. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-storm",
+      "name": "Штормавто",
+      "region": "Приморский край",
+      "address": "Владивосток, Дубовая, 10Ж",
+      "country": "Россия",
+      "phone": "+7 423 205-37-50",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Truck Point на этом же адресе не добавлен отдельно. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-temp",
+      "name": "Темп",
+      "region": "Приморский край",
+      "address": "Владивосток, Народный просп., 27Б",
+      "country": "Россия",
+      "phone": "+7 423 245-35-50",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-shinapoint",
+      "name": "Шинапоинт",
+      "region": "Приморский край",
+      "address": "Владивосток, Выселковая, 67",
+      "country": "Россия",
+      "phone": "+7 423 274-43-03",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб 09:00–18:00; вс 10:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-shina25",
+      "name": "Шина25ру",
+      "region": "Приморский край",
+      "address": "Владивосток, Снеговая, 3А",
+      "country": "Россия",
+      "phone": "+7 423 230-88-66",
+      "additional_phones": [
+        "8 800 700-88-25"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-asia",
+      "name": "Азия Трак",
+      "region": "Приморский край",
+      "address": "Владивосток, Днепровская, 27, стр. 2",
+      "country": "Россия",
+      "phone": "+7 962 831-81-20",
+      "additional_phones": [
+        "8 800 600-64-54"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "выездной ремонт грузовиков (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/vyezdnye-gruzovye-avtoservisy/"
+      ],
+      "notes": "Стационарный прием проверить до публикации. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-gruzdvor",
+      "name": "Грузовой двор",
+      "region": "Приморский край",
+      "address": "Владивосток, Фадеева, 47, стр. 27",
+      "country": "Россия",
+      "phone": "+7 423 297-12-22",
+      "additional_phones": [
+        "+7 423 297-90-00",
+        "+7 423 230-01-03"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–18:00",
+      "services": [
+        "выездной ремонт грузовиков (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/vyezdnye-gruzovye-avtoservisy/"
+      ],
+      "notes": "Стационарный прием проверить. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-vl-ocean",
+      "name": "Океан Моторс",
+      "region": "Приморский край",
+      "address": "Владивосток, Приморская, 8В, стр. 2",
+      "country": "Россия",
+      "phone": "+7 423 273-78-57",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "выездной ремонт грузовиков (рубрика)"
+      ],
+      "source_urls": [
+        "https://vladivostok.spravker.ru/vyezdnye-gruzovye-avtoservisy/"
+      ],
+      "notes": "Стационарный прием и грузовой профиль уточнить. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-aqua",
+      "name": "АкваТехноПлюс",
+      "region": "Приморский край",
+      "address": "Находка, Шоссейная, 229",
+      "country": "Россия",
+      "phone": "+7 4236 60-33-33",
+      "additional_phones": [
+        "+7 984 196-61-01"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)",
+        "ремонт спецтехники (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/",
+        "https://urbanplaces.su/ru_primorskij-kraj/nahodkinskij-gorodskoj-okrug-nahodka/category-remont-spetstehniki"
+      ],
+      "notes": "Доп. номер из urbanplaces; график перепроверить. Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-autores",
+      "name": "Авторесурс",
+      "region": "Приморский край",
+      "address": "Находка, Пограничная, 110А",
+      "country": "Россия",
+      "phone": "+7 914 979-58-99",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-pole",
+      "name": "Pole Position",
+      "region": "Приморский край",
+      "address": "Находка, Партизанская, 23",
+      "country": "Россия",
+      "phone": "+7 4236 74-22-60",
+      "additional_phones": [
+        "+7 914 040-63-48"
+      ],
+      "email": null,
+      "hours": "пн–пт 09:00–19:00; сб–вс 09:00–17:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-arosa",
+      "name": "Arosa tyres",
+      "region": "Приморский край",
+      "address": "Находка, Северный просп., 51, стр. 16",
+      "country": "Россия",
+      "phone": "+7 914 709-26-37",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–17:00; вс 10:00–15:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-trikita",
+      "name": "Три кита",
+      "region": "Приморский край",
+      "address": "Находка, Шоссейная, 148А",
+      "country": "Россия",
+      "phone": "+7 924 128-30-30",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-polaris",
+      "name": "Поларис",
+      "region": "Приморский край",
+      "address": "Находка, Шоссейная, 169",
+      "country": "Россия",
+      "phone": "+7 4236 74-63-69",
+      "additional_phones": [
+        "+7 4236 69-63-40"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-tire78",
+      "name": "Шиномонтажная мастерская",
+      "region": "Приморский край",
+      "address": "Находка, Находкинский просп., 78/2, стр. 2",
+      "country": "Россия",
+      "phone": "+7 914 734-40-11",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-autotime",
+      "name": "Auto time",
+      "region": "Приморский край",
+      "address": "Находка, Шоссейная, 146",
+      "country": "Россия",
+      "phone": "+7 4236 62-38-38",
+      "additional_phones": [
+        "+7 958 542-68-68"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–20:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b79-nah-oku",
+      "name": "Ёку Шина",
+      "region": "Приморский край",
+      "address": "Находка, Ореховая, 1",
+      "country": "Россия",
+      "phone": "+7 904 629-89-50",
+      "additional_phones": [
+        "+7 423 299-89-50",
+        "+7 924 253-21-69",
+        "+7 4236 79-89-50",
+        "+7 924 723-89-50"
+      ],
+      "email": null,
+      "hours": "ежедневно 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж (рубрика)"
+      ],
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Каталог — предварительное свидетельство; фактическую оснастку, график и актуальность подтвердить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Vladivostok",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Вяземский, Шоссейная, 77А",
+      "phone": null,
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/vyazemskiy"
+      ],
+      "reason": "Нет телефона и грузового подтверждения."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Бикин, Бикинский район",
+      "phone": null,
+      "source_urls": [
+        "https://bikin.jsprav.ru/shinomontazh/"
+      ],
+      "reason": "Нет точной площадки и подтвержденного грузового контакта."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Лесозаводск, Набережная, 11А",
+      "phone": null,
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/lesozavodsk"
+      ],
+      "reason": "Нет телефона и грузового подтверждения."
+    },
+    {
+      "name": "ПСЦ 777",
+      "address": "Дальнереченск, 50 лет Октября, 89",
+      "phone": null,
+      "source_urls": [
+        "https://dalnerechensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Нет опубликованного номера."
+    },
+    {
+      "name": "Автосервис 555",
+      "address": "Дальнереченск, Кирпичная, 10В",
+      "phone": null,
+      "source_urls": [
+        "https://dalnerechensk.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Нет номера; отзыв о легковом автомобиле."
+    },
+    {
+      "name": "АвтоМойШинСервис",
+      "address": "Спасский район, А-370, 526-й км, 5",
+      "phone": null,
+      "source_urls": [
+        "https://spassk-dalnii.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Заявлена круглосуточность, нет телефона."
+    },
+    {
+      "name": "Грузовая автомойка",
+      "address": "Спасск-Дальний, Хабаровская, 4/4",
+      "phone": null,
+      "source_urls": [
+        "https://e-avtozapis.ru/tochka/spassk-dalniy"
+      ],
+      "reason": "Нет номера."
+    },
+    {
+      "name": "Komtrans service",
+      "address": "Артём, 1-я Рабочая, 91Б",
+      "phone": "+7 923 034-86-58",
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Соседний адрес Сумотори, проверить отдельность."
+    },
+    {
+      "name": "АвтоЛют",
+      "address": "Артём, Ворошилова, 23, стр. 2",
+      "phone": "+7 902 556-98-72",
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Другие карточки по адресу; уточнить физический грузовой бокс."
+    },
+    {
+      "name": "Русбизнесавто",
+      "address": "Артём, Заводской пер., 19",
+      "phone": "+7 917 584-63-75",
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Совпадает номер с Севской, 40."
+    },
+    {
+      "name": "Truck Point",
+      "address": "Владивосток, Дубовая, 10Ж",
+      "phone": null,
+      "source_urls": [
+        "https://vladivostok.spravker.ru/org/truck-point.htm"
+      ],
+      "reason": "Совпадает адрес Штормавто."
+    },
+    {
+      "name": "Fit Service",
+      "address": "Владивосток, Выселковая, 171",
+      "phone": "+7 423 254-00-14",
+      "source_urls": [
+        "https://vladivostok.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Проверить тяжелую оснастку."
+    },
+    {
+      "name": "Гиперавто",
+      "address": "Находка, Находкинский просп., 109",
+      "phone": "+7 4236 90-40-50",
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Грузовая рубрика, фактическую оснастку филиала уточнить."
+    },
+    {
+      "name": "Гиперавто",
+      "address": "Находка, Находкинский просп., 7В",
+      "phone": "+7 4236 62-37-27",
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Грузовая рубрика, фактическую оснастку филиала уточнить."
+    },
+    {
+      "name": "СПЕЦ-МАСТЕР",
+      "address": "Находка, Ореховая, 21",
+      "phone": null,
+      "source_urls": [
+        "https://www.autodrive.ru/nahodka/autoservices/spets-master-avtoservis-po-remontu-gruzovikov-i-spetstehniki-orehovaya-ulitsa-nahodka/"
+      ],
+      "reason": "Найти полный опубликованный телефон."
+    },
+    {
+      "name": "Two Wheels",
+      "address": "Находка, Южный микрорайон",
+      "phone": "+7 914 679-81-13",
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет точного адреса."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Находка, Шоссейная, 112, стр. 5",
+      "phone": null,
+      "source_urls": [
+        "https://nakhodka.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Шиномонтаж",
+      "address": "Большой Камень, Гагарина, 16Б",
+      "phone": null,
+      "source_urls": [
+        "https://partizansk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Найти телефон и подтверждение грузового профиля."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "АвтоЛига — грузовое СТО Владивосток",
+      "batch": 13,
+      "email": "service.dnepr@al-vl.ru",
+      "source_urls": [
+        "https://al-vl.ru/kontakti"
+      ],
+      "notes": "Официальный контакт подтверждает прежний телефон."
+    },
+    {
+      "name": "АвтоЛига — Уссурийск",
+      "batch": 13,
+      "email": "ussur@al-vl.ru",
+      "source_urls": [
+        "https://al-vl.ru/kontakti"
+      ],
+      "notes": "Официальный контакт подтверждает прежний телефон."
+    },
+    {
+      "name": "Прим Трак / Русбизнесавто",
+      "batch": 35,
+      "address": "Артём, Гагарина, 57",
+      "phone": "+7 423 279-02-97",
+      "source_urls": [
+        "https://artem.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Один адрес и номер, не считать отдельной площадкой."
+    },
+    {
+      "name": "МИКА / Бас-ДВ",
+      "batch": 13,
+      "possible_duplicate_batch": 36,
+      "address": "Владивосток, Бородинская, 61",
+      "phone": "+7 423 268-80-40",
+      "notes": "Один адрес и телефон. Проверить оператора; не удваивать."
+    }
+  ]
+}
