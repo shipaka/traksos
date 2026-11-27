@@ -165,3 +165,24 @@ test('calendar training separates pending proposals, reservations and actual ava
   for(const role of ['insurer','service','inspection','courier','moderator','admin'] as const)
     assert.equal(allowedScenario(role,'calendar-reservation-conflict'),null);
 });
+
+
+test('private Air contact teaches confirmation, recipient preference and exact retry',()=>{
+  for(const role of ['owner','driver'] as const){
+    const item=allowedScenario(role,'air-private-support');
+    assert.ok(item);
+    assert.equal(item.link,'/air');
+    assert.equal(item.steps.length,3);
+    const text=item.steps.map(step=>step.situation+' '+step.why+' '+step.choices.map(c=>c.label+' '+c.feedback).join(' ')).join(' ');
+    assert.match(text,/@админ/);
+    assert.match(text,/@модератор/);
+    assert.match(text,/не публикуется/);
+    assert.match(text,/подтвердить отправку/);
+    assert.match(text,/предпочтение адресата/i);
+    assert.match(text,/не создаст второе обращение/);
+    assert.match(text,/перезапуске сначала проверьте список обращений/);
+    assert.ok(scenariosForRole(role,'личное обращение из эфира').some(x=>x.id===item.id));
+  }
+  for(const role of ['master','tow','service','insurer','inspection','courier','moderator','admin'] as const)
+    assert.equal(allowedScenario(role,'air-private-support'),null);
+});

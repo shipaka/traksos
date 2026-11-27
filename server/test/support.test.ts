@@ -1,5 +1,6 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
 import { setup, ok, type T } from './helpers.ts';
 
 let t: T;
@@ -58,4 +59,62 @@ test('статистика: считает заявки, доли и деньг�
   assert.equal(typeof s.people.support_open, 'number');
   assert.ok(Array.isArray(s.byDay) && s.byDay.length >= 1);
   assert.equal((await t.api('GET', '/api/admin/stats', undefined, client.token)).status, 403);
+});
+
+
+test('linked support intake rolls back ticket and initial message if durable staff inbox fails',async()=>{
+  const owner=await t.login('+79997770003');
+  const order=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb'},owner.token)).order;
+  const payload={topic:'Другое',text:'Учебное обращение по заявке',orderId:order.id};
+  await t.db.exec(`create function reject_linked_support_inbox() returns trigger language plpgsql as $$ begin
+    if new.kind='support' then raise exception 'synthetic linked inbox failure'; end if;
+    return new; end $$;
+    create trigger reject_linked_support_inbox before insert on notifications
+      for each row execute function reject_linked_support_inbox();`);
+  try{
+    const failed=await t.api('POST','/api/support',payload,owner.token);
+    assert.ok(failed.status>=400,'inbox failure must reject the whole intake');
+    assert.equal(await t.db.one('select id from support_tickets where user_id=$1 and order_id=$2',[owner.id,order.id]),null);
+    assert.equal(await t.db.one("select id from order_events where order_id=$1 and type='support_called'",[order.id]),null);
+  }finally{
+    await t.db.exec('drop trigger reject_linked_support_inbox on notifications; drop function reject_linked_support_inbox();');
+  }
+  const ticket=ok(await t.api('POST','/api/support',payload,owner.token));
+  assert.equal(ticket.messages.length,1);
+  const notices=await t.db.query<{user_id:string}>(
+    "select user_id from notifications where kind='support' and data->>'ticketId'=$1",[ticket.id]);
+  assert.deepEqual(notices,[{user_id:admin.id}]);
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='support_called'",[order.id])).length,1);
+  const later=ok(await t.api('POST','/api/support',{...payload,text:'Дополнительная информация'},owner.token));
+  assert.equal(later.id,ticket.id);
+  assert.equal(later.messages.length,2);
+});
+
+
+test('linked intake exact retries append once, replay after closure, and reject changed request',async()=>{
+  const owner=await t.login('+79997770004');
+  const order=ok(await t.api('POST','/api/orders',{service:'electric',zoneId:'spb'},owner.token)).order;
+  const first={topic:'Другое',text:'Учебное обращение по заявке',orderId:order.id,requestKey:randomUUID()};
+  const submit=(p:typeof first)=>t.api('POST','/api/support',p,owner.token);
+  const responses=await Promise.all(Array.from({length:6},()=>submit(first)));
+  const tickets=responses.map(ok);
+  const id=tickets[0].id;
+  assert.ok(tickets.every(x=>x.id===id&&x.messages.length===1));
+  const append={...first,text:'Новая информация по обращению',requestKey:randomUUID()};
+  const repeats=await Promise.all(Array.from({length:5},()=>submit(append)));
+  assert.ok(repeats.map(ok).every(x=>x.id===id&&x.messages.length===2));
+  assert.equal((await submit({...append,text:'Изменённый текст'})).status,409);
+  assert.equal((await t.db.query("select id from notifications where kind='support' and data->>'ticketId'=$1",[id])).length,2);
+  assert.equal((await t.db.query("select id from order_events where order_id=$1 and type='support_called'",[order.id])).length,1);
+  await t.api('POST','/api/support/'+id+'/close',{},owner.token);
+  const closed=ok(await submit(first));
+  assert.equal(closed.id,id);
+  assert.equal(closed.status,'closed');
+  assert.equal(ok(await submit(append)).id,id);
+  const rows=await t.db.query('select ticket_id from support_linked_requests where user_id=$1',[owner.id]);
+  assert.equal(rows.length,2);
+  assert.ok(rows.every(x=>x.ticket_id===id));
+  const fresh=ok(await submit({...first,requestKey:randomUUID()}));
+  assert.notEqual(fresh.id,id);
+  assert.equal(fresh.messages.length,1);
 });

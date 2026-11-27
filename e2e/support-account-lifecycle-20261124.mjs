@@ -32,6 +32,7 @@ const uiStub=`
   }
 `;
 const apiStub=`
+  export function getToken(){return 'synthetic-support-token';}
   function call(method,path,body) {
     const m=window.__supportMock;
     const rec={method,path,body};
@@ -149,6 +150,16 @@ try{
   await page.waitForTimeout(30);
   assert(await compose.inputValue()==='Message from B','Failed POST discarded user draft');
   assert(await counts('POST',postPath)===1,'Failed POST was silently retried');
+  const originalReply=await page.evaluate(()=>window.__supportMock.calls.find(x=>x.method==='POST'&&x.path==='/api/support/ticket-1/messages').body);
+  assert(typeof originalReply.requestKey==='string'&&originalReply.requestKey.length===36,'Reply must carry a UUID');
+  assert(await compose.isDisabled(),'Unconfirmed reply must retain its original payload');
+  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await wait('POST',postPath,2);
+  const repeatedReply=await page.evaluate(()=>window.__supportMock.calls.filter(x=>x.method==='POST'&&x.path==='/api/support/ticket-1/messages')[1].body);
+  assert(JSON.stringify(repeatedReply)===JSON.stringify(originalReply),'Explicit retry changed the original payload');
+  await finish('POST',postPath,1,'reject','still offline');
+  await page.getByRole('button',{name:'Повторить',exact:true}).waitFor();
+
 
   await page.evaluate(()=>window.__setSupportMe({id:'account-C',roles:['client']}));
   await wait('GET',thread,5);
@@ -203,6 +214,23 @@ try{
   assert(await page.evaluate(()=>location.hash)===originalHash,
     'Late previous-account ticket creation redirected the new user');
   await finish('GET','/api/support/topics',2,'resolve',['Другое']);
+
+  // A lost standalone reply must keep its original UUID and immutable draft.
+  await page.getByRole('button',{name:'Другое'}).click();
+  await page.getByRole('textbox',{name:'Описание проблемы'}).fill('Синтетическое обращение с потерянным ответом');
+  await page.getByRole('button',{name:'Отправить'}).click();
+  await wait('POST','/api/support',2);
+  const request=await page.evaluate(()=>window.__supportMock.calls.filter(x=>x.method==='POST'&&x.path==='/api/support')[1].body);
+  assert(typeof request.requestKey==='string'&&request.requestKey.length===36,'Missing standalone request UUID');
+  await finish('POST','/api/support',1,'reject',Error('lost reply').message);
+  await page.getByRole('button',{name:'Повторить отправку'}).waitFor();
+  assert(await page.getByRole('textbox',{name:'Описание проблемы'}).isDisabled(),'Uncertain payload remained editable');
+  await page.getByRole('button',{name:'Повторить отправку'}).click();
+  await wait('POST','/api/support',3);
+  const retry=await page.evaluate(()=>window.__supportMock.calls.filter(x=>x.method==='POST'&&x.path==='/api/support')[2].body);
+  assert(JSON.stringify(retry)===JSON.stringify(request),'Retry must reuse the same request and payload');
+  await finish('POST','/api/support',2,'resolve',{id:'confirmed-ticket'});
+  await page.waitForFunction(()=>location.hash==='#/support/confirmed-ticket');
 
   // The notifications screen must forget A's cached private inbox.
   await page.evaluate(()=>{

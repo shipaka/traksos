@@ -50,19 +50,24 @@ test('driver chat excludes repair partners and is read-only for moderators and a
   assert.equal((await t.api('POST','/api/air/messages',{body:'Реклама от администратора'},admin.token)).status,403);
 });
 
-test('staff calls get a clarifying prompt, but private details are never echoed in public air', async()=>{
-  const prompt=ok(await t.api('POST','/api/air/messages',{
-    body:'@админ у меня конфликт по заявке, телефон +7 999 123 45 67'
-  },driver.token));
-  assert.equal(prompt.supportSuggested,true);
-  assert.match(prompt.botMessage.body,/Уточню|заявк|поведением/);
-  assert.match(prompt.botMessage.body,/личн/i);
-  const messages=ok(await t.api('GET','/api/air/messages',undefined,other.token));
-  assert.equal(messages.messages.at(-2).body,'Хочу обратиться к администратору через личную поддержку.');
-  assert.doesNotMatch(JSON.stringify(messages),/999 123 45 67|конфликт по заявке/);
-  const mod=ok(await t.api('POST','/api/air/messages',{body:'@модератор помоги разобраться'},driver.token));
-  assert.equal(mod.supportSuggested,true);
-  assert.match(mod.botMessage.body,/модератор/);
+test('staff calls stay private: no public marker, bot reply or unconfirmed ticket', async()=>{
+  const before=ok(await t.api('GET','/api/air/messages',undefined,other.token));
+  const countBefore=await t.db.one<{n:number}>('select count(*)::int n from driver_air_messages');
+  for(const body of [
+    '@админ у меня конфликт по заявке, телефон +7 999 123 45 67',
+    '@модератор помоги разобраться',
+    'Администратор, помогите с личным вопросом',
+  ]){
+    const rejected=await t.api('POST','/api/air/messages',{body},driver.token);
+    assert.equal(rejected.status,400);
+    assert.equal(rejected.body.error,'air_private_support');
+    assert.match(rejected.body.message,/личную поддержку/);
+    assert.doesNotMatch(JSON.stringify(rejected.body),/999 123 45 67|конфликт по заявке/);
+  }
+  const after=ok(await t.api('GET','/api/air/messages',undefined,other.token));
+  assert.deepEqual(after.messages,before.messages,'even a canned public marker would disclose private intent');
+  assert.doesNotMatch(JSON.stringify(after),/999 123 45 67|конфликт по заявке/);
+  assert.deepEqual(await t.db.one('select count(*)::int n from driver_air_messages'),countBefore);
   const tickets=ok(await t.api('GET','/api/support',undefined,driver.token));
   assert.equal(tickets.length,0,'bot cannot auto-create a support ticket');
 });

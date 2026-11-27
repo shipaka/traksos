@@ -1,5 +1,6 @@
 // Поддержка: обращения по заявке или без неё. Пишут пользователь и сотрудники; закрыть может любой из них.
 
+import { createHash } from 'node:crypto';
 import type { Db, Queryable } from '../db/index.ts';
 import type { Notifier } from './notify.ts';
 import type { OrdersService } from './orders.ts';
@@ -10,20 +11,46 @@ export const TOPICS = ['Мастер не приехал', 'Не согласе�
 
 const isStaff = (u: AuthUser) => u.roles.includes('admin') || u.roles.includes('moderator');
 
+type LockedTicket = { status: string; user_id: string; number: number; assignee_id: string | null; requested_staff_role: 'admin'|'moderator'|null };
+
 export class SupportService {
   /** Споры уходят и в очередь модератора — ставится при сборке приложения */
   onDispute: ((p: { userId: string; orderId: string | null; ticketId: string; text: string; topic: string }) => Promise<unknown>) | null = null;
   constructor(private db: Db, private notifier: Notifier, private orders: OrdersService, private now: () => Date) {}
 
+  // Never authorize private support from a cached role snapshot alone.
+  private async liveActor(q: Queryable, user: AuthUser): Promise<AuthUser> {
+    const current = await q.one<AuthUser>(
+      "select id,phone,name,roles,status,owner_id from users where id=$1 and status='active' and deleted_at is null for share",
+      [user.id]);
+    if (!current) throw forbidden();
+    const roles = current.roles.filter(role => user.roles.includes(role));
+    if (!roles.length) throw forbidden();
+    return { ...current, roles };
+  }
+
+  private async authorizeTicket(q: Queryable, user: AuthUser, ticket: {user_id: string}) {
+    const actor = await this.liveActor(q,user);
+    if (ticket.user_id !== actor.id && !isStaff(actor)) throw forbidden();
+    return actor;
+  }
+
+  private async activeRecipient(q: Queryable, id: string): Promise<string[]> {
+    const row = await q.one<{id:string}>(
+      "select id from users where id=$1 and status='active' and deleted_at is null for share",[id]);
+    return row ? [row.id] : [];
+  }
+
+
   // Moderators own the first response. Admin receives intake only when no
   // moderator exists; otherwise admin is alerted once the SLA is breached.
-  private intakeStaffIds = async (q: Queryable = this.db) => {
+  private intakeStaffIds = async (q: Queryable = this.db, requestedRole?: 'admin' | 'moderator' | null) => {
     const moderators = await q.query<{ id: string }>(
-      `select id from users where status='active' and roles && '{moderator}'::text[] order by id for share`);
-    if (moderators.length) return moderators.map(r => r.id);
+      `select id from users where status='active' and deleted_at is null and roles && '{moderator}'::text[] order by id for share`);
+    if (requestedRole !== 'admin' && moderators.length) return moderators.map(r => r.id);
     const admins = await q.query<{ id: string }>(
-      `select id from users where status='active' and roles && '{admin}'::text[] order by id for share`);
-    return admins.map(r => r.id);
+      `select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[] order by id for share`);
+    return admins.length ? admins.map(r => r.id) : moderators.map(r => r.id);
   };
 
   /**
@@ -34,15 +61,15 @@ export class SupportService {
   async tickSla() {
     const now = this.now();
     const { overdue, adminIds } = await this.db.tx(async q => {
-      const overdue = await q.query<{ id: string; number: number; topic: string; sla_deadline_at: Date }>(
-        `select id, number, topic, sla_deadline_at from support_tickets
+      const overdue = await q.query<{ id: string; number: number; sla_deadline_at: Date }>(
+        `select id, number, sla_deadline_at from support_tickets
           where sla_deadline_at is not null and sla_deadline_at <= $1
             and sla_overdue_at is null
             and (first_staff_reply_at is null or first_staff_reply_at > sla_deadline_at)
           order by sla_deadline_at limit 100 for update skip locked`, [now]);
       if (!overdue.length) return { overdue, adminIds: [] as string[] };
       const admins = await q.query<{ id: string }>(
-        `select id from users where roles && '{admin}'::text[]`);
+        `select id from users where status='active' and deleted_at is null and roles && '{admin}'::text[] order by id for share`);
       for (const ticket of overdue) {
         await q.query(`update support_tickets set sla_overdue_at=$2 where id=$1`, [ticket.id, now]);
         await q.query(
@@ -54,7 +81,7 @@ export class SupportService {
           await q.query(
             `insert into notifications(user_id,kind,title,body,data) values ($1,'support',$2,$3,$4)`,
             [admin.id, `Поддержка: просрочка №${ticket.number}`,
-              `60 минут без своевременного ответа: ${ticket.topic}`,
+              '60 минут без своевременного ответа. Откройте личное обращение.',
               { ticketId: ticket.id, sla: 'first_reply_overdue' }]);
         }
       }
@@ -66,7 +93,7 @@ export class SupportService {
         type: 'support', ticketId: ticket.id, sla: 'first_reply_overdue',
       }, {
         kind: 'normal', title: `Поддержка: просрочка №${ticket.number}`,
-        body: `60 минут без своевременного ответа: ${ticket.topic}`,
+        body: '60 минут без своевременного ответа. Откройте личное обращение.',
         data: { ticketId: ticket.id, sla: 'first_reply_overdue' },
       });
     }
@@ -74,191 +101,262 @@ export class SupportService {
   }
 
 
-  async open(user: AuthUser, p: { topic: string; text: string; orderId?: string; ledgerEntryId?: number }) {
+  // Standalone intake has no linked order or ledger side effects. Persist
+  // the initial message and staff inbox in the same transaction as its ticket.
+  private async openStandalone(user: AuthUser, p: {
+    topic: string; text: string; requestKey?: string; requestedRole?: 'admin' | 'moderator';
+  }, text: string) {
+    const safeText = maskPhones(text).text;
+    const fingerprint = createHash('sha256').update(JSON.stringify([p.topic, text, p.requestedRole ?? null])).digest('hex');
+    const result = await this.db.tx(async q => {
+      await this.liveActor(q,user);
+      if (p.requestKey) {
+        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:standalone:' + user.id + ':' + p.requestKey]);
+        const prior = await q.one<{id:string;client_request_hash:string}>(
+          'select id,client_request_hash from support_tickets where user_id=$1 and client_request_key=$2',
+          [user.id,p.requestKey]);
+        if (prior) {
+          if (prior.client_request_hash !== fingerprint)
+            throw conflict('support_request_changed','Этот запрос уже использован с другим текстом. Проверьте историю обращений.');
+          return { id:prior.id, delivery:null };
+        }
+      }
+      const ticket = await q.one<{id:string;number:number}>(
+        `insert into support_tickets(user_id,topic,sla_deadline_at,client_request_key,client_request_hash,requested_staff_role)
+         values($1,$2,$3,$4,$5,$6) returning id,number`,
+        [user.id,p.topic.slice(0,80),new Date(this.now().getTime()+3_600_000),
+          p.requestKey??null,p.requestKey?fingerprint:null,p.requestedRole??null]);
+      if (!ticket) throw Error('Support ticket insert failed');
+      await q.query('insert into support_messages(ticket_id,sender_id,body) values($1,$2,$3)',
+        [ticket.id,user.id,safeText]);
+      const ids = await this.intakeStaffIds(q,p.requestedRole);
+      const msg = { kind:'normal' as const, title:`Новое обращение №${ticket.number}`,
+        body:'Откройте личное обращение, чтобы прочитать сообщение.', data:{ticketId:ticket.id} };
+      for(const id of ids) await q.query(
+        "insert into notifications(user_id,kind,title,body,data) values($1,'support',$2,$3,$4)",
+        [id,msg.title,msg.body,msg.data]);
+      return {id:ticket.id,delivery:{ids,msg}};
+    });
+    if(result.delivery) await this.notifier.deliverStored(result.delivery.ids,
+      {type:'support',ticketId:result.id},result.delivery.msg).catch(()=>{});
+    return this.thread(user,result.id);
+  }
+
+  async open(user: AuthUser, p: { topic: string; text: string; orderId?: string; ledgerEntryId?: number;
+    requestKey?: string; requestedRole?: 'admin' | 'moderator' }) {
     const text = p.text.trim();
     if (text.length < 3) throw bad('empty', 'Опишите, что случилось');
-    // The stored body and notification preview share one redacted version.
+    if (!p.orderId && !p.ledgerEntryId) return this.openStandalone(user,p,text);
+    if (p.requestedRole) throw bad('support_context','Выбор адресата доступен только для личного обращения без привязки к заявке.');
+    // Preserve existing ledger precedence when legacy callers send both IDs.
+    const fingerprint = createHash('sha256').update(JSON.stringify([p.ledgerEntryId?null:p.orderId??null,p.ledgerEntryId??null,p.topic,text])).digest('hex');
+    // Only the stored thread contains the redacted text, never notice previews.
     const safeText = maskPhones(text).text;
-    let number: number | null = null;
-    // Вопрос по конкретной операции: начисление, списание, выплата — поддержка увидит её целиком
+    // Ledger intake validates the source and persists the staff inbox in the
+    // same transaction as the initial message and ticket.
     if (p.ledgerEntryId) {
-      const e = await this.db.one<{ id: number; order_id: string | null }>(
-        `select id, order_id from ledger_entries where id=$1 and performer_id=$2`, [p.ledgerEntryId, user.id]);
-      if (!e) throw notFound('Операция не найдена');
-      // A repeated tap, browser retry or a second app instance may race with
-      // the first request. The existence check and INSERT must be serialized.
-      const result = await this.db.tx(async (q) => {
+      const result = await this.db.tx(async q => {
+        const actor=await this.liveActor(q,user);
+        const e = await q.one<{ id: number; order_id: string | null }>(
+          `select id, order_id from ledger_entries where id=$1 and performer_id=$2 for share`, [p.ledgerEntryId, user.id]);
+        if (!e) throw notFound('Операция не найдена');
+        const replay=await this.findLinkedRequest(q,actor.id,p.requestKey,fingerprint);
+        if(replay)return {id:replay,number:0,delivery:null,created:false};
         await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:ledger:' + user.id + ':' + e.id]);
-        const existing = await q.one<{ id: string }>(
-          'select id from support_tickets where user_id=$1 and ledger_entry_id=$2 and status=$3',
+        const existing = await q.one<LockedTicket & {id:string}>(
+          'select id,status,user_id,number,assignee_id,requested_staff_role from support_tickets where user_id=$1 and ledger_entry_id=$2 and status=$3 for update',
           [user.id, e.id, 'open']);
-        if (existing) return { id: existing.id, number: 0, created: false };
+        if (existing) {
+          const delivery=await this.appendReply(q,actor,existing,existing.id,text,safeText);
+          await this.rememberLinkedRequest(q,actor.id,p.requestKey,fingerprint,existing.id);
+          return {id:existing.id,number:existing.number,delivery,created:false};
+        }
         const created = await q.one<{ id: string; number: number }>(
           `insert into support_tickets(user_id, order_id, topic, ledger_entry_id, sla_deadline_at)
              values ($1,$2,$3,$4,$5) returning id, number`,
           [user.id, e.order_id, p.topic.slice(0, 80), e.id,
             new Date(this.now().getTime() + 3_600_000)]);
-        // Never commit an empty support ticket if its initial message fails.
+        if (!created) throw Error('Support ticket insert failed');
         await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
-          [created!.id, user.id, safeText]);
-        return { id: created!.id, number: created!.number, created: true };
+          [created.id, user.id, safeText]);
+        await this.rememberLinkedRequest(q,actor.id,p.requestKey,fingerprint,created.id);
+        return { id: created.id, number:created.number, delivery: await this.persistInitialNotice(q,created),created:true };
       });
-      if (!result.created) {
-        await this.post(user, result.id, text);
-        return this.thread(user, result.id);
-      }
-      const t = result;
-      await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-        kind: 'normal', title: `Обращение №${t!.number}: вопрос по операции`,
-        body: maskPhones(`${user.name ?? user.phone}: ${safeText.slice(0, 100)}`).text,
-        data: { ticketId: t!.id },
-      });
-      return this.thread(user, t!.id);
+      if (!result.delivery) return this.thread(user,result.id);
+      await this.notifier.deliverStored(result.delivery.ids,
+        {type:'support',ticketId:result.id},result.delivery.msg).catch(()=>{});
+      return this.thread(user,result.id);
     }
-    let uniqueTicket: { id: string; number: number } | null = null;
-    if (p.orderId) {
-      const o = await this.orders.mustSee(user, p.orderId);
-      if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
-      number = o.number;
-      // One open thread per customer + order. All concurrent requests serialize
-      // before the SELECT/INSERT; no silent duplicate conversations are created.
-      const result = await this.db.tx(async (q) => {
-        await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:order:' + user.id + ':' + p.orderId]);
-        const existing = await q.one<{ id: string }>(
-          'select id from support_tickets where user_id=$1 and order_id=$2 and status=$3',
-          [user.id, p.orderId, 'open']);
-        if (existing) return { id: existing.id, number: 0, created: false };
-        const created = await q.one<{ id: string; number: number }>(
-          `insert into support_tickets(user_id, order_id, topic, sla_deadline_at)
-             values ($1,$2,$3,$4) returning id, number`,
-          [user.id, p.orderId, p.topic.slice(0, 80),
-            new Date(this.now().getTime() + 3_600_000)]);
-        // Never commit an empty support ticket if its initial message fails.
-        await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
-          [created!.id, user.id, safeText]);
-        return { id: created!.id, number: created!.number, created: true };
-      });
-      if (!result.created) {
-        await this.post(user, result.id, text);
-        return this.thread(user, result.id);
+    if (!p.orderId) throw bad('support_context','Не указана заявка');
+    const o = await this.orders.mustSee(user, p.orderId);
+    if (!this.orders.actorOf(user, o)) throw forbidden('Позвать поддержку могут участники заявки');
+    // Serialize first intake per participant and order. The ticket, message and
+    // staff inbox either all commit or all roll back. Order/dispute callbacks
+    // remain separate post-commit effects, not part of this guarantee.
+    const result = await this.db.tx(async q => {
+      const actor=await this.liveActor(q,user);
+      if (!this.orders.actorOf(actor,o)) throw forbidden('Позвать поддержку могут участники заявки');
+      const replay=await this.findLinkedRequest(q,actor.id,p.requestKey,fingerprint);
+      if(replay)return {id:replay,number:0,delivery:null,created:false};
+      await q.query('select pg_advisory_xact_lock(hashtext($1))', ['support:order:' + user.id + ':' + p.orderId]);
+      const existing = await q.one<LockedTicket & {id:string}>(
+        'select id,status,user_id,number,assignee_id,requested_staff_role from support_tickets where user_id=$1 and order_id=$2 and status=$3 for update',
+        [user.id, p.orderId, 'open']);
+      if (existing) {
+        const delivery=await this.appendReply(q,actor,existing,existing.id,text,safeText);
+        await this.rememberLinkedRequest(q,actor.id,p.requestKey,fingerprint,existing.id);
+        return {id:existing.id,number:existing.number,delivery,created:false};
       }
-      uniqueTicket = { id: result.id, number: result.number };
-    }
-    const t = uniqueTicket ?? await this.db.tx(async q => {
       const created = await q.one<{ id: string; number: number }>(
         `insert into support_tickets(user_id, order_id, topic, sla_deadline_at)
            values ($1,$2,$3,$4) returning id, number`,
-        [user.id, null, p.topic.slice(0, 80), new Date(this.now().getTime() + 3_600_000)]);
+        [user.id, p.orderId, p.topic.slice(0, 80),
+          new Date(this.now().getTime() + 3_600_000)]);
+      if (!created) throw Error('Support ticket insert failed');
       await q.query('insert into support_messages(ticket_id, sender_id, body) values ($1,$2,$3)',
-        [created!.id, user.id, safeText]);
-      return created!;
+        [created.id, user.id, safeText]);
+      await this.rememberLinkedRequest(q,actor.id,p.requestKey,fingerprint,created.id);
+      return {id:created.id,number:created.number,delivery:await this.persistInitialNotice(q,created),created:true};
     });
-    if (p.orderId) {
-      await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: t!.number, topic: p.topic });
-      await this.orders.systemMessage(p.orderId, `Подключили поддержку (обращение №${t!.number}). Первый ответ специалиста — в течение часа.`);
-    }
-    if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId ?? null, ticketId: t!.id, text, topic: p.topic });
-    await this.notifier.notify(await this.intakeStaffIds(), { type: 'support', ticketId: t!.id }, {
-      kind: 'normal', title: maskPhones(`Обращение №${t!.number}: ${p.topic}`).text,
-      body: maskPhones(`${user.name ?? user.phone}${number ? ` · заявка №${number}` : ''}: ${safeText.slice(0, 100)}`).text,
-      data: { ticketId: t!.id },
-    });
-    return this.thread(user, t!.id);
+    if (!result.delivery) return this.thread(user,result.id);
+    // Send the already-persisted staff notice even if a later order callback
+    // fails. A push failure cannot undo or duplicate the stored inbox.
+    await this.notifier.deliverStored(result.delivery.ids,
+      {type:'support',ticketId:result.id},result.delivery.msg).catch(()=>{});
+    if (!result.created) return this.thread(user,result.id);
+    await this.orders.event(this.db, p.orderId, user.id, 'support_called', { ticket: result.number, topic: p.topic });
+    await this.orders.systemMessage(p.orderId, `Подключили поддержку (обращение №${result.number}). Первый ответ специалиста — в течение часа.`);
+    if (/спор|не согласен/i.test(p.topic) && this.onDispute) await this.onDispute({ userId: user.id, orderId: p.orderId, ticketId: result.id, text, topic: p.topic });
+    return this.thread(user,result.id);
   }
 
-  async post(user: AuthUser, ticketId: string, body: string) {
-    await this.mustSee(user, ticketId);
+  private async findLinkedRequest(q:Queryable,userId:string,requestKey:string|undefined,fingerprint:string) {
+    if(!requestKey)return null;
+    await q.query('select pg_advisory_xact_lock(hashtext($1))',['support:linked-request:'+userId+':'+requestKey]);
+    const prior=await q.one<{ticket_id:string;request_hash:string}>(
+      'select ticket_id,request_hash from support_linked_requests where user_id=$1 and request_key=$2',[userId,requestKey]);
+    if(!prior)return null;
+    if(prior.request_hash!==fingerprint)throw conflict('support_request_changed','Этот запрос уже использован с другими данными. Проверьте историю обращений.');
+    return prior.ticket_id;
+  }
+
+  private async rememberLinkedRequest(q:Queryable,userId:string,requestKey:string|undefined,fingerprint:string,ticketId:string) {
+    if(requestKey)await q.query('insert into support_linked_requests(user_id,request_key,request_hash,ticket_id) values($1,$2,$3,$4)',
+      [userId,requestKey,fingerprint,ticketId]);
+  }
+
+  private async persistInitialNotice(q:Queryable,ticket:{id:string;number:number}) {
+    const ids=await this.intakeStaffIds(q);
+    const msg={kind:'normal' as const,title:`Новое обращение №${ticket.number}`,
+      body:'Откройте личное обращение, чтобы прочитать сообщение.',data:{ticketId:ticket.id}};
+    for(const id of ids) await q.query(
+      "insert into notifications(user_id,kind,title,body,data) values($1,'support',$2,$3,$4)",
+      [id,msg.title,msg.body,msg.data]);
+    return {ids,msg};
+  }
+
+  async post(user: AuthUser, ticketId: string, body: string, requestKey?: string) {
     const text = body.trim();
     if (!text) throw bad('empty', 'Пустое сообщение');
     const safeText = maskPhones(text).text;
+    const fingerprint = requestKey ? createHash('sha256').update(text).digest('hex') : null;
     const delivery = await this.db.tx(async q => {
-      const locked = await q.one<{ status: string; user_id: string; number: number; assignee_id: string | null }>(
-        'select status, user_id, number, assignee_id from support_tickets where id=$1 for update', [ticketId]);
+      const locked = await q.one<LockedTicket>(
+        'select status, user_id, number, assignee_id, requested_staff_role from support_tickets where id=$1 for update', [ticketId]);
       if (!locked) throw notFound('Обращение не найдено');
+      const actor = await this.authorizeTicket(q,user,locked);
+      // Ticket lock serializes keyed replies with each other and with close.
+      // Replay is allowed only after current ACL, even if the ticket closed.
+      if (requestKey) {
+        const prior = await q.one<{client_request_hash:string}>(
+          'select client_request_hash from support_messages where ticket_id=$1 and sender_id=$2 and client_request_key=$3',
+          [ticketId,actor.id,requestKey]);
+        if (prior) {
+          if (prior.client_request_hash !== fingerprint)
+            throw conflict('support_reply_changed','Этот запрос уже использован с другим текстом.');
+          return null;
+        }
+      }
+      return this.appendReply(q,actor,locked,ticketId,text,safeText,requestKey,fingerprint);
+    });
+    // The inbox is durable even when an optional live delivery fails.
+    if (delivery) await this.notifier.deliverStored(delivery.ids, { type: 'support', ticketId }, delivery.msg)
+      .catch(() => {});
+    return this.thread(user, ticketId);
+  }
+
+  private async appendReply(q:Queryable,actor:AuthUser,locked:LockedTicket,ticketId:string,text:string,safeText:string,requestKey?:string,fingerprint:string|null=null) {
       if (locked.status === 'closed')
         throw conflict('closed', 'Обращение закрыто — создайте новое');
-      const staff = locked.user_id !== user.id;
-      if (staff) {
-        const currentStaff = await q.one<{ id: string }>(
-          "select id from users where id=$1 and status='active' and roles && '{admin,moderator}'::text[] for share",
-          [user.id]);
-        if (!currentStaff || !isStaff(user)) throw forbidden();
-      }
+      const staff = locked.user_id !== actor.id;
       // A former or blocked employee must not receive a new private reply.
       const assignee = locked.assignee_id ? await q.one<{ id: string }>(
-        "select id from users where id=$1 and status='active' and roles && '{admin,moderator}'::text[] for share",
+        "select id from users where id=$1 and status='active' and deleted_at is null and roles && '{admin,moderator}'::text[] for share",
         [locked.assignee_id]) : null;
       const postedAt = this.now();
-      await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body)
-        values ($1,$2,$3,$4)`, [ticketId, user.id, staff, staff ? text : safeText]);
+      await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body, client_request_key, client_request_hash)
+        values ($1,$2,$3,$4,$5,$6)`, [ticketId, actor.id, staff, staff ? text : safeText, requestKey??null, fingerprint]);
       await q.query(`update support_tickets
         set updated_at=$2, assignee_id=$3,
             first_staff_reply_at=case when $4::boolean then coalesce(first_staff_reply_at,$2::timestamptz)
                else first_staff_reply_at end where id=$1`,
-        [ticketId, postedAt, assignee?.id ?? (staff ? user.id : null), staff]);
-      const ids = staff ? [locked.user_id] :
-        assignee ? [assignee.id] : await this.intakeStaffIds(q);
+        [ticketId, postedAt, assignee?.id ?? (staff ? actor.id : null), staff]);
+      const ids = staff ? await this.activeRecipient(q,locked.user_id) :
+        assignee ? [assignee.id] : await this.intakeStaffIds(q,locked.requested_staff_role);
       const title = staff ? `Поддержка ответила · №${locked.number}` : `Новое сообщение · №${locked.number}`;
-      const msg = { kind: 'normal' as const, title, body: safeText.slice(0, 120), data: { ticketId } };
+      const msg = { kind: 'normal' as const, title, body: 'Откройте личное обращение, чтобы прочитать сообщение.', data: { ticketId } };
       // Persist the message, first-response timestamp and inbox in one commit.
       for (const id of ids) {
         await q.query(`insert into notifications(user_id,kind,title,body,data)
           values ($1,'support',$2,$3,$4)`, [id, msg.title, msg.body, msg.data]);
       }
       return { ids, msg };
-    });
-    // The inbox is durable even when an optional live delivery fails.
-    await this.notifier.deliverStored(delivery.ids, { type: 'support', ticketId }, delivery.msg)
-      .catch(() => {});
-    return this.thread(user, ticketId);
   }
 
   async close(user: AuthUser, ticketId: string) {
-    const t = await this.mustSee(user, ticketId);
-    // post() takes the same row lock. Concurrent close/close and close/post
-    // therefore serialize, with exactly one closure event on success.
-    const closedNow = await this.db.tx(async q => {
-      const locked = await q.one<{ status: string }>(
-        'select status from support_tickets where id=$1 for update', [ticketId]);
+    // The same lock as post() serializes closure and reply. Check live
+    // authorization before even returning the idempotent closed state.
+    const delivery = await this.db.tx(async q => {
+      const locked = await q.one<{ status: string; user_id: string; number: number }>(
+        'select status,user_id,number from support_tickets where id=$1 for update', [ticketId]);
       if (!locked) throw notFound('Обращение не найдено');
-      if (locked.status === 'closed') return false;
+      const actor = await this.authorizeTicket(q,user,locked);
+      if (locked.status === 'closed') return null;
       const at = this.now();
       await q.query(`update support_tickets set status='closed', closed_at=$2, closed_by=$3, updated_at=$2 where id=$1`,
-        [ticketId, at, user.id]);
+        [ticketId, at, actor.id]);
+      const staff = locked.user_id !== actor.id;
       await q.query(`insert into support_messages(ticket_id, sender_id, from_staff, body) values ($1,null,false,$2)`,
-        [ticketId, isStaff(user) && t.user_id !== user.id
+        [ticketId, staff
           ? 'Поддержка закрыла обращение. Если вопрос остался — напишите новое.' : 'Обращение закрыто.']);
-      if (t.user_id !== user.id) {
-        // Durable inbox belongs to the same commit as the terminal state and
-        // its system message. A second close cannot create a second alert.
-        await q.query(`insert into notifications(user_id,kind,title,body,data)
-          values ($1,'support',$2,$3,$4)`,
-          [t.user_id, `Обращение №${t.number} закрыто`,
-            'Если вопрос остался — напишите новое', { ticketId }]);
-      }
-      return true;
+      const ids = staff ? await this.activeRecipient(q,locked.user_id) : [];
+      const msg = {kind:'normal' as const,title:`Обращение №${locked.number} закрыто`,
+        body:'Если вопрос остался — напишите новое',data:{ticketId}};
+      for (const id of ids) await q.query(
+        `insert into notifications(user_id,kind,title,body,data) values ($1,'support',$2,$3,$4)`,
+        [id,msg.title,msg.body,msg.data]);
+      return {ids,msg};
     });
-    if (closedNow && t.user_id !== user.id) {
-      // Alert already exists in the user's inbox. Optional push failure
-      // must never turn the successful closure into a duplicate retry.
-      await this.notifier.deliverStored([t.user_id], { type: 'support', ticketId }, {
-        kind: 'normal', title: `Обращение №${t.number} закрыто`,
-        body: 'Если вопрос остался — напишите новое', data: { ticketId },
-      });
-    }
-    return this.thread(user, ticketId);
+    if (delivery) await this.notifier.deliverStored(delivery.ids,{type:'support',ticketId},delivery.msg).catch(()=>{});
+    return this.thread(user,ticketId);
   }
 
   async mine(user: AuthUser) {
-    return this.db.query(
+    return this.db.tx(async q => {
+      const actor = await this.liveActor(q,user);
+      return q.query(
       `select t.id, t.number, t.topic, t.status, t.order_id, o.number as order_number, t.created_at, t.updated_at,
               (select body from support_messages m where m.ticket_id=t.id order by m.id desc limit 1) as last
-         from support_tickets t left join orders o on o.id=t.order_id where t.user_id=$1 order by t.updated_at desc limit 50`, [user.id]);
+         from support_tickets t left join orders o on o.id=t.order_id where t.user_id=$1 order by t.updated_at desc limit 50`, [actor.id]);
+    });
   }
 
   /** Очередь: сначала открытые, где последнее слово за пользователем */
-  async queue(status: 'open' | 'closed' = 'open') {
-    return this.db.query(
+  async queue(user: AuthUser, status: 'open' | 'closed' = 'open') {
+    return this.db.tx(async q => {
+      const actor = await this.liveActor(q,user);
+      if (!isStaff(actor)) throw forbidden();
+      return q.query(
       `select t.id, t.number, t.topic, t.status, t.order_id, o.number as order_number, t.created_at, t.updated_at,
               u.id as user_id, u.name, u.phone, a.name as assignee_name,
               t.sla_deadline_at, t.first_staff_reply_at, t.sla_overdue_at,
@@ -266,32 +364,38 @@ export class SupportService {
               (select not from_staff from support_messages m where m.ticket_id=t.id and m.sender_id is not null order by m.id desc limit 1) as waiting
          from support_tickets t join users u on u.id=t.user_id left join orders o on o.id=t.order_id left join users a on a.id=t.assignee_id
         where t.status=$1 order by waiting desc nulls last, t.updated_at desc limit 200`, [status]);
+    });
   }
 
   async thread(user: AuthUser, ticketId: string) {
-    const t = await this.mustSee(user, ticketId);
-    const messages = await this.db.query(
+    return this.db.tx(async q => {
+    const t = await q.one<{
+      id: string; user_id: string; number: number; topic: string; status: string;
+      order_id: string | null; ledger_entry_id: number | string | null;
+      created_at: Date; requested_staff_role: 'admin' | 'moderator' | null;
+      sla_deadline_at: Date | null; first_staff_reply_at: Date | null; sla_overdue_at: Date | null;
+    }>(`select id,user_id,number,topic,status,order_id,ledger_entry_id,created_at,
+              requested_staff_role,sla_deadline_at,first_staff_reply_at,sla_overdue_at
+         from support_tickets where id=$1 for share`,[ticketId]);
+    if (!t) throw notFound('Обращение не найдено');
+    const actor = await this.authorizeTicket(q,user,t);
+    const messages = await q.query(
       `select m.id::int as id, m.body, m.from_staff, m.created_at, m.sender_id, u.name as sender_name
          from support_messages m left join users u on u.id=m.sender_id where m.ticket_id=$1 order by m.id`, [ticketId]);
-    const order = t.order_id ? await this.db.one('select id, number, status, service from orders where id=$1', [t.order_id]) : null;
-    const author = isStaff(user) ? await this.db.one('select id, name, phone from users where id=$1', [t.user_id]) : null;
+    const order = t.order_id ? await q.one('select id, number, status, service from orders where id=$1', [t.order_id]) : null;
+    const author = isStaff(actor) ? await q.one('select id, name, phone from users where id=$1', [t.user_id]) : null;
     // A moderator may answer a user's ticket but must not receive that user's
     // private ledger entry. The ticket owner and an administrator retain their
     // existing right to inspect the linked operation.
-    const canReadLedger = t.user_id === user.id || user.roles.includes('admin');
-    const entry = canReadLedger && t.ledger_entry_id ? await this.db.one(
+    const canReadLedger = t.user_id === actor.id || actor.roles.includes('admin');
+    const entry = canReadLedger && t.ledger_entry_id ? await q.one(
       `select l.id::int as id, l.kind, l.amount, l.note, l.account, l.created_at, o.number as order_number
          from ledger_entries l left join orders o on o.id=l.order_id where l.id=$1`, [t.ledger_entry_id]) : null;
     return { id: t.id, number: t.number, topic: t.topic, status: t.status,
-      createdAt: t.created_at, slaDeadlineAt: t.sla_deadline_at,
+      createdAt: t.created_at, requestedRole: t.requested_staff_role ?? null, slaDeadlineAt: t.sla_deadline_at,
       firstStaffReplyAt: t.first_staff_reply_at, slaOverdueAt: t.sla_overdue_at,
       order, author, messages, entry };
+    });
   }
 
-  private async mustSee(user: AuthUser, ticketId: string) {
-    const t = await this.db.one('select * from support_tickets where id=$1', [ticketId]);
-    if (!t) throw notFound('Обращение не найдено');
-    if (t.user_id !== user.id && !isStaff(user)) throw forbidden();
-    return t;
-  }
 }

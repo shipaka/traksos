@@ -5,6 +5,7 @@ import { bad, forbidden, notFound } from '../http/router.ts';
 import { maskPhones } from '../util.ts';
 import { config } from '../config.ts';
 import { suggestTrakBotAirReply } from './trakbotAirPolicy.ts';
+import { staffRecipient } from '../domain/airIntent.ts';
 
 type AirRow = { id:string; author_label:string; body:string; origin:string; created_at:Date };
 const isStaff = (u:AuthUser) => u.roles.includes('admin') || u.roles.includes('moderator');
@@ -30,11 +31,6 @@ async function currentAccount(q:Queryable,id:string):Promise<AuthUser> {
     where id=$1 and status='active' and deleted_at is null for share`,[id]);
   if(!user)throw forbidden('Доступ к эфиру отозван');
   return user;
-}
-function recipient(text:string):'admin'|'moderator'|null {
-  if(/@(?:admin|админ(?:истратор)?)(?![a-zа-я])|позов.{0,15}админ|вызови.{0,15}админ/i.test(text)) return 'admin';
-  if(/@(?:moderator|модератор)(?![a-zа-я])|позов.{0,15}модератор|вызови.{0,15}модератор/i.test(text)) return 'moderator';
-  return null;
 }
 function filterMessage(raw:string):string {
   const text=raw.trim().replace(/\s+/g,' ');
@@ -77,8 +73,9 @@ export class DriverAirService {
 
   async post(user:AuthUser,raw:string) {
     allowWrite(user);
+    // Legacy clients must not publish even a canned marker for a private request.
+    if(staffRecipient(raw)) throw bad('air_private_support','Обращение к сотруднику не опубликовано. Откройте личную поддержку и подтвердите отправку.');
     const text=filterMessage(raw);
-    const call=recipient(text);
     const now=this.now();
     return this.db.tx(async q=>{
       const actor=await currentAccount(q,user.id);
@@ -99,28 +96,16 @@ export class DriverAirService {
         "select 1 from driver_air_messages where user_id=$1 and origin='human' "+
         "and body=$2 and created_at>$3::timestamptz-interval '10 minutes' "+
         "and hidden_at is null limit 1",
-        [user.id,call ? 'Хочу обратиться к '+(call==='admin'?'администратору':'модератору')+' через личную поддержку.' : text,now]);
+        [user.id,text,now]);
       if(duplicate) throw bad('air_duplicate','Ты уже отправлял такое сообщение недавно.');
-      const body=call
-        ? 'Хочу обратиться к '+(call==='admin'?'администратору':'модератору')+' через личную поддержку.'
-        : text;
+      const body=text;
       const human=await q.one<AirRow>(
         "insert into driver_air_messages(user_id,author_label,body,origin,created_at) "+
         "values($1,$2,$3,'human',$4) returning id::text,author_label,body,origin,created_at",
         [actor.id,label(actor),body,now]);
       if(!human) throw bad('air_write');
       let bot:AirRow|null=null;
-      if(call) {
-        const note='Уточню: это проблема с заявкой, поведением участника или работой площадки? '+
-          'Номер заявки, документы и контакты не публикуй здесь. '+
-          'Перейди в «Личное обращение» и опиши детали — их увидят сотрудники. '+
-          'Если нужен именно '+(call==='admin'?'администратор':'модератор')+', укажи это в обращении.';
-        bot=await q.one<AirRow>(
-          "insert into driver_air_messages(user_id,author_label,body,origin,created_at) "+
-          "values(null,'TrakBot · бот',$1,'bot',$2) returning id::text,author_label,body,origin,created_at",
-          [note,now]);
-        // Required safe clarification does not use entertainment quotas.
-      } else if(state.bot_enabled) {
+      if(state.bot_enabled) {
         const recent=await q.query<{sender_id:string;body:string;created_at:Date}>(
           "select user_id::text as sender_id,body,created_at from driver_air_messages "+
           "where origin='human' and hidden_at is null and created_at>=$1::timestamptz-interval '1 hour' "+
@@ -143,7 +128,7 @@ export class DriverAirService {
             [now,day,count+1]);
         }
       }
-      return {message:expose([human])[0],botMessage:bot?expose([bot])[0]:null,supportSuggested:!!call};
+      return {message:expose([human])[0],botMessage:bot?expose([bot])[0]:null,supportSuggested:false};
     });
   }
 

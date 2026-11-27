@@ -137,3 +137,6 @@ try{
   }
   console.log('PASS: no SPb default; distinct region/zone; manual quote outside coverage; no stale price on change; location and payment stage consistency; renewed consent.');
 }finally{await browser.close()}
+
+// Real Shell Air/SOS navigation after disposable client bootstrap.
+await import('./air-sos-live-return-20261127.mjs');
