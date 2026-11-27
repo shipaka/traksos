@@ -215,9 +215,13 @@ function ClientHomeForAccount() {
 /** Direction-first SOS workflow is the single active customer help entry point. */
 export function Sos() {
   const {me}=useMe();
-  return <SosForAccount key={me?.id??'guest'} userId={me?.id}/>;
+  const roles=me?.roles??[];
+  const airEligible=roles.some(r=>r==='client'||r==='driver') &&
+    !roles.some(r=>['master','tow','service','insurer','inspection_operator','admin','moderator'].includes(r));
+  const fromAir=airEligible && location.hash==='#/sos?from=air';
+  return <SosForAccount key={me?.id??'guest'} userId={me?.id} fromAir={fromAir}/>;
 }
-function SosForAccount({userId}:{userId?:string}) {
+function SosForAccount({userId,fromAir}:{userId?:string;fromAir:boolean}) {
   const [direction, setDirection] = useState<'master' | 'tow' | 'service' | null>(null);
   const options = [
     { id: 'master', name: 'Выездной мастер', icon: '⚡', detail: 'Электрик, диагност, пневматика, отопители, шиномонтаж' },
@@ -234,7 +238,7 @@ function SosForAccount({userId}:{userId?:string}) {
   const chosen = options.find((item) => item.id === direction);
   return (
     <main className="client-sos-directions">
-      <Back to="" />
+      {fromAir ? <a href="#/air" className="note" style={{display:'inline-flex',alignItems:'center',minHeight:48,textDecoration:'none'}}>← Вернуться в Эфир</a> : <Back to="" />}
       <div className="client-sos-intro">
         <span className="label">TRAKSOS · СРОЧНАЯ ПОМОЩЬ</span>
         <h1>Помощь в дороге</h1>
