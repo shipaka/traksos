@@ -1,0 +1,391 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify actual operation, phone, legal operator, coordinates, source reuse, duplicate physical facilities and admin approval. Group outreach by operator and obtain appropriate permission. No calls or FNS official extracts.",
+  "records": [
+    {
+      "id": "transservice-pskov",
+      "name": "ТрансСервис",
+      "region": "Псковская область",
+      "address": "Псков, Ленинградское шоссе, 11А",
+      "country": "Россия",
+      "phone": "+7 911 899-78-66",
+      "email": null,
+      "hours": "пн–пт 08:30–18:00",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "ремонт"
+      ],
+      "source_urls": [
+        "https://www.ts60.ru/contacts.php",
+        "https://www.ts60.ru/"
+      ],
+      "notes": "Запись на сервис; запчасти +7 911 350-22-02.",
+      "operator_group": "transservice-pskov",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "motus-panino",
+      "name": "MOTUS — ремонтная база",
+      "region": "Псковская область",
+      "address": "Псков, п. Панино, 43",
+      "country": "Россия",
+      "phone": "+7 921 210-18-94",
+      "email": null,
+      "hours": null,
+      "services": [
+        "ремонт грузовиков",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://motus60.ru/"
+      ],
+      "notes": "Номер ремонтной базы, не магазина и не перевозчика; уточнить прием внешних клиентов.",
+      "operator_group": "motus",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzavto-tver",
+      "name": "Груз-Авто — Тверь",
+      "region": "Тверская область",
+      "address": "Тверь, проезд Стеклопластик, 5",
+      "country": "Россия",
+      "phone": "+7 906 550-87-11",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (сайт)",
+      "services": [
+        "грузовики",
+        "прицепы",
+        "двигатели",
+        "тормоза",
+        "рулевое управление",
+        "диагностика"
+      ],
+      "source_urls": [
+        "https://gruz-avto-tver.ru/"
+      ],
+      "notes": "Общий номер компании; второй объект указан отдельно.",
+      "operator_group": "gruzavto-tver",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gruzavto-zavolzhsky",
+      "name": "Груз-Авто — Заволжский",
+      "region": "Тверская область",
+      "address": "пос. Заволжский, ул. Новокаликинская, 58",
+      "country": "Россия",
+      "phone": "+7 999 231-69-15",
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (сайт)",
+      "services": [
+        "грузовой ремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://gruz-avto-tver.ru/"
+      ],
+      "notes": "Номер записи на ремонт на общем сайте, принадлежность конкретному филиалу не подтверждена. М-10.",
+      "operator_group": "gruzavto-tver",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gelios-torzhok",
+      "name": "Гелиос — Торжок",
+      "region": "Тверская область",
+      "address": "Торжок, Северный проезд, 9А",
+      "country": "Россия",
+      "phone": "+7 910 930-69-40",
+      "email": "alekseigelios@yandex.ru",
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://gelios69.ru/contact",
+        "https://gelios69.ru/"
+      ],
+      "notes": "Мастер сервиса 08:00–20:00; круглосуточный магазин +7 915 731-75-20. Часы самого СТО уточнить. М-10, 233-й км.",
+      "operator_group": "gelios69",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gelios-budovo",
+      "name": "Гелиос — Будово",
+      "region": "Тверская область",
+      "address": "Торжокский район, д. Будово, 45",
+      "country": "Россия",
+      "phone": "+7 980 636-17-32",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой ремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://gelios69.ru/contact"
+      ],
+      "notes": "Контактная страница указывает мастера СТО 08:00–20:00, верхняя навигация называет точку магазином; проверить наличие ремонтного поста. Магазин +7 961 016-58-71. М-10, 253-й км.",
+      "operator_group": "gelios69",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "tks-tver",
+      "name": "ТКС",
+      "region": "Тверская область",
+      "address": "Тверь, ул. Паши Савельевой, 41",
+      "country": "Россия",
+      "phone": "+7 900 016-97-77",
+      "email": "service@tks69.ru",
+      "hours": "пн–пт 08:00–17:00",
+      "services": [
+        "китайские грузовики",
+        "пневматика",
+        "электрика",
+        "КПП",
+        "двигатели",
+        "ходовая",
+        "тормоза"
+      ],
+      "source_urls": [
+        "https://tks69.ru/"
+      ],
+      "notes": "SHACMAN, FAW, FOTON, SANY, HOWO. Другой сервис по тому же адресу Автодруг пока не добавлен: проверить самостоятельность объектов.",
+      "operator_group": "tks69",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "servistrans-vologda",
+      "name": "Сервис-Транс",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Гагарина, 90",
+      "country": "Россия",
+      "phone": "+7 8172 70-32-01",
+      "email": "servis@str-35.ru",
+      "hours": "ежедневно 09:00–21:00",
+      "services": [
+        "грузовики",
+        "агрегатный ремонт",
+        "диагностика",
+        "кузовной ремонт",
+        "правка рам"
+      ],
+      "source_urls": [
+        "https://str-volvo.ru/o_kompanii"
+      ],
+      "notes": "Отдел сервиса; ИНН 3525292920 указан компанией. Volvo/Renault. Не подтвержден текущий дилерский статус.",
+      "operator_group": "servistrans-vologda",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vts-vologda",
+      "name": "ВологдаТракСервис",
+      "region": "Вологодская область",
+      "address": "Вологда, Окружное шоссе, 9Б",
+      "country": "Россия",
+      "phone": "8 800 250-53-51",
+      "email": "inbox@vts35.ru",
+      "hours": "08:00–21:00 ежедневно (сеть BPW)",
+      "services": [
+        "грузовой ремонт",
+        "прицепная техника",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://www.vts35.ru/",
+        "https://support.bpw-ost.ru/all-contacts/"
+      ],
+      "notes": "ИНН 3525282424 опубликован компанией; SITRAK, FOTON, АМТ, MAN. Отдельные шинные площадки связаны по operator_group.",
+      "operator_group": "vts35",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vts-tyre-vologda",
+      "name": "ВологдаТракСервис — шинный центр",
+      "region": "Вологодская область",
+      "address": "Вологда, Окружное шоссе, 9А",
+      "country": "Россия",
+      "phone": "8 800 250-53-41",
+      "email": "shinmarket@vts35.ru",
+      "hours": "ежедневно 08:00–21:00",
+      "services": [
+        "грузовые шины",
+        "обслуживание колес"
+      ],
+      "source_urls": [
+        "https://shinmarket35.ru/contacts/",
+        "https://www.vts35.ru/"
+      ],
+      "notes": "Отдельный адрес и телефон шинного центра; не полное СТО.",
+      "operator_group": "vts35",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "vts-tyre-totma",
+      "name": "ВологдаТракСервис — шинный центр Тотьма",
+      "region": "Вологодская область",
+      "address": "Тотемский район, д. Молоково, 1-й км автодороги Тотьма–Нюксеница–Великий Устюг, 2А",
+      "country": "Россия",
+      "phone": "8 800 250-21-53",
+      "email": "totma@vts35.ru",
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "грузовые шины",
+        "обслуживание колес"
+      ],
+      "source_urls": [
+        "https://shinmarket35.ru/contacts/",
+        "https://www.vts35.ru/"
+      ],
+      "notes": "Стоянка у кафе Аляска. Не полное СТО.",
+      "operator_group": "vts35",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sfera-cherepovets",
+      "name": "Сфера — грузовой сервис",
+      "region": "Вологодская область",
+      "address": "Череповец, ул. Краснодонцев, 3",
+      "country": "Россия",
+      "phone": "+7 911 518-00-71",
+      "email": "info@sferaautoservis.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой ремонт",
+        "ТО"
+      ],
+      "source_urls": [
+        "https://sferaautoservis.ru/",
+        "https://mayercargo.ru/dealers-map/"
+      ],
+      "notes": "В сети MAYER указан как Вторресурс77 с тем же адресом и телефоном; не создавать дубль.",
+      "operator_group": "sfera",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    },
+    {
+      "id": "sfera-tyre-yasnaya",
+      "name": "Сфера — грузовой шиномонтаж",
+      "region": "Вологодская область",
+      "address": "Череповец, Ясная Поляна, ул. Механизаторов, 2Д",
+      "country": "Россия",
+      "phone": "+7 921 545-11-01",
+      "email": "info@sferaautoservis.ru",
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://sferaautoservis.ru/"
+      ],
+      "notes": "Отдельная площадка с прямым номером; одна группа компаний.",
+      "operator_group": "sfera",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false
+    }
+  ]
+}
