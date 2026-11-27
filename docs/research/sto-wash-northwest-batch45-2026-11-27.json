@@ -1,0 +1,457 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only",
+  "publication_gate": "Confirm actual operation, heavy truck capability, operator, contact, entrance, coordinates, reuse rights and duplicates; no map publication.",
+  "records": [
+    {
+      "id": "b45-akvaprofi",
+      "name": "АкваПрофи",
+      "region": "Вологодская область",
+      "address": "Вологда, ул. Северная, 27",
+      "country": "Россия",
+      "phone": "+7 8172 709-079",
+      "email": "akvaprofi35@yandex.ru",
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "грузовая мойка",
+        "внутренняя мойка цистерн"
+      ],
+      "source_urls": [
+        "https://www.avtomoika35.ru/"
+      ],
+      "notes": "Сайт заявляет прием техники до 40 т, корпоративные договоры; не подтверждает ставку НДС.",
+      "operator_group": "akvaprofi",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-grigoryevskaya",
+      "name": "Грузовая автомойка",
+      "region": "Вологодская область",
+      "address": "Вологда, Григорьевская ул., 1",
+      "country": "Россия",
+      "phone": "+7 911 501-25-40",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://yandex.com/maps/org/gruzovaya_avtomoyka_truck/190409257155/"
+      ],
+      "notes": "График не перенесен из текущего статуса карты.",
+      "operator_group": "grigoryevskaya",
+      "evidence": "business_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-mg-tver",
+      "name": "Грузовая и легковая автомойка MG",
+      "region": "Тверская область",
+      "address": "Тверь, ул. Паши Савельевой, 41А",
+      "country": "Россия",
+      "phone": "+7 904 024-96-92",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://tver.2rus.org/moyka_avto/"
+      ],
+      "notes": "Соседний адрес 41 у ТКС и КАМАЗ центра; проверить отдельный въезд.",
+      "operator_group": "mg-tver",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-furamoyka-durykino",
+      "name": "Фурамойка",
+      "region": "Московская область",
+      "address": "д. Дурыкино, стр. 12",
+      "country": "Россия",
+      "phone": "+7 989 154-56-33",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "портальная грузовая мойка",
+        "мойка днища"
+      ],
+      "source_urls": [
+        "https://furamoyka.ru/"
+      ],
+      "notes": "На сайте заявлена охраняемая стоянка, не считать ремонтной услугой.",
+      "operator_group": "furamoyka-durykino",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-vodomoy-novy-byt",
+      "name": "Водомой-Авто",
+      "region": "Московская область",
+      "address": "Чеховский округ, с. Новый Быт, территория Коммунальная, стр. 10",
+      "country": "Россия",
+      "phone": "+7 926 256-30-20",
+      "email": "avtotreid2017@bk.ru",
+      "hours": "24/7",
+      "services": [
+        "грузовая мойка",
+        "мойка автоцистерн и танк-контейнеров"
+      ],
+      "source_urls": [
+        "https://vodomoy-avto.ru/contacts"
+      ],
+      "notes": "Второй телефон +7 926 417-45-91; разрешенные типы грузов и виды санитарной обработки уточнить.",
+      "operator_group": "vodomoy-novy-byt",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-akvaavto-stroitel",
+      "name": "Аква-авто",
+      "region": "Белгородская область",
+      "address": "Строитель, ул. Дорожная, 4",
+      "country": "Россия",
+      "phone": "+7 910 320-50-21",
+      "email": "vovikbus@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовая мойка",
+        "пропарка и промывка цистерн",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://akvaavto.ru/"
+      ],
+      "notes": "Работа с юридическими лицами заявлена; ставка НДС неизвестна. Не считать универсальным ремонтом.",
+      "operator_group": "akvaavto-stroitel",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "specialist_mixed",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-negarazh-lesnoy",
+      "name": "Негараж",
+      "region": "Московская область",
+      "address": "пгт Лесной, ул. Советская, 15",
+      "country": "Россия",
+      "phone": "+7 933 907-30-94",
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://negarazh-avtoservis.clients.site/service/gruzovaya-avtomoika/TYCOON_67272617021"
+      ],
+      "notes": "ИНН 5038010381 указан владельцем страницы; тяжелый ремонт не подтвержден. Только сегодняшний график указан, не экстраполировать.",
+      "operator_group": "negarazh-lesnoy",
+      "evidence": "business_profile",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "truck_wash",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-porohovye-tikhvin",
+      "name": "АвтоСервис на Пороховых",
+      "region": "Ленинградская область",
+      "address": "Тихвин, ул. Пороховые, 7",
+      "country": "Россия",
+      "phone": "+7 921 333-62-68",
+      "email": null,
+      "hours": "пн–пт 09:00–18:00",
+      "services": [
+        "ремонт тягачей",
+        "ремонт прицепов (по рубрике)"
+      ],
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Тяжелый профиль уточнить; дополнительно https://tihvin.jsprav.ru/remont-pritsepov-i-polupritsepov/",
+      "operator_group": "porohovye-tikhvin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-arsenal-tikhvin",
+      "name": "Арсенал Авто",
+      "region": "Ленинградская область",
+      "address": "Тихвин, Мебельная ул., 1А",
+      "country": "Россия",
+      "phone": "+7 81367 5-10-80",
+      "email": null,
+      "hours": "пн–пт 09:00–18:30; сб–вс 09:00–14:00",
+      "services": [
+        "ремонт коммерческого транспорта"
+      ],
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Прием тяжелых тягачей уточнить.",
+      "operator_group": "arsenal-tikhvin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-formula24-tikhvin",
+      "name": "Формула 24",
+      "region": "Ленинградская область",
+      "address": "Тихвин, Школьная ул., 6А",
+      "country": "Россия",
+      "phone": "+7 952 219-02-84",
+      "email": null,
+      "hours": null,
+      "services": [
+        "диагностика дизельных двигателей по рубрике"
+      ],
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Соседний адрес 6; проверить отдельность и грузовой профиль.",
+      "operator_group": "formula24-tikhvin",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-reliable-bor",
+      "name": "Reliable repair",
+      "region": "Ленинградская область",
+      "address": "д. Бор, 14",
+      "country": "Россия",
+      "phone": "+7 931 622-05-63",
+      "email": null,
+      "hours": "24/7",
+      "services": [
+        "грузовой ремонт по рубрике"
+      ],
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный муниципалитет, въезд и тяжелый профиль уточнить.",
+      "operator_group": "reliable-bor",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-remzona-vyborg",
+      "name": "RemZona",
+      "region": "Ленинградская область",
+      "address": "Выборг, ул. Данилова, 19",
+      "country": "Россия",
+      "phone": "+7 921 859-30-04",
+      "email": null,
+      "hours": "пн–сб 10:00–20:00",
+      "services": [
+        "диагностика грузовиков по рубрике"
+      ],
+      "source_urls": [
+        "https://vyborg.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Проверить тяжелый профиль.",
+      "operator_group": "remzona-vyborg",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    },
+    {
+      "id": "b45-lion-cherkasovo",
+      "name": "Лион",
+      "region": "Ленинградская область",
+      "address": "пос. Черкасово, Верхне-Черкасовская ул.",
+      "country": "Россия",
+      "phone": "+7 921 878-33-14",
+      "email": null,
+      "hours": "пн–пт 10:00–18:00",
+      "services": [
+        "грузовой сервис по рубрике"
+      ],
+      "source_urls": [
+        "https://vyborg.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Точный номер здания и обслуживание сторонних машин уточнить; перевозчик и сервис могут быть одним оператором.",
+      "operator_group": "lion-cherkasovo",
+      "evidence": "directory_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false
+    }
+  ],
+  "proposed_enrichments": [
+    {
+      "target": "b38-petromaster-shushary (verify id; same address)",
+      "source": "https://rnd.petromaster.ru/services/gruzovaya-moika",
+      "phone": "+7 812 244-35-14",
+      "service": "грузовая мойка",
+      "service_hours": "24/7, ежедневный технический перерыв 07:00–08:00",
+      "note": "Не переносить часы мойки на ремонт."
+    },
+    {
+      "target": "amg-sofiyskaya",
+      "source": "https://amg-ekspress.clients.site/",
+      "phone": "+7 905 200-81-63",
+      "service": "грузовая мойка, шиномонтаж, замена масла",
+      "note": "Софийская 149 vs 149 стр.3; ИНН 7816744720 указан в карточке; проверить общий или отдельный оператор и бокс."
+    },
+    {
+      "target": "hobbyauto-truck-vyborg",
+      "source": "https://hobbyauto-sto.ru/",
+      "note": "Собственный сайт найден; подтвердить конкретные услуги грузовой площадки."
+    }
+  ],
+  "excluded_exact_matches": [],
+  "review_notes": [
+    "Actual web pages retrieved for all rows; catalog-only entries not verified operational. Local comparisons limited to 85 records; failed reads [\"sto-spb-lo-batch03\"].",
+    "Wash-only and mixed-specialist candidates not counted toward verified repair goal. No phone calls/FNS checks; no outreach."
+  ]
+}
