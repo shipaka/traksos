@@ -1,0 +1,174 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted comparison of names, address fragments and phone patterns against compact indexes B/C (batches 1–31), record arrays 32–49, 51–52. Not a full normalized global duplicate audit.",
+  "records": [
+    {
+      "id": "b53-germes-vyborg",
+      "name": "Гермес",
+      "address": "Выборг, ул. Кузнечная, 4",
+      "phone": "+7 996 885-89-67",
+      "hours": "Пн–Пт 09:00–17:00",
+      "services": [
+        "грузовой автосервис (по справочнику)"
+      ],
+      "source_urls": [
+        "https://spravbiz.ru/vyiborg/avto/tsentryi-po-remontu-gruzovyih-avtomobilej/",
+        "https://vyborg.spravker.ru/tekhnicheskoe-obsluzhivanie-avtomobilia/"
+      ],
+      "notes": "Другой автосервис указан по тому же адресу в справочнике; уточнить отдельность площадки, оснащение и актуальность приема грузовиков.",
+      "site_kind_candidate": "repair",
+      "region": "Ленинградская область",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b53-tire-priozersk-vyborgskaya",
+      "name": "Шиномонтаж — Выборгская",
+      "address": "Приозерск, Выборгская ул., 31, корп. 2",
+      "phone": "+7 905 204-07-00",
+      "hours": "Ежедневно 09:00–18:00; перерыв 13:00–14:00",
+      "services": [
+        "грузовой шиномонтаж (по справочнику)"
+      ],
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://spravbiz.ru/priozersk/avto/gruzovoj-shinomontazh/",
+        "https://gdeshinomontagh.ru/komp/shinomontazh-priozersk/"
+      ],
+      "notes": "Несколько карточек по одному адресу объединены. Размеры обслуживаемых колес и график уточнить.",
+      "site_kind_candidate": "tire_service",
+      "region": "Ленинградская область",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b53-priozersk-mayakovskogo",
+      "name": "Автосервис — Маяковского",
+      "address": "Приозерск, ул. Маяковского, 25",
+      "phone": "+7 931 711-14-74",
+      "hours": "Пн–Пт 09:00–18:00; Сб 09:00–16:00",
+      "services": [
+        "ремонт коммерческого транспорта (по справочнику)",
+        "ремонт прицепов (по справочнику)"
+      ],
+      "source_urls": [
+        "https://priozersk.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://priozersk.spravker.ru/remont-pritsepov/"
+      ],
+      "notes": "Юридическое название и возможность приема тяжелых тягачей/полуприцепов уточнить.",
+      "site_kind_candidate": "repair",
+      "region": "Ленинградская область",
+      "country": "Россия",
+      "email": null,
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Europe/Moscow",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Автосервисный центр Соколова Е.А.",
+      "region": "Ленинградская область",
+      "address": "Тихвин, ул. Школьная, 6",
+      "phone": "+7 921 591-41-40",
+      "source_urls": [
+        "https://tikhvin.spravker.ru/remont-gruzovykh-avtomobilei/",
+        "https://mestam.info/ru/tihvin/mesto/3610587-avtoservisnii-centr-sokolova-e-a-ulica-shkolnaya-6"
+      ],
+      "reason": "Грузовой профиль требует подтверждения; рядом Формула 24, Школьная 6А (batch45), проверить отдельность площадок."
+    },
+    {
+      "name": "Грузовой сервисный центр",
+      "region": "Санкт-Петербург",
+      "address": "ул. Кондратенко, 3С",
+      "phone": "+7 812 602-69-69",
+      "email": "order@service-gruzovoy.ru",
+      "source_urls": [
+        "https://service-gruzovoy.ru/"
+      ],
+      "reason": "Тот же адрес, что Дакар-Авто (batch29); уточнить отдельность бизнеса и боксов."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Hom Service",
+      "batches": [
+        25,
+        47
+      ],
+      "phone": "+7 965 001-20-15",
+      "address": "Кингисеппский район, д. Малый Луцк",
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "reason": "Две карточки с одинаковым телефоном и адресом. Вероятный точный дубль, связать при итоговом импорте; исходники не удалять."
+    },
+    {
+      "name": "Зелёный бокс",
+      "batch": 41,
+      "address": "Кингисепп, ул. Дорожников, 41",
+      "existing_phone": "+7 999 986-09-99",
+      "additional_phones": [
+        "+7 924 673-80-14",
+        "+7 931 386-07-77"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/avtoservisy-avtotehcentry/"
+      ],
+      "reason": "Альтернативные контакты, проверить актуальность перед заменой."
+    },
+    {
+      "name": "Гараж47 / Монолит-Проф",
+      "batch": 47,
+      "existing_phone": "+7 953 151-51-89",
+      "additional_phones": [
+        "+7 981 809-30-01"
+      ],
+      "source_urls": [
+        "https://spb.spravker.ru/gorod-kingisepp/remont-pritsepov/"
+      ],
+      "reason": "Совпадают адрес и один номер, часы отличаются по карточкам; ночной режим не подтвержден."
+    }
+  ]
+}
