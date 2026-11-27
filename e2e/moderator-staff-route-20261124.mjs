@@ -8,6 +8,8 @@ const stubs={
     'export function fmtTime(value){return String(value||"—");}',
     'export function fmtPhone(value){return String(value||"—");}',
     'export function rub(value){return String(value||0)+" ₽";}',
+    // SupportThread now keys its session by the authenticated token. Keep the fixture role-scoped.
+    'export function getToken(){return "staff-route-test:"+window.__mode;}',
     'export function get(){return Promise.resolve({});}',
     'export function post(){return Promise.resolve({});}',
     'export function onEvent(){return ()=>{};}'
