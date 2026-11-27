@@ -10,4 +10,15 @@ export function takeAirDraft(owner: string, token: string | null) {
   pending = null;
   return draft && draft.owner===owner && draft.token===token ? {text:draft.text, recipient:draft.recipient} : null;
 }
-export function clearAirDraft(){ pending=null; }
+type AirSosContext = {text:string;bottom:boolean;anchor:{id:string;offset:number;top:number}|null;uncertain:boolean};
+let sosPending:({owner:string;token:string;roleKey:string;context:AirSosContext})|null=null;
+// Single in-memory, session-bound handoff. The SOS route receives no chat data.
+export function stageAirSosDraft(owner:string,token:string,roleKey:string,context:AirSosContext){
+  sosPending={owner,token,roleKey,context};
+}
+export function takeAirSosDraft(owner:string,token:string|null,roleKey:string){
+  const saved=sosPending;
+  sosPending=null;
+  return saved&&saved.owner===owner&&saved.token===token&&saved.roleKey===roleKey?saved.context:null;
+}
+export function clearAirDraft(){ pending=null;sosPending=null; }

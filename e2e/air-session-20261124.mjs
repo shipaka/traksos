@@ -258,3 +258,5 @@ try{
 
 // Run foreground and bounded-tail coverage in the existing CI entrypoint.
 await import('./air-foreground-regression.mjs');
+
+await import('./air-sos-handoff-20261127.mjs');

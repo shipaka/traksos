@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { get, post, getToken } from '../api.ts';
 import { staffRecipient } from '../../../server/src/domain/airIntent.ts';
-import { stageAirDraft } from '../airSupportDraft.ts';
+import { stageAirDraft, stageAirSosDraft, takeAirSosDraft } from '../airSupportDraft.ts';
 import { Back, useMe } from '../ui.tsx';
 
 type Message = { id:string; author:string; body:string; isBot:boolean; createdAt:string };
@@ -16,10 +16,11 @@ export function DriverAir() {
     <p>Писать в общем эфире могут только водители и владельцы автопарков. Сотрудникам доступна модерация.</p></main>;
   // A→B can preserve the same permission boolean. A keyed room unmounts every
   // previous draft, moderator permission, support hint and in-flight response.
-  return <AirRoom key={me!.id+':'+[...me!.roles].sort().join(',')+':'+(getToken()??'')} owner={me!.id} token={getToken()} />;
+  const roleKey=[...me!.roles].sort().join(',');
+  return <AirRoom key={me!.id+':'+roleKey+':'+(getToken()??'')} owner={me!.id} token={getToken()} roleKey={roleKey} canSos={ownerOrDriver&&!isStaff} />;
 }
 
-function AirRoom({owner,token}:{owner:string;token:string|null}) {
+function AirRoom({owner,token,roleKey,canSos}:{owner:string;token:string|null;roleKey:string;canSos:boolean}) {
   const [air,setAir] = useState<Air|null>(null);
   const [loading,setLoading] = useState(true);
   const [text,setText] = useState('');
@@ -34,6 +35,14 @@ function AirRoom({owner,token}:{owner:string;token:string|null}) {
   const keepAtBottom = useRef(true);
   const lastTailId = useRef<string|null>(null);
   const readingAnchor = useRef<{id:string;offset:number;top:number}|null>(null);
+  useLayoutEffect(()=>{
+    const saved=takeAirSosDraft(owner,token,roleKey);
+    if(!saved||!canSos||getToken()!==token)return;
+    setText(saved.text);
+    keepAtBottom.current=saved.bottom;
+    readingAnchor.current=saved.anchor;
+    if(saved.uncertain)setActionError('Перед переходом в SOS отправка не была подтверждена. Проверьте историю перед повторной отправкой.');
+  },[owner,token,roleKey,canSos]);
 
   useEffect(()=>{
     let live=true;
@@ -132,6 +141,12 @@ function AirRoom({owner,token}:{owner:string;token:string|null}) {
     stageAirDraft(owner,token,text,staffRecipient(text));
     location.hash='#/support/new';
   };
+  const openSos=()=>{
+    if(!canSos||!token||getToken()!==token)return;
+    stageAirSosDraft(owner,token,roleKey,{text,bottom:keepAtBottom.current,anchor:readingAnchor.current,uncertain:inFlight.current||!!actionError});
+    // Opening help is not an order, a payment, a GPS request or a chat write.
+    location.hash='#/sos';
+  };
   const target=staffRecipient(text);
   const send = async()=>{
     if(!air?.canPost||inFlight.current||!text.trim()||getToken()!==token)return;
@@ -165,7 +180,10 @@ function AirRoom({owner,token}:{owner:string;token:string|null}) {
     <Back to="" />
     <div className="between" style={{gap:12,flexWrap:'wrap'}}>
       <div><h1>Эфир TrakSOS</h1><p className="sub">Общий текстовый чат водителей и владельцев автопарков. Маршруты, жизнь в рейсе, полезный опыт и общение.</p></div>
-      <button type="button" className="btn ghost small" disabled={posting} onClick={openPrivate}>Личное обращение</button>
+      <div className="row" style={{flexWrap:'wrap'}}>
+        {canSos && <button type="button" className="btn" style={{minHeight:48}} onClick={openSos}>SOS · Помощь в дороге</button>}
+        <button type="button" className="btn ghost small" disabled={posting} onClick={openPrivate}>Личное обращение</button>
+      </div>
     </div>
     <div className="card flat">
       <p className="note">Это публичная переписка для зарегистрированных участников. Не отправляй в эфир телефоны, VIN, номера документов, личные данные и подробности заявок. Для жалоб и обращений к сотрудникам используй личную поддержку.</p>
