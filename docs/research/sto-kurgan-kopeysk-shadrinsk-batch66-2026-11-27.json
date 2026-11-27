@@ -1,0 +1,266 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Targeted name, address and phone search in audit B/C and records 32–49,51–65. Full global normalized audit pending.",
+  "records": [
+    {
+      "id": "b66-trakservice45",
+      "name": "Траксервис45",
+      "region": "Курганская область",
+      "address": "Курган, Курган-Шадринск тракт, 8А",
+      "country": "Россия",
+      "phone": "+7 963 003-34-99",
+      "additional_phones": [
+        "+7 982 802-81-43",
+        "+7 982 804-29-26"
+      ],
+      "email": null,
+      "hours": "Пн–Пт 09:00–18:00; Сб 09:00–13:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://rting.ru/kurgan/co/trakservis45/984574",
+        "https://mestam.info/ru/kurgan/remont-gruzovih-avtomobilei"
+      ],
+      "notes": "Два справочника подтверждают адрес; актуальность телефонов уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b66-kopeysk-chkalova",
+      "name": "Автотехцентр по ремонту коммерческого транспорта",
+      "region": "Челябинская область",
+      "address": "Копейск, ул. Чкалова, 4",
+      "country": "Россия",
+      "phone": "+7 908 093-43-20",
+      "additional_phones": [],
+      "email": null,
+      "hours": "Пн–Сб 09:00–19:00; Вс выходной",
+      "services": [
+        "ремонт дизельных двигателей",
+        "ремонт МКПП",
+        "ходовая",
+        "автоэлектрика"
+      ],
+      "source_urls": [
+        "https://kopeysk.spravka.city/company/avtotehcentr-po-remontu-kommercheskogo-transporta"
+      ],
+      "notes": "Телефон опубликован в деловой карточке; уточнить прием тяжелых тягачей.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b66-kopeysk-magistral",
+      "name": "Магистраль",
+      "region": "Челябинская область",
+      "address": "Копейск, ул. Врубовая, 20/2",
+      "country": "Россия",
+      "phone": "+7 912 804-95-59",
+      "additional_phones": [],
+      "email": "uzer@rtural.ru",
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "ремонт грузовиков",
+        "ремонт спецтехники",
+        "ДВС, КПП и ходовая"
+      ],
+      "source_urls": [
+        "https://zoon.ru/chelyabinsk/autoservice/gruzovoj_avtoservis_magistral/",
+        "https://kopeysk.spravka.city/company/magistral-548",
+        "https://kopeysk.spravka.city/company/magistral-562"
+      ],
+      "notes": "Врубовая 20/3 — соседняя карточка той же сети; до уточнения учитывать одной площадкой.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b66-shadrinsk-tire",
+      "name": "Шиномонтаж — Курганский тракт",
+      "region": "Курганская область",
+      "address": "Шадринск, Курганский тракт, 1А",
+      "country": "Россия",
+      "phone": "+7 912 838-98-88",
+      "additional_phones": [
+        "+7 992 421-52-55"
+      ],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://shadrinsk.spravker.ru/shinomontazh/"
+      ],
+      "notes": "Уточнить доступные размеры грузовых колес и название оператора.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire_service",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b66-kardanbalans-kurgan",
+      "name": "КарданБаланс — Курган",
+      "region": "Курганская область",
+      "address": "Курган, Омская ул., 146",
+      "country": "Россия",
+      "phone": "8 800 555-50-37",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–21:00 (справочник)",
+      "services": [
+        "ремонт и балансировка карданных валов",
+        "замена крестовин"
+      ],
+      "source_urls": [
+        "https://kurgan.kardanbalans.ru/services/",
+        "https://kurgan.spravker.ru/remont-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Общий номер сети, часы из справочника; отдельная физическая площадка. Прием целого грузовика уточнить.",
+      "evidence": "first_party_profile_and_directory",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Yekaterinburg",
+      "hours_verified": false,
+      "possible_matches": [],
+      "operator_key": "kardanbalans",
+      "phone_scope": "operator_shared"
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Ремгаз74",
+      "address": "Копейск, ул. Кожевникова, 20/7",
+      "phone": "+7 951 781-21-35",
+      "source_urls": [
+        "https://chel.auto2.info/kopeysk/remgaz74-423978/"
+      ],
+      "reason": "Confirm heavy tractor profile versus light commercial vehicles; targeted duplicate check performed for this name/address."
+    },
+    {
+      "name": "Шиномонтаж и автосервис",
+      "address": "Шадринск, ул. Курганская, 5",
+      "phones": [
+        "+7 35253 7-71-70",
+        "+7 912 572-02-99"
+      ],
+      "source_urls": [
+        "https://www.shadr.info/catalog/object/1056/",
+        "https://e-avtozapis.ru/tochka/shadrinsk"
+      ],
+      "reason": "Phone listing dated 2013; more recent directory confirms workshop address but not phone or 24-hour hours. Reconfirm before admission."
+    },
+    {
+      "name": "Магистраль — Врубовая 20/3",
+      "address": "Копейск, ул. Врубовая, 20/3",
+      "source_urls": [
+        "https://kopeysk.spravka.city/company/magistral-562"
+      ],
+      "reason": "Neighboring premises of same brand; not counted separately."
+    },
+    {
+      "name": "Автосервис Копейск",
+      "phone": "+7 912 302-40-38",
+      "source_urls": [
+        "https://kopeysk.spravka.city/company/avtoservis-5947"
+      ],
+      "reason": "Exact physical address not disclosed."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "Грузовой45",
+      "batch": 10,
+      "address": "Курган, Омская ул., 168",
+      "phone": "+7 3522 222-888",
+      "additional_phones": [
+        "+7 912 835-00-82"
+      ],
+      "email": "gruzovoi-service45@yandex.ru",
+      "additional_emails": [
+        "gruzovoi-service@yandex.ru"
+      ],
+      "hours": "ежедневно 08:00–19:00",
+      "services": [
+        "ремонт полуприцепов",
+        "грузовая автомойка",
+        "развал-схождение"
+      ],
+      "source_urls": [
+        "https://xn--45-dlcdun7abo4a.xn--p1ai/"
+      ],
+      "reason": "Existing site; service-specific contacts confirmed on website."
+    },
+    {
+      "name": "Кургантрансхолод",
+      "batch": 41,
+      "address": "Курган, Омская ул., 134, к1",
+      "service_phone": "+7 3522 55-76-76",
+      "refrigeration_phone": "+7 3522 54-57-54",
+      "source_urls": [
+        "https://transholod45.ru/avtoservis"
+      ],
+      "reason": "Existing site; separate service phone and exact building published by operator."
+    }
+  ]
+}
