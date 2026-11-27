@@ -88,10 +88,16 @@ export function vehicleReferencePhoto(
   if(!b||!m)return null;
   const match=records.find(x=>x.brand===b&&x.modelPattern.test(m));
   if(!match)return null;
-  const y=(typeof year==='number'||typeof year==='string')?Number(year):NaN;
-  if(Number.isFinite(y)&&y>=1900&&y<=2100){
-    if(y<match.yearMin||y>match.yearMax)return null;
-  }else if(match.yearRequired)return null; // ambiguous truck generations: do not guess!
+  // Only an actually absent year may use the explicitly year-optional models.
+  // Invalid supplied years are not equivalent to unknown model years.
+  const missing=year==null||(typeof year==='string'&&year.trim()==='');
+  if(missing){
+    if(match.yearRequired)return null;
+  }else{
+    if(typeof year==='string'&&!/^\d{4}$/.test(year.trim()))return null;
+    const y=Number(year);
+    if(!Number.isInteger(y)||y<match.yearMin||y>match.yearMax)return null;
+  }
   return {src:match.src,description:match.description,author:match.author,
     license:match.license,sourcePage:match.sourcePage,generation:match.generation};
 }
@@ -100,6 +106,7 @@ export function vehicleReferencePhoto(
 export function vehicleFamilyReferencePhoto(
   brand?:string|null,model?:string|null,year?:number|string|null
 ):VehiclePhoto|null {
+  if(typeof year==='string'&&!/^\d{4}$/.test(year.trim()))return null;
   const y=(typeof year==='number'||typeof year==='string')?Number(year):NaN;
   if(canonicalVehicleBrand(brand)!=='scania'||key(model)!=='r'||!Number.isInteger(y)||y<2016||y>2025)
     return null;
