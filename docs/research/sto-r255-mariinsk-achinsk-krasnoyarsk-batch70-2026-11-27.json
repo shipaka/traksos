@@ -1,0 +1,640 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Staging only; do not publish",
+  "deduplication": "Compared compact audit B/C, batch 12, and batches 32–37,42,47–49 by relevant city/address/name. Full normalized audit across all batches pending. No calls, legal or coordinate verification.",
+  "records": [
+    {
+      "id": "b70-mariinsk-pitstop",
+      "name": "Pit stop",
+      "region": "Кемеровская область",
+      "address": "Мариинск, ул. Котовского, 83Г",
+      "country": "Россия",
+      "phone": "+7 904 967-82-02",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–20:00",
+      "services": [
+        "грузовой шиномонтаж",
+        "грузовая мойка"
+      ],
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://mariinsk.spravker.ru/avtomoiki/",
+        "https://e-avtozapis.ru/tochka/mariinsk"
+      ],
+      "notes": "Также 83Б и Набережная 145 с тем же телефоном; отдельно не считать до уточнения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-mariinsk-avtoimport",
+      "name": "Автоимпорт+",
+      "region": "Кемеровская область",
+      "address": "Мариинск, ул. 50 лет Октября, 78Б",
+      "country": "Россия",
+      "phone": "+7 923 513-91-63",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–пт 09:00–18:00; сб–вс 09:00–15:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Уточнить максимальные размеры колес.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-mariinsk-stal24",
+      "name": "Сталь24",
+      "region": "Кемеровская область",
+      "address": "Мариинск, ул. Загородная, 60",
+      "country": "Россия",
+      "phone": "+7 913 421-59-70",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–22:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://avtorusy.com/shinomontazhi/mariinsk/shinomontazh-stal24/"
+      ],
+      "notes": "Номер и график из картографической карточки ChIJRwy94NR1KUMR3lQ3dtiXZpE; прием фур уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Novokuznetsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-perekrestok",
+      "name": "Перекресток",
+      "region": "Красноярский край",
+      "address": "Ачинск, ш. Байкал, 2А",
+      "country": "Россия",
+      "phone": "+7 923 557-98-08",
+      "additional_phones": [],
+      "email": null,
+      "hours": "круглосуточно по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "График и дополнительные ремонтные работы требуют подтверждения.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-soyuz",
+      "name": "Союз-Комплект-Сервис",
+      "region": "Красноярский край",
+      "address": "Ачинск, ул. Дзержинского, 61",
+      "country": "Россия",
+      "phone": "+7 908 215-90-32",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Грузовая мойка не подтверждена.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-shinpost",
+      "name": "ШинПост",
+      "region": "Красноярский край",
+      "address": "Ачинск, ул. 5 Июля, 1В",
+      "country": "Россия",
+      "phone": "+7 960 752-80-00",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–23:00 по справочнику",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://urbanplaces.su/ru_krasnoyarskij-kraj/achinsk-gorodskoj-okrug-achinsk/category-shinomontazh"
+      ],
+      "notes": "Картографический график отличается; уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-regionavto",
+      "name": "Регион-авто",
+      "region": "Красноярский край",
+      "address": "Ачинск, ул. Трудовых Резервов, 3",
+      "country": "Россия",
+      "phone": "+7 965 915-77-94",
+      "additional_phones": [
+        "+7 39151 5-65-95"
+      ],
+      "email": null,
+      "hours": "пн–сб 09:00–18:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Прием тяжелых тягачей уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-mira",
+      "name": "Шиномонтаж",
+      "region": "Красноярский край",
+      "address": "Ачинск, ул. Мира, 13/1",
+      "country": "Россия",
+      "phone": "+7 960 754-12-22",
+      "additional_phones": [],
+      "email": null,
+      "hours": "пн–сб 09:00–21:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Точный оператор и размеры колес неизвестны.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-gruzshiny",
+      "name": "Грузовые автошины",
+      "region": "Красноярский край",
+      "address": "Ачинск, ш. Байкал, 7А",
+      "country": "Россия",
+      "phone": "+7 913 518-47-30",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "notes": "Красноярское ш. 7 с тем же телефоном — возможный дубль; не считать отдельно.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-sibirkoleso",
+      "name": "Сибирь Колесо",
+      "region": "Красноярский край",
+      "address": "Ачинск, ул. Профсоюзная, 7",
+      "country": "Россия",
+      "phone": "+7 983 268-50-55",
+      "additional_phones": [
+        "8 800 775-10-50",
+        "+7 383 388-55-32",
+        "+7 383 388-55-31"
+      ],
+      "email": null,
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://achinsk.spravker.ru/avtoaksessuary/sibir-koleso1.htm"
+      ],
+      "notes": "Общие контакты сети не считать отдельными площадками.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "tire",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-baykal9",
+      "name": "Грузовой автосервис",
+      "region": "Красноярский край",
+      "address": "Ачинск, ш. Байкал, 9А",
+      "country": "Россия",
+      "phone": "+7 923 309-00-06",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 09:00–19:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-tormoznoi-sistemy-gruzovykh-avtomobilei/",
+        "https://yandex.com/maps/org/gruzovoy_avtoservis/51187657975/"
+      ],
+      "notes": "Номер и адрес совпадают в двух источниках. Уточнить виды ремонта.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-dr-dizel",
+      "name": "Dr. Dizel",
+      "region": "Красноярский край",
+      "address": "Ачинск, Южная Промзона, квартал № 12, 1",
+      "country": "Россия",
+      "phone": "+7 960 753-42-23",
+      "additional_phones": [
+        "+7 39151 5-63-66"
+      ],
+      "email": null,
+      "hours": "ежедневно 11:00–19:00",
+      "services": [
+        "диагностика грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-tormoznoi-sistemy-gruzovykh-avtomobilei/",
+        "https://achinsk.spravker.ru/diagnostika-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Возможность стендового ремонта ТНВД и форсунок уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-gagarina",
+      "name": "Шиномонтажная",
+      "region": "Красноярский край",
+      "address": "Ачинск, ул. Гагарина, 3А",
+      "country": "Россия",
+      "phone": "+7 905 971-88-94",
+      "additional_phones": [],
+      "email": null,
+      "hours": "ежедневно 08:00–22:00",
+      "services": [
+        "ремонт грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://www.google.com/maps/search/?api=1&query=Шиномонтажная+Ачинск+Гагарина+3А&query_place_id=ChIJn6ReM0zh1FwR3gmxdcrlkns"
+      ],
+      "notes": "Категория карты Truck repair shop; грузовой шиномонтаж и точный перечень работ уточнить.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-achinsk-rastochka",
+      "name": "Расточка Купола",
+      "region": "Красноярский край",
+      "address": "Ачинск, Южная Промзона, квартал № 6, 1",
+      "country": "Россия",
+      "phone": "+7 983 153-64-12",
+      "additional_phones": [
+        "+7 902 941-66-02"
+      ],
+      "email": null,
+      "hours": "пн–пт 08:00–17:00; сб 10:00–15:00",
+      "services": [
+        "ремонт двигателей грузовых автомобилей"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-dvigatelei-gruzovykh-avtomobilei/"
+      ],
+      "notes": "Уточнить оборудование и работу с тяжелыми дизелями.",
+      "evidence": "third_party_business_directory",
+      "verification_status": "public_directory_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    },
+    {
+      "id": "b70-krasnoyarsk-enisey",
+      "name": "Енисей Трак Сервис",
+      "region": "Красноярский край",
+      "address": "Красноярск, ул. Рейдовая, 58А",
+      "country": "Россия",
+      "phone": "+7 391 216-33-77",
+      "additional_phones": [
+        "+7 391 226-35-35"
+      ],
+      "email": "ets2006@yandex.ru",
+      "hours": "пн–пт 08:00–20:00; сб–вс 09:00–20:00; перерыв 12:00–13:00",
+      "services": [
+        "ТО грузовиков",
+        "диагностика",
+        "ремонт агрегатов",
+        "автоэлектрика",
+        "топливная аппаратура",
+        "ремонт рам",
+        "кузовной ремонт"
+      ],
+      "source_urls": [
+        "https://www.volvotruck24.ru/",
+        "https://www.volvotruck24.ru/Услуги/"
+      ],
+      "notes": "Главный телефон и график с собственного сайта; второй номер из карты. Марки Volvo, Renault, SITRAK, SHACMAN, HOWO, DONGFENG, DAYUN; авторизацию проверять отдельно.",
+      "evidence": "first_party_and_directory",
+      "verification_status": "public_web_evidence_only",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false,
+      "site_kind_candidate": "repair",
+      "vat_status": "unknown",
+      "vat_rates": [],
+      "timezone": "Asia/Krasnoyarsk",
+      "hours_verified": false,
+      "possible_matches": []
+    }
+  ],
+  "review_only": [
+    {
+      "name": "Шиномонтаж Советская",
+      "address": "Мариинск, ул. Советская",
+      "phone": "+7 904 964-61-56",
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет номера дома."
+    },
+    {
+      "name": "Шиномонтаж Р-255",
+      "address": "Чебулинский округ, Р-255, 431-й км",
+      "source_urls": [
+        "https://mariinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет телефона."
+    },
+    {
+      "name": "Pit stop — альтернативные адреса",
+      "address": "Мариинск, Набережная 145 и Котовского 83Б",
+      "phone": "+7 904 967-82-02",
+      "source_urls": [
+        "https://mariinsk.spravker.ru/avtomoiki/"
+      ],
+      "reason": "Один оператор с Котовского 83Г; подтвердить отдельность площадок."
+    },
+    {
+      "name": "Еврошина",
+      "address": "Ачинск, ул. 5 Июля, 34 или 3",
+      "phone": "+7 905 973-23-16",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Расхождение адресов и графика между картой и справочником."
+    },
+    {
+      "name": "Спец грузовой автосервис",
+      "address": "Ачинск, ул. Дзержинского, 42",
+      "phone": "+7 913 568-24-70",
+      "source_urls": [
+        "https://achinsk.spravker.ru/remont-dvigatelei-gruzovykh-avtomobilei/",
+        "https://achinsk.spravker.ru/remont-tormoznoi-sistemy-gruzovykh-avtomobilei/"
+      ],
+      "reason": "В одном источнике тот же адрес с названием Автосервис, телефоном и другим графиком; проверить принадлежность контакта."
+    },
+    {
+      "name": "Шиномонтаж МУП АГЭТ",
+      "address": "Ачинск, ул. Кравченко, 40",
+      "phone": "+7 923 303-20-12",
+      "additional_phones": [
+        "+7 983 169-49-63"
+      ],
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/",
+        "https://achinsk.spravker.ru/remont-tormoznoi-sistemy-gruzovykh-avtomobilei/"
+      ],
+      "reason": "Разные телефоны и график; прием сторонних фур неизвестен."
+    },
+    {
+      "name": "Шинный двор",
+      "address": "Ачинск",
+      "phone": "+7 923 275-74-36",
+      "source_urls": [
+        "https://achinsk.spravker.ru/gruzovoi-shinomontazh/"
+      ],
+      "reason": "Нет точного адреса."
+    },
+    {
+      "name": "Шиномонтажная мастерская",
+      "address": "Козулька",
+      "source_urls": [
+        "https://www.urbanplaces.su/ru_krasnoyarskij-kraj/kozulskij-rajon-pgt-kozulka"
+      ],
+      "reason": "Нет телефона и подтверждения грузового профиля."
+    },
+    {
+      "name": "Пункт технического осмотра",
+      "address": "Козулька, ул. Пролетарская, 147, стр. 5",
+      "source_urls": [
+        "https://to-kozulka24.gkto.ru/"
+      ],
+      "reason": "Техосмотр не равен ремонту, не включать в СТО без доказательства."
+    }
+  ],
+  "existing_record_reviews": [
+    {
+      "name": "СТО124",
+      "batch": 12,
+      "additional_phones": [
+        "+7 913 030-15-22"
+      ],
+      "notes": "Дополнительный номер из картографической карточки ChIJ_____9il11wRqJtJJbwGuDY, не отдельная площадка."
+    }
+  ]
+}
