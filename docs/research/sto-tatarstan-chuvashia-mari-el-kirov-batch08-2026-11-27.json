@@ -1,0 +1,452 @@
+{
+  "schema": "research-sto-candidates-v1",
+  "checked_on": "2026-11-27",
+  "purpose": "Research staging only; not production import",
+  "publication_gate": "Verify actual operation, exact address and coordinates, legal operator, source reuse rights, duplicates, and admin approval. No calls or official FNS extracts. No automated outreach. Distinguish specialized shops from full truck service.",
+  "records": [
+    {
+      "id": "gruzovoi116-chelny",
+      "name": "Грузовой 116",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, ул. Промышленная, 53А",
+      "country": "Россия",
+      "phone": "+7 927 417-77-66",
+      "email": "kamtorgservis@outlook.com",
+      "hours": null,
+      "services": [
+        "капитальный ремонт КАМАЗ",
+        "ДВС",
+        "КПП ZF",
+        "кабины",
+        "гидрофикация"
+      ],
+      "source_urls": [
+        "https://gruzovoi116.ru/"
+      ],
+      "notes": "Доп. номер +7 909 312-35-55 опубликован предприятием. График уточнить.",
+      "operator_group": "gruzovoi116",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "str116-chelny",
+      "name": "Спец Транс Ресурс",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Производственный проезд, 48",
+      "country": "Россия",
+      "phone": "+7 906 124-19-13",
+      "email": null,
+      "hours": "08:00–17:00 (сайт, дни не указаны)",
+      "services": [
+        "грузовики",
+        "полуприцепы",
+        "низкорамные тралы",
+        "диагностика",
+        "капремонт ДВС",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://str116.ru/"
+      ],
+      "notes": "Доп. +7 917 933-21-31. На сайте есть явно шаблонные отзывы, их не использовали как доказательство работы.",
+      "operator_group": "str116",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "clevertruck-chelny",
+      "name": "Клевер Трак — Набережные Челны",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Казанский просп., 148",
+      "country": "Россия",
+      "phone": "+7 927 030-88-44",
+      "email": "info@clever-truck.ru",
+      "hours": null,
+      "services": [
+        "сервис грузовой техники",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/contacts",
+        "https://daewoo-truck.ru/dealers"
+      ],
+      "notes": "Прямой контакт из списка JAC, общий номер сети 8 800 555-70-07 из списка Daewoo. Связанный оператор, отдельный адрес.",
+      "operator_group": "clever-truck",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "clevertruck-kazan",
+      "name": "Клевер Трак — Казань",
+      "region": "Республика Татарстан",
+      "address": "Зеленодольский район, пос. Новониколаевский, ул. Центральная, 5",
+      "country": "Россия",
+      "phone": "+7 927 402-53-44",
+      "email": "info@clever-truck.ru",
+      "hours": null,
+      "services": [
+        "сервис грузовой техники",
+        "запчасти"
+      ],
+      "source_urls": [
+        "https://jacrus.ru/contacts",
+        "https://daewoo-truck.ru/dealers"
+      ],
+      "notes": "Прямой контакт из списка JAC. Общий номер 8 800 555-70-07. Отдельное юридическое лицо в списке JAC, группировать контакты сети.",
+      "operator_group": "clever-truck",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gts-naberezhnye-morkvashi",
+      "name": "Глобал Трак Сервис — Казань",
+      "region": "Республика Татарстан",
+      "address": "Верхнеуслонский район, с. Набережные Моркваши, Двориков проезд, 5",
+      "country": "Россия",
+      "phone": "+7 917 254-23-97",
+      "email": null,
+      "hours": null,
+      "services": [
+        "сервис прицепной техники (сеть Grunwald)"
+      ],
+      "source_urls": [
+        "https://grunwald.ru/contacts/"
+      ],
+      "notes": "Точка и номер указаны производителем прицепов. Другой оператор в том же списке с тем же адресом не добавлен, чтобы избежать дубля.",
+      "operator_group": "global-truck-service",
+      "evidence": "manufacturer_network",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "rembat-chelny",
+      "name": "Рембат / Казань-Шинторг — Набережные Челны",
+      "region": "Республика Татарстан",
+      "address": "Набережные Челны, Мензелинский тракт, 112А (1055 км М-7)",
+      "country": "Россия",
+      "phone": "+7 855 240-94-09",
+      "email": "1055km@rembat24.ru",
+      "hours": null,
+      "services": [
+        "сервис грузовиков",
+        "грузовой шиномонтаж",
+        "сервис прицепов"
+      ],
+      "source_urls": [
+        "https://mayercargo.ru/dealers-map/",
+        "https://chelny.rembat24.ru/",
+        "https://chelny.kazan-shintorg.com/contacts/"
+      ],
+      "notes": "Номер из сети MAYER; собственные страницы индексируются, но прямое открытие не удалось. Email из поискового индекса, уточнить.",
+      "operator_group": "rembat",
+      "evidence": "manufacturer_network_and_first_party_index",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "magistral-chirshkasy",
+      "name": "Магистраль — Чиршкасы",
+      "region": "Чувашская Республика",
+      "address": "Чебоксарский район, д. Чиршкасы, ул. Куйбышева, 1Б",
+      "country": "Россия",
+      "phone": "8 800 770-06-46",
+      "email": "evakuator21@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовое СТО",
+        "спецтехника",
+        "грузовой шиномонтаж",
+        "эвакуация"
+      ],
+      "source_urls": [
+        "https://magistral-ru.ru/gruzovoj-service",
+        "https://89278464444.ru/services/freight-car-service/"
+      ],
+      "notes": "СпецТехЭвакуатор указывает тот же адрес и другой номер +7 900 333-22-55; не считать отдельной точкой до сверки. Сайт заявляет круглосуточность, график приёмки уточнить.",
+      "operator_group": "magistral-chirshkasy",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "doriss-scan-kugesi",
+      "name": "Дорисс-Скан",
+      "region": "Чувашская Республика",
+      "address": "Чебоксарский район, пос. Кугеси, ул. Тепличная, 2",
+      "country": "Россия",
+      "phone": "+7 83540 2-34-07",
+      "email": "info@scan21.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "ДВС",
+        "кузов",
+        "электрика",
+        "шиномонтаж"
+      ],
+      "source_urls": [
+        "https://scan21.ru/"
+      ],
+      "notes": "Доп. +7 83540 2-32-37; ИНН 2116499640 и ОГРН 1112135000340 по собственному сайту, не сверены с ФНС.",
+      "operator_group": "doriss-scan",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "63kolesa-yoshkar-ola",
+      "name": "63 КОЛЕСА — шинный центр",
+      "region": "Республика Марий Эл",
+      "address": "Йошкар-Ола, Кокшайский проезд, 32",
+      "country": "Россия",
+      "phone": "+7 8362 31-45-45",
+      "email": "avto-plus98@mail.ru",
+      "hours": null,
+      "services": [
+        "грузовой шиномонтаж",
+        "шины",
+        "ремонт проколов и порезов"
+      ],
+      "source_urls": [
+        "https://ntyre12.ru/avtoservis"
+      ],
+      "notes": "Подтверждён стационарный грузовой шиномонтаж; не полноценное СТО.",
+      "operator_group": "63-kolesa",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "technogroup-yoshkar-ola",
+      "name": "Техно-Групп — сервисный центр",
+      "region": "Республика Марий Эл",
+      "address": "Йошкар-Ола, ул. Прохорова, 39, к. 1",
+      "country": "Россия",
+      "phone": "+7 917 700-30-50",
+      "email": null,
+      "hours": null,
+      "services": [
+        "гарантийное обслуживание автобусов",
+        "грузовой ремонт (справочные сведения)"
+      ],
+      "source_urls": [
+        "https://www.itrbus.ru/kontakty/",
+        "https://mariy-el.spravochnika.ru/org/id-1618226"
+      ],
+      "notes": "Номер из списка сервисных станций ИТР; справочник даёт +7 8362 31-43-43. Возможность приёма тяжёлых тягачей уточнить.",
+      "operator_group": "technogroup12",
+      "evidence": "manufacturer_network_and_directory",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "gemma-kirov",
+      "name": "КАМАЗ-центр Гемма",
+      "region": "Кировская область",
+      "address": "Киров, ул. Производственная, 50А",
+      "country": "Россия",
+      "phone": "+7 8332 222-111",
+      "email": "43@kamaz43.ru",
+      "hours": null,
+      "services": [
+        "сервис КАМАЗ",
+        "гарантийное обслуживание",
+        "грузовые автомобили"
+      ],
+      "source_urls": [
+        "https://kamaz43.ru/",
+        "https://tzacom.ru/guarantee/service-centers/dealers-of-jsc-kamaz/"
+      ],
+      "notes": "Общий контакт центра; отдельную линию СТО и адрес ремонтного поста уточнить.",
+      "operator_group": "gemma43",
+      "evidence": "first_party_and_manufacturer",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "yaris-kirov",
+      "name": "Ярис",
+      "region": "Кировская область",
+      "address": "Киров, ул. Северное Кольцо, 22А",
+      "country": "Россия",
+      "phone": "+7 8332 36-14-24",
+      "email": "servicedir@kamaz-kirov.ru",
+      "hours": null,
+      "services": [
+        "КАМАЗ",
+        "МАЗ",
+        "УРАЛ",
+        "грузовики",
+        "ДВС",
+        "КПП",
+        "дизельные форсунки",
+        "электрика",
+        "АБС"
+      ],
+      "source_urls": [
+        "https://www.servis-yaris.ru/",
+        "https://kamaz-kirov.ru/about_us/service/"
+      ],
+      "notes": "Сервис заявляет работу без выходных; точные часы уточнить. Отдельная площадка от Геммы.",
+      "operator_group": "yaris43",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    },
+    {
+      "id": "zz8-kirov",
+      "name": "ZZ8 — автотехцентр",
+      "region": "Кировская область",
+      "address": "Киров, Заготзерновский проезд, 8/1",
+      "country": "Россия",
+      "phone": "+7 922 942-88-00",
+      "email": "info@zz-8.ru",
+      "hours": "пн–пт 09:00–18:00 (сайт)",
+      "services": [
+        "кузовной и малярный ремонт грузовых КАМАЗ, ГАЗ",
+        "диагностика",
+        "электрика",
+        "слесарные работы"
+      ],
+      "source_urls": [
+        "https://zz-8.ru/contacts",
+        "https://zz-8.ru/"
+      ],
+      "notes": "Доп. сервис +7 8332 73-62-42, кузовной цех +7 922 972-88-00. Уточнить допустимые габариты тягача и объём грузовой слесарки.",
+      "operator_group": "zz8",
+      "evidence": "first_party",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": 58.601279,
+      "longitude": 49.641001,
+      "coordinate_source": "https://zz-8.ru/contacts",
+      "publication_ready": false
+    },
+    {
+      "id": "avtokomfort-kirov",
+      "name": "Автокомфорт — грузовой сервис",
+      "region": "Кировская область",
+      "address": "Киров, ул. Дзержинского, 118/1 (карта); главный офис 118/2",
+      "country": "Россия",
+      "phone": "+7 8332 44-66-11",
+      "email": "info@akomfort.ru",
+      "hours": null,
+      "services": [
+        "грузовики",
+        "спецтехника",
+        "электрика",
+        "тормоза",
+        "пневматика",
+        "ДВС",
+        "КПП",
+        "сварка"
+      ],
+      "source_urls": [
+        "https://akomfort.tech/service/"
+      ],
+      "notes": "Адрес ремонтного корпуса 118/1 из карточки карты, официальный сайт указывает главный офис 118/2. Требуется уточнение въезда. Общий номер 8 800 250-44-66.",
+      "operator_group": "avtokomfort",
+      "evidence": "first_party_and_map",
+      "source_checked_on": "2026-11-27",
+      "partner_status": "non_partner_candidate",
+      "verification_status": "public_web_evidence_only",
+      "phone_verified": false,
+      "legal_status_verified": false,
+      "latitude": null,
+      "longitude": null,
+      "coordinate_source": null,
+      "publication_ready": false
+    }
+  ]
+}
